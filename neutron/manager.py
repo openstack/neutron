@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import weakref
+
 from oslo.config import cfg
 
 from neutron.common import legacy
@@ -196,20 +198,31 @@ class NeutronManager(object):
     @classmethod
     @utils.synchronized("manager")
     def _create_instance(cls):
-        if cls._instance is None:
+        if not cls.has_instance():
             cls._instance = cls()
+
+    @classmethod
+    def has_instance(cls):
+        return cls._instance is not None
+
+    @classmethod
+    def clear_instance(cls):
+        cls._instance = None
 
     @classmethod
     def get_instance(cls):
         # double checked locking
-        if cls._instance is None:
+        if not cls.has_instance():
             cls._create_instance()
         return cls._instance
 
     @classmethod
     def get_plugin(cls):
-        return cls.get_instance().plugin
+        # Return a weakref to minimize gc-preventing references.
+        return weakref.proxy(cls.get_instance().plugin)
 
     @classmethod
     def get_service_plugins(cls):
-        return cls.get_instance().service_plugins
+        # Return weakrefs to minimize gc-preventing references.
+        return dict((x, weakref.proxy(y))
+                    for x, y in cls.get_instance().service_plugins.iteritems())

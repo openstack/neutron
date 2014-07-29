@@ -161,6 +161,12 @@ class OVS_Lib_Test(base.BaseTestCase):
             ['ovs-vsctl', self.TO, '--', 'get-controller', self.BR_NAME],
             root_helper=self.root_helper)
 
+    def test_set_secure_mode(self):
+        self.br.set_secure_mode()
+        self.execute.assert_called_once_with(
+            ['ovs-vsctl', self.TO, '--', 'set-fail-mode', self.BR_NAME,
+             'secure'], root_helper=self.root_helper)
+
     def test_set_protocols(self):
         protocols = 'OpenFlow13'
         self.br.set_protocols(protocols)

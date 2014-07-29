@@ -64,18 +64,19 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.context = context.get_admin_context()
 
 
-class TestMl2BulkToggle(Ml2PluginV2TestCase):
+class TestMl2BulkToggleWithBulkless(Ml2PluginV2TestCase):
+
+    _mechanism_drivers = ['logger', 'test', 'bulkless']
 
     def test_bulk_disable_with_bulkless_driver(self):
-        self.tearDown()
-        self._mechanism_drivers = ['logger', 'test', 'bulkless']
-        self.setUp()
         self.assertTrue(self._skip_native_bulk)
 
+
+class TestMl2BulkToggleWithoutBulkless(Ml2PluginV2TestCase):
+
+    _mechanism_drivers = ['logger', 'test']
+
     def test_bulk_enabled_with_bulk_drivers(self):
-        self.tearDown()
-        self._mechanism_drivers = ['logger', 'test']
-        self.setUp()
         self.assertFalse(self._skip_native_bulk)
 
 

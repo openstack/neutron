@@ -115,6 +115,8 @@ class DhcpAgent(manager.Manager):
 
     def call_driver(self, action, network, **action_kwargs):
         """Invoke an action on a DHCP driver instance."""
+        LOG.debug(_('Calling driver for network: %(net)s action: %(action)s'),
+                  {'net': network.id, 'action': action})
         try:
             # the Driver expects something that is duck typed similar to
             # the base models.

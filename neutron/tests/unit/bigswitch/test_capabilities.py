@@ -33,7 +33,7 @@ class CapabilitiesTests(test_router_db.RouterDBTestCase):
     def test_floating_ip_capability(self):
         with nested(
             mock.patch(SERVERRESTCALL,
-                       return_value=(200, None, None, '["floatingip"]')),
+                       return_value=(200, None, '["floatingip"]', None)),
             mock.patch(SERVERPOOL + '.rest_create_floatingip',
                        return_value=(200, None, None, None)),
             mock.patch(SERVERPOOL + '.rest_delete_floatingip',
@@ -52,7 +52,7 @@ class CapabilitiesTests(test_router_db.RouterDBTestCase):
     def test_floating_ip_capability_neg(self):
         with nested(
             mock.patch(SERVERRESTCALL,
-                       return_value=(200, None, None, '[""]')),
+                       return_value=(200, None, '[""]', None)),
             mock.patch(SERVERPOOL + '.rest_update_network',
                        return_value=(200, None, None, None))
         ) as (mock_rest, mock_netupdate):

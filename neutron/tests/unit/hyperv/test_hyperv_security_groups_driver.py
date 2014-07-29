@@ -157,6 +157,20 @@ class TestHyperVSecurityGroupsDriver(base.BaseTestCase):
         self.assertEqual(self._driver._ACL_PROP_MAP['address_default']['IPv6'],
                          actual)
 
+    def test_get_rule_protocol_icmp(self):
+        self._test_get_rule_protocol(
+            'icmp', self._driver._ACL_PROP_MAP['protocol']['icmp'])
+
+    def test_get_rule_protocol_no_icmp(self):
+        self._test_get_rule_protocol('tcp', 'tcp')
+
+    def _test_get_rule_protocol(self, protocol, expected):
+        rule = self._create_security_rule()
+        rule['protocol'] = protocol
+        actual = self._driver._get_rule_protocol(rule)
+
+        self.assertEqual(expected, actual)
+
     def _get_port(self):
         return {
             'device': self._FAKE_DEVICE,

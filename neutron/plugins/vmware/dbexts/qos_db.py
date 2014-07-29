@@ -288,8 +288,11 @@ class QoSDbMixin(qos.QueuePluginBase):
                 raise qos.DefaultQueueCreateNotAdmin()
         if qos_queue.get('qos_marking') == 'trusted':
             dscp = qos_queue.pop('dscp')
+            if dscp:
+                # must raise because a non-zero dscp was provided
+                raise qos.QueueInvalidMarking()
             LOG.info(_("DSCP value (%s) will be ignored with 'trusted' "
-                     "marking"), dscp)
+                       "marking"), dscp)
         max = qos_queue.get('max')
         min = qos_queue.get('min')
         # Max can be None

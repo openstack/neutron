@@ -49,6 +49,15 @@ class FirewallCallbacks(object):
         LOG.debug(_("set_firewall_status() called"))
         with context.session.begin(subtransactions=True):
             fw_db = self.plugin._get_firewall(context, firewall_id)
+            # ignore changing status if firewall expects to be deleted
+            # That case means that while some pending operation has been
+            # performed on the backend, neutron server received delete request
+            # and changed firewall status to const.PENDING_DELETE
+            if fw_db.status == const.PENDING_DELETE:
+                LOG.debug(_("Firewall %(fw_id)s in PENDING_DELETE state, "
+                            "not changing to %(status)s"),
+                          {'fw_id': firewall_id, 'status': status})
+                return False
             #TODO(xuhanp): Remove INACTIVE status and use DOWN to
             # be consistent with other network resources
             if status in (const.ACTIVE, const.INACTIVE, const.DOWN):
@@ -63,7 +72,8 @@ class FirewallCallbacks(object):
         LOG.debug(_("firewall_deleted() called"))
         with context.session.begin(subtransactions=True):
             fw_db = self.plugin._get_firewall(context, firewall_id)
-            if fw_db.status == const.PENDING_DELETE:
+            # allow to delete firewalls in ERROR state
+            if fw_db.status in (const.PENDING_DELETE, const.ERROR):
                 self.plugin.delete_db_firewall_object(context, firewall_id)
                 return True
             else:

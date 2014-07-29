@@ -23,6 +23,24 @@
 Interface Configuration Commands
 """
 
+# Get NOS Version
+SHOW_FIRMWARE_VERSION = (
+    "show-firmware-version xmlns:nc="
+    "'urn:brocade.com:mgmt:brocade-firmware-ext'"
+)
+GET_VCS_DETAILS = (
+    'get-vcs-details xmlns:nc="urn:brocade.com:mgmt:brocade-vcs"'
+)
+SHOW_VIRTUAL_FABRIC = (
+    'show-virtual-fabric xmlns:nc="urn:brocade.com:mgmt:brocade-vcs"'
+)
+GET_VIRTUAL_FABRIC_INFO = (
+    'interface xmlns:nc="urn:brocade.com:mgmt:brocade-firmware-ext"'
+)
+
+NOS_VERSION = "./*/{urn:brocade.com:mgmt:brocade-firmware-ext}os-version"
+VFAB_ENABLE = "./*/*/*/{urn:brocade.com:mgmt:brocade-vcs}vfab-enable"
+
 # Create VLAN (vlan_id)
 CREATE_VLAN_INTERFACE = """
     <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
@@ -68,6 +86,20 @@ CREATE_VLAN_PROFILE_FOR_PORT_PROFILE = """
         <port-profile xmlns="urn:brocade.com:mgmt:brocade-port-profile">
             <name>{name}</name>
             <vlan-profile/>
+        </port-profile>
+    </config>
+"""
+
+# Configure L2 mode for VLAN sub-profile (port_profile_name)
+CONFIGURE_L2_MODE_FOR_VLAN_PROFILE_IN_DOMAIN = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <port-profile xmlns="urn:brocade.com:mgmt:brocade-port-profile">
+            <name>{name}</name>
+            <vlan-profile>
+                <switchport-basic>
+                   <basic/>
+                </switchport-basic>
+            </vlan-profile>
         </port-profile>
     </config>
 """
@@ -182,6 +214,29 @@ xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete">
                 </static>
             </port-profile>
         </port-profile-global>
+    </config>
+"""
+
+#port-profile domain management commands
+REMOVE_PORTPROFILE_FROM_DOMAIN = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <port-profile-domain xmlns="urn:brocade.com:mgmt:brocade-port-profile">
+            <port-profile-domain-name>{domain_name}</port-profile-domain-name>
+                <profile  operation="delete">
+                    <profile-name>{name}</profile-name>
+                </profile>
+            </port-profile-domain>
+    </config>
+"""
+#put port profile in default domain
+CONFIGURE_PORTPROFILE_IN_DOMAIN = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <port-profile-domain xmlns="urn:brocade.com:mgmt:brocade-port-profile">
+            <port-profile-domain-name>{domain_name}</port-profile-domain-name>
+                <profile>
+                    <profile-name>{name}</profile-name>
+                </profile>
+            </port-profile-domain>
     </config>
 """
 

@@ -242,7 +242,7 @@ class TestPortsV2(NsxPluginV2TestCase,
 
 class TestNetworksV2(test_plugin.TestNetworksV2, NsxPluginV2TestCase):
 
-    def _test_create_bridge_network(self, vlan_id=None):
+    def _test_create_bridge_network(self, vlan_id=0):
         net_type = vlan_id and 'vlan' or 'flat'
         name = 'bridge_net'
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
@@ -478,7 +478,7 @@ class TestL3NatTestCase(L3NatTest,
                         test_l3_plugin.L3NatDBIntTestCase,
                         NsxPluginV2TestCase):
 
-    def _test_create_l3_ext_network(self, vlan_id=None):
+    def _test_create_l3_ext_network(self, vlan_id=0):
         name = 'l3_ext_net'
         net_type = NetworkTypes.L3_EXT
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
@@ -971,6 +971,26 @@ class TestL3NatTestCase(L3NatTest,
                     res = router_req.get_response(self.ext_api)
                     self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
                                      res.status_int)
+
+    def test_router_add_interface_port_removes_security_group(self):
+        with self.router() as r:
+            with self.port(no_delete=True) as p:
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     None,
+                                                     p['port']['id'])
+                self.assertIn('port_id', body)
+                self.assertEqual(body['port_id'], p['port']['id'])
+
+                # fetch port and confirm no security-group on it.
+                body = self._show('ports', p['port']['id'])
+                self.assertEqual(body['port']['security_groups'], [])
+                self.assertFalse(body['port']['port_security_enabled'])
+                # clean-up
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              None,
+                                              p['port']['id'])
 
 
 class ExtGwModeTestCase(NsxPluginV2TestCase,

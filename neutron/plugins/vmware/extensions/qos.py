@@ -45,6 +45,11 @@ class QueueInvalidDscp(qexception.InvalidInput):
                 " between 0 and 63.")
 
 
+class QueueInvalidMarking(qexception.InvalidInput):
+    message = _("The qos marking cannot be set to 'trusted' "
+                "when the DSCP field is set")
+
+
 class QueueMinGreaterMax(qexception.InvalidInput):
     message = _("Invalid bandwidth rate, min greater than max.")
 
@@ -88,16 +93,19 @@ def convert_to_unsigned_int_or_none_max_63(val):
 # As per NSX API, if a queue is trusted, DSCP must be omitted; if a queue is
 # untrusted, DSCP must be specified. Whichever default values we choose for
 # the tuple (qos_marking, dscp), there will be at least one combination of a
-# request with conflicting values: for instance, with the following default:
-#
-# qos_marking = 'untrusted', dscp = '0'
-#
-# requests with qos_marking = 'trusted' and a default dscp will fail. Since
-# it is convoluted to ask the admin to specify a None value for dscp when
-# qos_marking is 'trusted', it is best to ignore the dscp value, regardless
-# of whether it has been specified or not. This preserves the chosen default
-# and keeps backward compatibility with the API. A warning will be logged, as
-# the server is overriding a potentially conflicting request from the admin
+# request with conflicting values: for instance given the default values below,
+# requests with qos_marking = 'trusted' and the default dscp value will fail.
+# In order to avoid API users to explicitly specify a setting for clearing
+# the DSCP field when a trusted queue is created, the code serving this API
+# will adopt the following behaviour when qos_marking is set to 'trusted':
+# - if the DSCP attribute is set to the default value (0), silently drop
+#   its value
+# - if the DSCP attribute is set to anything than 0 (but still a valid DSCP
+#   value) return a 400 error as qos_marking and DSCP setting conflict.
+# TODO(salv-orlando): Evaluate whether it will be possible from a backward
+# compatibility perspective to change the default value for DSCP in order to
+# avoid this peculiar behaviour
+
 RESOURCE_ATTRIBUTE_MAP = {
     'qos_queues': {
         'id': {'allow_post': False, 'allow_put': False,

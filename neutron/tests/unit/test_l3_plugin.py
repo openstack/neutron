@@ -640,7 +640,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
                 for n in test_notifier.NOTIFICATIONS:
                     if n['event_type'].startswith('router.interface.'):
-                        payload = n['payload']['router.interface']
+                        payload = n['payload']['router_interface']
                         self.assertIn('id', payload)
                         self.assertEqual(payload['id'], r['router']['id'])
                         self.assertIn('tenant_id', payload)

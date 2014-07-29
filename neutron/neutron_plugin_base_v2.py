@@ -336,3 +336,18 @@ class NeutronPluginBaseV2(object):
                   defined plugin API.
         """
         raise NotImplementedError
+
+    def rpc_workers_supported(self):
+        """Return whether the plugin supports multiple RPC workers.
+
+        A plugin that supports multiple RPC workers should override the
+        start_rpc_listener method to ensure that this method returns True and
+        that start_rpc_listener is called at the appropriate time.
+        Alternately, a plugin can override this method to customize detection
+        of support for multiple rpc workers
+
+        .. note:: this method is optional, as it was not part of the originally
+                  defined plugin API.
+        """
+        return (self.__class__.start_rpc_listener !=
+                NeutronPluginBaseV2.start_rpc_listener)

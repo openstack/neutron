@@ -19,6 +19,7 @@
 
 import time
 
+import netaddr
 from oslo.config import cfg
 from ryu.app.ofctl import api as ryu_api
 from ryu.base import app_manager
@@ -35,10 +36,8 @@ from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
-from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ofagent.common import config  # noqa
@@ -154,7 +153,7 @@ class OFASecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         self.context = context
         self.plugin_rpc = plugin_rpc
         self.root_helper = root_helper
-        self.init_firewall()
+        self.init_firewall(defer_refresh_firewall=True)
 
 
 class OFANeutronAgentRyuApp(app_manager.RyuApp):
@@ -251,6 +250,8 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.int_br_device_count = 0
 
         self.int_br = OVSBridge(integ_br, self.root_helper, self.ryuapp)
+        # Stores port update notifications for processing in main loop
+        self.updated_ports = set()
         self.setup_rpc()
         self.setup_integration_br()
         self.setup_physical_bridges(bridge_mappings)
@@ -298,6 +299,14 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         except Exception:
             LOG.exception(_("Failed reporting state!"))
 
+    def _create_tunnel_port_name(self, tunnel_type, ip_address):
+        try:
+            ip_hex = '%08x' % netaddr.IPAddress(ip_address, version=4)
+            return '%s-%s' % (tunnel_type, ip_hex)
+        except Exception:
+            LOG.warn(_("Unable to create tunnel port. Invalid remote IP: %s"),
+                     ip_address)
+
     def ryu_send_msg(self, msg):
         result = ryu_api.send_msg(self.ryuapp, msg)
         LOG.info(_("ryu send_msg() result: %s"), result)
@@ -344,40 +353,18 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     def port_update(self, context, **kwargs):
         port = kwargs.get('port')
+        # Put the port identifier in the updated_ports set.
+        # Even if full port details might be provided to this call,
+        # they are not used since there is no guarantee the notifications
+        # are processed in the same order as the relevant API requests
+        self.updated_ports.add(port['id'])
         LOG.debug(_("port_update received port %s"), port['id'])
-        # Validate that port is on OVS
-        vif_port = self.int_br.get_vif_port_by_id(port['id'])
-        if not vif_port:
-            return
-
-        if ext_sg.SECURITYGROUPS in port:
-            self.sg_agent.refresh_firewall()
-        network_type = kwargs.get('network_type')
-        segmentation_id = kwargs.get('segmentation_id')
-        physical_network = kwargs.get('physical_network')
-        self.treat_vif_port(vif_port, port['id'], port['network_id'],
-                            network_type, physical_network,
-                            segmentation_id, port['admin_state_up'])
-        try:
-            if port['admin_state_up']:
-                # update plugin about port status
-                self.plugin_rpc.update_device_up(self.context, port['id'],
-                                                 self.agent_id,
-                                                 cfg.CONF.host)
-            else:
-                # update plugin about port status
-                self.plugin_rpc.update_device_down(self.context, port['id'],
-                                                   self.agent_id,
-                                                   cfg.CONF.host)
-        except rpc_common.Timeout:
-            LOG.error(_("RPC timeout while updating port %s"), port['id'])
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug(_("tunnel_update received"))
         if not self.enable_tunneling:
             return
         tunnel_ip = kwargs.get('tunnel_ip')
-        tunnel_id = kwargs.get('tunnel_id', tunnel_ip)
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
             LOG.error(_("No tunnel_type specified, cannot create tunnels"))
@@ -387,7 +374,9 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             return
         if tunnel_ip == self.local_ip:
             return
-        tun_name = '%s-%s' % (tunnel_type, tunnel_id)
+        tun_name = self._create_tunnel_port_name(tunnel_type, tunnel_ip)
+        if not tun_name:
+            return
         self.setup_tunnel_port(tun_name, tunnel_ip, tunnel_type)
 
     def create_rpc_dispatcher(self):
@@ -422,8 +411,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         br = self.tun_br
         match = br.ofparser.OFPMatch(
             tunnel_id=int(segmentation_id))
-        actions = [br.ofparser.OFPActionSetField(
-            vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT)]
+        actions = [
+            br.ofparser.OFPActionPushVlan(),
+            br.ofparser.OFPActionSetField(
+                vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT)]
         instructions = [
             br.ofparser.OFPInstructionActions(
                 ryu_ofp13.OFPIT_APPLY_ACTIONS, actions),
@@ -446,54 +437,55 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self._provision_local_vlan_inbound_for_tunnel(lvid, network_type,
                                                       segmentation_id)
 
-    def _provision_local_vlan_outbound(self, br, lvid, actions,
-                                       physical_network):
-        match = br.ofparser.OFPMatch(
-            in_port=int(self.phys_ofports[physical_network]),
-            vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT)
-        instructions = [br.ofparser.OFPInstructionActions(
-            ryu_ofp13.OFPIT_APPLY_ACTIONS, actions)]
-        msg = br.ofparser.OFPFlowMod(br.datapath,
-                                     priority=4,
-                                     match=match,
-                                     instructions=instructions)
+    def _provision_local_vlan_outbound(self, lvid, vlan_vid, physical_network):
+        br = self.phys_brs[physical_network]
+        datapath = br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(in_port=int(self.phys_ofports[physical_network]),
+                              vlan_vid=int(lvid) | ofp.OFPVID_PRESENT)
+        if vlan_vid == ofp.OFPVID_NONE:
+            actions = [ofpp.OFPActionPopVlan()]
+        else:
+            actions = [ofpp.OFPActionSetField(vlan_vid=vlan_vid)]
+        actions += [ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0)]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        msg = ofpp.OFPFlowMod(datapath, priority=4, match=match,
+                              instructions=instructions)
         self.ryu_send_msg(msg)
 
     def _provision_local_vlan_inbound(self, lvid, vlan_vid, physical_network):
-        match = self.int_br.ofparser.OFPMatch(
-            in_port=int(self.int_ofports[physical_network]),
-            vlan_vid=vlan_vid)
-        actions = [self.int_br.ofparser.OFPActionSetField(
-            vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT),
-            self.int_br.ofparser.OFPActionOutput(
-                ryu_ofp13.OFPP_NORMAL, 0)]
-        instructions = [self.int_br.ofparser.OFPInstructionActions(
-            ryu_ofp13.OFPIT_APPLY_ACTIONS, actions)]
-        msg = self.int_br.ofparser.OFPFlowMod(
-            self.int_br.datapath,
-            priority=3,
-            match=match,
-            instructions=instructions)
+        datapath = self.int_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(in_port=int(self.int_ofports[physical_network]),
+                              vlan_vid=vlan_vid)
+        if vlan_vid == ofp.OFPVID_NONE:
+            actions = [ofpp.OFPActionPushVlan()]
+        else:
+            actions = []
+        actions += [
+            ofpp.OFPActionSetField(vlan_vid=int(lvid) | ofp.OFPVID_PRESENT),
+            ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+        ]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        msg = ofpp.OFPFlowMod(datapath, priority=3, match=match,
+                              instructions=instructions)
         self.ryu_send_msg(msg)
 
     def _local_vlan_for_flat(self, lvid, physical_network):
-        br = self.phys_brs[physical_network]
-        actions = [br.ofparser.OFPActionPopVlan(),
-                   br.ofparser.OFPActionOutput(ryu_ofp13.OFPP_NORMAL, 0)]
-        self._provision_local_vlan_outbound(
-            br, lvid, actions, physical_network)
-        self._provision_local_vlan_inbound(lvid, 0xffff, physical_network)
+        vlan_vid = ryu_ofp13.OFPVID_NONE
+        self._provision_local_vlan_outbound(lvid, vlan_vid, physical_network)
+        self._provision_local_vlan_inbound(lvid, vlan_vid, physical_network)
 
     def _local_vlan_for_vlan(self, lvid, physical_network, segmentation_id):
-        br = self.phys_brs[physical_network]
-        actions = [br.ofparser.OFPActionSetField(
-            vlan_vid=int(segmentation_id) | ryu_ofp13.OFPVID_PRESENT),
-            br.ofparser.OFPActionOutput(ryu_ofp13.OFPP_NORMAL, 0)]
-        self._provision_local_vlan_outbound(
-            br, lvid, actions, physical_network)
-        self._provision_local_vlan_inbound(
-            lvid, int(segmentation_id) | ryu_ofp13.OFPVID_PRESENT,
-            physical_network)
+        vlan_vid = int(segmentation_id) | ryu_ofp13.OFPVID_PRESENT
+        self._provision_local_vlan_outbound(lvid, vlan_vid, physical_network)
+        self._provision_local_vlan_inbound(lvid, vlan_vid, physical_network)
 
     def provision_local_vlan(self, net_uuid, network_type, physical_network,
                              segmentation_id):
@@ -556,28 +548,31 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     def _reclaim_local_vlan_outbound(self, lvm):
         br = self.phys_brs[lvm.physical_network]
-        match = br.ofparser.OFPMatch(
-            in_port=self.phys_ofports[lvm.physical_network],
-            vlan_vid=int(lvm.vlan) | ryu_ofp13.OFPVID_PRESENT)
-        msg = br.ofparser.OFPFlowMod(br.datapath,
-                                     table_id=ryu_ofp13.OFPTT_ALL,
-                                     command=ryu_ofp13.OFPFC_DELETE,
-                                     out_group=ryu_ofp13.OFPG_ANY,
-                                     out_port=ryu_ofp13.OFPP_ANY,
-                                     match=match)
+        datapath = br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(
+            in_port=int(self.phys_ofports[lvm.physical_network]),
+            vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT)
+        msg = ofpp.OFPFlowMod(datapath, table_id=ofp.OFPTT_ALL,
+                              command=ofp.OFPFC_DELETE, out_group=ofp.OFPG_ANY,
+                              out_port=ofp.OFPP_ANY, match=match)
         self.ryu_send_msg(msg)
 
-    def _reclaim_local_vlan_inbound(self, lvm, vlan_vid):
-        br = self.int_br
-        match = br.ofparser.OFPMatch(
-            in_port=self.int_ofports[lvm.physical_network],
-            vlan_vid=vlan_vid)
-        msg = br.ofparser.OFPFlowMod(br.datapath,
-                                     table_id=ryu_ofp13.OFPTT_ALL,
-                                     command=ryu_ofp13.OFPFC_DELETE,
-                                     out_group=ryu_ofp13.OFPG_ANY,
-                                     out_port=ryu_ofp13.OFPP_ANY,
-                                     match=match)
+    def _reclaim_local_vlan_inbound(self, lvm):
+        datapath = self.int_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        if lvm.network_type == p_const.TYPE_FLAT:
+            vid = ofp.OFPVID_NONE
+        else:  # p_const.TYPE_VLAN
+            vid = lvm.segmentation_id | ofp.OFPVID_PRESENT
+        match = ofpp.OFPMatch(
+            in_port=int(self.int_ofports[lvm.physical_network]),
+            vlan_vid=vid)
+        msg = ofpp.OFPFlowMod(datapath, table_id=ofp.OFPTT_ALL,
+                              command=ofp.OFPFC_DELETE, out_group=ofp.OFPG_ANY,
+                              out_port=ofp.OFPP_ANY, match=match)
         self.ryu_send_msg(msg)
 
     def reclaim_local_vlan(self, net_uuid):
@@ -618,15 +613,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                     out_port=ryu_ofp13.OFPP_ANY,
                     match=match)
                 self.ryu_send_msg(msg)
-        elif lvm.network_type == p_const.TYPE_FLAT:
+        elif lvm.network_type in (p_const.TYPE_FLAT, p_const.TYPE_VLAN):
             if lvm.physical_network in self.phys_brs:
                 self._reclaim_local_vlan_outbound(lvm)
-                self._reclaim_local_vlan_inbound(lvm, 0xffff)
-        elif lvm.network_type == p_const.TYPE_VLAN:
-            if lvm.physical_network in self.phys_brs:
-                self._reclaim_local_vlan_outbound(lvm)
-                self._reclaim_local_vlan_inbound(
-                    lvm, lvm.segmentation_id | ryu_ofp13.OFPVID_PRESENT)
+                self._reclaim_local_vlan_inbound(lvm)
         elif lvm.network_type == p_const.TYPE_LOCAL:
             # no flows needed for local networks
             pass
@@ -654,19 +644,21 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                       physical_network, segmentation_id)
         lvm = self.local_vlan_map[net_uuid]
         lvm.vif_ports[port.vif_id] = port
-
-        self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                     str(lvm.vlan))
-        if int(port.ofport) != -1:
-            match = self.int_br.ofparser.OFPMatch(in_port=port.ofport)
-            msg = self.int_br.ofparser.OFPFlowMod(
-                self.int_br.datapath,
-                table_id=ryu_ofp13.OFPTT_ALL,
-                command=ryu_ofp13.OFPFC_DELETE,
-                out_group=ryu_ofp13.OFPG_ANY,
-                out_port=ryu_ofp13.OFPP_ANY,
-                match=match)
-            self.ryu_send_msg(msg)
+        # Do not bind a port if it's already bound
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+        if cur_tag != str(lvm.vlan):
+            self.int_br.set_db_attribute("Port", port.port_name, "tag",
+                                         str(lvm.vlan))
+            if port.ofport != -1:
+                match = self.int_br.ofparser.OFPMatch(in_port=port.ofport)
+                msg = self.int_br.ofparser.OFPFlowMod(
+                    self.int_br.datapath,
+                    table_id=ryu_ofp13.OFPTT_ALL,
+                    command=ryu_ofp13.OFPFC_DELETE,
+                    out_group=ryu_ofp13.OFPG_ANY,
+                    out_port=ryu_ofp13.OFPP_ANY,
+                    match=match)
+                self.ryu_send_msg(msg)
 
     def port_unbound(self, vif_id, net_uuid=None):
         """Unbind port.
@@ -695,12 +687,15 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
         :param port: a ovs_lib.VifPort object.
         """
-        self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                     DEAD_VLAN_TAG)
-        match = self.int_br.ofparser.OFPMatch(in_port=int(port.ofport))
-        msg = self.int_br.ofparser.OFPFlowMod(self.int_br.datapath,
-                                              priority=2, match=match)
-        self.ryu_send_msg(msg)
+        # Don't kill a port if it's already dead
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+        if cur_tag != DEAD_VLAN_TAG:
+            self.int_br.set_db_attribute("Port", port.port_name, "tag",
+                                         DEAD_VLAN_TAG)
+            match = self.int_br.ofparser.OFPMatch(in_port=port.ofport)
+            msg = self.int_br.ofparser.OFPFlowMod(self.int_br.datapath,
+                                                  priority=2, match=match)
+            self.ryu_send_msg(msg)
 
     def setup_integration_br(self):
         """Setup the integration bridge.
@@ -880,10 +875,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         return (int_veth, phys_veth)
 
     def _phys_br_block_untranslated_traffic(self, br, physical_network):
-        match = br.ofparser.OFPMatch(in_port=int(
+        match = self.int_br.ofparser.OFPMatch(in_port=int(
             self.int_ofports[physical_network]))
-        msg = br.ofparser.OFPFlowMod(self.int_br.datapath,
-                                     priority=2, match=match)
+        msg = self.int_br.ofparser.OFPFlowMod(self.int_br.datapath,
+                                              priority=2, match=match)
         self.ryu_send_msg(msg)
         match = br.ofparser.OFPMatch(in_port=int(
             self.phys_ofports[physical_network]))
@@ -958,16 +953,54 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             self._phys_br_patch_physical_bridge_with_integration_bridge(
                 br, physical_network, bridge, ip_wrapper)
 
-    def update_ports(self, registered_ports):
-        ports = self.int_br.get_vif_port_set()
-        if ports == registered_ports:
-            return
-        self.int_br_device_count = len(ports)
-        added = ports - registered_ports
-        removed = registered_ports - ports
-        return {'current': ports,
-                'added': added,
-                'removed': removed}
+    def scan_ports(self, registered_ports, updated_ports=None):
+        cur_ports = self.int_br.get_vif_port_set()
+        self.int_br_device_count = len(cur_ports)
+        port_info = {'current': cur_ports}
+        if updated_ports is None:
+            updated_ports = set()
+        updated_ports.update(self._find_lost_vlan_port(registered_ports))
+        if updated_ports:
+            # Some updated ports might have been removed in the
+            # meanwhile, and therefore should not be processed.
+            # In this case the updated port won't be found among
+            # current ports.
+            updated_ports &= cur_ports
+            if updated_ports:
+                port_info['updated'] = updated_ports
+
+        if cur_ports == registered_ports:
+            # No added or removed ports to set, just return here
+            return port_info
+
+        port_info['added'] = cur_ports - registered_ports
+        # Remove all the known ports not found on the integration bridge
+        port_info['removed'] = registered_ports - cur_ports
+        return port_info
+
+    def _find_lost_vlan_port(self, registered_ports):
+        """Return ports which have lost their vlan tag.
+
+        The returned value is a set of port ids of the ports concerned by a
+        vlan tag loss.
+        """
+        port_tags = self.int_br.get_port_tag_dict()
+        changed_ports = set()
+        for lvm in self.local_vlan_map.values():
+            for port in registered_ports:
+                if (
+                    port in lvm.vif_ports
+                    and lvm.vif_ports[port].port_name in port_tags
+                    and port_tags[lvm.vif_ports[port].port_name] != lvm.vlan
+                ):
+                    LOG.info(
+                        _("Port '%(port_name)s' has lost "
+                            "its vlan tag '%(vlan_tag)d'!"),
+                        {'port_name': lvm.vif_ports[port].port_name,
+                         'vlan_tag': lvm.vlan}
+                    )
+                    changed_ports.add(port)
+        return changed_ports
 
     def update_ancillary_ports(self, registered_ports):
         ports = set()
@@ -985,6 +1018,13 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
                        physical_network, segmentation_id, admin_state_up):
         if vif_port:
+            # When this function is called for a port, the port should have
+            # an OVS ofport configured, as only these ports were considered
+            # for being treated. If that does not happen, it is a potential
+            # error condition of which operators should be aware
+            if not vif_port.ofport:
+                LOG.warn(_("VIF port: %s has no ofport configured, and might "
+                           "not be able to transmit"), vif_port.vif_id)
             if admin_state_up:
                 self.port_bound(vif_port, network_id, network_type,
                                 physical_network, segmentation_id)
@@ -1051,24 +1091,18 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                     self.ryu_send_msg(msg)
         return ofport
 
-    def cleanup_tunnel_port(self, tun_ofport, tunnel_type):
-        # Check if this tunnel port is still used
-        for lvm in self.local_vlan_map.values():
-            if tun_ofport in lvm.tun_ofports:
-                break
-        # If not, remove it
-        else:
-            for remote_ip, ofport in self.tun_br_ofports[tunnel_type].items():
-                if ofport == tun_ofport:
-                    port_name = '%s-%s' % (tunnel_type, remote_ip)
-                    self.tun_br.delete_port(port_name)
-                    self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
-
-    def treat_devices_added(self, devices):
+    def treat_devices_added_or_updated(self, devices):
         resync = False
-        self.sg_agent.prepare_devices_filter(devices)
         for device in devices:
-            LOG.info(_("Port %s added"), device)
+            LOG.debug(_("Processing port %s"), device)
+            port = self.int_br.get_vif_port_by_id(device)
+            if not port:
+                # The port has disappeared and should not be processed
+                # There is no need to put the port DOWN in the plugin as
+                # it never went up in the first place
+                LOG.info(_("Port %s was not found on the integration bridge "
+                           "and will therefore not be processed"), device)
+                continue
             try:
                 details = self.plugin_rpc.get_device_details(self.context,
                                                              device,
@@ -1079,7 +1113,6 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                           {'device': device, 'e': e})
                 resync = True
                 continue
-            port = self.int_br.get_vif_port_by_id(details['device'])
             if 'port_id' in details:
                 LOG.info(_("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': details})
@@ -1091,13 +1124,18 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                     details['admin_state_up'])
 
                 # update plugin about port status
-                self.plugin_rpc.update_device_up(self.context,
-                                                 device,
-                                                 self.agent_id,
-                                                 cfg.CONF.host)
+                if details.get('admin_state_up'):
+                    LOG.debug(_("Setting status for %s to UP"), device)
+                    self.plugin_rpc.update_device_up(
+                        self.context, device, self.agent_id, cfg.CONF.host)
+                else:
+                    LOG.debug(_("Setting status for %s to DOWN"), device)
+                    self.plugin_rpc.update_device_down(
+                        self.context, device, self.agent_id, cfg.CONF.host)
+                LOG.info(_("Configuration for device %s completed."), device)
             else:
-                LOG.debug(_("Device %s not defined on plugin"), device)
-                if (port and int(port.ofport) != -1):
+                LOG.warn(_("Device %s not defined on plugin"), device)
+                if (port and port.ofport != -1):
                     self.port_dead(port)
         return resync
 
@@ -1164,11 +1202,24 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def process_network_ports(self, port_info):
         resync_add = False
         resync_removed = False
-        if 'added' in port_info:
+        # If there is an exception while processing security groups ports
+        # will not be wired anyway, and a resync will be triggered
+        self.sg_agent.setup_port_filters(port_info.get('added', set()),
+                                         port_info.get('updated', set()))
+        # VIF wiring needs to be performed always for 'new' devices.
+        # For updated ports, re-wiring is not needed in most cases, but needs
+        # to be performed anyway when the admin state of a device is changed.
+        # A device might be both in the 'added' and 'updated'
+        # list at the same time; avoid processing it twice.
+        devices_added_updated = (port_info.get('added', set()) |
+                                 port_info.get('updated', set()))
+        if devices_added_updated:
             start = time.time()
-            resync_add = self.treat_devices_added(port_info['added'])
+            resync_add = self.treat_devices_added_or_updated(
+                devices_added_updated)
             LOG.debug(_("process_network_ports - iteration:%(iter_num)d - "
-                        "treat_devices_added completed in %(elapsed).3f"),
+                        "treat_devices_added_or_updated completed "
+                        "in %(elapsed).3f"),
                       {'iter_num': self.iter_num,
                        'elapsed': time.time() - start})
         if 'removed' in port_info:
@@ -1215,8 +1266,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                 tunnels = details['tunnels']
                 for tunnel in tunnels:
                     if self.local_ip != tunnel['ip_address']:
-                        tunnel_id = tunnel.get('id', tunnel['ip_address'])
-                        tun_name = '%s-%s' % (tunnel_type, tunnel_id)
+                        tun_name = self._create_tunnel_port_name(
+                            tunnel_type, tunnel['ip_address'])
+                        if not tun_name:
+                            continue
                         self.setup_tunnel_port(tun_name,
                                                tunnel['ip_address'],
                                                tunnel_type)
@@ -1226,49 +1279,73 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             resync = True
         return resync
 
+    def _agent_has_updates(self, polling_manager):
+        return (polling_manager.is_polling_required or
+                self.updated_ports or
+                self.sg_agent.firewall_refresh_needed())
+
+    def _port_info_has_changes(self, port_info):
+        return (port_info.get('added') or
+                port_info.get('removed') or
+                port_info.get('updated'))
+
     def ovsdb_monitor_loop(self, polling_manager=None):
         if not polling_manager:
             polling_manager = polling.AlwaysPoll()
 
         sync = True
         ports = set()
+        updated_ports_copy = set()
         ancillary_ports = set()
         tunnel_sync = True
         while True:
-            try:
-                start = time.time()
-                port_stats = {'regular': {'added': 0, 'removed': 0},
-                              'ancillary': {'added': 0, 'removed': 0}}
-                LOG.debug(_("Agent ovsdb_monitor_loop - "
-                          "iteration:%d started"),
-                          self.iter_num)
-                if sync:
-                    LOG.info(_("Agent out of sync with plugin!"))
-                    ports.clear()
-                    ancillary_ports.clear()
-                    sync = False
-                    polling_manager.force_polling()
-
-                # Notify the plugin of tunnel IP
-                if self.enable_tunneling and tunnel_sync:
-                    LOG.info(_("Agent tunnel out of sync with plugin!"))
+            start = time.time()
+            port_stats = {'regular': {'added': 0, 'updated': 0, 'removed': 0},
+                          'ancillary': {'added': 0, 'removed': 0}}
+            LOG.debug(_("Agent ovsdb_monitor_loop - "
+                      "iteration:%d started"),
+                      self.iter_num)
+            if sync:
+                LOG.info(_("Agent out of sync with plugin!"))
+                ports.clear()
+                ancillary_ports.clear()
+                sync = False
+                polling_manager.force_polling()
+            # Notify the plugin of tunnel IP
+            if self.enable_tunneling and tunnel_sync:
+                LOG.info(_("Agent tunnel out of sync with plugin!"))
+                try:
                     tunnel_sync = self.tunnel_sync()
-                if polling_manager.is_polling_required:
+                except Exception:
+                    LOG.exception(_("Error while synchronizing tunnels"))
+                    tunnel_sync = True
+            if self._agent_has_updates(polling_manager):
+                try:
                     LOG.debug(_("Agent ovsdb_monitor_loop - "
                                 "iteration:%(iter_num)d - "
                                 "starting polling. Elapsed:%(elapsed).3f"),
                               {'iter_num': self.iter_num,
                                'elapsed': time.time() - start})
-                    port_info = self.update_ports(ports)
+                    # Save updated ports dict to perform rollback in
+                    # case resync would be needed, and then clear
+                    # self.updated_ports. As the greenthread should not yield
+                    # between these two statements, this will be thread-safe
+                    updated_ports_copy = self.updated_ports
+                    self.updated_ports = set()
+                    port_info = self.scan_ports(ports, updated_ports_copy)
+                    ports = port_info['current']
                     LOG.debug(_("Agent ovsdb_monitor_loop - "
                                 "iteration:%(iter_num)d - "
                                 "port information retrieved. "
                                 "Elapsed:%(elapsed).3f"),
                               {'iter_num': self.iter_num,
                                'elapsed': time.time() - start})
-                    # notify plugin about port deltas
-                    if port_info:
-                        LOG.debug(_("Agent loop has new devices!"))
+                    # Secure and wire/unwire VIFs and update their status
+                    # on Neutron server
+                    if (self._port_info_has_changes(port_info) or
+                        self.sg_agent.firewall_refresh_needed()):
+                        LOG.debug(_("Starting to process devices in:%s"),
+                                  port_info)
                         # If treat devices fails - must resync with plugin
                         sync = self.process_network_ports(port_info)
                         LOG.debug(_("Agent ovsdb_monitor_loop - "
@@ -1276,9 +1353,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                     "ports processed. Elapsed:%(elapsed).3f"),
                                   {'iter_num': self.iter_num,
                                    'elapsed': time.time() - start})
-                        ports = port_info['current']
                         port_stats['regular']['added'] = (
                             len(port_info.get('added', [])))
+                        port_stats['regular']['updated'] = (
+                            len(port_info.get('updated', [])))
                         port_stats['regular']['removed'] = (
                             len(port_info.get('removed', [])))
                     # Treat ancillary devices if they exist
@@ -1309,11 +1387,11 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                             sync = sync | rc
 
                     polling_manager.polling_completed()
-
-            except Exception:
-                LOG.exception(_("Error in agent event loop"))
-                sync = True
-                tunnel_sync = True
+                except Exception:
+                    LOG.exception(_("Error while processing VIF ports"))
+                    # Put the ports back in self.updated_port
+                    self.updated_ports |= updated_ports_copy
+                    sync = True
 
             # sleep till end of polling interval
             elapsed = (time.time() - start)

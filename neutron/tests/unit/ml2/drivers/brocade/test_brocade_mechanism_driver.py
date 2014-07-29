@@ -67,3 +67,51 @@ class TestBrocadeMechDriverPortsV2(test_db_plugin.TestPortsV2,
 class TestBrocadeMechDriverSubnetsV2(test_db_plugin.TestSubnetsV2,
                                      TestBrocadeMechDriverV2):
     pass
+
+
+class TestBrocadeMechDriverFeaturesEnabledTestCase(TestBrocadeMechDriverV2):
+
+    def setUp(self):
+        super(TestBrocadeMechDriverFeaturesEnabledTestCase, self).setUp()
+
+    def test_version_features(self):
+
+        vf = True
+        # Test for NOS version 4.0.3
+        self.mechanism_driver.set_features_enabled("4.0.3", vf)
+        # Verify
+        pp_domain_support, virtual_fabric_enabled = (
+            self.mechanism_driver.get_features_enabled()
+        )
+        self.assertFalse(pp_domain_support)
+        self.assertTrue(virtual_fabric_enabled)
+
+        # Test for NOS version 4.1.0
+        vf = True
+        self.mechanism_driver.set_features_enabled("4.1.0", vf)
+        # Verify
+        pp_domain_support, virtual_fabric_enabled = (
+            self.mechanism_driver.get_features_enabled()
+        )
+        self.assertTrue(pp_domain_support)
+        self.assertTrue(virtual_fabric_enabled)
+
+        # Test for NOS version 4.1.3
+        vf = False
+        self.mechanism_driver.set_features_enabled("4.1.3", vf)
+        # Verify
+        pp_domain_support, virtual_fabric_enabled = (
+            self.mechanism_driver.get_features_enabled()
+        )
+        self.assertTrue(pp_domain_support)
+        self.assertFalse(virtual_fabric_enabled)
+
+        # Test for NOS version 5.0.0
+        vf = True
+        self.mechanism_driver.set_features_enabled("5.0.0", vf)
+        # Verify
+        pp_domain_support, virtual_fabric_enabled = (
+            self.mechanism_driver.get_features_enabled()
+        )
+        self.assertTrue(pp_domain_support)
+        self.assertTrue(virtual_fabric_enabled)

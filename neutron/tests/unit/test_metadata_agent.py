@@ -16,6 +16,7 @@
 #
 # @author: Mark McClain, DreamHost
 
+import contextlib
 import socket
 
 import mock
@@ -41,11 +42,18 @@ class FakeConf(object):
     nova_metadata_ip = '9.9.9.9'
     nova_metadata_port = 8775
     metadata_proxy_shared_secret = 'secret'
+    cache_url = ''
 
 
-class TestMetadataProxyHandler(base.BaseTestCase):
+class FakeConfCache(FakeConf):
+    cache_url = 'memory://?default_ttl=5'
+
+
+class TestMetadataProxyHandlerCache(base.BaseTestCase):
+    fake_conf = FakeConfCache
+
     def setUp(self):
-        super(TestMetadataProxyHandler, self).setUp()
+        super(TestMetadataProxyHandlerCache, self).setUp()
         self.qclient_p = mock.patch('neutronclient.v2_0.client.Client')
         self.qclient = self.qclient_p.start()
         self.addCleanup(self.qclient_p.stop)
@@ -54,7 +62,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         self.log = self.log_p.start()
         self.addCleanup(self.log_p.stop)
 
-        self.handler = agent.MetadataProxyHandler(FakeConf)
+        self.handler = agent.MetadataProxyHandler(self.fake_conf)
 
     def test_call(self):
         req = mock.Mock()
@@ -84,9 +92,118 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             self.assertIsInstance(retval, webob.exc.HTTPInternalServerError)
             self.assertEqual(len(self.log.mock_calls), 2)
 
+    def test_get_router_networks(self):
+        router_id = 'router-id'
+        expected = ('network_id1', 'network_id2')
+        ports = {'ports': [{'network_id': 'network_id1', 'something': 42},
+                           {'network_id': 'network_id2',
+                            'something_else': 32}],
+                 'not_used': [1, 2, 3]}
+        mock_list_ports = self.qclient.return_value.list_ports
+        mock_list_ports.return_value = ports
+        networks = self.handler._get_router_networks(router_id)
+        mock_list_ports.assert_called_once_with(
+            device_id=router_id,
+            device_owner=constants.DEVICE_OWNER_ROUTER_INTF)
+        self.assertEqual(expected, networks)
+
+    def _test_get_router_networks_twice_helper(self):
+        router_id = 'router-id'
+        ports = {'ports': [{'network_id': 'network_id1', 'something': 42}],
+                 'not_used': [1, 2, 3]}
+        expected_networks = ('network_id1',)
+        with mock.patch(
+            'neutron.openstack.common.timeutils.utcnow_ts', return_value=0):
+            mock_list_ports = self.qclient.return_value.list_ports
+            mock_list_ports.return_value = ports
+            networks = self.handler._get_router_networks(router_id)
+            mock_list_ports.assert_called_once_with(
+                device_id=router_id,
+                device_owner=constants.DEVICE_OWNER_ROUTER_INTF)
+            self.assertEqual(expected_networks, networks)
+            networks = self.handler._get_router_networks(router_id)
+
+    def test_get_router_networks_twice(self):
+        self._test_get_router_networks_twice_helper()
+        self.assertEqual(
+            1, self.qclient.return_value.list_ports.call_count)
+
+    def test_get_ports_for_remote_address(self):
+        remote_address = 'remote_address'
+        networks = 'networks'
+        fixed_ips = ["ip_address=%s" % remote_address]
+        ports = self.handler._get_ports_for_remote_address(remote_address,
+                                                           networks)
+        mock_list_ports = self.qclient.return_value.list_ports
+        mock_list_ports.assert_called_once_with(
+            network_id=networks, fixed_ips=fixed_ips)
+        self.assertEqual(mock_list_ports.return_value.__getitem__('ports'),
+                         ports)
+
+    def _get_ports_for_remote_address_cache_hit_helper(self):
+        remote_address = 'remote_address'
+        networks = ('net1', 'net2')
+        fixed_ips = ["ip_address=%s" % remote_address]
+        ports = self.handler._get_ports_for_remote_address(remote_address,
+                                                           networks)
+        mock_list_ports = self.qclient.return_value.list_ports
+        mock_list_ports.assert_called_once_with(
+            network_id=networks, fixed_ips=fixed_ips)
+        self.assertEqual(
+            mock_list_ports.return_value.__getitem__('ports'), ports)
+        self.assertEqual(1, mock_list_ports.call_count)
+        self.handler._get_ports_for_remote_address(remote_address,
+                                                   networks)
+
+    def test_get_ports_for_remote_address_cache_hit(self):
+        self._get_ports_for_remote_address_cache_hit_helper()
+        self.assertEqual(
+            1, self.qclient.return_value.list_ports.call_count)
+
+    def test_get_ports_network_id(self):
+        network_id = 'network-id'
+        router_id = 'router-id'
+        remote_address = 'remote-address'
+        expected = ['port1']
+        networks = (network_id,)
+        with contextlib.nested(
+            mock.patch.object(self.handler, '_get_ports_for_remote_address'),
+            mock.patch.object(self.handler, '_get_router_networks')
+        ) as (mock_get_ip_addr, mock_get_router_networks):
+            mock_get_ip_addr.return_value = expected
+            ports = self.handler._get_ports(remote_address, network_id,
+                                            router_id)
+            mock_get_ip_addr.assert_called_once_with(remote_address,
+                                                     networks)
+            self.assertFalse(mock_get_router_networks.called)
+        self.assertEqual(expected, ports)
+
+    def test_get_ports_router_id(self):
+        router_id = 'router-id'
+        remote_address = 'remote-address'
+        expected = ['port1']
+        networks = ('network1', 'network2')
+        with contextlib.nested(
+            mock.patch.object(self.handler,
+                              '_get_ports_for_remote_address',
+                              return_value=expected),
+            mock.patch.object(self.handler,
+                              '_get_router_networks',
+                              return_value=networks)
+        ) as (mock_get_ip_addr, mock_get_router_networks):
+            ports = self.handler._get_ports(remote_address,
+                                            router_id=router_id)
+            mock_get_router_networks.called_once_with(router_id)
+        mock_get_ip_addr.assert_called_once_with(remote_address, networks)
+        self.assertEqual(expected, ports)
+
+    def test_get_ports_no_id(self):
+        self.assertRaises(TypeError, self.handler._get_ports, 'remote_address')
+
     def _get_instance_and_tenant_id_helper(self, headers, list_ports_retval,
                                            networks=None, router_id=None):
-        headers['X-Forwarded-For'] = '192.168.1.1'
+        remote_address = '192.168.1.1'
+        headers['X-Forwarded-For'] = remote_address
         req = mock.Mock(headers=headers)
 
         def mock_list_ports(*args, **kwargs):
@@ -94,34 +211,35 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
         self.qclient.return_value.list_ports.side_effect = mock_list_ports
         instance_id, tenant_id = self.handler._get_instance_and_tenant_id(req)
-        expected = [
-            mock.call(
-                username=FakeConf.admin_user,
-                tenant_name=FakeConf.admin_tenant_name,
-                region_name=FakeConf.auth_region,
-                auth_url=FakeConf.auth_url,
-                password=FakeConf.admin_password,
-                auth_strategy=FakeConf.auth_strategy,
-                token=None,
-                insecure=FakeConf.auth_insecure,
-                ca_cert=FakeConf.auth_ca_cert,
-                endpoint_url=None,
-                endpoint_type=FakeConf.endpoint_type)
-        ]
+        new_qclient_call = mock.call(
+            username=FakeConf.admin_user,
+            tenant_name=FakeConf.admin_tenant_name,
+            region_name=FakeConf.auth_region,
+            auth_url=FakeConf.auth_url,
+            password=FakeConf.admin_password,
+            auth_strategy=FakeConf.auth_strategy,
+            token=None,
+            insecure=FakeConf.auth_insecure,
+            ca_cert=FakeConf.auth_ca_cert,
+            endpoint_url=None,
+            endpoint_type=FakeConf.endpoint_type)
+        expected = [new_qclient_call]
 
         if router_id:
-            expected.append(
+            expected.extend([
+                new_qclient_call,
                 mock.call().list_ports(
                     device_id=router_id,
                     device_owner=constants.DEVICE_OWNER_ROUTER_INTF
                 )
-            )
+            ])
 
-        expected.append(
+        expected.extend([
+            new_qclient_call,
             mock.call().list_ports(
-                network_id=networks or [],
+                network_id=networks or tuple(),
                 fixed_ips=['ip_address=192.168.1.1'])
-        )
+        ])
 
         self.qclient.assert_has_calls(expected)
 
@@ -133,7 +251,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             'X-Neutron-Router-ID': router_id
         }
 
-        networks = ['net1', 'net2']
+        networks = ('net1', 'net2')
         ports = [
             [{'network_id': 'net1'}, {'network_id': 'net2'}],
             [{'device_id': 'device_id', 'tenant_id': 'tenant_id'}]
@@ -152,7 +270,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             'X-Neutron-Router-ID': router_id
         }
 
-        networks = ['net1', 'net2']
+        networks = ('net1', 'net2')
         ports = [
             [{'network_id': 'net1'}, {'network_id': 'net2'}],
             []
@@ -177,7 +295,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
         self.assertEqual(
             self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=['the_id']),
+                                                    networks=('the_id',)),
             ('device_id', 'tenant_id')
         )
 
@@ -191,7 +309,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
         self.assertEqual(
             self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=['the_id']),
+                                                    networks=('the_id',)),
             (None, None)
         )
 
@@ -262,6 +380,20 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             self.handler._sign_instance_id('foo'),
             '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4'
         )
+
+
+class TestMetadataProxyHandlerNoCache(TestMetadataProxyHandlerCache):
+    fake_conf = FakeConf
+
+    def test_get_router_networks_twice(self):
+        self._test_get_router_networks_twice_helper()
+        self.assertEqual(
+            2, self.qclient.return_value.list_ports.call_count)
+
+    def test_get_ports_for_remote_address_cache_hit(self):
+        self._get_ports_for_remote_address_cache_hit_helper()
+        self.assertEqual(
+            2, self.qclient.return_value.list_ports.call_count)
 
 
 class TestUnixDomainHttpProtocol(base.BaseTestCase):

@@ -18,9 +18,11 @@
 """Base Test Case for all Unit Tests"""
 
 import contextlib
+import gc
 import logging
 import os
 import sys
+import weakref
 
 import eventlet.timeout
 import fixtures
@@ -28,7 +30,7 @@ import mock
 from oslo.config import cfg
 import testtools
 
-from neutron.common import constants as const
+from neutron.db import agentschedulers_db
 from neutron import manager
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common.notifier import test_notifier
@@ -47,19 +49,33 @@ def fake_use_fatal_exceptions(*args):
 
 class BaseTestCase(testtools.TestCase):
 
-    def _cleanup_coreplugin(self):
-        if manager.NeutronManager._instance:
-            agent_notifiers = getattr(manager.NeutronManager._instance.plugin,
-                                      'agent_notifiers', {})
-            dhcp_agent_notifier = agent_notifiers.get(const.AGENT_TYPE_DHCP)
-            if dhcp_agent_notifier:
-                dhcp_agent_notifier._plugin = None
-        manager.NeutronManager._instance = self._saved_instance
+    def cleanup_core_plugin(self):
+        """Ensure that the core plugin is deallocated."""
+        nm = manager.NeutronManager
+        if not nm.has_instance():
+            return
+
+        #TODO(marun) Fix plugins that do not properly initialize notifiers
+        agentschedulers_db.AgentSchedulerDbMixin.agent_notifiers = {}
+
+        # Perform a check for deallocation only if explicitly
+        # configured to do so since calling gc.collect() after every
+        # test increases test suite execution time by ~50%.
+        check_plugin_deallocation = (
+            os.environ.get('OS_CHECK_PLUGIN_DEALLOCATION') in TRUE_STRING)
+        if check_plugin_deallocation:
+            plugin = weakref.ref(nm._instance.plugin)
+
+        nm.clear_instance()
+
+        if check_plugin_deallocation:
+            gc.collect()
+
+            #TODO(marun) Ensure that mocks are deallocated?
+            if plugin() and not isinstance(plugin(), mock.Base):
+                self.fail('The plugin for this test was not deallocated.')
 
     def setup_coreplugin(self, core_plugin=None):
-        self._saved_instance = manager.NeutronManager._instance
-        self.addCleanup(self._cleanup_coreplugin)
-        manager.NeutronManager._instance = None
         if core_plugin is not None:
             cfg.CONF.set_override('core_plugin', core_plugin)
 
@@ -77,6 +93,10 @@ class BaseTestCase(testtools.TestCase):
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
+
+        # Ensure plugin cleanup is triggered last so that
+        # test-specific cleanup has a chance to release references.
+        self.addCleanup(self.cleanup_core_plugin)
 
         # Configure this first to ensure pm debugging support for setUp()
         if os.environ.get('OS_POST_MORTEM_DEBUG') in TRUE_STRING:

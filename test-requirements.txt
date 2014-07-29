@@ -7,7 +7,7 @@ fixtures>=0.3.14
 mock>=1.0
 python-subunit>=0.0.18
 ordereddict
-sphinx>=1.1.2,<1.2
+sphinx>=1.1.2,<1.1.999
 testrepository>=0.0.18
 testtools>=0.9.34
 WebTest>=2.0

@@ -23,10 +23,11 @@ Neutron network life-cycle management.
 """
 
 from ncclient import manager
+from xml.etree import ElementTree
 
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
-from neutron.plugins.brocade.nos import nctemplates as template
+from neutron.plugins.ml2.drivers.brocade.nos import nctemplates as template
 
 
 LOG = logging.getLogger(__name__)
@@ -51,6 +52,18 @@ class NOSdriver():
 
     def __init__(self):
         self.mgr = None
+        self._virtual_fabric_enabled = False
+        self._pp_domains_supported = False
+
+    def set_features_enabled(self, pp_domains_supported,
+                             virtual_fabric_enabled):
+        """Set features in the driver based on what was detected by the MD."""
+        self._pp_domains_supported = pp_domains_supported
+        self._virtual_fabric_enabled = virtual_fabric_enabled
+
+    def get_features_enabled(self):
+        """Respond to status of features enabled."""
+        return self._pp_domains_supported, self._virtual_fabric_enabled
 
     def connect(self, host, username, password):
         """Connect via SSH and initialize the NETCONF session."""
@@ -69,6 +82,7 @@ class NOSdriver():
             self.mgr = manager.connect(host=host, port=SSH_PORT,
                                        username=username, password=password,
                                        unknown_host_cb=nos_unknown_host_cb)
+
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.exception(_("Connect failed to switch"))
@@ -83,16 +97,46 @@ class NOSdriver():
             self.mgr.close_session()
             self.mgr = None
 
+    def get_nos_version(self, host, username, password):
+        """Show version of NOS."""
+        try:
+            mgr = self.connect(host, username, password)
+            return self.nos_version_request(mgr)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error"))
+                self.close_session()
+
+    def is_virtual_fabric_enabled(self, host, username, password):
+        """Show version of NOS."""
+        try:
+            mgr = self.connect(host, username, password)
+            return (self.virtual_fabric_info(mgr) == "enabled")
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error"))
+                self.close_session()
+
     def create_network(self, host, username, password, net_id):
         """Creates a new virtual network."""
 
+        domain_name = "default"
         name = template.OS_PORT_PROFILE_NAME.format(id=net_id)
         try:
             mgr = self.connect(host, username, password)
             self.create_vlan_interface(mgr, net_id)
             self.create_port_profile(mgr, name)
+
+            if self._pp_domains_supported and self._virtual_fabric_enabled:
+                self.configure_port_profile_in_domain(mgr, domain_name, name)
+
             self.create_vlan_profile_for_port_profile(mgr, name)
-            self.configure_l2_mode_for_vlan_profile(mgr, name)
+
+            if self._pp_domains_supported:
+                self.configure_l2_mode_for_vlan_profile_with_domains(mgr, name)
+            else:
+                self.configure_l2_mode_for_vlan_profile(mgr, name)
+
             self.configure_trunk_mode_for_vlan_profile(mgr, name)
             self.configure_allowed_vlans_for_vlan_profile(mgr, name, net_id)
             self.activate_port_profile(mgr, name)
@@ -104,9 +148,12 @@ class NOSdriver():
     def delete_network(self, host, username, password, net_id):
         """Deletes a virtual network."""
 
+        domain_name = "default"
         name = template.OS_PORT_PROFILE_NAME.format(id=net_id)
         try:
             mgr = self.connect(host, username, password)
+            if self._pp_domains_supported and self._virtual_fabric_enabled:
+                self.remove_port_profile_from_domain(mgr, domain_name, name)
             self.deactivate_port_profile(mgr, name)
             self.delete_port_profile(mgr, name)
             self.delete_vlan_interface(mgr, net_id)
@@ -234,3 +281,37 @@ class NOSdriver():
         confstr = template.CONFIGURE_ALLOWED_VLANS_FOR_VLAN_PROFILE.format(
             name=name, vlan_id=vlan_id)
         mgr.edit_config(target='running', config=confstr)
+
+    def remove_port_profile_from_domain(self, mgr, domain_name, name):
+        """Remove port-profile from default domain."""
+        confstr = template.REMOVE_PORTPROFILE_FROM_DOMAIN.format(
+            domain_name=domain_name, name=name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def configure_port_profile_in_domain(self, mgr, domain_name, name):
+        """put port-profile in default domain."""
+        confstr = template.CONFIGURE_PORTPROFILE_IN_DOMAIN.format(
+            domain_name=domain_name, name=name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def configure_l2_mode_for_vlan_profile_with_domains(self, mgr, name):
+        """Configures L2 mode for VLAN sub-profile."""
+        confstr = template.CONFIGURE_L2_MODE_FOR_VLAN_PROFILE_IN_DOMAIN.format(
+            name=name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def nos_version_request(self, mgr):
+        """Get firmware information using NETCONF rpc."""
+        reply = mgr.dispatch(template.SHOW_FIRMWARE_VERSION, None, None)
+        et = ElementTree.fromstring(str(reply))
+        return et.find(template.NOS_VERSION).text
+
+    def virtual_fabric_info(self, mgr):
+        """Get virtual fabric info using NETCONF get-config."""
+        response = mgr.get_config('running',
+                                  filter=("xpath", "/vcs/virtual-fabric"))
+        et = ElementTree.fromstring(str(response))
+        vfab_enable = et.find(template.VFAB_ENABLE)
+        if vfab_enable is not None:
+            return "enabled"
+        return "disabled"

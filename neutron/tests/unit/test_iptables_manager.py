@@ -607,6 +607,30 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
+    def _test_find_last_entry(self, find_str):
+        filter_list = [':neutron-filter-top - [0:0]',
+                       ':%(bn)s-FORWARD - [0:0]',
+                       ':%(bn)s-INPUT - [0:0]',
+                       ':%(bn)s-local - [0:0]',
+                       ':%(wrap)s - [0:0]',
+                       ':%(bn)s-OUTPUT - [0:0]',
+                       '[0:0] -A FORWARD -j neutron-filter-top',
+                       '[0:0] -A OUTPUT -j neutron-filter-top'
+                       % IPTABLES_ARG]
+
+        return self.iptables._find_last_entry(filter_list, find_str)
+
+    def test_find_last_entry_old_dup(self):
+        find_str = 'neutron-filter-top'
+        match_str = '[0:0] -A OUTPUT -j neutron-filter-top'
+        ret_str = self._test_find_last_entry(find_str)
+        self.assertEqual(ret_str, match_str)
+
+    def test_find_last_entry_none(self):
+        find_str = 'neutron-filter-NOTFOUND'
+        ret_str = self._test_find_last_entry(find_str)
+        self.assertIsNone(ret_str)
+
 
 class IptablesManagerStateLessTestCase(base.BaseTestCase):
 

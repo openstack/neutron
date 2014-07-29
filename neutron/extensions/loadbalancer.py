@@ -353,7 +353,8 @@ class Loadbalancer(extensions.ExtensionDescriptor):
         resources = resource_helper.build_resource_info(plural_mappings,
                                                         RESOURCE_ATTRIBUTE_MAP,
                                                         constants.LOADBALANCER,
-                                                        action_map=action_map)
+                                                        action_map=action_map,
+                                                        register_quota=True)
         plugin = manager.NeutronManager.get_service_plugins()[
             constants.LOADBALANCER]
         for collection_name in SUB_RESOURCE_ATTRIBUTE_MAP:
