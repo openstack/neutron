@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.openstack.common import jsonutils
 from neutron.plugins.ml2 import db
@@ -149,3 +150,20 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._binding.vif_type = vif_type
         self._binding.vif_details = jsonutils.dumps(vif_details)
         self._new_port_status = status
+
+
+class DvrPortContext(PortContext):
+
+    def __init__(self, plugin, plugin_context, port, network, binding,
+                 original_port=None):
+        super(DvrPortContext, self).__init__(
+            plugin, plugin_context, port, network, binding,
+            original_port=original_port)
+
+    @property
+    def bound_host(self):
+        if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
+            agent_host = self._binding.host
+        else:
+            agent_host = self._port['binding:host_id']
+        return agent_host

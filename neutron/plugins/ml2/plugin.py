@@ -32,6 +32,7 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
+from neutron.db import dvr_mac_db
 from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
 from neutron.db import models_v2
@@ -68,6 +69,7 @@ TYPE_MULTI_SEGMENT = 'multi-segment'
 
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
+                dvr_mac_db.DVRDbMixin,
                 external_net_db.External_net_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
@@ -245,6 +247,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.vif_details = ''
             binding.driver = None
             binding.segment = None
+
+        if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+            binding.vif_type = portbindings.VIF_TYPE_DISTRIBUTED
+            binding.vif_details = ''
+            binding.driver = None
+            binding.segment = None
+            binding.host = ''
 
         self._update_port_dict_binding(port, binding)
         return changes
@@ -870,6 +879,84 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             need_notify=need_port_update_notify)
         return bound_port._port
 
+    def _process_dvr_port_binding(self, mech_context, context, attrs):
+        binding = mech_context._binding
+        port = mech_context.current
+
+        if binding.vif_type != portbindings.VIF_TYPE_UNBOUND:
+            binding.vif_details = ''
+            binding.vif_type = portbindings.VIF_TYPE_UNBOUND
+            binding.driver = None
+            binding.segment = None
+            binding.host = ''
+
+        self._update_port_dict_binding(port, binding)
+        binding.host = attrs and attrs.get(portbindings.HOST_ID)
+
+    def update_dvr_port_binding(self, context, id, port):
+        attrs = port['port']
+
+        host = attrs and attrs.get(portbindings.HOST_ID)
+        host_set = attributes.is_attr_set(host)
+
+        if not host_set:
+            LOG.error(_("No Host supplied to bind DVR Port %s"), id)
+            return
+
+        session = context.session
+        binding = db.get_dvr_port_binding_by_host(session, id, host)
+        if (not binding or
+            binding.vif_type == portbindings.VIF_TYPE_BINDING_FAILED):
+            with session.begin(subtransactions=True):
+                if not binding:
+                    binding = db.ensure_dvr_port_binding(
+                        session, id, host, router_id=attrs['device_id'])
+                orig_port = super(Ml2Plugin, self).get_port(context, id)
+                network = self.get_network(context, orig_port['network_id'])
+                mech_context = driver_context.DvrPortContext(self,
+                    context, orig_port, network,
+                    binding, original_port=orig_port)
+                self._process_dvr_port_binding(mech_context, context, attrs)
+            self.mechanism_manager.bind_port(mech_context)
+            # Now try to commit result of attempting to bind the port.
+            self._commit_dvr_port_binding(mech_context._plugin_context,
+                                          orig_port['id'],
+                                          host,
+                                          mech_context)
+
+    def _commit_dvr_port_binding(self, plugin_context,
+                                 port_id, host,
+                                 mech_context):
+        session = plugin_context.session
+        new_binding = mech_context._binding
+        with contextlib.nested(lockutils.lock('db-access'),
+                               session.begin(subtransactions=True)):
+            # Get the current port state and build a new PortContext
+            # reflecting this state as original state for subsequent
+            # mechanism driver update_port_*commit() calls.
+            cur_binding = db.get_dvr_port_binding_by_host(session,
+                                                          port_id,
+                                                          host)
+            # Commit our binding results only if port has not been
+            # successfully bound concurrently by another thread or
+            # process and no binding inputs have been changed.
+            commit = ((cur_binding.vif_type in
+                       [portbindings.VIF_TYPE_UNBOUND,
+                        portbindings.VIF_TYPE_BINDING_FAILED]) and
+                      new_binding.host == cur_binding.host and
+                      new_binding.vnic_type == cur_binding.vnic_type and
+                      new_binding.profile == cur_binding.profile)
+
+            if commit:
+                # Update the port's binding state with our binding
+                # results.
+                cur_binding.vif_type = new_binding.vif_type
+                cur_binding.vif_details = new_binding.vif_details
+                cur_binding.driver = new_binding.driver
+                cur_binding.segment = new_binding.segment
+                if cur_binding.profile != new_binding.profile:
+                    cur_binding.profile = new_binding.profile
+
     def delete_port(self, context, id, l3_port_check=True):
         LOG.debug(_("Deleting port %s"), id)
         l3plugin = manager.NeutronManager.get_service_plugins().get(
@@ -893,15 +980,24 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port = self._make_port_dict(port_db)
 
             network = self.get_network(context, port['network_id'])
-            mech_context = driver_context.PortContext(self, context, port,
-                                                      network, binding)
-            self.mechanism_manager.delete_port_precommit(mech_context)
-            self._delete_port_security_group_bindings(context, id)
-            LOG.debug(_("Calling base delete_port"))
+            mech_context = None
+            if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+                bindings = db.get_dvr_port_bindings(context.session, id)
+                for bind in bindings:
+                    mech_context = driver_context.DvrPortContext(
+                        self, context, port, network, bind)
+                    self.mechanism_manager.delete_port_precommit(mech_context)
+            else:
+                mech_context = driver_context.PortContext(self, context, port,
+                                                          network, binding)
+                self.mechanism_manager.delete_port_precommit(mech_context)
+                self._delete_port_security_group_bindings(context, id)
             if l3plugin:
                 router_ids = l3plugin.disassociate_floatingips(
                     context, id, do_notify=False)
 
+            LOG.debug("Calling delete_port for %(port_id)s owned by %(owner)s"
+                      % {"port_id": id, "owner": port['device_owner']})
             super(Ml2Plugin, self).delete_port(context, id)
 
         # now that we've left db transaction, we are safe to notify
@@ -909,15 +1005,22 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             l3plugin.notify_routers_updated(context, router_ids)
 
         try:
-            self.mechanism_manager.delete_port_postcommit(mech_context)
+            # for both normal and DVR Interface ports, only one invocation of
+            # delete_port_postcommit.  We use gather/scatter technique for DVR
+            # interface ports, where the bindings are gathered in
+            # delete_port_precommit() call earlier and scattered as l2pop
+            # rules to cloud nodes in delete_port_postcommit() here
+            if mech_context:
+                self.mechanism_manager.delete_port_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             # TODO(apech) - One or more mechanism driver failed to
             # delete the port.  Ideally we'd notify the caller of the
             # fact that an error occurred.
-            LOG.error(_("mechanism_manager.delete_port_postcommit failed"))
+            LOG.error(_("mechanism_manager.delete_port_postcommit failed for "
+                        "port %s"), id)
         self.notify_security_groups_member_updated(context, port)
 
-    def get_bound_port_context(self, plugin_context, port_id):
+    def get_bound_port_context(self, plugin_context, port_id, host=None):
         session = plugin_context.session
         with session.begin(subtransactions=True):
             try:
@@ -933,8 +1036,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 return
             port = self._make_port_dict(port_db)
             network = self.get_network(plugin_context, port['network_id'])
-            port_context = driver_context.PortContext(
-                self, plugin_context, port, network, port_db.port_binding)
+            if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+                binding = db.get_dvr_port_binding_by_host(
+                    session, port['id'], host)
+                if not binding:
+                    LOG.error(_("Binding info for DVR port %s not found"),
+                              port_id)
+                    return None
+                port_context = driver_context.DvrPortContext(
+                    self, plugin_context, port, network, binding)
+            else:
+                port_context = driver_context.PortContext(
+                    self, plugin_context, port, network, port_db.port_binding)
 
         return self._bind_port_if_needed(port_context)
 
@@ -956,7 +1069,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.warning(_("Port %(port)s updated up by agent not found"),
                             {'port': port_id})
                 return None
-            if port.status != status:
+            if (port.status != status and
+                port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE):
                 original_port = self._make_port_dict(port)
                 port.status = status
                 updated_port = self._make_port_dict(port)
@@ -967,12 +1081,53 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     original_port=original_port)
                 self.mechanism_manager.update_port_precommit(mech_context)
                 updated = True
+            elif port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+                binding = db.get_dvr_port_binding_by_host(
+                    session, port['id'], host)
+                if not binding:
+                    return
+                binding['status'] = status
+                binding.update(binding)
+                updated = True
+
+        if (updated and
+            port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
+            with contextlib.nested(lockutils.lock('db-access'),
+                                   session.begin(subtransactions=True)):
+                port = db.get_port(session, port_id)
+                if not port:
+                    LOG.warning(_("Port %s not found during update"), port_id)
+                    return
+                original_port = self._make_port_dict(port)
+                network = self.get_network(context,
+                                           original_port['network_id'])
+                port.status = db.generate_dvr_port_status(session, port['id'])
+                updated_port = self._make_port_dict(port)
+                mech_context = (driver_context.DvrPortContext(
+                    self, context, updated_port, network,
+                    binding, original_port=original_port))
+                self.mechanism_manager.update_port_precommit(mech_context)
 
         if updated:
             self.mechanism_manager.update_port_postcommit(mech_context)
 
+        if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+            db.delete_dvr_port_binding_if_stale(session, binding)
+
         return port['id']
 
     def port_bound_to_host(self, context, port_id, host):
-        port_host = db.get_port_binding_host(port_id)
-        return (port_host == host)
+        port = db.get_port(context.session, port_id)
+        if not port:
+            LOG.debug("No Port match for: %s", port_id)
+            return False
+        if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+            bindings = db.get_dvr_port_bindings(context.session, port_id)
+            for b in bindings:
+                if b.host == host:
+                    return True
+            LOG.debug("No binding found for DVR port %s", port['id'])
+            return False
+        else:
+            port_host = db.get_port_binding_host(port_id)
+            return (port_host == host)
