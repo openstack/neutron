@@ -153,6 +153,29 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
         self.addCleanup(radware_driver.completion_handler.join)
 
+    def test_get_pip(self):
+        """Call _get_pip twice and verify that a Port is created once."""
+        port_dict = {'fixed_ips': [{'subnet_id': '10.10.10.10',
+                                    'ip_address': '11.11.11.11'}]}
+        self.plugin_instance._core_plugin.get_ports = mock.Mock(
+            return_value=[])
+        self.plugin_instance._core_plugin.create_port = mock.Mock(
+            return_value=port_dict)
+        radware_driver = self.plugin_instance.drivers['radware']
+        radware_driver._get_pip(context.get_admin_context(),
+                                'tenant_id', 'port_name',
+                                'network_id', '10.10.10.10')
+        self.plugin_instance._core_plugin.get_ports.assert_called_once()
+        self.plugin_instance._core_plugin.create_port.assert_called_once()
+        self.plugin_instance._core_plugin.create_port.reset_mock()
+        self.plugin_instance._core_plugin.get_ports.reset_mock()
+        self.plugin_instance._core_plugin.get_ports.return_value = [port_dict]
+        radware_driver._get_pip(context.get_admin_context(),
+                                'tenant_id', 'port_name',
+                                'network_id', '10.10.10.10')
+        self.plugin_instance._core_plugin.get_ports.assert_called_once()
+        self.plugin_instance._core_plugin.create_port.assert_has_calls([])
+
     def test_rest_client_recover_was_called(self):
         """Call the real REST client and verify _recover is called."""
         radware_driver = self.plugin_instance.drivers['radware']
