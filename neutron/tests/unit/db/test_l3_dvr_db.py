@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
 import mock
 
 from neutron.common import constants as l3_const
@@ -147,3 +148,22 @@ class L3DvrTestCase(base.BaseTestCase):
             'network_id': ['network_id'],
             'device_id': ['agent_id'],
             'device_owner': [l3_const.DEVICE_OWNER_AGENT_GW]})
+
+    def test__create_gw_port_with_no_gateway(self):
+        router = {
+            'name': 'foo_router',
+            'admin_state_up': True,
+            'distributed': True,
+        }
+        router_db = self._create_router(router)
+        router_id = router_db['id']
+        self.assertTrue(router_db.extra_attributes.distributed)
+        with contextlib.nested(
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              '_create_gw_port'),
+            mock.patch.object(self.mixin,
+                              'create_snat_intf_ports_if_not_exists')
+                              ) as (cw, cs):
+            self.mixin._create_gw_port(
+                self.ctx, router_id, router_db, mock.ANY)
+            self.assertFalse(cs.call_count)
