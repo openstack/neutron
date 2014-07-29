@@ -624,6 +624,19 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.mock_ip_dev.neigh.add.assert_called_once_with(
             4, '1.7.23.11', '00:11:22:33:44:55')
 
+    def test_add_arp_entry_no_routerinfo(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = prepare_router_data(num_internal_ports=2)
+        subnet_id = _get_subnet_id(router[l3_constants.INTERFACE_KEY][0])
+        arp_table = {'ip_address': '1.7.23.11',
+                     'mac_address': '00:11:22:33:44:55',
+                     'subnet_id': subnet_id}
+
+        payload = {'arp_table': arp_table, 'router_id': router['id']}
+        agent._update_arp_entry = mock.Mock()
+        agent.add_arp_entry(None, payload)
+        self.assertFalse(agent._update_arp_entry.called)
+
     def test_del_arp_entry(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data(num_internal_ports=2)
