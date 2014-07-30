@@ -18,6 +18,7 @@ from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.common import utils
 from neutron.db import dhcp_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
@@ -190,7 +191,9 @@ class RpcCallbacks(n_rpc.RpcCallback,
                                             host)
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
-        if l3plugin:
+        if (l3plugin and
+            utils.is_extension_supported(l3plugin,
+                                         q_const.L3_DISTRIBUTED_EXT_ALIAS)):
             l3plugin.dvr_vmarp_table_update(rpc_context, port_id, "add")
 
     def get_dvr_mac_address_by_host(self, rpc_context, **kwargs):

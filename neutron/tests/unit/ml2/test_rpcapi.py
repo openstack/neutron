@@ -28,6 +28,42 @@ from neutron.plugins.ml2 import rpc as plugin_rpc
 from neutron.tests import base
 
 
+class RpcCallbacks(base.BaseTestCase):
+
+    def setUp(self):
+        super(RpcCallbacks, self).setUp()
+        self.callbacks = plugin_rpc.RpcCallbacks(mock.Mock(), mock.Mock())
+
+    def _test_update_device_up(self, extensions, kwargs):
+        with mock.patch.object(plugin_rpc.manager, 'NeutronManager') as mgr:
+            with mock.patch.object(self.callbacks, '_device_to_port_id'):
+                mock_l3plugin = mock.Mock()
+                mgr.get_service_plugins.return_value = {
+                    'L3_ROUTER_NAT': mock_l3plugin
+                }
+                type(mock_l3plugin).supported_extension_aliases = (
+                    mock.PropertyMock(return_value=extensions))
+                self.callbacks.update_device_up(mock.ANY, **kwargs)
+        return mock_l3plugin
+
+    def test_update_device_up_without_dvr(self):
+        kwargs = {
+            'agent_id': 'foo_agent',
+            'device': 'foo_device'
+        }
+        l3plugin = self._test_update_device_up(['router'], kwargs)
+        self.assertFalse(l3plugin.dvr_vmarp_table_update.call_count)
+
+    def test_update_device_up_with_dvr(self):
+        kwargs = {
+            'agent_id': 'foo_agent',
+            'device': 'foo_device'
+        }
+        l3plugin = self._test_update_device_up(['router', 'dvr'], kwargs)
+        l3plugin.dvr_vmarp_table_update.assert_called_once_with(
+            mock.ANY, mock.ANY, 'add')
+
+
 class RpcApiTestCase(base.BaseTestCase):
 
     def _test_rpc_api(self, rpcapi, topic, method, rpc_method, **kwargs):
