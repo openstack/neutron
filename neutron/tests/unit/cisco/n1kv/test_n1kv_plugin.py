@@ -246,53 +246,54 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         netp = {'name': 'netp1',
                 'segment_type': segment_type,
                 'tenant_id': self.tenant_id}
-        if segment_type == 'vlan':
+        if segment_type == c_const.NETWORK_TYPE_VLAN:
             netp['segment_range'] = segment_range or '100-110'
             netp['physical_network'] = PHYS_NET
-        elif segment_type == 'overlay':
+        elif segment_type == c_const.NETWORK_TYPE_OVERLAY:
             netp['segment_range'] = segment_range or '10000-10010'
             netp['sub_type'] = sub_type or 'enhanced'
             netp['multicast_ip_range'] = (mcast_ip_range or
                                           "224.1.1.1-224.1.1.10")
-        elif segment_type == 'trunk':
-            netp['sub_type'] = 'vlan'
+        elif segment_type == c_const.NETWORK_TYPE_TRUNK:
+            netp['sub_type'] = c_const.NETWORK_TYPE_VLAN
         data = {"network_profile": netp}
         return data
 
     def test_create_network_profile_vlan(self):
-        data = self._prepare_net_profile_data('vlan')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_VLAN)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
 
     def test_create_network_profile_overlay(self):
-        data = self._prepare_net_profile_data('overlay')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
 
     def test_create_network_profile_trunk(self):
-        data = self._prepare_net_profile_data('trunk')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_TRUNK)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
 
     def test_create_network_profile_trunk_missing_subtype(self):
-        data = self._prepare_net_profile_data('trunk')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_TRUNK)
         data['network_profile'].pop('sub_type')
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 400)
 
     def test_create_network_profile_overlay_unreasonable_seg_range(self):
-        data = self._prepare_net_profile_data('overlay',
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY,
                                               segment_range='10000-1000000001')
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 400)
 
     def test_update_network_profile_plugin(self):
-        net_p_dict = self._prepare_net_profile_data('overlay')
+        net_p_dict = (self.
+                      _prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY))
         net_p_req = self.new_create_request('network_profiles', net_p_dict)
         net_p = self.deserialize(self.fmt,
                                  net_p_req.get_response(self.ext_api))
@@ -314,7 +315,8 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
 
     def test_update_network_profile_segment_type_fail(self):
         net_p = self._make_test_profile(name='netp1')
-        data = {'network_profile': {'segment_type': 'overlay'}}
+        data = {'network_profile': {
+                'segment_type': c_const.NETWORK_TYPE_OVERLAY}}
         net_p_req = self.new_update_request('network_profiles',
                                             data,
                                             net_p['id'])
@@ -322,11 +324,12 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(res.status_int, 400)
 
     def test_update_network_profile_sub_type_fail(self):
-        net_p_dict = self._prepare_net_profile_data('overlay')
+        net_p_dict = (self.
+                      _prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY))
         net_p_req = self.new_create_request('network_profiles', net_p_dict)
         net_p = self.deserialize(self.fmt,
                                  net_p_req.get_response(self.ext_api))
-        data = {'network_profile': {'sub_type': 'vlan'}}
+        data = {'network_profile': {'sub_type': c_const.NETWORK_TYPE_VLAN}}
         update_req = self.new_update_request('network_profiles',
                                              data,
                                              net_p['network_profile']['id'])
@@ -355,24 +358,27 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(update_res.status_int, 409)
 
     def test_create_overlay_network_profile_invalid_multicast_fail(self):
-        data = self._prepare_net_profile_data('overlay',
-                                              sub_type='native_vxlan',
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY,
+                                              sub_type=(c_const.
+                                              NETWORK_SUBTYPE_NATIVE_VXLAN),
                                               mcast_ip_range='1.1.1.1')
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 400)
 
     def test_create_overlay_network_profile_no_multicast_fail(self):
-        data = self._prepare_net_profile_data('overlay',
-                                              sub_type='native_vxlan')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY,
+                                              sub_type=(c_const.
+                                              NETWORK_SUBTYPE_NATIVE_VXLAN))
         data['network_profile']['multicast_ip_range'] = ''
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 400)
 
     def test_create_overlay_network_profile_wrong_split_multicast_fail(self):
-        data = self._prepare_net_profile_data('overlay',
-                                              sub_type='native_vxlan',
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY,
+                                              sub_type=(c_const.
+                                              NETWORK_SUBTYPE_NATIVE_VXLAN),
                                               mcast_ip_range=
                                               '224.1.1.1.224.1.1.3')
         net_p_req = self.new_create_request('network_profiles', data)
@@ -380,8 +386,9 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(res.status_int, 400)
 
     def test_create_overlay_network_profile_invalid_minip_multicast_fail(self):
-        data = self._prepare_net_profile_data('overlay',
-                                              sub_type='native_vxlan',
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY,
+                                              sub_type=(c_const.
+                                              NETWORK_SUBTYPE_NATIVE_VXLAN),
                                               mcast_ip_range=
                                               '10.0.0.1-224.1.1.3')
         net_p_req = self.new_create_request('network_profiles', data)
@@ -389,8 +396,9 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(res.status_int, 400)
 
     def test_create_overlay_network_profile_invalid_maxip_multicast_fail(self):
-        data = self._prepare_net_profile_data('overlay',
-                                              sub_type='native_vxlan',
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY,
+                                              sub_type=(c_const.
+                                              NETWORK_SUBTYPE_NATIVE_VXLAN),
                                               mcast_ip_range=
                                               '224.1.1.1-20.0.0.1')
         net_p_req = self.new_create_request('network_profiles', data)
@@ -398,13 +406,13 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(res.status_int, 400)
 
     def test_create_overlay_network_profile_correct_multicast_pass(self):
-        data = self._prepare_net_profile_data('overlay')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
 
     def test_update_overlay_network_profile_correct_multicast_pass(self):
-        data = self._prepare_net_profile_data('overlay')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
@@ -418,8 +426,9 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(update_res.status_int, 200)
 
     def test_create_overlay_network_profile_reservedip_multicast_fail(self):
-        data = self._prepare_net_profile_data('overlay',
-                                              sub_type='native_vxlan',
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY,
+                                              sub_type=(c_const.
+                                              NETWORK_SUBTYPE_NATIVE_VXLAN),
                                               mcast_ip_range=
                                               '224.0.0.100-224.0.1.100')
         net_p_req = self.new_create_request('network_profiles', data)
@@ -427,7 +436,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(res.status_int, 400)
 
     def test_update_overlay_network_profile_reservedip_multicast_fail(self):
-        data = self._prepare_net_profile_data('overlay')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
@@ -451,7 +460,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(update_res.status_int, 400)
 
     def test_update_trunk_network_profile_segment_range_fail(self):
-        data = self._prepare_net_profile_data('trunk')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_TRUNK)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
@@ -465,7 +474,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.assertEqual(update_res.status_int, 400)
 
     def test_update_trunk_network_profile_multicast_fail(self):
-        data = self._prepare_net_profile_data('trunk')
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_TRUNK)
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
@@ -480,7 +489,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
 
     def test_create_network_profile_populate_vlan_segment_pool(self):
         db_session = db.get_session()
-        net_p_dict = self._prepare_net_profile_data('vlan')
+        net_p_dict = self._prepare_net_profile_data(c_const.NETWORK_TYPE_VLAN)
         net_p_req = self.new_create_request('network_profiles', net_p_dict)
         self.deserialize(self.fmt,
                          net_p_req.get_response(self.ext_api))
@@ -515,7 +524,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
 
     def test_delete_network_profile_deallocate_vlan_segment_pool(self):
         db_session = db.get_session()
-        net_p_dict = self._prepare_net_profile_data('vlan')
+        net_p_dict = self._prepare_net_profile_data(c_const.NETWORK_TYPE_VLAN)
         net_p_req = self.new_create_request('network_profiles', net_p_dict)
         net_p = self.deserialize(self.fmt,
                                  net_p_req.get_response(self.ext_api))
