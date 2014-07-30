@@ -295,9 +295,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return
 
         filters = {
-            'network_id': network_id,
-            'device_id': agent_id,
-            'device_owner': DEVICE_OWNER_AGENT_GW
+            'network_id': [network_id],
+            'device_id': [agent_id],
+            'device_owner': [DEVICE_OWNER_AGENT_GW]
         }
         ports = self._core_plugin.get_ports(context, filters)
         if ports:
@@ -346,7 +346,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             context, l3_const.AGENT_TYPE_L3, host)
         if l3_agent_db:
             LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
-            # TODO(Swami): is this call still valid for external agent gw port?
             f_port = self.get_agent_gw_ports_exist_for_network(
                 context, network_id, host, l3_agent_db['id'])
             if not f_port:
