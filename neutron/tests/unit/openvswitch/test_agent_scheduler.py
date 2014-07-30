@@ -15,6 +15,7 @@
 
 import contextlib
 import copy
+import datetime
 
 import mock
 from oslo.config import cfg
@@ -27,6 +28,7 @@ from neutron.common import constants
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import dhcp_rpc_base
+from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_rpc_base
 from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
@@ -231,6 +233,9 @@ class OvsAgentSchedulerTestCaseBase(test_l3_plugin.L3NatTestCaseMixin,
         self.l3_notify_p = mock.patch(
             'neutron.extensions.l3agentscheduler.notify')
         self.patched_l3_notify = self.l3_notify_p.start()
+        self.l3_periodic_p = mock.patch('neutron.db.L3AgentSchedulerDbMixin.'
+                                        'start_periodic_agent_status_check')
+        self.patched_l3_periodic = self.l3_notify_p.start()
         self.dhcp_notify_p = mock.patch(
             'neutron.extensions.dhcpagentscheduler.notify')
         self.patched_dhcp_notify = self.dhcp_notify_p.start()
@@ -616,6 +621,61 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             port_list = self.deserialize('json', port_res)
             self.assertEqual(port_list['ports'][0]['device_id'],
                              constants.DEVICE_ID_RESERVED_DHCP_PORT)
+
+    def _take_down_agent_and_run_reschedule(self, host):
+        # take down the agent on host A and ensure B is alive
+        self.adminContext.session.begin(subtransactions=True)
+        query = self.adminContext.session.query(agents_db.Agent)
+        agt = query.filter_by(host=host).first()
+        agt.heartbeat_timestamp = (
+            agt.heartbeat_timestamp - datetime.timedelta(hours=1))
+        self.adminContext.session.commit()
+
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+
+        plugin.reschedule_routers_from_down_agents()
+
+    def _set_agent_admin_state_up(self, host, state):
+        self.adminContext.session.begin(subtransactions=True)
+        query = self.adminContext.session.query(agents_db.Agent)
+        agt_db = query.filter_by(host=host).first()
+        agt_db.admin_state_up = state
+        self.adminContext.session.commit()
+
+    def test_router_reschedule_from_dead_agent(self):
+        with self.router():
+            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            self._register_agent_states()
+
+            # schedule the router to host A
+            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            self._take_down_agent_and_run_reschedule(L3_HOSTA)
+
+            # B should now pick up the router
+            ret_b = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+        self.assertEqual(ret_b, ret_a)
+
+    def test_router_no_reschedule_from_dead_admin_down_agent(self):
+        with self.router() as r:
+            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            self._register_agent_states()
+
+            # schedule the router to host A
+            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            self._set_agent_admin_state_up(L3_HOSTA, False)
+            self._take_down_agent_and_run_reschedule(L3_HOSTA)
+
+            # A should still have it even though it was inactive due to the
+            # admin_state being down
+            rab = l3_agentschedulers_db.RouterL3AgentBinding
+            binding = (self.adminContext.session.query(rab).
+                       filter(rab.router_id == r['router']['id']).first())
+            self.assertEqual(binding.l3_agent.host, L3_HOSTA)
+
+            # B should not pick up the router
+            ret_b = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+            self.assertFalse(ret_b)
 
     def test_router_auto_schedule_with_invalid_router(self):
         with self.router() as router:
