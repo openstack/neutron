@@ -189,7 +189,11 @@ class RpcCallbacks(n_rpc.RpcCallback,
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         if l3plugin:
-            l3plugin.dvr_vmarp_table_update(rpc_context, port_id, "add")
+            try:
+                l3plugin.dvr_vmarp_table_update(rpc_context, port_id, "add")
+            except:
+                #function is not supported by the plugin
+                pass
 
     def get_dvr_mac_address_by_host(self, rpc_context, **kwargs):
         host = kwargs.get('host')
