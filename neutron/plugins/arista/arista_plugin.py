@@ -17,7 +17,6 @@
 # @author: Sukhdev Kapur, Arista Networks, Inc.
 #
 
-import pdb
 import threading
 from arista_l3_driver import AristaL3Driver
 from arista_l3_driver import NeutronNets
@@ -39,7 +38,7 @@ from neutron.plugins.ml2.driver_context import NetworkContext
 
 LOG = logging.getLogger(__name__)
 
-class AristaPluginRpcCallbacks(q_rpc.RpcCallback,
+class AristaL3ServicePluginRpcCallbacks(q_rpc.RpcCallback,
                                l3_rpc_base.L3RpcCallbackMixin):
 
     RPC_API_VERSION = '1.2'
@@ -47,7 +46,7 @@ class AristaPluginRpcCallbacks(q_rpc.RpcCallback,
     #   1.2 Added methods for DVR support
 
 
-class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
+class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                    extraroute_db.ExtraRoute_db_mixin,
                    l3_gwmode_db.L3_NAT_db_mixin,
                    l3_agentschedulers_db.L3AgentSchedulerDbMixin):
@@ -70,7 +69,7 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.ndb = NeutronNets()
         #self.sync_serv = SyncService()
         self.setup_rpc()
-        self.sync_timeout = cfg.CONF.arista.sync_interval
+        self.sync_timeout = cfg.CONF.l3_arista.l3_sync_interval
         self.sync_lock = threading.Lock()
         self._synchronization_thread()
 
@@ -81,7 +80,7 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.conn = q_rpc.create_connection(new=True)
         self.agent_notifiers.update(
             {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
-        self.endpoints = [AristaPluginRpcCallbacks()]
+        self.endpoints = [AristaL3ServicePluginRpcCallbacks()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         self.conn.consume_in_threads()
@@ -112,12 +111,12 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_router(self, context, router):
         """Create a new router entry on DB, and create it Arista HW"""
 
-        LOG.debug(_("AristaPlugin.create_router() called, "
+        LOG.debug(_("AristaL3ServicePlugin.create_router() called, "
                     "router=%s ."), router)
         tenant_id = self._get_tenant_id_for_create(context, router['router'])
 
         with context.session.begin(subtransactions=True):
-            new_router = super(AristaPlugin, self).create_router(context,
+            new_router = super(AristaL3ServicePlugin, self).create_router(context,
                                                                  router)
         # create router on the Arista Hw
         try:
@@ -125,19 +124,19 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             return new_router
         except Exception as e:
             print e
-            super(AristaPlugin, self).delete_router(context,
+            super(AristaL3ServicePlugin, self).delete_router(context,
                                                     new_router['id'])
 
     def update_router(self, context, router_id, router):
 
-        LOG.debug(_("AristaPlugin.update_router() called, "
+        LOG.debug(_("AristaL3ServicePlugin.update_router() called, "
                     "id=%(id)s, router=%(router)s ."),
                   {'id': router_id, 'router': router})
 
         with context.session.begin(subtransactions=True):
-            original_router = super(AristaPlugin, self).get_router(
+            original_router = super(AristaL3ServicePlugin, self).get_router(
                                     context, router_id)
-            new_router = super(AristaPlugin, self).update_router(
+            new_router = super(AristaL3ServicePlugin, self).update_router(
                 context, router_id, router)
 
             # modify router on the Arista Hw
@@ -149,9 +148,9 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 print e
 
     def delete_router(self, context, router_id):
-        LOG.debug(_("AristaPlugin.delete_router() called, id=%s."), router_id)
+        LOG.debug(_("AristaL3ServicePlugin.delete_router() called, id=%s."), router_id)
 
-        router = super(AristaPlugin, self).get_router(context, router_id)
+        router = super(AristaL3ServicePlugin, self).get_router(context, router_id)
         tenant_id = router['tenant_id']
 
         # delete router on the Arista Hw
@@ -161,19 +160,19 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             print e
 
         with context.session.begin(subtransactions=True):
-            super(AristaPlugin, self).delete_router(context, router_id)
+            super(AristaL3ServicePlugin, self).delete_router(context, router_id)
 
 
     def add_router_interface(self, context, router_id, interface_info):
 
-        LOG.debug(_("AristaPlugin.add_router_interface() called, "
+        LOG.debug(_("AristaL3ServicePlugin.add_router_interface() called, "
                     "id=%(id)s, interface=%(interface)s."),
                   {'id': router_id, 'interface': interface_info})
         
 
-        router = super(AristaPlugin, self).get_router(context, router_id)
+        router = super(AristaL3ServicePlugin, self).get_router(context, router_id)
 
-        router_info =  super(AristaPlugin, self).add_router_interface(
+        router_info =  super(AristaL3ServicePlugin, self).add_router_interface(
             context, router_id, interface_info)
 
         #network_id = self.ndb.get_network_id(interface_info['subnet_id'])
@@ -198,14 +197,9 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         try:
             self.driver.add_router_interface(context, router_info)
-            print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-            print router_info
-            print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
             return router_info
         except Exception as e:
-            print "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
             print e
-            print "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
 
     def remove_router_interface(self, context, router_id, interface_info):
 
@@ -213,13 +207,9 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     "id=%(id)s, interface=%(interface)s."),
                   {'id': router_id, 'interface': interface_info})
 
-        print "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
-        print router_id, interface_info
-        print "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+        router = super(AristaL3ServicePlugin, self).get_router(context, router_id)
 
-        router = super(AristaPlugin, self).get_router(context, router_id)
-
-        router_info =  super(AristaPlugin, self).remove_router_interface(
+        router_info =  super(AristaL3ServicePlugin, self).remove_router_interface(
             context, router_id, interface_info)
 
         #network_id = self.ndb.get_network_id(router_info['subnet_id'])
@@ -248,7 +238,7 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         leveraging the l3 agent, the initial status fro the floating
         IP object will be DOWN.
         """
-        return super(AristaPlugin, self).create_floatingip(
+        return super(AristaL3ServicePlugin, self).create_floatingip(
             context, floatingip,
             initial_status=q_const.FLOATINGIP_STATUS_DOWN)
 
@@ -258,7 +248,7 @@ class AristaPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.info(_('Syncing Neutron Router DB <-> EOS'))
         ctx = nctx.get_admin_context()
 
-        routers = super(AristaPlugin, self).get_routers(ctx)
+        routers = super(AristaL3ServicePlugin, self).get_routers(ctx)
         for r in routers:
             print r
             tenant_id = r['tenant_id']

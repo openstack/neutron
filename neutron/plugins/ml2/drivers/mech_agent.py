@@ -142,7 +142,7 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
         :param agent: agents_db entry describing agent to bind
         :returns: True iff segment can be bound for agent
 
-        Called inside transaction during bind_port so that derived
+        Called outside any transaction during bind_port so that derived
         MechanismDrivers can use agent_db data along with built-in
         knowledge of the corresponding agent's capabilities to
         determine whether or not the specified network segment can be

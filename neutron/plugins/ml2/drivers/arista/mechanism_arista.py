@@ -19,7 +19,6 @@ import jsonrpclib
 from oslo.config import cfg
 
 from neutron.common import constants as n_const
-from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api
@@ -224,6 +223,8 @@ class AristaRPCWrapper(object):
             except KeyError:
                 append_cmd('network id %s' % network['network_id'])
             # Enter segment mode without exiting out of network mode
+            if not network['segmentation_id']:
+                network['segmentation_id'] = 1
             append_cmd('segment 1 type vlan id %d' %
                        network['segmentation_id'])
         cmds.extend(self._get_exit_mode_cmds(['segment', 'network', 'tenant']))
@@ -801,7 +802,7 @@ class AristaDriver(driver_api.MechanismDriver):
         port = context.current
         device_id = port['device_id']
         device_owner = port['device_owner']
-        host = port[portbindings.HOST_ID]
+        host = context.host
 
         # device_id and device_owner are set on VM boot
         is_vm_boot = device_id and device_owner
@@ -822,7 +823,7 @@ class AristaDriver(driver_api.MechanismDriver):
         port = context.current
         device_id = port['device_id']
         device_owner = port['device_owner']
-        host = port[portbindings.HOST_ID]
+        host = context.host
 
         # device_id and device_owner are set on VM boot
         is_vm_boot = device_id and device_owner
@@ -885,7 +886,7 @@ class AristaDriver(driver_api.MechanismDriver):
 
         device_id = port['device_id']
         device_owner = port['device_owner']
-        host = port[portbindings.HOST_ID]
+        host = context.host
         is_vm_boot = device_id and device_owner
 
         if host and is_vm_boot:
@@ -926,7 +927,7 @@ class AristaDriver(driver_api.MechanismDriver):
         """Delete information about a VM and host from the DB."""
         port = context.current
 
-        host_id = port[portbindings.HOST_ID]
+        host_id = context.host
         device_id = port['device_id']
         tenant_id = port['tenant_id']
         network_id = port['network_id']
@@ -947,7 +948,7 @@ class AristaDriver(driver_api.MechanismDriver):
         """
         port = context.current
         device_id = port['device_id']
-        host = port[portbindings.HOST_ID]
+        host = context.host
         port_id = port['id']
         network_id = port['network_id']
         tenant_id = port['tenant_id']

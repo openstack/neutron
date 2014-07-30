@@ -17,15 +17,13 @@
 # @author: Sukhdev Kapur, Arista Networks, Inc.
 #
 
-import pdb
 import jsonrpclib
 import hashlib
 from oslo.config import cfg
 from neutron import context as nctx
 from neutron.openstack.common import log as logging
-from neutron.plugins.arista import config  # noqa
-from neutron.plugins.arista import exceptions as arista_exc
 from neutron.plugins.ml2 import db as ml2_db
+from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 from neutron.db import db_base_plugin_v2
 
 LOG = logging.getLogger(__name__)
@@ -108,13 +106,13 @@ class AristaL3Driver(object):
         self._hosts = []
         self.interfaceDict = None
         self._servers.append(jsonrpclib.Server(self._eapi_host_url()))
-        self.region = cfg.CONF.arista.region_name
-        self.mlag_configured = cfg.CONF.arista.mlag_config
-        self.use_vrf = cfg.CONF.arista.use_vrf
+        self.mlag_configured = cfg.CONF.l3_arista.mlag_config
+        self.use_vrf = cfg.CONF.l3_arista.use_vrf
         if self.mlag_configured:
             self._servers.append(jsonrpclib.Server(self._eapi_mlag_host_url()))
             self._additionalRouterCmdsDict = additional_cmds_for_mlag['router']
-            self._additionalInterfaceCmdsDict = additional_cmds_for_mlag['interface']
+            self._additionalInterfaceCmdsDict = (
+                additional_cmds_for_mlag['interface'])
         if self.use_vrf:
             self.routerDict = router_in_vrf['router']
             self.interfaceDict = router_in_vrf['interface']
@@ -125,9 +123,9 @@ class AristaL3Driver(object):
     def _eapi_host_url(self):
         self._validate_config()
 
-        user = cfg.CONF.arista.eapi_username
-        pwd = cfg.CONF.arista.eapi_password
-        host = cfg.CONF.arista.eapi_host
+        user = cfg.CONF.l3_arista.primary_l3_host_username
+        pwd = cfg.CONF.l3_arista.primary_l3_host_password
+        host = cfg.CONF.l3_arista.primary_l3_host
         self._hosts.append(host)
 
         eapi_server_url = ('https://%s:%s@%s/command-api' %
@@ -137,9 +135,9 @@ class AristaL3Driver(object):
     def _eapi_mlag_host_url(self):
         if not self.mlag_configured:
             return None
-        user = cfg.CONF.arista.eapi_username
-        pwd = cfg.CONF.arista.eapi_password
-        host = cfg.CONF.arista.eapi_mlag_host
+        user = cfg.CONF.l3_arista.primary_l3_host_username
+        pwd = cfg.CONF.l3_arista.primary_l3_host_password
+        host = cfg.CONF.l3_arista.seconadry_l3_host
         self._hosts.append(host)
 
         eapi_mlag_server_url = ('https://%s:%s@%s/command-api' %
@@ -147,24 +145,24 @@ class AristaL3Driver(object):
         return eapi_mlag_server_url
 
     def _validate_config(self):
-        if cfg.CONF.arista.get('eapi_host') == '':
-            msg = _('Required option eapi_host is not set')
+        if cfg.CONF.l3_arista.get('primary_l3_host') == '':
+            msg = _('Required option primary_l3_host is not set')
             LOG.error(msg)
-            raise arista_exc.AristaPluginConfigError(msg=msg)
-        if cfg.CONF.arista.get('mlag_config'):
+            raise arista_exc.AristaSevicePluginConfigError(msg=msg)
+        if cfg.CONF.l3_arista.get('mlag_config'):
             #if cfg.CONF.arista.get('use_vrf'):
             #    #This is invalid/unsupported configuration
             #    msg = _('VRF does not support MLAG mode')
             #    LOG.error(msg)
-            #    raise arista_exc.AristaPluginConfigError(msg=msg)
-            if cfg.CONF.arista.get('eapi_mlag_host') == '':
-                msg = _('Required option eapi_mlag_host is not set')
+            #    raise arista_exc.AristaSevicePluginConfigError(msg=msg)
+            if cfg.CONF.l3_arista.get('seconadry_l3_host') == '':
+                msg = _('Required option seconadry_l3_host is not set')
                 LOG.error(msg)
-                raise arista_exc.AristaPluginConfigError(msg=msg)
-        if cfg.CONF.arista.get('eapi_username') == '':
-            msg = _('Required option eapi_username is not set')
+                raise arista_exc.AristaSevicePluginConfigError(msg=msg)
+        if cfg.CONF.l3_arista.get('primary_l3_host_username') == '':
+            msg = _('Required option primary_l3_host_username is not set')
             LOG.error(msg)
-            raise arista_exc.AristaPluginConfigError(msg=msg)
+            raise arista_exc.AristaSevicePluginConfigError(msg=msg)
 
     def create_router_on_eos(self, router_name, rdm, server):
         """Creates a router on Arista HW Device.
@@ -206,10 +204,12 @@ class AristaL3Driver(object):
             if ipv == 6:
                 #for ipV6 use IpV6 commmands
                 self.interfaceDict = router_in_default_vrf_v6['interface']
-                self._additionalInterfaceCmdsDict = additional_cmds_for_mlag_v6['interface']
+                self._additionalInterfaceCmdsDict = (
+                    additional_cmds_for_mlag_v6['interface'])
             else:
                 self.interfaceDict = router_in_default_vrf['interface']
-                self._additionalInterfaceCmdsDict = additional_cmds_for_mlag['interface']
+                self._additionalInterfaceCmdsDict = (
+                    additional_cmds_for_mlag['interface'])
 
     def add_interface_to_router(self, segment_id,
                                 router_name, gip, router_ip, mask, server):
@@ -257,7 +257,7 @@ class AristaL3Driver(object):
 
         """
         if router:
-            rdm =str(int(hashlib.sha256(router['name']).hexdigest(), 16) % 65536)
+            rdm =str(int(hashlib.sha256(router['name']).hexdigest(),16) % 6553)
             for s in self._servers:
                 self.create_router_on_eos(router['name'], rdm, s)
 
@@ -290,7 +290,8 @@ class AristaL3Driver(object):
                 # For now, we are using x.x.x.253 and x.x.x.254 as virtual IP
                 for i in range(len(self._servers)):
                     #vip = virtualIp + '.' +  str (254 - i) + '/' + cidr.split('/')[1]
-                    router_ip = self._get_router_ip(cidr, i, router_info['ip_version'])
+                    router_ip = self._get_router_ip(cidr, i,
+                                                    router_info['ip_version'])
                     self.add_interface_to_router(router_info['segmentation_id'],
                                                  router_info['name'],
                                                  router_info['gip'],
@@ -338,7 +339,7 @@ class AristaL3Driver(object):
                      'commands %(cmd)s on EOS %(host)s') %
                    {'err': error, 'cmd': full_command, 'host': server})
             LOG.exception(msg)
-            raise arista_exc.AristaPluginRpcError(msg=msg)
+            raise arista_exc.AristaServicePluginRpcError(msg=msg)
 
 #    def _get_binary_from_ip(self, ip_addr, ip_ver):
 #       seperator = '.'

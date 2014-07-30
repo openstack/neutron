@@ -31,6 +31,7 @@ from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_agentschedulers_db
+from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_rpc_base
@@ -42,6 +43,7 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
+from neutron.tests import base
 from neutron.tests import fake_notifier
 from neutron.tests.unit import test_agent_ext_plugin
 from neutron.tests.unit import test_api_v2
@@ -508,6 +510,57 @@ class L3NatTestCaseMixin(object):
                 private_sub, fmt, set_context, public_sub) as (f, r):
                 # Yield only the floating ip object
                 yield f
+
+
+class ExtraAttributesMixinTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(ExtraAttributesMixinTestCase, self).setUp()
+        self.mixin = l3_attrs_db.ExtraAttributesMixin()
+
+    def _test__extend_extra_router_dict(
+        self, extra_attributes, attributes, expected_attributes):
+        self.mixin._extend_extra_router_dict(
+            attributes, {'extra_attributes': extra_attributes})
+        self.assertEqual(expected_attributes, attributes)
+
+    def test__extend_extra_router_dict_string_default(self):
+        self.mixin.extra_attributes = [{
+            'name': "foo_key",
+            'default': 'foo_default'
+        }]
+        extension_attributes = {'foo_key': 'my_fancy_value'}
+        self._test__extend_extra_router_dict(
+            extension_attributes, {}, extension_attributes)
+
+    def test__extend_extra_router_dict_booleans_false_default(self):
+        self.mixin.extra_attributes = [{
+            'name': "foo_key",
+            'default': False
+        }]
+        extension_attributes = {'foo_key': True}
+        self._test__extend_extra_router_dict(
+            extension_attributes, {}, extension_attributes)
+
+    def test__extend_extra_router_dict_booleans_true_default(self):
+        self.mixin.extra_attributes = [{
+            'name': "foo_key",
+            'default': True
+        }]
+        # Test that the default is overridden
+        extension_attributes = {'foo_key': False}
+        self._test__extend_extra_router_dict(
+            extension_attributes, {}, extension_attributes)
+
+    def test__extend_extra_router_dict_no_extension_attributes(self):
+        self.mixin.extra_attributes = [{
+            'name': "foo_key",
+            'default': 'foo_value'
+        }]
+        self._test__extend_extra_router_dict({}, {}, {'foo_key': 'foo_value'})
+
+    def test__extend_extra_router_dict_none_extension_attributes(self):
+        self._test__extend_extra_router_dict(None, {}, {})
 
 
 class L3NatTestCaseBase(L3NatTestCaseMixin):

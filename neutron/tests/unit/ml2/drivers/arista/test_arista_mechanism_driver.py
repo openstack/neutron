@@ -18,6 +18,7 @@ from oslo.config import cfg
 
 from neutron.common import constants as n_const
 import neutron.db.api as ndb
+from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.arista import db
 from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 from neutron.plugins.ml2.drivers.arista import mechanism_arista as arista
@@ -723,3 +724,11 @@ class FakePortContext(object):
     @property
     def network(self):
         return self._network_context
+
+    @property
+    def host(self):
+        return self._port.get(portbindings.HOST_ID)
+
+    @property
+    def original_host(self):
+        return self._original_port.get(portbindings.HOST_ID)

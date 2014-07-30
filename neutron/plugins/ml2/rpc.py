@@ -89,7 +89,9 @@ class RpcCallbacks(n_rpc.RpcCallback,
         port_id = self._device_to_port_id(device)
 
         plugin = manager.NeutronManager.get_plugin()
-        port_context = plugin.get_bound_port_context(rpc_context, port_id)
+        port_context = plugin.get_bound_port_context(rpc_context,
+                                                     port_id,
+                                                     host)
         if not port_context:
             LOG.warning(_("Device %(device)s requested by agent "
                           "%(agent_id)s not found in database"),

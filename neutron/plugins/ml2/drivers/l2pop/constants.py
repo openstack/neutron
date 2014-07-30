@@ -20,4 +20,5 @@
 from neutron.common import constants
 
 SUPPORTED_AGENT_TYPES = [constants.AGENT_TYPE_OVS,
-                         constants.AGENT_TYPE_LINUXBRIDGE]
+                         constants.AGENT_TYPE_LINUXBRIDGE,
+                         constants.AGENT_TYPE_OFA]
