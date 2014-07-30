@@ -66,5 +66,5 @@ def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.drop_table('ml2_brocadenetworks')
     op.drop_table('ml2_brocadeports')
+    op.drop_table('ml2_brocadenetworks')

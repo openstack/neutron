@@ -92,7 +92,7 @@ class TestVPNAgent(base.BaseTestCase):
     def test_get_namespace(self):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, None)
+                                 self.conf.use_namespaces, {})
         self.agent.router_info = {router_id: ri}
         namespace = self.agent.get_namespace(router_id)
         self.assertTrue(namespace.endswith(router_id))
@@ -101,7 +101,7 @@ class TestVPNAgent(base.BaseTestCase):
     def test_add_nat_rule(self):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, None)
+                                 self.conf.use_namespaces, {})
         iptables = mock.Mock()
         ri.iptables_manager.ipv4['nat'] = iptables
         self.agent.router_info = {router_id: ri}
@@ -121,7 +121,7 @@ class TestVPNAgent(base.BaseTestCase):
     def test_remove_rule(self):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, None)
+                                 self.conf.use_namespaces, {})
         iptables = mock.Mock()
         ri.iptables_manager.ipv4['nat'] = iptables
         self.agent.router_info = {router_id: ri}
@@ -140,7 +140,7 @@ class TestVPNAgent(base.BaseTestCase):
     def test_iptables_apply(self):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, None)
+                                 self.conf.use_namespaces, {})
         iptables = mock.Mock()
         ri.iptables_manager = iptables
         self.agent.router_info = {router_id: ri}
@@ -168,12 +168,13 @@ class TestVPNAgent(base.BaseTestCase):
             'neutron.agent.linux.iptables_manager.IptablesManager').start()
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, None)
+                                 self.conf.use_namespaces, {})
         ri.router = {
             'id': _uuid(),
             'admin_state_up': True,
             'routes': [],
-            'external_gateway_info': {}}
+            'external_gateway_info': {},
+            'distributed': False}
         device = mock.Mock()
         self.agent.router_info = {router_id: ri}
         self.agent.devices = [device]

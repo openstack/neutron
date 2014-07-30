@@ -28,7 +28,9 @@ from neutron import manager
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config
+from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api
+from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.ml2.drivers import mechanism_logger as mech_logger
@@ -224,6 +226,29 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             self._check_port_binding_profile(port)
             port = self._show('ports', port_id)['port']
             self._check_port_binding_profile(port)
+
+    def test_return_on_concurrent_delete_and_binding(self):
+        # create a port and delete it so we have an expired mechanism context
+        with self.port() as port:
+            plugin = manager.NeutronManager.get_plugin()
+            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+                                                         port['port']['id'])[1]
+            binding['host'] = 'test'
+            mech_context = driver_context.PortContext(
+                plugin, self.context, port['port'],
+                plugin.get_network(self.context, port['port']['network_id']),
+                binding)
+        with contextlib.nested(
+            mock.patch('neutron.plugins.ml2.plugin.'
+                       'db.get_locked_port_and_binding',
+                       return_value=(None, None)),
+            mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin._make_port_dict')
+        ) as (glpab_mock, mpd_mock):
+            plugin._bind_port_if_needed(mech_context)
+            # called during deletion to get port
+            self.assertTrue(glpab_mock.mock_calls)
+            # should have returned before calling _make_port_dict
+            self.assertFalse(mpd_mock.mock_calls)
 
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):

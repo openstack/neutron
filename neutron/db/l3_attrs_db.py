@@ -48,12 +48,12 @@ class ExtraAttributesMixin(object):
     extra_attributes = []
 
     def _extend_extra_router_dict(self, router_res, router_db):
-        extra_attrs = router_db['extra_attributes']
+        extra_attrs = router_db['extra_attributes'] or {}
         for attr in self.extra_attributes:
             name = attr['name']
             default = attr['default']
             router_res[name] = (
-                extra_attrs and extra_attrs[name] or default)
+                extra_attrs[name] if name in extra_attrs else default)
 
     def _get_extra_attributes(self, router, extra_attributes):
         return (dict((attr['name'],

@@ -20,7 +20,6 @@ from sqlalchemy import sql
 
 from neutron.db import api as db_api
 from neutron.db import model_base
-from neutron.db import models_v2
 
 
 class NetworkEPG(model_base.BASEV2):
@@ -50,13 +49,14 @@ class PortProfile(model_base.BASEV2):
     to_port = sa.Column(sa.Integer(), nullable=False)
 
 
-class TenantContract(model_base.BASEV2, models_v2.HasTenant):
+class TenantContract(model_base.BASEV2):
 
     """Contracts (and Filters) created on the APIC."""
 
     __tablename__ = 'cisco_ml2_apic_contracts'
 
-    __table_args__ = (sa.PrimaryKeyConstraint('tenant_id'),)
+    # Cannot use HasTenant since we need to set nullable=False
+    tenant_id = sa.Column(sa.String(255), nullable=False, primary_key=True)
     contract_id = sa.Column(sa.String(64), nullable=False)
     filter_id = sa.Column(sa.String(64), nullable=False)
 

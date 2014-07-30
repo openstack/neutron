@@ -81,6 +81,7 @@ L2_AGENT_4 = {
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 NOTIFIER = 'neutron.plugins.ml2.rpc.AgentNotifierApi'
+DEVICE_OWNER_COMPUTE = 'compute:None'
 
 
 class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
@@ -157,6 +158,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
             with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 with self.port(subnet=subnet,
@@ -178,6 +180,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p1['mac_address'],
+                                                  p1['device_owner'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -216,11 +219,13 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
             host_arg = {portbindings.HOST_ID: HOST,
                         'admin_state_up': True}
             with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID, 'admin_state_up',),
                            **host_arg) as port1:
                 host_arg = {portbindings.HOST_ID: HOST + '_2',
                             'admin_state_up': True}
                 with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=(portbindings.HOST_ID,
                                          'admin_state_up',),
                                **host_arg) as port2:
@@ -244,6 +249,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                    {'ports':
                                     {'20.0.0.2': [constants.FLOODING_ENTRY,
                                                   [p2['mac_address'],
+                                                   p2['device_owner'],
                                                    p2_ips[0]]]},
                                     'network_type': 'vxlan',
                                     'segment_id': 1}}},
@@ -265,6 +271,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                    {'ports':
                                     {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                   [p1['mac_address'],
+                                                   p1['device_owner'],
                                                    p1_ips[0]]]},
                                     'network_type': 'vxlan',
                                     'segment_id': 1}}},
@@ -280,14 +287,17 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST + '_2'}
             with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 with self.subnet(cidr='10.1.0.0/24') as subnet2:
                     with self.port(subnet=subnet2,
+                                   device_owner=DEVICE_OWNER_COMPUTE,
                                    arg_list=(portbindings.HOST_ID,),
                                    **host_arg):
                         host_arg = {portbindings.HOST_ID: HOST}
                         with self.port(subnet=subnet,
+                                       device_owner=DEVICE_OWNER_COMPUTE,
                                        arg_list=(portbindings.HOST_ID,),
                                        **host_arg) as port3:
                             p1 = port1['port']
@@ -310,6 +320,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                             {'20.0.0.2':
                                              [constants.FLOODING_ENTRY,
                                               [p1['mac_address'],
+                                               p1['device_owner'],
                                                p1_ips[0]]]},
                                             'network_type': 'vxlan',
                                             'segment_id': 1}}},
@@ -334,6 +345,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                             {'20.0.0.1':
                                              [constants.FLOODING_ENTRY,
                                               [p3['mac_address'],
+                                               p3['device_owner'],
                                                p3_ips[0]]]},
                                             'network_type': 'vxlan',
                                             'segment_id': 1}}},
@@ -350,9 +362,11 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
             with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=(portbindings.HOST_ID,),
                                **host_arg) as port2:
                     p2 = port2['port']
@@ -380,6 +394,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                  {p2['network_id']:
                                   {'ports':
                                    {'20.0.0.1': [[p2['mac_address'],
+                                                  p2['device_owner'],
                                                   p2_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -395,9 +410,11 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
             with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg):
                 with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=(portbindings.HOST_ID,),
                                **host_arg) as port2:
                     p2 = port2['port']
@@ -419,6 +436,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p2['mac_address'],
+                                                  p2['device_owner'],
                                                   p2_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -434,6 +452,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
             with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port:
                 p1 = port['port']
@@ -445,6 +464,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                                 device=device)
 
                 with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=(portbindings.HOST_ID,),
                                **host_arg) as port2:
                     p2 = port2['port']
@@ -461,6 +481,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                              {p2['network_id']:
                               {'ports':
                                {'20.0.0.1': [[p2['mac_address'],
+                                              p2['device_owner'],
                                               p2_ips[0]]]},
                                'network_type': 'vxlan',
                                'segment_id': 1}}},
@@ -476,9 +497,11 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
             with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg):
                 with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=(portbindings.HOST_ID,),
                                **host_arg) as port:
                     p1 = port['port']
@@ -496,6 +519,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                               {'ports':
                                {'20.0.0.1': [constants.FLOODING_ENTRY,
                                              [p1['mac_address'],
+                                              p1['device_owner'],
                                               p1_ips[0]]]},
                                'network_type': 'vxlan',
                                'segment_id': 1}}},
@@ -511,6 +535,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
             with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 p1 = port1['port']
@@ -536,6 +561,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {p1['network_id']:
                                    {'20.0.0.1':
                                     {'after': [[p1['mac_address'],
+                                                p1['device_owner'],
                                                 '10.0.0.10']]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
@@ -558,8 +584,10 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {p1['network_id']:
                                    {'20.0.0.1':
                                     {'before': [[p1['mac_address'],
+                                                 p1['device_owner'],
                                                  '10.0.0.10']],
                                      'after': [[p1['mac_address'],
+                                                p1['device_owner'],
                                                 '10.0.0.16']]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
@@ -581,6 +609,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {p1['network_id']:
                                    {'20.0.0.1':
                                     {'before': [[p1['mac_address'],
+                                                 p1['device_owner'],
                                                  '10.0.0.2']]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
@@ -594,6 +623,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
             with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 p1 = port1['port']
@@ -623,9 +653,11 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
             host_arg = {portbindings.HOST_ID: L2_AGENT['host']}
             host2_arg = {portbindings.HOST_ID: L2_AGENT_2['host']}
             with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                               device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=(portbindings.HOST_ID,),
                                **host2_arg) as port2:
                     p1 = port1['port']
@@ -658,6 +690,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p1['mac_address'],
+                                                  p1['device_owner'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -673,9 +706,11 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
             host_arg = {portbindings.HOST_ID: L2_AGENT['host']}
             host2_arg = {portbindings.HOST_ID: L2_AGENT_2['host']}
             with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                           device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                               device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=(portbindings.HOST_ID,),
                                **host2_arg) as port2:
                     p1 = port1['port']
@@ -714,6 +749,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p1['mac_address'],
+                                                  p1['device_owner'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},

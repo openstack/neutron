@@ -19,6 +19,7 @@ import mock
 
 from oslo.config import cfg
 
+from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic as md
 from neutron.plugins.ml2.drivers import type_vlan  # noqa
 from neutron.tests import base
@@ -224,3 +225,11 @@ class FakePortContext(object):
 
     def set_binding(self, segment_id, vif_type, cap_port_filter):
         pass
+
+    @property
+    def host(self):
+        return self._port.get(portbindings.HOST_ID)
+
+    @property
+    def original_host(self):
+        return self._original_port.get(portbindings.HOST_ID)

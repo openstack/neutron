@@ -66,6 +66,13 @@ class TestClientInvalidRequest(TestClient):
         self.inject_params = True
 
 
+class TestClientInvalidResponse(TestClient):
+
+    def __init__(self, **kwargs):
+        super(TestClientInvalidResponse, self).__init__()
+        self.broken = True
+
+
 def _validate_resource(action, body=None):
     if body:
         body_set = set(body.keys())

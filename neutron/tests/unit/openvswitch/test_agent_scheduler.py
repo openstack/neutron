@@ -228,9 +228,12 @@ class OvsAgentSchedulerTestCaseBase(test_l3_plugin.L3NatTestCaseMixin,
         self.l3agentscheduler_dbMinxin = (
             manager.NeutronManager.get_service_plugins().get(
                 service_constants.L3_ROUTER_NAT))
-        self.notify_p = mock.patch(
+        self.l3_notify_p = mock.patch(
             'neutron.extensions.l3agentscheduler.notify')
-        self.patched_notify = self.notify_p.start()
+        self.patched_l3_notify = self.l3_notify_p.start()
+        self.dhcp_notify_p = mock.patch(
+            'neutron.extensions.dhcpagentscheduler.notify')
+        self.patched_dhcp_notify = self.dhcp_notify_p.start()
 
     def restore_attribute_map(self):
         # Restore the original RESOURCE_ATTRIBUTE_MAP
@@ -1048,6 +1051,7 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
         self.addCleanup(self.restore_attribute_map)
+        fake_notifier.reset()
 
     def restore_attribute_map(self):
         # Restore the original RESOURCE_ATTRIBUTE_MAP
@@ -1067,6 +1071,9 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 'network_create_end',
                 payload={'network': {'id': network_id}}),
             topic='dhcp_agent.' + DHCP_HOSTA)
+        notifications = fake_notifier.NOTIFICATIONS
+        expected_event_type = 'dhcp_agent.network.add'
+        self._assert_notify(notifications, expected_event_type)
 
     def test_network_remove_from_dhcp_agent_notification(self):
         with self.network(do_delete=False) as net1:
@@ -1085,6 +1092,9 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 'network_delete_end',
                 payload={'network_id': network_id}),
             topic='dhcp_agent.' + DHCP_HOSTA)
+        notifications = fake_notifier.NOTIFICATIONS
+        expected_event_type = 'dhcp_agent.network.remove'
+        self._assert_notify(notifications, expected_event_type)
 
     def test_agent_updated_dhcp_agent_notification(self):
         self._register_agent_states()

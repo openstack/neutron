@@ -28,6 +28,9 @@ class FakeNuageClient(object):
     def vms_on_l2domain(self, l2dom_id):
         pass
 
+    def vms_on_subnet(self, subnet_id):
+        pass
+
     def create_subnet(self, neutron_subnet, params):
         nuage_subnet = {
             'nuage_l2template_id': uuidutils.generate_uuid(),
@@ -113,3 +116,48 @@ class FakeNuageClient(object):
 
     def update_nuage_vm_vport(self, params):
         pass
+
+    def get_nuage_fip_pool_by_id(self, net_id):
+        result = {
+            'nuage_fip_pool_id': uuidutils.generate_uuid()
+        }
+        return result
+
+    def get_nuage_fip_by_id(self, params):
+        if 'neutron_fip' in params:
+            neutron_fip = params['neutron_fip']
+            if (neutron_fip['floating_ip_address'] == '12.0.0.3' and
+                neutron_fip['fixed_ip_address'] == '10.0.1.2') or (
+                    neutron_fip['floating_ip_address'] == '12.0.0.5' and
+                    neutron_fip['fixed_ip_address'] == '10.0.1.3'):
+                result = {
+                    'nuage_fip_id': '1',
+                    'nuage_parent_id': '1'
+                }
+                return result
+
+    def get_nuage_port_by_id(self, params):
+        if 'nuage_fip_id' in params and params['nuage_fip_id'] == '1':
+            domain_id = uuidutils.generate_uuid()
+        else:
+            if 'nuage_router_id' in params:
+                domain_id = params['nuage_router_id']
+            else:
+                return
+
+        result = {
+            'nuage_vif_id': uuidutils.generate_uuid(),
+            'nuage_vport_id': uuidutils.generate_uuid(),
+            'nuage_domain_id': domain_id
+        }
+
+        return result
+
+    def get_zone_by_routerid(self, neutron_router_id):
+        result = {
+            'nuage_zone_id': uuidutils.generate_uuid()
+        }
+        return result
+
+    def get_usergroup(self, tenant, net_partition_id):
+        return uuidutils.generate_uuid(), uuidutils.generate_uuid()

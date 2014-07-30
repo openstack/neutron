@@ -511,7 +511,10 @@ class IpNetnsCommand(IpCommandBase):
 
     def add(self, name):
         self._as_root('add', name, use_root_namespace=True)
-        return IPWrapper(self._parent.root_helper, name)
+        wrapper = IPWrapper(self._parent.root_helper, name)
+        wrapper.netns.execute(['sysctl', '-w',
+                               'net.ipv4.conf.all.promote_secondaries=1'])
+        return wrapper
 
     def delete(self, name):
         self._as_root('delete', name, use_root_namespace=True)

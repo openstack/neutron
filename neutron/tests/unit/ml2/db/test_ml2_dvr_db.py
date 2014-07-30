@@ -107,6 +107,18 @@ class Ml2DBTestCase(base.BaseTestCase):
         ml2_db.delete_dvr_port_binding(
             self.ctx.session, 'foo_port_id', 'foo_host')
 
+    def test_delete_dvr_port_binding_if_stale(self):
+        network_id = 'foo_network_id'
+        port_id = 'foo_port_id'
+        self._setup_neutron_network(network_id, [port_id])
+        binding = self._setup_dvr_binding(
+            network_id, port_id, None, 'foo_host_id')
+
+        ml2_db.delete_dvr_port_binding_if_stale(self.ctx.session, binding)
+        count = (self.ctx.session.query(ml2_models.DVRPortBinding).
+            filter_by(port_id=binding.port_id).count())
+        self.assertFalse(count)
+
     def test_get_dvr_port_binding_by_host_not_found(self):
         port = ml2_db.get_dvr_port_binding_by_host(
             self.ctx.session, 'foo_port_id', 'foo_host_id')
