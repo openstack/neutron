@@ -172,12 +172,10 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                                       q_const.MAX_VLAN_TAG))
         self.tunnel_types = tunnel_types or []
         self.l2_pop = l2_population
-        # TODO(ethuleau): Initially, local ARP responder is be dependent to the
+        # TODO(ethuleau): Change ARP responder so it's not dependent on the
         #                 ML2 l2 population mechanism driver.
-        self.arp_responder_enabled = (arp_responder and
-                                      self._check_arp_responder_support() and
-                                      self.l2_pop)
         self.enable_distributed_routing = enable_distributed_routing
+        self.arp_responder_enabled = arp_responder and self.l2_pop
         self.agent_state = {
             'binary': 'neutron-openvswitch-agent',
             'host': cfg.CONF.host,
@@ -250,20 +248,6 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         # Initialize iteration counter
         self.iter_num = 0
         self.run_daemon_loop = True
-
-    def _check_arp_responder_support(self):
-        '''Check if OVS supports to modify ARP headers.
-
-        This functionality is only available since the development branch 2.1.
-        '''
-        args = ['arp,action=load:0x2->NXM_OF_ARP_OP[],'
-                'move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],'
-                'move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[]']
-        supported = ovs_lib.ofctl_arg_supported(self.root_helper, 'add-flow',
-                                                args)
-        if not supported:
-            LOG.warning(_('OVS version can not support ARP responder.'))
-        return supported
 
     def _report_state(self):
         # How many devices are likely used by a VM
@@ -477,14 +461,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         ip = netaddr.IPAddress(ip_str)
 
         if action == 'add':
-            actions = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
-                       'mod_dl_src:%(mac)s,'
-                       'load:0x2->NXM_OF_ARP_OP[],'
-                       'move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],'
-                       'move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],'
-                       'load:%(mac)#x->NXM_NX_ARP_SHA[],'
-                       'load:%(ip)#x->NXM_OF_ARP_SPA[],'
-                       'in_port' % {'mac': mac, 'ip': ip})
+            actions = constants.ARP_RESPONDER_ACTIONS % {'mac': mac, 'ip': ip}
             self.tun_br.add_flow(table=constants.ARP_RESPONDER,
                                  priority=1,
                                  proto='arp',

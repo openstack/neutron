@@ -78,12 +78,6 @@ class TunnelTest(base.BaseTestCase):
                               'neutron.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
 
-        check_arp_responder_str = ('neutron.plugins.openvswitch.agent.'
-                                   'ovs_neutron_agent.OVSNeutronAgent.'
-                                   '_check_arp_responder_support')
-        self.mock_check_arp_resp = mock.patch(check_arp_responder_str).start()
-        self.mock_check_arp_resp.return_value = True
-
         self.INT_BRIDGE = 'integration_bridge'
         self.TUN_BRIDGE = 'tunnel_bridge'
         self.MAP_TUN_BRIDGE = 'tun_br_map'
