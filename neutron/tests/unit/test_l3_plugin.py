@@ -2057,10 +2057,9 @@ class L3AgentDbIntTestCase(L3BaseForIntTests, L3AgentDbTestCaseBase):
     """
 
     def setUp(self):
-        self.core_plugin = TestL3NatIntPlugin()
-        # core plugin is also plugin providing L3 routing
-        self.plugin = self.core_plugin
         super(L3AgentDbIntTestCase, self).setUp()
+        self.core_plugin = TestL3NatIntPlugin()
+        self.plugin = self.core_plugin
 
 
 class L3AgentDbSepTestCase(L3BaseForSepTests, L3AgentDbTestCaseBase):
@@ -2070,10 +2069,9 @@ class L3AgentDbSepTestCase(L3BaseForSepTests, L3AgentDbTestCaseBase):
     """
 
     def setUp(self):
-        self.core_plugin = TestNoL3NatPlugin()
-        # core plugin is also plugin providing L3 routing
-        self.plugin = TestL3NatServicePlugin()
         super(L3AgentDbSepTestCase, self).setUp()
+        self.core_plugin = TestNoL3NatPlugin()
+        self.plugin = TestL3NatServicePlugin()
 
 
 class L3NatDBIntTestCase(L3BaseForIntTests, L3NatTestCaseBase):
