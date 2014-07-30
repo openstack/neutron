@@ -19,6 +19,7 @@ from neutron.common import constants as l3_const
 from neutron import context
 from neutron.db import api as db
 from neutron.db import l3_dvr_db
+from neutron import manager
 from neutron.tests import base
 
 
@@ -134,3 +135,15 @@ class L3DvrTestCase(base.BaseTestCase):
     def test__is_distributed_router_distributed(self):
         router = {'id': 'foo_router_id', 'distributed': True}
         self._test__is_distributed_router(router, True)
+
+    def test_get_agent_gw_ports_exist_for_network(self):
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp:
+            plugin = mock.Mock()
+            gp.return_value = plugin
+            plugin.get_ports.return_value = []
+            self.mixin.get_agent_gw_ports_exist_for_network(
+                self.ctx, 'network_id', 'host', 'agent_id')
+        plugin.get_ports.assert_called_with(self.ctx, {
+            'network_id': ['network_id'],
+            'device_id': ['agent_id'],
+            'device_owner': [l3_const.DEVICE_OWNER_AGENT_GW]})
