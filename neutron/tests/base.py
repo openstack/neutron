@@ -190,6 +190,12 @@ class BaseTestCase(testtools.TestCase):
         if sys.version_info < (2, 7) and getattr(self, 'fmt', '') == 'xml':
             raise self.skipException('XML Testing Skipped in Py26')
 
+        self.setup_config()
+
+    def setup_config(self):
+        """Tests that need a non-default config can override this method."""
+        self.config_parse()
+
     def config(self, **kw):
         """Override some configuration values.
 

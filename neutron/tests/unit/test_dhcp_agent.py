@@ -645,6 +645,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
         cfg.CONF.set_override('enable_metadata_network', True)
         cfg.CONF.set_override('debug', True)
+        cfg.CONF.set_override('verbose', False)
         cfg.CONF.set_override('log_file', 'test.log')
         class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
         self.external_process_p.stop()

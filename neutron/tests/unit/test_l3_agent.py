@@ -1843,6 +1843,7 @@ class TestL3AgentEventHandler(base.BaseTestCase):
             'interface_driver', 'neutron.agent.linux.interface.NullDriver'
         )
         cfg.CONF.set_override('use_namespaces', True)
+        cfg.CONF.set_override('verbose', False)
         agent_config.register_root_helper(cfg.CONF)
 
         device_exists_p = mock.patch(
