@@ -31,6 +31,7 @@ migration_for_plugins = [
     'neutron.plugins.brocade.NeutronPlugin.BrocadePluginV2',
     'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
     'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
+    'neutron.plugins.ml2.plugin.Ml2Plugin',
     'neutron.plugins.nec.nec_plugin.NECPluginV2',
     'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
     'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
