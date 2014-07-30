@@ -200,6 +200,10 @@ class TestL3GwModeMixin(base.BaseTestCase):
         self.fip_request = {'port_id': FAKE_FIP_INT_PORT_ID,
                             'tenant_id': self.tenant_id}
 
+    def _get_gwports_dict(self, gw_ports):
+        return dict((gw_port['id'], gw_port)
+                    for gw_port in gw_ports)
+
     def _reset_ext_gw(self):
         # Reset external gateway
         self.router.gw_port_id = None
@@ -253,7 +257,9 @@ class TestL3GwModeMixin(base.BaseTestCase):
     def test_build_routers_list_no_ext_gw(self):
         self._reset_ext_gw()
         router_dict = self.target_object._make_router_dict(self.router)
-        routers = self.target_object._build_routers_list([router_dict], [])
+        routers = self.target_object._build_routers_list(self.context,
+                                                         [router_dict],
+                                                         [])
         self.assertEqual(1, len(routers))
         router = routers[0]
         self.assertIsNone(router.get('gw_port'))
@@ -262,7 +268,8 @@ class TestL3GwModeMixin(base.BaseTestCase):
     def test_build_routers_list_with_ext_gw(self):
         router_dict = self.target_object._make_router_dict(self.router)
         routers = self.target_object._build_routers_list(
-            [router_dict], [self.router.gw_port])
+            self.context, [router_dict],
+            self._get_gwports_dict([self.router.gw_port]))
         self.assertEqual(1, len(routers))
         router = routers[0]
         self.assertIsNotNone(router.get('gw_port'))
@@ -273,7 +280,8 @@ class TestL3GwModeMixin(base.BaseTestCase):
         self.router.enable_snat = False
         router_dict = self.target_object._make_router_dict(self.router)
         routers = self.target_object._build_routers_list(
-            [router_dict], [self.router.gw_port])
+            self.context, [router_dict],
+            self._get_gwports_dict([self.router.gw_port]))
         self.assertEqual(1, len(routers))
         router = routers[0]
         self.assertIsNotNone(router.get('gw_port'))

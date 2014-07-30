@@ -24,8 +24,8 @@ from neutron.common import topics
 from neutron.db import api as qdbapi
 from neutron.db import common_db_mixin
 from neutron.db import extraroute_db
-from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_dvr_db
+from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_rpc_base
 from neutron.db import model_base
@@ -45,7 +45,7 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
                      l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                      l3_gwmode_db.L3_NAT_db_mixin,
-                     l3_agentschedulers_db.L3AgentSchedulerDbMixin):
+                     l3_dvrscheduler_db.L3_DVRsch_db_mixin):
 
     """Implementation of the Neutron L3 Router Service Plugin.
 

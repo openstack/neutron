@@ -28,10 +28,13 @@ from neutron.common import topics
 from neutron import context as q_context
 from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db
+from neutron.db import l3_db
+from neutron.db import l3_dvrscheduler_db
 from neutron.extensions import l3 as ext_l3
 from neutron import manager
 from neutron.openstack.common import timeutils
 from neutron.scheduler import l3_agent_scheduler
+from neutron.tests import base
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_l3_plugin
 
@@ -239,3 +242,142 @@ class L3AgentLeastRoutersSchedulerTestCase(L3SchedulerTestCase):
                         agent_id3 = agents[0]['id']
 
                         self.assertNotEqual(agent_id1, agent_id3)
+
+
+class L3DvrScheduler(l3_db.L3_NAT_db_mixin,
+                     l3_dvrscheduler_db.L3_DVRsch_db_mixin):
+    pass
+
+
+class L3DvrSchedulerTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+        self.setup_coreplugin(plugin)
+        super(L3DvrSchedulerTestCase, self).setUp()
+        self.adminContext = q_context.get_admin_context()
+        self.dut = L3DvrScheduler()
+
+    def test_dvr_update_router_addvm(self):
+        port = {
+                'device_id': 'abcd',
+                'device_owner': 'compute:nova',
+                'fixed_ips': [
+                    {
+                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+                        'ip_address': '10.10.10.3'
+                    }
+                ]
+        }
+        dvr_port = {
+                'id': 'dvr_port1',
+                'device_id': 'r1',
+                'device_owner': 'network:router_interface_distributed',
+                'fixed_ips': [
+                    {
+                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+                        'ip_address': '10.10.10.1'
+                    }
+                ]
+        }
+        r1 = {
+              'id': 'r1',
+              'distributed': True,
+        }
+
+        with contextlib.nested(
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+                       '.get_ports', return_value=[dvr_port]),
+            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
+                       return_value=mock.Mock()),
+            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                       return_value=r1),
+            mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
+                       '.L3AgentNotifyAPI')):
+            self.dut.dvr_update_router_addvm(self.adminContext, port)
+
+    def test_get_dvr_routers_by_vmportid(self):
+        dvr_port = {
+                'id': 'dvr_port1',
+                'device_id': 'r1',
+                'device_owner': 'network:router_interface_distributed',
+                'fixed_ips': [
+                    {
+                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+                        'ip_address': '10.10.10.1'
+                    }
+                ]
+        }
+        r1 = {
+              'id': 'r1',
+              'distributed': True,
+        }
+
+        with contextlib.nested(
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+                       '.get_port', return_value=dvr_port),
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+                       '.get_ports', return_value=[dvr_port])):
+            router_id = self.dut.get_dvr_routers_by_vmportid(self.adminContext,
+                                                             dvr_port['id'])
+            self.assertEqual(router_id.pop(), r1['id'])
+
+    def test_get_subnet_ids_on_router(self):
+        dvr_port = {
+                'id': 'dvr_port1',
+                'device_id': 'r1',
+                'device_owner': 'network:router_interface_distributed',
+                'fixed_ips': [
+                    {
+                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+                        'ip_address': '10.10.10.1'
+                    }
+                ]
+        }
+        r1 = {
+              'id': 'r1',
+              'distributed': True,
+        }
+
+        with contextlib.nested(
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+                       '.get_ports', return_value=[dvr_port])):
+            sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
+                                                        r1['id'])
+            self.assertEqual(sub_ids.pop(),
+                            dvr_port.get('fixed_ips').pop(0).get('subnet_id'))
+
+    def test_check_vm_exists_on_subnet(self):
+        dvr_port = {
+                'id': 'dvr_port1',
+                'device_id': 'r1',
+                'status': 'ACTIVE',
+                'binding:host_id': 'thisHost',
+                'device_owner': 'compute:nova',
+                'fixed_ips': [
+                    {
+                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+                        'ip_address': '10.10.10.1'
+                    }
+                ]
+        }
+        r1 = {
+              'id': 'r1',
+              'distributed': True,
+        }
+        with contextlib.nested(
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+                       '.get_ports', return_value=[dvr_port]),
+            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
+                       return_value=mock.Mock()),
+            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                       return_value=r1),
+            mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
+                       '.L3AgentNotifyAPI')):
+            sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
+                                                        r1['id'])
+            result = self.dut.check_vm_exists_on_subnet(
+                                                    self.adminContext,
+                                                    'thisHost', 'dvr_port1',
+                                                    sub_ids)
+            self.assertFalse(result)

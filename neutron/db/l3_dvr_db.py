@@ -19,7 +19,9 @@ from neutron.common import constants as l3_const
 from neutron.common import exceptions as n_exc
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
+from neutron.db import l3_dvrscheduler_db as l3_dvrsched_db
 from neutron.db import models_v2
+from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 
@@ -218,6 +220,32 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if interfaces:
             self._populate_subnet_for_ports(context, interfaces)
         return interfaces
+
+    def _build_routers_list(self, context, routers, gw_ports):
+        # Perform a single query up front for all routers
+        router_ids = [r['id'] for r in routers]
+        snat_binding = l3_dvrsched_db.CentralizedSnatL3AgentBinding
+        query = (context.session.query(snat_binding).
+                 filter(snat_binding.router_id.in_(router_ids))).all()
+        bindings = dict((b.router_id, b) for b in query)
+
+        for rtr in routers:
+            gw_port_id = rtr['gw_port_id']
+            if gw_port_id:
+                rtr['gw_port'] = gw_ports[gw_port_id]
+                if 'enable_snat' in rtr[l3.EXTERNAL_GW_INFO]:
+                    rtr['enable_snat'] = (
+                        rtr[l3.EXTERNAL_GW_INFO]['enable_snat'])
+
+                binding = bindings.get(rtr['id'])
+                if not binding:
+                    rtr['gw_port_host'] = None
+                    LOG.debug('No snat is bound to router %s', rtr['id'])
+                    continue
+
+                rtr['gw_port_host'] = binding.l3_agent.host
+
+        return routers
 
     def _process_routers(self, context, routers):
         routers_dict = {}

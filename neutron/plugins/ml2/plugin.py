@@ -28,6 +28,7 @@ from neutron.common import constants as const
 from neutron.common import exceptions as exc
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
@@ -214,7 +215,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # TODO(rkukura): Implement filtering.
         return nets
 
-    def _process_port_binding(self, mech_context, attrs):
+    def _process_port_binding(self, mech_context, context, attrs):
         binding = mech_context._binding
         port = mech_context.current
         changes = False
@@ -224,6 +225,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.host != host):
             binding.host = host
             changes = True
+            if "compute:" in port['device_owner']:
+                l3plugin = manager.NeutronManager.get_service_plugins().get(
+                    service_constants.L3_ROUTER_NAT)
+                if (utils.is_extension_supported(
+                    l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)):
+                    l3plugin.dvr_update_router_addvm(context, port)
 
         vnic_type = attrs and attrs.get(portbindings.VNIC_TYPE)
         if (attributes.is_attr_set(vnic_type) and
@@ -799,7 +806,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding = db.add_port_binding(session, result['id'])
             mech_context = driver_context.PortContext(self, context, result,
                                                       network, binding)
-            self._process_port_binding(mech_context, attrs)
+            self._process_port_binding(mech_context, context, attrs)
+
             result[addr_pair.ADDRESS_PAIRS] = (
                 self._process_create_allowed_address_pairs(
                     context, result,
@@ -861,7 +869,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self, context, updated_port, network, binding,
                 original_port=original_port)
             need_port_update_notify |= self._process_port_binding(
-                mech_context, attrs)
+                mech_context, context, attrs)
             self.mechanism_manager.update_port_precommit(mech_context)
 
         # TODO(apech) - handle errors raised by update_port, potentially
@@ -962,8 +970,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def delete_port(self, context, id, l3_port_check=True):
         LOG.debug(_("Deleting port %s"), id)
+        removed_routers = []
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
+        is_dvr_enabled = utils.is_extension_supported(
+            l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)
         if l3plugin and l3_port_check:
             l3plugin.prevent_l3_port_deletion(context, id)
 
@@ -993,11 +1004,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             else:
                 mech_context = driver_context.PortContext(self, context, port,
                                                           network, binding)
+                if "compute:" in port['device_owner'] and is_dvr_enabled:
+                    router_info = l3plugin.dvr_deletens_if_no_vm(context, id)
+                    removed_routers += router_info
                 self.mechanism_manager.delete_port_precommit(mech_context)
                 self._delete_port_security_group_bindings(context, id)
             if l3plugin:
                 router_ids = l3plugin.disassociate_floatingips(
                     context, id, do_notify=False)
+                if is_dvr_enabled:
+                    l3plugin.dvr_vmarp_table_update(context, id, "del")
 
             LOG.debug("Calling delete_port for %(port_id)s owned by %(owner)s"
                       % {"port_id": id, "owner": port['device_owner']})
@@ -1006,6 +1022,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # now that we've left db transaction, we are safe to notify
         if l3plugin:
             l3plugin.notify_routers_updated(context, router_ids)
+            for router in removed_routers:
+                l3plugin.remove_router_from_l3_agent(
+                    context, router['host'], router['router_id'])
 
         try:
             # for both normal and DVR Interface ports, only one invocation of

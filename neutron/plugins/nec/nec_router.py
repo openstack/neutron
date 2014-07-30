@@ -271,11 +271,11 @@ class L3AgentSchedulerDbMixin(l3_agentschedulers_db.L3AgentSchedulerDbMixin):
         return super(L3AgentSchedulerDbMixin, self).auto_schedule_routers(
             context, host, router_ids)
 
-    def schedule_router(self, context, router):
+    def schedule_router(self, context, router, candidates=None, hints=None):
         if (self._get_provider_by_router_id(context, router) ==
             nconst.ROUTER_PROVIDER_L3AGENT):
             return super(L3AgentSchedulerDbMixin, self).schedule_router(
-                context, router)
+                context, router, candidates=candidates, hints=hints)
 
     def add_router_to_l3_agent(self, context, id, router_id):
         provider = self._get_provider_by_router_id(context, router_id)
