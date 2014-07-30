@@ -231,10 +231,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.vnic_type = vnic_type
             changes = True
 
-        # CLI can't send {}, so treat None as {}.
-        profile = attrs and attrs.get(portbindings.PROFILE) or {}
-        if (profile is not attributes.ATTR_NOT_SPECIFIED and
-            self._get_profile(binding) != profile):
+        # treat None as clear of profile.
+        profile = None
+        if attrs and portbindings.PROFILE in attrs:
+            profile = attrs.get(portbindings.PROFILE) or {}
+
+        if profile not in (None, attributes.ATTR_NOT_SPECIFIED,
+                           self._get_profile(binding)):
             binding.profile = jsonutils.dumps(profile)
             if len(binding.profile) > models.BINDING_PROFILE_LEN:
                 msg = _("binding:profile value too large")
