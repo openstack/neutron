@@ -1478,7 +1478,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         mac = arp_table['mac_address']
         subnet_id = arp_table['subnet_id']
         ri = self.router_info.get(router_id)
-        self._update_arp_entry(ri, ip, mac, subnet_id, 'add')
+        if ri:
+            self._update_arp_entry(ri, ip, mac, subnet_id, 'add')
 
     def del_arp_entry(self, context, payload):
         """Delete arp entry from router namespace.  Called from RPC."""
