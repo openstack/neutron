@@ -124,8 +124,9 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                 agent.admin_state_up = True
                 agent.heartbeat_timestamp = timeutils.utcnow()
                 g.return_value = [agent]
+                dummy_payload = {'port': {}}
                 self.notifier._notify_agents(mock.Mock(), method,
-                                             mock.ANY, 'foo_network_id')
+                                             dummy_payload, 'foo_network_id')
                 self.assertEqual(expected_scheduling, f.call_count)
                 self.assertEqual(expected_casts, self.mock_cast.call_count)
 

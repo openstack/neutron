@@ -1168,6 +1168,29 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         for expected in expected_calls[DHCP_HOSTC]:
             self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
 
+    def _is_schedule_network_called(self, device_id):
+        plugin = manager.NeutronManager.get_plugin()
+        notifier = plugin.agent_notifiers[constants.AGENT_TYPE_DHCP]
+        with contextlib.nested(
+            self.subnet(),
+            mock.patch.object(plugin,
+                              'get_dhcp_agents_hosting_networks',
+                              return_value=[]),
+            mock.patch.object(notifier,
+                              '_schedule_network',
+                              return_value=[])
+                              ) as (subnet, _, mock_sched):
+            with self.port(subnet=subnet, device_id=device_id):
+                return mock_sched.called
+
+    def test_reserved_dhcp_port_creation(self):
+        device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
+        self.assertFalse(self._is_schedule_network_called(device_id))
+
+    def test_unreserved_dhcp_port_creation(self):
+        device_id = 'not_reserved'
+        self.assertTrue(self._is_schedule_network_called(device_id))
+
 
 class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                  test_agent_ext_plugin.AgentDBTestMixIn,
