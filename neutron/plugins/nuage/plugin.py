@@ -41,6 +41,7 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import lockutils
+from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.nuage.common import config
 from neutron.plugins.nuage.common import constants
@@ -50,6 +51,8 @@ from neutron.plugins.nuage.extensions import netpartition
 from neutron.plugins.nuage import nuagedb
 from neutron.plugins.nuage import syncmanager
 from neutron import policy
+
+LOG = logging.getLogger(__name__)
 
 
 class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
@@ -279,7 +282,8 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     net_partition = nuagedb.get_net_partition_by_id(
                         session, subnet_mapping['net_partition_id'])
                     self._create_update_port(context, port,
-                                             net_partition['np_name'])
+                                             net_partition['name'])
+                self._check_floatingip_update(context, port)
                 updated_port = self._make_port_dict(port)
                 sg_port = self._extend_port_dict_security_group(
                     updated_port,
@@ -1232,13 +1236,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return neutron_fip
 
-    def delete_floatingip(self, context, id):
-        fip = self._get_floatingip(context, id)
+    def delete_floatingip(self, context, fip_id):
+        fip = self._get_floatingip(context, fip_id)
         port_id = fip['fixed_port_id']
         with context.session.begin(subtransactions=True):
             if port_id:
                 params = {
-                    'neutron_port_id': id,
+                    'neutron_port_id': port_id,
                 }
                 nuage_port = self.nuageclient.get_nuage_port_by_id(params)
                 if (nuage_port and
@@ -1248,25 +1252,35 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                         'nuage_fip_id': None
                     }
                     self.nuageclient.update_nuage_vm_vport(params)
-            rtr_id = fip['last_known_router_id']
-            if rtr_id:
+                    LOG.debug("Floating-ip %(fip)s is disassociated from "
+                              "vport %(vport)s",
+                              {'fip': fip_id,
+                               'vport': nuage_port['nuage_vport_id']})
+
+                router_id = fip['router_id']
+            else:
+                router_id = fip['last_known_router_id']
+
+            if router_id:
                 ent_rtr_mapping = nuagedb.get_ent_rtr_mapping_by_rtrid(
                     context.session,
-                    rtr_id)
+                    router_id)
                 if not ent_rtr_mapping:
                     msg = _('router %s is not associated with '
-                            'any net-partition') % rtr_id
+                            'any net-partition') % router_id
                     raise n_exc.BadRequest(resource='floatingip',
                                        msg=msg)
                 params = {
                     'router_id': ent_rtr_mapping['nuage_router_id'],
-                    'fip_id': id
+                    'fip_id': fip_id
                 }
                 fip = self.nuageclient.get_nuage_fip_by_id(params)
                 if fip:
                     self.nuageclient.delete_nuage_floatingip(
                         fip['nuage_fip_id'])
-            super(NuagePlugin, self).delete_floatingip(context, id)
+                    LOG.debug('Floating-ip %s deleted from VSD', fip_id)
+
+            super(NuagePlugin, self).delete_floatingip(context, fip_id)
 
     def delete_security_group(self, context, id):
         filters = {'security_group_id': [id]}
