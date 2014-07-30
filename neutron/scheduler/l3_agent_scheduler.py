@@ -16,6 +16,7 @@
 import abc
 import random
 
+from oslo.db import exception as db_exc
 import six
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
@@ -145,15 +146,22 @@ class L3Scheduler(object):
 
     def bind_router(self, context, router_id, chosen_agent):
         """Bind the router to the l3 agent which has been chosen."""
-        with context.session.begin(subtransactions=True):
-            binding = l3_agentschedulers_db.RouterL3AgentBinding()
-            binding.l3_agent = chosen_agent
-            binding.router_id = router_id
-            context.session.add(binding)
-            LOG.debug(_('Router %(router_id)s is scheduled to '
-                        'L3 agent %(agent_id)s'),
-                      {'router_id': router_id,
-                       'agent_id': chosen_agent.id})
+        try:
+            with context.session.begin(subtransactions=True):
+                binding = l3_agentschedulers_db.RouterL3AgentBinding()
+                binding.l3_agent = chosen_agent
+                binding.router_id = router_id
+                context.session.add(binding)
+        except db_exc.DBDuplicateEntry:
+            LOG.debug('Router %(router_id)s has already been scheduled '
+                      'to L3 agent %(agent_id)s.',
+                      {'agent_id': chosen_agent.id,
+                       'router_id': router_id})
+            return
+
+        LOG.debug('Router %(router_id)s is scheduled to L3 agent '
+                  '%(agent_id)s', {'router_id': router_id,
+                                   'agent_id': chosen_agent.id})
 
 
 class ChanceScheduler(L3Scheduler):
