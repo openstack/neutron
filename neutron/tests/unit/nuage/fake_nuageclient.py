@@ -43,7 +43,7 @@ class FakeNuageClient(object):
     def update_subnet(self, neutron_subnet, params):
         pass
 
-    def delete_subnet(self, id, template_id):
+    def delete_subnet(self, id):
         pass
 
     def create_router(self, neutron_router, router, params):
@@ -86,6 +86,9 @@ class FakeNuageClient(object):
                 'l2dom_tid': uuidutils.generate_uuid(),
             }
             return fake_defnetpart_data
+
+    def get_net_partition_id_by_name(self, name):
+        return uuidutils.generate_uuid()
 
     def delete_net_partition(self, id, l3dom_id=None, l2dom_id=None):
         pass

@@ -114,27 +114,20 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             found_resource = found_resource[0]
         return found_resource
 
-    def _create_update_port(self, context, port,
-                            netpart_id, parent_id):
+    def _create_update_port(self, context, port, np_name):
         filters = {'device_id': [port['device_id']]}
         ports = self.get_ports(context, filters)
-        net_partition = nuagedb.get_net_partition_by_id(context.session,
-                                                        netpart_id)
         params = {
             'port_id': port['id'],
             'id': port['device_id'],
             'mac': port['mac_address'],
-            'parent_id': parent_id,
-            'net_partition': net_partition,
+            'netpart_name': np_name,
             'ip': port['fixed_ips'][0]['ip_address'],
             'no_of_ports': len(ports),
             'tenant': port['tenant_id'],
+            'neutron_id': port['fixed_ips'][0]['subnet_id']
         }
-
-        nuage_vm = self.nuageclient.create_vms(params)
-        if nuage_vm:
-            if port['fixed_ips'][0]['ip_address'] != str(nuage_vm['ip']):
-                self._update_port_ip(context, port, nuage_vm['ip'])
+        self.nuageclient.create_vms(params)
 
     def _get_router_by_subnet(self, context, subnet_id):
         filters = {
@@ -225,11 +218,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     if port['device_owner'].startswith(port_prefix):
                         #This request is coming from nova
                         try:
+                            net_partition = nuagedb.get_net_partition_by_id(
+                                session,
+                                subnet_mapping['net_partition_id'])
                             self._create_update_port(
                                 context,
                                 port,
-                                subnet_mapping['net_partition_id'],
-                                subnet_mapping['nuage_subnet_id'])
+                                net_partition['name'])
                         except Exception:
                             with excutils.save_and_reraise_exception():
                                 super(NuagePlugin, self).delete_port(
@@ -266,10 +261,10 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 }
                 nuage_port = self.nuageclient.get_nuage_port_by_id(params)
                 if not nuage_port or not nuage_port.get('nuage_vport_id'):
+                    net_partition = nuagedb.get_net_partition_by_id(
+                        session, subnet_mapping['net_partition_id'])
                     self._create_update_port(context, port,
-                                             subnet_mapping[
-                                                 'net_partition_id'],
-                                             subnet_mapping['nuage_subnet_id'])
+                                             net_partition['np_name'])
                 updated_port = self._make_port_dict(port)
                 sg_port = self._extend_port_dict_security_group(
                     updated_port,
@@ -301,17 +296,34 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 )
         return updated_port
 
+    def _delete_nuage_vport(self, context, port, np_name):
+        nuage_vif_id = None
+        params = {
+            'neutron_port_id': port['id'],
+        }
+        nuage_port = self.nuageclient.get_nuage_port_by_id(params)
+
+        if constants.NOVA_PORT_OWNER_PREF in port['device_owner']:
+            # This was a VM Port
+            if nuage_port:
+                nuage_vif_id = nuage_port['nuage_vif_id']
+            filters = {'device_id': [port['device_id']]}
+            ports = self.get_ports(context, filters)
+            params = {
+                'no_of_ports': len(ports),
+                'netpart_name': np_name,
+                'tenant': port['tenant_id'],
+                'mac': port['mac_address'],
+                'nuage_vif_id': nuage_vif_id,
+                'id': port['device_id']
+            }
+            self.nuageclient.delete_vms(params)
+
     @lockutils.synchronized('delete-port', 'nuage-del', external=True)
     def delete_port(self, context, id, l3_port_check=True):
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
         port = self._get_port(context, id)
-        nuage_vif_id = None
-        params = {
-            'neutron_port_id': id,
-        }
-        nuage_port = self.nuageclient.get_nuage_port_by_id(params)
-
         # This is required for to pass ut test_floatingip_port_delete
         self.disassociate_floatingips(context, id)
         if not port['fixed_ips']:
@@ -331,23 +343,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         netpart_id = subnet_mapping['net_partition_id']
         net_partition = nuagedb.get_net_partition_by_id(context.session,
                                                         netpart_id)
-
-        # Need to call this explicitly to delete vport
-        if constants.NOVA_PORT_OWNER_PREF in port['device_owner']:
-            if nuage_port:
-                nuage_vif_id = nuage_port['nuage_vif_id']
-            # This was a VM Port
-            filters = {'device_id': [port['device_id']]}
-            ports = self.get_ports(context, filters)
-            params = {
-                'no_of_ports': len(ports),
-                'net_partition': net_partition,
-                'tenant': port['tenant_id'],
-                'mac': port['mac_address'],
-                'nuage_vif_id': nuage_vif_id,
-                'id': port['device_id']
-            }
-            self.nuageclient.delete_vms(params)
+        self._delete_nuage_vport(context, port, net_partition['name'])
         super(NuagePlugin, self).delete_port(context, id)
 
     def _check_view_auth(self, context, resource, action):
@@ -491,12 +487,9 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 subnet_l2dom = nuagedb.get_subnet_l2dom_by_id(context.session,
                                                               subn['id'])
                 if subnet_l2dom:
-                    nuage_subnet_id = subnet_l2dom['nuage_subnet_id']
-                    nuage_l2dom_tid = subnet_l2dom['nuage_l2dom_tmplt_id']
                     user_id = subnet_l2dom['nuage_user_id']
                     group_id = subnet_l2dom['nuage_group_id']
-                    self.nuageclient.delete_subnet(nuage_subnet_id,
-                                                   nuage_l2dom_tid)
+                    self.nuageclient.delete_subnet(subn['id'])
                     nuagedb.delete_subnetl2dom_mapping(context.session,
                                                        subnet_l2dom)
                     if not self._check_router_subnet_for_tenant(
@@ -684,9 +677,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         subnet_l2dom = nuagedb.get_subnet_l2dom_by_id(context.session, id)
         if subnet_l2dom:
             try:
-                self.nuageclient.delete_subnet(
-                    subnet_l2dom['nuage_subnet_id'],
-                    subnet_l2dom['nuage_l2dom_tmplt_id'])
+                self.nuageclient.delete_subnet(id)
             except Exception:
                 msg = (_('Unable to complete operation on subnet %s.'
                          'One or more ports have an IP allocation '
@@ -743,7 +734,6 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                              'router': router_id})
                 raise n_exc.BadRequest(resource='subnet', msg=msg)
             nuage_subnet_id = subnet_l2dom['nuage_subnet_id']
-            nuage_l2dom_tmplt_id = subnet_l2dom['nuage_l2dom_tmplt_id']
             if self.nuageclient.vms_on_l2domain(nuage_subnet_id):
                 super(NuagePlugin,
                       self).remove_router_interface(context,
@@ -752,8 +742,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = (_("Subnet %s has one or more active VMs "
                        "Router-IF add not permitted") % subnet_id)
                 raise n_exc.BadRequest(resource='subnet', msg=msg)
-            self.nuageclient.delete_subnet(nuage_subnet_id,
-                                           nuage_l2dom_tmplt_id)
+            self.nuageclient.delete_subnet(subnet_id)
             net = netaddr.IPNetwork(subn['cidr'])
             pnet_binding = nuagedb.get_network_binding(context.session,
                                                        subn['network_id'])
