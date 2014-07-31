@@ -58,6 +58,26 @@ SECOND_L3_AGENT = {
     'start_flag': True
 }
 
+HOST_DVR = 'my_l3_host_dvr'
+DVR_L3_AGENT = {
+    'binary': 'neutron-l3-agent',
+    'host': HOST_DVR,
+    'topic': topics.L3_AGENT,
+    'configurations': {'agent_mode': 'dvr'},
+    'agent_type': constants.AGENT_TYPE_L3,
+    'start_flag': True
+}
+
+HOST_DVR_SNAT = 'my_l3_host_dvr_snat'
+DVR_SNAT_L3_AGENT = {
+    'binary': 'neutron-l3-agent',
+    'host': HOST_DVR_SNAT,
+    'topic': topics.L3_AGENT,
+    'configurations': {'agent_mode': 'dvr_snat'},
+    'agent_type': constants.AGENT_TYPE_L3,
+    'start_flag': True
+}
+
 DB_PLUGIN_KLASS = ('neutron.plugins.openvswitch.ovs_neutron_plugin.'
                    'OVSNeutronPluginV2')
 
@@ -105,6 +125,23 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         agent_db = self.plugin.get_agents_db(self.adminContext,
                                              filters={'host': [HOST]})
         self.agent_id2 = agent_db[0].id
+
+    def _register_l3_dvr_agents(self):
+        callback = agents_db.AgentExtRpcCallback()
+        callback.report_state(self.adminContext,
+                              agent_state={'agent_state': DVR_L3_AGENT},
+                              time=timeutils.strtime())
+        agent_db = self.plugin.get_agents_db(self.adminContext,
+                                             filters={'host': [HOST_DVR]})
+        self.l3_dvr_agent = agent_db[0]
+
+        callback.report_state(self.adminContext,
+                              agent_state={'agent_state': DVR_SNAT_L3_AGENT},
+                              time=timeutils.strtime())
+        agent_db = self.plugin.get_agents_db(self.adminContext,
+                                             filters={'host': [HOST_DVR_SNAT]})
+        self.l3_dvr_snat_id = agent_db[0].id
+        self.l3_dvr_snat_agent = agent_db[0]
 
     def _set_l3_agent_admin_state(self, context, agent_id, state=True):
         update = {'agent': {'admin_state_up': state}}
@@ -161,6 +198,40 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
             self.assertEqual(1, flog.call_count)
             args, kwargs = flog.call_args
             self.assertIn('has already been scheduled', args[0])
+
+    def _check_get_l3_agent_candidates(self, router, agent_list, exp_host):
+        candidates = self.get_l3_agent_candidates(self.adminContext,
+                                                  router, agent_list,
+                                                  subnet_id=None)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(candidates[0]['host'], exp_host)
+
+    def test_get_l3_agent_candidates(self):
+        self._register_l3_dvr_agents()
+        router = self._make_router(self.fmt,
+                                   tenant_id=str(uuid.uuid4()),
+                                   name='r2')
+        router['external_gateway_info'] = None
+        router['id'] = str(uuid.uuid4())
+        agent_list = [self.agent1, self.l3_dvr_agent]
+
+        # test legacy agent_mode case: only legacy agent should be candidate
+        router['distributed'] = False
+        exp_host = FIRST_L3_AGENT.get('host')
+        self._check_get_l3_agent_candidates(router, agent_list, exp_host)
+
+        # test dvr agent_mode case only dvr agent should be candidate
+        router['distributed'] = True
+        exp_host = DVR_L3_AGENT.get('host')
+        self._check_get_l3_agent_candidates(router, agent_list, exp_host)
+
+        # test dvr_snat agent_mode cases: dvr_snat agent can host
+        # centralized and distributed routers
+        agent_list = [self.l3_dvr_snat_agent]
+        exp_host = DVR_SNAT_L3_AGENT.get('host')
+        self._check_get_l3_agent_candidates(router, agent_list, exp_host)
+        router['distributed'] = False
+        self._check_get_l3_agent_candidates(router, agent_list, exp_host)
 
 
 class L3AgentChanceSchedulerTestCase(L3SchedulerTestCase):

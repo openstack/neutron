@@ -330,9 +330,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                  ex_net_id != gateway_external_network_id)):
                 continue
             is_router_distributed = sync_router.get('distributed', False)
-            if not is_router_distributed and agent_mode == 'legacy':
+            if agent_mode in ('legacy', 'dvr_snat') and (
+                not is_router_distributed):
                 candidates.append(l3_agent)
-            elif (agent_mode.startswith('dvr') and
+            elif is_router_distributed and agent_mode.startswith('dvr') and (
                 self.check_vmexists_on_l3agent(
                     context, l3_agent, sync_router['id'], subnet_id)):
                 candidates.append(l3_agent)
