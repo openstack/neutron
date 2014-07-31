@@ -260,7 +260,7 @@ class DhcpLocalProcess(DhcpBase):
         try:
             with open(file_name, 'r') as f:
                 try:
-                    return converter and converter(f.read()) or f.read()
+                    return converter(f.read()) if converter else f.read()
                 except ValueError:
                     msg = _('Unable to convert value in %s')
         except IOError:

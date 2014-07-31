@@ -83,12 +83,13 @@ def lsn_get_for_network(context, network_id, raise_on_err=True):
     try:
         return query.filter_by(net_id=network_id).one()
     except (orm.exc.NoResultFound, d_exc.DBError):
-        logger = raise_on_err and LOG.error or LOG.warn
-        logger(_('Unable to find Logical Service Node for '
-                 'network %s'), network_id)
+        msg = _('Unable to find Logical Service Node for network %s')
         if raise_on_err:
+            LOG.error(msg, network_id)
             raise p_exc.LsnNotFound(entity='network',
                                     entity_id=network_id)
+        else:
+            LOG.warn(msg, network_id)
 
 
 def lsn_port_add_for_lsn(context, lsn_port_id, subnet_id, mac, lsn_id):

@@ -173,7 +173,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                'devices': device_list,
                'tenant_id': network_gateway['tenant_id']}
         # Query gateway connections only if needed
-        if (fields and 'ports' in fields) or not fields:
+        if not fields or 'ports' in fields:
             res['ports'] = [self._make_gw_connection_dict(conn)
                             for conn in network_gateway.network_connections]
         return self._fields(res, fields)
@@ -221,7 +221,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
         query = self._get_collection_query(context,
                                            NetworkConnection,
                                            filters)
-        return only_one and query.one() or query.all()
+        return query.one() if only_one else query.all()
 
     def _unset_default_network_gateways(self, context):
         with context.session.begin(subtransactions=True):

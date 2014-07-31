@@ -48,7 +48,7 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
     def _agent_notification(self, context, method, router_ids, operation,
                             shuffle_agents):
         """Notify changed routers to hosting l3 agents."""
-        adminContext = context.is_admin and context or context.elevated()
+        adminContext = context if context.is_admin else context.elevated()
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         for router_id in router_ids:

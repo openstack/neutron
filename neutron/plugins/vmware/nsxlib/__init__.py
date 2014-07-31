@@ -41,7 +41,9 @@ def _build_uri_path(resource,
                     is_attachment=False,
                     extra_action=None):
     resources = resource.split('/')
-    res_path = resources[0] + (resource_id and "/%s" % resource_id or '')
+    res_path = resources[0]
+    if resource_id:
+        res_path += "/%s" % resource_id
     if len(resources) > 1:
         # There is also a parent resource to account for in the uri
         res_path = "%s/%s/%s" % (resources[1],

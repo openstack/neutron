@@ -67,12 +67,13 @@ class LsnManager(object):
         try:
             return lsn_api.lsn_for_network_get(self.cluster, network_id)
         except (n_exc.NotFound, api_exc.NsxApiException):
-            logger = raise_on_err and LOG.error or LOG.warn
-            logger(_('Unable to find Logical Service Node for '
-                     'network %s'), network_id)
+            msg = _('Unable to find Logical Service Node for network %s')
             if raise_on_err:
+                LOG.error(msg, network_id)
                 raise p_exc.LsnNotFound(entity='network',
                                         entity_id=network_id)
+            else:
+                LOG.warn(msg, network_id)
 
     def lsn_create(self, context, network_id):
         """Create a LSN associated to the network."""
@@ -103,14 +104,15 @@ class LsnManager(object):
                 lsn_port_id = lsn_api.lsn_port_by_subnet_get(
                     self.cluster, lsn_id, subnet_id)
             except (n_exc.NotFound, api_exc.NsxApiException):
-                logger = raise_on_err and LOG.error or LOG.warn
-                logger(_('Unable to find Logical Service Node Port for '
-                         'LSN %(lsn_id)s and subnet %(subnet_id)s')
-                       % {'lsn_id': lsn_id, 'subnet_id': subnet_id})
+                msg = _('Unable to find Logical Service Node Port for '
+                        'LSN %(lsn_id)s and subnet %(subnet_id)s')
                 if raise_on_err:
+                    LOG.error(msg, {'lsn_id': lsn_id, 'subnet_id': subnet_id})
                     raise p_exc.LsnPortNotFound(lsn_id=lsn_id,
                                                 entity='subnet',
                                                 entity_id=subnet_id)
+                else:
+                    LOG.warn(msg, {'lsn_id': lsn_id, 'subnet_id': subnet_id})
                 return (lsn_id, None)
             else:
                 return (lsn_id, lsn_port_id)
@@ -125,14 +127,15 @@ class LsnManager(object):
                 lsn_port_id = lsn_api.lsn_port_by_mac_get(
                     self.cluster, lsn_id, mac)
             except (n_exc.NotFound, api_exc.NsxApiException):
-                logger = raise_on_err and LOG.error or LOG.warn
-                logger(_('Unable to find Logical Service Node Port for '
-                         'LSN %(lsn_id)s and mac address %(mac)s')
-                       % {'lsn_id': lsn_id, 'mac': mac})
+                msg = _('Unable to find Logical Service Node Port for '
+                        'LSN %(lsn_id)s and mac address %(mac)s')
                 if raise_on_err:
+                    LOG.error(msg, {'lsn_id': lsn_id, 'mac': mac})
                     raise p_exc.LsnPortNotFound(lsn_id=lsn_id,
                                                 entity='MAC',
                                                 entity_id=mac)
+                else:
+                    LOG.warn(msg, {'lsn_id': lsn_id, 'mac': mac})
                 return (lsn_id, None)
             else:
                 return (lsn_id, lsn_port_id)

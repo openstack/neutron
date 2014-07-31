@@ -199,7 +199,7 @@ def get_segmentation_id(tenant_id, network_id):
         net = (session.query(AristaProvisionedNets).
                filter_by(tenant_id=tenant_id,
                          network_id=network_id).first())
-        return net and net.segmentation_id or None
+        return net.segmentation_id if net else None
 
 
 def is_vm_provisioned(vm_id, host_id, port_id,

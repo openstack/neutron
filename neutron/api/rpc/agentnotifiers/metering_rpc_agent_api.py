@@ -33,7 +33,7 @@ class MeteringAgentNotifyAPI(n_rpc.RpcProxy):
 
     def _agent_notification(self, context, method, routers):
         """Notify l3 metering agents hosted by l3 agent hosts."""
-        adminContext = context.is_admin and context or context.elevated()
+        adminContext = context if context.is_admin else context.elevated()
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
 

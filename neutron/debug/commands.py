@@ -89,7 +89,7 @@ class ListProbe(client.NeutronCommand, lister.Lister):
 
         debug_agent = self.get_debug_agent()
         info = debug_agent.list_probes()
-        columns = len(info) > 0 and sorted(info[0].keys()) or []
+        columns = sorted(info[0].keys()) if info else []
         return (columns, (utils.get_item_properties(
             s, columns, formatters=self._formatters, )
             for s in info), )

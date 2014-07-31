@@ -41,7 +41,7 @@ class L3RouterJointAgentNotifyAPI(n_rpc.RpcProxy):
 
     def _agent_notification(self, context, method, routers, operation, data):
         """Notify individual Cisco cfg agents."""
-        admin_context = context.is_admin and context or context.elevated()
+        admin_context = context if context.is_admin else context.elevated()
         for router in routers:
             if router['hosting_device'] is None:
                 continue
