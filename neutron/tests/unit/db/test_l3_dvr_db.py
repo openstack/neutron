@@ -20,7 +20,11 @@ from neutron.common import constants as l3_const
 from neutron import context
 from neutron.db import l3_dvr_db
 from neutron import manager
+from neutron.openstack.common import uuidutils
 from neutron.tests.unit import testlib_api
+
+
+_uuid = uuidutils.generate_uuid
 
 
 class L3DvrTestCase(testlib_api.SqlTestCase):
@@ -170,3 +174,60 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
         gw_ports = {}
         routers = self.mixin._build_routers_list(self.ctx, routers, gw_ports)
         self.assertIsNone(routers[0].get('gw_port'))
+
+    def test_clear_unused_fip_agent_gw_port(self):
+        floatingip = {
+            'id': _uuid(),
+            'fixed_port_id': _uuid(),
+            'floating_network_id': _uuid()
+        }
+        fip_id = floatingip['id']
+        with contextlib.nested(
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              '_get_floatingip'),
+            mock.patch.object(self.mixin,
+                              'get_vm_port_hostid'),
+            mock.patch.object(self.mixin,
+                              'check_fips_availability_on_host'),
+            mock.patch.object(self.mixin,
+                              'delete_floatingip_agent_gateway_port')
+                             ) as (gfips, gvm, cfips, dfips):
+            gfips.return_value = floatingip
+            gvm.return_value = 'my-host'
+            cfips.return_value = True
+            self.mixin.clear_unused_fip_agent_gw_port(
+                self.ctx, floatingip, fip_id)
+            self.assertTrue(dfips.called)
+            self.assertTrue(cfips.called)
+            self.assertTrue(gvm.called)
+
+    def _delete_floatingip_test_setup(self, floatingip):
+        fip_id = floatingip['id']
+        with contextlib.nested(
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              '_get_floatingip'),
+            mock.patch.object(self.mixin,
+                              'clear_unused_fip_agent_gw_port'),
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              'delete_floatingip')) as (gf, vf, df):
+            gf.return_value = floatingip
+            self.mixin.delete_floatingip(self.ctx, fip_id)
+            return vf
+
+    def test_delete_floatingip_without_internal_port(self):
+        floatingip = {
+            'id': _uuid(),
+            'fixed_port_id': None,
+            'floating_network_id': _uuid()
+        }
+        mock_fip_clear = self._delete_floatingip_test_setup(floatingip)
+        self.assertFalse(mock_fip_clear.call_count)
+
+    def test_delete_floatingip_with_internal_port(self):
+        floatingip = {
+            'id': _uuid(),
+            'fixed_port_id': _uuid(),
+            'floating_network_id': _uuid()
+        }
+        mock_fip_clear = self._delete_floatingip_test_setup(floatingip)
+        self.assertTrue(mock_fip_clear.called)
