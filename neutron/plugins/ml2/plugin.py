@@ -278,7 +278,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # possible (but unlikely) that the port's state could change
         # concurrently while these calls are being made. If another
         # thread or process succeeds in binding the port before this
-        # thread commits its results, the already commited results are
+        # thread commits its results, the already committed results are
         # used. If attributes such as binding:host_id,
         # binding:profile, or binding:vnic_type are updated
         # concurrently, this loop retries binding using the new
@@ -825,7 +825,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.delete_port(context, result['id'])
 
         # REVISIT(rkukura): Is there any point in calling this before
-        # a binding has been succesfully established?
+        # a binding has been successfully established?
         self.notify_security_groups_member_updated(context, result)
 
         try:

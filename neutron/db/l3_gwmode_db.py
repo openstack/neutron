@@ -59,7 +59,7 @@ class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
         super(L3_NAT_db_mixin, self)._update_router_gw_info(
             context, router_id, info, router=router)
         # Returning the router might come back useful if this
-        # method is overriden in child classes
+        # method is overridden in child classes
         return router
 
     def _build_routers_list(self, context, routers, gw_ports):

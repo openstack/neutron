@@ -627,13 +627,13 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
     @put_context_in_serverpool
     def create_port(self, context, port):
         """Create a port, which is a connection point of a device
-        (e.g., a VM NIC) to attach to a L2 Neutron network.
+        (e.g., a VM NIC) to attach an L2 Neutron network.
         :param context: neutron api request context
         :param port: dictionary describing the port
 
         :returns:
         {
-            "id": uuid represeting the port.
+            "id": uuid representing the port.
             "network_id": uuid of network.
             "tenant_id": tenant_id
             "mac_address": mac address to use on this port.
@@ -641,7 +641,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                               does not forward packets.
             "status": dicates whether port is currently operational
                       (limit values to "ACTIVE", "DOWN", "BUILD", and "ERROR")
-            "fixed_ips": list of subnet ID"s and IP addresses to be used on
+            "fixed_ips": list of subnet IDs and IP addresses to be used on
                          this port
             "device_id": identifies the device (e.g., virtual server) using
                          this port.
@@ -725,7 +725,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
         :returns: a mapping sequence with the following signature:
         {
-            "id": uuid represeting the port.
+            "id": uuid representing the port.
             "network_id": uuid of network.
             "tenant_id": tenant_id
             "mac_address": mac address to use on this port.
@@ -733,7 +733,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                                does not forward packets.
             "status": dicates whether port is currently operational
                        (limit values to "ACTIVE", "DOWN", "BUILD", and "ERROR")
-            "fixed_ips": list of subnet ID's and IP addresses to be used on
+            "fixed_ips": list of subnet IDs and IP addresses to be used on
                          this port
             "device_id": identifies the device (e.g., virtual server) using
                          this port.

@@ -399,13 +399,13 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
             subnet_uuid = ips['subnet_id']
             ldm = self.local_dvr_map[subnet_uuid]
             if not ldm.is_dvr_owned():
-                # well this is csnat stuff, let dvr come in
+                # well this is CSNAT stuff, let dvr come in
                 # and do plumbing for this vm later
                 continue
 
             # This confirms that this compute port belongs
             # to a dvr hosted subnet.
-            # Accomodate this VM Port into the existing rule in
+            # Accommodate this VM Port into the existing rule in
             # the integration bridge
             LOG.debug("DVR: Plumbing compute port %s", port.vif_id)
             subnet_info = ldm.get_subnet_info()
@@ -598,7 +598,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
         ovsport = self.local_ports[port.vif_id]
         # This confirms that this compute port being removed belonged
         # to a dvr hosted subnet.
-        # Accomodate this VM Port into the existing rule in
+        # Accommodate this VM Port into the existing rule in
         # the integration bridge
         LOG.debug("DVR: Removing plumbing for compute port %s", port)
         subnet_ids = ovsport.get_subnets()
@@ -654,9 +654,9 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
     def _unbind_centralized_snat_port_on_dvr_subnet(self, port, local_vlan):
 
         ovsport = self.local_ports[port.vif_id]
-        # This comfirms that this compute port being removed belonged
+        # This confirms that this compute port being removed belonged
         # to a dvr hosted subnet.
-        # Accomodate this VM Port into the existing rule in
+        # Accommodate this VM Port into the existing rule in
         # the integration bridge
         LOG.debug("DVR: Removing plumbing for csnat port %s", port)
         sub_uuid = list(ovsport.get_subnets())[0]

@@ -875,7 +875,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         # Build notification message
         (service1_data,
          service2_data) = self.notification_for_two_services_with_two_conns()
-        # Simulate plugin returning notifcation, when requested
+        # Simulate plugin returning notification, when requested
         self.driver.agent_rpc.get_vpn_services_on_host.return_value = [
             service1_data, service2_data]
         vpn_services = self.driver.update_all_services_and_connections(

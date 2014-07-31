@@ -554,13 +554,13 @@ class SyncService(object):
             try:
                 self._rpc.delete_this_region()
                 msg = _('No Tenants configured in Neutron DB. But %d '
-                        'tenants disovered in EOS during synchronization.'
-                        'Enitre EOS region is cleared') % len(eos_tenants)
+                        'tenants discovered in EOS during synchronization.'
+                        'Entire EOS region is cleared') % len(eos_tenants)
                 LOG.info(msg)
                 # Re-register with EOS so that the timestamp is updated.
                 self._rpc.register_with_eos()
                 # Region has been completely cleaned. So there is nothing to
-                # syncronize
+                # synchronize
                 self._force_sync = False
             except arista_exc.AristaRpcError:
                 LOG.warning(EOS_UNREACHABLE_MSG)
@@ -655,7 +655,7 @@ class SyncService(object):
 class AristaDriver(driver_api.MechanismDriver):
     """Ml2 Mechanism driver for Arista networking hardware.
 
-    Remebers all networks and VMs that are provisioned on Arista Hardware.
+    Remembers all networks and VMs that are provisioned on Arista Hardware.
     Does not send network provisioning request if the network has already been
     provisioned before for the given port.
     """

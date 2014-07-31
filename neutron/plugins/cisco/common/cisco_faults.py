@@ -126,7 +126,7 @@ class RequestedStateInvalid(webob.exc.HTTPClientError):
 
     subclass of :class:`~HTTPClientError`
 
-    This indicates that the server could not update the port state to
+    This indicates that the server could not update the port state
     to the request value
 
     code: 431, title: Requested State Invalid

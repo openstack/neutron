@@ -39,7 +39,7 @@ class VPNAgent(l3_agent.L3NATAgentWithStateReport):
 
         :param host: hostname. This is needed for rpc
         Each devices will stays as processes.
-        They will communiate with
+        They will communicate with
         server side service plugin using rpc with
         device specific rpc topic.
         :returns: None

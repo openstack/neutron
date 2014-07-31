@@ -602,7 +602,7 @@ class IptablesManager(object):
             return True
 
         # We filter duplicates.  Go through the chains and rules, letting
-        # the *last* occurrence take precendence since it could have a
+        # the *last* occurrence take precedence since it could have a
         # non-zero [packet:byte] count we want to preserve.  We also filter
         # out anything in the "remove" list.
         new_filter.reverse()

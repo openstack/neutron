@@ -184,7 +184,7 @@ def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
 
 
 def parse_mappings(mapping_list, unique_values=True):
-    """Parse a list of of mapping strings into a dictionary.
+    """Parse a list of mapping strings into a dictionary.
 
     :param mapping_list: a list of strings of the form '<key>:<value>'
     :param unique_values: values must be unique if True

@@ -57,7 +57,7 @@ class APICManager(object):
         apic_conf = cfg.CONF.ml2_cisco_apic
         self.switch_dict = config.create_switch_dictionary()
 
-        # Connect to the the APIC
+        # Connect to the APIC
         self.apic = apic_client.RestClient(
             apic_conf.apic_host,
             apic_conf.apic_port,

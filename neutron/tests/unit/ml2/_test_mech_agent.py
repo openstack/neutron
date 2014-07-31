@@ -111,7 +111,7 @@ class FakePortContext(api.PortContext):
 
 
 class AgentMechanismBaseTestCase(base.BaseTestCase):
-    # These following must be overriden for the specific mechanism
+    # The following must be overridden for the specific mechanism
     # driver being tested:
     VIF_TYPE = None
     CAP_PORT_FILTER = None
