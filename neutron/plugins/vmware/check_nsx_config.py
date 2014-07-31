@@ -24,7 +24,7 @@ from neutron.plugins.vmware.common import config as nsx_config  # noqa
 from neutron.plugins.vmware.common import nsx_utils
 from neutron.plugins.vmware import nsxlib
 
-config.setup_logging(cfg.CONF)
+config.setup_logging()
 
 
 def help(name):

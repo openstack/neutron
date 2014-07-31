@@ -59,7 +59,7 @@ def main():
     config.register_root_helper(cfg.CONF)
 
     common_config.init(sys.argv[1:])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
 
     mgr = manager.LbaasAgentManager(cfg.CONF)
     svc = LbaasAgentService(

@@ -166,7 +166,7 @@ class RestProxyAgent(n_rpc.RpcCallback,
 
 def main():
     config.init(sys.argv[1:])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     pl_config.register_config()
 
     integ_br = cfg.CONF.RESTPROXYAGENT.integration_bridge

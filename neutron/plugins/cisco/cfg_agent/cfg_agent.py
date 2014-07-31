@@ -343,7 +343,7 @@ def main(manager='neutron.plugins.cisco.cfg_agent.'
     conf.register_opts(external_process.OPTS)
     common_config.init(sys.argv[1:])
     conf(project='neutron')
-    config.setup_logging(conf)
+    config.setup_logging()
     server = neutron_service.Service.create(
         binary='neutron-cisco-cfg-agent',
         topic=c_constants.CFG_AGENT,

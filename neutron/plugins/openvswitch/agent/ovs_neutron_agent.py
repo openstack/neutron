@@ -1520,7 +1520,7 @@ def create_agent_config_map(config):
 def main():
     cfg.CONF.register_opts(ip_lib.OPTS)
     common_config.init(sys.argv[1:])
-    common_config.setup_logging(cfg.CONF)
+    common_config.setup_logging()
     q_utils.log_opt_values(LOG)
 
     try:

@@ -1913,7 +1913,7 @@ def _register_opts(conf):
 def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
     _register_opts(cfg.CONF)
     common_config.init(sys.argv[1:])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     server = neutron_service.Service.create(
         binary='neutron-l3-agent',
         topic=topics.L3_AGENT,

@@ -36,7 +36,7 @@ class IpLibTestFramework(base.BaseLinuxTestCase):
         self._configure()
 
     def _configure(self):
-        config.setup_logging(cfg.CONF)
+        config.setup_logging()
         config.register_root_helper(cfg.CONF)
         cfg.CONF.set_override('root_helper', self.root_helper, group='AGENT')
         config.register_interface_driver_opts_helper(cfg.CONF)

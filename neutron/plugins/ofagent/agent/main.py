@@ -35,5 +35,5 @@ def main():
     # TODO(yamamoto) remove this later
     if ryu_cfg.CONF is not cfg.CONF:
         ryu_cfg.CONF(project='ryu', args=[])
-    common_config.setup_logging(cfg.CONF)
+    common_config.setup_logging()
     AppManager.run_apps(['neutron.plugins.ofagent.agent.ofa_neutron_agent'])

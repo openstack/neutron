@@ -88,7 +88,7 @@ class NeutronApiService(WsgiService):
         # flags. Everything else must be set up in the conf file...
         # Log the options used when starting if we're in debug mode...
 
-        config.setup_logging(cfg.CONF)
+        config.setup_logging()
         # Dump the initial option values
         cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
         service = cls(app_name)

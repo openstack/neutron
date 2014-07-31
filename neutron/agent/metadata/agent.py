@@ -386,7 +386,7 @@ def main():
     cfg.CONF.set_default(name='cache_url', default='memory://?default_ttl=5')
     agent_conf.register_agent_state_opts_helper(cfg.CONF)
     config.init(sys.argv[1:])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     utils.log_opt_values(LOG)
     proxy = UnixDomainMetadataProxy(cfg.CONF)
     proxy.run()

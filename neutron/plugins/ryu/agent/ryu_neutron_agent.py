@@ -283,7 +283,7 @@ class OVSNeutronOFPRyuAgent(n_rpc.RpcCallback,
 def main():
     common_config.init(sys.argv[1:])
 
-    common_config.setup_logging(cfg.CONF)
+    common_config.setup_logging()
 
     integ_br = cfg.CONF.OVS.integration_bridge
     polling_interval = cfg.CONF.AGENT.polling_interval

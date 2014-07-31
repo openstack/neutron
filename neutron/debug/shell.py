@@ -76,7 +76,7 @@ class NeutronDebugShell(shell.NeutronShell):
         config.register_use_namespaces_opts_helper(cfg.CONF)
         config.register_root_helper(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])
-        config.setup_logging(cfg.CONF)
+        config.setup_logging()
         driver = importutils.import_object(cfg.CONF.interface_driver, cfg.CONF)
         self.debug_agent = debug_agent.NeutronDebugAgent(cfg.CONF,
                                                          client,

@@ -39,7 +39,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def _configure(self):
         l3_agent._register_opts(cfg.CONF)
         cfg.CONF.set_override('debug', True)
-        config.setup_logging(cfg.CONF)
+        config.setup_logging()
         cfg.CONF.set_override(
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')

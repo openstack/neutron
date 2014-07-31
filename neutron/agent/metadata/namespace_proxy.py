@@ -169,7 +169,7 @@ def main():
     cfg.CONF.register_cli_opts(opts)
     # Don't get the default configuration file
     cfg.CONF(project='neutron', default_config_files=[])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     utils.log_opt_values(LOG)
     proxy = ProxyDaemon(cfg.CONF.pid_file,
                         cfg.CONF.metadata_port,

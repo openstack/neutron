@@ -613,7 +613,7 @@ def register_options():
 def main():
     register_options()
     common_config.init(sys.argv[1:])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     server = neutron_service.Service.create(
         binary='neutron-dhcp-agent',
         topic=topics.DHCP_AGENT,

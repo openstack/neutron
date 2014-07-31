@@ -464,7 +464,7 @@ class HyperVNeutronAgent(n_rpc.RpcCallback):
 
 def main():
     common_config.init(sys.argv[1:])
-    common_config.setup_logging(cfg.CONF)
+    common_config.setup_logging()
 
     plugin = HyperVNeutronAgent()
 

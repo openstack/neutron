@@ -286,7 +286,7 @@ def main():
     config.register_agent_state_opts_helper(conf)
     config.register_root_helper(conf)
     common_config.init(sys.argv[1:])
-    config.setup_logging(conf)
+    config.setup_logging()
     server = neutron_service.Service.create(
         binary='neutron-metering-agent',
         topic=topics.METERING_AGENT,

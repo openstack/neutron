@@ -157,11 +157,8 @@ def init(args, **kwargs):
         raise Exception(msg)
 
 
-def setup_logging(conf):
-    """Sets up the logging options for a log with supplied name.
-
-    :param conf: a cfg.ConfOpts object
-    """
+def setup_logging():
+    """Sets up the logging options for a log with supplied name."""
     product_name = "neutron"
     logging.setup(product_name)
     LOG.info(_("Logging enabled!"))
