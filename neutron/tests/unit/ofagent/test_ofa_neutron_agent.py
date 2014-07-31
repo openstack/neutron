@@ -808,22 +808,6 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             self.agent.reclaim_local_vlan(self.lvms[1].net)
             del_port_fn.assert_called_once_with(self.tun_name2)
 
-    def test_daemon_loop_uses_polling_manager(self):
-        with mock.patch(
-            'neutron.agent.linux.polling.get_polling_manager'
-        ) as mock_get_pm:
-            fake_pm = mock.Mock()
-            mock_get_pm.return_value = fake_pm
-            fake_pm.__enter__ = mock.Mock()
-            fake_pm.__exit__ = mock.Mock()
-            with mock.patch.object(
-                self.agent, 'ovsdb_monitor_loop'
-            ) as mock_loop:
-                self.agent.daemon_loop()
-        mock_get_pm.assert_called_once_with(True, 'fake_helper',
-                                            constants.DEFAULT_OVSDBMON_RESPAWN)
-        mock_loop.assert_called_once_with(polling_manager=fake_pm.__enter__())
-
     def test__setup_tunnel_port_error_negative(self):
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'add_tunnel_port',
