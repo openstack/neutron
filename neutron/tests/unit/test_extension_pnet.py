@@ -152,8 +152,8 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         res, _1 = self._post_network_with_provider_attrs(ctx, True)
         self.assertEqual(res.status_int, web_exc.HTTPForbidden.code)
 
-    def test_network_update_with_provider_attrs_noadmin_returns_404(self):
+    def test_network_update_with_provider_attrs_noadmin_returns_403(self):
         tenant_id = 'no_admin'
         ctx = context.Context('', tenant_id, is_admin=False)
         res, _1, _2 = self._put_network_with_provider_attrs(ctx, True)
-        self.assertEqual(res.status_int, web_exc.HTTPNotFound.code)
+        self.assertEqual(res.status_int, web_exc.HTTPForbidden.code)

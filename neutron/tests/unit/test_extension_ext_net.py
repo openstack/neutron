@@ -118,8 +118,7 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                           network['network']['id'])
             req.environ['neutron.context'] = context.Context('', 'noadmin')
             res = req.get_response(self.api)
-            # The API layer always returns 404 on updates in place of 403
-            self.assertEqual(exc.HTTPNotFound.code, res.status_int)
+            self.assertEqual(exc.HTTPForbidden.code, res.status_int)
 
     def test_network_filter_hook_admin_context(self):
         plugin = manager.NeutronManager.get_plugin()

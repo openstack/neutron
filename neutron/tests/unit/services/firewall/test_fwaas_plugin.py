@@ -280,8 +280,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                     'firewalls', data, fw_id,
                     context=context.Context('', 'noadmin'))
                 res = req.get_response(self.ext_api)
-                # returns 404 due to security reasons
-                self.assertEqual(res.status_int, exc.HTTPNotFound.code)
+                self.assertEqual(res.status_int, exc.HTTPForbidden.code)
 
     def test_update_firewall_policy_fails_when_firewall_pending(self):
         name = "new_firewall1"
