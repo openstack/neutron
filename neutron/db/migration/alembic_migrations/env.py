@@ -17,11 +17,14 @@
 from logging import config as logging_config
 
 from alembic import context
-from sqlalchemy import create_engine, pool
+import sqlalchemy as sa
+from sqlalchemy import create_engine, event, pool
 
 from neutron.db import model_base
 from neutron.openstack.common import importutils
 
+
+MYSQL_ENGINE = None
 
 DATABASE_QUOTA_DRIVER = 'neutron.extensions._quotav2_driver.DbQuotaDriver'
 
@@ -45,6 +48,12 @@ for class_path in active_plugins:
 target_metadata = model_base.BASEV2.metadata
 
 
+def set_mysql_engine(mysql_engine):
+    global MYSQL_ENGINE
+    MYSQL_ENGINE = (mysql_engine or
+                    model_base.BASEV2.__table_args__['mysql_engine'])
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -55,6 +64,8 @@ def run_migrations_offline():
     script output.
 
     """
+    set_mysql_engine(neutron_config.command.mysql_engine)
+
     kwargs = dict()
     if neutron_config.database.connection:
         kwargs['url'] = neutron_config.database.connection
@@ -67,6 +78,12 @@ def run_migrations_offline():
                                options=build_options())
 
 
+@event.listens_for(sa.Table, 'after_parent_attach')
+def set_storage_engine(target, parent):
+    if MYSQL_ENGINE:
+        target.kwargs['mysql_engine'] = MYSQL_ENGINE
+
+
 def run_migrations_online():
     """Run migrations in 'online' mode.
 
@@ -74,6 +91,8 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    set_mysql_engine(neutron_config.command.mysql_engine)
+
     engine = create_engine(
         neutron_config.database.connection,
         poolclass=pool.NullPool)
