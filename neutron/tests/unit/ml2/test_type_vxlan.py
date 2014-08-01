@@ -15,7 +15,6 @@
 # @author: Kyle Mestery, Cisco Systems, Inc.
 
 import mock
-from oslo.config import cfg
 from six import moves
 import testtools
 from testtools import matchers
@@ -35,7 +34,6 @@ TUN_MAX = 109
 TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
 UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
 INVALID_VXLAN_VNI = 7337
-MULTICAST_GROUP = "239.1.1.1"
 VXLAN_UDP_PORT_ONE = 9999
 VXLAN_UDP_PORT_TWO = 8888
 
@@ -43,10 +41,6 @@ VXLAN_UDP_PORT_TWO = 8888
 class VxlanTypeTest(testlib_api.SqlTestCase):
     def setUp(self):
         super(VxlanTypeTest, self).setUp()
-        cfg.CONF.set_override('vni_ranges', [TUNNEL_RANGES],
-                              group='ml2_type_vxlan')
-        cfg.CONF.set_override('vxlan_group', MULTICAST_GROUP,
-                              group='ml2_type_vxlan')
         self.driver = type_vxlan.VxlanTypeDriver()
         self.driver.vxlan_vni_ranges = TUNNEL_RANGES
         self.driver._sync_vxlan_allocations()
