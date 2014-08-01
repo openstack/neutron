@@ -74,7 +74,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         except ImportError:
             with excutils.save_and_reraise_exception():
                 msg = (_('Error importing interface driver: %s')
-                       % conf.haproxy.interface_driver)
+                       % conf.interface_driver)
                 LOG.error(msg)
 
         self.vif_driver = vif_driver
