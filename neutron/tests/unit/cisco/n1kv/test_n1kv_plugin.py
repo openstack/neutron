@@ -17,8 +17,10 @@
 # @author: Juergen Brendel, Cisco Systems Inc.
 # @author: Abhishek Raut, Cisco Systems Inc.
 # @author: Sourabh Patwardhan, Cisco Systems Inc.
+# @author: Marga Millet, Cisco Systems Inc.
 
 from mock import patch
+import webob.exc
 
 from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes
@@ -595,6 +597,14 @@ class TestN1kvPorts(test_plugin.TestPortsV2,
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = False
 
+    _unsupported = ('test_delete_network_if_port_exists',
+                    'test_requested_subnet_id_v4_and_v6')
+
+    def setUp(self):
+        if self._testMethodName in self._unsupported:
+            self.skipTest("Unsupported test case")
+        super(TestN1kvPorts, self).setUp()
+
     def test_create_port_with_default_n1kv_policy_profile_id(self):
         """Test port create without passing policy profile id."""
         with self.port() as port:
@@ -818,9 +828,64 @@ class TestN1kvNetworks(test_plugin.TestNetworksV2,
         self.assertFalse(n1kv_db_v2.get_vxlan_allocation(db_session,
                                                          10000).allocated)
 
+    def test_delete_network(self):
+        """Regular test case of network deletion. Should return successful."""
+        res = self._create_network(self.fmt, name='net', admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        req = self.new_delete_request('networks', network['network']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+
+    def test_delete_network_with_subnet(self):
+        """Network deletion fails when a subnet is present on the network."""
+        with self.subnet() as subnet:
+            net_id = subnet['subnet']['network_id']
+            req = self.new_delete_request('networks', net_id)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
+    def test_update_network_set_not_shared_multi_tenants2_returns_409(self):
+        """
+           Verifies that updating a network which cannot be shared,
+           returns a conflict error.
+        """
+        with self.network(shared=True) as network:
+            res = self._create_port(self.fmt, network['network']['id'],
+                                    webob.exc.HTTPCreated.code,
+                                    tenant_id='somebody_else',
+                                    set_context=True)
+            data = {'network': {'shared': False}}
+            req = self.new_update_request('networks', data,
+                                          network['network']['id'])
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPConflict.code)
+            port = self.deserialize(self.fmt, res)
+            self._delete('ports', port['port']['id'])
+
+    def test_delete_network_if_port_exists(self):
+        """Verify that a network with a port attached cannot be removed."""
+        res = self._create_network(self.fmt, name='net1', admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        net_id = network['network']['id']
+        res = self._create_port(self.fmt, net_id,
+                                webob.exc.HTTPCreated.code)
+        req = self.new_delete_request('networks', net_id)
+        self.assertEqual(req.get_response(self.api).status_int,
+                         webob.exc.HTTPConflict.code)
+
 
 class TestN1kvSubnets(test_plugin.TestSubnetsV2,
                       N1kvPluginTestCase):
+
+    _unsupported = (
+        'test_delete_network',
+        'test_create_subnets_bulk_emulated',
+        'test_create_subnets_bulk_emulated_plugin_failure')
+
+    def setUp(self):
+        if self._testMethodName in self._unsupported:
+            self.skipTest("Unsupported test")
+        super(TestN1kvSubnets, self).setUp()
 
     def test_create_subnet_with_invalid_parameters(self):
         """Test subnet creation with invalid parameters sent to the VSM."""
@@ -834,6 +899,113 @@ class TestN1kvSubnets(test_plugin.TestSubnetsV2,
             subnet_resp = subnet_req.get_response(self.api)
             # Subnet creation should fail due to invalid network name
             self.assertEqual(subnet_resp.status_int, 400)
+
+    def test_update_subnet_adding_additional_host_routes_and_dns(self):
+        host_routes = [{'destination': '172.16.0.0/24',
+                        'nexthop': '10.0.2.2'}]
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'dns_nameservers': ['192.168.0.1'],
+                               'host_routes': host_routes,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            subnet = self.deserialize(self.fmt, req.get_response(self.api))
+
+            host_routes = [{'destination': '172.16.0.0/24',
+                            'nexthop': '10.0.2.2'},
+                           {'destination': '192.168.0.0/24',
+                            'nexthop': '10.0.2.3'}]
+
+            dns_nameservers = ['192.168.0.1', '192.168.0.2']
+            data = {'subnet': {'host_routes': host_routes,
+                               'dns_nameservers': dns_nameservers}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            subnet = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(sorted(subnet['subnet']['host_routes']),
+                             sorted(host_routes))
+            self.assertEqual(sorted(subnet['subnet']['dns_nameservers']),
+                             sorted(dns_nameservers))
+            # In N1K we need to delete the subnet before the network
+            req = self.new_delete_request('subnets', subnet['subnet']['id'])
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPNoContent.code)
+
+    def test_subnet_with_allocation_range(self):
+        with self.network() as network:
+            net_id = network['network']['id']
+            data = {'subnet': {'network_id': net_id,
+                               'cidr': '10.0.0.0/24',
+                               'ip_version': 4,
+                               'gateway_ip': '10.0.0.1',
+                               'tenant_id': network['network']['tenant_id'],
+                               'allocation_pools': [{'start': '10.0.0.100',
+                                                    'end': '10.0.0.120'}]}}
+            req = self.new_create_request('subnets', data)
+            subnet = self.deserialize(self.fmt, req.get_response(self.api))
+            # Check fixed IP not in allocation range
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.10'}]}
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+            port = self.deserialize(self.fmt, res)
+            # delete the port
+            self._delete('ports', port['port']['id'])
+            # Check when fixed IP is gateway
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.1'}]}
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+            port = self.deserialize(self.fmt, res)
+            # delete the port
+            self._delete('ports', port['port']['id'])
+            req = self.new_delete_request('subnets', subnet['subnet']['id'])
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPNoContent.code)
+
+    def test_requested_subnet_id_v4_and_v6(self):
+        with self.network() as network:
+            net_id = network['network']['id']
+            res = self._create_subnet(self.fmt, tenant_id='tenant1',
+                                      net_id=net_id, cidr='10.0.0.0/24',
+                                      ip_version=4,
+                                      gateway_ip=attributes.ATTR_NOT_SPECIFIED)
+            subnet1 = self.deserialize(self.fmt, res)
+            res = self._create_subnet(self.fmt, tenant_id='tenant1',
+                                      net_id=net_id,
+                                      cidr='2607:f0d0:1002:51::/124',
+                                      ip_version=6,
+                                      gateway_ip=attributes.ATTR_NOT_SPECIFIED)
+            subnet2 = self.deserialize(self.fmt, res)
+            kwargs = {"fixed_ips": [{'subnet_id': subnet1['subnet']['id']},
+                                    {'subnet_id': subnet2['subnet']['id']}]}
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port3 = self.deserialize(self.fmt, res)
+            ips = port3['port']['fixed_ips']
+            self.assertEqual(len(ips), 2)
+            self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+            self.assertEqual(ips[0]['subnet_id'], subnet1['subnet']['id'])
+            self.assertEqual(ips[1]['ip_address'], '2607:f0d0:1002:51::2')
+            self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
+            res = self._create_port(self.fmt, net_id=net_id)
+            port4 = self.deserialize(self.fmt, res)
+            # Check that a v4 and a v6 address are allocated
+            ips = port4['port']['fixed_ips']
+            self.assertEqual(len(ips), 2)
+            self.assertEqual(ips[0]['ip_address'], '10.0.0.3')
+            self.assertEqual(ips[0]['subnet_id'], subnet1['subnet']['id'])
+            self.assertEqual(ips[1]['ip_address'], '2607:f0d0:1002:51::3')
+            self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
+            self._delete('ports', port3['port']['id'])
+            self._delete('ports', port4['port']['id'])
+            req = self.new_delete_request('subnets', subnet1['subnet']['id'])
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPNoContent.code)
+            req = self.new_delete_request('subnets', subnet2['subnet']['id'])
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPNoContent.code)
 
     def test_schedule_network_with_subnet_create(self):
         """Test invocation of explicit scheduling for networks."""
