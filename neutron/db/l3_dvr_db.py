@@ -116,7 +116,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         super(L3_NAT_with_dvr_db_mixin,
               self)._create_gw_port(context, router_id,
                                     router, new_network)
-        if router.extra_attributes.distributed:
+        if router.extra_attributes.distributed and router.gw_port:
             snat_p_list = self.create_snat_intf_ports_if_not_exists(
                 context.elevated(), router['id'])
             if not snat_p_list:
