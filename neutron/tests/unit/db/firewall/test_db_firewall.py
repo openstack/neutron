@@ -131,13 +131,14 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                  'enabled': ENABLED}
         return attrs
 
-    def _get_test_firewall_policy_attrs(self, name='firewall_policy1'):
+    def _get_test_firewall_policy_attrs(self, name='firewall_policy1',
+                                        audited=AUDITED):
         attrs = {'name': name,
                  'description': DESCRIPTION,
                  'tenant_id': self._tenant_id,
                  'shared': SHARED,
                  'firewall_rules': [],
-                 'audited': AUDITED}
+                 'audited': audited}
         return attrs
 
     def _get_test_firewall_attrs(self, name='firewall_1'):
@@ -373,7 +374,7 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
 
     def test_update_firewall_policy(self):
         name = "new_firewall_policy1"
-        attrs = self._get_test_firewall_policy_attrs(name)
+        attrs = self._get_test_firewall_policy_attrs(name, audited=False)
 
         with self.firewall_policy(shared=SHARED,
                                   firewall_rules=None,
@@ -382,6 +383,22 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
             req = self.new_update_request('firewall_policies', data,
                                           fwp['firewall_policy']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.ext_api))
+            for k, v in attrs.iteritems():
+                self.assertEqual(res['firewall_policy'][k], v)
+
+    def test_update_firewall_policy_set_audited_false(self):
+        attrs = self._get_test_firewall_policy_attrs(audited=False)
+
+        with self.firewall_policy(name='firewall_policy1',
+                                  description='fwp',
+                                  audited=AUDITED) as fwp:
+            data = {'firewall_policy':
+                    {'description': 'fw_p1'}}
+            req = self.new_update_request('firewall_policies', data,
+                                          fwp['firewall_policy']['id'])
+            res = self.deserialize(self.fmt,
+                                   req.get_response(self.ext_api))
+            attrs['description'] = 'fw_p1'
             for k, v in attrs.iteritems():
                 self.assertEqual(res['firewall_policy'][k], v)
 
