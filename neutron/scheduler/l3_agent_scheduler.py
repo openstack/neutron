@@ -196,11 +196,12 @@ class L3Scheduler(object):
                          candidates=None, hints=None):
         sync_router = plugin.get_router(context, router_id)
         subnet_id = hints.get('subnet_id') if hints else None
-        candidates = candidates or self.get_candidates(
-            plugin, context, sync_router, subnet_id)
         if (hints and 'gw_exists' in hints
             and sync_router.get('distributed', False)):
-            plugin.schedule_snat_router(context, router_id, sync_router)
+            plugin.schedule_snat_router(
+                context, router_id, sync_router, hints['gw_exists'])
+        candidates = candidates or self.get_candidates(
+            plugin, context, sync_router, subnet_id)
         if not candidates:
             return
         if sync_router.get('distributed', False):
