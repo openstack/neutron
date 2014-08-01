@@ -16,16 +16,15 @@
 
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from six import moves
 import sqlalchemy as sa
 from sqlalchemy import sql
 
-from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.db import model_base
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.ml2.drivers import helpers
 from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
@@ -68,7 +67,7 @@ class VxlanEndpoints(model_base.BASEV2):
         return "<VxlanTunnelEndpoint(%s)>" % self.ip_address
 
 
-class VxlanTypeDriver(helpers.TypeDriverHelper, type_tunnel.TunnelTypeDriver):
+class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def __init__(self):
         super(VxlanTypeDriver, self).__init__(VxlanAllocation)
@@ -77,73 +76,19 @@ class VxlanTypeDriver(helpers.TypeDriverHelper, type_tunnel.TunnelTypeDriver):
         return p_const.TYPE_VXLAN
 
     def initialize(self):
-        self.vxlan_vni_ranges = []
-        self._parse_tunnel_ranges(
-            cfg.CONF.ml2_type_vxlan.vni_ranges,
-            self.vxlan_vni_ranges,
-            p_const.TYPE_VXLAN
-        )
-        self._sync_vxlan_allocations()
+        self._initialize(cfg.CONF.ml2_type_vxlan.vni_ranges)
 
-    def reserve_provider_segment(self, session, segment):
-        if self.is_partial_segment(segment):
-            alloc = self.allocate_partially_specified_segment(session)
-            if not alloc:
-                raise exc.NoNetworkAvailable
-        else:
-            segmentation_id = segment.get(api.SEGMENTATION_ID)
-            alloc = self.allocate_fully_specified_segment(
-                session, vxlan_vni=segmentation_id)
-            if not alloc:
-                raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
-        return {api.NETWORK_TYPE: p_const.TYPE_VXLAN,
-                api.PHYSICAL_NETWORK: None,
-                api.SEGMENTATION_ID: alloc.vxlan_vni}
-
-    def allocate_tenant_segment(self, session):
-        alloc = self.allocate_partially_specified_segment(session)
-        if not alloc:
-            return
-        return {api.NETWORK_TYPE: p_const.TYPE_VXLAN,
-                api.PHYSICAL_NETWORK: None,
-                api.SEGMENTATION_ID: alloc.vxlan_vni}
-
-    def release_segment(self, session, segment):
-        vxlan_vni = segment[api.SEGMENTATION_ID]
-
-        inside = any(lo <= vxlan_vni <= hi for lo, hi in self.vxlan_vni_ranges)
-
-        with session.begin(subtransactions=True):
-            query = (session.query(VxlanAllocation).
-                     filter_by(vxlan_vni=vxlan_vni))
-            if inside:
-                count = query.update({"allocated": False})
-                if count:
-                    LOG.debug("Releasing vxlan tunnel %s to pool",
-                              vxlan_vni)
-            else:
-                count = query.delete()
-                if count:
-                    LOG.debug("Releasing vxlan tunnel %s outside pool",
-                              vxlan_vni)
-
-        if not count:
-            LOG.warning(_("vxlan_vni %s not found"), vxlan_vni)
-
-    def _sync_vxlan_allocations(self):
-        """
-        Synchronize vxlan_allocations table with configured tunnel ranges.
-        """
+    def sync_allocations(self):
 
         # determine current configured allocatable vnis
         vxlan_vnis = set()
-        for tun_min, tun_max in self.vxlan_vni_ranges:
+        for tun_min, tun_max in self.tunnel_ranges:
             if tun_max + 1 - tun_min > MAX_VXLAN_VNI:
-                LOG.error(_("Skipping unreasonable VXLAN VNI range "
-                            "%(tun_min)s:%(tun_max)s"),
+                LOG.error(_LE("Skipping unreasonable VXLAN VNI range "
+                              "%(tun_min)s:%(tun_max)s"),
                           {'tun_min': tun_min, 'tun_max': tun_max})
             else:
-                vxlan_vnis |= set(xrange(tun_min, tun_max + 1))
+                vxlan_vnis |= set(moves.xrange(tun_min, tun_max + 1))
 
         session = db_api.get_session()
         with session.begin(subtransactions=True):
@@ -175,11 +120,6 @@ class VxlanTypeDriver(helpers.TypeDriverHelper, type_tunnel.TunnelTypeDriver):
                 bulk = [{'vxlan_vni': vni, 'allocated': False}
                         for vni in vni_list]
                 session.execute(VxlanAllocation.__table__.insert(), bulk)
-
-    def get_vxlan_allocation(self, session, vxlan_vni):
-        with session.begin(subtransactions=True):
-            return session.query(VxlanAllocation).filter_by(
-                vxlan_vni=vxlan_vni).first()
 
     def get_endpoints(self):
         """Get every vxlan endpoints from database."""
