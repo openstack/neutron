@@ -40,6 +40,8 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+net_conn_seg_type = sa.Enum('flat', 'vlan', name="net_conn_seg_type")
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -68,9 +70,7 @@ def upgrade(active_plugins=None, options=None):
                               nullable=True),
                     sa.Column('network_id', sa.String(length=36),
                               nullable=True),
-                    sa.Column('segmentation_type',
-                              sa.Enum('flat', 'vlan',
-                                      name="net_conn_seg_type"),
+                    sa.Column('segmentation_type', net_conn_seg_type,
                               nullable=True),
                     sa.Column('segmentation_id', sa.Integer(),
                               nullable=True),
@@ -94,5 +94,6 @@ def downgrade(active_plugins=None, options=None):
         return
 
     op.drop_table('networkconnections')
+    net_conn_seg_type.drop(op.get_bind(), checkfirst=False)
     op.drop_table('networkgatewaydevices')
     op.drop_table('networkgateways')

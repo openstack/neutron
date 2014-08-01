@@ -35,6 +35,21 @@ from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
+vpn_auth_algorithms = sa.Enum('sha1', name='vpn_auth_algorithms')
+vpn_encrypt_algorithms = sa.Enum('3des', 'aes-128', 'aes-256', 'aes-192',
+                                 name='vpn_encrypt_algorithms')
+ike_phase1_mode = sa.Enum('main', name='ike_phase1_mode')
+vpn_lifetime_units = sa.Enum('seconds', 'kilobytes', name='vpn_lifetime_units')
+ike_versions = sa.Enum('v1', 'v2', name='ike_versions')
+vpn_pfs = sa.Enum('group2', 'group5', 'group14', name='vpn_pfs')
+ipsec_transform_protocols = sa.Enum('esp', 'ah', 'ah-esp',
+                                    name='ipsec_transform_protocols')
+ipsec_encapsulations = sa.Enum('tunnel', 'transport',
+                               name='ipsec_encapsulations')
+vpn_dpd_actions = sa.Enum('hold', 'clear', 'restart', 'disabled',
+                          'restart-by-peer', name='vpn_dpd_actions')
+vpn_initiators = sa.Enum('bi-directional', 'response-only',
+                         name='vpn_initiators')
 
 
 def upgrade(active_plugins=None, options=None):
@@ -48,27 +63,16 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('description', sa.String(length=255), nullable=True),
         sa.Column(
-            'auth_algorithm',
-            sa.Enum('sha1', name='vpn_auth_algorithms'), nullable=False),
+            'auth_algorithm', vpn_auth_algorithms, nullable=False),
         sa.Column(
-            'encryption_algorithm',
-            sa.Enum('3des', 'aes-128', 'aes-256', 'aes-192',
-                    name='vpn_encrypt_algorithms'), nullable=False),
+            'encryption_algorithm', vpn_encrypt_algorithms, nullable=False),
         sa.Column(
-            'phase1_negotiation_mode',
-            sa.Enum('main', name='ike_phase1_mode'), nullable=False),
+            'phase1_negotiation_mode', ike_phase1_mode, nullable=False),
         sa.Column(
-            'lifetime_units',
-            sa.Enum('seconds', 'kilobytes', name='vpn_lifetime_units'),
-            nullable=False),
+            'lifetime_units', vpn_lifetime_units, nullable=False),
         sa.Column('lifetime_value', sa.Integer(), nullable=False),
-        sa.Column(
-            'ike_version',
-            sa.Enum('v1', 'v2', name='ike_versions'), nullable=False),
-        sa.Column(
-            'pfs',
-            sa.Enum('group2', 'group5', 'group14', name='vpn_pfs'),
-            nullable=False),
+        sa.Column('ike_version', ike_versions, nullable=False),
+        sa.Column('pfs', vpn_pfs, nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_table(
@@ -77,35 +81,18 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('description', sa.String(length=255), nullable=True),
+        sa.Column('transform_protocol', ipsec_transform_protocols,
+                  nullable=False),
+        sa.Column('auth_algorithm', vpn_auth_algorithms, nullable=False),
+        sa.Column('encryption_algorithm', vpn_encrypt_algorithms,
+                  nullable=False),
         sa.Column(
-            'transform_protocol',
-            sa.Enum('esp', 'ah', 'ah-esp', name='ipsec_transform_protocols'),
-            nullable=False),
+            'encapsulation_mode', ipsec_encapsulations, nullable=False),
         sa.Column(
-            'auth_algorithm',
-            sa.Enum('sha1', name='vpn_auth_algorithms'), nullable=False),
-        sa.Column(
-            'encryption_algorithm',
-            sa.Enum(
-                '3des', 'aes-128',
-                'aes-256', 'aes-192', name='vpn_encrypt_algorithms'),
-            nullable=False),
-        sa.Column(
-            'encapsulation_mode',
-            sa.Enum('tunnel', 'transport', name='ipsec_encapsulations'),
-            nullable=False),
-        sa.Column(
-            'lifetime_units',
-            sa.Enum(
-                'seconds', 'kilobytes',
-                name='vpn_lifetime_units'), nullable=False),
+            'lifetime_units', vpn_lifetime_units, nullable=False),
         sa.Column(
             'lifetime_value', sa.Integer(), nullable=False),
-        sa.Column(
-            'pfs',
-            sa.Enum(
-                'group2', 'group5', 'group14', name='vpn_pfs'),
-            nullable=False),
+        sa.Column('pfs', vpn_pfs, nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_table(
@@ -133,18 +120,11 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('route_mode', sa.String(length=8), nullable=False),
         sa.Column('mtu', sa.Integer(), nullable=False),
         sa.Column(
-            'initiator',
-            sa.Enum(
-                'bi-directional', 'response-only', name='vpn_initiators'),
-            nullable=False),
+            'initiator', vpn_initiators, nullable=False),
         sa.Column('auth_mode', sa.String(length=16), nullable=False),
         sa.Column('psk', sa.String(length=255), nullable=False),
         sa.Column(
-            'dpd_action',
-            sa.Enum(
-                'hold', 'clear', 'restart',
-                'disabled', 'restart-by-peer', name='vpn_dpd_actions'),
-            nullable=False),
+            'dpd_action', vpn_dpd_actions, nullable=False),
         sa.Column('dpd_interval', sa.Integer(), nullable=False),
         sa.Column('dpd_timeout', sa.Integer(), nullable=False),
         sa.Column('status', sa.String(length=16), nullable=False),
@@ -176,6 +156,16 @@ def downgrade(active_plugins=None, options=None):
 
     op.drop_table('ipsecpeercidrs')
     op.drop_table('ipsec_site_connections')
+    vpn_dpd_actions.drop(op.get_bind(), checkfirst=False)
+    vpn_initiators.drop(op.get_bind(), checkfirst=False)
     op.drop_table('vpnservices')
     op.drop_table('ipsecpolicies')
+    ipsec_transform_protocols.drop(op.get_bind(), checkfirst=False)
+    ipsec_encapsulations.drop(op.get_bind(), checkfirst=False)
     op.drop_table('ikepolicies')
+    vpn_auth_algorithms.drop(op.get_bind(), checkfirst=False)
+    vpn_encrypt_algorithms.drop(op.get_bind(), checkfirst=False)
+    ike_phase1_mode.drop(op.get_bind(), checkfirst=False)
+    vpn_lifetime_units.drop(op.get_bind(), checkfirst=False)
+    ike_versions.drop(op.get_bind(), checkfirst=False)
+    vpn_pfs.drop(op.get_bind(), checkfirst=False)

@@ -35,6 +35,14 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+lb_protocols = sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols")
+sesssionpersistences_type = sa.Enum("SOURCE_IP", "HTTP_COOKIE", "APP_COOKIE",
+                                    name="sesssionpersistences_type")
+pools_lb_method = sa.Enum("ROUND_ROBIN", "LEAST_CONNECTIONS", "SOURCE_IP",
+                          name="pools_lb_method")
+healthmontiors_type = sa.Enum("PING", "TCP", "HTTP", "HTTPS",
+                              name="healthmontiors_type")
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -48,9 +56,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column(u'description', sa.String(255), nullable=True),
         sa.Column(u'port_id', sa.String(36), nullable=True),
         sa.Column(u'protocol_port', sa.Integer(), nullable=False),
-        sa.Column(u'protocol',
-                  sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols"),
-                  nullable=False),
+        sa.Column(u'protocol', lb_protocols, nullable=False),
         sa.Column(u'pool_id', sa.String(36), nullable=False),
         sa.Column(u'status', sa.String(16), nullable=False),
         sa.Column(u'admin_state_up', sa.Boolean(), nullable=False),
@@ -70,12 +76,7 @@ def upgrade(active_plugins=None, options=None):
     op.create_table(
         u'sessionpersistences',
         sa.Column(u'vip_id', sa.String(36), nullable=False),
-        sa.Column(u'type',
-                  sa.Enum("SOURCE_IP",
-                          "HTTP_COOKIE",
-                          "APP_COOKIE",
-                          name="sesssionpersistences_type"),
-                  nullable=False),
+        sa.Column(u'type', sesssionpersistences_type, nullable=False),
         sa.Column(u'cookie_name', sa.String(1024), nullable=True),
         sa.ForeignKeyConstraint(['vip_id'], [u'vips.id'], ),
         sa.PrimaryKeyConstraint(u'vip_id')
@@ -88,15 +89,9 @@ def upgrade(active_plugins=None, options=None):
         sa.Column(u'name', sa.String(255), nullable=True),
         sa.Column(u'description', sa.String(255), nullable=True),
         sa.Column(u'subnet_id', sa.String(36), nullable=False),
-        sa.Column(u'protocol',
-                  sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols"),
-                  nullable=False),
-        sa.Column(u'lb_method',
-                  sa.Enum("ROUND_ROBIN",
-                          "LEAST_CONNECTIONS",
-                          "SOURCE_IP",
-                          name="pools_lb_method"),
-                  nullable=False),
+        sa.Column(u'protocol', lb_protocols, nullable=False),
+
+        sa.Column(u'lb_method', pools_lb_method, nullable=False),
         sa.Column(u'status', sa.String(16), nullable=False),
         sa.Column(u'admin_state_up', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(['vip_id'], [u'vips.id'], ),
@@ -106,13 +101,7 @@ def upgrade(active_plugins=None, options=None):
         u'healthmonitors',
         sa.Column(u'tenant_id', sa.String(255), nullable=True),
         sa.Column(u'id', sa.String(36), nullable=False),
-        sa.Column(u'type',
-                  sa.Enum("PING",
-                          "TCP",
-                          "HTTP",
-                          "HTTPS",
-                          name="healthmontiors_type"),
-                  nullable=False),
+        sa.Column(u'type', healthmontiors_type, nullable=False),
         sa.Column(u'delay', sa.Integer(), nullable=False),
         sa.Column(u'timeout', sa.Integer(), nullable=False),
         sa.Column(u'max_retries', sa.Integer(), nullable=False),
@@ -155,7 +144,12 @@ def downgrade(active_plugins=None, options=None):
     op.drop_table(u'poolstatisticss')
     op.drop_table(u'members')
     op.drop_table(u'healthmonitors')
+    healthmontiors_type.drop(op.get_bind(), checkfirst=False)
     op.drop_table(u'pools')
+    lb_protocols.drop(op.get_bind(), checkfirst=False)
+    pools_lb_method.drop(op.get_bind(), checkfirst=False)
     op.drop_table(u'sessionpersistences')
+    sesssionpersistences_type.drop(op.get_bind(), checkfirst=False)
     op.drop_table(u'poolmonitorassociations')
     op.drop_table(u'vips')
+    lb_protocols.drop(op.get_bind(), checkfirst=False)

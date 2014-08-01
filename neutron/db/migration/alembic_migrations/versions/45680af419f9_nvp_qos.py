@@ -40,6 +40,9 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+qosqueues_qos_marking = sa.Enum('untrusted', 'trusted',
+                                name='qosqueues_qos_marking')
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -54,9 +57,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('default', sa.Boolean(), nullable=True),
         sa.Column('min', sa.Integer(), nullable=False),
         sa.Column('max', sa.Integer(), nullable=True),
-        sa.Column('qos_marking', sa.Enum('untrusted', 'trusted',
-                                         name='qosqueues_qos_marking'),
-                  nullable=True),
+        sa.Column('qos_marking', qosqueues_qos_marking, nullable=True),
         sa.Column('dscp', sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
@@ -89,4 +90,5 @@ def downgrade(active_plugins=None, options=None):
     op.drop_table('portqueuemappings')
     op.drop_table('networkqueuemappings')
     op.drop_table('qosqueues')
+    qosqueues_qos_marking.drop(op.get_bind(), checkfirst=False)
     ### end Alembic commands ###

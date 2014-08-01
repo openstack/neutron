@@ -39,6 +39,9 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+nvp_network_bindings_binding_type = sa.Enum(
+    'flat', 'vlan', 'stt', 'gre', name='nvp_network_bindings_binding_type')
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -47,9 +50,7 @@ def upgrade(active_plugins=None, options=None):
     op.create_table(
         'nvp_network_bindings',
         sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.Column('binding_type',
-                  sa.Enum('flat', 'vlan', 'stt', 'gre',
-                          name='nvp_network_bindings_binding_type'),
+        sa.Column('binding_type', nvp_network_bindings_binding_type,
                   nullable=False),
         sa.Column('tz_uuid', sa.String(length=36), nullable=True),
         sa.Column('vlan_id', sa.Integer(), nullable=True),
@@ -63,3 +64,4 @@ def downgrade(active_plugins=None, options=None):
         return
 
     op.drop_table('nvp_network_bindings')
+    nvp_network_bindings_binding_type.drop(op.get_bind(), checkfirst=False)
