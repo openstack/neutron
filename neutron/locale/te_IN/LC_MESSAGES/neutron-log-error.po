@@ -3,17 +3,17 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
-# Andi Chandler <andi@gowling.com>, 2014
+# rajeshmalisettty <venkatarajesh.malisetty@gmail.com>, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2014-08-01 06:06+0000\n"
-"PO-Revision-Date: 2014-07-25 23:10+0000\n"
-"Last-Translator: Andi Chandler <andi@gowling.com>\n"
-"Language-Team: English (United Kingdom) (http://www.transifex.com/projects/p/"
-"neutron/language/en_GB/)\n"
-"Language: en_GB\n"
+"PO-Revision-Date: 2014-07-29 10:41+0000\n"
+"Last-Translator: rajeshmalisettty <venkatarajesh.malisetty@gmail.com>\n"
+"Language-Team: Telugu (India) (http://www.transifex.com/projects/p/neutron/"
+"language/te_IN/)\n"
+"Language: te_IN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -25,42 +25,40 @@ msgstr ""
 msgid ""
 "Backward compatibility unavailable for deprecated policy %s. The policy will "
 "not be enforced"
-msgstr ""
-"Backward compatibility unavailable for deprecated policy %s. The policy will "
-"not be enforced"
+msgstr "నిరాశపర్చింది విధానం %s కోసం అందుబాటులో వెనుకబడిన అనుకూలత. విధానం అమలు చేయబడదు"
 
 #: neutron/policy.py:280
 #, python-format
 msgid "Policy check error while calling %s!"
-msgstr "Policy check error while calling %s!"
+msgstr "పాలసీ చెక్ లోపం %s కాల్ఐంది !"
 
 #: neutron/cmd/sanity_check.py:58
 msgid ""
 "Nova notifications are enabled, but novaclient is not installed. Either "
 "disable nova notifications or install python-novaclient."
 msgstr ""
-"Nova notifications are enabled, but novaclient is not installed. Either "
-"disable nova notifications or install python-novaclient."
+"నోవా నోటిఫికేషన్లను ప్రారంభించి, కానీ novaclient ఇన్స్టాల్ కాలేదు. గాని డిసేబుల్ నోవా నోటిఫికేషన్లు లేదా "
+"python-novaclient ఇన్స్టాల్."
 
 #: neutron/openstack/common/excutils.py:76
 #, python-format
 msgid "Original exception being dropped: %s"
-msgstr "Original exception being dropped: %s"
+msgstr "అసలు మినహాయింపు ఔటైన:%s"
 
 #: neutron/openstack/common/excutils.py:105
 #, python-format
 msgid "Unexpected exception occurred %d time(s)... retrying."
-msgstr "Unexpected exception occurred %d time(s)... retrying."
+msgstr "ఊహించని మినహాయింపు%d సమయం (s) ఏర్పడింది ... ప్రయత్నించడానికి"
 
 #: neutron/openstack/common/periodic_task.py:202
 #, python-format
 msgid "Error during %(full_task_name)s: %(e)s"
-msgstr "Error during %(full_task_name)s: %(e)s"
+msgstr "సమయంలో లోపం %(full_task_name)s: %(e)s"
 
 #: neutron/openstack/common/service.py:188
 msgid "Exception during rpc cleanup."
-msgstr "Exception during rpc cleanup."
+msgstr "RPC క్లీనప్ సమయంలో మినహాయింపు."
 
 #: neutron/openstack/common/service.py:277
 msgid "Unhandled exception"
-msgstr "Unhandled exception"
+msgstr "నిర్వహించని మినహాయింపు"
