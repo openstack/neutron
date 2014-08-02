@@ -46,13 +46,14 @@ OPTS = [
         'loadbalancer_state_path',
         default=STATE_PATH_DEFAULT,
         help=_('Location to store config and state files'),
-        deprecated_opts=[cfg.DeprecatedOpt('loadbalancer_state_path')],
+        deprecated_opts=[cfg.DeprecatedOpt('loadbalancer_state_path',
+                                           group='DEFAULT')],
     ),
     cfg.StrOpt(
         'user_group',
         default=USER_GROUP_DEFAULT,
         help=_('The user group'),
-        deprecated_opts=[cfg.DeprecatedOpt('user_group')],
+        deprecated_opts=[cfg.DeprecatedOpt('user_group', group='DEFAULT')],
     )
 ]
 cfg.CONF.register_opts(OPTS, 'haproxy')
