@@ -619,7 +619,7 @@ class TestL3NatTestCase(L3NatTest,
                         res.status_int)
 
     def test_router_add_gateway_invalid_network_returns_404(self):
-        # NOTE(salv-orlando): This unit test has been overriden
+        # NOTE(salv-orlando): This unit test has been overridden
         # as the nsx plugin support the ext_gw_mode extension
         # which mandates a uuid for the external network identifier
         with self.router() as r:

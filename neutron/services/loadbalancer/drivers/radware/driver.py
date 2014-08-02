@@ -555,7 +555,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         return service_name
 
     def _get_available_service(self, service_name):
-        """Check if service exsists and return its name if it does."""
+        """Check if service exists and return its name if it does."""
         resource = '/api/service/' + service_name
         try:
             _rest_wrapper(self.rest_client.call('GET',

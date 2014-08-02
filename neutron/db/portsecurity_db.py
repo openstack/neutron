@@ -144,7 +144,7 @@ class PortSecurityDbMixin(object):
     def _determine_port_security_and_has_ip(self, context, port):
         """Returns a tuple of booleans (port_security_enabled, has_ip).
 
-        Port_security is the value assocated with the port if one is present
+        Port_security is the value associated with the port if one is present
         otherwise the value associated with the network is returned. has_ip is
         if the port is associated with an ip or not.
         """

@@ -2258,7 +2258,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         nsx_device_id = self._get_nsx_device_id(context, device_id)
         super(NsxPluginV2, self).delete_gateway_device(
             context, device_id)
-        # DB operation was successful, peform NSX operation
+        # DB operation was successful, perform NSX operation
         # TODO(salv-orlando): State consistency with neutron DB
         # should be ensured even in case of backend failures
         try:

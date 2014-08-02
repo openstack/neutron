@@ -228,12 +228,12 @@ class QoSDbMixin(qos.QueuePluginBase):
             port['device_owner'].startswith('network:')):
             return
 
-        # Check if there is a queue assocated with the network
+        # Check if there is a queue associated with the network
         filters = {'network_id': [port['network_id']]}
         network_queue_id = self._get_network_queue_bindings(
             context, filters, ['queue_id'])
         if network_queue_id:
-            # get networks that queue is assocated with
+            # get networks that queue is associated with
             filters = {'queue_id': [network_queue_id[0]['queue_id']]}
             networks_with_same_queue = self._get_network_queue_bindings(
                 context, filters)

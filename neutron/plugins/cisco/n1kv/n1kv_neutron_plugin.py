@@ -140,7 +140,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         Setup Cisco Nexus 1000V related parameters and pull policy profiles.
 
-        Retrieve all the policy profiles from the VSM when the plugin is
+        Retrieve all the policy profiles from the VSM when the plugin
         is instantiated for the first time and then continue to poll for
         policy profile updates.
         """

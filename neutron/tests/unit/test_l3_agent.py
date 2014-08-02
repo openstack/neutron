@@ -1129,7 +1129,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 l3_agent.L3NATAgent,
                 'internal_network_added') as internal_network_added:
             # raise RuntimeError to simulate that an unexpected exception
-            # occurrs
+            # occurs
             internal_network_added.side_effect = RuntimeError
             self.assertRaises(RuntimeError, agent.process_router, ri)
             self.assertNotIn(
@@ -1158,7 +1158,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 l3_agent.L3NATAgent,
                 'internal_network_removed') as internal_net_removed:
             # raise RuntimeError to simulate that an unexpected exception
-            # occurrs
+            # occurs
             internal_net_removed.side_effect = RuntimeError
             ri.internal_ports[0]['admin_state_up'] = False
             # The above port is set to down state, remove it.

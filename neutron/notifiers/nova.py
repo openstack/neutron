@@ -110,7 +110,7 @@ class Notifier(object):
     @property
     def _plugin(self):
         # NOTE(arosen): this cannot be set in __init__ currently since
-        # this class is initalized at the same time as NeutronManager()
+        # this class is initialized at the same time as NeutronManager()
         # which is decorated with synchronized()
         if not hasattr(self, '_plugin_ref'):
             self._plugin_ref = manager.NeutronManager.get_plugin()

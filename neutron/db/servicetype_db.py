@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 class ProviderResourceAssociation(model_base.BASEV2):
     provider_name = sa.Column(sa.String(255),
                               nullable=False, primary_key=True)
-    # should be manualy deleted on resource deletion
+    # should be manually deleted on resource deletion
     resource_id = sa.Column(sa.String(36), nullable=False, primary_key=True,
                             unique=True)
 

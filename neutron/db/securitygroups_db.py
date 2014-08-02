@@ -405,7 +405,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             # remote_group_id. Therefore it is not possible to do this
             # query unless the behavior of _get_collection()
             # is changed which cannot be because other methods are already
-            # relying on this behavor. Therefore, we do the filtering
+            # relying on this behavior. Therefore, we do the filtering
             # below to check for these corner cases.
             for db_rule in db_rules:
                 # need to remove id from db_rule for matching

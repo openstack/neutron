@@ -751,7 +751,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             raise plum_excep.PLUMgridException(err_msg=err_message)
 
     """
-    Internal PLUMgrid Fuctions
+    Internal PLUMgrid Functions
     """
 
     def _get_plugin_version(self):
