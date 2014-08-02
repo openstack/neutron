@@ -149,7 +149,7 @@ class ExtensionDescriptor(object):
     def get_plugin_interface(self):
         """Returns an abstract class which defines contract for the plugin.
 
-        The abstract class should inherit from extesnions.PluginInterface,
+        The abstract class should inherit from extensions.PluginInterface,
         Methods in this abstract class  should be decorated as abstractmethod
         """
         return None
