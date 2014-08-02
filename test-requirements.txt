@@ -12,7 +12,3 @@ oslosphinx
 testrepository>=0.0.18
 testtools>=0.9.34
 WebTest>=2.0
-# Packages for the Cisco Plugin
-###############################
-configobj
-###############################

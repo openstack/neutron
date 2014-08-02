@@ -22,9 +22,8 @@ service with the Linux Bridge plugin.
 
 # -- Python library dependencies
 
-   Make sure you have the following package(s) installedi on neutron server
+   Make sure you have the following package(s) installed on neutron server
    host as well as any hosts which run the agent:
-   python-configobj
    bridge-utils
    python-mysqldb
    sqlite3
