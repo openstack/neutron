@@ -248,27 +248,25 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         LOG.debug('Removed binding for router %(router_id)s and '
                   'agent %(id)s', {'router_id': router_id, 'id': agent_id})
 
-    def schedule_snat_router(self, context, router_id, gw_exists):
+    def schedule_snat_router(self, context, router_id, sync_router, gw_exists):
         """Schedule the snat router on l3 service agent."""
         if gw_exists:
-            query = (context.session.
-                     query(CentralizedSnatL3AgentBinding).
-                     filter_by(router_id=router_id))
-            for bind in query:
-                agt_id = bind.l3_agent_id
+            binding = (context.session.
+                       query(CentralizedSnatL3AgentBinding).
+                       filter_by(router_id=router_id).first())
+            if binding:
+                l3_agent_id = binding.l3_agent_id
+                l3_agent = binding.l3_agent
                 LOG.debug('SNAT Router %(router_id)s has already been '
                           'hosted by L3 agent '
-                          '%(agent_id)s', {'router_id': router_id,
-                                           'agent_id': agt_id})
-                self.bind_dvr_router_servicenode(context,
-                                                 router_id,
-                                                 bind.l3_agent)
+                          '%(l3_agent_id)s', {'router_id': router_id,
+                                              'l3_agent_id': l3_agent_id})
+                self.bind_dvr_router_servicenode(context, router_id, l3_agent)
                 return
             active_l3_agents = self.get_l3_agents(context, active=True)
             if not active_l3_agents:
                 LOG.warn(_('No active L3 agents'))
                 return
-            sync_router = self.get_router(context, router_id)
             snat_candidates = self.get_snat_candidates(sync_router,
                                                        active_l3_agents)
             if snat_candidates:
