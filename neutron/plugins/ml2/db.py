@@ -15,6 +15,8 @@
 
 from sqlalchemy.orm import exc
 
+from oslo.db import exception as db_exc
+
 from neutron.common import constants as n_const
 from neutron.db import api as db_api
 from neutron.db import models_v2
@@ -90,16 +92,13 @@ def get_locked_port_and_binding(session, port_id):
 
 
 def ensure_dvr_port_binding(session, port_id, host, router_id=None):
-    # FIXME(armando-migliaccio): take care of LP #1335226
-    # DVR ports are slightly different from the others in
-    # that binding happens at a later stage via L3 agent
-    # therefore we need to keep this logic of creation on
-    # missing binding.
-    with session.begin(subtransactions=True):
-        try:
-            record = (session.query(models.DVRPortBinding).
-                      filter_by(port_id=port_id, host=host).one())
-        except exc.NoResultFound:
+    record = (session.query(models.DVRPortBinding).
+              filter_by(port_id=port_id, host=host).first())
+    if record:
+        return record
+
+    try:
+        with session.begin(subtransactions=True):
             record = models.DVRPortBinding(
                 port_id=port_id,
                 host=host,
@@ -109,7 +108,11 @@ def ensure_dvr_port_binding(session, port_id, host, router_id=None):
                 cap_port_filter=False,
                 status=n_const.PORT_STATUS_DOWN)
             session.add(record)
-        return record
+            return record
+    except db_exc.DBDuplicateEntry:
+        LOG.debug("DVR Port %s already bound", port_id)
+        return (session.query(models.DVRPortBinding).
+                filter_by(port_id=port_id, host=host).one())
 
 
 def delete_dvr_port_binding(session, port_id, host):
