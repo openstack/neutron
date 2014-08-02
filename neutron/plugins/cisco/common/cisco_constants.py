@@ -83,7 +83,6 @@ NETWORK_SUBTYPE_TRUNK_VXLAN = NETWORK_TYPE_OVERLAY
 # Prefix for VM Network name
 VM_NETWORK_NAME_PREFIX = 'vmn_'
 
-DEFAULT_HTTP_TIMEOUT = 15
 SET = 'set'
 INSTANCE = 'instance'
 PROPERTIES = 'properties'

@@ -27,6 +27,7 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.common import config as c_conf
 from neutron.plugins.cisco.db import network_db_v2
 from neutron.plugins.cisco.extensions import n1kv
 from neutron import wsgi
@@ -146,7 +147,7 @@ class Client(object):
         self.format = 'json'
         self.hosts = self._get_vsm_hosts()
         self.action_prefix = 'http://%s/api/n1k' % self.hosts[0]
-        self.timeout = c_const.DEFAULT_HTTP_TIMEOUT
+        self.timeout = c_conf.CISCO_N1K.http_timeout
 
     def list_port_profiles(self):
         """
