@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 import uuid
 
 from oslo.config import cfg
@@ -51,7 +50,9 @@ from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import lockutils
+from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as plugin_const
 from neutron.plugins import vmware
 from neutron.plugins.vmware.api_client import exception as api_exc
@@ -2080,12 +2081,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def _get_nsx_device_id(self, context, device_id):
         return self._get_gateway_device(context, device_id)['nsx_id']
 
-    def _rollback_gw_device(self, context, device_id,
-                            gw_data=None, new_status=None,
-                            is_create=False, log_level=logging.ERROR):
-        LOG.log(log_level,
-                _("Rolling back database changes for gateway device %s "
-                  "because of an error in the NSX backend"), device_id)
+    def _rollback_gw_device(self, context, device_id, gw_data=None,
+                            new_status=None, is_create=False):
+        LOG.error(_LE("Rolling back database changes for gateway device %s "
+                      "because of an error in the NSX backend"), device_id)
         with context.session.begin(subtransactions=True):
             query = self._model_query(
                 context, networkgw_db.NetworkGatewayDevice).filter(

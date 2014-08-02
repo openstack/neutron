@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import contextlib
-import logging
 
 import mock
 from oslo.config import cfg
@@ -39,8 +38,6 @@ from neutron.services.loadbalancer.drivers import abstract_driver
 from neutron.services import provider_configuration as pconf
 from neutron.tests.unit import test_db_plugin
 
-
-LOG = logging.getLogger(__name__)
 
 DB_CORE_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 DB_LB_PLUGIN_KLASS = (

@@ -14,7 +14,7 @@
 #    under the License.
 
 import fixtures
-import logging
+import logging as std_logging
 import mock
 from sqlalchemy.orm import query
 
@@ -48,7 +48,7 @@ class HelpersTest(base.BaseTestCase):
             fixtures.FakeLogger(
                 name=helpers.__name__,
                 format=base.LOG_FORMAT,
-                level=logging.DEBUG
+                level=std_logging.DEBUG
             ))
 
     def check_raw_segment(self, expected, observed):

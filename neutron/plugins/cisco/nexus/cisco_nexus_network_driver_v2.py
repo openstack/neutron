@@ -19,11 +19,11 @@
 Implements a Nexus-OS NETCONF over SSHv2 API Client
 """
 
-import logging
 
 from ncclient import manager
 
 from neutron.openstack.common import excutils
+from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as cred
 from neutron.plugins.cisco.common import cisco_exceptions as cexc

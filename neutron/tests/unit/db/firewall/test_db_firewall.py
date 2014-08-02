@@ -16,7 +16,6 @@
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
 
 import contextlib
-import logging
 
 import mock
 import webob.exc
@@ -35,7 +34,6 @@ from neutron.services.firewall import fwaas_plugin
 from neutron.tests.unit import test_db_plugin
 
 
-LOG = logging.getLogger(__name__)
 DB_FW_PLUGIN_KLASS = (
     "neutron.db.firewall.firewall_db.Firewall_db_mixin"
 )
