@@ -78,24 +78,31 @@ class TestDbQuotaDriver(base.BaseTestCase):
         resource_1 = 'res_test_1'
         resource_2 = 'res_test_2'
 
-        resources = {resource_1: TestResource(resource_1, 1),
-                     resource_2: TestResource(resource_2, 1)}
+        resources = {resource_1: TestResource(resource_1, 3),
+                     resource_2: TestResource(resource_2, 5)}
 
-        self.plugin.update_quota_limit(self.context, project_1, resource_1, 2)
-        self.plugin.update_quota_limit(self.context, project_2, resource_2, 2)
+        self.plugin.update_quota_limit(self.context, project_1, resource_1, 7)
+        self.plugin.update_quota_limit(self.context, project_2, resource_2, 9)
         quotas = self.plugin.get_all_quotas(self.context, resources)
 
+        # Expect two tenants' quotas
         self.assertEqual(2, len(quotas))
+        # But not quotas for the same tenant twice
+        self.assertNotEqual(quotas[0]['tenant_id'], quotas[1]['tenant_id'])
 
-        self.assertEqual(3, len(quotas[0]))
-        self.assertEqual(project_1, quotas[0]['tenant_id'])
-        self.assertEqual(2, quotas[0][resource_1])
-        self.assertEqual(1, quotas[0][resource_2])
-
-        self.assertEqual(3, len(quotas[1]))
-        self.assertEqual(project_2, quotas[1]['tenant_id'])
-        self.assertEqual(1, quotas[1][resource_1])
-        self.assertEqual(2, quotas[1][resource_2])
+        # Check the expected limits. The quotas can be in any order.
+        for quota in quotas:
+            self.assertEqual(3, len(quota))
+            project = quota['tenant_id']
+            self.assertIn(project, (project_1, project_2))
+            if project == project_1:
+                expected_limit_r1 = 7
+                expected_limit_r2 = 5
+            if project == project_2:
+                expected_limit_r1 = 3
+                expected_limit_r2 = 9
+            self.assertEqual(expected_limit_r1, quota[resource_1])
+            self.assertEqual(expected_limit_r2, quota[resource_2])
 
     def test_limit_check(self):
         resources = {RESOURCE: TestResource(RESOURCE, 2)}
