@@ -37,7 +37,11 @@ security_group_opts = [
         help=_(
             'Controls whether the neutron security group API is enabled '
             'in the server. It should be false when using no security '
-            'groups or using the nova security group API.'))
+            'groups or using the nova security group API.')),
+    cfg.BoolOpt(
+        'enable_ipset',
+        default=True,
+        help=_('Use ipset to speed-up the iptables based security groups.'))
 ]
 cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 

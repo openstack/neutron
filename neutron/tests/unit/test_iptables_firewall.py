@@ -20,6 +20,7 @@ from oslo.config import cfg
 
 from neutron.agent.common import config as a_cfg
 from neutron.agent.linux import iptables_firewall
+from neutron.agent import securitygroups_rpc as sg_cfg
 from neutron.common import constants
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
@@ -31,11 +32,16 @@ FAKE_PREFIX = {'IPv4': '10.0.0.0/24',
 FAKE_IP = {'IPv4': '10.0.0.1',
            'IPv6': 'fe80::1'}
 
+TEST_IP_RANGE = ['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4',
+                 '10.0.0.5', '10.0.0.6', '10.0.0.7', '10.0.0.8',
+                 '10.0.0.9', '10.0.0.10']
 
-class IptablesFirewallTestCase(base.BaseTestCase):
+
+class BaseIptablesFirewallTestCase(base.BaseTestCase):
     def setUp(self):
-        super(IptablesFirewallTestCase, self).setUp()
+        super(BaseIptablesFirewallTestCase, self).setUp()
         cfg.CONF.register_opts(a_cfg.ROOT_HELPER_OPTS, 'AGENT')
+        cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
         self.utils_exec_p = mock.patch(
             'neutron.agent.linux.utils.execute')
         self.utils_exec = self.utils_exec_p.start()
@@ -51,6 +57,9 @@ class IptablesFirewallTestCase(base.BaseTestCase):
 
         self.firewall = iptables_firewall.IptablesFirewallDriver()
         self.firewall.iptables = self.iptables_inst
+
+
+class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
     def _fake_port(self):
         return {'device': 'tapfake_dev',
@@ -1221,3 +1230,120 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                  mock.call.add_rule('ofake_dev', '-j $sg-fallback'),
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
         self.v4filter_inst.assert_has_calls(calls)
+
+
+class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
+    def setUp(self):
+        super(IptablesFirewallEnhancedIpsetTestCase, self).setUp()
+        self.firewall.ipset = mock.Mock()
+
+    def _fake_port(self):
+        return {'device': 'tapfake_dev',
+                'mac_address': 'ff:ff:ff:ff:ff:ff',
+                'fixed_ips': [FAKE_IP['IPv4'],
+                              FAKE_IP['IPv6']],
+                'security_groups': ['fake_sgid'],
+                'security_group_source_groups': ['fake_sgid']}
+
+    def _fake_sg_rule(self):
+        return {'fake_sgid': [
+            {'direction': 'ingress', 'remote_group_id': 'fake_sgid'}]}
+
+    def test_prepare_port_filter_with_default_sg(self):
+        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': ['10.0.0.1', '10.0.0.2'], 'IPv6': ['fe80::1']}}
+        self.firewall.pre_sg_members = {}
+        port = self._fake_port()
+        self.firewall.prepare_port_filter(port)
+        calls = [mock.call.create_ipset_chain('IPv4fake_sgid', 'IPv4'),
+                 mock.call.refresh_ipset_chain_by_name(
+                     'IPv4fake_sgid', ['10.0.0.1', '10.0.0.2'], 'IPv4'),
+                 mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
+                 mock.call.refresh_ipset_chain_by_name(
+                     'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+
+        self.firewall.ipset.assert_has_calls(calls)
+
+    def test_prepare_port_filter_with_add_members_beyond_4(self):
+        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': TEST_IP_RANGE[:5],
+            'IPv6': ['fe80::1']}}
+        self.firewall.pre_sg_members = {}
+        port = self._fake_port()
+        self.firewall.prepare_port_filter(port)
+        calls = [mock.call.create_ipset_chain('IPv4fake_sgid', 'IPv4'),
+                 mock.call.refresh_ipset_chain_by_name(
+                     'IPv4fake_sgid', TEST_IP_RANGE[:5], 'IPv4'),
+                 mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
+                 mock.call.refresh_ipset_chain_by_name(
+                     'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+
+        self.firewall.ipset.assert_has_calls(calls)
+
+    def test_prepare_port_filter_with_ipset_chain_exist(self):
+        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.ipset_chains = {'IPv4fake_sgid': ['10.0.0.2']}
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': TEST_IP_RANGE[:5],
+            'IPv6': ['fe80::1']}}
+        self.firewall.pre_sg_members = {'fake_sgid': {
+            'IPv4': ['10.0.0.2'],
+            'IPv6': ['fe80::1']}}
+        port = self._fake_port()
+        self.firewall.prepare_port_filter(port)
+        calls = [
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.1'),
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.3'),
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.4'),
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.5'),
+            mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
+            mock.call.refresh_ipset_chain_by_name(
+                'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+
+        self.firewall.ipset.assert_has_calls(calls, True)
+
+    def test_prepare_port_filter_with_del_member(self):
+        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.ipset_chains = {'IPv4fake_sgid': ['10.0.0.2']}
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': [
+                '10.0.0.1', '10.0.0.3', '10.0.0.4', '10.0.0.5'],
+            'IPv6': ['fe80::1']}}
+        self.firewall.pre_sg_members = {'fake_sgid': {
+            'IPv4': ['10.0.0.2'],
+            'IPv6': ['fe80::1']}}
+        port = self._fake_port()
+        self.firewall.prepare_port_filter(port)
+        calls = [
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.1'),
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.3'),
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.4'),
+            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.5'),
+            mock.call.del_ipset_chain_member('IPv4fake_sgid', '10.0.0.2'),
+            mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
+            mock.call.refresh_ipset_chain_by_name(
+                'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+
+        self.firewall.ipset.assert_has_calls(calls, True)
+
+    def test_prepare_port_filter_change_beyond_9(self):
+        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.ipset_chains = {'IPv4fake_sgid': TEST_IP_RANGE[5:]}
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': TEST_IP_RANGE[:5],
+            'IPv6': ['fe80::1']}}
+        self.firewall.pre_sg_members = {'fake_sgid': {
+            'IPv4': TEST_IP_RANGE[5:],
+            'IPv6': ['fe80::1']}}
+        port = self._fake_port()
+        self.firewall.prepare_port_filter(port)
+        calls = [
+            mock.call.refresh_ipset_chain_by_name('IPv4fake_sgid',
+                                                  TEST_IP_RANGE[:5], 'IPv4'),
+            mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
+            mock.call.refresh_ipset_chain_by_name(
+                'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+
+        self.firewall.ipset.assert_has_calls(calls)
