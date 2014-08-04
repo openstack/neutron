@@ -8,7 +8,6 @@ default_l3_gw_service_uuid = whatever
 default_l2_gw_service_uuid = whatever
 default_service_cluster_uuid = whatever
 default_interface_name = whatever
-req_timeout = 14
 http_timeout = 13
 redirects = 12
 retries = 11

@@ -47,7 +47,7 @@ class NsxlibTestCase(base.BaseTestCase):
         self.fake_cluster.api_client = client.NsxApiClient(
             ('1.1.1.1', '999', True),
             self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
-            self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,
+            self.fake_cluster.http_timeout,
             self.fake_cluster.retries, self.fake_cluster.redirects)
 
         super(NsxlibTestCase, self).setUp()
@@ -81,7 +81,7 @@ class NsxlibNegativeBaseTestCase(base.BaseTestCase):
         self.fake_cluster.api_client = client.NsxApiClient(
             ('1.1.1.1', '999', True),
             self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
-            self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,
+            self.fake_cluster.http_timeout,
             self.fake_cluster.retries, self.fake_cluster.redirects)
 
         super(NsxlibNegativeBaseTestCase, self).setUp()

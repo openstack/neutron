@@ -68,7 +68,7 @@ class ApiRequestEventletTest(base.BaseTestCase):
     def test_apirequest_start(self):
         for i in range(10):
             a = request.EventletApiRequest(
-                self.client, self.url, request_timeout=0.1)
+                self.client, self.url)
             a._handle_request = mock.Mock()
             a.start()
             eventlet.greenthread.sleep(0.1)

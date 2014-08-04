@@ -210,7 +210,6 @@ def create_nsx_cluster(cluster_opts, concurrent_connections, gen_timeout):
                      for ctrl in cluster.nsx_controllers]
     cluster.api_client = client.NsxApiClient(
         api_providers, cluster.nsx_user, cluster.nsx_password,
-        request_timeout=cluster.req_timeout,
         http_timeout=cluster.http_timeout,
         retries=cluster.retries,
         redirects=cluster.redirects,

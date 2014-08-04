@@ -7,7 +7,6 @@ nvp_password = bar
 default_l3_gw_service_uuid = whatever
 default_l2_gw_service_uuid = whatever
 default_interface_name = whatever
-req_timeout = 4
 http_timeout = 3
 redirects = 2
 retries = 2
