@@ -110,6 +110,14 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
                 utils.execute(['ls'])
                 self.assertTrue(log.debug.called)
 
+    def test_return_code_raise_runtime_do_not_log_fail_as_error(self):
+        with mock.patch.object(utils, 'create_process') as create_process:
+            create_process.return_value = FakeCreateProcess(1), 'ls'
+            with mock.patch.object(utils, 'LOG') as log:
+                self.assertRaises(RuntimeError, utils.execute,
+                                  ['ls'], log_fail_as_error=False)
+                self.assertTrue(log.debug.called)
+
 
 class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
     def test_get_interface_mac(self):

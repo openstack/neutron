@@ -281,6 +281,7 @@ class LinuxBridgeManager:
     def _bridge_exists_and_ensure_up(self, bridge_name):
         """Check if the bridge exists and make sure it is up."""
         br = ip_lib.IPDevice(bridge_name, self.root_helper)
+        br.set_log_fail_as_error(False)
         try:
             # If the device doesn't exist this will throw a RuntimeError
             br.link.set_up()
@@ -537,7 +538,7 @@ class LinuxBridgeManager:
             utils.execute(
                 cmd=['bridge', 'fdb', 'append', constants.FLOODING_ENTRY[0],
                      'dev', test_iface, 'dst', '1.1.1.1'],
-                root_helper=self.root_helper)
+                root_helper=self.root_helper, log_fail_as_error=False)
             return True
         except RuntimeError:
             return False
@@ -563,7 +564,7 @@ class LinuxBridgeManager:
 
     def vxlan_module_supported(self):
         try:
-            utils.execute(cmd=['modinfo', 'vxlan'])
+            utils.execute(cmd=['modinfo', 'vxlan'], log_fail_as_error=False)
             return True
         except RuntimeError:
             return False
