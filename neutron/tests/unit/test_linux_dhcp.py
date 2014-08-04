@@ -1316,7 +1316,7 @@ tag:tag0,option:router""".lstrip()
                 mock_listdir.assert_called_once_with(path)
                 self.assertEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
                                   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'],
-                                 result)
+                                 sorted(result))
 
     def _check_version(self, cmd_out, expected_value):
         with mock.patch('neutron.agent.linux.utils.execute') as cmd:
