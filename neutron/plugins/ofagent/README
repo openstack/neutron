@@ -5,6 +5,38 @@ This directory includes agent for OpenFlow Agent mechanism driver.
 For how to install/set up ML2 mechanism driver for OpenFlow Agent, please refer to
 https://github.com/osrg/ryu/wiki/OpenStack
 
+# -- Notes for updating from Icehouce
+
+The support of ancillary bridges has been removed after Icehouce.
+While you can still use these bridges to provide connectivity,
+neutron-ofagent-agent no longer reports port state changes (up/down)
+for these bridges.  If it is a problem for you, please consider
+tweaking your configuration to avoid using ancillary bridges.
+We recommend to use a provider network instead as the following:
+
+- Make l3-agent external_network_bridge configuration empty.
+  eg.
+    [DEFAULT]
+    external_network_bridge=
+
+- (Re-)create a network (and subnet) for public connectivity with
+  a flat provider network.
+  eg.
+    neutron net-create $PUBLIC_NETWORK -- \
+      --router:external=True \
+      --provider:network_type:flat \
+      --provider:physical_network=$PUBLIC_PHYSICAL_NETWORK
+
+- Associate your neutron router to the above network.
+  eg.
+    neutron router-gateway-clear $ROUTER_ID
+    neutron router-gateway-set $ROUTER_ID $PUBLIC_NETWORK
+
+- Add the corresponding entry to bridge_mappings.
+  eg.
+    [OVS]
+    bridge_mappings=$PUBLIC_PHYSICAL_NETWORK:$PUBLIC_BRIDGE
+
 # -- Ryu General
 
 For general Ryu stuff, please refer to
