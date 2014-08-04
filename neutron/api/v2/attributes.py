@@ -720,7 +720,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': True,
                            'convert_to': convert_to_boolean,
                            'is_visible': True},
-        'mac_address': {'allow_post': True, 'allow_put': False,
+        'mac_address': {'allow_post': True, 'allow_put': True,
                         'default': ATTR_NOT_SPECIFIED,
                         'validate': {'type:mac_address': None},
                         'enforce_policy': True,

@@ -124,6 +124,12 @@ class PortInUse(InUse):
                 "device %(device_id)s.")
 
 
+class PortBound(InUse):
+    message = _("Unable to complete operation on port %(port_id)s, "
+                "port is already bound, port type: %(vif_type)s, "
+                "old_mac %(old_mac)s, new_mac %(new_mac)s")
+
+
 class MacAddressInUse(InUse):
     message = _("Unable to complete operation for network %(net_id)s. "
                 "The mac address %(mac)s is in use.")
@@ -201,6 +207,11 @@ class InvalidInput(BadRequest):
 
 class InvalidAllocationPool(BadRequest):
     message = _("The allocation pool %(pool)s is not valid.")
+
+
+class UnsupportedPortDeviceOwner(Conflict):
+    message = _("Operation %(op)s is not supported for device_owner "
+                "%(device_owner)s on port %(port_id)s.")
 
 
 class OverlappingAllocationPools(Conflict):

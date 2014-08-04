@@ -58,6 +58,9 @@ config.cfg.CONF.import_opt('network_vlan_ranges',
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
+DEVICE_OWNER_COMPUTE = 'compute:None'
+HOST = 'fake_host'
+
 
 class Ml2PluginConf(object):
     """Plugin configuration shared across the unit and functional tests.
@@ -158,6 +161,11 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with self.port() as port:
             self.assertEqual('DOWN', port['port']['status'])
             self.assertEqual('DOWN', self.port_create_status)
+
+    def test_update_port_mac(self):
+        self.check_update_port_mac(
+            host_arg={portbindings.HOST_ID: HOST},
+            arg_list=(portbindings.HOST_ID,))
 
     def test_update_non_existent_port(self):
         ctx = context.get_admin_context()
@@ -1087,6 +1095,7 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
         plugin.notifier = mock.Mock()
         plugin._get_host_port_if_changed = mock.Mock(
             return_value=new_host_port)
+        plugin._check_mac_update_allowed = mock.Mock(return_value=True)
 
         plugin._notify_l3_agent_new_port = mock.Mock()
         plugin._notify_l3_agent_new_port.side_effect = (
@@ -1113,8 +1122,16 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
         with contextlib.nested(
             mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
             mock.patch.object(base_plugin.NeutronDbPluginV2, 'update_port'),
-        ) as (init, super_update_port):
+            mock.patch.object(manager.NeutronManager, 'get_service_plugins'),
+        ) as (init, super_update_port, get_service_plugins):
             init.return_value = None
+            l3plugin = mock.Mock()
+            l3plugin.supported_extension_aliases = [
+                constants.L3_DISTRIBUTED_EXT_ALIAS,
+            ]
+            get_service_plugins.return_value = {
+                service_constants.L3_ROUTER_NAT: l3plugin,
+            }
 
             new_host_port = mock.Mock()
             plugin = self._create_plugin_for_create_update_port(new_host_port)
@@ -1123,6 +1140,8 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
 
             plugin._notify_l3_agent_new_port.assert_called_once_with(
                 self.context, new_host_port)
+            l3plugin.dvr_vmarp_table_update.assert_called_once_with(
+                self.context, mock.ANY, "add")
 
     def test_vmarp_table_update_outside_of_delete_transaction(self):
         l3plugin = mock.Mock()

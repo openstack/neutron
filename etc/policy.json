@@ -52,6 +52,7 @@
     "get_port:binding:host_id": "rule:admin_only",
     "get_port:binding:profile": "rule:admin_only",
     "update_port": "rule:admin_or_owner or rule:context_is_advsvc",
+    "update_port:mac_address": "rule:admin_only or rule:context_is_advsvc",
     "update_port:fixed_ips": "rule:admin_or_network_owner or rule:context_is_advsvc",
     "update_port:port_security_enabled": "rule:admin_or_network_owner or rule:context_is_advsvc",
     "update_port:binding:host_id": "rule:admin_only",
