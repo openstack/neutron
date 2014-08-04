@@ -149,6 +149,69 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             self.notifier.security_groups_member_updated(
                 context, port.get(ext_sg.SECURITYGROUPS))
 
+    def security_group_info_for_ports(self, context, ports):
+        sg_info = {'devices': ports,
+                   'security_groups': {},
+                   'sg_member_ips': {}}
+        rules_in_db = self._select_rules_for_ports(context, ports)
+        remote_security_group_info = {}
+        for (binding, rule_in_db) in rules_in_db:
+            port_id = binding['port_id']
+            remote_gid = rule_in_db.get('remote_group_id')
+            security_group_id = rule_in_db.get('security_group_id')
+            ethertype = rule_in_db['ethertype']
+            if ('security_group_source_groups'
+                not in sg_info['devices'][port_id]):
+                sg_info['devices'][port_id][
+                    'security_group_source_groups'] = []
+
+            if remote_gid:
+                if (remote_gid
+                    not in sg_info['devices'][port_id][
+                        'security_group_source_groups']):
+                    sg_info['devices'][port_id][
+                        'security_group_source_groups'].append(remote_gid)
+                if remote_gid not in remote_security_group_info:
+                    remote_security_group_info[remote_gid] = {}
+                if ethertype not in remote_security_group_info[remote_gid]:
+                    remote_security_group_info[remote_gid][ethertype] = []
+
+            direction = rule_in_db['direction']
+            rule_dict = {
+                'direction': direction,
+                'ethertype': ethertype}
+
+            for key in ('protocol', 'port_range_min', 'port_range_max',
+                        'remote_ip_prefix', 'remote_group_id'):
+                if rule_in_db.get(key):
+                    if key == 'remote_ip_prefix':
+                        direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
+                        rule_dict[direction_ip_prefix] = rule_in_db[key]
+                        continue
+                    rule_dict[key] = rule_in_db[key]
+            if security_group_id not in sg_info['security_groups']:
+                sg_info['security_groups'][security_group_id] = []
+            if rule_dict not in sg_info['security_groups'][security_group_id]:
+                sg_info['security_groups'][security_group_id].append(
+                    rule_dict)
+
+        sg_info['sg_member_ips'] = remote_security_group_info
+        # the provider rules do not belong to any security group, so these
+        # rules still reside in sg_info['devices'] [port_id]
+        self._apply_provider_rule(context, sg_info['devices'])
+
+        return self._get_security_group_member_ips(context, sg_info)
+
+    def _get_security_group_member_ips(self, context, sg_info):
+        ips = self._select_ips_for_remote_group(
+            context, sg_info['sg_member_ips'].keys())
+        for sg_id, member_ips in ips.items():
+            for ip in member_ips:
+                ethertype = 'IPv%d' % netaddr.IPAddress(ip).version
+                if ip not in sg_info['sg_member_ips'][sg_id][ethertype]:
+                    sg_info['sg_member_ips'][sg_id][ethertype].append(ip)
+        return sg_info
+
     def _select_rules_for_ports(self, context, ports):
         if not ports:
             return []
