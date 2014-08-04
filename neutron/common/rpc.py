@@ -106,7 +106,12 @@ def get_notifier(service=None, host=None, publisher_id=None):
 
 class RPCDispatcher(rpc_dispatcher.RPCDispatcher):
     def __call__(self, incoming):
-        LOG.debug('Incoming RPC: ctxt:%s message:%s', incoming.ctxt,
+        # NOTE(yamahata): '***' is chosen for consistency with
+        # openstack.common.strutils.mask_password
+        sanitize_key_list = ('auth_token', )
+        sanitized_ctxt = dict((k, '***' if k in sanitize_key_list else v)
+                              for (k, v) in incoming.ctxt.items())
+        LOG.debug('Incoming RPC: ctxt:%s message:%s', sanitized_ctxt,
                   incoming.message)
         return super(RPCDispatcher, self).__call__(incoming)
 
