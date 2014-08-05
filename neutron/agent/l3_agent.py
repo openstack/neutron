@@ -82,6 +82,7 @@ class L3PluginApi(n_rpc.RpcProxy):
               - get_ports_by_subnet
               - get_agent_gateway_port
               Needed by the agent when operating in DVR/DVR_SNAT mode
+        1.3 - Get the list of activated services
 
     """
 
@@ -132,6 +133,13 @@ class L3PluginApi(n_rpc.RpcProxy):
                                        network_id=fip_net, host=self.host),
                          topic=self.topic,
                          version='1.2')
+
+    def get_service_plugin_list(self, context):
+        """Make a call to get the list of activated services."""
+        return self.call(context,
+                         self.make_msg('get_service_plugin_list'),
+                         topic=self.topic,
+                         version='1.3')
 
 
 class RouterInfo(object):
@@ -417,6 +425,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self.removed_routers = set()
         self.sync_progress = False
 
+        # Get the list of service plugins from Neutron Server
+        self.neutron_service_plugins = (
+            self.plugin_rpc.get_service_plugin_list(self.context))
         self._clean_stale_namespaces = self.conf.use_namespaces
 
         # dvr data

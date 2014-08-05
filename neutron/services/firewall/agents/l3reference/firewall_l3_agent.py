@@ -62,7 +62,16 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
         LOG.debug(_("Initializing firewall agent"))
         self.conf = conf
         fwaas_driver_class_path = cfg.CONF.fwaas.driver
-        self.fwaas_enabled = cfg.CONF.fwaas.enabled
+        fwaas_enabled = cfg.CONF.fwaas.enabled
+        fwaas_plugin_configured = (constants.FIREWALL
+                                   in self.neutron_service_plugins)
+        if fwaas_plugin_configured and not fwaas_enabled:
+            msg = _("FWaaS plugin is configured in the server side, but "
+                    "FWaaS is disabled in L3-agent.")
+            LOG.error(msg)
+            raise SystemExit(1)
+
+        self.fwaas_enabled = fwaas_enabled and fwaas_plugin_configured
         if self.fwaas_enabled:
             try:
                 self.fwaas_driver = importutils.import_object(
