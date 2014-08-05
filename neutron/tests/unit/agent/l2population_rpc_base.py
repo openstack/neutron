@@ -14,6 +14,7 @@
 # @author: Fumihiko Kakuma, VA Linux Systems Japan K.K.
 
 import collections
+import mock
 
 from neutron.agent import l2population_rpc
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
@@ -28,19 +29,19 @@ class FakeNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin):
     def fdb_remove(self, context, fdb_entries):
         pass
 
-    def add_fdb_flow(self, port_info, remote_ip, lvm, ofport):
+    def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         pass
 
-    def del_fdb_flow(self, port_info, remote_ip, lvm, ofport):
+    def del_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         pass
 
-    def setup_tunnel_port(self, remote_ip, network_type):
+    def setup_tunnel_port(self, br, remote_ip, network_type):
         pass
 
-    def cleanup_tunnel_port(self, tun_ofport, tunnel_type):
+    def cleanup_tunnel_port(self, br, tun_ofport, tunnel_type):
         pass
 
-    def setup_entry_for_arp_reply(self, action, local_vid, mac_address,
+    def setup_entry_for_arp_reply(self, br, action, local_vid, mac_address,
                                   ip_address):
         pass
 
@@ -50,6 +51,7 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
     def setUp(self):
         super(TestL2populationRpcCallBackTunnelMixinBase, self).setUp()
         self.fakeagent = FakeNeutronAgent()
+        self.fakebr = mock.Mock()
         Port = collections.namedtuple('Port', 'ip, ofport')
         LVM = collections.namedtuple(
             'LVM', 'net, vlan, phys, segid, mac, ip, vif, port')
