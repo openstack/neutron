@@ -150,12 +150,10 @@ class ApiRequest(object):
                         # a request to authenticate, we should abort the
                         # request since there is no point in retrying.
                         self._abort = True
-                    else:
-                        # If request is unauthorized, clear the session cookie
-                        # for the current provider so that subsequent requests
-                        # to the same provider triggers re-authentication.
-                        self._api_client.set_auth_cookie(conn, None)
 
+                    # If request is unauthorized, clear the session cookie
+                    # for the current provider so that subsequent requests
+                    # to the same provider triggers re-authentication.
                     self._api_client.set_auth_cookie(conn, None)
                 elif response.status == httplib.SERVICE_UNAVAILABLE:
                     is_conn_service_unavail = True
