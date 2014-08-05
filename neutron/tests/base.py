@@ -217,3 +217,16 @@ class BaseTestCase(testtools.TestCase):
             yield
             return
         self.fail('Execution of this test timed out')
+
+    def assertOrderedEqual(self, expected, actual):
+        expect_val = self.sort_dict_lists(expected)
+        actual_val = self.sort_dict_lists(actual)
+        self.assertEqual(expect_val, actual_val)
+
+    def sort_dict_lists(self, dic):
+        for key, value in dic.iteritems():
+            if isinstance(value, list):
+                dic[key] = sorted(value)
+            elif isinstance(value, dict):
+                dic[key] = self.sort_dict_lists(value)
+        return dic
