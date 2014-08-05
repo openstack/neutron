@@ -550,7 +550,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                    'name': 'subnet1',
                                    'tenant_id':
                                    network['network']['tenant_id'],
-                                   'gateway_ip': '10.0.2.1'}}
+                                   'gateway_ip': '10.0.20.1'}}
                 req = self.new_create_request('subnets', data)
                 res = req.get_response(self.api)
                 self.assertEqual(500, res.status_int)
@@ -577,7 +577,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                        'name': 'subnet1',
                                        'tenant_id':
                                        network['network']['tenant_id'],
-                                       'gateway_ip': '10.0.2.1'}}
+                                       'gateway_ip': '10.0.20.1'}}
                     subnet_req = self.new_create_request('subnets', data)
                     subnet_res = subnet_req.get_response(self.api)
                     self.assertEqual(201, subnet_res.status_int)
@@ -608,7 +608,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                        'name': 'subnet1',
                                        'tenant_id':
                                        network['network']['tenant_id'],
-                                       'gateway_ip': '10.0.2.1'}}
+                                       'gateway_ip': '10.0.20.1'}}
                     subnet_req = self.new_create_request('subnets', data)
                     subnet_res = subnet_req.get_response(self.api)
                     self.assertEqual(201, subnet_res.status_int)

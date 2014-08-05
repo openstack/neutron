@@ -943,8 +943,6 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 try_overlapped_cidr('10.0.1.0/24')
                 # another subnet with overlapped cidr including s1
                 try_overlapped_cidr('10.0.0.0/16')
-                # another subnet with overlapped cidr included by s1
-                try_overlapped_cidr('10.0.1.1/32')
                 # clean-up
                 self._router_interface_action('remove',
                                               r['router']['id'],
