@@ -16,14 +16,14 @@
 """Brocade ML2 Mech. Driver
 
 Revision ID: 492a106273f8
-Revises: fcac4c42e2cc
+Revises: 2eeaf963a447
 Create Date: 2014-03-03 15:35:46.974523
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '492a106273f8'
-down_revision = 'fcac4c42e2cc'
+down_revision = '2eeaf963a447'
 
 # Change to ['*'] if this migration applies to all plugins
 
@@ -59,7 +59,8 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('physical_interface', sa.String(length=36), nullable=True),
         sa.Column('vlan_id', sa.String(length=36), nullable=True),
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
-        sa.PrimaryKeyConstraint('id'))
+        sa.PrimaryKeyConstraint('id'),
+        sa.ForeignKeyConstraint(['network_id'], ['ml2_brocadenetworks.id']))
 
 
 def downgrade(active_plugins=None, options=None):

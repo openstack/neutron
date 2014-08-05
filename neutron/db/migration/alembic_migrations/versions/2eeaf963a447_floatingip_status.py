@@ -16,14 +16,14 @@
 """floatingip_status
 
 Revision ID: 2eeaf963a447
-Revises: f44ab9871cd6
+Revises: e766b19a3bb
 Create Date: 2014-01-14 11:58:13.754747
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '2eeaf963a447'
-down_revision = 'f44ab9871cd6'
+down_revision = 'e766b19a3bb'
 
 # This migration is applied to all L3 capable plugins
 
