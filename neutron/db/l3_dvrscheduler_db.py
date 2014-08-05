@@ -224,7 +224,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             subnet_ids = self.get_subnet_ids_on_router(context, router_id)
             for subnet in subnet_ids:
                 vm_ports = (
-                    self.get_compute_ports_on_host_by_subnet(
+                    self._core_plugin.get_compute_ports_on_host_by_subnet(
                         context, host, subnet))
                 if vm_ports:
                     LOG.debug('VM exists on the snat enabled l3_agent '

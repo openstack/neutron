@@ -501,3 +501,30 @@ class L3DvrSchedulerTestCase(base.BaseTestCase):
                 self.adminContext, 'foo_router_id', mock.ANY, True)
         mock_bind.assert_called_once_with(
             self.adminContext, 'foo_router_id', [agent])
+
+    def test_unbind_snat_servicenode(self):
+        router_id = 'foo_router_id'
+        core_plugin = mock.PropertyMock()
+        type(self.dut)._core_plugin = core_plugin
+        (self.dut._core_plugin.get_compute_ports_on_host_by_subnet.
+         return_value) = []
+        core_plugin.reset_mock()
+        l3_notifier = mock.PropertyMock()
+        type(self.dut).l3_rpc_notifier = l3_notifier
+        binding = l3_dvrscheduler_db.CentralizedSnatL3AgentBinding(
+            router_id=router_id, l3_agent_id='foo_l3_agent_id',
+            l3_agent=agents_db.Agent())
+        with contextlib.nested(
+            mock.patch.object(query.Query, 'one'),
+            mock.patch.object(self.adminContext.session, 'delete'),
+            mock.patch.object(query.Query, 'delete'),
+            mock.patch.object(self.dut, 'get_subnet_ids_on_router')) as (
+                mock_query, mock_session, mock_delete, mock_get_subnets):
+            mock_query.return_value = binding
+            mock_get_subnets.return_value = ['foo_subnet_id']
+            self.dut.unbind_snat_servicenode(self.adminContext, router_id)
+        mock_get_subnets.assert_called_with(self.adminContext, router_id)
+        self.assertTrue(mock_session.call_count)
+        self.assertTrue(mock_delete.call_count)
+        core_plugin.assert_called_once_with()
+        l3_notifier.assert_called_once_with()
