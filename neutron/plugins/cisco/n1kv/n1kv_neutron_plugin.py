@@ -1229,8 +1229,13 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 n1kv_db_v2.delete_vm_network(context.session,
                                              port[n1kv.PROFILE_ID],
                                              port['network_id'])
-            self.disassociate_floatingips(context, id)
+            router_ids = self.disassociate_floatingips(
+                context, id, do_notify=False)
             super(N1kvNeutronPluginV2, self).delete_port(context, id)
+
+        # now that we've left db transaction, we are safe to notify
+        self.notify_routers_updated(context, router_ids)
+
         self._send_delete_port_request(context, port, vm_network)
 
     def get_port(self, context, id, fields=None):

@@ -524,11 +524,14 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
-            self.disassociate_floatingips(context, id)
+            router_ids = self.disassociate_floatingips(
+                context, id, do_notify=False)
             port = self.get_port(context, id)
             self._delete_port_security_group_bindings(context, id)
             super(LinuxBridgePluginV2, self).delete_port(context, id)
 
+        # now that we've left db transaction, we are safe to notify
+        self.notify_routers_updated(context, router_ids)
         self.notify_security_groups_member_updated(context, port)
 
     def _notify_port_updated(self, context, port):

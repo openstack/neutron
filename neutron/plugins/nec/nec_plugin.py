@@ -652,9 +652,13 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
         with context.session.begin(subtransactions=True):
-            self.disassociate_floatingips(context, id)
+            router_ids = self.disassociate_floatingips(
+                context, id, do_notify=False)
             self._delete_port_security_group_bindings(context, id)
             super(NECPluginV2, self).delete_port(context, id)
+
+        # now that we've left db transaction, we are safe to notify
+        self.notify_routers_updated(context, router_ids)
         self.notify_security_groups_member_updated(context, port)
 
 
