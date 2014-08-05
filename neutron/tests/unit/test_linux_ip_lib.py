@@ -816,8 +816,9 @@ class TestIpNetnsCommand(TestIPCmdBase):
             env = dict(FOO=1, BAR=2)
             self.netns_cmd.execute(['ip', 'link', 'list'], env)
             execute.assert_called_once_with(
-                ['ip', 'netns', 'exec', 'ns', 'env', 'FOO=1', 'BAR=2',
-                 'ip', 'link', 'list'],
+                ['ip', 'netns', 'exec', 'ns', 'env'] +
+                ['%s=%s' % (k, v) for k, v in env.items()] +
+                ['ip', 'link', 'list'],
                 root_helper='sudo', check_exit_code=True)
 
 
