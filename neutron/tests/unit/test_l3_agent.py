@@ -840,6 +840,16 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.add_arp_entry(None, payload)
         self.assertFalse(agent._update_arp_entry.called)
 
+    def test__update_arp_entry_with_no_subnet(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3_agent.RouterInfo(
+            'foo_router_id', mock.ANY, True,
+            {'distributed': True, 'gw_port_host': HOSTNAME})
+        with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as f:
+            agent._update_arp_entry(ri, mock.ANY, mock.ANY,
+                                    'foo_subnet_id', 'add')
+        self.assertFalse(f.call_count)
+
     def test_del_arp_entry(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data(num_internal_ports=2)
@@ -1455,6 +1465,19 @@ class TestBasicRouterOperations(base.BaseTestCase):
             mock_update_fip_status.assert_called_once_with(
                 mock.ANY, ri.router_id,
                 {fip_id: l3_constants.FLOATINGIP_STATUS_ERROR})
+
+    def test_handle_router_snat_rules_distributed_without_snat_manager(self):
+        ri = l3_agent.RouterInfo(
+            'foo_router_id', mock.ANY, True, {'distributed': True})
+        ri.iptables_manager = mock.Mock()
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        with mock.patch.object(l3_agent.LOG, 'debug') as log_debug:
+            agent._handle_router_snat_rules(
+                ri, mock.ANY, mock.ANY, mock.ANY, mock.ANY)
+        self.assertIsNone(ri.snat_iptables_manager)
+        self.assertFalse(ri.iptables_manager.called)
+        self.assertTrue(log_debug.called)
 
     def test_handle_router_snat_rules_add_back_jump(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
