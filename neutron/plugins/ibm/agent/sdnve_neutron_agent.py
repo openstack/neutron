@@ -48,8 +48,7 @@ class SdnvePluginApi(agent_rpc.PluginApi):
 
     def sdnve_info(self, context, info):
         return self.call(context,
-                         self.make_msg('sdnve_info', info=info),
-                         topic=self.topic)
+                         self.make_msg('sdnve_info', info=info))
 
 
 class SdnveNeutronAgent(n_rpc.RpcCallback):

@@ -68,8 +68,7 @@ class MeteringAgentNotifyAPI(n_rpc.RpcProxy):
                    'router_id': router_id})
         self.fanout_cast(
             context, self.make_msg(method,
-                                   router_id=router_id),
-            topic=self.topic)
+                                   router_id=router_id))
 
     def _notification(self, context, method, routers):
         """Notify all the agents that are hosting the routers."""
@@ -79,8 +78,7 @@ class MeteringAgentNotifyAPI(n_rpc.RpcProxy):
             plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             self._agent_notification(context, method, routers)
         else:
-            self.fanout_cast(context, self.make_msg(method, routers=routers),
-                             topic=self.topic)
+            self.fanout_cast(context, self.make_msg(method, routers=routers))
 
     def router_deleted(self, context, router_id):
         self._notification_fanout(context, 'router_deleted', router_id)

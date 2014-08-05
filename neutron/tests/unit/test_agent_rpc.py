@@ -76,7 +76,6 @@ class AgentPluginReportState(base.BaseTestCase):
                              {'agent_state': expected_agent_state})
             self.assertIsInstance(call.call_args[0][1]['args']['time'],
                                   str)
-            self.assertEqual(call.call_args[1]['topic'], topic)
 
     def test_plugin_report_state_cast(self):
         topic = 'test'
@@ -92,7 +91,6 @@ class AgentPluginReportState(base.BaseTestCase):
                              {'agent_state': expected_agent_state})
             self.assertIsInstance(cast.call_args[0][1]['args']['time'],
                                   str)
-            self.assertEqual(cast.call_args[1]['topic'], topic)
 
 
 class AgentRPCMethods(base.BaseTestCase):

@@ -161,15 +161,13 @@ class CiscoCsrIPsecVpnDriverApi(n_rpc.RpcProxy):
         """
         return self.call(context,
                          self.make_msg('get_vpn_services_on_host',
-                                       host=host),
-                         topic=self.topic)
+                                       host=host))
 
     def update_status(self, context, status):
         """Update status for all VPN services and connections."""
         return self.cast(context,
                          self.make_msg('update_status',
-                                       status=status),
-                         topic=self.topic)
+                                       status=status))
 
 
 @six.add_metaclass(abc.ABCMeta)

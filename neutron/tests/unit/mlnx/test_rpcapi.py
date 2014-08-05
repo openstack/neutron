@@ -33,7 +33,9 @@ class rpcApiTestCase(base.BaseTestCase):
                        expected_msg=None, **kwargs):
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if method == 'call' else None
-        expected_kwargs = {'topic': topic}
+        expected_kwargs = {}
+        if topic:
+            expected_kwargs['topic'] = topic
         if 'version' in kwargs:
             expected_kwargs['version'] = kwargs.pop('version')
         if not expected_msg:
@@ -133,7 +135,7 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_device_details(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_mlnx_api(rpcapi, topics.PLUGIN,
+        self._test_mlnx_api(rpcapi, None,
                             'get_device_details', rpc_method='call',
                             device='fake_device',
                             agent_id='fake_agent_id',
@@ -141,7 +143,7 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_devices_details_list(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_mlnx_api(rpcapi, topics.PLUGIN,
+        self._test_mlnx_api(rpcapi, None,
                             'get_devices_details_list', rpc_method='call',
                             devices=['fake_device1', 'fake_device1'],
                             agent_id='fake_agent_id', host='fake_host',
@@ -149,7 +151,7 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_update_device_down(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_mlnx_api(rpcapi, topics.PLUGIN,
+        self._test_mlnx_api(rpcapi, None,
                             'update_device_down', rpc_method='call',
                             device='fake_device',
                             agent_id='fake_agent_id',
@@ -157,7 +159,7 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_update_device_up(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_mlnx_api(rpcapi, topics.PLUGIN,
+        self._test_mlnx_api(rpcapi, None,
                             'update_device_up', rpc_method='call',
                             device='fake_device',
                             agent_id='fake_agent_id',

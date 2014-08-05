@@ -44,8 +44,7 @@ class FWaaSL3PluginApi(api.FWaaSPluginApiMixin):
 
         return self.call(context,
                          self.make_msg('get_firewalls_for_tenant',
-                                       host=self.host),
-                         topic=self.topic)
+                                       host=self.host))
 
     def get_tenants_with_firewalls(self, context, **kwargs):
         """Get all Tenants that have Firewalls configured from plugin."""
@@ -53,8 +52,7 @@ class FWaaSL3PluginApi(api.FWaaSPluginApiMixin):
 
         return self.call(context,
                          self.make_msg('get_tenants_with_firewalls',
-                                       host=self.host),
-                         topic=self.topic)
+                                       host=self.host))
 
 
 class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):

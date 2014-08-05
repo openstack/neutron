@@ -67,9 +67,9 @@ class PluginReportStateAPI(n_rpc.RpcProxy):
                                          agent_state},
                             time=timeutils.strtime())
         if use_call:
-            return self.call(context, msg, topic=self.topic)
+            return self.call(context, msg)
         else:
-            return self.cast(context, msg, topic=self.topic)
+            return self.cast(context, msg)
 
 
 class PluginApi(n_rpc.RpcProxy):
@@ -91,8 +91,7 @@ class PluginApi(n_rpc.RpcProxy):
     def get_device_details(self, context, device, agent_id, host=None):
         return self.call(context,
                          self.make_msg('get_device_details', device=device,
-                                       agent_id=agent_id, host=host),
-                         topic=self.topic)
+                                       agent_id=agent_id, host=host))
 
     def get_devices_details_list(self, context, devices, agent_id, host=None):
         res = []
@@ -102,7 +101,7 @@ class PluginApi(n_rpc.RpcProxy):
                                           devices=devices,
                                           agent_id=agent_id,
                                           host=host),
-                            topic=self.topic, version='1.3')
+                            version='1.3')
         except messaging.UnsupportedVersion:
             # If the server has not been upgraded yet, a DVR-enabled agent
             # may not work correctly, however it can function in 'degraded'
@@ -112,8 +111,7 @@ class PluginApi(n_rpc.RpcProxy):
             res = [
                 self.call(context,
                           self.make_msg('get_device_details', device=device,
-                                        agent_id=agent_id, host=host),
-                          topic=self.topic)
+                                        agent_id=agent_id, host=host))
                 for device in devices
             ]
         return res
@@ -121,17 +119,14 @@ class PluginApi(n_rpc.RpcProxy):
     def update_device_down(self, context, device, agent_id, host=None):
         return self.call(context,
                          self.make_msg('update_device_down', device=device,
-                                       agent_id=agent_id, host=host),
-                         topic=self.topic)
+                                       agent_id=agent_id, host=host))
 
     def update_device_up(self, context, device, agent_id, host=None):
         return self.call(context,
                          self.make_msg('update_device_up', device=device,
-                                       agent_id=agent_id, host=host),
-                         topic=self.topic)
+                                       agent_id=agent_id, host=host))
 
     def tunnel_sync(self, context, tunnel_ip, tunnel_type=None):
         return self.call(context,
                          self.make_msg('tunnel_sync', tunnel_ip=tunnel_ip,
-                                       tunnel_type=tunnel_type),
-                         topic=self.topic)
+                                       tunnel_type=tunnel_type))

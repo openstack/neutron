@@ -184,8 +184,7 @@ class TestFirewallAgentApi(base.BaseTestCase):
         self.assertEqual(rv, self.mock_fanoutcast.return_value)
         self.mock_fanoutcast.assert_called_once_with(
             mock.sentinel.context,
-            self.mock_msg.return_value,
-            topic='topic'
+            self.mock_msg.return_value
         )
 
         self.mock_msg.assert_called_once_with(

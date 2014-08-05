@@ -35,22 +35,19 @@ class LbaasAgentApi(n_rpc.RpcProxy):
     def get_ready_devices(self):
         return self.call(
             self.context,
-            self.make_msg('get_ready_devices', host=self.host),
-            topic=self.topic
+            self.make_msg('get_ready_devices', host=self.host)
         )
 
     def pool_destroyed(self, pool_id):
         return self.call(
             self.context,
-            self.make_msg('pool_destroyed', pool_id=pool_id),
-            topic=self.topic
+            self.make_msg('pool_destroyed', pool_id=pool_id)
         )
 
     def pool_deployed(self, pool_id):
         return self.call(
             self.context,
-            self.make_msg('pool_deployed', pool_id=pool_id),
-            topic=self.topic
+            self.make_msg('pool_deployed', pool_id=pool_id)
         )
 
     def get_logical_device(self, pool_id):
@@ -59,30 +56,26 @@ class LbaasAgentApi(n_rpc.RpcProxy):
             self.make_msg(
                 'get_logical_device',
                 pool_id=pool_id
-            ),
-            topic=self.topic
+            )
         )
 
     def update_status(self, obj_type, obj_id, status):
         return self.call(
             self.context,
             self.make_msg('update_status', obj_type=obj_type, obj_id=obj_id,
-                          status=status),
-            topic=self.topic
+                          status=status)
         )
 
     def plug_vip_port(self, port_id):
         return self.call(
             self.context,
-            self.make_msg('plug_vip_port', port_id=port_id, host=self.host),
-            topic=self.topic
+            self.make_msg('plug_vip_port', port_id=port_id, host=self.host)
         )
 
     def unplug_vip_port(self, port_id):
         return self.call(
             self.context,
-            self.make_msg('unplug_vip_port', port_id=port_id, host=self.host),
-            topic=self.topic
+            self.make_msg('unplug_vip_port', port_id=port_id, host=self.host)
         )
 
     def update_pool_stats(self, pool_id, stats):
@@ -93,6 +86,5 @@ class LbaasAgentApi(n_rpc.RpcProxy):
                 pool_id=pool_id,
                 stats=stats,
                 host=self.host
-            ),
-            topic=self.topic
+            )
         )

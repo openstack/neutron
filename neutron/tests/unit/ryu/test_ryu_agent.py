@@ -240,7 +240,7 @@ class TestRyuPluginApi(RyuAgentTestCase):
             mock.call('get_ofp_rest_api')
         ])
         mock_call.assert_has_calls([
-            mock.call('context', 'msg', topic='topics')
+            mock.call('context', 'msg')
         ])
 
 
