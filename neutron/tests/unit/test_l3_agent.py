@@ -1456,17 +1456,38 @@ class TestBasicRouterOperations(base.BaseTestCase):
         namespaces = ['qrouter-foo', 'qrouter-bar']
 
         self.mock_ip.get_namespaces.return_value = namespaces
-        self.mock_ip.get_devices.return_value = [FakeDev('fr-aaaa'),
+        self.mock_ip.get_devices.return_value = [FakeDev('fpr-aaaa'),
                                                  FakeDev('fg-aaaa')]
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
         agent._destroy_fip_namespace(namespaces[0])
-        # TODO(mrsmith): update for fr interface
-        self.assertEqual(self.mock_driver.unplug.call_count, 1)
-        self.mock_driver.unplug.assert_called_with('fg-aaaa', bridge='br-ex',
-                                                   prefix='fg-',
-                                                   namespace='qrouter-foo')
+        self.mock_driver.unplug.assert_called_once_with('fg-aaaa',
+                                                        bridge='br-ex',
+                                                        prefix='fg-',
+                                                        namespace='qrouter'
+                                                        '-foo')
+        self.mock_ip.del_veth.assert_called_once_with('fpr-aaaa')
+
+    def test_destroy_namespace(self):
+        class FakeDev(object):
+            def __init__(self, name):
+                self.name = name
+
+        namespace = 'qrouter-bar'
+
+        self.mock_ip.get_namespaces.return_value = [namespace]
+        self.mock_ip.get_devices.return_value = [FakeDev('qr-aaaa'),
+                                                 FakeDev('rfp-aaaa')]
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        agent._destroy_namespace(namespace)
+        self.mock_driver.unplug.assert_called_once_with('qr-aaaa',
+                                                        prefix='qr-',
+                                                        namespace='qrouter'
+                                                        '-bar')
+        self.mock_ip.del_veth.assert_called_once_with('rfp-aaaa')
 
     def test_destroy_router_namespace_skips_ns_removal(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1866,20 +1887,30 @@ class TestBasicRouterOperations(base.BaseTestCase):
                          'network_id': _uuid(),
                          'mac_address': 'ca:fe:de:ad:be:ef',
                          'ip_cidr': '20.0.0.30/24'}
-
         fip_cidr = '11.22.33.44/24'
 
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         ri.dist_fip_count = 2
         ri.floating_ips_dict['11.22.33.44'] = FIP_PRI
+        ri.fip_2_rtr = '11.22.33.42'
+        ri.rtr_2_fip = '11.22.33.40'
         agent.agent_gateway_port = agent_gw_port
         agent.floating_ip_removed_dist(ri, fip_cidr)
         self.mock_rule.delete_rule_priority.assert_called_with(FIP_PRI)
         self.mock_ip_dev.route.delete_route.assert_called_with(fip_cidr,
                                                                ri.rtr_2_fip)
-        # TODO(mrsmith): test ri.dist_fip_count == 0
-        # TODO(mrsmith): test agent_fip_count == 0 case
+        with mock.patch.object(agent, '_destroy_fip_namespace') as f:
+            ri.dist_fip_count = 1
+            agent.agent_fip_count = 1
+            fip_ns_name = agent.get_fip_ns_name(
+                str(agent._fetch_external_net_id()))
+            agent.floating_ip_removed_dist(ri, fip_cidr)
+            self.mock_ip.del_veth.assert_called_once_with(
+                agent.get_fip_int_device_name(router['id']))
+            self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
+                '11.22.33.42', table=16)
+            f.assert_called_once_with(fip_ns_name)
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):

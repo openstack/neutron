@@ -539,8 +539,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(FIP_2_ROUTER_DEV_PREFIX):
                 # internal link between IRs and FIP NS
-                # TODO(mrsmith): remove IR interfaces (IP pool?)
-                pass
+                ns_ip.del_veth(d.name)
             elif d.name.startswith(FIP_EXT_DEV_PREFIX):
                 # single port from FIP NS to br-ext
                 # TODO(mrsmith): remove br-ext interface
@@ -562,6 +561,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 # device is on default bridge
                 self.driver.unplug(d.name, namespace=ns,
                                    prefix=INTERNAL_DEV_PREFIX)
+            elif d.name.startswith(ROUTER_2_FIP_DEV_PREFIX):
+                ns_ip.del_veth(d.name)
             elif d.name.startswith(EXTERNAL_DEV_PREFIX):
                 self.driver.unplug(d.name,
                                    bridge=self.conf.external_network_bridge,
@@ -1443,12 +1444,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             #remove default route entry
             device = ip_lib.IPDevice(rtr_2_fip_name, self.root_helper,
                                      namespace=ri.ns_name)
+            ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=fip_ns_name)
             device.route.delete_gateway(ri.fip_2_rtr, table=FIP_RT_TBL)
             self.local_ips.add(ri.rtr_2_fip.rsplit('.', 1)[1])
             ri.rtr_2_fip = None
             self.local_ips.add(ri.fip_2_rtr.rsplit('.', 1)[1])
             ri.fip_2_rtr = None
-            # TODO(mrsmith): remove interface
+            ns_ip.del_veth(fip_2_rtr_name)
         # clean up fip-namespace if this is the last FIP
         self.agent_fip_count = self.agent_fip_count - 1
         if self.agent_fip_count == 0:
