@@ -1026,7 +1026,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             l3plugin.notify_routers_updated(context, router_ids)
             for router in removed_routers:
                 l3plugin.remove_router_from_l3_agent(
-                    context, router['host'], router['router_id'])
+                    context, router['agent_id'], router['router_id'])
 
         try:
             # for both normal and DVR Interface ports, only one invocation of
