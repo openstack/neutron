@@ -24,6 +24,7 @@ from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
 from neutron.agent import l3_agent
+from neutron.agent import l3_ha_agent
 from neutron.agent.linux import ip_lib
 from neutron.common import config as base_config
 from neutron import context
@@ -58,6 +59,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
+        self.conf.register_opts(l3_ha_agent.OPTS)
         agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_root_helper(self.conf)
         self.conf.root_helper = 'sudo'

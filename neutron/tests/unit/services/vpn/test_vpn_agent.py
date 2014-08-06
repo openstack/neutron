@@ -18,6 +18,7 @@ from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
 from neutron.agent import l3_agent
+from neutron.agent import l3_ha_agent
 from neutron.agent.linux import interface
 from neutron.common import config as base_config
 from neutron.openstack.common import uuidutils
@@ -48,6 +49,7 @@ class TestVPNAgent(base.BaseTestCase):
         self.conf = cfg.CONF
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
+        self.conf.register_opts(l3_ha_agent.OPTS)
         self.conf.register_opts(interface.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_use_namespaces_opts_helper(self.conf)

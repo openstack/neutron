@@ -14,11 +14,14 @@
 #    under the License.
 
 import os
+import time
 
 from neutron.tests import base
 
 
 SUDO_CMD = 'sudo -n'
+TIMEOUT = 60
+SLEEP_INTERVAL = 1
 
 
 class BaseSudoTestCase(base.BaseTestCase):
@@ -55,3 +58,8 @@ class BaseSudoTestCase(base.BaseTestCase):
     def check_sudo_enabled(self):
         if not self.sudo_enabled:
             self.skipTest('testing with sudo is not enabled')
+
+    def wait_until(self, predicate, *args, **kwargs):
+        with self.assert_max_execution_time(TIMEOUT):
+            while not predicate(*args, **kwargs):
+                time.sleep(SLEEP_INTERVAL)

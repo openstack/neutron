@@ -83,7 +83,7 @@ class KeepalivedGroup(object):
         self.ha_vr_id = ha_vr_id
         self.name = 'VG_%s' % ha_vr_id
         self.instance_names = set()
-        self.notifiers = {}
+        self.notifiers = []
 
     def add_instance(self, instance):
         self.instance_names.add(instance.name)
@@ -91,7 +91,7 @@ class KeepalivedGroup(object):
     def set_notify(self, state, path):
         if state not in VALID_NOTIFY_STATES:
             raise InvalidNotifyStateException(state=state)
-        self.notifiers[state] = path
+        self.notifiers.append((state, path))
 
     def build_config(self):
         return itertools.chain(['vrrp_sync_group %s {' % self.name,
@@ -99,7 +99,7 @@ class KeepalivedGroup(object):
                                ('        %s' % i for i in self.instance_names),
                                ['    }'],
                                ('    notify_%s "%s"' % (state, path)
-                                for state, path in self.notifiers.items()),
+                                for state, path in self.notifiers),
                                ['}'])
 
 
@@ -131,6 +131,9 @@ class KeepalivedInstance(object):
             raise InvalidAuthenticationTypeExecption(auth_type=auth_type)
 
         self.authentication = (auth_type, password)
+
+    def add_vip(self, ip_cidr, interface_name):
+        self.vips.append(KeepalivedVipAddress(ip_cidr, interface_name))
 
     def remove_vips_vroutes_by_interface(self, interface_name):
         self.vips = [vip for vip in self.vips
