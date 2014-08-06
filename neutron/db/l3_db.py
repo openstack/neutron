@@ -679,8 +679,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         When a floating IP is associated with an internal port,
         we need to extract/determine some data associated with the
         internal port, including the internal_ip_address, and router_id.
-        We also need to confirm that this internal port is owned by the
-        tenant who owns the floating IP.
+        The confirmation of the internal port whether owned by the tenant who
+        owns the floating IP will be confirmed by _get_router_for_floatingip.
         """
         (internal_port, internal_subnet_id,
          internal_ip_address) = self._internal_fip_assoc_data(context, fip)
@@ -688,18 +688,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                                     internal_port,
                                                     internal_subnet_id,
                                                     floating_network_id)
-        # confirm that this router has a floating
-        # ip enabled gateway with support for this floating IP network
-        try:
-            port_qry = context.elevated().session.query(models_v2.Port)
-            port_qry.filter_by(
-                network_id=floating_network_id,
-                device_id=router_id,
-                device_owner=DEVICE_OWNER_ROUTER_GW).one()
-        except exc.NoResultFound:
-            raise l3.ExternalGatewayForFloatingIPNotFound(
-                subnet_id=internal_subnet_id,
-                port_id=internal_port['id'])
 
         return (fip['port_id'], internal_ip_address, router_id)
 
