@@ -379,8 +379,9 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             for port_info in port_infos:
                 if port_info == n_const.FLOODING_ENTRY:
                     continue
-                self.ryuapp.add_arp_table_entry(
-                    lvm.vlan, port_info[1], port_info[0])
+                self.ryuapp.add_arp_table_entry(lvm.vlan,
+                                                port_info.ip_address,
+                                                port_info.mac_address)
 
     @log.log
     def _fdb_remove_arp(self, lvm, agent_ports):
@@ -388,7 +389,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             for port_info in port_infos:
                 if port_info == n_const.FLOODING_ENTRY:
                     continue
-                self.ryuapp.del_arp_table_entry(lvm.vlan, port_info[1])
+                self.ryuapp.del_arp_table_entry(lvm.vlan, port_info.ip_address)
 
     def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         if port_info == n_const.FLOODING_ENTRY:
@@ -399,11 +400,13 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                 lvm.tun_ofports, goto_next=True)
         else:
             self.ryuapp.add_arp_table_entry(
-                lvm.vlan, port_info[1], port_info[0])
+                lvm.vlan,
+                port_info.ip_address,
+                port_info.mac_address)
             br.install_tunnel_output(
                 tables.TUNNEL_OUT,
                 lvm.vlan, lvm.segmentation_id,
-                set([ofport]), goto_next=False, eth_dst=port_info[0])
+                set([ofport]), goto_next=False, eth_dst=port_info.mac_address)
 
     def del_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         if port_info == n_const.FLOODING_ENTRY:
@@ -418,9 +421,9 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                     tables.TUNNEL_FLOOD[lvm.network_type],
                     lvm.vlan)
         else:
-            self.ryuapp.del_arp_table_entry(lvm.vlan, port_info[1])
+            self.ryuapp.del_arp_table_entry(lvm.vlan, port_info.ip_address)
             br.delete_tunnel_output(tables.TUNNEL_OUT,
-                                    lvm.vlan, eth_dst=port_info[0])
+                                    lvm.vlan, eth_dst=port_info.mac_address)
 
     def setup_entry_for_arp_reply(self, br, action, local_vid, mac_address,
                                   ip_address):

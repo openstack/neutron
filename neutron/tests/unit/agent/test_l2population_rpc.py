@@ -39,10 +39,10 @@ class TestL2populationRpcCallBackTunnelMixin(
             results[lvm] = agent_ports
         expected = {
             self.lvm1: {
-                self.ports[0].ip: [[self.lvms[0].mac, self.lvms[0].ip]],
+                self.ports[0].ip: [(self.lvms[0].mac, self.lvms[0].ip)],
                 self.local_ip: []},
             self.lvm3: {
-                self.ports[2].ip: [[self.lvms[2].mac, self.lvms[2].ip]],
+                self.ports[2].ip: [(self.lvms[2].mac, self.lvms[2].ip)],
                 self.local_ip: []},
         }
         self.assertEqual(expected, results)
@@ -55,11 +55,11 @@ class TestL2populationRpcCallBackTunnelMixin(
             results[lvm] = agent_ports
         expected = {
             self.lvm1: {
-                self.ports[0].ip: [[self.lvms[0].mac, self.lvms[0].ip]],
+                self.ports[0].ip: [(self.lvms[0].mac, self.lvms[0].ip)],
                 self.local_ip: []},
             self.lvm2: {},
             self.lvm3: {
-                self.ports[2].ip: [[self.lvms[2].mac, self.lvms[2].ip]],
+                self.ports[2].ip: [(self.lvms[2].mac, self.lvms[2].ip)],
                 self.local_ip: []},
         }
         self.assertEqual(expected, results)
@@ -72,11 +72,11 @@ class TestL2populationRpcCallBackTunnelMixin(
             self.fakeagent.fdb_add_tun('context', self.fakebr, self.lvm1,
                                        self.agent_ports, self.ofports)
         expected = [
-            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+            mock.call(self.fakebr, (self.lvms[0].mac, self.lvms[0].ip),
                       self.ports[0].ip, self.lvm1, self.ports[0].ofport),
-            mock.call(self.fakebr, [self.lvms[1].mac, self.lvms[1].ip],
+            mock.call(self.fakebr, (self.lvms[1].mac, self.lvms[1].ip),
                       self.ports[1].ip, self.lvm1, self.ports[1].ofport),
-            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+            mock.call(self.fakebr, (self.lvms[2].mac, self.lvms[2].ip),
                       self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
@@ -95,11 +95,11 @@ class TestL2populationRpcCallBackTunnelMixin(
         mock_setup_tunnel_port.assert_called_once_with(
             self.fakebr, self.ports[1].ip, self.lvm1.network_type)
         expected = [
-            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+            mock.call(self.fakebr, (self.lvms[0].mac, self.lvms[0].ip),
                       self.ports[0].ip, self.lvm1, self.ports[0].ofport),
-            mock.call(self.fakebr, [self.lvms[1].mac, self.lvms[1].ip],
+            mock.call(self.fakebr, (self.lvms[1].mac, self.lvms[1].ip),
                       self.ports[1].ip, self.lvm1, ofport),
-            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+            mock.call(self.fakebr, (self.lvms[2].mac, self.lvms[2].ip),
                       self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
@@ -117,9 +117,9 @@ class TestL2populationRpcCallBackTunnelMixin(
         mock_setup_tunnel_port.assert_called_once_with(
             self.fakebr, self.ports[1].ip, self.lvm1.network_type)
         expected = [
-            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+            mock.call(self.fakebr, (self.lvms[0].mac, self.lvms[0].ip),
                       self.ports[0].ip, self.lvm1, self.ports[0].ofport),
-            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+            mock.call(self.fakebr, (self.lvms[2].mac, self.lvms[2].ip),
                       self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
@@ -131,11 +131,11 @@ class TestL2populationRpcCallBackTunnelMixin(
             self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm1,
                                           self.agent_ports, self.ofports)
         expected = [
-            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+            mock.call(self.fakebr, (self.lvms[0].mac, self.lvms[0].ip),
                       self.ports[0].ip, self.lvm1, self.ports[0].ofport),
-            mock.call(self.fakebr, [self.lvms[1].mac, self.lvms[1].ip],
+            mock.call(self.fakebr, (self.lvms[1].mac, self.lvms[1].ip),
                       self.ports[1].ip, self.lvm1, self.ports[1].ofport),
-            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+            mock.call(self.fakebr, (self.lvms[2].mac, self.lvms[2].ip),
                       self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
@@ -150,12 +150,12 @@ class TestL2populationRpcCallBackTunnelMixin(
             self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm1,
                                           self.agent_ports, self.ofports)
         expected = [
-            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+            mock.call(self.fakebr, (self.lvms[0].mac, self.lvms[0].ip),
                       self.ports[0].ip, self.lvm1, self.ports[0].ofport),
             mock.call(self.fakebr,
-                      [n_const.FLOODING_ENTRY[0], n_const.FLOODING_ENTRY[1]],
+                      (n_const.FLOODING_ENTRY[0], n_const.FLOODING_ENTRY[1]),
                       self.ports[1].ip, self.lvm1, self.ports[1].ofport),
-            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+            mock.call(self.fakebr, (self.lvms[2].mac, self.lvms[2].ip),
                       self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
@@ -170,9 +170,9 @@ class TestL2populationRpcCallBackTunnelMixin(
             self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm1,
                                           self.agent_ports, self.ofports)
         expected = [
-            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+            mock.call(self.fakebr, (self.lvms[0].mac, self.lvms[0].ip),
                       self.ports[0].ip, self.lvm1, self.ports[0].ofport),
-            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+            mock.call(self.fakebr, (self.lvms[2].mac, self.lvms[2].ip),
                       self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
@@ -223,8 +223,8 @@ class TestL2populationRpcCallBackTunnelMixin(
         upd_fdb_entry_val = {
             self.lvms[0].net: {
                 self.local_ip: {
-                    'before': [[self.lvms[0].mac, self.lvms[0].ip]],
-                    'after': [[self.lvms[1].mac, self.lvms[1].ip]],
+                    'before': [(self.lvms[0].mac, self.lvms[0].ip)],
+                    'after': [(self.lvms[1].mac, self.lvms[1].ip)],
                 },
             },
         }

@@ -70,7 +70,7 @@ MAX_GRE_ID = 2 ** 32 - 1
 MIN_VXLAN_VNI = 1
 MAX_VXLAN_VNI = 2 ** 24 - 1
 
-FLOODING_ENTRY = ['00:00:00:00:00:00', '0.0.0.0']
+FLOODING_ENTRY = ('00:00:00:00:00:00', '0.0.0.0')
 
 EXT_NS_COMP = '_backward_comp_e_ns'
 EXT_NS = '_extension_ns'
