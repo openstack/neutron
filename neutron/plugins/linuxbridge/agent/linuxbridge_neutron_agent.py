@@ -18,7 +18,6 @@
 # Performs per host Linux Bridge configuration for Neutron.
 # Based on the structure of the OpenVSwitch agent in the
 # Neutron OpenVSwitch Plugin.
-# @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 import os
 import sys

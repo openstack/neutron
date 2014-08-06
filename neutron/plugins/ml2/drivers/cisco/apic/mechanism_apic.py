@@ -12,8 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Arvind Somya (asomya@cisco.com), Cisco Systems Inc.
 
 from apicapi import apic_manager
 from apicapi import exceptions as exc

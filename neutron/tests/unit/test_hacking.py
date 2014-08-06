@@ -67,3 +67,15 @@ class HackingTestCase(base.BaseTestCase):
                     "json.%s" % method,
                     "./neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/"
                     "plugins/netwrap"))))
+
+    def test_no_author_tags(self):
+        self.assertIsInstance(checks.no_author_tags("# author: pele"), tuple)
+        self.assertIsInstance(checks.no_author_tags("# @author: pele"), tuple)
+        self.assertIsInstance(checks.no_author_tags("# @Author: pele"), tuple)
+        self.assertIsInstance(checks.no_author_tags("# Author: pele"), tuple)
+        self.assertIsInstance(checks.no_author_tags("# Author pele"), tuple)
+        self.assertIsInstance(checks.no_author_tags(".. moduleauthor:: pele"),
+                              tuple)
+        self.assertEqual(2, checks.no_author_tags("# author: pele")[0])
+        self.assertEqual(2, checks.no_author_tags("# Author: pele")[0])
+        self.assertEqual(3, checks.no_author_tags(".. moduleauthor:: pele")[0])

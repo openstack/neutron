@@ -11,8 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Paul Michali, Cisco Systems, Inc.
 
 #TODO(pcm): Rename this file to remove the "no" prefix, once httmock is
 # approved and added to requirements.txt

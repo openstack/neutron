@@ -13,8 +13,6 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
-# @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
-
 import copy
 
 import mock

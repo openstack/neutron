@@ -12,8 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author:  Ivar Lazzaro, Embrane, Inc. ivar@embrane.com
 
 from neutron.db import models_v2 as nmodel
 from neutron.services.loadbalancer.drivers.embrane import models

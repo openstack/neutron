@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Sayaji Patil, Nuage Networks, Alcatel-Lucent USA Inc.
 
 from oslo.config import cfg
 import sqlalchemy.orm.exc as db_exc

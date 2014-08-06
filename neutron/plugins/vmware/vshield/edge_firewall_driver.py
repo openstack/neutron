@@ -11,8 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Leon Cui, VMware
 
 from neutron.db import db_base_plugin_v2
 from neutron.openstack.common import excutils

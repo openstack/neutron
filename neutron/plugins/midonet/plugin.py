@@ -13,12 +13,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Takaaki Suzuki, Midokura Japan KK
-# @author: Tomoe Sugihara, Midokura Japan KK
-# @author: Ryu Ishimoto, Midokura Japan KK
-# @author: Rossella Sblendido, Midokura Japan KK
-# @author: Duarte Nunes, Midokura Japan KK
 
 import functools
 

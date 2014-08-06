@@ -33,6 +33,8 @@ Guidelines for writing new hacking checks
 
 log_translation = re.compile(
     r"(.)*LOG\.(audit|error|info|warn|warning|critical|exception)\(\s*('|\")")
+author_tag_re = (re.compile("^\s*#\s*@?(a|A)uthor"),
+                 re.compile("^\.\.\s+moduleauthor::"))
 
 
 def validate_log_translations(logical_line, physical_line, filename):
@@ -67,6 +69,17 @@ def use_jsonutils(logical_line, filename):
                 yield (pos, msg % {'fun': f[:-1]})
 
 
+def no_author_tags(physical_line):
+    for regex in author_tag_re:
+        if regex.match(physical_line):
+            physical_line = physical_line.lower()
+            pos = physical_line.find('moduleauthor')
+            if pos < 0:
+                pos = physical_line.find('author')
+            return pos, "N322: Don't use author tags"
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
+    register(no_author_tags)

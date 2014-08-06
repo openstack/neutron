@@ -12,10 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# Authors:
-# Varma Bhupatiraju (vbhupati@brocade.com)
-# Shiv Haris (shivharis@hotmail.com)
 
 
 """Brocade NOS Driver implements NETCONF over SSHv2 for

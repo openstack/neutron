@@ -11,8 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author Mark McClain (DreamHost)
 
 The migrations in the alembic/versions contain the changes needed to migrate
 from older Neutron releases to newer versions. A migration occurs by executing

@@ -11,10 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
-# @author: Sridar Kandaswamy, skandasw@cisco.com, Cisco Systems, Inc.
-# @author: Dan Florea, dflorea@cisco.com, Cisco Systems, Inc.
 
 import contextlib
 import uuid
