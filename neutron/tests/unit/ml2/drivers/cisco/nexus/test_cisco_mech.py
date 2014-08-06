@@ -408,6 +408,45 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                     self._is_in_last_nexus_cfg(['allowed', 'vlan']))
                 self.assertFalse(self._is_in_last_nexus_cfg(['name']))
 
+    def test_ncclient_version_detect(self):
+        """Test ability to handle connection to old and new-style ncclient.
+
+        We used to require a custom version of the ncclient library. However,
+        recent contributions to the ncclient make this unnecessary. Our
+        driver was modified to be able to establish a connection via both
+        the old and new type of ncclient.
+
+        The new style ncclient.connect() function takes one additional
+        parameter.
+
+        The ML2 driver uses this to detect whether we are dealing with an
+        old or new ncclient installation.
+
+        """
+        # The code we are exercising calls connect() twice, if there is a
+        # TypeError on the first call (if the old ncclient is installed).
+        # The second call should succeed. That's what we are simulating here.
+        connect = self.mock_ncclient.connect
+        with self._patch_ncclient('connect.side_effect',
+                                  [TypeError, connect]):
+            with self._create_resources() as result:
+                self.assertEqual(result.status_int,
+                                 wexc.HTTPOk.code)
+
+    def test_ncclient_fail_on_second_connect(self):
+        """Test that other errors during connect() sequences are still handled.
+
+        If the old ncclient is installed, we expect to get a TypeError first,
+        but should still handle other errors in the usual way, whether they
+        appear on the first or second call to connect().
+
+        """
+        with self._patch_ncclient('connect.side_effect',
+                                  [TypeError, IOError]):
+            with self._create_resources() as result:
+                self._assertExpectedHTTP(result.status_int,
+                                         c_exc.NexusConnectFailed)
+
     def test_nexus_connect_fail(self):
         """Test failure to connect to a Nexus switch.
 
