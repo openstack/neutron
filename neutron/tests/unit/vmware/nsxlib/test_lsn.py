@@ -81,8 +81,8 @@ class LSNTestCase(base.BaseTestCase):
         self.assertEqual(lsn_id, result)
         self.mock_request.assert_called_once_with(
             "GET",
-            ("/ws.v1/lservices-node?fields=uuid&tag_scope="
-             "n_network_id&tag=%s" % net_id),
+            ("/ws.v1/lservices-node?fields=uuid&tag=%s&"
+             "tag_scope=n_network_id" % net_id),
             cluster=self.cluster)
 
     def test_lsn_for_network_get_none(self):
@@ -179,8 +179,8 @@ class LSNTestCase(base.BaseTestCase):
         self.assertEqual(result, port_id)
         self.mock_request.assert_called_once_with(
             "GET",
-            ("/ws.v1/lservices-node/%s/lport?fields=uuid&tag_scope=%s&"
-             "tag=%s" % (lsn_id, filters["tag_scope"], filters["tag"])),
+            ("/ws.v1/lservices-node/%s/lport?fields=uuid&tag=%s&"
+             "tag_scope=%s" % (lsn_id, filters["tag"], filters["tag_scope"])),
             cluster=self.cluster)
 
     def test_lsn_port_get_with_filters_return_none(self):

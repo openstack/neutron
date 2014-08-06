@@ -220,7 +220,7 @@ class NsxUtilsTestCase(base.BaseTestCase):
         filters = {"tag": 'foo', "tag_scope": "scope_foo"}
         result = nsxlib._build_uri_path('RESOURCE', filters=filters)
         expected = (
-            "%s/%s?tag_scope=scope_foo&tag=foo" %
+            "%s/%s?tag=foo&tag_scope=scope_foo" %
             (nsxlib.URI_PREFIX, 'RESOURCE'))
         self.assertEqual(expected, result)
 

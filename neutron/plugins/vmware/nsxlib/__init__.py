@@ -56,7 +56,10 @@ def _build_uri_path(resource,
     params.append(relations and "relations=%s" % relations)
     params.append(types and "types=%s" % types)
     if filters:
-        params.extend(['%s=%s' % (k, v) for (k, v) in filters.iteritems()])
+        sorted_filters = [
+            '%s=%s' % (k, filters[k]) for k in sorted(filters.keys())
+        ]
+        params.extend(sorted_filters)
     uri_path = "%s/%s" % (URI_PREFIX, res_path)
     non_empty_params = [x for x in params if x is not None]
     if non_empty_params:

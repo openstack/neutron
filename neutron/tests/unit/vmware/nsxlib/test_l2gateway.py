@@ -281,7 +281,7 @@ class L2GatewayTestCase(base.NsxlibTestCase):
                 "GET",
                 ("/ws.v1/transport-node?fields=uuid,tags&"
                  "relations=TransportNodeStatus&"
-                 "tag_scope=os_tid&tag=ssc_napoli&"
+                 "tag=ssc_napoli&tag_scope=os_tid&"
                  "_page_length=1000&tag_scope=quantum"),
                 cluster=self.fake_cluster)
 
