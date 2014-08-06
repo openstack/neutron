@@ -40,7 +40,7 @@ def get_tags(**kwargs):
     tags = ([dict(tag=value, scope=key)
             for key, value in kwargs.iteritems()])
     tags.append({"tag": NEUTRON_VERSION, "scope": "quantum"})
-    return tags
+    return sorted(tags)
 
 
 def device_id_to_vm_id(device_id, obfuscate=False):
