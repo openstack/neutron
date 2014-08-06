@@ -337,7 +337,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        internal_cidrs = ['100.0.1.0/24', '200.74.0.0/16']
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'subnet_id': _uuid()}],
                       'subnet': {'gateway_ip': '20.0.0.1'},
@@ -355,8 +354,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                          'fixed_ip_address': '192.168.0.1',
                                          'port_id': _uuid()}]}
             router[l3_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
-            agent.external_gateway_added(ri, ex_gw_port,
-                                         interface_name, internal_cidrs)
+            agent.external_gateway_added(ri, ex_gw_port, interface_name)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
             self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
@@ -371,8 +369,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         elif action == 'remove':
             self.device_exists.return_value = True
-            agent.external_gateway_removed(ri, ex_gw_port,
-                                           interface_name, internal_cidrs)
+            agent.external_gateway_removed(ri, ex_gw_port, interface_name)
             self.assertEqual(self.mock_driver.unplug.call_count, 1)
         else:
             raise Exception("Invalid action %s" % action)
@@ -1716,11 +1713,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
                        'id': _uuid(), 'device_id': _uuid()}]
 
         interface_name = agent.get_snat_int_device_name(port_id)
-        internal_cidrs = None
         self.device_exists.return_value = False
 
-        agent._create_dvr_gateway(ri, dvr_gw_port, interface_name,
-                                  internal_cidrs, snat_ports)
+        agent._create_dvr_gateway(ri, dvr_gw_port, interface_name, snat_ports)
 
         # check 2 internal ports are plugged
         # check 1 ext-gw-port is plugged
