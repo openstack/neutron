@@ -14,7 +14,6 @@ iso8601>=0.1.9
 jsonrpclib
 Jinja2
 keystonemiddleware>=1.0.0
-kombu>=2.4.8
 netaddr>=0.7.12
 python-neutronclient>=2.3.6,<3
 SQLAlchemy>=0.8.4,<=0.8.99,>=0.9.7,<=0.9.99
