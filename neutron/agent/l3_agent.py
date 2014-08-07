@@ -32,6 +32,7 @@ from neutron.agent.linux import ra
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
+from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as common_utils
@@ -144,7 +145,8 @@ class L3PluginApi(n_rpc.RpcProxy):
 
 class RouterInfo(object):
 
-    def __init__(self, router_id, root_helper, use_namespaces, router):
+    def __init__(self, router_id, root_helper, use_namespaces, router,
+                 use_ipv6=False):
         self.router_id = router_id
         self.ex_gw_port = None
         self._snat_enabled = None
@@ -160,7 +162,7 @@ class RouterInfo(object):
         self.ns_name = NS_PREFIX + router_id if use_namespaces else None
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=root_helper,
-            #FIXME(danwent): use_ipv6=True,
+            use_ipv6=use_ipv6,
             namespace=self.ns_name)
         self.routes = []
         # DVR Data
@@ -440,6 +442,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         super(L3NATAgent, self).__init__(conf=self.conf)
 
         self.target_ex_net_id = None
+        self.use_ipv6 = ipv6_utils.is_enabled()
 
     def _check_config_params(self):
         """Check items in configuration files.
@@ -609,7 +612,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
     def _router_added(self, router_id, router):
         ri = RouterInfo(router_id, self.root_helper,
-                        self.conf.use_namespaces, router)
+                        self.conf.use_namespaces, router,
+                        use_ipv6=self.use_ipv6)
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
             self._create_router_namespace(ri)
@@ -1076,11 +1080,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                                          SNAT_INT_DEV_PREFIX)
         self._external_gateway_added(ri, ex_gw_port, gw_interface_name,
                                      snat_ns_name, preserve_ips=[])
-        ri.snat_iptables_manager = (
-            iptables_manager.IptablesManager(
-                root_helper=self.root_helper, namespace=snat_ns_name
-            )
-        )
+        ri.snat_iptables_manager = iptables_manager.IptablesManager(
+            root_helper=self.root_helper,
+            namespace=snat_ns_name,
+            use_ipv6=self.use_ipv6)
 
     def external_gateway_added(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
