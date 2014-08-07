@@ -23,7 +23,7 @@ from oslo.config import cfg
 import requests
 from six.moves.urllib import parse
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 import neutron.plugins.oneconvergence.lib.exception as exception
 
@@ -68,7 +68,8 @@ class NVSDController(object):
         login_url = parse.urljoin(self.api_url,
                                   "/pluginhandler/ocplugin/authmgmt/login")
 
-        data = json.dumps({"user_name": self._user, "passwd": self._password})
+        data = jsonutils.dumps({"user_name": self._user,
+                                "passwd": self._password})
 
         attempts = 0
 
@@ -98,7 +99,7 @@ class NVSDController(object):
             LOG.debug(_("Login Successful %(uri)s "
                         "%(status)s"), {'uri': self.api_url,
                                         'status': response.status_code})
-            self.auth_token = json.loads(response.content)["session_uuid"]
+            self.auth_token = jsonutils.loads(response.content)["session_uuid"]
             LOG.debug(_("AuthToken = %s"), self.auth_token)
         else:
             LOG.error(_("login failed"))

@@ -18,7 +18,7 @@ import time
 import requests
 
 from neutron.openstack.common import excutils
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
@@ -80,7 +80,7 @@ class OFCClient(object):
                   {'host': self.host, 'port': self.port,
                    'method': method, 'action': action, 'body': body})
         if type(body) is dict:
-            body = json.dumps(body)
+            body = jsonutils.dumps(body)
         try:
             res = self._get_response(method, action, body)
             data = res.text
@@ -90,7 +90,7 @@ class OFCClient(object):
 
             # Try to decode JSON data if possible.
             try:
-                data = json.loads(data)
+                data = jsonutils.loads(data)
             except (ValueError, TypeError):
                 pass
 

@@ -21,7 +21,7 @@ import time
 import requests
 import requests.exceptions
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.cisco.apic import exceptions as cexc
 
@@ -184,7 +184,7 @@ class ApicSession(object):
     @staticmethod
     def _make_data(key, **attrs):
         """Build the body for a msg out of a key and some attributes."""
-        return json.dumps({key: {'attributes': attrs}})
+        return jsonutils.dumps({key: {'attributes': attrs}})
 
     def _api_url(self, api):
         """Create the URL for a generic API."""

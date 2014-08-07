@@ -9,6 +9,7 @@ Neutron Specific Commandments
 --------------------------
 
 - [N320] Validate that LOG messages, except debug ones, have translations
+- [N321] Validate that jsonutils module is used instead of json
 
 Creating Unit Tests
 -------------------

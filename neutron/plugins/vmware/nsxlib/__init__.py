@@ -14,7 +14,7 @@
 #    under the License.
 
 from neutron.common import exceptions as exception
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
@@ -97,7 +97,7 @@ def do_request(*args, **kwargs):
     try:
         res = cluster.api_client.request(*args)
         if res:
-            return json.loads(res)
+            return jsonutils.loads(res)
     except api_exc.ResourceNotFound:
         raise exception.NotFound()
     except api_exc.ReadOnlyMode:
@@ -141,4 +141,4 @@ def mk_body(**kwargs):
     :param kwargs: the key/value pirs to be dumped into a json string.
     :returns: a json string.
     """
-    return json.dumps(kwargs, ensure_ascii=False)
+    return jsonutils.dumps(kwargs, ensure_ascii=False)

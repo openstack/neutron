@@ -14,7 +14,7 @@
 #    under the License.
 #
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
@@ -59,7 +59,7 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
     }
     return nsxlib.do_request(
         HTTP_POST, nsxlib._build_uri_path(GWSERVICE_RESOURCE),
-        json.dumps(gwservice_obj), cluster=cluster)
+        jsonutils.dumps(gwservice_obj), cluster=cluster)
 
 
 def plug_l2_gw_service(cluster, lswitch_id, lport_id,
@@ -101,7 +101,7 @@ def update_l2_gw_service(cluster, gateway_id, display_name):
     return nsxlib.do_request(HTTP_PUT,
                              nsxlib._build_uri_path(GWSERVICE_RESOURCE,
                                                     resource_id=gateway_id),
-                             json.dumps(gwservice_obj), cluster=cluster)
+                             jsonutils.dumps(gwservice_obj), cluster=cluster)
 
 
 def delete_l2_gw_service(cluster, gateway_id):
@@ -149,7 +149,7 @@ def create_gateway_device(cluster, tenant_id, display_name, neutron_id,
     try:
         return nsxlib.do_request(
             HTTP_POST, nsxlib._build_uri_path(TRANSPORTNODE_RESOURCE),
-            json.dumps(body), cluster=cluster)
+            jsonutils.dumps(body), cluster=cluster)
     except api_exc.InvalidSecurityCertificate:
         raise nsx_exc.InvalidSecurityCertificate()
 
@@ -166,7 +166,7 @@ def update_gateway_device(cluster, gateway_id, tenant_id,
             HTTP_PUT,
             nsxlib._build_uri_path(TRANSPORTNODE_RESOURCE,
                                    resource_id=gateway_id),
-            json.dumps(body), cluster=cluster)
+            jsonutils.dumps(body), cluster=cluster)
     except api_exc.InvalidSecurityCertificate:
         raise nsx_exc.InvalidSecurityCertificate()
 

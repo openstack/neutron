@@ -46,5 +46,27 @@ def validate_log_translations(logical_line, physical_line, filename):
         yield (0, msg)
 
 
+def use_jsonutils(logical_line, filename):
+    msg = "N321: jsonutils.%(fun)s must be used instead of json.%(fun)s"
+
+    # Some files in the tree are not meant to be run from inside Neutron
+    # itself, so we should not complain about them not using jsonutils
+    json_check_skipped_patterns = [
+        "neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/plugins/netwrap",
+    ]
+
+    for pattern in json_check_skipped_patterns:
+        if pattern in filename:
+            return
+
+    if "json." in logical_line:
+        json_funcs = ['dumps(', 'dump(', 'loads(', 'load(']
+        for f in json_funcs:
+            pos = logical_line.find('json.%s' % f)
+            if pos != -1:
+                yield (pos, msg % {'fun': f[:-1]})
+
+
 def factory(register):
     register(validate_log_translations)
+    register(use_jsonutils)

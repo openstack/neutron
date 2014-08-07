@@ -24,7 +24,7 @@ from six.moves import queue as Queue
 from neutron import context
 from neutron.extensions import loadbalancer
 from neutron import manager
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers.radware import driver
 from neutron.services.loadbalancer.drivers.radware import exceptions as r_exc
@@ -66,9 +66,9 @@ def rest_call_function_mock(action, resource, data, headers, binary=False):
 def _get_handler(resource):
     if resource == GET_200[2]:
         if rest_call_function_mock.TEMPLATES_MISSING:
-            data = json.loads('[]')
+            data = jsonutils.loads('[]')
         else:
-            data = json.loads(
+            data = jsonutils.loads(
                 '[{"name":"openstack_l2_l3"},{"name":"openstack_l4"}]'
             )
         return 200, '', '', data
@@ -76,7 +76,7 @@ def _get_handler(resource):
     if resource in GET_200:
         return 200, '', '', ''
     else:
-        data = json.loads('{"complete":"True", "success": "True"}')
+        data = jsonutils.loads('{"complete":"True", "success": "True"}')
         return 202, '', '', data
 
 
@@ -86,10 +86,10 @@ def _delete_handler(resource):
 
 def _post_handler(resource, binary):
     if re.search(r'/api/workflow/.+/action/.+', resource):
-        data = json.loads('{"uri":"some_uri"}')
+        data = jsonutils.loads('{"uri":"some_uri"}')
         return 202, '', '', data
     elif re.search(r'/api/service\?name=.+', resource):
-        data = json.loads('{"links":{"actions":{"provision":"someuri"}}}')
+        data = jsonutils.loads('{"links":{"actions":{"provision":"someuri"}}}')
         return 201, '', '', data
     elif binary:
         return 201, '', '', ''

@@ -16,7 +16,7 @@
 import mock
 import requests
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.plugins.oneconvergence.lib import config  # noqa
 from neutron.plugins.oneconvergence.lib import plugin_helper as client
 from neutron.tests import base
@@ -30,14 +30,14 @@ class TestPluginHelper(base.BaseTestCase):
     def get_response(self, *args, **kwargs):
         response = mock.Mock()
         response.status_code = requests.codes.ok
-        response.content = json.dumps({'session_uuid': 'new_auth_token'})
+        response.content = jsonutils.dumps({'session_uuid': 'new_auth_token'})
         return response
 
     def test_login(self):
         login_url = ('http://127.0.0.1:8082/pluginhandler/ocplugin/'
                      'authmgmt/login')
         headers = {'Content-Type': 'application/json'}
-        data = json.dumps({"user_name": "ocplugin", "passwd": "oc123"})
+        data = jsonutils.dumps({"user_name": "ocplugin", "passwd": "oc123"})
         timeout = 30.0
 
         with mock.patch.object(self.nvsdcontroller, 'do_request',

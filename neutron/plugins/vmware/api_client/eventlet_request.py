@@ -18,7 +18,7 @@ import eventlet
 import httplib
 import urllib
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import request
 
@@ -199,7 +199,7 @@ class GetApiProvidersRequestEventlet(EventletApiRequest):
         try:
             if self.successful():
                 ret = []
-                body = json.loads(self.value.body)
+                body = jsonutils.loads(self.value.body)
                 for node in body.get('results', []):
                     for role in node.get('roles', []):
                         if role.get('role') == 'api_provider':

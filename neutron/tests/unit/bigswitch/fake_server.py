@@ -15,7 +15,7 @@
 # @author: Kevin Benton, <kevin.benton@bigswitch.com>
 #
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch import servermanager
 
@@ -119,7 +119,7 @@ class VerifyMultiTenantFloatingIP(HTTPConnectionMock):
     def request(self, action, uri, body, headers):
         # Only handle network update requests
         if 'network' in uri and 'tenant' in uri and 'ports' not in uri:
-            req = json.loads(body)
+            req = jsonutils.loads(body)
             if 'network' not in req or 'floatingips' not in req['network']:
                 msg = _("No floating IPs in request"
                         "uri=%(uri)s, body=%(body)s") % {'uri': uri,

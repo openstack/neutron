@@ -14,7 +14,7 @@
 
 import copy
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.vshield.common import exceptions
 
@@ -79,7 +79,7 @@ class FakeVcns(object):
                 'moduleName': 'vShield Edge',
                 'errorData': None
             }
-            return (header, json.dumps(response))
+            return (header, jsonutils.dumps(response))
 
         self._job_idx = self._job_idx + 1
         job_id = "jobdata-%d" % self._job_idx
@@ -241,7 +241,8 @@ class FakeVcns(object):
         # The lswitch is created via VCNS API so the fake nsx_api will not
         # see it. Added to fake nsx_api here.
         if self._fake_nsx_api:
-            lswitch = self._fake_nsx_api._add_lswitch(json.dumps(lsconfig))
+            lswitch = \
+                self._fake_nsx_api._add_lswitch(jsonutils.dumps(lsconfig))
         else:
             lswitch = lsconfig
             lswitch['uuid'] = uuidutils.generate_uuid()
