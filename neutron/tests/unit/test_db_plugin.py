@@ -306,7 +306,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                     'dns_nameservers', 'host_routes',
                     'shared', 'ipv6_ra_mode', 'ipv6_address_mode'):
             # Arg must be present and not null (but can be false)
-            if arg in kwargs and kwargs[arg] is not None:
+            if kwargs.get(arg) is not None:
                 data['subnet'][arg] = kwargs[arg]
 
         if ('gateway_ip' in kwargs and

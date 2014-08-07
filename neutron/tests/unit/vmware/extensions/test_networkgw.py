@@ -372,7 +372,7 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             data[self.gw_resource]['name'] = name
         for arg in arg_list or ():
             # Arg must be present and not empty
-            if arg in kwargs and kwargs[arg]:
+            if kwargs.get(arg):
                 data[self.gw_resource][arg] = kwargs[arg]
         nw_gw_req = self.new_create_request(networkgw.NETWORK_GATEWAYS,
                                             data, fmt)

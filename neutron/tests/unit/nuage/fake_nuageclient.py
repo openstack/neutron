@@ -141,7 +141,7 @@ class FakeNuageClient(object):
                 return result
 
     def get_nuage_port_by_id(self, params):
-        if 'nuage_fip_id' in params and params['nuage_fip_id'] == '1':
+        if params.get('nuage_fip_id') == '1':
             domain_id = uuidutils.generate_uuid()
         else:
             if 'nuage_router_id' in params:

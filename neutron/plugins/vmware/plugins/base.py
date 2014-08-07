@@ -1823,12 +1823,11 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                           ips_to_remove=nsx_floating_ips)
 
     def _get_fip_assoc_data(self, context, fip, floatingip_db):
-        if (('fixed_ip_address' in fip and fip['fixed_ip_address']) and
-            not ('port_id' in fip and fip['port_id'])):
+        if fip.get('fixed_ip_address') and not fip.get('port_id'):
             msg = _("fixed_ip_address cannot be specified without a port_id")
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
         port_id = internal_ip = router_id = None
-        if 'port_id' in fip and fip['port_id']:
+        if fip.get('port_id'):
             fip_qry = context.session.query(l3_db.FloatingIP)
             port_id, internal_ip, router_id = self.get_assoc_data(
                 context,
