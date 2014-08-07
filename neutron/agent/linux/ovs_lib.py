@@ -462,7 +462,7 @@ class DeferredOVSBridge(object):
     This class is not thread-safe, that's why for every use a new instance
     must be implemented.
     '''
-    ALLOWED_PASSTHROUGHS = 'add_port', 'delete_port'
+    ALLOWED_PASSTHROUGHS = 'add_port', 'add_tunnel_port', 'delete_port'
 
     def __init__(self, br, full_ordered=False,
                  order=('add', 'mod', 'del')):

@@ -880,6 +880,11 @@ class TestDeferredOVSBridge(base.BaseTestCase):
         self.del_flow_dict1 = dict(in_port=31)
         self.del_flow_dict2 = dict(in_port=32)
 
+    def test_right_allowed_passthroughs(self):
+        expected_passthroughs = ('add_port', 'add_tunnel_port', 'delete_port')
+        self.assertEqual(expected_passthroughs,
+                         ovs_lib.DeferredOVSBridge.ALLOWED_PASSTHROUGHS)
+
     def _verify_mock_call(self, expected_calls):
         self.mocked_do_action_flows.assert_has_calls(expected_calls)
         self.assertEqual(len(expected_calls),
