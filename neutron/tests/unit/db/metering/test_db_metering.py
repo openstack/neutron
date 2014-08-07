@@ -15,7 +15,6 @@
 # under the License.
 
 import contextlib
-import logging
 
 import webob.exc
 
@@ -27,8 +26,6 @@ from neutron.extensions import metering
 from neutron.plugins.common import constants
 from neutron.services.metering import metering_plugin
 from neutron.tests.unit import test_db_plugin
-
-LOG = logging.getLogger(__name__)
 
 DB_METERING_PLUGIN_KLASS = (
     "neutron.services.metering."

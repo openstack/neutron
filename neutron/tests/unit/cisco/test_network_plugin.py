@@ -16,7 +16,7 @@
 import contextlib
 import copy
 import inspect
-import logging
+import logging as std_logging
 import mock
 
 import six
@@ -33,6 +33,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.openstack.common import gettextutils
+from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config as cisco_config
@@ -923,7 +924,7 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                                                 *args, **kwargs)
                 patched_plugin.side_effect = side_effect
                 res = self._create_network_bulk(self.fmt, 2, 'test', True)
-                LOG.debug("response is %s" % res)
+                LOG.debug('response is %s', res)
                 # We expect an internal server error as we injected a fault
                 self._validate_behavior_on_bulk_failure(
                     res,
@@ -1052,10 +1053,10 @@ class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
         def _count_exception_logs(*args, **kwargs):
             self.log_exc_count += 1
 
-        mock.patch.object(logging.LoggerAdapter, 'exception',
+        mock.patch.object(std_logging.LoggerAdapter, 'exception',
                           autospec=True,
                           side_effect=_count_exception_logs,
-                          wraps=logging.LoggerAdapter.exception).start()
+                          wraps=std_logging.LoggerAdapter.exception).start()
         super(TestCiscoRouterInterfacesV2, self).setUp()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)

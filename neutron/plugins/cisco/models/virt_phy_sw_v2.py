@@ -18,7 +18,6 @@
 #
 
 import inspect
-import logging
 import sys
 
 from neutron.api.v2 import attributes
@@ -27,6 +26,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import importutils
+from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as cred
 from neutron.plugins.cisco.common import cisco_exceptions as cexc

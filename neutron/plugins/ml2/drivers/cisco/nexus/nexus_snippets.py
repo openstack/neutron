@@ -18,11 +18,6 @@
 Cisco Nexus-OS XML-based configuration snippets.
 """
 
-import logging
-
-
-LOG = logging.getLogger(__name__)
-
 
 # The following are standard strings, messages used to communicate with Nexus.
 EXEC_CONF_SNIPPET = """

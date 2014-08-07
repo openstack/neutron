@@ -14,7 +14,6 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-import logging
 
 import webob.exc as wexc
 
@@ -22,6 +21,7 @@ from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import base
 from neutron.db import db_base_plugin_v2
 from neutron.openstack.common import importutils
+from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_exceptions as cexc
 from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import network_db_v2 as cdb

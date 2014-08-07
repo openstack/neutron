@@ -22,10 +22,10 @@
 PlugIn for Nexus OS driver
 """
 
-import logging
 
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
+from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as cisco_exc
 from neutron.plugins.cisco.common import config as conf

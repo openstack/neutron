@@ -34,6 +34,8 @@ METHODS = {}
 
 
 def heal():
+    # This is needed else the heal script will start spewing
+    # a lot of pointless warning messages from alembic.
     LOG.setLevel(logging.INFO)
     if context.is_offline_mode():
         return

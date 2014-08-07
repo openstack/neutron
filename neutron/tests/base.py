@@ -17,7 +17,7 @@
 
 import contextlib
 import gc
-import logging
+import logging as std_logging
 import os
 import os.path
 import sys
@@ -110,7 +110,6 @@ class BaseTestCase(testtools.TestCase):
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
-
         # Ensure plugin cleanup is triggered last so that
         # test-specific cleanup has a chance to release references.
         self.addCleanup(self.cleanup_core_plugin)
@@ -120,12 +119,12 @@ class BaseTestCase(testtools.TestCase):
             self.addOnException(post_mortem_debug.exception_handler)
 
         if os.environ.get('OS_DEBUG') in TRUE_STRING:
-            _level = logging.DEBUG
+            _level = std_logging.DEBUG
         else:
-            _level = logging.INFO
+            _level = std_logging.INFO
         capture_logs = os.environ.get('OS_LOG_CAPTURE') in TRUE_STRING
         if not capture_logs:
-            logging.basicConfig(format=LOG_FORMAT, level=_level)
+            std_logging.basicConfig(format=LOG_FORMAT, level=_level)
         self.log_fixture = self.useFixture(
             fixtures.FakeLogger(
                 format=LOG_FORMAT,
@@ -138,7 +137,7 @@ class BaseTestCase(testtools.TestCase):
             fixtures.FakeLogger(
                 name='neutron.api.extensions',
                 format=LOG_FORMAT,
-                level=logging.ERROR,
+                level=std_logging.ERROR,
                 nuke_handlers=capture_logs,
             ))
 

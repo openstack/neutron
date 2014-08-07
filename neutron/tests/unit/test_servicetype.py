@@ -16,8 +16,6 @@
 #    @author: Salvatore Orlando, VMware
 #
 
-import logging
-
 import mock
 from oslo.config import cfg
 import webob.exc as webexc
@@ -39,7 +37,6 @@ from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
 
 
-LOG = logging.getLogger(__name__)
 DEFAULT_SERVICE_DEFS = [{'service_class': constants.DUMMY,
                          'plugin': dp.DUMMY_PLUGIN_NAME}]
 

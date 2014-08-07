@@ -13,7 +13,6 @@
 #    under the License.
 
 import httplib
-import logging
 import new
 import random
 
@@ -21,13 +20,14 @@ import eventlet
 from eventlet.green import urllib2
 import mock
 
+from neutron.openstack.common.gettextutils import _LI
+from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import eventlet_client as client
 from neutron.plugins.vmware.api_client import eventlet_request as request
 from neutron.tests import base
 from neutron.tests.unit import vmware
 
 
-logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger("test_api_request_eventlet")
 
 
@@ -60,7 +60,7 @@ class ApiRequestEventletTest(base.BaseTestCase):
     def test_apirequest_spawn(self):
         def x(id):
             eventlet.greenthread.sleep(random.random())
-            LOG.info('spawned: %d' % id)
+            LOG.info(_LI('spawned: %d'), id)
 
         for i in range(10):
             request.EventletApiRequest._spawn(x, i)
@@ -72,8 +72,8 @@ class ApiRequestEventletTest(base.BaseTestCase):
             a._handle_request = mock.Mock()
             a.start()
             eventlet.greenthread.sleep(0.1)
-            logging.info('_handle_request called: %s' %
-                         a._handle_request.called)
+            LOG.info(_LI('_handle_request called: %s'),
+                     a._handle_request.called)
         request.EventletApiRequest.joinall()
 
     def test_join_with_handle_request(self):
