@@ -103,7 +103,7 @@ class TestNecPortBindingPortInfo(test_nec_plugin.NecPluginV2TestCase):
             # port-update with non admin user should fail
             self._update('ports', port_id,
                          {'port': profile_arg},
-                         expected_code=404,
+                         expected_code=exc.HTTPForbidden.code,
                          neutron_context=ctx)
 
     def test_port_update_portinfo(self):
@@ -255,14 +255,11 @@ class TestNecPortBindingPortInfo(test_nec_plugin.NecPluginV2TestCase):
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1) as port:
                     # By default user is admin - now test non admin user
-                    # Note that 404 is returned when prohibit by policy.
-                    # See comment for PolicyNotAuthorized except clause
-                    # in update() in neutron.api.v2.base.Controller.
                     port_id = port['port']['id']
                     ctx = self._get_non_admin_context()
                     port = self._update('ports', port_id,
                                         {'port': profile_arg},
-                                        expected_code=404,
+                                        expected_code=exc.HTTPForbidden.code,
                                         neutron_context=ctx)
                 self.assertEqual(self.ofc.create_ofc_port.call_count, 0)
 

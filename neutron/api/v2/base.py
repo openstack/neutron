@@ -26,6 +26,7 @@ from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron import policy
 from neutron import quota
@@ -517,8 +518,12 @@ class Controller(object):
                            action,
                            orig_obj)
         except exceptions.PolicyNotAuthorized:
-            # To avoid giving away information, pretend that it
-            # doesn't exist
+            with excutils.save_and_reraise_exception() as ctxt:
+                # If a tenant is modifying it's own object, it's safe to return
+                # a 403. Otherwise, pretend that it doesn't exist to avoid
+                # giving away information.
+                if request.context.tenant_id != orig_obj['tenant_id']:
+                    ctxt.reraise = False
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
 
