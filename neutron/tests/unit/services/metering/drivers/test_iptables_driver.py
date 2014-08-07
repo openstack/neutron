@@ -68,7 +68,8 @@ class IptablesDriverTestCase(base.BaseTestCase):
 
         self.iptables_cls.assert_called_with(root_helper='fake_sudo',
                                              namespace=mock.ANY,
-                                             binary_name=mock.ANY)
+                                             binary_name=mock.ANY,
+                                             use_ipv6=mock.ANY)
 
     def test_add_metering_label(self):
         routers = [{'_metering_labels': [

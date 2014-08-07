@@ -599,8 +599,10 @@ class IptablesManager(object):
         cmd_tables = [('iptables', key) for key, table in self.ipv4.items()
                       if name in table._select_chain_set(wrap)]
 
-        cmd_tables += [('ip6tables', key) for key, table in self.ipv6.items()
-                       if name in table._select_chain_set(wrap)]
+        if self.use_ipv6:
+            cmd_tables += [('ip6tables', key)
+                           for key, table in self.ipv6.items()
+                           if name in table._select_chain_set(wrap)]
 
         return cmd_tables
 

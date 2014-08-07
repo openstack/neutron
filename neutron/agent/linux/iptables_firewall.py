@@ -21,6 +21,7 @@ from oslo.config import cfg
 from neutron.agent import firewall
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
+from neutron.common import ipv6_utils
 from neutron.openstack.common import log as logging
 
 
@@ -43,7 +44,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def __init__(self):
         self.iptables = iptables_manager.IptablesManager(
             root_helper=cfg.CONF.AGENT.root_helper,
-            use_ipv6=True)
+            use_ipv6=ipv6_utils.is_enabled())
         # list of port which has security group
         self.filtered_ports = {}
         self._add_fallback_chain_v4v6()

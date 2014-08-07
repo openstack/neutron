@@ -1467,6 +1467,9 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         self.agent.init_firewall(defer_refresh_firewall=defer_refresh_firewall)
 
         self.iptables = self.agent.firewall.iptables
+        # TODO(jlibosva) Get rid of mocking iptables execute and mock out
+        # firewall instead
+        self.iptables.use_ipv6 = True
         self.iptables_execute = mock.patch.object(self.iptables,
                                                   "execute").start()
         self.iptables_execute_return_values = []

@@ -20,6 +20,7 @@ from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as constants
+from neutron.common import ipv6_utils
 from neutron.common import log
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -74,7 +75,8 @@ class RouterWithMetering(object):
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=self.root_helper,
             namespace=self.ns_name,
-            binary_name=WRAP_NAME)
+            binary_name=WRAP_NAME,
+            use_ipv6=ipv6_utils.is_enabled())
         self.metering_labels = {}
 
 
