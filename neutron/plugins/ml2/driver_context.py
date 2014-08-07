@@ -161,9 +161,15 @@ class DvrPortContext(PortContext):
             original_port=original_port)
 
     @property
-    def bound_host(self):
+    def host(self):
         if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
-            agent_host = self._binding.host
-        else:
-            agent_host = self._port['binding:host_id']
-        return agent_host
+            return self._binding.host
+
+        return super(DvrPortContext, self).host
+
+    @property
+    def status(self):
+        if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
+            return self._binding.status
+
+        return super(DvrPortContext, self).status

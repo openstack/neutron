@@ -83,8 +83,12 @@ class L2populationMechanismDriver(api.MechanismDriver,
     def _fixed_ips_changed(self, context, orig, port, diff_ips):
         orig_ips, port_ips = diff_ips
 
+        if (port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
+            agent_host = context.host
+        else:
+            agent_host = context.original_host
         port_infos = self._get_port_infos(
-            context, orig, context.original_host)
+            context, orig, agent_host)
         if not port_infos:
             return
         agent, agent_host, agent_ip, segment, port_fdb_entries = port_infos
