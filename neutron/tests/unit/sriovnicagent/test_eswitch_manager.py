@@ -280,7 +280,8 @@ class TestEmbSwitch(base.BaseTestCase):
 
     def test_get_pci_list(self):
         result = self.emb_switch.get_pci_slot_list()
-        self.assertEqual([tup[0] for tup in self.SCANNED_DEVICES], result)
+        self.assertEqual([tup[0] for tup in self.SCANNED_DEVICES],
+                         sorted(result))
 
 
 class TestPciOsWrapper(base.BaseTestCase):
