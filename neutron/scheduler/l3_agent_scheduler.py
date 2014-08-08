@@ -224,9 +224,8 @@ class ChanceScheduler(L3Scheduler):
 
     def schedule(self, plugin, context, router_id,
                  candidates=None, hints=None):
-        with context.session.begin(subtransactions=True):
-            return self._schedule_router(
-                plugin, context, router_id, candidates=candidates, hints=hints)
+        return self._schedule_router(
+            plugin, context, router_id, candidates=candidates, hints=hints)
 
     def _choose_router_agent(self, plugin, context, candidates):
         return random.choice(candidates)
@@ -237,9 +236,8 @@ class LeastRoutersScheduler(L3Scheduler):
 
     def schedule(self, plugin, context, router_id,
                  candidates=None, hints=None):
-        with context.session.begin(subtransactions=True):
-            return self._schedule_router(
-                plugin, context, router_id, candidates=candidates, hints=hints)
+        return self._schedule_router(
+            plugin, context, router_id, candidates=candidates, hints=hints)
 
     def _choose_router_agent(self, plugin, context, candidates):
         candidate_ids = [candidate['id'] for candidate in candidates]
