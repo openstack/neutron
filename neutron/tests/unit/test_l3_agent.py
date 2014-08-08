@@ -374,6 +374,41 @@ class TestBasicRouterOperations(base.BaseTestCase):
         else:
             raise Exception("Invalid action %s" % action)
 
+    def test_external_gateway_updated(self):
+        router = prepare_router_data(num_internal_ports=2)
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
+                                     'subnet_id': _uuid()}],
+                      'subnet': {'gateway_ip': '20.0.0.1'},
+                      'extra_subnets': [{'cidr': '172.16.0.0/24'}],
+                      'id': _uuid(),
+                      'network_id': _uuid(),
+                      'mac_address': 'ca:fe:de:ad:be:ef',
+                      'ip_cidr': '20.0.0.30/24'}
+        interface_name = agent.get_external_device_name(ex_gw_port['id'])
+
+        self.device_exists.return_value = True
+        fake_fip = {'floatingips': [{'id': _uuid(),
+                                     'floating_ip_address': '192.168.1.34',
+                                     'fixed_ip_address': '192.168.0.1',
+                                     'port_id': _uuid()}]}
+        router[l3_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
+        agent.external_gateway_updated(ri, ex_gw_port,
+                                     interface_name)
+        self.assertEqual(self.mock_driver.plug.call_count, 0)
+        self.assertEqual(self.mock_driver.init_l3.call_count, 1)
+        self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
+                                              '20.0.0.30')
+        kwargs = {'preserve_ips': ['192.168.1.34/32'],
+                  'namespace': 'qrouter-' + router['id'],
+                  'gateway': '20.0.0.1',
+                  'extra_subnets': [{'cidr': '172.16.0.0/24'}]}
+        self.mock_driver.init_l3.assert_called_with(interface_name,
+                                                    ['20.0.0.30/24'],
+                                                    **kwargs)
+
     def test_agent_add_external_gateway(self):
         self._test_external_gateway_action('add')
 
@@ -679,6 +714,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.process_router_floating_ip_addresses.return_value = {
             fake_fip_id: 'ACTIVE'}
         agent.external_gateway_added = mock.Mock()
+        agent.external_gateway_updated = mock.Mock()
         fake_floatingips1 = {'floatingips': [
             {'id': fake_fip_id,
              'floating_ip_address': '8.8.8.8',
@@ -691,6 +727,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.process_router_floating_ip_addresses.reset_mock()
         agent.process_router_floating_ip_nat_rules.assert_called_with(ri)
         agent.process_router_floating_ip_nat_rules.reset_mock()
+        agent.external_gateway_added.reset_mock()
 
         # remap floating IP to a new fixed ip
         fake_floatingips2 = copy.deepcopy(fake_floatingips1)
@@ -704,6 +741,24 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.process_router_floating_ip_addresses.reset_mock()
         agent.process_router_floating_ip_nat_rules.assert_called_with(ri)
         agent.process_router_floating_ip_nat_rules.reset_mock()
+        self.assertEqual(agent.external_gateway_added.call_count, 0)
+        self.assertEqual(agent.external_gateway_updated.call_count, 0)
+        agent.external_gateway_added.reset_mock()
+        agent.external_gateway_updated.reset_mock()
+
+        # change the ex_gw_port a bit to test gateway update
+        new_gw_port = copy.deepcopy(ri.router['gw_port'])
+        ri.router['gw_port'] = new_gw_port
+        old_ip = (netaddr.IPAddress(ri.router['gw_port']
+                                    ['fixed_ips'][0]['ip_address']))
+        ri.router['gw_port']['fixed_ips'][0]['ip_address'] = str(old_ip + 1)
+
+        agent.process_router(ri)
+        ex_gw_port = agent._get_ex_gw_port(ri)
+        agent.process_router_floating_ip_addresses.reset_mock()
+        agent.process_router_floating_ip_nat_rules.reset_mock()
+        self.assertEqual(agent.external_gateway_added.call_count, 0)
+        self.assertEqual(agent.external_gateway_updated.call_count, 1)
 
         # remove just the floating ips
         del router[l3_constants.FLOATINGIP_KEY]
