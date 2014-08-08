@@ -15,6 +15,7 @@
 # @author: Ronak Shah, Aniket Dandekar, Nuage Networks, Alcatel-Lucent USA Inc.
 
 import contextlib
+import copy
 import os
 
 import mock
@@ -22,14 +23,18 @@ from oslo.config import cfg
 from webob import exc
 
 from neutron.extensions import external_net
+from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron.openstack.common import uuidutils
 from neutron.plugins.nuage import extensions
+from neutron.plugins.nuage.extensions import nuage_router
 from neutron.plugins.nuage import plugin as nuage_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.nuage import fake_nuageclient
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extension_extraroute as extraroute_test
 from neutron.tests.unit import test_extension_security_group as test_sg
+from neutron.tests.unit import test_extensions
 from neutron.tests.unit import test_l3_plugin
 
 API_EXT_PATH = os.path.dirname(extensions.__file__)
@@ -229,6 +234,18 @@ class TestNuageSubnetsV2(NuagePluginV2TestCase,
         self.skipTest("Plugin does not support Neutron "
                       "Subnet no-gateway option")
 
+    def test_create_subnet_with_nuage_subnet_template(self):
+        with self.network() as network:
+            nuage_subn_template = uuidutils.generate_uuid()
+            data = {'subnet': {'tenant_id': network['network']['tenant_id']}}
+            data['subnet']['cidr'] = '10.0.0.0/24'
+            data['subnet']['ip_version'] = 4
+            data['subnet']['network_id'] = network['network']['id']
+            data['subnet']['nuage_subnet_template'] = nuage_subn_template
+            subnet_req = self.new_create_request('subnets', data, 'json')
+            subnet_res = subnet_req.get_response(self.api)
+            self.assertEqual(exc.HTTPCreated.code, subnet_res.status_int)
+
 
 class TestNuagePluginPortBinding(NuagePluginV2TestCase,
                                  test_bindings.PortBindingsTestCase):
@@ -253,6 +270,44 @@ class TestNuageL3NatTestCase(NuagePluginV2TestCase,
 
     def test_network_update_external_failure(self):
         self._test_network_update_external_failure()
+
+
+class NuageRouterTestExtensionManager(object):
+
+    def get_resources(self):
+        l3.RESOURCE_ATTRIBUTE_MAP['routers'].update(
+            nuage_router.EXTENDED_ATTRIBUTES_2_0['routers'])
+        return l3.L3.get_resources()
+
+    def get_actions(self):
+        return []
+
+    def get_request_extensions(self):
+        return []
+
+
+class TestNuageRouterExtTestCase(NuagePluginV2TestCase):
+
+    def setUp(self):
+        self._l3_attribute_map_bk = copy.deepcopy(l3.RESOURCE_ATTRIBUTE_MAP)
+        ext_mgr = NuageRouterTestExtensionManager()
+        super(TestNuageRouterExtTestCase, self).setUp(plugin=_plugin_name,
+                                                      ext_mgr=ext_mgr)
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+        self.addCleanup(self.restore_l3_attribute_map)
+
+    def restore_l3_attribute_map(self):
+        l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
+
+    def test_router_create_with_nuage_rtr_template(self):
+        nuage_rtr_template = uuidutils.generate_uuid()
+        data = {'router': {'tenant_id': uuidutils.generate_uuid()}}
+        data['router']['name'] = 'router1'
+        data['router']['admin_state_up'] = True
+        data['router']['nuage_router_template'] = nuage_rtr_template
+        router_req = self.new_create_request('routers', data, 'json')
+        router_res = router_req.get_response(self.ext_api)
+        self.assertEqual(exc.HTTPCreated.code, router_res.status_int)
 
 
 class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,

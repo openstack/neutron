@@ -508,12 +508,14 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._add_nuage_sharedresource(subn, net_id, type)
             return subn
 
-    def _create_nuage_subnet(self, context, neutron_subnet, netpart_id):
+    def _create_nuage_subnet(self, context, neutron_subnet,
+                             netpart_id, l2dom_template_id):
         net = netaddr.IPNetwork(neutron_subnet['cidr'])
         params = {
             'netpart_id': netpart_id,
             'tenant_id': neutron_subnet['tenant_id'],
-            'net': net
+            'net': net,
+            'l2dom_tmplt_id': l2dom_template_id
         }
         try:
             nuage_subnet = self.nuageclient.create_subnet(neutron_subnet,
@@ -551,7 +553,8 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         net_partition = self._get_net_partition_for_subnet(context, subn)
         neutron_subnet = super(NuagePlugin, self).create_subnet(context,
                                                                 subnet)
-        self._create_nuage_subnet(context, neutron_subnet, net_partition['id'])
+        self._create_nuage_subnet(context, neutron_subnet, net_partition['id'],
+                                  subn['nuage_subnet_template'])
         return neutron_subnet
 
     def delete_subnet(self, context, id):
