@@ -42,6 +42,7 @@ class TestCiscoNexusPluginConfig(base.BaseTestCase):
                 'ssh_port': [22],
                 'compute1': ['1/1'],
                 'compute2': ['1/2'],
+                'compute5': ['1/3,1/4']
             },
             'ml2_mech_cisco_nexus:2.2.2.2': {
                 'username': ['admin'],
@@ -49,6 +50,7 @@ class TestCiscoNexusPluginConfig(base.BaseTestCase):
                 'ssh_port': [22],
                 'compute3': ['1/1'],
                 'compute4': ['1/2'],
+                'compute5': ['portchannel:20,portchannel:30']
             },
         }
         expected_dev_dict = {
@@ -57,11 +59,13 @@ class TestCiscoNexusPluginConfig(base.BaseTestCase):
             ('1.1.1.1', 'ssh_port'): 22,
             ('1.1.1.1', 'compute1'): '1/1',
             ('1.1.1.1', 'compute2'): '1/2',
+            ('1.1.1.1', 'compute5'): '1/3,1/4',
             ('2.2.2.2', 'username'): 'admin',
             ('2.2.2.2', 'password'): 'mySecretPassword',
             ('2.2.2.2', 'ssh_port'): 22,
             ('2.2.2.2', 'compute3'): '1/1',
             ('2.2.2.2', 'compute4'): '1/2',
+            ('2.2.2.2', 'compute5'): 'portchannel:20,portchannel:30',
         }
         with mock.patch.object(cfg, 'MultiConfigParser') as parser:
             parser.return_value.read.return_value = cfg.CONF.config_file
