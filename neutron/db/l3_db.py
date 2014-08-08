@@ -78,7 +78,7 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     status = sa.Column(sa.String(16))
 
 
-class L3_NAT_db_mixin(l3.RouterPluginBase):
+class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     """Mixin class to add L3/NAT router methods to db_base_plugin_v2."""
 
     router_device_owners = (
@@ -86,16 +86,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         DEVICE_OWNER_ROUTER_GW,
         DEVICE_OWNER_FLOATINGIP
     )
-
-    @property
-    def l3_rpc_notifier(self):
-        if not hasattr(self, '_l3_rpc_notifier'):
-            self._l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
-        return self._l3_rpc_notifier
-
-    @l3_rpc_notifier.setter
-    def l3_rpc_notifier(self, value):
-        self._l3_rpc_notifier = value
 
     @property
     def _core_plugin(self):
@@ -169,17 +159,13 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if gw_info != attributes.ATTR_NOT_SPECIFIED:
             candidates = self._check_router_needs_rescheduling(
                 context, id, gw_info)
-            payload = {'gw_exists': True}
         else:
             candidates = None
-            payload = {'gw_exists': False}
         router_db = self._update_router_db(context, id, r, gw_info)
         if candidates:
             l3_plugin = manager.NeutronManager.get_service_plugins().get(
                 constants.L3_ROUTER_NAT)
             l3_plugin.reschedule_router(context, id, candidates)
-        self.l3_rpc_notifier.routers_updated(context, [router_db['id']],
-                                             None, payload)
         return self._make_router_dict(router_db)
 
     def _check_router_needs_rescheduling(self, context, router_id, gw_info):
@@ -357,8 +343,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 self._core_plugin._delete_port(context.elevated(),
                                                ports[0]['id'])
 
-        self.l3_rpc_notifier.router_deleted(context, id)
-
     def get_router(self, context, id, fields=None):
         router = self._get_router(context, id)
         return self._make_router_dict(router, fields)
@@ -469,23 +453,15 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
              'device_owner': owner,
              'name': ''}})
 
-    def notify_router_interface_action(
-            self, context, router_id, tenant_id, port_id, subnet_id, action):
-        l3_method = '%s_router_interface' % action
-        self.l3_rpc_notifier.routers_updated(context, [router_id],
-            l3_method, {'subnet_id': subnet_id})
-
-        mapping = {'add': 'create', 'remove': 'delete'}
-        info = {
+    @staticmethod
+    def _make_router_interface_info(
+            router_id, tenant_id, port_id, subnet_id):
+        return {
             'id': router_id,
             'tenant_id': tenant_id,
             'port_id': port_id,
             'subnet_id': subnet_id
         }
-        notifier = n_rpc.get_notifier('network')
-        router_event = 'router.interface.%s' % mapping[action]
-        notifier.info(context, router_event, {'router_interface': info})
-        return info
 
     def add_router_interface(self, context, router_id, interface_info):
         add_by_port, add_by_sub = self._validate_interface_info(interface_info)
@@ -498,9 +474,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             port = self._add_interface_by_subnet(
                 context, router_id, interface_info['subnet_id'], device_owner)
 
-        return self.notify_router_interface_action(
-            context, router_id, port['tenant_id'], port['id'],
-            port['fixed_ips'][0]['subnet_id'], 'add')
+        return self._make_router_interface_info(
+            router_id, port['tenant_id'], port['id'],
+            port['fixed_ips'][0]['subnet_id'])
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
@@ -568,9 +544,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             port, subnet = self._remove_interface_by_subnet(
                 context, router_id, subnet_id, device_owner)
 
-        return self.notify_router_interface_action(
-            context, router_id, port['tenant_id'], port['id'],
-            subnet['id'], 'remove')
+        return self._make_router_interface_info(router_id, port['tenant_id'],
+                                                port['id'], subnet['id'])
 
     def _get_floatingip(self, context, id):
         try:
@@ -739,9 +714,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                               'router_id': router_id,
                               'last_known_router_id': previous_router_id})
 
-    def create_floatingip(
-        self, context, floatingip,
-        initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
+    def create_floatingip(self, context, floatingip,
+            initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
         fip = floatingip['floatingip']
         tenant_id = self._get_tenant_id_for_create(context, fip)
         fip_id = uuidutils.generate_uuid()
@@ -785,34 +759,30 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                    floatingip_db, external_port)
             context.session.add(floatingip_db)
 
-        router_id = floatingip_db['router_id']
-        if router_id:
-            self.l3_rpc_notifier.routers_updated(
-                context, [router_id],
-                'create_floatingip', {})
         return self._make_floatingip_dict(floatingip_db)
 
-    def update_floatingip(self, context, id, floatingip):
+    def _update_floatingip(self, context, id, floatingip):
         fip = floatingip['floatingip']
         with context.session.begin(subtransactions=True):
             floatingip_db = self._get_floatingip(context, id)
+            old_floatingip = self._make_floatingip_dict(floatingip_db)
             fip['tenant_id'] = floatingip_db['tenant_id']
             fip['id'] = id
             fip_port_id = floatingip_db['floating_port_id']
-            before_router_id = floatingip_db['router_id']
             self._update_fip_assoc(context, fip, floatingip_db,
                                    self._core_plugin.get_port(
                                        context.elevated(), fip_port_id))
-        router_ids = []
-        if before_router_id:
-            router_ids.append(before_router_id)
-        router_id = floatingip_db['router_id']
-        if router_id and router_id != before_router_id:
-            router_ids.append(router_id)
-        if router_ids:
-            self.l3_rpc_notifier.routers_updated(
-                context, router_ids, 'update_floatingip', {})
-        return self._make_floatingip_dict(floatingip_db)
+        return old_floatingip, self._make_floatingip_dict(floatingip_db)
+
+    def _floatingips_to_router_ids(self, floatingips):
+        return list(set([floatingip['router_id']
+                         for floatingip in floatingips
+                         if floatingip['router_id']]))
+
+    def update_floatingip(self, context, id, floatingip):
+        _old_floatingip, floatingip = self._update_floatingip(
+            context, id, floatingip)
+        return floatingip
 
     def update_floatingip_status(self, context, floatingip_id, status):
         """Update operational status for floating IP in neutron DB."""
@@ -820,7 +790,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             FloatingIP.id == floatingip_id)
         fip_query.update({'status': status}, synchronize_session=False)
 
-    def delete_floatingip(self, context, id):
+    def _delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
         router_id = floatingip['router_id']
         with context.session.begin(subtransactions=True):
@@ -828,10 +798,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             self._core_plugin.delete_port(context.elevated(),
                                           floatingip['floating_port_id'],
                                           l3_port_check=False)
-        if router_id:
-            self.l3_rpc_notifier.routers_updated(
-                context, [router_id],
-                'delete_floatingip', {})
+        return router_id
+
+    def delete_floatingip(self, context, id):
+        self._delete_floatingip(context, id)
 
     def get_floatingip(self, context, id, fields=None):
         floatingip = self._get_floatingip(context, id)
@@ -890,7 +860,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                           {'port_id': port_db['id'],
                            'port_owner': port_db['device_owner']})
 
-    def disassociate_floatingips(self, context, port_id, do_notify=True):
+    def disassociate_floatingips(self, context, port_id):
         """Disassociate all floating IPs linked to specific port.
 
         @param port_id: ID of the port to disassociate floating IPs.
@@ -908,19 +878,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 floating_ip.update({'fixed_port_id': None,
                                     'fixed_ip_address': None,
                                     'router_id': None})
-        if do_notify:
-            self.notify_routers_updated(context, router_ids)
-            # since caller assumes that we handled notifications on its
-            # behalf, return nothing
-            return
-
         return router_ids
-
-    def notify_routers_updated(self, context, router_ids):
-        if router_ids:
-            self.l3_rpc_notifier.routers_updated(
-                context, list(router_ids),
-                'disassociate_floatingips', {})
 
     def _build_routers_list(self, context, routers, gw_ports):
         for router in routers:
@@ -1069,3 +1027,122 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         self._process_floating_ips(context, routers_dict, floating_ips)
         self._process_interfaces(routers_dict, interfaces)
         return routers_dict.values()
+
+
+class L3RpcNotifierMixin(object):
+    """Mixin class to add rpc notifier attribute to db_base_plugin_v2."""
+
+    @property
+    def l3_rpc_notifier(self):
+        if not hasattr(self, '_l3_rpc_notifier'):
+            self._l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
+        return self._l3_rpc_notifier
+
+    @l3_rpc_notifier.setter
+    def l3_rpc_notifier(self, value):
+        self._l3_rpc_notifier = value
+
+    def notify_router_updated(self, context, router_id,
+                              operation=None, data=None):
+        if router_id:
+            self.l3_rpc_notifier.routers_updated(
+                context, [router_id], operation, data)
+
+    def notify_routers_updated(self, context, router_ids,
+                               operation=None, data=None):
+        if router_ids:
+            self.l3_rpc_notifier.routers_updated(
+                context, router_ids, operation, data)
+
+    def notify_router_deleted(self, context, router_id):
+        self.l3_rpc_notifier.router_deleted(context, router_id)
+
+
+class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
+    """Mixin class to add rpc notifier methods to db_base_plugin_v2."""
+
+    def update_router(self, context, id, router):
+        r = router['router']
+        payload = {'gw_exists':
+                   r.get(EXTERNAL_GW_INFO, attributes.ATTR_NOT_SPECIFIED) !=
+                   attributes.ATTR_NOT_SPECIFIED}
+        router_dict = super(L3_NAT_db_mixin, self).update_router(context,
+                                                                 id, router)
+        self.notify_router_updated(context, router_dict['id'], None, payload)
+        return router_dict
+
+    def delete_router(self, context, id):
+        super(L3_NAT_db_mixin, self).delete_router(context, id)
+        self.notify_router_deleted(context, id)
+
+    def notify_router_interface_action(
+            self, context, router_interface_info, action):
+        l3_method = '%s_router_interface' % action
+        super(L3_NAT_db_mixin, self).notify_routers_updated(
+            context, [router_interface_info['id']], l3_method,
+            {'subnet_id': router_interface_info['subnet_id']})
+
+        mapping = {'add': 'create', 'remove': 'delete'}
+        notifier = n_rpc.get_notifier('network')
+        router_event = 'router.interface.%s' % mapping[action]
+        notifier.info(context, router_event,
+                      {'router_interface': router_interface_info})
+
+    def add_router_interface(self, context, router_id, interface_info):
+        router_interface_info = super(
+            L3_NAT_db_mixin, self).add_router_interface(
+                context, router_id, interface_info)
+        self.notify_router_interface_action(
+            context, router_interface_info, 'add')
+        return router_interface_info
+
+    def remove_router_interface(self, context, router_id, interface_info):
+        router_interface_info = super(
+            L3_NAT_db_mixin, self).remove_router_interface(
+                context, router_id, interface_info)
+        self.notify_router_interface_action(
+            context, router_interface_info, 'remove')
+        return router_interface_info
+
+    def create_floatingip(self, context, floatingip,
+            initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
+        floatingip_dict = super(L3_NAT_db_mixin, self).create_floatingip(
+            context, floatingip, initial_status)
+        router_id = floatingip_dict['router_id']
+        self.notify_router_updated(context, router_id, 'create_floatingip', {})
+        return floatingip_dict
+
+    def update_floatingip(self, context, id, floatingip):
+        old_floatingip, floatingip = self._update_floatingip(
+            context, id, floatingip)
+        router_ids = self._floatingips_to_router_ids(
+            [old_floatingip, floatingip])
+        super(L3_NAT_db_mixin, self).notify_routers_updated(
+            context, router_ids, 'update_floatingip', {})
+        return floatingip
+
+    def delete_floatingip(self, context, id):
+        router_id = self._delete_floatingip(context, id)
+        self.notify_router_updated(context, router_id, 'delete_floatingip', {})
+
+    def disassociate_floatingips(self, context, port_id, do_notify=True):
+        """Disassociate all floating IPs linked to specific port.
+
+        @param port_id: ID of the port to disassociate floating IPs.
+        @param do_notify: whether we should notify routers right away.
+        @return: set of router-ids that require notification updates
+                 if do_notify is False, otherwise None.
+        """
+        router_ids = super(L3_NAT_db_mixin, self).disassociate_floatingips(
+            context, port_id)
+        if do_notify:
+            self.notify_routers_updated(context, router_ids)
+            # since caller assumes that we handled notifications on its
+            # behalf, return nothing
+            return
+
+        return router_ids
+
+    def notify_routers_updated(self, context, router_ids):
+        super(L3_NAT_db_mixin, self).notify_routers_updated(
+            context, list(router_ids), 'disassociate_floatingips', {})
