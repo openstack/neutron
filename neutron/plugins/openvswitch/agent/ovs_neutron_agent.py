@@ -374,13 +374,12 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         else:
             self.setup_entry_for_arp_reply(br, 'add', lvm.vlan, port_info[0],
                                            port_info[1])
-            if not self.dvr_agent.is_dvr_router_interface(port_info[1]):
-                br.add_flow(table=constants.UCAST_TO_TUN,
-                            priority=2,
-                            dl_vlan=lvm.vlan,
-                            dl_dst=port_info[0],
-                            actions="strip_vlan,set_tunnel:%s,output:%s" %
-                            (lvm.segmentation_id, ofport))
+            br.add_flow(table=constants.UCAST_TO_TUN,
+                        priority=2,
+                        dl_vlan=lvm.vlan,
+                        dl_dst=port_info[0],
+                        actions="strip_vlan,set_tunnel:%s,output:%s" %
+                        (lvm.segmentation_id, ofport))
 
     def del_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         if port_info == q_const.FLOODING_ENTRY:

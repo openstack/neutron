@@ -45,7 +45,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
         self.remove_fdb_entries = {}
 
     def _get_port_fdb_entries(self, port):
-        return [[port['mac_address'], port['device_owner'],
+        return [[port['mac_address'],
                  ip['ip_address']] for ip in port['fixed_ips']]
 
     def delete_port_precommit(self, context):
@@ -93,19 +93,17 @@ class L2populationMechanismDriver(api.MechanismDriver,
             return
         agent, agent_host, agent_ip, segment, port_fdb_entries = port_infos
 
-        orig_mac_devowner_ip = [[port['mac_address'], port['device_owner'], ip]
-                       for ip in orig_ips]
-        port_mac_devowner_ip = [[port['mac_address'], port['device_owner'], ip]
-                       for ip in port_ips]
+        orig_mac_ip = [[port['mac_address'], ip] for ip in orig_ips]
+        port_mac_ip = [[port['mac_address'], ip] for ip in port_ips]
 
         upd_fdb_entries = {port['network_id']: {agent_ip: {}}}
 
         ports = upd_fdb_entries[port['network_id']][agent_ip]
-        if orig_mac_devowner_ip:
-            ports['before'] = orig_mac_devowner_ip
+        if orig_mac_ip:
+            ports['before'] = orig_mac_ip
 
-        if port_mac_devowner_ip:
-            ports['after'] = port_mac_devowner_ip
+        if port_mac_ip:
+            ports['after'] = port_mac_ip
 
         self.L2populationAgentNotify.update_fdb_entries(
             self.rpc_ctx, {'chg_ip': upd_fdb_entries})
