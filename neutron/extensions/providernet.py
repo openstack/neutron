@@ -35,7 +35,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                            'enforce_policy': True,
                            'is_visible': True},
         SEGMENTATION_ID: {'allow_post': True, 'allow_put': True,
-                          'convert_to': int,
+                          'convert_to': attributes.convert_to_int,
                           'enforce_policy': True,
                           'default': attributes.ATTR_NOT_SPECIFIED,
                           'is_visible': True},
