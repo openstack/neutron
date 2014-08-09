@@ -927,6 +927,31 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                         expected_code=webob.exc.HTTPConflict.code,
                         expected_body=None, body_data=insert_data)
 
+    def test_insert_rule_for_prev_associated_ref_rule(self):
+        with contextlib.nested(self.firewall_rule(name='fwr0'),
+                               self.firewall_rule(name='fwr1')) as fwr:
+            fwr0_id = fwr[0]['firewall_rule']['id']
+            fwr1_id = fwr[1]['firewall_rule']['id']
+            with contextlib.nested(
+                self.firewall_policy(name='fwp0'),
+                    self.firewall_policy(name='fwp1',
+                                         firewall_rules=[fwr1_id])) as fwp:
+                fwp0_id = fwp[0]['firewall_policy']['id']
+                #test inserting before a rule which is associated
+                #with different policy
+                self._rule_action(
+                    'insert', fwp0_id, fwr0_id,
+                    insert_before=fwr1_id,
+                    expected_code=webob.exc.HTTPBadRequest.code,
+                    expected_body=None)
+                #test inserting  after a rule which is associated
+                #with different policy
+                self._rule_action(
+                    'insert', fwp0_id, fwr0_id,
+                    insert_after=fwr1_id,
+                    expected_code=webob.exc.HTTPBadRequest.code,
+                    expected_body=None)
+
     def test_insert_rule_in_policy(self):
         attrs = self._get_test_firewall_policy_attrs()
         attrs['audited'] = False
