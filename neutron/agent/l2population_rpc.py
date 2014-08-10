@@ -166,7 +166,9 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
     def get_agent_ports(self, fdb_entries, local_vlan_map):
         for network_id, values in fdb_entries.items():
             lvm = local_vlan_map.get(network_id)
-            agent_ports = values.get('ports') if lvm else {}
+            if lvm is None:
+                continue
+            agent_ports = values.get('ports')
             yield (lvm, agent_ports)
 
     @log.log
