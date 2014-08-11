@@ -1453,22 +1453,22 @@ class ExtensionTestCase(base.BaseTestCase):
 
 
 class TestSubresourcePlugin():
-        def get_network_dummies(self, context, network_id,
-                                filters=None, fields=None):
-            return []
+    def get_network_dummies(self, context, network_id,
+                            filters=None, fields=None):
+        return []
 
-        def get_network_dummy(self, context, id, network_id,
-                              fields=None):
-            return {}
+    def get_network_dummy(self, context, id, network_id,
+                          fields=None):
+        return {}
 
-        def create_network_dummy(self, context, network_id, dummy):
-            return {}
+    def create_network_dummy(self, context, network_id, dummy):
+        return {}
 
-        def update_network_dummy(self, context, id, network_id, dummy):
-            return {}
+    def update_network_dummy(self, context, id, network_id, dummy):
+        return {}
 
-        def delete_network_dummy(self, context, id, network_id):
-            return
+    def delete_network_dummy(self, context, id, network_id):
+        return
 
 
 class ListArgsTestCase(base.BaseTestCase):
