@@ -140,6 +140,7 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
             # call into the driver
             try:
                 self.fwaas_driver.__getattribute__(func_name)(
+                    self.conf.agent_mode,
                     router_info_list,
                     fw)
                 if fw['admin_state_up']:
@@ -174,7 +175,10 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
         """
         if fw['status'] == constants.PENDING_DELETE:
             try:
-                self.fwaas_driver.delete_firewall(router_info_list, fw)
+                self.fwaas_driver.delete_firewall(
+                    self.conf.agent_mode,
+                    router_info_list,
+                    fw)
                 self.fwplugin_rpc.firewall_deleted(
                     ctx,
                     fw['id'])
@@ -189,7 +193,10 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
         else:
             # PENDING_UPDATE, PENDING_CREATE, ...
             try:
-                self.fwaas_driver.update_firewall(router_info_list, fw)
+                self.fwaas_driver.update_firewall(
+                    self.conf.agent_mode,
+                    router_info_list,
+                    fw)
                 if fw['admin_state_up']:
                     status = constants.ACTIVE
                 else:
