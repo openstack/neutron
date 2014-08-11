@@ -93,7 +93,7 @@ class FakePortContext(object):
         return self._network
 
     @property
-    def bound_segment(self):
+    def bottom_bound_segment(self):
         return self._segment
 
 

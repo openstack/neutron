@@ -91,12 +91,14 @@ class TestMechanismDriver(api.MechanismDriver):
 
         if vif_type in (portbindings.VIF_TYPE_UNBOUND,
                         portbindings.VIF_TYPE_BINDING_FAILED):
-            assert(context.bound_segment is None)
-            assert(context.bound_driver is None)
+            self._check_unbound(context.binding_levels,
+                                context.top_bound_segment,
+                                context.bottom_bound_segment)
             assert(context.current['id'] not in self.bound_ports)
         else:
-            assert(isinstance(context.bound_segment, dict))
-            assert(context.bound_driver == 'test')
+            self._check_bound(context.binding_levels,
+                              context.top_bound_segment,
+                              context.bottom_bound_segment)
             assert(context.current['id'] in self.bound_ports)
 
         if original_expected:
@@ -106,19 +108,40 @@ class TestMechanismDriver(api.MechanismDriver):
             assert(vif_type is not None)
             if vif_type in (portbindings.VIF_TYPE_UNBOUND,
                             portbindings.VIF_TYPE_BINDING_FAILED):
-                assert(context.original_bound_segment is None)
-                assert(context.original_bound_driver is None)
+                self._check_unbound(context.original_binding_levels,
+                                    context.original_top_bound_segment,
+                                    context.original_bottom_bound_segment)
             else:
-                assert(isinstance(context.original_bound_segment, dict))
-                assert(context.original_bound_driver == 'test')
+                self._check_bound(context.original_binding_levels,
+                                  context.original_top_bound_segment,
+                                  context.original_bottom_bound_segment)
         else:
             assert(context.original is None)
-            assert(context.original_bound_segment is None)
-            assert(context.original_bound_driver is None)
+            self._check_unbound(context.original_binding_levels,
+                                context.original_top_bound_segment,
+                                context.original_bottom_bound_segment)
 
         network_context = context.network
         assert(isinstance(network_context, api.NetworkContext))
         self._check_network_context(network_context, False)
+
+    def _check_unbound(self, levels, top_segment, bottom_segment):
+        assert(levels is None)
+        assert(top_segment is None)
+        assert(bottom_segment is None)
+
+    def _check_bound(self, levels, top_segment, bottom_segment):
+        assert(isinstance(levels, list))
+        top_level = levels[0]
+        assert(isinstance(top_level, dict))
+        assert(isinstance(top_segment, dict))
+        assert(top_segment == top_level[api.BOUND_SEGMENT])
+        assert('test' == top_level[api.BOUND_DRIVER])
+        bottom_level = levels[-1]
+        assert(isinstance(bottom_level, dict))
+        assert(isinstance(bottom_segment, dict))
+        assert(bottom_segment == bottom_level[api.BOUND_SEGMENT])
+        assert('test' == bottom_level[api.BOUND_DRIVER])
 
     def create_port_precommit(self, context):
         self._check_port_context(context, False)
@@ -127,8 +150,8 @@ class TestMechanismDriver(api.MechanismDriver):
         self._check_port_context(context, False)
 
     def update_port_precommit(self, context):
-        if (context.original_bound_driver == 'test' and
-            context.bound_driver != 'test'):
+        if (context.original_top_bound_segment and
+            not context.top_bound_segment):
             self.bound_ports.remove(context.original['id'])
         self._check_port_context(context, True)
 
@@ -144,8 +167,8 @@ class TestMechanismDriver(api.MechanismDriver):
     def bind_port(self, context):
         self._check_port_context(context, False)
 
-        host = context.current.get(portbindings.HOST_ID, None)
-        segment = context.network.network_segments[0][api.ID]
+        host = context.host
+        segment = context.segments_to_bind[0][api.ID]
         if host == "host-ovs-no_filter":
             context.set_binding(segment, portbindings.VIF_TYPE_OVS,
                                 {portbindings.CAP_PORT_FILTER: False})

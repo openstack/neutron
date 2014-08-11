@@ -26,6 +26,12 @@ NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
 
+# The following keys are used in the binding level dictionaries
+# available via the binding_levels and original_binding_levels
+# PortContext properties.
+BOUND_DRIVER = 'bound_driver'
+BOUND_SEGMENT = 'bound_segment'
+
 
 @six.add_metaclass(abc.ABCMeta)
 class TypeDriver(object):
@@ -260,17 +266,100 @@ class PortContext(object):
         pass
 
     @abc.abstractproperty
-    def bound_segment(self):
-        """Return the currently bound segment dictionary."""
+    def binding_levels(self):
+        """Return dictionaries describing the current binding levels.
+
+        This property returns a list of dictionaries describing each
+        binding level if the port is bound or partially bound, or None
+        if the port is unbound. Each returned dictionary contains the
+        name of the bound driver under the BOUND_DRIVER key, and the
+        bound segment dictionary under the BOUND_SEGMENT key.
+
+        The first entry (index 0) describes the top-level binding,
+        which always involves one of the port's network's static
+        segments. In the case of a hierarchical binding, subsequent
+        entries describe the lower-level bindings in descending order,
+        which may involve dynamic segments. Adjacent levels where
+        different drivers bind the same static or dynamic segment are
+        possible. The last entry (index -1) describes the bottom-level
+        binding that supplied the port's binding:vif_type and
+        binding:vif_details attribute values.
+
+        Within calls to MechanismDriver.bind_port, descriptions of the
+        levels above the level currently being bound are returned.
+        """
         pass
 
     @abc.abstractproperty
-    def original_bound_segment(self):
-        """Return the original bound segment dictionary.
+    def original_binding_levels(self):
+        """Return dictionaries describing the original binding levels.
 
-        Return the original bound segment dictionary, prior to a call
-        to update_port.  Method is only valid within calls to
-        update_port_precommit and update_port_postcommit.
+        This property returns a list of dictionaries describing each
+        original binding level if the port was previously bound, or
+        None if the port was unbound. The content is as described for
+        the binding_levels property.
+
+        This property is only valid within calls to
+        update_port_precommit and update_port_postcommit. It returns
+        None otherwise.
+        """
+        pass
+
+    @abc.abstractproperty
+    def top_bound_segment(self):
+        """Return the current top-level bound segment dictionary.
+
+        This property returns the current top-level bound segment
+        dictionary, or None if the port is unbound. For a bound port,
+        top_bound_segment is equivalent to
+        binding_levels[0][BOUND_SEGMENT], and returns one of the
+        port's network's static segments.
+        """
+        pass
+
+    @abc.abstractproperty
+    def original_top_bound_segment(self):
+        """Return the original top-level bound segment dictionary.
+
+        This property returns the original top-level bound segment
+        dictionary, or None if the port was previously unbound. For a
+        previously bound port, original_top_bound_segment is
+        equivalent to original_binding_levels[0][BOUND_SEGMENT], and
+        returns one of the port's network's static segments.
+
+        This property is only valid within calls to
+        update_port_precommit and update_port_postcommit. It returns
+        None otherwise.
+        """
+        pass
+
+    @abc.abstractproperty
+    def bottom_bound_segment(self):
+        """Return the current bottom-level bound segment dictionary.
+
+        This property returns the current bottom-level bound segment
+        dictionary, or None if the port is unbound. For a bound port,
+        bottom_bound_segment is equivalent to
+        binding_levels[-1][BOUND_SEGMENT], and returns the segment
+        whose binding supplied the port's binding:vif_type and
+        binding:vif_details attribute values.
+        """
+        pass
+
+    @abc.abstractproperty
+    def original_bottom_bound_segment(self):
+        """Return the original bottom-level bound segment dictionary.
+
+        This property returns the orignal bottom-level bound segment
+        dictionary, or None if the port was previously unbound. For a
+        previously bound port, original_bottom_bound_segment is
+        equivalent to original_binding_levels[-1][BOUND_SEGMENT], and
+        returns the segment whose binding supplied the port's previous
+        binding:vif_type and binding:vif_details attribute values.
+
+        This property is only valid within calls to
+        update_port_precommit and update_port_postcommit. It returns
+        None otherwise.
         """
         pass
 
@@ -289,17 +378,18 @@ class PortContext(object):
         pass
 
     @abc.abstractproperty
-    def bound_driver(self):
-        """Return the currently bound mechanism driver name."""
-        pass
+    def segments_to_bind(self):
+        """Return the list of segments with which to bind the port.
 
-    @abc.abstractproperty
-    def original_bound_driver(self):
-        """Return the original bound mechanism driver name.
+        This property returns the list of segment dictionaries with
+        which the mechanism driver may bind the port. When
+        establishing a top-level binding, these will be the port's
+        network's static segments. For each subsequent level, these
+        will be the segments passed to continue_binding by the
+        mechanism driver that bound the level above.
 
-        Return the original bound mechanism driver name, prior to a
-        call to update_port.  Method is only valid within calls to
-        update_port_precommit and update_port_postcommit.
+        This property is only valid within calls to
+        MechanismDriver.bind_port. It returns None otherwise.
         """
         pass
 
@@ -315,16 +405,36 @@ class PortContext(object):
     @abc.abstractmethod
     def set_binding(self, segment_id, vif_type, vif_details,
                     status=None):
-        """Set the binding for the port.
+        """Set the bottom-level binding for the port.
 
         :param segment_id: Network segment bound for the port.
         :param vif_type: The VIF type for the bound port.
         :param vif_details: Dictionary with details for VIF driver.
         :param status: Port status to set if not None.
 
-        Called by MechanismDriver.bind_port to indicate success and
-        specify binding details to use for port. The segment_id must
-        identify an item in network.network_segments.
+        This method is called by MechanismDriver.bind_port to indicate
+        success and specify binding details to use for port. The
+        segment_id must identify an item in the current value of the
+        segments_to_bind property.
+        """
+        pass
+
+    @abc.abstractmethod
+    def continue_binding(self, segment_id, next_segments_to_bind):
+        """Continue binding the port with different segments.
+
+        :param segment_id: Network segment partially bound for the port.
+        :param next_segments_to_bind: Segments to continue binding with.
+
+        This method is called by MechanismDriver.bind_port to indicate
+        it was able to partially bind the port, but that one or more
+        additional mechanism drivers are required to complete the
+        binding. The segment_id must identify an item in the current
+        value of the segments_to_bind property. The list of segments
+        IDs passed as next_segments_to_bind identify dynamic (or
+        static) segments of the port's network that will be used to
+        populate segments_to_bind for the next lower level of a
+        hierarchical binding.
         """
         pass
 
@@ -656,22 +766,36 @@ class MechanismDriver(object):
 
         :param context: PortContext instance describing the port
 
-        Called outside any transaction to attempt to establish a port
-        binding using this mechanism driver. If the driver is able to
-        bind the port, it must call context.set_binding() with the
-        binding details. If the binding results are committed after
-        bind_port() returns, they will be seen by all mechanism
-        drivers as update_port_precommit() and
-        update_port_postcommit() calls.
+        This method is called outside any transaction to attempt to
+        establish a port binding using this mechanism driver. Bindings
+        may be created at each of multiple levels of a hierarchical
+        network, and are established from the top level downward. At
+        each level, the mechanism driver determines whether it can
+        bind to any of the network segments in the
+        context.segments_to_bind property, based on the value of the
+        context.host property, any relevant port or network
+        attributes, and its own knowledge of the network topology. At
+        the top level, context.segments_to_bind contains the static
+        segments of the port's network. At each lower level of
+        binding, it contains static or dynamic segments supplied by
+        the driver that bound at the level above. If the driver is
+        able to complete the binding of the port to any segment in
+        context.segments_to_bind, it must call context.set_binding
+        with the binding details. If it can partially bind the port,
+        it must call context.continue_binding with the network
+        segments to be used to bind at the next lower level.
 
-        Note that if some other thread or process concurrently binds
-        or updates the port, these binding results will not be
-        committed, and update_port_precommit() and
-        update_port_postcommit() will not be called on the mechanism
-        drivers with these results. Because binding results can be
-        discarded rather than committed, drivers should avoid making
-        persistent state changes in bind_port(), or else must ensure
-        that such state changes are eventually cleaned up.
+        If the binding results are committed after bind_port returns,
+        they will be seen by all mechanism drivers as
+        update_port_precommit and update_port_postcommit calls. But if
+        some other thread or process concurrently binds or updates the
+        port, these binding results will not be committed, and
+        update_port_precommit and update_port_postcommit will not be
+        called on the mechanism drivers with these results. Because
+        binding results can be discarded rather than committed,
+        drivers should avoid making persistent state changes in
+        bind_port, or else must ensure that such state changes are
+        eventually cleaned up.
         """
         pass
 

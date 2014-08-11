@@ -119,7 +119,7 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             self.try_to_bind(context)
 
     def try_to_bind(self, context, agent=None):
-        for segment in context.network.network_segments:
+        for segment in context.segments_to_bind:
             if self.check_segment(segment, agent):
                 context.set_binding(segment[api.ID],
                                     self.vif_type,
