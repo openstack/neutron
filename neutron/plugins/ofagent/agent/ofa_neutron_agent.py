@@ -199,7 +199,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
     RPC_API_VERSION = '1.1'
 
     def __init__(self, ryuapp, integ_br, local_ip,
-                 bridge_mappings, root_helper,
+                 bridge_mappings, interface_mappings, root_helper,
                  polling_interval, tunnel_types=None,
                  veth_mtu=None):
         """Constructor.
@@ -208,6 +208,9 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         :param integ_br: name of the integration bridge.
         :param local_ip: local IP address of this hypervisor.
         :param bridge_mappings: mappings from physical network name to bridge.
+               (deprecated)
+        :param interface_mappings: mappings from physical network name to
+               interface.
         :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
         :param tunnel_types: A list of tunnel types to enable support for in
@@ -229,11 +232,13 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             'binary': 'neutron-ofa-agent',
             'host': cfg.CONF.host,
             'topic': n_const.L2_AGENT_TOPIC,
-            'configurations': {'bridge_mappings': bridge_mappings,
-                               'tunnel_types': self.tunnel_types,
-                               'tunneling_ip': local_ip,
-                               'l2_population': True,
-                               'l2pop_network_types': l2pop_network_types},
+            'configurations': {
+                'bridge_mappings': bridge_mappings,
+                'interface_mappings': interface_mappings,
+                'tunnel_types': self.tunnel_types,
+                'tunneling_ip': local_ip,
+                'l2_population': True,
+                'l2pop_network_types': l2pop_network_types},
             'agent_type': n_const.AGENT_TYPE_OFA,
             'start_flag': True}
 
@@ -245,6 +250,9 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         self.updated_ports = set()
         self.setup_rpc()
         self.setup_integration_br()
+        self.int_ofports = {}
+        self.setup_physical_interfaces(interface_mappings)
+        # TODO(yamamoto): Remove physical bridge support
         self.setup_physical_bridges(bridge_mappings)
         self.local_vlan_map = {}
         self.tun_ofports = {}
@@ -638,7 +646,6 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         :param bridge_mappings: map physical network names to bridge names.
         """
         self.phys_brs = {}
-        self.int_ofports = {}
         self.phys_ofports = {}
         ip_wrapper = ip_lib.IPWrapper(self.root_helper)
         for physical_network, bridge in bridge_mappings.iteritems():
@@ -659,6 +666,18 @@ class OFANeutronAgent(n_rpc.RpcCallback,
 
             self._phys_br_patch_physical_bridge_with_integration_bridge(
                 br, physical_network, bridge, ip_wrapper)
+
+    def setup_physical_interfaces(self, interface_mappings):
+        """Setup the physical network interfaces.
+
+        Link physical network interfaces to the integration bridge.
+
+        :param interface_mappings: map physical network names to
+                                   interface names.
+        """
+        for physical_network, interface_name in interface_mappings.iteritems():
+            ofport = int(self.int_br.add_port(interface_name))
+            self.int_ofports[physical_network] = ofport
 
     def scan_ports(self, registered_ports, updated_ports=None):
         cur_ports = self._get_ofport_names(self.int_br)
@@ -968,10 +987,17 @@ def create_agent_config_map(config):
         bridge_mappings = n_utils.parse_mappings(config.OVS.bridge_mappings)
     except ValueError as e:
         raise ValueError(_("Parsing bridge_mappings failed: %s.") % e)
+    try:
+        interface_mappings = n_utils.parse_mappings(
+            config.AGENT.physical_interface_mappings)
+    except ValueError as e:
+        raise ValueError(_("Parsing physical_interface_mappings failed: %s.")
+                         % e)
 
     kwargs = dict(
         integ_br=config.OVS.integration_bridge,
         local_ip=config.OVS.local_ip,
+        interface_mappings=interface_mappings,
         bridge_mappings=bridge_mappings,
         root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,

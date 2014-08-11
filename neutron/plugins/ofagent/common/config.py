@@ -23,6 +23,9 @@ agent_opts = [
     cfg.IntOpt('get_datapath_retry_times', default=60,
                help=_("Number of seconds to retry acquiring "
                       "an Open vSwitch datapath")),
+    cfg.ListOpt('physical_interface_mappings',
+                default=[],
+                help=_("List of <physical_network>:<physical_interface>")),
 ]
 
 

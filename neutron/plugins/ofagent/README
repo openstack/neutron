@@ -7,6 +7,28 @@ https://github.com/osrg/ryu/wiki/OpenStack
 
 # -- Notes for updating from Icehouce
 
+OVS.bridge_mappings is deprecated for ofagent.  It's planned to be
+removed in Kilo.  Please use AGENT.physical_interface_mappings instead.
+To mimic an existing setup with bridge_mapping, you can create
+a veth pair, link one side of it to the bridge, and then specify
+the other side in physical_interface_mappings.
+For example, if you have the following:
+
+    [OVS]
+    bridge_mappings=public:br-ex
+
+You can do:
+
+    # ip link add int-public type veth peer name phy-public
+    # ip link set int-public up
+    # ip link set phy-public up
+    # ovs-vsctl add-port br-ex phy-public
+
+and then replace the bridge_mappings with:
+
+    [AGENT]
+    physical_interface_mappings=public:int-public
+
 After Icehouce, most of the functionality have been folded into
 a single bridge, the integration bridge.  (aka. br-int)
 The integration bridge is the only bridge which would have an
