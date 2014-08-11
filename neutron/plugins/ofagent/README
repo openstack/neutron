@@ -37,6 +37,16 @@ We recommend to use a provider network instead as the following:
     [OVS]
     bridge_mappings=$PUBLIC_PHYSICAL_NETWORK:$PUBLIC_BRIDGE
 
+The port naming scheme for ofagent has been changed after Icehouce.
+If you are using security groups, you should switch firewall_driver
+accordingly.
+  From:
+    [securitygroup]
+    firewall_driver=neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+  To:
+    [securitygroup]
+    firewall_driver=neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+
 # -- Ryu General
 
 For general Ryu stuff, please refer to
