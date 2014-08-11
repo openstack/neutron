@@ -65,7 +65,7 @@ class CiscoNexusDriver(object):
             allowed_exc_strs = []
         mgr = self.nxos_connect(nexus_host)
         try:
-            mgr.edit_config(target, config=config)
+            mgr.edit_config(target=target, config=config)
         except Exception as e:
             for exc_str in allowed_exc_strs:
                 if exc_str in str(e):
@@ -86,16 +86,26 @@ class CiscoNexusDriver(object):
         nexus_user = self.nexus_switches[nexus_host, const.USERNAME]
         nexus_password = self.nexus_switches[nexus_host, const.PASSWORD]
         try:
-            man = self.ncclient.connect(host=nexus_host,
-                                        port=nexus_ssh_port,
-                                        username=nexus_user,
-                                        password=nexus_password)
-            self.connections[nexus_host] = man
+            try:
+                # With new ncclient version, we can pass device_params...
+                man = self.ncclient.connect(host=nexus_host,
+                                            port=nexus_ssh_port,
+                                            username=nexus_user,
+                                            password=nexus_password,
+                                            device_params={"name": "nexus"})
+            except TypeError:
+                # ... but if that causes an error, we appear to have the old
+                # ncclient installed, which doesn't understand this parameter.
+                man = self.ncclient.connect(host=nexus_host,
+                                            port=nexus_ssh_port,
+                                            username=nexus_user,
+                                            password=nexus_password)
         except Exception as e:
             # Raise a Neutron exception. Include a description of
             # the original ncclient exception.
             raise cexc.NexusConnectFailed(nexus_host=nexus_host, exc=e)
 
+        self.connections[nexus_host] = man
         return self.connections[nexus_host]
 
     def create_xml_snippet(self, customized_config):
