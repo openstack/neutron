@@ -99,17 +99,16 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             else:
                 LOG.exception(_('%s failed'), action)
             e = translate(e, language)
-            # following structure is expected by python-neutronclient
-            err_data = {'type': e.__class__.__name__,
-                        'message': e, 'detail': ''}
-            body = serializer.serialize({'NeutronError': err_data})
+            body = serializer.serialize(
+                {'NeutronError': get_exception_data(e)})
             kwargs = {'body': body, 'content_type': content_type}
             raise mapped_exc(**kwargs)
         except webob.exc.HTTPException as e:
             type_, value, tb = sys.exc_info()
             LOG.exception(_('%s failed'), action)
             translate(e, language)
-            value.body = serializer.serialize({'NeutronError': e})
+            value.body = serializer.serialize(
+                {'NeutronError': get_exception_data(e)})
             value.content_type = content_type
             six.reraise(type_, value, tb)
         except NotImplementedError as e:
@@ -121,7 +120,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             # because a plugin does not implement a feature,
             # returning 500 is definitely confusing.
             body = serializer.serialize(
-                {'NotImplementedError': e.message})
+                {'NotImplementedError': get_exception_data(e)})
             kwargs = {'body': body, 'content_type': content_type}
             raise webob.exc.HTTPNotImplemented(**kwargs)
         except Exception:
@@ -131,7 +130,9 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             msg = _('Request Failed: internal server error while '
                     'processing your request.')
             msg = translate(msg, language)
-            body = serializer.serialize({'NeutronError': msg})
+            body = serializer.serialize(
+                {'NeutronError': get_exception_data(
+                    webob.exc.HTTPInternalServerError(msg))})
             kwargs = {'body': body, 'content_type': content_type}
             raise webob.exc.HTTPInternalServerError(**kwargs)
 
@@ -146,6 +147,21 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
                               content_type=content_type,
                               body=body)
     return resource
+
+
+def get_exception_data(e):
+    """Extract the information about an exception.
+
+    Neutron client for the v2 API expects exceptions to have 'type', 'message'
+    and 'detail' attributes.This information is extracted and converted into a
+    dictionary.
+
+    :param e: the exception to be reraised
+    :returns: a structured dict with the exception data
+    """
+    err_data = {'type': e.__class__.__name__,
+                'message': e, 'detail': ''}
+    return err_data
 
 
 def translate(translatable, locale):
