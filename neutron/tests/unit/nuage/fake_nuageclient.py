@@ -40,6 +40,9 @@ class FakeNuageClient(object):
         }
         return nuage_subnet
 
+    def update_subnet(self, neutron_subnet, params):
+        pass
+
     def delete_subnet(self, id, template_id):
         pass
 

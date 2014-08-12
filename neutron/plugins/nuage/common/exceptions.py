@@ -14,7 +14,6 @@
 #
 # @author: Ronak Shah, Nuage Networks, Alcatel-Lucent USA Inc.
 
-
 ''' Nuage specific exceptions '''
 
 from neutron.common import exceptions as n_exc

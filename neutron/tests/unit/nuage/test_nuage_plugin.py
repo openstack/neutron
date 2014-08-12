@@ -14,19 +14,25 @@
 #
 # @author: Ronak Shah, Aniket Dandekar, Nuage Networks, Alcatel-Lucent USA Inc.
 
+
 import contextlib
 import copy
 import os
 
+import contextlib
 import mock
+import netaddr
 from oslo.config import cfg
 from webob import exc
 
+from neutron.common import constants
 from neutron import context
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
+from neutron.extensions import securitygroup as ext_sg
+from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nuage import extensions
 from neutron.plugins.nuage.extensions import nuage_router
@@ -38,6 +44,7 @@ from neutron.tests.unit import test_extension_extraroute as extraroute_test
 from neutron.tests.unit import test_extension_security_group as test_sg
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import test_l3_plugin
+
 
 API_EXT_PATH = os.path.dirname(extensions.__file__)
 FAKE_DEFAULT_ENT = 'default'
@@ -55,6 +62,10 @@ _plugin_name = ('%s.NuagePlugin' % NUAGE_PLUGIN_PATH)
 class NuagePluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def setUp(self, plugin=_plugin_name,
               ext_mgr=None, service_plugins=None):
+
+        if 'v6' in self._testMethodName:
+            self.skipTest("Nuage Plugin does not support IPV6.")
+
         def mock_nuageClient_init(self):
             server = FAKE_SERVER
             serverauth = FAKE_SERVER_AUTH
@@ -154,6 +165,102 @@ class NuagePluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                     r['router']['id'],
                     s1['subnet']['network_id'])
 
+    def _test_floatingip_update_different_fixed_ip_same_port(self):
+        with self.subnet() as s:
+            # The plugin use the last IP as a gateway
+            ip_range = list(netaddr.IPNetwork(s['subnet']['cidr']))[:-1]
+            fixed_ips = [{'ip_address': str(ip_range[-3])},
+                         {'ip_address': str(ip_range[-2])}]
+            with self.port(subnet=s, fixed_ips=fixed_ips) as p:
+                with self.floatingip_with_assoc(
+                    port_id=p['port']['id'],
+                    fixed_ip=str(ip_range[-3])) as fip:
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(fip['floatingip']['id'],
+                                     body['floatingip']['id'])
+                    self.assertEqual(fip['floatingip']['port_id'],
+                                     body['floatingip']['port_id'])
+                    self.assertEqual(str(ip_range[-3]),
+                                     body['floatingip']['fixed_ip_address'])
+                    self.assertIsNotNone(body['floatingip']['router_id'])
+                    body_2 = self._update(
+                        'floatingips', fip['floatingip']['id'],
+                        {'floatingip': {'port_id': p['port']['id'],
+                                        'fixed_ip_address': str(ip_range[-2])}
+                         })
+                    self.assertEqual(fip['floatingip']['port_id'],
+                                     body_2['floatingip']['port_id'])
+                    self.assertEqual(str(ip_range[-2]),
+                                     body_2['floatingip']['fixed_ip_address'])
+
+    def _test_floatingip_create_different_fixed_ip_same_port(self):
+        """Test to create fixed IPs using the same port.
+
+        This tests that it is possible to delete a port that has
+        multiple floating ip addresses associated with it (each floating
+        address associated with a unique fixed address).
+        """
+
+        with self.router() as r:
+            with self.subnet(cidr='11.0.0.0/24') as public_sub:
+                self._set_net_external(public_sub['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+
+                with self.subnet() as private_sub:
+                    ip_range = list(netaddr.IPNetwork(
+                        private_sub['subnet']['cidr']))[:-1]
+                    fixed_ips = [{'ip_address': str(ip_range[-3])},
+                                 {'ip_address': str(ip_range[-2])}]
+
+                    self._router_interface_action(
+                        'add', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+
+                    with self.port(subnet=private_sub,
+                                   fixed_ips=fixed_ips) as p:
+
+                        fip1 = self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'],
+                            p['port']['id'],
+                            fixed_ip=str(ip_range[-2]))
+                        fip2 = self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'],
+                            p['port']['id'],
+                            fixed_ip=str(ip_range[-3]))
+
+                        # Test that floating ips are assigned successfully.
+                        body = self._show('floatingips',
+                                          fip1['floatingip']['id'])
+                        self.assertEqual(
+                            fip1['floatingip']['port_id'],
+                            body['floatingip']['port_id'])
+
+                        body = self._show('floatingips',
+                                          fip2['floatingip']['id'])
+                        self.assertEqual(
+                            fip2['floatingip']['port_id'],
+                            body['floatingip']['port_id'])
+
+                    # Test that port has been successfully deleted.
+                    body = self._show('ports', p['port']['id'],
+                                      expected_code=exc.HTTPNotFound.code)
+
+                    for fip in [fip1, fip2]:
+                        self._delete('floatingips',
+                                     fip['floatingip']['id'])
+
+                    self._router_interface_action(
+                        'remove', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+
 
 class TestNuageBasicGet(NuagePluginV2TestCase,
                         test_db_plugin.TestBasicGet):
@@ -172,69 +279,54 @@ class TestNuageNetworksV2(NuagePluginV2TestCase,
 
 class TestNuageSubnetsV2(NuagePluginV2TestCase,
                          test_db_plugin.TestSubnetsV2):
-    def test_create_subnet_bad_hostroutes(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_create_subnet_inconsistent_ipv4_hostroute_dst_v6(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_create_subnet_inconsistent_ipv4_hostroute_np_v6(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_update_subnet_adding_additional_host_routes_and_dns(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_update_subnet_inconsistent_ipv6_hostroute_dst_v4(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_update_subnet_inconsistent_ipv6_hostroute_np_v4(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_create_subnet_with_one_host_route(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_create_subnet_with_two_host_routes(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_create_subnet_with_too_many_routes(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_update_subnet_route(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_update_subnet_route_to_None(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_update_subnet_route_with_too_many_entries(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_delete_subnet_with_route(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_delete_subnet_with_dns_and_route(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_validate_subnet_host_routes_exhausted(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_validate_subnet_dns_nameservers_exhausted(self):
-        self.skipTest("Plugin does not support Neutron Subnet host-routes")
-
-    def test_create_subnet_with_none_gateway(self):
-        self.skipTest("Plugin does not support "
-                      "Neutron Subnet no-gateway option")
 
     def test_create_subnet_nonzero_cidr(self):
-        self.skipTest("Plugin does not support "
-                      "Neutron Subnet no-gateway option")
+        # The plugin requires 2 IP addresses available if gateway is set
+        with contextlib.nested(
+            self.subnet(cidr='10.129.122.5/8'),
+            self.subnet(cidr='11.129.122.5/15'),
+            self.subnet(cidr='12.129.122.5/16'),
+            self.subnet(cidr='13.129.122.5/18'),
+            self.subnet(cidr='14.129.122.5/22'),
+            self.subnet(cidr='15.129.122.5/24'),
+            self.subnet(cidr='16.129.122.5/28'),
+        ) as subs:
+            # the API should accept and correct these for users
+            self.assertEqual('10.0.0.0/8', subs[0]['subnet']['cidr'])
+            self.assertEqual('11.128.0.0/15', subs[1]['subnet']['cidr'])
+            self.assertEqual('12.129.0.0/16', subs[2]['subnet']['cidr'])
+            self.assertEqual('13.129.64.0/18', subs[3]['subnet']['cidr'])
+            self.assertEqual('14.129.120.0/22', subs[4]['subnet']['cidr'])
+            self.assertEqual('15.129.122.0/24', subs[5]['subnet']['cidr'])
+            self.assertEqual('16.129.122.0/28', subs[6]['subnet']['cidr'])
 
-    def test_create_subnet_with_none_gateway_fully_allocated(self):
-        self.skipTest("Plugin does not support Neutron "
-                      "Subnet no-gateway option")
+    def test_create_subnet_gateway_outside_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '10.0.2.0/24',
+                    'ip_version': '4',
+                    'tenant_id': network['network']['tenant_id'],
+                    'gateway_ip': '10.0.3.1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(exc.HTTPClientError.code, res.status_int)
 
-    def test_create_subnet_with_none_gateway_allocation_pool(self):
-        self.skipTest("Plugin does not support Neutron "
-                      "Subnet no-gateway option")
+    def test_create_subnet_with_dhcp_port(self):
+        nuage_dhcp_port = '10.0.0.254'
+        with self.network() as network:
+            keys = {
+                'cidr': '10.0.0.0/24',
+                'gateway_ip': '10.0.0.1'
+            }
+            with self.subnet(network=network, **keys) as subnet:
+                query_params = "fixed_ips=ip_address%%3D%s" % nuage_dhcp_port
+                ports = self._list('ports', query_params=query_params)
+                self.assertEqual(4, subnet['subnet']['ip_version'])
+                self.assertIn('name', subnet['subnet'])
+                self.assertEqual(1, len(ports['ports']))
+                self.assertEqual(nuage_dhcp_port,
+                                 ports['ports'][0]['fixed_ips']
+                                 [0]['ip_address'])
 
     def test_create_subnet_with_nuage_subnet_template(self):
         with self.network() as network:
@@ -256,22 +348,38 @@ class TestNuagePluginPortBinding(NuagePluginV2TestCase,
     def setUp(self):
         super(TestNuagePluginPortBinding, self).setUp()
 
-
-class TestNuagePortsV2(NuagePluginV2TestCase,
-                       test_db_plugin.TestPortsV2):
-    def test_no_more_port_exception(self):
-        self.skipTest("Plugin does not support "
-                      "Neutron Subnet no-gateway option")
+    def test_ports_vif_details(self):
+        # The Plugin will create 2 extra ports
+        plugin = manager.NeutronManager.get_plugin()
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with contextlib.nested(self.port(), self.port()):
+            ctx = context.get_admin_context()
+            ports = plugin.get_ports(ctx)
+            self.assertEqual(4, len(ports))
+            for port in ports:
+                self._check_response_portbindings(port)
+            # By default user is admin - now test non admin user
+            ctx = self._get_non_admin_context()
+            ports = self._list('ports', neutron_context=ctx)['ports']
+            self.assertEqual(4, len(ports))
+            for non_admin_port in ports:
+                self._check_response_no_portbindings(non_admin_port)
 
 
 class TestNuageL3NatTestCase(NuagePluginV2TestCase,
                              test_l3_plugin.L3NatDBIntTestCase):
 
+    def test_network_update_external_failure(self):
+        self._test_network_update_external_failure()
+
+    def test_floatingip_create_different_fixed_ip_same_port(self):
+        self._test_floatingip_create_different_fixed_ip_same_port()
+
     def test_floatingip_update_different_router(self):
         self._test_floatingip_update_different_router()
 
-    def test_network_update_external_failure(self):
-        self._test_network_update_external_failure()
+    def test_floatingip_update_different_fixed_ip_same_port(self):
+        self._test_floatingip_update_different_fixed_ip_same_port()
 
 
 class NuageRouterTestExtensionManager(object):
@@ -340,16 +448,55 @@ class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
                                                   None,
                                                   p['port']['id'])
 
+    def test_router_update_on_external_port(self):
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                body = self._show('routers', r['router']['id'])
+                net_id = body['router']['external_gateway_info']['network_id']
+                self.assertEqual(net_id, s['subnet']['network_id'])
+                port_res = self._list_ports(
+                    'json',
+                    200,
+                    s['subnet']['network_id'],
+                    tenant_id=r['router']['tenant_id'],
+                    device_own=constants.DEVICE_OWNER_ROUTER_GW)
+                port_list = self.deserialize('json', port_res)
+                # The plugin will create 1 port
+                self.assertEqual(2, len(port_list['ports']))
+
+                routes = [{'destination': '135.207.0.0/16',
+                           'nexthop': '10.0.1.3'}]
+
+                body = self._update('routers', r['router']['id'],
+                                    {'router': {'routes':
+                                                routes}})
+
+                body = self._show('routers', r['router']['id'])
+                self.assertEqual(routes,
+                                 body['router']['routes'])
+
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                body = self._show('routers', r['router']['id'])
+                gw_info = body['router']['external_gateway_info']
+                self.assertIsNone(gw_info)
+
+    def test_floatingip_create_different_fixed_ip_same_port(self):
+        self._test_floatingip_create_different_fixed_ip_same_port()
+
     def test_floatingip_update_different_router(self):
         self._test_floatingip_update_different_router()
 
+    def test_floatingip_update_different_fixed_ip_same_port(self):
+        self._test_floatingip_update_different_fixed_ip_same_port()
+
     def test_network_update_external_failure(self):
         self._test_network_update_external_failure()
-
-
-class TestNuageSecurityGroupTestCase(NuagePluginV2TestCase,
-                                     test_sg.TestSecurityGroups):
-    pass
 
 
 class TestNuageProviderNetTestCase(NuagePluginV2TestCase):
@@ -379,3 +526,19 @@ class TestNuageProviderNetTestCase(NuagePluginV2TestCase):
                                     '', 'no_admin', is_admin=False)
         res = network_req.get_response(self.api)
         self.assertEqual(exc.HTTPForbidden.code, res.status_int)
+
+
+class TestNuageSecurityGroupTestCase(NuagePluginV2TestCase,
+                                     test_sg.TestSecurityGroups):
+
+    def test_list_ports_security_group(self):
+        with self.network() as n:
+            with self.subnet(n):
+                self._create_port(self.fmt, n['network']['id'])
+                req = self.new_list_request('ports')
+                res = req.get_response(self.api)
+                ports = self.deserialize(self.fmt, res)
+                # The Nuage plugin reserve the first port
+                port = ports['ports'][1]
+                self.assertEqual(1, len(port[ext_sg.SECURITYGROUPS]))
+                self._delete('ports', port['id'])
