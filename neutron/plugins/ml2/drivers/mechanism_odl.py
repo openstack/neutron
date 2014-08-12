@@ -39,10 +39,6 @@ ODL_SUBNETS = 'subnets'
 ODL_PORT = 'port'
 ODL_PORTS = 'ports'
 
-not_found_exception_map = {ODL_NETWORKS: n_exc.NetworkNotFound,
-                           ODL_SUBNETS: n_exc.SubnetNotFound,
-                           ODL_PORTS: n_exc.PortNotFound}
-
 odl_opts = [
     cfg.StrOpt('url',
                help=_("HTTP URL of OpenDaylight REST interface.")),
@@ -183,7 +179,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         if self.out_of_sync:
             self.sync_full(context)
         else:
-            self.sync_object(operation, object_type, context)
+            self.sync_single_resource(operation, object_type, context)
 
     def filter_create_network_attributes(self, network, context, dbcontext):
         """Filter out network attributes not required for a create."""
@@ -216,7 +212,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                 self.sendjson('get', urlpath, None)
             except requests.exceptions.HTTPError as e:
                 with excutils.save_and_reraise_exception() as ctx:
-                    if e.response.status_code == 404:
+                    if e.response.status_code == requests.codes.not_found:
                         attr_filter(resource, context, dbcontext)
                         to_be_synced.append(resource)
                         ctx.reraise = False
@@ -224,14 +220,15 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         key = resource_name if len(to_be_synced) == 1 else collection_name
 
         # 400 errors are returned if an object exists, which we ignore.
-        self.sendjson('post', collection_name, {key: to_be_synced}, [400])
+        self.sendjson('post', collection_name, {key: to_be_synced},
+                      [requests.codes.bad_request])
 
     @utils.synchronized('odl-sync-full')
     def sync_full(self, context):
         """Resync the entire database to ODL.
 
         Transition to the in-sync state on success.
-        Note: we only allow a single thead in here at a time.
+        Note: we only allow a single thread in here at a time.
         """
         if not self.out_of_sync:
             return
@@ -274,49 +271,34 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                          ODL_SUBNETS: filter_update_subnet_attributes,
                          ODL_PORTS: filter_update_port_attributes}
 
-    def sync_single_resource(self, operation, object_type, obj_id,
-                             context, attr_filter_create, attr_filter_update):
+    def sync_single_resource(self, operation, object_type, context):
         """Sync over a single resource from Neutron to OpenDaylight.
 
         Handle syncing a single operation over to OpenDaylight, and correctly
         filter attributes out which are not required for the requisite
         operation (create or update) being handled.
         """
-        dbcontext = context._plugin_context
-        if operation == 'create':
-            urlpath = object_type
-            method = 'post'
-        else:
-            urlpath = object_type + '/' + obj_id
-            method = 'put'
-
         try:
-            obj_getter = getattr(context._plugin, 'get_%s' % object_type[:-1])
-            resource = obj_getter(dbcontext, obj_id)
-        except not_found_exception_map[object_type]:
-            LOG.debug(_('%(object_type)s not found (%(obj_id)s)'),
-                      {'object_type': object_type.capitalize(),
-                      'obj_id': obj_id})
-        else:
-            if operation == 'create':
-                attr_filter_create(self, resource, context, dbcontext)
-            elif operation == 'update':
-                attr_filter_update(self, resource, context, dbcontext)
-            try:
+            obj_id = context.current['id']
+            if operation == 'delete':
+                self.sendjson('delete', object_type + '/' + obj_id, None)
+            else:
+                if operation == 'create':
+                    urlpath = object_type
+                    method = 'post'
+                    attr_filter = self.create_object_map[object_type]
+                elif operation == 'update':
+                    urlpath = object_type + '/' + obj_id
+                    method = 'put'
+                    attr_filter = self.update_object_map[object_type]
+                resource = context.current.copy()
+                attr_filter(self, resource, context, context._plugin_context)
                 # 400 errors are returned if an object exists, which we ignore.
                 self.sendjson(method, urlpath, {object_type[:-1]: resource},
-                              [400])
-            except Exception:
-                with excutils.save_and_reraise_exception():
-                    self.out_of_sync = True
-
-    def sync_object(self, operation, object_type, context):
-        """Synchronize the single modified record to ODL."""
-        obj_id = context.current['id']
-
-        self.sync_single_resource(operation, object_type, obj_id, context,
-                                  self.create_object_map[object_type],
-                                  self.update_object_map[object_type])
+                              [requests.codes.bad_request])
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                self.out_of_sync = True
 
     def add_security_groups(self, context, dbcontext, port):
         """Populate the 'security_groups' field with entire records."""
