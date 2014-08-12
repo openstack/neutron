@@ -266,6 +266,12 @@ class TestIpWrapper(base.BaseTestCase):
                                               'peer', 'name', 'tap1'),
                                              'sudo', None)
 
+    def test_del_veth(self):
+        ip_lib.IPWrapper('sudo').del_veth('fpr-1234')
+        self.execute.assert_called_once_with('', 'link',
+                                             ('del', 'fpr-1234'),
+                                             'sudo', None)
+
     def test_add_veth_with_namespaces(self):
         ns2 = 'ns2'
         with mock.patch.object(ip_lib.IPWrapper, 'ensure_namespace') as en:
