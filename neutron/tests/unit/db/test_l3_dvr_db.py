@@ -167,3 +167,9 @@ class L3DvrTestCase(base.BaseTestCase):
             self.mixin._create_gw_port(
                 self.ctx, router_id, router_db, mock.ANY)
             self.assertFalse(cs.call_count)
+
+    def test_build_routers_list_with_gw_port_mismatch(self):
+        routers = [{'gw_port_id': 'foo_gw_port_id', 'id': 'foo_router_id'}]
+        gw_ports = {}
+        routers = self.mixin._build_routers_list(self.ctx, routers, gw_ports)
+        self.assertIsNone(routers[0].get('gw_port'))

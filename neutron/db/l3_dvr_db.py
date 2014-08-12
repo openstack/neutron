@@ -237,7 +237,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         for rtr in routers:
             gw_port_id = rtr['gw_port_id']
-            if gw_port_id:
+            # Collect gw ports only if available
+            if gw_port_id and gw_ports.get(gw_port_id):
                 rtr['gw_port'] = gw_ports[gw_port_id]
                 if 'enable_snat' in rtr[l3.EXTERNAL_GW_INFO]:
                     rtr['enable_snat'] = (
