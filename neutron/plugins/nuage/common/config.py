@@ -42,6 +42,18 @@ restproxy_opts = [
                help=_("Per Net Partition quota of floating ips")),
 ]
 
+syncmanager_opts = [
+    cfg.BoolOpt('enable_sync', default=False,
+                help=_("Nuage plugin will sync resources between openstack "
+                       "and VSD")),
+    cfg.IntOpt('sync_interval', default=0,
+               help=_("Sync interval in seconds between openstack and VSD. "
+                      "It defines how often the synchronization is done. "
+                      "If not set, value of 0 is assumed and sync will be "
+                      "performed only once, at the Neutron startup time.")),
+]
+
 
 def nuage_register_cfg_opts():
     cfg.CONF.register_opts(restproxy_opts, "RESTPROXY")
+    cfg.CONF.register_opts(syncmanager_opts, "SYNCMANAGER")
