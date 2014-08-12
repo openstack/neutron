@@ -168,45 +168,10 @@ class MlnxEswitchRpcCallbacks(n_rpc.RpcCallback,
             self.eswitch.remove_network(network_id)
 
     def port_update(self, context, **kwargs):
-        LOG.debug(_("port_update received"))
         port = kwargs.get('port')
-        net_type = kwargs.get('network_type')
-        segmentation_id = kwargs.get('segmentation_id')
-        if not segmentation_id:
-            # compatibility with pre-Havana RPC vlan_id encoding
-            segmentation_id = kwargs.get('vlan_id')
-        physical_network = kwargs.get('physical_network')
-        net_id = port['network_id']
-        if self.eswitch.vnic_port_exists(port['mac_address']):
-            if 'security_groups' in port:
-                self.sg_agent.refresh_firewall()
-            try:
-                if port['admin_state_up']:
-                    self.eswitch.port_up(net_id,
-                                         net_type,
-                                         physical_network,
-                                         segmentation_id,
-                                         port['id'],
-                                         port['mac_address'])
-                    # update plugin about port status
-                    self.agent.plugin_rpc.update_device_up(self.context,
-                                                           port['mac_address'],
-                                                           self.agent.agent_id,
-                                                           cfg.CONF.host)
-                else:
-                    self.eswitch.port_down(net_id,
-                                           physical_network,
-                                           port['mac_address'])
-                    # update plugin about port status
-                    self.agent.plugin_rpc.update_device_down(
-                        self.context,
-                        port['mac_address'],
-                        self.agent.agent_id,
-                        cfg.CONF.host)
-            except n_rpc.MessagingTimeout:
-                LOG.error(_("RPC timeout while updating port %s"), port['id'])
-        else:
-            LOG.debug(_("No port %s defined on agent."), port['id'])
+        self.agent.add_port_update(port['mac_address'])
+        LOG.debug("port_update message processed for port with mac %s",
+                  port['mac_address'])
 
 
 class MlnxEswitchPluginApi(agent_rpc.PluginApi,
@@ -229,6 +194,8 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             'configurations': configurations,
             'agent_type': q_constants.AGENT_TYPE_MLNX,
             'start_flag': True}
+        # Stores port update notifications for processing in main rpc loop
+        self.updated_ports = set()
         self._setup_rpc()
         self.init_firewall()
 
@@ -272,24 +239,27 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                 self._report_state)
             heartbeat.start(interval=report_interval)
 
-    def update_ports(self, registered_ports):
-        ports = self.eswitch.get_vnics_mac()
-        if ports == registered_ports:
-            return
-        added = ports - registered_ports
-        removed = registered_ports - ports
-        return {'current': ports,
-                'added': added,
-                'removed': removed}
+    def add_port_update(self, port):
+        self.updated_ports.add(port)
+
+    def scan_ports(self, registered_ports, updated_ports_copy=None):
+        cur_ports = self.eswitch.get_vnics_mac()
+        port_info = {'current': cur_ports}
+        # Shouldn't process updates for not existing ports
+        port_info['updated'] = updated_ports_copy & cur_ports
+        port_info['added'] = cur_ports - registered_ports
+        port_info['removed'] = registered_ports - cur_ports
+        return port_info
 
     def process_network_ports(self, port_info):
         resync_a = False
         resync_b = False
-        if port_info.get('added'):
-            LOG.debug(_("Ports added!"))
-            resync_a = self.treat_devices_added(port_info['added'])
-        if port_info.get('removed'):
-            LOG.debug(_("Ports removed!"))
+        device_added_updated = port_info['added'] | port_info['updated']
+
+        if device_added_updated:
+            resync_a = self.treat_devices_added_or_updated(
+                device_added_updated)
+        if port_info['removed']:
             resync_b = self.treat_devices_removed(port_info['removed'])
         # If one of the above opertaions fails => resync with plugin
         return (resync_a | resync_b)
@@ -311,7 +281,7 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         else:
             LOG.debug(_("No port %s defined on agent."), port_id)
 
-    def treat_devices_added(self, devices):
+    def treat_devices_added_or_updated(self, devices):
         try:
             devs_details_list = self.plugin_rpc.get_devices_details_list(
                 self.context,
@@ -326,11 +296,11 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
 
         for dev_details in devs_details_list:
             device = dev_details['device']
-            LOG.info(_("Adding port with mac %s"), device)
+            LOG.info(_("Adding or updating port with mac %s"), device)
 
             if 'port_id' in dev_details:
                 LOG.info(_("Port %s updated"), device)
-                LOG.debug(_("Device details %s"), str(dev_details))
+                LOG.debug("Device details %s", str(dev_details))
                 self.treat_vif_port(dev_details['port_id'],
                                     dev_details['device'],
                                     dev_details['network_id'],
@@ -339,12 +309,16 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                                     dev_details['segmentation_id'],
                                     dev_details['admin_state_up'])
                 if dev_details.get('admin_state_up'):
-                    self.plugin_rpc.update_device_up(self.context,
-                                                     device,
-                                                     self.agent_id)
+                    LOG.debug("Setting status for %s to UP", device)
+                    self.plugin_rpc.update_device_up(
+                        self.context, device, self.agent_id)
+                else:
+                    LOG.debug("Setting status for %s to DOWN", device)
+                    self.plugin_rpc.update_device_down(
+                        self.context, device, self.agent_id)
             else:
-                LOG.debug(_("Device with mac_address %s not defined "
-                          "on Neutron Plugin"), device)
+                LOG.debug("Device with mac_address %s not defined "
+                          "on Neutron Plugin", device)
         return False
 
     def treat_devices_removed(self, devices):
@@ -369,27 +343,37 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             self.eswitch.port_release(device)
         return resync
 
+    def _port_info_has_changes(self, port_info):
+        return (port_info['added'] or
+                port_info['removed'] or
+                port_info['updated'])
+
     def daemon_loop(self):
         sync = True
         ports = set()
+        updated_ports_copy = set()
 
         LOG.info(_("eSwitch Agent Started!"))
 
         while True:
-            try:
-                start = time.time()
-                if sync:
-                    LOG.info(_("Agent out of sync with plugin!"))
-                    ports.clear()
-                    sync = False
+            start = time.time()
+            if sync:
+                LOG.info(_("Agent out of sync with plugin!"))
+                ports.clear()
+                sync = False
 
-                port_info = self.update_ports(ports)
-                # notify plugin about port deltas
-                if port_info:
-                    LOG.debug(_("Agent loop process devices!"))
-                    # If treat devices fails - must resync with plugin
+            try:
+                updated_ports_copy = self.updated_ports
+                self.updated_ports = set()
+                port_info = self.scan_ports(ports, updated_ports_copy)
+                LOG.debug("Agent loop process devices!")
+                # If treat devices fails - must resync with plugin
+                ports = port_info['current']
+                if self._port_info_has_changes(port_info):
+                    LOG.debug("Starting to process devices in:%s", port_info)
+                    # sync with upper/lower layers about port deltas
                     sync = self.process_network_ports(port_info)
-                    ports = port_info['current']
+
             except exceptions.RequestTimeout:
                 LOG.exception(_("Request timeout in agent event loop "
                                 "eSwitchD is not responding - exiting..."))
@@ -397,6 +381,7 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             except Exception:
                 LOG.exception(_("Error in agent event loop"))
                 sync = True
+                self.updated_ports |= updated_ports_copy
             # sleep till end of polling interval
             elapsed = (time.time() - start)
             if (elapsed < self._polling_interval):

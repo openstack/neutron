@@ -45,6 +45,23 @@ class TestEswichManager(base.BaseTestCase):
             self.manager.get_port_id_by_mac('no-such-mac')
 
 
+class TestMlnxEswitchRpcCallbacks(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestMlnxEswitchRpcCallbacks, self).setUp()
+        agent = mock.Mock()
+        self.rpc_callbacks = eswitch_neutron_agent.MlnxEswitchRpcCallbacks(
+            'context',
+            agent
+        )
+
+    def test_port_update(self):
+        port = {'mac_address': '10:20:30:40:50:60'}
+        add_port_update = self.rpc_callbacks.agent.add_port_update
+        self.rpc_callbacks.port_update('context', port=port)
+        add_port_update.assert_called_once_with(port['mac_address'])
+
+
 class TestEswitchAgent(base.BaseTestCase):
 
     def setUp(self):
@@ -82,9 +99,9 @@ class TestEswitchAgent(base.BaseTestCase):
             mock.patch('neutron.plugins.mlnx.agent.eswitch_neutron_agent.'
                        'EswitchManager.get_vnics_mac',
                        return_value=[])):
-            self.assertTrue(self.agent.treat_devices_added([{}]))
+            self.assertTrue(self.agent.treat_devices_added_or_updated([{}]))
 
-    def _mock_treat_devices_added(self, details, func_name):
+    def _mock_treat_devices_added_updated(self, details, func_name):
         """Mock treat devices added.
 
         :param details: the details to return for the device
@@ -101,14 +118,14 @@ class TestEswitchAgent(base.BaseTestCase):
             mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
             mock.patch.object(self.agent, func_name)
         ) as (vnics_fn, get_dev_fn, upd_dev_up, func):
-            self.assertFalse(self.agent.treat_devices_added([{}]))
+            self.assertFalse(self.agent.treat_devices_added_or_updated([{}]))
         return (func.called, upd_dev_up.called)
 
     def test_treat_devices_added_updates_known_port(self):
         details = mock.MagicMock()
         details.__contains__.side_effect = lambda x: True
-        func, dev_up = self._mock_treat_devices_added(details,
-                                                      'treat_vif_port')
+        func, dev_up = self._mock_treat_devices_added_updated(details,
+                                                              'treat_vif_port')
         self.assertTrue(func)
         self.assertTrue(dev_up)
 
@@ -120,8 +137,8 @@ class TestEswitchAgent(base.BaseTestCase):
                    'physical_network': 'default',
                    'segmentation_id': 2,
                    'admin_state_up': False}
-        func, dev_up = self._mock_treat_devices_added(details,
-                                                      'treat_vif_port')
+        func, dev_up = self._mock_treat_devices_added_updated(details,
+                                                              'treat_vif_port')
         self.assertTrue(func)
         self.assertFalse(dev_up)
 
@@ -139,17 +156,75 @@ class TestEswitchAgent(base.BaseTestCase):
                 self.assertFalse(self.agent.treat_devices_removed([{}]))
                 self.assertTrue(port_release.called)
 
+    def _test_process_network_ports(self, port_info):
+        with contextlib.nested(
+            mock.patch.object(self.agent, 'treat_devices_added_or_updated',
+                              return_value=False),
+            mock.patch.object(self.agent, 'treat_devices_removed',
+                              return_value=False)
+        ) as (device_added_updated, device_removed):
+            self.assertFalse(self.agent.process_network_ports(port_info))
+            device_added_updated.assert_called_once_with(
+                port_info['added'] | port_info['updated'])
+            device_removed.assert_called_once_with(port_info['removed'])
+
     def test_process_network_ports(self):
-        current_ports = set(['01:02:03:04:05:06'])
-        added_ports = set(['10:20:30:40:50:60'])
-        removed_ports = set(['11:22:33:44:55:66'])
-        reply = {'current': current_ports,
-                 'removed': removed_ports,
-                 'added': added_ports}
-        with mock.patch.object(self.agent, 'treat_devices_added',
-                               return_value=False) as device_added:
-            with mock.patch.object(self.agent, 'treat_devices_removed',
-                                   return_value=False) as device_removed:
-                self.assertFalse(self.agent.process_network_ports(reply))
-                device_added.assert_called_once_with(added_ports)
-                device_removed.assert_called_once_with(removed_ports)
+        self._test_process_network_ports(
+            {'current': set(['10:20:30:40:50:60']),
+             'updated': set(),
+             'added': set(['11:21:31:41:51:61']),
+             'removed': set(['13:23:33:43:53:63'])})
+
+    def test_process_network_ports_with_updated_ports(self):
+        self._test_process_network_ports(
+            {'current': set(['10:20:30:40:50:60']),
+             'updated': set(['12:22:32:42:52:62']),
+             'added': set(['11:21:31:41:51:61']),
+             'removed': set(['13:23:33:43:53:63'])})
+
+    def test_add_port_update(self):
+        mac_addr = '10:20:30:40:50:60'
+        self.agent.add_port_update(mac_addr)
+        self.assertEqual(set([mac_addr]), self.agent.updated_ports)
+
+    def _mock_scan_ports(self, vif_port_set, registered_ports, updated_ports):
+        with mock.patch.object(self.agent.eswitch, 'get_vnics_mac',
+                               return_value=vif_port_set):
+            return self.agent.scan_ports(registered_ports, updated_ports)
+
+    def test_scan_ports_return_current_for_unchanged_ports(self):
+        vif_port_set = set([1, 2])
+        registered_ports = set([1, 2])
+        actual = self._mock_scan_ports(vif_port_set,
+                                       registered_ports, set())
+        expected = dict(current=vif_port_set, added=set(),
+                        removed=set(), updated=set())
+        self.assertEqual(expected, actual)
+
+    def test_scan_ports_return_port_changes(self):
+        vif_port_set = set([1, 3])
+        registered_ports = set([1, 2])
+        actual = self._mock_scan_ports(vif_port_set,
+                                       registered_ports, set())
+        expected = dict(current=vif_port_set, added=set([3]),
+                        removed=set([2]), updated=set())
+        self.assertEqual(expected, actual)
+
+    def test_scan_ports_with_updated_ports(self):
+        vif_port_set = set([1, 3, 4])
+        registered_ports = set([1, 2, 4])
+        actual = self._mock_scan_ports(vif_port_set,
+                                       registered_ports, set([4]))
+        expected = dict(current=vif_port_set, added=set([3]),
+                        removed=set([2]), updated=set([4]))
+        self.assertEqual(expected, actual)
+
+    def test_scan_ports_with_unknown_updated_ports(self):
+        vif_port_set = set([1, 3, 4])
+        registered_ports = set([1, 2, 4])
+        actual = self._mock_scan_ports(vif_port_set,
+                                       registered_ports,
+                                       updated_ports=set([4, 5]))
+        expected = dict(current=vif_port_set, added=set([3]),
+                        removed=set([2]), updated=set([4]))
+        self.assertEqual(expected, actual)
