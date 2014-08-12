@@ -70,14 +70,19 @@ class RouterDBTestBase(test_base.BigSwitchTestBase,
                        test_l3_plugin.L3BaseForIntTests,
                        test_l3_plugin.L3NatTestCaseMixin):
 
+    mock_rescheduling = False
+
     def setUp(self):
         self.setup_patches()
         self.setup_config_files()
         ext_mgr = RouterRulesTestExtensionManager()
+        service_plugins = {'L3_ROUTER_NAT': self._l3_plugin_name}
         super(RouterDBTestBase, self).setUp(plugin=self._plugin_name,
-                                            ext_mgr=ext_mgr)
+                                            ext_mgr=ext_mgr,
+                                            service_plugins=service_plugins)
         cfg.CONF.set_default('allow_overlapping_ips', False)
-        self.plugin_obj = manager.NeutronManager.get_plugin()
+        self.plugin_obj = manager.NeutronManager.get_service_plugins().get(
+            'L3_ROUTER_NAT')
         self.startHttpPatch()
 
     def tearDown(self):

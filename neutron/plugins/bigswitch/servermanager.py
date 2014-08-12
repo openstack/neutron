@@ -228,6 +228,15 @@ class ServerProxy(object):
 
 class ServerPool(object):
 
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance:
+            return cls._instance
+        cls._instance = cls()
+        return cls._instance
+
     def __init__(self, timeout=False,
                  base_uri=BASE_URI, name='NeutronRestProxy'):
         LOG.debug(_("ServerPool: initializing"))
@@ -268,6 +277,7 @@ class ServerPool(object):
         ]
         eventlet.spawn(self._consistency_watchdog,
                        cfg.CONF.RESTPROXY.consistency_interval)
+        ServerPool._instance = self
         LOG.debug(_("ServerPool: initialization done"))
 
     def set_context(self, context):

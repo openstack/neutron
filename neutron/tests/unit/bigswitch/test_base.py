@@ -25,6 +25,7 @@ from neutron.tests.unit.bigswitch import fake_server
 
 
 RESTPROXY_PKG_PATH = 'neutron.plugins.bigswitch.plugin'
+L3_RESTPROXY_PKG_PATH = 'neutron.plugins.bigswitch.l3_router_plugin'
 NOTIFIER = 'neutron.plugins.bigswitch.plugin.AgentNotifierApi'
 CERTFETCH = 'neutron.plugins.bigswitch.servermanager.ServerPool._fetch_cert'
 SERVER_MANAGER = 'neutron.plugins.bigswitch.servermanager'
@@ -36,6 +37,7 @@ CWATCH = SERVER_MANAGER + '.ServerPool._consistency_watchdog'
 class BigSwitchTestBase(object):
 
     _plugin_name = ('%s.NeutronRestProxyV2' % RESTPROXY_PKG_PATH)
+    _l3_plugin_name = ('%s.L3RestProxy' % L3_RESTPROXY_PKG_PATH)
 
     def setup_config_files(self):
         etc_path = os.path.join(os.path.dirname(__file__), 'etc')
@@ -49,6 +51,7 @@ class BigSwitchTestBase(object):
                               os.path.join(etc_path, 'ssl'), 'RESTPROXY')
         # The mock interferes with HTTP(S) connection caching
         cfg.CONF.set_override('cache_connections', False, 'RESTPROXY')
+        cfg.CONF.set_override('service_plugins', ['bigswitch_l3'])
 
     def setup_patches(self):
         self.plugin_notifier_p = mock.patch(NOTIFIER)
