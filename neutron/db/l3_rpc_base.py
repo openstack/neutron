@@ -16,6 +16,7 @@
 from oslo.config import cfg
 
 from neutron.common import constants
+from neutron.common import exceptions
 from neutron.common import utils
 from neutron import context as neutron_context
 from neutron.extensions import l3
@@ -106,8 +107,13 @@ class L3RpcCallbackMixin(object):
              portbindings.VIF_TYPE_BINDING_FAILED)):
             # All ports, including ports created for SNAT'ing for
             # DVR are handled here
-            self.plugin.update_port(context, port['id'],
-                                    {'port': {portbindings.HOST_ID: host}})
+            try:
+                self.plugin.update_port(context, port['id'],
+                                        {'port': {portbindings.HOST_ID: host}})
+            except exceptions.PortNotFound:
+                LOG.debug("Port %(port)s not found while updating "
+                          "agent binding for router %(router)s."
+                          % {"port": port['id'], "router": router_id})
         elif (port and
               port.get('device_owner') ==
               constants.DEVICE_OWNER_DVR_INTERFACE):
