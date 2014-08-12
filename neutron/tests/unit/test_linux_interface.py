@@ -449,6 +449,7 @@ class TestMetaInterfaceDriver(TestBase):
             'meta_flavor_driver_mappings',
             'fake1:neutron.agent.linux.interface.OVSInterfaceDriver,'
             'fake2:neutron.agent.linux.interface.BridgeInterfaceDriver')
+        self.conf.set_override('endpoint_type', 'internalURL')
 
     def test_get_driver_by_network_id(self):
         meta_interface = interface.MetaInterfaceDriver(self.conf)
