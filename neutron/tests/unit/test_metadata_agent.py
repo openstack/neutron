@@ -27,6 +27,12 @@ from neutron.common import utils
 from neutron.tests import base
 
 
+EXPECTED_OWNER_ROUTERS = [
+    constants.DEVICE_OWNER_ROUTER_INTF,
+    constants.DEVICE_OWNER_DVR_INTERFACE
+]
+
+
 class FakeConf(object):
     admin_user = 'neutron'
     admin_password = 'password'
@@ -104,7 +110,7 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
         networks = self.handler._get_router_networks(router_id)
         mock_list_ports.assert_called_once_with(
             device_id=router_id,
-            device_owner=constants.DEVICE_OWNER_ROUTER_INTF)
+            device_owner=EXPECTED_OWNER_ROUTERS)
         self.assertEqual(expected, networks)
 
     def _test_get_router_networks_twice_helper(self):
@@ -119,7 +125,7 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
             networks = self.handler._get_router_networks(router_id)
             mock_list_ports.assert_called_once_with(
                 device_id=router_id,
-                device_owner=constants.DEVICE_OWNER_ROUTER_INTF)
+                device_owner=EXPECTED_OWNER_ROUTERS)
             self.assertEqual(expected_networks, networks)
             networks = self.handler._get_router_networks(router_id)
 
@@ -232,7 +238,7 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
                 new_qclient_call,
                 mock.call().list_ports(
                     device_id=router_id,
-                    device_owner=constants.DEVICE_OWNER_ROUTER_INTF
+                    device_owner=EXPECTED_OWNER_ROUTERS
                 )
             ])
 
