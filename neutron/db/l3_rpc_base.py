@@ -32,6 +32,19 @@ LOG = logging.getLogger(__name__)
 class L3RpcCallbackMixin(object):
     """A mix-in that enable L3 agent rpc support in plugin implementations."""
 
+    @property
+    def plugin(self):
+        if not hasattr(self, '_plugin'):
+            self._plugin = manager.NeutronManager.get_plugin()
+        return self._plugin
+
+    @property
+    def l3plugin(self):
+        if not hasattr(self, '_l3plugin'):
+            self._l3plugin = manager.NeutronManager.get_service_plugins()[
+                plugin_constants.L3_ROUTER_NAT]
+        return self._l3plugin
+
     def sync_routers(self, context, **kwargs):
         """Sync routers according to filters to a specific agent.
 
@@ -43,51 +56,48 @@ class L3RpcCallbackMixin(object):
         router_ids = kwargs.get('router_ids')
         host = kwargs.get('host')
         context = neutron_context.get_admin_context()
-        l3plugin = manager.NeutronManager.get_service_plugins()[
-            plugin_constants.L3_ROUTER_NAT]
-        if not l3plugin:
+        if not self.l3plugin:
             routers = {}
             LOG.error(_('No plugin for L3 routing registered! Will reply '
                         'to l3 agent with empty router dictionary.'))
         elif utils.is_extension_supported(
-                l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
+                self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
-                l3plugin.auto_schedule_routers(context, host, router_ids)
-            routers = l3plugin.list_active_sync_routers_on_active_l3_agent(
-                context, host, router_ids)
+                self.l3plugin.auto_schedule_routers(context, host, router_ids)
+            routers = (
+                self.l3plugin.list_active_sync_routers_on_active_l3_agent(
+                    context, host, router_ids))
         else:
-            routers = l3plugin.get_sync_data(context, router_ids)
-        plugin = manager.NeutronManager.get_plugin()
+            routers = self.l3plugin.get_sync_data(context, router_ids)
         if utils.is_extension_supported(
-            plugin, constants.PORT_BINDING_EXT_ALIAS):
-            self._ensure_host_set_on_ports(context, plugin, host, routers)
+            self.plugin, constants.PORT_BINDING_EXT_ALIAS):
+            self._ensure_host_set_on_ports(context, host, routers)
         LOG.debug(_("Routers returned to l3 agent:\n %s"),
                   jsonutils.dumps(routers, indent=5))
         return routers
 
-    def _ensure_host_set_on_ports(self, context, plugin, host, routers):
+    def _ensure_host_set_on_ports(self, context, host, routers):
         for router in routers:
             LOG.debug(_("Checking router: %(id)s for host: %(host)s"),
                       {'id': router['id'], 'host': host})
             if router.get('gw_port') and router.get('distributed'):
-                self._ensure_host_set_on_port(context, plugin,
+                self._ensure_host_set_on_port(context,
                                               router.get('gw_port_host'),
                                               router.get('gw_port'),
                                               router['id'])
                 for p in router.get(constants.SNAT_ROUTER_INTF_KEY, []):
-                    self._ensure_host_set_on_port(context, plugin,
+                    self._ensure_host_set_on_port(context,
                                                   router.get('gw_port_host'),
                                                   p, router['id'])
             else:
-                self._ensure_host_set_on_port(context, plugin, host,
+                self._ensure_host_set_on_port(context, host,
                                               router.get('gw_port'),
                                               router['id'])
             for interface in router.get(constants.INTERFACE_KEY, []):
-                self._ensure_host_set_on_port(context, plugin, host,
+                self._ensure_host_set_on_port(context, host,
                                               interface, router['id'])
 
-    def _ensure_host_set_on_port(self, context, plugin, host, port,
-                                 router_id=None):
+    def _ensure_host_set_on_port(self, context, host, port, router_id=None):
         if (port and
             (port.get('device_owner') !=
              constants.DEVICE_OWNER_DVR_INTERFACE and
@@ -96,8 +106,8 @@ class L3RpcCallbackMixin(object):
              portbindings.VIF_TYPE_BINDING_FAILED)):
             # All ports, including ports created for SNAT'ing for
             # DVR are handled here
-            plugin.update_port(context, port['id'],
-                               {'port': {portbindings.HOST_ID: host}})
+            self.plugin.update_port(context, port['id'],
+                                    {'port': {portbindings.HOST_ID: host}})
         elif (port and
               port.get('device_owner') ==
               constants.DEVICE_OWNER_DVR_INTERFACE):
@@ -105,11 +115,11 @@ class L3RpcCallbackMixin(object):
             # of hosts on which DVR router interfaces are spawned). Such
             # bindings are created/updated here by invoking
             # update_dvr_port_binding
-            plugin.update_dvr_port_binding(context, port['id'],
-                                           {'port':
-                                            {portbindings.HOST_ID: host,
-                                             'device_id': router_id}
-                                            })
+            self.plugin.update_dvr_port_binding(context, port['id'],
+                                                {'port':
+                                                 {portbindings.HOST_ID: host,
+                                                  'device_id': router_id}
+                                                 })
 
     def get_external_network_id(self, context, **kwargs):
         """Get one external network id for l3 agent.
@@ -118,8 +128,7 @@ class L3RpcCallbackMixin(object):
         this query.
         """
         context = neutron_context.get_admin_context()
-        plugin = manager.NeutronManager.get_plugin()
-        net_id = plugin.get_external_network_id(context)
+        net_id = self.plugin.get_external_network_id(context)
         LOG.debug(_("External network ID returned to l3 agent: %s"),
                   net_id)
         return net_id
@@ -130,17 +139,15 @@ class L3RpcCallbackMixin(object):
 
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Update operational status for a floating IP."""
-        l3_plugin = manager.NeutronManager.get_service_plugins()[
-            plugin_constants.L3_ROUTER_NAT]
         with context.session.begin(subtransactions=True):
             for (floatingip_id, status) in fip_statuses.iteritems():
                 LOG.debug(_("New status for floating IP %(floatingip_id)s: "
                             "%(status)s"), {'floatingip_id': floatingip_id,
                                             'status': status})
                 try:
-                    l3_plugin.update_floatingip_status(context,
-                                                       floatingip_id,
-                                                       status)
+                    self.l3plugin.update_floatingip_status(context,
+                                                           floatingip_id,
+                                                           status)
                 except l3.FloatingIPNotFound:
                     LOG.debug(_("Floating IP: %s no longer present."),
                               floatingip_id)
@@ -148,7 +155,7 @@ class L3RpcCallbackMixin(object):
             # for which an update was not received. Set them DOWN mercilessly
             # This situation might occur for some asynchronous backends if
             # notifications were missed
-            known_router_fips = l3_plugin.get_floatingips(
+            known_router_fips = self.l3plugin.get_floatingips(
                 context, {'last_known_router_id': [router_id]})
             # Consider only floating ips which were disassociated in the API
             # FIXME(salv-orlando): Filtering in code should be avoided.
@@ -156,7 +163,7 @@ class L3RpcCallbackMixin(object):
             fips_to_disable = (fip['id'] for fip in known_router_fips
                                if not fip['router_id'])
             for fip_id in fips_to_disable:
-                l3_plugin.update_floatingip_status(
+                self.l3plugin.update_floatingip_status(
                     context, fip_id, constants.FLOATINGIP_STATUS_DOWN)
 
     def get_ports_by_subnet(self, context, **kwargs):
@@ -164,8 +171,7 @@ class L3RpcCallbackMixin(object):
         subnet_id = kwargs.get('subnet_id')
         LOG.debug("DVR: subnet_id: %s", subnet_id)
         filters = {'fixed_ips': {'subnet_id': [subnet_id]}}
-        plugin = manager.NeutronManager.get_plugin()
-        return plugin.get_ports(context, filters=filters)
+        return self.plugin.get_ports(context, filters=filters)
 
     def get_agent_gateway_port(self, context, **kwargs):
         """Get Agent Gateway port for FIP.
@@ -176,13 +182,9 @@ class L3RpcCallbackMixin(object):
         network_id = kwargs.get('network_id')
         host = kwargs.get('host')
         admin_ctx = neutron_context.get_admin_context()
-        plugin = manager.NeutronManager.get_plugin()
-        l3plugin = manager.NeutronManager.get_service_plugins()[
-            plugin_constants.L3_ROUTER_NAT]
-        agent_port = l3plugin.create_fip_agent_gw_port_if_not_exists(
+        agent_port = self.l3plugin.create_fip_agent_gw_port_if_not_exists(
             admin_ctx, network_id, host)
-        self._ensure_host_set_on_port(admin_ctx, plugin, host,
-                                      agent_port)
+        self._ensure_host_set_on_port(admin_ctx, host, agent_port)
         LOG.debug('Agent Gateway port returned : %(agent_port)s with '
                   'host %(host)s', {'agent_port': agent_port,
                   'host': host})
@@ -200,13 +202,11 @@ class L3RpcCallbackMixin(object):
         router_id = kwargs.get('router_id')
         host = kwargs.get('host')
         admin_ctx = neutron_context.get_admin_context()
-        plugin = manager.NeutronManager.get_plugin()
-        l3plugin = manager.NeutronManager.get_service_plugins()[
-            plugin_constants.L3_ROUTER_NAT]
-        snat_port_list = l3plugin.create_snat_intf_port_list_if_not_exists(
-            admin_ctx, router_id)
+        snat_port_list = (
+            self.l3plugin.create_snat_intf_port_list_if_not_exists(
+                admin_ctx, router_id))
         for p in snat_port_list:
-            self._ensure_host_set_on_port(admin_ctx, plugin, host, p)
+            self._ensure_host_set_on_port(admin_ctx, host, p)
         LOG.debug('SNAT interface ports returned : %(snat_port_list)s '
                   'and on host %(host)s', {'snat_port_list': snat_port_list,
                   'host': host})
