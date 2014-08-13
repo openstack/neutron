@@ -64,6 +64,7 @@ ROUTERS_PATH = "/tenants/%s/routers/%s"
 ROUTER_INTF_PATH = "/tenants/%s/routers/%s/interfaces/%s"
 TOPOLOGY_PATH = "/topology"
 HEALTH_PATH = "/health"
+SWITCHES_PATH = "/switches/%s"
 SUCCESS_CODES = range(200, 207)
 FAILURE_CODES = [0, 301, 302, 303, 400, 401, 403, 404, 500, 501, 502, 503,
                  504, 505]
@@ -567,6 +568,11 @@ class ServerPool(object):
         resource = FLOATINGIPS_PATH % (tenant_id, oldid)
         errstr = _("Unable to delete floating IP: %s")
         self.rest_action('DELETE', resource, errstr=errstr)
+
+    def rest_get_switch(self, switch_id):
+        resource = SWITCHES_PATH % switch_id
+        errstr = _("Unable to retrieve switch: %s")
+        return self.rest_action('GET', resource, errstr=errstr)
 
     def _consistency_watchdog(self, polling_interval=60):
         if 'consistency' not in self.get_capabilities():
