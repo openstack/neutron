@@ -82,5 +82,5 @@ class PortProfileBinding(model_base.BASEV2):
         self.vnic_type = vnic_type
 
     def __repr__(self):
-        return "<PortProfileBinding(%s,%s,%s,%d)>" % (self.port_id,
-                                                      self.vnic_type)
+        return "<PortProfileBinding(%s,%s)>" % (self.port_id,
+                                                self.vnic_type)

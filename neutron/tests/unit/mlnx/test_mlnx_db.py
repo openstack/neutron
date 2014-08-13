@@ -176,3 +176,29 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual(binding.network_type, NET_TYPE)
             self.assertEqual(binding.physical_network, PHYS_NET)
             self.assertEqual(binding.segmentation_id, 1234)
+
+            self.assertTrue(repr(binding))
+
+
+class PortProfileBindingTest(test_plugin.NeutronDbPluginV2TestCase):
+    def setUp(self):
+        super(PortProfileBindingTest, self).setUp()
+        self.session = db.get_session()
+
+    def test_add_port_profile_binding(self):
+        with self.port() as port:
+            TEST_PORT_ID = port['port']['id']
+            VNIC_TYPE = 'normal'
+
+            self.assertIsNone(mlnx_db.get_port_profile_binding(self.session,
+                                                               TEST_PORT_ID))
+            mlnx_db.add_port_profile_binding(self.session,
+                                             TEST_PORT_ID,
+                                             VNIC_TYPE)
+            binding = mlnx_db.get_port_profile_binding(self.session,
+                                                       TEST_PORT_ID)
+            self.assertIsNotNone(binding)
+            self.assertEqual(binding.port_id, TEST_PORT_ID)
+            self.assertEqual(binding.vnic_type, VNIC_TYPE)
+
+            self.assertTrue(repr(binding))
