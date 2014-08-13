@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-21 06:06+0000\n"
-"PO-Revision-Date: 2014-07-18 21:01+0000\n"
+"POT-Creation-Date: 2014-08-13 06:05+0000\n"
+"PO-Revision-Date: 2014-08-12 21:40+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
@@ -25,12 +25,12 @@ msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
 msgstr "在被废弃的策略:%(old_policy)s位置上插入策略:%(new_policy)s "
 
-#: neutron/openstack/common/periodic_task.py:125
+#: neutron/openstack/common/periodic_task.py:126
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
 msgstr "正在跳过周期性任务 %(task)s，因为其时间间隔为负"
 
-#: neutron/openstack/common/periodic_task.py:130
+#: neutron/openstack/common/periodic_task.py:131
 #, python-format
 msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr "正在跳过周期性任务 %(task)s，因为它已禁用"
@@ -86,3 +86,17 @@ msgstr ""
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "正在等待 %d 个子代退出"
+
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
+msgid "Agent out of sync with plugin!"
+msgstr "代理与插件不同步！"
+
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63
+#, python-format
+msgid "spawned: %d"
+msgstr ""
+
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:75
+#, python-format
+msgid "_handle_request called: %s"
+msgstr ""

@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-01 06:06+0000\n"
-"PO-Revision-Date: 2014-07-25 15:11+0000\n"
-"Last-Translator: Andi Chandler <andi@gowling.com>\n"
+"POT-Creation-Date: 2014-08-13 06:05+0000\n"
+"PO-Revision-Date: 2014-08-12 21:23+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: English (United Kingdom) (http://www.transifex.com/projects/p/"
 "neutron/language/en_GB/)\n"
 "Language: en_GB\n"
@@ -88,3 +88,17 @@ msgstr "Wait called after thread killed.  Cleaning up."
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "Waiting on %d children to exit"
+
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
+msgid "Agent out of sync with plugin!"
+msgstr ""
+
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63
+#, python-format
+msgid "spawned: %d"
+msgstr ""
+
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:75
+#, python-format
+msgid "_handle_request called: %s"
+msgstr ""

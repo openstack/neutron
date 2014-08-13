@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2014.2.dev390.g1b621fc\n"
+"Project-Id-Version: neutron 2014.2.dev216.g40a4c36\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-22 06:06+0000\n"
+"POT-Creation-Date: 2014-08-13 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -45,7 +45,7 @@ msgstr ""
 msgid "Unexpected exception occurred %d time(s)... retrying."
 msgstr ""
 
-#: neutron/openstack/common/periodic_task.py:179
+#: neutron/openstack/common/periodic_task.py:202
 #, python-format
 msgid "Error during %(full_task_name)s: %(e)s"
 msgstr ""
@@ -56,5 +56,16 @@ msgstr ""
 
 #: neutron/openstack/common/service.py:277
 msgid "Unhandled exception"
+msgstr ""
+
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:386
+msgid "Error in agent event loop"
+msgstr ""
+
+#: neutron/plugins/vmware/plugins/base.py:2086
+#, python-format
+msgid ""
+"Rolling back database changes for gateway device %s because of an error "
+"in the NSX backend"
 msgstr ""
 
