@@ -71,7 +71,9 @@ base_opts = [
                help=_("The default option leverages service nodes to perform"
                       " packet replication though one could set to this to "
                       "'source' to perform replication locally. This is useful"
-                      " if one does not want to deploy a service node(s)."))
+                      " if one does not want to deploy a service node(s). "
+                      "It must be set to 'service' for leveraging distributed "
+                      "routers."))
 ]
 
 sync_opts = [
