@@ -56,7 +56,6 @@ disable=
  signature-differs,
  star-args,
  super-init-not-called,
- undefined-loop-variable,
  unnecessary-lambda,
  unnecessary-pass,
  unpacking-non-sequence,
