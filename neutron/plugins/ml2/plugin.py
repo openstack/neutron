@@ -323,7 +323,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # The port has been deleted concurrently, so just
                 # return the unbound result from the initial
                 # transaction that completed before the deletion.
-                return context._port
+                LOG.debug("Port %s has been deleted concurrently",
+                          port_id)
+                return context
             # Need to notify if we succeed and our results were
             # committed.
             if did_commit and (new_context._binding.vif_type !=
