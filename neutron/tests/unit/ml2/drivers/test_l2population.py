@@ -180,7 +180,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p1['mac_address'],
-                                                  p1['device_owner'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -249,7 +248,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                    {'ports':
                                     {'20.0.0.2': [constants.FLOODING_ENTRY,
                                                   [p2['mac_address'],
-                                                   p2['device_owner'],
                                                    p2_ips[0]]]},
                                     'network_type': 'vxlan',
                                     'segment_id': 1}}},
@@ -271,7 +269,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                    {'ports':
                                     {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                   [p1['mac_address'],
-                                                   p1['device_owner'],
                                                    p1_ips[0]]]},
                                     'network_type': 'vxlan',
                                     'segment_id': 1}}},
@@ -320,7 +317,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                             {'20.0.0.2':
                                              [constants.FLOODING_ENTRY,
                                               [p1['mac_address'],
-                                               p1['device_owner'],
                                                p1_ips[0]]]},
                                             'network_type': 'vxlan',
                                             'segment_id': 1}}},
@@ -345,7 +341,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                             {'20.0.0.1':
                                              [constants.FLOODING_ENTRY,
                                               [p3['mac_address'],
-                                               p3['device_owner'],
                                                p3_ips[0]]]},
                                             'network_type': 'vxlan',
                                             'segment_id': 1}}},
@@ -394,7 +389,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                  {p2['network_id']:
                                   {'ports':
                                    {'20.0.0.1': [[p2['mac_address'],
-                                                  p2['device_owner'],
                                                   p2_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -436,7 +430,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p2['mac_address'],
-                                                  p2['device_owner'],
                                                   p2_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -481,7 +474,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                              {p2['network_id']:
                               {'ports':
                                {'20.0.0.1': [[p2['mac_address'],
-                                              p2['device_owner'],
                                               p2_ips[0]]]},
                                'network_type': 'vxlan',
                                'segment_id': 1}}},
@@ -519,7 +511,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                               {'ports':
                                {'20.0.0.1': [constants.FLOODING_ENTRY,
                                              [p1['mac_address'],
-                                              p1['device_owner'],
                                               p1_ips[0]]]},
                                'network_type': 'vxlan',
                                'segment_id': 1}}},
@@ -561,7 +552,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {p1['network_id']:
                                    {'20.0.0.1':
                                     {'after': [[p1['mac_address'],
-                                                p1['device_owner'],
                                                 '10.0.0.10']]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
@@ -584,10 +574,8 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {p1['network_id']:
                                    {'20.0.0.1':
                                     {'before': [[p1['mac_address'],
-                                                 p1['device_owner'],
                                                  '10.0.0.10']],
                                      'after': [[p1['mac_address'],
-                                                p1['device_owner'],
                                                 '10.0.0.16']]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
@@ -609,7 +597,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {p1['network_id']:
                                    {'20.0.0.1':
                                     {'before': [[p1['mac_address'],
-                                                 p1['device_owner'],
                                                  '10.0.0.2']]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
@@ -690,7 +677,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p1['mac_address'],
-                                                  p1['device_owner'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -749,7 +735,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                   {'ports':
                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
                                                  [p1['mac_address'],
-                                                  p1['device_owner'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
