@@ -20,6 +20,7 @@ Unit Tests for ml2 rpc
 import mock
 
 from neutron.agent import rpc as agent_rpc
+from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.openstack.common import context
@@ -28,40 +29,50 @@ from neutron.plugins.ml2 import rpc as plugin_rpc
 from neutron.tests import base
 
 
-class RpcCallbacks(base.BaseTestCase):
+class RpcCallbacksTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(RpcCallbacks, self).setUp()
+        super(RpcCallbacksTestCase, self).setUp()
         self.callbacks = plugin_rpc.RpcCallbacks(mock.Mock(), mock.Mock())
+        self.manager = mock.patch.object(
+            plugin_rpc.manager, 'NeutronManager').start()
+        self.l3plugin = mock.Mock()
+        self.manager.get_service_plugins.return_value = {
+            'L3_ROUTER_NAT': self.l3plugin
+        }
 
     def _test_update_device_up(self, extensions, kwargs):
-        with mock.patch.object(plugin_rpc.manager, 'NeutronManager') as mgr:
-            with mock.patch.object(self.callbacks, '_device_to_port_id'):
-                mock_l3plugin = mock.Mock()
-                mgr.get_service_plugins.return_value = {
-                    'L3_ROUTER_NAT': mock_l3plugin
-                }
-                type(mock_l3plugin).supported_extension_aliases = (
-                    mock.PropertyMock(return_value=extensions))
-                self.callbacks.update_device_up(mock.ANY, **kwargs)
-        return mock_l3plugin
+        with mock.patch.object(self.callbacks, '_device_to_port_id'):
+            type(self.l3plugin).supported_extension_aliases = (
+                mock.PropertyMock(return_value=extensions))
+            self.callbacks.update_device_up(mock.ANY, **kwargs)
 
     def test_update_device_up_without_dvr(self):
         kwargs = {
             'agent_id': 'foo_agent',
             'device': 'foo_device'
         }
-        l3plugin = self._test_update_device_up(['router'], kwargs)
-        self.assertFalse(l3plugin.dvr_vmarp_table_update.call_count)
+        self._test_update_device_up(['router'], kwargs)
+        self.assertFalse(self.l3plugin.dvr_vmarp_table_update.call_count)
 
     def test_update_device_up_with_dvr(self):
         kwargs = {
             'agent_id': 'foo_agent',
             'device': 'foo_device'
         }
-        l3plugin = self._test_update_device_up(['router', 'dvr'], kwargs)
-        l3plugin.dvr_vmarp_table_update.assert_called_once_with(
+        self._test_update_device_up(['router', 'dvr'], kwargs)
+        self.l3plugin.dvr_vmarp_table_update.assert_called_once_with(
             mock.ANY, mock.ANY, 'add')
+
+    def test_update_device_up_with_dvr_when_port_not_found(self):
+        kwargs = {
+            'agent_id': 'foo_agent',
+            'device': 'foo_device'
+        }
+        self.l3plugin.dvr_vmarp_table_update.side_effect = (
+            exceptions.PortNotFound(port_id='foo_port_id'))
+        self._test_update_device_up(['router', 'dvr'], kwargs)
+        self.assertTrue(self.l3plugin.dvr_vmarp_table_update.call_count)
 
 
 class RpcApiTestCase(base.BaseTestCase):
