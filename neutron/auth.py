@@ -48,10 +48,14 @@ class NeutronKeystoneContext(wsgi.Middleware):
         # Use request_id if already set
         req_id = req.environ.get(request_id.ENV_REQUEST_ID)
 
+        # Get the auth token
+        auth_token = req.headers.get('X_AUTH_TOKEN',
+                                     req.headers.get('X_STORAGE_TOKEN'))
+
         # Create a context with the authentication data
         ctx = context.Context(user_id, tenant_id, roles=roles,
                               user_name=user_name, tenant_name=tenant_name,
-                              request_id=req_id)
+                              request_id=req_id, auth_token=auth_token)
 
         # Inject the context...
         req.environ['neutron.context'] = ctx

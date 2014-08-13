@@ -95,3 +95,17 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.request.environ[request_id.ENV_REQUEST_ID] = req_id
         self.request.get_response(self.middleware)
         self.assertEqual(req_id, self.context.request_id)
+
+    def test_with_auth_token(self):
+        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_USER_ID'] = 'testuserid'
+        response = self.request.get_response(self.middleware)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(self.context.auth_token, 'testauthtoken')
+
+    def test_without_auth_token(self):
+        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_USER_ID'] = 'testuserid'
+        del self.request.headers['X_AUTH_TOKEN']
+        self.request.get_response(self.middleware)
+        self.assertIsNone(self.context.auth_token)
