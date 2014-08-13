@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-22 06:06+0000\n"
+"POT-Creation-Date: 2014-08-13 06:05+0000\n"
 "PO-Revision-Date: 2014-06-30 20:07+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
@@ -47,7 +47,7 @@ msgstr "기존 예외가 삭제됨: %s"
 msgid "Unexpected exception occurred %d time(s)... retrying."
 msgstr "예기치 않은 예외 %d 번 발생하였습니다... 다시 시도중."
 
-#: neutron/openstack/common/periodic_task.py:179
+#: neutron/openstack/common/periodic_task.py:202
 #, python-format
 msgid "Error during %(full_task_name)s: %(e)s"
 msgstr "%(full_task_name)s 중 오류: %(e)s"
@@ -59,3 +59,14 @@ msgstr ""
 #: neutron/openstack/common/service.py:277
 msgid "Unhandled exception"
 msgstr "처리되지 않은 예외"
+
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:386
+msgid "Error in agent event loop"
+msgstr ""
+
+#: neutron/plugins/vmware/plugins/base.py:2086
+#, python-format
+msgid ""
+"Rolling back database changes for gateway device %s because of an error in "
+"the NSX backend"
+msgstr ""
