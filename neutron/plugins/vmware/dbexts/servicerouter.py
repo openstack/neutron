@@ -13,15 +13,15 @@
 #    under the License.
 #
 
-from neutron.plugins.vmware.dbexts import distributedrouter as dist_rtr
+from neutron.db import l3_dvr_db
 from neutron.plugins.vmware.extensions import servicerouter
 
 
-class ServiceRouter_mixin(dist_rtr.DistributedRouter_mixin):
+class ServiceRouter_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
     """Mixin class to enable service router support."""
 
-    nsx_attributes = (
-        dist_rtr.DistributedRouter_mixin.nsx_attributes + [{
+    extra_attributes = (
+        l3_dvr_db.L3_NAT_with_dvr_db_mixin.extra_attributes + [{
             'name': servicerouter.SERVICE_ROUTER,
             'default': False
         }])

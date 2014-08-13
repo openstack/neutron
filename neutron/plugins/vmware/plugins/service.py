@@ -142,7 +142,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             router = self._get_router(context, router_id)
 
         LOG.debug(_("EDGE: router = %s"), router)
-        if router['nsx_attributes']['service_router']:
+        if router['extra_attributes']['service_router']:
             router_type = ROUTER_TYPE_ADVANCED
         else:
             router_type = ROUTER_TYPE_BASIC

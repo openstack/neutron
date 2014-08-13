@@ -28,6 +28,7 @@ from neutron.common import constants
 from neutron.common import exceptions as ntn_exc
 import neutron.common.test_lib as test_lib
 from neutron import context
+from neutron.extensions import dvr
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
@@ -43,7 +44,6 @@ from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import sync
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware.dbexts import db as nsx_db
-from neutron.plugins.vmware.extensions import distributedrouter as dist_router
 from neutron.plugins.vmware import nsxlib
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 import neutron.tests.unit.test_db_plugin as test_plugin
@@ -408,7 +408,7 @@ class TestL3ExtensionManager(object):
             l3.RESOURCE_ATTRIBUTE_MAP[key].update(
                 l3_ext_gw_mode.EXTENDED_ATTRIBUTES_2_0.get(key, {}))
             l3.RESOURCE_ATTRIBUTE_MAP[key].update(
-                dist_router.EXTENDED_ATTRIBUTES_2_0.get(key, {}))
+                dvr.EXTENDED_ATTRIBUTES_2_0.get(key, {}))
         # Finally add l3 resources to the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             l3.RESOURCE_ATTRIBUTE_MAP)
@@ -1224,6 +1224,16 @@ class NeutronNsxOutOfSync(NsxPluginV2TestCase,
                 self.fc._fake_lrouter_nat_dict[uuid.uuid4()] = rule
 
         self._test_remove_router_interface_nsx_out_of_sync(unsync_action)
+
+    def test_update_router_distributed_bad_request(self):
+        res = self._create_router('json', 'tenant')
+        router = self.deserialize('json', res)
+        req = self.new_update_request(
+            'routers',
+            {'router': {'distributed': True}},
+            router['router']['id'])
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
 
     def test_update_router_not_in_nsx(self):
         res = self._create_router('json', 'tenant')
