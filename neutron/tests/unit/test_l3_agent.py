@@ -254,6 +254,23 @@ class TestBasicRouterOperations(base.BaseTestCase):
             'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()
 
+    def _prepare_internal_network_data(self):
+        port_id = _uuid()
+        router_id = _uuid()
+        network_id = _uuid()
+        router = prepare_router_data(num_internal_ports=2)
+        router_id = router['id']
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        cidr = '99.0.1.9/24'
+        mac = 'ca:fe:de:ad:be:ef'
+        port = {'network_id': network_id,
+                'id': port_id, 'ip_cidr': cidr,
+                'mac_address': mac}
+
+        return agent, ri, port
+
     def test__sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.side_effect = Exception()
@@ -297,20 +314,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
     def _test_internal_network_action(self, action):
-        port_id = _uuid()
-        router_id = _uuid()
-        network_id = _uuid()
-        router = prepare_router_data(num_internal_ports=2)
-        router_id = router['id']
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, router=router)
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        cidr = '99.0.1.9/24'
-        mac = 'ca:fe:de:ad:be:ef'
-        port = {'network_id': network_id,
-                'id': port_id, 'ip_cidr': cidr,
-                'mac_address': mac}
-        interface_name = agent.get_internal_device_name(port_id)
+        agent, ri, port = self._prepare_internal_network_data()
+        interface_name = agent.get_internal_device_name(port['id'])
 
         if action == 'add':
             self.device_exists.return_value = False
@@ -326,8 +331,38 @@ class TestBasicRouterOperations(base.BaseTestCase):
         else:
             raise Exception("Invalid action %s" % action)
 
+    def _test_internal_network_action_dist(self, action):
+        agent, ri, port = self._prepare_internal_network_data()
+        ri.router['distributed'] = True
+        ri.router['gw_port_host'] = HOSTNAME
+        agent.host = HOSTNAME
+        agent.conf.agent_mode = 'dvr_snat'
+        sn_port = {'fixed_ips': [{'ip_address': '20.0.0.31',
+                                 'subnet_id': _uuid()}],
+                  'subnet': {'gateway_ip': '20.0.0.1'},
+                  'extra_subnets': [{'cidr': '172.16.0.0/24'}],
+                  'id': _uuid(),
+                  'network_id': _uuid(),
+                  'mac_address': 'ca:fe:de:ad:be:ef',
+                  'ip_cidr': '20.0.0.31/24'}
+
+        if action == 'add':
+            self.device_exists.return_value = False
+
+            agent._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            agent._snat_redirect_add = mock.Mock()
+            agent._set_subnet_info = mock.Mock()
+            agent._internal_network_added = mock.Mock()
+            agent.internal_network_added(ri, port)
+            self.assertEqual(agent._snat_redirect_add.call_count, 1)
+            self.assertEqual(agent._set_subnet_info.call_count, 1)
+            self.assertEqual(agent._internal_network_added.call_count, 2)
+
     def test_agent_add_internal_network(self):
         self._test_internal_network_action('add')
+
+    def test_agent_add_internal_network_dist(self):
+        self._test_internal_network_action_dist('add')
 
     def test_agent_remove_internal_network(self):
         self._test_internal_network_action('remove')

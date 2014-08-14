@@ -1294,19 +1294,20 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         ex_gw_port = self._get_ex_gw_port(ri)
         if ri.router['distributed'] and ex_gw_port:
             snat_ports = self.get_snat_interfaces(ri)
-            snat_ip = self._map_internal_interfaces(ri, port, snat_ports)
-            if snat_ip:
-                self._snat_redirect_add(ri, snat_ip['fixed_ips'][0]
+            sn_port = self._map_internal_interfaces(ri, port, snat_ports)
+            if sn_port:
+                self._snat_redirect_add(ri, sn_port['fixed_ips'][0]
                                         ['ip_address'], port, interface_name)
-            if self.conf.agent_mode == 'dvr_snat' and (
+                if (self.conf.agent_mode == 'dvr_snat' and
                     ri.router['gw_port_host'] == self.host):
-                ns_name = self.get_snat_ns_name(ri.router['id'])
-                for port in snat_ports:
-                    self._set_subnet_info(port)
-                    interface_name = self.get_snat_int_device_name(port['id'])
-                    self._internal_network_added(ns_name, port['network_id'],
-                                                 port['id'], internal_cidr,
-                                                 port['mac_address'],
+                    ns_name = self.get_snat_ns_name(ri.router['id'])
+                    self._set_subnet_info(sn_port)
+                    interface_name = (
+                          self.get_snat_int_device_name(sn_port['id']))
+                    self._internal_network_added(ns_name,
+                                                 sn_port['network_id'],
+                                                 sn_port['id'], internal_cidr,
+                                                 sn_port['mac_address'],
                                                  interface_name,
                                                  SNAT_INT_DEV_PREFIX)
 
