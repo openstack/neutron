@@ -112,19 +112,6 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 return True
         return False
 
-    def delete_namespace_on_host(self, context, host, router_id):
-        """Delete the given router namespace on the host."""
-        agent = self._get_agent_by_type_and_host(
-            context, q_const.AGENT_TYPE_L3, host)
-        agent_id = str(agent.id)
-        with context.session.begin(subtransactions=True):
-            (context.session.query(l3agent_sch_db.RouterL3AgentBinding).
-             filter_by(router_id=router_id, l3_agent_id=agent_id).
-             delete(synchronize_session=False))
-        LOG.debug('Deleted router %(router_id)s on agent.id %(id)s',
-                  {'router_id': router_id,
-                   'id': agent.id})
-
     def dvr_deletens_if_no_vm(self, context, port_id):
         """Delete the DVR namespace if no VM exists."""
         router_ids = self.get_dvr_routers_by_vmportid(context, port_id)
@@ -162,11 +149,14 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                     # unbind this port from router
                     dvr_binding['router_id'] = None
                     dvr_binding.update(dvr_binding)
-            self.delete_namespace_on_host(context, port_host, router_id)
-            info = {'router_id': router_id, 'host': port_host}
+            agent = self._get_agent_by_type_and_host(context,
+                                                     q_const.AGENT_TYPE_L3,
+                                                     port_host)
+            info = {'router_id': router_id, 'host': port_host,
+                    'agent_id': str(agent.id)}
             removed_router_info.append(info)
-            LOG.debug('Deleted router namespace %(router_id)s '
-                      'on host %(host)s', info)
+            LOG.debug('Router namespace %(router_id)s on host %(host)s '
+                      'to be deleted', info)
         return removed_router_info
 
     def bind_snat_router(self, context, router_id, chosen_agent):
