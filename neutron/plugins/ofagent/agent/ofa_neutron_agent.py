@@ -225,7 +225,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         self.tunnel_types = tunnel_types or []
         l2pop_network_types = list(set(self.tunnel_types +
                                        [p_const.TYPE_VLAN,
-                                        p_const.TYPE_FLAT]))
+                                        p_const.TYPE_FLAT,
+                                        p_const.TYPE_LOCAL]))
         self.agent_state = {
             'binary': 'neutron-ofa-agent',
             'host': cfg.CONF.host,
