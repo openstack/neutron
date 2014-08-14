@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 from six import moves
 import testtools
 from testtools import matchers
@@ -224,6 +225,12 @@ class GreTypeTest(base.BaseTestCase):
         for endpoint in endpoints:
             self.assertIn(endpoint['ip_address'],
                           [TUNNEL_IP_ONE, TUNNEL_IP_TWO])
+
+    def test_add_same_endpoints(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE)
+        with mock.patch.object(type_gre.LOG, 'warning') as log_warn:
+            self.driver.add_endpoint(TUNNEL_IP_ONE)
+        log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
 
 
 class GreTypeMultiRangeTest(base.BaseTestCase):

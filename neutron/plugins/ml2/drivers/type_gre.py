@@ -14,9 +14,9 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo.db import exception as db_exc
 from six import moves
 import sqlalchemy as sa
-from sqlalchemy.orm import exc as sa_exc
 from sqlalchemy import sql
 
 from neutron.common import exceptions as exc
@@ -172,12 +172,11 @@ class GreTypeDriver(helpers.TypeDriverHelper, type_tunnel.TunnelTypeDriver):
     def add_endpoint(self, ip):
         LOG.debug(_("add_gre_endpoint() called for ip %s"), ip)
         session = db_api.get_session()
-        with session.begin(subtransactions=True):
-            try:
-                gre_endpoint = (session.query(GreEndpoints).
-                                filter_by(ip_address=ip).one())
-                LOG.warning(_("Gre endpoint with ip %s already exists"), ip)
-            except sa_exc.NoResultFound:
-                gre_endpoint = GreEndpoints(ip_address=ip)
-                session.add(gre_endpoint)
-            return gre_endpoint
+        try:
+            gre_endpoint = GreEndpoints(ip_address=ip)
+            gre_endpoint.save(session)
+        except db_exc.DBDuplicateEntry:
+            gre_endpoint = (session.query(GreEndpoints).
+                            filter_by(ip_address=ip).one())
+            LOG.warning(_("Gre endpoint with ip %s already exists"), ip)
+        return gre_endpoint

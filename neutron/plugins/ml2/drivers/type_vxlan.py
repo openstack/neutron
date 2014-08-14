@@ -15,8 +15,8 @@
 # @author: Kyle Mestery, Cisco Systems, Inc.
 
 from oslo.config import cfg
+from oslo.db import exception as db_exc
 import sqlalchemy as sa
-from sqlalchemy.orm import exc as sa_exc
 from sqlalchemy import sql
 
 from neutron.common import exceptions as exc
@@ -62,8 +62,7 @@ class VxlanEndpoints(model_base.BASEV2):
     __tablename__ = 'ml2_vxlan_endpoints'
 
     ip_address = sa.Column(sa.String(64), primary_key=True)
-    udp_port = sa.Column(sa.Integer, primary_key=True, nullable=False,
-                         autoincrement=False)
+    udp_port = sa.Column(sa.Integer, nullable=False)
 
     def __repr__(self):
         return "<VxlanTunnelEndpoint(%s)>" % self.ip_address
@@ -197,13 +196,12 @@ class VxlanTypeDriver(helpers.TypeDriverHelper, type_tunnel.TunnelTypeDriver):
     def add_endpoint(self, ip, udp_port=VXLAN_UDP_PORT):
         LOG.debug(_("add_vxlan_endpoint() called for ip %s"), ip)
         session = db_api.get_session()
-        with session.begin(subtransactions=True):
-            try:
-                vxlan_endpoint = (session.query(VxlanEndpoints).
-                                  filter_by(ip_address=ip).
-                                  with_lockmode('update').one())
-            except sa_exc.NoResultFound:
-                vxlan_endpoint = VxlanEndpoints(ip_address=ip,
-                                                udp_port=udp_port)
-                session.add(vxlan_endpoint)
-            return vxlan_endpoint
+        try:
+            vxlan_endpoint = VxlanEndpoints(ip_address=ip,
+                                            udp_port=udp_port)
+            vxlan_endpoint.save(session)
+        except db_exc.DBDuplicateEntry:
+            vxlan_endpoint = (session.query(VxlanEndpoints).
+                              filter_by(ip_address=ip).one())
+            LOG.warning(_("Vxlan endpoint with ip %s already exists"), ip)
+        return vxlan_endpoint

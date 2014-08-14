@@ -14,6 +14,7 @@
 #    under the License.
 # @author: Kyle Mestery, Cisco Systems, Inc.
 
+import mock
 from oslo.config import cfg
 from six import moves
 import testtools
@@ -243,6 +244,14 @@ class VxlanTypeTest(base.BaseTestCase):
                 self.assertEqual(VXLAN_UDP_PORT_ONE, endpoint['udp_port'])
             elif endpoint['ip_address'] == TUNNEL_IP_TWO:
                 self.assertEqual(VXLAN_UDP_PORT_TWO, endpoint['udp_port'])
+
+    def test_add_same_ip_endpoints(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, VXLAN_UDP_PORT_ONE)
+        with mock.patch.object(type_vxlan.LOG, 'warning') as log_warn:
+            observed = self.driver.add_endpoint(TUNNEL_IP_ONE,
+                                                VXLAN_UDP_PORT_TWO)
+            self.assertEqual(VXLAN_UDP_PORT_ONE, observed['udp_port'])
+            log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
 
 
 class VxlanTypeMultiRangeTest(base.BaseTestCase):
