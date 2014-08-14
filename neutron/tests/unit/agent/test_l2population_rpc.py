@@ -40,7 +40,6 @@ class TestL2populationRpcCallBackTunnelMixin(
             self.lvm1: {
                 self.ports[0].ip: [[self.lvms[0].mac, self.lvms[0].ip]],
                 self.local_ip: []},
-            None: {},
             self.lvm3: {
                 self.ports[2].ip: [[self.lvms[2].mac, self.lvms[2].ip]],
                 self.local_ip: []},
