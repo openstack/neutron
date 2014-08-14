@@ -1225,16 +1225,6 @@ class NeutronNsxOutOfSync(NsxPluginV2TestCase,
 
         self._test_remove_router_interface_nsx_out_of_sync(unsync_action)
 
-    def test_update_router_distributed_bad_request(self):
-        res = self._create_router('json', 'tenant')
-        router = self.deserialize('json', res)
-        req = self.new_update_request(
-            'routers',
-            {'router': {'distributed': True}},
-            router['router']['id'])
-        res = req.get_response(self.ext_api)
-        self.assertEqual(res.status_int, 400)
-
     def test_update_router_not_in_nsx(self):
         res = self._create_router('json', 'tenant')
         router = self.deserialize('json', res)
