@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import os
 
 import mock
@@ -132,8 +133,10 @@ class APIv2TestCase(APIv2TestBase):
     def _do_field_list(self, resource, base_fields):
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[resource]
         policy_attrs = [name for (name, info) in attr_info.items()
-                        if info.get('required_by_policy') or
-                        info.get('primary_key')]
+                        if info.get('required_by_policy')]
+        for name, info in attr_info.items():
+            if info.get('primary_key'):
+                policy_attrs.append(name)
         fields = base_fields
         fields.extend(policy_attrs)
         return fields
@@ -141,8 +144,8 @@ class APIv2TestCase(APIv2TestBase):
     def _get_collection_kwargs(self, skipargs=[], **kwargs):
         args_list = ['filters', 'fields', 'sorts', 'limit', 'marker',
                      'page_reverse']
-        args_dict = dict((arg, mock.ANY)
-                         for arg in set(args_list) - set(skipargs))
+        args_dict = collections.OrderedDict(
+            (arg, mock.ANY) for arg in set(args_list) - set(skipargs))
         args_dict.update(kwargs)
         return args_dict
 
@@ -1522,7 +1525,7 @@ class FiltersTestCase(base.BaseTestCase):
         }
         expect_val = {'foo': {'key': ['2', '4']}, 'bar': ['3'], 'qux': ['1']}
         actual_val = api_common.get_filters(request, attr_info)
-        self.assertEqual(actual_val, expect_val)
+        self.assertOrderedEqual(expect_val, actual_val)
 
     def test_attr_info_with_convert_to(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
