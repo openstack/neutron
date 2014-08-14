@@ -28,6 +28,7 @@ from neutron.agent.linux import ip_lib
 from neutron.common import config as base_config
 from neutron import context
 from neutron.plugins.common import constants
+from neutron.services.firewall.agents import firewall_agent_api
 from neutron.services.firewall.agents.l3reference import firewall_l3_agent
 from neutron.tests import base
 from neutron.tests.unit.services.firewall.agents import test_firewall_agent_api
@@ -41,14 +42,13 @@ class FWaasHelper(object):
 class FWaasAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, FWaasHelper):
     neutron_service_plugins = []
 
-    def __init__(self, conf=None):
-        super(FWaasAgent, self).__init__(conf)
 
+def _setup_test_agent_class(service_plugins):
+    class FWaasTestAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
+                         FWaasHelper):
+        neutron_service_plugins = service_plugins
 
-class FWaasTestAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, FWaasHelper):
-    def __init__(self, conf=None):
-        self.neutron_service_plugins = [constants.FIREWALL]
-        super(FWaasTestAgent, self).__init__(conf)
+    return FWaasTestAgent
 
 
 class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
@@ -61,12 +61,26 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
         agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_root_helper(self.conf)
         self.conf.root_helper = 'sudo'
+        self.conf.register_opts(firewall_agent_api.FWaaSOpts, 'fwaas')
         self.api = FWaasAgent(self.conf)
         self.api.fwaas_driver = test_firewall_agent_api.NoopFwaasDriver()
 
-    def test_missing_fw_config(self):
-        self.conf.fwaas_enabled = False
-        self.assertRaises(SystemExit, FWaasTestAgent, self.conf)
+    def test_fw_config_match(self):
+        test_agent_class = _setup_test_agent_class([constants.FIREWALL])
+        cfg.CONF.set_override('enabled', True, 'fwaas')
+        with mock.patch('neutron.openstack.common.importutils.import_object'):
+            test_agent_class(cfg.CONF)
+
+    def test_fw_config_mismatch_plugin_enabled_agent_disabled(self):
+        test_agent_class = _setup_test_agent_class([constants.FIREWALL])
+        cfg.CONF.set_override('enabled', False, 'fwaas')
+        self.assertRaises(SystemExit, test_agent_class, cfg.CONF)
+
+    def test_fw_plugin_list_unavailable(self):
+        test_agent_class = _setup_test_agent_class(None)
+        cfg.CONF.set_override('enabled', False, 'fwaas')
+        with mock.patch('neutron.openstack.common.importutils.import_object'):
+            test_agent_class(cfg.CONF)
 
     def test_create_firewall(self):
         fake_firewall = {'id': 0}

@@ -28,8 +28,10 @@ from neutron.agent.linux import interface
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.common import rpc as n_rpc
 from neutron.openstack.common import processutils
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants as p_const
 from neutron.tests import base
 
 
@@ -1946,6 +1948,20 @@ class TestBasicRouterOperations(base.BaseTestCase):
             self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
                 '11.22.33.42', table=16)
             f.assert_called_once_with(fip_ns_name)
+
+    def test_get_service_plugin_list(self):
+        service_plugins = [p_const.L3_ROUTER_NAT]
+        self.plugin_api.get_service_plugin_list.return_value = service_plugins
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertEqual(service_plugins, agent.neutron_service_plugins)
+        self.assertTrue(self.plugin_api.get_service_plugin_list.called)
+
+    def test_get_service_plugin_list_failed(self):
+        raise_rpc = n_rpc.RemoteError()
+        self.plugin_api.get_service_plugin_list.side_effect = raise_rpc
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertIsNone(agent.neutron_service_plugins)
+        self.assertTrue(self.plugin_api.get_service_plugin_list.called)
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):
