@@ -16,7 +16,7 @@
 import mock
 
 from neutron.common import exceptions
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import utils
@@ -68,7 +68,7 @@ class LSNTestCase(base.BaseTestCase):
         lsnlib.lsn_for_network_create(self.cluster, net_id)
         self.mock_request.assert_called_once_with(
             "POST", "/ws.v1/lservices-node",
-            json.dumps(obj), cluster=self.cluster)
+            jsonutils.dumps(obj), cluster=self.cluster)
 
     def test_lsn_for_network_get(self):
         net_id = "foo_network_id"
@@ -120,7 +120,7 @@ class LSNTestCase(base.BaseTestCase):
             '/ws.v1/lservices-node/%s/lport/%s/%s' % (lsn_id,
                                                       lsn_port_id,
                                                       lsn_type),
-            json.dumps({'hosts': hosts_data}),
+            jsonutils.dumps({'hosts': hosts_data}),
             cluster=self.cluster)
 
     def test_lsn_port_dhcp_entries_update(self):
@@ -156,7 +156,7 @@ class LSNTestCase(base.BaseTestCase):
         }
         self.mock_request.assert_called_once_with(
             "POST", "/ws.v1/lservices-node/%s/lport" % lsn_id,
-            json.dumps(port_obj), cluster=self.cluster)
+            jsonutils.dumps(port_obj), cluster=self.cluster)
 
     def test_lsn_port_delete(self):
         lsn_id = "foo_lsn_id"
@@ -231,8 +231,8 @@ class LSNTestCase(base.BaseTestCase):
             "PUT",
             ("/ws.v1/lservices-node/%s/lport/%s/"
              "attachment") % (lsn_id, lsn_port_id),
-            json.dumps({"peer_port_uuid": lswitch_port_id,
-                        "type": "PatchAttachment"}),
+            jsonutils.dumps({"peer_port_uuid": lswitch_port_id,
+                             "type": "PatchAttachment"}),
             cluster=self.cluster)
 
     def test_lsn_port_plug_network_raise_conflict(self):
@@ -255,12 +255,12 @@ class LSNTestCase(base.BaseTestCase):
         ]
         self.mock_request.assert_has_calls([
             mock.call("PUT", "/ws.v1/lservices-node/%s/dhcp" % lsn_id,
-                      json.dumps({"enabled": is_enabled}),
+                      jsonutils.dumps({"enabled": is_enabled}),
                       cluster=self.cluster),
             mock.call("PUT",
                       ("/ws.v1/lservices-node/%s/"
                        "lport/%s/dhcp") % (lsn_id, lsn_port_id),
-                      json.dumps({"options": opt_array}),
+                      jsonutils.dumps({"options": opt_array}),
                       cluster=self.cluster)
         ])
 
@@ -289,7 +289,7 @@ class LSNTestCase(base.BaseTestCase):
         self.mock_request.assert_has_calls([
             mock.call("PUT",
                       "/ws.v1/lservices-node/%s/metadata-proxy" % lsn_id,
-                      json.dumps(lsn_obj),
+                      jsonutils.dumps(lsn_obj),
                       cluster=self.cluster),
         ])
 
@@ -335,7 +335,7 @@ class LSNTestCase(base.BaseTestCase):
             "POST",
             ("/ws.v1/lservices-node/%s/lport/"
              "%s/%s?action=%s") % (lsn_id, lsn_port_id, extra_action, action),
-            json.dumps(host), cluster=self.cluster)
+            jsonutils.dumps(host), cluster=self.cluster)
 
     def test_lsn_port_dhcp_host_add(self):
         host = {

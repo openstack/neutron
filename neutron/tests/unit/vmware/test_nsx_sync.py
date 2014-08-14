@@ -25,7 +25,7 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.extensions import l3
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import client
 from neutron.plugins.vmware.api_client import exception as api_exc
@@ -61,19 +61,19 @@ class CacheTestCase(base.BaseTestCase):
                 self.nsx_cache._lswitches)
             self.nsx_cache._lswitches[lswitch['uuid']] = (
                 {'data': lswitch,
-                 'hash': hash(json.dumps(lswitch))})
+                 'hash': hash(jsonutils.dumps(lswitch))})
         for lswitchport in LSWITCHPORTS:
             self.nsx_cache._uuid_dict_mappings[lswitchport['uuid']] = (
                 self.nsx_cache._lswitchports)
             self.nsx_cache._lswitchports[lswitchport['uuid']] = (
                 {'data': lswitchport,
-                 'hash': hash(json.dumps(lswitchport))})
+                 'hash': hash(jsonutils.dumps(lswitchport))})
         for lrouter in LROUTERS:
             self.nsx_cache._uuid_dict_mappings[lrouter['uuid']] = (
                 self.nsx_cache._lrouters)
             self.nsx_cache._lrouters[lrouter['uuid']] = (
                 {'data': lrouter,
-                 'hash': hash(json.dumps(lrouter))})
+                 'hash': hash(jsonutils.dumps(lrouter))})
         super(CacheTestCase, self).setUp()
 
     def test_get_lswitches(self):
@@ -496,11 +496,11 @@ class SyncTestCase(base.BaseTestCase):
         ctx = context.get_admin_context()
         # Generate 4 networks, 1 port per network, and 4 routers
         with self._populate_data(ctx, net_size=4, port_size=1, router_size=4):
-            fake_lswitches = json.loads(
+            fake_lswitches = jsonutils.loads(
                 self.fc.handle_get('/ws.v1/lswitch'))['results']
-            fake_lrouters = json.loads(
+            fake_lrouters = jsonutils.loads(
                 self.fc.handle_get('/ws.v1/lrouter'))['results']
-            fake_lswitchports = json.loads(
+            fake_lswitchports = jsonutils.loads(
                 self.fc.handle_get('/ws.v1/lswitch/*/lport'))['results']
             return_values = [
                 # Chunk 0 - lswitches

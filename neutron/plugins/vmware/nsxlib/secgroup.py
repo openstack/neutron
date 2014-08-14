@@ -16,7 +16,7 @@
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.openstack.common import excutils
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware import nsxlib
@@ -37,7 +37,7 @@ def mk_body(**kwargs):
     :param kwargs: the key/value pirs to be dumped into a json string.
     :returns: a json string.
     """
-    return json.dumps(kwargs, ensure_ascii=False)
+    return jsonutils.dumps(kwargs, ensure_ascii=False)
 
 
 def query_security_profiles(cluster, fields=None, filters=None):
@@ -125,7 +125,7 @@ def update_security_profile(cluster, spid, name):
     return nsxlib.do_request(
         HTTP_PUT,
         nsxlib._build_uri_path(SECPROF_RESOURCE, resource_id=spid),
-        json.dumps({"display_name": utils.check_and_truncate(name)}),
+        jsonutils.dumps({"display_name": utils.check_and_truncate(name)}),
         cluster=cluster)
 
 

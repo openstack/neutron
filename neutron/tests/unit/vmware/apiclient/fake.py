@@ -14,7 +14,7 @@
 
 import six.moves.urllib.parse as urlparse
 
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.api_client import exception as api_exc
@@ -153,7 +153,7 @@ class FakeClient:
         return (tag_filter, attr_filter, page_len, page_cursor)
 
     def _add_lswitch(self, body):
-        fake_lswitch = json.loads(body)
+        fake_lswitch = jsonutils.loads(body)
         fake_lswitch['uuid'] = uuidutils.generate_uuid()
         self._fake_lswitch_dict[fake_lswitch['uuid']] = fake_lswitch
         # put the tenant_id and the zone_uuid in the main dict
@@ -167,7 +167,7 @@ class FakeClient:
         return fake_lswitch
 
     def _build_lrouter(self, body, uuid=None):
-        fake_lrouter = json.loads(body)
+        fake_lrouter = jsonutils.loads(body)
         if uuid:
             fake_lrouter['uuid'] = uuid
         fake_lrouter['tenant_id'] = self._get_tag(fake_lrouter, 'os_tid')
@@ -198,13 +198,13 @@ class FakeClient:
         return fake_lrouter
 
     def _add_lqueue(self, body):
-        fake_lqueue = json.loads(body)
+        fake_lqueue = jsonutils.loads(body)
         fake_lqueue['uuid'] = uuidutils.generate_uuid()
         self._fake_lqueue_dict[fake_lqueue['uuid']] = fake_lqueue
         return fake_lqueue
 
     def _add_lswitch_lport(self, body, ls_uuid):
-        fake_lport = json.loads(body)
+        fake_lport = jsonutils.loads(body)
         new_uuid = uuidutils.generate_uuid()
         fake_lport['uuid'] = new_uuid
         # put the tenant_id and the ls_uuid in the main dict
@@ -231,7 +231,7 @@ class FakeClient:
         return fake_lport
 
     def _build_lrouter_lport(self, body, new_uuid=None, lr_uuid=None):
-        fake_lport = json.loads(body)
+        fake_lport = jsonutils.loads(body)
         if new_uuid:
             fake_lport['uuid'] = new_uuid
         # put the tenant_id and the le_uuid in the main dict
@@ -243,7 +243,7 @@ class FakeClient:
                                                       'q_port_id')
         # replace ip_address with its json dump
         if 'ip_addresses' in fake_lport:
-            ip_addresses_json = json.dumps(fake_lport['ip_addresses'])
+            ip_addresses_json = jsonutils.dumps(fake_lport['ip_addresses'])
             fake_lport['ip_addresses_json'] = ip_addresses_json
         return fake_lport
 
@@ -264,7 +264,7 @@ class FakeClient:
         return fake_lport
 
     def _add_securityprofile(self, body):
-        fake_securityprofile = json.loads(body)
+        fake_securityprofile = jsonutils.loads(body)
         fake_securityprofile['uuid'] = uuidutils.generate_uuid()
         fake_securityprofile['tenant_id'] = self._get_tag(
             fake_securityprofile, 'os_tid')
@@ -276,18 +276,18 @@ class FakeClient:
         return fake_securityprofile
 
     def _add_lrouter_nat(self, body, lr_uuid):
-        fake_nat = json.loads(body)
+        fake_nat = jsonutils.loads(body)
         new_uuid = uuidutils.generate_uuid()
         fake_nat['uuid'] = new_uuid
         fake_nat['lr_uuid'] = lr_uuid
         self._fake_lrouter_nat_dict[fake_nat['uuid']] = fake_nat
         if 'match' in fake_nat:
-            match_json = json.dumps(fake_nat['match'])
+            match_json = jsonutils.dumps(fake_nat['match'])
             fake_nat['match_json'] = match_json
         return fake_nat
 
     def _add_gatewayservice(self, body):
-        fake_gwservice = json.loads(body)
+        fake_gwservice = jsonutils.loads(body)
         fake_gwservice['uuid'] = str(uuidutils.generate_uuid())
         fake_gwservice['tenant_id'] = self._get_tag(
             fake_gwservice, 'os_tid')
@@ -428,7 +428,7 @@ class FakeClient:
                 return False
 
             def _build_item(resource):
-                item = json.loads(response_template % resource)
+                item = jsonutils.loads(response_template % resource)
                 if relations:
                     for relation in relations:
                         self._build_relation(resource, item,
@@ -437,7 +437,7 @@ class FakeClient:
 
             for item in res_dict.itervalues():
                 if 'tags' in item:
-                    item['tags_json'] = json.dumps(item['tags'])
+                    item['tags_json'] = jsonutils.dumps(item['tags'])
             if resource_type in (self.LSWITCH_LPORT_RESOURCE,
                                  self.LSWITCH_LPORT_ATT,
                                  self.LSWITCH_LPORT_STATUS):
@@ -470,7 +470,7 @@ class FakeClient:
                 response_dict['page_cursor'] = next_cursor
             if do_result_count:
                 response_dict['result_count'] = total_items
-            return json.dumps(response_dict)
+            return jsonutils.dumps(response_dict)
 
     def _show(self, resource_type, response_file,
               uuid1, uuid2=None, relations=None):
@@ -482,20 +482,20 @@ class FakeClient:
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
             for item in res_dict.itervalues():
                 if 'tags' in item:
-                    item['tags_json'] = json.dumps(item['tags'])
+                    item['tags_json'] = jsonutils.dumps(item['tags'])
 
                 # replace sec prof rules with their json dump
                 def jsonify_rules(rule_key):
                     if rule_key in item:
-                        rules_json = json.dumps(item[rule_key])
+                        rules_json = jsonutils.dumps(item[rule_key])
                         item['%s_json' % rule_key] = rules_json
                 jsonify_rules('logical_port_egress_rules')
                 jsonify_rules('logical_port_ingress_rules')
 
-            items = [json.loads(response_template % res_dict[res_uuid])
+            items = [jsonutils.loads(response_template % res_dict[res_uuid])
                      for res_uuid in res_dict if res_uuid == target_uuid]
             if items:
-                return json.dumps(items[0])
+                return jsonutils.dumps(items[0])
             raise api_exc.ResourceNotFound()
 
     def handle_get(self, url):
@@ -538,7 +538,7 @@ class FakeClient:
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             add_resource = getattr(self, '_add_%s' % res_type)
-            body_json = json.loads(body)
+            body_json = jsonutils.loads(body)
             val_func = self._validators.get(res_type)
             if val_func:
                 val_func(body_json)
@@ -562,7 +562,7 @@ class FakeClient:
                 is_attachment = True
                 res_type = res_type[:res_type.index('attachment')]
             res_dict = getattr(self, '_fake_%s_dict' % res_type)
-            body_json = json.loads(body)
+            body_json = jsonutils.loads(body)
             val_func = self._validators.get(res_type)
             if val_func:
                 val_func(body_json)
@@ -577,7 +577,7 @@ class FakeClient:
                 resource.update(body_json)
             else:
                 relations = resource.get("_relations", {})
-                body_2 = json.loads(body)
+                body_2 = jsonutils.loads(body)
                 resource['att_type'] = body_2['type']
                 relations['LogicalPortAttachment'] = body_2
                 resource['_relations'] = relations
@@ -591,7 +591,8 @@ class FakeClient:
                                                       self.LROUTER_RESOURCE)
                     res_dict_2 = getattr(self, '_fake_%s_dict' % res_type_2)
                     body_2['peer_port_uuid'] = uuids[-1]
-                    resource_2 = res_dict_2[json.loads(body)['peer_port_uuid']]
+                    resource_2 = \
+                        res_dict_2[jsonutils.loads(body)['peer_port_uuid']]
                     relations_2 = resource_2.get("_relations")
                     if not relations_2:
                         relations_2 = {}
@@ -627,7 +628,7 @@ class FakeClient:
                     lr_uuid = None
                 lp_uuid = uuids[1]
                 response = response_template % self._fill_attachment(
-                    json.loads(body), ls_uuid, lr_uuid, lp_uuid)
+                    jsonutils.loads(body), ls_uuid, lr_uuid, lp_uuid)
             return response
 
     def handle_delete(self, url):

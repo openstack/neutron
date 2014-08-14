@@ -27,7 +27,7 @@ from neutron.common import exceptions
 from neutron import context
 from neutron import manager
 from neutron.openstack.common import importutils
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import policy as common_policy
 from neutron import policy
 from neutron.tests import base
@@ -524,7 +524,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def _test_set_rules_with_deprecated_policy(self, input_rules,
                                                expected_rules):
-        policy._set_rules(json.dumps(input_rules))
+        policy._set_rules(jsonutils.dumps(input_rules))
         # verify deprecated policy has been removed
         for pol in input_rules.keys():
             self.assertNotIn(pol, common_policy._rules)

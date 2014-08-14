@@ -34,7 +34,7 @@ from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as lb_db
 from neutron.extensions import loadbalancer
 from neutron.openstack.common import excutils
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers import abstract_driver
@@ -728,7 +728,7 @@ class vDirectRESTClient:
         if binary:
             body = data
         else:
-            body = json.dumps(data)
+            body = jsonutils.dumps(data)
 
         debug_data = 'binary' if binary else body
         debug_data = debug_data if debug_data else 'EMPTY'
@@ -758,7 +758,7 @@ class vDirectRESTClient:
             respstr = response.read()
             respdata = respstr
             try:
-                respdata = json.loads(respstr)
+                respdata = jsonutils.loads(respstr)
             except ValueError:
                 # response was not JSON, ignore the exception
                 pass

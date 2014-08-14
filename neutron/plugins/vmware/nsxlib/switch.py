@@ -18,7 +18,7 @@ from oslo.config import cfg
 
 from neutron.common import constants
 from neutron.common import exceptions as exception
-from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
@@ -125,7 +125,7 @@ def create_lswitch(cluster, neutron_net_id, tenant_id, display_name,
     if "tags" in kwargs:
         lswitch_obj["tags"].extend(kwargs["tags"])
     uri = nsxlib._build_uri_path(LSWITCH_RESOURCE)
-    lswitch = nsxlib.do_request(HTTP_POST, uri, json.dumps(lswitch_obj),
+    lswitch = nsxlib.do_request(HTTP_POST, uri, jsonutils.dumps(lswitch_obj),
                                 cluster=cluster)
     LOG.debug(_("Created logical switch: %s"), lswitch['uuid'])
     return lswitch
@@ -144,7 +144,7 @@ def update_lswitch(cluster, lswitch_id, display_name,
     if tags:
         lswitch_obj['tags'] = tags
     try:
-        return nsxlib.do_request(HTTP_PUT, uri, json.dumps(lswitch_obj),
+        return nsxlib.do_request(HTTP_PUT, uri, jsonutils.dumps(lswitch_obj),
                                  cluster=cluster)
     except exception.NotFound as e:
         LOG.error(_("Network not found, Error: %s"), str(e))
@@ -319,7 +319,7 @@ def update_port(cluster, lswitch_uuid, lport_uuid, neutron_port_id, tenant_id,
 
     path = "/ws.v1/lswitch/" + lswitch_uuid + "/lport/" + lport_uuid
     try:
-        result = nsxlib.do_request(HTTP_PUT, path, json.dumps(lport_obj),
+        result = nsxlib.do_request(HTTP_PUT, path, jsonutils.dumps(lport_obj),
                                    cluster=cluster)
         LOG.debug(_("Updated logical port %(result)s "
                     "on logical switch %(uuid)s"),
@@ -353,7 +353,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, neutron_port_id,
 
     path = nsxlib._build_uri_path(LSWITCHPORT_RESOURCE,
                                   parent_resource_id=lswitch_uuid)
-    result = nsxlib.do_request(HTTP_POST, path, json.dumps(lport_obj),
+    result = nsxlib.do_request(HTTP_POST, path, jsonutils.dumps(lport_obj),
                                cluster=cluster)
 
     LOG.debug(_("Created logical port %(result)s on logical switch %(uuid)s"),
@@ -382,7 +382,7 @@ def plug_interface(cluster, lswitch_id, lport_id, att_obj):
                              nsxlib._build_uri_path(LSWITCHPORT_RESOURCE,
                                                     lport_id, lswitch_id,
                                                     is_attachment=True),
-                             json.dumps(att_obj),
+                             jsonutils.dumps(att_obj),
                              cluster=cluster)
 
 
