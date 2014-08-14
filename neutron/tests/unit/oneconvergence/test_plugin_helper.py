@@ -40,20 +40,20 @@ class TestPluginHelper(base.BaseTestCase):
         data = json.dumps({"user_name": "ocplugin", "passwd": "oc123"})
         timeout = 30.0
 
-        with mock.patch.object(self.nvsdcontroller, 'do_request',
-                               side_effect=self.get_response) as do_request:
+        with mock.patch.object(self.nvsdcontroller.pool, 'request',
+                               side_effect=self.get_response) as request:
             self.nvsdcontroller.login()
-            do_request.assert_called_once_with('POST', url=login_url,
-                                               headers=headers, data=data,
-                                               timeout=timeout)
+            request.assert_called_once_with('POST', url=login_url,
+                                            headers=headers, data=data,
+                                            timeout=timeout)
 
     def test_request(self):
-        with mock.patch.object(self.nvsdcontroller, 'do_request',
-                               side_effect=self.get_response) as do_request:
+        with mock.patch.object(self.nvsdcontroller.pool, 'request',
+                               side_effect=self.get_response) as request:
             self.nvsdcontroller.login()
             self.nvsdcontroller.request("POST", "/some_url")
-            self.assertEqual(do_request.call_count, 2)
-            do_request.assert_called_with(
+            self.assertEqual(request.call_count, 2)
+            request.assert_called_with(
                 'POST',
                 url='http://127.0.0.1:8082/some_url?authToken=new_auth_token',
                 headers={'Content-Type': 'application/json'}, data='',

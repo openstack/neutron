@@ -53,8 +53,7 @@ class NVSDController(object):
 
         self.auth_token = None
 
-    def do_request(self, method, url=None, headers=None, data=None,
-                   timeout=10):
+    def do_request(self, method, url=None, headers=None, data=None):
         response = self.pool.request(method, url=url,
                                      headers=headers, data=data,
                                      timeout=self._request_timeout)
@@ -84,8 +83,7 @@ class NVSDController(object):
                 raise exception.ServerException(reason=msg)
             try:
                 response = self.do_request("POST", url=login_url,
-                                           headers=headers, data=data,
-                                           timeout=self._request_timeout)
+                                           headers=headers, data=data)
                 break
             except Exception as e:
                 LOG.error(_("Login Failed: %s"), e)
@@ -123,8 +121,7 @@ class NVSDController(object):
 
         try:
             response = self.do_request(method, url=url,
-                                       headers=headers, data=body,
-                                       timeout=self._request_timeout)
+                                       headers=headers, data=body)
 
             LOG.debug(_("request: %(method)s %(uri)s successful"),
                       {'method': method, 'uri': self.api_url + uri})
