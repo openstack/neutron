@@ -22,6 +22,7 @@ from neutron.common import log
 from neutron.common import utils
 from neutron.db import model_base
 from neutron.extensions import dvr as ext_dvr
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import log as logging
 from oslo.config import cfg
@@ -121,24 +122,35 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                 'mac_address': dvr_mac_entry['mac_address']}
 
     @log.log
-    def get_compute_ports_on_host_by_subnet(self, context, host, subnet):
+    def get_ports_on_host_by_subnet(self, context, host, subnet):
+        """Returns ports of interest, on a given subnet in the input host
+
+        This method returns ports that need to be serviced by DVR.
+        :param context: rpc request context
+        :param host: host id to match and extract ports of interest
+        :param subnet: subnet id to match and extract ports of interest
+        :returns list -- Ports on the given subnet in the input host
+        """
         # FIXME(vivek, salv-orlando): improve this query by adding the
         # capability of filtering by binding:host_id
-        vm_ports_by_host = []
+        ports_by_host = []
         filter = {'fixed_ips': {'subnet_id': [subnet]}}
         ports = self.plugin.get_ports(context, filters=filter)
-        LOG.debug("List of Ports on subnet %(subnet)s received as %(ports)s",
-                  {'subnet': subnet, 'ports': ports})
+        LOG.debug("List of Ports on subnet %(subnet)s at host %(host)s "
+                  "received as %(ports)s",
+                  {'subnet': subnet, 'host': host, 'ports': ports})
         for port in ports:
-            if 'compute:' in port['device_owner']:
-                if port['binding:host_id'] == host:
-                    port_dict = self.plugin._make_port_dict(
-                        port, process_extensions=False)
-                    vm_ports_by_host.append(port_dict)
-        LOG.debug("Returning list of VM Ports on host %(host)s for subnet "
-                  "%(subnet)s ports %(ports)s",
-                  {'host': host, 'subnet': subnet, 'ports': vm_ports_by_host})
-        return vm_ports_by_host
+            device_owner = port['device_owner']
+            if (utils.is_dvr_serviced(device_owner)):
+                if port[portbindings.HOST_ID] == host:
+                    port_dict = self.plugin._make_port_dict(port,
+                        process_extensions=False)
+                    ports_by_host.append(port_dict)
+        LOG.debug("Returning list of dvr serviced ports on host %(host)s"
+                  " for subnet %(subnet)s ports %(ports)s",
+                  {'host': host, 'subnet': subnet,
+                   'ports': ports_by_host})
+        return ports_by_host
 
     @log.log
     def get_subnet_for_dvr(self, context, subnet):

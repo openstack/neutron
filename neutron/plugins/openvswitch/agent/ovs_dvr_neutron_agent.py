@@ -17,6 +17,7 @@
 
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as n_const
+from neutron.common import utils as n_utils
 from neutron.openstack.common import log as logging
 from neutron.plugins.openvswitch.common import constants
 
@@ -310,10 +311,10 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
         subnet_info = ldm.get_subnet_info()
         ip_subnet = subnet_info['cidr']
         local_compute_ports = (
-            self.plugin_rpc.get_compute_ports_on_host_by_subnet(
+            self.plugin_rpc.get_ports_on_host_by_subnet(
                 self.context, self.host, subnet_uuid))
         LOG.debug("DVR: List of ports received from "
-                  "get_compute_ports_on_host_by_subnet %s",
+                  "get_ports_on_host_by_subnet %s",
                   local_compute_ports)
         for prt in local_compute_ports:
             vif = self.int_br.get_vif_port_by_id(prt['id'])
@@ -389,8 +390,8 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
         ovsport.add_subnet(subnet_uuid)
         self.local_ports[port.vif_id] = ovsport
 
-    def _bind_compute_port_on_dvr_subnet(self, port, fixed_ips,
-                                         device_owner, local_vlan):
+    def _bind_port_on_dvr_subnet(self, port, fixed_ips,
+                                 device_owner, local_vlan):
         # Handle new compute port added use-case
         subnet_uuid = None
         for ips in fixed_ips:
@@ -517,10 +518,10 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
                                                          device_owner,
                                                          local_vlan_id)
 
-        if device_owner and device_owner.startswith('compute:'):
-            self._bind_compute_port_on_dvr_subnet(port, fixed_ips,
-                                                  device_owner,
-                                                  local_vlan_id)
+        if device_owner and n_utils.is_dvr_serviced(device_owner):
+            self._bind_port_on_dvr_subnet(port, fixed_ips,
+                                          device_owner,
+                                          local_vlan_id)
 
         if device_owner == n_const.DEVICE_OWNER_ROUTER_SNAT:
             self._bind_centralized_snat_port_on_dvr_subnet(port, fixed_ips,
@@ -593,7 +594,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
         # release port state
         self.local_ports.pop(port.vif_id, None)
 
-    def _unbind_compute_port_on_dvr_subnet(self, port, local_vlan):
+    def _unbind_port_on_dvr_subnet(self, port, local_vlan):
 
         ovsport = self.local_ports[port.vif_id]
         # This confirms that this compute port being removed belonged
@@ -710,9 +711,8 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
             self._unbind_distributed_router_interface_port(vif_port,
                                                            local_vlan_id)
 
-        if device_owner and device_owner.startswith('compute:'):
-            self._unbind_compute_port_on_dvr_subnet(vif_port,
-                                                    local_vlan_id)
+        if device_owner and n_utils.is_dvr_serviced(device_owner):
+            self._unbind_port_on_dvr_subnet(vif_port, local_vlan_id)
 
         if device_owner == n_const.DEVICE_OWNER_ROUTER_SNAT:
             self._unbind_centralized_snat_port_on_dvr_subnet(vif_port,

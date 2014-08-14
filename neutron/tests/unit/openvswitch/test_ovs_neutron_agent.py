@@ -223,8 +223,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                   'cidr': '1.1.1.0/24',
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_compute_ports_on_host_by_subnet',
-                                  return_value=[]),
+                    'get_ports_on_host_by_subnet',
+                    return_value=[]),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),
@@ -243,7 +243,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 self.assertTrue(add_flow_tun_fn.called)
                 self.assertTrue(delete_flows_int_fn.called)
 
-    def test_port_bound_for_dvr_with_compute_ports(self, ofport=10):
+    def _test_port_bound_for_dvr(self, device_owner):
         self._setup_for_dvr_test()
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                         'set_db_attribute',
@@ -259,8 +259,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                       'cidr': '1.1.1.0/24',
                                       'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_compute_ports_on_host_by_subnet',
-                                  return_value=[]),
+                    'get_ports_on_host_by_subnet',
+                    return_value=[]),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),
@@ -279,10 +279,17 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 self.agent.port_bound(self._compute_port, self._net_uuid,
                                       'vxlan', None, None,
                                       self._compute_fixed_ips,
-                                      "compute:None", False)
+                                      device_owner, False)
                 self.assertTrue(add_flow_tun_fn.called)
                 self.assertTrue(add_flow_int_fn.called)
                 self.assertTrue(delete_flows_int_fn.called)
+
+    def test_port_bound_for_dvr_with_compute_ports(self):
+        self._test_port_bound_for_dvr(device_owner="compute:None")
+
+    def test_port_bound_for_dvr_with_lbaas_vip_ports(self):
+        self._test_port_bound_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
 
     def test_port_bound_for_dvr_with_csnat_ports(self, ofport=10):
         self._setup_for_dvr_test()
@@ -299,8 +306,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                   'cidr': '1.1.1.0/24',
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_compute_ports_on_host_by_subnet',
-                                  return_value=[]),
+                    'get_ports_on_host_by_subnet',
+                    return_value=[]),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),
@@ -334,8 +341,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                   'cidr': '1.1.1.0/24',
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_compute_ports_on_host_by_subnet',
-                                  return_value=[]),
+                    'get_ports_on_host_by_subnet',
+                    return_value=[]),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),
@@ -368,7 +375,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 self.assertTrue(delete_flows_int_fn.called)
                 self.assertTrue(delete_flows_tun_fn.called)
 
-    def test_treat_devices_removed_for_dvr_with_compute_ports(self, ofport=10):
+    def _test_treat_devices_removed_for_dvr(self, device_owner):
         self._setup_for_dvr_test()
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                         'set_db_attribute',
@@ -383,8 +390,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                   'cidr': '1.1.1.0/24',
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_compute_ports_on_host_by_subnet',
-                                  return_value=[]),
+                    'get_ports_on_host_by_subnet',
+                    return_value=[]),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),
@@ -404,7 +411,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                       self._net_uuid, 'vxlan',
                                       None, None,
                                       self._compute_fixed_ips,
-                                      "compute:None", False)
+                                      device_owner, False)
                 self.assertTrue(add_flow_tun_fn.called)
                 self.assertTrue(add_flow_int_fn.called)
                 self.assertTrue(delete_flows_int_fn.called)
@@ -419,6 +426,13 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                                    delete_flows_int_fn):
                 self.agent.treat_devices_removed([self._compute_port.vif_id])
                 self.assertTrue(delete_flows_int_fn.called)
+
+    def test_treat_devices_removed_for_dvr_with_compute_ports(self):
+        self._test_treat_devices_removed_for_dvr(device_owner="compute:None")
+
+    def test_treat_devices_removed_for_dvr_with_lbaas_vip_ports(self):
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
 
     def test_treat_devices_removed_for_dvr_csnat_port(self, ofport=10):
         self._setup_for_dvr_test()
@@ -435,8 +449,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                   'cidr': '1.1.1.0/24',
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_compute_ports_on_host_by_subnet',
-                                  return_value=[]),
+                    'get_ports_on_host_by_subnet',
+                    return_value=[]),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),
