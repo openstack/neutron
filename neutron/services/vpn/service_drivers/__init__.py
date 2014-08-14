@@ -36,6 +36,11 @@ class VpnDriver(object):
         self.validator = validator
 
     @property
+    def l3_plugin(self):
+        return manager.NeutronManager.get_service_plugins().get(
+            constants.L3_ROUTER_NAT)
+
+    @property
     def service_type(self):
         pass
 
@@ -69,8 +74,9 @@ class VpnDriver(object):
 class BaseIPsecVpnAgentApi(n_rpc.RpcProxy):
     """Base class for IPSec API to agent."""
 
-    def __init__(self, to_agent_topic, topic, default_version):
-        self.to_agent_topic = to_agent_topic
+    def __init__(self, topic, default_version, driver):
+        self.topic = topic
+        self.driver = driver
         super(BaseIPsecVpnAgentApi, self).__init__(topic, default_version)
 
     def _agent_notification(self, context, method, router_id,
@@ -81,25 +87,23 @@ class BaseIPsecVpnAgentApi(n_rpc.RpcProxy):
         dispatch notification for the agent.
         """
         admin_context = context.is_admin and context or context.elevated()
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            constants.L3_ROUTER_NAT)
         if not version:
             version = self.RPC_API_VERSION
-        l3_agents = plugin.get_l3_agents_hosting_routers(
+        l3_agents = self.driver.l3_plugin.get_l3_agents_hosting_routers(
             admin_context, [router_id],
             admin_state_up=True,
             active=True)
         for l3_agent in l3_agents:
             LOG.debug(_('Notify agent at %(topic)s.%(host)s the message '
                         '%(method)s %(args)s'),
-                      {'topic': self.to_agent_topic,
+                      {'topic': self.topic,
                        'host': l3_agent.host,
                        'method': method,
                        'args': kwargs})
             self.cast(
                 context, self.make_msg(method, **kwargs),
                 version=version,
-                topic='%s.%s' % (self.to_agent_topic, l3_agent.host))
+                topic='%s.%s' % (self.topic, l3_agent.host))
 
     def vpnservice_updated(self, context, router_id, **kwargs):
         """Send update event of vpnservices."""

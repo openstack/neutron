@@ -63,7 +63,7 @@ class TestCsrLoginRestApi(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrLoginRestApi, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -104,7 +104,7 @@ class TestCsrGetRestApi(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrGetRestApi, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -133,7 +133,7 @@ class TestCsrPostRestApi(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrPostRestApi, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -289,7 +289,7 @@ class TestCsrPutRestApi(base.BaseTestCase):
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         """Prepare for PUT API tests."""
         super(TestCsrPutRestApi, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -375,7 +375,7 @@ class TestCsrDeleteRestApi(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrDeleteRestApi, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -430,7 +430,7 @@ class TestCsrRestApiFailures(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=0.1):
         super(TestCsrRestApiFailures, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -480,7 +480,7 @@ class TestCsrRestIkePolicyCreate(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIkePolicyCreate, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -569,7 +569,7 @@ class TestCsrRestIPSecPolicyCreate(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIPSecPolicyCreate, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -738,7 +738,7 @@ class TestCsrRestPreSharedKeyCreate(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestPreSharedKeyCreate, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -836,7 +836,7 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIPSecConnectionCreate, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -1282,7 +1282,7 @@ class TestCsrRestIkeKeepaliveCreate(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIkeKeepaliveCreate, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
         self._save_dpd_info()
@@ -1323,7 +1323,7 @@ class TestCsrRestStaticRoute(base.BaseTestCase):
 
     def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestStaticRoute, self).setUp()
-        info = {'rest_mgmt': host, 'tunnel_ip': tunnel_ip,
+        info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
