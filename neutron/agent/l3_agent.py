@@ -20,6 +20,7 @@ import eventlet
 eventlet.monkey_patch()
 
 import netaddr
+import os
 from oslo.config import cfg
 import Queue
 
@@ -58,7 +59,7 @@ SNAT_NS_PREFIX = 'snat-'
 FIP_2_ROUTER_DEV_PREFIX = 'fpr-'
 ROUTER_2_FIP_DEV_PREFIX = 'rfp-'
 FIP_EXT_DEV_PREFIX = 'fg-'
-FIP_LL_PREFIX = '169.254.30.'
+FIP_LL_SUBNET = '169.254.30.0/23'
 # Route Table index for FIPs
 FIP_RT_TBL = 16
 # Rule priority range for FIPs
@@ -142,6 +143,99 @@ class L3PluginApi(n_rpc.RpcProxy):
                          version='1.3')
 
 
+class LinkLocalAddressPair(netaddr.IPNetwork):
+    def __init__(self, addr):
+        super(LinkLocalAddressPair, self).__init__(addr)
+
+    def get_pair(self):
+        """Builds an address pair from the first and last addresses. """
+        return (netaddr.IPNetwork("%s/%s" % (self.network, self.prefixlen)),
+                netaddr.IPNetwork("%s/%s" % (self.broadcast, self.prefixlen)))
+
+
+class LinkLocalAllocator(object):
+    """Manages allocation of link local IP addresses.
+
+    These link local addresses are used for routing inside the fip namespaces.
+    The associations need to persist across agent restarts to maintain
+    consistency.  Without this, there is disruption in network connectivity
+    as the agent rewires the connections with the new IP address assocations.
+
+    Persisting these in the database is unnecessary and would degrade
+    performance.
+    """
+    def __init__(self, state_file, subnet):
+        """Read the file with previous allocations recorded.
+
+        See the note in the allocate method for more detail.
+        """
+        self.state_file = state_file
+        subnet = netaddr.IPNetwork(subnet)
+
+        self.allocations = {}
+
+        self.remembered = {}
+        for line in self._read():
+            key, cidr = line.strip().split(',')
+            self.remembered[key] = LinkLocalAddressPair(cidr)
+
+        self.pool = set(LinkLocalAddressPair(s) for s in subnet.subnet(31))
+        self.pool.difference_update(self.remembered.values())
+
+    def allocate(self, key):
+        """Try to allocate a link local address pair.
+
+        I expect this to work in all cases because I expect the pool size to be
+        large enough for any situation.  Nonetheless, there is some defensive
+        programming in here.
+
+        Since the allocations are persisted, there is the chance to leak
+        allocations which should have been released but were not.  This leak
+        could eventually exhaust the pool.
+
+        So, if a new allocation is needed, the code first checks to see if
+        there are any remembered allocations for the key.  If not, it checks
+        the free pool.  If the free pool is empty then it dumps the remembered
+        allocations to free the pool.  This final desparate step will not
+        happen often in practice.
+        """
+        if key in self.remembered:
+            self.allocations[key] = self.remembered.pop(key)
+            return self.allocations[key]
+
+        if not self.pool:
+            # Desparate times.  Try to get more in the pool.
+            self.pool.update(self.remembered.values())
+            self.remembered.clear()
+            if not self.pool:
+                # More than 256 routers on a compute node!
+                raise RuntimeError(_("Cannot allocate link local address"))
+
+        self.allocations[key] = self.pool.pop()
+        self._write_allocations()
+        return self.allocations[key]
+
+    def release(self, key):
+        self.pool.add(self.allocations.pop(key))
+        self._write_allocations()
+
+    def _write_allocations(self):
+        current = ["%s,%s\n" % (k, v) for k, v in self.allocations.items()]
+        remembered = ["%s,%s\n" % (k, v) for k, v in self.remembered.items()]
+        current.extend(remembered)
+        self._write(current)
+
+    def _write(self, lines):
+        with open(self.state_file, "w") as f:
+            f.writelines(lines)
+
+    def _read(self):
+        if not os.path.exists(self.state_file):
+            return []
+        with open(self.state_file) as f:
+            return f.readlines()
+
+
 class RouterInfo(object):
 
     def __init__(self, router_id, root_helper, use_namespaces, router):
@@ -164,10 +258,8 @@ class RouterInfo(object):
             namespace=self.ns_name)
         self.routes = []
         # DVR Data
-        # Linklocal router to floating IP addr
-        self.rtr_2_fip = None
-        # Linklocal floating to router IP addr
-        self.fip_2_rtr = None
+        # Linklocal subnet for router and floating IP namespace link
+        self.rtr_fip_subnet = None
         self.dist_fip_count = 0
 
     @property
@@ -433,7 +525,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # dvr data
         self.agent_gateway_port = None
         self.agent_fip_count = 0
-        self.local_ips = set(range(2, 251))
+        self.local_subnets = LinkLocalAllocator(
+            os.path.join(self.conf.state_path, 'fip-linklocal-networks'),
+            FIP_LL_SUBNET)
         self.fip_priorities = set(range(FIP_PR_START, FIP_PR_END))
 
         self._queue = RouterProcessingQueue()
@@ -1374,24 +1468,23 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         fip_ns_name = self.get_fip_ns_name(str(network_id))
 
         # add link local IP to interface
-        if ri.rtr_2_fip is None:
-            ri.rtr_2_fip = FIP_LL_PREFIX + str(self.local_ips.pop())
-        if ri.fip_2_rtr is None:
-            ri.fip_2_rtr = FIP_LL_PREFIX + str(self.local_ips.pop())
+        if ri.rtr_fip_subnet is None:
+            ri.rtr_fip_subnet = self.local_subnets.allocate(ri.router_id)
+        rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
         ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                       namespace=ri.ns_name)
         int_dev = ip_wrapper.add_veth(rtr_2_fip_name,
                                       fip_2_rtr_name, fip_ns_name)
-        self.internal_ns_interface_added(ri.rtr_2_fip + '/31',
+        self.internal_ns_interface_added(str(rtr_2_fip),
                                          rtr_2_fip_name, ri.ns_name)
-        self.internal_ns_interface_added(ri.fip_2_rtr + '/31',
+        self.internal_ns_interface_added(str(fip_2_rtr),
                                          fip_2_rtr_name, fip_ns_name)
         int_dev[0].link.set_up()
         int_dev[1].link.set_up()
         # add default route for the link local interface
         device = ip_lib.IPDevice(rtr_2_fip_name, self.root_helper,
                                  namespace=ri.ns_name)
-        device.route.add_gateway(ri.fip_2_rtr, table=FIP_RT_TBL)
+        device.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
         #setup the NAT rules and chains
         self._handle_router_fip_nat_rules(ri, rtr_2_fip_name, 'add_rules')
 
@@ -1408,9 +1501,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         #Add routing rule in fip namespace
         fip_cidr = str(floating_ip) + FLOATING_IP_CIDR_SUFFIX
         fip_ns_name = self.get_fip_ns_name(str(fip['floating_network_id']))
+        rtr_2_fip, _ = ri.rtr_fip_subnet.get_pair()
         device = ip_lib.IPDevice(fip_2_rtr_name, self.root_helper,
                                  namespace=fip_ns_name)
-        device.route.add_route(fip_cidr, ri.rtr_2_fip)
+        device.route.add_route(fip_cidr, str(rtr_2_fip.ip))
         interface_name = (
             self.get_fip_ext_device_name(self.agent_gateway_port['id']))
         self._send_gratuitous_arp_packet(fip_ns_name,
@@ -1425,6 +1519,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         floating_ip = fip_cidr.split('/')[0]
         rtr_2_fip_name = self.get_rtr_int_device_name(ri.router_id)
         fip_2_rtr_name = self.get_fip_int_device_name(ri.router_id)
+        rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
         fip_ns_name = self.get_fip_ns_name(str(self._fetch_external_net_id()))
         ip_rule_rtr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
         if floating_ip in ri.floating_ips_dict:
@@ -1438,7 +1533,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         device = ip_lib.IPDevice(fip_2_rtr_name, self.root_helper,
                                  namespace=fip_ns_name)
 
-        device.route.delete_route(fip_cidr, ri.rtr_2_fip)
+        device.route.delete_route(fip_cidr, str(rtr_2_fip.ip))
         # check if this is the last FIP for this router
         ri.dist_fip_count = ri.dist_fip_count - 1
         if ri.dist_fip_count == 0:
@@ -1446,11 +1541,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             device = ip_lib.IPDevice(rtr_2_fip_name, self.root_helper,
                                      namespace=ri.ns_name)
             ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=fip_ns_name)
-            device.route.delete_gateway(ri.fip_2_rtr, table=FIP_RT_TBL)
-            self.local_ips.add(ri.rtr_2_fip.rsplit('.', 1)[1])
-            ri.rtr_2_fip = None
-            self.local_ips.add(ri.fip_2_rtr.rsplit('.', 1)[1])
-            ri.fip_2_rtr = None
+            device.route.delete_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
+            self.local_subnets.release(ri.router_id)
+            ri.rtr_fip_subnet = None
             ns_ip.del_veth(fip_2_rtr_name)
         # clean up fip-namespace if this is the last FIP
         self.agent_fip_count = self.agent_fip_count - 1
