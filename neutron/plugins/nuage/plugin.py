@@ -36,6 +36,7 @@ from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
@@ -58,7 +59,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
     """Class that implements Nuage Networks' plugin functionality."""
     supported_extension_aliases = ["router", "binding", "external-net",
                                    "net-partition", "nuage-router",
-                                   "nuage-subnet", "quotas",
+                                   "nuage-subnet", "quotas", "provider",
                                    "extraroute", "security-group"]
 
     binding_view = "extension:port_binding:view"
@@ -378,8 +379,49 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         subnets = self.get_subnets(context, filters=filters)
         return bool(routers or subnets)
 
+    def _extend_network_dict_provider(self, context, network):
+        binding = nuagedb.get_network_binding(context.session, network['id'])
+        if binding:
+            network[pnet.NETWORK_TYPE] = binding.network_type
+            network[pnet.PHYSICAL_NETWORK] = binding.physical_network
+            network[pnet.SEGMENTATION_ID] = binding.vlan_id
+
+    def _process_provider_create(self, context, attrs):
+        network_type = attrs.get(pnet.NETWORK_TYPE)
+        physical_network = attrs.get(pnet.PHYSICAL_NETWORK)
+        segmentation_id = attrs.get(pnet.SEGMENTATION_ID)
+
+        network_type_set = attributes.is_attr_set(network_type)
+        physical_network_set = attributes.is_attr_set(physical_network)
+        segmentation_id_set = attributes.is_attr_set(segmentation_id)
+
+        if not (network_type_set or physical_network_set or
+                segmentation_id_set):
+            return None, None, None
+        if not network_type_set:
+            msg = _("provider:network_type required")
+            raise n_exc.InvalidInput(error_message=msg)
+        elif network_type != 'vlan':
+            msg = (_("provider:network_type %s not supported in VSP")
+                   % network_type)
+            raise nuage_exc.NuageBadRequest(msg=msg)
+        if not physical_network_set:
+            msg = _("provider:physical_network required")
+            raise nuage_exc.NuageBadRequest(msg=msg)
+        if not segmentation_id_set:
+            msg = _("provider:segmentation_id required")
+            raise nuage_exc.NuageBadRequest(msg=msg)
+
+        self.nuageclient.validate_provider_network(network_type,
+                                                   physical_network,
+                                                   segmentation_id)
+
+        return network_type, physical_network, segmentation_id
+
     def create_network(self, context, network):
-        net = network['network']
+        (network_type, physical_network,
+         vlan_id) = self._process_provider_create(context,
+                                                  network['network'])
         with context.session.begin(subtransactions=True):
             self._ensure_default_security_group(
                 context,
@@ -388,6 +430,11 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             net = super(NuagePlugin, self).create_network(context,
                                                           network)
             self._process_l3_create(context, net, network['network'])
+            if network_type == 'vlan':
+                nuagedb.add_network_binding(context.session, net['id'],
+                                            network_type,
+                                            physical_network, vlan_id)
+            self._extend_network_dict_provider(context, net)
         return net
 
     def _validate_update_network(self, context, id, network):
@@ -413,7 +460,25 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     raise n_exc.NetworkInUse(net_id=id)
         return (is_external_set, subnet)
 
+    def get_network(self, context, net_id, fields=None):
+        net = super(NuagePlugin, self).get_network(context,
+                                                   net_id,
+                                                   None)
+        self._extend_network_dict_provider(context, net)
+        return self._fields(net, fields)
+
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None, page_reverse=False):
+        nets = super(NuagePlugin,
+                     self).get_networks(context, filters, None, sorts,
+                                        limit, marker, page_reverse)
+        for net in nets:
+            self._extend_network_dict_provider(context, net)
+
+        return [self._fields(net, fields) for net in nets]
+
     def update_network(self, context, id, network):
+        pnet._raise_if_updates_provider_attributes(network['network'])
         with context.session.begin(subtransactions=True):
             is_external_set, subnet = self._validate_update_network(context,
                                                                     id,
@@ -477,6 +542,14 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             msg = "no-gateway option not supported with subnets"
             raise nuage_exc.OperationNotSupported(msg=msg)
 
+    def _validate_create_provider_subnet(self, context, net_id):
+        net_filter = {'network_id': [net_id]}
+        existing_subn = self.get_subnets(context, filters=net_filter)
+        if len(existing_subn) > 0:
+            msg = _('Only one subnet is allowed per '
+                    'Provider network %s') % net_id
+            raise nuage_exc.OperationNotSupported(msg=msg)
+
     def _delete_nuage_sharedresource(self, net_id):
         self.nuageclient.delete_nuage_sharedresource(net_id)
 
@@ -508,14 +581,15 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._add_nuage_sharedresource(subn, net_id, type)
             return subn
 
-    def _create_nuage_subnet(self, context, neutron_subnet,
-                             netpart_id, l2dom_template_id):
+    def _create_nuage_subnet(self, context, neutron_subnet, netpart_id,
+                             l2dom_template_id, pnet_binding):
         net = netaddr.IPNetwork(neutron_subnet['cidr'])
         params = {
             'netpart_id': netpart_id,
             'tenant_id': neutron_subnet['tenant_id'],
             'net': net,
-            'l2dom_tmplt_id': l2dom_template_id
+            'l2dom_tmplt_id': l2dom_template_id,
+            'pnet_binding': pnet_binding
         }
         try:
             nuage_subnet = self.nuageclient.create_subnet(neutron_subnet,
@@ -547,6 +621,9 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if self._network_is_external(context, net_id):
             return self._create_nuage_sharedresource(
                 context, subnet, constants.SR_TYPE_FLOATING)
+        pnet_binding = nuagedb.get_network_binding(context.session, net_id)
+        if pnet_binding:
+            self._validate_create_provider_subnet(context, net_id)
 
         self._validate_create_subnet(subn)
 
@@ -554,7 +631,8 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         neutron_subnet = super(NuagePlugin, self).create_subnet(context,
                                                                 subnet)
         self._create_nuage_subnet(context, neutron_subnet, net_partition['id'],
-                                  subn['nuage_subnet_template'])
+                                  subn['nuage_subnet_template'],
+                                  pnet_binding)
         return neutron_subnet
 
     def delete_subnet(self, context, id):
@@ -637,13 +715,17 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.nuageclient.delete_subnet(nuage_subnet_id,
                                            nuage_l2dom_tmplt_id)
             net = netaddr.IPNetwork(subn['cidr'])
+            pnet_binding = nuagedb.get_network_binding(context.session,
+                                                       subn['network_id'])
             params = {
                 'net': net,
                 'zone_id': nuage_zone['nuage_zone_id'],
-                'neutron_subnet_id': subnet_id
+                'neutron_subnet_id': subnet_id,
+                'pnet_binding': pnet_binding
             }
             if not attributes.is_attr_set(subn['gateway_ip']):
                 subn['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
+
             try:
                 nuage_subnet = self.nuageclient.create_domain_subnet(subn,
                                                                    params)
@@ -723,14 +805,17 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             net = netaddr.IPNetwork(neutron_subnet['cidr'])
             netpart_id = ent_rtr_mapping['net_partition_id']
+            pnet_binding = nuagedb.get_network_binding(
+                context.session, neutron_subnet['network_id'])
             params = {
                 'tenant_id': neutron_subnet['tenant_id'],
                 'net': net,
-                'netpart_id': netpart_id
+                'netpart_id': netpart_id,
+                'nuage_subn_id': nuage_subn_id,
+                'neutron_subnet': neutron_subnet,
+                'pnet_binding': pnet_binding
             }
-            nuage_subnet = self.nuageclient.create_subnet(neutron_subnet,
-                                                          params)
-            self.nuageclient.delete_domain_subnet(nuage_subn_id)
+            nuage_subnet = self.nuageclient.remove_router_interface(params)
             info = super(NuagePlugin,
                          self).remove_router_interface(context, router_id,
                                                        interface_info)
