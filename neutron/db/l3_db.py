@@ -871,7 +871,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def _build_routers_list(self, context, routers, gw_ports):
         for router in routers:
             gw_port_id = router['gw_port_id']
-            if gw_port_id:
+            # Collect gw ports only if available
+            if gw_port_id and gw_ports.get(gw_port_id):
                 router['gw_port'] = gw_ports[gw_port_id]
         return routers
 
@@ -904,6 +905,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             gw_ports = dict((gw_port['id'], gw_port)
                             for gw_port in
                             self.get_sync_gw_ports(context, gw_port_ids))
+        # NOTE(armando-migliaccio): between get_routers and get_sync_gw_ports
+        # gw ports may get deleted, which means that router_dicts may contain
+        # ports that gw_ports does not; we should rebuild router_dicts, but
+        # letting the callee check for missing gw_ports sounds like a good
+        # defensive approach regardless
         return self._build_routers_list(context, router_dicts, gw_ports)
 
     def _get_sync_floating_ips(self, context, router_ids):

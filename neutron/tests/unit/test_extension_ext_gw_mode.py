@@ -288,6 +288,15 @@ class TestL3GwModeMixin(base.BaseTestCase):
         self.assertEqual(FAKE_GW_PORT_ID, router['gw_port']['id'])
         self.assertFalse(router.get('enable_snat'))
 
+    def test_build_routers_list_with_gw_port_mismatch(self):
+        router_dict = self.target_object._make_router_dict(self.router)
+        routers = self.target_object._build_routers_list(
+            self.context, [router_dict], {})
+        self.assertEqual(1, len(routers))
+        router = routers[0]
+        self.assertIsNone(router.get('gw_port'))
+        self.assertIsNone(router.get('enable_snat'))
+
 
 class ExtGwModeIntTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                            test_l3_plugin.L3NatTestCaseMixin):
