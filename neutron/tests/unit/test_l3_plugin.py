@@ -38,6 +38,7 @@ from neutron.db import l3_rpc_base
 from neutron.db import model_base
 from neutron.extensions import external_net
 from neutron.extensions import l3
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -2046,6 +2047,41 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
                         r['router']['id'],
                         s1['subnet']['network_id'],
                         expected_code=exc.HTTPBadRequest.code)
+
+
+class L3RpcCallbackMixinTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(L3RpcCallbackMixinTestCase, self).setUp()
+        self.mock_plugin = mock.patch.object(
+            l3_rpc_base.L3RpcCallbackMixin,
+            'plugin', new_callable=mock.PropertyMock).start()
+        self.mock_l3plugin = mock.patch.object(
+            l3_rpc_base.L3RpcCallbackMixin,
+            'l3plugin', new_callable=mock.PropertyMock).start()
+        self.mixin = l3_rpc_base.L3RpcCallbackMixin()
+
+    def test__ensure_host_set_on_port_update_on_concurrent_delete(self):
+        port_id = 'foo_port_id'
+        port = {
+            'id': port_id,
+            'device_owner': 'compute:None',
+            portbindings.HOST_ID: '',
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_BINDING_FAILED
+        }
+        router_id = 'foo_router_id'
+        self.mixin.plugin.update_port.side_effect = n_exc.PortNotFound(
+            port_id=port_id)
+        with mock.patch.object(l3_rpc_base.LOG, 'debug') as mock_log:
+            self.mixin._ensure_host_set_on_port(
+                mock.ANY, mock.ANY, port, router_id)
+        self.mixin.plugin.update_port.assert_called_once_with(
+            mock.ANY, port_id, {'port': {'binding:host_id': mock.ANY}})
+        self.assertTrue(mock_log.call_count)
+        expected_message = ('Port foo_port_id not found while updating '
+                            'agent binding for router foo_router_id.')
+        actual_message = mock_log.call_args[0][0]
+        self.assertEqual(expected_message, actual_message)
 
 
 class L3AgentDbIntTestCase(L3BaseForIntTests, L3AgentDbTestCaseBase):
