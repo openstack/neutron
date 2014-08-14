@@ -73,9 +73,9 @@ class CiscoCsrVpnValidator(vpn_validator.VpnReferenceValidator):
                                        key='mtu',
                                        value=mtu)
 
-    def validate_public_ip_present(self, vpn_service):
+    def validate_public_ip_present(self, router):
         """Ensure there is one gateway IP specified for the router used."""
-        gw_port = vpn_service.router.gw_port
+        gw_port = router.gw_port
         if not gw_port or len(gw_port.fixed_ips) != 1:
             raise CsrValidationFailure(resource='IPSec Connection',
                                        key='router:gw_port:ip_address',
@@ -106,11 +106,11 @@ class CiscoCsrVpnValidator(vpn_validator.VpnReferenceValidator):
             context, ipsec_sitecon['ipsecpolicy_id'])
         vpn_service = self.service_plugin.get_vpnservice(
             context, ipsec_sitecon['vpnservice_id'])
+        router = self.l3_plugin._get_router(context, vpn_service['router_id'])
         self.validate_lifetime('IKE Policy', ike_policy)
         self.validate_lifetime('IPSec Policy', ipsec_policy)
         self.validate_ike_version(ike_policy)
         self.validate_mtu(ipsec_sitecon)
-        self.validate_public_ip_present(vpn_service)
+        self.validate_public_ip_present(router)
         self.validate_peer_id(ipsec_sitecon)
-        LOG.debug("IPSec connection %s validated for Cisco CSR",
-                  ipsec_sitecon['id'])
+        LOG.debug("IPSec connection validated for Cisco CSR")

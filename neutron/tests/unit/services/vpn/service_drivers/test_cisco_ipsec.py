@@ -83,7 +83,8 @@ class TestCiscoIPsecDriverValidation(base.BaseTestCase):
         mock.patch('neutron.manager.NeutronManager.get_plugin',
                    return_value=self.core_plugin).start()
         self.context = n_ctx.Context('some_user', 'some_tenant')
-        self.vpn_service = mock.Mock()
+        self.vpn_service = {'router_id': '123'}
+        self.router = mock.Mock()
         self.service_plugin = mock.Mock()
         self.validator = validator.CiscoCsrVpnValidator(self.service_plugin)
 
@@ -167,23 +168,25 @@ class TestCiscoIPsecDriverValidation(base.BaseTestCase):
         """Helper function indicating that tunnel has a gateway IP."""
         def have_one():
             return 1
-        self.vpn_service.router.gw_port.fixed_ips.__len__ = have_one
+        self.router.gw_port.fixed_ips.__len__ = have_one
         ip_addr_mock = mock.Mock()
-        self.vpn_service.router.gw_port.fixed_ips = [ip_addr_mock]
-        return ip_addr_mock
+        self.router.gw_port.fixed_ips = [ip_addr_mock]
 
     def test_have_public_ip_for_router(self):
         """Ensure that router for IPSec connection has gateway IP."""
         self.simulate_gw_ip_available()
-        self.validator.validate_public_ip_present(self.vpn_service)
+        try:
+            self.validator.validate_public_ip_present(self.router)
+        except Exception:
+            self.fail("Unexpected exception on validation")
 
     def test_router_with_missing_gateway_ip(self):
         """Failure test of IPSec connection with missing gateway IP."""
         self.simulate_gw_ip_available()
-        self.vpn_service.router.gw_port = None
+        self.router.gw_port = None
         self.assertRaises(validator.CsrValidationFailure,
                           self.validator.validate_public_ip_present,
-                          self.vpn_service)
+                          self.router)
 
     def test_peer_id_is_an_ip_address(self):
         """Ensure peer ID is an IP address for IPsec connection create."""
@@ -206,6 +209,7 @@ class TestCiscoIPsecDriverValidation(base.BaseTestCase):
             return_value={'lifetime': {'units': 'seconds', 'value': 120}})
         self.service_plugin.get_vpnservice = mock.Mock(
             return_value=self.vpn_service)
+        self.l3_plugin._get_router = mock.Mock(return_value=self.router)
         # Provide the minimum needed items to validate
         ipsec_sitecon = {'id': '1',
                          'vpnservice_id': FAKE_SERVICE_ID,
