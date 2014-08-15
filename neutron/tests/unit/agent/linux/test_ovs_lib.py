@@ -972,6 +972,6 @@ class TestDeferredOVSBridge(base.BaseTestCase):
         with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
             self.assertEqual(self.br.add_port, deferred_br.add_port)
 
-    def test_getattr_unallowed_attr(self):
+    def test_getattr_unallowed_attr_failure(self):
         with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
             self.assertRaises(AttributeError, getattr, deferred_br, 'failure')
