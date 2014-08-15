@@ -292,6 +292,13 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
 
+    def test_create_network_profile_overlay_missing_subtype(self):
+        data = self._prepare_net_profile_data(c_const.NETWORK_TYPE_OVERLAY)
+        data['network_profile'].pop('sub_type')
+        net_p_req = self.new_create_request('network_profiles', data)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
+
     def test_create_network_profile_trunk(self):
         data = self._prepare_net_profile_data('trunk')
         net_p_req = self.new_create_request('network_profiles', data)
