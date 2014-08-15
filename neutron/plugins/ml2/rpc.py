@@ -16,6 +16,7 @@
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as q_const
+from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -195,7 +196,10 @@ class RpcCallbacks(n_rpc.RpcCallback,
         if (l3plugin and
             utils.is_extension_supported(l3plugin,
                                          q_const.L3_DISTRIBUTED_EXT_ALIAS)):
-            l3plugin.dvr_vmarp_table_update(rpc_context, port_id, "add")
+            try:
+                l3plugin.dvr_vmarp_table_update(rpc_context, port_id, "add")
+            except exceptions.PortNotFound:
+                LOG.debug('Port %s not found during ARP update', port_id)
 
     def get_dvr_mac_address_by_host(self, rpc_context, **kwargs):
         host = kwargs.get('host')
