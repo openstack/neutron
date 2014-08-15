@@ -742,8 +742,6 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                webob.exc.HTTPBadRequest,
                                nsx_exc.NoMorePortsException:
                                webob.exc.HTTPBadRequest,
-                               nsx_exc.ReadOnlyAttribute:
-                               webob.exc.HTTPBadRequest,
                                nsx_exc.MaintenanceInProgress:
                                webob.exc.HTTPServiceUnavailable,
                                nsx_exc.InvalidSecurityCertificate:
@@ -1485,9 +1483,6 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self.cluster, nsx_router_id, routes)
 
     def update_router(self, context, router_id, router):
-        if isinstance(router['router'].get('distributed'), bool):
-            # Router conversion is not supported
-            raise nsx_exc.ReadOnlyAttribute(attribute='distributed')
         # Either nexthop is updated or should be kept as it was before
         r = router['router']
         nexthop = None
