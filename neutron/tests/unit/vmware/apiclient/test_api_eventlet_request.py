@@ -28,7 +28,7 @@ from neutron.tests import base
 from neutron.tests.unit import vmware
 
 
-LOG = logging.getLogger("test_api_request_eventlet")
+LOG = logging.getLogger(__name__)
 
 
 REQUEST_TIMEOUT = 1

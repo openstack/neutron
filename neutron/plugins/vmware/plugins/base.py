@@ -77,7 +77,7 @@ from neutron.plugins.vmware.nsxlib import router as routerlib
 from neutron.plugins.vmware.nsxlib import secgroup as secgrouplib
 from neutron.plugins.vmware.nsxlib import switch as switchlib
 
-LOG = logging.getLogger("NeutronPlugin")
+LOG = logging.getLogger(__name__)
 
 NSX_NOSNAT_RULES_ORDER = 10
 NSX_FLOATINGIP_NAT_RULES_ORDER = 224
