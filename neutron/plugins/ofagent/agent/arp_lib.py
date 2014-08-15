@@ -120,7 +120,12 @@ class ArpLib(object):
 
     @log.log
     def del_arp_table_entry(self, network, ip):
-        del self._arp_tbl[network][ip]
+        if network not in self._arp_tbl:
+            LOG.debug("removal of unknown network %s", network)
+            return
+        if self._arp_tbl[network].pop(ip, None) is None:
+            LOG.debug("removal of unknown ip %s", ip)
+            return
         if not self._arp_tbl[network]:
             del self._arp_tbl[network]
 
