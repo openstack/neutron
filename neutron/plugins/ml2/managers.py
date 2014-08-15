@@ -16,12 +16,15 @@
 from oslo.config import cfg
 import stevedore
 
+from neutron.api.v2 import attributes
 from neutron.common import exceptions as exc
+from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
+from neutron.extensions import providernet as provider
 from neutron.openstack.common import log
 from neutron.plugins.ml2.common import exceptions as ml2_exc
+from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
-
 
 LOG = log.getLogger(__name__)
 
@@ -68,10 +71,94 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 raise SystemExit(1)
         LOG.info(_("Tenant network_types: %s"), self.tenant_network_types)
 
+    def _process_provider_segment(self, segment):
+        network_type = self._get_attribute(segment, provider.NETWORK_TYPE)
+        physical_network = self._get_attribute(segment,
+                                               provider.PHYSICAL_NETWORK)
+        segmentation_id = self._get_attribute(segment,
+                                              provider.SEGMENTATION_ID)
+
+        if attributes.is_attr_set(network_type):
+            segment = {api.NETWORK_TYPE: network_type,
+                       api.PHYSICAL_NETWORK: physical_network,
+                       api.SEGMENTATION_ID: segmentation_id}
+            self.validate_provider_segment(segment)
+            return segment
+
+        msg = _("network_type required")
+        raise exc.InvalidInput(error_message=msg)
+
+    def _process_provider_create(self, network):
+        if any(attributes.is_attr_set(network.get(f))
+               for f in (provider.NETWORK_TYPE, provider.PHYSICAL_NETWORK,
+                         provider.SEGMENTATION_ID)):
+            # Verify that multiprovider and provider attributes are not set
+            # at the same time.
+            if attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+                raise mpnet.SegmentsSetInConjunctionWithProviders()
+
+            network_type = self._get_attribute(network, provider.NETWORK_TYPE)
+            physical_network = self._get_attribute(network,
+                                                   provider.PHYSICAL_NETWORK)
+            segmentation_id = self._get_attribute(network,
+                                                  provider.SEGMENTATION_ID)
+            segments = [{provider.NETWORK_TYPE: network_type,
+                         provider.PHYSICAL_NETWORK: physical_network,
+                         provider.SEGMENTATION_ID: segmentation_id}]
+            return [self._process_provider_segment(s) for s in segments]
+        elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+            segments = [self._process_provider_segment(s)
+                        for s in network[mpnet.SEGMENTS]]
+            mpnet.check_duplicate_segments(
+                segments,
+                self.is_partial_segment)
+            return segments
+
+    def _get_attribute(self, attrs, key):
+        value = attrs.get(key)
+        if value is attributes.ATTR_NOT_SPECIFIED:
+            value = None
+        return value
+
+    def _extend_network_dict_provider(self, context, network):
+        id = network['id']
+        segments = db.get_network_segments(context.session, id)
+        if not segments:
+            LOG.error(_("Network %s has no segments"), id)
+            network[provider.NETWORK_TYPE] = None
+            network[provider.PHYSICAL_NETWORK] = None
+            network[provider.SEGMENTATION_ID] = None
+        elif len(segments) > 1:
+            network[mpnet.SEGMENTS] = [
+                {provider.NETWORK_TYPE: segment[api.NETWORK_TYPE],
+                 provider.PHYSICAL_NETWORK: segment[api.PHYSICAL_NETWORK],
+                 provider.SEGMENTATION_ID: segment[api.SEGMENTATION_ID]}
+                for segment in segments]
+        else:
+            segment = segments[0]
+            network[provider.NETWORK_TYPE] = segment[api.NETWORK_TYPE]
+            network[provider.PHYSICAL_NETWORK] = segment[api.PHYSICAL_NETWORK]
+            network[provider.SEGMENTATION_ID] = segment[api.SEGMENTATION_ID]
+
     def initialize(self):
         for network_type, driver in self.drivers.iteritems():
             LOG.info(_("Initializing driver for type '%s'"), network_type)
             driver.obj.initialize()
+
+    def create_network_segments(self, context, network, tenant_id):
+        """Call type drivers to create network segments."""
+        segments = self._process_provider_create(network)
+        session = context.session
+        with session.begin(subtransactions=True):
+            network_id = network['id']
+            if segments:
+                for segment in segments:
+                    segment = self.reserve_provider_segment(
+                        session, segment)
+                    db.add_network_segment(session, network_id, segment)
+            else:
+                segment = self.allocate_tenant_segment(session)
+                db.add_network_segment(session, network_id, segment)
 
     def is_partial_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]

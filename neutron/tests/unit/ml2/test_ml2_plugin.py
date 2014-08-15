@@ -477,7 +477,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                    pnet.PHYSICAL_NETWORK: 'phys_net',
                    pnet.SEGMENTATION_ID: None}
         with testtools.ExpectedException(exc.InvalidInput):
-            self.driver._process_provider_create(segment)
+            self.driver.type_manager._process_provider_create(segment)
 
     def test_create_network_plugin(self):
         data = {'network': {'name': 'net1',
@@ -499,7 +499,8 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
     def test_extend_dictionary_no_segments(self):
         network = dict(name='net_no_segment', id='5', tenant_id='tenant_one')
-        self.driver._extend_network_dict_provider(self.context, network)
+        self.driver.type_manager._extend_network_dict_provider(self.context,
+                                                               network)
         self.assertIsNone(network[pnet.NETWORK_TYPE])
         self.assertIsNone(network[pnet.PHYSICAL_NETWORK])
         self.assertIsNone(network[pnet.SEGMENTATION_ID])
