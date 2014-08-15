@@ -52,6 +52,19 @@ class VpnDriver(object):
     def delete_vpnservice(self, context, vpnservice):
         pass
 
+    @abc.abstractmethod
+    def create_ipsec_site_connection(self, context, ipsec_site_connection):
+        pass
+
+    @abc.abstractmethod
+    def update_ipsec_site_connection(self, context, old_ipsec_site_connection,
+                                     ipsec_site_connection):
+        pass
+
+    @abc.abstractmethod
+    def delete_ipsec_site_connection(self, context, ipsec_site_connection):
+        pass
+
 
 class BaseIPsecVpnAgentApi(n_rpc.RpcProxy):
     """Base class for IPSec API to agent."""
