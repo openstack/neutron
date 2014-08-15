@@ -17,6 +17,7 @@
 from logging import config as logging_config
 
 from alembic import context
+from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy import create_engine, event, pool
 
@@ -48,7 +49,12 @@ for class_path in active_plugins:
 target_metadata = model_base.BASEV2.metadata
 
 
-def set_mysql_engine(mysql_engine):
+def set_mysql_engine():
+    try:
+        mysql_engine = neutron_config.command.mysql_engine
+    except cfg.NoSuchOptError:
+        mysql_engine = None
+
     global MYSQL_ENGINE
     MYSQL_ENGINE = (mysql_engine or
                     model_base.BASEV2.__table_args__['mysql_engine'])
@@ -64,7 +70,7 @@ def run_migrations_offline():
     script output.
 
     """
-    set_mysql_engine(neutron_config.command.mysql_engine)
+    set_mysql_engine()
 
     kwargs = dict()
     if neutron_config.database.connection:
@@ -91,7 +97,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    set_mysql_engine(neutron_config.command.mysql_engine)
+    set_mysql_engine()
 
     engine = create_engine(
         neutron_config.database.connection,
