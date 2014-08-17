@@ -315,3 +315,174 @@ class NOSdriver():
         if vfab_enable is not None:
             return "enabled"
         return "disabled"
+
+    def create_svi(self, host, username, password,
+                   rbridge_id, vlan_id, ip_address, router_id):
+        """create svi on configured rbridge-id."""
+        try:
+            mgr = self.connect(host, username, password)
+            self.bind_vrf_to_svi(host, username, password,
+                                 rbridge_id, vlan_id, router_id)
+            self.configure_svi_with_ip_address(mgr,
+                                               rbridge_id, vlan_id, ip_address)
+            self.activate_svi(mgr, rbridge_id, vlan_id)
+        except Exception as ex:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error: %s"), ex)
+                self.close_session()
+
+    def delete_svi(self, host, username, password,
+                   rbridge_id, vlan_id, gw_ip, router_id):
+        """delete svi from configured rbridge-id."""
+        try:
+            mgr = self.connect(host, username, password)
+            self.remove_svi(mgr, rbridge_id, vlan_id)
+        except Exception as ex:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error: %s"), ex)
+                self.close_session()
+
+    def create_router(self, host, username, password, rbridge_id, router_id):
+        """create vrf and associate vrf."""
+        router_id = router_id[0:11]
+        vrf_name = template.OS_VRF_NAME.format(id=router_id)
+        rd = router_id + ":" + router_id
+        try:
+            mgr = self.connect(host, username, password)
+            self.create_vrf(mgr, rbridge_id, vrf_name)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error"))
+                self.close_session()
+        try:
+            # For Nos5.0.0
+            self.configure_rd_for_vrf(mgr, rbridge_id, vrf_name, rd)
+            self.configure_address_family_for_vrf(mgr, rbridge_id, vrf_name)
+        except Exception:
+            with excutils.save_and_reraise_exception() as ctxt:
+                try:
+                    # This is done because on 4.0.0 rd doesnt accept alpha
+                    # character nor hyphen
+                    rd = "".join(i for i in router_id if i in "0123456789")
+                    rd = rd[:4] + ":" + rd[:4]
+                    self.configure_rd_for_vrf(mgr, rbridge_id, vrf_name, rd)
+                    self.configure_address_family_for_vrf_v1(mgr,
+                                                             rbridge_id,
+                                                             vrf_name)
+                except Exception:
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("NETCONF error"))
+                        self.close_session()
+
+                ctxt.reraise = False
+
+    def delete_router(self, host, username, password, rbridge_id, router_id):
+        """delete router and associated vrf."""
+        router_id = router_id[0:11]
+        vrf_name = template.OS_VRF_NAME.format(id=router_id)
+        try:
+            mgr = self.connect(host, username, password)
+            self.delete_vrf(mgr, rbridge_id, vrf_name)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error"))
+                self.close_session()
+
+    def bind_vrf_to_svi(self, host, username, password, rbridge_id,
+                        vlan_id, router_id):
+        """binds vrf to a svi."""
+        router_id = router_id[0:11]
+        vrf_name = template.OS_VRF_NAME.format(id=router_id)
+        try:
+            mgr = self.connect(host, username, password)
+            self.add_vrf_to_svi(mgr, rbridge_id, vlan_id, vrf_name)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error"))
+                self.close_session()
+
+    def unbind_vrf_to_svi(self, host, username, password, rbridge_id,
+                          vlan_id, router_id):
+        """unbind vrf from the svi."""
+        router_id = router_id[0:11]
+        vrf_name = template.OS_VRF_NAME.format(id=router_id)
+        try:
+            mgr = self.connect(host, username, password)
+            self.delete_vrf_from_svi(mgr, rbridge_id, vlan_id, vrf_name)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error"))
+                self.close_session()
+
+    def create_vrf(self, mgr, rbridge_id, vrf_name):
+        """create vrf on rbridge."""
+        confstr = template.CREATE_VRF.format(rbridge_id=rbridge_id,
+                                             vrf_name=vrf_name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def delete_vrf(self, mgr, rbridge_id, vrf_name):
+        """delete vrf on rbridge."""
+
+        confstr = template.DELETE_VRF.format(rbridge_id=rbridge_id,
+                                             vrf_name=vrf_name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def configure_rd_for_vrf(self, mgr, rbridge_id, vrf_name, rd):
+        """configure rd on vrf  on rbridge."""
+
+        confstr = template.CONFIGURE_RD_FOR_VRF.format(rbridge_id=rbridge_id,
+                                                       vrf_name=vrf_name,
+                                                       rd=rd)
+        mgr.edit_config(target='running', config=confstr)
+
+    def configure_address_family_for_vrf_v1(self, mgr, rbridge_id, vrf_name):
+        """configure ipv4 address family to vrf  on rbridge."""
+
+        confstr = template.ADD_ADDRESS_FAMILY_FOR_VRF_V1.format(
+            rbridge_id=rbridge_id,
+            vrf_name=vrf_name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def configure_address_family_for_vrf(self, mgr, rbridge_id, vrf_name):
+        """configure ipv4 address family to vrf  on rbridge."""
+
+        confstr = template.ADD_ADDRESS_FAMILY_FOR_VRF.format(
+            rbridge_id=rbridge_id, vrf_name=vrf_name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def configure_svi_with_ip_address(self, mgr, rbridge_id,
+                                      vlan_id, ip_address):
+        """configure SVI with ip address on rbridge."""
+
+        confstr = template.CONFIGURE_SVI_WITH_IP_ADDRESS.format(
+            rbridge_id=rbridge_id,
+            vlan_id=vlan_id,
+            ip_address=ip_address)
+
+        mgr.edit_config(target='running', config=confstr)
+
+    def activate_svi(self, mgr, rbridge_id, vlan_id):
+        """activate the svi on the rbridge."""
+        confstr = template.ACTIVATE_SVI.format(rbridge_id=rbridge_id,
+                                               vlan_id=vlan_id)
+        mgr.edit_config(target='running', config=confstr)
+
+    def add_vrf_to_svi(self, mgr, rbridge_id, vlan_id, vrf_name):
+        """add vrf to svi on rbridge."""
+        confstr = template.ADD_VRF_TO_SVI.format(rbridge_id=rbridge_id,
+                                                 vlan_id=vlan_id,
+                                                 vrf_name=vrf_name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def delete_vrf_from_svi(self, mgr, rbridge_id, vlan_id, vrf_name):
+        """delete vrf from svi on rbridge."""
+        confstr = template.DELETE_VRF_FROM_SVI.format(rbridge_id=rbridge_id,
+                                                      vlan_id=vlan_id,
+                                                      vrf_name=vrf_name)
+        mgr.edit_config(target='running', config=confstr)
+
+    def remove_svi(self, mgr, rbridge_id, vlan_id):
+        """delete vrf from svi on rbridge."""
+        confstr = template.DELETE_SVI.format(rbridge_id=rbridge_id,
+                                             vlan_id=vlan_id)
+        mgr.edit_config(target='running', config=confstr)
