@@ -1252,9 +1252,13 @@ class TestVpnaas(VPNPluginDbTestCase):
                     self.assertEqual(expected_status_int, res.status_int)
                     if expected_status_int == 200:
                         res_dict = self.deserialize(self.fmt, res)
+                        actual = res_dict['ipsec_site_connection']
                         for k, v in update.items():
-                            self.assertEqual(
-                                res_dict['ipsec_site_connection'][k], v)
+                            # Sort lists before checking equality
+                            if isinstance(actual[k], list):
+                                self.assertEqual(v, sorted(actual[k]))
+                            else:
+                                self.assertEqual(v, actual[k])
 
     def test_show_ipsec_site_connection(self):
         """Test case to show a ipsec_site_connection."""
