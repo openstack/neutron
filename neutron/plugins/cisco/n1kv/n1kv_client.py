@@ -256,6 +256,8 @@ class Client(object):
                 'id': network_profile['id'],
                 'logicalNetwork': logical_network_name,
                 'tenantId': tenant_id}
+        if network_profile['segment_type'] == c_const.NETWORK_TYPE_OVERLAY:
+            body['subType'] = network_profile['sub_type']
         return self._post(
             self.network_segment_pool_path % network_profile['id'],
             body=body)
