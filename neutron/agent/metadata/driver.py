@@ -36,9 +36,8 @@ class MetadataDriver(advanced_service.AdvancedService):
         router.iptables_manager.apply()
 
         if not router.is_ha:
-            self._spawn_metadata_proxy(router.router_id,
-                                       router.ns_name,
-                                       self.l3_agent.conf)
+            self._spawn_monitored_metadata_proxy(router.router_id,
+                                                 router.ns_name)
 
     def before_router_removed(self, router):
         for c, r in self.metadata_filter_rules(self.metadata_port):
@@ -47,9 +46,8 @@ class MetadataDriver(advanced_service.AdvancedService):
             router.iptables_manager.ipv4['nat'].remove_rule(c, r)
         router.iptables_manager.apply()
 
-        self._destroy_metadata_proxy(router.router['id'],
-                                     router.ns_name,
-                                     self.l3_agent.conf)
+        self._destroy_monitored_metadata_proxy(router.router['id'],
+                                               router.ns_name)
 
     @classmethod
     def metadata_filter_rules(cls, port):
@@ -89,6 +87,17 @@ class MetadataDriver(advanced_service.AdvancedService):
 
         return callback
 
+    def _spawn_monitored_metadata_proxy(self, router_id, ns_name):
+        callback = self._get_metadata_proxy_callback(
+            router_id, self.l3_agent.conf)
+        self.l3_agent.process_monitor.enable(router_id, callback, ns_name)
+
+    def _destroy_monitored_metadata_proxy(self, router_id, ns_name):
+        self.l3_agent.process_monitor.disable(router_id, ns_name)
+
+    # TODO(mangelajo): remove the unmonitored _get_*_process_manager,
+    #                  _spawn_* and _destroy* when keepalived stops
+    #                  spawning and killing proxies on its own.
     @classmethod
     def _get_metadata_proxy_process_manager(cls, router_id, ns_name, conf):
         return external_process.ProcessManager(

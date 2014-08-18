@@ -147,12 +147,15 @@ class AgentMixin(object):
         callback = (
             metadata_driver.MetadataDriver._get_metadata_proxy_callback(
                 ri.router_id, self.conf))
+        # TODO(mangelajo): use the process monitor in keepalived when
+        #                  keepalived stops killing/starting metadata
+        #                  proxy on its own
         pm = (
             metadata_driver.MetadataDriver.
             _get_metadata_proxy_process_manager(ri.router_id,
                                                 ri.ns_name,
                                                 self.conf))
-        pid = pm.get_pid_file_name(ensure_pids_dir=True)
+        pid = pm.get_pid_file_name()
         ri.keepalived_manager.add_notifier(
             callback(pid), 'master', ri.ha_vr_id)
         for state in ('backup', 'fault'):

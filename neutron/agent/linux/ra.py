@@ -18,11 +18,13 @@ import netaddr
 from oslo.config import cfg
 import six
 
-from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.openstack.common import log as logging
 
+
+RADVD_SERVICE_NAME = 'radvd'
+RADVD_SERVICE_CMD = 'radvd'
 
 LOG = logging.getLogger(__name__)
 
@@ -76,49 +78,43 @@ def _generate_radvd_conf(router_id, router_ports, dev_name_helper):
     return radvd_conf
 
 
-def _spawn_radvd(router_id, radvd_conf, router_ns, root_helper):
+def _spawn_radvd(router_id, radvd_conf, router_ns, process_monitor):
     def callback(pid_file):
         # we need to use -m syslog and f.e. not -m stderr (the default)
         # or -m stderr_syslog so that radvd 2.0+ will close stderr and
         # exit after daemonization; otherwise, the current thread will
         # be locked waiting for result from radvd that won't ever come
         # until the process dies
-        radvd_cmd = ['radvd',
+        radvd_cmd = [RADVD_SERVICE_CMD,
                      '-C', '%s' % radvd_conf,
                      '-p', '%s' % pid_file,
                      '-m', 'syslog']
         return radvd_cmd
 
-    radvd = external_process.ProcessManager(cfg.CONF,
-                                            router_id,
-                                            root_helper,
-                                            router_ns,
-                                            'radvd')
-    radvd.enable(callback, True)
+    process_monitor.enable(uuid=router_id,
+                           cmd_callback=callback,
+                           namespace=router_ns,
+                           service=RADVD_SERVICE_NAME,
+                           reload_cfg=True)
     LOG.debug("radvd enabled for router %s", router_id)
 
 
 def enable_ipv6_ra(router_id, router_ns, router_ports,
-                   dev_name_helper, root_helper):
+                   dev_name_helper, process_monitor):
     for p in router_ports:
         if netaddr.IPNetwork(p['subnet']['cidr']).version == 6:
             break
     else:
         # Kill the daemon if it's running
-        disable_ipv6_ra(router_id, router_ns, root_helper)
+        disable_ipv6_ra(router_id, process_monitor)
         return
 
     LOG.debug("Enable IPv6 RA for router %s", router_id)
     radvd_conf = _generate_radvd_conf(router_id, router_ports, dev_name_helper)
-    _spawn_radvd(router_id, radvd_conf, router_ns, root_helper)
+    _spawn_radvd(router_id, radvd_conf, router_ns, process_monitor)
 
 
-def disable_ipv6_ra(router_id, router_ns, root_helper):
-    radvd = external_process.ProcessManager(cfg.CONF,
-                                            router_id,
-                                            root_helper,
-                                            router_ns,
-                                            'radvd')
-    radvd.disable()
+def disable_ipv6_ra(router_id, process_monitor):
+    process_monitor.disable(router_id, service=RADVD_SERVICE_NAME)
     utils.remove_conf_files(cfg.CONF.ra_confs, router_id)
     LOG.debug("radvd disabled for router %s", router_id)

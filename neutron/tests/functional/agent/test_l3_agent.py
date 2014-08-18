@@ -63,6 +63,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         config.register_cli_opts(logging.logging_cli_opts)
         config.register_opts(logging.generic_log_opts)
         config.register_opts(logging.log_opts)
+        agent_config.register_process_monitor_opts(config)
         return config
 
     def _configure_agent(self, host):

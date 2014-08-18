@@ -29,6 +29,7 @@ from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import router_processing_queue as queue
+from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
@@ -147,6 +148,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.router_info = {}
 
         self._check_config_params()
+
+        self.process_monitor = external_process.ProcessMonitor(
+            config=self.conf,
+            root_helper=self.root_helper,
+            resource_type='router')
 
         try:
             self.driver = importutils.import_object(
@@ -281,7 +287,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _destroy_router_namespace(self, ns):
         router_id = self.get_router_id(ns)
-        ra.disable_ipv6_ra(router_id, ns, self.root_helper)
+        ra.disable_ipv6_ra(router_id, self.process_monitor)
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
@@ -450,7 +456,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                               ri.ns_name,
                               internal_ports,
                               self.get_internal_device_name,
-                              self.root_helper)
+                              self.process_monitor)
 
         existing_devices = self._get_existing_devices(ri)
         current_internal_devs = set([n for n in existing_devices
