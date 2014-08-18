@@ -109,6 +109,12 @@ class FakePortContext(api.PortContext):
         self._bound_vif_type = vif_type
         self._bound_vif_details = vif_details
 
+    def allocate_dynamic_segment(self, segment):
+        pass
+
+    def release_dynamic_segment(self, segment_id):
+        pass
+
 
 class AgentMechanismBaseTestCase(base.BaseTestCase):
     # The following must be overridden for the specific mechanism

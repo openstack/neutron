@@ -615,9 +615,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         record = self._get_network(context, id)
                         LOG.debug(_("Deleting network record %s"), record)
                         session.delete(record)
-
-                        for segment in mech_context.network_segments:
-                            self.type_manager.release_segment(session, segment)
+                        self.type_manager.release_network_segments(session, id)
 
                         # The segment records are deleted via cascade from the
                         # network record, so explicit removal is not necessary.

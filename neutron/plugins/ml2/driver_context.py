@@ -151,6 +151,16 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._binding.vif_details = jsonutils.dumps(vif_details)
         self._new_port_status = status
 
+    def allocate_dynamic_segment(self, segment):
+        network_id = self._network_context.current['id']
+
+        return self._plugin.type_manager.allocate_dynamic_segment(
+                self._plugin_context.session, network_id, segment)
+
+    def release_dynamic_segment(self, segment_id):
+        return self._plugin.type_manager.release_dynamic_segment(
+                self._plugin_context.session, segment_id)
+
 
 class DvrPortContext(PortContext):
 

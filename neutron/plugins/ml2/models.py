@@ -39,6 +39,8 @@ class NetworkSegment(model_base.BASEV2, models_v2.HasId):
     network_type = sa.Column(sa.String(32), nullable=False)
     physical_network = sa.Column(sa.String(64))
     segmentation_id = sa.Column(sa.Integer)
+    is_dynamic = sa.Column(sa.Boolean, default=False, nullable=False,
+                           server_default=sa.sql.false())
 
 
 class PortBinding(model_base.BASEV2):

@@ -191,20 +191,47 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 return segment
         raise exc.NoNetworkAvailable()
 
-    def release_segment(self, session, segment):
-        network_type = segment.get(api.NETWORK_TYPE)
-        driver = self.drivers.get(network_type)
-        # ML2 may have been reconfigured since the segment was created,
-        # so a driver may no longer exist for this network_type.
-        # REVISIT: network_type-specific db entries may become orphaned
-        # if a network is deleted and the driver isn't available to release
-        # the segment. This may be fixed with explicit foreign-key references
-        # or consistency checks on driver initialization.
-        if not driver:
-            LOG.error(_("Failed to release segment '%s' because "
-                        "network type is not supported."), segment)
-            return
-        driver.obj.release_segment(session, segment)
+    def release_network_segments(self, session, network_id):
+        segments = db.get_network_segments(session, network_id,
+                                           filter_dynamic=None)
+
+        for segment in segments:
+            network_type = segment.get(api.NETWORK_TYPE)
+            driver = self.drivers.get(network_type)
+            if driver:
+                driver.obj.release_segment(session, segment)
+            else:
+                LOG.error(_("Failed to release segment '%s' because "
+                            "network type is not supported."), segment)
+
+    def allocate_dynamic_segment(self, session, network_id, segment):
+        """Allocate a dynamic segment using a partial or full segment dict."""
+        dynamic_segment = db.get_dynamic_segment(
+            session, network_id, segment.get(api.PHYSICAL_NETWORK),
+            segment.get(api.SEGMENTATION_ID))
+
+        if dynamic_segment:
+            return dynamic_segment
+
+        driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
+        dynamic_segment = driver.obj.reserve_provider_segment(session, segment)
+        db.add_network_segment(session, network_id, dynamic_segment,
+                               is_dynamic=True)
+        return dynamic_segment
+
+    def release_dynamic_segment(self, session, segment_id):
+        """Delete a dynamic segment."""
+        segment = db.get_segment_by_id(session, segment_id)
+        if segment:
+            driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
+            if driver:
+                driver.obj.release_segment(session, segment)
+                db.delete_network_segment(session, segment_id)
+            else:
+                LOG.error(_("Failed to release segment '%s' because "
+                            "network type is not supported."), segment)
+        else:
+            LOG.debug("No segment found with id %(segment_id)s", segment_id)
 
 
 class MechanismManager(stevedore.named.NamedExtensionManager):

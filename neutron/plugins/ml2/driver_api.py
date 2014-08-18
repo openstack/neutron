@@ -328,6 +328,31 @@ class PortContext(object):
         """
         pass
 
+    @abc.abstractmethod
+    def allocate_dynamic_segment(self, segment):
+        """Allocate a dynamic segment.
+
+        :param segment: A partially or fully specified segment dictionary
+
+        Called by the MechanismDriver.bind_port, create_port or update_port
+        to dynamically allocate a segment for the port using the partial
+        segment specified. The segment dictionary can be a fully or partially
+        specified segment. At a minumim it needs the network_type populated to
+        call on the appropriate type driver.
+        """
+        pass
+
+    @abc.abstractmethod
+    def release_dynamic_segment(self, segment_id):
+        """Release an allocated dynamic segment.
+
+        :param segment_id: UUID of the dynamic network segment.
+
+        Called by the MechanismDriver.delete_port or update_port to release
+        the dynamic segment allocated for this port.
+        """
+        pass
+
 
 @six.add_metaclass(abc.ABCMeta)
 class MechanismDriver(object):
