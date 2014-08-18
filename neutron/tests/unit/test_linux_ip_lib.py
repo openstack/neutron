@@ -826,6 +826,15 @@ class TestIpNetnsCommand(TestIPCmdBase):
                  'ip', 'link', 'list'],
                 root_helper='sudo', check_exit_code=True)
 
+    def test_execute_nosudo_with_no_namespace(self):
+        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+            self.parent.namespace = None
+            self.parent.root_helper = None
+            self.netns_cmd.execute(['test'])
+            execute.assert_called_once_with(['test'],
+                                            root_helper=None,
+                                            check_exit_code=True)
+
 
 class TestDeviceExists(base.BaseTestCase):
     def test_device_exists(self):
