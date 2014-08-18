@@ -20,6 +20,7 @@ from oslo.config import cfg
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
@@ -35,7 +36,6 @@ from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_gwmode_db
-from neutron.db import l3_rpc_base
 from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -55,7 +55,6 @@ LOG = logging.getLogger(__name__)
 
 class LinuxBridgeRpcCallbacks(n_rpc.RpcCallback,
                               dhcp_rpc_base.DhcpRpcCallbackMixin,
-                              l3_rpc_base.L3RpcCallbackMixin,
                               sg_db_rpc.SecurityGroupServerRpcCallbackMixin
                               ):
 
@@ -285,6 +284,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [LinuxBridgeRpcCallbacks(),
+                          l3_rpc.L3RpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)

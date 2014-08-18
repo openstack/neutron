@@ -18,6 +18,7 @@
 from oslo.config import cfg
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -26,18 +27,8 @@ from neutron.db import extraroute_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
-from neutron.db import l3_rpc_base
 from neutron.openstack.common import importutils
 from neutron.plugins.common import constants
-
-
-class L3RouterPluginRpcCallbacks(n_rpc.RpcCallback,
-                                 l3_rpc_base.L3RpcCallbackMixin):
-
-    RPC_API_VERSION = '1.3'
-    # history
-    #   1.2 Added methods for DVR support
-    #   1.3 Added a method that returns the list of activated services
 
 
 class L3RouterPlugin(common_db_mixin.CommonDbMixin,
@@ -70,7 +61,7 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
         self.conn = n_rpc.create_connection(new=True)
         self.agent_notifiers.update(
             {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
-        self.endpoints = [L3RouterPluginRpcCallbacks()]
+        self.endpoints = [l3_rpc.L3RpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         self.conn.consume_in_threads()
