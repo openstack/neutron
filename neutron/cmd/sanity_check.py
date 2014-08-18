@@ -25,6 +25,8 @@ from oslo.config import cfg
 LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('AGENT', 'neutron.plugins.openvswitch.common.config')
 cfg.CONF.import_group('OVS', 'neutron.plugins.openvswitch.common.config')
+cfg.CONF.import_group('ml2_sriov',
+                      'neutron.plugins.ml2.drivers.mech_sriov.mech_driver')
 
 
 class BoolOptCallback(cfg.BoolOpt):
@@ -71,6 +73,16 @@ def check_arp_responder():
     return result
 
 
+def check_vf_management():
+    result = checks.vf_management_supported(
+        root_helper=cfg.CONF.AGENT.root_helper)
+    if not result:
+        LOG.error(_LE('Check for VF management support failed. '
+                      'Please ensure that the version of ip link '
+                      'being used has VF support.'))
+    return result
+
+
 # Define CLI opts to test specific features, with a calback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -81,6 +93,9 @@ OPTS = [
                     help=_('Check for nova notification support')),
     BoolOptCallback('arp_responder', check_arp_responder, default=False,
                     help=_('Check for ARP responder support')),
+    BoolOptCallback('vf_management', check_vf_management, default=False,
+                    help=_('Check for VF management support')),
+
 ]
 
 
@@ -101,6 +116,8 @@ def enable_tests_from_config():
         cfg.CONF.set_override('nova_notify', True)
     if cfg.CONF.AGENT.arp_responder:
         cfg.CONF.set_override('arp_responder', True)
+    if cfg.CONF.ml2_sriov.agent_required:
+        cfg.CONF.set_override('vf_management', True)
 
 
 def all_tests_passed():
