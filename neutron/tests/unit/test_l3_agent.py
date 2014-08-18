@@ -2179,7 +2179,7 @@ class TestL3AgentEventHandler(base.BaseTestCase):
                         '--debug',
                         '--log-file=neutron-ns-metadata-proxy-%s.log' %
                         router_id
-                    ])
+                    ], addl_env=None)
                 ])
         finally:
             self.external_process_p.start()

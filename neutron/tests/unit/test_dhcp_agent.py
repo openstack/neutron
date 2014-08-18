@@ -665,7 +665,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                         mock.ANY,
                         '--debug',
                         ('--log-file=neutron-ns-metadata-proxy-%s.log' %
-                         fake_meta_network.id)])
+                         fake_meta_network.id)], addl_env=None)
                 ])
         finally:
             self.external_process_p.start()
