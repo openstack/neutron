@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-01 06:06+0000\n"
+"POT-Creation-Date: 2014-08-17 06:05+0000\n"
 "PO-Revision-Date: 2014-07-25 23:10+0000\n"
 "Last-Translator: Andi Chandler <andi@gowling.com>\n"
 "Language-Team: English (United Kingdom) (http://www.transifex.com/projects/p/"
@@ -33,6 +33,20 @@ msgstr ""
 #, python-format
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr "Unable to find data type descriptor for attribute %s"
+
+#: neutron/db/l3_agentschedulers_db.py:101
+msgid ""
+"Time since last L3 agent reschedule check has exceeded the interval between "
+"checks. Waiting before check to allow agents to send a heartbeat in case "
+"there was a clock adjustment."
+msgstr ""
+
+#: neutron/db/l3_agentschedulers_db.py:116
+#, python-format
+msgid ""
+"Rescheduling router %(router)s from agent %(agent)s because the agent did "
+"not report to the server in the last %(dead_time)s seconds."
+msgstr ""
 
 #: neutron/openstack/common/service.py:364
 #, python-format

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-13 06:05+0000\n"
+"POT-Creation-Date: 2014-08-17 06:05+0000\n"
 "PO-Revision-Date: 2014-08-12 21:40+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
@@ -26,6 +26,12 @@ msgid ""
 msgstr ""
 "Inserindo política: %(new_policy)s no lugar de política deprecada: "
 "%(old_policy)s"
+
+#: neutron/db/l3_agentschedulers_db.py:78
+msgid ""
+"Skipping period L3 agent status check because automatic router rescheduling "
+"is disabled."
+msgstr ""
 
 #: neutron/openstack/common/periodic_task.py:126
 #, python-format

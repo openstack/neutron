@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2014.2.dev216.g40a4c36\n"
+"Project-Id-Version: neutron 2014.2.dev271.g7384726\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-13 06:05+0000\n"
+"POT-Creation-Date: 2014-08-17 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,6 +22,12 @@ msgstr ""
 msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated "
 "policy:%(old_policy)s"
+msgstr ""
+
+#: neutron/db/l3_agentschedulers_db.py:78
+msgid ""
+"Skipping period L3 agent status check because automatic router "
+"rescheduling is disabled."
 msgstr ""
 
 #: neutron/openstack/common/periodic_task.py:126
