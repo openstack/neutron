@@ -23,6 +23,7 @@ from oslo.config import cfg as q_conf
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -33,7 +34,6 @@ from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
-from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
@@ -56,15 +56,6 @@ from neutron.plugins.common import constants as svc_constants
 
 
 LOG = logging.getLogger(__name__)
-
-
-class N1kvRpcCallbacks(n_rpc.RpcCallback,
-                       dhcp_rpc_base.DhcpRpcCallbackMixin):
-
-    """Class to handle agent RPC calls."""
-
-    # Set RPC API version to 1.1 by default.
-    RPC_API_VERSION = '1.1'
 
 
 class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
@@ -127,7 +118,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = n_rpc.create_connection(new=True)
-        self.endpoints = [N1kvRpcCallbacks(),
+        self.endpoints = [dhcp_rpc.DhcpRpcCallback(),
                           l3_rpc.L3RpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():

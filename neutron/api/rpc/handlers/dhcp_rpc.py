@@ -19,6 +19,7 @@ from oslo.db import exception as db_exc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
+from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron import manager
@@ -29,8 +30,14 @@ from neutron.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class DhcpRpcCallbackMixin(object):
-    """A mix-in that enable DHCP agent support in plugin implementations."""
+class DhcpRpcCallback(n_rpc.RpcCallback):
+    """DHCP agent RPC callback in plugin implementations."""
+
+    # API version history:
+    #     1.0 - Initial version.
+    #     1.1 - Added get_active_networks_info, create_dhcp_port,
+    #           and update_dhcp_port methods.
+    RPC_API_VERSION = '1.1'
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""

@@ -23,12 +23,12 @@ from webob import exc
 
 from neutron.api import extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
 from neutron.db import agents_db
-from neutron.db import dhcp_rpc_base
 from neutron.db import l3_agentschedulers_db
 from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
@@ -263,16 +263,16 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         cfg.CONF.set_override('allow_overlapping_ips', True)
         with contextlib.nested(self.subnet(),
                                self.subnet()):
-            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
             hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTC)
             self._disable_agent(hosta_id)
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
             # second agent will host all the networks since first is disabled.
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
             networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
             num_hostc_nets = len(networks['networks'])
             networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
@@ -284,15 +284,15 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         cfg.CONF.set_override('allow_overlapping_ips', True)
         with contextlib.nested(self.subnet(enable_dhcp=False),
                                self.subnet(enable_dhcp=False)):
-            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
             hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTC)
             self._disable_agent(hosta_id)
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
             networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
             num_hostc_nets = len(networks['networks'])
             networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
@@ -305,14 +305,14 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         cfg.CONF.set_override('allow_overlapping_ips', True)
         with contextlib.nested(self.subnet(),
                                self.subnet()):
-            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
             hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTC)
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
             networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
             num_hostc_nets = len(networks['networks'])
             networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
@@ -323,10 +323,10 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
     def test_network_auto_schedule_restart_dhcp_agent(self):
         cfg.CONF.set_override('dhcp_agents_per_network', 2)
         with self.subnet() as sub1:
-            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
             dhcp_agents = self._list_dhcp_agents_hosting_network(
                 sub1['subnet']['network_id'])
         self.assertEqual(1, len(dhcp_agents['agents']))
@@ -336,11 +336,11 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         cfg.CONF.set_override('allow_overlapping_ips', True)
         with contextlib.nested(self.subnet(),
                                self.subnet()) as (sub1, sub2):
-            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
             # second agent will not host the network since first has got it.
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
             dhcp_agents = self._list_dhcp_agents_hosting_network(
                 sub1['subnet']['network_id'])
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -359,7 +359,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_network_auto_schedule_with_hosted_2(self):
         # one agent hosts one network
-        dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+        dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
         dhcp_hosta = {
             'binary': 'neutron-dhcp-agent',
             'host': DHCP_HOSTA,
@@ -373,13 +373,13 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         cfg.CONF.set_override('allow_overlapping_ips', True)
         with self.subnet() as sub1:
             self._register_one_agent_state(dhcp_hosta)
-            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
             self._disable_agent(hosta_id, admin_state_up=False)
             with self.subnet() as sub2:
                 self._register_one_agent_state(dhcp_hostc)
-                dhcp_rpc.get_active_networks(self.adminContext,
+                dhcp_rpc_cb.get_active_networks(self.adminContext,
                                              host=DHCP_HOSTC)
                 dhcp_agents_1 = self._list_dhcp_agents_hosting_network(
                     sub1['subnet']['network_id'])

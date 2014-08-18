@@ -55,6 +55,7 @@ from sqlalchemy.orm import exc as sqlexc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
@@ -66,7 +67,6 @@ from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
-from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
 from neutron.db import l3_db
@@ -114,8 +114,7 @@ class AgentNotifierApi(n_rpc.RpcProxy,
 
 
 class RestProxyCallbacks(n_rpc.RpcCallback,
-                         sg_rpc_base.SecurityGroupServerRpcCallbackMixin,
-                         dhcp_rpc_base.DhcpRpcCallbackMixin):
+                         sg_rpc_base.SecurityGroupServerRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
 
@@ -511,6 +510,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self._dhcp_agent_notifier
         )
         self.endpoints = [RestProxyCallbacks(),
+                          dhcp_rpc.DhcpRpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)

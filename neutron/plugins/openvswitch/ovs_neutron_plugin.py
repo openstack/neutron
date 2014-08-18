@@ -20,6 +20,7 @@ from oslo.config import cfg
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as q_const
@@ -31,7 +32,6 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
-from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
 from neutron.db import extraroute_db
@@ -59,7 +59,6 @@ LOG = logging.getLogger(__name__)
 
 
 class OVSRpcCallbacks(n_rpc.RpcCallback,
-                      dhcp_rpc_base.DhcpRpcCallbackMixin,
                       sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
     # history
@@ -345,6 +344,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             l3_rpc_agent_api.L3AgentNotifyAPI()
         )
         self.endpoints = [OVSRpcCallbacks(self.notifier, self.tunnel_type),
+                          dhcp_rpc.DhcpRpcCallback(),
                           l3_rpc.L3RpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():

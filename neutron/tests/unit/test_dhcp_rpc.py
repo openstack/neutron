@@ -16,22 +16,22 @@
 import mock
 from oslo.db import exception as db_exc
 
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
-from neutron.db import dhcp_rpc_base
 from neutron.tests import base
 
 
-class TestDhcpRpcCallbackMixin(base.BaseTestCase):
+class TestDhcpRpcCallback(base.BaseTestCase):
 
     def setUp(self):
-        super(TestDhcpRpcCallbackMixin, self).setUp()
+        super(TestDhcpRpcCallback, self).setUp()
         self.plugin_p = mock.patch('neutron.manager.NeutronManager.get_plugin')
         get_plugin = self.plugin_p.start()
         self.plugin = mock.MagicMock()
         get_plugin.return_value = self.plugin
-        self.callbacks = dhcp_rpc_base.DhcpRpcCallbackMixin()
-        self.log_p = mock.patch('neutron.db.dhcp_rpc_base.LOG')
+        self.callbacks = dhcp_rpc.DhcpRpcCallback()
+        self.log_p = mock.patch('neutron.api.rpc.handlers.dhcp_rpc.LOG')
         self.log = self.log_p.start()
 
     def test_get_active_networks(self):
