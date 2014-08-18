@@ -31,14 +31,15 @@ from neutron.plugins.ml2 import models
 LOG = log.getLogger(__name__)
 
 
-def add_network_segment(session, network_id, segment):
+def add_network_segment(session, network_id, segment, dynamic_segment=False):
     with session.begin(subtransactions=True):
         record = models.NetworkSegment(
             id=uuidutils.generate_uuid(),
             network_id=network_id,
             network_type=segment.get(api.NETWORK_TYPE),
             physical_network=segment.get(api.PHYSICAL_NETWORK),
-            segmentation_id=segment.get(api.SEGMENTATION_ID)
+            segmentation_id=segment.get(api.SEGMENTATION_ID),
+            dynamic_segment=dynamic_segment
         )
         session.add(record)
     LOG.info(_("Added segment %(id)s of type %(network_type)s for network"
@@ -51,12 +52,27 @@ def add_network_segment(session, network_id, segment):
 def get_network_segments(session, network_id):
     with session.begin(subtransactions=True):
         records = (session.query(models.NetworkSegment).
-                   filter_by(network_id=network_id))
+                   filter_by(network_id=network_id).
+                   filter_by(dynamic_segment=False))
         return [{api.ID: record.id,
                  api.NETWORK_TYPE: record.network_type,
                  api.PHYSICAL_NETWORK: record.physical_network,
                  api.SEGMENTATION_ID: record.segmentation_id}
                 for record in records]
+
+
+def get_dynamic_segment(session, network_id, physical_network):
+    with session.begin(subtransactions=True):
+        record = (session.query(models.NetworkSegment).
+                  filter_by(network_id=network_id).
+                  filter_by(physical_network=physical_network).
+                  filter_by(dynamic_segment=True).
+                  first())
+        if record:
+            return {api.ID: record.id,
+                    api.NETWORK_TYPE: record.network_type,
+                    api.PHYSICAL_NETWORK: record.physical_network,
+                    api.SEGMENTATION_ID: record.segmentation_id}
 
 
 def add_port_binding(session, port_id):

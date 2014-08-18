@@ -25,6 +25,7 @@ ID = 'id'
 NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
+DYNAMIC_SEGMENT = 'dynamic_segment'
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -133,6 +134,19 @@ class TypeDriver(object):
         tenant or provider network's type-specific resource. Runtime
         errors are not expected, but raising an exception will result
         in rollback of the transaction.
+        """
+        pass
+
+    def allocate_dynamic_segment(self, session, network_id, segment):
+        """Allocate a dynamic segment.
+
+        :param network_id: UUID of the network
+        :param segment: A partially specified segment dictionary
+
+        Optional method called from the mechanism drivers during create_port
+        or bind_port to dynamically allocate a segment for the network and the
+        partial segment specified. The partial segment is expected to have it's
+        NETWORK_TYPE and PHYSICAL_NETWORK keys populated.
         """
         pass
 
@@ -326,6 +340,10 @@ class PortContext(object):
         specify binding details to use for port. The segment_id must
         identify an item in network.network_segments.
         """
+        pass
+
+    def allocate_dynamic_segment(self, segment):
+        """Allocate a dynamic segment for the port."""
         pass
 
 

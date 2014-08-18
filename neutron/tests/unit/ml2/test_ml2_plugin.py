@@ -68,8 +68,12 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
                                      group='ml2')
         self.physnet = 'physnet1'
         self.vlan_range = '1:100'
+        self.vlan_range2 = '200:300'
+        self.physnet2 = 'physnet2'
         self.phys_vrange = ':'.join([self.physnet, self.vlan_range])
-        config.cfg.CONF.set_override('network_vlan_ranges', [self.phys_vrange],
+        self.phys2_vrange = ':'.join([self.physnet2, self.vlan_range2])
+        config.cfg.CONF.set_override('network_vlan_ranges',
+                                     [self.phys_vrange, self.phys2_vrange],
                                      group='ml2_type_vlan')
         super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME,
                                                service_plugins=service_plugins)
@@ -355,6 +359,59 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
     def setUp(self, plugin=None):
         super(TestMultiSegmentNetworks, self).setUp()
+
+    def test_allocate_dynamic_segment(self):
+        data = {'network': {'name': 'net1',
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        segment = {driver_api.NETWORK_TYPE: 'vlan',
+                   driver_api.PHYSICAL_NETWORK: 'physnet1'}
+        network_id = network['network']['id']
+        self.driver.type_manager.allocate_dynamic_segment(
+            self.context.session, network_id, segment)
+        dynamic_segment = ml2_db.get_dynamic_segment(self.context.session,
+                                                     network_id,
+                                                     'physnet1')
+        self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
+        self.assertEqual('physnet1',
+                         dynamic_segment[driver_api.PHYSICAL_NETWORK])
+        self.assertTrue(dynamic_segment[driver_api.SEGMENTATION_ID] > 0)
+
+    def test_allocate_dynamic_segment_multiple_physnets(self):
+        data = {'network': {'name': 'net1',
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        segment = {driver_api.NETWORK_TYPE: 'vlan',
+                   driver_api.PHYSICAL_NETWORK: 'physnet1'}
+        network_id = network['network']['id']
+        self.driver.type_manager.allocate_dynamic_segment(
+            self.context.session, network_id, segment)
+        dynamic_segment = ml2_db.get_dynamic_segment(self.context.session,
+                                                     network_id,
+                                                     'physnet1')
+        self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
+        self.assertEqual('physnet1',
+                         dynamic_segment[driver_api.PHYSICAL_NETWORK])
+        dynamic_segment_id = dynamic_segment[driver_api.SEGMENTATION_ID]
+        self.assertTrue(dynamic_segment_id > 0)
+        dynamic_segment1 = ml2_db.get_dynamic_segment(self.context.session,
+                                                      network_id,
+                                                      'physnet1')
+        dynamic_segment1_id = dynamic_segment1[driver_api.SEGMENTATION_ID]
+        self.assertEqual(dynamic_segment_id, dynamic_segment1_id)
+        segment2 = {driver_api.NETWORK_TYPE: 'vlan',
+                    driver_api.PHYSICAL_NETWORK: 'physnet2'}
+        self.driver.type_manager.allocate_dynamic_segment(
+            self.context.session, network_id, segment2)
+        dynamic_segment2 = ml2_db.get_dynamic_segment(self.context.session,
+                                                      network_id,
+                                                      'physnet2')
+        dynamic_segment2_id = dynamic_segment2[driver_api.SEGMENTATION_ID]
+        self.assertNotEqual(dynamic_segment_id, dynamic_segment2_id)
 
     def test_create_network_provider(self):
         data = {'network': {'name': 'net1',

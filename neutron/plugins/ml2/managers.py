@@ -206,6 +206,23 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             return
         driver.obj.release_segment(session, segment)
 
+    def allocate_dynamic_segment(self, session, network_id, segment):
+        """Allocate a dynamic segment using a partial segment dict."""
+        dynamic_segment = db.get_dynamic_segment(
+            session, network_id, segment.get(api.PHYSICAL_NETWORK))
+
+        if dynamic_segment:
+            return dynamic_segment
+
+        for network_type in self.drivers:
+            if network_type == segment.get(api.NETWORK_TYPE):
+                driver = self.drivers.get(network_type)
+                dynamic_segment = driver.obj.reserve_provider_segment(
+                    session, segment)
+                db.add_network_segment(session, network_id, dynamic_segment,
+                                       dynamic_segment=True)
+                return dynamic_segment
+
 
 class MechanismManager(stevedore.named.NamedExtensionManager):
     """Manage networking mechanisms using drivers."""
