@@ -110,6 +110,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             seconds=agent_dead_limit)
         down_bindings = (
             context.session.query(RouterL3AgentBinding).
+            join(agents_db.Agent).
             filter(agents_db.Agent.heartbeat_timestamp < cutoff,
                    agents_db.Agent.admin_state_up))
         for binding in down_bindings:
