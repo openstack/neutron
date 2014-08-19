@@ -39,7 +39,6 @@ TAP_DEVICE_PREFIX_LENGTH = 3
 
 
 class RpcCallbacks(n_rpc.RpcCallback,
-                   dvr_rpc.DVRServerRpcCallbackMixin,
                    sg_db_rpc.SecurityGroupServerRpcCallbackMixin,
                    type_tunnel.TunnelRpcCallbackMixin):
 
@@ -198,24 +197,6 @@ class RpcCallbacks(n_rpc.RpcCallback,
                 l3plugin.dvr_vmarp_table_update(rpc_context, port_id, "add")
             except exceptions.PortNotFound:
                 LOG.debug('Port %s not found during ARP update', port_id)
-
-    def get_dvr_mac_address_by_host(self, rpc_context, **kwargs):
-        host = kwargs.get('host')
-        LOG.debug("DVR Agent requests mac_address for host %s", host)
-        return super(RpcCallbacks, self).get_dvr_mac_address_by_host(
-            rpc_context, host)
-
-    def get_ports_on_host_by_subnet(self, rpc_context, **kwargs):
-        host = kwargs.get('host')
-        subnet = kwargs.get('subnet')
-        LOG.debug("DVR Agent requests list of VM ports on host %s", host)
-        return super(RpcCallbacks, self).get_ports_on_host_by_subnet(
-            rpc_context, host, subnet)
-
-    def get_subnet_for_dvr(self, rpc_context, **kwargs):
-        subnet = kwargs.get('subnet')
-        return super(RpcCallbacks, self).get_subnet_for_dvr(rpc_context,
-                                                            subnet)
 
 
 class AgentNotifierApi(n_rpc.RpcProxy,
