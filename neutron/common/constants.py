@@ -115,3 +115,5 @@ DHCPV6_STATEFUL = 'dhcpv6-stateful'
 DHCPV6_STATELESS = 'dhcpv6-stateless'
 IPV6_SLAAC = 'slaac'
 IPV6_MODES = [DHCPV6_STATEFUL, DHCPV6_STATELESS, IPV6_SLAAC]
+
+ATTRIBUTES_TO_UPDATE = 'attributes_to_update'

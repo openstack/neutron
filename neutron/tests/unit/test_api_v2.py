@@ -1208,6 +1208,18 @@ class SubresourceTest(base.BaseTestCase):
                                                               network_id='id1',
                                                               dummy=body)
 
+    def test_update_subresource_to_none(self):
+        instance = self.plugin.return_value
+
+        dummy_id = _uuid()
+        body = {'dummy': {}}
+        self.api.put_json('/networks/id1' + _get_path('dummies', id=dummy_id),
+                          body)
+        instance.update_network_dummy.assert_called_once_with(mock.ANY,
+                                                              dummy_id,
+                                                              network_id='id1',
+                                                              dummy=body)
+
     def test_delete_sub_resource(self):
         instance = self.plugin.return_value
 
