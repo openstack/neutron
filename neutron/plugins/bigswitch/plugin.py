@@ -362,8 +362,10 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
         # In ML2, the host_id is already populated
         if portbindings.HOST_ID in port:
             hostid = port[portbindings.HOST_ID]
-        else:
+        elif 'id' in port:
             hostid = porttracker_db.get_port_hostid(context, port['id'])
+        else:
+            hostid = None
         if hostid:
             port[portbindings.HOST_ID] = hostid
             override = self._check_hostvif_override(hostid)
