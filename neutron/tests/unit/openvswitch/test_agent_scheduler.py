@@ -1055,9 +1055,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           L3_HOSTA)
             self._add_router_to_l3_agent(hosta_id,
                                          router1['router']['id'])
+            # scheduling twice on the same agent is fine
             self._add_router_to_l3_agent(hosta_id,
-                                         router1['router']['id'],
-                                         expected_code=exc.HTTPConflict.code)
+                                         router1['router']['id'])
 
     def test_router_add_to_two_l3_agents(self):
         with self.router() as router1:

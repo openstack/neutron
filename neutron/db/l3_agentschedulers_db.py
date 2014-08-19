@@ -152,30 +152,29 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if is_wrong_type_or_unsuitable_agent:
             raise l3agentscheduler.InvalidL3Agent(id=agent['id'])
 
-    def validate_agent_router_existing_binding(self, context, agent, router):
-        """Validate if the router is already assigned to the agent.
+    def check_agent_router_scheduling_needed(self, context, agent, router):
+        """Check if the router scheduling is needed.
 
         :raises: RouterHostedByL3Agent if router is already assigned
+          to a different agent.
+        :returns: True if scheduling is needed, otherwise False
         """
         router_id = router['id']
         agent_id = agent['id']
         query = context.session.query(RouterL3AgentBinding)
+        bindings = query.filter_by(router_id=router_id).all()
+        if not bindings:
+            return True
+        for binding in bindings:
+            if binding.l3_agent_id == agent_id:
+                # router already bound to the agent we need
+                return False
         if router.get('distributed'):
-            binding = query.filter_by(router_id=router_id,
-                                      l3_agent_id=agent_id).first()
-            if binding:
-                raise l3agentscheduler.RouterHostedByL3Agent(
-                    router_id=router_id,
-                    agent_id=binding.l3_agent_id)
-        else:
-            try:
-                binding = query.filter_by(router_id=router_id).one()
-
-                raise l3agentscheduler.RouterHostedByL3Agent(
-                    router_id=router_id,
-                    agent_id=binding.l3_agent_id)
-            except exc.NoResultFound:
-                pass
+            return False
+        # non-dvr case: centralized router is already bound to some agent
+        raise l3agentscheduler.RouterHostedByL3Agent(
+            router_id=router_id,
+            agent_id=bindings[0].l3_agent_id)
 
     def create_router_to_agent_binding(self, context, agent, router):
         """Create router to agent binding."""
@@ -192,8 +191,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             router = self.get_router(context, router_id)
             agent = self._get_agent(context, agent_id)
             self.validate_agent_router_combination(context, agent, router)
-            self.validate_agent_router_existing_binding(context, agent, router)
-            self.create_router_to_agent_binding(context, agent, router)
+            if self.check_agent_router_scheduling_needed(
+                context, agent, router):
+                self.create_router_to_agent_binding(context, agent, router)
+            else:
+                return
 
         l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
         if l3_notifier:
