@@ -518,8 +518,18 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self.sync_progress = False
 
         # Get the list of service plugins from Neutron Server
-        self.neutron_service_plugins = (
-            self.plugin_rpc.get_service_plugin_list(self.context))
+        try:
+            self.neutron_service_plugins = (
+                self.plugin_rpc.get_service_plugin_list(self.context))
+        except n_rpc.RemoteError as e:
+            LOG.warning(_('l3-agent cannot check service plugins '
+                          'enabled at the neutron server when startup '
+                          'due to RPC error. It happens when the server '
+                          'does not support this RPC API. If the error '
+                          'is UnsupportedVersion you can ignore '
+                          'this warning. Detail message: %s'), e)
+            self.neutron_service_plugins = None
+
         self._clean_stale_namespaces = self.conf.use_namespaces
 
         # dvr data
