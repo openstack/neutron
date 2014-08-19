@@ -51,9 +51,7 @@ class FirewallCallbacks(n_rpc.RpcCallback):
                             "not changing to %(status)s"),
                           {'fw_id': firewall_id, 'status': status})
                 return False
-            #TODO(xuhanp): Remove INACTIVE status and use DOWN to
-            # be consistent with other network resources
-            if status in (const.ACTIVE, const.INACTIVE, const.DOWN):
+            if status in (const.ACTIVE, const.DOWN):
                 fw_db.status = status
                 return True
             else:
