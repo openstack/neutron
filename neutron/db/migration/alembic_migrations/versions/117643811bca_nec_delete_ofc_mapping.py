@@ -179,30 +179,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.create_table(
-        'ofctenants',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table(
-        'ofcnetworks',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table(
-        'ofcports',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table(
-        'ofcfilters',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
+    pass

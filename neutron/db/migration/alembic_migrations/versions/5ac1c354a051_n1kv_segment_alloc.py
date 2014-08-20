@@ -70,14 +70,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.drop_constraint('cisco_n1kv_vxlan_allocations_ibfk_1',
-                       'cisco_n1kv_vxlan_allocations',
-                       'foreignkey')
-    op.drop_column('cisco_n1kv_vxlan_allocations', 'network_profile_id')
-    op.drop_constraint('cisco_n1kv_vlan_allocations_ibfk_1',
-                       'cisco_n1kv_vlan_allocations',
-                       'foreignkey')
-    op.drop_column('cisco_n1kv_vlan_allocations', 'network_profile_id')
+    pass

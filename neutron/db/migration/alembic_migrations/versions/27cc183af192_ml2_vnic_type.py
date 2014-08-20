@@ -48,7 +48,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.drop_column('ml2_port_bindings', 'vnic_type')
+    pass

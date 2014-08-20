@@ -62,19 +62,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    # Restore table to pre-icehouse version
-    op.create_table('quantum_nvp_port_mapping',
-                    sa.Column('quantum_id', sa.String(length=36),
-                              nullable=False),
-                    sa.Column('nvp_id', sa.String(length=36),
-                              nullable=False),
-                    sa.ForeignKeyConstraint(['quantum_id'], ['ports.id'],
-                                            ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('quantum_id'))
-    op.execute("INSERT INTO quantum_nvp_port_mapping SELECT neutron_id as "
-               "quantum_id, nsx_port_id as nvp_id from"
-               " neutron_nsx_port_mappings")
-    op.drop_table('neutron_nsx_port_mappings')
+    pass

@@ -107,14 +107,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.drop_table('router_zone_mapping')
-    op.drop_table('net_partition_router_mapping')
-    op.drop_table('subnet_l2dom_mapping')
-    op.drop_table('port_mapping')
-    op.drop_table('net_partitions')
-    op.drop_table('quotas')
-
-    common_ext_ops.downgrade_l3()
+    pass

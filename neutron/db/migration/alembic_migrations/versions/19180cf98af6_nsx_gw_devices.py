@@ -79,22 +79,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.drop_table('networkgatewaydevices')
-    # Re-create previous version of networkgatewaydevices table
-    op.create_table(
-        'networkgatewaydevices',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('network_gateway_id', sa.String(length=36), nullable=True),
-        sa.Column('interface_name', sa.String(length=64), nullable=True),
-        sa.ForeignKeyConstraint(['network_gateway_id'], ['networkgateways.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id'))
-    # Copy from networkgatewaydevicereferences to networkgatewaydevices
-    op.execute("INSERT INTO networkgatewaydevices SELECT "
-               "id, network_gateway_id, interface_name FROM "
-               "networkgatewaydevicereferences")
-    # Dropt networkgatewaydevicereferences
-    op.drop_table('networkgatewaydevicereferences')
+    pass

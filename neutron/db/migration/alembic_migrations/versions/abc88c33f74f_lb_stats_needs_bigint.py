@@ -52,14 +52,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.alter_column('poolstatisticss', 'bytes_in',
-                    type_=sa.Integer(), existing_type=sa.BigInteger())
-    op.alter_column('poolstatisticss', 'bytes_out',
-                    type_=sa.Integer(), existing_type=sa.BigInteger())
-    op.alter_column('poolstatisticss', 'active_connections',
-                    type_=sa.Integer(), existing_type=sa.BigInteger())
-    op.alter_column('poolstatisticss', 'total_connections',
-                    type_=sa.Integer(), existing_type=sa.BigInteger())
+    pass

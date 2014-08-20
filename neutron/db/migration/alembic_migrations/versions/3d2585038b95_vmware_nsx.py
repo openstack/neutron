@@ -53,13 +53,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    engine = op.get_bind().engine
-    if engine.name == 'postgresql':
-        op.execute("ALTER TYPE tz_network_bindings_binding_type "
-                   "RENAME TO nvp_network_bindings_binding_type;")
-
-    op.rename_table('multi_provider_networks', 'nvp_multi_provider_networks')
-    op.rename_table('tz_network_bindings', 'nvp_network_bindings')
+    pass
