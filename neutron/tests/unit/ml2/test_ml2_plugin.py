@@ -413,6 +413,19 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         dynamic_segment2_id = dynamic_segment2[driver_api.SEGMENTATION_ID]
         self.assertNotEqual(dynamic_segment_id, dynamic_segment2_id)
 
+    def test_create_network_provider_stores_boolean(self):
+        data = {'network': {'name': 'net1',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: 'physnet1',
+                            pnet.SEGMENTATION_ID: 1,
+                            'tenant_id': 'tenant_one',
+                            'admin_state_up': True,
+                            'shared': False}}
+        network = self.driver.create_network(self.context, data)
+        self.assertEqual('vlan', network[pnet.NETWORK_TYPE])
+        self.assertEqual('physnet1', network[pnet.PHYSICAL_NETWORK])
+        self.assertTrue(network[driver_api.PROVIDER_SEGMENT])
+
     def test_create_network_provider(self):
         data = {'network': {'name': 'net1',
                             pnet.NETWORK_TYPE: 'vlan',

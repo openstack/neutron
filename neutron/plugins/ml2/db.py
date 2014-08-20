@@ -31,7 +31,8 @@ from neutron.plugins.ml2 import models
 LOG = log.getLogger(__name__)
 
 
-def add_network_segment(session, network_id, segment, dynamic_segment=False):
+def add_network_segment(session, network_id, segment, dynamic_segment=False,
+                        provider_segment=False):
     with session.begin(subtransactions=True):
         record = models.NetworkSegment(
             id=uuidutils.generate_uuid(),
@@ -39,7 +40,8 @@ def add_network_segment(session, network_id, segment, dynamic_segment=False):
             network_type=segment.get(api.NETWORK_TYPE),
             physical_network=segment.get(api.PHYSICAL_NETWORK),
             segmentation_id=segment.get(api.SEGMENTATION_ID),
-            dynamic_segment=dynamic_segment
+            dynamic_segment=dynamic_segment,
+            provider_segment=provider_segment
         )
         session.add(record)
     LOG.info(_("Added segment %(id)s of type %(network_type)s for network"
@@ -57,7 +59,8 @@ def get_network_segments(session, network_id):
         return [{api.ID: record.id,
                  api.NETWORK_TYPE: record.network_type,
                  api.PHYSICAL_NETWORK: record.physical_network,
-                 api.SEGMENTATION_ID: record.segmentation_id}
+                 api.SEGMENTATION_ID: record.segmentation_id,
+                 api.PROVIDER_SEGMENT: record.provider_segment}
                 for record in records]
 
 
