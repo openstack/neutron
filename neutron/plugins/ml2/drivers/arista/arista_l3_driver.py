@@ -33,6 +33,8 @@ VIRTUAL_ROUTER_MAC = '00:11:22:33:44:55'
 IPV4_BITS = 32
 IPV6_BITS = 128
 
+# This string-format-at-a-distance confuses pylint :(
+# pylint: disable=too-many-format-args
 router_in_vrf = {
     'router': {'create': ['vrf definition {0}',
                           'rd {1}',

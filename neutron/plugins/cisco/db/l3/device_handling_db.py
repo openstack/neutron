@@ -187,30 +187,30 @@ class DeviceHandlingMixin(object):
         return cls._mgmt_sec_grp_id
 
     @classmethod
-    def get_hosting_device_driver(self):
+    def get_hosting_device_driver(cls):
         """Returns device driver."""
-        if self._hosting_device_driver:
-            return self._hosting_device_driver
+        if cls._hosting_device_driver:
+            return cls._hosting_device_driver
         else:
             try:
-                self._hosting_device_driver = importutils.import_object(
+                cls._hosting_device_driver = importutils.import_object(
                     cfg.CONF.hosting_devices.csr1kv_device_driver)
             except (ImportError, TypeError, n_exc.NeutronException):
                 LOG.exception(_('Error loading hosting device driver'))
-            return self._hosting_device_driver
+            return cls._hosting_device_driver
 
     @classmethod
-    def get_hosting_device_plugging_driver(self):
+    def get_hosting_device_plugging_driver(cls):
         """Returns  plugging driver."""
-        if self._plugging_driver:
-            return self._plugging_driver
+        if cls._plugging_driver:
+            return cls._plugging_driver
         else:
             try:
-                self._plugging_driver = importutils.import_object(
+                cls._plugging_driver = importutils.import_object(
                     cfg.CONF.hosting_devices.csr1kv_plugging_driver)
             except (ImportError, TypeError, n_exc.NeutronException):
                 LOG.exception(_('Error loading plugging driver'))
-            return self._plugging_driver
+            return cls._plugging_driver
 
     def get_hosting_devices_qry(self, context, hosting_device_ids,
                                 load_agent=True):
@@ -432,7 +432,7 @@ class DeviceHandlingMixin(object):
         with context.session.begin(subtransactions=True):
             hd_db = l3_models.HostingDevice(
                 id=hd.get('id') or uuidutils.generate_uuid(),
-                complementary_id = hd.get('complementary_id'),
+                complementary_id=hd.get('complementary_id'),
                 tenant_id=tenant_id,
                 device_id=hd.get('device_id'),
                 admin_state_up=hd.get('admin_state_up', True),

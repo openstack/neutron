@@ -2,17 +2,98 @@
 [MASTER]
 # Add <file or directory> to the black list. It should be a base name, not a
 # path. You may set this option multiple times.
-ignore=test
+#
+# Note the 'openstack' below is intended to match only
+# neutron.openstack.common.  If we ever have another 'openstack'
+# dirname, then we'll need to expand the ignore features in pylint :/
+ignore=.git,tests,openstack
 
-[Messages Control]
-# NOTE(justinsb): We might want to have a 2nd strict pylintrc in future
-# C0111: Don't require docstrings on every method
-# W0511: TODOs in code comments are fine.
-# W0142: *args and **kwargs are fine.
-# W0622: Redefining id is fine.
-disable=C0111,W0511,W0142,W0622
+[MESSAGES CONTROL]
+# NOTE(gus): This is a long list.  A number of these are important and
+# should be re-enabled once the offending code is fixed (or marked
+# with a local disable)
+disable=
+# "F" Fatal errors that prevent further processing
+ import-error,
+# "I" Informational noise
+ locally-disabled,
+# "E" Error for important programming issues (likely bugs)
+ access-member-before-definition,
+ assignment-from-no-return,
+ bad-except-order,
+ bad-super-call,
+ maybe-no-member,
+ no-member,
+ no-method-argument,
+ no-name-in-module,
+ no-self-argument,
+ not-callable,
+ no-value-for-parameter,
+ super-on-old-class,
+ too-few-format-args,
+# "W" Warnings for stylistic problems or minor programming issues
+ abstract-method,
+ anomalous-backslash-in-string,
+ anomalous-unicode-escape-in-string,
+ arguments-differ,
+ attribute-defined-outside-init,
+ bad-builtin,
+ bad-indentation,
+ broad-except,
+ dangerous-default-value,
+ deprecated-lambda,
+ duplicate-key,
+ expression-not-assigned,
+ fixme,
+ global-statement,
+ global-variable-not-assigned,
+ logging-not-lazy,
+ lost-exception,
+ no-init,
+ non-parent-init-called,
+ pointless-string-statement,
+ protected-access,
+ redefined-builtin,
+ redefined-outer-name,
+ redefine-in-handler,
+ reimported,
+ signature-differs,
+ star-args,
+ super-init-not-called,
+ undefined-loop-variable,
+ unnecessary-lambda,
+ unnecessary-pass,
+ unpacking-non-sequence,
+ unreachable,
+ unused-argument,
+ unused-import,
+ unused-variable,
+ useless-else-on-loop,
+# "C" Coding convention violations
+ bad-continuation,
+ invalid-name,
+ missing-docstring,
+ old-style-class,
+ superfluous-parens,
+# "R" Refactor recommendations
+ abstract-class-little-used,
+ abstract-class-not-used,
+ cyclic-import,
+ duplicate-code,
+ interface-not-implemented,
+ no-self-use,
+ too-few-public-methods,
+ too-many-ancestors,
+ too-many-arguments,
+ too-many-branches,
+ too-many-instance-attributes,
+ too-many-lines,
+ too-many-locals,
+ too-many-public-methods,
+ too-many-return-statements,
+ too-many-statements
 
-[Basic]
+[BASIC]
 # Variable names can be 1 to 31 characters long, with lowercase and underscores
 variable-rgx=[a-z_][a-z0-9_]{0,30}$
 
@@ -21,7 +102,7 @@ argument-rgx=[a-z_][a-z0-9_]{1,30}$
 
 # Method names should be at least 3 characters long
 # and be lowecased with underscores
-method-rgx=([a-z_][a-z0-9_]{2,50}|setUp|tearDown)$
+method-rgx=([a-z_][a-z0-9_]{2,}|setUp|tearDown)$
 
 # Module names matching neutron-* are ok (files in bin/)
 module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+)|(neutron-[a-z0-9_-]+))$
@@ -29,14 +110,26 @@ module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+)|(neutron-[a-z0-9_-]+))$
 # Don't require docstrings on tests.
 no-docstring-rgx=((__.*__)|([tT]est.*)|setUp|tearDown)$
 
-[Design]
-max-public-methods=100
-min-public-methods=0
-max-args=6
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=79
 
-[Variables]
-
+[VARIABLES]
 # List of additional names supposed to be defined in builtins. Remember that
 # you should avoid to define new builtins when possible.
 # _ is used by our localization
 additional-builtins=_
+
+[CLASSES]
+# List of interface methods to ignore, separated by a comma.
+ignore-iface-methods=
+
+[IMPORTS]
+# Deprecated modules which should not be used, separated by a comma
+deprecated-modules=
+# should use openstack.common.jsonutils
+ json
+
+[REPORTS]
+# Tells whether to display a full report or only the messages
+reports=no
