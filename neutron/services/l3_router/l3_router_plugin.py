@@ -88,11 +88,11 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
         """Create floating IP.
 
         :param context: Neutron request context
-        :param floatingip: data fo the floating IP being created
+        :param floatingip: data for the floating IP being created
         :returns: A floating IP object on success
 
-        AS the l3 router plugin aysnchrounously creates floating IPs
-        leveraging tehe l3 agent, the initial status fro the floating
+        As the l3 router plugin asynchronously creates floating IPs
+        leveraging the l3 agent, the initial status for the floating
         IP object will be DOWN.
         """
         return super(L3RouterPlugin, self).create_floatingip(
