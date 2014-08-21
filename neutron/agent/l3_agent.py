@@ -685,6 +685,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         ip_wrapper_root = ip_lib.IPWrapper(self.root_helper)
         ip_wrapper = ip_wrapper_root.ensure_namespace(name)
         ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
+        if self.use_ipv6:
+            ip_wrapper.netns.execute(['sysctl', '-w',
+                                      'net.ipv6.conf.all.forwarding=1'])
 
     def _create_router_namespace(self, ri):
         self._create_namespace(ri.ns_name)
