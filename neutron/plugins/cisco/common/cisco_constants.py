@@ -40,7 +40,6 @@ PASSWORD = 'password'
 
 LOGGER_COMPONENT_NAME = "cisco_plugin"
 
-NEXUS_PLUGIN = 'nexus_plugin'
 VSWITCH_PLUGIN = 'vswitch_plugin'
 
 DEVICE_IP = 'device_ip'
@@ -101,11 +100,11 @@ ENCAPSULATION_PROFILE_SUFFIX = '_profile'
 
 UUID_LENGTH = 36
 
-# Nexus vlan and vxlan segment range
-NEXUS_VLAN_RESERVED_MIN = 3968
-NEXUS_VLAN_RESERVED_MAX = 4047
-NEXUS_VXLAN_MIN = 4096
-NEXUS_VXLAN_MAX = 16000000
+# N1KV vlan and vxlan segment range
+N1KV_VLAN_RESERVED_MIN = 3968
+N1KV_VLAN_RESERVED_MAX = 4047
+N1KV_VXLAN_MIN = 4096
+N1KV_VXLAN_MAX = 16000000
 
 # Type and topic for Cisco cfg agent
 # ==================================
