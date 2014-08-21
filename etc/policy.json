@@ -63,10 +63,17 @@
     "update_port:mac_learning_enabled": "rule:admin_or_network_owner",
     "delete_port": "rule:admin_or_owner",
 
+    "create_router": "rule:regular_user",
     "create_router:external_gateway_info:enable_snat": "rule:admin_only",
     "create_router:distributed": "rule:admin_only",
+    "get_router": "rule:admin_or_owner",
+    "get_router:distributed": "rule:admin_only",
     "update_router:external_gateway_info:enable_snat": "rule:admin_only",
     "update_router:distributed": "rule:admin_only",
+    "delete_router": "rule:admin_or_owner",
+
+    "add_router_interface": "rule:admin_or_owner",
+    "remove_router_interface": "rule:admin_or_owner",
 
     "create_firewall": "",
     "get_firewall": "rule:admin_or_owner",
@@ -104,13 +111,6 @@
     "get_l3-agents": "rule:admin_only",
     "get_loadbalancer-agent": "rule:admin_only",
     "get_loadbalancer-pools": "rule:admin_only",
-
-    "create_router": "rule:regular_user",
-    "get_router": "rule:admin_or_owner",
-    "get_router:distributed": "rule:admin_only",
-    "update_router:add_router_interface": "rule:admin_or_owner",
-    "update_router:remove_router_interface": "rule:admin_or_owner",
-    "delete_router": "rule:admin_or_owner",
 
     "create_floatingip": "rule:regular_user",
     "update_floatingip": "rule:admin_or_owner",
