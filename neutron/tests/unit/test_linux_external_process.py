@@ -23,6 +23,9 @@ class TestProcessManager(base.BaseTestCase):
         super(TestProcessManager, self).setUp()
         self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
         self.execute = self.execute_p.start()
+        self.delete_if_exists = mock.patch(
+            'neutron.openstack.common.fileutils.delete_if_exists').start()
+
         self.conf = mock.Mock()
         self.conf.external_pids = '/var/path'
 

@@ -51,6 +51,7 @@ METADATA_DEFAULT_CIDR = '%s/%d' % (METADATA_DEFAULT_IP,
 METADATA_PORT = 80
 WIN2k3_STATIC_DNS = 249
 NS_PREFIX = 'qdhcp-'
+DNSMASQ_SERVICE_NAME = 'dnsmasq'
 
 
 class DictModel(dict):
@@ -111,11 +112,12 @@ class NetModel(DictModel):
 @six.add_metaclass(abc.ABCMeta)
 class DhcpBase(object):
 
-    def __init__(self, conf, network, root_helper='sudo',
+    def __init__(self, conf, network, process_monitor, root_helper='sudo',
                  version=None, plugin=None):
         self.conf = conf
         self.network = network
         self.root_helper = root_helper
+        self.process_monitor = process_monitor
         self.device_manager = DeviceManager(self.conf,
                                             self.root_helper, plugin)
         self.version = version
@@ -167,10 +169,10 @@ class DhcpBase(object):
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
 
-    def __init__(self, conf, network, root_helper='sudo',
+    def __init__(self, conf, network, process_monitor, root_helper='sudo',
                  version=None, plugin=None):
-        super(DhcpLocalProcess, self).__init__(conf, network, root_helper,
-                                               version, plugin)
+        super(DhcpLocalProcess, self).__init__(conf, network, process_monitor,
+                                               root_helper, version, plugin)
         self.confs_dir = self.get_confs_dir(conf)
         self.network_conf_dir = os.path.join(self.confs_dir, network.id)
         self._ensure_network_conf_dir()
@@ -210,21 +212,18 @@ class DhcpLocalProcess(DhcpBase):
 
     def disable(self, retain_port=False):
         """Disable DHCP for this network by killing the local process."""
-        pid = self.pid
+        pid_filename = self.get_conf_file_name('pid')
 
-        if pid:
-            if self.active:
-                cmd = ['kill', '-9', pid]
-                utils.execute(cmd, self.root_helper)
-            else:
-                LOG.debug('DHCP for %(net_id)s is stale, pid %(pid)d '
-                          'does not exist, performing cleanup',
-                          {'net_id': self.network.id, 'pid': pid})
-            if not retain_port:
-                self.device_manager.destroy(self.network,
-                                            self.interface_name)
-        else:
-            LOG.debug('No DHCP started for %s', self.network.id)
+        pid = self.process_monitor.get_pid(uuid=self.network.id,
+                                           service=DNSMASQ_SERVICE_NAME,
+                                           pid_file=pid_filename)
+
+        self.process_monitor.disable(uuid=self.network.id,
+                                     namespace=self.network.namespace,
+                                     service=DNSMASQ_SERVICE_NAME,
+                                     pid_file=pid_filename)
+        if pid and not retain_port:
+            self.device_manager.destroy(self.network, self.interface_name)
 
         self._remove_config_files()
 
@@ -256,24 +255,6 @@ class DhcpLocalProcess(DhcpBase):
         return None
 
     @property
-    def pid(self):
-        """Last known pid for the DHCP process spawned for this network."""
-        return self._get_value_from_conf_file('pid', int)
-
-    @property
-    def active(self):
-        pid = self.pid
-        if pid is None:
-            return False
-
-        cmdline = '/proc/%s/cmdline' % pid
-        try:
-            with open(cmdline, "r") as f:
-                return self.network.id in f.readline()
-        except IOError:
-            return False
-
-    @property
     def interface_name(self):
         return self._get_value_from_conf_file('interface')
 
@@ -281,6 +262,13 @@ class DhcpLocalProcess(DhcpBase):
     def interface_name(self, value):
         interface_file_path = self.get_conf_file_name('interface')
         utils.replace_file(interface_file_path, value)
+
+    @property
+    def active(self):
+        pid_filename = self.get_conf_file_name('pid')
+        return self.process_monitor.is_active(self.network.id,
+                                              DNSMASQ_SERVICE_NAME,
+                                              pid_file=pid_filename)
 
     @abc.abstractmethod
     def spawn_process(self):
@@ -333,12 +321,7 @@ class Dnsmasq(DhcpLocalProcess):
         except OSError:
             return []
 
-    def spawn_process(self):
-        """Spawns a Dnsmasq process for the network."""
-        env = {
-            self.NEUTRON_NETWORK_ID_KEY: self.network.id,
-        }
-
+    def _build_cmdline_callback(self, pid_file):
         cmd = [
             'dnsmasq',
             '--no-hosts',
@@ -347,10 +330,10 @@ class Dnsmasq(DhcpLocalProcess):
             '--bind-interfaces',
             '--interface=%s' % self.interface_name,
             '--except-interface=lo',
-            '--pid-file=%s' % self.get_conf_file_name('pid'),
-            '--dhcp-hostsfile=%s' % self._output_hosts_file(),
-            '--addn-hosts=%s' % self._output_addn_hosts_file(),
-            '--dhcp-optsfile=%s' % self._output_opts_file(),
+            '--pid-file=%s' % pid_file,
+            '--dhcp-hostsfile=%s' % self.get_conf_file_name('host'),
+            '--addn-hosts=%s' % self.get_conf_file_name('addn_hosts'),
+            '--dhcp-optsfile=%s' % self.get_conf_file_name('opts'),
             '--leasefile-ro',
         ]
 
@@ -409,9 +392,31 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.dhcp_broadcast_reply:
             cmd.append('--dhcp-broadcast')
 
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                      self.network.namespace)
-        ip_wrapper.netns.execute(cmd, addl_env=env)
+        return cmd
+
+    def spawn_process(self):
+        """Spawn the process, if it's not spawned already."""
+        self._spawn_or_reload_process(reload_with_HUP=False)
+
+    def _spawn_or_reload_process(self, reload_with_HUP):
+        """Spawns or reloads a Dnsmasq process for the network.
+
+        When reload_with_HUP is True, dnsmasq receives a HUP signal,
+        or it's reloaded if the process is not running.
+        """
+
+        self._output_config_files()
+
+        pid_filename = self.get_conf_file_name('pid')
+
+        self.process_monitor.enable(
+            uuid=self.network.id,
+            cmd_callback=self._build_cmdline_callback,
+            namespace=self.network.namespace,
+            service=DNSMASQ_SERVICE_NAME,
+            cmd_addl_env={self.NEUTRON_NETWORK_ID_KEY: self.network.id},
+            reload_cfg=reload_with_HUP,
+            pid_file=pid_filename)
 
     def _release_lease(self, mac_address, ip):
         """Release a DHCP lease."""
@@ -419,6 +424,11 @@ class Dnsmasq(DhcpLocalProcess):
         ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                       self.network.namespace)
         ip_wrapper.netns.execute(cmd)
+
+    def _output_config_files(self):
+        self._output_hosts_file()
+        self._output_addn_hosts_file()
+        self._output_opts_file()
 
     def reload_allocations(self):
         """Rebuild the dnsmasq config and signal the dnsmasq to reload."""
@@ -431,14 +441,7 @@ class Dnsmasq(DhcpLocalProcess):
             return
 
         self._release_unused_leases()
-        self._output_hosts_file()
-        self._output_addn_hosts_file()
-        self._output_opts_file()
-        if self.active:
-            cmd = ['kill', '-HUP', self.pid]
-            utils.execute(cmd, self.root_helper)
-        else:
-            LOG.debug('Pid %d is stale, relaunching dnsmasq', self.pid)
+        self._spawn_or_reload_process(reload_with_HUP=True)
         LOG.debug('Reloading allocations for network: %s', self.network.id)
         self.device_manager.update(self.network, self.interface_name)
 

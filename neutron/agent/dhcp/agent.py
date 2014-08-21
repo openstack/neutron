@@ -67,6 +67,24 @@ class DhcpAgent(manager.Manager):
             os.makedirs(dhcp_dir, 0o755)
         self.dhcp_version = self.dhcp_driver_cls.check_version()
         self._populate_networks_cache()
+        self._process_monitor = external_process.ProcessMonitor(
+            config=self.conf,
+            root_helper=self.root_helper,
+            resource_type='dhcp',
+            exit_handler=self._exit_handler)
+
+    def _exit_handler(self, uuid, service):
+        """This is an exit handler for the ProcessMonitor.
+
+        It will be called if the administrator configured the exit action in
+        check_child_processes_actions, and one of our external processes die
+        unexpectedly.
+        """
+        LOG.error(_LE("Exiting neutron-dhcp-agent because of a malfunction "
+                      "with the %(service)s process identified by uuid "
+                      "%(uuid)s"),
+                  {'service': service, 'uuid': uuid})
+        raise SystemExit(1)
 
     def _populate_networks_cache(self):
         """Populate the networks cache when the DHCP-agent starts."""
@@ -105,10 +123,10 @@ class DhcpAgent(manager.Manager):
             # the base models.
             driver = self.dhcp_driver_cls(self.conf,
                                           network,
+                                          self._process_monitor,
                                           self.root_helper,
                                           self.dhcp_version,
                                           self.plugin_rpc)
-
             getattr(driver, action)(**action_kwargs)
             return True
         except exceptions.Conflict:
@@ -368,20 +386,13 @@ class DhcpAgent(manager.Manager):
                 cfg.CONF, 'neutron-ns-metadata-proxy-%s.log' % network.id))
             return proxy_cmd
 
-        pm = external_process.ProcessManager(
-            self.conf,
-            network.id,
-            self.root_helper,
-            network.namespace)
-        pm.enable(callback)
+        self._process_monitor.enable(uuid=network.id,
+                                     cmd_callback=callback,
+                                     namespace=network.namespace)
 
     def disable_isolated_metadata_proxy(self, network):
-        pm = external_process.ProcessManager(
-            self.conf,
-            network.id,
-            self.root_helper,
-            network.namespace)
-        pm.disable()
+        self._process_monitor.disable(uuid=network.id,
+                                      namespace=network.namespace)
 
 
 class DhcpPluginApi(object):
