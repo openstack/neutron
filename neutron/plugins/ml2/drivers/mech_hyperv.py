@@ -51,7 +51,4 @@ class HypervMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             for pattern in mappings:
                 if re.match(pattern, segment[api.PHYSICAL_NETWORK]):
                     return True
-            else:
-                return False
-        else:
-            return False
+        return False
