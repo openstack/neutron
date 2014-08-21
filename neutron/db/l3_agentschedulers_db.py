@@ -17,6 +17,7 @@ import random
 import time
 
 from oslo.config import cfg
+from oslo.db import exception as db_exc
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy import orm
@@ -181,10 +182,12 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """Create router to agent binding."""
         router_id = router['id']
         agent_id = agent['id']
-        result = self.auto_schedule_routers(context, agent.host, [router_id])
-        if not result:
-            raise l3agentscheduler.RouterSchedulingFailed(
-                router_id=router_id, agent_id=agent_id)
+        if self.router_scheduler:
+            try:
+                self.router_scheduler.bind_router(context, router_id, agent)
+            except db_exc.DBError:
+                raise l3agentscheduler.RouterSchedulingFailed(
+                    router_id=router_id, agent_id=agent_id)
 
     def add_router_to_l3_agent(self, context, agent_id, router_id):
         """Add a l3 agent to host a router."""
