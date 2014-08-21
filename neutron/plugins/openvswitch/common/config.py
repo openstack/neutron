@@ -79,10 +79,14 @@ agent_opts = [
     cfg.IntOpt('veth_mtu',
                help=_("MTU size of veth interfaces")),
     cfg.BoolOpt('l2_population', default=False,
-                help=_("Use ml2 l2population mechanism driver to learn "
+                help=_("Use ML2 l2population mechanism driver to learn "
                        "remote mac and IPs and improve tunnel scalability")),
     cfg.BoolOpt('arp_responder', default=False,
-                help=_("Enable local ARP responder if it is supported")),
+                help=_("Enable local ARP responder if it is supported. "
+                       "Requires OVS 2.1 and ML2 l2population driver. "
+                       "Allows the switch (when supporting an overlay) "
+                       "to respond to an ARP request locally without "
+                       "performing a costly ARP broadcast into the overlay")),
     cfg.BoolOpt('dont_fragment', default=True,
                 help=_("Set or un-set the don't fragment (DF) bit on "
                        "outgoing IP packet carrying GRE/VXLAN tunnel")),
