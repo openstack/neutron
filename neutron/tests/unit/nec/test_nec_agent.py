@@ -39,8 +39,6 @@ class TestNecAgentBase(base.BaseTestCase):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        cfg.CONF.set_override('rpc_backend',
-                              'neutron.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override('host', 'dummy-host')
         with contextlib.nested(
             mock.patch.object(ovs_lib.OVSBridge, 'get_datapath_id',
