@@ -75,6 +75,7 @@ ICMP = "icmp"
 TYPE_FLAT = 'flat'
 TYPE_GRE = 'gre'
 TYPE_LOCAL = 'local'
+TYPE_NEXUS_VXLAN = 'nexus_vxlan'
 TYPE_VXLAN = 'vxlan'
 TYPE_VLAN = 'vlan'
 TYPE_NONE = 'none'
