@@ -16,12 +16,12 @@
 # @author: Henry Gessau, Cisco Systems
 
 import mock
+import sys
 
-from oslo.config import cfg
+sys.modules["apicapi"] = mock.Mock()
 
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic as md
-from neutron.plugins.ml2.drivers import type_vlan  # noqa
 from neutron.tests import base
 from neutron.tests.unit.ml2.drivers.cisco.apic import (
     test_cisco_apic_common as mocked)
@@ -41,14 +41,12 @@ TEST_SEGMENT2 = 'test-segment2'
 
 class TestCiscoApicMechDriver(base.BaseTestCase,
                               mocked.ControllerMixin,
-                              mocked.ConfigMixin,
-                              mocked.DbModelMixin):
+                              mocked.ConfigMixin):
 
     def setUp(self):
         super(TestCiscoApicMechDriver, self).setUp()
         mocked.ControllerMixin.set_up_mocks(self)
         mocked.ConfigMixin.set_up_mocks(self)
-        mocked.DbModelMixin.set_up_mocks(self)
 
         self.mock_apic_manager_login_responses()
         self.driver = md.APICMechanismDriver()
@@ -56,21 +54,9 @@ class TestCiscoApicMechDriver(base.BaseTestCase,
         self.driver.cap_port_filter = 'test-cap_port_filter'
 
     def test_initialize(self):
-        cfg.CONF.set_override('network_vlan_ranges', ['physnet1:100:199'],
-                              'ml2_type_vlan')
-        ns = mocked.APIC_VLAN_NAME
-        mode = mocked.APIC_VLAN_MODE
-        self.mock_response_for_get('fvnsVlanInstP', name=ns, mode=mode)
-        self.mock_response_for_get('physDomP', name=mocked.APIC_DOMAIN)
-        self.mock_response_for_get('infraAttEntityP',
-                                   name=mocked.APIC_ATT_ENT_PROF)
-        self.mock_response_for_get('infraAccPortGrp',
-                                   name=mocked.APIC_ACC_PORT_GRP)
-        mock.patch('neutron.plugins.ml2.drivers.cisco.apic.apic_manager.'
-                   'APICManager.ensure_infra_created_on_apic').start()
+        mgr = self.driver.apic_manager = mock.Mock()
         self.driver.initialize()
-        self.session = self.driver.apic_manager.apic.session
-        self.assert_responses_drained()
+        mgr.ensure_infra_created_on_apic.assert_called_once()
 
     def test_update_port_postcommit(self):
         net_ctx = self._get_network_context(mocked.APIC_TENANT,
@@ -85,7 +71,7 @@ class TestCiscoApicMechDriver(base.BaseTestCase,
             mocked.APIC_TENANT)
         mgr.ensure_path_created_for_port.assert_called_once_with(
             mocked.APIC_TENANT, mocked.APIC_NETWORK, HOST_ID1,
-            ENCAP, mocked.APIC_NETWORK + '-name')
+            ENCAP)
 
     def test_create_network_postcommit(self):
         ctx = self._get_network_context(mocked.APIC_TENANT,

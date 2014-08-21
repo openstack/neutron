@@ -16,6 +16,9 @@
 # @author: Arvind Somya (asomya@cisco.com), Cisco Systems
 
 import mock
+import sys
+
+sys.modules["apicapi"] = mock.Mock()
 
 from neutron.services.l3_router import l3_apic
 from neutron.tests.unit import testlib_api
@@ -59,8 +62,6 @@ class TestCiscoApicL3Plugin(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestCiscoApicL3Plugin, self).setUp()
-        mock.patch('neutron.plugins.ml2.drivers.cisco.apic.apic_manager.'
-                   'APICManager').start()
         self.plugin = l3_apic.ApicL3ServicePlugin()
         self.context = FakeContext()
         self.context.tenant_id = TENANT
