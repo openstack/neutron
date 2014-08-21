@@ -65,7 +65,6 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
                 router_id=router_id,
                 vif_type=portbindings.VIF_TYPE_UNBOUND,
                 vnic_type=portbindings.VNIC_NORMAL,
-                cap_port_filter=False,
                 status='DOWN')
             self.ctx.session.add(record)
             return record

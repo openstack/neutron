@@ -68,10 +68,6 @@ class PortBinding(model_base.BASEV2):
     vif_type = sa.Column(sa.String(64), nullable=False)
     vif_details = sa.Column(sa.String(4095), nullable=False, default='',
                             server_default='')
-    driver = sa.Column(sa.String(64))
-    segment = sa.Column(sa.String(36),
-                        sa.ForeignKey('ml2_network_segments.id',
-                                      ondelete="SET NULL"))
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
     # eagerly load port bindings
@@ -80,6 +76,27 @@ class PortBinding(model_base.BASEV2):
         backref=orm.backref("port_binding",
                             lazy='joined', uselist=False,
                             cascade='delete'))
+
+
+class PortBindingLevel(model_base.BASEV2):
+    """Represent each level of a port binding.
+
+    Stores information associated with each level of an established
+    port binding. Different levels might correspond to the host and
+    ToR switch, for instance.
+    """
+
+    __tablename__ = 'ml2_port_binding_levels'
+
+    port_id = sa.Column(sa.String(36),
+                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
+                        primary_key=True)
+    host = sa.Column(sa.String(255), nullable=False, primary_key=True)
+    level = sa.Column(sa.Integer, primary_key=True, autoincrement=False)
+    driver = sa.Column(sa.String(64))
+    segment_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('ml2_network_segments.id',
+                                         ondelete="SET NULL"))
 
 
 class DVRPortBinding(model_base.BASEV2):
@@ -103,11 +120,6 @@ class DVRPortBinding(model_base.BASEV2):
                           server_default=portbindings.VNIC_NORMAL)
     profile = sa.Column(sa.String(BINDING_PROFILE_LEN), nullable=False,
                         default='', server_default='')
-    cap_port_filter = sa.Column(sa.Boolean, nullable=False)
-    driver = sa.Column(sa.String(64))
-    segment = sa.Column(sa.String(36),
-                        sa.ForeignKey('ml2_network_segments.id',
-                                      ondelete="SET NULL"))
     status = sa.Column(sa.String(16), nullable=False)
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
