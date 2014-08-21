@@ -347,6 +347,14 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                     audited=AUDITED)
                 self.assertEqual(res.status_int, 409)
 
+    def test_create_shared_firewall_policy_with_unshared_rule(self):
+        with self.firewall_rule(shared=False) as fwr:
+            fw_rule_ids = [fwr['firewall_rule']['id']]
+            res = self._create_firewall_policy(
+                None, 'firewall_policy1', description=DESCRIPTION, shared=True,
+                firewall_rules=fw_rule_ids, audited=AUDITED)
+            self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
     def test_show_firewall_policy(self):
         name = "firewall_policy1"
         attrs = self._get_test_firewall_policy_attrs(name)
@@ -519,6 +527,42 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                                        req.get_response(self.ext_api))
                 for k, v in attrs.iteritems():
                     self.assertEqual(res['firewall_policy'][k], v)
+
+    def test_update_shared_firewall_policy_with_unshared_rule(self):
+        with self.firewall_rule(name='fwr1', shared=False) as fr:
+            with self.firewall_policy() as fwp:
+                fw_rule_ids = [fr['firewall_rule']['id']]
+                # update shared policy with unshared rule
+                data = {'firewall_policy':
+                        {'firewall_rules': fw_rule_ids}}
+                req = self.new_update_request('firewall_policies', data,
+                                              fwp['firewall_policy']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_update_firewall_policy_with_shared_attr_unshared_rule(self):
+        with self.firewall_rule(name='fwr1', shared=False) as fr:
+            with self.firewall_policy(shared=False) as fwp:
+                fw_rule_ids = [fr['firewall_rule']['id']]
+                # update shared policy with shared attr and unshared rule
+                data = {'firewall_policy': {'shared': True,
+                                            'firewall_rules': fw_rule_ids}}
+                req = self.new_update_request('firewall_policies', data,
+                                              fwp['firewall_policy']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_update_firewall_policy_with_shared_attr_exist_unshare_rule(self):
+        with self.firewall_rule(name='fwr1', shared=False) as fr:
+            fw_rule_ids = [fr['firewall_rule']['id']]
+            with self.firewall_policy(shared=False,
+                                      firewall_rules=fw_rule_ids) as fwp:
+                # update policy with shared attr
+                data = {'firewall_policy': {'shared': True}}
+                req = self.new_update_request('firewall_policies', data,
+                                              fwp['firewall_policy']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
     def test_delete_firewall_policy(self):
         ctx = context.get_admin_context()

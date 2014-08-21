@@ -54,6 +54,30 @@ class FirewallPolicyInUse(qexception.InUse):
     message = _("Firewall Policy %(firewall_policy_id)s is being used.")
 
 
+class FirewallRuleSharingConflict(qexception.Conflict):
+
+    """FWaaS exception for firewall rules
+
+    When a shared policy is created or updated with unshared rules,
+    this exception will be raised.
+    """
+    message = _("Operation cannot be performed since Firewall Policy "
+                "%(firewall_policy_id)s is shared but Firewall Rule "
+                "%(firewall_rule_id)s is not shared")
+
+
+class FirewallPolicySharingConflict(qexception.Conflict):
+
+    """FWaaS exception for firewall policy
+
+    When a policy is shared without sharing its associated rules,
+    this exception will be raised.
+    """
+    message = _("Operation cannot be performed. Before sharing Firewall "
+                "Policy %(firewall_policy_id)s, share associated Firewall "
+                "Rule %(firewall_rule_id)s")
+
+
 class FirewallRuleNotFound(qexception.NotFound):
     message = _("Firewall Rule %(firewall_rule_id)s could not be found.")
 
