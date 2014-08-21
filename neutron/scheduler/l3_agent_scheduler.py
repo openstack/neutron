@@ -166,10 +166,9 @@ class L3Scheduler(object):
                 candidates = list(new_l3agentset - old_l3agentset)
             else:
                 candidates = new_l3agents
-            if not candidates:
-                LOG.warn(_('No L3 agents can host the router %s'),
-                         sync_router['id'])
-                return
+                if not candidates:
+                    LOG.warn(_('No L3 agents can host the router %s'),
+                             sync_router['id'])
 
             return candidates
 
