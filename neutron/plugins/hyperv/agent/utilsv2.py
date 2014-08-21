@@ -389,15 +389,43 @@ class HyperVUtilsV2R2(HyperVUtilsV2):
     # 2 directions x 2 address types x 3 protocols = 12 ACLs
     _REJECT_ACLS_COUNT = 12
 
+    def create_security_rule(self, switch_port_name, direction, acl_type,
+                             local_port, protocol, remote_address):
+        if protocol is self._ACL_DEFAULT:
+            protocols = [
+                self._ICMP_PROTOCOL, self._TCP_PROTOCOL, self._UDP_PROTOCOL]
+        else:
+            protocols = [protocol]
+
+        for protocol in protocols:
+            super(HyperVUtilsV2R2, self).create_security_rule(
+                switch_port_name, direction, acl_type, local_port, protocol,
+                remote_address)
+
+    def remove_security_rule(self, switch_port_name, direction, acl_type,
+                             local_port, protocol, remote_address):
+        if protocol is self._ACL_DEFAULT:
+            protocols = [
+                self._ICMP_PROTOCOL, self._TCP_PROTOCOL, self._UDP_PROTOCOL]
+        else:
+            protocols = [protocol]
+
+        for protocol in protocols:
+            super(HyperVUtilsV2R2, self).remove_security_rule(
+                switch_port_name, direction, acl_type, local_port, protocol,
+                remote_address)
+
     def _create_security_acl(self, direction, acl_type, action, local_port,
                              protocol, remote_addr, weight):
         acl = self._get_default_setting_data(self._PORT_EXT_ACL_SET_DATA)
+        is_icmp = protocol is self._ICMP_PROTOCOL
         acl.set(Direction=direction,
                 Action=action,
-                LocalPort=str(local_port),
+                LocalPort=str(local_port) if not is_icmp else '',
                 Protocol=protocol,
                 RemoteIPAddress=remote_addr,
                 IdleSessionTimeout=0,
+                Stateful=(not is_icmp and action is not self._ACL_ACTION_DENY),
                 Weight=weight)
         return acl
 
