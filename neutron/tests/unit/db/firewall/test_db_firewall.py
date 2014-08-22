@@ -15,6 +15,8 @@
 #
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
 
+from oslo.config import cfg
+
 import contextlib
 
 import mock
@@ -139,11 +141,12 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                  'audited': audited}
         return attrs
 
-    def _get_test_firewall_attrs(self, name='firewall_1'):
+    def _get_test_firewall_attrs(
+        self, name='firewall_1', status='PENDING_CREATE'):
         attrs = {'name': name,
                  'tenant_id': self._tenant_id,
                  'admin_state_up': ADMIN_STATE_UP,
-                 'status': 'PENDING_CREATE'}
+                 'status': status}
 
         return attrs
 
@@ -761,19 +764,25 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, 409)
 
-    def test_create_firewall(self):
-        name = "firewall1"
-        attrs = self._get_test_firewall_attrs(name)
-
+    def _test_create_firewall(self, attrs):
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
             attrs['firewall_policy_id'] = fwp_id
-            with self.firewall(name=name,
+            with self.firewall(name=attrs['name'],
                                firewall_policy_id=fwp_id,
                                admin_state_up=
                                ADMIN_STATE_UP) as firewall:
                 for k, v in attrs.iteritems():
                     self.assertEqual(firewall['firewall'][k], v)
+
+    def test_create_firewall(self):
+        attrs = self._get_test_firewall_attrs("firewall1")
+        self._test_create_firewall(attrs)
+
+    def test_create_firewall_with_dvr(self):
+        cfg.CONF.set_override('router_distributed', True)
+        attrs = self._get_test_firewall_attrs("firewall1", "CREATED")
+        self._test_create_firewall(attrs)
 
     def test_show_firewall(self):
         name = "firewall1"

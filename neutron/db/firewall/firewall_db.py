@@ -15,6 +15,8 @@
 #
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
 
+from oslo.config import cfg
+
 import sqlalchemy as sa
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy import orm
@@ -239,6 +241,11 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         LOG.debug(_("create_firewall() called"))
         fw = firewall['firewall']
         tenant_id = self._get_tenant_id_for_create(context, fw)
+        # distributed routers may required a more complex state machine;
+        # the introduction of a new 'CREATED' state allows this, whilst
+        # keeping a backward compatible behavior of the logical resource.
+        status = (const.CREATED
+            if cfg.CONF.router_distributed else const.PENDING_CREATE)
         with context.session.begin(subtransactions=True):
             firewall_db = Firewall(id=uuidutils.generate_uuid(),
                                    tenant_id=tenant_id,
@@ -247,7 +254,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                                    firewall_policy_id=
                                    fw['firewall_policy_id'],
                                    admin_state_up=fw['admin_state_up'],
-                                   status=const.PENDING_CREATE)
+                                   status=status)
             context.session.add(firewall_db)
         return self._make_firewall_dict(firewall_db)
 
