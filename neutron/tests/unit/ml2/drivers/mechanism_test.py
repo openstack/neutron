@@ -91,9 +91,16 @@ class TestMechanismDriver(api.MechanismDriver):
 
         if vif_type in (portbindings.VIF_TYPE_UNBOUND,
                         portbindings.VIF_TYPE_BINDING_FAILED):
-            self._check_unbound(context.binding_levels,
-                                context.top_bound_segment,
-                                context.bottom_bound_segment)
+            if (context.segments_to_bind and
+                context.segments_to_bind[0][api.NETWORK_TYPE] == 'vlan'):
+                # Partially bound.
+                self._check_bound(context.binding_levels,
+                                  context.top_bound_segment,
+                                  context.bottom_bound_segment)
+            else:
+                self._check_unbound(context.binding_levels,
+                                    context.top_bound_segment,
+                                    context.bottom_bound_segment)
             assert(context.current['id'] not in self.bound_ports)
         else:
             self._check_bound(context.binding_levels,
@@ -168,17 +175,31 @@ class TestMechanismDriver(api.MechanismDriver):
         self._check_port_context(context, False)
 
         host = context.host
-        segment = context.segments_to_bind[0][api.ID]
+        segment = context.segments_to_bind[0]
+        segment_id = segment[api.ID]
         if host == "host-ovs-no_filter":
-            context.set_binding(segment, portbindings.VIF_TYPE_OVS,
+            context.set_binding(segment_id, portbindings.VIF_TYPE_OVS,
                                 {portbindings.CAP_PORT_FILTER: False})
             self.bound_ports.add(context.current['id'])
         elif host == "host-bridge-filter":
-            context.set_binding(segment, portbindings.VIF_TYPE_BRIDGE,
+            context.set_binding(segment_id, portbindings.VIF_TYPE_BRIDGE,
                                 {portbindings.CAP_PORT_FILTER: True})
             self.bound_ports.add(context.current['id'])
         elif host == "host-ovs-filter-active":
-            context.set_binding(segment, portbindings.VIF_TYPE_OVS,
+            context.set_binding(segment_id, portbindings.VIF_TYPE_OVS,
                                 {portbindings.CAP_PORT_FILTER: True},
                                 status=const.PORT_STATUS_ACTIVE)
             self.bound_ports.add(context.current['id'])
+        elif host == "host-hierarchical":
+            segment_type = segment[api.NETWORK_TYPE]
+            if segment_type == 'local':
+                next_segment = context.allocate_dynamic_segment(
+                    {api.NETWORK_TYPE: 'vlan',
+                     api.PHYSICAL_NETWORK: 'physnet1'}
+                )
+                context.continue_binding(segment_id, [next_segment])
+            elif segment_type == 'vlan':
+                context.set_binding(segment_id,
+                                    portbindings.VIF_TYPE_OVS,
+                                    {portbindings.CAP_PORT_FILTER: False})
+                self.bound_ports.add(context.current['id'])
