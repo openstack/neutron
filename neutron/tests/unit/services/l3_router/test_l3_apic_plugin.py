@@ -15,12 +15,15 @@
 #
 # @author: Arvind Somya (asomya@cisco.com), Cisco Systems
 
-import mock
 import sys
+
+import mock
 
 sys.modules["apicapi"] = mock.Mock()
 
 from neutron.services.l3_router import l3_apic
+from neutron.tests.unit.ml2.drivers.cisco.apic import (
+    test_cisco_apic_common as mocked)
 from neutron.tests.unit import testlib_api
 
 TENANT = 'tenant1'
@@ -58,10 +61,14 @@ class FakePort(object):
         self.subnet_id = SUBNET
 
 
-class TestCiscoApicL3Plugin(testlib_api.SqlTestCase):
+class TestCiscoApicL3Plugin(testlib_api.SqlTestCase,
+                            mocked.ControllerMixin,
+                            mocked.ConfigMixin):
 
     def setUp(self):
         super(TestCiscoApicL3Plugin, self).setUp()
+        mocked.ControllerMixin.set_up_mocks(self)
+        mocked.ConfigMixin.set_up_mocks(self)
         self.plugin = l3_apic.ApicL3ServicePlugin()
         self.context = FakeContext()
         self.context.tenant_id = TENANT
