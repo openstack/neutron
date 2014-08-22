@@ -1832,6 +1832,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         elif (not associated and
               floatingip_db['status'] != constants.FLOATINGIP_STATUS_DOWN):
             return constants.FLOATINGIP_STATUS_DOWN
+        # in any case ensure the status is not reset by this method!
+        return floatingip_db['status']
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
         """Update floating IP association data.

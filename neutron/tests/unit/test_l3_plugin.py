@@ -1330,6 +1330,18 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         self._test_floatingip_with_assoc_fails(
             'neutron.db.l3_db.L3_NAT_db_mixin._check_and_get_fip_assoc')
 
+    def test_create_floatingip_with_assoc(
+        self, expected_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
+        with self.floatingip_with_assoc() as fip:
+            body = self._show('floatingips', fip['floatingip']['id'])
+            self.assertEqual(body['floatingip']['id'],
+                             fip['floatingip']['id'])
+            self.assertEqual(body['floatingip']['port_id'],
+                             fip['floatingip']['port_id'])
+            self.assertEqual(expected_status, body['floatingip']['status'])
+            self.assertIsNotNone(body['floatingip']['fixed_ip_address'])
+            self.assertIsNotNone(body['floatingip']['router_id'])
+
     def test_floatingip_update(
         self, expected_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
         with self.port() as p:
@@ -1502,16 +1514,6 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             {'floatingip': {'port_id': None}})
                         fip2_r2_res = associate_and_assert(fip2, p2)
                         self.assertEqual(fip2_r2_res, r2['router']['id'])
-
-    def test_floatingip_with_assoc(self):
-        with self.floatingip_with_assoc() as fip:
-            body = self._show('floatingips', fip['floatingip']['id'])
-            self.assertEqual(body['floatingip']['id'],
-                             fip['floatingip']['id'])
-            self.assertEqual(body['floatingip']['port_id'],
-                             fip['floatingip']['port_id'])
-            self.assertIsNotNone(body['floatingip']['fixed_ip_address'])
-            self.assertIsNotNone(body['floatingip']['router_id'])
 
     def test_floatingip_port_delete(self):
         with self.subnet() as private_sub:
