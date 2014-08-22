@@ -100,7 +100,6 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         super(L3SchedulerBaseTestCase, self).setUp()
         self.scheduler = FakeL3Scheduler()
         self.plugin = mock.Mock()
-        self.context = q_context.get_admin_context()
 
     def test_auto_schedule_routers(self):
         self.plugin.get_enabled_agent_on_host.return_value = [mock.ANY]
@@ -109,7 +108,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
             mock.patch.object(self.scheduler, 'get_routers_can_schedule')) as (
             gs, gr):
             result = self.scheduler.auto_schedule_routers(
-                self.plugin, self.context, mock.ANY, mock.ANY)
+                self.plugin, mock.ANY, mock.ANY, mock.ANY)
         self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
         self.assertTrue(result)
         self.assertTrue(gs.called)
@@ -118,7 +117,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
     def test_auto_schedule_routers_no_agents(self):
         self.plugin.get_enabled_agent_on_host.return_value = None
         result = self.scheduler.auto_schedule_routers(
-            self.plugin, self.context, mock.ANY, mock.ANY)
+            self.plugin, mock.ANY, mock.ANY, mock.ANY)
         self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
         self.assertFalse(result)
 
@@ -127,7 +126,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
                                'get_routers_to_schedule') as mock_routers:
             mock_routers.return_value = None
             result = self.scheduler.auto_schedule_routers(
-                self.plugin, self.context, mock.ANY, mock.ANY)
+                self.plugin, mock.ANY, mock.ANY, mock.ANY)
         self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
         self.assertFalse(result)
 
@@ -140,7 +139,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
             mock_unscheduled_routers.return_value = mock.ANY
             mock_target_routers.return_value = None
             result = self.scheduler.auto_schedule_routers(
-                self.plugin, self.context, mock.ANY, mock.ANY)
+                self.plugin, mock.ANY, mock.ANY, mock.ANY)
         self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
         self.assertFalse(result)
 
