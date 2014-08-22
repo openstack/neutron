@@ -522,6 +522,12 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     prefix = subnet['cidr']
                     ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
                         prefix, mac)
+                    if not self._check_unique_ip(
+                        context, p['network_id'],
+                        subnet['id'], ip_address.format()):
+                        raise n_exc.IpAddressInUse(
+                            net_id=p['network_id'],
+                            ip_address=ip_address.format())
                     ips.append({'ip_address': ip_address.format(),
                                 'subnet_id': subnet['id']})
                     v6.remove(subnet)
