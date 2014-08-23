@@ -30,6 +30,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -57,6 +58,7 @@ LOG = logging.getLogger(__name__)
 PLUGIN_VERSION = 0.88
 AGENT_OWNER_PREFIX = "network:"
 NOS_DRIVER = 'neutron.plugins.brocade.nos.nosdriver.NOSdriver'
+TAP_PREFIX_LEN = 3
 
 SWITCH_OPTS = [cfg.StrOpt('address', default='',
                           help=_('The address of the host to SSH to')),
@@ -77,8 +79,7 @@ cfg.CONF.register_opts(SWITCH_OPTS, "SWITCH")
 cfg.CONF.register_opts(PHYSICAL_INTERFACE_OPTS, "PHYSICAL_INTERFACE")
 
 
-class BridgeRpcCallbacks(n_rpc.RpcCallback,
-                         sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+class BridgeRpcCallbacks(n_rpc.RpcCallback):
     """Agent callback."""
 
     RPC_API_VERSION = '1.2'
@@ -86,32 +87,6 @@ class BridgeRpcCallbacks(n_rpc.RpcCallback,
     # history
     #   1.1 Support Security Group RPC
     #   1.2 Support get_devices_details_list
-    TAP_PREFIX_LEN = 3
-
-    @classmethod
-    def get_port_from_device(cls, device):
-        """Get port from the brocade specific db."""
-
-        # TODO(shh) context is not being passed as
-        # an argument to this function;
-        #
-        # need to be fixed in:
-        # file: neutron/db/securtygroups_rpc_base.py
-        # function: securitygroup_rules_for_devices()
-        # which needs to pass context to us
-
-        # Doing what other plugins are doing
-        session = db.get_session()
-        port = brocade_db.get_port_from_device(
-            session, device[cls.TAP_PREFIX_LEN:])
-
-        # TODO(shiv): need to extend the db model to include device owners
-        # make it appears that the device owner is of type network
-        if port:
-            port['device'] = device
-            port['device_owner'] = AGENT_OWNER_PREFIX
-            port['binding:vif_type'] = 'bridge'
-        return port
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""
@@ -120,7 +95,7 @@ class BridgeRpcCallbacks(n_rpc.RpcCallback,
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
-        port = brocade_db.get_port(rpc_context, device[self.TAP_PREFIX_LEN:])
+        port = brocade_db.get_port(rpc_context, device[TAP_PREFIX_LEN:])
         if port:
             entry = {'device': device,
                      'vlan_id': port.vlan_id,
@@ -161,6 +136,34 @@ class BridgeRpcCallbacks(n_rpc.RpcCallback,
                      'exists': False}
             LOG.debug(_("%s can not be found in database"), device)
         return entry
+
+
+class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
+
+    @classmethod
+    def get_port_from_device(cls, device):
+        """Get port from the brocade specific db."""
+
+        # TODO(shh) context is not being passed as
+        # an argument to this function;
+        #
+        # need to be fixed in:
+        # file: neutron/db/securtygroups_rpc_base.py
+        # function: securitygroup_rules_for_devices()
+        # which needs to pass context to us
+
+        # Doing what other plugins are doing
+        session = db.get_session()
+        port = brocade_db.get_port_from_device(
+            session, device[TAP_PREFIX_LEN:])
+
+        # TODO(shiv): need to extend the db model to include device owners
+        # make it appears that the device owner is of type network
+        if port:
+            port['device'] = device
+            port['device_owner'] = AGENT_OWNER_PREFIX
+            port['binding:vif_type'] = 'bridge'
+        return port
 
 
 class AgentNotifierApi(n_rpc.RpcProxy,
@@ -205,7 +208,7 @@ class AgentNotifierApi(n_rpc.RpcProxy,
 class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       external_net_db.External_net_db_mixin,
                       extraroute_db.ExtraRoute_db_mixin,
-                      sg_db_rpc.SecurityGroupServerRpcMixin,
+                      SecurityGroupServerRpcMixin,
                       l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                       agentschedulers_db.DhcpAgentSchedulerDbMixin,
                       portbindings_base.PortBindingBaseMixin):
@@ -262,6 +265,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                   is_admin=False)
         self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [BridgeRpcCallbacks(),
+                          securitygroups_rpc.SecurityGroupServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
                           l3_rpc.L3RpcCallback(),
                           agents_db.AgentExtRpcCallback()]

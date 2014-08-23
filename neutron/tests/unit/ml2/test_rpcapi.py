@@ -42,7 +42,8 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         }
 
     def _test_update_device_up(self, extensions, kwargs):
-        with mock.patch.object(self.callbacks, '_device_to_port_id'):
+        with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin'
+                        '._device_to_port_id'):
             type(self.l3plugin).supported_extension_aliases = (
                 mock.PropertyMock(return_value=extensions))
             self.callbacks.update_device_up(mock.ANY, **kwargs)

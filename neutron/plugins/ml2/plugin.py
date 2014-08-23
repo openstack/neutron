@@ -25,6 +25,7 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import dvr_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
@@ -51,6 +52,7 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
+from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa
@@ -68,6 +70,9 @@ MAX_BIND_TRIES = 10
 # REVISIT(rkukura): Move this and other network_type constants to
 # providernet.py?
 TYPE_MULTI_SEGMENT = 'multi-segment'
+
+TAP_DEVICE_PREFIX = 'tap'
+TAP_DEVICE_PREFIX_LENGTH = 3
 
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
@@ -136,6 +141,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def start_rpc_listeners(self):
         self.endpoints = [rpc.RpcCallbacks(self.notifier, self.type_manager),
+                          securitygroups_rpc.SecurityGroupServerRpcCallback(),
                           dvr_rpc.DVRServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
                           agents_db.AgentExtRpcCallback()]
@@ -1083,3 +1089,25 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         else:
             port_host = db.get_port_binding_host(port_id)
             return (port_host == host)
+
+    def get_port_from_device(self, device):
+        port_id = self._device_to_port_id(device)
+        port = db.get_port_and_sgs(port_id)
+        if port:
+            port['device'] = device
+        return port
+
+    def _device_to_port_id(self, device):
+        # REVISIT(rkukura): Consider calling into MechanismDrivers to
+        # process device names, or having MechanismDrivers supply list
+        # of device prefixes to strip.
+        if device.startswith(TAP_DEVICE_PREFIX):
+            return device[TAP_DEVICE_PREFIX_LENGTH:]
+        else:
+            # REVISIT(irenab): Consider calling into bound MD to
+            # handle the get_device_details RPC, then remove the 'else' clause
+            if not uuidutils.is_uuid_like(device):
+                port = db.get_port_from_device_mac(device)
+                if port:
+                    return port.id
+        return device

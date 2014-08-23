@@ -56,6 +56,7 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
@@ -72,7 +73,7 @@ from neutron.db import extradhcpopt_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
-from neutron.db import securitygroups_rpc_base as sg_rpc_base
+from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import external_net
 from neutron.extensions import extra_dhcp_opt as edo_ext
@@ -113,10 +114,7 @@ class AgentNotifierApi(n_rpc.RpcProxy,
                          topic=self.topic_port_update)
 
 
-class RestProxyCallbacks(n_rpc.RpcCallback,
-                         sg_rpc_base.SecurityGroupServerRpcCallbackMixin):
-
-    RPC_API_VERSION = '1.1'
+class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
 
     def get_port_from_device(self, device):
         port_id = re.sub(r"^tap", "", device)
@@ -454,7 +452,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                          addr_pair_db.AllowedAddressPairsMixin,
                          extradhcpopt_db.ExtraDhcpOptMixin,
                          agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                         sg_rpc_base.SecurityGroupServerRpcMixin):
+                         SecurityGroupServerRpcMixin):
 
     _supported_extension_aliases = ["external-net", "router", "binding",
                                     "router_rules", "extra_dhcp_opt", "quotas",
@@ -509,7 +507,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             self._dhcp_agent_notifier
         )
-        self.endpoints = [RestProxyCallbacks(),
+        self.endpoints = [securitygroups_rpc.SecurityGroupServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,

@@ -74,8 +74,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                                            req.get_response(self.api))
                     port_id = res['port']['id']
                     plugin = manager.NeutronManager.get_plugin()
-                    callbacks = plugin.endpoints[0]
-                    port_dict = callbacks.get_port_from_device(port_id)
+                    port_dict = plugin.get_port_from_device(port_id)
                     self.assertEqual(port_id, port_dict['id'])
                     self.assertEqual([security_group_id],
                                      port_dict[ext_sg.SECURITYGROUPS])
@@ -86,7 +85,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
 
     def test_security_group_get_port_from_device_with_no_port(self):
         plugin = manager.NeutronManager.get_plugin()
-        port_dict = plugin.endpoints[0].get_port_from_device('bad_device_id')
+        port_dict = plugin.get_port_from_device('bad_device_id')
         self.assertIsNone(port_dict)
 
 
@@ -96,11 +95,11 @@ class TestMl2SecurityGroupsXML(TestMl2SecurityGroups):
 
 class TestMl2SGServerRpcCallBack(
     Ml2SecurityGroupsTestCase,
-    test_sg_rpc.SGServerRpcCallBackMixinTestCase):
+    test_sg_rpc.SGServerRpcCallBackTestCase):
     pass
 
 
 class TestMl2SGServerRpcCallBackXML(
     Ml2SecurityGroupsTestCase,
-    test_sg_rpc.SGServerRpcCallBackMixinTestCaseXML):
+    test_sg_rpc.SGServerRpcCallBackTestCaseXML):
     pass

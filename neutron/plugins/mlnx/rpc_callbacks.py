@@ -17,39 +17,17 @@ from oslo.config import cfg
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.db import api as db_api
-from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.db import mlnx_db_v2 as db
 
 LOG = logging.getLogger(__name__)
 
 
-class MlnxRpcCallbacks(n_rpc.RpcCallback,
-                       sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+class MlnxRpcCallbacks(n_rpc.RpcCallback):
     # History
     #  1.1 Support Security Group RPC
     #  1.2 Support get_devices_details_list
     RPC_API_VERSION = '1.2'
-
-    #to be compatible with Linux Bridge Agent on Network Node
-    TAP_PREFIX_LEN = 3
-
-    @classmethod
-    def get_port_from_device(cls, device):
-        """Get port according to device.
-
-        To maintain compatibility with Linux Bridge L2 Agent for DHCP/L3
-        services get device either by linux bridge plugin
-        device name convention or by mac address
-        """
-        port = db.get_port_from_device(device[cls.TAP_PREFIX_LEN:])
-        if port:
-            port['device'] = device
-        else:
-            port = db.get_port_from_device_mac(device)
-            if port:
-                port['device'] = device
-        return port
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""

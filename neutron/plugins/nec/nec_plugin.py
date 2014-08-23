@@ -19,6 +19,7 @@ from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
@@ -53,10 +54,23 @@ from neutron.plugins.nec import packet_filter
 LOG = logging.getLogger(__name__)
 
 
+class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
+
+    @staticmethod
+    def get_port_from_device(device):
+        port = ndb.get_port_from_device(device)
+        if port:
+            port['device'] = device
+        LOG.debug("NECPluginV2.get_port_from_device() called, "
+                  "device=%(device)s => %(ret)s.",
+                  {'device': device, 'ret': port})
+        return port
+
+
 class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   external_net_db.External_net_db_mixin,
                   nec_router.RouterMixin,
-                  sg_db_rpc.SecurityGroupServerRpcMixin,
+                  SecurityGroupServerRpcMixin,
                   agentschedulers_db.DhcpAgentSchedulerDbMixin,
                   nec_router.L3AgentSchedulerDbMixin,
                   packet_filter.PacketFilterMixin,
@@ -143,7 +157,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         )
 
         # NOTE: callback_sg is referred to from the sg unit test.
-        self.callback_sg = SecurityGroupServerRpcCallback()
+        self.callback_sg = securitygroups_rpc.SecurityGroupServerRpcCallback()
         self.endpoints = [
             NECPluginV2RPCCallbacks(self.safe_reference),
             dhcp_rpc.DhcpRpcCallback(),
@@ -678,23 +692,6 @@ class NECPluginV2AgentNotifierApi(n_rpc.RpcProxy,
                          self.make_msg('port_update',
                                        port=port),
                          topic=self.topic_port_update)
-
-
-class SecurityGroupServerRpcCallback(
-    n_rpc.RpcCallback,
-    sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
-
-    RPC_API_VERSION = sg_rpc.SG_RPC_VERSION
-
-    @staticmethod
-    def get_port_from_device(device):
-        port = ndb.get_port_from_device(device)
-        if port:
-            port['device'] = device
-        LOG.debug(_("NECPluginV2RPCCallbacks.get_port_from_device() called, "
-                    "device=%(device)s => %(ret)s."),
-                  {'device': device, 'ret': port})
-        return port
 
 
 class NECPluginV2RPCCallbacks(n_rpc.RpcCallback):

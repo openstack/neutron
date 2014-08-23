@@ -51,13 +51,13 @@ class NecSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
 
 
 class TestNecSGServerRpcCallBack(
-    test_sg_rpc.SGServerRpcCallBackMixinTestCase,
+    test_sg_rpc.SGServerRpcCallBackTestCase,
     NecSecurityGroupsTestCase):
     pass
 
 
 class TestNecSGServerRpcCallBackXML(
-    test_sg_rpc.SGServerRpcCallBackMixinTestCaseXML,
+    test_sg_rpc.SGServerRpcCallBackTestCaseXML,
     NecSecurityGroupsTestCase):
     pass
 
@@ -84,7 +84,7 @@ class TestNecSecurityGroups(NecSecurityGroupsTestCase,
                                        req.get_response(self.api))
 
                 plugin = manager.NeutronManager.get_plugin()
-                port_dict = plugin.callback_sg.get_port_from_device(port_id)
+                port_dict = plugin.get_port_from_device(port_id)
                 self.assertEqual(port_id, port_dict['id'])
                 self.assertEqual([sg_id],
                                  port_dict[ext_sg.SECURITYGROUPS])

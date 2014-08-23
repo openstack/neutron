@@ -71,7 +71,7 @@ class TestRyuSecurityGroups(RyuSecurityGroupsTestCase,
                                        req.get_response(self.api))
                 port_id = res['port']['id']
                 plugin = manager.NeutronManager.get_plugin()
-                port_dict = plugin.endpoints[0].get_port_from_device(port_id)
+                port_dict = plugin.get_port_from_device(port_id)
                 self.assertEqual(port_id, port_dict['id'])
                 self.assertEqual([security_group_id],
                                  port_dict[ext_sg.SECURITYGROUPS])
@@ -82,7 +82,7 @@ class TestRyuSecurityGroups(RyuSecurityGroupsTestCase,
 
     def test_security_group_get_port_from_device_with_no_port(self):
         plugin = manager.NeutronManager.get_plugin()
-        port_dict = plugin.endpoints[0].get_port_from_device('bad_device_id')
+        port_dict = plugin.get_port_from_device('bad_device_id')
         self.assertIsNone(port_dict)
 
 

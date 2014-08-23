@@ -22,6 +22,7 @@ from ryu.app import rest_nw_id
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
@@ -45,8 +46,17 @@ from neutron.plugins.ryu.db import api_v2 as db_api_v2
 LOG = logging.getLogger(__name__)
 
 
-class RyuRpcCallbacks(n_rpc.RpcCallback,
-                      sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
+
+    @classmethod
+    def get_port_from_device(cls, device):
+        port = db_api_v2.get_port_from_device(device)
+        if port:
+            port['device'] = device
+        return port
+
+
+class RyuRpcCallbacks(n_rpc.RpcCallback):
 
     RPC_API_VERSION = '1.1'
 
@@ -57,13 +67,6 @@ class RyuRpcCallbacks(n_rpc.RpcCallback,
     def get_ofp_rest_api(self, context, **kwargs):
         LOG.debug(_("get_ofp_rest_api: %s"), self.ofp_rest_api_addr)
         return self.ofp_rest_api_addr
-
-    @classmethod
-    def get_port_from_device(cls, device):
-        port = db_api_v2.get_port_from_device(device)
-        if port:
-            port['device'] = device
-        return port
 
 
 class AgentNotifierApi(n_rpc.RpcProxy,
@@ -88,7 +91,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                          external_net_db.External_net_db_mixin,
                          extraroute_db.ExtraRoute_db_mixin,
                          l3_gwmode_db.L3_NAT_db_mixin,
-                         sg_db_rpc.SecurityGroupServerRpcMixin,
+                         SecurityGroupServerRpcMixin,
                          portbindings_base.PortBindingBaseMixin):
 
     _supported_extension_aliases = ["external-net", "router", "ext-gw-mode",
@@ -138,6 +141,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.conn = n_rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.endpoints = [RyuRpcCallbacks(self.ofp_api_host),
+                          securitygroups_rpc.SecurityGroupServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
                           l3_rpc.L3RpcCallback()]
         for svc_topic in self.service_topics.values():

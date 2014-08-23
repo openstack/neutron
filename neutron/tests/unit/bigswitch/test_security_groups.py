@@ -36,7 +36,7 @@ class RestProxySecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase,
         self.startHttpPatch()
 
 
-class TestSecServerRpcCallBack(test_sg_rpc.SGServerRpcCallBackMixinTestCase,
+class TestSecServerRpcCallBack(test_sg_rpc.SGServerRpcCallBackTestCase,
                                RestProxySecurityGroupsTestCase):
     pass
 
