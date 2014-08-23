@@ -1,0 +1,12 @@
+# neutron-rootwrap command filters to support functional testing.  It
+# is NOT intended to be used outside of a test environment.
+#
+# This file should be owned by (and only-writeable by) the root user
+
+[Filters]
+# '$BASE_PATH' is intended to be replaced with the expected tox path
+# (e.g. /opt/stack/new/neutron/.tox/dsvm-functional) by the neutron
+# functional jenkins job.  This ensures that tests can kill the
+# processes that they launch with their containing tox environment's
+# python.
+kill_tox_python: KillFilter, root, $BASE_PATH/bin/python, -9
