@@ -32,11 +32,14 @@ from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import quota_db  # noqa
+from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
+from neutron.openstack.common import lockutils
 from neutron.plugins.nuage.common import config
 from neutron.plugins.nuage.common import constants
 from neutron.plugins.nuage.common import exceptions as nuage_exc
@@ -50,11 +53,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                   external_net_db.External_net_db_mixin,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_db.L3_NAT_db_mixin,
-                  netpartition.NetPartitionPluginBase):
+                  netpartition.NetPartitionPluginBase,
+                  sg_db.SecurityGroupDbMixin):
     """Class that implements Nuage Networks' plugin functionality."""
     supported_extension_aliases = ["router", "binding", "external-net",
                                    "net-partition", "nuage-router",
-                                   "nuage-subnet", "quotas", "extraroute"]
+                                   "nuage-subnet", "quotas",
+                                   "extraroute", "security-group"]
 
     binding_view = "extension:port_binding:view"
 
@@ -122,18 +127,93 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             'net_partition': net_partition,
             'ip': port['fixed_ips'][0]['ip_address'],
             'no_of_ports': len(ports),
-            'tenant': port['tenant_id']
+            'tenant': port['tenant_id'],
         }
 
-        self.nuageclient.create_vms(params)
+        nuage_vm = self.nuageclient.create_vms(params)
+        if nuage_vm:
+            if port['fixed_ips'][0]['ip_address'] != str(nuage_vm['ip']):
+                self._update_port_ip(context, port, nuage_vm['ip'])
 
+    def _get_router_by_subnet(self, context, subnet_id):
+        filters = {
+            'fixed_ips': {'subnet_id': [subnet_id]},
+            'device_owner': [os_constants.DEVICE_OWNER_ROUTER_INTF]
+        }
+        router_port = self.get_ports(context, filters=filters)
+        if not router_port:
+            msg = (_("Router for subnet %s not found ") % subnet_id)
+            raise n_exc.BadRequest(resource='port', msg=msg)
+        return router_port[0]['device_id']
+
+    def _process_port_create_security_group(self, context, port,
+                                            sec_group):
+        if not attributes.is_attr_set(sec_group):
+            port[ext_sg.SECURITYGROUPS] = []
+            return
+        port_id = port['id']
+        with context.session.begin(subtransactions=True):
+            for sg_id in sec_group:
+                super(NuagePlugin,
+                      self)._create_port_security_group_binding(context,
+                                                                port_id,
+                                                                sg_id)
+        try:
+            vptag_vport_list = []
+            for sg_id in sec_group:
+                params = {
+                    'neutron_port_id': port_id
+                }
+                nuage_port = self.nuageclient.get_nuage_port_by_id(params)
+                if nuage_port and nuage_port.get('nuage_vport_id'):
+                    nuage_vport_id = nuage_port['nuage_vport_id']
+                    sg = self._get_security_group(context, sg_id)
+                    sg_rules = self.get_security_group_rules(
+                                        context,
+                                        {'security_group_id': [sg_id]})
+                    sg_params = {
+                        'nuage_port': nuage_port,
+                        'sg': sg,
+                        'sg_rules': sg_rules
+                    }
+                    nuage_vptag_id = (
+                        self.nuageclient.process_port_create_security_group(
+                                                                    sg_params))
+                    vptag_vport = {
+                        'nuage_vporttag_id': nuage_vptag_id
+                    }
+                    vptag_vport_list.append(vptag_vport)
+
+            if vptag_vport_list:
+                params = {
+                    'vptag_vport_list': vptag_vport_list,
+                    'nuage_vport_id': nuage_vport_id
+                }
+                self.nuageclient.update_nuage_vport(params)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                for sg_id in sec_group:
+                    super(NuagePlugin,
+                          self)._delete_port_security_group_bindings(context,
+                                                                 port_id)
+        # Convert to list as a set might be passed here and
+        # this has to be serialized
+        port[ext_sg.SECURITYGROUPS] = (list(sec_group) if sec_group else [])
+
+    def _delete_port_security_group_bindings(self, context, port_id):
+        super(NuagePlugin,
+              self)._delete_port_security_group_bindings(context, port_id)
+        self.nuageclient.delete_port_security_group_bindings(port_id)
+
+    @lockutils.synchronized('create_port', 'nuage-port', external=True)
     def create_port(self, context, port):
         session = context.session
         with session.begin(subtransactions=True):
+            p = port['port']
+            self._ensure_default_security_group_on_port(context, port)
             port = super(NuagePlugin, self).create_port(context, port)
             device_owner = port.get('device_owner', None)
-            if (device_owner and
-                device_owner not in constants.AUTO_CREATE_PORT_OWNERS):
+            if device_owner not in constants.AUTO_CREATE_PORT_OWNERS:
                 if 'fixed_ips' not in port or len(port['fixed_ips']) == 0:
                     return self._extend_port_dict_binding(context, port)
                 subnet_id = port['fixed_ips'][0]['subnet_id']
@@ -154,17 +234,23 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                 super(NuagePlugin, self).delete_port(
                                     context,
                                     port['id'])
+                    if ext_sg.SECURITYGROUPS in p:
+                        self._process_port_create_security_group(
+                            context,
+                            port,
+                            p[ext_sg.SECURITYGROUPS])
         return self._extend_port_dict_binding(context, port)
 
     def update_port(self, context, id, port):
         p = port['port']
+        sg_groups = None
         if p.get('device_owner', '').startswith(
             constants.NOVA_PORT_OWNER_PREF):
             session = context.session
             with session.begin(subtransactions=True):
                 port = self._get_port(context, id)
                 port.update(p)
-                if 'fixed_ips' not in port or len(port['fixed_ips']) == 0:
+                if not port.get('fixed_ips'):
                     return self._make_port_dict(port)
                 subnet_id = port['fixed_ips'][0]['subnet_id']
 
@@ -178,24 +264,48 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     'neutron_port_id': id,
                 }
                 nuage_port = self.nuageclient.get_nuage_port_by_id(params)
-                if not nuage_port:
-                    msg = (_("Port %s not found on VSD") % id)
-                    raise n_exc.BadRequest(resource='port', msg=msg)
-                if not nuage_port['nuage_vport_id']:
+                if not nuage_port or not nuage_port.get('nuage_vport_id'):
                     self._create_update_port(context, port,
                                              subnet_mapping[
                                                  'net_partition_id'],
                                              subnet_mapping['nuage_subnet_id'])
                 updated_port = self._make_port_dict(port)
+                sg_port = self._extend_port_dict_security_group(
+                    updated_port,
+                    port
+                )
+                sg_groups = sg_port[ext_sg.SECURITYGROUPS]
         else:
             updated_port = super(NuagePlugin, self).update_port(context, id,
                                                                 port)
+            if not updated_port.get('fixed_ips'):
+                return updated_port
+            subnet_id = updated_port['fixed_ips'][0]['subnet_id']
+            subnet_mapping = nuagedb.get_subnet_l2dom_by_id(context.session,
+                                                            subnet_id)
+        if subnet_mapping:
+            if sg_groups:
+                self._delete_port_security_group_bindings(context,
+                                                          updated_port['id'])
+                self._process_port_create_security_group(context,
+                                                         updated_port,
+                                                         sg_groups)
+            elif ext_sg.SECURITYGROUPS in p:
+                self._delete_port_security_group_bindings(context,
+                                                          updated_port['id'])
+                self._process_port_create_security_group(
+                    context,
+                    updated_port,
+                    p[ext_sg.SECURITYGROUPS]
+                )
         return updated_port
 
+    @lockutils.synchronized('delete-port', 'nuage-del', external=True)
     def delete_port(self, context, id, l3_port_check=True):
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
         port = self._get_port(context, id)
+        nuage_vif_id = None
         params = {
             'neutron_port_id': id,
         }
@@ -212,12 +322,19 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                         sub_id)
         if not subnet_mapping:
             return super(NuagePlugin, self).delete_port(context, id)
+
+        # Need to call this explicitly to delete vport to vporttag binding
+        if ext_sg.SECURITYGROUPS in port:
+            self._delete_port_security_group_bindings(context, id)
+
         netpart_id = subnet_mapping['net_partition_id']
         net_partition = nuagedb.get_net_partition_by_id(context.session,
                                                         netpart_id)
 
-        # Need to call this explicitly to delete vport_vporttag_mapping
+        # Need to call this explicitly to delete vport
         if constants.NOVA_PORT_OWNER_PREF in port['device_owner']:
+            if nuage_port:
+                nuage_vif_id = nuage_port['nuage_vif_id']
             # This was a VM Port
             filters = {'device_id': [port['device_id']]}
             ports = self.get_ports(context, filters)
@@ -226,7 +343,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 'net_partition': net_partition,
                 'tenant': port['tenant_id'],
                 'mac': port['mac_address'],
-                'nuage_vif_id': nuage_port['nuage_vif_id'],
+                'nuage_vif_id': nuage_vif_id,
                 'id': port['device_id']
             }
             self.nuageclient.delete_vms(params)
@@ -264,6 +381,10 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_network(self, context, network):
         net = network['network']
         with context.session.begin(subtransactions=True):
+            self._ensure_default_security_group(
+                context,
+                network['network']['tenant_id']
+            )
             net = super(NuagePlugin, self).create_network(context,
                                                           network)
             self._process_l3_create(context, net, network['network'])
@@ -1011,3 +1132,49 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self.nuageclient.delete_nuage_floatingip(
                         fip['nuage_fip_id'])
             super(NuagePlugin, self).delete_floatingip(context, id)
+
+    def delete_security_group(self, context, id):
+        filters = {'security_group_id': [id]}
+        ports = self._get_port_security_group_bindings(context,
+                                                       filters)
+        if ports:
+            raise ext_sg.SecurityGroupInUse(id=id)
+        sg_rules = self.get_security_group_rules(context,
+                                                 {'security_group_id': [id]})
+
+        if sg_rules:
+            self.nuageclient.delete_nuage_sgrule(sg_rules)
+        self.nuageclient.delete_nuage_secgroup(id)
+
+        super(NuagePlugin, self).delete_security_group(context, id)
+
+    def create_security_group_rule(self, context, security_group_rule):
+        sg_rule = security_group_rule['security_group_rule']
+        self.nuageclient.validate_nuage_sg_rule_definition(sg_rule)
+        sg_id = sg_rule['security_group_id']
+
+        local_sg_rule = super(NuagePlugin,
+                              self).create_security_group_rule(
+                                        context, security_group_rule)
+
+        try:
+            nuage_vptag = self.nuageclient.get_sg_vptag_mapping(sg_id)
+            if nuage_vptag:
+                sg_params = {
+                    'sg_id': sg_id,
+                    'neutron_sg_rule': local_sg_rule,
+                    'vptag': nuage_vptag
+                }
+                self.nuageclient.create_nuage_sgrule(sg_params)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                super(NuagePlugin,
+                      self).delete_security_group_rule(context,
+                                                   local_sg_rule['id'])
+
+        return local_sg_rule
+
+    def delete_security_group_rule(self, context, id):
+        local_sg_rule = self.get_security_group_rule(context, id)
+        super(NuagePlugin, self).delete_security_group_rule(context, id)
+        self.nuageclient.delete_nuage_sgrule([local_sg_rule])

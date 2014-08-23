@@ -29,6 +29,7 @@ from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.nuage import fake_nuageclient
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extension_extraroute as extraroute_test
+from neutron.tests.unit import test_extension_security_group as test_sg
 from neutron.tests.unit import test_l3_plugin
 
 API_EXT_PATH = os.path.dirname(extensions.__file__)
@@ -287,3 +288,8 @@ class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
 
     def test_network_update_external_failure(self):
         self._test_network_update_external_failure()
+
+
+class TestNuageSecurityGroupTestCase(NuagePluginV2TestCase,
+                                     test_sg.TestSecurityGroups):
+    pass
