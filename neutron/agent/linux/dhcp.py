@@ -313,10 +313,11 @@ class Dnsmasq(DhcpLocalProcess):
             ver = re.findall("\d+.\d+", out)[0]
             is_valid_version = float(ver) >= cls.MINIMUM_VERSION
             if not is_valid_version:
-                LOG.warning(_('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
-                              'DHCP AGENT MAY NOT RUN CORRECTLY! '
-                              'Please ensure that its version is %s '
-                              'or above!'), cls.MINIMUM_VERSION)
+                LOG.error(_('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
+                            'DHCP AGENT MAY NOT RUN CORRECTLY! '
+                            'Please ensure that its version is %s '
+                            'or above!'), cls.MINIMUM_VERSION)
+                raise SystemExit(1)
         except (OSError, RuntimeError, IndexError, ValueError):
             LOG.error(_('Unable to determine dnsmasq version. '
                         'Please ensure that its version is %s '
@@ -368,17 +369,12 @@ class Dnsmasq(DhcpLocalProcess):
             else:
                 # Note(scollins) If the IPv6 attributes are not set, set it as
                 # static to preserve previous behavior
-                if (not getattr(subnet, 'ipv6_ra_mode', None) and
-                        not getattr(subnet, 'ipv6_address_mode', None)):
+                addr_mode = getattr(subnet, 'ipv6_address_mode', None)
+                ra_mode = getattr(subnet, 'ipv6_ra_mode', None)
+                if (addr_mode in [constants.DHCPV6_STATEFUL,
+                                  constants.DHCPV6_STATELESS] or
+                        not addr_mode and not ra_mode):
                     mode = 'static'
-                elif getattr(subnet, 'ipv6_ra_mode', None) is None:
-                    # RA mode is not set - do not launch dnsmasq
-                    continue
-
-            if self.version >= self.MINIMUM_VERSION:
-                set_tag = 'set:'
-            else:
-                set_tag = ''
 
             cidr = netaddr.IPNetwork(subnet.cidr)
 
@@ -390,14 +386,9 @@ class Dnsmasq(DhcpLocalProcess):
             # mode is optional and is not set - skip it
             if mode:
                 cmd.append('--dhcp-range=%s%s,%s,%s,%s' %
-                           (set_tag, self._TAG_PREFIX % i,
+                           ('set:', self._TAG_PREFIX % i,
                             cidr.network, mode, lease))
-            else:
-                cmd.append('--dhcp-range=%s%s,%s,%s' %
-                           (set_tag, self._TAG_PREFIX % i,
-                            cidr.network, lease))
-
-            possible_leases += cidr.size
+                possible_leases += cidr.size
 
         # Cap the limit because creating lots of subnets can inflate
         # this possible lease cap.
@@ -465,9 +456,8 @@ class Dnsmasq(DhcpLocalProcess):
                 # associated with the subnet being managed by this
                 # dhcp agent
                 if alloc.subnet_id in v6_nets:
-                    ra_mode = v6_nets[alloc.subnet_id].ipv6_ra_mode
                     addr_mode = v6_nets[alloc.subnet_id].ipv6_address_mode
-                    if (ra_mode is None and addr_mode == constants.IPV6_SLAAC):
+                    if addr_mode != constants.DHCPV6_STATEFUL:
                         continue
                 hostname = 'host-%s' % alloc.ip_address.replace(
                     '.', '-').replace(':', '-')
@@ -497,7 +487,6 @@ class Dnsmasq(DhcpLocalProcess):
 
         LOG.debug(_('Building host file: %s'), filename)
         for (port, alloc, hostname, name) in self._iter_hosts():
-            set_tag = ''
             # (dzyu) Check if it is legal ipv6 address, if so, need wrap
             # it with '[]' to let dnsmasq to distinguish MAC address from
             # IPv6 address.
@@ -510,12 +499,9 @@ class Dnsmasq(DhcpLocalProcess):
                        "ip": ip_address})
 
             if getattr(port, 'extra_dhcp_opts', False):
-                if self.version >= self.MINIMUM_VERSION:
-                    set_tag = 'set:'
-
                 buf.write('%s,%s,%s,%s%s\n' %
                           (port.mac_address, name, ip_address,
-                           set_tag, port.id))
+                           'set:', port.id))
             else:
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
@@ -575,16 +561,26 @@ class Dnsmasq(DhcpLocalProcess):
         dhcp_ips = collections.defaultdict(list)
         subnet_idx_map = {}
         for i, subnet in enumerate(self.network.subnets):
-            if not subnet.enable_dhcp:
+            if (not subnet.enable_dhcp or
+                (subnet.ip_version == 6 and
+                 getattr(subnet, 'ipv6_address_mode', None)
+                 in [None, constants.IPV6_SLAAC])):
                 continue
             if subnet.dns_nameservers:
                 options.append(
-                    self._format_option(i, 'dns-server',
-                                        ','.join(subnet.dns_nameservers)))
+                    self._format_option(
+                        subnet.ip_version, i, 'dns-server',
+                        ','.join(
+                            Dnsmasq._convert_to_literal_addrs(
+                                subnet.ip_version, subnet.dns_nameservers))))
             else:
                 # use the dnsmasq ip as nameservers only if there is no
                 # dns-server submitted by the server
                 subnet_idx_map[subnet.id] = i
+
+            if self.conf.dhcp_domain and subnet.ip_version == 6:
+                options.append('tag:tag%s,option6:domain-search,%s' %
+                               (i, ''.join(self.conf.dhcp_domain)))
 
             gateway = subnet.gateway_ip
             host_routes = []
@@ -603,27 +599,42 @@ class Dnsmasq(DhcpLocalProcess):
                     '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
                 )
 
-            if host_routes:
-                if gateway and subnet.ip_version == 4:
-                    host_routes.append("%s,%s" % ("0.0.0.0/0", gateway))
-                options.append(
-                    self._format_option(i, 'classless-static-route',
-                                        ','.join(host_routes)))
-                options.append(
-                    self._format_option(i, WIN2k3_STATIC_DNS,
-                                        ','.join(host_routes)))
-
             if subnet.ip_version == 4:
+                if host_routes:
+                    if gateway:
+                        host_routes.append("%s,%s" % ("0.0.0.0/0", gateway))
+                    options.append(
+                        self._format_option(subnet.ip_version, i,
+                                            'classless-static-route',
+                                            ','.join(host_routes)))
+                    options.append(
+                        self._format_option(subnet.ip_version, i,
+                                            WIN2k3_STATIC_DNS,
+                                            ','.join(host_routes)))
+
                 if gateway:
-                    options.append(self._format_option(i, 'router', gateway))
+                    options.append(self._format_option(subnet.ip_version,
+                                                       i, 'router',
+                                                       gateway))
                 else:
-                    options.append(self._format_option(i, 'router'))
+                    options.append(self._format_option(subnet.ip_version,
+                                                       i, 'router'))
 
         for port in self.network.ports:
             if getattr(port, 'extra_dhcp_opts', False):
-                options.extend(
-                    self._format_option(port.id, opt.opt_name, opt.opt_value)
-                    for opt in port.extra_dhcp_opts)
+                for ip_version in (4, 6):
+                    if any(
+                        netaddr.IPAddress(ip.ip_address).version == ip_version
+                            for ip in port.fixed_ips):
+                        options.extend(
+                            # TODO(xuhanp):Instead of applying extra_dhcp_opts
+                            # to both DHCPv4 and DHCPv6, we need to find a new
+                            # way to specify options for v4 and v6
+                            # respectively. We also need to validate the option
+                            # before applying it.
+                            self._format_option(ip_version, port.id,
+                                                opt.opt_name, opt.opt_value)
+                            for opt in port.extra_dhcp_opts)
 
             # provides all dnsmasq ip as dns-server if there is more than
             # one dnsmasq for a subnet and there is no dns-server submitted
@@ -636,10 +647,16 @@ class Dnsmasq(DhcpLocalProcess):
                     dhcp_ips[i].append(ip.ip_address)
 
         for i, ips in dhcp_ips.items():
-            if len(ips) > 1:
-                options.append(self._format_option(i,
-                                                   'dns-server',
-                                                   ','.join(ips)))
+            for ip_version in (4, 6):
+                vx_ips = [ip for ip in ips
+                          if netaddr.IPAddress(ip).version == ip_version]
+                if vx_ips:
+                    options.append(
+                        self._format_option(
+                            ip_version, i, 'dns-server',
+                            ','.join(
+                                Dnsmasq._convert_to_literal_addrs(ip_version,
+                                                                  vx_ips))))
 
         name = self.get_conf_file_name('opts')
         utils.replace_file(name, '\n'.join(options))
@@ -667,22 +684,26 @@ class Dnsmasq(DhcpLocalProcess):
 
         return retval
 
-    def _format_option(self, tag, option, *args):
+    def _format_option(self, ip_version, tag, option, *args):
         """Format DHCP option by option name or code."""
-        if self.version >= self.MINIMUM_VERSION:
-            set_tag = 'tag:'
-        else:
-            set_tag = ''
-
         option = str(option)
 
         if isinstance(tag, int):
             tag = self._TAG_PREFIX % tag
 
         if not option.isdigit():
-            option = 'option:%s' % option
+            if ip_version == 4:
+                option = 'option:%s' % option
+            else:
+                option = 'option6:%s' % option
 
-        return ','.join((set_tag + tag, '%s' % option) + args)
+        return ','.join(('tag:' + tag, '%s' % option) + args)
+
+    @staticmethod
+    def _convert_to_literal_addrs(ip_version, ips):
+        if ip_version == 4:
+            return ips
+        return ['[' + ip + ']' for ip in ips]
 
     def _enable_metadata(self, subnet):
         '''Determine if the metadata route will be pushed to hosts on subnet.
