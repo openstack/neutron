@@ -167,6 +167,9 @@ class HyperVUtils(object):
                 msg=_('Failed creating port for %s') % vswitch_name)
         return new_port
 
+    def remove_all_security_rules(self, switch_port_name):
+        pass
+
     def disconnect_switch_port(
             self, vswitch_name, switch_port_name, delete_port):
         """Disconnects the switch port."""
