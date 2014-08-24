@@ -758,6 +758,21 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             if ra_mode_set and address_mode_set:
                 self._validate_ipv6_combination(subnet['ipv6_ra_mode'],
                                                 subnet['ipv6_address_mode'])
+        if address_mode_set:
+            self._validate_eui64_applicable(subnet)
+
+    def _validate_eui64_applicable(self, subnet):
+        # Per RFC 4862, section 5.5.3, prefix length and interface
+        # id together should be equal to 128. Currently neutron supports
+        # EUI64 interface id only, thus limiting the prefix
+        # length to be 64 only.
+        if self._check_if_subnet_uses_eui64(subnet):
+            if netaddr.IPNetwork(subnet['cidr']).prefixlen != 64:
+                msg = _('Invalid CIDR %s for IPv6 address mode. '
+                        'OpenStack uses the EUI-64 address format, '
+                        'which requires the prefix to be /64.')
+                raise n_exc.InvalidInput(
+                    error_message=(msg % subnet['cidr']))
 
     def _validate_ipv6_combination(self, ra_mode, address_mode):
         if ra_mode != address_mode:
