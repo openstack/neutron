@@ -224,7 +224,6 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
                                             filters={'tenant_id': [tenant_id]})
         if fw_count:
             raise FirewallCountExceeded(tenant_id=tenant_id)
-        firewall['firewall']['status'] = const.PENDING_CREATE
         fw = super(FirewallPlugin, self).create_firewall(context, firewall)
         fw_with_rules = (
             self._make_firewall_dict_with_rules(context, fw['id']))
