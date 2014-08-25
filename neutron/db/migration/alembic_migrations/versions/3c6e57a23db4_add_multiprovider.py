@@ -64,9 +64,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('network_id', sa.String(length=36), nullable=False),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
                                 ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('network_id'),
-        mysql_engine='InnoDB'
-    )
+        sa.PrimaryKeyConstraint('network_id'))
     op.create_table('rename_nvp_network_bindings',
                     sa.Column('network_id', sa.String(length=36),
                               primary_key=True),

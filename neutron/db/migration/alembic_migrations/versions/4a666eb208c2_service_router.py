@@ -53,9 +53,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('router_id', sa.String(length=36), nullable=False),
         sa.Column('edge_id', sa.String(length=16), nullable=True),
         sa.Column('lswitch_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('router_id'),
-        mysql_engine='InnoDB'
-    )
+        sa.PrimaryKeyConstraint('router_id'))
     op.add_column(
         u'nsxrouterextattributess',
         sa.Column('service_router', sa.Boolean(), nullable=False))
