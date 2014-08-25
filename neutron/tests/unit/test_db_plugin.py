@@ -1302,6 +1302,20 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                 self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
+    def test_generated_duplicate_ip_ipv6(self):
+        with self.subnet(ip_version=6,
+                         cidr="2014::/64",
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            with self.port(subnet=subnet,
+                           fixed_ips=[{'subnet_id': subnet['subnet']['id'],
+                                       'ip_address':
+                                       "2014::1322:33ff:fe44:5566"}]) as port:
+                # Check configuring of duplicate IP
+                kwargs = {"mac_address": "11:22:33:44:55:66"}
+                net_id = port['port']['network_id']
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
+
     def test_requested_subnet_delete(self):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:

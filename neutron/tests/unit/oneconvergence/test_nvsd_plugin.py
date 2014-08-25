@@ -124,6 +124,9 @@ class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
     def test_ip_allocation_for_ipv6_subnet_slaac_adddress_mode(self):
         self.skipTest("NVSD Plugin does not support IPV6.")
 
+    def test_generated_duplicate_ip_ipv6(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
 
 class TestOneConvergenceBasicGet(test_plugin.TestBasicGet,
                                  OneConvergencePluginV2TestCase):
