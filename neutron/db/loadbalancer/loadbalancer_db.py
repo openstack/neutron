@@ -232,7 +232,10 @@ class LoadBalancerPluginDb(loadbalancer.LoadBalancerPluginBase,
     ########################################################
     # VIP DB access
     def _make_vip_dict(self, vip, fields=None):
-        fixed_ip = (vip.port.fixed_ips or [{}])[0]
+        fixed_ip = {}
+        # it's possible that vip doesn't have created port yet
+        if vip.port:
+            fixed_ip = (vip.port.fixed_ips or [{}])[0]
 
         res = {'id': vip['id'],
                'tenant_id': vip['tenant_id'],
@@ -358,9 +361,6 @@ class LoadBalancerPluginDb(loadbalancer.LoadBalancerPluginBase,
                 if pool['status'] == constants.PENDING_DELETE:
                     raise loadbalancer.StateInvalid(state=pool['status'],
                                                     id=pool['id'])
-            else:
-                pool = None
-
             vip_db = Vip(id=uuidutils.generate_uuid(),
                          tenant_id=tenant_id,
                          name=v['name'],
@@ -386,8 +386,6 @@ class LoadBalancerPluginDb(loadbalancer.LoadBalancerPluginBase,
                 context.session.flush()
             except exception.DBDuplicateEntry:
                 raise loadbalancer.VipExists(pool_id=v['pool_id'])
-            if pool:
-                pool['vip_id'] = vip_db['id']
 
         try:
             # create a port to reserve address for IPAM
@@ -398,9 +396,17 @@ class LoadBalancerPluginDb(loadbalancer.LoadBalancerPluginBase,
             # catch any kind of exceptions
             with excutils.save_and_reraise_exception():
                 context.session.delete(vip_db)
-                if pool:
-                    pool['vip_id'] = None
                 context.session.flush()
+
+        if v['pool_id']:
+            # fetching pool again
+            pool = self._get_resource(context, Pool, v['pool_id'])
+            # (NOTE): we rely on the fact that pool didn't change between
+            # above block and here
+            vip_db['pool_id'] = v['pool_id']
+            pool['vip_id'] = vip_db['id']
+            # explicitly flush changes as we're outside any transaction
+            context.session.flush()
 
         return self._make_vip_dict(vip_db)
 
