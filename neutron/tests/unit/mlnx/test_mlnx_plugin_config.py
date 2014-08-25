@@ -33,8 +33,6 @@ class TestMlnxPluginConfig(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestMlnxPluginConfig, self).setUp()
-        cfg.CONF.set_override('rpc_backend',
-                              'neutron.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override(group='MLNX',
                               name='network_vlan_ranges',
                               override=self.config_vlan_ranges)

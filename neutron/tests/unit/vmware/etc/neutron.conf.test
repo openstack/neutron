@@ -18,7 +18,7 @@ bind_port = 9696
 api_paste_config = api-paste.ini.test
 
 # The messaging module to use, defaults to kombu.
-rpc_backend = neutron.openstack.common.rpc.impl_fake
+rpc_backend = fake
 
 lock_path = $state_path/lock
 

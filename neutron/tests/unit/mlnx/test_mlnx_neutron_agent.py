@@ -66,9 +66,6 @@ class TestEswitchAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestEswitchAgent, self).setUp()
-        # Avoid rpc initialization for unit tests
-        cfg.CONF.set_override('rpc_backend',
-                              'neutron.openstack.common.rpc.impl_fake')
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
