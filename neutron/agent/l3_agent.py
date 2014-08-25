@@ -1233,7 +1233,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def external_gateway_updated(self, ri, ex_gw_port, interface_name):
         preserve_ips = []
         if ri.router['distributed']:
-            ns_name = self.get_snat_ns_name(ri.router['id'])
+            if (self.conf.agent_mode == 'dvr_snat' and
+                ri.router['gw_port_host'] == self.host):
+                ns_name = self.get_snat_ns_name(ri.router['id'])
+            else:
+                # no centralized SNAT gateway for this node/agent
+                LOG.debug("not hosting snat for router: %", ri.router['id'])
+                return
         else:
             ns_name = ri.ns_name
             floating_ips = self.get_floating_ips(ri)

@@ -488,11 +488,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         else:
             raise Exception("Invalid action %s" % action)
 
-    def test_external_gateway_updated(self):
-        router = prepare_router_data(num_internal_ports=2)
-        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
-                                 self.conf.use_namespaces, router=router)
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+    def _prepare_ext_gw_test(self, agent):
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'subnet_id': _uuid()}],
                       'subnet': {'gateway_ip': '20.0.0.1'},
@@ -504,6 +500,16 @@ class TestBasicRouterOperations(base.BaseTestCase):
         interface_name = agent.get_external_device_name(ex_gw_port['id'])
 
         self.device_exists.return_value = True
+
+        return interface_name, ex_gw_port
+
+    def test_external_gateway_updated(self):
+        router = prepare_router_data(num_internal_ports=2)
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        interface_name, ex_gw_port = self._prepare_ext_gw_test(agent)
+
         fake_fip = {'floatingips': [{'id': _uuid(),
                                      'floating_ip_address': '192.168.1.34',
                                      'fixed_ip_address': '192.168.0.1',
@@ -522,6 +528,39 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.mock_driver.init_l3.assert_called_with(interface_name,
                                                     ['20.0.0.30/24'],
                                                     **kwargs)
+
+    def _test_ext_gw_updated_dvr_agent_mode(self, host,
+                                            agent_mode, expected_call_count):
+        router = prepare_router_data(num_internal_ports=2)
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        interface_name, ex_gw_port = self._prepare_ext_gw_test(agent)
+        agent._external_gateway_added = mock.Mock()
+
+        # test agent mode = dvr (compute node)
+        router['distributed'] = True
+        router['gw_port_host'] = host
+        agent.conf.agent_mode = agent_mode
+
+        agent.external_gateway_updated(ri, ex_gw_port,
+                                       interface_name)
+        # no gateway should be added on dvr node
+        self.assertEqual(expected_call_count,
+                         agent._external_gateway_added.call_count)
+
+    def test_ext_gw_updated_dvr_agent_mode(self):
+        # no gateway should be added on dvr node
+        self._test_ext_gw_updated_dvr_agent_mode('any-foo', 'dvr', 0)
+
+    def test_ext_gw_updated_dvr_snat_agent_mode_no_host(self):
+        # no gateway should be added on dvr_snat node without host match
+        self._test_ext_gw_updated_dvr_agent_mode('any-foo', 'dvr_snat', 0)
+
+    def test_ext_gw_updated_dvr_snat_agent_mode_host(self):
+        # gateway should be added on dvr_snat node
+        self._test_ext_gw_updated_dvr_agent_mode(self.conf.host,
+                                                 'dvr_snat', 1)
 
     def test_agent_add_external_gateway(self):
         self._test_external_gateway_action('add')
