@@ -183,6 +183,23 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 or subnet['ipv6_address_mode'] == constants.DHCPV6_STATELESS)
 
     @staticmethod
+    def _store_ip_allocation(context, ip_address, network_id, subnet_id,
+                             port_id):
+        LOG.debug("Allocated IP %(ip_address)s "
+                  "(%(network_id)s/%(subnet_id)s/%(port_id)s)",
+                  {'ip_address': ip_address,
+                   'network_id': network_id,
+                   'subnet_id': subnet_id,
+                   'port_id': port_id})
+        allocated = models_v2.IPAllocation(
+            network_id=network_id,
+            port_id=port_id,
+            ip_address=ip_address,
+            subnet_id=subnet_id
+        )
+        context.session.add(allocated)
+
+    @staticmethod
     def _generate_ip(context, subnets):
         try:
             return NeutronDbPluginV2._try_generate_ip(context, subnets)
@@ -1295,19 +1312,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 for ip in ips:
                     ip_address = ip['ip_address']
                     subnet_id = ip['subnet_id']
-                    LOG.debug(_("Allocated IP %(ip_address)s "
-                                "(%(network_id)s/%(subnet_id)s/%(port_id)s)"),
-                              {'ip_address': ip_address,
-                               'network_id': network_id,
-                               'subnet_id': subnet_id,
-                               'port_id': port_id})
-                    allocated = models_v2.IPAllocation(
-                        network_id=network_id,
-                        port_id=port_id,
-                        ip_address=ip_address,
-                        subnet_id=subnet_id,
-                    )
-                    context.session.add(allocated)
+                    NeutronDbPluginV2._store_ip_allocation(
+                        context, ip_address, network_id, subnet_id, port_id)
 
         return self._make_port_dict(port, process_extensions=False)
 
@@ -1345,10 +1351,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
                 # Update ips if necessary
                 for ip in added_ips:
-                    allocated = models_v2.IPAllocation(
-                        network_id=port['network_id'], port_id=port.id,
-                        ip_address=ip['ip_address'], subnet_id=ip['subnet_id'])
-                    context.session.add(allocated)
+                    NeutronDbPluginV2._store_ip_allocation(
+                        context, ip['ip_address'], port['network_id'],
+                        ip['subnet_id'], port.id)
             # Remove all attributes in p which are not in the port DB model
             # and then update the port
             port.update(self._filter_non_model_columns(p, models_v2.Port))
