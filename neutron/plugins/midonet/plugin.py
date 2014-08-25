@@ -590,7 +590,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("MidonetPluginV2.get_port called: id=%(id)s "
                   "fields=%(fields)r", {'id': id, 'fields': fields})
         port = super(MidonetPluginV2, self).get_port(context, id, fields)
-        "Check if the port exists in MidoNet DB"""
+        # Check if the port exists in MidoNet DB
         try:
             self.client.get_port(id)
         except midonet_lib.MidonetResourceNotFound as exc:

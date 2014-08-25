@@ -123,9 +123,9 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
         """
         base.FAULT_MAP.update(self.CISCO_FAULT_MAP)
 
-    """
-    Extension API implementation
-    """
+    #
+    # Extension API implementation
+    #
     def get_all_qoss(self, tenant_id):
         """Get all QoS levels."""
         LOG.debug("get_all_qoss() called")
