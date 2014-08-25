@@ -24,6 +24,7 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.tests import base
 from neutron.tests.unit import dummy_plugin
+from neutron.tests.unit import testlib_plugin
 
 
 LOG = logging.getLogger(__name__)
@@ -39,7 +40,8 @@ class CorePluginWithAgentNotifiers(object):
                        'dhcp': 'dhcp_agent_notifier'}
 
 
-class NeutronManagerTestCase(base.BaseTestCase):
+class NeutronManagerTestCase(base.BaseTestCase,
+                             testlib_plugin.PluginSetupHelper):
 
     def setUp(self):
         super(NeutronManagerTestCase, self).setUp()

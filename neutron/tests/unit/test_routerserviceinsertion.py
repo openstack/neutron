@@ -32,6 +32,7 @@ from neutron.extensions import routerservicetype as rst
 from neutron.plugins.common import constants
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import testlib_plugin
 from neutron import wsgi
 
 _uuid = test_api_v2._uuid
@@ -150,7 +151,8 @@ class RouterServiceInsertionTestPlugin(
         pass
 
 
-class RouterServiceInsertionTestCase(testlib_api.SqlTestCase):
+class RouterServiceInsertionTestCase(testlib_api.SqlTestCase,
+                                     testlib_plugin.PluginSetupHelper):
     def setUp(self):
         super(RouterServiceInsertionTestCase, self).setUp()
         plugin = (

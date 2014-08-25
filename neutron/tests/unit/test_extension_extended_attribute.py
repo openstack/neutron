@@ -32,6 +32,7 @@ from neutron.tests import base
 from neutron.tests.unit.extensions import extendedattribute as extattr
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import testlib_plugin
 from neutron import wsgi
 
 _uuid = test_api_v2._uuid
@@ -66,7 +67,8 @@ class ExtensionExtendedAttributeTestPlugin(
         return self.objh[id]
 
 
-class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
+class ExtensionExtendedAttributeTestCase(base.BaseTestCase,
+                                         testlib_plugin.PluginSetupHelper):
     def setUp(self):
         super(ExtensionExtendedAttributeTestCase, self).setUp()
         plugin = (

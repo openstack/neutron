@@ -31,9 +31,11 @@ from neutron import quota
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import testlib_plugin
 
 
-class ExtensionTestCase(testlib_api.WebTestCase):
+class ExtensionTestCase(testlib_api.WebTestCase,
+                        testlib_plugin.PluginSetupHelper):
     def _resotre_attr_map(self):
         attributes.RESOURCE_ATTRIBUTE_MAP = self._saved_attr_map
 

@@ -36,6 +36,7 @@ from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extensions
+from neutron.tests.unit import testlib_plugin
 from neutron.tests.unit import vmware
 from neutron.tests.unit.vmware import test_nsx_plugin
 
@@ -61,7 +62,8 @@ class TestExtensionManager(object):
         return []
 
 
-class NetworkGatewayExtensionTestCase(base.BaseTestCase):
+class NetworkGatewayExtensionTestCase(base.BaseTestCase,
+                                      testlib_plugin.PluginSetupHelper):
 
     def setUp(self):
         super(NetworkGatewayExtensionTestCase, self).setUp()
