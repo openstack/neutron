@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from oslo.config import cfg
 import webob
 
@@ -22,6 +20,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
+from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
 from neutron import manager
 from neutron.openstack.common import importutils
@@ -55,7 +54,7 @@ class QuotaSetsController(wsgi.Controller):
                 'allow_post': False,
                 'allow_put': True,
                 'convert_to': attributes.convert_to_int,
-                'validate': {'type:range': [-1, sys.maxsize]},
+                'validate': {'type:range': [-1, const.DB_INTEGER_MAX_VALUE]},
                 'is_visible': True}
         self._update_extended_attributes = False
 
