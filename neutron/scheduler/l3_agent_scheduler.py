@@ -18,11 +18,9 @@ import random
 
 from oslo.db import exception as db_exc
 import six
-from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
 from neutron.common import constants
-from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.openstack.common import log as logging
@@ -52,89 +50,92 @@ class L3Scheduler(object):
 
         return query.count() > 0
 
+    def filter_unscheduled_routers(self, context, plugin, routers):
+        """Filter from list of routers the ones that are not scheduled."""
+        unscheduled_routers = []
+        for router in routers:
+            l3_agents = plugin.get_l3_agents_hosting_routers(
+                context, [router['id']], admin_state_up=True)
+            # TODO(armando-migliaccio): remove dvr-related check
+            if l3_agents and not router.get('distributed', False):
+                LOG.debug(('Router %(router_id)s has already been '
+                           'hosted by L3 agent %(agent_id)s'),
+                          {'router_id': router['id'],
+                           'agent_id': l3_agents[0]['id']})
+            else:
+                unscheduled_routers.append(router)
+        return unscheduled_routers
+
+    def get_unscheduled_routers(self, context, plugin):
+        """Get routers with no agent binding."""
+        # TODO(gongysh) consider the disabled agent's router
+        no_agent_binding = ~sql.exists().where(
+            l3_db.Router.id ==
+            l3_agentschedulers_db.RouterL3AgentBinding.router_id)
+        query = context.session.query(l3_db.Router.id).filter(no_agent_binding)
+        unscheduled_router_ids = [router_id_[0] for router_id_ in query]
+        if unscheduled_router_ids:
+            return plugin.get_routers(
+                context, filters={'id': unscheduled_router_ids})
+        return []
+
+    def get_routers_to_schedule(self, context, plugin, router_ids=None):
+        """Verify that the routers specified need to be scheduled.
+
+        :param context: the context
+        :param plugin: the core plugin
+        :param router_ids: the list of routers to be checked for scheduling
+        :returns: the list of routers to be scheduled
+        """
+        if router_ids is not None:
+            routers = plugin.get_routers(context, filters={'id': router_ids})
+            return self.filter_unscheduled_routers(context, plugin, routers)
+        else:
+            return self.get_unscheduled_routers(context, plugin)
+
+    def get_routers_can_schedule(self, context, plugin, routers, l3_agent):
+        """Get the subset of routers that can be scheduled on the L3 agent."""
+        ids_to_discard = set()
+        for router in routers:
+            # check if the l3 agent is compatible with the router
+            candidates = plugin.get_l3_agent_candidates(
+                context, router, [l3_agent])
+            if not candidates:
+                ids_to_discard.add(router['id'])
+
+        return [r for r in routers if r['id'] not in ids_to_discard]
+
     def auto_schedule_routers(self, plugin, context, host, router_ids):
         """Schedule non-hosted routers to L3 Agent running on host.
 
         If router_ids is given, each router in router_ids is scheduled
         if it is not scheduled yet. Otherwise all unscheduled routers
         are scheduled.
-        Don't schedule the routers which are hosted already
+        Do not schedule the routers which are hosted already
         by active l3 agents.
+
+        :returns: True if routers have been successfully assigned to host
         """
         with context.session.begin(subtransactions=True):
-            # query if we have valid l3 agent on the host
-            query = context.session.query(agents_db.Agent)
-            query = query.filter(agents_db.Agent.agent_type ==
-                                 constants.AGENT_TYPE_L3,
-                                 agents_db.Agent.host == host,
-                                 agents_db.Agent.admin_state_up == sql.true())
-            try:
-                l3_agent = query.one()
-            except (exc.MultipleResultsFound, exc.NoResultFound):
-                LOG.debug(_('No enabled L3 agent on host %s'),
-                          host)
+            l3_agent = plugin.get_enabled_agent_on_host(
+                context, constants.AGENT_TYPE_L3, host)
+            if not l3_agent:
                 return False
-            if agents_db.AgentDbMixin.is_agent_down(
-                l3_agent.heartbeat_timestamp):
-                LOG.warn(_('L3 agent %s is not active'), l3_agent.id)
-            # check if each of the specified routers is hosted
-            if router_ids:
-                routers = plugin.get_routers(
-                    context, filters={'id': router_ids})
-                unscheduled_routers = []
-                for router in routers:
-                    l3_agents = plugin.get_l3_agents_hosting_routers(
-                        context, [router['id']], admin_state_up=True)
-                    if l3_agents and not router.get('distributed', False):
-                        LOG.debug(_('Router %(router_id)s has already been'
-                                    ' hosted by L3 agent %(agent_id)s'),
-                                  {'router_id': router['id'],
-                                   'agent_id': l3_agents[0]['id']})
-                    else:
-                        unscheduled_routers.append(router)
-                if not unscheduled_routers:
-                    # all (specified) routers are already scheduled
-                    return False
-            else:
-                # get all routers that are not hosted
-                #TODO(gongysh) consider the disabled agent's router
-                stmt = ~sql.exists().where(
-                    l3_db.Router.id ==
-                    l3_agentschedulers_db.RouterL3AgentBinding.router_id)
-                unscheduled_router_ids = [router_id_[0] for router_id_ in
-                                          context.session.query(
-                                              l3_db.Router.id).filter(stmt)]
-                if not unscheduled_router_ids:
-                    LOG.debug(_('No non-hosted routers'))
-                    return False
-                unscheduled_routers = plugin.get_routers(
-                    context, filters={'id': unscheduled_router_ids})
 
-            # check if the configuration of l3 agent is compatible
-            # with the router
-            to_removed_ids = set()
-            for router in unscheduled_routers:
-                candidates = plugin.get_l3_agent_candidates(context,
-                                                            router,
-                                                            [l3_agent])
-                if not candidates:
-                    to_removed_ids.add(router['id'])
+            unscheduled_routers = self.get_routers_to_schedule(
+                context, plugin, router_ids)
+            if not unscheduled_routers:
+                return False
 
-            target_routers = [r for r in unscheduled_routers
-                              if r['id'] not in to_removed_ids]
+            target_routers = self.get_routers_can_schedule(
+                context, plugin, unscheduled_routers, l3_agent)
             if not target_routers:
                 LOG.warn(_('No routers compatible with L3 agent configuration'
                            ' on host %s'), host)
                 return False
 
-            for router_dict in target_routers:
-                if (router_dict.get('distributed', False)
-                    and self.dvr_has_binding(context,
-                                             router_dict['id'],
-                                             l3_agent.id)):
-                    continue
-                self.bind_router(context, router_dict['id'], l3_agent)
-        return True
+            self.bind_routers(context, target_routers, l3_agent)
+            return True
 
     def get_candidates(self, plugin, context, sync_router, subnet_id):
         """Return L3 agents where a router could be scheduled."""
@@ -171,6 +172,13 @@ class L3Scheduler(object):
                              sync_router['id'])
 
             return candidates
+
+    def bind_routers(self, context, routers, l3_agent):
+        for router in routers:
+            if (router.get('distributed', False) and
+                self.dvr_has_binding(context, router['id'], l3_agent.id)):
+                    continue
+            self.bind_router(context, router['id'], l3_agent)
 
     def bind_router(self, context, router_id, chosen_agent):
         """Bind the router to the l3 agent which has been chosen."""

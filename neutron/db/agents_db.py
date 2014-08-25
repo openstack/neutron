@@ -82,6 +82,23 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
             raise ext_agent.AgentNotFound(id=id)
         return agent
 
+    def get_enabled_agent_on_host(self, context, agent_type, host):
+        """Return agent of agent_type for the specified host."""
+        query = context.session.query(Agent)
+        query = query.filter(Agent.agent_type == agent_type,
+                             Agent.host == host,
+                             Agent.admin_state_up == sql.true())
+        try:
+            agent = query.one()
+        except exc.NoResultFound:
+            LOG.debug('No enabled %(agent_type)s agent on host '
+                      '%(host)s' % {'agent_type': agent_type, 'host': host})
+            return
+        if self.is_agent_down(agent.heartbeat_timestamp):
+            LOG.warn(_('%(agent_type)s agent %(agent_id)s is not active')
+                     % {'agent_type': agent_type, 'agent_id': agent.id})
+        return agent
+
     @classmethod
     def is_agent_down(cls, heart_beat_time):
         return timeutils.is_older_than(heart_beat_time,
