@@ -19,7 +19,6 @@ disable=
  locally-disabled,
 # "E" Error for important programming issues (likely bugs)
  access-member-before-definition,
- bad-except-order,
  bad-super-call,
  maybe-no-member,
  no-member,

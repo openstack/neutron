@@ -130,13 +130,13 @@ class NSClient(object):
         try:
             response = requests.request(method, url=resource_uri,
                                         headers=headers, data=body)
+        except requests.exceptions.SSLError:
+            LOG.exception(_LE("SSL error occurred while connecting to %s"),
+                          self.service_uri)
+            raise NCCException(NCCException.CONNECTION_ERROR)
         except requests.exceptions.ConnectionError:
             LOG.exception(_LE("Connection error occurred while connecting "
                               "to %s"),
-                          self.service_uri)
-            raise NCCException(NCCException.CONNECTION_ERROR)
-        except requests.exceptions.SSLError:
-            LOG.exception(_LE("SSL error occurred while connecting to %s"),
                           self.service_uri)
             raise NCCException(NCCException.CONNECTION_ERROR)
         except requests.exceptions.Timeout:
