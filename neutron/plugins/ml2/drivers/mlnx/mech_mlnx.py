@@ -18,7 +18,6 @@ from oslo.config import cfg
 
 from neutron.common import constants
 from neutron.extensions import portbindings
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
@@ -49,7 +48,6 @@ class MlnxMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             cfg.CONF.ESWITCH.vnic_type,
             {portbindings.CAP_PORT_FILTER: False},
             portbindings.VNIC_TYPES)
-        self.update_profile = cfg.CONF.ESWITCH.apply_profile_patch
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('interface_mappings', {})
@@ -75,13 +73,6 @@ class MlnxMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             context.set_binding(segment[api.ID],
                                 vif_type,
                                 self.vif_details)
-            # REVISIT(irenab): Temporary solution till nova support
-            # will be merged for physical_network propagation
-            # via VIF object to VIFDriver (required by mlnx vif plugging).
-            if self.update_profile:
-                profile = {'physical_network':
-                           segment['physical_network']}
-                context._binding.profile = jsonutils.dumps(profile)
 
     def _get_vif_type(self, requested_vnic_type):
         if requested_vnic_type == portbindings.VNIC_MACVTAP:

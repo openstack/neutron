@@ -23,9 +23,6 @@ eswitch_opts = [
                default=portbindings.VIF_TYPE_MLNX_DIRECT,
                help=_("Type of VM network interface: mlnx_direct or "
                       "hostdev")),
-    cfg.BoolOpt('apply_profile_patch',
-                default=False,
-                help=_("Enable server compatibility with old nova")),
 ]
 
 
