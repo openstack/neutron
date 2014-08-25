@@ -29,6 +29,7 @@ from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 LOG = logging.getLogger(__name__)
 
 EOS_UNREACHABLE_MSG = _('Unable to reach EOS')
+DEFAULT_VLAN = 1
 
 
 class AristaRPCWrapper(object):
@@ -223,6 +224,8 @@ class AristaRPCWrapper(object):
             except KeyError:
                 append_cmd('network id %s' % network['network_id'])
             # Enter segment mode without exiting out of network mode
+            if not network['segmentation_id']:
+                network['segmentation_id'] = DEFAULT_VLAN
             append_cmd('segment 1 type vlan id %d' %
                        network['segmentation_id'])
         cmds.extend(self._get_exit_mode_cmds(['segment', 'network', 'tenant']))

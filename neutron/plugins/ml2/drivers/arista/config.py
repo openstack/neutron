@@ -67,4 +67,62 @@ ARISTA_DRIVER_OPTS = [
                       '"RegionOne" is assumed.'))
 ]
 
+
+""" Arista L3 Service Plugin specific configuration knobs.
+
+Following are user configurable options for Arista L3 plugin
+driver. The eapi_username, eapi_password, and eapi_host are
+required options.
+"""
+
+ARISTA_L3_PLUGIN = [
+    cfg.StrOpt('primary_l3_host_username',
+               default='',
+               help=_('Username for Arista EOS. This is required field. '
+                      'If not set, all communications to Arista EOS '
+                      'will fail')),
+    cfg.StrOpt('primary_l3_host_password',
+               default='',
+               secret=True,  # do not expose value in the logs
+               help=_('Password for Arista EOS. This is required field. '
+                      'If not set, all communications to Arista EOS '
+                      'will fail')),
+    cfg.StrOpt('primary_l3_host',
+               default='',
+               help=_('Arista EOS IP address. This is required field. '
+                      'If not set, all communications to Arista EOS '
+                      'will fail')),
+    cfg.StrOpt('secondary_l3_host',
+               default='',
+               help=_('Arista EOS IP address for second Switch MLAGed with '
+                      'the first one. This an optional field, however, if '
+                      'mlag_config flag is set, then this is required. '
+                      'If not set, all communications to Arista EOS '
+                      'will fail')),
+    cfg.BoolOpt('mlag_config',
+                default=False,
+                help=_('This flag is used indicate if Arista Switches are '
+                       'configured in MLAG mode. If yes, all L3 config '
+                       'is pushed to both the switches automatically. '
+                       'If this flag is set to True, ensure to specify IP '
+                       'addresses of both switches. '
+                       'This is optional. If not set, a value of "False" '
+                       'is assumed.')),
+    cfg.BoolOpt('use_vrf',
+                default=False,
+                help=_('A "True" value for this flag indicates to create a '
+                       'router in VRF. If not set, all routers are created '
+                       'in default VRF.'
+                       'This is optional. If not set, a value of "False" '
+                       'is assumed.')),
+    cfg.IntOpt('l3_sync_interval',
+               default=180,
+               help=_('Sync interval in seconds between L3 Service plugin '
+                      'and EOS. This interval defines how often the '
+                      'synchronization is performed. This is an optional '
+                      'field. If not set, a value of 180 seconds is assumed'))
+]
+
+cfg.CONF.register_opts(ARISTA_L3_PLUGIN, "l3_arista")
+
 cfg.CONF.register_opts(ARISTA_DRIVER_OPTS, "ml2_arista")
