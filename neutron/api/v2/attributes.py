@@ -151,19 +151,17 @@ def _validate_no_whitespace(data):
 
 
 def _validate_mac_address(data, valid_values=None):
-    valid_mac = False
     try:
         valid_mac = netaddr.valid_mac(_validate_no_whitespace(data))
     except Exception:
-        pass
-    finally:
-        # TODO(arosen): The code in this file should be refactored
-        # so it catches the correct exceptions. _validate_no_whitespace
-        # raises AttributeError if data is None.
-        if valid_mac is False:
-            msg = _("'%s' is not a valid MAC address") % data
-            LOG.debug(msg)
-            return msg
+        valid_mac = False
+    # TODO(arosen): The code in this file should be refactored
+    # so it catches the correct exceptions. _validate_no_whitespace
+    # raises AttributeError if data is None.
+    if not valid_mac:
+        msg = _("'%s' is not a valid MAC address") % data
+        LOG.debug(msg)
+        return msg
 
 
 def _validate_mac_address_or_none(data, valid_values=None):
