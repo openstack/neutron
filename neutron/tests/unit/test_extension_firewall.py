@@ -84,7 +84,6 @@ class FirewallExtensionTestCase(testlib_api.WebTestCase):
         ext_mgr = FirewallTestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
-        super(FirewallExtensionTestCase, self).setUp()
 
     def tearDown(self):
         self._plugin_patcher.stop()

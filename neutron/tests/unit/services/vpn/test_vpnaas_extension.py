@@ -84,7 +84,6 @@ class VpnaasExtensionTestCase(testlib_api.WebTestCase):
         ext_mgr = VpnaasTestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
-        super(VpnaasExtensionTestCase, self).setUp()
 
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
