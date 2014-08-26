@@ -33,9 +33,9 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
                 self.skipTest(skip_msg)
             raise
 
-    def get_rand_name(self, max_length, prefix='test'):
+    def get_rand_name(self, max_length=None, prefix='test'):
         name = prefix + str(random.randint(1, 0x7fffffff))
-        return name[:max_length]
+        return name[:max_length] if max_length is not None else name
 
     def create_resource(self, name_prefix, creation_func, *args, **kwargs):
         """Create a new resource that does not already exist.
@@ -47,7 +47,8 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
         :param *args *kwargs: These will be passed to the create function.
         """
         while True:
-            name = self.get_rand_name(n_const.DEVICE_NAME_MAX_LEN, name_prefix)
+            name = self.get_rand_name(max_length=n_const.DEVICE_NAME_MAX_LEN,
+                                      prefix=name_prefix)
             try:
                 return creation_func(name, *args, **kwargs)
             except RuntimeError:

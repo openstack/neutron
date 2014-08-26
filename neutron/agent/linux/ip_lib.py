@@ -549,11 +549,29 @@ class IpNetnsCommand(IpCommandBase):
 
 
 def device_exists(device_name, root_helper=None, namespace=None):
+    """Return True if the device exists in the namespace."""
     try:
         address = IPDevice(device_name, root_helper, namespace).link.address
     except RuntimeError:
         return False
     return bool(address)
+
+
+def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None,
+                              root_helper=None):
+    """Return True if the device with the given IP and MAC addresses
+    exists in the namespace.
+    """
+    try:
+        device = IPDevice(device_name, root_helper, namespace)
+        if mac != device.link.address:
+            return False
+        if ip_cidr not in (ip['cidr'] for ip in device.addr.list()):
+            return False
+    except RuntimeError:
+        return False
+    else:
+        return True
 
 
 def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
