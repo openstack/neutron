@@ -176,6 +176,7 @@ class DhcpAgent(manager.Manager):
             self.schedule_resync(e)
             LOG.exception(_('Unable to sync network state.'))
 
+    @utils.exception_logger()
     def _periodic_resync_helper(self):
         """Resync the dhcp state at the configured interval."""
         while True:
@@ -210,6 +211,7 @@ class DhcpAgent(manager.Manager):
         if network:
             self.configure_dhcp_for_network(network)
 
+    @utils.exception_logger()
     def safe_configure_dhcp_for_network(self, network):
         try:
             self.configure_dhcp_for_network(network)

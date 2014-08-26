@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import eventlet
 import mock
 import testtools
 
@@ -381,3 +382,85 @@ class TestDict2Tuples(base.BaseTestCase):
         expected = ((42, 'baz'), ('aaa', 'zzz'), ('foo', 'bar'))
         output_tuple = utils.dict2tuple(input_dict)
         self.assertEqual(expected, output_tuple)
+
+
+class TestExceptionLogger(base.BaseTestCase):
+    def test_normal_call(self):
+        result = "Result"
+
+        @utils.exception_logger()
+        def func():
+            return result
+
+        self.assertEqual(result, func())
+
+    def test_raise(self):
+        result = "Result"
+
+        @utils.exception_logger()
+        def func():
+            raise RuntimeError(result)
+
+        self.assertRaises(RuntimeError, func)
+
+    def test_spawn_normal(self):
+        result = "Result"
+        logger = mock.Mock()
+
+        @utils.exception_logger(logger=logger)
+        def func():
+            return result
+
+        gt = eventlet.spawn(func)
+        self.assertEqual(result, gt.wait())
+        self.assertFalse(logger.called)
+
+    def test_spawn_raise(self):
+        result = "Result"
+        logger = mock.Mock()
+
+        @utils.exception_logger(logger=logger)
+        def func():
+            raise RuntimeError(result)
+
+        gt = eventlet.spawn(func)
+        self.assertRaises(RuntimeError, gt.wait)
+        self.assertTrue(logger.called)
+
+    def test_pool_spawn_normal(self):
+        logger = mock.Mock()
+        calls = mock.Mock()
+
+        @utils.exception_logger(logger=logger)
+        def func(i):
+            calls(i)
+
+        pool = eventlet.GreenPool(4)
+        for i in range(0, 4):
+            pool.spawn(func, i)
+        pool.waitall()
+
+        calls.assert_has_calls([mock.call(0), mock.call(1),
+                                mock.call(2), mock.call(3)],
+                               any_order=True)
+        self.assertFalse(logger.called)
+
+    def test_pool_spawn_raise(self):
+        logger = mock.Mock()
+        calls = mock.Mock()
+
+        @utils.exception_logger(logger=logger)
+        def func(i):
+            if i == 2:
+                raise RuntimeError(2)
+            else:
+                calls(i)
+
+        pool = eventlet.GreenPool(4)
+        for i in range(0, 4):
+            pool.spawn(func, i)
+        pool.waitall()
+
+        calls.assert_has_calls([mock.call(0), mock.call(1), mock.call(3)],
+                               any_order=True)
+        self.assertTrue(logger.called)
