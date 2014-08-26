@@ -13,25 +13,33 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import abc
-import six
 
 from neutron.common import exceptions as exc
 from neutron.common import topics
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import helpers
 
 LOG = log.getLogger(__name__)
 
 TUNNEL = 'tunnel'
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TunnelTypeDriver(api.TypeDriver):
+class TunnelTypeDriver(helpers.TypeDriverHelper):
     """Define stable abstract interface for ML2 type drivers.
 
     tunnel type networks rely on tunnel endpoints. This class defines abstract
     methods to manage these endpoints.
     """
+
+    def __init__(self, model):
+        super(TunnelTypeDriver, self).__init__(model)
+        self.segmentation_key = iter(self.primary_keys).next()
+
+    @abc.abstractmethod
+    def sync_allocations(self):
+        """Synchronize type_driver allocation table with configured ranges."""
 
     @abc.abstractmethod
     def add_endpoint(self, ip):
@@ -48,6 +56,13 @@ class TunnelTypeDriver(api.TypeDriver):
         :returns a list of dict [{id:endpoint_id, ip_address:endpoint_ip},..]
         """
         pass
+
+    def _initialize(self, raw_tunnel_ranges):
+        self.tunnel_ranges = []
+        self._parse_tunnel_ranges(raw_tunnel_ranges,
+                                  self.tunnel_ranges,
+                                  self.get_type())
+        self.sync_allocations()
 
     def _parse_tunnel_ranges(self, tunnel_ranges, current_range, tunnel_type):
         for entry in tunnel_ranges:
@@ -80,6 +95,57 @@ class TunnelTypeDriver(api.TypeDriver):
                 msg = (_("%(key)s prohibited for %(tunnel)s provider network"),
                        {'key': key, 'tunnel': segment.get(api.NETWORK_TYPE)})
                 raise exc.InvalidInput(error_message=msg)
+
+    def reserve_provider_segment(self, session, segment):
+        if self.is_partial_segment(segment):
+            alloc = self.allocate_partially_specified_segment(session)
+            if not alloc:
+                raise exc.NoNetworkAvailable
+        else:
+            segmentation_id = segment.get(api.SEGMENTATION_ID)
+            alloc = self.allocate_fully_specified_segment(
+                session, **{self.segmentation_key: segmentation_id})
+            if not alloc:
+                raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
+        return {api.NETWORK_TYPE: self.get_type(),
+                api.PHYSICAL_NETWORK: None,
+                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key)}
+
+    def allocate_tenant_segment(self, session):
+        alloc = self.allocate_partially_specified_segment(session)
+        if not alloc:
+            return
+        return {api.NETWORK_TYPE: self.get_type(),
+                api.PHYSICAL_NETWORK: None,
+                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key)}
+
+    def release_segment(self, session, segment):
+        tunnel_id = segment[api.SEGMENTATION_ID]
+
+        inside = any(lo <= tunnel_id <= hi for lo, hi in self.tunnel_ranges)
+
+        info = {'type': self.get_type(), 'id': tunnel_id}
+        with session.begin(subtransactions=True):
+            query = (session.query(self.model).
+                     filter_by(**{self.segmentation_key: tunnel_id}))
+            if inside:
+                count = query.update({"allocated": False})
+                if count:
+                    LOG.debug("Releasing %(type)s tunnel %(id)s to pool",
+                              info)
+            else:
+                count = query.delete()
+                if count:
+                    LOG.debug("Releasing %(type)s tunnel %(id)s outside pool",
+                              info)
+
+        if not count:
+            LOG.warning(_LW("%(type)s tunnel %(id)s not found"), info)
+
+    def get_allocation(self, session, tunnel_id):
+        return (session.query(self.model).
+                filter_by(**{self.segmentation_key: tunnel_id}).
+                first())
 
 
 class TunnelRpcCallbackMixin(object):
