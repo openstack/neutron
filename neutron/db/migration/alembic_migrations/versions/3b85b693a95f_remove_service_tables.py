@@ -1,4 +1,4 @@
-# Copyright ${create_date.year} OpenStack Foundation
+# Copyright 2014 OpenStack Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,26 +13,33 @@
 #    under the License.
 #
 
-"""${message}
+"""Drop unused servicedefinitions and servicetypes tables.
 
-Revision ID: ${up_revision}
-Revises: ${down_revision}
-Create Date: ${create_date}
+These tables are created independently on plugins but only dropped if
+LoadBalancer plugin is used. Meaning that if LoadBalancer plugin is not set
+then these tables were created and never used.
+
+Revision ID: 3b85b693a95f
+Revises: 327ee5fde2c7
+Create Date: 2014-07-22 03:30:05.837152
 
 """
 
 # revision identifiers, used by Alembic.
-revision = ${repr(up_revision)}
-down_revision = ${repr(down_revision)}
+revision = '3b85b693a95f'
+down_revision = '327ee5fde2c7'
 
 from alembic import op
-import sqlalchemy as sa
-${imports if imports else ""}
 
 
 def upgrade(active_plugins=None, options=None):
-    ${upgrades if upgrades else "pass"}
+    for table in ('servicedefinitions', 'servicetypes'):
+        op.execute("DROP TABLE IF EXISTS %s" % table)
 
 
 def downgrade(active_plugins=None, options=None):
-    ${downgrades if downgrades else "pass"}
+    """Don't create the tables
+
+    These tables would be created during downgrade at correct place in
+    migration timeline at revision 557edfc53098.
+    """
