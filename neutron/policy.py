@@ -17,6 +17,7 @@
 Policy engine for neutron.  Largely copied from nova.
 """
 import itertools
+import logging
 import re
 
 from oslo.config import cfg
@@ -27,11 +28,11 @@ import neutron.common.utils as utils
 from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import importutils
-from neutron.openstack.common import log as logging
+from neutron.openstack.common import log
 from neutron.openstack.common import policy
 
 
-LOG = logging.getLogger(__name__)
+LOG = log.getLogger(__name__)
 _POLICY_PATH = None
 _POLICY_CACHE = {}
 ADMIN_CTX_POLICY = 'context_is_admin'
@@ -151,6 +152,16 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
     return policy.AndCheck(sub_attr_rules)
 
 
+def _process_rules_list(rules, match_rule):
+    """Recursively walk a policy rule to extract a list of match entries."""
+    if isinstance(match_rule, policy.RuleCheck):
+        rules.append(match_rule.match)
+    elif isinstance(match_rule, policy.AndCheck):
+        for rule in match_rule.rules:
+            _process_rules_list(rules, rule)
+    return rules
+
+
 def _build_match_rule(action, target):
     """Create the rule to match for a given action.
 
@@ -188,6 +199,11 @@ def _build_match_rule(action, target):
                                     attribute_name, attribute,
                                     action, target)])
                         match_rule = policy.AndCheck([match_rule, attr_rule])
+    # Check that the logger has a DEBUG log level
+    if (cfg.CONF.debug and LOG.logger.level == logging.NOTSET or
+            LOG.logger.level == logging.DEBUG):
+        rules = _process_rules_list([], match_rule)
+        LOG.debug("Enforcing rules: %s", rules)
     return match_rule
 
 
