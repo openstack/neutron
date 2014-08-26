@@ -81,6 +81,9 @@ apic_opts = [
     cfg.StrOpt('root_helper',
                default=DEFAULT_ROOT_HELPER,
                help=_("Setup root helper as rootwrap or sudo")),
+    cfg.IntOpt('apic_sync_interval',
+               default=0,
+               help=_("Synchronization interval in seconds")),
 ]
 
 

@@ -27,6 +27,7 @@ from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.cisco.apic import apic_model
+from neutron.plugins.ml2.drivers.cisco.apic import apic_sync
 from neutron.plugins.ml2.drivers.cisco.apic import config
 from neutron.plugins.ml2 import models
 
@@ -54,12 +55,34 @@ class APICMechanismDriver(api.MechanismDriver):
                                         keyclient_param, keystone_authtoken,
                                         apic_system_id)
 
+    @staticmethod
+    def get_base_synchronizer(inst):
+        apic_config = cfg.CONF.ml2_cisco_apic
+        return apic_sync.ApicBaseSynchronizer(inst,
+                                              apic_config.apic_sync_interval)
+
+    @staticmethod
+    def get_router_synchronizer(inst):
+        apic_config = cfg.CONF.ml2_cisco_apic
+        return apic_sync.ApicRouterSynchronizer(inst,
+                                                apic_config.apic_sync_interval)
+
     def initialize(self):
         # initialize apic
         self.apic_manager = APICMechanismDriver.get_apic_manager()
         self.name_mapper = self.apic_manager.apic_mapper
+        self.synchronizer = None
         self.apic_manager.ensure_infra_created_on_apic()
         self.apic_manager.ensure_bgp_pod_policy_created_on_apic()
+
+    def sync_init(f):
+        def inner(inst, *args, **kwargs):
+            if not inst.synchronizer:
+                inst.synchronizer = (
+                    APICMechanismDriver.get_base_synchronizer(inst))
+                inst.synchronizer.sync_base()
+            return f(inst, *args, **kwargs)
+        return inner
 
     @lockutils.synchronized('apic-portlock')
     def _perform_path_port_operations(self, context, port):
@@ -172,6 +195,7 @@ class APICMechanismDriver(api.MechanismDriver):
             network_id = self.name_mapper.network(context, network_id)
             return tenant_id, network_id, gateway_ip
 
+    @sync_init
     def create_port_postcommit(self, context):
         self._perform_port_operations(context)
 
@@ -184,6 +208,7 @@ class APICMechanismDriver(api.MechanismDriver):
                 resource='Port', msg='Port device owner and id cannot be '
                                      'changed.')
 
+    @sync_init
     def update_port_postcommit(self, context):
         self._perform_port_operations(context)
 
@@ -197,6 +222,7 @@ class APICMechanismDriver(api.MechanismDriver):
         elif port.get('device_owner') == n_constants.DEVICE_OWNER_DHCP:
             self._delete_path_if_last(context)
 
+    @sync_init
     def create_network_postcommit(self, context):
         if not context.current.get('router:external'):
             tenant_id = context.current['tenant_id']
@@ -213,6 +239,10 @@ class APICMechanismDriver(api.MechanismDriver):
                                                             transaction=trs)
                 self.apic_manager.ensure_epg_created(
                     tenant_id, network_id, transaction=trs)
+
+    @sync_init
+    def update_network_postcommit(self, context):
+        super(APICMechanismDriver, self).update_network_postcommit(context)
 
     def delete_network_postcommit(self, context):
         if not context.current.get('router:external'):
@@ -236,6 +266,7 @@ class APICMechanismDriver(api.MechanismDriver):
                                                       context.current['id'])
                 self.apic_manager.delete_external_routed_network(network_id)
 
+    @sync_init
     def create_subnet_postcommit(self, context):
         info = self._get_subnet_info(context, context.current)
         if info:
@@ -244,6 +275,7 @@ class APICMechanismDriver(api.MechanismDriver):
             self.apic_manager.ensure_subnet_created_on_apic(
                 tenant_id, network_id, gateway_ip)
 
+    @sync_init
     def update_subnet_postcommit(self, context):
         if context.current['gateway_ip'] != context.original['gateway_ip']:
             with self.apic_manager.apic.transaction() as trs:
