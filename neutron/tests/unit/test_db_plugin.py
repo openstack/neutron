@@ -582,8 +582,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         resource = resource.replace('-', '_')
         resources = resources.replace('-', '_')
         expected_res = [item[resource]['id'] for item in items]
-        self.assertEqual(sorted([n['id'] for n in res[resources]]),
-                         sorted(expected_res))
+        self.assertEqual(expected_res, [n['id'] for n in res[resources]])
 
     def _test_list_with_pagination(self, resource, items, sort,
                                    limit, expected_page_num,
@@ -616,10 +615,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                                                          '', content_type)
                         self.assertEqual(len(res[resources]),
                                          limit)
-        self.assertEqual(page_num, expected_page_num)
-        self.assertEqual(sorted([n[verify_key] for n in items_res]),
-                         sorted([item[resource][verify_key]
-                                for item in items]))
+        self.assertEqual(expected_page_num, page_num)
+        self.assertEqual([item[resource][verify_key] for item in items],
+                         [n[verify_key] for n in items_res])
 
     def _test_list_with_pagination_reverse(self, resource, items, sort,
                                            limit, expected_page_num,
@@ -655,11 +653,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                                                          '', content_type)
                         self.assertEqual(len(res[resources]),
                                          limit)
-        self.assertEqual(page_num, expected_page_num)
+        self.assertEqual(expected_page_num, page_num)
         expected_res = [item[resource]['id'] for item in items]
         expected_res.reverse()
-        self.assertEqual(sorted([n['id'] for n in item_res]),
-                         sorted(expected_res))
+        self.assertEqual(expected_res, [n['id'] for n in item_res])
 
 
 class TestBasicGet(NeutronDbPluginV2TestCase):

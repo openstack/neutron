@@ -361,7 +361,7 @@ class TestLoadbalancerPlugin(
             ) as (vip1, vip2, vip3):
                 self._test_list_with_sort(
                     'vip',
-                    (vip1, vip3, vip2),
+                    (vip1, vip2, vip3),
                     [('protocol_port', 'asc'), ('name', 'desc')]
                 )
                 req = self.new_list_request('vips')
