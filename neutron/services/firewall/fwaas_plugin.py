@@ -243,7 +243,7 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
 
     def delete_db_firewall_object(self, context, id):
         firewall = self.get_firewall(context, id)
-        if firewall['status'] in [const.PENDING_DELETE]:
+        if firewall['status'] == const.PENDING_DELETE:
             super(FirewallPlugin, self).delete_firewall(context, id)
 
     def delete_firewall(self, context, id):
