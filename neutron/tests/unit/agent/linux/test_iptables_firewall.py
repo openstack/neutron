@@ -56,8 +56,12 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
         self.iptables_inst = mock.Mock()
         self.v4filter_inst = mock.Mock()
         self.v6filter_inst = mock.Mock()
-        self.iptables_inst.ipv4 = {'filter': self.v4filter_inst}
-        self.iptables_inst.ipv6 = {'filter': self.v6filter_inst}
+        self.iptables_inst.ipv4 = {'filter': self.v4filter_inst,
+                                   'raw': self.v4filter_inst
+                                   }
+        self.iptables_inst.ipv6 = {'filter': self.v6filter_inst,
+                                   'raw': self.v6filter_inst
+                                   }
         iptables_cls.return_value = self.iptables_inst
 
         self.firewall = iptables_firewall.IptablesFirewallDriver()
@@ -69,6 +73,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
     def _fake_port(self):
         return {'device': 'tapfake_dev',
                 'mac_address': 'ff:ff:ff:ff:ff:ff',
+                'network_id': 'fake_net',
                 'fixed_ips': [FAKE_IP['IPv4'],
                               FAKE_IP['IPv6']]}
 
@@ -921,7 +926,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     '-m physdev --physdev-out tapfake_dev '
                                     '--physdev-is-bridged '
                                     '-j $ifake_dev',
-                                    comment=ic.SG_TO_VM_SG),
+                                    comment=ic.SG_TO_VM_SG)
                  ]
         if ethertype == 'IPv6':
             for icmp6_type in constants.ICMPV6_ALLOWED_TYPES:
@@ -1247,8 +1252,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
     def test_defer_chain_apply_coalesce_multiple_ports(self):
         chain_applies = self._mock_chain_applies()
-        port1 = {'device': 'd1', 'mac_address': 'mac1'}
-        port2 = {'device': 'd2', 'mac_address': 'mac2'}
+        port1 = {'device': 'd1', 'mac_address': 'mac1', 'network_id': 'net1'}
+        port2 = {'device': 'd2', 'mac_address': 'mac2', 'network_id': 'net1'}
         device2port = {'d1': port1, 'd2': port2}
         with self.firewall.defer_apply():
             self.firewall.prepare_port_filter(port1)
@@ -1259,6 +1264,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
     def test_ip_spoofing_filter_with_multiple_ips(self):
         port = {'device': 'tapfake_dev',
                 'mac_address': 'ff:ff:ff:ff:ff:ff',
+                'network_id': 'fake_net',
                 'fixed_ips': ['10.0.0.1', 'fe80::1', '10.0.0.2']}
         self.firewall.prepare_port_filter(port)
         calls = [mock.call.add_chain('sg-fallback'),
@@ -1338,6 +1344,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
     def test_ip_spoofing_no_fixed_ips(self):
         port = {'device': 'tapfake_dev',
                 'mac_address': 'ff:ff:ff:ff:ff:ff',
+                'network_id': 'fake_net',
                 'fixed_ips': []}
         self.firewall.prepare_port_filter(port)
         calls = [mock.call.add_chain('sg-fallback'),
@@ -1421,6 +1428,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
     def _fake_port(self, sg_id=FAKE_SGID):
         return {'device': 'tapfake_dev',
                 'mac_address': 'ff:ff:ff:ff:ff:ff',
+                'network_id': 'fake_net',
                 'fixed_ips': [FAKE_IP['IPv4'],
                               FAKE_IP['IPv6']],
                 'security_groups': [sg_id],
