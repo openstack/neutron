@@ -79,6 +79,18 @@ APIC_KEY = 'key'
 
 KEYSTONE_TOKEN = '123Token123'
 
+APIC_UPLINK_PORTS = ['uplink_port']
+
+SERVICE_HOST = 'host1'
+SERVICE_HOST_IFACE = 'eth0'
+SERVICE_HOST_MAC = 'aa:ee:ii:oo:uu:yy'
+
+SERVICE_PEER_CHASSIS_NAME = 'leaf4'
+SERVICE_PEER_CHASSIS = 'topology/pod-1/node-' + APIC_EXT_SWITCH
+SERVICE_PEER_PORT_LOCAL = 'Eth%s/%s' % (APIC_EXT_MODULE, APIC_EXT_PORT)
+SERVICE_PEER_PORT_DESC = ('topology/pod-1/paths-%s/pathep-[%s]' %
+                          (APIC_EXT_SWITCH, SERVICE_PEER_PORT_LOCAL.lower()))
+
 
 class ControllerMixin(object):
 
@@ -175,6 +187,7 @@ class ConfigMixin(object):
             'apic_node_profile': APIC_NODE_PROF,
             'apic_entity_profile': APIC_ATT_ENT_PROF,
             'apic_function_profile': APIC_FUNC_PROF,
+            'apic_host_uplink_ports': APIC_UPLINK_PORTS
         }
         for opt, val in apic_test_config.items():
             cfg.CONF.set_override(opt, val, 'ml2_cisco_apic')
