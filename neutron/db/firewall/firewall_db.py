@@ -255,11 +255,10 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         LOG.debug(_("update_firewall() called"))
         fw = firewall['firewall']
         with context.session.begin(subtransactions=True):
-            fw_query = context.session.query(
-                Firewall).with_lockmode('update')
-            firewall_db = fw_query.filter_by(id=id).one()
-            firewall_db.update(fw)
-        return self._make_firewall_dict(firewall_db)
+            count = context.session.query(Firewall).filter_by(id=id).update(fw)
+            if not count:
+                raise firewall.FirewallNotFound(firewall_id=id)
+        return self.get_firewall(context, id)
 
     def delete_firewall(self, context, id):
         LOG.debug(_("delete_firewall() called"))
