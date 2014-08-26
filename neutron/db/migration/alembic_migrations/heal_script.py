@@ -103,12 +103,12 @@ def parse_modify_command(command):
     #              autoincrement=None, existing_type=None,
     #              existing_server_default=False, existing_nullable=None,
     #              existing_autoincrement=None, schema=None, **kw)
+    bind = op.get_bind()
     for modified, schema, table, column, existing, old, new in command:
         if modified.endswith('type'):
             modified = 'type_'
         elif modified.endswith('nullable'):
             modified = 'nullable'
-            bind = op.get_bind()
             insp = sqlalchemy.engine.reflection.Inspector.from_engine(bind)
             if column in insp.get_primary_keys(table) and new:
                 return
@@ -122,8 +122,7 @@ def parse_modify_command(command):
             if isinstance(default.arg, basestring):
                 existing['existing_server_default'] = default.arg
             else:
-                existing['existing_server_default'] = default.arg.compile(
-                    dialect=bind.engine.name)
+                existing['existing_server_default'] = default.arg.text
         kwargs.update(existing)
         op.alter_column(table, column, **kwargs)
 
