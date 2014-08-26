@@ -52,9 +52,6 @@ from neutron.plugins.mlnx import rpc_callbacks
 
 LOG = logging.getLogger(__name__)
 
-#to be compatible with Linux Bridge Agent on Network Node
-TAP_PREFIX_LEN = 3
-
 
 class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                             external_net_db.External_net_db_mixin,
@@ -529,7 +526,8 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         services get device either by linux bridge plugin
         device name convention or by mac address
         """
-        port = db.get_port_from_device(device[TAP_PREFIX_LEN:])
+        port = db.get_port_from_device(
+            device[len(q_const.TAP_DEVICE_PREFIX):])
         if port:
             port['device'] = device
         else:

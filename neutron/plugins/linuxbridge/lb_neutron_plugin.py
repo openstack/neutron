@@ -53,12 +53,10 @@ from neutron.plugins.linuxbridge.db import l2network_db_v2 as db
 
 LOG = logging.getLogger(__name__)
 
-# Device names start with "tap"
-TAP_PREFIX_LEN = 3
-
 
 class LinuxBridgeRpcCallbacks(n_rpc.RpcCallback):
 
+    # Device names start with "tap"
     # history
     #   1.1 Support Security Group RPC
     #   1.2 Support get_devices_details_list
@@ -540,7 +538,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @classmethod
     def get_port_from_device(cls, device):
-        port = db.get_port_from_device(device[TAP_PREFIX_LEN:])
+        port = db.get_port_from_device(device[len(q_const.TAP_DEVICE_PREFIX):])
         if port:
             port['device'] = device
         return port

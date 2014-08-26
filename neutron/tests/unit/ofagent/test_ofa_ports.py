@@ -18,6 +18,7 @@
 
 import mock
 
+from neutron.common import constants as n_const
 from neutron.plugins.ofagent.agent import ports
 from neutron.tests import base
 
@@ -35,7 +36,7 @@ class TestOFAgentPorts(base.BaseTestCase):
         self.assertFalse(p2.is_neutron_port())
 
     def test_neutron_port(self):
-        for pref in ['qvo', 'qr-', 'qg-', 'tap']:
+        for pref in ['qvo', 'qr-', 'qg-', n_const.TAP_DEVICE_PREFIX]:
             name = pref + '03b9a237-0b'
             p1 = ports.Port(port_name=name, ofport=999)
             ryu_ofp_port = mock.Mock(port_no=999)

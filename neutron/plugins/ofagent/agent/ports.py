@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import constants as n_const
+
 
 class OFPort(object):
     def __init__(self, port_name, ofport):
@@ -28,7 +30,7 @@ class OFPort(object):
 
 PORT_NAME_LEN = 14
 PORT_NAME_PREFIXES = [
-    "tap",  # common cases, including ovs_use_veth=True
+    n_const.TAP_DEVICE_PREFIX,  # common cases, including ovs_use_veth=True
     "qvo",  # nova hybrid interface driver
     "qr-",  # l3-agent INTERNAL_DEV_PREFIX  (ovs_use_veth=False)
     "qg-",  # l3-agent EXTERNAL_DEV_PREFIX  (ovs_use_veth=False)
@@ -61,7 +63,7 @@ def get_normalized_port_name(interface_id):
     use "tap" prefix throughout the agent and plugin for simplicity.
     Some care should be taken when talking to the switch.
     """
-    return ("tap" + interface_id)[0:PORT_NAME_LEN]
+    return (n_const.TAP_DEVICE_PREFIX + interface_id)[0:PORT_NAME_LEN]
 
 
 def _normalize_port_name(name):
@@ -71,7 +73,7 @@ def _normalize_port_name(name):
     """
     for pref in PORT_NAME_PREFIXES:
         if name.startswith(pref):
-            return "tap" + name[len(pref):]
+            return n_const.TAP_DEVICE_PREFIX + name[len(pref):]
     return name
 
 
