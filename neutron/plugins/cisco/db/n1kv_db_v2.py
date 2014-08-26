@@ -1294,7 +1294,7 @@ class NetworkProfile_db_mixin(object):
 
         :param net_p: network profile object
         """
-        if any(net_p[arg] == "" for arg in ["segment_type"]):
+        if net_p["segment_type"] == "":
             msg = _("Arguments segment_type missing"
                     " for network profile")
             LOG.error(msg)

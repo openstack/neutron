@@ -1109,8 +1109,7 @@ def _translate_vip_object_graph(extended_vip, plugin, context):
                           _trans_prop_name(hm_property))].append(value)
     ids = get_ids(extended_vip)
     trans_vip['__ids__'] = ids
-    for key in ['pip_address']:
-        if key in extended_vip:
-            trans_vip[key] = extended_vip[key]
+    if 'pip_address' in extended_vip:
+        trans_vip['pip_address'] = extended_vip['pip_address']
     LOG.debug('Translated Vip graph: ' + str(trans_vip))
     return trans_vip

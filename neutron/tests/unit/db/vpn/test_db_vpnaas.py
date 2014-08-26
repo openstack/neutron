@@ -85,9 +85,8 @@ class VPNTestMixin(object):
                 'pfs': pfs,
                 'tenant_id': self._tenant_id
                 }}
-        for arg in ['description']:
-            if arg in kwargs and kwargs[arg] is not None:
-                data['ikepolicy'][arg] = kwargs[arg]
+        if kwargs.get('description') is not None:
+            data['ikepolicy']['description'] = kwargs['description']
 
         ikepolicy_req = self.new_create_request('ikepolicies', data, fmt)
         ikepolicy_res = ikepolicy_req.get_response(self.ext_api)
@@ -148,9 +147,8 @@ class VPNTestMixin(object):
                                              'value': lifetime_value},
                                 'pfs': pfs,
                                 'tenant_id': self._tenant_id}}
-        for arg in ['description']:
-            if arg in kwargs and kwargs[arg] is not None:
-                data['ipsecpolicy'][arg] = kwargs[arg]
+        if kwargs.get('description') is not None:
+            data['ipsecpolicy']['description'] = kwargs['description']
         ipsecpolicy_req = self.new_create_request('ipsecpolicies', data, fmt)
         ipsecpolicy_res = ipsecpolicy_req.get_response(self.ext_api)
         if expected_res_status:
@@ -198,9 +196,8 @@ class VPNTestMixin(object):
                                'router_id': router_id,
                                'admin_state_up': admin_state_up,
                                'tenant_id': tenant_id}}
-        for arg in ['description']:
-            if arg in kwargs and kwargs[arg] is not None:
-                data['vpnservice'][arg] = kwargs[arg]
+        if kwargs.get('description') is not None:
+            data['vpnservice']['description'] = kwargs['description']
         vpnservice_req = self.new_create_request('vpnservices', data, fmt)
         if (kwargs.get('set_context') and
                 'tenant_id' in kwargs):
@@ -309,9 +306,9 @@ class VPNTestMixin(object):
                                       'admin_state_up': admin_state_up,
                                       'tenant_id': self._tenant_id}
         }
-        for arg in ['description']:
-            if arg in kwargs and kwargs[arg] is not None:
-                data['ipsec_site_connection'][arg] = kwargs[arg]
+        if kwargs.get('description') is not None:
+            data['ipsec_site_connection'][
+                'description'] = kwargs['description']
 
         ipsec_site_connection_req = self.new_create_request(
             'ipsec-site-connections', data, fmt
