@@ -211,12 +211,15 @@ class DhcpAgent(manager.Manager):
         if not network.admin_state_up:
             return
 
+        enable_metadata = self.dhcp_driver_cls.should_enable_metadata(
+            self.conf, network)
+
         for subnet in network.subnets:
-            if subnet.enable_dhcp:
+            if subnet.enable_dhcp and subnet.ip_version == 4:
                 if self.call_driver('enable', network):
-                    if (self.conf.use_namespaces and
-                        self.conf.enable_isolated_metadata):
+                    if self.conf.use_namespaces and enable_metadata:
                         self.enable_isolated_metadata_proxy(network)
+                        enable_metadata = False  # Don't trigger twice
                     self.cache.put(network)
                 break
 
@@ -226,6 +229,10 @@ class DhcpAgent(manager.Manager):
         if network:
             if (self.conf.use_namespaces and
                 self.conf.enable_isolated_metadata):
+                # NOTE(jschwarz): In the case where a network is deleted, all
+                # the subnets and ports are deleted before this function is
+                # called, so checking if 'should_enable_metadata' is True
+                # for any subnet is false logic here.
                 self.disable_isolated_metadata_proxy(network)
             if self.call_driver('disable', network):
                 self.cache.remove(network)
