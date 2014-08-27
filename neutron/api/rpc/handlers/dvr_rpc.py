@@ -40,11 +40,12 @@ class DVRServerRpcApiMixin(object):
                          version=self.DVR_RPC_VERSION)
 
     @log.log
-    def get_compute_ports_on_host_by_subnet(self, context, host, subnet):
+    def get_ports_on_host_by_subnet(self, context, host, subnet):
         return self.call(context,
-                         self.make_msg('get_compute_ports_on_host_by_subnet',
-                                       host=host,
-                                       subnet=subnet),
+                         self.make_msg(
+                             'get_ports_on_host_by_subnet',
+                             host=host,
+                             subnet=subnet),
                          version=self.DVR_RPC_VERSION)
 
     @log.log
@@ -70,10 +71,9 @@ class DVRServerRpcCallbackMixin(object):
     def get_dvr_mac_address_by_host(self, context, host):
         return self.plugin.get_dvr_mac_address_by_host(context, host)
 
-    def get_compute_ports_on_host_by_subnet(self, context, host, subnet):
-        return self.plugin.get_compute_ports_on_host_by_subnet(context,
-                                                               host,
-                                                               subnet)
+    def get_ports_on_host_by_subnet(self, context, host, subnet):
+        return self.plugin.get_ports_on_host_by_subnet(context,
+            host, subnet)
 
     def get_subnet_for_dvr(self, context, subnet):
         return self.plugin.get_subnet_for_dvr(context, subnet)

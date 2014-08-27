@@ -155,7 +155,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.host != host):
             binding.host = host
             changes = True
-            if "compute:" in port['device_owner']:
+            # Whenever a DVR serviceable port comes up on a
+            # node, it has to be communicated to the L3 Plugin
+            # and agent for creating the respective namespaces.
+            if (utils.is_dvr_serviced(port['device_owner'])):
                 l3plugin = manager.NeutronManager.get_service_plugins().get(
                     service_constants.L3_ROUTER_NAT)
                 if (utils.is_extension_supported(

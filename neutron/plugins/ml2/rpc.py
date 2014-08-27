@@ -207,11 +207,11 @@ class RpcCallbacks(n_rpc.RpcCallback,
         return super(RpcCallbacks, self).get_dvr_mac_address_by_host(
             rpc_context, host)
 
-    def get_compute_ports_on_host_by_subnet(self, rpc_context, **kwargs):
+    def get_ports_on_host_by_subnet(self, rpc_context, **kwargs):
         host = kwargs.get('host')
         subnet = kwargs.get('subnet')
         LOG.debug("DVR Agent requests list of VM ports on host %s", host)
-        return super(RpcCallbacks, self).get_compute_ports_on_host_by_subnet(
+        return super(RpcCallbacks, self).get_ports_on_host_by_subnet(
             rpc_context, host, subnet)
 
     def get_subnet_for_dvr(self, rpc_context, **kwargs):

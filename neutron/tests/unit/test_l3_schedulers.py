@@ -584,7 +584,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
             self.assertEqual(sub_ids.pop(),
                             dvr_port.get('fixed_ips').pop(0).get('subnet_id'))
 
-    def test_check_vm_exists_on_subnet(self):
+    def test_check_ports_active_on_host_and_subnet(self):
         dvr_port = {
                 'id': 'dvr_port1',
                 'device_id': 'r1',
@@ -613,11 +613,39 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
                        '.L3AgentNotifyAPI')):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
-            result = self.dut.check_vm_exists_on_subnet(
+            result = self.dut.check_ports_active_on_host_and_subnet(
                                                     self.adminContext,
                                                     'thisHost', 'dvr_port1',
                                                     sub_ids)
             self.assertFalse(result)
+
+    def test_check_dvr_serviced_port_exists_on_subnet(self):
+        vip_port = {
+                'id': 'lbaas-vip-port1',
+                'device_id': 'vip-pool-id',
+                'status': 'ACTIVE',
+                'binding:host_id': 'thisHost',
+                'device_owner': constants.DEVICE_OWNER_LOADBALANCER,
+                'fixed_ips': [
+                    {
+                        'subnet_id': 'my-subnet-id',
+                        'ip_address': '10.10.10.1'
+                    }
+                ]
+        }
+
+        with contextlib.nested(
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+                       '.get_ports', return_value=[vip_port]),
+            mock.patch('neutron.common.utils.is_dvr_serviced',
+                       return_value=True)) as (get_ports_fn, dvr_serv_fn):
+            result = self.dut.check_ports_active_on_host_and_subnet(
+                                                    self.adminContext,
+                                                    'thisHost',
+                                                    'dvr1-intf-id',
+                                                    'my-subnet-id')
+            self.assertTrue(result)
+            self.assertEqual(dvr_serv_fn.call_count, 1)
 
     def test_schedule_snat_router_with_snat_candidates(self):
         agent = agents_db.Agent()

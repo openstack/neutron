@@ -17,6 +17,7 @@ from oslo.config import cfg
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_const
 from neutron.common import exceptions as n_exc
+from neutron.common import utils as n_utils
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvrscheduler_db as l3_dvrsched_db
@@ -333,10 +334,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
     def get_vm_port_hostid(self, context, port_id, port=None):
         """Return the portbinding host_id."""
         vm_port_db = port or self._core_plugin.get_port(context, port_id)
-        allowed_device_owners = ("neutron:LOADBALANCER", DEVICE_OWNER_AGENT_GW)
         device_owner = vm_port_db['device_owner'] if vm_port_db else ""
-        if (device_owner in allowed_device_owners or
-            device_owner.startswith("compute:")):
+        if (n_utils.is_dvr_serviced(device_owner) or
+            device_owner == DEVICE_OWNER_AGENT_GW):
             return vm_port_db[portbindings.HOST_ID]
 
     def get_agent_gw_ports_exist_for_network(

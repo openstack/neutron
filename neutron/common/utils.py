@@ -335,3 +335,16 @@ class exception_logger(object):
                 with excutils.save_and_reraise_exception():
                     self.logger(e)
         return call
+
+
+def is_dvr_serviced(device_owner):
+        """Check if the port need to be serviced by DVR
+
+        Helper function to check the device owners of the
+        ports in the compute and service node to make sure
+        if they are required for DVR or any service directly or
+        indirectly associated with DVR.
+        """
+        if (device_owner.startswith('compute:') or (
+            q_const.DEVICE_OWNER_LOADBALANCER == device_owner)):
+            return True

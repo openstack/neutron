@@ -24,6 +24,7 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
 
 from neutron.common import constants
+from neutron.common import utils as n_utils
 from neutron import context as n_ctx
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -348,8 +349,12 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 
-    def check_vmexists_on_l3agent(self, context, l3_agent, router_id,
-                                  subnet_id):
+    def check_ports_exist_on_l3agent(self, context, l3_agent, router_id,
+                                     subnet_id):
+        """
+        This function checks for existence of dvr serviceable
+        ports on the host, running the input l3agent.
+        """
         if not subnet_id:
             return True
 
@@ -357,7 +362,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         filter = {'fixed_ips': {'subnet_id': [subnet_id]}}
         ports = core_plugin.get_ports(context, filters=filter)
         for port in ports:
-            if ("compute:" in port['device_owner'] and
+            if (n_utils.is_dvr_serviced(port['device_owner']) and
                 l3_agent['host'] == port['binding:host_id']):
                     return True
 
@@ -425,7 +430,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 not is_router_distributed):
                 candidates.append(l3_agent)
             elif is_router_distributed and agent_mode.startswith('dvr') and (
-                self.check_vmexists_on_l3agent(
+                self.check_ports_exist_on_l3agent(
                     context, l3_agent, sync_router['id'], subnet_id)):
                 candidates.append(l3_agent)
         return candidates
