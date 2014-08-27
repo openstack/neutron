@@ -18,6 +18,7 @@ from neutronclient.common import utils
 from neutronclient.neutron import v2_0 as client
 from neutronclient.neutron.v2_0 import port
 
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 
 
@@ -102,8 +103,8 @@ class ClearProbe(ProbeCommand):
     def run(self, parsed_args):
         self.log.debug('run(%s)' % parsed_args)
         debug_agent = self.get_debug_agent()
-        debug_agent.clear_probe()
-        self.log.info(_('All Probes deleted '))
+        cleared_probes_count = debug_agent.clear_probes()
+        self.log.info(_LI('%d probe(s) deleted') % cleared_probes_count)
 
 
 class ExecProbe(ProbeCommand):
