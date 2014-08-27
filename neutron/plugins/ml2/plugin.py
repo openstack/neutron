@@ -877,6 +877,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         self._update_port_dict_binding(port, binding)
         binding.host = attrs and attrs.get(portbindings.HOST_ID)
+        binding.router_id = attrs and attrs.get('device_id')
 
     def update_dvr_port_binding(self, context, id, port):
         attrs = port['port']
@@ -890,12 +891,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         binding = db.get_dvr_port_binding_by_host(session, id, host)
-        if (not binding or
-            binding.vif_type == portbindings.VIF_TYPE_BINDING_FAILED):
+        device_id = attrs and attrs.get('device_id')
+        router_id = binding and binding.get('router_id')
+        update_required = (not binding or
+            binding.vif_type == portbindings.VIF_TYPE_BINDING_FAILED or
+            router_id != device_id)
+        if update_required:
             with session.begin(subtransactions=True):
                 if not binding:
                     binding = db.ensure_dvr_port_binding(
-                        session, id, host, router_id=attrs['device_id'])
+                        session, id, host, router_id=device_id)
                 orig_port = super(Ml2Plugin, self).get_port(context, id)
                 network = self.get_network(context, orig_port['network_id'])
                 mech_context = driver_context.DvrPortContext(self,

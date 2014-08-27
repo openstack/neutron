@@ -34,6 +34,7 @@ from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers import type_vlan
+from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.ml2.drivers import mechanism_logger as mech_logger
@@ -350,6 +351,31 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             self._check_port_binding_profile(port, profile)
             port = self._show('ports', port_id)['port']
             self._check_port_binding_profile(port, profile)
+
+    def test_process_dvr_port_binding_update_router_id(self):
+        host_id = 'host'
+        binding = models.DVRPortBinding(
+                            port_id='port_id',
+                            host=host_id,
+                            router_id='old_router_id',
+                            vif_type=portbindings.VIF_TYPE_OVS,
+                            vnic_type=portbindings.VNIC_NORMAL,
+                            cap_port_filter=False,
+                            status=constants.PORT_STATUS_DOWN)
+        plugin = manager.NeutronManager.get_plugin()
+        mock_network = {'id': 'net_id'}
+        context = mock.Mock()
+        new_router_id = 'new_router'
+        attrs = {'device_id': new_router_id, portbindings.HOST_ID: host_id}
+        with mock.patch.object(plugin, '_update_port_dict_binding'):
+            with mock.patch.object(ml2_db, 'get_network_segments',
+                                   return_value=[]):
+                mech_context = driver_context.DvrPortContext(
+                    self, context, 'port', mock_network, binding)
+                plugin._process_dvr_port_binding(mech_context, context, attrs)
+                self.assertEqual(new_router_id,
+                                 mech_context._binding.router_id)
+                self.assertEqual(host_id, mech_context._binding.host)
 
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):
