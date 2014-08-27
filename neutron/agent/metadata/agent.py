@@ -31,16 +31,37 @@ from neutron.agent.common import config as agent_conf
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config
 from neutron.common import constants as n_const
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
 from neutron.openstack.common.cache import cache
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
+
+
+class MetadataPluginAPI(n_rpc.RpcProxy):
+    """Agent-side RPC (stub) for agent-to-plugin interaction.
+
+    API version history:
+        1.0 - Initial version.
+    """
+
+    BASE_RPC_API_VERSION = '1.0'
+
+    def __init__(self, topic):
+        super(MetadataPluginAPI, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+
+    def get_ports(self, context, filters):
+        return self.call(context,
+                         self.make_msg('get_ports',
+                                       filters=filters))
 
 
 class MetadataProxyHandler(object):
@@ -101,6 +122,11 @@ class MetadataProxyHandler(object):
         else:
             self._cache = False
 
+        self.plugin_rpc = MetadataPluginAPI(topics.PLUGIN)
+        self.context = context.get_admin_context_without_session()
+        # Use RPC by default
+        self.use_rpc = True
+
     def _get_neutron_client(self):
         qclient = client.Client(
             username=self.conf.admin_user,
@@ -134,16 +160,41 @@ class MetadataProxyHandler(object):
                     'Please try your request again.')
             return webob.exc.HTTPInternalServerError(explanation=unicode(msg))
 
+    def _get_ports_from_server(self, router_id=None, ip_address=None,
+                               networks=None):
+        """Either get ports from server by RPC or fallback to neutron client"""
+        filters = self._get_port_filters(router_id, ip_address, networks)
+        if self.use_rpc:
+            try:
+                return self.plugin_rpc.get_ports(self.context, filters)
+            except (n_rpc.RPCException, AttributeError):
+                # TODO(obondarev): remove fallback once RPC is proven
+                # to work fine with metadata agent (K or L release at most)
+                LOG.warning(_LW('Server does not support metadata RPC, '
+                                'fallback to using neutron client'))
+                self.use_rpc = False
+
+        return self._get_ports_using_client(filters)
+
+    def _get_port_filters(self, router_id=None, ip_address=None,
+                          networks=None):
+        filters = {}
+        if router_id:
+            filters['device_id'] = [router_id]
+            filters['device_owner'] = [
+                n_const.DEVICE_OWNER_ROUTER_INTF,
+                n_const.DEVICE_OWNER_DVR_INTERFACE]
+        if ip_address:
+            filters['fixed_ips'] = {'ip_address': [ip_address]}
+        if networks:
+            filters['network_id'] = networks
+
+        return filters
+
     @utils.cache_method_results
     def _get_router_networks(self, router_id):
         """Find all networks connected to given router."""
-        qclient = self._get_neutron_client()
-
-        internal_ports = qclient.list_ports(
-            device_id=router_id,
-            device_owner=[n_const.DEVICE_OWNER_ROUTER_INTF,
-                          n_const.DEVICE_OWNER_DVR_INTERFACE])['ports']
-        self.auth_info = qclient.get_auth_info()
+        internal_ports = self._get_ports_from_server(router_id=router_id)
         return tuple(p['network_id'] for p in internal_ports)
 
     @utils.cache_method_results
@@ -155,13 +206,21 @@ class MetadataProxyHandler(object):
                          searched for
 
         """
-        qclient = self._get_neutron_client()
-        all_ports = qclient.list_ports(
-            fixed_ips=['ip_address=%s' % remote_address])['ports']
+        return self._get_ports_from_server(networks=networks,
+                                           ip_address=remote_address)
 
-        self.auth_info = qclient.get_auth_info()
-        networks = set(networks)
-        return [p for p in all_ports if p['network_id'] in networks]
+    def _get_ports_using_client(self, filters):
+        # reformat filters for neutron client
+        if 'device_id' in filters:
+            filters['device_id'] = filters['device_id'][0]
+        if 'fixed_ips' in filters:
+            filters['fixed_ips'] = [
+                'ip_address=%s' % filters['fixed_ips']['ip_address'][0]]
+
+        client = self._get_neutron_client()
+        ports = client.list_ports(**filters)
+        self.auth_info = client.get_auth_info()
+        return ports['ports']
 
     def _get_ports(self, remote_address, network_id=None, router_id=None):
         """Search for all ports that contain passed ip address and belongs to
