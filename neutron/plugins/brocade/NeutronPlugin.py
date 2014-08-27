@@ -28,6 +28,7 @@ from oslo.config import cfg
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -40,7 +41,6 @@ from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
-from neutron.db import l3_rpc_base
 from neutron.db import portbindings_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
@@ -79,7 +79,6 @@ cfg.CONF.register_opts(PHYSICAL_INTERFACE_OPTS, "PHYSICAL_INTERFACE")
 
 class BridgeRpcCallbacks(n_rpc.RpcCallback,
                          dhcp_rpc_base.DhcpRpcCallbackMixin,
-                         l3_rpc_base.L3RpcCallbackMixin,
                          sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
     """Agent callback."""
 
@@ -264,6 +263,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                   is_admin=False)
         self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [BridgeRpcCallbacks(),
+                          l3_rpc.L3RpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)

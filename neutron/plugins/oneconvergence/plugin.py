@@ -21,6 +21,7 @@ from oslo.config import cfg
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as q_const
 from neutron.common import exceptions as nexception
 from neutron.common import rpc as n_rpc
@@ -33,7 +34,6 @@ from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_gwmode_db
-from neutron.db import l3_rpc_base
 from neutron.db import portbindings_base
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -53,7 +53,6 @@ IPv6 = 6
 
 class NVSDPluginRpcCallbacks(n_rpc.RpcCallback,
                              dhcp_rpc_base.DhcpRpcCallbackMixin,
-                             l3_rpc_base.L3RpcCallbackMixin,
                              sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
@@ -162,6 +161,7 @@ class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             l3_rpc_agent_api.L3AgentNotifyAPI()
         )
         self.endpoints = [NVSDPluginRpcCallbacks(),
+                          l3_rpc.L3RpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)

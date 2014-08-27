@@ -23,13 +23,13 @@ from webob import exc
 
 from neutron.api import extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_agentschedulers_db
-from neutron.db import l3_rpc_base
 from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.extensions import l3agentscheduler
@@ -645,11 +645,11 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_router_is_not_rescheduled_from_alive_agent(self):
         with self.router():
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
 
             # schedule the router to host A
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             with mock.patch('neutron.db.l3_agentschedulers_db.'
                             'L3AgentSchedulerDbMixin.reschedule_router') as rr:
                 # take down some unrelated agent and run reschedule check
@@ -658,24 +658,24 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_router_reschedule_from_dead_agent(self):
         with self.router():
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
 
             # schedule the router to host A
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             self._take_down_agent_and_run_reschedule(L3_HOSTA)
 
             # B should now pick up the router
-            ret_b = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+            ret_b = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
         self.assertEqual(ret_b, ret_a)
 
     def test_router_no_reschedule_from_dead_admin_down_agent(self):
         with self.router() as r:
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
 
             # schedule the router to host A
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             self._set_agent_admin_state_up(L3_HOSTA, False)
             self._take_down_agent_and_run_reschedule(L3_HOSTA)
 
@@ -687,28 +687,28 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.assertEqual(binding.l3_agent.host, L3_HOSTA)
 
             # B should not pick up the router
-            ret_b = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+            ret_b = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
             self.assertFalse(ret_b)
 
     def test_router_auto_schedule_with_invalid_router(self):
         with self.router() as router:
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
         # deleted router
-        ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
-                                    router_ids=[router['router']['id']])
+        ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
+                                       router_ids=[router['router']['id']])
         self.assertFalse(ret_a)
         # non-existent router
-        ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
-                                    router_ids=[uuidutils.generate_uuid()])
+        ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
+                                       router_ids=[uuidutils.generate_uuid()])
         self.assertFalse(ret_a)
 
     def test_router_auto_schedule_with_hosted(self):
         with self.router() as router:
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
-            ret_b = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
+            ret_b = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
             l3_agents = self._list_l3_agents_hosting_router(
                 router['router']['id'])
             self.assertEqual(1, len(ret_a))
@@ -719,14 +719,14 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_router_auto_schedule_restart_l3_agent(self):
         with self.router():
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
 
     def test_router_auto_schedule_with_hosted_2(self):
         # one agent hosts one router
-        l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
         l3_hosta = {
             'binary': 'neutron-l3-agent',
             'host': L3_HOSTA,
@@ -744,13 +744,13 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         l3_hostb['host'] = L3_HOSTB
         with self.router() as router1:
             self._register_one_agent_state(l3_hosta)
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
             self._disable_agent(hosta_id, admin_state_up=False)
             with self.router() as router2:
                 self._register_one_agent_state(l3_hostb)
-                l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+                l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
                 l3_agents_1 = self._list_l3_agents_hosting_router(
                     router1['router']['id'])
                 l3_agents_2 = self._list_l3_agents_hosting_router(
@@ -773,7 +773,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
     def test_router_auto_schedule_with_disabled(self):
         with contextlib.nested(self.router(),
                                self.router()):
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
@@ -781,9 +781,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           L3_HOSTB)
             self._disable_agent(hosta_id)
             # first agent will not host router since it is disabled
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             # second agent will host all the routers since first is disabled.
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
             hostb_routers = self._list_routers_hosted_by_l3_agent(hostb_id)
             num_hostb_routers = len(hostb_routers['routers'])
             hosta_routers = self._list_routers_hosted_by_l3_agent(hosta_id)
@@ -807,12 +807,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             'agent_type': constants.AGENT_TYPE_L3}
         with contextlib.nested(self.router(),
                                self.router()) as (router1, router2):
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             l3_hosta['configurations']['router_id'] = router1['router']['id']
             self._register_one_agent_state(l3_hosta)
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             hosta_routers = self._list_routers_hosted_by_l3_agent(hosta_id)
             num_hosta_routers = len(hosta_routers['routers'])
             l3_agents_1 = self._list_l3_agents_hosting_router(
@@ -825,11 +825,11 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(0, len(l3_agents_2['agents']))
 
     def test_rpc_sync_routers(self):
-        l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
         self._register_agent_states()
 
         # No routers
-        ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+        ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
         self.assertEqual(0, len(ret_a))
 
         with contextlib.nested(self.router(),
@@ -838,26 +838,26 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             router_ids = [r['router']['id'] for r in routers]
 
             # Get all routers
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             self.assertEqual(3, len(ret_a))
             self.assertEqual(set(router_ids), set([r['id'] for r in ret_a]))
 
             # Get all routers (router_ids=None)
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
-                                        router_ids=None)
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
+                                           router_ids=None)
             self.assertEqual(3, len(ret_a))
             self.assertEqual(set(router_ids), set([r['id'] for r in ret_a]))
 
             # Get router2 only
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
-                                        router_ids=[router_ids[1]])
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
+                                           router_ids=[router_ids[1]])
             self.assertEqual(1, len(ret_a))
             self.assertIn(router_ids[1], [r['id'] for r in ret_a])
 
             # Get router1 and router3
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
-                                        router_ids=[router_ids[0],
-                                                    router_ids[2]])
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
+                                           router_ids=[router_ids[0],
+                                                       router_ids[2]])
             self.assertEqual(2, len(ret_a))
             self.assertIn(router_ids[0], [r['id'] for r in ret_a])
             self.assertIn(router_ids[2], [r['id'] for r in ret_a])
@@ -865,8 +865,8 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
     def test_router_auto_schedule_for_specified_routers(self):
 
         def _sync_router_with_ids(router_ids, exp_synced, exp_hosted, host_id):
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
-                                        router_ids=router_ids)
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
+                                           router_ids=router_ids)
             self.assertEqual(exp_synced, len(ret_a))
             for r in router_ids:
                 self.assertIn(r, [r['id'] for r in ret_a])
@@ -874,7 +874,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             num_host_routers = len(host_routers['routers'])
             self.assertEqual(exp_hosted, num_host_routers)
 
-        l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
         self._register_agent_states()
         hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3, L3_HOSTA)
 

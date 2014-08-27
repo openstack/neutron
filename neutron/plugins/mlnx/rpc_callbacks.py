@@ -18,7 +18,6 @@ from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
-from neutron.db import l3_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.db import mlnx_db_v2 as db
@@ -28,7 +27,6 @@ LOG = logging.getLogger(__name__)
 
 class MlnxRpcCallbacks(n_rpc.RpcCallback,
                        dhcp_rpc_base.DhcpRpcCallbackMixin,
-                       l3_rpc_base.L3RpcCallbackMixin,
                        sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
     # History
     #  1.1 Support Security Group RPC

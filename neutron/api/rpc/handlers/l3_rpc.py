@@ -17,6 +17,7 @@ from oslo.config import cfg
 
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron import context as neutron_context
 from neutron.extensions import l3
@@ -30,8 +31,14 @@ from neutron.plugins.common import constants as plugin_constants
 LOG = logging.getLogger(__name__)
 
 
-class L3RpcCallbackMixin(object):
-    """A mix-in that enable L3 agent rpc support in plugin implementations."""
+class L3RpcCallback(n_rpc.RpcCallback):
+    """L3 agent RPC callback in plugin implementations."""
+
+    # 1.0  L3PluginApi BASE_RPC_API_VERSION
+    # 1.1  Support update_floatingip_statuses
+    # 1.2 Added methods for DVR support
+    # 1.3 Added a method that returns the list of activated services
+    RPC_API_VERSION = '1.3'
 
     @property
     def plugin(self):

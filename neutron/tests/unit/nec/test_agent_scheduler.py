@@ -15,8 +15,8 @@
 
 import contextlib
 
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants
-from neutron.db import l3_rpc_base
 from neutron.tests.unit.nec import test_nec_plugin
 from neutron.tests.unit.openvswitch import test_agent_scheduler
 
@@ -75,10 +75,10 @@ class NecL3AgentSchedulerWithOpenFlowRouter(
             self.router(arg_list=('provider',),
                         provider='openflow'
                         )) as (r1, r2):
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
-            ret_b = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
+            ret_b = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
             l3_agents = self._list_l3_agents_hosting_router(
                 r1['router']['id'])
             self.assertEqual(1, len(ret_a))
@@ -93,9 +93,9 @@ class NecL3AgentSchedulerWithOpenFlowRouter(
             self.router(arg_list=('provider',), provider='openflow'),
             self.router(arg_list=('provider',), provider='openflow')
         ) as (r1, r2):
-            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
-            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             l3_agents_1 = self._list_l3_agents_hosting_router(
                 r1['router']['id'])
             l3_agents_2 = self._list_l3_agents_hosting_router(

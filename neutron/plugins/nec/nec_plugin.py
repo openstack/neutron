@@ -17,6 +17,7 @@
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
@@ -28,7 +29,6 @@ from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
-from neutron.db import l3_rpc_base
 from neutron.db import portbindings_base
 from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
@@ -147,7 +147,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.endpoints = [
             NECPluginV2RPCCallbacks(self.safe_reference),
             DhcpRpcCallback(),
-            L3RpcCallback(),
+            l3_rpc.L3RpcCallback(),
             self.callback_sg,
             agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():
@@ -683,12 +683,6 @@ class NECPluginV2AgentNotifierApi(n_rpc.RpcProxy,
 class DhcpRpcCallback(n_rpc.RpcCallback,
                       dhcp_rpc_base.DhcpRpcCallbackMixin):
     # DhcpPluginApi BASE_RPC_API_VERSION
-    RPC_API_VERSION = '1.1'
-
-
-class L3RpcCallback(n_rpc.RpcCallback, l3_rpc_base.L3RpcCallbackMixin):
-    # 1.0  L3PluginApi BASE_RPC_API_VERSION
-    # 1.1  Support update_floatingip_statuses
     RPC_API_VERSION = '1.1'
 
 

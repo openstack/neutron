@@ -21,6 +21,7 @@ import threading
 from oslo.config import cfg
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as q_const
 from neutron.common import log
 from neutron.common import rpc as q_rpc
@@ -30,7 +31,6 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_gwmode_db
-from neutron.db import l3_rpc_base
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -39,12 +39,6 @@ from neutron.plugins.ml2.drivers.arista.arista_l3_driver import AristaL3Driver  
 from neutron.plugins.ml2.drivers.arista.arista_l3_driver import NeutronNets  # noqa
 
 LOG = logging.getLogger(__name__)
-
-
-class AristaL3ServicePluginRpcCallbacks(q_rpc.RpcCallback,
-                               l3_rpc_base.L3RpcCallbackMixin):
-
-    RPC_API_VERSION = '1.2'
 
 
 class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
@@ -76,7 +70,7 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.conn = q_rpc.create_connection(new=True)
         self.agent_notifiers.update(
             {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
-        self.endpoints = [AristaL3ServicePluginRpcCallbacks()]
+        self.endpoints = [l3_rpc.L3RpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         self.conn.consume_in_threads()
