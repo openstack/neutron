@@ -45,7 +45,7 @@ class LocalTypeDriver(api.TypeDriver):
 
     def validate_provider_segment(self, segment):
         for key, value in segment.iteritems():
-            if value and key not in [api.NETWORK_TYPE]:
+            if value and key != api.NETWORK_TYPE:
                 msg = _("%s prohibited for local provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 

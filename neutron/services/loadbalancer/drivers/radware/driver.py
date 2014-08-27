@@ -468,7 +468,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         resource = '/api/workflow/%s' % (wf_name)
         rest_return = self.rest_client.call('DELETE', resource, None, None)
         response = _rest_wrapper(rest_return, [204, 202, 404])
-        if rest_return[RESP_STATUS] in [404]:
+        if rest_return[RESP_STATUS] == 404:
             if post_remove_function:
                 try:
                     post_remove_function(True)
