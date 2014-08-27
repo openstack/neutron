@@ -392,7 +392,9 @@ class IptablesManager(object):
                 args = ['ip', 'netns', 'exec', self.namespace] + args
             all_tables = self.execute(args, root_helper=self.root_helper)
             all_lines = all_tables.split('\n')
-            for table_name, table in tables.iteritems():
+            # Traverse tables in sorted order for predictable dump output
+            for table_name in sorted(tables):
+                table = tables[table_name]
                 start, end = self._find_table(all_lines, table_name)
                 all_lines[start:end] = self._modify_rules(
                     all_lines[start:end], table, table_name)
@@ -463,8 +465,10 @@ class IptablesManager(object):
                 return s
 
     def _modify_rules(self, current_lines, table, table_name):
-        unwrapped_chains = table.unwrapped_chains
-        chains = table.chains
+        # Chains are stored as sets to avoid duplicates.
+        # Sort the output chains here to make their order predictable.
+        unwrapped_chains = sorted(table.unwrapped_chains)
+        chains = sorted(table.chains)
         remove_chains = table.remove_chains
         rules = table.rules
         remove_rules = table.remove_rules

@@ -42,6 +42,7 @@ def setup_mock_calls(mocked_call, expected_calls_and_values):
     mocked_call.side_effect = return_values
 
 
-def verify_mock_calls(mocked_call, expected_calls_and_values):
+def verify_mock_calls(mocked_call, expected_calls_and_values,
+                      any_order=False):
     expected_calls = [call[0] for call in expected_calls_and_values]
-    mocked_call.assert_has_calls(expected_calls)
+    mocked_call.assert_has_calls(expected_calls, any_order=any_order)
