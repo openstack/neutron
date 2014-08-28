@@ -40,6 +40,18 @@ class NetPartitionRouter(model_base.BASEV2):
     nuage_router_id = sa.Column(sa.String(36))
 
 
+class ProviderNetBinding(model_base.BASEV2):
+    """Represents binding of virtual network to physical_network and vlan."""
+    __tablename__ = 'nuage_provider_net_bindings'
+
+    network_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
+                           primary_key=True)
+    network_type = sa.Column(sa.String(32), nullable=False)
+    physical_network = sa.Column(sa.String(64), nullable=False)
+    vlan_id = sa.Column(sa.Integer, nullable=False)
+
+
 class SubnetL2Domain(model_base.BASEV2):
     __tablename__ = 'nuage_subnet_l2dom_mapping'
     subnet_id = sa.Column(sa.String(36),

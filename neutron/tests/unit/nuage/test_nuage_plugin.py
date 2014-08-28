@@ -22,9 +22,11 @@ import mock
 from oslo.config import cfg
 from webob import exc
 
+from neutron import context
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron.extensions import providernet as pnet
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nuage import extensions
 from neutron.plugins.nuage.extensions import nuage_router
@@ -348,3 +350,32 @@ class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
 class TestNuageSecurityGroupTestCase(NuagePluginV2TestCase,
                                      test_sg.TestSecurityGroups):
     pass
+
+
+class TestNuageProviderNetTestCase(NuagePluginV2TestCase):
+
+    def test_create_provider_network(self):
+        phy_net = uuidutils.generate_uuid()
+        data = {'network': {'name': 'pnet1',
+                            'tenant_id': 'admin',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: phy_net,
+                            pnet.SEGMENTATION_ID: 123}}
+        network_req = self.new_create_request('networks', data, self.fmt)
+        net = self.deserialize(self.fmt, network_req.get_response(self.api))
+        self.assertEqual('vlan', net['network'][pnet.NETWORK_TYPE])
+        self.assertEqual(phy_net, net['network'][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(123, net['network'][pnet.SEGMENTATION_ID])
+
+    def test_create_provider_network_no_admin(self):
+        phy_net = uuidutils.generate_uuid()
+        data = {'network': {'name': 'pnet1',
+                            'tenant_id': 'no_admin',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: phy_net,
+                            pnet.SEGMENTATION_ID: 123}}
+        network_req = self.new_create_request('networks', data, self.fmt)
+        network_req.environ['neutron.context'] = context.Context(
+                                    '', 'no_admin', is_admin=False)
+        res = network_req.get_response(self.api)
+        self.assertEqual(exc.HTTPForbidden.code, res.status_int)

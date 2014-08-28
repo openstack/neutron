@@ -185,3 +185,9 @@ class FakeNuageClient(object):
 
     def delete_port_security_group_bindings(self, params):
         pass
+
+    def validate_provider_network(self, net_type, phy_net, vlan_id):
+        pass
+
+    def remove_router_interface(self, params):
+        pass
