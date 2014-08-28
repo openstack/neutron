@@ -36,6 +36,9 @@ class OneConvergencePluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self):
+        if 'v6' in self._testMethodName:
+            self.skipTest("NVSD Plugin does not support IPV6.")
+
         def mocked_oneconvergence_init(self):
             def side_effect(*args, **kwargs):
                 return {'id': str(uuid.uuid4())}
@@ -57,50 +60,13 @@ class TestOneConvergencePluginNetworksV2(test_plugin.TestNetworksV2,
 
 class TestOneConvergencePluginSubnetsV2(test_plugin.TestSubnetsV2,
                                         OneConvergencePluginV2TestCase):
-    def test_update_subnet_inconsistent_ipv6_gatewayv4(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_create_subnet_with_v6_allocation_pool(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_update_subnet_inconsistent_ipv6_hostroute_dst_v4(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_update_subnet_inconsistent_ipv6_hostroute_np_v4(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_create_subnet_ipv6_attributes(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_create_subnet_ipv6_single_attribute_set(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_update_subnet_ipv6_attributes(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_update_subnet_ipv6_inconsistent_enable_dhcp(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_update_subnet_ipv6_inconsistent_ra_attribute(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_update_subnet_ipv6_inconsistent_address_attribute(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_create_subnet_ipv6_out_of_cidr_global(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_create_subnet_ipv6_out_of_cidr_lla(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
+    pass
 
 
 class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
                                       test_bindings.PortBindingsTestCase,
                                       OneConvergencePluginV2TestCase):
     VIF_TYPE = portbindings.VIF_TYPE_OVS
-
-    def test_requested_subnet_id_v4_and_v6(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
 
     def test_port_vif_details(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -120,12 +86,6 @@ class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
             for port in ports:
                 self.assertEqual(port['binding:vif_type'],
                                  portbindings.VIF_TYPE_OVS)
-
-    def test_ip_allocation_for_ipv6_subnet_slaac_adddress_mode(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
-
-    def test_generated_duplicate_ip_ipv6(self):
-        self.skipTest("NVSD Plugin does not support IPV6.")
 
 
 class TestOneConvergenceBasicGet(test_plugin.TestBasicGet,
