@@ -28,6 +28,7 @@ from neutron.common import constants
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.db import agents_db
+from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_dvrscheduler_db
@@ -232,6 +233,8 @@ class L3SchedulerTestExtensionManager(object):
 
 
 class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
+                          l3_db.L3_NAT_db_mixin,
+                          common_db_mixin.CommonDbMixin,
                           test_db_plugin.NeutronDbPluginV2TestCase,
                           test_l3_plugin.L3NatTestCaseMixin):
 
@@ -300,6 +303,47 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         self._remove_external_gateway_from_router(
             router['router']['id'], subnet['subnet']['network_id'])
         self._delete('routers', router['router']['id'])
+
+    def _test_add_router_to_l3_agent(self,
+                                     distributed=False,
+                                     already_scheduled=False):
+        agent_id = self.agent_id1
+        agent = self.agent1
+        if distributed:
+            self._register_l3_dvr_agents()
+            agent_id = self.l3_dvr_snat_id
+            agent = self.l3_dvr_snat_agent
+        router = self._make_router(self.fmt,
+                                   tenant_id=str(uuid.uuid4()),
+                                   name='r1')
+        router['router']['distributed'] = distributed
+        router['router']['external_gateway_info'] = None
+        if already_scheduled:
+            self._test_schedule_bind_router(agent, router)
+        with contextlib.nested(
+            mock.patch.object(self, "create_router_to_agent_binding"),
+            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                       return_value=router['router'])
+        ) as (auto_s, gr):
+            self.add_router_to_l3_agent(self.adminContext, agent_id,
+                                        router['router']['id'])
+            self.assertNotEqual(already_scheduled, auto_s.called)
+
+    def test_add_router_to_l3_agent(self):
+        self._test_add_router_to_l3_agent(distributed=False,
+                                          already_scheduled=False)
+
+    def test_add_distributed_router_to_l3_agent(self):
+        self._test_add_router_to_l3_agent(distributed=True,
+                                          already_scheduled=False)
+
+    def test_add_router_to_l3_agent_already_scheduled(self):
+        self._test_add_router_to_l3_agent(distributed=False,
+                                          already_scheduled=True)
+
+    def test_add_distributed_router_to_l3_agent_already_scheduled(self):
+        self._test_add_router_to_l3_agent(distributed=True,
+                                          already_scheduled=True)
 
     def test_schedule_router_distributed(self):
         scheduler = l3_agent_scheduler.ChanceScheduler()
