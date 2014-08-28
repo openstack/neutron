@@ -212,7 +212,8 @@ class MidoClient:
             raise MidonetApiException(
                 msg=_("Tried to delete non-existent DHCP"))
         for dhcp in dhcp_subnets:
-            if dhcp.get_subnet_prefix() == net_addr:
+            if (dhcp.get_subnet_prefix() == net_addr and
+                dhcp.get_subnet_length() == str(net_len)):
                 dhcp.delete()
                 break
 
