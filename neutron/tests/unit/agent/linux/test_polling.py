@@ -43,6 +43,9 @@ class TestBasePollingManager(base.BaseTestCase):
         super(TestBasePollingManager, self).setUp()
         self.pm = polling.BasePollingManager()
 
+    def test__is_polling_required_should_not_be_implemented(self):
+        self.assertRaises(NotImplementedError, self.pm._is_polling_required)
+
     def test_force_polling_sets_interval_attribute(self):
         self.assertFalse(self.pm._force_polling)
         self.pm.force_polling()

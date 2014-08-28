@@ -52,7 +52,7 @@ class BasePollingManager(object):
         self._polling_completed = True
 
     def _is_polling_required(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     @property
     def is_polling_required(self):
