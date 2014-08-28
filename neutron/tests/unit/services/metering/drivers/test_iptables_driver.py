@@ -26,6 +26,38 @@ from neutron.tests.unit import test_api_v2
 _uuid = test_api_v2._uuid
 
 
+TEST_ROUTERS = [
+    {'_metering_labels': [
+        {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
+         'rules': [{
+             'direction': 'ingress',
+             'excluded': False,
+             'id': '7f1a261f-2489-4ed1-870c-a62754501379',
+             'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
+             'remote_ip_prefix': '10.0.0.0/24'}]}],
+     'admin_state_up': True,
+     'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
+     'id': '473ec392-1711-44e3-b008-3251ccfc5099',
+     'name': 'router1',
+     'status': 'ACTIVE',
+     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
+    {'_metering_labels': [
+        {'id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
+         'rules': [{
+             'direction': 'egress',
+             'excluded': False,
+             'id': 'fa2441e8-2489-4ed1-870c-a62754501379',
+             'metering_label_id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
+             'remote_ip_prefix': '20.0.0.0/24'}]}],
+     'admin_state_up': True,
+     'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
+     'id': '373ec392-1711-44e3-b008-3251ccfc5099',
+     'name': 'router2',
+     'status': 'ACTIVE',
+     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
+]
+
+
 class IptablesDriverTestCase(base.BaseTestCase):
     def setUp(self):
         super(IptablesDriverTestCase, self).setUp()
@@ -52,16 +84,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                                                cfg.CONF)
 
     def test_root_helper(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': []}],
-            'admin_state_up': True,
-            'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
-        self.metering.add_metering_label(None, routers)
+        self.metering.add_metering_label(None, TEST_ROUTERS)
 
         self.iptables_cls.assert_called_with(root_helper='fake_sudo',
                                              namespace=mock.ANY,
@@ -69,15 +92,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                              use_ipv6=mock.ANY)
 
     def test_add_metering_label(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': []}],
-            'admin_state_up': True,
-            'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+        routers = TEST_ROUTERS[:1]
 
         self.metering.add_metering_label(None, routers)
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
@@ -94,35 +109,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.v4filter_inst.assert_has_calls(calls)
 
     def test_process_metering_label_rules(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': [{
-                 'direction': 'ingress',
-                 'excluded': False,
-                 'id': '7f1a261f-2489-4ed1-870c-a62754501379',
-                 'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                 'remote_ip_prefix': '10.0.0.0/24'}]}],
-            'admin_state_up': True,
-            'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
-            {'_metering_labels': [
-             {'id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
-              'rules': [{
-                  'direction': 'egress',
-                  'excluded': False,
-                  'id': 'fa2441e8-2489-4ed1-870c-a62754501379',
-                  'metering_label_id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
-                  'remote_ip_prefix': '20.0.0.0/24'}]}],
-             'admin_state_up': True,
-             'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-             'id': '373ec392-1711-44e3-b008-3251ccfc5099',
-             'name': 'router2',
-             'status': 'ACTIVE',
-             'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
-        self.metering.add_metering_label(None, routers)
+        self.metering.add_metering_label(None, TEST_ROUTERS)
 
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
                                      wrap=False),
@@ -156,34 +143,11 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.v4filter_inst.assert_has_calls(calls)
 
     def test_add_metering_label_with_rules(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': [{
-                 'direction': 'ingress',
-                 'excluded': False,
-                 'id': '7f1a261f-2489-4ed1-870c-a62754501379',
-                 'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                 'remote_ip_prefix': '10.0.0.0/24'}]}],
-            'admin_state_up': True,
-            'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
-            {'_metering_labels': [
-             {'id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
-              'rules': [{
-                  'direction': 'ingress',
-                  'excluded': True,
-                  'id': 'fa2441e8-2489-4ed1-870c-a62754501379',
-                  'metering_label_id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
-                  'remote_ip_prefix': '20.0.0.0/24'}]}],
-             'admin_state_up': True,
-             'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-             'id': '373ec392-1711-44e3-b008-3251ccfc5099',
-             'name': 'router2',
-             'status': 'ACTIVE',
-             'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+        routers = copy.deepcopy(TEST_ROUTERS)
+        routers[1]['_metering_labels'][0]['rules'][0].update({
+            'direction': 'ingress',
+            'excluded': True,
+        })
 
         self.metering.add_metering_label(None, routers)
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
@@ -218,20 +182,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.v4filter_inst.assert_has_calls(calls)
 
     def test_update_metering_label_rules(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': [{
-                 'direction': 'ingress',
-                 'excluded': False,
-                 'id': '7f1a261f-2489-4ed1-870c-a62754501379',
-                 'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                 'remote_ip_prefix': '10.0.0.0/24'}]}],
-            'admin_state_up': True,
-            'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+        routers = TEST_ROUTERS[:1]
 
         self.metering.add_metering_label(None, routers)
 
@@ -278,44 +229,18 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.v4filter_inst.assert_has_calls(calls)
 
     def test_remove_metering_label_rule(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': [{
-                 'direction': 'ingress',
-                 'excluded': False,
-                 'id': '7f1a261f-2489-4ed1-870c-a62754501379',
-                 'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                 'remote_ip_prefix': '10.0.0.0/24'},
-                 {'direction': 'ingress',
-                  'excluded': False,
-                  'id': 'aaaa261f-2489-4ed1-870c-a62754501379',
-                  'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                  'remote_ip_prefix': '20.0.0.0/24'}]
-             }],
-            'admin_state_up': True,
-            'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+        routers = copy.deepcopy(TEST_ROUTERS[:1])
+        routers[0]['_metering_labels'][0]['rules'].append({
+            'direction': 'ingress',
+            'excluded': False,
+            'id': 'aaaa261f-2489-4ed1-870c-a62754501379',
+            'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
+            'remote_ip_prefix': '20.0.0.0/24',
+        })
 
         self.metering.add_metering_label(None, routers)
 
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': [{
-                 'direction': 'ingress',
-                 'excluded': False,
-                 'id': '7f1a261f-2489-4ed1-870c-a62754501379',
-                 'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                 'remote_ip_prefix': '10.0.0.0/24'}]
-             }],
-            'admin_state_up': True,
-            'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+        del routers[0]['_metering_labels'][0]['rules'][1]
 
         self.metering.update_metering_label_rules(None, routers)
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
@@ -329,38 +254,24 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                     '',
                                     wrap=False),
                  mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                                    '-i qg-7d411f48-ec -d 10.0.0.0/24'
+                                    '-i qg-6d411f48-ec -d 10.0.0.0/24'
                                     ' -j neutron-meter-l-c5df2fe5-c60',
                                     wrap=False, top=False),
                  mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                                    '-i qg-7d411f48-ec -d 20.0.0.0/24'
+                                    '-i qg-6d411f48-ec -d 20.0.0.0/24'
                                     ' -j neutron-meter-l-c5df2fe5-c60',
                                     wrap=False, top=False),
                  mock.call.empty_chain('neutron-meter-r-c5df2fe5-c60',
                                        wrap=False),
                  mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                                    '-i qg-7d411f48-ec -d 10.0.0.0/24'
+                                    '-i qg-6d411f48-ec -d 10.0.0.0/24'
                                     ' -j neutron-meter-l-c5df2fe5-c60',
                                     wrap=False, top=False)]
 
         self.v4filter_inst.assert_has_calls(calls)
 
     def test_remove_metering_label(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': [{
-                 'direction': 'ingress',
-                 'excluded': False,
-                 'id': '7f1a261f-2489-4ed1-870c-a62754501379',
-                 'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                 'remote_ip_prefix': '10.0.0.0/24'}]
-             }],
-            'admin_state_up': True,
-            'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+        routers = TEST_ROUTERS[:1]
 
         self.metering.add_metering_label(None, routers)
         self.metering.remove_metering_label(None, routers)
@@ -375,7 +286,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                     '',
                                     wrap=False),
                  mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                                    '-i qg-7d411f48-ec -d 10.0.0.0/24'
+                                    '-i qg-6d411f48-ec -d 10.0.0.0/24'
                                     ' -j neutron-meter-l-c5df2fe5-c60',
                                     wrap=False, top=False),
                  mock.call.remove_chain('neutron-meter-l-c5df2fe5-c60',
@@ -386,34 +297,11 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.v4filter_inst.assert_has_calls(calls)
 
     def test_update_routers(self):
-        routers = [{'_metering_labels': [
-            {'id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-             'rules': [{
-                 'direction': 'ingress',
-                 'excluded': False,
-                 'id': '7f1a261f-2489-4ed1-870c-a62754501379',
-                 'metering_label_id': 'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83',
-                 'remote_ip_prefix': '10.0.0.0/24'}]}],
-            'admin_state_up': True,
-            'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-            'id': '473ec392-1711-44e3-b008-3251ccfc5099',
-            'name': 'router1',
-            'status': 'ACTIVE',
-            'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
-            {'_metering_labels': [
-             {'id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
-              'rules': [{
-                  'direction': 'ingress',
-                  'excluded': True,
-                  'id': 'fa2441e8-2489-4ed1-870c-a62754501379',
-                  'metering_label_id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
-                  'remote_ip_prefix': '20.0.0.0/24'}]}],
-             'admin_state_up': True,
-             'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
-             'id': '373ec392-1711-44e3-b008-3251ccfc5099',
-             'name': 'router2',
-             'status': 'ACTIVE',
-             'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+        routers = copy.deepcopy(TEST_ROUTERS)
+        routers[1]['_metering_labels'][0]['rules'][0].update({
+            'direction': 'ingress',
+            'excluded': True,
+        })
 
         self.metering.add_metering_label(None, routers)
 
@@ -467,5 +355,21 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                     '-i qg-587b63c1-22 -d 10.0.0.0/24'
                                     ' -j neutron-meter-l-c5df2fe5-c60',
                                     wrap=False, top=False)]
+
+        self.v4filter_inst.assert_has_calls(calls)
+
+    def test_update_routers_removal(self):
+        routers = TEST_ROUTERS
+
+        self.metering.add_metering_label(None, routers)
+
+        # Remove router id '373ec392-1711-44e3-b008-3251ccfc5099'
+        updates = TEST_ROUTERS[:1]
+
+        self.metering.update_routers(None, updates)
+        calls = [mock.call.remove_chain('neutron-meter-l-eeef45da-c60',
+                                        wrap=False),
+                 mock.call.remove_chain('neutron-meter-r-eeef45da-c60',
+                                        wrap=False)]
 
         self.v4filter_inst.assert_has_calls(calls)
