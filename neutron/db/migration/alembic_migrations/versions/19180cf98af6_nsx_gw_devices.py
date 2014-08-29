@@ -25,23 +25,17 @@ Create Date: 2014-02-26 02:46:26.151741
 revision = '19180cf98af6'
 down_revision = '117643811bca'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
-    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
-    'neutron.plugins.vmware.plugin.NsxPlugin',
-    'neutron.plugins.vmware.plugin.NsxServicePlugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
+def upgrade():
+
+    if not migration.schema_has_table('networkgatewaydevices'):
+        # Assume that, in the database we are migrating from, the
+        # configured plugin did not create any nsx tables.
         return
 
     op.create_table(
@@ -78,5 +72,5 @@ def upgrade(active_plugins=None, options=None):
                "gw_dev_ref.network_gateway_id=net_gw.id")
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

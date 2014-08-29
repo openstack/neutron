@@ -25,20 +25,17 @@ Create Date: 2014-03-05 17:36:52.952608
 revision = '5ac1c354a051'
 down_revision = '538732fa21e1'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.cisco.network_plugin.PluginV2'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
+def upgrade():
+
+    if not migration.schema_has_table('cisco_n1kv_vlan_allocations'):
+        # Assume that, in the database we are migrating from, the
+        # configured plugin did not create any n1kv tables.
         return
 
     op.add_column(
@@ -69,5 +66,5 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

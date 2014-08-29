@@ -31,12 +31,11 @@ down_revision = 'd06e871c0d5'
 
 import sqlalchemy as sa
 
-
 from neutron.db import migration
 
 
 @migration.skip_if_offline
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     migration.alter_column_if_exists(
         'cisco_nexusport_bindings', 'vlan_id',
         nullable=False,
@@ -44,7 +43,7 @@ def upgrade(active_plugins=None, options=None):
 
 
 @migration.skip_if_offline
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     migration.alter_column_if_exists(
         'cisco_nexusport_bindings', 'vlan_id',
         nullable=True,

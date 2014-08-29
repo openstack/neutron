@@ -25,20 +25,13 @@ Create Date: 2014-03-17 11:00:35.370618
 revision = '1e5dd1d09b22'
 down_revision = '54f7549a0e5f'
 
-# Change to ['*'] if this migration applies to all plugins
-
-# This migration will be executed only if the neutron DB schema
-# contains the tables for load balancing service plugin.
-# This migration will be skipped when executed in offline mode.
-
-
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
 @migration.skip_if_offline
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     migration.alter_column_if_exists(
         'poolstatisticss', 'bytes_in',
         nullable=False,
@@ -58,7 +51,7 @@ def upgrade(active_plugins=None, options=None):
 
 
 @migration.skip_if_offline
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     migration.alter_column_if_exists(
         'poolstatisticss', 'bytes_in',
         nullable=True,

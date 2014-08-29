@@ -23,25 +23,11 @@ Create Date: 2014-01-07 15:37:41.323020
 revision = '3d3cb89d84ee'
 down_revision = '1421183d533f'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
-    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
-    'neutron.plugins.vmware.plugin.NsxPlugin',
-    'neutron.plugins.vmware.plugin.NsxServicePlugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.db import migration
 
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     # Create table for network mappings
     op.create_table(
         'neutron_nsx_network_mappings',
@@ -54,5 +40,5 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

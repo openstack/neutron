@@ -25,12 +25,6 @@ Create Date: 2014-03-02 05:26:47.073318
 revision = '117643811bca'
 down_revision = '81c553f3776c'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.nec.nec_plugin.NECPluginV2'
-]
-
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.ext import compiler as sa_compiler
@@ -71,14 +65,16 @@ def visit_insert_from_select(element, compiler, **kw):
     return sql
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     # Table definitions below are only used for sqlalchemy to generate
     # SQL statements, so in networks/ports tables only required field
     # are declared. Note that 'quantum_id' in OFC ID mapping tables
     # will be renamed in a later patch (bug 1287432).
+
+    if not migration.schema_has_table('ofctenants'):
+        # Assume that, in the database we are migrating from, the
+        # configured plugin did not create any ofc tables.
+        return
 
     ofctenants = sa_expr.table(
         'ofctenants',
@@ -178,5 +174,5 @@ def upgrade(active_plugins=None, options=None):
     op.drop_table('ofcfilters')
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

@@ -34,13 +34,11 @@ TABLES = ['router_extra_attributes', 'dvr_host_macs', 'ml2_dvr_port_bindings',
           'csnat_l3_agent_bindings']
 
 
-def upgrade(active_plugins=None, options=None):
-
+def upgrade():
     if op.get_bind().dialect.name == 'mysql':
         for table in TABLES:
             op.execute("ALTER TABLE %s ENGINE=InnoDB" % table)
 
 
-def downgrade(active_plugins=None, options=None):
-
+def downgrade():
     pass

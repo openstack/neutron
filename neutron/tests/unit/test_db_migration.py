@@ -35,13 +35,6 @@ class TestDbMigration(base.BaseTestCase):
         self.mock_sa_inspector = mock.patch(
             'sqlalchemy.engine.reflection.Inspector').start()
 
-    def test_should_run_plugin_in_list(self):
-        self.assertTrue(migration.should_run(['foo'], ['foo', 'bar']))
-        self.assertFalse(migration.should_run(['foo'], ['bar']))
-
-    def test_should_run_plugin_wildcard(self):
-        self.assertTrue(migration.should_run(['foo'], ['*']))
-
     def _prepare_mocked_sqlalchemy_inspector(self):
         mock_inspector = mock.MagicMock()
         mock_inspector.get_table_names.return_value = ['foo', 'bar']

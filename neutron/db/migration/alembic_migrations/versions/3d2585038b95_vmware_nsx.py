@@ -25,22 +25,16 @@ Create Date: 2014-02-11 18:18:34.319031
 revision = '3d2585038b95'
 down_revision = '157a5d299379'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
-    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
-    'neutron.plugins.vmware.plugin.NsxPlugin',
-    'neutron.plugins.vmware.plugin.NsxServicePlugin'
-]
-
 from alembic import op
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
+def upgrade():
+
+    if not migration.schema_has_table('nvp_network_bindings'):
+        # Assume that, in the database we are migrating from, the
+        # configured plugin did not create any nvp tables.
         return
 
     op.rename_table('nvp_network_bindings', 'tz_network_bindings')
@@ -52,5 +46,5 @@ def upgrade(active_plugins=None, options=None):
                    "RENAME TO tz_network_bindings_binding_type;")
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

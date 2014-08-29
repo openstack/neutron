@@ -25,22 +25,11 @@ Create Date: 2014-07-09 17:25:29.242948
 revision = '37f322991f59'
 down_revision = '2026156eab2f'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    '*'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.db import migration
 
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     op.drop_table('nuage_floatingip_mapping')
     op.drop_table('nuage_floatingip_pool_mapping')
     op.drop_table('nuage_routerroutes_mapping')
@@ -48,10 +37,7 @@ def upgrade(active_plugins=None, options=None):
     op.drop_table('nuage_router_zone_mapping')
 
 
-def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def downgrade():
     op.create_table(
         'nuage_router_zone_mapping',
         sa.Column('router_id', sa.String(length=36), nullable=False),

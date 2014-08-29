@@ -20,10 +20,6 @@ from alembic import context
 from alembic import op
 import sqlalchemy as sa
 
-OVS_PLUGIN = ('neutron.plugins.openvswitch.ovs_neutron_plugin'
-              '.OVSNeutronPluginV2')
-CISCO_PLUGIN = 'neutron.plugins.cisco.network_plugin.PluginV2'
-
 
 def skip_if_offline(func):
     """Decorator for skipping migrations in offline mode."""
@@ -92,16 +88,6 @@ def drop_table_if_exists(table_name):
 def rename_table_if_exists(old_table_name, new_table_name):
     if schema_has_table(old_table_name):
         op.rename_table(old_table_name, new_table_name)
-
-
-def should_run(active_plugins, migrate_plugins):
-    if '*' in migrate_plugins:
-        return True
-    else:
-        if (CISCO_PLUGIN not in migrate_plugins and
-                OVS_PLUGIN in migrate_plugins):
-            migrate_plugins.append(CISCO_PLUGIN)
-        return set(active_plugins) & set(migrate_plugins)
 
 
 def alter_enum(table, column, enum_type, nullable):

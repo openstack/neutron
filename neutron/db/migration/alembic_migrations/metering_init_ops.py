@@ -24,7 +24,7 @@ direction = sa.Enum('ingress', 'egress',
                     name='meteringlabels_direction')
 
 
-def upgrade():
+def create_meteringlabels():
     op.create_table(
         'meteringlabels',
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
@@ -32,6 +32,10 @@ def upgrade():
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('description', sa.String(length=1024), nullable=True),
         sa.PrimaryKeyConstraint('id'))
+
+
+def upgrade():
+    create_meteringlabels()
 
     op.create_table(
         'meteringlabelrules',

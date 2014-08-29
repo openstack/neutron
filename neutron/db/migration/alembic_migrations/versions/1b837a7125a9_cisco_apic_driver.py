@@ -30,7 +30,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     op.create_table(
         'cisco_ml2_apic_epgs',
         sa.Column('network_id', sa.String(length=255), nullable=False),

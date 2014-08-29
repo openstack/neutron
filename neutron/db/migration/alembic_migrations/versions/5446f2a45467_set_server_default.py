@@ -29,7 +29,6 @@ down_revision = '2db5203cb7a9'
 import sqlalchemy as sa
 import sqlalchemy.sql
 
-
 from neutron.db import migration
 from neutron.plugins.cisco.common import cisco_constants
 
@@ -50,16 +49,16 @@ from neutron.plugins.cisco.common import cisco_constants
 # This migration will be skipped when executed offline mode.
 
 
-def upgrade(active_plugins=None, options=None):
-    run(active_plugins, True)
+def upgrade():
+    run(True)
 
 
-def downgrade(active_plugins=None, options=None):
-    run(active_plugins, None)
+def downgrade():
+    run()
 
 
 @migration.skip_if_offline
-def run(active_plugins, default):
+def run(default=None):
     set_default_ml2(default)
     set_default_mlnx(default)
     set_default_brocade(default)

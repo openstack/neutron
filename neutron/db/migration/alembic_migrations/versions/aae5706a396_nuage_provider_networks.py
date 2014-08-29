@@ -28,7 +28,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     op.create_table(
         'nuage_provider_net_bindings',
         sa.Column('network_id', sa.String(length=36), nullable=False),
@@ -41,5 +41,5 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     op.drop_table('nuage_provider_net_bindings')

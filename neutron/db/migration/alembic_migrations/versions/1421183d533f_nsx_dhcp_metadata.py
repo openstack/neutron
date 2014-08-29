@@ -26,23 +26,11 @@ Create Date: 2013-10-11 14:33:37.303215
 revision = '1421183d533f'
 down_revision = '50e86cb2637a'
 
-migration_for_plugins = [
-    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
-    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
-    'neutron.plugins.vmware.plugin.NsxPlugin',
-    'neutron.plugins.vmware.plugin.NsxServicePlugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.db import migration
 
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     op.create_table(
         'lsn',
         sa.Column('net_id',
@@ -66,5 +54,5 @@ def upgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint('lsn_port_id'))
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

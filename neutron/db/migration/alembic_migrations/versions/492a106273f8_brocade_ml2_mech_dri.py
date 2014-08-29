@@ -25,23 +25,11 @@ Create Date: 2014-03-03 15:35:46.974523
 revision = '492a106273f8'
 down_revision = '2eeaf963a447'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.ml2.plugin.Ml2Plugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 
-from neutron.db import migration
-
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     op.create_table(
         'ml2_brocadenetworks',
         sa.Column('id', sa.String(length=36), nullable=False),
@@ -63,5 +51,5 @@ def upgrade(active_plugins=None, options=None):
         sa.ForeignKeyConstraint(['network_id'], ['ml2_brocadenetworks.id']))
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

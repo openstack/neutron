@@ -32,12 +32,11 @@ down_revision = '4eca4a84f08a'
 
 import sqlalchemy as sa
 
-
 from neutron.db import migration
 
 
 @migration.skip_if_offline
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     migration.alter_column_if_exists(
         'ml2_brocadeports', 'admin_state_up',
         nullable=False,
@@ -45,7 +44,7 @@ def upgrade(active_plugins=None, options=None):
 
 
 @migration.skip_if_offline
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     migration.alter_column_if_exists(
         'ml2_brocadeports', 'admin_state_up',
         nullable=True,

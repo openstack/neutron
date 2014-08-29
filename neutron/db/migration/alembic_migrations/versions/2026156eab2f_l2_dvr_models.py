@@ -25,20 +25,12 @@ Create Date: 2014-06-23 19:12:43.392912
 revision = '2026156eab2f'
 down_revision = '3927f7f7c456'
 
-migration_for_plugins = [
-    '*'
-]
 
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.db import migration
 
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     op.create_table(
         'dvr_host_macs',
         sa.Column('host', sa.String(length=255), nullable=False),
@@ -70,9 +62,6 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def downgrade():
     op.drop_table('ml2_dvr_port_bindings')
     op.drop_table('dvr_host_macs')

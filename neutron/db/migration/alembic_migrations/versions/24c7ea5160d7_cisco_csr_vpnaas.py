@@ -23,22 +23,16 @@
 revision = '24c7ea5160d7'
 down_revision = '492a106273f8'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.services.vpn.plugin.VPNDriverPlugin',
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
+def upgrade():
+    if not migration.schema_has_table('ipsec_site_connections'):
+        # The vpnaas service plugin was not configured.
         return
-
     op.create_table(
         'cisco_csr_identifier_map',
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
@@ -53,5 +47,5 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

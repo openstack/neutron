@@ -29,27 +29,17 @@ down_revision = '33c3db036fe4'
 from alembic import op
 
 from neutron.db import migration
+from neutron.db.migration.alembic_migrations import ml2_init_ops
 
 
-def upgrade(active_plugins=None, options=None):
-    op.execute('DROP TABLE IF EXISTS cisco_ml2_credentials')
+TABLE = 'cisco_ml2_credentials'
 
 
-def downgrade(active_plugins=None, options=None):
-    if op.get_bind().engine.dialect.name == 'postgresql':
-        migration.create_table_if_not_exist_psql(
-            'cisco_ml2_credentials',
-            ("(credential_id VARCHAR(255) NULL,"
-             "tenant_id VARCHAR(255) NOT NULL,"
-             "credential_name VARCHAR(255) NOT NULL,"
-             "user_name VARCHAR(255) NULL,"
-             "password VARCHAR(255) NULL,"
-             "PRIMARY KEY (tenant_id, credential_name))"))
-    else:
-        op.execute('CREATE TABLE IF NOT EXISTS cisco_ml2_credentials( '
-                   'credential_id VARCHAR(255) NULL,'
-                   'tenant_id VARCHAR(255) NOT NULL,'
-                   'credential_name VARCHAR(255) NOT NULL,'
-                   'user_name VARCHAR(255) NULL,'
-                   'password VARCHAR(255) NULL,'
-                   'PRIMARY KEY (tenant_id, credential_name))')
+def upgrade():
+    if migration.schema_has_table(TABLE):
+        op.drop_table(TABLE)
+
+
+def downgrade():
+    if not migration.schema_has_table(TABLE):
+        ml2_init_ops.create_cisco_ml2_credentials()

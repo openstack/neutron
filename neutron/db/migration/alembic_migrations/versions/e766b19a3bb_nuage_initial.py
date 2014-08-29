@@ -25,18 +25,17 @@ Create Date: 2014-02-14 18:03:14.841064
 revision = 'e766b19a3bb'
 down_revision = '1b2580001654'
 
-migration_for_plugins = [
-    'neutron.plugins.nuage.plugin.NuagePlugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
+def upgrade():
+
+    if not migration.schema_has_table('routers'):
+        # In the database we are migrating from, the configured plugin
+        # did not create the routers table.
         return
 
     op.create_table(
@@ -95,5 +94,5 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

@@ -20,6 +20,18 @@ from alembic import op
 import sqlalchemy as sa
 
 
+def create_cisco_ml2_credentials():
+    op.create_table(
+        'cisco_ml2_credentials',
+        sa.Column('credential_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
+        sa.Column('credential_name', sa.String(length=255), nullable=False),
+        sa.Column('user_name', sa.String(length=255), nullable=True),
+        sa.Column('password', sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint('tenant_id', 'credential_name'),
+    )
+
+
 def upgrade():
     op.create_table(
         'ml2_vlan_allocations',
@@ -96,15 +108,7 @@ def upgrade():
         sa.PrimaryKeyConstraint('binding_id'),
     )
 
-    op.create_table(
-        'cisco_ml2_credentials',
-        sa.Column('credential_id', sa.String(length=255), nullable=True),
-        sa.Column('tenant_id', sa.String(length=255), nullable=False),
-        sa.Column('credential_name', sa.String(length=255), nullable=False),
-        sa.Column('user_name', sa.String(length=255), nullable=True),
-        sa.Column('password', sa.String(length=255), nullable=True),
-        sa.PrimaryKeyConstraint('tenant_id', 'credential_name'),
-    )
+    create_cisco_ml2_credentials()
 
     op.create_table(
         'arista_provisioned_nets',
