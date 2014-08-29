@@ -31,18 +31,23 @@ from neutron.tests.unit import testlib_api
 
 NEXUS_IP_ADDRESS = '1.1.1.1'
 NEXUS_IP_ADDRESS_PC = '2.2.2.2'
+NEXUS_IP_ADDRESS_DUAL = '3.3.3.3'
 HOST_NAME_1 = 'testhost1'
 HOST_NAME_2 = 'testhost2'
 HOST_NAME_PC = 'testpchost'
+HOST_NAME_DUAL = 'testdualhost'
 INSTANCE_1 = 'testvm1'
 INSTANCE_2 = 'testvm2'
 INSTANCE_PC = 'testpcvm'
+INSTANCE_DUAL = 'testdualvm'
 NEXUS_PORT_1 = 'ethernet:1/10'
 NEXUS_PORT_2 = 'ethernet:1/20'
 NEXUS_PORTCHANNELS = 'portchannel:2'
+NEXUS_DUAL = 'ethernet:1/3,portchannel:2'
 VLAN_ID_1 = 267
 VLAN_ID_2 = 265
 VLAN_ID_PC = 268
+VLAN_ID_DUAL = 269
 DEVICE_OWNER = 'compute:test'
 NEXUS_SSH_PORT = '22'
 PORT_STATE = n_const.PORT_STATUS_ACTIVE
@@ -119,6 +124,12 @@ class TestCiscoNexusDevice(testlib_api.SqlTestCase):
             NEXUS_PORTCHANNELS,
             INSTANCE_PC,
             VLAN_ID_PC),
+        'test_config_dual': TestConfigObj(
+            NEXUS_IP_ADDRESS_DUAL,
+            HOST_NAME_DUAL,
+            NEXUS_DUAL,
+            INSTANCE_DUAL,
+            VLAN_ID_DUAL),
     }
 
     def setUp(self):
@@ -169,19 +180,22 @@ class TestCiscoNexusDevice(testlib_api.SqlTestCase):
 
         self._cisco_mech_driver.update_port_precommit(port_context)
         self._cisco_mech_driver.update_port_postcommit(port_context)
-        bindings = nexus_db_v2.get_nexusport_binding(nexus_port,
-                                                     vlan_id,
-                                                     nexus_ip_addr,
-                                                     instance_id)
-        self.assertEqual(len(bindings), 1)
+        for port_id in nexus_port.split(','):
+            bindings = nexus_db_v2.get_nexusport_binding(port_id,
+                                                         vlan_id,
+                                                         nexus_ip_addr,
+                                                         instance_id)
+            self.assertEqual(len(bindings), 1)
 
         self._cisco_mech_driver.delete_port_precommit(port_context)
         self._cisco_mech_driver.delete_port_postcommit(port_context)
-        with testtools.ExpectedException(exceptions.NexusPortBindingNotFound):
-            nexus_db_v2.get_nexusport_binding(nexus_port,
-                                              vlan_id,
-                                              nexus_ip_addr,
-                                              instance_id)
+        for port_id in nexus_port.split(','):
+            with testtools.ExpectedException(
+                    exceptions.NexusPortBindingNotFound):
+                nexus_db_v2.get_nexusport_binding(port_id,
+                                                  vlan_id,
+                                                  nexus_ip_addr,
+                                                  instance_id)
 
     def test_create_delete_ports(self):
         """Tests creation and deletion of two new virtual Ports."""
@@ -195,3 +209,8 @@ class TestCiscoNexusDevice(testlib_api.SqlTestCase):
         """Tests creation of a port over a portchannel."""
         self._create_delete_port(
             TestCiscoNexusDevice.test_configs['test_config_portchannel'])
+
+    def test_create_delete_dual(self):
+        """Tests creation and deletion of dual ports for single server"""
+        self._create_delete_port(
+            TestCiscoNexusDevice.test_configs['test_config_dual'])
