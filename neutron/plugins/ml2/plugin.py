@@ -24,6 +24,7 @@ from sqlalchemy.orm import exc as sa_exc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
+from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
@@ -135,6 +136,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def start_rpc_listeners(self):
         self.endpoints = [rpc.RpcCallbacks(self.notifier, self.type_manager),
+                          dvr_rpc.DVRServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         self.topic = topics.PLUGIN

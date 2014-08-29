@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron.common import log
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -56,8 +57,13 @@ class DVRServerRpcApiMixin(object):
                          version=self.DVR_RPC_VERSION)
 
 
-class DVRServerRpcCallbackMixin(object):
+class DVRServerRpcCallback(n_rpc.RpcCallback):
     """Plugin-side RPC (implementation) for agent-to-plugin interaction."""
+
+    # History
+    #   1.0 Initial version
+
+    RPC_API_VERSION = "1.0"
 
     @property
     def plugin(self):
@@ -68,14 +74,20 @@ class DVRServerRpcCallbackMixin(object):
     def get_dvr_mac_address_list(self, context):
         return self.plugin.get_dvr_mac_address_list(context)
 
-    def get_dvr_mac_address_by_host(self, context, host):
+    def get_dvr_mac_address_by_host(self, context, **kwargs):
+        host = kwargs.get('host')
+        LOG.debug("DVR Agent requests mac_address for host %s", host)
         return self.plugin.get_dvr_mac_address_by_host(context, host)
 
-    def get_ports_on_host_by_subnet(self, context, host, subnet):
+    def get_ports_on_host_by_subnet(self, context, **kwargs):
+        host = kwargs.get('host')
+        subnet = kwargs.get('subnet')
+        LOG.debug("DVR Agent requests list of VM ports on host %s", host)
         return self.plugin.get_ports_on_host_by_subnet(context,
             host, subnet)
 
-    def get_subnet_for_dvr(self, context, subnet):
+    def get_subnet_for_dvr(self, context, **kwargs):
+        subnet = kwargs.get('subnet')
         return self.plugin.get_subnet_for_dvr(context, subnet)
 
 
