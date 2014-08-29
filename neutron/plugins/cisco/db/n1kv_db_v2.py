@@ -30,6 +30,7 @@ from neutron.db import models_v2
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.common import config as c_conf
 from neutron.plugins.cisco.db import n1kv_models_v2
 
 LOG = logging.getLogger(__name__)
@@ -1494,7 +1495,7 @@ class PolicyProfile_db_mixin(object):
                         profile dictionary. Only these fields will be returned
         :returns: list of all policy profiles
         """
-        if context.is_admin:
+        if context.is_admin or not c_conf.CISCO_N1K.restrict_policy_profiles:
             return self._get_collection(context, n1kv_models_v2.PolicyProfile,
                                         self._make_policy_profile_dict,
                                         filters=filters, fields=fields)
