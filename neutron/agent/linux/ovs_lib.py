@@ -24,12 +24,14 @@ from neutron.common import exceptions
 from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
-from neutron.plugins.common import constants as p_const
-#  TODO(JLH) Should we remove the explicit include of the ovs plugin here
-from neutron.plugins.openvswitch.common import constants
+from neutron.plugins.common import constants
 
 # Default timeout for ovs-vsctl command
 DEFAULT_OVS_VSCTL_TIMEOUT = 10
+
+# Special return value for an invalid OVS ofport
+INVALID_OFPORT = '-1'
+
 OPTS = [
     cfg.IntOpt('ovs_vsctl_timeout',
                default=DEFAULT_OVS_VSCTL_TIMEOUT,
@@ -183,7 +185,7 @@ class OVSBridge(BaseOVS):
             int(ofport)
             return ofport
         except (ValueError, TypeError):
-            return constants.INVALID_OFPORT
+            return INVALID_OFPORT
 
     def get_datapath_id(self):
         return self.db_get_val('Bridge',
@@ -215,14 +217,14 @@ class OVSBridge(BaseOVS):
         return DeferredOVSBridge(self, **kwargs)
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
-                        tunnel_type=p_const.TYPE_GRE,
+                        tunnel_type=constants.TYPE_GRE,
                         vxlan_udp_port=constants.VXLAN_UDP_PORT,
                         dont_fragment=True):
         vsctl_command = ["--", "--may-exist", "add-port", self.br_name,
                          port_name]
         vsctl_command.extend(["--", "set", "Interface", port_name,
                               "type=%s" % tunnel_type])
-        if tunnel_type == p_const.TYPE_VXLAN:
+        if tunnel_type == constants.TYPE_VXLAN:
             # Only set the VXLAN UDP port if it's not the default
             if vxlan_udp_port != constants.VXLAN_UDP_PORT:
                 vsctl_command.append("options:dst_port=%s" % vxlan_udp_port)
@@ -234,8 +236,8 @@ class OVSBridge(BaseOVS):
                               "options:out_key=flow"])
         self.run_vsctl(vsctl_command)
         ofport = self.get_port_ofport(port_name)
-        if (tunnel_type == p_const.TYPE_VXLAN and
-                ofport == constants.INVALID_OFPORT):
+        if (tunnel_type == constants.TYPE_VXLAN and
+                ofport == INVALID_OFPORT):
             LOG.error(_('Unable to create VXLAN tunnel port. Please ensure '
                         'that an openvswitch version that supports VXLAN is '
                         'installed.'))
