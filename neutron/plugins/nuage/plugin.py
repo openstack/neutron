@@ -14,7 +14,7 @@
 #
 # @author: Ronak Shah, Nuage Networks, Alcatel-Lucent USA Inc.
 
-
+import copy
 import re
 
 import netaddr
@@ -533,14 +533,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise n_exc.BadRequest(resource='subnet', msg=msg)
         return net_partition
 
-    def _validate_create_subnet(self, subnet):
-        if ('host_routes' in subnet and
-            attributes.is_attr_set(subnet['host_routes'])):
-            msg = 'host_routes extensions not supported for subnets'
-            raise nuage_exc.OperationNotSupported(msg=msg)
-        if subnet['gateway_ip'] is None:
-            msg = "no-gateway option not supported with subnets"
-            raise nuage_exc.OperationNotSupported(msg=msg)
+    @staticmethod
+    def _validate_create_subnet(subnet):
+        if (attributes.is_attr_set(subnet['gateway_ip'])
+            and netaddr.IPAddress(subnet['gateway_ip'])
+            not in netaddr.IPNetwork(subnet['cidr'])):
+            msg = "Gateway IP outside of the subnet CIDR "
+            raise nuage_exc.NuageBadRequest(msg=msg)
 
     def _validate_create_provider_subnet(self, context, net_id):
         net_filter = {'network_id': [net_id]}
@@ -581,24 +580,51 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._add_nuage_sharedresource(subn, net_id, type)
             return subn
 
+    def _create_port_gateway(self, context, subnet, gw_ip=None):
+        if gw_ip is not None:
+            fixed_ip = [{'ip_address': gw_ip, 'subnet_id': subnet['id']}]
+        else:
+            fixed_ip = [{'subnet_id': subnet['id']}]
+
+        port_dict = dict(port=dict(
+            name='',
+            device_id='',
+            admin_state_up=True,
+            network_id=subnet['network_id'],
+            tenant_id=subnet['tenant_id'],
+            fixed_ips=fixed_ip,
+            mac_address=attributes.ATTR_NOT_SPECIFIED,
+            device_owner=os_constants.DEVICE_OWNER_DHCP))
+        port = super(NuagePlugin, self).create_port(context, port_dict)
+        return port
+
+    def _delete_port_gateway(self, context, ports):
+        for port in ports:
+            super(NuagePlugin, self).delete_port(context, port['id'])
+
     def _create_nuage_subnet(self, context, neutron_subnet, netpart_id,
                              l2dom_template_id, pnet_binding):
         net = netaddr.IPNetwork(neutron_subnet['cidr'])
+        # list(net)[-1] is the broadcast
+        last_address = neutron_subnet['allocation_pools'][-1]['end']
+        gw_port = self._create_port_gateway(context, neutron_subnet,
+                                            last_address)
         params = {
             'netpart_id': netpart_id,
             'tenant_id': neutron_subnet['tenant_id'],
             'net': net,
             'l2dom_tmplt_id': l2dom_template_id,
-            'pnet_binding': pnet_binding
+            'pnet_binding': pnet_binding,
+            'dhcp_ip': gw_port['fixed_ips'][0]['ip_address']
         }
         try:
             nuage_subnet = self.nuageclient.create_subnet(neutron_subnet,
                                                           params)
         except Exception:
             with excutils.save_and_reraise_exception():
-                super(NuagePlugin, self).delete_subnet(
-                    context,
-                    neutron_subnet['id'])
+                self._delete_port_gateway(context, [gw_port])
+                super(NuagePlugin, self).delete_subnet(context,
+                                                       neutron_subnet['id'])
 
         if nuage_subnet:
             l2dom_id = str(nuage_subnet['nuage_l2template_id'])
@@ -634,6 +660,20 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                   subn['nuage_subnet_template'],
                                   pnet_binding)
         return neutron_subnet
+
+    def update_subnet(self, context, id, subnet):
+        subn = copy.deepcopy(subnet['subnet'])
+        subnet_l2dom = nuagedb.get_subnet_l2dom_by_id(context.session,
+                                                      id)
+        params = {
+            'parent_id': subnet_l2dom['nuage_subnet_id'],
+            'type': subnet_l2dom['nuage_l2dom_tmplt_id']
+        }
+        with context.session.begin(subtransactions=True):
+            neutron_subnet = super(NuagePlugin, self).update_subnet(context,
+                                                                    id, subnet)
+            self.nuageclient.update_subnet(subn, params)
+            return neutron_subnet
 
     def delete_subnet(self, context, id):
         subnet = self.get_subnet(context, id)
