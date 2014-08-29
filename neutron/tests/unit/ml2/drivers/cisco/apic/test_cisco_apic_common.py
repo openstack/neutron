@@ -22,13 +22,12 @@ from oslo.config import cfg
 
 from neutron.common import config as neutron_config
 from neutron.plugins.ml2 import config as ml2_config
-from neutron.plugins.ml2.drivers.cisco.apic import apic_client as apic
 from neutron.tests import base
 
 
 OK = requests.codes.ok
 
-APIC_HOST = 'fake.controller.local'
+APIC_HOSTS = ['fake.controller.local']
 APIC_PORT = 7580
 APIC_USR = 'notadmin'
 APIC_PWD = 'topsecret'
@@ -103,20 +102,6 @@ class ControllerMixin(object):
         attrs['debug_mo'] = mo  # useful for debugging
         self._stage_mocked_response('post', OK, mo, **attrs)
 
-    def mock_response_for_get(self, mo, **attrs):
-        self._stage_mocked_response('get', OK, mo, **attrs)
-
-    def mock_append_to_response(self, mo, **attrs):
-        # Append a MO to the last get response.
-        mo_attrs = attrs and {mo: {'attributes': attrs}} or {}
-        self.response['get'][-1].json.return_value['imdata'].append(mo_attrs)
-
-    def mock_error_post_response(self, status, **attrs):
-        self._stage_mocked_response('post', status, 'error', **attrs)
-
-    def mock_error_get_response(self, status, **attrs):
-        self._stage_mocked_response('get', status, 'error', **attrs)
-
     def _stage_mocked_response(self, req, mock_status, mo, **attrs):
         response = mock.MagicMock()
         response.status_code = mock_status
@@ -124,40 +109,10 @@ class ControllerMixin(object):
         response.json.return_value = {'imdata': mo_attrs}
         self.response[req].append(response)
 
-    def mock_responses_for_create(self, obj):
-        self._mock_container_responses_for_create(
-            apic.ManagedObjectClass(obj).container)
-        name = '-'.join([obj, 'name'])  # useful for debugging
-        self._stage_mocked_response('post', OK, obj, name=name)
-
-    def _mock_container_responses_for_create(self, obj):
-        # Recursively generate responses for creating obj's containers.
-        if obj:
-            mo = apic.ManagedObjectClass(obj)
-            if mo.can_create:
-                if mo.container:
-                    self._mock_container_responses_for_create(mo.container)
-                name = '-'.join([obj, 'name'])  # useful for debugging
-                self._stage_mocked_response('post', OK, obj, debug_name=name)
-
     def mock_apic_manager_login_responses(self, timeout=300):
         # APIC Manager tests are based on authenticated session
         self.mock_response_for_post('aaaLogin', userName=APIC_USR,
                                     token='ok', refreshTimeoutSeconds=timeout)
-
-    def assert_responses_drained(self, req=None):
-        """Fail if all the expected responses have not been consumed."""
-        request = {'post': self.session.post, 'get': self.session.get}
-        reqs = req and [req] or ['post', 'get']  # Both if none specified.
-        for req in reqs:
-            try:
-                request[req]('some url')
-            except StopIteration:
-                pass
-            else:
-                # User-friendly error message
-                msg = req + ' response queue not drained'
-                self.fail(msg=msg)
 
 
 class ConfigMixin(object):
@@ -182,10 +137,9 @@ class ConfigMixin(object):
 
         # Configure the Cisco APIC mechanism driver
         apic_test_config = {
-            'apic_host': APIC_HOST,
+            'apic_hosts': APIC_HOSTS,
             'apic_username': APIC_USR,
             'apic_password': APIC_PWD,
-            'apic_port': APIC_PORT,
             'apic_vmm_domain': APIC_DOMAIN,
             'apic_vlan_ns_name': APIC_VLAN_NAME,
             'apic_vlan_range': '%d:%d' % (APIC_VLANID_FROM, APIC_VLANID_TO),
@@ -205,21 +159,3 @@ class ConfigMixin(object):
                                                'MultiConfigParser').start()
         self.mocked_parser.return_value.read.return_value = [apic_switch_cfg]
         self.mocked_parser.return_value.parsed = [apic_switch_cfg]
-
-
-class DbModelMixin(object):
-
-    """Mock the DB models for the APIC driver and service unit tests."""
-
-    def __init__(self):
-        self.mocked_session = None
-
-    def set_up_mocks(self):
-        self.mocked_session = mock.Mock()
-        get_session = mock.patch('neutron.db.api.get_session').start()
-        get_session.return_value = self.mocked_session
-
-    def mock_db_query_filterby_first_return(self, value):
-        """Mock db.session.query().filterby().first() to return value."""
-        query = self.mocked_session.query.return_value
-        query.filter_by.return_value.first.return_value = value

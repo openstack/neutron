@@ -21,7 +21,7 @@ from neutron.db import l3_gwmode_db
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
-from neutron.plugins.ml2.drivers.cisco.apic import apic_manager
+from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic as ma
 
 LOG = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self):
         super(ApicL3ServicePlugin, self).__init__()
-        self.manager = apic_manager.APICManager()
+        self.manager = ma.APICMechanismDriver.get_apic_manager()
 
     @staticmethod
     def get_plugin_type():
@@ -100,14 +100,14 @@ class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def remove_router_interface(self, context, router_id, interface_info):
         """Detach a subnet from a router."""
         tenant_id = context.tenant_id
-        subnet_id = interface_info['subnet_id']
-        LOG.debug("Detaching subnet %(subnet_id)s from "
-                  "router %(router_id)s" % {'subnet_id': subnet_id,
-                                            'router_id': router_id})
+        if 'subnet_id' in interface_info:
+            subnet = self.get_subnet(context, interface_info['subnet_id'])
+            network_id = subnet['network_id']
+        else:
+            port = self.get_port(context, interface_info['port_id'])
+            network_id = port['network_id']
 
         # Get network for this subnet
-        subnet = self.get_subnet(context, subnet_id)
-        network_id = subnet['network_id']
         network = self.get_network(context, network_id)
 
         contract = self.manager.create_tenant_contract(tenant_id)
@@ -124,8 +124,5 @@ class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             return super(ApicL3ServicePlugin, self).remove_router_interface(
                 context, router_id, interface_info)
         except Exception:
-            LOG.error(_("Error detaching subnet %(subnet_id)s from "
-                        "router %(router_id)s") % {'subnet_id': subnet_id,
-                                                   'router_id': router_id})
             with excutils.save_and_reraise_exception():
                 self._add_epg_to_contract(tenant_id, epg, contract)

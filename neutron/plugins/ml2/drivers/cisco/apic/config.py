@@ -19,14 +19,16 @@ from oslo.config import cfg
 
 
 apic_opts = [
-    cfg.StrOpt('apic_host',
-               help=_("Host name or IP Address of the APIC controller")),
+    cfg.ListOpt('apic_hosts',
+                default=[],
+                help=_("An ordered list of host names or IP addresses of "
+                       "the APIC controller(s).")),
     cfg.StrOpt('apic_username',
                help=_("Username for the APIC controller")),
     cfg.StrOpt('apic_password',
                help=_("Password for the APIC controller"), secret=True),
-    cfg.StrOpt('apic_port',
-               help=_("Communication port for the APIC controller")),
+    cfg.BoolOpt('apic_use_ssl', default=True,
+                help=_("Use SSL to connect to the APIC controller")),
     cfg.StrOpt('apic_vmm_provider', default='VMware',
                help=_("Name for the VMM domain provider")),
     cfg.StrOpt('apic_vmm_domain', default='openstack',
