@@ -73,8 +73,8 @@ def heal():
     diff1 = autogen.compare_metadata(mc, models_metadata)
     # Alembic does not contain checks for foreign keys. Because of that it
     # checks separately.
-    diff2 = check_foreign_keys(models_metadata)
-    diff = diff1 + diff2
+    added_fks, dropped_fks = check_foreign_keys(models_metadata)
+    diff = dropped_fks + diff1 + added_fks
     # For each difference run command
     for el in diff:
         execute_alembic_command(el)
@@ -205,7 +205,8 @@ def add_key(fk):
 def check_foreign_keys(metadata):
     # This methods checks foreign keys that tables contain in models with
     # foreign keys that are in db.
-    diff = []
+    added_fks = []
+    dropped_fks = []
     bind = op.get_bind()
     insp = sqlalchemy.engine.reflection.Inspector.from_engine(bind)
     # Get all tables from db
@@ -224,15 +225,15 @@ def check_foreign_keys(metadata):
                          model_tables[table].foreign_keys)
         fk_models_set = set(fk_models.keys())
         for key in (fk_db_set - fk_models_set):
-            diff.append(('drop_key', fk_db[key], table))
+            dropped_fks.append(('drop_key', fk_db[key], table))
             LOG.info(_("Detected removed foreign key %(fk)r on "
                        "table %(table)r"), {'fk': fk_db[key], 'table': table})
         for key in (fk_models_set - fk_db_set):
-            diff.append(('add_key', fk_models[key]))
+            added_fks.append(('add_key', fk_models[key]))
             LOG.info(_("Detected added foreign key for column %(fk)r on table "
                        "%(table)r"), {'fk': fk_models[key].column.name,
                                       'table': table})
-    return diff
+    return (added_fks, dropped_fks)
 
 
 def check_if_table_exists(table):
