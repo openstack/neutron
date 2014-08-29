@@ -116,26 +116,25 @@ class L3Scheduler(object):
 
         :returns: True if routers have been successfully assigned to host
         """
-        with context.session.begin(subtransactions=True):
-            l3_agent = plugin.get_enabled_agent_on_host(
-                context, constants.AGENT_TYPE_L3, host)
-            if not l3_agent:
-                return False
+        l3_agent = plugin.get_enabled_agent_on_host(
+            context, constants.AGENT_TYPE_L3, host)
+        if not l3_agent:
+            return False
 
-            unscheduled_routers = self.get_routers_to_schedule(
-                context, plugin, router_ids)
-            if not unscheduled_routers:
-                return False
+        unscheduled_routers = self.get_routers_to_schedule(
+            context, plugin, router_ids)
+        if not unscheduled_routers:
+            return False
 
-            target_routers = self.get_routers_can_schedule(
-                context, plugin, unscheduled_routers, l3_agent)
-            if not target_routers:
-                LOG.warn(_('No routers compatible with L3 agent configuration'
-                           ' on host %s'), host)
-                return False
+        target_routers = self.get_routers_can_schedule(
+            context, plugin, unscheduled_routers, l3_agent)
+        if not target_routers:
+            LOG.warn(_('No routers compatible with L3 agent configuration'
+                       ' on host %s'), host)
+            return False
 
-            self.bind_routers(context, target_routers, l3_agent)
-            return True
+        self.bind_routers(context, target_routers, l3_agent)
+        return True
 
     def get_candidates(self, plugin, context, sync_router, subnet_id):
         """Return L3 agents where a router could be scheduled."""
