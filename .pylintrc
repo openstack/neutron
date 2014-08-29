@@ -78,7 +78,6 @@ disable=
 # "R" Refactor recommendations
  abstract-class-little-used,
  abstract-class-not-used,
- cyclic-import,
  duplicate-code,
  interface-not-implemented,
  no-self-use,
