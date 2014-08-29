@@ -29,6 +29,7 @@ from oslo.config import cfg
 from sqlalchemy.orm import exc as sa_exc
 from webob import exc as w_exc
 
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -37,7 +38,6 @@ from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
-from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
@@ -192,11 +192,6 @@ def _check_resource_exists(func, id, name, raise_exc=False):
                   {"name": name, "id": id})
         if raise_exc:
             raise MidonetPluginException(msg=exc)
-
-
-class MidoRpcCallbacks(n_rpc.RpcCallback,
-                       dhcp_rpc_base.DhcpRpcCallbackMixin):
-    RPC_API_VERSION = '1.1'
 
 
 class MidonetPluginException(n_exc.NeutronException):
@@ -395,7 +390,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection(new=True)
-        self.endpoints = [MidoRpcCallbacks(),
+        self.endpoints = [dhcp_rpc.DhcpRpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)

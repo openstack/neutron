@@ -20,7 +20,6 @@ from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
-from neutron.db import dhcp_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron import manager
@@ -40,7 +39,6 @@ TAP_DEVICE_PREFIX_LENGTH = 3
 
 
 class RpcCallbacks(n_rpc.RpcCallback,
-                   dhcp_rpc_base.DhcpRpcCallbackMixin,
                    dvr_rpc.DVRServerRpcCallbackMixin,
                    sg_db_rpc.SecurityGroupServerRpcCallbackMixin,
                    type_tunnel.TunnelRpcCallbackMixin):

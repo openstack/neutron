@@ -16,6 +16,7 @@
 
 from oslo.config import cfg
 
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
@@ -189,6 +190,7 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
         self.notifier = agent_notifier_api.AgentNotifierApi(
             topics.AGENT)
         self.endpoints = [rpc_callbacks.HyperVRpcCallbacks(self.notifier),
+                          dhcp_rpc.DhcpRpcCallback(),
                           l3_rpc.L3RpcCallback(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():

@@ -20,6 +20,7 @@ from ryu.app import client
 from ryu.app import rest_nw_id
 
 from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
@@ -27,7 +28,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
-from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_gwmode_db
@@ -46,7 +46,6 @@ LOG = logging.getLogger(__name__)
 
 
 class RyuRpcCallbacks(n_rpc.RpcCallback,
-                      dhcp_rpc_base.DhcpRpcCallbackMixin,
                       sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
@@ -139,6 +138,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.conn = n_rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.endpoints = [RyuRpcCallbacks(self.ofp_api_host),
+                          dhcp_rpc.DhcpRpcCallback(),
                           l3_rpc.L3RpcCallback()]
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)
