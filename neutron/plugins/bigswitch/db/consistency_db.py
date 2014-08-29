@@ -76,7 +76,12 @@ class HashHandler(object):
         else:
             conhash = ConsistencyHash(hash_id=self.hash_id, hash=hash)
             self.session.merge(conhash)
-        self.transaction.commit()
-        self.transaction = None
+        self.close_update_session()
         LOG.debug(_("Consistency hash for group %(hash_id)s updated "
                     "to %(hash)s"), {'hash_id': self.hash_id, 'hash': hash})
+
+    def close_update_session(self):
+        if not self.transaction:
+            return
+        self.transaction.commit()
+        self.transaction = None
