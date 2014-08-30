@@ -17,14 +17,11 @@ from neutron import manager
 
 
 # TODO(amotoki): Move security group RPC API and agent callback
-# from securitygroups_rpc.py.
+# from neutron/agent/securitygroups_rpc.py.
 
 
 class SecurityGroupServerRpcCallback(n_rpc.RpcCallback):
-    """Callback for SecurityGroup agent RPC in plugin implementations.
-
-    Subclass which inherits this class must implement get_port_from_device().
-    """
+    """Callback for SecurityGroup agent RPC in plugin implementations."""
 
     # API version history:
     #   1.1 - Initial version
