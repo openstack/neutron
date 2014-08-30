@@ -524,10 +524,10 @@ class IpNetnsCommand(IpCommandBase):
         self._as_root('delete', name, use_root_namespace=True)
 
     def execute(self, cmds, addl_env={}, check_exit_code=True):
-        if not self._parent.root_helper:
-            raise exceptions.SudoRequired()
         ns_params = []
         if self._parent.namespace:
+            if not self._parent.root_helper:
+                raise exceptions.SudoRequired()
             ns_params = ['ip', 'netns', 'exec', self._parent.namespace]
 
         env_params = []
