@@ -26,17 +26,17 @@ DEFAULT_TUNNEL_TYPES = []
 
 ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int',
-               help=_("Integration bridge to use")),
+               help=_("Integration bridge to use.")),
     cfg.BoolOpt('enable_tunneling', default=False,
-                help=_("Enable tunneling support")),
+                help=_("Enable tunneling support.")),
     cfg.StrOpt('tunnel_bridge', default='br-tun',
-               help=_("Tunnel bridge to use")),
+               help=_("Tunnel bridge to use.")),
     cfg.StrOpt('int_peer_patch_port', default='patch-tun',
                help=_("Peer patch port in integration bridge for tunnel "
-                      "bridge")),
+                      "bridge.")),
     cfg.StrOpt('tun_peer_patch_port', default='patch-int',
                help=_("Peer patch port in tunnel bridge for integration "
-                      "bridge")),
+                      "bridge.")),
     cfg.StrOpt('local_ip', default='',
                help=_("Local IP address of GRE tunnel endpoints.")),
     cfg.ListOpt('bridge_mappings',
@@ -44,20 +44,20 @@ ovs_opts = [
                 help=_("List of <physical_network>:<bridge>")),
     cfg.StrOpt('tenant_network_type', default='local',
                help=_("Network type for tenant networks "
-                      "(local, vlan, gre, vxlan, or none)")),
+                      "(local, vlan, gre, vxlan, or none).")),
     cfg.ListOpt('network_vlan_ranges',
                 default=DEFAULT_VLAN_RANGES,
                 help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
-                       "or <physical_network>")),
+                       "or <physical_network>.")),
     cfg.ListOpt('tunnel_id_ranges',
                 default=DEFAULT_TUNNEL_RANGES,
-                help=_("List of <tun_min>:<tun_max>")),
+                help=_("List of <tun_min>:<tun_max>.")),
     cfg.StrOpt('tunnel_type', default='',
                help=_("The type of tunnels to use when utilizing tunnels, "
-                      "either 'gre' or 'vxlan'")),
+                      "either 'gre' or 'vxlan'.")),
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 help=_("Use veths instead of patch ports to interconnect the "
-                       "integration bridge to physical bridges")),
+                       "integration bridge to physical bridges.")),
 ]
 
 agent_opts = [
@@ -71,28 +71,28 @@ agent_opts = [
     cfg.IntOpt('ovsdb_monitor_respawn_interval',
                default=constants.DEFAULT_OVSDBMON_RESPAWN,
                help=_("The number of seconds to wait before respawning the "
-                      "ovsdb monitor after losing communication with it")),
+                      "ovsdb monitor after losing communication with it.")),
     cfg.ListOpt('tunnel_types', default=DEFAULT_TUNNEL_TYPES,
                 help=_("Network types supported by the agent "
-                       "(gre and/or vxlan)")),
+                       "(gre and/or vxlan).")),
     cfg.IntOpt('vxlan_udp_port', default=p_const.VXLAN_UDP_PORT,
                help=_("The UDP port to use for VXLAN tunnels.")),
     cfg.IntOpt('veth_mtu',
                help=_("MTU size of veth interfaces")),
     cfg.BoolOpt('l2_population', default=False,
                 help=_("Use ML2 l2population mechanism driver to learn "
-                       "remote mac and IPs and improve tunnel scalability")),
+                       "remote MAC and IPs and improve tunnel scalability.")),
     cfg.BoolOpt('arp_responder', default=False,
                 help=_("Enable local ARP responder if it is supported. "
                        "Requires OVS 2.1 and ML2 l2population driver. "
                        "Allows the switch (when supporting an overlay) "
                        "to respond to an ARP request locally without "
-                       "performing a costly ARP broadcast into the overlay")),
+                       "performing a costly ARP broadcast into the overlay.")),
     cfg.BoolOpt('dont_fragment', default=True,
                 help=_("Set or un-set the don't fragment (DF) bit on "
-                       "outgoing IP packet carrying GRE/VXLAN tunnel")),
+                       "outgoing IP packet carrying GRE/VXLAN tunnel.")),
     cfg.BoolOpt('enable_distributed_routing', default=False,
-                help=_("Make the l2 agent run in DVR mode ")),
+                help=_("Make the l2 agent run in DVR mode.")),
 ]
 
 
