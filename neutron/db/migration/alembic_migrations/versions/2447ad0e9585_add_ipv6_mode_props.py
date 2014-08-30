@@ -70,12 +70,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.drop_column('subnets', 'ipv6_ra_mode')
-    op.drop_column('subnets', 'ipv6_address_mode')
-    context = op.get_context()
-    if context.bind.dialect.name == 'postgresql':
-        op.execute('DROP TYPE ipv6_ra_modes')
-        op.execute('DROP TYPE ipv6_address_modes')
+    pass

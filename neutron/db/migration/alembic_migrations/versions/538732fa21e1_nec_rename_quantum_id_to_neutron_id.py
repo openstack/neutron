@@ -52,14 +52,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    for table in ['ofctenantmappings', 'ofcnetworkmappings',
-                  'ofcportmappings', 'ofcfiltermappings',
-                  'ofcroutermappings',
-                  ]:
-        op.alter_column(table, 'neutron_id',
-                        new_column_name='quantum_id',
-                        existing_type=sa.String(length=36),
-                        existing_nullable=False)
+    pass
