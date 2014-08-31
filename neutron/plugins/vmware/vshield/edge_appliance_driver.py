@@ -62,7 +62,7 @@ class EdgeApplianceDriver(object):
             edge['appliances']['deploymentContainerId'] = (
                 deployment_container_id)
         if datacenter_moid:
-            edge['datacenterMoid'] = datacenter_moid,
+            edge['datacenterMoid'] = datacenter_moid
 
         return edge
 
