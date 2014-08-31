@@ -25,6 +25,7 @@ from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as const
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import rpc as n_rpc
@@ -45,7 +46,38 @@ FAKE_IP = {const.IPv4: '10.0.0.1',
            'IPv6_LLA': 'fe80::123'}
 
 
-class FakeSGCallback(sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+TEST_PLUGIN_CLASS = ('neutron.tests.unit.test_security_groups_rpc.'
+                     'SecurityGroupRpcTestPlugin')
+
+
+class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
+                                 sg_db_rpc.SecurityGroupServerRpcMixin):
+    def __init__(self):
+        super(SecurityGroupRpcTestPlugin, self).__init__()
+        self.notifier = mock.Mock()
+        self.devices = {}
+
+    def create_port(self, context, port):
+        result = super(SecurityGroupRpcTestPlugin,
+                       self).create_port(context, port)
+        self.devices[result['id']] = result
+        self.notify_security_groups_member_updated(context, result)
+        return result
+
+    def update_port(self, context, id, port):
+        original_port = self.get_port(context, id)
+        updated_port = super(SecurityGroupRpcTestPlugin,
+                             self).update_port(context, id, port)
+        self.devices[id] = updated_port
+        self.update_security_group_on_port(
+            context, id, port, original_port, updated_port)
+
+    def delete_port(self, context, id):
+        port = self.get_port(context, id)
+        super(SecurityGroupRpcTestPlugin, self).delete_port(context, id)
+        self.notify_security_groups_member_updated(context, port)
+        del self.devices[id]
+
     def get_port_from_device(self, device):
         device = self.devices.get(device)
         if device:
@@ -56,13 +88,15 @@ class FakeSGCallback(sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
         return device
 
 
-class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
+class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
     def setUp(self, plugin=None):
+        plugin = plugin or TEST_PLUGIN_CLASS
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        super(SGServerRpcCallBackMixinTestCase, self).setUp(plugin)
-        self.rpc = FakeSGCallback()
+        super(SGServerRpcCallBackTestCase, self).setUp(plugin)
+        self.notifier = manager.NeutronManager.get_plugin().notifier
+        self.rpc = securitygroups_rpc.SecurityGroupServerRpcCallback()
 
     def _test_security_group_port(self, device_owner, gw_ip,
                                   cidr, ip_version, ip_address):
@@ -71,93 +105,73 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              gateway_ip=gw_ip,
                              cidr=cidr,
                              ip_version=ip_version) as subnet:
-                with mock.patch.object(
-                    self.notifier,
-                    'security_groups_provider_updated') as mock_notifier:
-                    kwargs = {
-                        'fixed_ips': [{'subnet_id': subnet['subnet']['id'],
-                                       'ip_address': ip_address}]}
-                    if device_owner:
-                        kwargs['device_owner'] = device_owner
-                    res = self._create_port(
-                        self.fmt, net['network']['id'], **kwargs)
-                    res = self.deserialize(self.fmt, res)
-                    port_id = res['port']['id']
-                    if device_owner == const.DEVICE_OWNER_ROUTER_INTF:
-                        data = {'port': {'fixed_ips': []}}
-                        req = self.new_update_request('ports', data, port_id)
-                        res = self.deserialize(self.fmt,
-                                               req.get_response(self.api))
-                    self._delete('ports', port_id)
-                    return mock_notifier
+                kwargs = {
+                    'fixed_ips': [{'subnet_id': subnet['subnet']['id'],
+                                   'ip_address': ip_address}]}
+                if device_owner:
+                    kwargs['device_owner'] = device_owner
+                res = self._create_port(
+                    self.fmt, net['network']['id'], **kwargs)
+                res = self.deserialize(self.fmt, res)
+                port_id = res['port']['id']
+                if device_owner == const.DEVICE_OWNER_ROUTER_INTF:
+                    data = {'port': {'fixed_ips': []}}
+                    req = self.new_update_request('ports', data, port_id)
+                    res = self.deserialize(self.fmt,
+                                           req.get_response(self.api))
+                self._delete('ports', port_id)
 
     def test_notify_security_group_ipv6_gateway_port_added(self):
-        if getattr(self, "notifier", None) is None:
-            self.skipTest("Notifier mock is not set so security group "
-                          "RPC calls can't be tested")
-
-        mock_notifier = self._test_security_group_port(
+        self._test_security_group_port(
             const.DEVICE_OWNER_ROUTER_INTF,
             '2001:0db8::1',
             '2001:0db8::/64',
             6,
             '2001:0db8::1')
-        self.assertTrue(mock_notifier.called)
+        self.assertTrue(self.notifier.security_groups_provider_updated.called)
 
     def test_notify_security_group_ipv6_normal_port_added(self):
-        if getattr(self, "notifier", None) is None:
-            self.skipTest("Notifier mock is not set so security group "
-                          "RPC calls can't be tested")
-        mock_notifier = self._test_security_group_port(
+        self._test_security_group_port(
             None,
             '2001:0db8::1',
             '2001:0db8::/64',
             6,
             '2001:0db8::3')
-        self.assertFalse(mock_notifier.called)
+        self.assertFalse(self.notifier.security_groups_provider_updated.called)
 
     def test_notify_security_group_ipv4_dhcp_port_added(self):
-        if getattr(self, "notifier", None) is None:
-            self.skipTest("Notifier mock is not set so security group "
-                          "RPC calls can't be tested")
-        mock_notifier = self._test_security_group_port(
+        self._test_security_group_port(
             const.DEVICE_OWNER_DHCP,
             '192.168.1.1',
             '192.168.1.0/24',
             4,
             '192.168.1.2')
-        self.assertTrue(mock_notifier.called)
+        self.assertTrue(self.notifier.security_groups_provider_updated.called)
 
     def test_notify_security_group_ipv4_gateway_port_added(self):
-        if getattr(self, "notifier", None) is None:
-            self.skipTest("Notifier mock is not set so security group "
-                          "RPC calls can't be tested")
-        mock_notifier = self._test_security_group_port(
+        self._test_security_group_port(
             const.DEVICE_OWNER_ROUTER_INTF,
             '192.168.1.1',
             '192.168.1.0/24',
             4,
             '192.168.1.1')
-        self.assertFalse(mock_notifier.called)
+        self.assertFalse(self.notifier.security_groups_provider_updated.called)
 
     def test_notify_security_group_ipv4_normal_port_added(self):
-        if getattr(self, "notifier", None) is None:
-            self.skipTest("Notifier mock is not set so security group "
-                          "RPC calls can't be tested")
-        mock_notifier = self._test_security_group_port(
+        self._test_security_group_port(
             None,
             '192.168.1.1',
             '192.168.1.0/24',
             4,
             '192.168.1.3')
-        self.assertFalse(mock_notifier.called)
+        self.assertFalse(self.notifier.security_groups_provider_updated.called)
 
     def test_security_group_rules_for_devices_ipv4_ingress(self):
         fake_prefix = FAKE_PREFIX[const.IPv4]
         with self.network() as n:
-            with contextlib.nested(self.subnet(n),
-                                   self.security_group()) as (subnet_v4,
-                                                              sg1):
+            with contextlib.nested(
+                    self.subnet(n),
+                    self.security_group()) as (subnet_v4, sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -829,7 +843,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id2)
 
 
-class SGServerRpcCallBackMixinTestCaseXML(SGServerRpcCallBackMixinTestCase):
+class SGServerRpcCallBackTestCaseXML(SGServerRpcCallBackTestCase):
     fmt = 'xml'
 
 

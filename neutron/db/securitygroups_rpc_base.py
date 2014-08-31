@@ -36,6 +36,27 @@ DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
 
 
 class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
+    """Mixin class to add agent-based security group implementation."""
+
+    def get_port_from_device(self, device):
+        """Get port dict from device name on an agent.
+
+        Subclass must provide this method.
+
+        :param device: device name which identifies a port on the agent side.
+        What is specified in "device" depends on a plugin agent implementation.
+        For example, it is a port ID in OVS agent and netdev name in Linux
+        Bridge agent.
+        :return: port dict returned by DB plugin get_port(). In addition,
+        it must contain the following fields in the port dict returned.
+        - device
+        - security_groups
+        - security_group_rules,
+        - security_group_source_groups
+        - fixed_ips
+        """
+        raise NotImplementedError(_("%s must implement get_port_from_device.")
+                                  % self.__class__.__name__)
 
     def create_security_group_rule(self, context, security_group_rule):
         bulk_rule = {'security_group_rules': [security_group_rule]}
@@ -127,33 +148,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         else:
             self.notifier.security_groups_member_updated(
                 context, port.get(ext_sg.SECURITYGROUPS))
-
-
-class SecurityGroupServerRpcCallbackMixin(object):
-    """A mix-in that enable SecurityGroup agent support in plugin
-    implementations.
-    """
-
-    def security_group_rules_for_devices(self, context, **kwargs):
-        """Return security group rules for each port.
-
-        also convert remote_group_id rule
-        to source_ip_prefix and dest_ip_prefix rule
-
-        :params devices: list of devices
-        :returns: port correspond to the devices with security group rules
-        """
-        devices = kwargs.get('devices')
-
-        ports = {}
-        for device in devices:
-            port = self.get_port_from_device(device)
-            if not port:
-                continue
-            if port['device_owner'].startswith('network:'):
-                continue
-            ports[port['id']] = port
-        return self._security_group_rules_for_ports(context, ports)
 
     def _select_rules_for_ports(self, context, ports):
         if not ports:
@@ -354,7 +348,7 @@ class SecurityGroupServerRpcCallbackMixin(object):
             self._add_ingress_ra_rule(port, ips_ra)
             self._add_ingress_dhcp_rule(port, ips_dhcp)
 
-    def _security_group_rules_for_ports(self, context, ports):
+    def security_group_rules_for_ports(self, context, ports):
         rules_in_db = self._select_rules_for_ports(context, ports)
         for (binding, rule_in_db) in rules_in_db:
             port_id = binding['port_id']

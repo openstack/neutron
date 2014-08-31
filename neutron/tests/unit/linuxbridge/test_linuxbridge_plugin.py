@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
-
 import mock
 from oslo.config import cfg
 
@@ -95,11 +93,9 @@ class TestLinuxBridgePluginRpcCallbacks(test_plugin.NeutronDbPluginV2TestCase):
         self.callbacks = lb_neutron_plugin.LinuxBridgeRpcCallbacks()
 
     def test_update_device_down(self):
-        with contextlib.nested(
-            mock.patch.object(self.callbacks, "get_port_from_device",
-                              return_value=None),
-            mock.patch.object(manager.NeutronManager, "get_plugin")
-        ) as (gpfd, gp):
+        with mock.patch.object(manager.NeutronManager, "get_plugin") as gp:
+            plugin = gp.return_value
+            plugin.get_port_from_device.return_value = None
             self.assertEqual(
                 self.callbacks.update_device_down("fake_context",
                                                   agent_id="123",
@@ -107,8 +103,9 @@ class TestLinuxBridgePluginRpcCallbacks(test_plugin.NeutronDbPluginV2TestCase):
                                                   host="host"),
                 {'device': 'device', 'exists': False}
             )
-            gpfd.return_value = {'id': 'fakeid',
-                                 'status': q_const.PORT_STATUS_ACTIVE}
+            plugin.get_port_from_device.return_value = {
+                'id': 'fakeid',
+                'status': q_const.PORT_STATUS_ACTIVE}
             self.assertEqual(
                 self.callbacks.update_device_down("fake_context",
                                                   agent_id="123",
@@ -118,15 +115,13 @@ class TestLinuxBridgePluginRpcCallbacks(test_plugin.NeutronDbPluginV2TestCase):
             )
 
     def test_update_device_up(self):
-        with contextlib.nested(
-            mock.patch.object(self.callbacks, "get_port_from_device",
-                              return_value=None),
-            mock.patch.object(manager.NeutronManager, "get_plugin")
-        ) as (gpfd, gp):
-            gpfd.return_value = {'id': 'fakeid',
-                                 'status': q_const.PORT_STATUS_ACTIVE}
+        with mock.patch.object(manager.NeutronManager, "get_plugin") as gp:
+            plugin = gp.return_value
+            plugin.get_port_from_device.return_value = {
+                'id': 'fakeid',
+                'status': q_const.PORT_STATUS_ACTIVE}
             self.callbacks.update_device_up("fake_context",
                                             agent_id="123",
                                             device="device",
                                             host="host")
-            gpfd.assert_called_once_with('device')
+            plugin.get_port_from_device.assert_called_once_with('device')
