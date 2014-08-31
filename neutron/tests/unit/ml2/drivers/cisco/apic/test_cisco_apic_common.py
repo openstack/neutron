@@ -15,13 +15,12 @@
 #
 # @author: Henry Gessau, Cisco Systems
 
-import mock
+import contextlib
 import requests
 
+import mock
 from oslo.config import cfg
 
-from neutron.common import config as neutron_config
-from neutron.plugins.ml2 import config as ml2_config
 from neutron.tests import base
 
 
@@ -45,9 +44,8 @@ APIC_SUBJECT = 'testSubject'
 APIC_FILTER = 'carbonFilter'
 APIC_ENTRY = 'forcedEntry'
 
-APIC_VMMP = 'OpenStack'
+APIC_SYSTEM_ID = 'sysid'
 APIC_DOMAIN = 'cumuloNimbus'
-APIC_PDOM = 'rainStorm'
 
 APIC_NODE_PROF = 'red'
 APIC_LEAF = 'green'
@@ -67,6 +65,19 @@ APIC_VLANID_FROM = 2900
 APIC_VLANID_TO = 2999
 APIC_VLAN_FROM = 'vlan-%d' % APIC_VLANID_FROM
 APIC_VLAN_TO = 'vlan-%d' % APIC_VLANID_TO
+
+APIC_ROUTER = 'router_id'
+
+APIC_EXT_SWITCH = '203'
+APIC_EXT_MODULE = '1'
+APIC_EXT_PORT = '34'
+APIC_EXT_ENCAP = 'vlan-100'
+APIC_EXT_CIDR_EXPOSED = '10.10.40.2/16'
+APIC_EXT_GATEWAY_IP = '10.10.40.1'
+
+APIC_KEY = 'key'
+
+KEYSTONE_TOKEN = '123Token123'
 
 
 class ControllerMixin(object):
@@ -114,6 +125,10 @@ class ControllerMixin(object):
         self.mock_response_for_post('aaaLogin', userName=APIC_USR,
                                     token='ok', refreshTimeoutSeconds=timeout)
 
+    @contextlib.contextmanager
+    def fake_transaction(self, *args, **kwargs):
+        yield 'transaction'
+
 
 class ConfigMixin(object):
 
@@ -124,8 +139,13 @@ class ConfigMixin(object):
 
     def set_up_mocks(self):
         # Mock the configuration file
-        args = ['--config-file', base.etcdir('neutron.conf.test')]
-        neutron_config.init(args=args)
+        base.BaseTestCase.config_parse()
+
+        # Configure global option apic_system_id
+        cfg.CONF.set_override('apic_system_id', APIC_SYSTEM_ID)
+
+        # Configure option keystone_authtoken
+        cfg.CONF.keystone_authtoken = KEYSTONE_TOKEN
 
         # Configure the ML2 mechanism drivers and network types
         ml2_opts = {
@@ -133,14 +153,23 @@ class ConfigMixin(object):
             'tenant_network_types': ['vlan'],
         }
         for opt, val in ml2_opts.items():
-                ml2_config.cfg.CONF.set_override(opt, val, 'ml2')
+                cfg.CONF.set_override(opt, val, 'ml2')
+
+        # Configure the ML2 type_vlan opts
+        ml2_type_vlan_opts = {
+            'vlan_ranges': ['physnet1:100:199'],
+        }
+        cfg.CONF.set_override('network_vlan_ranges',
+                              ml2_type_vlan_opts['vlan_ranges'],
+                              'ml2_type_vlan')
+        self.vlan_ranges = ml2_type_vlan_opts['vlan_ranges']
 
         # Configure the Cisco APIC mechanism driver
         apic_test_config = {
             'apic_hosts': APIC_HOSTS,
             'apic_username': APIC_USR,
             'apic_password': APIC_PWD,
-            'apic_vmm_domain': APIC_DOMAIN,
+            'apic_domain_name': APIC_SYSTEM_ID,
             'apic_vlan_ns_name': APIC_VLAN_NAME,
             'apic_vlan_range': '%d:%d' % (APIC_VLANID_FROM, APIC_VLANID_TO),
             'apic_node_profile': APIC_NODE_PROF,
@@ -149,13 +178,43 @@ class ConfigMixin(object):
         }
         for opt, val in apic_test_config.items():
             cfg.CONF.set_override(opt, val, 'ml2_cisco_apic')
+        self.apic_config = cfg.CONF.ml2_cisco_apic
 
+        # Configure switch topology
         apic_switch_cfg = {
-            'apic_switch:east01': {'ubuntu1,ubuntu2': ['3/11']},
-            'apic_switch:east02': {'rhel01,rhel02': ['4/21'],
-                                   'rhel03': ['4/22']},
+            'apic_switch:101': {'ubuntu1,ubuntu2': ['3/11']},
+            'apic_switch:102': {'rhel01,rhel02': ['4/21'],
+                                'rhel03': ['4/22']},
         }
-        self.mocked_parser = mock.patch.object(cfg,
-                                               'MultiConfigParser').start()
+        self.switch_dict = {
+            '101': {
+                '3/11': ['ubuntu1', 'ubuntu2'],
+            },
+            '102': {
+                '4/21': ['rhel01', 'rhel02'],
+                '4/22': ['rhel03'],
+            },
+        }
+        self.vpc_dict = {
+            '201': '202',
+            '202': '201',
+        }
+        self.external_network_dict = {
+            APIC_NETWORK + '-name': {
+                'switch': APIC_EXT_SWITCH,
+                'port': APIC_EXT_MODULE + '/' + APIC_EXT_PORT,
+                'encap': APIC_EXT_ENCAP,
+                'cidr_exposed': APIC_EXT_CIDR_EXPOSED,
+                'gateway_ip': APIC_EXT_GATEWAY_IP,
+            },
+        }
+        self.mocked_parser = mock.patch.object(
+            cfg, 'MultiConfigParser').start()
         self.mocked_parser.return_value.read.return_value = [apic_switch_cfg]
         self.mocked_parser.return_value.parsed = [apic_switch_cfg]
+
+
+class FakeDbContract(object):
+
+    def __init__(self, contract_id):
+        self.contract_id = contract_id
