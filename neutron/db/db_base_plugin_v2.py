@@ -807,6 +807,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                for route in subnet['routes']],
                'shared': subnet['shared']
                }
+        # Call auxiliary extend functions, if any
+        self._apply_dict_extend_functions(attributes.SUBNETS, res, subnet)
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,

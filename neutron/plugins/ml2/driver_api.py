@@ -649,3 +649,158 @@ class MechanismDriver(object):
         that such state changes are eventually cleaned up.
         """
         pass
+
+
+@six.add_metaclass(abc.ABCMeta)
+class ExtensionDriver(object):
+    """Define stable abstract interface for ML2 extension drivers.
+
+    An extension driver extends the core resources implemented by the
+    ML2 plugin with additional attributes. Methods that process create
+    and update operations for these resources validate and persist
+    values for extended attributes supplied through the API. Other
+    methods extend the resource dictionaries returned from the API
+    operations with the values of the extended attributes.
+    """
+
+    @abc.abstractmethod
+    def initialize(self):
+        """Perform driver initialization.
+
+        Called after all drivers have been loaded and the database has
+        been initialized. No abstract methods defined below will be
+        called prior to this method being called.
+        """
+        pass
+
+    @abc.abstractproperty
+    def extension_alias(self):
+        """Supported extension alias.
+
+        Return the alias identifying the core API extension supported
+        by this driver.
+        """
+        pass
+
+    def process_create_network(self, session, data, result):
+        """Process extended attributes for create network.
+
+        :param session: database session
+        :param data: dictionary of incoming network data
+        :param result: network dictionary to extend
+
+        Called inside transaction context on session to validate and
+        persist any extended network attributes defined by this
+        driver. Extended attribute values must also be added to
+        result.
+        """
+        pass
+
+    def process_create_subnet(self, session, data, result):
+        """Process extended attributes for create subnet.
+
+        :param session: database session
+        :param data: dictionary of incoming subnet data
+        :param result: subnet dictionary to extend
+
+        Called inside transaction context on session to validate and
+        persist any extended subnet attributes defined by this
+        driver. Extended attribute values must also be added to
+        result.
+        """
+        pass
+
+    def process_create_port(self, session, data, result):
+        """Process extended attributes for create port.
+
+        :param session: database session
+        :param data: dictionary of incoming port data
+        :param result: port dictionary to extend
+
+        Called inside transaction context on session to validate and
+        persist any extended port attributes defined by this
+        driver. Extended attribute values must also be added to
+        result.
+        """
+        pass
+
+    def process_update_network(self, session, data, result):
+        """Process extended attributes for update network.
+
+        :param session: database session
+        :param data: dictionary of incoming network data
+        :param result: network dictionary to extend
+
+        Called inside transaction context on session to validate and
+        update any extended network attributes defined by this
+        driver. Extended attribute values, whether updated or not,
+        must also be added to result.
+        """
+        pass
+
+    def process_update_subnet(self, session, data, result):
+        """Process extended attributes for update subnet.
+
+        :param session: database session
+        :param data: dictionary of incoming subnet data
+        :param result: subnet dictionary to extend
+
+        Called inside transaction context on session to validate and
+        update any extended subnet attributes defined by this
+        driver. Extended attribute values, whether updated or not,
+        must also be added to result.
+        """
+        pass
+
+    def process_update_port(self, session, data, result):
+        """Process extended attributes for update port.
+
+        :param session: database session
+        :param data: dictionary of incoming port data
+        :param result: port dictionary to extend
+
+        Called inside transaction context on session to validate and
+        update any extended port attributes defined by this
+        driver. Extended attribute values, whether updated or not,
+        must also be added to result.
+        """
+        pass
+
+    def extend_network_dict(self, session, result):
+        """Add extended attributes to network dictionary.
+
+        :param session: database session
+        :param result: network dictionary to extend
+
+        Called inside transaction context on session to add any
+        extended attributes defined by this driver to a network
+        dictionary to be used for mechanism driver calls and/or
+        returned as the result of a network operation.
+        """
+        pass
+
+    def extend_subnet_dict(self, session, result):
+        """Add extended attributes to subnet dictionary.
+
+        :param session: database session
+        :param result: subnet dictionary to extend
+
+        Called inside transaction context on session to add any
+        extended attributes defined by this driver to a subnet
+        dictionary to be used for mechanism driver calls and/or
+        returned as the result of a subnet operation.
+        """
+        pass
+
+    def extend_port_dict(self, session, result):
+        """Add extended attributes to port dictionary.
+
+        :param session: database session
+        :param result: port dictionary to extend
+
+        Called inside transaction context on session to add any
+        extended attributes defined by this driver to a port
+        dictionary to be used for mechanism driver calls and/or
+        returned as the result of a port operation.
+        """
+        pass
