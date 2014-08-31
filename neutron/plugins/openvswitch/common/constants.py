@@ -22,9 +22,6 @@ FLAT_VLAN_ID = -1
 # Topic for tunnel notifications between the plugin and agent
 TUNNEL = 'tunnel'
 
-# Values for network_type
-VXLAN_UDP_PORT = 4789
-
 # Name prefixes for veth device or patch port pair linking the integration
 # bridge with the physical bridge for a physical network
 PEER_INTEGRATION_PREFIX = 'int-'
@@ -62,9 +59,6 @@ TUN_TABLE = {p_const.TYPE_GRE: GRE_TUN_TO_LV,
 
 # The default respawn interval for the ovsdb monitor
 DEFAULT_OVSDBMON_RESPAWN = 30
-
-# Special return value for an invalid OVS ofport
-INVALID_OFPORT = '-1'
 
 # Represent invalid OF Port
 OFPORT_INVALID = -1

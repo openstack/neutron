@@ -22,8 +22,7 @@ from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import uuidutils
-from neutron.plugins.common import constants as p_const
-from neutron.plugins.openvswitch.common import constants as const
+from neutron.plugins.common import constants
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -355,10 +354,10 @@ class OVS_Lib_Test(base.BaseTestCase):
         self._test_get_port_ofport("6", "6")
 
     def test_get_port_ofport_returns_invalid_ofport_for_non_int(self):
-        self._test_get_port_ofport("[]", const.INVALID_OFPORT)
+        self._test_get_port_ofport("[]", ovs_lib.INVALID_OFPORT)
 
     def test_get_port_ofport_returns_invalid_ofport_for_none(self):
-        self._test_get_port_ofport(None, const.INVALID_OFPORT)
+        self._test_get_port_ofport(None, ovs_lib.INVALID_OFPORT)
 
     def test_get_datapath_id(self):
         datapath_id = '"0000b67f4fbcc149"'
@@ -488,7 +487,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         command = ["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
                    self.BR_NAME, pname]
         command.extend(["--", "set", "Interface", pname])
-        command.extend(["type=" + p_const.TYPE_VXLAN,
+        command.extend(["type=" + constants.TYPE_VXLAN,
                         "options:dst_port=" + vxlan_udp_port,
                         "options:df_default=false",
                         "options:remote_ip=" + remote_ip,
@@ -507,7 +506,7 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         self.assertEqual(
             self.br.add_tunnel_port(pname, remote_ip, local_ip,
-                                    p_const.TYPE_VXLAN, vxlan_udp_port,
+                                    constants.TYPE_VXLAN, vxlan_udp_port,
                                     dont_fragment),
             ofport)
 

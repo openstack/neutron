@@ -15,6 +15,7 @@
 from oslo.config import cfg
 
 from neutron.agent.common import config
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.common import constants
 
 
@@ -74,7 +75,7 @@ agent_opts = [
     cfg.ListOpt('tunnel_types', default=DEFAULT_TUNNEL_TYPES,
                 help=_("Network types supported by the agent "
                        "(gre and/or vxlan)")),
-    cfg.IntOpt('vxlan_udp_port', default=constants.VXLAN_UDP_PORT,
+    cfg.IntOpt('vxlan_udp_port', default=p_const.VXLAN_UDP_PORT,
                help=_("The UDP port to use for VXLAN tunnels.")),
     cfg.IntOpt('veth_mtu',
                help=_("MTU size of veth interfaces")),
