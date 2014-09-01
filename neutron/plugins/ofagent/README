@@ -7,6 +7,21 @@ https://github.com/osrg/ryu/wiki/OpenStack
 
 # -- Notes for updating from Icehouce
 
+After Icehouce, most of the functionality have been folded into
+a single bridge, the integration bridge.  (aka. br-int)
+The integration bridge is the only bridge which would have an
+OpenFlow connection to the embedded controller in ofagent now.
+
+- ofagent no longer uses a separate bridge for tunneling.
+  Please remove br-tun if you have one.
+
+   # ovs-vsctl del-br br-tun
+
+- ofagent no longer acts as an OpenFlow controller for physical bridges.
+  Please remove set-controller configuration from your physical bridges.
+
+   # ovs-vsctl del-controller ${PHYSICAL_BRIDGE}
+
 The support of ancillary bridges has been removed after Icehouce.
 While you can still use these bridges to provide connectivity,
 neutron-ofagent-agent no longer reports port state changes (up/down)

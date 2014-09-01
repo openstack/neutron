@@ -23,29 +23,13 @@ from neutron.tests import base
 from neutron.tests.unit.ofagent import fake_oflib
 
 
-class OFAAgentTestBase(base.BaseTestCase):
-
-    _AGENT_NAME = 'neutron.plugins.ofagent.agent.ofa_neutron_agent'
+class OFATestBase(base.BaseTestCase):
 
     def setUp(self):
         self.fake_oflib_of = fake_oflib.patch_fake_oflib_of()
         self.fake_oflib_of.start()
         self.addCleanup(self.fake_oflib_of.stop)
-        self.mod_agent = importutils.import_module(self._AGENT_NAME)
-        super(OFAAgentTestBase, self).setUp()
-        self.ryuapp = mock.Mock()
-
-    def setup_config(self):
-        cfg.CONF.set_default('firewall_driver',
-                             'neutron.agent.firewall.NoopFirewallDriver',
-                             group='SECURITYGROUP')
-        cfg.CONF.register_cli_opts([
-            cfg.StrOpt('ofp-listen-host', default='',
-                       help='openflow listen host'),
-            cfg.IntOpt('ofp-tcp-listen-port', default=6633,
-                       help='openflow tcp listen port')
-        ])
-        cfg.CONF.set_override('root_helper', 'fake_helper', group='AGENT')
+        super(OFATestBase, self).setUp()
 
     def _mk_test_dp(self, name):
         ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
@@ -63,3 +47,25 @@ class OFAAgentTestBase(base.BaseTestCase):
         br.ofproto = dp.ofproto
         br.ofparser = dp.ofproto_parser
         return br
+
+
+class OFAAgentTestBase(OFATestBase):
+
+    _AGENT_NAME = 'neutron.plugins.ofagent.agent.ofa_neutron_agent'
+
+    def setUp(self):
+        super(OFAAgentTestBase, self).setUp()
+        self.mod_agent = importutils.import_module(self._AGENT_NAME)
+        self.ryuapp = mock.Mock()
+
+    def setup_config(self):
+        cfg.CONF.set_default('firewall_driver',
+                             'neutron.agent.firewall.NoopFirewallDriver',
+                             group='SECURITYGROUP')
+        cfg.CONF.register_cli_opts([
+            cfg.StrOpt('ofp-listen-host', default='',
+                       help='openflow listen host'),
+            cfg.IntOpt('ofp-tcp-listen-port', default=6633,
+                       help='openflow tcp listen port')
+        ])
+        cfg.CONF.set_override('root_helper', 'fake_helper', group='AGENT')
