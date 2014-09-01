@@ -37,7 +37,7 @@ class ProcessManager(object):
     Note: The manager expects uuid to be in cmdline.
     """
     def __init__(self, conf, uuid, root_helper='sudo',
-                 namespace=None, service=None):
+                 namespace=None, service=None, pids_path=None):
         self.conf = conf
         self.uuid = uuid
         self.root_helper = root_helper
@@ -46,6 +46,7 @@ class ProcessManager(object):
             self.service_pid_fname = 'pid.' + service
         else:
             self.service_pid_fname = 'pid'
+        self.pids_path = pids_path or self.conf.external_pids
 
     def enable(self, cmd_callback, reload_cfg=False):
         if not self.active:
@@ -67,18 +68,19 @@ class ProcessManager(object):
             utils.execute(cmd, self.root_helper)
             # In the case of shutting down, remove the pid file
             if sig == '9':
-                utils.remove_conf_file(self.conf.external_pids,
+                utils.remove_conf_file(self.pids_path,
                                        self.uuid,
                                        self.service_pid_fname)
         elif pid:
-            LOG.debug(_('Process for %(uuid)s pid %(pid)d is stale, ignoring '
-                        'command'), {'uuid': self.uuid, 'pid': pid})
+            LOG.debug('Process for %(uuid)s pid %(pid)d is stale, ignoring '
+                      'signal %(signal)s', {'uuid': self.uuid, 'pid': pid,
+                                            'signal': sig})
         else:
-            LOG.debug(_('No process started for %s'), self.uuid)
+            LOG.debug('No process started for %s', self.uuid)
 
     def get_pid_file_name(self, ensure_pids_dir=False):
         """Returns the file name for a given kind of config file."""
-        return utils.get_conf_file_name(self.conf.external_pids,
+        return utils.get_conf_file_name(self.pids_path,
                                         self.uuid,
                                         self.service_pid_fname,
                                         ensure_pids_dir)
@@ -86,7 +88,7 @@ class ProcessManager(object):
     @property
     def pid(self):
         """Last known pid for this external process spawned for this uuid."""
-        return utils.get_value_from_conf_file(self.conf.external_pids,
+        return utils.get_value_from_conf_file(self.pids_path,
                                               self.uuid,
                                               self.service_pid_fname,
                                               int)

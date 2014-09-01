@@ -42,3 +42,7 @@ iptables-save: CommandFilter, iptables-save, root
 iptables-restore: CommandFilter, iptables-restore, root
 ip6tables-save: CommandFilter, ip6tables-save, root
 ip6tables-restore: CommandFilter, ip6tables-restore, root
+
+# Keepalived
+keepalived: CommandFilter, keepalived, root
+kill_keepalived: KillFilter, root, /usr/sbin/keepalived, -HUP, -15, -9
