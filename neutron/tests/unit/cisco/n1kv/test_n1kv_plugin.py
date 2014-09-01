@@ -1172,6 +1172,17 @@ class TestN1kvSubnets(test_plugin.TestSubnetsV2,
             self.assertEqual(req.get_response(self.api).status_int,
                              webob.exc.HTTPNoContent.code)
 
+    def test_schedule_network_with_subnet_create(self):
+        """Test invocation of explicit scheduling for networks."""
+        with mock.patch.object(n1kv_neutron_plugin.N1kvNeutronPluginV2,
+                               'schedule_network') as mock_method:
+            # Test with network auto-scheduling disabled
+            c_conf.CONF.set_override('network_auto_schedule', False)
+            # Subnet creation should trigger scheduling for networks
+            with self.subnet():
+                pass
+        self.assertEqual(1, mock_method.call_count)
+
 
 class TestN1kvL3Test(test_l3_plugin.L3NatExtensionTestCase):
 
