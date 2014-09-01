@@ -33,6 +33,7 @@ from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api
 from neutron.plugins.ml2 import driver_context
+from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.ml2.drivers import mechanism_logger as mech_logger
@@ -590,8 +591,11 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                          dynamic_segment[driver_api.PHYSICAL_NETWORK])
         self.assertTrue(dynamic_segment[driver_api.SEGMENTATION_ID] > 0)
 
-        req = self.new_delete_request('networks', network_id)
-        res = req.get_response(self.api)
+        with mock.patch.object(type_vlan.VlanTypeDriver,
+                               'release_segment') as rs:
+            req = self.new_delete_request('networks', network_id)
+            res = req.get_response(self.api)
+            self.assertEqual(2, rs.call_count)
         self.assertEqual(ml2_db.get_network_segments(
             self.context.session, network_id), [])
         self.assertIsNone(ml2_db.get_dynamic_segment(
