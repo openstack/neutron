@@ -17,7 +17,6 @@
 
 import sqlalchemy as sa
 from sqlalchemy import orm
-from sqlalchemy import sql
 
 from neutron.db import api as db_api
 from neutron.db import model_base
@@ -26,29 +25,20 @@ from neutron.db import models_v2
 from neutron.plugins.ml2 import models as models_ml2
 
 
-class NetworkEPG(model_base.BASEV2):
+class RouterContract(model_base.BASEV2, models_v2.HasTenant):
 
-    """EPG's created on the apic per network."""
+    """Contracts created on the APIC.
 
-    __tablename__ = 'cisco_ml2_apic_epgs'
-
-    network_id = sa.Column(sa.String(255), nullable=False, primary_key=True)
-    epg_id = sa.Column(sa.String(64), nullable=False)
-    segmentation_id = sa.Column(sa.String(64), nullable=False)
-    provider = sa.Column(sa.Boolean, default=False, server_default=sql.false(),
-                         nullable=False)
-
-
-class TenantContract(model_base.BASEV2):
-
-    """Contracts (and Filters) created on the APIC."""
+    tenant_id represents the owner (APIC side) of the contract.
+    router_id is the UUID of the router (Neutron side) this contract is
+    referring to.
+    """
 
     __tablename__ = 'cisco_ml2_apic_contracts'
 
-    # Cannot use HasTenant since we need to set nullable=False
-    tenant_id = sa.Column(sa.String(255), nullable=False, primary_key=True)
-    contract_id = sa.Column(sa.String(64), nullable=False)
-    filter_id = sa.Column(sa.String(64), nullable=False)
+    router_id = sa.Column(sa.String(64), sa.ForeignKey('routers.id',
+                                                       ondelete='CASCADE'),
+                          primary_key=True)
 
 
 class HostLink(model_base.BASEV2):
@@ -82,71 +72,36 @@ class ApicDbModel(object):
     def __init__(self):
         self.session = db_api.get_session()
 
-    def get_provider_contract(self):
-        """Returns  provider EPG from the DB if found."""
-        return self.session.query(NetworkEPG).filter_by(
-            provider=True).first()
+    def get_contract_for_router(self, router_id):
+        """Returns the specified router's contract."""
+        return self.session.query(RouterContract).filter_by(
+            router_id=router_id).first()
 
-    def set_provider_contract(self, epg_id):
-        """Sets an EPG to be a contract provider."""
-        epg = self.session.query(NetworkEPG).filter_by(
-            epg_id=epg_id).first()
-        if epg:
-            epg.provider = True
-            self.session.merge(epg)
-            self.session.flush()
-
-    def unset_provider_contract(self, epg_id):
-        """Sets an EPG to be a contract consumer."""
-        epg = self.session.query(NetworkEPG).filter_by(
-            epg_id=epg_id).first()
-        if epg:
-            epg.provider = False
-            self.session.merge(epg)
-            self.session.flush()
-
-    def get_an_epg(self, exception):
-        """Returns an EPG from the DB that does not match the id specified."""
-        return self.session.query(NetworkEPG).filter(
-            NetworkEPG.epg_id != exception).first()
-
-    def get_epg_for_network(self, network_id):
-        """Returns an EPG for a give neutron network."""
-        return self.session.query(NetworkEPG).filter_by(
-            network_id=network_id).first()
-
-    def write_epg_for_network(self, network_id, epg_uid, segmentation_id='1'):
-        """Stores EPG details for a network.
-
-        NOTE: Segmentation_id is just a placeholder currently, it will be
-              populated with a proper segment id once segmentation mgmt is
-              moved to the APIC.
-        """
-        epg = NetworkEPG(network_id=network_id, epg_id=epg_uid,
-                         segmentation_id=segmentation_id)
-        self.session.add(epg)
-        self.session.flush()
-        return epg
-
-    def delete_epg(self, epg):
-        """Deletes an EPG from the DB."""
-        self.session.delete(epg)
-        self.session.flush()
-
-    def get_contract_for_tenant(self, tenant_id):
-        """Returns the specified tenant's contract."""
-        return self.session.query(TenantContract).filter_by(
-            tenant_id=tenant_id).first()
-
-    def write_contract_for_tenant(self, tenant_id, contract_id, filter_id):
+    def write_contract_for_router(self, tenant_id, router_id):
         """Stores a new contract for the given tenant."""
-        contract = TenantContract(tenant_id=tenant_id,
-                                  contract_id=contract_id,
-                                  filter_id=filter_id)
-        self.session.add(contract)
-        self.session.flush()
-
+        contract = RouterContract(tenant_id=tenant_id,
+                                  router_id=router_id)
+        with self.session.begin(subtransactions=True):
+            self.session.add(contract)
         return contract
+
+    def update_contract_for_router(self, tenant_id, router_id):
+        with self.session.begin(subtransactions=True):
+            contract = self.session.query(RouterContract).filter_by(
+                router_id=router_id).with_lockmode('update').first()
+            if contract:
+                contract.tenant_id = tenant_id
+                self.session.merge(contract)
+            else:
+                self.write_contract_for_router(tenant_id, router_id)
+
+    def delete_contract_for_router(self, router_id):
+        with self.session.begin(subtransactions=True):
+            try:
+                self.session.query(RouterContract).filter_by(
+                    router_id=router_id).delete()
+            except orm.exc.NoResultFound:
+                return
 
     def add_hostlink(self, host, ifname, ifmac, swid, module, port):
         link = HostLink(host=host, ifname=ifname, ifmac=ifmac,
@@ -216,7 +171,8 @@ class ApicDbModel(object):
     def update_apic_name(self, neutron_id, neutron_type, apic_name):
         with self.session.begin(subtransactions=True):
             name = self.session.query(ApicName).filter_by(
-                neutron_id=neutron_id, neutron_type=neutron_type).first()
+                neutron_id=neutron_id,
+                neutron_type=neutron_type).with_lockmode('update').first()
             if name:
                 name.apic_name = apic_name
                 self.session.merge(name)

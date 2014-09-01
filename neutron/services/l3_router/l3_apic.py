@@ -14,32 +14,40 @@
 #    under the License.
 #
 # @author: Arvind Somya (asomya@cisco.com), Cisco Systems Inc.
+# @author: Ivar Lazzaro (ivarlazzaro@gmail.com), Cisco Systems Inc.
+
+from apicapi import apic_mapper
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
-from neutron.db import l3_gwmode_db
+from neutron.db import l3_dvr_db
 from neutron.openstack.common import excutils
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
-from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic as ma
 
-LOG = logging.getLogger(__name__)
+from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic
 
 
 class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                          extraroute_db.ExtraRoute_db_mixin,
-                          l3_gwmode_db.L3_NAT_db_mixin):
-    """Implementation of the APIC L3 Router Service Plugin.
-
-    This class implements a L3 service plugin that provides
-    internal gateway functionality for the Cisco APIC (Application
-    Policy Infrastructure Controller).
-    """
+                          l3_dvr_db.L3_NAT_with_dvr_db_mixin,
+                          extraroute_db.ExtraRoute_db_mixin):
     supported_extension_aliases = ["router", "ext-gw-mode", "extraroute"]
 
     def __init__(self):
         super(ApicL3ServicePlugin, self).__init__()
-        self.manager = ma.APICMechanismDriver.get_apic_manager()
+        self.manager = mechanism_apic.APICMechanismDriver.get_apic_manager()
+        self.name_mapper = self.manager.apic_mapper
+        self.manager.ensure_infra_created_on_apic()
+        self.manager.ensure_bgp_pod_policy_created_on_apic()
+
+    def _map_names(self, context,
+                   tenant_id, router_id, net_id, subnet_id):
+        context._plugin = self
+        with apic_mapper.mapper_context(context) as ctx:
+            atenant_id = tenant_id and self.name_mapper.tenant(ctx, tenant_id)
+            arouter_id = router_id and self.name_mapper.router(ctx, router_id)
+            anet_id = net_id and self.name_mapper.network(ctx, net_id)
+            asubnet_id = subnet_id and self.name_mapper.subnet(ctx, subnet_id)
+        return atenant_id, arouter_id, anet_id, asubnet_id
 
     @staticmethod
     def get_plugin_type():
@@ -50,79 +58,99 @@ class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         """Returns string description of the plugin."""
         return _("L3 Router Service Plugin for basic L3 using the APIC")
 
-    def _add_epg_to_contract(self, tenant_id, epg, contract):
-        """Add an End Point Group(EPG) to a contract as provider/consumer."""
-        if self.manager.db.get_provider_contract():
-            # Set this network's EPG as a consumer
-            self.manager.set_contract_for_epg(tenant_id, epg.epg_id,
-                                              contract.contract_id)
-        else:
-            # Set this network's EPG as a provider
-            self.manager.set_contract_for_epg(tenant_id, epg.epg_id,
-                                              contract.contract_id,
-                                              provider=True)
+    def add_router_interface_postcommit(self, context, router_id,
+                                        interface_info):
+        # Update router's state first
+        router = self.get_router(context, router_id)
+        self.update_router_postcommit(context, router)
 
-    def add_router_interface(self, context, router_id, interface_info):
-        """Attach a subnet to a router."""
-        tenant_id = context.tenant_id
-        subnet_id = interface_info['subnet_id']
-        LOG.debug("Attaching subnet %(subnet_id)s to "
-                  "router %(router_id)s" % {'subnet_id': subnet_id,
-                                            'router_id': router_id})
-
-        # Get network for this subnet
-        subnet = self.get_subnet(context, subnet_id)
-        network_id = subnet['network_id']
-        net_name = self.get_network(context, network_id)['name']
-
-        # Setup tenant filters and contracts
-        contract = self.manager.create_tenant_contract(tenant_id)
-
-        # Check for a provider EPG
-        epg = self.manager.ensure_epg_created_for_network(tenant_id,
-                                                          network_id,
-                                                          net_name)
-        self._add_epg_to_contract(tenant_id, epg, contract)
-
-        # Create DB port
-        try:
-            return super(ApicL3ServicePlugin, self).add_router_interface(
-                context, router_id, interface_info)
-        except Exception:
-            LOG.error(_("Error attaching subnet %(subnet_id)s to "
-                        "router %(router_id)s") % {'subnet_id': subnet_id,
-                                                   'router_id': router_id})
-            with excutils.save_and_reraise_exception():
-                self.manager.delete_contract_for_epg(tenant_id, epg.epg_id,
-                                                     contract.contract_id,
-                                                     provider=epg.provider)
-
-    def remove_router_interface(self, context, router_id, interface_info):
-        """Detach a subnet from a router."""
-        tenant_id = context.tenant_id
+        # Add router interface
         if 'subnet_id' in interface_info:
             subnet = self.get_subnet(context, interface_info['subnet_id'])
             network_id = subnet['network_id']
+            tenant_id = subnet['tenant_id']
         else:
             port = self.get_port(context, interface_info['port_id'])
             network_id = port['network_id']
+            tenant_id = port['tenant_id']
 
-        # Get network for this subnet
-        network = self.get_network(context, network_id)
+        # Map openstack IDs to APIC IDs
+        atenant_id, arouter_id, anetwork_id, _ = self._map_names(
+            context, tenant_id, router_id, network_id, None)
 
-        contract = self.manager.create_tenant_contract(tenant_id)
+        # Program APIC
+        self.manager.add_router_interface(atenant_id, arouter_id,
+                                          anetwork_id)
 
-        epg = self.manager.ensure_epg_created_for_network(tenant_id,
-                                                          network_id,
-                                                          network['name'])
-        # Delete contract for this epg
-        self.manager.delete_contract_for_epg(tenant_id, epg.epg_id,
-                                             contract.contract_id,
-                                             provider=epg.provider)
+    def remove_router_interface_precommit(self, context, router_id,
+                                          interface_info):
+        if 'subnet_id' in interface_info:
+            subnet = self.get_subnet(context, interface_info['subnet_id'])
+            network_id = subnet['network_id']
+            tenant_id = subnet['tenant_id']
+        else:
+            port = self.get_port(context, interface_info['port_id'])
+            network_id = port['network_id']
+            tenant_id = port['tenant_id']
 
+        # Map openstack IDs to APIC IDs
+        atenant_id, arouter_id, anetwork_id, _ = self._map_names(
+            context, tenant_id, router_id, network_id, None)
+
+        # Program APIC
+        self.manager.remove_router_interface(atenant_id, arouter_id,
+                                             anetwork_id)
+
+    def delete_router_precommit(self, context, router_id):
+        context._plugin = self
+        with apic_mapper.mapper_context(context) as ctx:
+            arouter_id = router_id and self.name_mapper.router(ctx, router_id)
+        self.manager.delete_router(arouter_id)
+
+    def update_router_postcommit(self, context, router):
+        context._plugin = self
+        with apic_mapper.mapper_context(context) as ctx:
+            arouter_id = router['id'] and self.name_mapper.router(ctx,
+                                                                  router['id'])
+        with self.manager.apic.transaction() as trs:
+            self.manager.create_router(arouter_id, transaction=trs)
+            if router['admin_state_up']:
+                self.manager.enable_router(arouter_id, transaction=trs)
+            else:
+                self.manager.disable_router(arouter_id, transaction=trs)
+
+    # Router API
+
+    def update_router(self, context, id, router):
+        result = super(ApicL3ServicePlugin, self).update_router(context,
+                                                                id, router)
+        self.update_router_postcommit(context, result)
+        return result
+
+    def delete_router(self, context, router_id):
+        self.delete_router_precommit(context, router_id)
+        result = super(ApicL3ServicePlugin, self).delete_router(context,
+                                                                router_id)
+        return result
+
+    # Router Interface API
+
+    def add_router_interface(self, context, router_id, interface_info):
+        # Create interface in parent
+        result = super(ApicL3ServicePlugin, self).add_router_interface(
+            context, router_id, interface_info)
         try:
-            return super(ApicL3ServicePlugin, self).remove_router_interface(
-                context, router_id, interface_info)
+            self.add_router_interface_postcommit(context, router_id,
+                                                 interface_info)
         except Exception:
             with excutils.save_and_reraise_exception():
-                self._add_epg_to_contract(tenant_id, epg, contract)
+                # Rollback db operation
+                super(ApicL3ServicePlugin, self).remove_router_interface(
+                    context, router_id, interface_info)
+        return result
+
+    def remove_router_interface(self, context, router_id, interface_info):
+        self.remove_router_interface_precommit(context, router_id,
+                                               interface_info)
+        return super(ApicL3ServicePlugin, self).remove_router_interface(
+            context, router_id, interface_info)
