@@ -556,11 +556,11 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             mock.patch.object(self.agent.ryuapp, "del_arp_table_entry"),
         ) as (add_fn, del_fn):
             self.agent.fdb_add(None, copy.deepcopy(fdb_entry))
-            self.assertFalse(add_fn.called)
+            add_fn.assert_called_once_with(12, 'ip', 'mac')
             self.assertFalse(del_fn.called)
             self.agent.fdb_remove(None, fdb_entry)
-            self.assertFalse(add_fn.called)
-            self.assertFalse(del_fn.called)
+            add_fn.assert_called_once_with(12, 'ip', 'mac')
+            del_fn.assert_called_once_with(12, 'ip')
 
     def test_fdb_add_flows(self):
         self._prepare_l2_pop_ofports()
