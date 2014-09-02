@@ -856,6 +856,11 @@ class TestDnsmasq(TestBase):
             network=FakeV4Network(),
             max_leases=256)
 
+    def test_spawn_cfg_broadcast(self):
+        self.conf.set_override('dhcp_broadcast_reply', True)
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal',
+                          '--dhcp-broadcast'])
+
     def test_output_opts_file(self):
         fake_v6 = '2001:0200:feed:7ac0::1'
         expected = (
