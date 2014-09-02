@@ -151,39 +151,45 @@ class TestSubProcessBase(base.BaseTestCase):
         ip_lib.SubProcessBase._execute('o', 'link', ('list',), 'sudo')
 
         self.execute.assert_called_once_with(['ip', '-o', 'link', 'list'],
-                                             root_helper='sudo')
+                                             root_helper='sudo',
+                                             log_fail_as_error=True)
 
     def test_execute_wrapper_int_options(self):
         ip_lib.SubProcessBase._execute([4], 'link', ('list',))
 
         self.execute.assert_called_once_with(['ip', '-4', 'link', 'list'],
-                                             root_helper=None)
+                                             root_helper=None,
+                                             log_fail_as_error=True)
 
     def test_execute_wrapper_no_options(self):
         ip_lib.SubProcessBase._execute([], 'link', ('list',))
 
         self.execute.assert_called_once_with(['ip', 'link', 'list'],
-                                             root_helper=None)
+                                             root_helper=None,
+                                             log_fail_as_error=True)
 
     def test_run_no_namespace(self):
         base = ip_lib.SubProcessBase('sudo')
         base._run([], 'link', ('list',))
         self.execute.assert_called_once_with(['ip', 'link', 'list'],
-                                             root_helper=None)
+                                             root_helper=None,
+                                             log_fail_as_error=True)
 
     def test_run_namespace(self):
         base = ip_lib.SubProcessBase('sudo', 'ns')
         base._run([], 'link', ('list',))
         self.execute.assert_called_once_with(['ip', 'netns', 'exec', 'ns',
                                               'ip', 'link', 'list'],
-                                             root_helper='sudo')
+                                             root_helper='sudo',
+                                             log_fail_as_error=True)
 
     def test_as_root_namespace(self):
         base = ip_lib.SubProcessBase('sudo', 'ns')
         base._as_root([], 'link', ('list',))
         self.execute.assert_called_once_with(['ip', 'netns', 'exec', 'ns',
                                               'ip', 'link', 'list'],
-                                             root_helper='sudo')
+                                             root_helper='sudo',
+                                             log_fail_as_error=True)
 
     def test_as_root_no_root_helper(self):
         base = ip_lib.SubProcessBase()
@@ -257,20 +263,23 @@ class TestIpWrapper(base.BaseTestCase):
         ip_lib.IPWrapper('sudo').add_tuntap('tap0')
         self.execute.assert_called_once_with('', 'tuntap',
                                              ('add', 'tap0', 'mode', 'tap'),
-                                             'sudo', None)
+                                             'sudo', None,
+                                             log_fail_as_error=True)
 
     def test_add_veth(self):
         ip_lib.IPWrapper('sudo').add_veth('tap0', 'tap1')
         self.execute.assert_called_once_with('', 'link',
                                              ('add', 'tap0', 'type', 'veth',
                                               'peer', 'name', 'tap1'),
-                                             'sudo', None)
+                                             'sudo', None,
+                                             log_fail_as_error=True)
 
     def test_del_veth(self):
         ip_lib.IPWrapper('sudo').del_veth('fpr-1234')
         self.execute.assert_called_once_with('', 'link',
                                              ('del', 'fpr-1234'),
-                                             'sudo', None)
+                                             'sudo', None,
+                                             log_fail_as_error=True)
 
     def test_add_veth_with_namespaces(self):
         ns2 = 'ns2'
@@ -281,7 +290,8 @@ class TestIpWrapper(base.BaseTestCase):
                                              ('add', 'tap0', 'type', 'veth',
                                               'peer', 'name', 'tap1',
                                               'netns', ns2),
-                                             'sudo', None)
+                                             'sudo', None,
+                                             log_fail_as_error=True)
 
     def test_get_device(self):
         dev = ip_lib.IPWrapper('sudo', 'ns').device('eth0')
@@ -297,7 +307,8 @@ class TestIpWrapper(base.BaseTestCase):
                     ns_exists.return_value = False
                     ip.ensure_namespace('ns')
                     self.execute.assert_has_calls(
-                        [mock.call([], 'netns', ('add', 'ns'), 'sudo', None)])
+                        [mock.call([], 'netns', ('add', 'ns'), 'sudo', None,
+                                   log_fail_as_error=True)])
                     ip_dev.assert_has_calls([mock.call('lo', 'sudo', 'ns'),
                                              mock.call().link.set_up()])
 
@@ -390,7 +401,8 @@ class TestIpWrapper(base.BaseTestCase):
                                               'ttl', 'ttl0', 'tos', 'tos0',
                                               'local', 'local0', 'proxy',
                                               'port', '1', '2'],
-                                             'sudo', None)
+                                             'sudo', None,
+                                             log_fail_as_error=True)
 
     def test_add_vxlan_invalid_port_length(self):
         wrapper = ip_lib.IPWrapper('sudo')
@@ -422,13 +434,15 @@ class TestIpRule(base.BaseTestCase):
         self.execute.assert_called_once_with('', 'rule',
                                              ('add', 'from', '192.168.45.100',
                                               'lookup', 2, 'priority', 100),
-                                             'sudo', None)
+                                             'sudo', None,
+                                             log_fail_as_error=True)
 
     def test_delete_rule_priority(self):
         ip_lib.IpRule('sudo').delete_rule_priority(100)
         self.execute.assert_called_once_with('', 'rule',
                                              ('del', 'priority', 100),
-                                             'sudo', None)
+                                             'sudo', None,
+                                             log_fail_as_error=True)
 
 
 class TestIPDevice(base.BaseTestCase):
@@ -794,7 +808,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
             self.assertTrue(
                 netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
             execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
-                                            root_helper=None)
+                                            root_helper=None,
+                                            log_fail_as_error=True)
 
     def test_namespace_doest_not_exist(self):
         retval = '\n'.join(NETNS_SAMPLE)
@@ -805,7 +820,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
             self.assertFalse(
                 netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
             execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
-                                            root_helper=None)
+                                            root_helper=None,
+                                            log_fail_as_error=True)
 
     def test_execute(self):
         self.parent.namespace = 'ns'
@@ -842,7 +858,8 @@ class TestDeviceExists(base.BaseTestCase):
         with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
             _execute.return_value = LINK_SAMPLE[1]
             self.assertTrue(ip_lib.device_exists('eth0'))
-            _execute.assert_called_once_with('o', 'link', ('show', 'eth0'))
+            _execute.assert_called_once_with('o', 'link', ('show', 'eth0'),
+                                             log_fail_as_error=False)
 
     def test_device_does_not_exist(self):
         with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:

@@ -36,9 +36,11 @@ VLAN_INTERFACE_DETAIL = ['vlan protocol 802.1q',
 
 
 class SubProcessBase(object):
-    def __init__(self, root_helper=None, namespace=None):
+    def __init__(self, root_helper=None, namespace=None,
+                 log_fail_as_error=True):
         self.root_helper = root_helper
         self.namespace = namespace
+        self.log_fail_as_error = log_fail_as_error
         try:
             self.force_root = cfg.CONF.ip_lib_force_root
         except cfg.NoSuchOptError:
@@ -52,9 +54,11 @@ class SubProcessBase(object):
         elif self.force_root:
             # Force use of the root helper to ensure that commands
             # will execute in dom0 when running under XenServer/XCP.
-            return self._execute(options, command, args, self.root_helper)
+            return self._execute(options, command, args, self.root_helper,
+                                 log_fail_as_error=self.log_fail_as_error)
         else:
-            return self._execute(options, command, args)
+            return self._execute(options, command, args,
+                                 log_fail_as_error=self.log_fail_as_error)
 
     def _as_root(self, options, command, args, use_root_namespace=False):
         if not self.root_helper:
@@ -66,18 +70,23 @@ class SubProcessBase(object):
                              command,
                              args,
                              self.root_helper,
-                             namespace)
+                             namespace,
+                             log_fail_as_error=self.log_fail_as_error)
 
     @classmethod
     def _execute(cls, options, command, args, root_helper=None,
-                 namespace=None):
+                 namespace=None, log_fail_as_error=True):
         opt_list = ['-%s' % o for o in options]
         if namespace:
             ip_cmd = ['ip', 'netns', 'exec', namespace, 'ip']
         else:
             ip_cmd = ['ip']
         return utils.execute(ip_cmd + opt_list + [command] + list(args),
-                             root_helper=root_helper)
+                             root_helper=root_helper,
+                             log_fail_as_error=log_fail_as_error)
+
+    def set_log_fail_as_error(self, fail_with_error):
+        self.log_fail_as_error = fail_with_error
 
 
 class IPWrapper(SubProcessBase):
@@ -551,7 +560,9 @@ class IpNetnsCommand(IpCommandBase):
 def device_exists(device_name, root_helper=None, namespace=None):
     """Return True if the device exists in the namespace."""
     try:
-        address = IPDevice(device_name, root_helper, namespace).link.address
+        dev = IPDevice(device_name, root_helper, namespace)
+        dev.set_log_fail_as_error(False)
+        address = dev.link.address
     except RuntimeError:
         return False
     return bool(address)
@@ -576,6 +587,7 @@ def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None,
 
 def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
     dev = IPDevice(device_name, root_helper, namespace)
+    dev.set_log_fail_as_error(False)
     try:
         # Ensure the device is up, even if it is already up. If the device
         # doesn't exist, a RuntimeError will be raised.
