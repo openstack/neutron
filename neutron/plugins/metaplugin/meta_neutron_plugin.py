@@ -191,7 +191,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 return getattr(plugin, key)
 
         # if no plugin support the method, then raise
-        raise AttributeError
+        raise AttributeError()
 
     def _extend_network_dict(self, context, network):
         flavor = self._get_flavor_by_network_id(context, network['id'])
@@ -281,7 +281,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def create_port(self, context, port):
         p = port['port']
         if 'network_id' not in p:
-            raise exc.NotFound
+            raise exc.NotFound()
         plugin = self._get_plugin_by_network_id(context, p['network_id'])
         return plugin.create_port(context, port)
 
@@ -328,7 +328,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
         if 'network_id' not in s:
-            raise exc.NotFound
+            raise exc.NotFound()
         plugin = self._get_plugin_by_network_id(context,
                                                 s['network_id'])
         return plugin.create_subnet(context, subnet)

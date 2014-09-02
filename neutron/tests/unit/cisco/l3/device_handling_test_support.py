@@ -100,7 +100,7 @@ class DeviceHandlingTestSupportMixin(object):
                     LOG.error('Failed to delete port %(p_id)s for vm instance '
                               '%(v_id)s due to %(err)s',
                               {'p_id': port['id'], 'v_id': vm_id, 'err': e})
-                    raise nova_exc.InternalServerError
+                    raise nova_exc.InternalServerError()
 
     def _mock_svc_vm_create_delete(self, plugin):
         # Mock novaclient methods for creation/deletion of service VMs

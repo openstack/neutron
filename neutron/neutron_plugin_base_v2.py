@@ -116,7 +116,7 @@ class NeutronPluginBaseV2(object):
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def delete_subnet(self, context, id):
@@ -217,7 +217,7 @@ class NeutronPluginBaseV2(object):
         NOTE: this method is optional, as it was not part of the originally
               defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def delete_network(self, context, id):
@@ -313,7 +313,7 @@ class NeutronPluginBaseV2(object):
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def delete_port(self, context, id):
@@ -334,7 +334,7 @@ class NeutronPluginBaseV2(object):
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def rpc_workers_supported(self):
         """Return whether the plugin supports multiple RPC workers.

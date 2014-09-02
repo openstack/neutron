@@ -72,7 +72,7 @@ class NsxlibNegativeBaseTestCase(base.BaseTestCase):
             version.Version(fake_version))
 
         def _faulty_request(*args, **kwargs):
-            raise exception.NsxApiException
+            raise exception.NsxApiException()
 
         instance.return_value.request.side_effect = _faulty_request
         self.fake_cluster = cluster.NSXCluster(

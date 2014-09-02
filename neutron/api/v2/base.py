@@ -200,7 +200,7 @@ class Controller(object):
                 return getattr(self._plugin, name)(*arg_list, **kwargs)
             return _handle_action
         else:
-            raise AttributeError
+            raise AttributeError()
 
     def _get_pagination_helper(self, request):
         if self._allow_pagination and self._native_pagination:

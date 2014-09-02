@@ -732,7 +732,7 @@ class TestDnsmasq(TestBase):
             if index == 0:
                 return '/usr/local/bin/neutron-dhcp-agent'
             else:
-                raise IndexError
+                raise IndexError()
 
         expected = [
             'ip',

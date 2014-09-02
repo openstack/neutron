@@ -205,7 +205,7 @@ class VlanTypeDriver(helpers.TypeDriverHelper):
             alloc = self.allocate_partially_specified_segment(
                 session, **filters)
             if not alloc:
-                raise exc.NoNetworkAvailable
+                raise exc.NoNetworkAvailable()
         else:
             alloc = self.allocate_fully_specified_segment(
                 session, **filters)

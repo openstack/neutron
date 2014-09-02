@@ -355,7 +355,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                                  segment2),
                                                                 encap_profile)
             else:
-                raise cisco_exceptions.NoClusterFound
+                raise cisco_exceptions.NoClusterFound()
 
         for profile in encap_dict:
             n1kvclient.update_encapsulation_profile(context, profile,
@@ -922,7 +922,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     seg_min, seg_max = self._get_segment_range(
                         network_profile['segment_range'])
                     if not seg_min <= segmentation_id <= seg_max:
-                        raise cisco_exceptions.VlanIDOutsidePool
+                        raise cisco_exceptions.VlanIDOutsidePool()
                     n1kv_db_v2.reserve_specific_vlan(session,
                                                      physical_network,
                                                      segmentation_id)

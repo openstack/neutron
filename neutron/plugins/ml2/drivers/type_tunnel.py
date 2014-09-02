@@ -100,7 +100,7 @@ class TunnelTypeDriver(helpers.TypeDriverHelper):
         if self.is_partial_segment(segment):
             alloc = self.allocate_partially_specified_segment(session)
             if not alloc:
-                raise exc.NoNetworkAvailable
+                raise exc.NoNetworkAvailable()
         else:
             segmentation_id = segment.get(api.SEGMENTATION_ID)
             alloc = self.allocate_fully_specified_segment(

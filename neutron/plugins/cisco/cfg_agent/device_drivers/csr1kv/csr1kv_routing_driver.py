@@ -63,7 +63,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
         except KeyError as e:
             LOG.error(_("Missing device parameter:%s. Aborting "
                         "CSR1kvRoutingDriver initialization"), e)
-            raise cfg_exc.CSR1kvInitializationException
+            raise cfg_exc.CSR1kvInitializationException()
 
     ###### Public Functions ########
     def router_added(self, ri):
@@ -149,10 +149,10 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
             self._set_ha_HSRP(subinterface, vrf_name, priority, group, ip)
 
     def _csr_add_ha_VRRP(self, ri, port):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _csr_add_ha_GBLP(self, ri, port):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _csr_remove_ha(self, ri, port):
         pass
