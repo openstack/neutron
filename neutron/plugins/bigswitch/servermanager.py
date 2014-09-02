@@ -72,6 +72,7 @@ FAILURE_CODES = [0, 301, 302, 303, 400, 401, 403, 404, 500, 501, 502, 503,
 BASE_URI = '/networkService/v1.1'
 ORCHESTRATION_SERVICE_ID = 'Neutron v2.0'
 HASH_MATCH_HEADER = 'X-BSN-BVS-HASH-MATCH'
+REQ_CONTEXT_HEADER = 'X-REQ-CONTEXT'
 # error messages
 NXNETWORK = 'NXVNS'
 HTTP_SERVICE_UNAVAILABLE_RETRY_COUNT = 3
@@ -125,12 +126,11 @@ class ServerProxy(object):
                                                 'cap': self.capabilities})
         return self.capabilities
 
-    def rest_call(self, action, resource, data='', headers={}, timeout=False,
-                  reconnect=False, hash_handler=None):
+    def rest_call(self, action, resource, data='', headers=None,
+                  timeout=False, reconnect=False, hash_handler=None):
         uri = self.base_uri + resource
         body = jsonutils.dumps(data)
-        if not headers:
-            headers = {}
+        headers = headers or {}
         headers['Content-type'] = 'application/json'
         headers['Accept'] = 'application/json'
         headers['NeutronProxy-Agent'] = self.name
@@ -425,7 +425,15 @@ class ServerPool(object):
     @utils.synchronized('bsn-rest-call')
     def rest_call(self, action, resource, data, headers, ignore_codes,
                   timeout=False):
-        hash_handler = cdb.HashHandler(context=self.get_context_ref())
+        context = self.get_context_ref()
+        if context:
+            # include the requesting context information if available
+            cdict = context.to_dict()
+            # remove the auth token so it's not present in debug logs on the
+            # backend controller
+            cdict.pop('auth_token', None)
+            headers[REQ_CONTEXT_HEADER] = jsonutils.dumps(cdict)
+        hash_handler = cdb.HashHandler(context=context)
         good_first = sorted(self.servers, key=lambda x: x.failed)
         first_response = None
         for active_server in good_first:
@@ -479,13 +487,15 @@ class ServerPool(object):
         return first_response
 
     def rest_action(self, action, resource, data='', errstr='%s',
-                    ignore_codes=[], headers={}, timeout=False):
+                    ignore_codes=None, headers=None, timeout=False):
         """
         Wrapper for rest_call that verifies success and raises a
         RemoteRestError on failure with a provided error string
         By default, 404 errors on DELETE calls are ignored because
         they already do not exist on the backend.
         """
+        ignore_codes = ignore_codes or []
+        headers = headers or {}
         if not ignore_codes and action == 'DELETE':
             ignore_codes = [404]
         resp = self.rest_call(action, resource, data, headers, ignore_codes,
