@@ -712,7 +712,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
         router_id = 'foo_router_id'
         core_plugin = mock.PropertyMock()
         type(self.dut)._core_plugin = core_plugin
-        (self.dut._core_plugin.get_compute_ports_on_host_by_subnet.
+        (self.dut._core_plugin.get_ports_on_host_by_subnet.
          return_value) = []
         core_plugin.reset_mock()
         l3_notifier = mock.PropertyMock()
