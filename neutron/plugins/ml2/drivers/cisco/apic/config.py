@@ -84,6 +84,12 @@ apic_opts = [
     cfg.IntOpt('apic_sync_interval',
                default=0,
                help=_("Synchronization interval in seconds")),
+    cfg.FloatOpt('apic_agent_report_interval',
+                 default=30,
+                 help=_('Interval between agent status updates (in sec)')),
+    cfg.FloatOpt('apic_agent_poll_interval',
+                 default=2,
+                 help=_('Interval between agent poll for topology (in sec)')),
 ]
 
 
