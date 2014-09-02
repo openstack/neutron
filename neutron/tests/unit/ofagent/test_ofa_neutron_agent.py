@@ -504,7 +504,7 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             self.agent.port_unbound("vif1")
             self.assertTrue(reclvl_fn.called)
 
-    def _prepare_l2_pop_ofports(self):
+    def _prepare_l2_pop_ofports(self, network_type=None):
         LVM = collections.namedtuple('LVM', 'net, vlan, segid, ip')
         self.lvms = [LVM(net='net1', vlan=11, segid=21, ip='1.1.1.1'),
                      LVM(net='net2', vlan=12, segid=22, ip='2.2.2.2')]
@@ -513,16 +513,19 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                                                        self.tunnel_type)
         self.tun_name2 = self._create_tunnel_port_name(self.lvms[1].ip,
                                                        self.tunnel_type)
+        if network_type is None:
+            network_type = self.tunnel_type
         lvm1 = mock.Mock()
-        lvm1.network_type = self.tunnel_type
+        lvm1.network_type = network_type
         lvm1.vlan = self.lvms[0].vlan
         lvm1.segmentation_id = self.lvms[0].segid
         lvm1.tun_ofports = set([1])
         lvm2 = mock.Mock()
-        lvm2.network_type = self.tunnel_type
+        lvm2.network_type = network_type
         lvm2.vlan = self.lvms[1].vlan
         lvm2.segmentation_id = self.lvms[1].segid
         lvm2.tun_ofports = set([1, 2])
+        self.agent.tunnel_types = [self.tunnel_type]
         self.agent.local_vlan_map = {self.lvms[0].net: lvm1,
                                      self.lvms[1].net: lvm2}
         self.agent.tun_ofports = {self.tunnel_type:
@@ -637,9 +640,13 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         fdb_entry = {self.lvms[0].net:
                      {'network_type': self.tunnel_type,
                       'segment_id': 'tun1',
-                      'ports': {self.lvms[0].ip: [['mac1', 'ip1']],
-                                self.lvms[1].ip: [['mac2', 'ip2']]}}}
-        with mock.patch.object(self.agent, 'setup_tunnel_port'):
+                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
+                                                  ['mac1', 'ip1']],
+                                self.lvms[1].ip: [['mac2', 'ip2']],
+                                '192.0.2.1': [n_const.FLOODING_ENTRY,
+                                              ['mac3', 'ip3']]}}}
+        with mock.patch.object(self.agent,
+                               'setup_tunnel_port') as setup_tun_fn:
             self.agent.fdb_add(None, fdb_entry)
             calls = [
                 mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
@@ -648,15 +655,46 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                           'ip2', 'mac2')
             ]
             self.ryuapp.add_arp_table_entry.assert_has_calls(calls)
+            setup_tun_fn.assert_called_once_with(self.agent.int_br,
+                                                 '192.0.2.1', 'gre')
+
+    def _test_add_arp_table_entry_non_tunnel(self, network_type):
+        self._prepare_l2_pop_ofports(network_type=network_type)
+        fdb_entry = {self.lvms[0].net:
+                     {'network_type': network_type,
+                      'segment_id': 'tun1',
+                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
+                                                  ['mac1', 'ip1']],
+                                self.lvms[1].ip: [['mac2', 'ip2']],
+                                '192.0.2.1': [n_const.FLOODING_ENTRY,
+                                              ['mac3', 'ip3']]}}}
+        with mock.patch.object(self.agent,
+                               'setup_tunnel_port') as setup_tun_fn:
+            self.agent.fdb_add(None, fdb_entry)
+            calls = [
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip1', 'mac1'),
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip2', 'mac2')
+            ]
+            self.ryuapp.add_arp_table_entry.assert_has_calls(calls)
+            self.assertFalse(setup_tun_fn.called)
+
+    def test_add_arp_table_entry_vlan(self):
+        self._test_add_arp_table_entry_non_tunnel('vlan')
 
     def test_del_arp_table_entry(self):
         self._prepare_l2_pop_ofports()
         fdb_entry = {self.lvms[0].net:
                      {'network_type': self.tunnel_type,
                       'segment_id': 'tun1',
-                      'ports': {self.lvms[0].ip: [['mac1', 'ip1']],
-                                self.lvms[1].ip: [['mac2', 'ip2']]}}}
-        with mock.patch.object(self.agent, 'cleanup_tunnel_port'):
+                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
+                                                  ['mac1', 'ip1']],
+                                self.lvms[1].ip: [['mac2', 'ip2']],
+                                '192.0.2.1': [n_const.FLOODING_ENTRY,
+                                              ['mac3', 'ip3']]}}}
+        with mock.patch.object(self.agent,
+                               'cleanup_tunnel_port') as cleanup_tun_fn:
             self.agent.fdb_remove(None, fdb_entry)
             calls = [
                 mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
@@ -665,6 +703,32 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                           'ip2')
             ]
             self.ryuapp.del_arp_table_entry.assert_has_calls(calls)
+            cleanup_tun_fn.assert_called_once_with(self.agent.int_br, 1, 'gre')
+
+    def _test_del_arp_table_entry_non_tunnel(self, network_type):
+        self._prepare_l2_pop_ofports(network_type=network_type)
+        fdb_entry = {self.lvms[0].net:
+                     {'network_type': network_type,
+                      'segment_id': 'tun1',
+                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
+                                                  ['mac1', 'ip1']],
+                                self.lvms[1].ip: [['mac2', 'ip2']],
+                                '192.0.2.1': [n_const.FLOODING_ENTRY,
+                                              ['mac3', 'ip3']]}}}
+        with mock.patch.object(self.agent,
+                               'cleanup_tunnel_port') as cleanup_tun_fn:
+            self.agent.fdb_remove(None, fdb_entry)
+            calls = [
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip1'),
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip2')
+            ]
+            self.ryuapp.del_arp_table_entry.assert_has_calls(calls)
+            self.assertFalse(cleanup_tun_fn.called)
+
+    def test_del_arp_table_entry_vlan(self):
+        self._test_del_arp_table_entry_non_tunnel('vlan')
 
     def test_recl_lv_port_to_preserve(self):
         self._prepare_l2_pop_ofports()
