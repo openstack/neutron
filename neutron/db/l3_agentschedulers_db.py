@@ -442,15 +442,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             return self.router_scheduler.auto_schedule_routers(
                 self, context, host, router_ids)
 
-    def schedule_router(self, context, router, candidates=None, hints=None):
+    def schedule_router(self, context, router, candidates=None):
         if self.router_scheduler:
             return self.router_scheduler.schedule(
-                self, context, router, candidates=candidates, hints=hints)
+                self, context, router, candidates=candidates)
 
-    def schedule_routers(self, context, routers, hints=None):
+    def schedule_routers(self, context, routers):
         """Schedule the routers to l3 agents."""
         for router in routers:
-            self.schedule_router(context, router, candidates=None, hints=hints)
+            self.schedule_router(context, router, candidates=None)
 
     def get_l3_agent_with_min_routers(self, context, agent_ids):
         """Return l3 agent with the least number of routers."""

@@ -198,15 +198,14 @@ class L3Scheduler(object):
                                    'agent_id': chosen_agent.id})
 
     def _schedule_router(self, plugin, context, router_id,
-                         candidates=None, hints=None):
+                         candidates=None):
         sync_router = plugin.get_router(context, router_id)
         router_distributed = sync_router.get('distributed', False)
         if router_distributed:
             # For Distributed routers check for SNAT Binding before
             # calling the schedule_snat_router
             snat_bindings = plugin.get_snat_bindings(context, [router_id])
-            router_gw_exists = (hints and 'gw_exists' in hints
-                                and hints['gw_exists'])
+            router_gw_exists = sync_router.get('external_gateway_info', False)
             if not snat_bindings and router_gw_exists:
                 # If GW exists for DVR routers and no SNAT binding
                 # call the schedule_snat_router
@@ -239,9 +238,9 @@ class ChanceScheduler(L3Scheduler):
     """Randomly allocate an L3 agent for a router."""
 
     def schedule(self, plugin, context, router_id,
-                 candidates=None, hints=None):
+                 candidates=None):
         return self._schedule_router(
-            plugin, context, router_id, candidates=candidates, hints=hints)
+            plugin, context, router_id, candidates=candidates)
 
     def _choose_router_agent(self, plugin, context, candidates):
         return random.choice(candidates)
@@ -251,9 +250,9 @@ class LeastRoutersScheduler(L3Scheduler):
     """Allocate to an L3 agent with the least number of routers bound."""
 
     def schedule(self, plugin, context, router_id,
-                 candidates=None, hints=None):
+                 candidates=None):
         return self._schedule_router(
-            plugin, context, router_id, candidates=candidates, hints=hints)
+            plugin, context, router_id, candidates=candidates)
 
     def _choose_router_agent(self, plugin, context, candidates):
         candidate_ids = [candidate['id'] for candidate in candidates]
