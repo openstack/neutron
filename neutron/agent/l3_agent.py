@@ -1425,7 +1425,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                           self.get_snat_int_device_name(sn_port['id']))
                     self._internal_network_added(ns_name,
                                                  sn_port['network_id'],
-                                                 sn_port['id'], internal_cidr,
+                                                 sn_port['id'],
+                                                 sn_port['ip_cidr'],
                                                  sn_port['mac_address'],
                                                  interface_name,
                                                  SNAT_INT_DEV_PREFIX)

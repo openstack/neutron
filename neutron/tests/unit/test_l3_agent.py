@@ -446,6 +446,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
             self.assertEqual(agent._snat_redirect_add.call_count, 1)
             self.assertEqual(agent._set_subnet_info.call_count, 1)
             self.assertEqual(agent._internal_network_added.call_count, 2)
+            agent._internal_network_added.assert_called_with(
+                agent.get_snat_ns_name(ri.router['id']),
+                sn_port['network_id'],
+                sn_port['id'],
+                sn_port['ip_cidr'],
+                sn_port['mac_address'],
+                agent.get_snat_int_device_name(sn_port['id']),
+                l3_agent.SNAT_INT_DEV_PREFIX)
 
     def test_agent_add_internal_network(self):
         self._test_internal_network_action('add')
