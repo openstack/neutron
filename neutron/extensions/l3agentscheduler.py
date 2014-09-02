@@ -183,6 +183,12 @@ class RouterL3AgentMismatch(exceptions.Conflict):
                 "on %(agent_mode)s L3 agent %(agent_id)s.")
 
 
+class DVRL3CannotAssignToDvrAgent(exceptions.Conflict):
+    message = _("Not allowed to manually assign a %(router_type)s "
+                "router %(router_id)s from an existing DVR node "
+                "to another L3 agent %(agent_id)s.")
+
+
 class L3AgentSchedulerPluginBase(object):
     """REST API to operate the l3 agent scheduler.
 
