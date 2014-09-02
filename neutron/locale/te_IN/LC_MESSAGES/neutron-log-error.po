@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-13 06:05+0000\n"
+"POT-Creation-Date: 2014-09-01 06:19+0000\n"
 "PO-Revision-Date: 2014-08-12 21:24+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Telugu (India) (http://www.transifex.com/projects/p/neutron/"
@@ -63,11 +63,21 @@ msgstr "RPC క్లీనప్ సమయంలో మినహాయింప
 msgid "Unhandled exception"
 msgstr "నిర్వహించని మినహాయింపు"
 
+#: neutron/plugins/ml2/drivers/type_gre.py:80
+#, python-format
+msgid "Skipping unreasonable gre ID range %(tun_min)s:%(tun_max)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_vxlan.py:87
+#, python-format
+msgid "Skipping unreasonable VXLAN VNI range %(tun_min)s:%(tun_max)s"
+msgstr ""
+
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:386
 msgid "Error in agent event loop"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2086
+#: neutron/plugins/vmware/plugins/base.py:2089
 #, python-format
 msgid ""
 "Rolling back database changes for gateway device %s because of an error in "

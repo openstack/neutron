@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-17 06:05+0000\n"
+"POT-Creation-Date: 2014-09-01 06:18+0000\n"
 "PO-Revision-Date: 2014-06-30 19:27+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
@@ -31,14 +31,14 @@ msgstr ""
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:101
+#: neutron/db/l3_agentschedulers_db.py:103
 msgid ""
 "Time since last L3 agent reschedule check has exceeded the interval between "
 "checks. Waiting before check to allow agents to send a heartbeat in case "
 "there was a clock adjustment."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:116
+#: neutron/db/l3_agentschedulers_db.py:119
 #, python-format
 msgid ""
 "Rescheduling router %(router)s from agent %(agent)s because the agent did "
@@ -49,3 +49,8 @@ msgstr ""
 #, python-format
 msgid "pid %d not in child list"
 msgstr "El pid %d no está en la lista de hijos"
+
+#: neutron/plugins/ml2/drivers/type_tunnel.py:143
+#, python-format
+msgid "%(type)s tunnel %(id)s not found"
+msgstr ""

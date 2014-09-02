@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-17 06:05+0000\n"
+"POT-Creation-Date: 2014-09-01 06:18+0000\n"
 "PO-Revision-Date: 2014-08-17 05:19+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: English (United Kingdom) (http://www.transifex.com/projects/p/"
@@ -27,7 +27,11 @@ msgid ""
 msgstr ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
 
-#: neutron/db/l3_agentschedulers_db.py:78
+#: neutron/common/ipv6_utils.py:62
+msgid "IPv6 is not enabled on this system."
+msgstr ""
+
+#: neutron/db/l3_agentschedulers_db.py:80
 msgid ""
 "Skipping period L3 agent status check because automatic router rescheduling "
 "is disabled."
