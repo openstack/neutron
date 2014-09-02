@@ -354,17 +354,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 
-    def check_ports_exist_on_l3agent(self, context, l3_agent, router_id,
-                                     subnet_id):
+    def check_ports_exist_on_l3agent(self, context, l3_agent, router_id):
         """
         This function checks for existence of dvr serviceable
         ports on the host, running the input l3agent.
         """
-        if not subnet_id:
-            return True
+        subnet_ids = self.get_subnet_ids_on_router(context, router_id)
 
         core_plugin = manager.NeutronManager.get_plugin()
-        filter = {'fixed_ips': {'subnet_id': [subnet_id]}}
+        filter = {'fixed_ips': {'subnet_id': subnet_ids}}
         ports = core_plugin.get_ports(context, filters=filter)
         for port in ports:
             if (n_utils.is_dvr_serviced(port['device_owner']) and
@@ -407,8 +405,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             candidates.append(l3_agent)
         return candidates
 
-    def get_l3_agent_candidates(self, context, sync_router, l3_agents,
-                                subnet_id=None):
+    def get_l3_agent_candidates(self, context, sync_router, l3_agents):
         """Get the valid l3 agents for the router from a list of l3_agents."""
         candidates = []
         for l3_agent in l3_agents:
@@ -436,7 +433,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 candidates.append(l3_agent)
             elif is_router_distributed and agent_mode.startswith('dvr') and (
                 self.check_ports_exist_on_l3agent(
-                    context, l3_agent, sync_router['id'], subnet_id)):
+                    context, l3_agent, sync_router['id'])):
                 candidates.append(l3_agent)
         return candidates
 

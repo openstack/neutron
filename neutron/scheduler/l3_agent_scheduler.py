@@ -136,7 +136,7 @@ class L3Scheduler(object):
         self.bind_routers(context, target_routers, l3_agent)
         return True
 
-    def get_candidates(self, plugin, context, sync_router, subnet_id):
+    def get_candidates(self, plugin, context, sync_router):
         """Return L3 agents where a router could be scheduled."""
         with context.session.begin(subtransactions=True):
             # allow one router is hosted by just
@@ -158,8 +158,7 @@ class L3Scheduler(object):
                 return
             new_l3agents = plugin.get_l3_agent_candidates(context,
                                                           sync_router,
-                                                          active_l3_agents,
-                                                          subnet_id)
+                                                          active_l3_agents)
             old_l3agentset = set(l3_agents)
             if sync_router.get('distributed', False):
                 new_l3agentset = set(new_l3agents)
@@ -201,13 +200,12 @@ class L3Scheduler(object):
     def _schedule_router(self, plugin, context, router_id,
                          candidates=None, hints=None):
         sync_router = plugin.get_router(context, router_id)
-        subnet_id = hints.get('subnet_id') if hints else None
         if (hints and 'gw_exists' in hints
             and sync_router.get('distributed', False)):
             plugin.schedule_snat_router(
                 context, router_id, sync_router, hints['gw_exists'])
         candidates = candidates or self.get_candidates(
-            plugin, context, sync_router, subnet_id)
+            plugin, context, sync_router)
         if not candidates:
             return
         if sync_router.get('distributed', False):
