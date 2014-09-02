@@ -20,6 +20,7 @@ import logging as std_logging
 import os
 import os.path
 import sys
+import traceback
 
 import eventlet.timeout
 import fixtures
@@ -147,6 +148,12 @@ class BaseTestCase(testtools.TestCase):
             raise self.skipException('XML Testing Skipped in Py26')
 
         self.setup_config()
+        self.addOnException(self.check_for_systemexit)
+
+    def check_for_systemexit(self, exc_info):
+        if isinstance(exc_info[1], SystemExit):
+            self.fail("A SystemExit was raised during the test. %s"
+                      % traceback.format_exception(*exc_info))
 
     def setup_config(self):
         """Tests that need a non-default config can override this method."""
