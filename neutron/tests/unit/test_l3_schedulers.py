@@ -953,25 +953,6 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
         }
         return agent, router
 
-    def test_schedule_snat_router_with_gateway_and_nobinding(self):
-        agent, router = self._prepare_schedule_snat_tests()
-        with contextlib.nested(
-            mock.patch.object(query.Query, 'first'),
-            mock.patch.object(self.dut, 'get_l3_agents'),
-            mock.patch.object(self.dut, 'get_snat_candidates'),
-            mock.patch.object(self.dut, 'get_router'),
-            mock.patch.object(self.dut, 'bind_dvr_router_servicenode'),
-            mock.patch.object(self.dut, 'bind_snat_servicenode')) as (
-                mock_query, mock_agents,
-                mock_candidates, mock_rd, mock_dvr, mock_bind):
-            mock_rd.return_value = router
-            mock_query.return_value = []
-            mock_agents.return_value = [agent]
-            mock_candidates.return_value = [agent]
-            self.dut.schedule_snat_router(
-                self.adminContext, 'foo_router_id', router)
-        self.assertFalse(mock_dvr.called)
-
     def test_schedule_router_unbind_snat_servicenode_negativetest(self):
         router = {
             'id': 'foo_router_id',
