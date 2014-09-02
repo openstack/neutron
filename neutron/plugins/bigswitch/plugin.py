@@ -451,7 +451,9 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
 def put_context_in_serverpool(f):
     @functools.wraps(f)
     def wrapper(self, context, *args, **kwargs):
-        self.servers.set_context(context)
+        # core plugin: context is top level object
+        # ml2: keeps context in _plugin_context
+        self.servers.set_context(getattr(context, '_plugin_context', context))
         return f(self, context, *args, **kwargs)
     return wrapper
 

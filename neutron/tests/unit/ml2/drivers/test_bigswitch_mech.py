@@ -31,7 +31,8 @@ from neutron.tests.unit import test_db_plugin
 PHYS_NET = 'physnet1'
 VLAN_START = 1000
 VLAN_END = 1100
-SERVER_POOL = 'neutron.plugins.bigswitch.servermanager.ServerPool'
+SERVER_MANAGER = 'neutron.plugins.bigswitch.servermanager'
+SERVER_POOL = SERVER_MANAGER + '.ServerPool'
 DRIVER_MOD = 'neutron.plugins.ml2.drivers.mech_bigswitch.driver'
 DRIVER = DRIVER_MOD + '.BigSwitchMechanismDriver'
 
@@ -120,3 +121,11 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
             self.assertEqual('host', pb['binding:host_id'])
             self.assertIn('bound_segment', pb)
             self.assertIn('network', pb)
+
+    def test_req_context_header_present(self):
+        with nested(
+            mock.patch(SERVER_MANAGER + '.ServerProxy.rest_call'),
+            self.port(**{'device_id': 'devid', 'binding:host_id': 'host'})
+        ) as (mock_rest, p):
+            headers = mock_rest.mock_calls[0][1][3]
+            self.assertIn('X-REQ-CONTEXT', headers)
