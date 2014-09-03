@@ -132,6 +132,7 @@ class MetadataProxyHandler(object):
         internal_ports = qclient.list_ports(
             device_id=router_id,
             device_owner=n_const.DEVICE_OWNER_ROUTER_INTF)['ports']
+        self.auth_info = qclient.get_auth_info()
         return tuple(p['network_id'] for p in internal_ports)
 
     @utils.cache_method_results
@@ -145,9 +146,11 @@ class MetadataProxyHandler(object):
         """
         qclient = self._get_neutron_client()
 
-        return qclient.list_ports(
+        all_ports = qclient.list_ports(
             network_id=networks,
             fixed_ips=['ip_address=%s' % remote_address])['ports']
+        self.auth_info = qclient.get_auth_info()
+        return all_ports
 
     def _get_ports(self, remote_address, network_id=None, router_id=None):
         """Search for all ports that contain passed ip address and belongs to
@@ -168,15 +171,12 @@ class MetadataProxyHandler(object):
         return self._get_ports_for_remote_address(remote_address, networks)
 
     def _get_instance_and_tenant_id(self, req):
-        qclient = self._get_neutron_client()
-
         remote_address = req.headers.get('X-Forwarded-For')
         network_id = req.headers.get('X-Neutron-Network-ID')
         router_id = req.headers.get('X-Neutron-Router-ID')
 
         ports = self._get_ports(remote_address, network_id, router_id)
 
-        self.auth_info = qclient.get_auth_info()
         if len(ports) == 1:
             return ports[0]['device_id'], ports[0]['tenant_id']
         return None, None

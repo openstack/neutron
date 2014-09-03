@@ -210,6 +210,8 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
             return {'ports': list_ports_retval.pop(0)}
 
         self.qclient.return_value.list_ports.side_effect = mock_list_ports
+        self.qclient.return_value.get_auth_info.return_value = {
+            'auth_token': None, 'endpoint_url': None}
         instance_id, tenant_id = self.handler._get_instance_and_tenant_id(req)
         new_qclient_call = mock.call(
             username=FakeConf.admin_user,
@@ -223,7 +225,8 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
             ca_cert=FakeConf.auth_ca_cert,
             endpoint_url=None,
             endpoint_type=FakeConf.endpoint_type)
-        expected = [new_qclient_call]
+
+        expected = []
 
         if router_id:
             expected.extend([
@@ -231,14 +234,16 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
                 mock.call().list_ports(
                     device_id=router_id,
                     device_owner=constants.DEVICE_OWNER_ROUTER_INTF
-                )
+                ),
+                mock.call().get_auth_info()
             ])
 
         expected.extend([
             new_qclient_call,
             mock.call().list_ports(
                 network_id=networks or tuple(),
-                fixed_ips=['ip_address=192.168.1.1'])
+                fixed_ips=['ip_address=192.168.1.1']),
+            mock.call().get_auth_info()
         ])
 
         self.qclient.assert_has_calls(expected)
@@ -312,6 +317,67 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
                                                     networks=('the_id',)),
             (None, None)
         )
+
+    def test_auth_info_cache(self):
+        router_id = 'the_id'
+        networks = ('net1',)
+        list_ports = [
+            [{'network_id': 'net1'}],
+            [{'device_id': 'did', 'tenant_id': 'tid', 'network_id': 'net1'}]]
+
+        def update_get_auth_info(*args, **kwargs):
+            self.qclient.return_value.get_auth_info.return_value = {
+                'auth_token': 'token', 'endpoint_url': 'uri'}
+            return {'ports': list_ports.pop(0)}
+
+        self.qclient.return_value.list_ports.side_effect = update_get_auth_info
+
+        new_qclient_call = mock.call(
+            username=FakeConf.admin_user,
+            tenant_name=FakeConf.admin_tenant_name,
+            region_name=FakeConf.auth_region,
+            auth_url=FakeConf.auth_url,
+            password=FakeConf.admin_password,
+            auth_strategy=FakeConf.auth_strategy,
+            token=None,
+            insecure=FakeConf.auth_insecure,
+            ca_cert=FakeConf.auth_ca_cert,
+            endpoint_url=None,
+            endpoint_type=FakeConf.endpoint_type)
+
+        cached_qclient_call = mock.call(
+            username=FakeConf.admin_user,
+            tenant_name=FakeConf.admin_tenant_name,
+            region_name=FakeConf.auth_region,
+            auth_url=FakeConf.auth_url,
+            password=FakeConf.admin_password,
+            auth_strategy=FakeConf.auth_strategy,
+            token='token',
+            insecure=FakeConf.auth_insecure,
+            ca_cert=FakeConf.auth_ca_cert,
+            endpoint_url='uri',
+            endpoint_type=FakeConf.endpoint_type)
+
+        headers = {'X-Forwarded-For': '192.168.1.10',
+                   'X-Neutron-Router-ID': router_id}
+        req = mock.Mock(headers=headers)
+        self.handler._get_instance_and_tenant_id(req)
+
+        expected = [
+            new_qclient_call,
+            mock.call().list_ports(
+                device_id=router_id,
+                device_owner=constants.DEVICE_OWNER_ROUTER_INTF
+            ),
+            mock.call().get_auth_info(),
+            cached_qclient_call,
+            mock.call().list_ports(
+                network_id=networks or tuple(),
+                fixed_ips=['ip_address=192.168.1.10']),
+            mock.call().get_auth_info(),
+        ]
+
+        self.qclient.assert_has_calls(expected)
 
     def _proxy_request_test_helper(self, response_code=200, method='GET'):
         hdrs = {'X-Forwarded-For': '8.8.8.8'}
