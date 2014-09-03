@@ -146,6 +146,7 @@ class MetadataProxyHandler(object):
             device_id=router_id,
             device_owner=[n_const.DEVICE_OWNER_ROUTER_INTF,
                           n_const.DEVICE_OWNER_DVR_INTERFACE])['ports']
+        self.auth_info = qclient.get_auth_info()
         return tuple(p['network_id'] for p in internal_ports)
 
     @utils.cache_method_results
@@ -161,6 +162,7 @@ class MetadataProxyHandler(object):
         all_ports = qclient.list_ports(
             fixed_ips=['ip_address=%s' % remote_address])['ports']
 
+        self.auth_info = qclient.get_auth_info()
         networks = set(networks)
         return [p for p in all_ports if p['network_id'] in networks]
 
@@ -183,15 +185,12 @@ class MetadataProxyHandler(object):
         return self._get_ports_for_remote_address(remote_address, networks)
 
     def _get_instance_and_tenant_id(self, req):
-        qclient = self._get_neutron_client()
-
         remote_address = req.headers.get('X-Forwarded-For')
         network_id = req.headers.get('X-Neutron-Network-ID')
         router_id = req.headers.get('X-Neutron-Router-ID')
 
         ports = self._get_ports(remote_address, network_id, router_id)
 
-        self.auth_info = qclient.get_auth_info()
         if len(ports) == 1:
             return ports[0]['device_id'], ports[0]['tenant_id']
         return None, None
