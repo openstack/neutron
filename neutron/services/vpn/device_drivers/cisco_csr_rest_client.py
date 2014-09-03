@@ -61,9 +61,11 @@ class CsrRestClient(object):
     """REST CsrRestClient for accessing the Cisco Cloud Services Router."""
 
     def __init__(self, settings):
-        self.host = settings['rest_mgmt']
-        self.tunnel_ip = settings['tunnel_ip']
+        self.port = str(settings.get('protocol_port', 55443))
+        self.host = ':'.join([settings.get('rest_mgmt_ip', ''), self.port])
+        self.tunnel_ip = settings.get('external_ip', '')
         self.auth = (settings['username'], settings['password'])
+        self.tunnel_if_name = settings.get('tunnel_if_name', '')
         self.token = None
         self.status = requests.codes.OK
         self.timeout = settings.get('timeout')
@@ -227,8 +229,14 @@ class CsrRestClient(object):
         return self.post_request(URI_VPN_IKE_KEYRINGS, payload=psk_info)
 
     def create_ipsec_connection(self, connection_info):
-        base_conn_info = {u'vpn-type': u'site-to-site',
-                          u'ip-version': u'ipv4'}
+        base_conn_info = {
+            u'vpn-type': u'site-to-site',
+            u'ip-version': u'ipv4',
+            u'local-device': {
+                u'tunnel-ip-address': self.tunnel_ip,
+                u'ip-address': self.tunnel_if_name
+            }
+        }
         connection_info.update(base_conn_info)
         return self.post_request(URI_VPN_SITE_TO_SITE,
                                  payload=connection_info)

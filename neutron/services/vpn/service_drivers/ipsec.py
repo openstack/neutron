@@ -58,9 +58,9 @@ class IPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
 
     RPC_API_VERSION = BASE_IPSEC_VERSION
 
-    def __init__(self, topic, default_version):
+    def __init__(self, topic, default_version, driver):
         super(IPsecVpnAgentApi, self).__init__(
-            topics.IPSEC_AGENT_TOPIC, topic, default_version)
+            topic, default_version, driver)
 
 
 class IPsecVPNDriver(service_drivers.VpnDriver):
@@ -74,7 +74,7 @@ class IPsecVPNDriver(service_drivers.VpnDriver):
             topics.IPSEC_DRIVER_TOPIC, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
         self.agent_rpc = IPsecVpnAgentApi(
-            topics.IPSEC_AGENT_TOPIC, BASE_IPSEC_VERSION)
+            topics.IPSEC_AGENT_TOPIC, BASE_IPSEC_VERSION, self)
 
     @property
     def service_type(self):

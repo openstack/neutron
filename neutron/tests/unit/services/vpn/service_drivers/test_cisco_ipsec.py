@@ -340,24 +340,19 @@ class TestCiscoIPsecDriver(testlib_api.SqlTestCase):
         super(TestCiscoIPsecDriver, self).setUp()
         mock.patch('neutron.common.rpc.create_connection').start()
 
-        l3_agent = mock.Mock()
-        l3_agent.host = FAKE_HOST
-        plugin = mock.Mock()
-        plugin.get_l3_agents_hosting_routers.return_value = [l3_agent]
-        plugin_p = mock.patch('neutron.manager.NeutronManager.get_plugin')
-        get_plugin = plugin_p.start()
-        get_plugin.return_value = plugin
-        service_plugin_p = mock.patch(
-            'neutron.manager.NeutronManager.get_service_plugins')
-        get_service_plugin = service_plugin_p.start()
-        get_service_plugin.return_value = {constants.L3_ROUTER_NAT: plugin}
-
         service_plugin = mock.Mock()
-        service_plugin.get_l3_agents_hosting_routers.return_value = [l3_agent]
+        service_plugin.get_host_for_router.return_value = FAKE_HOST
+        # TODO(pcm): Remove when Cisco L3 router plugin support available
+        mock.patch('neutron.services.vpn.service_drivers.'
+                   'cisco_cfg_loader.get_host_for_router',
+                   return_value=FAKE_HOST).start()
         service_plugin._get_vpnservice.return_value = {
             'router_id': _uuid()
         }
-        self.db_update_mock = service_plugin.update_ipsec_site_conn_status
+        get_service_plugin = mock.patch(
+            'neutron.manager.NeutronManager.get_service_plugins').start()
+        get_service_plugin.return_value = {
+            constants.L3_ROUTER_NAT: service_plugin}
         self.driver = ipsec_driver.CiscoCsrIPsecVPNDriver(service_plugin)
         mock.patch.object(csr_db, 'create_tunnel_mapping').start()
         self.context = n_ctx.Context('some_user', 'some_tenant')
