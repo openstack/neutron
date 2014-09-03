@@ -14,6 +14,7 @@
 #    under the License.
 
 import sqlalchemy as sa
+from sqlalchemy import orm
 
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -48,6 +49,11 @@ class ProviderNetBinding(model_base.BASEV2):
     network_type = sa.Column(sa.String(32), nullable=False)
     physical_network = sa.Column(sa.String(64), nullable=False)
     vlan_id = sa.Column(sa.Integer, nullable=False)
+
+    network = orm.relationship(
+        models_v2.Network,
+        backref=orm.backref("pnetbinding", lazy='joined',
+                            uselist=False, cascade='delete'))
 
 
 class SubnetL2Domain(model_base.BASEV2):

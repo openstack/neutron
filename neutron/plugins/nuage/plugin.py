@@ -78,6 +78,9 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.syncmanager = syncmanager.SyncManager(self.nuageclient)
             self._synchronization_thread()
 
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        attributes.NETWORKS, ['_extend_network_dict_provider_nuage'])
+
     def nuageclient_init(self):
         server = cfg.CONF.RESTPROXY.server
         serverauth = cfg.CONF.RESTPROXY.serverauth
@@ -392,8 +395,9 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         subnets = self.get_subnets(context, filters=filters)
         return bool(routers or subnets)
 
-    def _extend_network_dict_provider(self, context, network):
-        binding = nuagedb.get_network_binding(context.session, network['id'])
+    def _extend_network_dict_provider_nuage(self, network, net_db,
+                                            net_binding=None):
+        binding = net_db.pnetbinding if net_db else net_binding
         if binding:
             network[pnet.NETWORK_TYPE] = binding.network_type
             network[pnet.PHYSICAL_NETWORK] = binding.physical_network
@@ -432,6 +436,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return network_type, physical_network, segmentation_id
 
     def create_network(self, context, network):
+        binding = None
         (network_type, physical_network,
          vlan_id) = self._process_provider_create(context,
                                                   network['network'])
@@ -444,10 +449,11 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                           network)
             self._process_l3_create(context, net, network['network'])
             if network_type == 'vlan':
-                nuagedb.add_network_binding(context.session, net['id'],
+                binding = nuagedb.add_network_binding(context.session,
+                                            net['id'],
                                             network_type,
                                             physical_network, vlan_id)
-            self._extend_network_dict_provider(context, net)
+            self._extend_network_dict_provider_nuage(net, None, binding)
         return net
 
     def _validate_update_network(self, context, id, network):
@@ -472,23 +478,6 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                         constants.NOVA_PORT_OWNER_PREF):
                     raise n_exc.NetworkInUse(net_id=id)
         return (is_external_set, subnet)
-
-    def get_network(self, context, net_id, fields=None):
-        net = super(NuagePlugin, self).get_network(context,
-                                                   net_id,
-                                                   None)
-        self._extend_network_dict_provider(context, net)
-        return self._fields(net, fields)
-
-    def get_networks(self, context, filters=None, fields=None,
-                     sorts=None, limit=None, marker=None, page_reverse=False):
-        nets = super(NuagePlugin,
-                     self).get_networks(context, filters, None, sorts,
-                                        limit, marker, page_reverse)
-        for net in nets:
-            self._extend_network_dict_provider(context, net)
-
-        return [self._fields(net, fields) for net in nets]
 
     def update_network(self, context, id, network):
         pnet._raise_if_updates_provider_attributes(network['network'])
