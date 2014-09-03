@@ -1,4 +1,6 @@
 # Test config file for quantum-proxy-plugin.
+[DEFAULT]
+service_plugins = bigswitch_l3
 
 [database]
 # This line MUST be changed to actually run the plugin.

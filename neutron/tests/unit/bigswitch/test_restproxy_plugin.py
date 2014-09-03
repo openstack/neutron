@@ -45,8 +45,9 @@ class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
         self.setup_patches()
         if plugin_name:
             self._plugin_name = plugin_name
+        service_plugins = {'L3_ROUTER_NAT': self._l3_plugin_name}
         super(BigSwitchProxyPluginV2TestCase,
-              self).setUp(self._plugin_name)
+              self).setUp(self._plugin_name, service_plugins=service_plugins)
         self.port_create_status = 'BUILD'
         self.startHttpPatch()
 
@@ -310,6 +311,6 @@ class TestBigSwitchProxySync(BigSwitchProxyPluginV2TestCase):
         self.assertEqual(result[0], 200)
 
 
-class TestBigSwitchAddressPairs(BigSwitchProxyPluginV2TestCase,
-                                test_addr_pair.TestAllowedAddressPairs):
+class TestBigSwitchAddressPairs(test_addr_pair.TestAllowedAddressPairs,
+                                BigSwitchProxyPluginV2TestCase):
     pass
