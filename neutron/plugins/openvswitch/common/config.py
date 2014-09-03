@@ -41,7 +41,8 @@ ovs_opts = [
                help=_("Local IP address of GRE tunnel endpoints.")),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
-                help=_("List of <physical_network>:<bridge>")),
+                help=_("List of <physical_network>:<bridge>. "
+                       "Deprecated for ofagent.")),
     cfg.StrOpt('tenant_network_type', default='local',
                help=_("Network type for tenant networks "
                       "(local, vlan, gre, vxlan, or none).")),

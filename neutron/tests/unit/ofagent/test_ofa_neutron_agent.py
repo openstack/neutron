@@ -490,6 +490,13 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             self.assertEqual(11, self.agent.int_ofports["physnet1"])
             self.assertEqual(25, self.agent.phys_ofports["physnet1"])
 
+    def test_setup_physical_interfaces(self):
+        with mock.patch.object(self.agent.int_br, "add_port") as add_port_fn:
+            add_port_fn.return_value = "111"
+            self.agent.setup_physical_interfaces({"physnet1": "eth1"})
+            add_port_fn.assert_called_once_with("eth1")
+            self.assertEqual(111, self.agent.int_ofports["physnet1"])
+
     def test_port_unbound(self):
         with contextlib.nested(
             mock.patch.object(self.agent, "reclaim_local_vlan"),

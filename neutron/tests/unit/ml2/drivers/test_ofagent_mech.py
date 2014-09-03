@@ -24,14 +24,14 @@ class OfagentMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     CAP_PORT_FILTER = True
     AGENT_TYPE = constants.AGENT_TYPE_OFA
 
-    GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
+    GOOD_MAPPINGS = {'fake_physical_network': 'fake_interface'}
     GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
-    GOOD_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+    GOOD_CONFIGS = {'interface_mappings': GOOD_MAPPINGS,
                     'tunnel_types': GOOD_TUNNEL_TYPES}
 
-    BAD_MAPPINGS = {'wrong_physical_network': 'wrong_bridge'}
+    BAD_MAPPINGS = {'wrong_physical_network': 'wrong_interface'}
     BAD_TUNNEL_TYPES = ['bad_tunnel_type']
-    BAD_CONFIGS = {'bridge_mappings': BAD_MAPPINGS,
+    BAD_CONFIGS = {'interface_mappings': BAD_MAPPINGS,
                    'tunnel_types': BAD_TUNNEL_TYPES}
 
     AGENTS = [{'alive': True,
@@ -71,4 +71,67 @@ class OfagentMechanismVlanTestCase(OfagentMechanismBaseTestCase,
 
 class OfagentMechanismGreTestCase(OfagentMechanismBaseTestCase,
                                   base.AgentMechanismGreTestCase):
+    pass
+
+
+# The following tests are for deprecated "bridge_mappings".
+# TODO(yamamoto): Remove them.
+
+class OfagentMechanismPhysBridgeTestCase(base.AgentMechanismBaseTestCase):
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    CAP_PORT_FILTER = True
+    AGENT_TYPE = constants.AGENT_TYPE_OFA
+
+    GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
+    GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
+    GOOD_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                    'tunnel_types': GOOD_TUNNEL_TYPES}
+
+    BAD_MAPPINGS = {'wrong_physical_network': 'wrong_bridge'}
+    BAD_TUNNEL_TYPES = ['bad_tunnel_type']
+    BAD_CONFIGS = {'bridge_mappings': BAD_MAPPINGS,
+                   'tunnel_types': BAD_TUNNEL_TYPES}
+
+    AGENTS = [{'alive': True,
+               'configurations': GOOD_CONFIGS}]
+    AGENTS_DEAD = [{'alive': False,
+                    'configurations': GOOD_CONFIGS}]
+    AGENTS_BAD = [{'alive': False,
+                   'configurations': GOOD_CONFIGS},
+                  {'alive': True,
+                   'configurations': BAD_CONFIGS}]
+
+    def setUp(self):
+        super(OfagentMechanismPhysBridgeTestCase, self).setUp()
+        self.driver = mech_ofagent.OfagentMechanismDriver()
+        self.driver.initialize()
+
+
+class OfagentMechanismPhysBridgeGenericTestCase(
+        OfagentMechanismPhysBridgeTestCase,
+        base.AgentMechanismGenericTestCase):
+    pass
+
+
+class OfagentMechanismPhysBridgeLocalTestCase(
+        OfagentMechanismPhysBridgeTestCase,
+        base.AgentMechanismLocalTestCase):
+    pass
+
+
+class OfagentMechanismPhysBridgeFlatTestCase(
+        OfagentMechanismPhysBridgeTestCase,
+        base.AgentMechanismFlatTestCase):
+    pass
+
+
+class OfagentMechanismPhysBridgeVlanTestCase(
+        OfagentMechanismPhysBridgeTestCase,
+        base.AgentMechanismVlanTestCase):
+    pass
+
+
+class OfagentMechanismPhysBridgeGreTestCase(
+        OfagentMechanismPhysBridgeTestCase,
+        base.AgentMechanismGreTestCase):
     pass
