@@ -110,7 +110,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                     break
             LOG.debug('DVR: dvr_update_router_addvm %s ', router_id)
 
-    def get_dvr_routers_by_vmportid(self, context, port_id):
+    def get_dvr_routers_by_portid(self, context, port_id):
         """Gets the dvr routers on vmport subnets."""
         router_ids = set()
         port_dict = self._core_plugin.get_port(context, port_id)
@@ -153,9 +153,9 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 return True
         return False
 
-    def dvr_deletens_if_no_vm(self, context, port_id):
-        """Delete the DVR namespace if no VM exists."""
-        router_ids = self.get_dvr_routers_by_vmportid(context, port_id)
+    def dvr_deletens_if_no_port(self, context, port_id):
+        """Delete the DVR namespace if no dvr serviced port exists."""
+        router_ids = self.get_dvr_routers_by_portid(context, port_id)
         port_host = ml2_db.get_port_binding_host(port_id)
         if not router_ids:
             LOG.debug('No namespaces available for this DVR port %(port)s '
@@ -165,16 +165,16 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         removed_router_info = []
         for router_id in router_ids:
             subnet_ids = self.get_subnet_ids_on_router(context, router_id)
-            vm_exists_on_subnet = False
+            port_exists_on_subnet = False
             for subnet in subnet_ids:
                 if self.check_ports_active_on_host_and_subnet(context,
                                                               port_host,
                                                               port_id,
                                                               subnet):
-                    vm_exists_on_subnet = True
+                    port_exists_on_subnet = True
                     break
 
-            if vm_exists_on_subnet:
+            if port_exists_on_subnet:
                 continue
             filter_rtr = {'device_id': [router_id],
                           'device_owner':

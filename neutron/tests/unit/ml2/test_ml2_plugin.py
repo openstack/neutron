@@ -177,6 +177,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self.assertTrue(utils.is_dvr_serviced(
             constants.DEVICE_OWNER_LOADBALANCER))
 
+    def test_check_if_dhcp_port_serviced_by_dvr(self):
+        self.assertTrue(utils.is_dvr_serviced(constants.DEVICE_OWNER_DHCP))
+
     def test_check_if_port_not_serviced_by_dvr(self):
         self.assertFalse(utils.is_dvr_serviced(
             constants.DEVICE_OWNER_ROUTER_INTF))
@@ -205,61 +208,49 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             mock.PropertyMock(return_value=extensions))
         self.service_plugins = {'L3_ROUTER_NAT': self.l3plugin}
 
-    def test_delete_last_vm_port(self):
-        fip_set = set()
-        ns_to_delete = {'host': 'vmhost', 'agent_id': 'vm_l3_agent',
+    def _test_delete_dvr_serviced_port(self, device_owner, floating_ip=False):
+        ns_to_delete = {'host': 'myhost', 'agent_id': 'vm_l3_agent',
                         'router_id': 'my_router'}
+        fip_set = set()
+        if floating_ip:
+            fip_set.add(ns_to_delete['router_id'])
 
         with contextlib.nested(
             mock.patch.object(manager.NeutronManager,
                               'get_service_plugins',
                               return_value=self.service_plugins),
-            self.port(do_delete=False, device_owner='compute:None'),
+            self.port(do_delete=False,
+                      device_owner=device_owner),
             mock.patch.object(self.l3plugin, 'notify_routers_updated'),
             mock.patch.object(self.l3plugin, 'disassociate_floatingips',
                               return_value=fip_set),
-            mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_vm',
+            mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_port',
                               return_value=[ns_to_delete]),
             mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent')
         ) as (get_service_plugin, port, notify, disassociate_floatingips,
-              ddinv, remove_router_from_l3_agent):
+              dvr_delns_ifno_port, remove_router_from_l3_agent):
 
             port_id = port['port']['id']
             self.plugin.delete_port(self.context, port_id)
 
             notify.assert_has_calls([mock.call(self.context, fip_set)])
+            dvr_delns_ifno_port.assert_called_once_with(self.context,
+                                                        port['port']['id'])
             remove_router_from_l3_agent.assert_has_calls([
                 mock.call(self.context, ns_to_delete['agent_id'],
                           ns_to_delete['router_id'])
             ])
+
+    def test_delete_last_vm_port(self):
+        self._test_delete_dvr_serviced_port(device_owner='compute:None')
 
     def test_delete_last_vm_port_with_floatingip(self):
-        ns_to_delete = {'host': 'vmhost', 'agent_id': 'vm_l3_agent',
-                        'router_id': 'my_router'}
-        fip_set = set([ns_to_delete['router_id']])
+        self._test_delete_dvr_serviced_port(device_owner='compute:None',
+                                            floating_ip=True)
 
-        with contextlib.nested(
-            mock.patch.object(manager.NeutronManager,
-                              'get_service_plugins',
-                              return_value=self.service_plugins),
-            self.port(do_delete=False, device_owner='compute:None'),
-            mock.patch.object(self.l3plugin, 'notify_routers_updated'),
-            mock.patch.object(self.l3plugin, 'disassociate_floatingips',
-                              return_value=fip_set),
-            mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_vm',
-                              return_value=[ns_to_delete]),
-            mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent')
-        ) as (get_service_plugins, port, notify, disassociate_floatingips,
-              ddinv, remove_router_from_l3_agent):
-
-            port_id = port['port']['id']
-            self.plugin.delete_port(self.context, port_id)
-
-            notify.assert_has_calls([mock.call(self.context, fip_set)])
-            remove_router_from_l3_agent.assert_has_calls([
-                mock.call(self.context, ns_to_delete['agent_id'],
-                          ns_to_delete['router_id'])
-            ])
+    def test_delete_lbaas_vip_port(self):
+        self._test_delete_dvr_serviced_port(
+            device_owner=constants.DEVICE_OWNER_LOADBALANCER)
 
 
 class TestMl2PortBinding(Ml2PluginV2TestCase,
