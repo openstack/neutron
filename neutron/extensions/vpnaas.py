@@ -32,7 +32,7 @@ class VPNServiceNotFound(qexception.NotFound):
 
 
 class IPsecSiteConnectionNotFound(qexception.NotFound):
-    message = _("ipsec_site_connection %(ipsecsite_conn_id)s not found")
+    message = _("ipsec_site_connection %(ipsec_site_conn_id)s not found")
 
 
 class IPsecSiteConnectionDpdIntervalValueError(qexception.InvalidInput):
