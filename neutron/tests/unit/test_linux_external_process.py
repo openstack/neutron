@@ -61,8 +61,8 @@ class TestProcessManager(base.BaseTestCase):
                     name.assert_called_once_with(ensure_pids_dir=True)
                     ip_lib.assert_has_calls([
                         mock.call.IPWrapper('sudo', 'ns'),
-                        mock.call.IPWrapper().netns.execute(['the', 'cmd'])]
-                    )
+                        mock.call.IPWrapper().netns.execute(['the', 'cmd'],
+                                                            addl_env=None)])
 
     def test_enable_with_namespace_process_active(self):
         callback = mock.Mock()
