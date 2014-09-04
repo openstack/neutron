@@ -16,14 +16,14 @@
 """cisco_csr_routing
 
 Revision ID: 58fe87a01143
-Revises: 4eba2f05c2f4
+Revises: 32f3915891fd
 Create Date: 2014-08-18 17:14:12.506356
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '58fe87a01143'
-down_revision = '469426cd2173'
+down_revision = '32f3915891fd'
 
 from alembic import op
 import sqlalchemy as sa
