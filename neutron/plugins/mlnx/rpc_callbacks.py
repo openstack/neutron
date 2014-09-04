@@ -17,6 +17,7 @@ from oslo.config import cfg
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.db import api as db_api
+from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.db import mlnx_db_v2 as db
 
@@ -35,7 +36,8 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
-        port = self.get_port_from_device(device)
+        plugin = manager.NeutronManager.get_plugin()
+        port = plugin.get_port_from_device(device)
         if port:
             binding = db.get_network_binding(db_api.get_session(),
                                              port['network_id'])
@@ -74,7 +76,8 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
-        port = self.get_port_from_device(device)
+        plugin = manager.NeutronManager.get_plugin()
+        port = plugin.get_port_from_device(device)
         if port:
             entry = {'device': device,
                      'exists': True}
@@ -93,7 +96,8 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s up %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
-        port = self.get_port_from_device(device)
+        plugin = manager.NeutronManager.get_plugin()
+        port = plugin.get_port_from_device(device)
         if port:
             if port['status'] != q_const.PORT_STATUS_ACTIVE:
                 # Set port status to ACTIVE
