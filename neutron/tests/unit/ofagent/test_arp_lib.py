@@ -289,6 +289,11 @@ class TestArpLib(OFAAgentTestCase):
         self._fake_get_protocol_arp = False
         self._test_packet_in_handler_drop()
 
+    def test_packet_in_handler_corrupted(self):
+        mock.patch('ryu.lib.packet.packet.Packet',
+                   side_effect=ValueError).start()
+        self._test_packet_in_handler_drop()
+
     def test_packet_in_handler_unknown_network(self):
         self.arplib._arp_tbl = {
             self.nets[0].net: {self.nets[0].ip: self.nets[0].mac}}
