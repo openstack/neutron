@@ -680,7 +680,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_('_send_update_network_request: %s'), network['id'])
         db_session = context.session
         profile = n1kv_db_v2.get_network_profile(
-            db_session, network[n1kv.PROFILE_ID])
+            db_session, network[n1kv.PROFILE_ID], context.tenant_id)
         n1kvclient = n1kv_client.Client()
         body = {'description': network['name'],
                 'id': network['id'],
@@ -880,7 +880,8 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # tenant network
                 (physical_network, network_type, segmentation_id,
                     multicast_ip) = n1kv_db_v2.alloc_network(session,
-                                                             profile_id)
+                                                             profile_id,
+                                                             context.tenant_id)
                 LOG.debug(_('Physical_network %(phy_net)s, '
                             'seg_type %(net_type)s, '
                             'seg_id %(seg_id)s, '

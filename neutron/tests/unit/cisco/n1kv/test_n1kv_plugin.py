@@ -44,6 +44,8 @@ from neutron.tests.unit import test_l3_schedulers
 PHYS_NET = 'some-phys-net'
 VLAN_MIN = 100
 VLAN_MAX = 110
+TENANT_NOT_ADMIN = 'not_admin'
+TENANT_TEST = 'test'
 
 
 class FakeResponse(object):
@@ -159,6 +161,12 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
             profile['physical_network'] = PHYS_NET
             net_p = n1kv_db_v2.create_network_profile(db_session, profile)
             n1kv_db_v2.sync_vlan_allocations(db_session, net_p)
+        n1kv_db_v2.create_profile_binding(db_session, self.tenant_id,
+                                          net_p['id'], c_const.NETWORK)
+        n1kv_db_v2.create_profile_binding(db_session, TENANT_NOT_ADMIN,
+                                          net_p['id'], c_const.NETWORK)
+        n1kv_db_v2.create_profile_binding(db_session, TENANT_TEST,
+                                          net_p['id'], c_const.NETWORK)
         return net_p
 
     def setUp(self, ext_mgr=NetworkProfileTestExtensionManager()):
@@ -571,7 +579,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         self.new_create_request('network_profiles', net_p_dict)
         bindings = (db_session.query(n1kv_models_v2.ProfileBinding).filter_by(
                     profile_type="network"))
-        self.assertEqual(bindings.count(), 0)
+        self.assertEqual(3, bindings.count())
 
     def test_create_network_profile_with_old_add_tenant_fail(self):
         data = self._prepare_net_profile_data('vlan')
@@ -670,6 +678,52 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         tenant4 = n1kv_db_v2.get_profile_binding(db_session, 'tenant4',
                                                 net_p['network_profile']['id'])
         self.assertIsNotNone(tenant4)
+
+    def test_get_network_profile_restricted(self):
+        c_conf.CONF.set_override('restrict_network_profiles', True,
+                                 'CISCO_N1K')
+        ctx1 = context.Context(user_id='admin',
+                        tenant_id='tenant1',
+                        is_admin=True)
+        sess1 = db.get_session()
+        net_p = self._make_test_profile(name='netp1')
+        n1kv_db_v2.create_profile_binding(sess1, ctx1.tenant_id,
+                                          net_p['id'], c_const.NETWORK)
+        #network profile binding with creator tenant should always exist
+        profile = n1kv_db_v2.get_network_profile(sess1, net_p['id'],
+                                                 ctx1.tenant_id)
+        self.assertIsNotNone(profile)
+        ctx2 = context.Context(user_id='non_admin',
+                               tenant_id='tenant2',
+                               is_admin=False)
+        sess2 = db.get_session()
+        self.assertRaises(c_exc.ProfileTenantBindingNotFound,
+                          n1kv_db_v2.get_network_profile,
+                          sess2, net_p['id'], ctx2.tenant_id)
+
+    def test_get_network_profile_unrestricted(self):
+        c_conf.CONF.set_override('restrict_network_profiles', False,
+                                 'CISCO_N1K')
+        ctx1 = context.Context(user_id='admin',
+                               tenant_id='tenant1',
+                               is_admin=True)
+        sess1 = db.get_session()
+        net_p = self._make_test_profile(name='netp1')
+        n1kv_db_v2.create_profile_binding(sess1, ctx1.tenant_id,
+                                          net_p['id'], c_const.NETWORK)
+        # network profile binding with creator tenant should always exist
+        profile = n1kv_db_v2.get_network_profile(sess1, net_p['id'],
+                                                 ctx1.tenant_id)
+        self.assertIsNotNone(profile)
+        ctx2 = context.Context(user_id='non_admin',
+                               tenant_id='tenant2',
+                               is_admin=False)
+        sess2 = db.get_session()
+        profile = n1kv_db_v2.get_network_profile(sess2, net_p['id'],
+                                                 ctx2.tenant_id)
+        #network profile will be returned even though the profile is
+        #not bound to tenant of sess2
+        self.assertIsNotNone(profile)
 
 
 class TestN1kvBasicGet(test_plugin.TestBasicGet,
