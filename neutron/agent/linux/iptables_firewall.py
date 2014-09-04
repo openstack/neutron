@@ -31,6 +31,8 @@ SPOOF_FILTER = 'spoof-filter'
 CHAIN_NAME_PREFIX = {INGRESS_DIRECTION: 'i',
                      EGRESS_DIRECTION: 'o',
                      SPOOF_FILTER: 's'}
+DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
+                       'egress': 'dest_ip_prefix'}
 LINUX_DEV_LEN = 14
 
 
@@ -48,10 +50,24 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self._add_fallback_chain_v4v6()
         self._defer_apply = False
         self._pre_defer_filtered_ports = None
+        # List of security group rules for ports residing on this host
+        self.sg_rules = {}
+        self.pre_sg_rules = None
+        # List of security group member ips for ports residing on this host
+        self.sg_members = {}
+        self.pre_sg_members = None
 
     @property
     def ports(self):
         return self.filtered_ports
+
+    def update_security_group_rules(self, sg_id, sg_rules):
+        LOG.debug("Update rules of security group (%s)", sg_id)
+        self.sg_rules[sg_id] = sg_rules
+
+    def update_security_group_members(self, sg_id, sg_members):
+        LOG.debug("Update members of security group (%s)", sg_id)
+        self.sg_members[sg_id] = sg_members
 
     def prepare_port_filter(self, port):
         LOG.debug(_("Preparing device (%s) filter"), port['device'])
@@ -250,10 +266,33 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                              icmp6_type]
         return icmpv6_rules
 
+    def _select_sg_rules_for_port(self, port, direction):
+        sg_ids = port.get('security_groups', [])
+        port_rules = []
+        fixed_ips = port.get('fixed_ips', [])
+        for sg_id in sg_ids:
+            for rule in self.sg_rules.get(sg_id, []):
+                if rule['direction'] == direction:
+                    remote_group_id = rule.get('remote_group_id')
+                    if not remote_group_id:
+                        port_rules.append(rule)
+                        continue
+                    ethertype = rule['ethertype']
+                    for ip in self.sg_members[remote_group_id][ethertype]:
+                        if ip in fixed_ips:
+                            continue
+                        ip_rule = rule.copy()
+                        direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
+                        ip_rule[direction_ip_prefix] = str(
+                            netaddr.IPNetwork(ip).cidr)
+                        port_rules.append(ip_rule)
+        return port_rules
+
     def _add_rule_by_security_group(self, port, direction):
         chain_name = self._port_chain_name(port, direction)
         # select rules for current direction
         security_group_rules = self._select_sgr_by_direction(port, direction)
+        security_group_rules += self._select_sg_rules_for_port(port, direction)
         # split groups by ip version
         # for ipv4, iptables command is used
         # for ipv6, iptables6 command is used
@@ -360,15 +399,43 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if not self._defer_apply:
             self.iptables.defer_apply_on()
             self._pre_defer_filtered_ports = dict(self.filtered_ports)
+            self.pre_sg_members = dict(self.sg_members)
+            self.pre_sg_rules = dict(self.sg_rules)
             self._defer_apply = True
+
+    def _remove_unused_security_group_info(self):
+        need_removed_ipset_chains = set()
+        need_removed_security_groups = set()
+        remote_group_ids = set()
+        cur_group_ids = set()
+        for port in self.filtered_ports.values():
+            source_groups = port.get('security_group_source_groups', [])
+            remote_group_ids.update(source_groups)
+            groups = port.get('security_groups', [])
+            cur_group_ids.update(groups)
+
+        need_removed_ipset_chains.update(
+            [x for x in self.pre_sg_members if x not in remote_group_ids])
+        need_removed_security_groups.update(
+            [x for x in self.pre_sg_rules if x not in cur_group_ids])
+        # Remove unused remote security group member ips
+        for remove_chain_id in need_removed_ipset_chains:
+            if remove_chain_id in self.sg_members:
+                self.sg_members.pop(remove_chain_id, None)
+
+        # Remove unused security group rules
+        for remove_group_id in need_removed_security_groups:
+            if remove_group_id in self.sg_rules:
+                self.sg_rules.pop(remove_group_id, None)
 
     def filter_defer_apply_off(self):
         if self._defer_apply:
             self._defer_apply = False
             self._remove_chains_apply(self._pre_defer_filtered_ports)
-            self._pre_defer_filtered_ports = None
             self._setup_chains_apply(self.filtered_ports)
             self.iptables.defer_apply_off()
+            self._remove_unused_security_group_info()
+            self._pre_defer_filtered_ports = None
 
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):

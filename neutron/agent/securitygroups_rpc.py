@@ -15,12 +15,16 @@
 #
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.common import topics
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
+# history
+#   1.1 Support Security Group RPC
 SG_RPC_VERSION = "1.1"
 
 security_group_opts = [
@@ -74,13 +78,22 @@ def disable_security_group_extension_by_config(aliases):
 
 class SecurityGroupServerRpcApiMixin(object):
     """A mix-in that enable SecurityGroup support in plugin rpc."""
+
     def security_group_rules_for_devices(self, context, devices):
         LOG.debug(_("Get security group rules "
                     "for devices via rpc %r"), devices)
         return self.call(context,
                          self.make_msg('security_group_rules_for_devices',
                                        devices=devices),
-                         version=SG_RPC_VERSION)
+                         version='1.1')
+
+    def security_group_info_for_devices(self, context, devices):
+        LOG.debug("Get security group information for devices via rpc %r",
+                  devices)
+        return self.call(context,
+                         self.make_msg('security_group_info_for_devices',
+                                       devices=devices),
+                         version='1.2')
 
 
 class SecurityGroupAgentRpcCallbackMixin(object):
@@ -149,16 +162,58 @@ class SecurityGroupAgentRpcMixin(object):
         self.devices_to_refilter = set()
         # Flag raised when a global refresh is needed
         self.global_refresh_firewall = False
+        self._use_enhanced_rpc = None
+
+    @property
+    def use_enhanced_rpc(self):
+        if self._use_enhanced_rpc is None:
+            self._use_enhanced_rpc = (
+                self._check_enhanced_rpc_is_supported_by_server())
+        return self._use_enhanced_rpc
+
+    def _check_enhanced_rpc_is_supported_by_server(self):
+        try:
+            self.plugin_rpc.security_group_info_for_devices(
+                self.context, devices=[])
+        except messaging.UnsupportedVersion:
+            LOG.warning(_LW('security_group_info_for_devices rpc call not '
+                            'supported by the server, falling back to old '
+                            'security_group_rules_for_devices which scales '
+                            'worse.'))
+            return False
+        return True
 
     def prepare_devices_filter(self, device_ids):
         if not device_ids:
             return
         LOG.info(_("Preparing filters for devices %s"), device_ids)
-        devices = self.plugin_rpc.security_group_rules_for_devices(
-            self.context, list(device_ids))
+        if self.use_enhanced_rpc:
+            devices_info = self.plugin_rpc.security_group_info_for_devices(
+                self.context, list(device_ids))
+            devices = devices_info['devices']
+            security_groups = devices_info['security_groups']
+            security_group_member_ips = devices_info['sg_member_ips']
+        else:
+            devices = self.plugin_rpc.security_group_rules_for_devices(
+                self.context, list(device_ids))
+
         with self.firewall.defer_apply():
             for device in devices.values():
                 self.firewall.prepare_port_filter(device)
+            if self.use_enhanced_rpc:
+                LOG.debug("Update security group information for ports %s",
+                          devices.keys())
+                self._update_security_group_info(
+                    security_groups, security_group_member_ips)
+
+    def _update_security_group_info(self, security_groups,
+                                    security_group_member_ips):
+        LOG.debug("Update security group information")
+        for sg_id, sg_rules in security_groups.items():
+            self.firewall.update_security_group_rules(sg_id, sg_rules)
+        for remote_sg_id, member_ips in security_group_member_ips.items():
+            self.firewall.update_security_group_members(
+                remote_sg_id, member_ips)
 
     def security_groups_rule_updated(self, security_groups):
         LOG.info(_("Security group "
@@ -217,12 +272,25 @@ class SecurityGroupAgentRpcMixin(object):
             if not device_ids:
                 LOG.info(_("No ports here to refresh firewall"))
                 return
-        devices = self.plugin_rpc.security_group_rules_for_devices(
-            self.context, device_ids)
+        if self.use_enhanced_rpc:
+            devices_info = self.plugin_rpc.security_group_info_for_devices(
+                self.context, device_ids)
+            devices = devices_info['devices']
+            security_groups = devices_info['security_groups']
+            security_group_member_ips = devices_info['sg_member_ips']
+        else:
+            devices = self.plugin_rpc.security_group_rules_for_devices(
+                self.context, device_ids)
+
         with self.firewall.defer_apply():
             for device in devices.values():
                 LOG.debug(_("Update port filter for %s"), device['device'])
                 self.firewall.update_port_filter(device)
+            if self.use_enhanced_rpc:
+                LOG.debug("Update security group information for ports %s",
+                          devices.keys())
+                self._update_security_group_info(
+                    security_groups, security_group_member_ips)
 
     def firewall_refresh_needed(self):
         return self.global_refresh_firewall or self.devices_to_refilter
