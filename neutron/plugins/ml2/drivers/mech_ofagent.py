@@ -1,4 +1,7 @@
 # Copyright (C) 2014 VA Linux Systems Japan K.K.
+# Copyright (C) 2014 Fumihiko Kakuma <kakuma at valinux co jp>
+# All Rights Reserved.
+#
 # Based on openvswitch mechanism driver.
 #
 # Copyright (c) 2013 OpenStack Foundation
@@ -15,7 +18,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-# @author: Fumihiko Kakuma, VA Linux Systems Japan K.K.
 
 from neutron.common import constants
 from neutron.extensions import portbindings
