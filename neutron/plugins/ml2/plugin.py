@@ -708,7 +708,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # wait timeout' errors.
             with contextlib.nested(lockutils.lock('db-access'),
                                    session.begin(subtransactions=True)):
-                subnet = self.get_subnet(context, id)
+                record = self._get_subnet(context, id)
+                subnet = self._make_subnet_dict(record, None)
                 # Get ports to auto-deallocate
                 allocated = (session.query(models_v2.IPAllocation).
                              filter_by(subnet_id=id).
@@ -731,7 +732,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         mech_context)
 
                     LOG.debug(_("Deleting subnet record"))
-                    record = self._get_subnet(context, id)
                     session.delete(record)
 
                     LOG.debug(_("Committing transaction"))
