@@ -180,19 +180,6 @@ class TestHyperVUtilsV2(base.BaseTestCase):
         self.assertRaises(utils.HyperVException, self._utils._get_vswitch,
                           self._FAKE_VSWITCH_NAME)
 
-    def test_get_vswitch_external_port(self):
-        mock_vswitch = mock.MagicMock()
-        mock_sw_port = mock.MagicMock()
-        mock_vswitch.associators.return_value = [mock_sw_port]
-        mock_le = mock_sw_port.associators.return_value
-        mock_le.__len__.return_value = 1
-        mock_le1 = mock_le[0].associators.return_value
-        mock_le1.__len__.return_value = 1
-
-        vswitch_port = self._utils._get_vswitch_external_port(mock_vswitch)
-
-        self.assertEqual(mock_sw_port, vswitch_port)
-
     def test_set_vswitch_port_vlan_id(self):
         mock_port_alloc = mock.MagicMock()
         self._utils._get_switch_port_allocation = mock.MagicMock(return_value=(

@@ -18,3 +18,4 @@ TUNNEL = 'tunnel'
 
 # Special vlan_id value in ovs_vlan_allocations table indicating flat network
 FLAT_VLAN_ID = -1
+TRUNK_ENDPOINT_MODE = 5
