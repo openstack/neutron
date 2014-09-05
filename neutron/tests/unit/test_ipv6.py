@@ -56,7 +56,11 @@ class TestIsEnabled(base.BaseTestCase):
 
     def setUp(self):
         super(TestIsEnabled, self).setUp()
-        ipv6_utils._IS_IPV6_ENABLED = None
+
+        def reset_detection_flag():
+            ipv6_utils._IS_IPV6_ENABLED = None
+        reset_detection_flag()
+        self.addCleanup(reset_detection_flag)
         self.mock_exists = mock.patch("os.path.exists",
                                       return_value=True).start()
         mock_open = mock.patch("__builtin__.open").start()
