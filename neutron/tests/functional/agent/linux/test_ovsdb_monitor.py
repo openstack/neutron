@@ -96,7 +96,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         self.monitor = ovsdb_monitor.SimpleInterfaceMonitor(
             root_helper=self.root_helper)
         self.addCleanup(self.monitor.stop)
-        self.monitor.start(block=True)
+        self.monitor.start(block=True, timeout=60)
 
     def test_has_updates(self):
         self.assertTrue(self.monitor.has_updates,

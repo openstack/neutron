@@ -69,10 +69,6 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
             respawn_interval=respawn_interval,
         )
         self.data_received = False
-        if respawn_interval:
-            self._default_timeout = respawn_interval / 2
-        else:
-            self._default_timeout = 10
 
     @property
     def is_active(self):
@@ -91,13 +87,12 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
         """
         return bool(list(self.iter_stdout())) or not self.is_active
 
-    def start(self, block=False, timeout=None):
-        timeout = timeout or self._default_timeout
+    def start(self, block=False, timeout=5):
         super(SimpleInterfaceMonitor, self).start()
         if block:
-            eventlet.timeout.Timeout(timeout)
-            while not self.is_active:
-                eventlet.sleep()
+            with eventlet.timeout.Timeout(timeout):
+                while not self.is_active:
+                    eventlet.sleep()
 
     def _kill(self, *args, **kwargs):
         self.data_received = False
