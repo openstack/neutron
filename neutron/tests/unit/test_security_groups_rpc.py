@@ -52,6 +52,23 @@ TEST_PLUGIN_CLASS = ('neutron.tests.unit.test_security_groups_rpc.'
                      'SecurityGroupRpcTestPlugin')
 
 
+FIREWALL_BASE_PACKAGE = 'neutron.agent.linux.iptables_firewall.'
+FIREWALL_IPTABLES_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
+FIREWALL_HYBRID_DRIVER = (FIREWALL_BASE_PACKAGE +
+                          'OVSHybridIptablesFirewallDriver')
+FIREWALL_NOOP_DRIVER = 'neutron.agent.firewall.NoopFirewallDriver'
+
+
+def set_enable_security_groups(enabled):
+    cfg.CONF.set_override('enable_security_group', enabled,
+                          group='SECURITYGROUP')
+
+
+def set_firewall_driver(firewall_driver):
+    cfg.CONF.set_override('firewall_driver', firewall_driver,
+                          group='SECURITYGROUP')
+
+
 class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
                                  sg_db_rpc.SecurityGroupServerRpcMixin):
     def __init__(self):
@@ -93,9 +110,7 @@ class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
 class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
     def setUp(self, plugin=None):
         plugin = plugin or TEST_PLUGIN_CLASS
-        cfg.CONF.set_default('firewall_driver',
-                             'neutron.agent.firewall.NoopFirewallDriver',
-                             group='SECURITYGROUP')
+        set_firewall_driver(FIREWALL_NOOP_DRIVER)
         super(SGServerRpcCallBackTestCase, self).setUp(plugin)
         self.notifier = manager.NeutronManager.get_plugin().notifier
         self.rpc = securitygroups_rpc.SecurityGroupServerRpcCallback()
@@ -996,9 +1011,7 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
 
 class SecurityGroupAgentRpcTestCaseForNoneDriver(base.BaseTestCase):
     def test_init_firewall_with_none_driver(self):
-        cfg.CONF.set_override(
-            'enable_security_group', False,
-            group='SECURITYGROUP')
+        set_enable_security_groups(False)
         agent = sg_rpc.SecurityGroupAgentRpcMixin()
         agent.plugin_rpc = mock.Mock()
         agent.context = None
@@ -2321,17 +2334,6 @@ COMMIT
 # Completed by iptables_manager
 """ % IPTABLES_ARG
 
-FIREWALL_BASE_PACKAGE = 'neutron.agent.linux.iptables_firewall.'
-FIREWALL_IPTABLES_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
-FIREWALL_HYBRID_DRIVER = (FIREWALL_BASE_PACKAGE +
-                          'OVSHybridIptablesFirewallDriver')
-FIREWALL_NOOP_DRIVER = 'neutron.agent.firewall.NoopFirewallDriver'
-
-
-def set_firewall_driver(firewall_driver):
-    cfg.CONF.set_override('firewall_driver', firewall_driver,
-                          group='SECURITYGROUP')
-
 
 class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
     FIREWALL_DRIVER = FIREWALL_IPTABLES_DRIVER
@@ -2759,73 +2761,45 @@ class TestSecurityGroupAgentWithOVSIptables(
 
 class TestSecurityGroupExtensionControl(base.BaseTestCase):
     def test_disable_security_group_extension_by_config(self):
-        cfg.CONF.set_override(
-            'enable_security_group', False,
-            group='SECURITYGROUP')
+        set_enable_security_groups(False)
         exp_aliases = ['dummy1', 'dummy2']
         ext_aliases = ['dummy1', 'security-group', 'dummy2']
         sg_rpc.disable_security_group_extension_by_config(ext_aliases)
         self.assertEqual(ext_aliases, exp_aliases)
 
     def test_enable_security_group_extension_by_config(self):
-        cfg.CONF.set_override(
-            'enable_security_group', True,
-            group='SECURITYGROUP')
+        set_enable_security_groups(True)
         exp_aliases = ['dummy1', 'security-group', 'dummy2']
         ext_aliases = ['dummy1', 'security-group', 'dummy2']
         sg_rpc.disable_security_group_extension_by_config(ext_aliases)
         self.assertEqual(ext_aliases, exp_aliases)
 
     def test_is_invalid_drvier_combination_sg_enabled(self):
-        cfg.CONF.set_override(
-            'enable_security_group', True,
-            group='SECURITYGROUP')
-        cfg.CONF.set_override(
-            'firewall_driver', 'neutron.agent.firewall.NoopFirewallDriver',
-            group='SECURITYGROUP')
+        set_enable_security_groups(True)
+        set_firewall_driver(FIREWALL_NOOP_DRIVER)
         self.assertFalse(sg_rpc._is_valid_driver_combination())
 
     def test_is_invalid_drvier_combination_sg_enabled_with_none(self):
-        cfg.CONF.set_override(
-            'enable_security_group', True,
-            group='SECURITYGROUP')
-        cfg.CONF.set_override(
-            'firewall_driver', None,
-            group='SECURITYGROUP')
+        set_enable_security_groups(True)
+        set_firewall_driver(None)
         self.assertFalse(sg_rpc._is_valid_driver_combination())
 
     def test_is_invalid_drvier_combination_sg_disabled(self):
-        cfg.CONF.set_override(
-            'enable_security_group', False,
-            group='SECURITYGROUP')
-        cfg.CONF.set_override(
-            'firewall_driver', 'NonNoopDriver',
-            group='SECURITYGROUP')
+        set_enable_security_groups(False)
+        set_firewall_driver('NonNoopDriver')
         self.assertFalse(sg_rpc._is_valid_driver_combination())
 
     def test_is_valid_drvier_combination_sg_enabled(self):
-        cfg.CONF.set_override(
-            'enable_security_group', True,
-            group='SECURITYGROUP')
-        cfg.CONF.set_override(
-            'firewall_driver', 'NonNoopDriver',
-            group='SECURITYGROUP')
+        set_enable_security_groups(True)
+        set_firewall_driver('NonNoopDriver')
         self.assertTrue(sg_rpc._is_valid_driver_combination())
 
     def test_is_valid_drvier_combination_sg_disabled(self):
-        cfg.CONF.set_override(
-            'enable_security_group', False,
-            group='SECURITYGROUP')
-        cfg.CONF.set_override(
-            'firewall_driver', 'neutron.agent.firewall.NoopFirewallDriver',
-            group='SECURITYGROUP')
+        set_enable_security_groups(False)
+        set_firewall_driver(FIREWALL_NOOP_DRIVER)
         self.assertTrue(sg_rpc._is_valid_driver_combination())
 
     def test_is_valid_drvier_combination_sg_disabled_with_none(self):
-        cfg.CONF.set_override(
-            'enable_security_group', False,
-            group='SECURITYGROUP')
-        cfg.CONF.set_override(
-            'firewall_driver', None,
-            group='SECURITYGROUP')
+        set_enable_security_groups(False)
+        set_firewall_driver(None)
         self.assertTrue(sg_rpc._is_valid_driver_combination())
