@@ -1021,6 +1021,7 @@ class BaseSecurityGroupAgentRpcTestCase(base.BaseTestCase):
         self.agent.root_helper = 'sudo'
         self.agent.plugin_rpc = mock.Mock()
         self.agent.init_firewall(defer_refresh_firewall=defer_refresh_firewall)
+        self.default_firewall = self.agent.firewall
         self.firewall = mock.Mock()
         firewall_object = firewall_base.FirewallDriver()
         self.firewall.defer_apply.side_effect = firewall_object.defer_apply
@@ -1056,6 +1057,26 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
                                         mock.call.remove_port_filter(
                                             self.fake_device),
                                         ])
+
+    def test_prepare_devices_filter_with_noopfirewall(self):
+        self.agent.firewall = self.default_firewall
+        self.agent.plugin_rpc.security_group_info_for_devices = mock.Mock()
+        self.agent.plugin_rpc.security_group_rules_for_devices = mock.Mock()
+        self.agent.prepare_devices_filter(['fake_device'])
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_info_for_devices.called)
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_rules_for_devices.called)
+
+    def test_prepare_devices_filter_with_firewall_disabled(self):
+        cfg.CONF.set_override('enable_security_group', False, 'SECURITYGROUP')
+        self.agent.plugin_rpc.security_group_info_for_devices = mock.Mock()
+        self.agent.plugin_rpc.security_group_rules_for_devices = mock.Mock()
+        self.agent.prepare_devices_filter(['fake_device'])
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_info_for_devices.called)
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_rules_for_devices.called)
 
     def test_security_groups_rule_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -1110,6 +1131,30 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
     def test_refresh_firewall_none(self):
         self.agent.refresh_firewall([])
         self.assertFalse(self.firewall.called)
+
+    def test_refresh_firewall_with_firewall_disabled(self):
+        cfg.CONF.set_override('enable_security_group', False, 'SECURITYGROUP')
+        self.agent.plugin_rpc.security_group_info_for_devices = mock.Mock()
+        self.agent.plugin_rpc.security_group_rules_for_devices = mock.Mock()
+        self.agent.firewall.defer_apply = mock.Mock()
+        self.agent.refresh_firewall([self.fake_device])
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_info_for_devices.called)
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_rules_for_devices.called)
+        self.assertFalse(self.agent.firewall.defer_apply.called)
+
+    def test_refresh_firewall_with_noopfirewall(self):
+        self.agent.firewall = self.default_firewall
+        self.agent.plugin_rpc.security_group_info_for_devices = mock.Mock()
+        self.agent.plugin_rpc.security_group_rules_for_devices = mock.Mock()
+        self.agent.firewall.defer_apply = mock.Mock()
+        self.agent.refresh_firewall([self.fake_device])
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_info_for_devices.called)
+        self.assertFalse(self.agent.plugin_rpc.
+                         security_group_rules_for_devices.called)
+        self.assertFalse(self.agent.firewall.defer_apply.called)
 
 
 class SecurityGroupAgentEnhancedRpcTestCase(
