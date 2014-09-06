@@ -365,7 +365,8 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             return '', [tenant_id, net_id, new_device_id, new_host_id]
 
         # An instance is being migrated
-        if (old_device_id and old_host_id and new_host_id != old_host_id and
+        if (old_device_id and old_host_id and
+                new_host_id and new_host_id != old_host_id and
                 self._check_valid_port_device_owner(old_port)):
             return old_host_id, [tenant_id, net_id, old_device_id, new_host_id]
 
