@@ -1242,7 +1242,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 ns_name = self.get_snat_ns_name(ri.router['id'])
             else:
                 # no centralized SNAT gateway for this node/agent
-                LOG.debug("not hosting snat for router: %", ri.router['id'])
+                LOG.debug("not hosting snat for router: %s", ri.router['id'])
                 return
         else:
             ns_name = ri.ns_name
