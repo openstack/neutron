@@ -63,6 +63,17 @@ def _fake_get_sorting_helper(self, request):
     return api_common.SortingEmulatedHelper(request, self._attr_info)
 
 
+# TODO(banix): Move the following method to ML2 db test module when ML2
+# mechanism driver unit tests are corrected to use Ml2PluginV2TestCase
+# instead of directly using NeutronDbPluginV2TestCase
+def _get_create_db_method(resource):
+    ml2_method = '_create_%s_db' % resource
+    if hasattr(manager.NeutronManager.get_plugin(), ml2_method):
+        return ml2_method
+    else:
+        return 'create_%s' % resource
+
+
 class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                                 testlib_plugin.PluginSetupHelper):
     fmt = 'json'
@@ -883,8 +894,9 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
             orig = manager.NeutronManager.get_plugin().create_port
+            method_to_patch = _get_create_db_method('port')
             with mock.patch.object(manager.NeutronManager.get_plugin(),
-                                   'create_port') as patched_plugin:
+                                   method_to_patch) as patched_plugin:
 
                 def side_effect(*args, **kwargs):
                     return self._fail_second_call(patched_plugin, orig,
@@ -908,7 +920,8 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
         with self.network() as net:
             plugin = manager.NeutronManager.get_plugin()
             orig = plugin.create_port
-            with mock.patch.object(plugin, 'create_port') as patched_plugin:
+            method_to_patch = _get_create_db_method('port')
+            with mock.patch.object(plugin, method_to_patch) as patched_plugin:
 
                 def side_effect(*args, **kwargs):
                     return self._fail_second_call(patched_plugin, orig,
@@ -2073,8 +2086,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         #ensures the API choose the emulation code path
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
+            method_to_patch = _get_create_db_method('network')
             with mock.patch.object(manager.NeutronManager.get_plugin(),
-                                   'create_network') as patched_plugin:
+                                   method_to_patch) as patched_plugin:
 
                 def side_effect(*args, **kwargs):
                     return self._fail_second_call(patched_plugin, orig,
@@ -2091,8 +2105,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
         orig = manager.NeutronManager.get_plugin().create_network
+        method_to_patch = _get_create_db_method('network')
         with mock.patch.object(manager.NeutronManager.get_plugin(),
-                               'create_network') as patched_plugin:
+                               method_to_patch) as patched_plugin:
 
             def side_effect(*args, **kwargs):
                 return self._fail_second_call(patched_plugin, orig,
@@ -2513,8 +2528,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
             orig = manager.NeutronManager.get_plugin().create_subnet
+            method_to_patch = _get_create_db_method('subnet')
             with mock.patch.object(manager.NeutronManager.get_plugin(),
-                                   'create_subnet') as patched_plugin:
+                                   method_to_patch) as patched_plugin:
 
                 def side_effect(*args, **kwargs):
                     self._fail_second_call(patched_plugin, orig,
@@ -2536,7 +2552,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk subnet create")
         plugin = manager.NeutronManager.get_plugin()
         orig = plugin.create_subnet
-        with mock.patch.object(plugin, 'create_subnet') as patched_plugin:
+        method_to_patch = _get_create_db_method('subnet')
+        with mock.patch.object(plugin, method_to_patch) as patched_plugin:
             def side_effect(*args, **kwargs):
                 return self._fail_second_call(patched_plugin, orig,
                                               *args, **kwargs)

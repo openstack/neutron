@@ -55,8 +55,6 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
         # register plugin config opts
         pl_config.register_config()
         self.evpool = eventlet.GreenPool(cfg.CONF.RESTPROXY.thread_pool_size)
-        # backend doesn't support bulk operations yet
-        self.native_bulk_support = False
 
         # init network ctrl connections
         self.servers = servermanager.ServerPool()
