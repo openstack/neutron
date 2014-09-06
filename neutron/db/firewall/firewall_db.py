@@ -270,12 +270,11 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
     def delete_firewall(self, context, id):
         LOG.debug(_("delete_firewall() called"))
         with context.session.begin(subtransactions=True):
-            fw_query = context.session.query(
-                Firewall).with_lockmode('update')
-            firewall_db = fw_query.filter_by(id=id).one()
             # Note: Plugin should ensure that it's okay to delete if the
             # firewall is active
-            context.session.delete(firewall_db)
+            count = context.session.query(Firewall).filter_by(id=id).delete()
+            if not count:
+                raise firewall.FirewallNotFound(firewall_id=id)
 
     def get_firewall(self, context, id, fields=None):
         LOG.debug(_("get_firewall() called"))
