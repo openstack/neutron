@@ -322,7 +322,7 @@ class SriovNicAgentConfigParser(object):
 def main():
     common_config.init(sys.argv[1:])
 
-    common_config.setup_logging(cfg.CONF)
+    common_config.setup_logging()
     try:
         config_parser = SriovNicAgentConfigParser()
         config_parser.parse()

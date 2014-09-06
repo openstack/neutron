@@ -1018,7 +1018,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 def main():
     common_config.init(sys.argv[1:])
 
-    common_config.setup_logging(cfg.CONF)
+    common_config.setup_logging()
     try:
         interface_mappings = q_utils.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)

@@ -114,7 +114,7 @@ def all_tests_passed():
 def main():
     cfg.CONF.register_cli_opts(OPTS)
     cfg.CONF.set_override('use_stderr', True)
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     config.init(sys.argv[1:], default_config_files=[])
 
     if cfg.CONF.config_file:

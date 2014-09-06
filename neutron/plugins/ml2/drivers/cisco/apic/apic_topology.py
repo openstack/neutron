@@ -331,7 +331,7 @@ class ApicTopologyAgent(manager.Manager):
 def launch(binary, manager, topic=None):
     cfg.CONF(project='neutron')
     common_cfg.init(sys.argv[1:])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     report_period = cfg.CONF.ml2_cisco_apic.apic_agent_report_interval
     poll_period = cfg.CONF.ml2_cisco_apic.apic_agent_poll_interval
     server = service.Service.create(

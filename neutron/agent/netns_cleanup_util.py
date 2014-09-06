@@ -159,7 +159,7 @@ def main():
     """
     conf = setup_conf()
     conf()
-    config.setup_logging(conf)
+    config.setup_logging()
 
     root_helper = agent_config.get_root_helper(conf)
     # Identify namespaces that are candidates for deletion.

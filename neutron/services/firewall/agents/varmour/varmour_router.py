@@ -339,7 +339,7 @@ def main():
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
     common_config.init(sys.argv[1:])
-    config.setup_logging(conf)
+    config.setup_logging()
     server = neutron_service.Service.create(
         binary='neutron-l3-agent',
         topic=topics.L3_AGENT,

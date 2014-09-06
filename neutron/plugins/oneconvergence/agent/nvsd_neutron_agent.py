@@ -164,7 +164,7 @@ class NVSDNeutronAgent(n_rpc.RpcCallback):
 
 def main():
     common_config.init(sys.argv[1:])
-    common_config.setup_logging(config.CONF)
+    common_config.setup_logging()
 
     integ_br = config.AGENT.integration_bridge
     root_helper = config.AGENT.root_helper
