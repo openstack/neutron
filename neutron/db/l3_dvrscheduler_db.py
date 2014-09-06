@@ -254,12 +254,12 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             subnet_ids = self.get_subnet_ids_on_router(context, router_id)
             for subnet in subnet_ids:
                 vm_ports = (
-                    self._core_plugin.get_compute_ports_on_host_by_subnet(
+                    self._core_plugin.get_ports_on_host_by_subnet(
                         context, host, subnet))
                 if vm_ports:
-                    LOG.debug('VM exists on the snat enabled l3_agent '
-                              'host %(host)s and router_id %(router_id)s',
-                              {'host': host, 'router_id': router_id})
+                    LOG.debug('One or more ports exist on the snat enabled '
+                              'l3_agent host %(host)s and router_id %(id)s',
+                              {'host': host, 'id': router_id})
                     break
             agent_id = binding.l3_agent_id
             LOG.debug('Delete binding of the SNAT router %(router_id)s '
