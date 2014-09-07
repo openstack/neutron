@@ -41,12 +41,14 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import lockutils
+from neutron.openstack.common import loopingcall
 from neutron.plugins.nuage.common import config
 from neutron.plugins.nuage.common import constants
 from neutron.plugins.nuage.common import exceptions as nuage_exc
 from neutron.plugins.nuage import extensions
 from neutron.plugins.nuage.extensions import netpartition
 from neutron.plugins.nuage import nuagedb
+from neutron.plugins.nuage import syncmanager
 from neutron import policy
 
 
@@ -71,6 +73,9 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.nuageclient_init()
         net_partition = cfg.CONF.RESTPROXY.default_net_partition_name
         self._create_default_net_partition(net_partition)
+        if cfg.CONF.SYNCMANAGER.enable_sync:
+            self.syncmanager = syncmanager.SyncManager(self.nuageclient)
+            self._synchronization_thread()
 
     def nuageclient_init(self):
         server = cfg.CONF.RESTPROXY.server
@@ -84,6 +89,16 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                    serverssl, serverauth,
                                                    auth_resource,
                                                    organization)
+
+    def _synchronization_thread(self):
+        sync_interval = cfg.CONF.SYNCMANAGER.sync_interval
+        fip_quota = str(cfg.CONF.RESTPROXY.default_floatingip_quota)
+        if sync_interval > 0:
+            sync_loop = loopingcall.FixedIntervalLoopingCall(
+                self.syncmanager.synchronize, fip_quota)
+            sync_loop.start(interval=sync_interval)
+        else:
+            self.syncmanager.synchronize(fip_quota)
 
     def _resource_finder(self, context, for_resource, resource, user_req):
         match = re.match(attributes.UUID_PATTERN, user_req[resource])
@@ -1084,10 +1099,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                   neutron_fip, port_id):
         rtr_id = neutron_fip['router_id']
         net_id = neutron_fip['floating_network_id']
+        subn = nuagedb.get_ipalloc_for_fip(context.session,
+                                           net_id,
+                                           neutron_fip['floating_ip_address'])
 
-        fip_pool = self.nuageclient.get_nuage_fip_pool_by_id(net_id)
+        fip_pool = self.nuageclient.get_nuage_fip_pool_by_id(subn['subnet_id'])
         if not fip_pool:
-            msg = _('sharedresource %s not found on VSD') % net_id
+            msg = _('sharedresource %s not found on VSD') % subn['subnet_id']
             raise n_exc.BadRequest(resource='floatingip',
                                    msg=msg)
 

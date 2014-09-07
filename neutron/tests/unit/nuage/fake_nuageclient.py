@@ -197,3 +197,126 @@ class FakeNuageClient(object):
 
     def remove_router_interface(self, params):
         pass
+
+    def get_resources_to_sync(self, data):
+        netpart_id_list = []
+        for netpart in data['netpartition']:
+            netpart_id_list.append(netpart['id'])
+
+        netpart_dict = {
+            'add': netpart_id_list,
+            'sync': []
+        }
+
+        subn_id_list = []
+        if data['subnet']:
+            subn_id_list.append(data['subnet'][0])
+
+        l2domain_dict = {
+            'add': subn_id_list
+        }
+
+        rtr_id_list = []
+        if data['router']:
+            rtr_id_list.append(data['router'][0])
+
+        domain_dict = {
+            'add': rtr_id_list
+        }
+
+        domain_subn_id = uuidutils.generate_uuid()
+
+        result = {
+            'netpartition': netpart_dict,
+            'l2domain': l2domain_dict,
+            'domain': domain_dict,
+            'domainsubnet': {'add': [domain_subn_id]},
+            'sharednetwork': {'add': [uuidutils.generate_uuid()]},
+            'route': {'add': []},
+            'security': {
+                'secgroup': {
+                    'l2domain': {'add': {
+                        uuidutils.generate_uuid(): [uuidutils.generate_uuid()]
+                    }},
+                    'domain': {'add': {
+                        uuidutils.generate_uuid(): [uuidutils.generate_uuid()]
+                    }}
+                },
+                'secgrouprule': {
+                    'l2domain': {'add': [uuidutils.generate_uuid()]},
+                    'domain': {'add': [uuidutils.generate_uuid()]}
+                },
+            },
+            'port': {
+                'vm': [uuidutils.generate_uuid()],
+                'sub_rtr_intf_port_dict': {
+                    domain_subn_id: uuidutils.generate_uuid()
+                },
+                'secgroup': [uuidutils.generate_uuid()]
+            },
+            'subl2dommapping': [uuidutils.generate_uuid()],
+            'fip': {
+                'add': [uuidutils.generate_uuid()],
+                'associate': [uuidutils.generate_uuid()],
+                'disassociate': [uuidutils.generate_uuid()]
+            }
+        }
+        return result
+
+    def create_netpart(self, netpart, fip_quota):
+        if netpart['name'] == 'sync-new-netpartition':
+            oldid = netpart['id']
+            netpart['id'] = 'a917924f-3139-4bdb-a4c3-ea7c8011582f'
+            netpart = {
+                oldid: netpart
+            }
+            return netpart
+        return {}
+
+    def create_sharednetwork(self, subnet):
+        pass
+
+    def create_l2domain(self, netpart_id, subnet):
+        subl2dom = {
+            'subnet_id': subnet['id'],
+            'nuage_subnet_id': '52daa465-cf33-4efd-91d3-f5bc2aebd',
+            'net_partition_id': netpart_id,
+            'nuage_l2dom_tmplt_id': uuidutils.generate_uuid(),
+            'nuage_user_id': uuidutils.generate_uuid(),
+            'nuage_group_id': uuidutils.generate_uuid(),
+        }
+
+        return subl2dom
+
+    def create_domain(self, netpart, router):
+        entrtr = {
+            'router_id': router['id'],
+            'nuage_router_id': '2d782c02-b88e-44ad-a79b-4bdf11f7df3d',
+            'net_partition_id': netpart['id']
+        }
+
+        return entrtr
+
+    def create_domainsubnet(self, subnet, ports):
+        pass
+
+    def create_route(self, route):
+        pass
+
+    def create_vm(self, port):
+        pass
+
+    def create_security_group(self, secgrp, ports):
+        pass
+
+    def create_security_group_rule(self, secgrprule):
+        pass
+
+    def create_fip(self, fip, ipalloc):
+        pass
+
+    def associate_fip(self, fip):
+        pass
+
+    def disassociate_fip(self, fip):
+        pass

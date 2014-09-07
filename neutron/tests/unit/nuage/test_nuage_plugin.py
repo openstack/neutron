@@ -59,6 +59,22 @@ FAKE_ORGANIZATION = 'fake_org'
 _plugin_name = ('%s.NuagePlugin' % NUAGE_PLUGIN_PATH)
 
 
+def getNuageClient():
+    server = FAKE_SERVER
+    serverauth = FAKE_SERVER_AUTH
+    serverssl = FAKE_SERVER_SSL
+    base_uri = FAKE_BASE_URI
+    auth_resource = FAKE_AUTH_RESOURCE
+    organization = FAKE_ORGANIZATION
+    nuageclient = fake_nuageclient.FakeNuageClient(server,
+                                                   base_uri,
+                                                   serverssl,
+                                                   serverauth,
+                                                   auth_resource,
+                                                   organization)
+    return nuageclient
+
+
 class NuagePluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def setUp(self, plugin=_plugin_name,
               ext_mgr=None, service_plugins=None):
@@ -67,19 +83,7 @@ class NuagePluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             self.skipTest("Nuage Plugin does not support IPV6.")
 
         def mock_nuageClient_init(self):
-            server = FAKE_SERVER
-            serverauth = FAKE_SERVER_AUTH
-            serverssl = FAKE_SERVER_SSL
-            base_uri = FAKE_BASE_URI
-            auth_resource = FAKE_AUTH_RESOURCE
-            organization = FAKE_ORGANIZATION
-            self.nuageclient = None
-            self.nuageclient = fake_nuageclient.FakeNuageClient(server,
-                                                                base_uri,
-                                                                serverssl,
-                                                                serverauth,
-                                                                auth_resource,
-                                                                organization)
+            self.nuageclient = getNuageClient()
 
         with mock.patch.object(nuage_plugin.NuagePlugin,
                                'nuageclient_init', new=mock_nuageClient_init):
