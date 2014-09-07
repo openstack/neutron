@@ -1482,6 +1482,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         fip_ns_name = (
             self.get_fip_ns_name(str(network_id)))
         self._create_namespace(fip_ns_name)
+        ri.fip_iptables_manager = iptables_manager.IptablesManager(
+            root_helper=self.root_helper, namespace=fip_ns_name,
+            use_ipv6=self.use_ipv6)
+        # no connection tracking needed in fip namespace
+        ri.fip_iptables_manager.ipv4['raw'].add_rule('PREROUTING',
+                                                     '-j CT --notrack')
+        ri.fip_iptables_manager.apply()
         interface_name = (
             self.get_fip_ext_device_name(self.agent_gateway_port['id']))
         self.agent_gateway_added(fip_ns_name, self.agent_gateway_port,

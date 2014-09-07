@@ -321,6 +321,10 @@ class IptablesManager(object):
                 {'nat': IptablesTable(binary_name=self.wrap_name)})
             builtin_chains[4].update({'nat': ['PREROUTING',
                                       'OUTPUT', 'POSTROUTING']})
+            self.ipv4.update(
+                {'raw': IptablesTable(binary_name=self.wrap_name)})
+            builtin_chains[4].update({'raw': ['PREROUTING',
+                                      'OUTPUT']})
 
         for ip_version in builtin_chains:
             if ip_version == 4:
