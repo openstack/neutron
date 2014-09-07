@@ -16,6 +16,7 @@
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
 # @author: Kevin Benton, Big Switch Networks, Inc.
 import copy
+import datetime
 import httplib
 
 import eventlet
@@ -25,13 +26,18 @@ from neutron import context as ctx
 from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log
+from neutron.openstack.common import timeutils
 from neutron.plugins.bigswitch import config as pl_config
 from neutron.plugins.bigswitch import plugin
 from neutron.plugins.bigswitch import servermanager
+from neutron.plugins.common import constants as pconst
 from neutron.plugins.ml2 import driver_api as api
 
 
 LOG = log.getLogger(__name__)
+
+# time in seconds to maintain existence of vswitch response
+CACHE_VSWITCH_TIME = 60
 
 
 class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
@@ -59,6 +65,9 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
                                                'get_floating_ips': False,
                                                'get_routers': False}
         self.segmentation_types = ', '.join(cfg.CONF.ml2.type_drivers)
+        # Track hosts running IVS to avoid excessive calls to the backend
+        self.ivs_host_cache = {}
+
         LOG.debug(_("Initialization done"))
 
     def create_network_postcommit(self, context):
@@ -126,3 +135,57 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
             # the host_id set
             return False
         return prepped_port
+
+    def bind_port(self, context):
+        if not self.does_vswitch_exist(context.host):
+            # this is not an IVS host
+            return
+
+        # currently only vlan segments are supported
+        for segment in context.network.network_segments:
+            if segment[api.NETWORK_TYPE] == pconst.TYPE_VLAN:
+                context.set_binding(segment[api.ID], portbindings.VIF_TYPE_IVS,
+                                    {portbindings.CAP_PORT_FILTER: True,
+                                     portbindings.OVS_HYBRID_PLUG: False})
+
+    def does_vswitch_exist(self, host):
+        """Check if Indigo vswitch exists with the given hostname.
+
+        Returns True if switch exists on backend.
+        Returns False if switch does not exist.
+        Returns None if backend could not be reached.
+        Caches response from backend.
+        """
+        try:
+            return self._get_cached_vswitch_existence(host)
+        except ValueError:
+            # cache was empty for that switch or expired
+            pass
+
+        try:
+            self.servers.rest_get_switch(host)
+            exists = True
+        except servermanager.RemoteRestError as e:
+            if e.status == 404:
+                exists = False
+            else:
+                # Another error, return without caching to try again on
+                # next binding
+                return
+        self.ivs_host_cache[host] = {
+            'timestamp': datetime.datetime.now(),
+            'exists': exists
+        }
+        return exists
+
+    def _get_cached_vswitch_existence(self, host):
+        """Returns cached existence. Old and non-cached raise ValueError."""
+        entry = self.ivs_host_cache.get(host)
+        if not entry:
+            raise ValueError(_('No cache entry for host %s') % host)
+        diff = timeutils.delta_seconds(entry['timestamp'],
+                                       datetime.datetime.now())
+        if diff > CACHE_VSWITCH_TIME:
+            self.ivs_host_cache.pop(host)
+            raise ValueError(_('Expired cache entry for host %s') % host)
+        return entry['exists']

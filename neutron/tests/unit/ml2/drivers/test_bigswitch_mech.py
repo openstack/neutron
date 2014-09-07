@@ -15,6 +15,8 @@
 # limitations under the License.
 
 import contextlib
+import functools
+
 import mock
 import webob.exc
 
@@ -86,6 +88,58 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
+
+    def test_bind_ivs_port(self):
+        host_arg = {portbindings.HOST_ID: 'hostname'}
+        with contextlib.nested(
+            mock.patch(SERVER_POOL + '.rest_get_switch', return_value=True),
+            self.port(arg_list=(portbindings.HOST_ID,), **host_arg)
+        ) as (rmock, port):
+            rmock.assert_called_once_with('hostname')
+            p = port['port']
+            self.assertEqual('ACTIVE', p['status'])
+            self.assertEqual('hostname', p[portbindings.HOST_ID])
+            self.assertEqual(portbindings.VIF_TYPE_IVS,
+                             p[portbindings.VIF_TYPE])
+
+    def test_dont_bind_non_ivs_port(self):
+        host_arg = {portbindings.HOST_ID: 'hostname'}
+        with contextlib.nested(
+            mock.patch(SERVER_POOL + '.rest_get_switch',
+                       side_effect=servermanager.RemoteRestError(
+                           reason='No such switch', status=404)),
+            self.port(arg_list=(portbindings.HOST_ID,), **host_arg)
+        ) as (rmock, port):
+            rmock.assert_called_once_with('hostname')
+            p = port['port']
+            self.assertNotEqual(portbindings.VIF_TYPE_IVS,
+                                p[portbindings.VIF_TYPE])
+
+    def test_bind_port_cache(self):
+        with contextlib.nested(
+            self.subnet(),
+            mock.patch(SERVER_POOL + '.rest_get_switch', return_value=True)
+        ) as (sub, rmock):
+            makeport = functools.partial(self.port, **{
+                'subnet': sub, 'arg_list': (portbindings.HOST_ID,),
+                portbindings.HOST_ID: 'hostname'})
+
+            with contextlib.nested(makeport(), makeport(),
+                                   makeport()) as ports:
+                # response from first should be cached
+                rmock.assert_called_once_with('hostname')
+                for port in ports:
+                    self.assertEqual(portbindings.VIF_TYPE_IVS,
+                                     port['port'][portbindings.VIF_TYPE])
+            rmock.reset_mock()
+            # expired cache should result in new calls
+            mock.patch(DRIVER_MOD + '.CACHE_VSWITCH_TIME', new=0).start()
+            with contextlib.nested(makeport(), makeport(),
+                                   makeport()) as ports:
+                self.assertEqual(3, rmock.call_count)
+                for port in ports:
+                    self.assertEqual(portbindings.VIF_TYPE_IVS,
+                                     port['port'][portbindings.VIF_TYPE])
 
     def test_create404_triggers_background_sync(self):
         # allow the async background thread to run for this test
