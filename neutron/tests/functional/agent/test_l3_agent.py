@@ -100,7 +100,6 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
 class L3AgentTestCase(L3AgentTestFramework):
     def test_router_lifecycle(self):
-        self.skipTest('This test is suspected of causing bug 1364171')
         router = self.manage_router()
 
         self.assertTrue(self._namespace_exists(router))
