@@ -34,6 +34,7 @@ from neutron.plugins.common import constants as pconst
 from neutron.plugins.ml2 import driver_api as api
 
 
+EXTERNAL_PORT_OWNER = 'neutron:external_port'
 LOG = log.getLogger(__name__)
 
 # time in seconds to maintain existence of vswitch response
@@ -137,16 +138,32 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
         return prepped_port
 
     def bind_port(self, context):
-        if not self.does_vswitch_exist(context.host):
-            # this is not an IVS host
-            return
+        """Marks ports as bound.
 
-        # currently only vlan segments are supported
-        for segment in context.network.network_segments:
-            if segment[api.NETWORK_TYPE] == pconst.TYPE_VLAN:
-                context.set_binding(segment[api.ID], portbindings.VIF_TYPE_IVS,
-                                    {portbindings.CAP_PORT_FILTER: True,
-                                     portbindings.OVS_HYBRID_PLUG: False})
+        Binds external ports and IVS ports.
+        Fabric configuration will occur on the subsequent port update.
+        Currently only vlan segments are supported.
+        """
+        if context.current['device_owner'] == EXTERNAL_PORT_OWNER:
+            # TODO(kevinbenton): check controller to see if the port exists
+            # so this driver can be run in parallel with others that add
+            # support for external port bindings
+            for segment in context.network.network_segments:
+                if segment[api.NETWORK_TYPE] == pconst.TYPE_VLAN:
+                    context.set_binding(
+                        segment[api.ID], portbindings.VIF_TYPE_BRIDGE,
+                        {portbindings.CAP_PORT_FILTER: False,
+                         portbindings.OVS_HYBRID_PLUG: False})
+                    return
+
+        # IVS hosts will have a vswitch with the same name as the hostname
+        if self.does_vswitch_exist(context.host):
+            for segment in context.network.network_segments:
+                if segment[api.NETWORK_TYPE] == pconst.TYPE_VLAN:
+                    context.set_binding(
+                        segment[api.ID], portbindings.VIF_TYPE_IVS,
+                        {portbindings.CAP_PORT_FILTER: True,
+                        portbindings.OVS_HYBRID_PLUG: False})
 
     def does_vswitch_exist(self, host):
         """Check if Indigo vswitch exists with the given hostname.

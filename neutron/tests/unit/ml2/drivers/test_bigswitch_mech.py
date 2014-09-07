@@ -23,8 +23,10 @@ import webob.exc
 from neutron import context as neutron_context
 from neutron.extensions import portbindings
 from neutron import manager
+from neutron.openstack.common import jsonutils
 from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.ml2 import config as ml2_config
+from neutron.plugins.ml2.drivers.mech_bigswitch import driver as bsn_driver
 from neutron.plugins.ml2.drivers import type_vlan as vlan_config
 import neutron.tests.unit.bigswitch.test_restproxy_plugin as trp
 from neutron.tests.unit.ml2 import test_ml2_plugin
@@ -195,3 +197,18 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
             self.assertEqual('host', pb['binding:host_id'])
             self.assertIn('bound_segment', pb)
             self.assertIn('network', pb)
+
+    def test_bind_external_port(self):
+        ext_id = jsonutils.dumps({'type': 'vlan', 'chassis_id': 'FF',
+                                  'port_id': '1'})
+        port_kwargs = {
+            portbindings.HOST_ID: ext_id,
+            'device_owner': bsn_driver.EXTERNAL_PORT_OWNER
+        }
+        with contextlib.nested(
+            mock.patch(SERVER_POOL + '.rest_create_port'),
+            self.port(arg_list=(portbindings.HOST_ID,), **port_kwargs)
+        ) as (rmock, port):
+            create_body = rmock.mock_calls[-1][1][2]
+            self.assertIsNotNone(create_body['bound_segment'])
+            self.assertEqual(create_body[portbindings.HOST_ID], ext_id)
