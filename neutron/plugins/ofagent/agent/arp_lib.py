@@ -22,6 +22,8 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import packet
 from ryu.lib.packet import vlan
 
+from neutron.common import log
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 import neutron.plugins.ofagent.agent.metadata as meta
 
@@ -50,8 +52,8 @@ class ArpLib(object):
     def set_bridge(self, br):
         self.br = br
 
+    @log.log
     def _send_arp_reply(self, datapath, port, pkt):
-        LOG.debug("packet-out %s", pkt)
         ofp = datapath.ofproto
         ofpp = datapath.ofproto_parser
         pkt.serialize()
@@ -64,10 +66,8 @@ class ArpLib(object):
                                 data=data)
         ryu_api.send_msg(self.ryuapp, out)
 
+    @log.log
     def _send_unknown_packet(self, msg, in_port, out_port):
-        LOG.debug("unknown packet-out in-port %(in_port)s "
-                  "out-port %(out_port)s msg %(msg)s",
-                  {'in_port': in_port, 'out_port': out_port, 'msg': msg})
         datapath = msg.datapath
         ofp = datapath.ofproto
         ofpp = datapath.ofproto_parser
@@ -111,18 +111,15 @@ class ArpLib(object):
         self._send_arp_reply(datapath, port, pkt)
         return True
 
+    @log.log
     def add_arp_table_entry(self, network, ip, mac):
-        LOG.debug("added arp table entry: "
-                  "network %(network)s ip %(ip)s mac %(mac)s",
-                  {'network': network, 'ip': ip, 'mac': mac})
         if network in self._arp_tbl:
             self._arp_tbl[network][ip] = mac
         else:
             self._arp_tbl[network] = {ip: mac}
 
+    @log.log
     def del_arp_table_entry(self, network, ip):
-        LOG.debug("deleted arp table entry: network %(network)s ip %(ip)s",
-                  {'network': network, 'ip': ip})
         del self._arp_tbl[network][ip]
         if not self._arp_tbl[network]:
             del self._arp_tbl[network]
@@ -137,32 +134,32 @@ class ArpLib(object):
         LOG.debug("packet-in msg %s", msg)
         datapath = msg.datapath
         if self.br is None:
-            LOG.info(_("No bridge is set"))
+            LOG.info(_LI("No bridge is set"))
             return
         if self.br.datapath.id != datapath.id:
-            LOG.info(_("Unknown bridge %(dpid)s ours %(ours)s"),
+            LOG.info(_LI("Unknown bridge %(dpid)s ours %(ours)s"),
                      {"dpid": datapath.id, "ours": self.br.datapath.id})
             return
         ofp = datapath.ofproto
         port = msg.match['in_port']
         metadata = msg.match.get('metadata')
         pkt = packet.Packet(msg.data)
-        LOG.info(_("packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s"),
+        LOG.info(_LI("packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s"),
                  {'dpid': dpid_lib.dpid_to_str(datapath.id),
                  'port': port, 'pkt': pkt})
 
         if metadata is None:
-            LOG.info(_("drop non tenant packet"))
+            LOG.info(_LI("drop non tenant packet"))
             return
         network = metadata & meta.NETWORK_MASK
         pkt_ethernet = pkt.get_protocol(ethernet.ethernet)
         if not pkt_ethernet:
-            LOG.info(_("drop non-ethernet packet"))
+            LOG.info(_LI("drop non-ethernet packet"))
             return
         pkt_vlan = pkt.get_protocol(vlan.vlan)
         pkt_arp = pkt.get_protocol(arp.arp)
         if not pkt_arp:
-            LOG.info(_("drop non-arp packet"))
+            LOG.info(_LI("drop non-arp packet"))
             return
 
         arptbl = self._arp_tbl.get(network)
@@ -171,7 +168,7 @@ class ArpLib(object):
                                  pkt_ethernet, pkt_vlan, pkt_arp):
                 return
         else:
-            LOG.info(_("unknown network %s"), network)
+            LOG.info(_LI("unknown network %s"), network)
 
         # add a flow to skip a packet-in to a controller.
         self.br.arp_passthrough(network=network, tpa=pkt_arp.dst_ip)
