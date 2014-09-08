@@ -33,10 +33,11 @@ def get_network_bindings(session, network_id):
             all())
 
 
-def get_network_bindings_by_vlanid(session, vlan_id):
+def get_network_bindings_by_vlanid_and_physical_net(session, vlan_id,
+                                                    phy_uuid):
     session = session or db.get_session()
     return (session.query(models.TzNetworkBinding).
-            filter_by(vlan_id=vlan_id).
+            filter_by(vlan_id=vlan_id, phy_uuid=phy_uuid).
             all())
 
 
