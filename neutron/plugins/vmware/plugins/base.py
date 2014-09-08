@@ -996,6 +996,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context.session, self.cluster, id)
         with context.session.begin(subtransactions=True):
             self._process_l3_delete(context, id)
+            nsx_db.delete_network_bindings(context.session, id)
             super(NsxPluginV2, self).delete_network(context, id)
 
         # Do not go to NSX for external networks
