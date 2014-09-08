@@ -974,7 +974,7 @@ class TestNetworkGateway(test_nsx_plugin.NsxPluginV2TestCase,
 
     def test_create_network_gateway_nsx_error_returns_500(self):
         def raise_nsx_api_exc(*args, **kwargs):
-            raise api_exc.NsxApiException
+            raise api_exc.NsxApiException()
 
         with mock.patch.object(nsxlib.l2gateway,
                                'create_l2_gw_service',

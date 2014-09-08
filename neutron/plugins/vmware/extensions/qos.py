@@ -75,7 +75,7 @@ def convert_to_unsigned_int_or_none(val):
     try:
         val = int(val)
         if val < 0:
-            raise ValueError
+            raise ValueError()
     except (ValueError, TypeError):
         msg = _("'%s' must be a non negative integer.") % val
         raise qexception.InvalidInput(error_message=msg)

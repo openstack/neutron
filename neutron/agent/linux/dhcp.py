@@ -167,23 +167,23 @@ class DhcpBase(object):
     def existing_dhcp_networks(cls, conf, root_helper):
         """Return a list of existing networks ids that we have configs for."""
 
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @classmethod
     def check_version(cls):
         """Execute version checks on DHCP server."""
 
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @classmethod
     def get_isolated_subnets(cls, network):
         """Returns a dict indicating whether or not a subnet is isolated"""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @classmethod
     def should_enable_metadata(cls, conf, network):
         """True if the metadata-proxy should be enabled for the network."""
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class DhcpLocalProcess(DhcpBase):

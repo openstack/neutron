@@ -564,7 +564,7 @@ def reserve_specific_vlan(db_session, physical_network, vlan_id):
             alloc.allocated = True
             db_session.add(alloc)
         except exc.NoResultFound:
-            raise c_exc.VlanIDOutsidePool
+            raise c_exc.VlanIDOutsidePool()
 
 
 def release_vlan(db_session, physical_network, vlan_id):
@@ -643,7 +643,7 @@ def reserve_specific_vxlan(db_session, vxlan_id):
             alloc.allocated = True
             db_session.add(alloc)
         except exc.NoResultFound:
-            raise c_exc.VxlanIDOutsidePool
+            raise c_exc.VxlanIDOutsidePool()
 
 
 def release_vxlan(db_session, vxlan_id):

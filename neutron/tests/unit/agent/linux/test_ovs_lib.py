@@ -934,7 +934,7 @@ class TestDeferredOVSBridge(base.BaseTestCase):
                 deferred_br.add_flow(**self.add_flow_dict1)
                 deferred_br.mod_flow(**self.mod_flow_dict1)
                 deferred_br.delete_flows(**self.del_flow_dict1)
-                raise Exception
+                raise Exception()
         except Exception:
             self._verify_mock_call([])
         else:

@@ -140,4 +140,4 @@ class TypeDriverHelper(api.TypeDriver):
         LOG.warning(_("Allocate %(type)s segment from pool failed "
                       "after %(number)s failed attempts"),
                     {"type": network_type, "number": DB_MAX_RETRIES})
-        raise exc.NoNetworkFoundInMaximumAllowedAttempts
+        raise exc.NoNetworkFoundInMaximumAllowedAttempts()

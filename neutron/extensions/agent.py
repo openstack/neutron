@@ -130,7 +130,7 @@ class AgentPluginBase(object):
         This operation is not allow in REST API.
         @raise exceptions.BadRequest:
         """
-        raise exceptions.BadRequest
+        raise exceptions.BadRequest()
 
     @abc.abstractmethod
     def delete_agent(self, context, id):

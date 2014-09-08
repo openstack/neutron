@@ -146,7 +146,7 @@ def serve_rpc():
             msg = _("'rpc_workers = %d' ignored because start_rpc_listeners "
                     "is not implemented.")
             LOG.error(msg, cfg.CONF.rpc_workers)
-        raise NotImplementedError
+        raise NotImplementedError()
 
     try:
         rpc = RpcWorker(plugin)
