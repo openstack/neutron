@@ -217,7 +217,7 @@ xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete">
     </config>
 """
 
-#port-profile domain management commands
+# port-profile domain management commands
 REMOVE_PORTPROFILE_FROM_DOMAIN = """
     <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         <port-profile-domain xmlns="urn:brocade.com:mgmt:brocade-port-profile">
@@ -228,7 +228,7 @@ REMOVE_PORTPROFILE_FROM_DOMAIN = """
             </port-profile-domain>
     </config>
 """
-#put port profile in default domain
+# put port profile in default domain
 CONFIGURE_PORTPROFILE_IN_DOMAIN = """
     <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         <port-profile-domain xmlns="urn:brocade.com:mgmt:brocade-port-profile">
@@ -241,11 +241,196 @@ CONFIGURE_PORTPROFILE_IN_DOMAIN = """
 """
 
 #
+# L3 Life-cycle Management Configuration Commands
+#
+
+# Create SVI and assign ippaddres (rbridge_id,vlan_id,ip_address)
+CONFIGURE_SVI_WITH_IP_ADDRESS = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <interface xmlns="urn:brocade.com:mgmt:brocade-interface">
+                <ve>
+                    <name>{vlan_id}</name>
+                    <ip xmlns="urn:brocade.com:mgmt:brocade-ip-config">
+                        <ip-config>
+                          <address>
+                             <address>{ip_address}</address>
+                          </address>
+                        </ip-config>
+                    </ip>
+                </ve>
+            </interface>
+         </rbridge-id>
+    </config>
+"""
+
+# delete SVI (rbridge_id,vlan_id)
+DELETE_SVI = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <interface xmlns="urn:brocade.com:mgmt:brocade-interface">
+                <ve operation="delete">
+                    <name>{vlan_id}</name>
+                </ve>
+            </interface>
+         </rbridge-id>
+    </config>
+"""
+
+# Activate SVI (rbridge_id,vlan_id)
+ACTIVATE_SVI = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <interface xmlns="urn:brocade.com:mgmt:brocade-interface">
+                <ve>
+                    <name>{vlan_id}</name>
+                    <shutdown xmlns="urn:brocade.com:mgmt:brocade-ip-config"
+                    xc:operation="delete"></shutdown>
+                </ve>
+            </interface>
+         </rbridge-id>
+    </config>
+"""
+
+# Remove ipaddress from SVI (rbridge_id,vlan_id)
+DECONFIGURE_IP_FROM_SVI = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <interface xmlns="urn:brocade.com:mgmt:brocade-interface">
+                <ve>
+                    <name>{vlan_id}</name>
+                    <ip xmlns="urn:brocade.com:mgmt:brocade-ip-config">
+                        <ip-config>
+                            <address xc:operation="delete">
+                                <address>{gw_ip}</address>
+                            </address>
+                        </ip-config>
+                    </ip>
+                </ve>
+            </interface>
+         </rbridge-id>
+    </config>
+"""
+
+# create vrf (rbridge_id,vrf_name)
+CREATE_VRF = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+                <vrf xmlns="urn:brocade.com:mgmt:brocade-vrf">
+                    <vrf-name>{vrf_name}</vrf-name>
+                </vrf>
+         </rbridge-id>
+    </config>
+"""
+
+
+# delete vrf (rbridge_id,vrf_name)
+DELETE_VRF = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+                <vrf xmlns="urn:brocade.com:mgmt:brocade-vrf"
+                       xc:operation="delete">
+                    <vrf-name>{vrf_name}</vrf-name>
+                </vrf>
+         </rbridge-id>
+    </config>
+"""
+
+# configure route distinguisher for vrf (rbridge_id,vrf_name, rd)
+CONFIGURE_RD_FOR_VRF = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <vrf xmlns="urn:brocade.com:mgmt:brocade-vrf">
+                <vrf-name>{vrf_name}</vrf-name>
+                <route-distiniguisher>{rd}</route-distiniguisher>
+            </vrf>
+         </rbridge-id>
+    </config>
+"""
+
+# configure address-family for vrf (rbridge_id,vrf_name)
+ADD_ADDRESS_FAMILY_FOR_VRF_V1 = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <vrf xmlns="urn:brocade.com:mgmt:brocade-vrf">
+                <vrf-name>{vrf_name}</vrf-name>
+                <address-family xmlns="urn:brocade.com:mgmt:brocade-vrf">
+                    <ipv4>
+                        <max-route>1200</max-route>
+                    </ipv4>
+                </address-family>
+            </vrf>
+         </rbridge-id>
+    </config>
+"""
+
+# configure address-family for vrf (rbridge_id,vrf_name)
+ADD_ADDRESS_FAMILY_FOR_VRF = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <vrf xmlns="urn:brocade.com:mgmt:brocade-vrf">
+                <vrf-name>{vrf_name}</vrf-name>
+                <address-family xmlns="urn:brocade.com:mgmt:brocade-vrf">
+                    <ip>
+                        <unicast/>
+                    </ip>
+                </address-family>
+            </vrf>
+         </rbridge-id>
+    </config>
+"""
+
+# Bind vrf to SVI (rbridge_id,vlan_idi, vrf)
+ADD_VRF_TO_SVI = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <interface xmlns="urn:brocade.com:mgmt:brocade-interface">
+                <ve>
+                    <name>{vlan_id}</name>
+                    <vrf xmlns="urn:brocade.com:mgmt:brocade-ip-config">
+                        <forwarding>{vrf_name}</forwarding>
+                    </vrf>
+                </ve>
+            </interface>
+         </rbridge-id>
+    </config>
+"""
+
+# unbind  vrf from SVI (rbridge_id,vlan_idi, vrf)
+DELETE_VRF_FROM_SVI = """
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rbridge-id xmlns="urn:brocade.com:mgmt:brocade-rbridge">
+            <rbridge-id>{rbridge_id}</rbridge-id>
+            <interface xmlns="urn:brocade.com:mgmt:brocade-interface">
+                <ve>
+                    <name>{vlan_id}</name>
+                    <vrf xmlns="urn:brocade.com:mgmt:brocade-ip-config"
+                            operation="delete">
+                        <forwarding>{vrf_name}</forwarding>
+                    </vrf>
+                </ve>
+            </interface>
+         </rbridge-id>
+    </config>
+"""
+
+#
 # Constants
 #
 
 # Port profile naming convention for Neutron networks
 OS_PORT_PROFILE_NAME = "openstack-profile-{id}"
+OS_VRF_NAME = "osv-{id}"
 
 # Port profile filter expressions
 PORT_PROFILE_XPATH_FILTER = "/port-profile"
