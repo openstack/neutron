@@ -14,13 +14,17 @@
 
 import random
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
+from neutron.openstack.common import uuidutils
+from neutron.tests.functional.agent.linux import pinger
 from neutron.tests.functional import base as functional_base
 
 
 BR_PREFIX = 'test-br'
+ICMP_BLOCK_RULE = '-p icmp -j DROP'
 
 
 class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
@@ -64,3 +68,53 @@ class BaseOVSLinuxTestCase(BaseLinuxTestCase):
         br = self.create_resource(br_prefix, self.ovs.add_bridge)
         self.addCleanup(br.destroy)
         return br
+
+
+class BaseIPVethTestCase(BaseLinuxTestCase):
+    SRC_ADDRESS = '192.168.0.1'
+    DST_ADDRESS = '192.168.0.2'
+    BROADCAST_ADDRESS = '192.168.0.255'
+    SRC_VETH = 'source'
+    DST_VETH = 'destination'
+
+    def setUp(self):
+        super(BaseIPVethTestCase, self).setUp()
+        self.check_sudo_enabled()
+        self.pinger = pinger.Pinger(self)
+
+    @staticmethod
+    def _set_ip_up(device, cidr, broadcast, ip_version=4):
+        device.addr.add(ip_version=ip_version, cidr=cidr, broadcast=broadcast)
+        device.link.set_up()
+
+    def _create_namespace(self):
+        ip_cmd = ip_lib.IPWrapper(self.root_helper)
+        name = "func-%s" % uuidutils.generate_uuid()
+        namespace = ip_cmd.ensure_namespace(name)
+        self.addCleanup(namespace.netns.delete, namespace.namespace)
+
+        return namespace
+
+    def prepare_veth_pairs(self, src_addr=None,
+                           dst_addr=None,
+                           broadcast_addr=None,
+                           src_ns=None, dst_ns=None,
+                           src_veth=None,
+                           dst_veth=None):
+
+        src_addr = src_addr or self.SRC_ADDRESS
+        dst_addr = dst_addr or self.DST_ADDRESS
+        broadcast_addr = broadcast_addr or self.BROADCAST_ADDRESS
+        src_veth = src_veth or self.SRC_VETH
+        dst_veth = dst_veth or self.DST_VETH
+        src_ns = src_ns or self._create_namespace()
+        dst_ns = dst_ns or self._create_namespace()
+
+        src_veth, dst_veth = src_ns.add_veth(src_veth,
+                                             dst_veth,
+                                             dst_ns.namespace)
+
+        self._set_ip_up(src_veth, '%s/24' % src_addr, broadcast_addr)
+        self._set_ip_up(dst_veth, '%s/24' % dst_addr, broadcast_addr)
+
+        return src_ns, dst_ns
