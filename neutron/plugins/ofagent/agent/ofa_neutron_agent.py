@@ -1,5 +1,8 @@
 # Copyright (C) 2014 VA Linux Systems Japan K.K.
 # Copyright (C) 2014 YAMAMOTO Takashi <yamamoto at valinux co jp>
+# Copyright (C) 2014 Fumihiko Kakuma <kakuma at valinux co jp>
+# All Rights Reserved.
+#
 # Based on openvswitch agent.
 #
 # Copyright 2011 VMware, Inc.
@@ -16,7 +19,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-# @author: Fumihiko Kakuma, VA Linux Systems Japan K.K.
 
 import time
 

@@ -1,4 +1,7 @@
 # Copyright (C) 2014 VA Linux Systems Japan K.K.
+# Copyright (C) 2014 Fumihiko Kakuma <kakuma at valinux co jp>
+# Copyright (C) 2014 YAMAMOTO Takashi <yamamoto at valinux co jp>
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,9 +14,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Fumihiko Kakuma, VA Linux Systems Japan K.K.
-# @author: YAMAMOTO Takashi, VA Linux Systems Japan K.K.
 
 import mock
 
