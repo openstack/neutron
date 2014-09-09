@@ -364,10 +364,13 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
             'distributed': True
         }
         plugin.get_router.return_value = sync_router
-        with mock.patch.object(scheduler, 'bind_router'):
-            scheduler._schedule_router(
-                plugin, self.adminContext,
-                'foo_router_id', None)
+        with contextlib.nested(
+            mock.patch.object(scheduler, 'bind_router'),
+            mock.patch.object(
+                plugin, 'get_snat_bindings', return_value=False)
+        ):
+                scheduler._schedule_router(
+                    plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
             mock.call.get_l3_agents_hosting_routers(
@@ -382,12 +385,14 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         sync_router = {'id': 'foo_router_id',
                        'distributed': True}
         plugin.get_router.return_value = sync_router
-        with mock.patch.object(scheduler, 'bind_router'):
-            scheduler._schedule_router(
-                plugin, self.adminContext,
-                'foo_router_id', None)
+        with contextlib.nested(
+            mock.patch.object(scheduler, 'bind_router'),
+            mock.patch.object(plugin, 'get_snat_bindings', return_value=True)):
+                scheduler._schedule_router(
+                    plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
+            mock.call.unbind_snat_servicenode(mock.ANY, 'foo_router_id'),
             mock.call.get_l3_agents_hosting_routers(
                 mock.ANY, ['foo_router_id'], admin_state_up=True),
             mock.call.get_l3_agents(mock.ANY, active=True),
@@ -406,10 +411,13 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
             }
         }
         plugin.get_router.return_value = sync_router
-        with mock.patch.object(scheduler, 'bind_router'):
-            scheduler._schedule_router(
-                plugin, self.adminContext,
-                'foo_router_id', None)
+        with contextlib.nested(
+            mock.patch.object(scheduler, 'bind_router'),
+            mock.patch.object(
+                plugin, 'get_snat_bindings', return_value=False)
+        ):
+                scheduler._schedule_router(
+                    plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
             mock.call.get_l3_agents_hosting_routers(
@@ -877,7 +885,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
             mock_agents.return_value = [agent]
             mock_candidates.return_value = [agent]
             self.dut.schedule_snat_router(
-                self.adminContext, 'foo_router_id', router, True)
+                self.adminContext, 'foo_router_id', router)
         self.assertFalse(mock_dvr.called)
 
     def test_schedule_router_unbind_snat_servicenode_negativetest(self):
@@ -887,11 +895,13 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
         }
         with contextlib.nested(
             mock.patch.object(self.dut, 'get_router'),
-            mock.patch.object(self.dut, 'unbind_snat_servicenode')) as (
-                mock_rd, mock_unbind):
+            mock.patch.object(self.dut, 'get_snat_bindings'),
+            mock.patch.object(self.dut, 'unbind_snat_servicenode')
+        ) as (mock_rd, mock_snat_bind, mock_unbind):
             mock_rd.return_value = router
+            mock_snat_bind.return_value = False
             self.dut.schedule_snat_router(
-                self.adminContext, 'foo_router_id', router, True)
+                self.adminContext, 'foo_router_id', router)
         self.assertFalse(mock_unbind.called)
 
     def test_schedule_snat_router_with_snat_candidates(self):
@@ -910,7 +920,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
             mock_agents.return_value = [agent]
             mock_candidates.return_value = [agent]
             self.dut.schedule_snat_router(
-                self.adminContext, 'foo_router_id', mock.ANY, True)
+                self.adminContext, 'foo_router_id', mock.ANY)
         mock_bind.assert_called_once_with(
             self.adminContext, 'foo_router_id', [agent])
 

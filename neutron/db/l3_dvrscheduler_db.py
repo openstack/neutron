@@ -18,6 +18,7 @@ import random
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
+from sqlalchemy.orm import joinedload
 
 from neutron.common import constants as q_const
 from neutron.common import utils as n_utils
@@ -278,28 +279,34 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         LOG.debug('Removed binding for router %(router_id)s and '
                   'agent %(id)s', {'router_id': router_id, 'id': agent_id})
 
-    def schedule_snat_router(self, context, router_id, sync_router, gw_exists):
+    def get_snat_bindings(self, context, router_ids):
+        """ Retrieves the dvr snat bindings for a router."""
+        if not router_ids:
+            return []
+        query = context.session.query(CentralizedSnatL3AgentBinding)
+        query = query.options(joinedload('l3_agent')).filter(
+            CentralizedSnatL3AgentBinding.router_id.in_(router_ids))
+        return query.all()
+
+    def schedule_snat_router(self, context, router_id, sync_router):
         """Schedule the snat router on l3 service agent."""
-        if gw_exists:
-            binding = (context.session.
-                       query(CentralizedSnatL3AgentBinding).
-                       filter_by(router_id=router_id).first())
-            if binding:
-                l3_agent_id = binding.l3_agent_id
-                l3_agent = binding.l3_agent
-                LOG.debug('SNAT Router %(router_id)s has already been '
-                          'hosted by L3 agent '
-                          '%(l3_agent_id)s', {'router_id': router_id,
-                                              'l3_agent_id': l3_agent_id})
-                self.bind_dvr_router_servicenode(context, router_id, l3_agent)
-                return
-            active_l3_agents = self.get_l3_agents(context, active=True)
-            if not active_l3_agents:
-                LOG.warn(_('No active L3 agents'))
-                return
-            snat_candidates = self.get_snat_candidates(sync_router,
-                                                       active_l3_agents)
-            if snat_candidates:
-                self.bind_snat_servicenode(context, router_id, snat_candidates)
-        else:
-            self.unbind_snat_servicenode(context, router_id)
+        binding = (context.session.
+                   query(CentralizedSnatL3AgentBinding).
+                   filter_by(router_id=router_id).first())
+        if binding:
+            l3_agent_id = binding.l3_agent_id
+            l3_agent = binding.l3_agent
+            LOG.debug('SNAT Router %(router_id)s has already been '
+                      'hosted by L3 agent '
+                      '%(l3_agent_id)s', {'router_id': router_id,
+                                          'l3_agent_id': l3_agent_id})
+            self.bind_dvr_router_servicenode(context, router_id, l3_agent)
+            return
+        active_l3_agents = self.get_l3_agents(context, active=True)
+        if not active_l3_agents:
+            LOG.warn(_('No active L3 agents found for SNAT'))
+            return
+        snat_candidates = self.get_snat_candidates(sync_router,
+                                                   active_l3_agents)
+        if snat_candidates:
+            self.bind_snat_servicenode(context, router_id, snat_candidates)
