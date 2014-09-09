@@ -18,9 +18,9 @@
 
 """Implements iptables rules using linux utilities."""
 
-import inspect
 import os
 import re
+import sys
 
 from oslo.config import cfg
 from oslo.utils import excutils
@@ -42,7 +42,7 @@ LOG = logging.getLogger(__name__)
 #             (max_chain_name_length - len('-POSTROUTING') == 16)
 def get_binary_name():
     """Grab the name of the binary we're running in."""
-    return os.path.basename(inspect.stack()[-1][1])[:16]
+    return os.path.basename(sys.argv[0])[:16]
 
 binary_name = get_binary_name()
 

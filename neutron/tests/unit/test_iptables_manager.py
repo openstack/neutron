@@ -13,8 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import inspect
 import os
+import sys
 
 import mock
 from oslo.config import cfg
@@ -190,8 +190,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.execute = mock.patch.object(self.iptables, "execute").start()
 
     def test_binary_name(self):
-        self.assertEqual(iptables_manager.binary_name,
-                         os.path.basename(inspect.stack()[-1][1])[:16])
+        expected = os.path.basename(sys.argv[0])[:16]
+        self.assertEqual(expected, iptables_manager.binary_name)
 
     def test_get_chain_name(self):
         name = '0123456789' * 5
