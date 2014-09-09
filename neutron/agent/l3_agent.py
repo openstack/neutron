@@ -258,6 +258,7 @@ class RouterInfo(object):
             root_helper=root_helper,
             use_ipv6=use_ipv6,
             namespace=self.ns_name)
+        self.snat_iptables_manager = None
         self.routes = []
         # DVR Data
         # Linklocal subnet for router and floating IP namespace link
@@ -951,10 +952,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # This is safe because if use_namespaces is set as False
         # then the agent can only configure one router, otherwise
         # each router's SNAT rules will be in their own namespace
-        if ri.router['distributed']:
+        if not ri.router['distributed']:
+            iptables_manager = ri.iptables_manager
+        elif ri.snat_iptables_manager:
             iptables_manager = ri.snat_iptables_manager
         else:
-            iptables_manager = ri.iptables_manager
+            LOG.debug("DVR router: no snat rules to be handled")
+            return
 
         iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
         iptables_manager.ipv4['nat'].empty_chain('snat')
@@ -1212,11 +1216,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                     self._snat_redirect_add(ri, gateway['fixed_ips'][0]
                                             ['ip_address'], p, id_name)
 
-            if self.conf.agent_mode == 'dvr_snat' and (
-                    ri.router['gw_port_host'] == self.host):
-                if snat_ports:
-                    self._create_dvr_gateway(ri, ex_gw_port, interface_name,
-                                             snat_ports)
+            if (self.conf.agent_mode == 'dvr_snat' and
+                ri.router['gw_port_host'] == self.host):
+                self._create_dvr_gateway(ri, ex_gw_port, interface_name,
+                                         snat_ports)
             for port in snat_ports:
                 for ip in port['fixed_ips']:
                     self._update_arp_entry(ri, ip['ip_address'],
@@ -1598,9 +1601,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self._queue.add(update)
 
     def _update_arp_entry(self, ri, ip, mac, subnet_id, operation):
-        """Add or delete arp entry into router namespace."""
+        """Add or delete arp entry into router namespace for the subnet."""
         port = self.get_internal_port(ri, subnet_id)
-        if 'id' in port:
+        # update arp entry only if the subnet is attached to the router
+        if port:
             ip_cidr = str(ip) + '/32'
             try:
                 # TODO(mrsmith): optimize the calls below for bulk calls
