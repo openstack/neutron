@@ -16,9 +16,7 @@
 
 from oslo.config import cfg
 from oslo import messaging
-from oslo.messaging.rpc import dispatcher as rpc_dispatcher
 from oslo.messaging import serializer as om_serializer
-from oslo.messaging import server as msg_server
 
 from neutron.common import exceptions
 from neutron.common import log
@@ -93,8 +91,8 @@ def get_client(target, version_cap=None, serializer=None):
 def get_server(target, endpoints, serializer=None):
     assert TRANSPORT is not None
     serializer = RequestContextSerializer(serializer)
-    dispatcher = RPCDispatcher(target, endpoints, serializer)
-    return msg_server.MessageHandlingServer(TRANSPORT, dispatcher, 'eventlet')
+    return messaging.get_rpc_server(TRANSPORT, target, endpoints,
+                                    'eventlet', serializer)
 
 
 def get_notifier(service=None, host=None, publisher_id=None):
@@ -102,18 +100,6 @@ def get_notifier(service=None, host=None, publisher_id=None):
     if not publisher_id:
         publisher_id = "%s.%s" % (service, host or cfg.CONF.host)
     return NOTIFIER.prepare(publisher_id=publisher_id)
-
-
-class RPCDispatcher(rpc_dispatcher.RPCDispatcher):
-    def __call__(self, incoming):
-        # NOTE(yamahata): '***' is chosen for consistency with
-        # openstack.common.strutils.mask_password
-        sanitize_key_list = ('auth_token', )
-        sanitized_ctxt = dict((k, '***' if k in sanitize_key_list else v)
-                              for (k, v) in incoming.ctxt.items())
-        LOG.debug('Incoming RPC: ctxt:%s message:%s', sanitized_ctxt,
-                  incoming.message)
-        return super(RPCDispatcher, self).__call__(incoming)
 
 
 class RequestContextSerializer(om_serializer.Serializer):
