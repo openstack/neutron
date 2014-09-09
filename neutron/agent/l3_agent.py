@@ -1025,15 +1025,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         ri.iptables_manager.apply()
 
-    def process_router_floating_ip_addresses(self, ri, ex_gw_port):
-        """Configure IP addresses on router's external gateway interface.
-
-        Ensures addresses for existing floating IPs and cleans up
-        those that should not longer be configured.
-        """
-        fip_statuses = {}
-
-        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
+    def _get_external_device_interface_name(self, ri, ex_gw_port,
+                                            floating_ips):
         if ri.router['distributed']:
             # filter out only FIPs for this host/agent
             floating_ips = [i for i in floating_ips if i['host'] == self.host]
@@ -1045,12 +1038,56 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 if floating_ips and ri.dist_fip_count == 0:
                     self.create_rtr_2_fip_link(ri, floating_ips[0]
                                                ['floating_network_id'])
-                interface_name = self.get_rtr_int_device_name(ri.router_id)
+                return self.get_rtr_int_device_name(ri.router_id)
             else:
                 # there are no fips or agent port, no work to do
-                return fip_statuses
+                return None
+
+        return self.get_external_device_name(ex_gw_port['id'])
+
+    def _add_floating_ip(self, ri, fip, interface_name, device):
+        fip_ip = fip['floating_ip_address']
+        ip_cidr = str(fip_ip) + FLOATING_IP_CIDR_SUFFIX
+        net = netaddr.IPNetwork(ip_cidr)
+        try:
+            device.addr.add(net.version, ip_cidr, str(net.broadcast))
+        except (processutils.UnknownArgumentError,
+                processutils.ProcessExecutionError):
+            # any exception occurred here should cause the floating IP
+            # to be set in error state
+            LOG.warn(_("Unable to configure IP address for "
+                       "floating IP: %s"), fip['id'])
+            return l3_constants.FLOATINGIP_STATUS_ERROR
+        if ri.router['distributed']:
+            # Special Handling for DVR - update FIP namespace
+            # and ri.namespace to handle DVR based FIP
+            self.floating_ip_added_dist(ri, fip)
         else:
-            interface_name = self.get_external_device_name(ex_gw_port['id'])
+            # As GARP is processed in a distinct thread the call below
+            # won't raise an exception to be handled.
+            self._send_gratuitous_arp_packet(
+                ri.ns_name, interface_name, fip_ip)
+        return l3_constants.FLOATINGIP_STATUS_ACTIVE
+
+    def _remove_floating_ip(self, ri, device, ip_cidr):
+        net = netaddr.IPNetwork(ip_cidr)
+        device.addr.delete(net.version, ip_cidr)
+        if ri.router['distributed']:
+            self.floating_ip_removed_dist(ri, ip_cidr)
+
+    def process_router_floating_ip_addresses(self, ri, ex_gw_port):
+        """Configure IP addresses on router's external gateway interface.
+
+        Ensures addresses for existing floating IPs and cleans up
+        those that should not longer be configured.
+        """
+
+        fip_statuses = {}
+        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
+        interface_name = self._get_external_device_interface_name(
+            ri, ex_gw_port, floating_ips)
+        if interface_name is None:
+            return fip_statuses
 
         device = ip_lib.IPDevice(interface_name, self.root_helper,
                                  namespace=ri.ns_name)
@@ -1061,41 +1098,18 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         for fip in floating_ips:
             fip_ip = fip['floating_ip_address']
             ip_cidr = str(fip_ip) + FLOATING_IP_CIDR_SUFFIX
-
             new_cidrs.add(ip_cidr)
-
+            fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ACTIVE
             if ip_cidr not in existing_cidrs:
-                net = netaddr.IPNetwork(ip_cidr)
-                try:
-                    device.addr.add(net.version, ip_cidr, str(net.broadcast))
-                except (processutils.UnknownArgumentError,
-                        processutils.ProcessExecutionError):
-                    # any exception occurred here should cause the floating IP
-                    # to be set in error state
-                    fip_statuses[fip['id']] = (
-                        l3_constants.FLOATINGIP_STATUS_ERROR)
-                    LOG.warn(_("Unable to configure IP address for "
-                               "floating IP: %s"), fip['id'])
-                    continue
-                if ri.router['distributed']:
-                    # Special Handling for DVR - update FIP namespace
-                    # and ri.namespace to handle DVR based FIP
-                    self.floating_ip_added_dist(ri, fip)
-                else:
-                    # As GARP is processed in a distinct thread the call below
-                    # won't raise an exception to be handled.
-                    self._send_gratuitous_arp_packet(
-                        ri.ns_name, interface_name, fip_ip)
-            fip_statuses[fip['id']] = (
-                l3_constants.FLOATINGIP_STATUS_ACTIVE)
+                fip_statuses[fip['id']] = self._add_floating_ip(
+                    ri, fip, interface_name, device)
 
-        # Clean up addresses that no longer belong on the gateway interface.
-        for ip_cidr in existing_cidrs - new_cidrs:
-            if ip_cidr.endswith(FLOATING_IP_CIDR_SUFFIX):
-                net = netaddr.IPNetwork(ip_cidr)
-                device.addr.delete(net.version, ip_cidr)
-                if ri.router['distributed']:
-                    self.floating_ip_removed_dist(ri, ip_cidr)
+        fips_to_remove = (
+            ip_cidr for ip_cidr in existing_cidrs - new_cidrs if
+            ip_cidr.endswith(FLOATING_IP_CIDR_SUFFIX))
+        for ip_cidr in fips_to_remove:
+            self._remove_floating_ip(ri, device, ip_cidr)
+
         return fip_statuses
 
     def _get_ex_gw_port(self, ri):
