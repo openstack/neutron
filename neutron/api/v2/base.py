@@ -140,7 +140,7 @@ class Controller(object):
                 if policy.check(
                     context,
                     '%s:%s' % (self._plugin_handlers[self.SHOW], attr_name),
-                    None,
+                    data,
                     might_not_exist=True):
                     # this attribute is visible, check next one
                     continue
