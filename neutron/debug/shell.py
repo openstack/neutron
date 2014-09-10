@@ -22,21 +22,20 @@ from neutron.agent.linux import interface
 from neutron.debug import debug_agent
 from neutron.openstack.common import importutils
 from neutronclient.common import exceptions as exc
-from neutronclient.common import utils
 from neutronclient import shell
 
 COMMAND_V2 = {
-    'probe-create': utils.import_class(
+    'probe-create': importutils.import_class(
         'neutron.debug.commands.CreateProbe'),
-    'probe-delete': utils.import_class(
+    'probe-delete': importutils.import_class(
         'neutron.debug.commands.DeleteProbe'),
-    'probe-list': utils.import_class(
+    'probe-list': importutils.import_class(
         'neutron.debug.commands.ListProbe'),
-    'probe-clear': utils.import_class(
+    'probe-clear': importutils.import_class(
         'neutron.debug.commands.ClearProbe'),
-    'probe-exec': utils.import_class(
+    'probe-exec': importutils.import_class(
         'neutron.debug.commands.ExecProbe'),
-    'ping-all': utils.import_class(
+    'ping-all': importutils.import_class(
         'neutron.debug.commands.PingAll'),
     #TODO(nati)  ping, netcat , nmap, bench
 }
