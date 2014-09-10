@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-01 06:18+0000\n"
+"POT-Creation-Date: 2014-09-09 06:04+0000\n"
 "PO-Revision-Date: 2014-08-17 05:19+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: German (http://www.transifex.com/projects/p/neutron/language/"
@@ -100,9 +100,40 @@ msgstr "Warten aufgerufen nach dem der Thread abgebrochen wurde. Bereinige."
 msgid "Waiting on %d children to exit"
 msgstr "Warten auf Beenden von %d untergeordneten Elementen"
 
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:80
+msgid "APIC service agent starting ..."
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:97
+msgid "APIC service agent started"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:191
+#, python-format
+msgid "APIC host agent: agent starting on %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:211
+#, python-format
+msgid "APIC host agent: started on %s"
+msgstr ""
+
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
 msgid "Agent out of sync with plugin!"
 msgstr "Agent nicht synchron mit Plug-in!"
+
+#: neutron/plugins/nuage/syncmanager.py:47
+msgid "Starting the sync between Neutron and VSD"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:60
+msgid "Sync between Neutron and VSD completed successfully"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:57
+#, python-format
+msgid "Scanning config files %s for Cisco CSR configurations"
+msgstr ""
 
 #: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63
 #, python-format

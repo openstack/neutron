@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-01 06:18+0000\n"
+"POT-Creation-Date: 2014-09-09 06:04+0000\n"
 "PO-Revision-Date: 2014-06-30 19:27+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
@@ -29,6 +29,18 @@ msgstr ""
 #: neutron/policy.py:137
 #, python-format
 msgid "Unable to find data type descriptor for attribute %s"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:179
+msgid ""
+"security_group_info_for_devices rpc call not supported by the server, "
+"falling back to old security_group_rules_for_devices which scales worse."
+msgstr ""
+
+#: neutron/agent/linux/keepalived.py:358
+msgid ""
+"A previous instance of keepalived seems to be dead, unable to restart it, a "
+"new instance will be spawned"
 msgstr ""
 
 #: neutron/db/l3_agentschedulers_db.py:103
@@ -53,4 +65,71 @@ msgstr "pid %d non incluso nell'elenco child"
 #: neutron/plugins/ml2/drivers/type_tunnel.py:143
 #, python-format
 msgid "%(type)s tunnel %(id)s not found"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:68
+#, python-format
+msgid "Create network postcommit failed for network %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:78
+#, python-format
+msgid "Create subnet postcommit failed for subnet %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:91
+#, python-format
+msgid "Create port postcommit failed for port %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:110
+#, python-format
+msgid "Add interface postcommit failed for port %s"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:299
+#, python-format
+msgid "Subnet %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:317
+#, python-format
+msgid "Router %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:329
+#, python-format
+msgid ""
+"Route with destination %(dest)s and nexthop %(hop)s not found in neutron for "
+"sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:343
+#, python-format
+msgid "Security group %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:354
+#, python-format
+msgid "Security group rule %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:364
+#, python-format
+msgid "Floating ip %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:376
+#, python-format
+msgid "IP allocation for floating ip %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:387
+#, python-format
+msgid "Net-partition %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:397
+#, python-format
+msgid "VM port %s not found in neutron for sync"
 msgstr ""

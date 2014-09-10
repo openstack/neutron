@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-01 06:19+0000\n"
+"POT-Creation-Date: 2014-09-09 06:04+0000\n"
 "PO-Revision-Date: 2014-06-30 20:07+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
@@ -29,6 +29,22 @@ msgstr ""
 #: neutron/policy.py:280
 #, python-format
 msgid "Policy check error while calling %s!"
+msgstr ""
+
+#: neutron/agent/linux/external_process.py:230
+#, python-format
+msgid ""
+"%(service)s for %(resource_type)s with uuid %(uuid)s not found. The process "
+"should not have died"
+msgstr ""
+
+#: neutron/agent/linux/external_process.py:250
+#, python-format
+msgid "respawning %(service)s for uuid %(uuid)s"
+msgstr ""
+
+#: neutron/agent/linux/external_process.py:256
+msgid "Exiting agent as programmed in check_child_processes_actions"
 msgstr ""
 
 #: neutron/cmd/sanity_check.py:58
@@ -70,8 +86,35 @@ msgstr ""
 msgid "Skipping unreasonable VXLAN VNI range %(tun_min)s:%(tun_max)s"
 msgstr ""
 
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:112
+msgid "APIC service agent: failed in reporting state"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:207
+#, python-format
+msgid "No such interface (ignored): %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:257
+msgid "APIC service agent: exception in LLDP parsing"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:312
+#, python-format
+msgid "APIC service agent: can not get MACaddr for %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:328
+msgid "APIC host agent: failed in reporting state"
+msgstr ""
+
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:386
 msgid "Error in agent event loop"
+msgstr ""
+
+#: neutron/plugins/nuage/syncmanager.py:56
+#, python-format
+msgid "Cannot complete the sync between Neutron and VSD because of error:%s"
 msgstr ""
 
 #: neutron/plugins/vmware/plugins/base.py:2089
@@ -79,4 +122,55 @@ msgstr ""
 msgid ""
 "Rolling back database changes for gateway device %s because of an error in "
 "the NSX backend"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:62
+#, python-format
+msgid "Config file parse error: %s"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:76
+#, python-format
+msgid "Ignoring Cisco CSR configuration entry - router IP %s is not valid"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:89
+#, python-format
+msgid "Ignoring Cisco CSR for router %(router)s - missing %(field)s setting"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:97
+#, python-format
+msgid ""
+"Ignoring Cisco CSR for router %s - timeout is not a floating point number"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:113
+#, python-format
+msgid "Ignoring Cisco CSR for router %s - local tunnel is not an IP address"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:119
+#, python-format
+msgid "Malformed interface name for Cisco CSR router entry - %s"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:155
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:202
+msgid "No routers found in INI file!"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:174
+#, python-format
+msgid "Unable to lookup router ID based on router's public IP (%s) in INI file"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:177
+#, python-format
+msgid "No matching routers on host %s"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:211
+#, python-format
+msgid "Unable to find host for router %s"
 msgstr ""
