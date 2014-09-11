@@ -158,13 +158,6 @@ class OFANeutronAgentRyuApp(app_manager.RyuApp):
             LOG.exception(_LE("Agent failed to create agent config map"))
             raise SystemExit(1)
 
-        is_xen_compute_host = ('rootwrap-xen-dom0' in
-                               agent_config['root_helper'])
-        if is_xen_compute_host:
-            # Force ip_lib to always use the root helper to ensure that ip
-            # commands target xen dom0 rather than domU.
-            cfg.CONF.set_default('ip_lib_force_root', True)
-
         agent = OFANeutronAgent(ryuapp, **agent_config)
         self.arplib.set_bridge(agent.int_br)
 
