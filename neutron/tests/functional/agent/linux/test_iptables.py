@@ -12,14 +12,19 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import os.path
+
 import testtools
 
 from neutron.agent.linux import iptables_manager
-from neutron.tests.functional.agent.linux import base
+from neutron.agent.linux import utils
+from neutron.tests import base
+from neutron.tests.functional.agent.linux import base as linux_base
+from neutron.tests.functional.agent.linux.bin import ipt_binname
 from neutron.tests.functional.agent.linux import helpers
 
 
-class IptablesManagerTestCase(base.BaseIPVethTestCase):
+class IptablesManagerTestCase(linux_base.BaseIPVethTestCase):
     DIRECTION_CHAIN_MAPPER = {'ingress': 'INPUT',
                               'egress': 'OUTPUT'}
     PROTOCOL_BLOCK_RULE = '-p %s -j DROP'
@@ -85,25 +90,28 @@ class IptablesManagerTestCase(base.BaseIPVethTestCase):
     def test_icmp(self):
         pinger = helpers.Pinger(self.client_ns)
         pinger.assert_ping(self.DST_ADDRESS)
-        self.server_fw.ipv4['filter'].add_rule('INPUT', base.ICMP_BLOCK_RULE)
+        self.server_fw.ipv4['filter'].add_rule('INPUT',
+                                               linux_base.ICMP_BLOCK_RULE)
         self.server_fw.apply()
         pinger.assert_no_ping(self.DST_ADDRESS)
         self.server_fw.ipv4['filter'].remove_rule('INPUT',
-                                                 base.ICMP_BLOCK_RULE)
+                                                  linux_base.ICMP_BLOCK_RULE)
         self.server_fw.apply()
         pinger.assert_ping(self.DST_ADDRESS)
 
     def test_mangle_icmp(self):
         pinger = helpers.Pinger(self.client_ns)
         pinger.assert_ping(self.DST_ADDRESS)
-        self.server_fw.ipv4['mangle'].add_rule('INPUT', base.ICMP_MARK_RULE)
-        self.server_fw.ipv4['filter'].add_rule('INPUT', base.MARKED_BLOCK_RULE)
+        self.server_fw.ipv4['mangle'].add_rule('INPUT',
+                                               linux_base.ICMP_MARK_RULE)
+        self.server_fw.ipv4['filter'].add_rule('INPUT',
+                                               linux_base.MARKED_BLOCK_RULE)
         self.server_fw.apply()
         pinger.assert_no_ping(self.DST_ADDRESS)
         self.server_fw.ipv4['mangle'].remove_rule('INPUT',
-                                                  base.ICMP_MARK_RULE)
+                                                  linux_base.ICMP_MARK_RULE)
         self.server_fw.ipv4['filter'].remove_rule('INPUT',
-                                                  base.MARKED_BLOCK_RULE)
+                                                  linux_base.MARKED_BLOCK_RULE)
         self.server_fw.apply()
         pinger.assert_ping(self.DST_ADDRESS)
 
@@ -130,3 +138,24 @@ class IptablesManagerTestCase(base.BaseIPVethTestCase):
 
     def test_udp_output(self):
         self._test_with_nc(self.client_fw, 'egress', port=None, udp=True)
+
+
+class IptablesManagerNonRootTestCase(base.BaseTestCase):
+    @staticmethod
+    def _normalize_module_name(name):
+        for suf in ['.pyc', '.pyo']:
+            if name.endswith(suf):
+                return name[:-len(suf)] + '.py'
+        return name
+
+    def _test_binary_name(self, module, *extra_options):
+        executable = self._normalize_module_name(module.__file__)
+        expected = os.path.basename(executable)[:16]
+        observed = utils.execute([executable] + list(extra_options)).rstrip()
+        self.assertEqual(expected, observed)
+
+    def test_binary_name(self):
+        self._test_binary_name(ipt_binname)
+
+    def test_binary_name_eventlet_spawn(self):
+        self._test_binary_name(ipt_binname, 'spawn')
