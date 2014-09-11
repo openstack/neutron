@@ -791,11 +791,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
     def test_create_no_keystone_env(self):
         data = {'name': 'net1'}
-        res = self.api.post(_get_path('networks', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+        self._test_create_failure_bad_request('networks', data)
 
     def test_create_with_keystone_env(self):
         tenant_id = _uuid()
@@ -827,45 +823,25 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         tenant_id = _uuid()
         data = {'network': {'name': 'net1', 'tenant_id': tenant_id}}
         env = {'neutron.context': context.Context('', tenant_id + "bad")}
-        res = self.api.post(_get_path('networks', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True,
-                            extra_environ=env)
-        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+        self._test_create_failure_bad_request('networks', data,
+                                              extra_environ=env)
 
     def test_create_no_body(self):
         data = {'whoa': None}
-        res = self.api.post(_get_path('networks', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+        self._test_create_failure_bad_request('networks', data)
 
     def test_create_no_resource(self):
         data = {}
-        res = self.api.post(_get_path('networks', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+        self._test_create_failure_bad_request('networks', data)
 
     def test_create_missing_attr(self):
         data = {'port': {'what': 'who', 'tenant_id': _uuid()}}
-        res = self.api.post(_get_path('ports', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True)
-        self.assertEqual(res.status_int, 400)
+        self._test_create_failure_bad_request('ports', data)
 
     def test_create_readonly_attr(self):
         data = {'network': {'name': 'net1', 'tenant_id': _uuid(),
                             'status': "ACTIVE"}}
-        res = self.api.post(_get_path('networks', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True)
-        self.assertEqual(res.status_int, 400)
+        self._test_create_failure_bad_request('networks', data)
 
     def test_create_bulk(self):
         data = {'networks': [{'name': 'net1',
@@ -888,38 +864,28 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                             content_type='application/' + self.fmt)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
 
-    def _test_create_bulk_failure(self, resource, data):
-        # TODO(kevinbenton): update the rest of the failure cases to use
-        # this.
+    def _test_create_failure_bad_request(self, resource, data, **kwargs):
         res = self.api.post(_get_path(resource, fmt=self.fmt),
                             self.serialize(data),
                             content_type='application/' + self.fmt,
-                            expect_errors=True)
+                            expect_errors=True, **kwargs)
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_bulk_networks_none(self):
-        self._test_create_bulk_failure('networks', {'networks': None})
+        self._test_create_failure_bad_request('networks', {'networks': None})
 
     def test_create_bulk_networks_empty_list(self):
-        self._test_create_bulk_failure('networks', {'networks': []})
+        self._test_create_failure_bad_request('networks', {'networks': []})
 
     def test_create_bulk_missing_attr(self):
         data = {'ports': [{'what': 'who', 'tenant_id': _uuid()}]}
-        res = self.api.post(_get_path('ports', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True)
-        self.assertEqual(res.status_int, 400)
+        self._test_create_failure_bad_request('ports', data)
 
     def test_create_bulk_partial_body(self):
         data = {'ports': [{'device_id': 'device_1',
                            'tenant_id': _uuid()},
                           {'tenant_id': _uuid()}]}
-        res = self.api.post(_get_path('ports', fmt=self.fmt),
-                            self.serialize(data),
-                            content_type='application/' + self.fmt,
-                            expect_errors=True)
-        self.assertEqual(res.status_int, 400)
+        self._test_create_failure_bad_request('ports', data)
 
     def test_create_attr_not_specified(self):
         net_id = _uuid()
