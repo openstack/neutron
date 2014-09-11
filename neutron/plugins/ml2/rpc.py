@@ -40,7 +40,9 @@ class RpcCallbacks(n_rpc.RpcCallback,
     #   1.0 Initial version (from openvswitch/linuxbridge)
     #   1.1 Support Security Group RPC
     #   1.2 Support get_devices_details_list
-    #   1.3 Support Distributed Virtual Router (DVR)
+    #   1.3 get_device_details rpc signature upgrade to obtain 'host' and
+    #       return value to include fixed_ips and device_owner for
+    #       the device port
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
