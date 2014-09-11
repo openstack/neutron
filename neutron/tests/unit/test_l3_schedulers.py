@@ -171,6 +171,20 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         mock_get.assert_called_once_with(mock.ANY, self.plugin)
         self.assertEqual(expected_routers, unscheduled_routers)
 
+    def test_get_routers_to_schedule_exclude_distributed(self):
+        routers = [
+            {'id': 'foo_router1', 'distributed': True}, {'id': 'foo_router_2'}
+        ]
+        expected_routers = [{'id': 'foo_router_2'}]
+        with mock.patch.object(self.scheduler,
+                               'get_unscheduled_routers') as mock_get:
+            mock_get.return_value = routers
+            unscheduled_routers = self.scheduler.get_routers_to_schedule(
+                mock.ANY, self.plugin,
+                router_ids=None, exclude_distributed=True)
+        mock_get.assert_called_once_with(mock.ANY, self.plugin)
+        self.assertEqual(expected_routers, unscheduled_routers)
+
     def _test_get_routers_can_schedule(self, routers, agent, target_routers):
         self.plugin.get_l3_agent_candidates.return_value = agent
         result = self.scheduler.get_routers_can_schedule(
@@ -206,15 +220,6 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         with mock.patch.object(self.scheduler, 'bind_router') as mock_bind:
             self.scheduler.bind_routers(mock.ANY, routers, mock.ANY)
         mock_bind.assert_called_once_with(mock.ANY, 'foo_router', mock.ANY)
-
-    def test_bind_routers_dvr(self):
-        routers = [{'id': 'foo_router', 'distributed': True}]
-        agent = agents_db.Agent(id='foo_agent')
-        with mock.patch.object(self.scheduler, 'dvr_has_binding') as mock_dvr:
-            with mock.patch.object(self.scheduler, 'bind_router') as mock_bind:
-                self.scheduler.bind_routers(mock.ANY, routers, agent)
-        mock_dvr.assert_called_once_with(mock.ANY, 'foo_router', 'foo_agent')
-        self.assertFalse(mock_bind.called)
 
 
 class L3SchedulerTestExtensionManager(object):

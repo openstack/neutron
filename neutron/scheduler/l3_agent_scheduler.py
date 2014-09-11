@@ -41,23 +41,13 @@ class L3Scheduler(object):
         """
         pass
 
-    def dvr_has_binding(self, context, router_id, l3_agent_id):
-        router_binding_model = l3_agentschedulers_db.RouterL3AgentBinding
-
-        query = context.session.query(router_binding_model)
-        query = query.filter(router_binding_model.router_id == router_id,
-                             router_binding_model.l3_agent_id == l3_agent_id)
-
-        return query.count() > 0
-
     def filter_unscheduled_routers(self, context, plugin, routers):
         """Filter from list of routers the ones that are not scheduled."""
         unscheduled_routers = []
         for router in routers:
             l3_agents = plugin.get_l3_agents_hosting_routers(
                 context, [router['id']], admin_state_up=True)
-            # TODO(armando-migliaccio): remove dvr-related check
-            if l3_agents and not router.get('distributed', False):
+            if l3_agents:
                 LOG.debug(('Router %(router_id)s has already been '
                            'hosted by L3 agent %(agent_id)s'),
                           {'router_id': router['id'],
@@ -79,19 +69,28 @@ class L3Scheduler(object):
                 context, filters={'id': unscheduled_router_ids})
         return []
 
-    def get_routers_to_schedule(self, context, plugin, router_ids=None):
+    def get_routers_to_schedule(self, context, plugin,
+                                router_ids=None, exclude_distributed=False):
         """Verify that the routers specified need to be scheduled.
 
         :param context: the context
         :param plugin: the core plugin
         :param router_ids: the list of routers to be checked for scheduling
+        :param exclude_distributed: whether or not to consider dvr routers
         :returns: the list of routers to be scheduled
         """
         if router_ids is not None:
             routers = plugin.get_routers(context, filters={'id': router_ids})
-            return self.filter_unscheduled_routers(context, plugin, routers)
+            unscheduled_routers = self.filter_unscheduled_routers(
+                context, plugin, routers)
         else:
-            return self.get_unscheduled_routers(context, plugin)
+            unscheduled_routers = self.get_unscheduled_routers(context, plugin)
+
+        if exclude_distributed:
+            unscheduled_routers = [
+                r for r in unscheduled_routers if not r.get('distributed')
+            ]
+        return unscheduled_routers
 
     def get_routers_can_schedule(self, context, plugin, routers, l3_agent):
         """Get the subset of routers that can be scheduled on the L3 agent."""
@@ -121,8 +120,11 @@ class L3Scheduler(object):
         if not l3_agent:
             return False
 
+        # NOTE(armando-migliaccio): DVR routers should not be auto
+        # scheduled because auto-scheduling may interfere with the
+        # placement rules for IR and SNAT namespaces.
         unscheduled_routers = self.get_routers_to_schedule(
-            context, plugin, router_ids)
+            context, plugin, router_ids, exclude_distributed=True)
         if not unscheduled_routers:
             return False
 
@@ -173,9 +175,6 @@ class L3Scheduler(object):
 
     def bind_routers(self, context, routers, l3_agent):
         for router in routers:
-            if (router.get('distributed', False) and
-                self.dvr_has_binding(context, router['id'], l3_agent.id)):
-                    continue
             self.bind_router(context, router['id'], l3_agent)
 
     def bind_router(self, context, router_id, chosen_agent):
