@@ -170,7 +170,7 @@ class BaseMigrateToMl2_Icehouse(object):
           INSERT INTO ml2_vlan_allocations
             SELECT physical_network, vlan_id, allocated
               FROM %(source_table)s
-              WHERE allocated = 1
+              WHERE allocated = TRUE
         """) % {'source_table': self.vlan_allocation_table_name})
 
     def get_port_segment_map(self, engine):
@@ -389,7 +389,7 @@ class MigrateOpenvswitchToMl2_Icehouse(BaseMigrateToMl2_Icehouse):
               INSERT INTO ml2_gre_allocations
                 SELECT tunnel_id as gre_id, allocated
                   FROM ovs_tunnel_allocations
-                  WHERE allocated = 1
+                  WHERE allocated = TRUE
             """)
             engine.execute("""
               INSERT INTO ml2_gre_endpoints
@@ -403,7 +403,7 @@ class MigrateOpenvswitchToMl2_Icehouse(BaseMigrateToMl2_Icehouse):
               INSERT INTO ml2_vxlan_allocations
                 SELECT tunnel_id as vxlan_vni, allocated
                   FROM ovs_tunnel_allocations
-                  WHERE allocated = 1
+                  WHERE allocated = TRUE
             """)
             engine.execute(sa.text("""
               INSERT INTO ml2_vxlan_endpoints
