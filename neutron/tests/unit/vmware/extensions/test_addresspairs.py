@@ -13,10 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.tests.unit import test_extension_allowedaddresspairs as ext_pairs
 from neutron.tests.unit.vmware import test_nsx_plugin
 
 
 class TestAllowedAddressPairs(test_nsx_plugin.NsxPluginV2TestCase,
                               ext_pairs.TestAllowedAddressPairs):
-    pass
+
+    # TODO(arosen): move to ext_pairs.TestAllowedAddressPairs once all
+    # plugins do this correctly.
+    def test_create_port_no_allowed_address_pairs(self):
+        with self.network() as net:
+            res = self._create_port(self.fmt, net['network']['id'])
+            port = self.deserialize(self.fmt, res)
+            self.assertEqual(port['port'][addr_pair.ADDRESS_PAIRS], [])
+            self._delete('ports', port['port']['id'])
