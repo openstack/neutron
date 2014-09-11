@@ -733,7 +733,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         for c, r in self.metadata_nat_rules():
             ri.iptables_manager.ipv4['nat'].add_rule(c, r)
         ri.iptables_manager.apply()
-        super(L3NATAgent, self).process_router_add(ri)
+        self.process_router_add(ri)
         if self.conf.enable_metadata_proxy:
             self._spawn_metadata_proxy(ri.router_id, ri.ns_name)
 
@@ -1202,6 +1202,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             root_helper=self.root_helper,
             namespace=snat_ns_name,
             use_ipv6=self.use_ipv6)
+        # kicks the FW Agent to add rules for the snat namespace
+        self.process_router_add(ri)
 
     def external_gateway_added(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
@@ -1523,6 +1525,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         device.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
         #setup the NAT rules and chains
         self._handle_router_fip_nat_rules(ri, rtr_2_fip_name, 'add_rules')
+        # kicks the FW Agent to add rules for the IR namespace if configured
+        self.process_router_add(ri)
 
     def floating_ip_added_dist(self, ri, fip):
         """Add floating IP to FIP namespace."""

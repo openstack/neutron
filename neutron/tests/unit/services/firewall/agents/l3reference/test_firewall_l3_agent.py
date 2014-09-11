@@ -249,6 +249,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
                                'admin_state_up': True}]
         fake_router = {'id': 1111, 'tenant_id': 2}
         self.api.plugin_rpc = mock.Mock()
+        agent_mode = 'legacy'
         ri = mock.Mock()
         ri.router = fake_router
         routers = [ri.router]
@@ -280,6 +281,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
                 ri.router['tenant_id'])
             mock_get_firewalls_for_tenant.assert_called_once_with(ctx)
             mock_driver_update_firewall.assert_called_once_with(
+                agent_mode,
                 routers,
                 fake_firewall_list[0])
 
@@ -292,6 +294,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
         fake_firewall_list = [{'id': 0, 'tenant_id': 1,
                                'status': constants.PENDING_DELETE}]
         fake_router = {'id': 1111, 'tenant_id': 2}
+        agent_mode = 'legacy'
         self.api.plugin_rpc = mock.Mock()
         ri = mock.Mock()
         ri.router = fake_router
@@ -324,6 +327,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
                 ri.router['tenant_id'])
             mock_get_firewalls_for_tenant.assert_called_once_with(ctx)
             mock_driver_delete_firewall.assert_called_once_with(
+                agent_mode,
                 routers,
                 fake_firewall_list[0])
 
