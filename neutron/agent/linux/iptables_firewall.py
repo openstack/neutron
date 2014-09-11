@@ -39,9 +39,6 @@ DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
 IPSET_DIRECTION = {INGRESS_DIRECTION: 'src',
                    EGRESS_DIRECTION: 'dst'}
 LINUX_DEV_LEN = 14
-IPSET_CHAIN_LEN = 20
-IPSET_CHANGE_BULK_THRESHOLD = 10
-IPSET_ADD_BULK_THRESHOLD = 5
 comment_rule = iptables_manager.comment_rule
 
 
@@ -69,7 +66,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # List of security group member ips for ports residing on this host
         self.sg_members = {}
         self.pre_sg_members = None
-        self.ipset_chains = {}
         self.enable_ipset = cfg.CONF.SECURITYGROUP.enable_ipset
 
     @property
@@ -338,8 +334,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         security_group_rules += self._select_sg_rules_for_port(port, direction)
         if self.enable_ipset:
             remote_sg_ids = self._get_remote_sg_ids(port, direction)
-            # update the corresponding ipset chain member
-            self._update_ipset_chain_member(remote_sg_ids)
+            # update the corresponding ipset members
+            self._update_ipset_members(remote_sg_ids)
         # split groups by ip version
         # for ipv4, iptables command is used
         # for ipv6, iptables6 command is used
@@ -365,56 +361,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _get_cur_sg_member_ips(self, sg_id, ethertype):
         return self.sg_members.get(sg_id, {}).get(ethertype, [])
 
-    def _get_pre_sg_member_ips(self, sg_id, ethertype):
-        return self.pre_sg_members.get(sg_id, {}).get(ethertype, [])
-
-    def _get_new_sg_member_ips(self, sg_id, ethertype):
-        add_member_ips = (set(self._get_cur_sg_member_ips(sg_id, ethertype)) -
-                          set(self._get_pre_sg_member_ips(sg_id, ethertype)))
-        return list(add_member_ips)
-
-    def _get_deleted_sg_member_ips(self, sg_id, ethertype):
-        del_member_ips = (set(self._get_pre_sg_member_ips(sg_id, ethertype)) -
-                          set(self._get_cur_sg_member_ips(sg_id, ethertype)))
-        return list(del_member_ips)
-
-    def _bulk_set_ips_to_chain(self, chain_name, member_ips, ethertype):
-        self.ipset.refresh_ipset_chain_by_name(chain_name, member_ips,
-                                               ethertype)
-        self.ipset_chains[chain_name] = member_ips
-
-    def _add_ips_to_ipset_chain(self, chain_name, add_ips):
-        for ip in add_ips:
-            if ip not in self.ipset_chains[chain_name]:
-                self.ipset.add_member_to_ipset_chain(chain_name, ip)
-                self.ipset_chains[chain_name].append(ip)
-
-    def _del_ips_from_ipset_chain(self, chain_name, del_ips):
-        if chain_name in self.ipset_chains:
-            for del_ip in del_ips:
-                if del_ip in self.ipset_chains[chain_name]:
-                    self.ipset.del_ipset_chain_member(chain_name, del_ip)
-                    self.ipset_chains[chain_name].remove(del_ip)
-
-    def _update_ipset_chain_member(self, security_group_ids):
+    def _update_ipset_members(self, security_group_ids):
         for ethertype, sg_ids in security_group_ids.items():
             for sg_id in sg_ids:
-                add_ips = self._get_new_sg_member_ips(sg_id, ethertype)
-                del_ips = self._get_deleted_sg_member_ips(sg_id, ethertype)
                 cur_member_ips = self._get_cur_sg_member_ips(sg_id, ethertype)
-                chain_name = ethertype + sg_id[:IPSET_CHAIN_LEN]
-                if chain_name not in self.ipset_chains and cur_member_ips:
-                    self.ipset_chains[chain_name] = []
-                    self.ipset.create_ipset_chain(chain_name, ethertype)
-                    self._bulk_set_ips_to_chain(chain_name,
-                                                cur_member_ips, ethertype)
-                elif (len(add_ips) + len(del_ips)
-                      < IPSET_CHANGE_BULK_THRESHOLD):
-                    self._add_ips_to_ipset_chain(chain_name, add_ips)
-                    self._del_ips_from_ipset_chain(chain_name, del_ips)
-                else:
-                    self._bulk_set_ips_to_chain(chain_name,
-                                                cur_member_ips, ethertype)
+                if cur_member_ips:
+                    self.ipset.set_members(sg_id, ethertype, cur_member_ips)
 
     def _generate_ipset_chain(self, sg_rule, remote_gid):
         iptables_rules = []
@@ -429,12 +381,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                sg_rule.get('port_range_max'))
         direction = sg_rule.get('direction')
         ethertype = sg_rule.get('ethertype')
-        # the length of ipset chain name require less than 31
-        # characters
-        ipset_chain_name = (ethertype + remote_gid[:IPSET_CHAIN_LEN])
-        if ipset_chain_name in self.ipset_chains:
+
+        if self.ipset.set_exists(remote_gid, ethertype):
             args += ['-m set', '--match-set',
-                     ipset_chain_name,
+                     self.ipset.get_name(remote_gid, ethertype),
                      IPSET_DIRECTION[direction]]
             args += ['-j RETURN']
             iptables_rules += [' '.join(args)]
@@ -539,8 +489,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._defer_apply = True
 
     def _remove_unused_security_group_info(self):
-        need_removed_ipset_chains = {constants.IPv4: set(),
-                                     constants.IPv6: set()}
+        need_removed_ipsets = {constants.IPv4: set(),
+                               constants.IPv6: set()}
         need_removed_security_groups = set()
         remote_group_ids = {constants.IPv4: set(),
                             constants.IPv6: set()}
@@ -554,24 +504,20 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             cur_group_ids.update(groups)
 
         for ethertype in [constants.IPv4, constants.IPv6]:
-            need_removed_ipset_chains[ethertype].update(
+            need_removed_ipsets[ethertype].update(
                 [x for x in self.pre_sg_members if x not in remote_group_ids[
                     ethertype]])
             need_removed_security_groups.update(
                 [x for x in self.pre_sg_rules if x not in cur_group_ids])
 
-        # Remove unused remote ipset set
-        for ethertype, remove_chain_ids in need_removed_ipset_chains.items():
-            for remove_chain_id in remove_chain_ids:
-                if self.sg_members.get(remove_chain_id, {}).get(ethertype, []):
-                    self.sg_members[remove_chain_id][ethertype] = []
+        # Remove unused ip sets (sg_members and kernel ipset if we
+        # are using ipset)
+        for ethertype, remove_set_ids in need_removed_ipsets.items():
+            for remove_set_id in remove_set_ids:
+                if self.sg_members.get(remove_set_id, {}).get(ethertype, []):
+                    self.sg_members[remove_set_id][ethertype] = []
                 if self.enable_ipset:
-                    removed_chain = (
-                        ethertype + remove_chain_id[:IPSET_CHAIN_LEN])
-                    if removed_chain in self.ipset_chains:
-                        self.ipset.destroy_ipset_chain_by_name(
-                            removed_chain)
-                        self.ipset_chains.pop(removed_chain, None)
+                    self.ipset.destroy(remove_set_id, ethertype)
 
         # Remove unused remote security group member ips
         sg_ids = self.sg_members.keys()
