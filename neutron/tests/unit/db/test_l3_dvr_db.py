@@ -23,7 +23,6 @@ from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit import testlib_api
 
-
 _uuid = uuidutils.generate_uuid
 
 
@@ -213,6 +212,32 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             gf.return_value = floatingip
             self.mixin.delete_floatingip(self.ctx, fip_id)
             return vf
+
+    def _disassociate_floatingip_setup(self, port_id=None, floatingip=None):
+        with contextlib.nested(
+            mock.patch.object(self.mixin, '_get_floatingip_on_port'),
+            mock.patch.object(self.mixin,
+                              'clear_unused_fip_agent_gw_port'),
+                              ) as (gf, vf):
+            gf.return_value = floatingip
+            self.mixin.disassociate_floatingips(
+                self.ctx, port_id, do_notify=False)
+            return vf
+
+    def test_disassociate_floatingip_with_vm_port(self):
+        port_id = '1234'
+        floatingip = {
+            'id': _uuid(),
+            'fixed_port_id': 1234,
+            'floating_network_id': _uuid()
+        }
+        mock_disassociate_fip = self._disassociate_floatingip_setup(
+            port_id=port_id, floatingip=floatingip)
+        self.assertTrue(mock_disassociate_fip.called)
+
+    def test_disassociate_floatingip_with_no_vm_port(self):
+        mock_disassociate_fip = self._disassociate_floatingip_setup()
+        self.assertFalse(mock_disassociate_fip.called)
 
     def test_delete_floatingip_without_internal_port(self):
         floatingip = {
