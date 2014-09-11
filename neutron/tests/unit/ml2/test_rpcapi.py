@@ -17,9 +17,12 @@
 Unit Tests for ml2 rpc
 """
 
+import collections
+
 import mock
 
 from neutron.agent import rpc as agent_rpc
+from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -40,6 +43,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.manager.get_service_plugins.return_value = {
             'L3_ROUTER_NAT': self.l3plugin
         }
+        self.plugin = self.manager.get_plugin()
 
     def _test_update_device_up(self, extensions, kwargs):
         with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -74,6 +78,89 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             exceptions.PortNotFound(port_id='foo_port_id'))
         self._test_update_device_up(['router', 'dvr'], kwargs)
         self.assertTrue(self.l3plugin.dvr_vmarp_table_update.call_count)
+
+    def test_get_device_details_without_port_context(self):
+        self.plugin.get_bound_port_context.return_value = None
+        self.assertEqual(
+            {'device': 'fake_device'},
+            self.callbacks.get_device_details('fake_context',
+                                              device='fake_device'))
+
+    def test_get_device_details_port_context_without_bounded_segment(self):
+        self.plugin.get_bound_port_context().bound_segment = None
+        self.assertEqual(
+            {'device': 'fake_device'},
+            self.callbacks.get_device_details('fake_context',
+                                              device='fake_device'))
+
+    def test_get_device_details_port_status_equal_new_status(self):
+        port = collections.defaultdict(lambda: 'fake')
+        self.plugin.get_bound_port_context().current = port
+        for admin_state_up in (True, False):
+            new_status = (constants.PORT_STATUS_BUILD if admin_state_up
+                          else constants.PORT_STATUS_DOWN)
+            for status in (constants.PORT_STATUS_ACTIVE,
+                           constants.PORT_STATUS_BUILD,
+                           constants.PORT_STATUS_DOWN,
+                           constants.PORT_STATUS_ERROR):
+                port['admin_state_up'] = admin_state_up
+                port['status'] = status
+                self.plugin.update_port_status.reset_mock()
+                self.callbacks.get_device_details('fake_context',
+                                                  host='fake_host')
+                self.assertEqual(status == new_status,
+                                 not self.plugin.update_port_status.called)
+
+    def test_get_devices_details_list(self):
+        devices = [1, 2, 3, 4, 5]
+        kwargs = {'host': 'fake_host', 'agent_id': 'fake_agent_id'}
+        with mock.patch.object(self.callbacks, 'get_device_details',
+                               side_effect=devices) as f:
+            res = self.callbacks.get_devices_details_list('fake_context',
+                                                          devices=devices,
+                                                          **kwargs)
+            self.assertEqual(devices, res)
+            self.assertEqual(len(devices), f.call_count)
+            calls = [mock.call('fake_context', device=i, **kwargs)
+                     for i in devices]
+            f.assert_has_calls(calls)
+
+    def test_get_devices_details_list_with_empty_devices(self):
+        with mock.patch.object(self.callbacks, 'get_device_details') as f:
+            res = self.callbacks.get_devices_details_list('fake_context')
+            self.assertFalse(f.called)
+            self.assertEqual([], res)
+
+    def _test_update_device_not_bound_to_host(self, func):
+        self.plugin.port_bound_to_host.return_value = False
+        self.plugin._device_to_port_id.return_value = 'fake_port_id'
+        res = func('fake_context', device='fake_device', host='fake_host')
+        self.plugin.port_bound_to_host.assert_called_once_with('fake_context',
+                                                               'fake_port_id',
+                                                               'fake_host')
+        return res
+
+    def test_update_device_up_with_device_not_bound_to_host(self):
+        self.assertIsNone(self._test_update_device_not_bound_to_host(
+            self.callbacks.update_device_up))
+
+    def test_update_device_down_with_device_not_bound_to_host(self):
+        self.assertEqual(
+            {'device': 'fake_device', 'exists': True},
+            self._test_update_device_not_bound_to_host(
+                self.callbacks.update_device_down))
+
+    def test_update_device_down_call_update_port_status(self):
+        self.plugin.update_port_status.return_value = False
+        self.plugin._device_to_port_id.return_value = 'fake_port_id'
+        self.assertEqual(
+            {'device': 'fake_device', 'exists': False},
+            self.callbacks.update_device_down('fake_context',
+                                              device='fake_device',
+                                              host='fake_host'))
+        self.plugin.update_port_status.assert_called_once_with(
+            'fake_context', 'fake_port_id', constants.PORT_STATUS_DOWN,
+            'fake_host')
 
 
 class RpcApiTestCase(base.BaseTestCase):
