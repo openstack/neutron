@@ -174,7 +174,7 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                                 'tenant_id', 'port_name',
                                 'network_id', '10.10.10.10')
         self.plugin_instance._core_plugin.get_ports.assert_called_once()
-        self.plugin_instance._core_plugin.create_port.assert_has_calls([])
+        self.assertFalse(self.plugin_instance._core_plugin.create_port.called)
 
     def test_rest_client_recover_was_called(self):
         """Call the real REST client and verify _recover is called."""
