@@ -43,10 +43,11 @@ class TunnelTypeDriver(helpers.TypeDriverHelper):
         """Synchronize type_driver allocation table with configured ranges."""
 
     @abc.abstractmethod
-    def add_endpoint(self, ip):
+    def add_endpoint(self, ip, host):
         """Register the endpoint in the type_driver database.
 
-        param ip: the ip of the endpoint
+        param ip: the IP address of the endpoint
+        param host: the Host name of the endpoint
         """
         pass
 
@@ -54,7 +55,42 @@ class TunnelTypeDriver(helpers.TypeDriverHelper):
     def get_endpoints(self):
         """Get every endpoint managed by the type_driver
 
-        :returns a list of dict [{id:endpoint_id, ip_address:endpoint_ip},..]
+        :returns a list of dict [{ip_address:endpoint_ip, host:endpoint_host},
+        ..]
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_endpoint_by_host(self, host):
+        """Get endpoint for a given host managed by the type_driver
+
+        param host: the Host name of the endpoint
+
+        if host found in type_driver database
+           :returns db object for that particular host
+        else
+           :returns None
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_endpoint_by_ip(self, ip):
+        """Get endpoint for a given tunnel ip managed by the type_driver
+
+        param ip: the IP address of the endpoint
+
+        if ip found in type_driver database
+           :returns db object for that particular ip
+        else
+           :returns None
+        """
+        pass
+
+    @abc.abstractmethod
+    def delete_endpoint(self, ip):
+        """Delete the endpoint in the type_driver database.
+
+        param ip: the IP address of the endpoint
         """
         pass
 
@@ -160,13 +196,50 @@ class TunnelRpcCallbackMixin(object):
         be notified about the new tunnel IP.
         """
         tunnel_ip = kwargs.get('tunnel_ip')
+        if not tunnel_ip:
+            msg = _("Tunnel IP value needed by the ML2 plugin")
+            raise exc.InvalidInput(error_message=msg)
+
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
-            msg = _("Network_type value needed by the ML2 plugin")
+            msg = _("Network type value needed by the ML2 plugin")
             raise exc.InvalidInput(error_message=msg)
+
+        host = kwargs.get('host')
         driver = self._type_manager.drivers.get(tunnel_type)
         if driver:
-            tunnel = driver.obj.add_endpoint(tunnel_ip)
+            # The given conditional statements will verify the following
+            # things:
+            # 1. If host is not passed from an agent, it is a legacy mode.
+            # 2. If passed host and tunnel_ip are not found in the DB,
+            #    it is a new endpoint.
+            # 3. If host is passed from an agent and it is not found in DB
+            #    but the passed tunnel_ip is found, delete the endpoint
+            #    from DB and add the endpoint with (tunnel_ip, host),
+            #    it is an upgrade case.
+            # 4. If passed host is found in DB and passed tunnel ip is not
+            #    found, delete the endpoint belonging to that host and
+            #    add endpoint with latest (tunnel_ip, host), it is a case
+            #    where local_ip of an agent got changed.
+            if host:
+                host_endpoint = driver.obj.get_endpoint_by_host(host)
+                ip_endpoint = driver.obj.get_endpoint_by_ip(tunnel_ip)
+
+                if (ip_endpoint and ip_endpoint.host is None
+                    and host_endpoint is None):
+                    driver.obj.delete_endpoint(ip_endpoint.ip_address)
+                elif (ip_endpoint and ip_endpoint.host != host):
+                    msg = (_("Tunnel IP %(ip)s in use with host %(host)s"),
+                           {'ip': ip_endpoint.ip_address,
+                            'host': ip_endpoint.host})
+                    raise exc.InvalidInput(error_message=msg)
+                elif (host_endpoint and host_endpoint.ip_address != tunnel_ip):
+                    # Notify all other listening agents to delete stale tunnels
+                    self._notifier.tunnel_delete(rpc_context,
+                        host_endpoint.ip_address, tunnel_type)
+                    driver.obj.delete_endpoint(host_endpoint.ip_address)
+
+            tunnel = driver.obj.add_endpoint(tunnel_ip, host)
             tunnels = driver.obj.get_endpoints()
             entry = {'tunnels': tunnels}
             # Notify all other listening agents
@@ -175,7 +248,7 @@ class TunnelRpcCallbackMixin(object):
             # Return the list of tunnels IP's to the agent
             return entry
         else:
-            msg = _("network_type value '%s' not supported") % tunnel_type
+            msg = _("Network type value '%s' not supported") % tunnel_type
             raise exc.InvalidInput(error_message=msg)
 
 
@@ -191,3 +264,5 @@ class TunnelAgentRpcApiMixin(object):
                                     fanout=True)
         cctxt.cast(context, 'tunnel_update', tunnel_ip=tunnel_ip,
                    tunnel_type=tunnel_type)
+
+    # TODO(romilg): Add tunnel_delete rpc in dependent patch-set

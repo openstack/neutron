@@ -23,6 +23,8 @@ from neutron.tests.unit import testlib_api
 
 TUNNEL_IP_ONE = "10.10.10.10"
 TUNNEL_IP_TWO = "10.10.10.20"
+HOST_ONE = 'fake_host_one'
+HOST_TWO = 'fake_host_two'
 
 
 class GreTypeTest(test_type_tunnel.TunnelTypeTestMixin,
@@ -30,23 +32,56 @@ class GreTypeTest(test_type_tunnel.TunnelTypeTestMixin,
     DRIVER_CLASS = type_gre.GreTypeDriver
     TYPE = p_const.TYPE_GRE
 
-    def test_endpoints(self):
-        tun_1 = self.driver.add_endpoint(TUNNEL_IP_ONE)
-        tun_2 = self.driver.add_endpoint(TUNNEL_IP_TWO)
-        self.assertEqual(TUNNEL_IP_ONE, tun_1.ip_address)
-        self.assertEqual(TUNNEL_IP_TWO, tun_2.ip_address)
+    def test_add_endpoint(self):
+        endpoint = self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+        self.assertEqual(TUNNEL_IP_ONE, endpoint.ip_address)
+        self.assertEqual(HOST_ONE, endpoint.host)
 
-        # Get all the endpoints
+    def test_add_endpoint_for_existing_tunnel_ip(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+
+        with mock.patch.object(type_gre.LOG, 'warning') as log_warn:
+            self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+            log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
+
+    def test_get_endpoint_by_host(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+
+        host_endpoint = self.driver.get_endpoint_by_host(HOST_ONE)
+        self.assertEqual(TUNNEL_IP_ONE, host_endpoint.ip_address)
+
+    def test_get_endpoint_by_host_for_not_existing_host(self):
+        ip_endpoint = self.driver.get_endpoint_by_host(HOST_TWO)
+        self.assertIsNone(ip_endpoint)
+
+    def test_get_endpoint_by_ip(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+
+        ip_endpoint = self.driver.get_endpoint_by_ip(TUNNEL_IP_ONE)
+        self.assertEqual(HOST_ONE, ip_endpoint.host)
+
+    def test_get_endpoint_by_ip_for_not_existing_tunnel_ip(self):
+        ip_endpoint = self.driver.get_endpoint_by_ip(TUNNEL_IP_TWO)
+        self.assertIsNone(ip_endpoint)
+
+    def test_get_endpoints(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+        self.driver.add_endpoint(TUNNEL_IP_TWO, HOST_TWO)
+
         endpoints = self.driver.get_endpoints()
         for endpoint in endpoints:
-            self.assertIn(endpoint['ip_address'],
-                          [TUNNEL_IP_ONE, TUNNEL_IP_TWO])
+            if endpoint['ip_address'] == TUNNEL_IP_ONE:
+                self.assertEqual(HOST_ONE, endpoint['host'])
+            elif endpoint['ip_address'] == TUNNEL_IP_TWO:
+                self.assertEqual(HOST_TWO, endpoint['host'])
 
-    def test_add_same_ip_endpoints(self):
-        self.driver.add_endpoint(TUNNEL_IP_ONE)
-        with mock.patch.object(type_gre.LOG, 'warning') as log_warn:
-            self.driver.add_endpoint(TUNNEL_IP_ONE)
-        log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
+    def test_delete_endpoint(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+
+        self.assertIsNone(self.driver.delete_endpoint(TUNNEL_IP_ONE))
+        # Get all the endpoints and verify its empty
+        endpoints = self.driver.get_endpoints()
+        self.assertNotIn(TUNNEL_IP_ONE, endpoints)
 
 
 class GreTypeMultiRangeTest(test_type_tunnel.TunnelTypeMultiRangeTestMixin,

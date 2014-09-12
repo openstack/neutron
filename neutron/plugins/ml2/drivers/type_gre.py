@@ -19,7 +19,7 @@ from six import moves
 import sqlalchemy as sa
 from sqlalchemy import sql
 
-from neutron.common import exceptions as exc
+from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.i18n import _LE, _LW
@@ -52,9 +52,14 @@ class GreAllocation(model_base.BASEV2):
 
 class GreEndpoints(model_base.BASEV2):
     """Represents tunnel endpoint in RPC mode."""
-    __tablename__ = 'ml2_gre_endpoints'
 
+    __tablename__ = 'ml2_gre_endpoints'
+    __table_args__ = (
+        sa.UniqueConstraint('host',
+                            name='unique_ml2_gre_endpoints0host'),
+    )
     ip_address = sa.Column(sa.String(64), primary_key=True)
+    host = sa.Column(sa.String(255), nullable=True)
 
     def __repr__(self):
         return "<GreTunnelEndpoint(%s)>" % self.ip_address
@@ -71,7 +76,7 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
     def initialize(self):
         try:
             self._initialize(cfg.CONF.ml2_type_gre.tunnel_id_ranges)
-        except exc.NetworkTunnelRangeError:
+        except n_exc.NetworkTunnelRangeError:
             LOG.exception(_LE("Failed to parse tunnel_id_ranges. "
                               "Service terminated!"))
             raise SystemExit()
@@ -115,19 +120,42 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
         LOG.debug("get_gre_endpoints() called")
         session = db_api.get_session()
 
-        with session.begin(subtransactions=True):
-            gre_endpoints = session.query(GreEndpoints)
-            return [{'ip_address': gre_endpoint.ip_address}
-                    for gre_endpoint in gre_endpoints]
+        gre_endpoints = session.query(GreEndpoints)
+        return [{'ip_address': gre_endpoint.ip_address,
+                 'host': gre_endpoint.host}
+                for gre_endpoint in gre_endpoints]
 
-    def add_endpoint(self, ip):
+    def get_endpoint_by_host(self, host):
+        LOG.debug("get_endpoint_by_host() called for host %s", host)
+        session = db_api.get_session()
+
+        host_endpoint = (session.query(GreEndpoints).
+                         filter_by(host=host).first())
+        return host_endpoint
+
+    def get_endpoint_by_ip(self, ip):
+        LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
+        session = db_api.get_session()
+
+        ip_endpoint = (session.query(GreEndpoints).
+                       filter_by(ip_address=ip).first())
+        return ip_endpoint
+
+    def add_endpoint(self, ip, host):
         LOG.debug("add_gre_endpoint() called for ip %s", ip)
         session = db_api.get_session()
         try:
-            gre_endpoint = GreEndpoints(ip_address=ip)
+            gre_endpoint = GreEndpoints(ip_address=ip, host=host)
             gre_endpoint.save(session)
         except db_exc.DBDuplicateEntry:
             gre_endpoint = (session.query(GreEndpoints).
                             filter_by(ip_address=ip).one())
             LOG.warning(_LW("Gre endpoint with ip %s already exists"), ip)
         return gre_endpoint
+
+    def delete_endpoint(self, ip):
+        LOG.debug("delete_gre_endpoint() called for ip %s", ip)
+        session = db_api.get_session()
+
+        with session.begin(subtransactions=True):
+            session.query(GreEndpoints).filter_by(ip_address=ip).delete()
