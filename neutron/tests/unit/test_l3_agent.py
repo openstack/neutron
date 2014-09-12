@@ -20,6 +20,7 @@ import datetime
 import mock
 import netaddr
 from oslo.config import cfg
+from oslo import messaging
 from testtools import matchers
 
 from neutron.agent.common import config as agent_config
@@ -2259,6 +2260,26 @@ vrrp_instance VR_1 {
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertIsNone(agent.neutron_service_plugins)
         self.assertTrue(self.plugin_api.get_service_plugin_list.called)
+
+    def test_get_service_plugin_list_retried(self):
+        raise_timeout = messaging.MessagingTimeout()
+        # Raise a timeout the first 2 times it calls
+        # get_service_plugin_list then return a empty tuple
+        self.plugin_api.get_service_plugin_list.side_effect = (
+            raise_timeout, raise_timeout, tuple()
+        )
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        self.assertEqual(agent.neutron_service_plugins, tuple())
+
+    def test_get_service_plugin_list_retried_max(self):
+        raise_timeout = messaging.MessagingTimeout()
+        # Raise a timeout 5 times
+        self.plugin_api.get_service_plugin_list.side_effect = (
+            (raise_timeout, ) * 5
+        )
+        self.assertRaises(messaging.MessagingTimeout, l3_agent.L3NATAgent,
+                          HOSTNAME, self.conf)
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):
