@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import itertools
 import threading
 
 import jsonrpclib
@@ -377,15 +378,18 @@ class AristaRPCWrapper(object):
         This the initial handshake between Neutron and EOS.
         critical end-point information is registered with EOS.
         """
-        cmds = ['auth url %s user "%s" password "%s"' %
-                (self._keystone_url(),
+
+        cmds = ['auth url %s user %s password %s tenant %s' % (
+                self._keystone_url(),
                 self.keystone_conf.admin_user,
-                self.keystone_conf.admin_password)]
+                self.keystone_conf.admin_password,
+                self.keystone_conf.admin_tenant_name)]
 
-        log_cmds = ['auth url %s user %s password ******' %
-                    (self._keystone_url(),
-                    self.keystone_conf.admin_user)]
-
+        log_cmds = ['auth url %s user %s password %s tenant %s' % (
+                    self._keystone_url(),
+                    self.keystone_conf.admin_user,
+                    '******',
+                    self.keystone_conf.admin_tenant_name)]
         self._run_openstack_cmds(cmds, commands_to_log=log_cmds)
 
     def clear_region_updated_time(self):
@@ -424,11 +428,11 @@ class AristaRPCWrapper(object):
                                  param is logged.
         """
 
-        log_cmd = commands
+        log_cmds = commands
         if commands_to_log:
-            log_cmd = commands_to_log
+            log_cmds = commands_to_log
 
-        LOG.info(_('Executing command on Arista EOS: %s'), log_cmd)
+        LOG.info(_('Executing command on Arista EOS: %s'), log_cmds)
 
         try:
             # this returns array of return values for every command in
@@ -436,10 +440,21 @@ class AristaRPCWrapper(object):
             ret = self._server.runCmds(version=1, cmds=commands)
         except Exception as error:
             host = cfg.CONF.ml2_arista.eapi_host
+            error_msg_str = unicode(error)
+            if commands_to_log:
+                # The command might contain sensitive information. If the
+                # command to log is different from the actual command, use
+                # that in the error message.
+                for cmd, log_cmd in itertools.izip(commands, log_cmds):
+                    error_msg_str = error_msg_str.replace(cmd, log_cmd)
             msg = (_('Error %(err)s while trying to execute '
                      'commands %(cmd)s on EOS %(host)s') %
-                   {'err': error, 'cmd': commands_to_log, 'host': host})
-            LOG.exception(msg)
+                  {'err': error_msg_str,
+                   'cmd': commands_to_log,
+                   'host': host})
+            # Logging exception here can reveal passwords as the exception
+            # contains the CLI command which contains the credentials.
+            LOG.error(msg)
             raise arista_exc.AristaRpcError(msg=msg)
 
         return ret

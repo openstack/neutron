@@ -503,6 +503,28 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         cmds = ['show openstack config region RegionOne timestamp']
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
+    def test_register_with_eos(self):
+        self.drv.register_with_eos()
+        auth = fake_keystone_info_class()
+        keystone_url = '%s://%s:%s/v2.0/' % (auth.auth_protocol,
+                                             auth.auth_host,
+                                             auth.auth_port)
+        auth_cmd = 'auth url %s user %s password %s tenant %s' % (keystone_url,
+                    auth.admin_user,
+                    auth.admin_password,
+                    auth.admin_tenant_name)
+        cmds = ['enable',
+                'configure',
+                'cvx',
+                'service openstack',
+                'region %s' % self.region,
+                auth_cmd,
+                'exit',
+                'exit',
+                'exit',
+                ]
+        self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
+
 
 class AristaRPCWrapperInvalidConfigTestCase(base.BaseTestCase):
     """Negative test cases to test the Arista Driver configuration."""
@@ -676,6 +698,7 @@ class fake_keystone_info_class(object):
     auth_port = 5000
     admin_user = 'neutron'
     admin_password = 'fun'
+    admin_tenant_name = 'tenant_name'
 
 
 class FakeNetworkContext(object):
