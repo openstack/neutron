@@ -350,14 +350,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 cur_binding.driver = new_binding.driver
                 cur_binding.segment = new_binding.segment
 
-                # REVISIT(rkukura): The binding:profile attribute is
-                # supposed to be input-only, but the Mellanox driver
-                # currently modifies it while binding. Remove this
-                # code when the Mellanox driver has been updated to
-                # use binding:vif_details instead.
-                if cur_binding.profile != new_binding.profile:
-                    cur_binding.profile = new_binding.profile
-
                 # Update PortContext's port dictionary to reflect the
                 # updated binding state.
                 self._update_port_dict_binding(port, cur_binding)
@@ -944,8 +936,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 cur_binding.vif_details = new_binding.vif_details
                 cur_binding.driver = new_binding.driver
                 cur_binding.segment = new_binding.segment
-                if cur_binding.profile != new_binding.profile:
-                    cur_binding.profile = new_binding.profile
 
     def delete_port(self, context, id, l3_port_check=True):
         LOG.debug(_("Deleting port %s"), id)
