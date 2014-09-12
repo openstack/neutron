@@ -93,6 +93,8 @@ class TestMlnxPortBinding(MlnxPluginV2TestCase,
                            **profile_arg) as port:
                 self._check_default_port_binding_profole(
                     port, expected_vif_type=vif_type)
+                self._delete('ports', port['port']['id'])
+                self._delete('networks', port['port']['network_id'])
 
     def test_create_port_binding_profile_with_empty_dict(self):
         profile_arg = {portbindings.PROFILE: {}}

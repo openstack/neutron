@@ -518,13 +518,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
     def network(self, name='net1',
                 admin_state_up=True,
                 fmt=None,
-                do_delete=True,
                 **kwargs):
         network = self._make_network(fmt or self.fmt, name,
                                      admin_state_up, **kwargs)
         yield network
-        if do_delete:
-            self._delete('networks', network['network']['id'])
 
     @contextlib.contextmanager
     def subnet(self, network=None,
@@ -537,7 +534,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                dns_nameservers=None,
                host_routes=None,
                shared=None,
-               do_delete=True,
                ipv6_ra_mode=None,
                ipv6_address_mode=None):
         with optional_ctx(network, self.network) as network_to_use:
@@ -554,18 +550,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                                        ipv6_ra_mode=ipv6_ra_mode,
                                        ipv6_address_mode=ipv6_address_mode)
             yield subnet
-            if do_delete:
-                self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fmt=None, do_delete=True,
-             **kwargs):
+    def port(self, subnet=None, fmt=None, **kwargs):
         with optional_ctx(subnet, self.subnet) as subnet_to_use:
             net_id = subnet_to_use['subnet']['network_id']
             port = self._make_port(fmt or self.fmt, net_id, **kwargs)
             yield port
-            if do_delete:
-                self._delete('ports', port['port']['id'])
 
     def _test_list_with_sort(self, resource,
                              items, sorts, resources=None, query_params=''):
@@ -783,7 +774,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             self.assertEqual('myname', port['port']['name'])
 
     def test_create_port_as_admin(self):
-        with self.network(do_delete=False) as network:
+        with self.network() as network:
             self._create_port(self.fmt,
                               network['network']['id'],
                               webob.exc.HTTPCreated.code,
@@ -1058,7 +1049,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(port['port']['id'], sport['port']['id'])
 
     def test_delete_port(self):
-        with self.port(do_delete=False) as port:
+        with self.port() as port:
             self._delete('ports', port['port']['id'])
             self._show('ports', port['port']['id'],
                        expected_code=webob.exc.HTTPNotFound.code)
@@ -1684,8 +1675,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
             with contextlib.nested(
-                self.port(subnet=subnet, device_id='owner1', do_delete=False),
-                self.port(subnet=subnet, device_id='owner1', do_delete=False),
+                self.port(subnet=subnet, device_id='owner1'),
+                self.port(subnet=subnet, device_id='owner1'),
                 self.port(subnet=subnet, device_id='owner2'),
             ) as (p1, p2, p3):
                 network_id = subnet['subnet']['network_id']
@@ -1702,7 +1693,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
             with contextlib.nested(
-                self.port(subnet=subnet, device_id='owner1', do_delete=False),
+                self.port(subnet=subnet, device_id='owner1'),
                 self.port(subnet=subnet, device_id='owner1'),
                 self.port(subnet=subnet, device_id='owner2'),
             ) as (p1, p2, p3):
@@ -2296,7 +2287,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                          sorted(expected[k]))
                     else:
                         self.assertEqual(subnet['subnet'][k], expected[k])
-            return subnet
+        self._delete('subnets', subnet['subnet']['id'])
+        return subnet
 
     def test_create_subnet(self):
         gateway_ip = '10.0.0.1'
@@ -2438,6 +2430,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     res = self._create_subnet_bulk(self.fmt, 2,
                                                    net['network']['id'],
                                                    'test')
+                self._delete('networks', net['network']['id'])
                 # We expect a 500 as we injected a fault in the plugin
                 self._validate_behavior_on_bulk_failure(
                     res, 'subnets', webob.exc.HTTPServerError.code
@@ -2541,8 +2534,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             with contextlib.nested(
                 self.subnet(network=network),
-                self.subnet(network=network, cidr='10.0.1.0/24',
-                            do_delete=False)) as (subnet1, subnet2):
+                self.subnet(network=network, cidr='10.0.1.0/24'),
+            ) as (subnet1, subnet2):
                 subnet1_id = subnet1['subnet']['id']
                 subnet2_id = subnet2['subnet']['id']
                 with self.port(
@@ -2578,7 +2571,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 set_context=True)
 
     def test_create_subnet_as_admin(self):
-        with self.network(do_delete=False) as network:
+        with self.network() as network:
             self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.2.0/24',
@@ -3848,6 +3841,16 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         self._helper_test_validate_subnet(
             'max_subnet_host_routes',
             n_exc.HostRoutesExhausted)
+
+    def test_port_prevents_network_deletion(self):
+        with self.port() as p:
+            self._delete('networks', p['port']['network_id'],
+                         expected_code=webob.exc.HTTPConflict.code)
+
+    def test_port_prevents_subnet_deletion(self):
+        with self.port() as p:
+            self._delete('subnets', p['port']['fixed_ips'][0]['subnet_id'],
+                         expected_code=webob.exc.HTTPConflict.code)
 
 
 class DbModelTestCase(base.BaseTestCase):

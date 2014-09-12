@@ -307,6 +307,8 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 yield res
                 if do_delete:
                     self._delete('ports', port['port']['id'])
+        self._delete('subnets', subnet['subnet']['id'])
+        self._delete('networks', network['network']['id'])
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -399,12 +401,13 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                          'device_id': device_id,
                          'device_owner': DEVICE_OWNER}
             with self.port(subnet=subnet, fmt=self.fmt,
-                           arg_list=arg_list, **port_dict):
+                           arg_list=arg_list, **port_dict) as port:
                 self.assertTrue(self._is_vlan_configured(
                     vlan_creation_expected=vlan_creation_expected,
                     add_keyword_expected=False))
                 self.mock_ncclient.reset_mock()
                 yield
+                self._delete('ports', port['port']['id'])
 
         # Create network and subnet
         with self.network(name=NETWORK_NAME) as network:

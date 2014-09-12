@@ -85,8 +85,8 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
     def test_router_port_status_active(self):
         # router ports screw up port auto-deletion so it has to be
         # disabled for this test
-        with self.network(do_delete=False) as net:
-            with self.subnet(network=net, do_delete=False) as sub:
+        with self.network() as net:
+            with self.subnet(network=net) as sub:
                 with self.port(
                     subnet=sub,
                     do_delete=False,
@@ -214,6 +214,8 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
         with self.port(**kwargs) as port:
             self.assertEqual(port['port']['binding:vif_type'],
                              portbindings.VIF_TYPE_IVS)
+        self._delete('ports', port['port']['id'])
+        self._delete('networks', port['port']['network_id'])
         kwargs = {'name': 'name2', 'binding:host_id': 'someotherhost',
                   'device_id': 'other_dev'}
         with self.port(**kwargs) as port:

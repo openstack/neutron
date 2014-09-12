@@ -174,7 +174,7 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                'get_service_plugins') as srv_plugins:
             l3_mock = mock.Mock()
             srv_plugins.return_value = {'L3_ROUTER_NAT': l3_mock}
-            with self.network(do_delete=False) as net:
+            with self.network() as net:
                 req = self.new_delete_request('networks', net['network']['id'])
                 res = req.get_response(self.api)
                 self.assertEqual(res.status_int, exc.HTTPNoContent.code)

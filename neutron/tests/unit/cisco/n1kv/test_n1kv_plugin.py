@@ -1052,6 +1052,9 @@ class TestN1kvSubnets(test_plugin.TestSubnetsV2,
             self.skipTest("Unsupported test")
         super(TestN1kvSubnets, self).setUp()
 
+    def test_port_prevents_network_deletion(self):
+        self.skipTest("plugin does not return standard conflict code")
+
     def test_create_subnet_with_invalid_parameters(self):
         """Test subnet creation with invalid parameters sent to the VSM"""
         with self.network() as network:

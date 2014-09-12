@@ -215,8 +215,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
     def test_create_vip_failure(self):
         """Test the rest call failure handling by Exception raising."""
-        with self.network(do_delete=False) as network:
-            with self.subnet(network=network, do_delete=False) as subnet:
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
                 with self.pool(do_delete=False,
                                provider='radware',
                                subnet_id=subnet['subnet']['id']) as pool:
@@ -495,8 +495,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
     def test_delete_vip_failure(self):
         plugin = self.plugin_instance
 
-        with self.network(do_delete=False) as network:
-            with self.subnet(network=network, do_delete=False) as subnet:
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
                 with self.pool(do_delete=False,
                                provider='radware',
                                subnet_id=subnet['subnet']['id']) as pool:
