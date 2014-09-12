@@ -38,7 +38,8 @@ class L3RpcCallback(n_rpc.RpcCallback):
     # 1.1  Support update_floatingip_statuses
     # 1.2 Added methods for DVR support
     # 1.3 Added a method that returns the list of activated services
-    RPC_API_VERSION = '1.3'
+    # 1.4 Added L3 HA update_router_state
+    RPC_API_VERSION = '1.4'
 
     @property
     def plugin(self):
@@ -104,6 +105,10 @@ class L3RpcCallback(n_rpc.RpcCallback):
             for interface in router.get(constants.INTERFACE_KEY, []):
                 self._ensure_host_set_on_port(context, host,
                                               interface, router['id'])
+            interface = router.get(constants.HA_INTERFACE_KEY)
+            if interface:
+                self._ensure_host_set_on_port(context, host, interface,
+                                              router['id'])
 
     def _ensure_host_set_on_port(self, context, host, port, router_id=None):
         if (port and
@@ -224,3 +229,11 @@ class L3RpcCallback(n_rpc.RpcCallback):
                   'and on host %(host)s', {'snat_port_list': snat_port_list,
                   'host': host})
         return snat_port_list
+
+    def update_router_state(self, context, **kwargs):
+        router_id = kwargs.get('router_id')
+        state = kwargs.get('state')
+        host = kwargs.get('host')
+
+        return self.l3plugin.update_router_state(context, router_id, state,
+                                                 host=host)

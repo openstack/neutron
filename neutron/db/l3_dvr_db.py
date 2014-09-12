@@ -61,7 +61,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _create_router_db(self, context, router, tenant_id):
         """Create a router db object with dvr additions."""
-        router['distributed'] = _is_distributed_router(router)
+        router['distributed'] = is_distributed_router(router)
         with context.session.begin(subtransactions=True):
             router_db = super(
                 L3_NAT_with_dvr_db_mixin, self)._create_router_db(
@@ -128,7 +128,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         router_is_uuid = isinstance(router, basestring)
         if router_is_uuid:
             router = self._get_router(context, router)
-        if _is_distributed_router(router):
+        if is_distributed_router(router):
             return DEVICE_OWNER_DVR_INTERFACE
         return super(L3_NAT_with_dvr_db_mixin,
                      self)._get_device_owner(context, router)
@@ -534,7 +534,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                                   l3_port_check=False)
 
 
-def _is_distributed_router(router):
+def is_distributed_router(router):
     """Return True if router to be handled is distributed."""
     try:
         # See if router is a DB object first

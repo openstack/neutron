@@ -118,7 +118,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             pass_router_id=False)
 
     def _test__is_distributed_router(self, router, expected):
-        result = l3_dvr_db._is_distributed_router(router)
+        result = l3_dvr_db.is_distributed_router(router)
         self.assertEqual(expected, result)
 
     def test__is_distributed_router_by_db_object(self):

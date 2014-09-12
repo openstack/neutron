@@ -284,8 +284,14 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 RouterL3AgentBinding.router_id.in_(router_ids))
         router_ids = [item[0] for item in query]
         if router_ids:
-            return self.get_sync_data(context, router_ids=router_ids,
-                                      active=True)
+            if n_utils.is_extension_supported(self,
+                                              constants.L3_HA_MODE_EXT_ALIAS):
+                return self.get_ha_sync_data_for_host(context, host,
+                                                      router_ids=router_ids,
+                                                      active=True)
+            else:
+                return self.get_sync_data(context, router_ids=router_ids,
+                                          active=True)
         else:
             return []
 

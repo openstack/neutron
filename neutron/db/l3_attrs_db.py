@@ -40,6 +40,11 @@ class RouterExtraAttributes(model_base.BASEV2):
     service_router = sa.Column(sa.Boolean, default=False,
                                server_default=sa.sql.false(),
                                nullable=False)
+    ha = sa.Column(sa.Boolean, default=False,
+                   server_default=sa.sql.false(),
+                   nullable=False)
+    ha_vr_id = sa.Column(sa.Integer())
+
     router = orm.relationship(
         l3_db.Router,
         backref=orm.backref("extra_attributes", lazy='joined',
