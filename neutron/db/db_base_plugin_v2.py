@@ -564,6 +564,16 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         CIDR if overlapping IPs are disabled.
         """
         new_subnet_ipset = netaddr.IPSet([new_subnet_cidr])
+        # Disallow subnets with prefix length 0 as they will lead to
+        # dnsmasq failures (see bug 1362651).
+        # This is not a discrimination against /0 subnets.
+        # A /0 subnet is conceptually possible but hardly a practical
+        # scenario for neutron's use cases.
+        for cidr in new_subnet_ipset.iter_cidrs():
+            if cidr.prefixlen == 0:
+                err_msg = _("0 is not allowed as CIDR prefix length")
+                raise n_exc.InvalidInput(error_message=err_msg)
+
         if cfg.CONF.allow_overlapping_ips:
             subnet_list = network.subnets
         else:

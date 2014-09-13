@@ -2349,6 +2349,17 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
+    def test_create_subnet_bad_V4_cidr_prefix_len(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '0.0.0.0/0',
+                    'ip_version': '4',
+                    'tenant_id': network['network']['tenant_id'],
+                    'gateway_ip': '0.0.0.1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
+
     def test_create_subnet_bad_V6_cidr(self):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
