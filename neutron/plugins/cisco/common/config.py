@@ -17,17 +17,6 @@ from oslo.config import cfg
 from neutron.agent.common import config
 
 
-cisco_plugins_opts = [
-    cfg.StrOpt('vswitch_plugin',
-               default='neutron.plugins.openvswitch.ovs_neutron_plugin.'
-                       'OVSNeutronPluginV2',
-               help=_("Virtual Switch to use")),
-    cfg.StrOpt('nexus_plugin',
-               default='neutron.plugins.cisco.nexus.cisco_nexus_plugin_v2.'
-                       'NexusPlugin',
-               help=_("Nexus Switch to use")),
-]
-
 cisco_opts = [
     cfg.StrOpt('vlan_name_prefix', default='q-',
                help=_("VLAN Name prefix")),
@@ -47,10 +36,6 @@ cisco_opts = [
                default='neutron.plugins.cisco.models.virt_phy_sw_v2.'
                        'VirtualPhysicalSwitchModelV2',
                help=_("Model Class")),
-    cfg.StrOpt('nexus_driver',
-               default='neutron.plugins.cisco.test.nexus.'
-                       'fake_nexus_driver.CiscoNEXUSFakeDriver',
-               help=_("Nexus Driver Name")),
 ]
 
 cisco_n1k_opts = [
@@ -89,14 +74,12 @@ cisco_n1k_opts = [
 
 cfg.CONF.register_opts(cisco_opts, "CISCO")
 cfg.CONF.register_opts(cisco_n1k_opts, "CISCO_N1K")
-cfg.CONF.register_opts(cisco_plugins_opts, "CISCO_PLUGINS")
 config.register_root_helper(cfg.CONF)
 
 # shortcuts
 CONF = cfg.CONF
 CISCO = cfg.CONF.CISCO
 CISCO_N1K = cfg.CONF.CISCO_N1K
-CISCO_PLUGINS = cfg.CONF.CISCO_PLUGINS
 
 #
 # device_dictionary - Contains all external device configuration.
@@ -143,7 +126,7 @@ class CiscoConfigOptions():
         for parsed_file in multi_parser.parsed:
             for parsed_item in parsed_file.keys():
                 dev_id, sep, dev_ip = parsed_item.partition(':')
-                if dev_id.lower() in ['nexus_switch', 'n1kv']:
+                if dev_id.lower() == 'n1kv':
                     for dev_key, value in parsed_file[parsed_item].items():
                         if dev_ip and not first_device_ip:
                             first_device_ip = dev_ip

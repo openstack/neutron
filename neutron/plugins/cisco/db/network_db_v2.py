@@ -22,7 +22,6 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_models_v2
-from neutron.plugins.openvswitch import ovs_models_v2
 
 
 LOG = logging.getLogger(__name__)
@@ -234,13 +233,6 @@ def is_provider_vlan(vlan_id):
             filter_by(network_type=const.NETWORK_TYPE_VLAN,
                       segmentation_id=vlan_id).first()):
         return True
-
-
-def get_ovs_vlans():
-    session = db.get_session()
-    bindings = (session.query(ovs_models_v2.VlanAllocation.vlan_id).
-                filter_by(allocated=True))
-    return [binding.vlan_id for binding in bindings]
 
 
 class Credential_db_mixin(object):
