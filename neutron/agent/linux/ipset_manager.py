@@ -18,9 +18,10 @@ from neutron.common import utils
 class IpsetManager(object):
     """Wrapper for ipset."""
 
-    def __init__(self, execute=None, root_helper=None):
+    def __init__(self, execute=None, root_helper=None, namespace=None):
         self.execute = execute or linux_utils.execute
         self.root_helper = root_helper
+        self.namespace = namespace
 
     @utils.synchronized('ipset', external=True)
     def create_ipset_chain(self, chain_name, ethertype):
@@ -57,7 +58,13 @@ class IpsetManager(object):
 
     def _apply(self, cmd, input=None):
         input = '\n'.join(input) if input else None
-        self.execute(cmd, root_helper=self.root_helper, process_input=input)
+        cmd_ns = []
+        if self.namespace:
+            cmd_ns.extend(['ip', 'netns', 'exec', self.namespace])
+        cmd_ns.extend(cmd)
+        self.execute(cmd_ns,
+                     root_helper=self.root_helper,
+                     process_input=input)
 
     def _get_ipset_chain_type(self, ethertype):
         return 'inet6' if ethertype == 'IPv6' else 'inet'
