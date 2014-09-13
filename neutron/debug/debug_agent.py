@@ -93,7 +93,8 @@ class NeutronDebugAgent():
         network.subnets = obj_subnet
         return network
 
-    def clear_probe(self):
+    def clear_probes(self):
+        """Returns number of deleted probes"""
         ports = self.client.list_ports(
             device_id=socket.gethostname(),
             device_owner=[DEVICE_OWNER_NETWORK_PROBE,
@@ -101,6 +102,7 @@ class NeutronDebugAgent():
         info = ports['ports']
         for port in info:
             self.delete_probe(port['id'])
+        return len(info)
 
     def delete_probe(self, port_id):
         port = dhcp.DictModel(self.client.show_port(port_id)['port'])
