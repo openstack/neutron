@@ -35,6 +35,7 @@ import httplib
 import os
 import socket
 import ssl
+import time
 import weakref
 
 import eventlet
@@ -73,6 +74,8 @@ ORCHESTRATION_SERVICE_ID = 'Neutron v2.0'
 HASH_MATCH_HEADER = 'X-BSN-BVS-HASH-MATCH'
 # error messages
 NXNETWORK = 'NXVNS'
+HTTP_SERVICE_UNAVAILABLE_RETRY_COUNT = 3
+HTTP_SERVICE_UNAVAILABLE_RETRY_INTERVAL = 3
 
 
 class RemoteRestError(exceptions.NeutronException):
@@ -428,10 +431,15 @@ class ServerPool(object):
         good_first = sorted(self.servers, key=lambda x: x.failed)
         first_response = None
         for active_server in good_first:
-            ret = active_server.rest_call(action, resource, data, headers,
-                                          timeout,
-                                          reconnect=self.always_reconnect,
-                                          hash_handler=hash_handler)
+            for x in range(HTTP_SERVICE_UNAVAILABLE_RETRY_COUNT + 1):
+                ret = active_server.rest_call(action, resource, data, headers,
+                                              timeout,
+                                              reconnect=self.always_reconnect,
+                                              hash_handler=hash_handler)
+                if ret[0] != httplib.SERVICE_UNAVAILABLE:
+                    break
+                time.sleep(HTTP_SERVICE_UNAVAILABLE_RETRY_INTERVAL)
+
             # If inconsistent, do a full synchronization
             if ret[0] == httplib.CONFLICT:
                 if not self.get_topo_function:
