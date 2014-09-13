@@ -425,6 +425,8 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                     plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
+            mock.call.schedule_snat_router(
+                mock.ANY, 'foo_router_id', sync_router),
             mock.call.get_l3_agents_hosting_routers(
                 mock.ANY, ['foo_router_id'], admin_state_up=True),
             mock.call.get_l3_agents(mock.ANY, active=True),

@@ -271,11 +271,11 @@ class L3AgentSchedulerDbMixin(l3_agentschedulers_db.L3AgentSchedulerDbMixin):
         return super(L3AgentSchedulerDbMixin, self).auto_schedule_routers(
             context, host, router_ids)
 
-    def schedule_router(self, context, router, candidates=None, hints=None):
+    def schedule_router(self, context, router, candidates=None):
         if (self._get_provider_by_router_id(context, router) ==
             nconst.ROUTER_PROVIDER_L3AGENT):
             return super(L3AgentSchedulerDbMixin, self).schedule_router(
-                context, router, candidates=candidates, hints=hints)
+                context, router, candidates=candidates)
 
     def add_router_to_l3_agent(self, context, id, router_id):
         provider = self._get_provider_by_router_id(context, router_id)
@@ -289,7 +289,7 @@ class L3AgentSchedulerDbMixin(l3_agentschedulers_db.L3AgentSchedulerDbMixin):
 
 class L3AgentNotifyAPI(l3_rpc_agent_api.L3AgentNotifyAPI):
 
-    def _notification(self, context, method, router_ids, operation, data):
+    def _notification(self, context, method, router_ids, operation):
         """Notify all the agents that are hosting the routers.
 
         _notification() is called in L3 db plugin for all routers regardless
@@ -300,7 +300,7 @@ class L3AgentNotifyAPI(l3_rpc_agent_api.L3AgentNotifyAPI):
         router_ids = rdb.get_routers_by_provider(
             context.session, nconst.ROUTER_PROVIDER_L3AGENT, router_ids)
         super(L3AgentNotifyAPI, self)._notification(
-            context, method, router_ids, operation, data)
+            context, method, router_ids, operation)
 
 
 def load_driver(plugin, ofc_manager):

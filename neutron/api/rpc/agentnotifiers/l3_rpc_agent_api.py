@@ -43,8 +43,7 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
                                    payload=payload),
             topic='%s.%s' % (topics.L3_AGENT, host))
 
-    def _agent_notification(self, context, method, router_ids,
-                            operation, data):
+    def _agent_notification(self, context, method, router_ids, operation):
         """Notify changed routers to hosting l3 agents."""
         adminContext = context.is_admin and context or context.elevated()
         plugin = manager.NeutronManager.get_service_plugins().get(
@@ -92,7 +91,7 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
                       self.make_msg(method, payload=dvr_arptable),
                       topic=topic, version='1.2')
 
-    def _notification(self, context, method, router_ids, operation, data):
+    def _notification(self, context, method, router_ids, operation):
         """Notify all the agents that are hosting the routers."""
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
@@ -104,9 +103,9 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
                 plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             adminContext = (context.is_admin and
                             context or context.elevated())
-            plugin.schedule_routers(adminContext, router_ids, hints=data)
+            plugin.schedule_routers(adminContext, router_ids)
             self._agent_notification(
-                context, method, router_ids, operation, data)
+                context, method, router_ids, operation)
         else:
             self.fanout_cast(
                 context, self.make_msg(method,
@@ -136,7 +135,7 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
     def routers_updated(self, context, router_ids, operation=None, data=None):
         if router_ids:
             self._notification(context, 'routers_updated', router_ids,
-                               operation, data)
+                               operation)
 
     def add_arp_entry(self, context, router_id, arp_table, operation=None):
         self._agent_notification_arp(context, 'add_arp_entry', router_id,
