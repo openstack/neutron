@@ -83,6 +83,10 @@ class FirewallRuleInvalidICMPParameter(qexception.InvalidInput):
                 "is set to ICMP.")
 
 
+class FirewallRuleWithPortWithoutProtocolInvalid(qexception.InvalidInput):
+    message = _("Source/destination port requires a protocol")
+
+
 class FirewallInvalidPortValue(qexception.InvalidInput):
     message = _("Invalid value for port %(port)s.")
 
