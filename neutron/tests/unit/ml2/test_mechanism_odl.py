@@ -286,18 +286,17 @@ class OpenDaylightMechanismDriverTestCase(base.BaseTestCase):
                                     'delete', **kwargs)
 
     def test_create_network_postcommit(self):
-        for status_code in (requests.codes.created,
-                            requests.codes.bad_request):
-            self._test_create_resource_postcommit('network', status_code)
-        self._test_create_resource_postcommit(
-            'network', requests.codes.unauthorized,
-            requests.exceptions.HTTPError)
+        self._test_create_resource_postcommit('network',
+                                              requests.codes.created)
+        for status_code in (requests.codes.bad_request,
+                            requests.codes.unauthorized):
+            self._test_create_resource_postcommit(
+                'network', status_code, requests.exceptions.HTTPError)
 
     def test_create_subnet_postcommit(self):
-        for status_code in (requests.codes.created,
-                            requests.codes.bad_request):
-            self._test_create_resource_postcommit('subnet', status_code)
-        for status_code in (requests.codes.unauthorized,
+        self._test_create_resource_postcommit('subnet', requests.codes.created)
+        for status_code in (requests.codes.bad_request,
+                            requests.codes.unauthorized,
                             requests.codes.forbidden,
                             requests.codes.not_found,
                             requests.codes.conflict,
@@ -306,10 +305,9 @@ class OpenDaylightMechanismDriverTestCase(base.BaseTestCase):
                 'subnet', status_code, requests.exceptions.HTTPError)
 
     def test_create_port_postcommit(self):
-        for status_code in (requests.codes.created,
-                            requests.codes.bad_request):
-            self._test_create_resource_postcommit('port', status_code)
-        for status_code in (requests.codes.unauthorized,
+        self._test_create_resource_postcommit('port', requests.codes.created)
+        for status_code in (requests.codes.bad_request,
+                            requests.codes.unauthorized,
                             requests.codes.forbidden,
                             requests.codes.not_found,
                             requests.codes.conflict,
@@ -319,19 +317,17 @@ class OpenDaylightMechanismDriverTestCase(base.BaseTestCase):
                 'port', status_code, requests.exceptions.HTTPError)
 
     def test_update_network_postcommit(self):
-        for status_code in (requests.codes.ok,
-                            requests.codes.bad_request):
-            self._test_update_resource_postcommit('network', status_code)
-        for status_code in (requests.codes.forbidden,
+        self._test_update_resource_postcommit('network', requests.codes.ok)
+        for status_code in (requests.codes.bad_request,
+                            requests.codes.forbidden,
                             requests.codes.not_found):
             self._test_update_resource_postcommit(
                 'network', status_code, requests.exceptions.HTTPError)
 
     def test_update_subnet_postcommit(self):
-        for status_code in (requests.codes.ok,
-                            requests.codes.bad_request):
-            self._test_update_resource_postcommit('subnet', status_code)
-        for status_code in (requests.codes.unauthorized,
+        self._test_update_resource_postcommit('subnet', requests.codes.ok)
+        for status_code in (requests.codes.bad_request,
+                            requests.codes.unauthorized,
                             requests.codes.forbidden,
                             requests.codes.not_found,
                             requests.codes.not_implemented):
@@ -339,10 +335,9 @@ class OpenDaylightMechanismDriverTestCase(base.BaseTestCase):
                 'subnet', status_code, requests.exceptions.HTTPError)
 
     def test_update_port_postcommit(self):
-        for status_code in (requests.codes.ok,
-                            requests.codes.bad_request):
-            self._test_update_resource_postcommit('port', status_code)
-        for status_code in (requests.codes.unauthorized,
+        self._test_update_resource_postcommit('port', requests.codes.ok)
+        for status_code in (requests.codes.bad_request,
+                            requests.codes.unauthorized,
                             requests.codes.forbidden,
                             requests.codes.not_found,
                             requests.codes.conflict,
