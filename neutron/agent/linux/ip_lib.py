@@ -532,7 +532,7 @@ class IpNetnsCommand(IpCommandBase):
     def delete(self, name):
         self._as_root('delete', name, use_root_namespace=True)
 
-    def execute(self, cmds, addl_env={}, check_exit_code=True,
+    def execute(self, cmds, addl_env=None, check_exit_code=True,
                 extra_ok_codes=None):
         ns_params = []
         if self._parent.namespace:
