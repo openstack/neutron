@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-09 06:04+0000\n"
+"POT-Creation-Date: 2014-09-14 06:11+0000\n"
 "PO-Revision-Date: 2014-06-30 19:27+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
@@ -31,7 +31,7 @@ msgstr ""
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:179
+#: neutron/agent/securitygroups_rpc.py:183
 msgid ""
 "security_group_info_for_devices rpc call not supported by the server, "
 "falling back to old security_group_rules_for_devices which scales worse."
@@ -43,18 +43,23 @@ msgid ""
 "new instance will be spawned"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:103
+#: neutron/db/l3_agentschedulers_db.py:105
 msgid ""
 "Time since last L3 agent reschedule check has exceeded the interval between "
 "checks. Waiting before check to allow agents to send a heartbeat in case "
 "there was a clock adjustment."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:119
+#: neutron/db/l3_agentschedulers_db.py:127
 #, python-format
 msgid ""
 "Rescheduling router %(router)s from agent %(agent)s because the agent did "
 "not report to the server in the last %(dead_time)s seconds."
+msgstr ""
+
+#: neutron/db/l3_hamode_db.py:404
+#, python-format
+msgid "The router %(router_id)s is bound multiple times on the agent %(host)s"
 msgstr ""
 
 #: neutron/openstack/common/service.py:364
@@ -132,4 +137,20 @@ msgstr ""
 #: neutron/plugins/nuage/syncmanager.py:397
 #, python-format
 msgid "VM port %s not found in neutron for sync"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:290
+#, python-format
+msgid "Unable to create tunnel port. Invalid remote IP: %s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:713
+#, python-format
+msgid ""
+"VIF port: %s has no ofport configured, and might not be able to transmit"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:820
+#, python-format
+msgid "Device %s not defined on plugin"
 msgstr ""

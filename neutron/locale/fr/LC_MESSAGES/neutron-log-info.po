@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-09 06:04+0000\n"
+"POT-Creation-Date: 2014-09-14 06:10+0000\n"
 "PO-Revision-Date: 2014-08-12 21:40+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
@@ -29,10 +29,29 @@ msgstr ""
 msgid "IPv6 is not enabled on this system."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:80
+#: neutron/db/l3_agentschedulers_db.py:82
 msgid ""
 "Skipping period L3 agent status check because automatic router rescheduling "
 "is disabled."
+msgstr ""
+
+#: neutron/db/l3_hamode_db.py:176
+#, python-format
+msgid ""
+"Attempt %(count)s to allocate a VRID in the network %(network)s for the "
+"router %(router)s"
+msgstr ""
+
+#: neutron/db/l3_hamode_db.py:257
+#, python-format
+msgid ""
+"Number of available agents lower than max_l3_agents_per_router. L3 agents "
+"available: %s"
+msgstr ""
+
+#: neutron/debug/commands.py:107
+#, python-format
+msgid "%d probe(s) deleted"
 msgstr ""
 
 #: neutron/openstack/common/periodic_task.py:126
@@ -116,6 +135,7 @@ msgid "APIC host agent: started on %s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:907
 msgid "Agent out of sync with plugin!"
 msgstr "Agent non synchronisé avec le plug-in !"
 
@@ -125,6 +145,87 @@ msgstr ""
 
 #: neutron/plugins/nuage/syncmanager.py:60
 msgid "Sync between Neutron and VSD completed successfully"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/arp_lib.py:137
+msgid "No bridge is set"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/arp_lib.py:140
+#, python-format
+msgid "Unknown bridge %(dpid)s ours %(ours)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/arp_lib.py:147
+#, python-format
+msgid "packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/arp_lib.py:152
+msgid "drop non tenant packet"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/arp_lib.py:157
+msgid "drop non-ethernet packet"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/arp_lib.py:162
+msgid "drop non-arp packet"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/arp_lib.py:171
+#, python-format
+msgid "unknown network %s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:165
+msgid "Agent initialized successfully, now running... "
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:452
+#, python-format
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:502
+#, python-format
+msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:570
+#, python-format
+msgid "port_unbound() net_uuid %s not in local_vlan_map"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:651
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:785
+#, python-format
+msgid ""
+"Port %s was not found on the integration bridge and will therefore not be "
+"processed"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:799
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:818
+#, python-format
+msgid "Configuration for device %s completed."
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:829
+#, python-format
+msgid "Attachment %s removed"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:912
+msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
 #: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:57

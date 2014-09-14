@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-09 06:04+0000\n"
+"POT-Creation-Date: 2014-09-14 06:11+0000\n"
 "PO-Revision-Date: 2014-06-30 20:07+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: English (Australia) (http://www.transifex.com/projects/p/"
@@ -76,6 +76,11 @@ msgstr "Exception during rpc cleanup."
 msgid "Unhandled exception"
 msgstr "Unhandled exception"
 
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:283
+#, python-format
+msgid "Unable to delete port '%(pname)s' on switch. Exception: %(exp)s"
+msgstr ""
+
 #: neutron/plugins/ml2/drivers/type_gre.py:80
 #, python-format
 msgid "Skipping unreasonable gre ID range %(tun_min)s:%(tun_max)s"
@@ -117,11 +122,88 @@ msgstr ""
 msgid "Cannot complete the sync between Neutron and VSD because of error:%s"
 msgstr ""
 
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:102
+msgid "Agent terminated!: Failed to get a datapath."
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:121
+msgid "Agent terminated"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:158
+msgid "Agent failed to create agent config map"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:283
+msgid "Failed reporting state!"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:449
+#, python-format
+msgid "No local VLAN available for net-id=%s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:464
+#, python-format
+msgid ""
+"Cannot provision %(network_type)s network for net-id=%(net_uuid)s - "
+"tunneling disabled"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:475
+#, python-format
+msgid ""
+"Cannot provision %(network_type)s network for net-id=%(net_uuid)s - no "
+"bridge for physical_network %(physical_network)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:485
+#, python-format
+msgid ""
+"Cannot provision unknown network type %(network_type)s for net-id="
+"%(net_uuid)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:523
+#, python-format
+msgid ""
+"Cannot reclaim unknown network type %(network_type)s for net-id=%(net_uuid)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:657
+#, python-format
+msgid ""
+"Bridge %(bridge)s for physical network %(physical_network)s does not exist. "
+"Agent terminated!"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:735
+msgid "ofport should have a value that can be interpreted as an integer"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:738
+#, python-format
+msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:916
+msgid "Error while synchronizing tunnels"
+msgstr ""
+
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:956
+msgid "Error while processing VIF ports"
+msgstr ""
+
 #: neutron/plugins/vmware/plugins/base.py:2089
 #, python-format
 msgid ""
 "Rolling back database changes for gateway device %s because of an error in "
 "the NSX backend"
+msgstr ""
+
+#: neutron/scheduler/l3_agent_scheduler.py:281
+#, python-format
+msgid "Not enough candidates, a HA router needs at least %s agents"
 msgstr ""
 
 #: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:62
