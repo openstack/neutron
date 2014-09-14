@@ -40,6 +40,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_rpc_base
 from neutron.db import portbindings_db
+from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
 from neutron.openstack.common import excutils
@@ -100,7 +101,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     # This attribute specifies whether the plugin supports or not
     # bulk operations.
     __native_bulk_support = False
-    supported_extension_aliases = ["provider", "agent",
+    supported_extension_aliases = ["provider", "agent", "quotas",
                                    "n1kv", "network_profile",
                                    "policy_profile", "external-net", "router",
                                    "binding", "credential",
