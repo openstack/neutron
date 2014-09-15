@@ -16,7 +16,7 @@
 """nsx_mappings
 
 Revision ID: 50e86cb2637a
-Revises: havana
+Revises: 1fcfc149aca4
 Create Date: 2013-10-26 14:37:30.012149
 
 """

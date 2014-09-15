@@ -33,23 +33,12 @@ from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
-from neutron.db.migration.alembic_migrations import common_ext_ops
 
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    common_ext_ops.upgrade_l3()
-
-    op.create_table(
-        'quotas',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
-        sa.Column('resource', sa.String(length=255), nullable=True),
-        sa.Column('limit', sa.Integer(), nullable=True),
-        sa.PrimaryKeyConstraint('id'),
-    )
     op.create_table(
         'net_partitions',
         sa.Column('id', sa.String(length=36), nullable=False),
@@ -77,9 +66,9 @@ def upgrade(active_plugins=None, options=None):
                   nullable=True),
         sa.Column('nuage_user_id', sa.String(length=36), nullable=True),
         sa.Column('nuage_group_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['net_partition_id'], ['net_partitions.id'],
-                                ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['subnet_id'], ['subnets.id'],
+                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['net_partition_id'], ['net_partitions.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('subnet_id'),
     )
@@ -92,7 +81,7 @@ def upgrade(active_plugins=None, options=None):
                                 ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('router_id'),
+        sa.PrimaryKeyConstraint('net_partition_id', 'router_id'),
     )
     op.create_table(
         'router_zone_mapping',

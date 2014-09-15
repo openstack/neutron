@@ -18,13 +18,13 @@
 """NSX DHCP/metadata support
 
 Revision ID: 1421183d533f
-Revises: 8f682276ee4
+Revises: 50e86cb2637a
 Create Date: 2013-10-11 14:33:37.303215
 
 """
 
 revision = '1421183d533f'
-down_revision = '8f682276ee4'
+down_revision = '50e86cb2637a'
 
 migration_for_plugins = [
     'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
