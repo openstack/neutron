@@ -323,7 +323,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                                           l3_port_check=False)
 
     def _notify_ha_interfaces_updated(self, context, router_id):
-        self.l3_rpc_notifier.routers_updated(context, [router_id])
+        self.l3_rpc_notifier.routers_updated(
+            context, [router_id], shuffle_agents=True)
 
     @classmethod
     def _is_ha(cls, router):
