@@ -25,12 +25,55 @@ from neutron.tests import base
 
 
 class TestDbMigration(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestDbMigration, self).setUp()
+        mock.patch('alembic.op.get_bind').start()
+        self.mock_alembic_is_offline = mock.patch(
+            'alembic.context.is_offline_mode', return_value=False).start()
+        self.mock_alembic_is_offline.return_value = False
+        self.mock_sa_inspector = mock.patch(
+            'sqlalchemy.engine.reflection.Inspector').start()
+
     def test_should_run_plugin_in_list(self):
         self.assertTrue(migration.should_run(['foo'], ['foo', 'bar']))
         self.assertFalse(migration.should_run(['foo'], ['bar']))
 
     def test_should_run_plugin_wildcard(self):
         self.assertTrue(migration.should_run(['foo'], ['*']))
+
+    def _prepare_mocked_sqlalchemy_inspector(self):
+        mock_inspector = mock.MagicMock()
+        mock_inspector.get_table_names.return_value = ['foo', 'bar']
+        mock_inspector.get_columns.return_value = [{'name': 'foo_column'},
+                                                   {'name': 'bar_column'}]
+        self.mock_sa_inspector.from_engine.return_value = mock_inspector
+
+    def test_schema_has_table(self):
+        self._prepare_mocked_sqlalchemy_inspector()
+        self.assertTrue(migration.schema_has_table('foo'))
+
+    def test_schema_has_table_raises_if_offline(self):
+        self.mock_alembic_is_offline.return_value = True
+        self.assertRaises(RuntimeError, migration.schema_has_table, 'foo')
+
+    def test_schema_has_column_missing_table(self):
+        self._prepare_mocked_sqlalchemy_inspector()
+        self.assertFalse(migration.schema_has_column('meh', 'meh'))
+
+    def test_schema_has_column(self):
+        self._prepare_mocked_sqlalchemy_inspector()
+        self.assertTrue(migration.schema_has_column('foo', 'foo_column'))
+
+    def test_schema_has_column_raises_if_offline(self):
+        self.mock_alembic_is_offline.return_value = True
+        self.assertRaises(RuntimeError, migration.schema_has_column,
+                          'foo', 'foo_col')
+
+    def test_schema_has_column_missing_column(self):
+        self._prepare_mocked_sqlalchemy_inspector()
+        self.assertFalse(migration.schema_has_column(
+            'foo', column_name='meh'))
 
 
 class TestCli(base.BaseTestCase):

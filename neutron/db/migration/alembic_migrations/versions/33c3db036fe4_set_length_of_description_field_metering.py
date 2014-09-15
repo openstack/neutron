@@ -25,12 +25,6 @@ Create Date: 2014-03-25 11:04:27.341830
 revision = '33c3db036fe4'
 down_revision = 'b65aa907aec'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.services.metering.metering_plugin.MeteringPlugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
@@ -38,9 +32,6 @@ from neutron.db import migration
 
 
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
     if op.get_bind().engine.dialect.name == 'postgresql':
         migration.create_table_if_not_exist_psql(
             'meteringlabels',
@@ -60,7 +51,4 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
     pass

@@ -25,30 +25,27 @@ Create Date: 2014-03-27 14:38:12.571173
 revision = '6be312499f9'
 down_revision = 'd06e871c0d5'
 
-# Change to ['*'] if this migration applies to all plugins
+# This migration will be executed only if the neutron DB schema
+# contains the tables for the cisco plugin.
+# This migration will be skipped when executed in offline mode.
 
-migration_for_plugins = [
-    'neutron.plugins.cisco.network_plugin.PluginV2'
-]
-
-from alembic import op
 import sqlalchemy as sa
 
 
 from neutron.db import migration
 
 
+@migration.skip_if_offline
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
+    migration.alter_column_if_exists(
+        'cisco_nexusport_bindings', 'vlan_id',
+        nullable=False,
+        existing_type=sa.Integer)
 
-    op.alter_column('cisco_nexusport_bindings', 'vlan_id', nullable=False,
-                    existing_type=sa.Integer)
 
-
+@migration.skip_if_offline
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.alter_column('cisco_nexusport_bindings', 'vlan_id', nullable=True,
-                    existing_type=sa.Integer)
+    migration.alter_column_if_exists(
+        'cisco_nexusport_bindings', 'vlan_id',
+        nullable=True,
+        existing_type=sa.Integer)

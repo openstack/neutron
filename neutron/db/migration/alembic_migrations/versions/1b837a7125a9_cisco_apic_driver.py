@@ -25,20 +25,12 @@ Create Date: 2014-02-13 09:35:19.147619
 revision = '1b837a7125a9'
 down_revision = '6be312499f9'
 
-migration_for_plugins = [
-    'neutron.plugins.ml2.plugin.Ml2Plugin'
-]
 
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.db import migration
-
 
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
     op.create_table(
         'cisco_ml2_apic_epgs',
         sa.Column('network_id', sa.String(length=255), nullable=False),
@@ -66,9 +58,6 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
     op.drop_table('cisco_ml2_apic_contracts')
     op.drop_table('cisco_ml2_apic_port_profiles')
     op.drop_table('cisco_ml2_apic_epgs')
