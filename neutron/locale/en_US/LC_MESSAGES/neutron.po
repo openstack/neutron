@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-14 06:10+0000\n"
+"POT-Creation-Date: 2014-09-15 06:10+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -409,7 +409,7 @@ msgstr ""
 msgid "Number of threads to use during sync process."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:65 neutron/agent/l3_agent.py:491
+#: neutron/agent/dhcp_agent.py:65 neutron/agent/l3_agent.py:496
 #: neutron/agent/metadata/namespace_proxy.py:165
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
@@ -489,7 +489,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:582 neutron/agent/l3_agent.py:1919
+#: neutron/agent/dhcp_agent.py:582 neutron/agent/l3_agent.py:1984
 #: neutron/agent/metadata/agent.py:363
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:328
 #: neutron/services/metering/agents/metering_agent.py:272
@@ -498,7 +498,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:588 neutron/agent/l3_agent.py:1924
+#: neutron/agent/dhcp_agent.py:588 neutron/agent/l3_agent.py:1989
 #: neutron/agent/metadata/agent.py:368
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:110
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:795
@@ -516,17 +516,17 @@ msgstr ""
 msgid "Agent updated: %(payload)s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:597 neutron/agent/l3_agent.py:1929
+#: neutron/agent/dhcp_agent.py:597 neutron/agent/l3_agent.py:1994
 #: neutron/services/metering/agents/metering_agent.py:280
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:213
+#: neutron/agent/l3_agent.py:214
 msgid "Cannot allocate link local address"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:452
+#: neutron/agent/l3_agent.py:457
 msgid ""
 "The working mode for the agent. Allowed modes are: 'legacy' - this "
 "preserves the existing behavior where the L3 agent is deployed on a "
@@ -538,48 +538,48 @@ msgid ""
 "centralized node (or in single-host deployments, e.g. devstack)"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:465 neutron/debug/debug_agent.py:41
+#: neutron/agent/l3_agent.py:470 neutron/debug/debug_agent.py:41
 msgid "Name of bridge used for external network traffic."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:469
+#: neutron/agent/l3_agent.py:474
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:473
+#: neutron/agent/l3_agent.py:478
 msgid ""
 "Send this many gratuitous ARPs for HA setup, if less than or equal to 0, "
 "the feature is disabled"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:476
+#: neutron/agent/l3_agent.py:481
 msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:481
+#: neutron/agent/l3_agent.py:486
 msgid "Agent should implement routers with no gateway"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:483
+#: neutron/agent/l3_agent.py:488
 msgid "UUID of external network for routers implemented by the agents."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:486
+#: neutron/agent/l3_agent.py:491
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:488
+#: neutron/agent/l3_agent.py:493
 msgid "Delete namespace after removing a router."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:511
+#: neutron/agent/l3_agent.py:516
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:528
+#: neutron/agent/l3_agent.py:533
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled at the neutron server when "
@@ -588,167 +588,188 @@ msgid ""
 "warning. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:559 neutron/agent/linux/dhcp.py:785
+#: neutron/agent/l3_agent.py:564 neutron/agent/linux/dhcp.py:785
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:92
 msgid "An interface driver must be specified"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:564
+#: neutron/agent/l3_agent.py:569
 msgid "Router id is required if not using namespaces."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:582
+#: neutron/agent/l3_agent.py:587
 msgid "RuntimeError in obtaining router list for namespace cleanup."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:612
+#: neutron/agent/l3_agent.py:617
 #, python-format
 msgid "Failed to destroy stale router namespace %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:630 neutron/agent/linux/dhcp.py:235
+#: neutron/agent/l3_agent.py:635 neutron/agent/linux/dhcp.py:235
 #, python-format
 msgid "Failed trying to delete namespace: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:718
+#: neutron/agent/l3_agent.py:723
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:743
+#: neutron/agent/l3_agent.py:755
 #, python-format
 msgid "Info for router %s were not found. Skipping router removal"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:810
+#: neutron/agent/l3_agent.py:830
 #: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:635
-#: neutron/services/firewall/agents/varmour/varmour_router.py:102
+#: neutron/services/firewall/agents/varmour/varmour_router.py:103
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:812 neutron/db/l3_db.py:954
+#: neutron/agent/l3_agent.py:832 neutron/db/l3_db.py:954
 #: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:637
-#: neutron/services/firewall/agents/varmour/varmour_router.py:105
+#: neutron/services/firewall/agents/varmour/varmour_router.py:106
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:873
+#: neutron/agent/l3_agent.py:893
 #, python-format
 msgid "Deleting stale internal router device: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:900
+#: neutron/agent/l3_agent.py:930
 #, python-format
 msgid "Deleting stale external router device: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1058
+#: neutron/agent/l3_agent.py:1098
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1135
+#: neutron/agent/l3_agent.py:1178
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1197
+#: neutron/agent/l3_agent.py:1240
 msgid "DVR: no map match_port found!"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1391
+#: neutron/agent/l3_agent.py:1444
 msgid "DVR: error adding redirection logic"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1403
+#: neutron/agent/l3_agent.py:1456
 msgid "DVR: removed snat failed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1496
+#: neutron/agent/l3_agent.py:1557
 msgid "Missing subnet/agent_gateway_port"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1617
+#: neutron/agent/l3_agent.py:1678
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1638
+#: neutron/agent/l3_agent.py:1699
 msgid "DVR: Failed updating arp entry"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1665
+#: neutron/agent/l3_agent.py:1726
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1675
+#: neutron/agent/l3_agent.py:1736
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1681
+#: neutron/agent/l3_agent.py:1742
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1688
+#: neutron/agent/l3_agent.py:1749
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1740
+#: neutron/agent/l3_agent.py:1801
 #, python-format
 msgid "Failed to fetch router information for '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1779
+#: neutron/agent/l3_agent.py:1840
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1799
+#: neutron/agent/l3_agent.py:1860
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1807
+#: neutron/agent/l3_agent.py:1868
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1809
+#: neutron/agent/l3_agent.py:1870
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1812
+#: neutron/agent/l3_agent.py:1873
 #: neutron/services/metering/agents/metering_agent.py:61
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1835
+#: neutron/agent/l3_agent.py:1896
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1850
+#: neutron/agent/l3_agent.py:1915
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1858
+#: neutron/agent/l3_agent.py:1923
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1892
+#: neutron/agent/l3_agent.py:1957
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1916
+#: neutron/agent/l3_agent.py:1981
 msgid "Report state task successfully completed"
+msgstr ""
+
+#: neutron/agent/l3_ha_agent.py:35
+msgid "Location to store keepalived/conntrackd config files"
+msgstr ""
+
+#: neutron/agent/l3_ha_agent.py:39
+msgid "VRRP authentication type AH/PASS"
+msgstr ""
+
+#: neutron/agent/l3_ha_agent.py:41
+msgid "VRRP authentication password"
+msgstr ""
+
+#: neutron/agent/l3_ha_agent.py:45
+msgid "The advertisement interval in seconds"
+msgstr ""
+
+#: neutron/agent/l3_ha_agent.py:56
+#, python-format
+msgid "Router %s is not a HA router"
 msgstr ""
 
 #: neutron/agent/netns_cleanup_util.py:59
@@ -3254,6 +3275,11 @@ msgstr ""
 #: neutron/db/metering/metering_rpc.py:46
 #, python-format
 msgid "Unable to find agent %s."
+msgstr ""
+
+#: neutron/db/migration/__init__.py:44
+#, python-format
+msgid "%s cannot be called while in offline mode"
 msgstr ""
 
 #: neutron/db/migration/cli.py:32
@@ -15046,69 +15072,69 @@ msgstr ""
 msgid "vArmourRestAPI: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:49
+#: neutron/services/firewall/agents/varmour/varmour_router.py:50
 msgid "vArmourL3NATAgent: __init__"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:63
+#: neutron/services/firewall/agents/varmour/varmour_router.py:64
 #, python-format
 msgid "_router_added: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:70
+#: neutron/services/firewall/agents/varmour/varmour_router.py:71
 #, python-format
 msgid "_router_removed: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:111
+#: neutron/services/firewall/agents/varmour/varmour_router.py:112
 #, python-format
 msgid "_va_unset_zone_interfaces: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:143
+#: neutron/services/firewall/agents/varmour/varmour_router.py:144
 #, python-format
 msgid "_va_set_interface_ip: %(pif)s %(cidr)s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:163
+#: neutron/services/firewall/agents/varmour/varmour_router.py:164
 #, python-format
 msgid "_va_config_trusted_zone: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:194
+#: neutron/services/firewall/agents/varmour/varmour_router.py:195
 #, python-format
 msgid "_va_config_untrusted_zone: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:209
+#: neutron/services/firewall/agents/varmour/varmour_router.py:210
 #, python-format
 msgid "_va_config_untrusted_zone: gw=%r"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:222
+#: neutron/services/firewall/agents/varmour/varmour_router.py:223
 #, python-format
 msgid "_va_config_router_snat_rules: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:254
+#: neutron/services/firewall/agents/varmour/varmour_router.py:255
 #, python-format
 msgid "_va_config_floating_ips: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:276
+#: neutron/services/firewall/agents/varmour/varmour_router.py:277
 #, python-format
 msgid "process_router: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:287
+#: neutron/services/firewall/agents/varmour/varmour_router.py:288
 msgid "Unable to parse interface mapping."
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:290
+#: neutron/services/firewall/agents/varmour/varmour_router.py:291
 msgid "Unable to read interface mapping."
 msgstr ""
 
-#: neutron/services/firewall/agents/varmour/varmour_router.py:309
+#: neutron/services/firewall/agents/varmour/varmour_router.py:310
 #, python-format
 msgid "external_gateway_added: %s"
 msgstr ""

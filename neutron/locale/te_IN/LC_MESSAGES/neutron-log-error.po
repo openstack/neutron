@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-14 06:11+0000\n"
+"POT-Creation-Date: 2014-09-15 06:11+0000\n"
 "PO-Revision-Date: 2014-08-12 21:24+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Telugu (India) (http://www.transifex.com/projects/p/neutron/"
@@ -31,6 +31,11 @@ msgstr "నిరాశపర్చింది విధానం %s కోస�
 #, python-format
 msgid "Policy check error while calling %s!"
 msgstr "పాలసీ చెక్ లోపం %s కాల్ఐంది !"
+
+#: neutron/agent/l3_ha_agent.py:136
+#, python-format
+msgid "Unable to process HA router %s without ha port"
+msgstr ""
 
 #: neutron/agent/linux/external_process.py:230
 #, python-format
