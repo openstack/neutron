@@ -47,7 +47,7 @@ def _migrate_data(old_table, new_table):
                    {'new_table': new_table, 'old_table': old_table})
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     op.add_column('router_extra_attributes',
                   sa.Column('service_router', sa.Boolean(),
                             nullable=False,
@@ -56,7 +56,7 @@ def upgrade(active_plugins=None, options=None):
     op.drop_table('nsxrouterextattributess')
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     op.create_table(
         'nsxrouterextattributess',
         sa.Column('router_id', sa.String(length=36), nullable=False),

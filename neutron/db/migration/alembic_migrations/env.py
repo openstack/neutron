@@ -37,10 +37,6 @@ neutron_config = config.neutron_config
 # This line sets up loggers basically.
 logging_config.fileConfig(config.config_file_name)
 
-plugin_class_path = neutron_config.core_plugin
-active_plugins = [plugin_class_path]
-active_plugins += neutron_config.service_plugins
-
 # set the target for 'autogenerate' support
 target_metadata = model_base.BASEV2.metadata
 
@@ -76,8 +72,7 @@ def run_migrations_offline():
     context.configure(**kwargs)
 
     with context.begin_transaction():
-        context.run_migrations(active_plugins=active_plugins,
-                               options=build_options())
+        context.run_migrations()
 
 
 @event.listens_for(sa.Table, 'after_parent_attach')
@@ -104,14 +99,9 @@ def run_migrations_online():
 
     try:
         with context.begin_transaction():
-            context.run_migrations(active_plugins=active_plugins,
-                                   options=build_options())
+            context.run_migrations()
     finally:
         connection.close()
-
-
-def build_options():
-    return
 
 
 if context.is_offline_mode():

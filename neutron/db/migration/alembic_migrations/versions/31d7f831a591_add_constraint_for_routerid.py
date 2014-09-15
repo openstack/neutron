@@ -43,7 +43,7 @@ fk_names = {'postgresql':
                 'routerl3agentbindings_ibfk_1'}}
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     # In order to sanitize the data during migration,
     # the current records in the table need to be verified
     # and all the duplicate records which violate the PK
@@ -72,7 +72,7 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
 
     context = op.get_context()
     dialect = context.bind.dialect.name

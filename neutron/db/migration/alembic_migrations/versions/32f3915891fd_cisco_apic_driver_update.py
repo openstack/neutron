@@ -28,7 +28,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
 
     op.drop_table('cisco_ml2_apic_port_profiles')
 
@@ -50,7 +50,7 @@ def upgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint('neutron_id', 'neutron_type'))
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
 
     op.drop_table('cisco_ml2_apic_names')
     op.drop_table('cisco_ml2_apic_host_links')

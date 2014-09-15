@@ -25,22 +25,16 @@ Create Date: 2014-02-25 00:15:35.567111
 revision = '33dd0a9fa487'
 down_revision = '19180cf98af6'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.services.loadbalancer.plugin.LoadBalancerPlugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
+def upgrade():
+    if not migration.schema_has_table('pools'):
+        # The lbaas service plugin was not configured.
         return
-
     op.create_table(
         u'embrane_pool_port',
         sa.Column(u'pool_id', sa.String(length=36), nullable=False),
@@ -52,5 +46,5 @@ def upgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint(u'pool_id'))
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

@@ -37,29 +37,35 @@ from neutron.db import migration
 
 
 @migration.skip_if_offline
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     # These tables will be created even if the nuage plugin is not enabled.
     # This is fine as they would be created anyway by the healing migration.
-    op.create_table(
-        'nuage_floatingip_pool_mapping',
-        sa.Column('fip_pool_id', sa.String(length=36), nullable=False),
-        sa.Column('net_id', sa.String(length=36), nullable=True),
-        sa.Column('router_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['net_id'], ['networks.id'],
-                                ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('fip_pool_id'),
-    )
-    op.create_table(
-        'nuage_floatingip_mapping',
-        sa.Column('fip_id', sa.String(length=36), nullable=False),
-        sa.Column('router_id', sa.String(length=36), nullable=True),
-        sa.Column('nuage_fip_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['fip_id'], ['floatingips.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('fip_id'),
-    )
+    if migration.schema_has_table('routers'):
+        # In the database we are migrating from, the configured plugin
+        # did not create the routers table.
+        op.create_table(
+            'nuage_floatingip_pool_mapping',
+            sa.Column('fip_pool_id', sa.String(length=36), nullable=False),
+            sa.Column('net_id', sa.String(length=36), nullable=True),
+            sa.Column('router_id', sa.String(length=36), nullable=True),
+            sa.ForeignKeyConstraint(['net_id'], ['networks.id'],
+                                    ondelete='CASCADE'),
+            sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
+                                    ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('fip_pool_id'),
+        )
+    if migration.schema_has_table('floatingips'):
+        # In the database we are migrating from, the configured plugin
+        # did not create the floatingips table.
+        op.create_table(
+            'nuage_floatingip_mapping',
+            sa.Column('fip_id', sa.String(length=36), nullable=False),
+            sa.Column('router_id', sa.String(length=36), nullable=True),
+            sa.Column('nuage_fip_id', sa.String(length=36), nullable=True),
+            sa.ForeignKeyConstraint(['fip_id'], ['floatingips.id'],
+                                    ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('fip_id'),
+        )
     migration.rename_table_if_exists('net_partitions',
                                      'nuage_net_partitions')
     migration.rename_table_if_exists('net_partition_router_mapping',
@@ -75,7 +81,7 @@ def upgrade(active_plugins=None, options=None):
 
 
 @migration.skip_if_offline
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     migration.drop_table_if_exists('nuage_floatingip_mapping')
     migration.drop_table_if_exists('nuage_floatingip_pool_mapping')
     migration.rename_table_if_exists('nuage_net_partitions', 'net_partitions')

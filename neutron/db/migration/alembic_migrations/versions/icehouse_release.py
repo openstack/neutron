@@ -25,17 +25,13 @@ Create Date: 2013-03-28 00:00:00.000000
 revision = 'icehouse'
 down_revision = '5ac1c354a051'
 
-# Change to ['*'] if this migration applies to all plugins
 
-migration_for_plugins = ['*']
-
-
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     """A no-op migration for marking the Icehouse release."""
     pass
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     # We are purging all downgrade methods from icehouse to havana because:
     # 1) havana is going to become unsupported during Kilo cycle.
     # 2) most people will upgrade from icehouse, while a minor percentage

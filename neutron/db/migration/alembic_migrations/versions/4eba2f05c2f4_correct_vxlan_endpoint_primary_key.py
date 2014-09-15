@@ -33,11 +33,11 @@ TABLE_NAME = 'ml2_vxlan_endpoints'
 PK_NAME = 'ml2_vxlan_endpoints_pkey'
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     op.drop_constraint(PK_NAME, TABLE_NAME, type_='primary')
     op.create_primary_key(PK_NAME, TABLE_NAME, cols=['ip_address'])
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     op.drop_constraint(PK_NAME, TABLE_NAME, type_='primary')
     op.create_primary_key(PK_NAME, TABLE_NAME, cols=['ip_address', 'udp_port'])

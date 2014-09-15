@@ -28,9 +28,9 @@ down_revision = '5446f2a45467'
 from neutron.db.migration.alembic_migrations import heal_script
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     heal_script.heal()
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

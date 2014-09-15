@@ -47,7 +47,7 @@ from neutron.db.migration.alembic_migrations import vmware_init_ops
 from neutron.db.migration.alembic_migrations import vpn_init_ops
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     agent_init_ops.upgrade()
     core_init_ops.upgrade()
     l3_init_ops.upgrade()
@@ -70,7 +70,7 @@ def upgrade(active_plugins=None, options=None):
     vmware_init_ops.upgrade()
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     vmware_init_ops.downgrade()
     ryu_init_ops.downgrade()
     other_plugins_init_ops.downgrade()

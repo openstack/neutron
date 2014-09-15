@@ -25,11 +25,6 @@ Create Date: 2014-02-24 20:14:59.577972
 revision = 'abc88c33f74f'
 down_revision = '3d2585038b95'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.services.loadbalancer.plugin.LoadBalancerPlugin'
-]
 
 from alembic import op
 import sqlalchemy as sa
@@ -37,19 +32,17 @@ import sqlalchemy as sa
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.alter_column('poolstatisticss', 'bytes_in',
-                    type_=sa.BigInteger(), existing_type=sa.Integer())
-    op.alter_column('poolstatisticss', 'bytes_out',
-                    type_=sa.BigInteger(), existing_type=sa.Integer())
-    op.alter_column('poolstatisticss', 'active_connections',
-                    type_=sa.BigInteger(), existing_type=sa.Integer())
-    op.alter_column('poolstatisticss', 'total_connections',
-                    type_=sa.BigInteger(), existing_type=sa.Integer())
+def upgrade():
+    if migration.schema_has_table('poolstatisticss'):
+        op.alter_column('poolstatisticss', 'bytes_in',
+                        type_=sa.BigInteger(), existing_type=sa.Integer())
+        op.alter_column('poolstatisticss', 'bytes_out',
+                        type_=sa.BigInteger(), existing_type=sa.Integer())
+        op.alter_column('poolstatisticss', 'active_connections',
+                        type_=sa.BigInteger(), existing_type=sa.Integer())
+        op.alter_column('poolstatisticss', 'total_connections',
+                        type_=sa.BigInteger(), existing_type=sa.Integer())
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

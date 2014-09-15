@@ -26,23 +26,11 @@ Create Date: 2013-10-23 16:36:44.188904
 revision = '2447ad0e9585'
 down_revision = '33dd0a9fa487'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    '*'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 
-from neutron.db import migration
-
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     # Workaround for Alemic bug #89
     # https://bitbucket.org/zzzeek/alembic/issue/89
     context = op.get_context()
@@ -69,5 +57,5 @@ def upgrade(active_plugins=None, options=None):
                   )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

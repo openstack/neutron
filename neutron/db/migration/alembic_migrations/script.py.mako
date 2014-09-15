@@ -30,9 +30,9 @@ import sqlalchemy as sa
 ${imports if imports else ""}
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     ${upgrades if upgrades else "pass"}
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     ${downgrades if downgrades else "pass"}

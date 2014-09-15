@@ -30,7 +30,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
 
     op.drop_table('cisco_ml2_apic_contracts')
     op.drop_table('cisco_ml2_apic_epgs')
@@ -43,7 +43,7 @@ def upgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint('router_id'))
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
 
     op.drop_table('cisco_ml2_apic_contracts')
 

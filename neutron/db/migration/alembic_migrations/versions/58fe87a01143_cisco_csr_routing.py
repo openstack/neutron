@@ -29,7 +29,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     op.create_table('cisco_hosting_devices',
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
         sa.Column('id', sa.String(length=36), nullable=False),
@@ -73,7 +73,7 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     op.drop_table('cisco_router_mappings')
     op.drop_table('cisco_port_mappings')
     op.drop_table('cisco_hosting_devices')

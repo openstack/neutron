@@ -30,9 +30,16 @@ from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
+from neutron.db.migration.alembic_migrations import l3_init_ops
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
+
+    if not migration.schema_has_table('routers'):
+        # In the database we are migrating from, the configured plugin
+        # did not create the routers table.
+        return
+
     op.create_table(
         'routerroutes_mapping',
         sa.Column('router_id', sa.String(length=36), nullable=False),
@@ -42,25 +49,10 @@ def upgrade(active_plugins=None, options=None):
     )
     # This table might already exist as it might have been created
     # if another plugin was configured before the nuage one
-    if op.get_bind().engine.dialect.name == 'postgresql':
-        migration.create_table_if_not_exist_psql(
-            'routerroutes',
-            ("(destination VARCHAR(64) NOT NULL,"
-             "nexthop VARCHAR(64) NOT NULL,"
-             "router_id VARCHAR(36) NOT NULL,"
-             "PRIMARY KEY (destination, nexthop, router_id),"
-             "FOREIGN KEY (router_id) REFERENCES routers (id) "
-             "ON DELETE CASCADE ON UPDATE CASCADE)"))
-    else:
-        op.execute("CREATE TABLE IF NOT EXISTS routerroutes( "
-                   "destination VARCHAR(64) NOT NULL,"
-                   "nexthop VARCHAR(64) NOT NULL,"
-                   "router_id VARCHAR(36) NOT NULL,"
-                   "PRIMARY KEY (destination, nexthop, router_id),"
-                   "FOREIGN KEY (router_id) REFERENCES routers (id) "
-                   "ON DELETE CASCADE ON UPDATE CASCADE)")
+    if not migration.schema_has_table('routerroutes'):
+        l3_init_ops.create_routerroutes()
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     # The routerroutes table should not be dropped
-    op.execute('DROP TABLE IF EXISTS routerroutes_mapping')
+    op.drop_table('routerroutes_mapping')

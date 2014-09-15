@@ -25,26 +25,18 @@ Create Date: 2014-02-13 23:48:25.147279
 revision = '157a5d299379'
 down_revision = '50d5ba354c23'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.ml2.plugin.Ml2Plugin'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.add_column('ml2_port_bindings',
-                  sa.Column('profile', sa.String(length=4095),
-                            nullable=False, server_default=''))
+def upgrade():
+    if migration.schema_has_table('ml2_port_bindings'):
+        op.add_column('ml2_port_bindings',
+                      sa.Column('profile', sa.String(length=4095),
+                                nullable=False, server_default=''))
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

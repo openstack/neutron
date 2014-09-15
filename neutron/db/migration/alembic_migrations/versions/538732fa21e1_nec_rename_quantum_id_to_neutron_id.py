@@ -25,20 +25,17 @@ Create Date: 2014-03-04 05:43:33.660601
 revision = '538732fa21e1'
 down_revision = '2447ad0e9585'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.nec.nec_plugin.NECPluginV2'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
+def upgrade():
+
+    if not migration.schema_has_table('ofctenantmappings'):
+        # Assume that, in the database we are migrating from, the
+        # configured plugin did not create any ofc tables.
         return
 
     for table in ['ofctenantmappings', 'ofcnetworkmappings',
@@ -51,5 +48,5 @@ def upgrade(active_plugins=None, options=None):
                         existing_nullable=False)
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

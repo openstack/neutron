@@ -29,13 +29,13 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
 
     op.add_column('ml2_network_segments',
                   sa.Column('is_dynamic', sa.Boolean(), nullable=False,
                             server_default=sa.sql.false()))
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
 
     op.drop_column('ml2_network_segments', 'is_dynamic')

@@ -31,13 +31,16 @@ down_revision = '327ee5fde2c7'
 
 from alembic import op
 
+from neutron.db import migration
 
-def upgrade(active_plugins=None, options=None):
+
+def upgrade():
     for table in ('servicedefinitions', 'servicetypes'):
-        op.execute("DROP TABLE IF EXISTS %s" % table)
+        if migration.schema_has_table(table):
+            op.drop_table(table)
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     """Don't create the tables
 
     These tables would be created during downgrade at correct place in

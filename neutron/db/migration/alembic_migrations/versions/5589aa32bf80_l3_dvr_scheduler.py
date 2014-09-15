@@ -25,20 +25,11 @@ Create Date: 2014-07-7 11:00:43.392912
 revision = '5589aa32bf80'
 down_revision = '31d7f831a591'
 
-migration_for_plugins = [
-    '*'
-]
-
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.db import migration
 
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     op.create_table(
         'csnat_l3_agent_bindings',
         sa.Column('router_id', sa.String(length=36), nullable=False),
@@ -55,8 +46,5 @@ def upgrade(active_plugins=None, options=None):
     )
 
 
-def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def downgrade():
     op.drop_table('csnat_l3_agent_bindings')

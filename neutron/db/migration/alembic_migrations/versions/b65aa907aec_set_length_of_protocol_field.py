@@ -35,12 +35,12 @@ from neutron.db import migration
 
 
 @migration.skip_if_offline
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     migration.alter_column_if_exists(
         'firewall_rules', 'protocol',
         type_=sa.String(40),
         existing_nullable=True)
 
 
-def downgrade(active_plugins=None, options=None):
+def downgrade():
     pass

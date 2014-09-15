@@ -19,6 +19,17 @@ from alembic import op
 import sqlalchemy as sa
 
 
+def create_routerroutes():
+    op.create_table(
+        'routerroutes',
+        sa.Column('destination', sa.String(length=64), nullable=False),
+        sa.Column('nexthop', sa.String(length=64), nullable=False),
+        sa.Column('router_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
+                                ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('destination', 'nexthop', 'router_id'))
+
+
 def upgrade():
     op.create_table(
         'externalnetworks',
@@ -55,14 +66,7 @@ def upgrade():
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'], ),
         sa.PrimaryKeyConstraint('id'))
 
-    op.create_table(
-        'routerroutes',
-        sa.Column('destination', sa.String(length=64), nullable=False),
-        sa.Column('nexthop', sa.String(length=64), nullable=False),
-        sa.Column('router_id', sa.String(length=36), nullable=False),
-        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('destination', 'nexthop', 'router_id'))
+    create_routerroutes()
 
     op.create_table(
         'routerl3agentbindings',
