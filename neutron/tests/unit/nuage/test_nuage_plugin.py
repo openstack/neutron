@@ -374,6 +374,34 @@ class TestNuagePluginPortBinding(NuagePluginV2TestCase,
 class TestNuageL3NatTestCase(NuagePluginV2TestCase,
                              test_l3_plugin.L3NatDBIntTestCase):
 
+    def test_update_port_with_assoc_floatingip(self):
+        with self.subnet(cidr='200.0.0.0/24') as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.port() as port:
+                p_id = port['port']['id']
+                with self.floatingip_with_assoc(port_id=p_id):
+                    # Update the port with dummy vm info
+                    port_dict = {
+                        'device_id': uuidutils.generate_uuid(),
+                        'device_owner': 'compute:Nova'
+                    }
+                    port = self._update('ports', port['port']['id'],
+                                        {'port': port_dict})
+                    self.assertEqual(port_dict['device_id'],
+                                     port['port']['device_id'])
+
+    def test_disassociated_floatingip_delete(self):
+        with self.subnet(cidr='200.0.0.0/24') as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.port() as port:
+                p_id = port['port']['id']
+                with self.floatingip_with_assoc(port_id=p_id) as fip:
+
+                    # Disassociate fip from the port
+                    fip = self._update('floatingips', fip['floatingip']['id'],
+                                       {'floatingip': {'port_id': None}})
+                    self.assertIsNone(fip['floatingip']['router_id'])
+
     def test_network_update_external_failure(self):
         self._test_network_update_external_failure()
 
