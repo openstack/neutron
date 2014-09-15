@@ -3901,16 +3901,9 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
                                    '_rebuild_availability_ranges') as rebuild:
 
                 exception = n_exc.IpAddressGenerationFailure(net_id='n')
-                generate.side_effect = exception
-
-                # I want the side_effect to throw an exception once but I
-                # didn't see a way to do this.  So, let it throw twice and
-                # catch the second one.  Check below to ensure that
-                # _try_generate_ip was called twice.
-                try:
-                    db_base_plugin_v2.NeutronDbPluginV2._generate_ip('c', 's')
-                except n_exc.IpAddressGenerationFailure:
-                    pass
+                # fail first call but not second
+                generate.side_effect = [exception, None]
+                db_base_plugin_v2.NeutronDbPluginV2._generate_ip('c', 's')
 
         self.assertEqual(2, generate.call_count)
         rebuild.assert_called_once_with('c', 's')
