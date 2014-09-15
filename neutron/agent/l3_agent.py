@@ -948,7 +948,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # Process SNAT/DNAT rules for floating IPs
         fip_statuses = {}
         try:
-            if ex_gw_port:
+            if ex_gw_port or ri.ex_gw_port:
                 existing_floating_ips = ri.floating_ips
                 self.process_router_floating_ip_nat_rules(ri)
                 ri.iptables_manager.defer_apply_off()
@@ -962,7 +962,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
                 fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ERROR
 
-        if ex_gw_port:
+        if ex_gw_port or ri.ex_gw_port:
             # Identify floating IPs which were disabled
             ri.floating_ips = set(fip_statuses.keys())
             for fip_id in existing_floating_ips - ri.floating_ips:

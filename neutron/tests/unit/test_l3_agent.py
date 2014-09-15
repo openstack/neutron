@@ -988,7 +988,17 @@ class TestBasicRouterOperations(base.BaseTestCase):
         del router[l3_constants.INTERFACE_KEY]
         del router['gw_port']
         agent.process_router(ri)
+        ex_gw_port = agent._get_ex_gw_port(ri)
         self.assertEqual(self.send_arp.call_count, 1)
+        agent.process_router_floating_ip_addresses.assert_called_with(
+            ri, ex_gw_port)
+        agent.process_router_floating_ip_addresses.reset_mock()
+        agent.process_router_floating_ip_nat_rules.assert_called_with(ri)
+        agent.process_router_floating_ip_nat_rules.reset_mock()
+
+        # now no ports no gateway, test state tear down
+        ri.ex_gw_port = None
+        agent.process_router(ri)
         self.assertFalse(agent.process_router_floating_ip_addresses.called)
         self.assertFalse(agent.process_router_floating_ip_nat_rules.called)
 
