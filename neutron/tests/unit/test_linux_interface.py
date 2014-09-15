@@ -394,7 +394,7 @@ class TestBridgeInterfaceDriver(TestBase):
                     'port-1234',
                     'tap0',
                     'aa:bb:cc:dd:ee:ff')
-            self.ip_dev.assert_has_calls([])
+            self.assertFalse(self.ip_dev.called)
             self.assertEqual(log.call_count, 1)
 
     def test_plug_mtu(self):

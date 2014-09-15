@@ -1028,7 +1028,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         port = self._fake_port()
         self.firewall.remove_port_filter(port)
         # checking no exception occures
-        self.v4filter_inst.assert_has_calls([])
+        self.assertFalse(self.v4filter_inst.called)
 
     def test_defer_apply(self):
         with self.firewall.defer_apply():

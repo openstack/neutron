@@ -1000,7 +1000,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.agent.refresh_firewall = mock.Mock()
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.security_groups_rule_updated(['fake_sgid3', 'fake_sgid4'])
-        self.agent.refresh_firewall.assert_has_calls([])
+        self.assertFalse(self.agent.refresh_firewall.called)
 
     def test_security_groups_member_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -1013,7 +1013,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.agent.refresh_firewall = mock.Mock()
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.security_groups_member_updated(['fake_sgid3', 'fake_sgid4'])
-        self.agent.refresh_firewall.assert_has_calls([])
+        self.assertFalse(self.agent.refresh_firewall.called)
 
     def test_security_groups_provider_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -1041,7 +1041,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
 
     def test_refresh_firewall_none(self):
         self.agent.refresh_firewall([])
-        self.firewall.assert_has_calls([])
+        self.assertFalse(self.firewall.called)
 
 
 class SecurityGroupAgentEnhancedRpcTestCase(
@@ -1157,7 +1157,7 @@ class SecurityGroupAgentEnhancedRpcTestCase(
 
     def test_refresh_firewall_none_enhanced_rpc(self):
         self.agent.refresh_firewall([])
-        self.firewall.assert_has_calls([])
+        self.assertFalse(self.firewall.called)
 
 
 class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
