@@ -36,6 +36,7 @@ from neutron.plugins.ml2 import driver_api as api
 
 EXTERNAL_PORT_OWNER = 'neutron:external_port'
 LOG = log.getLogger(__name__)
+put_context_in_serverpool = plugin.put_context_in_serverpool
 
 # time in seconds to maintain existence of vswitch response
 CACHE_VSWITCH_TIME = 60
@@ -71,18 +72,22 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
 
         LOG.debug(_("Initialization done"))
 
+    @put_context_in_serverpool
     def create_network_postcommit(self, context):
         # create network on the network controller
         self._send_create_network(context.current)
 
+    @put_context_in_serverpool
     def update_network_postcommit(self, context):
         # update network on the network controller
         self._send_update_network(context.current)
 
+    @put_context_in_serverpool
     def delete_network_postcommit(self, context):
         # delete network on the network controller
         self._send_delete_network(context.current)
 
+    @put_context_in_serverpool
     def create_port_postcommit(self, context):
         # create port on the network controller
         port = self._prepare_port_for_controller(context)
@@ -90,6 +95,7 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
             self.async_port_create(port["network"]["tenant_id"],
                                    port["network"]["id"], port)
 
+    @put_context_in_serverpool
     def update_port_postcommit(self, context):
         # update port on the network controller
         port = self._prepare_port_for_controller(context)
@@ -113,6 +119,7 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
                             triggered_by_tenant=port["network"]["tenant_id"]
                         )
 
+    @put_context_in_serverpool
     def delete_port_postcommit(self, context):
         # delete port on the network controller
         port = context.current

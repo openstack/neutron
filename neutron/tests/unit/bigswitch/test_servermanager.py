@@ -22,8 +22,10 @@ import ssl
 import mock
 from oslo.config import cfg
 
+from neutron import context
 from neutron import manager
 from neutron.openstack.common import importutils
+from neutron.openstack.common import jsonutils
 from neutron.plugins.bigswitch import servermanager
 from neutron.tests.unit.bigswitch import test_restproxy_plugin as test_rp
 
@@ -210,6 +212,23 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
         # verify new header made it in
         self.assertIn('EXTRA-HEADER', callheaders)
         self.assertEqual(callheaders['EXTRA-HEADER'], 'HI')
+
+    def test_req_context_header(self):
+        sp = manager.NeutronManager.get_plugin().servers
+        ncontext = context.Context('uid', 'tid')
+        sp.set_context(ncontext)
+        with mock.patch(HTTPCON) as conmock:
+            rv = conmock.return_value
+            rv.getresponse.return_value.getheader.return_value = 'HASHHEADER'
+            sp.rest_action('GET', '/')
+        callheaders = rv.request.mock_calls[0][1][3]
+        self.assertIn(servermanager.REQ_CONTEXT_HEADER, callheaders)
+        ctxdct = ncontext.to_dict()
+        # auth token is not included
+        ctxdct.pop('auth_token')
+        self.assertEqual(
+            ctxdct, jsonutils.loads(
+                  callheaders[servermanager.REQ_CONTEXT_HEADER]))
 
     def test_capabilities_retrieval(self):
         sp = servermanager.ServerPool()
