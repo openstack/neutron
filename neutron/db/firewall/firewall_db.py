@@ -164,7 +164,8 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                'enabled': firewall_rule['enabled']}
         return self._fields(res, fields)
 
-    def _set_rules_for_policy(self, context, firewall_policy_db, rule_id_list):
+    def _set_rules_for_policy(self, context, firewall_policy_db, fwp):
+        rule_id_list = fwp['firewall_rules']
         fwp_db = firewall_policy_db
         with context.session.begin(subtransactions=True):
             if not rule_id_list:
@@ -188,6 +189,15 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                             fwp_db['id']):
                         raise firewall.FirewallRuleInUse(
                             firewall_rule_id=fwrule_id)
+                if 'shared' in fwp:
+                    if fwp['shared'] and not rules_dict[fwrule_id]['shared']:
+                        raise firewall.FirewallRuleSharingConflict(
+                            firewall_rule_id=fwrule_id,
+                            firewall_policy_id=fwp_db['id'])
+                elif fwp_db['shared'] and not rules_dict[fwrule_id]['shared']:
+                    raise firewall.FirewallRuleSharingConflict(
+                        firewall_rule_id=fwrule_id,
+                        firewall_policy_id=fwp_db['id'])
             # New list of rules is valid so we will first reset the existing
             # list and then add each rule in order.
             # Note that the list could be empty in which case we interpret
@@ -197,6 +207,15 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                 fwp_db.firewall_rules.append(rules_dict[fwrule_id])
             fwp_db.firewall_rules.reorder()
             fwp_db.audited = False
+
+    def _check_unshared_rules_for_policy(self, fwp_db, fwp):
+        if fwp['shared']:
+            rules_in_db = fwp_db['firewall_rules']
+            for fwr_db in rules_in_db:
+                if not fwr_db['shared']:
+                    raise firewall.FirewallPolicySharingConflict(
+                        firewall_rule_id=fwr_db['id'],
+                        firewall_policy_id=fwp_db['id'])
 
     def _process_rule_for_policy(self, context, firewall_policy_id,
                                  firewall_rule_db, position):
@@ -303,8 +322,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                                     description=fwp['description'],
                                     shared=fwp['shared'])
             context.session.add(fwp_db)
-            self._set_rules_for_policy(context, fwp_db,
-                                       fwp['firewall_rules'])
+            self._set_rules_for_policy(context, fwp_db, fwp)
             fwp_db.audited = fwp['audited']
         return self._make_firewall_policy_dict(fwp_db)
 
@@ -313,9 +331,11 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         fwp = firewall_policy['firewall_policy']
         with context.session.begin(subtransactions=True):
             fwp_db = self._get_firewall_policy(context, id)
-            if 'firewall_rules' in fwp:
-                self._set_rules_for_policy(context, fwp_db,
-                                           fwp['firewall_rules'])
+            # check any existing rules are not shared
+            if 'shared' in fwp and 'firewall_rules' not in fwp:
+                self._check_unshared_rules_for_policy(fwp_db, fwp)
+            elif 'firewall_rules' in fwp:
+                self._set_rules_for_policy(context, fwp_db, fwp)
                 del fwp['firewall_rules']
             if 'audited' not in fwp or fwp['audited']:
                 fwp['audited'] = False
