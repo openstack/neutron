@@ -82,6 +82,12 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
         super(TestBigSwitchProxyPortsV2,
               self).setUp(self._plugin_name)
 
+    def test_get_ports_no_id(self):
+        with self.port(name='test'):
+            ports = manager.NeutronManager.get_plugin().get_ports(
+                context.get_admin_context(), fields=['name'])
+            self.assertEqual(['name'], ports[0].keys())
+
     def test_router_port_status_active(self):
         # router ports screw up port auto-deletion so it has to be
         # disabled for this test
