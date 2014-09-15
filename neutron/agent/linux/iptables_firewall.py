@@ -385,7 +385,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 del_ips = self._get_deleted_sg_member_ips(sg_id, ethertype)
                 cur_member_ips = self._get_cur_sg_member_ips(sg_id, ethertype)
                 chain_name = ethertype + sg_id[:IPSET_CHAIN_LEN]
-                if chain_name not in self.ipset_chains:
+                if chain_name not in self.ipset_chains and cur_member_ips:
                     self.ipset_chains[chain_name] = []
                     self.ipset.create_ipset_chain(
                         chain_name, ethertype)
