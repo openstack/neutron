@@ -44,7 +44,6 @@ sys.path.insert(0, NEUTRON_DIR)
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
-              'sphinx.ext.intersphinx',
               'sphinx.ext.pngmath',
               'sphinx.ext.graphviz',
               'sphinx.ext.todo',
@@ -239,12 +238,3 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('http://docs.python.org/', None),
-                       'nova': ('http://nova.openstack.org', None),
-                       'swift': ('http://swift.openstack.org', None),
-                       'glance': ('http://glance.openstack.org', None),
-                       'horizon': ('http://horizon.openstack.org', None),
-                       'keystone': ('http://keystone.openstack.org', None),
-                      }
