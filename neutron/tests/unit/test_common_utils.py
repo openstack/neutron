@@ -16,8 +16,10 @@ import eventlet
 import mock
 import testtools
 
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
 
@@ -63,6 +65,68 @@ class TestParseMappings(base.BaseTestCase):
 
     def test_parse_mappings_succeeds_for_no_mappings(self):
         self.assertEqual(self.parse(['']), {})
+
+
+class TestParseTunnelRangesMixin(object):
+    TUN_MIN = None
+    TUN_MAX = None
+    TYPE = None
+    _err_prefix = "Invalid network Tunnel range: '%d:%d' - "
+    _err_suffix = "%s is not a valid %s identifier"
+    _err_range = "End of tunnel range is less than start of tunnel range"
+
+    def _build_invalid_tunnel_range_msg(self, t_range_tuple, n):
+        bad_id = t_range_tuple[n - 1]
+        return (self._err_prefix % t_range_tuple) + (self._err_suffix
+                                                 % (bad_id, self.TYPE))
+
+    def _build_range_reversed_msg(self, t_range_tuple):
+        return (self._err_prefix % t_range_tuple) + self._err_range
+
+    def _verify_range(self, tunnel_range):
+        return plugin_utils.verify_tunnel_range(tunnel_range, self.TYPE)
+
+    def _check_range_valid_ranges(self, tunnel_range):
+        self.assertIsNone(self._verify_range(tunnel_range))
+
+    def _check_range_invalid_ranges(self, bad_range, which):
+        expected_msg = self._build_invalid_tunnel_range_msg(bad_range, which)
+        err = self.assertRaises(n_exc.NetworkTunnelRangeError,
+                                self._verify_range, bad_range)
+        self.assertEqual(expected_msg, str(err))
+
+    def _check_range_reversed(self, bad_range):
+        err = self.assertRaises(n_exc.NetworkTunnelRangeError,
+                                self._verify_range, bad_range)
+        expected_msg = self._build_range_reversed_msg(bad_range)
+        self.assertEqual(expected_msg, str(err))
+
+    def test_range_tunnel_id_valid(self):
+            self._check_range_valid_ranges((self.TUN_MIN, self.TUN_MAX))
+
+    def test_range_tunnel_id_invalid(self):
+            self._check_range_invalid_ranges((-1, self.TUN_MAX), 1)
+            self._check_range_invalid_ranges((self.TUN_MIN,
+                                              self.TUN_MAX + 1), 2)
+            self._check_range_invalid_ranges((self.TUN_MIN - 1,
+                                              self.TUN_MAX + 1), 1)
+
+    def test_range_tunnel_id_reversed(self):
+            self._check_range_reversed((self.TUN_MAX, self.TUN_MIN))
+
+
+class TestGreTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
+                                    base.BaseTestCase):
+    TUN_MIN = constants.MIN_GRE_ID
+    TUN_MAX = constants.MAX_GRE_ID
+    TYPE = p_const.TYPE_GRE
+
+
+class TestVxlanTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
+                                      base.BaseTestCase):
+    TUN_MIN = constants.MIN_VXLAN_VNI
+    TUN_MAX = constants.MAX_VXLAN_VNI
+    TYPE = p_const.TYPE_VXLAN
 
 
 class UtilTestParseVlanRanges(base.BaseTestCase):

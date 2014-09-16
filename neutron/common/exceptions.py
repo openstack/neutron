@@ -305,6 +305,17 @@ class NetworkVlanRangeError(NeutronException):
         super(NetworkVlanRangeError, self).__init__(**kwargs)
 
 
+class NetworkTunnelRangeError(NeutronException):
+    message = _("Invalid network Tunnel range: "
+                "'%(tunnel_range)s' - %(error)s")
+
+    def __init__(self, **kwargs):
+        # Convert tunnel_range tuple to 'start:end' format for display
+        if isinstance(kwargs['tunnel_range'], tuple):
+            kwargs['tunnel_range'] = "%d:%d" % kwargs['tunnel_range']
+        super(NetworkTunnelRangeError, self).__init__(**kwargs)
+
+
 class NetworkVxlanPortRangeError(NeutronException):
     message = _("Invalid network VXLAN port range: '%(vxlan_range)s'")
 
