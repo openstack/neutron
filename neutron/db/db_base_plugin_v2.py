@@ -935,23 +935,16 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, id)
 
-            filters = {'network_id': [id]}
-            # NOTE(armando-migliaccio): stick with base plugin
-            query = context.session.query(
-                models_v2.Port).enable_eagerloads(False)
-            ports = self._apply_filters_to_query(
-                query, models_v2.Port, filters).with_lockmode('update')
+            context.session.query(models_v2.Port).filter_by(
+                network_id=id).filter(
+                models_v2.Port.device_owner.
+                in_(AUTO_DELETE_PORT_OWNERS)).delete(synchronize_session=False)
 
-            # check if there are any tenant owned ports in-use
-            only_auto_del = all(p['device_owner'] in AUTO_DELETE_PORT_OWNERS
-                                for p in ports)
+            port_in_use = context.session.query(models_v2.Port).filter_by(
+                network_id=id).first()
 
-            if not only_auto_del:
+            if port_in_use:
                 raise n_exc.NetworkInUse(net_id=id)
-
-            # clean up network owned ports
-            for port in ports:
-                self._delete_port(context, port['id'])
 
             # clean up subnets
             subnets = self._get_subnets_by_network(context, id)
@@ -1268,24 +1261,29 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     def delete_subnet(self, context, id):
         with context.session.begin(subtransactions=True):
             subnet = self._get_subnet(context, id)
-            # Check if any tenant owned ports are using this subnet
-            allocated = (context.session.query(models_v2.IPAllocation).
-                         filter_by(subnet_id=subnet['id']).
-                         join(models_v2.Port).
-                         filter_by(network_id=subnet['network_id']).
-                         with_lockmode('update'))
-
+            # Delete all network owned ports
+            qry_network_ports = (
+                context.session.query(models_v2.IPAllocation).
+                filter_by(subnet_id=subnet['id']).
+                join(models_v2.Port))
             # Remove network owned ports, and delete IP allocations
             # for IPv6 addresses which were automatically generated
             # via SLAAC
             is_ipv6_slaac_subnet = ipv6_utils.is_slaac_subnet(subnet)
-            for a in allocated:
-                if (is_ipv6_slaac_subnet or
-                    a.ports.device_owner in AUTO_DELETE_PORT_OWNERS):
-                    NeutronDbPluginV2._delete_ip_allocation(
-                        context, subnet.network_id, id, a.ip_address)
-                else:
-                    raise n_exc.SubnetInUse(subnet_id=id)
+            if not is_ipv6_slaac_subnet:
+                qry_network_ports = (
+                    qry_network_ports.filter(models_v2.Port.device_owner.
+                    in_(AUTO_DELETE_PORT_OWNERS)))
+            network_ports = qry_network_ports.all()
+            if network_ports:
+                map(context.session.delete, network_ports)
+            # Check if there are tenant owned ports
+            tenant_ports = (context.session.query(models_v2.IPAllocation).
+                            filter_by(subnet_id=subnet['id']).
+                            join(models_v2.Port).
+                            filter_by(network_id=subnet['network_id']).first())
+            if tenant_ports:
+                raise n_exc.SubnetInUse(subnet_id=id)
 
             context.session.delete(subnet)
 
