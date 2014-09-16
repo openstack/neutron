@@ -44,7 +44,8 @@ FAKE_PREFIX = {const.IPv4: '10.0.0.0/24',
 FAKE_IP = {const.IPv4: '10.0.0.1',
            const.IPv6: 'fe80::1',
            'IPv6_GLOBAL': '2001:0db8::1',
-           'IPv6_LLA': 'fe80::123'}
+           'IPv6_LLA': 'fe80::123',
+           'IPv6_DHCP': '2001:db8::3'}
 
 
 TEST_PLUGIN_CLASS = ('neutron.tests.unit.test_security_groups_rpc.'
@@ -483,6 +484,18 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
+                dhcp_port = self._create_port(
+                    self.fmt, n['network']['id'],
+                    fixed_ips=[{'subnet_id': subnet_v6['subnet']['id'],
+                                'ip_address': FAKE_IP['IPv6_DHCP']}],
+                    device_owner=const.DEVICE_OWNER_DHCP,
+                    security_groups=[sg1_id])
+                dhcp_rest = self.deserialize(self.fmt, dhcp_port)
+                dhcp_mac = dhcp_rest['port']['mac_address']
+                dhcp_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
+                    const.IPV6_LLA_PREFIX,
+                    dhcp_mac))
+
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
                     fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
@@ -495,6 +508,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
+                source_port, dest_port, ethertype = sg_db_rpc.DHCP_RULE_PORT[6]
                 expected = [{'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg1_id},
                             {'direction': 'egress', 'ethertype': const.IPv6,
@@ -517,6 +531,14 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                              'ethertype': const.IPv6,
                              'source_ip_prefix': fake_gateway,
                              'source_port_range_min': const.ICMPV6_TYPE_RA},
+                            {'direction': 'ingress',
+                             'ethertype': ethertype,
+                             'port_range_max': dest_port,
+                             'port_range_min': dest_port,
+                             'protocol': const.PROTO_NAME_UDP,
+                             'source_ip_prefix': dhcp_lla_ip,
+                             'source_port_range_max': source_port,
+                             'source_port_range_min': source_port}
                             ]
                 self.assertEqual(port_rpc['security_group_rules'],
                                  expected)

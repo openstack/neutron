@@ -27,12 +27,10 @@ from neutron.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-IP_MASK = {q_const.IPv4: 32,
-           q_const.IPv6: 128}
-
-
 DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
                        'egress': 'dest_ip_prefix'}
+
+DHCP_RULE_PORT = {4: (67, 68, q_const.IPv4), 6: (547, 546, q_const.IPv6)}
 
 
 class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
@@ -282,7 +280,14 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             ips[network_id] = []
 
         for port, ip in query:
-            ips[port['network_id']].append(ip)
+            if (netaddr.IPAddress(ip).version == 6
+                and not netaddr.IPAddress(ip).is_link_local()):
+                mac_address = port['mac_address']
+                ip = str(ipv6.get_ipv6_addr_by_EUI64(q_const.IPV6_LLA_PREFIX,
+                    mac_address))
+            if ip not in ips[port['network_id']]:
+                ips[port['network_id']].append(ip)
+
         return ips
 
     def _select_ra_ips_for_network_ids(self, context, network_ids):
@@ -376,18 +381,16 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def _add_ingress_dhcp_rule(self, port, ips):
         dhcp_ips = ips.get(port['network_id'])
         for dhcp_ip in dhcp_ips:
-            if not netaddr.IPAddress(dhcp_ip).version == 4:
-                return
-
+            source_port, dest_port, ethertype = DHCP_RULE_PORT[
+                netaddr.IPAddress(dhcp_ip).version]
             dhcp_rule = {'direction': 'ingress',
-                         'ethertype': q_const.IPv4,
+                         'ethertype': ethertype,
                          'protocol': 'udp',
-                         'port_range_min': 68,
-                         'port_range_max': 68,
-                         'source_port_range_min': 67,
-                         'source_port_range_max': 67}
-            dhcp_rule['source_ip_prefix'] = "%s/%s" % (dhcp_ip,
-                                                       IP_MASK[q_const.IPv4])
+                         'port_range_min': dest_port,
+                         'port_range_max': dest_port,
+                         'source_port_range_min': source_port,
+                         'source_port_range_max': source_port,
+                         'source_ip_prefix': dhcp_ip}
             port['security_group_rules'].append(dhcp_rule)
 
     def _add_ingress_ra_rule(self, port, ips):
