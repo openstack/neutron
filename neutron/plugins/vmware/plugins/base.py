@@ -1153,7 +1153,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         port_data[addr_pair.ADDRESS_PAIRS])
             else:
                 # remove ATTR_NOT_SPECIFIED
-                port_data[addr_pair.ADDRESS_PAIRS] = None
+                port_data[addr_pair.ADDRESS_PAIRS] = []
 
             # security group extension checks
             if port_security and has_ip:
