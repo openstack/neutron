@@ -237,6 +237,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         """Bind the snat router to the chosen l3 service agent."""
         chosen_snat_agent = random.choice(snat_candidates)
         self.bind_snat_router(context, router_id, chosen_snat_agent)
+        return chosen_snat_agent
 
     def unbind_snat_servicenode(self, context, router_id):
         """Unbind the snat router to the chosen l3 service agent."""
@@ -290,18 +291,6 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def schedule_snat_router(self, context, router_id, sync_router):
         """Schedule the snat router on l3 service agent."""
-        binding = (context.session.
-                   query(CentralizedSnatL3AgentBinding).
-                   filter_by(router_id=router_id).first())
-        if binding:
-            l3_agent_id = binding.l3_agent_id
-            l3_agent = binding.l3_agent
-            LOG.debug('SNAT Router %(router_id)s has already been '
-                      'hosted by L3 agent '
-                      '%(l3_agent_id)s', {'router_id': router_id,
-                                          'l3_agent_id': l3_agent_id})
-            self.bind_dvr_router_servicenode(context, router_id, l3_agent)
-            return
         active_l3_agents = self.get_l3_agents(context, active=True)
         if not active_l3_agents:
             LOG.warn(_('No active L3 agents found for SNAT'))
@@ -309,4 +298,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         snat_candidates = self.get_snat_candidates(sync_router,
                                                    active_l3_agents)
         if snat_candidates:
-            self.bind_snat_servicenode(context, router_id, snat_candidates)
+            chosen_agent = self.bind_snat_servicenode(
+                context, router_id, snat_candidates)
+            self.bind_dvr_router_servicenode(
+                context, router_id, chosen_agent)
