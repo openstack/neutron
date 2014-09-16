@@ -358,7 +358,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         IPs. Include the subnet_id in the result if only an IP address is
         configured.
 
-        :raises: InvalidInput, IpAddressInUse
+        :raises: InvalidInput, IpAddressInUse, InvalidIpForNetwork,
+                 InvalidIpForSubnet
         """
         fixed_ip_set = []
         for fixed in fixed_ips:
@@ -377,9 +378,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                         subnet_id = subnet['id']
                         break
                 if not found:
-                    msg = _('IP address %s is not a valid IP for the defined '
-                            'networks subnets') % fixed['ip_address']
-                    raise n_exc.InvalidInput(error_message=msg)
+                    raise n_exc.InvalidIpForNetwork(
+                        ip_address=fixed['ip_address'])
             else:
                 subnet = self._get_subnet(context, fixed['subnet_id'])
                 if subnet['network_id'] != network_id:
@@ -403,9 +403,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 if (not found and
                     not self._check_subnet_ip(subnet['cidr'],
                                               fixed['ip_address'])):
-                    msg = _('IP address %s is not a valid IP for the defined '
-                            'subnet') % fixed['ip_address']
-                    raise n_exc.InvalidInput(error_message=msg)
+                    raise n_exc.InvalidIpForSubnet(
+                        ip_address=fixed['ip_address'])
                 if (ipv6_utils.is_auto_address_subnet(subnet) and
                     device_owner not in
                         constants.ROUTER_INTERFACE_OWNERS):
