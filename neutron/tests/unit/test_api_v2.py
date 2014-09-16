@@ -888,13 +888,20 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                             content_type='application/' + self.fmt)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
 
-    def test_create_bulk_no_networks(self):
-        data = {'networks': []}
-        res = self.api.post(_get_path('networks', fmt=self.fmt),
+    def _test_create_bulk_failure(self, resource, data):
+        # TODO(kevinbenton): update the rest of the failure cases to use
+        # this.
+        res = self.api.post(_get_path(resource, fmt=self.fmt),
                             self.serialize(data),
                             content_type='application/' + self.fmt,
                             expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_create_bulk_networks_none(self):
+        self._test_create_bulk_failure('networks', {'networks': None})
+
+    def test_create_bulk_networks_empty_list(self):
+        self._test_create_bulk_failure('networks', {'networks': []})
 
     def test_create_bulk_missing_attr(self):
         data = {'ports': [{'what': 'who', 'tenant_id': _uuid()}]}

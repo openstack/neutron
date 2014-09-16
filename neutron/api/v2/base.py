@@ -576,20 +576,18 @@ class Controller(object):
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
         LOG.debug(_("Request body: %(body)s"), {'body': body})
-        prep_req_body = lambda x: Controller.prepare_request_body(
-            context,
-            x if resource in x else {resource: x},
-            is_create,
-            resource,
-            attr_info,
-            allow_bulk)
         if collection in body:
             if not allow_bulk:
                 raise webob.exc.HTTPBadRequest(_("Bulk operation "
                                                  "not supported"))
-            bulk_body = [prep_req_body(item) for item in body[collection]]
-            if not bulk_body:
+            if not body[collection]:
                 raise webob.exc.HTTPBadRequest(_("Resources required"))
+            bulk_body = [
+                Controller.prepare_request_body(
+                    context, item if resource in item else {resource: item},
+                    is_create, resource, attr_info, allow_bulk
+                ) for item in body[collection]
+            ]
             return {collection: bulk_body}
 
         res_dict = body.get(resource)
