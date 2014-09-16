@@ -911,7 +911,17 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
                                                     sub_ids)
             self.assertFalse(result)
 
-    def test_check_dvr_serviced_port_exists_on_subnet(self):
+    def _test_dvr_serviced_port_exists_on_subnet(self, port):
+        with mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                        'get_ports', return_value=[port]):
+            result = self.dut.check_ports_active_on_host_and_subnet(
+                                                    self.adminContext,
+                                                    'thisHost',
+                                                    'dvr1-intf-id',
+                                                    'my-subnet-id')
+            self.assertTrue(result)
+
+    def test_dvr_serviced_vip_port_exists_on_subnet(self):
         vip_port = {
                 'id': 'lbaas-vip-port1',
                 'device_id': 'vip-pool-id',
@@ -925,19 +935,23 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
                     }
                 ]
         }
+        self._test_dvr_serviced_port_exists_on_subnet(port=vip_port)
 
-        with contextlib.nested(
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                       '.get_ports', return_value=[vip_port]),
-            mock.patch('neutron.common.utils.is_dvr_serviced',
-                       return_value=True)) as (get_ports_fn, dvr_serv_fn):
-            result = self.dut.check_ports_active_on_host_and_subnet(
-                                                    self.adminContext,
-                                                    'thisHost',
-                                                    'dvr1-intf-id',
-                                                    'my-subnet-id')
-            self.assertTrue(result)
-            self.assertEqual(dvr_serv_fn.call_count, 1)
+    def test_dvr_serviced_dhcp_port_exists_on_subnet(self):
+        dhcp_port = {
+                'id': 'dhcp-port1',
+                'device_id': 'dhcp-net-id',
+                'status': 'ACTIVE',
+                'binding:host_id': 'thisHost',
+                'device_owner': constants.DEVICE_OWNER_DHCP,
+                'fixed_ips': [
+                    {
+                        'subnet_id': 'my-subnet-id',
+                        'ip_address': '10.10.10.2'
+                    }
+                ]
+        }
+        self._test_dvr_serviced_port_exists_on_subnet(port=dhcp_port)
 
     def _prepare_schedule_snat_tests(self):
         agent = agents_db.Agent()

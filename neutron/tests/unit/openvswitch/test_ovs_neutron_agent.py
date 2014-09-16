@@ -291,6 +291,10 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self._test_port_bound_for_dvr(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
 
+    def test_port_bound_for_dvr_with_dhcp_ports(self):
+        self._test_port_bound_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_DHCP)
+
     def test_port_bound_for_dvr_with_csnat_ports(self, ofport=10):
         self._setup_for_dvr_test()
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
@@ -433,6 +437,10 @@ class TestOvsNeutronAgent(base.BaseTestCase):
     def test_treat_devices_removed_for_dvr_with_lbaas_vip_ports(self):
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
+
+    def test_treat_devices_removed_for_dvr_with_dhcp_ports(self):
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_DHCP)
 
     def test_treat_devices_removed_for_dvr_csnat_port(self, ofport=10):
         self._setup_for_dvr_test()

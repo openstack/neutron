@@ -353,6 +353,7 @@ def is_dvr_serviced(device_owner):
         if they are required for DVR or any service directly or
         indirectly associated with DVR.
         """
-        if (device_owner.startswith('compute:') or (
-            q_const.DEVICE_OWNER_LOADBALANCER == device_owner)):
-            return True
+        dvr_serviced_device_owners = (q_const.DEVICE_OWNER_LOADBALANCER,
+                                      q_const.DEVICE_OWNER_DHCP)
+        return (device_owner.startswith('compute:') or
+                device_owner in dvr_serviced_device_owners)

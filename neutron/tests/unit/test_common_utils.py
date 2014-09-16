@@ -528,3 +528,18 @@ class TestExceptionLogger(base.BaseTestCase):
         calls.assert_has_calls([mock.call(0), mock.call(1), mock.call(3)],
                                any_order=True)
         self.assertTrue(logger.called)
+
+
+class TestDvrServices(base.BaseTestCase):
+
+    def _test_is_dvr_serviced(self, device_owner, expected):
+        self.assertEqual(expected, utils.is_dvr_serviced(device_owner))
+
+    def test_is_dvr_serviced_with_lb_port(self):
+        self._test_is_dvr_serviced(constants.DEVICE_OWNER_LOADBALANCER, True)
+
+    def test_is_dvr_serviced_with_dhcp_port(self):
+        self._test_is_dvr_serviced(constants.DEVICE_OWNER_DHCP, True)
+
+    def test_is_dvr_serviced_with_vm_port(self):
+        self._test_is_dvr_serviced('compute:', True)
