@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# @author: Samer Deeb, Mellanox Technologies, Ltd
-
 import re
 
 from neutron.agent.linux import ip_lib

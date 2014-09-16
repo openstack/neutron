@@ -12,8 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Akihiro Motoki, NEC Corporation
 
 
 """setup_mock_calls and verify_mock_calls are convenient methods

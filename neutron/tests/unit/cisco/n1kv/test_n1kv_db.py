@@ -11,10 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Juergen Brendel, Cisco Systems Inc.
-# @author: Abhishek Raut, Cisco Systems Inc.
-# @author: Rudrajit Tapadar, Cisco Systems Inc.
 
 from six import moves
 from sqlalchemy.orm import exc as s_exc

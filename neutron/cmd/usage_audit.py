@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # Copyright (c) 2012 New Dream Network, LLC (DreamHost)
-# Author: Julien Danjou <julien@danjou.info>
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may

@@ -11,8 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Edgar Magana, emagana@plumgrid.com, PLUMgrid, Inc.
 
 """
 Neutron Plug-in for PLUMgrid Virtual Networking Infrastructure (VNI)

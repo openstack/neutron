@@ -13,8 +13,6 @@
 #    under the License.
 #
 # Adapted from neutron.tests.unit.test_l3_plugin
-# @author: Sumit Naiksatam, sumitnaiksatam@gmail.com
-#
 
 import contextlib
 import copy

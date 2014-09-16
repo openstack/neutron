@@ -12,9 +12,6 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# @author: Sukhdev Kapur, Arista Networks, Inc.
-#
 
 
 import mock

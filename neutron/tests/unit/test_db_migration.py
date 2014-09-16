@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# @author Mark McClain (DreamHost)
-
 import sys
 
 import mock

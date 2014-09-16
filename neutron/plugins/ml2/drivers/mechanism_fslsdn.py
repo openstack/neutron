@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# @author: Trinath Somanchi, Freescale, Inc
-
-
 from neutronclient.v2_0 import client
 from oslo.config import cfg
 

@@ -12,8 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Gary Duan, gduan@varmour.com, vArmour Networks
 
 from neutron.openstack.common import log as logging
 from neutron.services.firewall.agents.varmour import varmour_api

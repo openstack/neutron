@@ -11,9 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Kaiwei Fan, VMware, Inc.
-# @author: Bo Link, VMware, Inc.
 
 from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
