@@ -831,6 +831,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                      pnet.SEGMENTATION_ID: binding.vlan_id}
                     for binding in bindings]
 
+    def extend_port_dict_binding(self, port_res, port_db):
+        super(NsxPluginV2, self).extend_port_dict_binding(port_res, port_db)
+        port_res[pbin.VNIC_TYPE] = pbin.VNIC_NORMAL
+
     def _handle_lswitch_selection(self, context, cluster, network,
                                   network_bindings, max_ports,
                                   allow_extra_lswitches):
@@ -1128,6 +1132,12 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._process_portbindings_create_and_update(context,
                                                          port['port'],
                                                          port_data)
+            # For some reason the port bindings DB mixin does not handle
+            # the VNIC_TYPE attribute, which is required by nova for
+            # setting up VIFs.
+            context.session.flush()
+            port_data[pbin.VNIC_TYPE] = pbin.VNIC_NORMAL
+
         # DB Operation is complete, perform NSX operation
         try:
             port_data = port['port'].copy()

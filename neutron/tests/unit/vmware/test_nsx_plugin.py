@@ -124,7 +124,8 @@ class TestV2HTTPResponse(test_plugin.TestV2HTTPResponse, NsxPluginV2TestCase):
 class TestPortsV2(NsxPluginV2TestCase,
                   test_plugin.TestPortsV2,
                   test_bindings.PortBindingsTestCase,
-                  test_bindings.PortBindingsHostTestCaseMixin):
+                  test_bindings.PortBindingsHostTestCaseMixin,
+                  test_bindings.PortBindingsVnicTestCaseMixin):
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = True
