@@ -94,13 +94,16 @@ class L3RpcCallback(object):
             LOG.debug("Checking router: %(id)s for host: %(host)s",
                       {'id': router['id'], 'host': host})
             if router.get('gw_port') and router.get('distributed'):
+                # '' is used to effectively clear binding of a gw port if not
+                # bound (snat is not hosted on any l3 agent)
+                gw_port_host = router.get('gw_port_host') or ''
                 self._ensure_host_set_on_port(context,
-                                              router.get('gw_port_host'),
+                                              gw_port_host,
                                               router.get('gw_port'),
                                               router['id'])
                 for p in router.get(constants.SNAT_ROUTER_INTF_KEY, []):
                     self._ensure_host_set_on_port(context,
-                                                  router.get('gw_port_host'),
+                                                  gw_port_host,
                                                   p, router['id'])
             else:
                 self._ensure_host_set_on_port(
@@ -139,6 +142,8 @@ class L3RpcCallback(object):
                         context,
                         port['id'],
                         {'port': {portbindings.HOST_ID: host}})
+                    # updating port's host to pass actual info to l3 agent
+                    port[portbindings.HOST_ID] = host
                 except exceptions.PortNotFound:
                     LOG.debug("Port %(port)s not found while updating "
                               "agent binding for router %(router)s.",
