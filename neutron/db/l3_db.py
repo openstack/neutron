@@ -861,6 +861,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                     'admin_state_up': True,
                     'device_id': fip_id,
                     'device_owner': DEVICE_OWNER_FLOATINGIP,
+                    'status': l3_constants.PORT_STATUS_NOTAPPLICABLE,
                     'name': ''}
 
             if fip.get('floating_ip_address'):

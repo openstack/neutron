@@ -931,7 +931,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _create_port_db(self, context, port):
         attrs = port[attributes.PORT]
-        attrs['status'] = const.PORT_STATUS_DOWN
+        if not attrs.get('status'):
+            attrs['status'] = const.PORT_STATUS_DOWN
 
         session = context.session
         with session.begin(subtransactions=True):

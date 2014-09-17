@@ -1658,6 +1658,13 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.assertIsNotNone(body['floatingip']['fixed_ip_address'])
             self.assertIsNotNone(body['floatingip']['router_id'])
 
+    def test_floating_port_status_not_applicable(self):
+        with self.floatingip_with_assoc():
+            port_body = self._list('ports',
+               query_params='device_owner=network:floatingip')['ports'][0]
+            self.assertEqual(l3_constants.PORT_STATUS_NOTAPPLICABLE,
+                             port_body['status'])
+
     def test_floatingip_update(
         self, expected_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
         with self.port() as p:

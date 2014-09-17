@@ -122,3 +122,6 @@ class IBMPluginRouterTestCase(test_l3_plugin.L3NatDBIntTestCase):
                        'Client',
                        new=MockClient)):
             super(IBMPluginRouterTestCase, self).setUp(plugin=_plugin_name)
+
+    def test_floating_port_status_not_applicable(self):
+        self.skipTest('Plugin changes floating port status')
