@@ -197,8 +197,6 @@ class ServerProxy(object):
                 except ValueError:
                     # response was not JSON, ignore the exception
                     pass
-            else:
-                hash_handler.close_update_session()
             ret = (response.status, response.reason, respstr, respdata)
         except httplib.HTTPException:
             # If we were using a cached connection, try again with a new one.
