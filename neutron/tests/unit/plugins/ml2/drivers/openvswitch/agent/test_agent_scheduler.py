@@ -1049,6 +1049,47 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 self.adminContext, [r['id']])[0]['l3_agent']['host']
             self.assertNotEqual(csnat_agent_host, new_csnat_agent_host)
 
+    def test_dvr_router_csnat_manual_rescheduling(self):
+        helpers.register_l3_agent(
+            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        helpers.register_l3_agent(
+            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        with self.subnet() as s:
+            net_id = s['subnet']['network_id']
+            self._set_net_external(net_id)
+
+            router = {'name': 'router1',
+                      'external_gateway_info': {'network_id': net_id},
+                      'admin_state_up': True,
+                      'distributed': True}
+            r = self.l3plugin.create_router(self.adminContext,
+                                            {'router': router})
+            self.l3plugin.schedule_router(
+                    self.adminContext, r['id'])
+            l3agents = self.l3plugin.list_l3_agents_hosting_router(
+                self.adminContext, r['id'])
+            self.assertEqual(2, len(l3agents['agents']))
+            csnat_agent = self.l3plugin.get_snat_bindings(
+                self.adminContext, [r['id']])[0]['l3_agent']
+
+            self.l3plugin.remove_router_from_l3_agent(
+                self.adminContext, csnat_agent['id'], r['id'])
+
+            l3agents = self.l3plugin.list_l3_agents_hosting_router(
+                self.adminContext, r['id'])
+            self.assertEqual(1, len(l3agents['agents']))
+            self.assertFalse(self.l3plugin.get_snat_bindings(
+                self.adminContext, [r['id']]))
+
+            self.l3plugin.add_router_to_l3_agent(
+                self.adminContext, csnat_agent['id'], r['id'])
+
+            l3agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(2, len(l3agents['agents']))
+            new_csnat_agent = self.l3plugin.get_snat_bindings(
+                self.adminContext, [r['id']])[0]['l3_agent']
+            self.assertEqual(csnat_agent['id'], new_csnat_agent['id'])
+
     def test_router_sync_data(self):
         with self.subnet() as s1,\
                 self.subnet(cidr='10.0.2.0/24') as s2,\
