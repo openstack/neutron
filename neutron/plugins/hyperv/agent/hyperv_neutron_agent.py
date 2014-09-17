@@ -118,8 +118,8 @@ class HyperVPluginApi(agent_rpc.PluginApi,
 
 
 class HyperVNeutronAgent(object):
-    # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    # Set RPC API version to 1.1 by default.
+    RPC_API_VERSION = '1.1'
 
     def __init__(self):
         self._utils = utilsfactory.get_hypervutils()
