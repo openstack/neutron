@@ -55,17 +55,24 @@ def create_request(path, body, content_type, method='GET',
 
 class SqlTestCase(base.BaseTestCase):
 
+    # flag to indicate that the models have been loaded
+    _TABLES_ESTABLISHED = False
+
     def setUp(self):
         super(SqlTestCase, self).setUp()
         # Register all data models
         engine = db_api.get_engine()
-        model_base.BASEV2.metadata.create_all(engine)
+        if not SqlTestCase._TABLES_ESTABLISHED:
+            model_base.BASEV2.metadata.create_all(engine)
+            SqlTestCase._TABLES_ESTABLISHED = True
 
-        def unregister_models():
-            """Unregister all data models."""
-            model_base.BASEV2.metadata.drop_all(engine)
+        def clear_tables():
+            with engine.begin() as conn:
+                for table in reversed(
+                        model_base.BASEV2.metadata.sorted_tables):
+                    conn.execute(table.delete())
 
-        self.addCleanup(unregister_models)
+        self.addCleanup(clear_tables)
 
 
 class WebTestCase(SqlTestCase):
