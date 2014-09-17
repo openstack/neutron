@@ -88,8 +88,10 @@ class ApiRequest(object):
             return error
 
         url = self._url
-        LOG.debug(_("[%(rid)d] Issuing - request %(conn)s"),
-                  {'rid': self._rid(), 'conn': self._request_str(conn, url)})
+        LOG.debug(_("[%(rid)d] Issuing - request url: %(conn)s "
+                    "body: %(body)s"),
+                  {'rid': self._rid(), 'conn': self._request_str(conn, url),
+                   'body': self._body})
         issued_time = time.time()
         is_conn_error = False
         is_conn_service_unavail = False
