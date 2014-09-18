@@ -433,6 +433,10 @@ class TestMetadataProxyHandlerCache(base.BaseTestCase):
         self.assertEqual(response.content_type, "text/plain")
         self.assertEqual(response.body, 'content')
 
+    def test_proxy_request_400(self):
+        self.assertIsInstance(self._proxy_request_test_helper(400),
+                              webob.exc.HTTPBadRequest)
+
     def test_proxy_request_403(self):
         self.assertIsInstance(self._proxy_request_test_helper(403),
                               webob.exc.HTTPForbidden)

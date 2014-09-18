@@ -110,6 +110,8 @@ class NetworkMetadataProxyHandler(object):
             response.headers['Content-Type'] = resp['content-type']
             response.body = content
             return response
+        elif resp.status == 400:
+            return webob.exc.HTTPBadRequest()
         elif resp.status == 404:
             return webob.exc.HTTPNotFound()
         elif resp.status == 409:

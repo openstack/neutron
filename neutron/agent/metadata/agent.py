@@ -232,6 +232,8 @@ class MetadataProxyHandler(object):
             )
             LOG.warn(msg)
             return webob.exc.HTTPForbidden()
+        elif resp.status == 400:
+            return webob.exc.HTTPBadRequest()
         elif resp.status == 404:
             return webob.exc.HTTPNotFound()
         elif resp.status == 409:
