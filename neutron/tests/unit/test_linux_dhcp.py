@@ -583,6 +583,7 @@ class TestDhcpLocalProcess(TestBase):
             lp.enable()
 
             self.assertEqual(lp.called, ['restart'])
+            self.assertFalse(self.mock_mgr.return_value.setup.called)
 
     def test_enable(self):
         attrs_to_mock = dict(
