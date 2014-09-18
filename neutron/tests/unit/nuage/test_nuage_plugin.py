@@ -41,7 +41,6 @@ from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extension_extraroute as extraroute_test
 from neutron.tests.unit import test_extension_security_group as test_sg
 from neutron.tests.unit import test_extensions
-from neutron.tests.unit import test_l3_plugin
 
 
 API_EXT_PATH = os.path.dirname(extensions.__file__)
@@ -383,8 +382,83 @@ class TestNuagePluginPortBinding(NuagePluginV2TestCase,
                 self._check_response_no_portbindings(non_admin_port)
 
 
-class TestNuageL3NatTestCase(NuagePluginV2TestCase,
-                             test_l3_plugin.L3NatDBIntTestCase):
+class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
+                                  extraroute_test.ExtraRouteDBIntTestCase):
+
+    def test_router_update_with_dup_destination_address(self):
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s:
+                with self.port(subnet=s) as p:
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+
+                    routes = [{'destination': '135.207.0.0/16',
+                               'nexthop': '10.0.1.3'},
+                              {'destination': '135.207.0.0/16',
+                               'nexthop': '10.0.1.5'}]
+
+                    self._update('routers', r['router']['id'],
+                                 {'router': {'routes':
+                                             routes}},
+                                 expected_code=exc.HTTPBadRequest.code)
+
+                    # clean-up
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+
+    def test_router_update_on_external_port(self):
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                body = self._show('routers', r['router']['id'])
+                net_id = body['router']['external_gateway_info']['network_id']
+                self.assertEqual(net_id, s['subnet']['network_id'])
+                port_res = self._list_ports(
+                    'json',
+                    200,
+                    s['subnet']['network_id'],
+                    tenant_id=r['router']['tenant_id'],
+                    device_own=constants.DEVICE_OWNER_ROUTER_GW)
+                port_list = self.deserialize('json', port_res)
+                # The plugin will create 1 port
+                self.assertEqual(2, len(port_list['ports']))
+
+                routes = [{'destination': '135.207.0.0/16',
+                           'nexthop': '10.0.1.3'}]
+
+                body = self._update('routers', r['router']['id'],
+                                    {'router': {'routes':
+                                                routes}})
+
+                body = self._show('routers', r['router']['id'])
+                self.assertEqual(routes,
+                                 body['router']['routes'])
+
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                body = self._show('routers', r['router']['id'])
+                gw_info = body['router']['external_gateway_info']
+                self.assertIsNone(gw_info)
+
+    def test_floatingip_create_different_fixed_ip_same_port(self):
+        self._test_floatingip_create_different_fixed_ip_same_port()
+
+    def test_floatingip_update_different_router(self):
+        self._test_floatingip_update_different_router()
+
+    def test_floatingip_update_different_fixed_ip_same_port(self):
+        self._test_floatingip_update_different_fixed_ip_same_port()
+
+    def test_network_update_external_failure(self):
+        self._test_network_update_external_failure()
 
     def test_update_port_with_assoc_floatingip(self):
         with self.subnet(cidr='200.0.0.0/24') as public_sub:
@@ -463,85 +537,6 @@ class TestNuageRouterExtTestCase(NuagePluginV2TestCase):
         router_req = self.new_create_request('routers', data, 'json')
         router_res = router_req.get_response(self.ext_api)
         self.assertEqual(exc.HTTPCreated.code, router_res.status_int)
-
-
-class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
-                                  extraroute_test.ExtraRouteDBIntTestCase):
-
-    def test_router_update_with_dup_destination_address(self):
-        with self.router() as r:
-            with self.subnet(cidr='10.0.1.0/24') as s:
-                with self.port(subnet=s) as p:
-                    self._router_interface_action('add',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
-
-                    routes = [{'destination': '135.207.0.0/16',
-                               'nexthop': '10.0.1.3'},
-                              {'destination': '135.207.0.0/16',
-                               'nexthop': '10.0.1.5'}]
-
-                    self._update('routers', r['router']['id'],
-                                 {'router': {'routes':
-                                             routes}},
-                                 expected_code=exc.HTTPBadRequest.code)
-
-                    # clean-up
-                    self._router_interface_action('remove',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
-
-    def test_router_update_on_external_port(self):
-        with self.router() as r:
-            with self.subnet(cidr='10.0.1.0/24') as s:
-                self._set_net_external(s['subnet']['network_id'])
-                self._add_external_gateway_to_router(
-                    r['router']['id'],
-                    s['subnet']['network_id'])
-                body = self._show('routers', r['router']['id'])
-                net_id = body['router']['external_gateway_info']['network_id']
-                self.assertEqual(net_id, s['subnet']['network_id'])
-                port_res = self._list_ports(
-                    'json',
-                    200,
-                    s['subnet']['network_id'],
-                    tenant_id=r['router']['tenant_id'],
-                    device_own=constants.DEVICE_OWNER_ROUTER_GW)
-                port_list = self.deserialize('json', port_res)
-                # The plugin will create 1 port
-                self.assertEqual(2, len(port_list['ports']))
-
-                routes = [{'destination': '135.207.0.0/16',
-                           'nexthop': '10.0.1.3'}]
-
-                body = self._update('routers', r['router']['id'],
-                                    {'router': {'routes':
-                                                routes}})
-
-                body = self._show('routers', r['router']['id'])
-                self.assertEqual(routes,
-                                 body['router']['routes'])
-
-                self._remove_external_gateway_from_router(
-                    r['router']['id'],
-                    s['subnet']['network_id'])
-                body = self._show('routers', r['router']['id'])
-                gw_info = body['router']['external_gateway_info']
-                self.assertIsNone(gw_info)
-
-    def test_floatingip_create_different_fixed_ip_same_port(self):
-        self._test_floatingip_create_different_fixed_ip_same_port()
-
-    def test_floatingip_update_different_router(self):
-        self._test_floatingip_update_different_router()
-
-    def test_floatingip_update_different_fixed_ip_same_port(self):
-        self._test_floatingip_update_different_fixed_ip_same_port()
-
-    def test_network_update_external_failure(self):
-        self._test_network_update_external_failure()
 
 
 class TestNuageProviderNetTestCase(NuagePluginV2TestCase):
