@@ -1028,14 +1028,13 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         tenant_id = _uuid()
         # Inject rule in policy engine
         policy.init()
-        common_policy._rules['get_network:name'] = common_policy.parse_rule(
-            "rule:admin_only")
+        self.addCleanup(policy.reset)
+        rules = {'get_network:name': common_policy.parse_rule(
+            "rule:admin_only")}
+        policy.set_rules(rules, overwrite=False)
         res = self._test_get(tenant_id, tenant_id, 200)
         res = self.deserialize(res)
-        try:
-            self.assertNotIn('name', res['network'])
-        finally:
-            del common_policy._rules['get_network:name']
+        self.assertNotIn('name', res['network'])
 
     def _test_update(self, req_tenant_id, real_tenant_id, expected_code,
                      expect_errors=False):

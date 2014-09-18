@@ -71,10 +71,6 @@ class AdminRequired(NotAuthorized):
     message = _("User does not have admin privileges: %(reason)s")
 
 
-class PolicyNotAuthorized(NotAuthorized):
-    message = _("Policy doesn't allow %(action)s to be performed.")
-
-
 class NetworkNotFound(NotFound):
     message = _("Network %(net_id)s could not be found")
 

@@ -28,6 +28,7 @@ from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import policy as common_policy
 from neutron import policy
 from neutron import quota
 
@@ -41,6 +42,7 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.ServiceUnavailable: webob.exc.HTTPServiceUnavailable,
              exceptions.NotAuthorized: webob.exc.HTTPForbidden,
              netaddr.AddrFormatError: webob.exc.HTTPBadRequest,
+             common_policy.PolicyNotAuthorized: webob.exc.HTTPForbidden
              }
 
 
@@ -187,7 +189,7 @@ class Controller(object):
                 # Fetch the resource and verify if the user can access it
                 try:
                     resource = self._item(request, id, True)
-                except exceptions.PolicyNotAuthorized:
+                except common_policy.PolicyNotAuthorized:
                     msg = _('The resource could not be found.')
                     raise webob.exc.HTTPNotFound(msg)
                 body = kwargs.pop('body', None)
@@ -326,7 +328,7 @@ class Controller(object):
                                           field_list=field_list,
                                           parent_id=parent_id),
                                fields_to_strip=added_fields)}
-        except exceptions.PolicyNotAuthorized:
+        except common_policy.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
             msg = _('The resource could not be found.')
@@ -466,7 +468,7 @@ class Controller(object):
             policy.enforce(request.context,
                            action,
                            obj)
-        except exceptions.PolicyNotAuthorized:
+        except common_policy.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
             msg = _('The resource could not be found.')
@@ -521,7 +523,7 @@ class Controller(object):
             policy.enforce(request.context,
                            action,
                            orig_obj)
-        except exceptions.PolicyNotAuthorized:
+        except common_policy.PolicyNotAuthorized:
             with excutils.save_and_reraise_exception() as ctxt:
                 # If a tenant is modifying it's own object, it's safe to return
                 # a 403. Otherwise, pretend that it doesn't exist to avoid
