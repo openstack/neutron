@@ -41,7 +41,11 @@ OPTS = [
     cfg.IntOpt('network_device_mtu',
                help=_('MTU setting for device.')),
     cfg.StrOpt('meta_flavor_driver_mappings',
-               help=_('Mapping between flavor and LinuxInterfaceDriver')),
+               help=_('Mapping between flavor and LinuxInterfaceDriver. '
+                      'It is specific to MetaInterfaceDriver used with '
+                      'admin_user, admin_password, admin_tenant_name, '
+                      'admin_url, auth_strategy, auth_region and '
+                      'endpoint_type.')),
     cfg.StrOpt('admin_user',
                help=_("Admin username")),
     cfg.StrOpt('admin_password',
@@ -55,6 +59,10 @@ OPTS = [
                help=_("The type of authentication to use")),
     cfg.StrOpt('auth_region',
                help=_("Authentication region")),
+    cfg.StrOpt('endpoint_type',
+               default='publicURL',
+               help=_("Network service endpoint type to pull from "
+                      "the keystone catalog")),
 ]
 
 
@@ -399,7 +407,8 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
             tenant_name=self.conf.admin_tenant_name,
             auth_url=self.conf.auth_url,
             auth_strategy=self.conf.auth_strategy,
-            region_name=self.conf.auth_region
+            region_name=self.conf.auth_region,
+            endpoint_type=self.conf.endpoint_type
         )
         self.flavor_driver_map = {}
         for net_flavor, driver_name in [
