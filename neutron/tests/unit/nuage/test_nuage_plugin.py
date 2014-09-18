@@ -343,6 +343,20 @@ class TestNuageSubnetsV2(NuagePluginV2TestCase,
             subnet_res = subnet_req.get_response(self.api)
             self.assertEqual(exc.HTTPCreated.code, subnet_res.status_int)
 
+    def test_delete_subnet_port_exists_returns_409(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
+                                   cidr, ip_version=4)
+        self._create_port(self.fmt,
+                          network['network']['id'])
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(409, res.status_int)
+
 
 class TestNuagePluginPortBinding(NuagePluginV2TestCase,
                                  test_bindings.PortBindingsTestCase):

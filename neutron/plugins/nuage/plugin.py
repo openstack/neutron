@@ -691,6 +691,12 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             super(NuagePlugin, self).delete_subnet(context, id)
             return self._delete_nuage_sharedresource(id)
 
+        filters = {'fixed_ips': {'subnet_id': [id]}}
+        ports = self.get_ports(context, filters)
+        for port in ports:
+            if port['device_owner'] != os_constants.DEVICE_OWNER_DHCP:
+                raise n_exc.SubnetInUse(subnet_id=id)
+
         subnet_l2dom = nuagedb.get_subnet_l2dom_by_id(context.session, id)
         if subnet_l2dom:
             try:
