@@ -1306,18 +1306,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                 self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
-    def test_requested_subnet_delete(self):
-        with self.subnet() as subnet:
-            with self.port(subnet=subnet) as port:
-                ips = port['port']['fixed_ips']
-                self.assertEqual(len(ips), 1)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
-                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
-                req = self.new_delete_request('subnet',
-                                              subnet['subnet']['id'])
-                res = req.get_response(self.api)
-                self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
-
     def test_requested_subnet_id(self):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
