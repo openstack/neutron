@@ -216,7 +216,8 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
     def test_port_vif_details_override(self):
         # ivshost is in the test config to override to IVS
         kwargs = {'name': 'name', 'binding:host_id': 'ivshost',
-                  'device_id': 'override_dev'}
+                  'device_id': 'override_dev',
+                  'arg_list': ('binding:host_id',)}
         with self.port(**kwargs) as port:
             self.assertEqual(port['port']['binding:vif_type'],
                              portbindings.VIF_TYPE_IVS)
@@ -237,18 +238,6 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
             req = self.new_update_request('ports', data, port['port']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['port']['binding:vif_type'], self.VIF_TYPE)
-
-    def _make_port(self, fmt, net_id, expected_res_status=None, arg_list=None,
-                   **kwargs):
-        arg_list = arg_list or ()
-        arg_list += ('binding:host_id', )
-        res = self._create_port(fmt, net_id, expected_res_status,
-                                arg_list, **kwargs)
-        # Things can go wrong - raise HTTP exc with res code only
-        # so it can be caught by unit tests
-        if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
-        return self.deserialize(fmt, res)
 
 
 class TestVifDifferentDefault(BigSwitchProxyPluginV2TestCase):
