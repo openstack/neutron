@@ -822,8 +822,10 @@ class OVS_Lib_Test(base.BaseTestCase):
             with testtools.ExpectedException(Exception):
                 self.br.get_local_port_mac()
 
-    def _test_get_vif_port_by_id(self, iface_id, data, br_name=None):
+    def _test_get_vif_port_by_id(self, iface_id, data, br_name=None,
+                                 extra_calls_and_values=None):
         headings = ['external_ids', 'name', 'ofport']
+
         # Each element is a tuple of (expected mock call, return_value)
         expected_calls_and_values = [
             (mock.call(["ovs-vsctl", self.TO, "--format=json",
@@ -836,9 +838,15 @@ class OVS_Lib_Test(base.BaseTestCase):
             if not br_name:
                 br_name = self.BR_NAME
 
+            # Only the last information list in 'data' is used, so if more
+            # than one vif is described in data, the rest must be declared
+            # in the argument 'expected_calls_and_values'.
+            if extra_calls_and_values:
+                expected_calls_and_values.extend(extra_calls_and_values)
+
             expected_calls_and_values.append(
                 (mock.call(["ovs-vsctl", self.TO,
-                            "iface-to-br", data[0][headings.index('name')]],
+                            "iface-to-br", data[-1][headings.index('name')]],
                            root_helper=self.root_helper),
                  br_name))
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
@@ -846,6 +854,15 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
         return vif_port
+
+    def _assert_vif_port(self, vif_port, ofport=None, mac=None):
+        if not ofport or ofport == -1 or not mac:
+            self.assertIsNone(vif_port)
+            return
+        self.assertEqual('tap99id', vif_port.vif_id)
+        self.assertEqual(mac, vif_port.vif_mac)
+        self.assertEqual('tap99', vif_port.port_name)
+        self.assertEqual(ofport, vif_port.ofport)
 
     def _test_get_vif_port_by_id_with_data(self, ofport=None, mac=None):
         external_ids = [["iface-id", "tap99id"],
@@ -855,13 +872,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         data = [[["map", external_ids], "tap99",
                  ofport if ofport else '["set",[]]']]
         vif_port = self._test_get_vif_port_by_id('tap99id', data)
-        if not ofport or ofport == -1 or not mac:
-            self.assertIsNone(vif_port)
-            return
-        self.assertEqual(vif_port.vif_id, 'tap99id')
-        self.assertEqual(vif_port.vif_mac, 'aa:bb:cc:dd:ee:ff')
-        self.assertEqual(vif_port.port_name, 'tap99')
-        self.assertEqual(vif_port.ofport, ofport)
+        self._assert_vif_port(vif_port, ofport, mac)
 
     def test_get_vif_by_port_id_with_ofport(self):
         self._test_get_vif_port_by_id_with_data(
@@ -886,6 +897,22 @@ class OVS_Lib_Test(base.BaseTestCase):
         data = [[["map", external_ids], "tap99", 1]]
         self.assertIsNone(self._test_get_vif_port_by_id('tap99id', data,
                                                         "br-ext"))
+
+    def test_get_vif_by_port_id_multiple_vifs(self):
+        external_ids = [["iface-id", "tap99id"],
+                        ["iface-status", "active"],
+                        ["attached-mac", "de:ad:be:ef:13:37"]]
+        data = [[["map", external_ids], "dummytap", 1],
+                [["map", external_ids], "tap99", 1337]]
+        extra_calls_and_values = [
+                (mock.call(["ovs-vsctl", self.TO,
+                            "iface-to-br", "dummytap"],
+                           root_helper=self.root_helper),
+                 "br-ext")]
+
+        vif_port = self._test_get_vif_port_by_id(
+                'tap99id', data, extra_calls_and_values=extra_calls_and_values)
+        self._assert_vif_port(vif_port, ofport=1337, mac="de:ad:be:ef:13:37")
 
 
 class TestDeferredOVSBridge(base.BaseTestCase):
