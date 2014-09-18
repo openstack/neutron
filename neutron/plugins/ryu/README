@@ -9,7 +9,7 @@ https://github.com/osrg/ryu/wiki/OpenStack
 # -- Ryu General
 
 For general Ryu stuff, please refer to
-http://www.osrg.net/ryu/
+http://osrg.github.io/ryu/
 
 Ryu is available at github
 git://github.com/osrg/ryu.git
