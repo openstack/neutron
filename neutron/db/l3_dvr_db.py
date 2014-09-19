@@ -25,7 +25,9 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.i18n import _LI
+from neutron import manager
 from neutron.openstack.common import log as logging
+from neutron.plugins.common import constants
 
 
 LOG = logging.getLogger(__name__)
@@ -70,14 +72,43 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self._process_extra_attr_router_create(context, router_db, router)
             return router_db
 
-    def _validate_router_migration(self, router_db, router_res):
+    def _validate_router_migration(self, context, router_db, router_res):
         """Allow centralized -> distributed state transition only."""
         if (router_db.extra_attributes.distributed and
             router_res.get('distributed') is False):
             LOG.info(_LI("Centralizing distributed router %s "
                          "is not supported"), router_db['id'])
             raise NotImplementedError()
-        # TODO(Swami): Add a check for Services FWaaS and VPNaaS
+        elif (not router_db.extra_attributes.distributed and
+              router_res.get('distributed')):
+            # Add a check for Services FWaaS and VPNaaS
+            # This check below ensures that the legacy routers with
+            # associated VPNaaS or FWaaS services are not allowed to
+            # migrate.
+            if (self.check_router_has_no_vpnaas(context, router_db) and
+                self.check_router_has_no_firewall(context, router_db)):
+                LOG.info(_LI("No Service associated, so safe to migrate: %s "
+                             "listed"), router_db['id'])
+
+    def check_router_has_no_firewall(self, context, router_db):
+        """Check if FWaaS is associated with the legacy router."""
+        fwaas_service = manager.NeutronManager.get_service_plugins().get(
+                constants.FIREWALL)
+        if fwaas_service:
+            tenant_firewalls = fwaas_service.get_firewalls(
+                context,
+                filters={'tenant_id': [router_db['tenant_id']]})
+            if tenant_firewalls:
+                raise l3.RouterInUse(router_id=router_db['id'])
+        return True
+
+    def check_router_has_no_vpnaas(self, context, router_db):
+        """Check if VPNaaS is associated with the legacy router."""
+        vpn_plugin = manager.NeutronManager.get_service_plugins().get(
+            constants.VPN)
+        if vpn_plugin:
+            vpn_plugin.check_router_in_use(context, router_db['id'])
+        return True
 
     def _update_distributed_attr(
         self, context, router_id, router_db, data, gw_info):
@@ -97,7 +128,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             migrating_to_distributed = (
                 not router_db.extra_attributes.distributed and
                 data.get('distributed') is True)
-            self._validate_router_migration(router_db, data)
+            self._validate_router_migration(context, router_db, data)
             router_db.extra_attributes.update(data)
             self._update_distributed_attr(
                 context, router_id, router_db, data, gw_info)
