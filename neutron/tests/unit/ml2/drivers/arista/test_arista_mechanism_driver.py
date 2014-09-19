@@ -29,6 +29,7 @@ def setup_arista_wrapper_config(value=''):
     cfg.CONF.keystone_authtoken = fake_keystone_info_class()
     cfg.CONF.set_override('eapi_host', value, "ml2_arista")
     cfg.CONF.set_override('eapi_username', value, "ml2_arista")
+    cfg.CONF.set_override('sync_interval', 10, "ml2_arista")
 
 
 def setup_valid_config():
@@ -218,6 +219,24 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
 
     def test_no_exception_on_correct_configuration(self):
         self.assertIsNotNone(self.drv)
+
+    def test_sync_start(self):
+        self.drv.sync_start()
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
+                'region RegionOne',
+                'sync start',
+                'exit', 'exit', 'exit']
+
+        self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
+
+    def test_sync_end(self):
+        self.drv.sync_end()
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
+                'region RegionOne',
+                'sync end',
+                'exit', 'exit', 'exit']
+
+        self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_plug_host_into_network(self):
         tenant_id = 'ten-1'
@@ -519,6 +538,7 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
                 'service openstack',
                 'region %s' % self.region,
                 auth_cmd,
+                'sync interval %d' % cfg.CONF.ml2_arista.sync_interval,
                 'exit',
                 'exit',
                 'exit',
