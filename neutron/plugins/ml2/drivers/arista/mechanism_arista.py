@@ -44,6 +44,7 @@ class AristaRPCWrapper(object):
         self._server = jsonrpclib.Server(self._eapi_host_url())
         self.keystone_conf = cfg.CONF.keystone_authtoken
         self.region = cfg.CONF.ml2_arista.region_name
+        self.sync_interval = cfg.CONF.ml2_arista.sync_interval
         self._region_updated_time = None
         # The cli_commands dict stores the mapping between the CLI command key
         # and the actual CLI command.
@@ -198,6 +199,18 @@ class AristaRPCWrapper(object):
                 'no dhcp id %s port-id %s' % (dhcp_id, port_id),
                 'exit']
         self._run_openstack_cmds(cmds)
+
+    def sync_start(self):
+        """Sends indication to EOS that ML2->EOS sync has started."""
+
+        sync_start_cmd = ['sync start']
+        self._run_openstack_cmds(sync_start_cmd)
+
+    def sync_end(self):
+        """Sends indication to EOS that ML2->EOS sync has completed."""
+
+        sync_end_cmd = ['sync end']
+        self._run_openstack_cmds(sync_end_cmd)
 
     def create_network(self, tenant_id, network):
         """Creates a single network on Arista hardware
@@ -390,6 +403,11 @@ class AristaRPCWrapper(object):
                     self.keystone_conf.admin_user,
                     '******',
                     self.keystone_conf.admin_tenant_name)]
+
+        sync_interval_cmd = 'sync interval %d' % self.sync_interval
+        cmds.append(sync_interval_cmd)
+        log_cmds.append(sync_interval_cmd)
+
         self._run_openstack_cmds(cmds, commands_to_log=log_cmds)
 
     def clear_region_updated_time(self):
@@ -529,7 +547,7 @@ class AristaRPCWrapper(object):
 
 
 class SyncService(object):
-    """Synchronizatin of information between Neutron and EOS
+    """Synchronization of information between Neutron and EOS
 
     Periodically (through configuration option), this service
     ensures that Networks and VMs configured on EOS/Arista HW
@@ -539,6 +557,24 @@ class SyncService(object):
         self._rpc = rpc_wrapper
         self._ndb = neutron_db
         self._force_sync = True
+
+    def do_synchronize(self):
+        try:
+            # Send trigger to EOS that the ML2->EOS sync has started.
+            self._rpc.sync_start()
+            LOG.info(_('Sync start trigger sent to EOS'))
+        except arista_exc.AristaRpcError:
+            LOG.warning(EOS_UNREACHABLE_MSG)
+            return
+
+        # Perform the sync
+        self.synchronize()
+
+        try:
+            # Send trigger to EOS that the ML2->EOS sync is Complete.
+            self._rpc.sync_end()
+        except arista_exc.AristaRpcError:
+            LOG.warning(EOS_UNREACHABLE_MSG)
 
     def synchronize(self):
         """Sends data to EOS which differs from neutron DB."""
@@ -1006,7 +1042,7 @@ class AristaDriver(driver_api.MechanismDriver):
 
     def _synchronization_thread(self):
         with self.eos_sync_lock:
-            self.eos.synchronize()
+            self.eos.do_synchronize()
 
         self.timer = threading.Timer(self.sync_timeout,
                                      self._synchronization_thread)
