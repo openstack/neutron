@@ -785,12 +785,27 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent.int_br_device_count = 5
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
-                                         self.agent.agent_state)
+                                         self.agent.agent_state, True)
             self.assertNotIn("start_flag", self.agent.agent_state)
+            self.assertFalse(self.agent.use_call)
             self.assertEqual(
                 self.agent.agent_state["configurations"]["devices"],
                 self.agent.int_br_device_count
             )
+            self.agent._report_state()
+            report_st.assert_called_with(self.agent.context,
+                                         self.agent.agent_state, False)
+
+    def test_report_state_fail(self):
+        with mock.patch.object(self.agent.state_rpc,
+                               "report_state") as report_st:
+            report_st.side_effect = Exception()
+            self.agent._report_state()
+            report_st.assert_called_with(self.agent.context,
+                                         self.agent.agent_state, True)
+            self.agent._report_state()
+            report_st.assert_called_with(self.agent.context,
+                                         self.agent.agent_state, True)
 
     def test_network_delete(self):
         with contextlib.nested(
