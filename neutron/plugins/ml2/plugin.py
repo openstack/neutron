@@ -890,10 +890,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             router_id != device_id)
         if update_required:
             with session.begin(subtransactions=True):
+                try:
+                    orig_port = super(Ml2Plugin, self).get_port(context, id)
+                except exc.PortNotFound:
+                    LOG.debug("DVR Port %s has been deleted concurrently", id)
+                    return
                 if not binding:
                     binding = db.ensure_dvr_port_binding(
                         session, id, host, router_id=device_id)
-                orig_port = super(Ml2Plugin, self).get_port(context, id)
                 network = self.get_network(context, orig_port['network_id'])
                 mech_context = driver_context.DvrPortContext(self,
                     context, orig_port, network,
