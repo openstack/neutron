@@ -231,6 +231,26 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             resp = sp.servers[0].rest_call('GET', '/')
             self.assertEqual(resp, (0, None, None, None))
 
+    def test_retry_on_unavailable(self):
+        pl = NeutronManager.get_plugin()
+        with nested(
+            mock.patch(SERVERMANAGER + '.ServerProxy.rest_call',
+                       return_value=(httplib.SERVICE_UNAVAILABLE, 0, 0, 0)),
+            mock.patch(SERVERMANAGER + '.time.sleep')
+        ) as (srestmock, tmock):
+            # making a call should trigger retries with sleeps in between
+            pl.servers.rest_call('GET', '/', '', None, [])
+            rest_call = [mock.call('GET', '/', '', None, False, reconnect=True,
+                                   hash_handler=mock.ANY)]
+            rest_call_count = (
+                servermanager.HTTP_SERVICE_UNAVAILABLE_RETRY_COUNT + 1)
+            srestmock.assert_has_calls(rest_call * rest_call_count)
+            sleep_call = [mock.call(
+                servermanager.HTTP_SERVICE_UNAVAILABLE_RETRY_INTERVAL)]
+            # should sleep 1 less time than the number of calls
+            sleep_call_count = rest_call_count - 1
+            tmock.assert_has_calls(sleep_call * sleep_call_count)
+
 
 class TestSockets(test_rp.BigSwitchProxyPluginV2TestCase):
 
