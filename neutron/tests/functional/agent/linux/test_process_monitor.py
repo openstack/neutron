@@ -29,7 +29,6 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
     def setUp(self):
         super(BaseTestProcessMonitor, self).setUp()
         self._exit_handler_called = False
-        cfg.CONF.set_override('check_child_processes', True)
         cfg.CONF.set_override('check_child_processes_interval', 1)
         self._child_processes = []
         self._ext_processes = None
