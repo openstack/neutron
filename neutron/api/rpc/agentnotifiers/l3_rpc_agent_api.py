@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import random
+
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -43,7 +45,8 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
                                    payload=payload),
             topic='%s.%s' % (topics.L3_AGENT, host))
 
-    def _agent_notification(self, context, method, router_ids, operation):
+    def _agent_notification(self, context, method, router_ids, operation,
+                            shuffle_agents):
         """Notify changed routers to hosting l3 agents."""
         adminContext = context.is_admin and context or context.elevated()
         plugin = manager.NeutronManager.get_service_plugins().get(
@@ -53,6 +56,8 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
                 adminContext, [router_id],
                 admin_state_up=True,
                 active=True)
+            if shuffle_agents:
+                random.shuffle(l3_agents)
             for l3_agent in l3_agents:
                 LOG.debug(_('Notify agent at %(topic)s.%(host)s the message '
                             '%(method)s'),
@@ -91,7 +96,8 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
                       self.make_msg(method, payload=dvr_arptable),
                       topic=topic, version='1.2')
 
-    def _notification(self, context, method, router_ids, operation):
+    def _notification(self, context, method, router_ids, operation,
+                      shuffle_agents):
         """Notify all the agents that are hosting the routers."""
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
@@ -105,7 +111,7 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
                             context or context.elevated())
             plugin.schedule_routers(adminContext, router_ids)
             self._agent_notification(
-                context, method, router_ids, operation)
+                context, method, router_ids, operation, shuffle_agents)
         else:
             self.fanout_cast(
                 context, self.make_msg(method,
@@ -132,10 +138,11 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
     def router_deleted(self, context, router_id):
         self._notification_fanout(context, 'router_deleted', router_id)
 
-    def routers_updated(self, context, router_ids, operation=None, data=None):
+    def routers_updated(self, context, router_ids, operation=None, data=None,
+                        shuffle_agents=False):
         if router_ids:
             self._notification(context, 'routers_updated', router_ids,
-                               operation)
+                               operation, shuffle_agents)
 
     def add_arp_entry(self, context, router_id, arp_table, operation=None):
         self._agent_notification_arp(context, 'add_arp_entry', router_id,
