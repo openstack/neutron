@@ -17,7 +17,7 @@ import mock
 from oslo.config import cfg
 
 from neutron.extensions import portbindings
-from neutron.plugins.ml2.drivers import mechanism_fslsdn
+from neutron.plugins.ml2.drivers.freescale import mechanism_fslsdn
 from neutron.tests import base
 from neutron.tests.unit import test_db_plugin
 
@@ -25,32 +25,16 @@ from neutron.tests.unit import test_db_plugin
 """Unit testing for Freescale SDN mechanism driver."""
 
 
-def setup_driver_config():
-    """Mechanism Driver specific configuration."""
-
-    # Configure mechanism driver as 'fslsdn'
-    cfg.CONF.set_override('mechanism_drivers', ['fslsdn'], 'ml2')
-    # Configure FSL SDN Mechanism driver specific options
-    cfg.CONF.set_override('crd_user_name', 'crd', 'ml2_fslsdn')
-    cfg.CONF.set_override('crd_password', 'CRD_PASS', 'ml2_fslsdn')
-    cfg.CONF.set_override('crd_tenant_name', 'service', 'ml2_fslsdn')
-    cfg.CONF.set_override('crd_auth_url',
-                          'http://127.0.0.1:5000/v2.0', 'ml2_fslsdn')
-    cfg.CONF.set_override('crd_url',
-                          'http://127.0.0.1:9797', 'ml2_fslsdn')
-    cfg.CONF.set_override('crd_auth_strategy', 'keystone', 'ml2_fslsdn')
-
-
 class TestFslSdnMechDriverV2(test_db_plugin.NeutronDbPluginV2TestCase):
 
     """Testing mechanism driver with ML2 plugin."""
 
     def setUp(self):
-        setup_driver_config()
+        cfg.CONF.set_override('mechanism_drivers', ['fslsdn'], 'ml2')
 
         def mocked_fslsdn_init(self):
             # Mock CRD client, since it requires CRD service running.
-            self._crdclieint = mock.Mock()
+            self._crdclient = mock.Mock()
 
         with mock.patch.object(mechanism_fslsdn.FslsdnMechanismDriver,
                                'initialize', new=mocked_fslsdn_init):
@@ -79,7 +63,7 @@ class TestFslSdnMechanismDriver(base.BaseTestCase):
 
     def setUp(self):
         super(TestFslSdnMechanismDriver, self).setUp()
-        setup_driver_config()
+        cfg.CONF.set_override('mechanism_drivers', ['fslsdn'], 'ml2')
         self.driver = mechanism_fslsdn.FslsdnMechanismDriver()
         self.driver.initialize()
         self.client = self.driver._crdclient = mock.Mock()

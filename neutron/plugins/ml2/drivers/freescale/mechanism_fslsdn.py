@@ -13,62 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neutronclient.v2_0 import client
-from oslo.config import cfg
-
 from neutron.common import constants as n_const
 from neutron.common import log
 from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers.freescale import config  # noqa
 
 
 LOG = logging.getLogger(__name__)
-
-# CRD service options required for FSL SDN OS Mech Driver
-ml2_fslsdn_opts = [
-    cfg.StrOpt('crd_user_name', default='crd',
-               help=_("CRD service Username")),
-    cfg.StrOpt('crd_password', default='password',
-               secret='True',
-               help=_("CRD Service Password")),
-    cfg.StrOpt('crd_tenant_name', default='service',
-               help=_("CRD Tenant Name")),
-    cfg.StrOpt('crd_auth_url',
-               default='http://127.0.0.1:5000/v2.0/',
-               help=_("CRD Auth URL")),
-    cfg.StrOpt('crd_url',
-               default='http://127.0.0.1:9797',
-               help=_("URL for connecting to CRD service")),
-    cfg.IntOpt('crd_url_timeout',
-               default=30,
-               help=_("Timeout value for connecting to "
-                      "CRD service in seconds")),
-    cfg.StrOpt('crd_region_name',
-               default='RegionOne',
-               help=_("Region name for connecting to "
-                      "CRD Service in admin context")),
-    cfg.BoolOpt('crd_api_insecure',
-                default=False,
-                help=_("If set, ignore any SSL validation issues")),
-    cfg.StrOpt('crd_auth_strategy',
-               default='keystone',
-               help=_("Auth strategy for connecting to "
-                      "neutron in admin context")),
-    cfg.StrOpt('crd_ca_certificates_file',
-               help=_("Location of ca certificates file to use for "
-                      "CRD client requests.")),
-]
-
-# Register the configuration option for crd service
-# required for FSL SDN OS Mechanism driver
-cfg.CONF.register_opts(ml2_fslsdn_opts, "ml2_fslsdn")
-
-# shortcut
-FSLCONF = cfg.CONF.ml2_fslsdn
-
-SERVICE_TYPE = 'crd'
 
 
 class FslsdnMechanismDriver(api.MechanismDriver):
@@ -82,20 +36,7 @@ class FslsdnMechanismDriver(api.MechanismDriver):
         self.vif_type = portbindings.VIF_TYPE_OVS
         self.vif_details = {portbindings.CAP_PORT_FILTER: True}
         LOG.info(_("Initializing CRD client... "))
-        crd_client_params = {
-            'username': FSLCONF.crd_user_name,
-            'tenant_name': FSLCONF.crd_tenant_name,
-            'region_name': FSLCONF.crd_region_name,
-            'password': FSLCONF.crd_password,
-            'auth_url': FSLCONF.crd_auth_url,
-            'auth_strategy': FSLCONF.crd_auth_strategy,
-            'endpoint_url': FSLCONF.crd_url,
-            'timeout': FSLCONF.crd_url_timeout,
-            'insecure': FSLCONF.crd_api_insecure,
-            'service_type': SERVICE_TYPE,
-            'ca_cert': FSLCONF.crd_ca_certificates_file,
-        }
-        self._crdclient = client.Client(**crd_client_params)
+        self._crdclient = config.get_crdclient()
 
     # Network Management
     @staticmethod
