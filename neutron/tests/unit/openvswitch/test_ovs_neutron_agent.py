@@ -136,6 +136,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        'FixedIntervalLoopingCall',
                        new=MockFixedIntervalLoopingCall)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**kwargs)
+            # set back to true because initial report state will succeed due
+            # to mocked out RPC calls
+            self.agent.use_call = True
             self.agent.tun_br = mock.Mock()
         self.agent.sg_agent = mock.Mock()
 
