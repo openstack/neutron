@@ -221,29 +221,40 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         for subnet in subnets:
             ip_range = range_qry.filter_by(subnet_id=subnet['id']).first()
             if not ip_range:
-                LOG.debug(_("All IPs from subnet %(subnet_id)s (%(cidr)s) "
-                            "allocated"),
-                          {'subnet_id': subnet['id'], 'cidr': subnet['cidr']})
+                LOG.debug("All IPs from subnet %(subnet_id)s (%(cidr)s) "
+                          "allocated",
+                          {'subnet_id': subnet['id'],
+                           'cidr': subnet['cidr']})
                 continue
             ip_address = ip_range['first_ip']
-            LOG.debug(_("Allocated IP - %(ip_address)s from %(first_ip)s "
-                        "to %(last_ip)s"),
-                      {'ip_address': ip_address,
-                       'first_ip': ip_range['first_ip'],
-                       'last_ip': ip_range['last_ip']})
             if ip_range['first_ip'] == ip_range['last_ip']:
                 # No more free indices on subnet => delete
-                LOG.debug(_("No more free IP's in slice. Deleting allocation "
-                            "pool."))
+                LOG.debug("No more free IP's in slice. Deleting "
+                          "allocation pool.")
                 context.session.delete(ip_range)
             else:
                 # increment the first free
-                ip_range['first_ip'] = str(netaddr.IPAddress(ip_address) + 1)
-            return {'ip_address': ip_address, 'subnet_id': subnet['id']}
+                new_first_ip = str(netaddr.IPAddress(ip_address) + 1)
+                ip_range['first_ip'] = new_first_ip
+            LOG.debug("Allocated IP - %(ip_address)s from %(first_ip)s "
+                      "to %(last_ip)s",
+                      {'ip_address': ip_address,
+                       'first_ip': ip_address,
+                       'last_ip': ip_range['last_ip']})
+            return {'ip_address': ip_address,
+                    'subnet_id': subnet['id']}
         raise n_exc.IpAddressGenerationFailure(net_id=subnets[0]['network_id'])
 
     @staticmethod
     def _rebuild_availability_ranges(context, subnets):
+        """Rebuild availability ranges.
+
+        This method is called only when there's no more IP available or by
+        _update_subnet_allocation_pools. Calling
+        _update_subnet_allocation_pools before calling this function deletes
+        the IPAllocationPools associated with the subnet that is updating,
+        which will result in deleting the IPAvailabilityRange too.
+        """
         ip_qry = context.session.query(
             models_v2.IPAllocation).with_lockmode('update')
         # PostgreSQL does not support select...for update with an outer join.
@@ -311,16 +322,18 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     ip_range['last_ip'] = new_last_ip
                     return
                 else:
-                    # Split into two ranges
-                    new_first = str(netaddr.IPAddress(ip_address) + 1)
-                    new_last = ip_range['last_ip']
+                    # Adjust the original range to end before ip_address
+                    old_last_ip = ip_range['last_ip']
                     new_last_ip = str(netaddr.IPAddress(ip_address) - 1)
                     ip_range['last_ip'] = new_last_ip
-                    ip_range = models_v2.IPAvailabilityRange(
+
+                    # Create a new second range for after ip_address
+                    new_first_ip = str(netaddr.IPAddress(ip_address) + 1)
+                    new_ip_range = models_v2.IPAvailabilityRange(
                         allocation_pool_id=ip_range['allocation_pool_id'],
-                        first_ip=new_first,
-                        last_ip=new_last)
-                    context.session.add(ip_range)
+                        first_ip=new_first_ip,
+                        last_ip=old_last_ip)
+                    context.session.add(new_ip_range)
                     return
 
     @staticmethod
@@ -1300,26 +1313,24 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     raise n_exc.MacAddressInUse(net_id=network_id,
                                                 mac=p['mac_address'])
 
-            # Returns the IP's for the port
-            ips = self._allocate_ips_for_port(context, port)
-
             if 'status' not in p:
                 status = constants.PORT_STATUS_ACTIVE
             else:
                 status = p['status']
 
-            port = models_v2.Port(tenant_id=tenant_id,
-                                  name=p['name'],
-                                  id=port_id,
-                                  network_id=network_id,
-                                  mac_address=p['mac_address'],
-                                  admin_state_up=p['admin_state_up'],
-                                  status=status,
-                                  device_id=p['device_id'],
-                                  device_owner=p['device_owner'])
-            context.session.add(port)
+            db_port = models_v2.Port(tenant_id=tenant_id,
+                                     name=p['name'],
+                                     id=port_id,
+                                     network_id=network_id,
+                                     mac_address=p['mac_address'],
+                                     admin_state_up=p['admin_state_up'],
+                                     status=status,
+                                     device_id=p['device_id'],
+                                     device_owner=p['device_owner'])
+            context.session.add(db_port)
 
-            # Update the allocated IP's
+            # Update the IP's for the port
+            ips = self._allocate_ips_for_port(context, port)
             if ips:
                 for ip in ips:
                     ip_address = ip['ip_address']
@@ -1327,7 +1338,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     NeutronDbPluginV2._store_ip_allocation(
                         context, ip_address, network_id, subnet_id, port_id)
 
-        return self._make_port_dict(port, process_extensions=False)
+        return self._make_port_dict(db_port, process_extensions=False)
 
     def update_port(self, context, id, port):
         p = port['port']
