@@ -377,6 +377,17 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                                  mech_context._binding.router_id)
                 self.assertEqual(host_id, mech_context._binding.host)
 
+    def test_update_dvr_port_binding_on_non_existent_port(self):
+        plugin = manager.NeutronManager.get_plugin()
+        port = {
+            'id': 'foo_port_id',
+            'binding:host_id': 'foo_host',
+        }
+        with mock.patch.object(ml2_db, 'ensure_dvr_port_binding') as mock_dvr:
+            plugin.update_dvr_port_binding(
+                self.context, 'foo_port_id', {'port': port})
+        self.assertFalse(mock_dvr.called)
+
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):
     HAS_PORT_FILTER = False
