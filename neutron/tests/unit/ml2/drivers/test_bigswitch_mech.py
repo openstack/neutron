@@ -18,7 +18,6 @@ import contextlib
 import functools
 
 import mock
-import webob.exc
 
 from neutron import context as neutron_context
 from neutron.extensions import portbindings
@@ -80,18 +79,6 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
             self.assertEqual(port['port']['status'], 'DOWN')
             self.assertEqual(self.port_create_status, 'DOWN')
 
-    def _make_port(self, fmt, net_id, expected_res_status=None, arg_list=None,
-                   **kwargs):
-        arg_list = arg_list or ()
-        arg_list += ('binding:host_id', )
-        res = self._create_port(fmt, net_id, expected_res_status,
-                                arg_list, **kwargs)
-        # Things can go wrong - raise HTTP exc with res code only
-        # so it can be caught by unit tests
-        if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
-        return self.deserialize(fmt, res)
-
     def test_bind_ivs_port(self):
         host_arg = {portbindings.HOST_ID: 'hostname'}
         with contextlib.nested(
@@ -152,7 +139,8 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
                        side_effect=servermanager.RemoteRestError(
                            reason=servermanager.NXNETWORK, status=404)),
             mock.patch(DRIVER + '._send_all_data'),
-            self.port(**{'device_id': 'devid', 'binding:host_id': 'host'})
+            self.port(**{'device_id': 'devid', 'binding:host_id': 'host',
+                         'arg_list': ('binding:host_id',)})
         ) as (mock_http, mock_send_all, p):
             # wait for thread to finish
             mm = manager.NeutronManager.get_plugin().mechanism_manager
@@ -191,7 +179,8 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
     def test_backend_request_contents(self):
         with contextlib.nested(
             mock.patch(SERVER_POOL + '.rest_create_port'),
-            self.port(**{'device_id': 'devid', 'binding:host_id': 'host'})
+            self.port(**{'device_id': 'devid', 'binding:host_id': 'host',
+                         'arg_list': ('binding:host_id',)})
         ) as (mock_rest, p):
             # make sure basic expected keys are present in the port body
             pb = mock_rest.mock_calls[0][1][2]
