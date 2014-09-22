@@ -82,12 +82,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             event.listen(models_v2.Port.status, 'set',
                          self.nova_notifier.record_port_status_changed)
 
-    @classmethod
-    def register_dict_extend_funcs(cls, resource, funcs):
-        cur_funcs = cls._dict_extend_functions.get(resource, [])
-        cur_funcs.extend(funcs)
-        cls._dict_extend_functions[resource] = cur_funcs
-
     def _get_network(self, context, id):
         try:
             network = self._get_by_id(context, models_v2.Network, id)
