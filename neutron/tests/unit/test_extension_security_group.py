@@ -573,6 +573,16 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                         neutron_context=neutron_context).get('security_groups')
         self.assertEqual(len(sg), 1)
 
+    def test_security_group_port_create_creates_default_security_group(self):
+        res = self._create_network(self.fmt, 'net1', True,
+                                   tenant_id='not_admin',
+                                   set_context=True)
+        net1 = self.deserialize(self.fmt, res)
+        res = self._create_port(self.fmt, net1['network']['id'],
+                                tenant_id='not_admin', set_context=True)
+        sg = self._list('security-groups').get('security_groups')
+        self.assertEqual(len(sg), 1)
+
     def test_default_security_group_rules(self):
         with self.network():
             res = self.new_list_request('security-groups')
