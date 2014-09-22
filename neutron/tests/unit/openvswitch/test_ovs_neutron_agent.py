@@ -1420,8 +1420,13 @@ class AncillaryBridgesTest(base.BaseTestCase):
         device_ids = ancillary[:]
 
         def pullup_side_effect(self, *args):
-            result = device_ids.pop(0)
-            return result
+            # Check that the device_id exists, if it does return it
+            # if it does not return None
+            try:
+                device_ids.remove(args[0])
+                return args[0]
+            except Exception:
+                return None
 
         with contextlib.nested(
             mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
