@@ -968,7 +968,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             network = self.get_network(context, port['network_id'])
             mech_context = None
-            if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+            device_owner = port['device_owner']
+            if device_owner == const.DEVICE_OWNER_DVR_INTERFACE:
                 bindings = db.get_dvr_port_bindings(context.session, id)
                 for bind in bindings:
                     mech_context = driver_context.DvrPortContext(
@@ -977,8 +978,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             else:
                 mech_context = driver_context.PortContext(self, context, port,
                                                           network, binding)
-                if "compute:" in port['device_owner'] and is_dvr_enabled:
-                    router_info = l3plugin.dvr_deletens_if_no_vm(context, id)
+                if is_dvr_enabled and utils.is_dvr_serviced(device_owner):
+                    router_info = l3plugin.dvr_deletens_if_no_port(context, id)
                     removed_routers += router_info
                 self.mechanism_manager.delete_port_precommit(mech_context)
                 self._delete_port_security_group_bindings(context, id)
@@ -989,7 +990,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     l3plugin.dvr_vmarp_table_update(context, id, "del")
 
             LOG.debug("Calling delete_port for %(port_id)s owned by %(owner)s"
-                      % {"port_id": id, "owner": port['device_owner']})
+                      % {"port_id": id, "owner": device_owner})
             super(Ml2Plugin, self).delete_port(context, id)
 
         # now that we've left db transaction, we are safe to notify
