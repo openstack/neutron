@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import collections
 import os
 
 import mock
@@ -145,7 +144,7 @@ class APIv2TestCase(APIv2TestBase):
     def _get_collection_kwargs(self, skipargs=[], **kwargs):
         args_list = ['filters', 'fields', 'sorts', 'limit', 'marker',
                      'page_reverse']
-        args_dict = collections.OrderedDict(
+        args_dict = dict(
             (arg, mock.ANY) for arg in set(args_list) - set(skipargs))
         args_dict.update(kwargs)
         return args_dict
