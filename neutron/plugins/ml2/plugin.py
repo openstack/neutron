@@ -72,9 +72,6 @@ MAX_BIND_TRIES = 10
 # providernet.py?
 TYPE_MULTI_SEGMENT = 'multi-segment'
 
-TAP_DEVICE_PREFIX = 'tap'
-TAP_DEVICE_PREFIX_LENGTH = 3
-
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 dvr_mac_db.DVRDbMixin,
@@ -1139,8 +1136,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # REVISIT(rkukura): Consider calling into MechanismDrivers to
         # process device names, or having MechanismDrivers supply list
         # of device prefixes to strip.
-        if device.startswith(TAP_DEVICE_PREFIX):
-            return device[TAP_DEVICE_PREFIX_LENGTH:]
+        if device.startswith(const.TAP_DEVICE_PREFIX):
+            return device[len(const.TAP_DEVICE_PREFIX):]
         else:
             # REVISIT(irenab): Consider calling into bound MD to
             # handle the get_device_details RPC, then remove the 'else' clause

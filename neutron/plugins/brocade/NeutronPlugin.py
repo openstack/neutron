@@ -54,7 +54,6 @@ LOG = logging.getLogger(__name__)
 PLUGIN_VERSION = 0.88
 AGENT_OWNER_PREFIX = "network:"
 NOS_DRIVER = 'neutron.plugins.brocade.nos.nosdriver.NOSdriver'
-TAP_PREFIX_LEN = 3
 
 SWITCH_OPTS = [cfg.StrOpt('address', default='',
                           help=_('The address of the host to SSH to')),
@@ -91,7 +90,8 @@ class BridgeRpcCallbacks(n_rpc.RpcCallback):
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
-        port = brocade_db.get_port(rpc_context, device[TAP_PREFIX_LEN:])
+        port = brocade_db.get_port(rpc_context,
+                                   device[len(q_const.TAP_DEVICE_PREFIX):])
         if port:
             entry = {'device': device,
                      'vlan_id': port.vlan_id,
@@ -151,7 +151,7 @@ class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
         # Doing what other plugins are doing
         session = db.get_session()
         port = brocade_db.get_port_from_device(
-            session, device[TAP_PREFIX_LEN:])
+            session, device[len(q_const.TAP_DEVICE_PREFIX):])
 
         # TODO(shiv): need to extend the db model to include device owners
         # make it appears that the device owner is of type network

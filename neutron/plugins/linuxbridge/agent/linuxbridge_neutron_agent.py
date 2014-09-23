@@ -50,7 +50,6 @@ from neutron.plugins.linuxbridge.common import constants as lconst
 LOG = logging.getLogger(__name__)
 
 BRIDGE_NAME_PREFIX = "brq"
-TAP_INTERFACE_PREFIX = "tap"
 BRIDGE_FS = "/sys/devices/virtual/net/"
 BRIDGE_NAME_PLACEHOLDER = "bridge_name"
 BRIDGE_INTERFACES_FS = BRIDGE_FS + BRIDGE_NAME_PLACEHOLDER + "/brif/"
@@ -109,7 +108,7 @@ class LinuxBridgeManager:
         if not interface_id:
             LOG.warning(_("Invalid Interface ID, will lead to incorrect "
                           "tap device name"))
-        tap_device_name = TAP_INTERFACE_PREFIX + interface_id[0:11]
+        tap_device_name = constants.TAP_DEVICE_PREFIX + interface_id[0:11]
         return tap_device_name
 
     def get_vxlan_device_name(self, segmentation_id):
@@ -141,7 +140,7 @@ class LinuxBridgeManager:
             try:
                 if_list = os.listdir(bridge_interface_path)
                 return len([interface for interface in if_list if
-                            interface.startswith(TAP_INTERFACE_PREFIX)])
+                            interface.startswith(constants.TAP_DEVICE_PREFIX)])
             except OSError:
                 return 0
 
@@ -509,7 +508,7 @@ class LinuxBridgeManager:
     def get_tap_devices(self):
         devices = set()
         for device in os.listdir(BRIDGE_FS):
-            if device.startswith(TAP_INTERFACE_PREFIX):
+            if device.startswith(constants.TAP_DEVICE_PREFIX):
                 devices.add(device)
         return devices
 

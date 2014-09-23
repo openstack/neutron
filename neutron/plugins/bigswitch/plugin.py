@@ -112,7 +112,7 @@ class AgentNotifierApi(n_rpc.RpcProxy,
 class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
 
     def get_port_from_device(self, device):
-        port_id = re.sub(r"^tap", "", device)
+        port_id = re.sub(r"^%s" % const.TAP_DEVICE_PREFIX, "", device)
         port = self.get_port_and_sgs(port_id)
         if port:
             port['device'] = device

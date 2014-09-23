@@ -23,6 +23,7 @@ from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.extensions import flavor
 from neutron.openstack.common import importutils
@@ -71,7 +72,7 @@ class LinuxInterfaceDriver(object):
 
     # from linux IF_NAMESIZE
     DEV_NAME_LEN = 14
-    DEV_NAME_PREFIX = 'tap'
+    DEV_NAME_PREFIX = n_const.TAP_DEVICE_PREFIX
 
     def __init__(self, conf):
         self.conf = conf
@@ -150,7 +151,7 @@ class NullDriver(LinuxInterfaceDriver):
 class OVSInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating an internal interface on an OVS bridge."""
 
-    DEV_NAME_PREFIX = 'tap'
+    DEV_NAME_PREFIX = n_const.TAP_DEVICE_PREFIX
 
     def __init__(self, conf):
         super(OVSInterfaceDriver, self).__init__(conf)
@@ -159,7 +160,8 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
     def _get_tap_name(self, dev_name, prefix=None):
         if self.conf.ovs_use_veth:
-            dev_name = dev_name.replace(prefix or self.DEV_NAME_PREFIX, 'tap')
+            dev_name = dev_name.replace(prefix or self.DEV_NAME_PREFIX,
+                                        n_const.TAP_DEVICE_PREFIX)
         return dev_name
 
     def _ovs_add_port(self, bridge, device_name, port_id, mac_address,
@@ -254,7 +256,8 @@ class MidonetInterfaceDriver(LinuxInterfaceDriver):
                                     self.root_helper,
                                     namespace=namespace):
             ip = ip_lib.IPWrapper(self.root_helper)
-            tap_name = device_name.replace(prefix or 'tap', 'tap')
+            tap_name = device_name.replace(prefix or n_const.TAP_DEVICE_PREFIX,
+                                           n_const.TAP_DEVICE_PREFIX)
 
             # Create ns_dev in a namespace if one is configured.
             root_dev, ns_dev = ip.add_veth(tap_name, device_name,
@@ -293,14 +296,15 @@ class MidonetInterfaceDriver(LinuxInterfaceDriver):
 class IVSInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating an internal interface on an IVS bridge."""
 
-    DEV_NAME_PREFIX = 'tap'
+    DEV_NAME_PREFIX = n_const.TAP_DEVICE_PREFIX
 
     def __init__(self, conf):
         super(IVSInterfaceDriver, self).__init__(conf)
         self.DEV_NAME_PREFIX = 'ns-'
 
     def _get_tap_name(self, dev_name, prefix=None):
-        dev_name = dev_name.replace(prefix or self.DEV_NAME_PREFIX, 'tap')
+        dev_name = dev_name.replace(prefix or self.DEV_NAME_PREFIX,
+                                    n_const.TAP_DEVICE_PREFIX)
         return dev_name
 
     def _ivs_add_port(self, device_name, port_id, mac_address):
@@ -367,10 +371,8 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
             ip = ip_lib.IPWrapper(self.root_helper)
 
             # Enable agent to define the prefix
-            if prefix:
-                tap_name = device_name.replace(prefix, 'tap')
-            else:
-                tap_name = device_name.replace(self.DEV_NAME_PREFIX, 'tap')
+            tap_name = device_name.replace(prefix or self.DEV_NAME_PREFIX,
+                                        n_const.TAP_DEVICE_PREFIX)
             # Create ns_veth in a namespace if one is configured.
             root_veth, ns_veth = ip.add_veth(tap_name, device_name,
                                              namespace2=namespace)

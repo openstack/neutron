@@ -560,7 +560,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
-    OVS_HYBRID_TAP_PREFIX = 'tap'
+    OVS_HYBRID_TAP_PREFIX = constants.TAP_DEVICE_PREFIX
 
     def _port_chain_name(self, port, direction):
         return iptables_manager.get_chain_name(

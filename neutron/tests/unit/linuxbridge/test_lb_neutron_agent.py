@@ -377,10 +377,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_get_tap_device_name(self):
         if_id = "123456789101112"
         self.assertEqual(self.lbm.get_tap_device_name(if_id),
-                         "tap" + if_id[0:11])
+                         constants.TAP_DEVICE_PREFIX + if_id[0:11])
         if_id = ""
         self.assertEqual(self.lbm.get_tap_device_name(if_id),
-                         "tap")
+                         constants.TAP_DEVICE_PREFIX)
 
     def test_get_vxlan_device_name(self):
         vn_id = constants.MAX_VXLAN_VNI
