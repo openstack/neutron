@@ -63,6 +63,13 @@ class IPAvailabilityRange(model_base.BASEV2):
                                    primary_key=True)
     first_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
     last_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
+    __table_args__ = (
+        sa.UniqueConstraint(
+            first_ip, allocation_pool_id,
+            name='uniq_ipavailabilityranges0first_ip0allocation_pool_id'),
+        sa.UniqueConstraint(
+            last_ip, allocation_pool_id,
+            name='uniq_ipavailabilityranges0last_ip0allocation_pool_id'))
 
     def __repr__(self):
         return "%s - %s" % (self.first_ip, self.last_ip)
