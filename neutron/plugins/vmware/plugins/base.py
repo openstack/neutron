@@ -245,7 +245,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 port_data.get('id', 'fake'), port_data.get('name', 'fake'),
                 port_data.get('admin_state_up', True), ip_addresses,
                 port_data.get('mac_address'))
-            LOG.debug(_("Created NSX router port:%s"), lrouter_port['uuid'])
+            LOG.debug("Created NSX router port:%s", lrouter_port['uuid'])
         except api_exc.NsxApiException:
             LOG.exception(_("Unable to create port on NSX logical router %s"),
                           nsx_router_id)
@@ -329,7 +329,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                   attachment,
                                                   attachment_type,
                                                   attachment_vlan)
-            LOG.debug(_("Attached %(att)s to NSX router port %(port)s"),
+            LOG.debug("Attached %(att)s to NSX router port %(port)s",
                       {'att': attachment, 'port': nsx_router_port_id})
         except api_exc.NsxApiException:
             # Must remove NSX logical port
@@ -460,9 +460,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 switchlib.plug_vif_interface(
                     self.cluster, selected_lswitch['uuid'],
                     lport['uuid'], "VifAttachment", port_data['id'])
-            LOG.debug(_("_nsx_create_port completed for port %(name)s "
-                        "on network %(network_id)s. The new port id is "
-                        "%(id)s."), port_data)
+            LOG.debug("_nsx_create_port completed for port %(name)s "
+                      "on network %(network_id)s. The new port id is "
+                      "%(id)s.", port_data)
         except (api_exc.NsxApiException, n_exc.NeutronException):
             self._handle_create_port_exception(
                 context, port_data['id'],
@@ -483,7 +483,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                               selected_lswitch['uuid'],
                                               lport['uuid'])
                     except n_exc.NotFound:
-                        LOG.debug(_("NSX Port %s already gone"), lport['uuid'])
+                        LOG.debug("NSX Port %s already gone", lport['uuid'])
 
     def _nsx_delete_port(self, context, port_data):
         # FIXME(salvatore-orlando): On the NSX platform we do not really have
@@ -498,15 +498,15 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
             context.session, self.cluster, port_data['id'])
         if not nsx_port_id:
-            LOG.debug(_("Port '%s' was already deleted on NSX platform"), id)
+            LOG.debug("Port '%s' was already deleted on NSX platform", id)
             return
         # TODO(bgh): if this is a bridged network and the lswitch we just got
         # back will have zero ports after the delete we should garbage collect
         # the lswitch.
         try:
             switchlib.delete_port(self.cluster, nsx_switch_id, nsx_port_id)
-            LOG.debug(_("_nsx_delete_port completed for port %(port_id)s "
-                        "on network %(net_id)s"),
+            LOG.debug("_nsx_delete_port completed for port %(port_id)s "
+                      "on network %(net_id)s",
                       {'port_id': port_data['id'],
                        'net_id': port_data['network_id']})
         except n_exc.NotFound:
@@ -571,9 +571,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             nsx_db.add_neutron_nsx_port_mapping(
                 context.session, port_data['id'],
                 selected_lswitch['uuid'], ls_port['uuid'])
-            LOG.debug(_("_nsx_create_router_port completed for port "
-                        "%(name)s on network %(network_id)s. The new "
-                        "port id is %(id)s."),
+            LOG.debug("_nsx_create_router_port completed for port "
+                      "%(name)s on network %(network_id)s. The new "
+                      "port id is %(id)s.",
                       port_data)
         except (api_exc.NsxApiException, n_exc.NeutronException):
             self._handle_create_port_exception(
@@ -635,9 +635,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 physical_network,
                 ext_network[pnet.SEGMENTATION_ID])
 
-        LOG.debug(_("_nsx_create_ext_gw_port completed on external network "
-                    "%(ext_net_id)s, attached to router:%(router_id)s. "
-                    "NSX port id is %(nsx_port_id)s"),
+        LOG.debug("_nsx_create_ext_gw_port completed on external network "
+                  "%(ext_net_id)s, attached to router:%(router_id)s. "
+                  "NSX port id is %(nsx_port_id)s",
                   {'ext_net_id': port_data['network_id'],
                    'router_id': nsx_router_id,
                    'nsx_port_id': lr_port['uuid']})
@@ -676,8 +676,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             raise nsx_exc.NsxPluginException(
                 err_msg=_("Unable to update logical router"
                           "on NSX Platform"))
-        LOG.debug(_("_nsx_delete_ext_gw_port completed on external network "
-                    "%(ext_net_id)s, attached to NSX router:%(router_id)s"),
+        LOG.debug("_nsx_delete_ext_gw_port completed on external network "
+                  "%(ext_net_id)s, attached to NSX router:%(router_id)s",
                   {'ext_net_id': port_data['network_id'],
                    'router_id': nsx_router_id})
 
@@ -718,9 +718,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     switchlib.delete_port(self.cluster,
                                           selected_lswitch['uuid'],
                                           lport['uuid'])
-        LOG.debug(_("_nsx_create_l2_gw_port completed for port %(name)s "
-                    "on network %(network_id)s. The new port id "
-                    "is %(id)s."), port_data)
+        LOG.debug("_nsx_create_l2_gw_port completed for port %(name)s "
+                  "on network %(network_id)s. The new port id "
+                  "is %(id)s.", port_data)
 
     def _nsx_create_fip_port(self, context, port_data):
         # As we do not create ports for floating IPs in NSX,
@@ -846,7 +846,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         ['lport_count'] < max_ports)].pop(0)
         except IndexError:
             # Too bad, no switch available
-            LOG.debug(_("No switch has available ports (%d checked)"),
+            LOG.debug("No switch has available ports (%d checked)",
                       len(lswitches))
         if allow_extra_lswitches:
             # The 'main' logical switch is either the only one available
@@ -1145,8 +1145,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 port_data['device_owner'],
                 self._port_drivers['create']['default'])
             port_create_func(context, port_data)
-            LOG.debug(_("port created on NSX backend for tenant "
-                        "%(tenant_id)s: (%(id)s)"), port_data)
+            LOG.debug("port created on NSX backend for tenant "
+                      "%(tenant_id)s: (%(id)s)", port_data)
         except n_exc.NotFound:
             LOG.warning(_("Logical switch for network %s was not "
                           "found in NSX."), port_data['network_id'])
@@ -1247,7 +1247,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._delete_port_queue_mapping(context, ret_port['id'])
             self._process_port_queue_mapping(context, ret_port,
                                              port_queue_id)
-            LOG.debug(_("Updating port: %s"), port)
+            LOG.debug("Updating port: %s", port)
             nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, id)
             # Convert Neutron security groups identifiers into NSX security
@@ -1683,8 +1683,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # if needed.
         self.handle_router_metadata_access(
             context, router_id, interface=router_iface_info)
-        LOG.debug(_("Add_router_interface completed for subnet:%(subnet_id)s "
-                    "and router:%(router_id)s"),
+        LOG.debug("Add_router_interface completed for subnet:%(subnet_id)s "
+                  "and router:%(router_id)s",
                   {'subnet_id': subnet_id, 'router_id': router_id})
         return router_iface_info
 
@@ -1974,7 +1974,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                     min_num_rules_expected=1)
                 self._remove_floatingip_address(context, fip_db)
         except sa_exc.NoResultFound:
-            LOG.debug(_("The port '%s' is not associated with floating IPs"),
+            LOG.debug("The port '%s' is not associated with floating IPs",
                       port_id)
         except n_exc.NotFound:
             LOG.warning(_("Nat rules not found in nsx for port: %s"), id)
@@ -2141,9 +2141,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 query.update({'status': device_status,
                               'nsx_id': nsx_res['uuid']},
                              synchronize_session=False)
-            LOG.debug(_("Neutron gateway device: %(neutron_id)s; "
-                        "NSX transport node identifier: %(nsx_id)s; "
-                        "Operational status: %(status)s."),
+            LOG.debug("Neutron gateway device: %(neutron_id)s; "
+                      "NSX transport node identifier: %(nsx_id)s; "
+                      "Operational status: %(status)s.",
                       {'neutron_id': neutron_id,
                        'nsx_id': nsx_res['uuid'],
                        'status': device_status})
@@ -2179,9 +2179,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         networkgw_db.NetworkGatewayDevice.id == neutron_id)
                 query.update({'status': device_status},
                              synchronize_session=False)
-            LOG.debug(_("Neutron gateway device: %(neutron_id)s; "
-                        "NSX transport node identifier: %(nsx_id)s; "
-                        "Operational status: %(status)s."),
+            LOG.debug("Neutron gateway device: %(neutron_id)s; "
+                      "NSX transport node identifier: %(nsx_id)s; "
+                      "Operational status: %(status)s.",
                       {'neutron_id': neutron_id,
                        'nsx_id': nsx_id,
                        'status': device_status})

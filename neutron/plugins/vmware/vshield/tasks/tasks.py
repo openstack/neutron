@@ -191,7 +191,7 @@ class TaskManager():
             LOG.exception(msg)
             status = constants.TaskStatus.ERROR
 
-        LOG.debug(_("Task %(task)s return %(status)s"), {
+        LOG.debug("Task %(task)s return %(status)s", {
             'task': str(task),
             'status': status})
 
@@ -210,7 +210,7 @@ class TaskManager():
                 'cb': str(task._result_callback)}
             LOG.exception(msg)
 
-        LOG.debug(_("Task %(task)s return %(status)s"),
+        LOG.debug("Task %(task)s return %(status)s",
                   {'task': str(task), 'status': task.status})
 
         task._finished()
