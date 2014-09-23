@@ -19,6 +19,7 @@ import mock
 from oslo.config import cfg
 from six.moves import queue as Queue
 
+from neutron.api.v2 import attributes
 from neutron import context
 from neutron.extensions import loadbalancer
 from neutron import manager
@@ -155,6 +156,16 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
         """Call _get_pip twice and verify that a Port is created once."""
         port_dict = {'fixed_ips': [{'subnet_id': '10.10.10.10',
                                     'ip_address': '11.11.11.11'}]}
+        port_data = {
+            'tenant_id': 'tenant_id',
+            'name': 'port_name',
+            'network_id': 'network_id',
+            'mac_address': attributes.ATTR_NOT_SPECIFIED,
+            'admin_state_up': False,
+            'device_id': '',
+            'device_owner': 'neutron:' + constants.LOADBALANCER,
+            'fixed_ips': [{'subnet_id': '10.10.10.10'}]
+        }
         self.plugin_instance._core_plugin.get_ports = mock.Mock(
             return_value=[])
         self.plugin_instance._core_plugin.create_port = mock.Mock(
@@ -163,15 +174,18 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
         radware_driver._get_pip(context.get_admin_context(),
                                 'tenant_id', 'port_name',
                                 'network_id', '10.10.10.10')
-        self.plugin_instance._core_plugin.get_ports.assert_called_once()
-        self.plugin_instance._core_plugin.create_port.assert_called_once()
+        self.plugin_instance._core_plugin.get_ports.assert_called_once_with(
+                mock.ANY, filters={'name': ['port_name']})
+        self.plugin_instance._core_plugin.create_port.assert_called_once_with(
+                mock.ANY, {'port': port_data})
         self.plugin_instance._core_plugin.create_port.reset_mock()
         self.plugin_instance._core_plugin.get_ports.reset_mock()
         self.plugin_instance._core_plugin.get_ports.return_value = [port_dict]
         radware_driver._get_pip(context.get_admin_context(),
                                 'tenant_id', 'port_name',
                                 'network_id', '10.10.10.10')
-        self.plugin_instance._core_plugin.get_ports.assert_called_once()
+        self.plugin_instance._core_plugin.get_ports.assert_called_once_with(
+                mock.ANY, filters={'name': ['port_name']})
         self.assertFalse(self.plugin_instance._core_plugin.create_port.called)
 
     def test_rest_client_recover_was_called(self):
@@ -181,7 +195,9 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
         radware_driver.rest_client._call = self.orig__call
         self.assertRaises(r_exc.RESTRequestFailure,
                           radware_driver._verify_workflow_templates)
-        self.recover_mock.assert_called_once()
+        self.recover_mock.assert_called_once_with('GET',
+                                                  '/api/workflowTemplate',
+                                                  None, None, False)
 
     def test_rest_client_flip_servers(self):
         radware_driver = self.plugin_instance.drivers['radware']

@@ -79,3 +79,21 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(2, checks.no_author_tags("# author: pele")[0])
         self.assertEqual(2, checks.no_author_tags("# Author: pele")[0])
         self.assertEqual(3, checks.no_author_tags(".. moduleauthor:: pele")[0])
+
+    def test_assert_called_once(self):
+        fail_code = """
+               mock = Mock()
+               mock.method(1, 2, 3, test='wow')
+               mock.method.assert_called_once()
+               """
+        pass_code = """
+               mock = Mock()
+               mock.method(1, 2, 3, test='wow')
+               mock.method.assert_called_once_with()
+               """
+        self.assertEqual(
+            1, len(list(checks.check_assert_called_once(fail_code,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            0, len(list(checks.check_assert_called_once(pass_code,
+                                            "neutron/tests/test_assert.py"))))

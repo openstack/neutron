@@ -120,7 +120,8 @@ class TestCiscoApicL3Plugin(testlib_api.SqlTestCase,
         mgr = self.plugin.manager
         self.plugin.remove_router_interface(self.context, ROUTER,
                                             interface_info)
-        mgr.delete_contract_for_epg.assert_called_once()
+        mgr.remove_router_interface.assert_called_once_with(
+            mocked.APIC_TENANT, mocked.APIC_ROUTER, mocked.APIC_NETWORK)
 
     def test_add_router_interface_subnet(self):
         self._test_add_router_interface(self.interface_info['subnet'])
