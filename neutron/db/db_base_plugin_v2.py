@@ -20,6 +20,7 @@ import weakref
 
 import netaddr
 from oslo.config import cfg
+from sqlalchemy import and_
 from sqlalchemy import event
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -822,7 +823,12 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             return
         ports = self._model_query(
             context, models_v2.Port).filter(
-                models_v2.Port.network_id == id)
+                and_(
+                    models_v2.Port.network_id == id,
+                    models_v2.Port.device_owner !=
+                    constants.DEVICE_OWNER_ROUTER_GW,
+                    models_v2.Port.device_owner !=
+                    constants.DEVICE_OWNER_FLOATINGIP))
         subnets = self._model_query(
             context, models_v2.Subnet).filter(
                 models_v2.Subnet.network_id == id)
