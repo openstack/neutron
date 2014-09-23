@@ -203,6 +203,7 @@ def add_network_binding(session, network_id, network_type, physical_network,
                             physical_network=physical_network,
                             vlan_id=vlan_id)
     session.add(binding)
+    return binding
 
 
 def get_network_binding(session, network_id):

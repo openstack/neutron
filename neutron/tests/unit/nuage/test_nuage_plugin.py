@@ -547,30 +547,73 @@ class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
 class TestNuageProviderNetTestCase(NuagePluginV2TestCase):
 
     def test_create_provider_network(self):
-        phy_net = uuidutils.generate_uuid()
+        phys_net = uuidutils.generate_uuid()
         data = {'network': {'name': 'pnet1',
                             'tenant_id': 'admin',
                             pnet.NETWORK_TYPE: 'vlan',
-                            pnet.PHYSICAL_NETWORK: phy_net,
+                            pnet.PHYSICAL_NETWORK: phys_net,
                             pnet.SEGMENTATION_ID: 123}}
         network_req = self.new_create_request('networks', data, self.fmt)
         net = self.deserialize(self.fmt, network_req.get_response(self.api))
         self.assertEqual('vlan', net['network'][pnet.NETWORK_TYPE])
-        self.assertEqual(phy_net, net['network'][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(phys_net, net['network'][pnet.PHYSICAL_NETWORK])
         self.assertEqual(123, net['network'][pnet.SEGMENTATION_ID])
 
     def test_create_provider_network_no_admin(self):
-        phy_net = uuidutils.generate_uuid()
+        phys_net = uuidutils.generate_uuid()
         data = {'network': {'name': 'pnet1',
                             'tenant_id': 'no_admin',
                             pnet.NETWORK_TYPE: 'vlan',
-                            pnet.PHYSICAL_NETWORK: phy_net,
+                            pnet.PHYSICAL_NETWORK: phys_net,
                             pnet.SEGMENTATION_ID: 123}}
         network_req = self.new_create_request('networks', data, self.fmt)
         network_req.environ['neutron.context'] = context.Context(
                                     '', 'no_admin', is_admin=False)
         res = network_req.get_response(self.api)
         self.assertEqual(exc.HTTPForbidden.code, res.status_int)
+
+    def test_get_network_for_provider_network(self):
+        phys_net = uuidutils.generate_uuid()
+        data = {'network': {'name': 'pnet1',
+                            'tenant_id': 'admin',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: phys_net,
+                            pnet.SEGMENTATION_ID: 123}}
+        network_req = self.new_create_request('networks', data, self.fmt)
+        res = self.deserialize(self.fmt, network_req.get_response(self.api))
+
+        get_req = self.new_show_request('networks', res['network']['id'])
+        net = self.deserialize(self.fmt, get_req.get_response(self.api))
+        self.assertEqual('vlan', net['network'][pnet.NETWORK_TYPE])
+        self.assertEqual(phys_net, net['network'][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(123, net['network'][pnet.SEGMENTATION_ID])
+
+    def test_list_networks_for_provider_network(self):
+        phys_net = uuidutils.generate_uuid()
+        data1 = {'network': {'name': 'pnet1',
+                            'tenant_id': 'admin',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: phys_net,
+                            pnet.SEGMENTATION_ID: 123}}
+        network_req_1 = self.new_create_request('networks', data1, self.fmt)
+        network_req_1.get_response(self.api)
+        data2 = {'network': {'name': 'pnet2',
+                            'tenant_id': 'admin',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: phys_net,
+                            pnet.SEGMENTATION_ID: 234}}
+        network_req_2 = self.new_create_request('networks', data2, self.fmt)
+        network_req_2.get_response(self.api)
+
+        list_req = self.new_list_request('networks')
+        pnets = self.deserialize(self.fmt, list_req.get_response(self.api))
+        self.assertEqual(2, len(pnets['networks']))
+        self.assertEqual('vlan', pnets['networks'][0][pnet.NETWORK_TYPE])
+        self.assertEqual(phys_net, pnets['networks'][0][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(123, pnets['networks'][0][pnet.SEGMENTATION_ID])
+        self.assertEqual('vlan', pnets['networks'][1][pnet.NETWORK_TYPE])
+        self.assertEqual(phys_net, pnets['networks'][1][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(234, pnets['networks'][1][pnet.SEGMENTATION_ID])
 
 
 class TestNuageSecurityGroupTestCase(NuagePluginV2TestCase,
