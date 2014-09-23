@@ -599,6 +599,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                             'for namespace cleanup.'))
             return set()
 
+    def _get_routers_namespaces(self, router_ids):
+        namespaces = set(self._get_router_info(id, router=None).ns_name
+                         for id in router_ids)
+        namespaces.update(self.get_snat_ns_name(id) for id in router_ids)
+        return namespaces
+
     def _cleanup_namespaces(self, router_namespaces, router_ids):
         """Destroy stale router namespaces on host when L3 agent restarts
 
@@ -607,9 +613,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         The argument router_namespaces is the list of all routers namespaces
         The argument router_ids is the list of ids for known routers.
         """
-        ns_to_ignore = set(self._get_router_info(id, router=None).ns_name
-                           for id in router_ids)
-        ns_to_ignore.update(self.get_snat_ns_name(id) for id in router_ids)
+        # Don't destroy namespaces of routers this agent handles.
+        ns_to_ignore = self._get_routers_namespaces(router_ids)
+
         ns_to_destroy = router_namespaces - ns_to_ignore
         self._destroy_stale_router_namespaces(ns_to_destroy)
 
