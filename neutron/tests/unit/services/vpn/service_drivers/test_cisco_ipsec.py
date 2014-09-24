@@ -74,14 +74,10 @@ class TestCiscoIPsecDriverValidation(base.BaseTestCase):
 
     def setUp(self):
         super(TestCiscoIPsecDriverValidation, self).setUp()
-        mock.patch('neutron.common.rpc.create_connection').start()
         self.l3_plugin = mock.Mock()
         mock.patch(
             'neutron.manager.NeutronManager.get_service_plugins',
             return_value={constants.L3_ROUTER_NAT: self.l3_plugin}).start()
-        self.core_plugin = mock.Mock()
-        mock.patch('neutron.manager.NeutronManager.get_plugin',
-                   return_value=self.core_plugin).start()
         self.context = n_ctx.Context('some_user', 'some_tenant')
         self.vpn_service = {'router_id': '123'}
         self.router = mock.Mock()
@@ -337,18 +333,20 @@ class TestCiscoIPsecDriver(testlib_api.SqlTestCase):
         mock.patch('neutron.common.rpc.create_connection').start()
 
         service_plugin = mock.Mock()
-        service_plugin.get_host_for_router.return_value = FAKE_HOST
-        # TODO(pcm): Remove when Cisco L3 router plugin support available
-        mock.patch('neutron.services.vpn.service_drivers.'
-                   'cisco_cfg_loader.get_host_for_router',
-                   return_value=FAKE_HOST).start()
         service_plugin._get_vpnservice.return_value = {
             'router_id': _uuid()
         }
-        get_service_plugin = mock.patch(
-            'neutron.manager.NeutronManager.get_service_plugins').start()
-        get_service_plugin.return_value = {
-            constants.L3_ROUTER_NAT: service_plugin}
+
+        l3_plugin = mock.Mock()
+        mock.patch(
+            'neutron.manager.NeutronManager.get_service_plugins',
+            return_value={constants.L3_ROUTER_NAT: l3_plugin}).start()
+
+        l3_plugin.get_host_for_router.return_value = FAKE_HOST
+        l3_agent = mock.Mock()
+        l3_agent.host = 'some-host'
+        l3_plugin.get_l3_agents_hosting_routers.return_value = [l3_agent]
+
         self.driver = ipsec_driver.CiscoCsrIPsecVPNDriver(service_plugin)
         mock.patch.object(csr_db, 'create_tunnel_mapping').start()
         self.context = n_ctx.Context('some_user', 'some_tenant')
@@ -388,3 +386,58 @@ class TestCiscoIPsecDriver(testlib_api.SqlTestCase):
         self._test_update(self.driver.delete_vpnservice,
                           [FAKE_VPN_SERVICE],
                           {'reason': 'vpn-service-delete'})
+
+
+class TestCiscoIPsecDriverRequests(base.BaseTestCase):
+
+    """Test handling device driver requests for service info."""
+
+    def setUp(self):
+        super(TestCiscoIPsecDriverRequests, self).setUp()
+        mock.patch('neutron.common.rpc.create_connection').start()
+
+        service_plugin = mock.Mock()
+        self.driver = ipsec_driver.CiscoCsrIPsecVPNDriver(service_plugin)
+
+    def test_build_router_tunnel_interface_name(self):
+        """Check formation of inner/outer interface name for CSR router."""
+        router_info = {
+            '_interfaces': [
+                {'hosting_info': {'segmentation_id': 100,
+                                  'hosting_port_name': 't1_p:1'}}
+            ],
+            'gw_port':
+                {'hosting_info': {'segmentation_id': 200,
+                                  'hosting_port_name': 't2_p:1'}}
+        }
+        self.assertEqual(
+            'GigabitEthernet2.100',
+            self.driver._create_interface(router_info['_interfaces'][0]))
+        self.assertEqual(
+            'GigabitEthernet3.200',
+            self.driver._create_interface(router_info['gw_port']))
+
+    def test_build_router_info(self):
+        """Check creation of CSR info to send to device driver."""
+        router_info = {
+            'hosting_device': {
+                'management_ip_address': '1.1.1.1',
+                'credentials': {'username': 'me', 'password': 'secret'}
+            },
+            'gw_port':
+                {'hosting_info': {'segmentation_id': 101,
+                                 'hosting_port_name': 't2_p:1'}},
+            'id': u'c607b58e-f150-4289-b83f-45623578d122',
+            '_interfaces': [
+                {'hosting_info': {'segmentation_id': 100,
+                                  'hosting_port_name': 't1_p:1'}}
+            ]
+        }
+        expected = {'rest_mgmt_ip': '1.1.1.1',
+                    'username': 'me',
+                    'password': 'secret',
+                    'inner_if_name': 'GigabitEthernet2.100',
+                    'outer_if_name': 'GigabitEthernet3.101',
+                    'vrf': 'nrouter-c607b5',
+                    'timeout': 30}
+        self.assertEqual(expected, self.driver._get_router_info(router_info))
