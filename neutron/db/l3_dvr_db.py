@@ -314,6 +314,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     floating_ip['host'] = self.get_vm_port_hostid(
                         context, floating_ip['port_id'])
                     LOG.debug("Floating IP host: %s", floating_ip['host'])
+                    # if no VM there won't be an agent assigned
+                    if not floating_ip['host']:
+                        continue
                     fip_agent = self._get_agent_by_type_and_host(
                         context, l3_const.AGENT_TYPE_L3,
                         floating_ip['host'])

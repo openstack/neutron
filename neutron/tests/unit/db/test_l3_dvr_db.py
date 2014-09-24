@@ -256,3 +256,52 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
         }
         mock_fip_clear = self._delete_floatingip_test_setup(floatingip)
         self.assertTrue(mock_fip_clear.called)
+
+    def _floatingip_on_port_test_setup(self, hostid):
+        router = {'id': 'foo_router_id', 'distributed': True}
+        floatingip = {
+            'id': _uuid(),
+            'port_id': _uuid(),
+            'router_id': 'foo_router_id'
+        }
+        routers = {
+            'foo_router_id': router
+        }
+        fipagent = {
+            'id': _uuid()
+        }
+
+        # NOTE: mock.patch is not needed here since self.mixin is created fresh
+        # for each test.  It doesn't work with some methods since the mixin is
+        # tested in isolation (e.g. _get_agent_by_type_and_host).
+        self.mixin.get_vm_port_hostid = mock.Mock(return_value=hostid)
+        self.mixin._get_agent_by_type_and_host = mock.Mock(
+            return_value=fipagent)
+        self.mixin.get_fip_sync_interfaces = mock.Mock(
+            return_value='fip_interface')
+
+        self.mixin._process_floating_ips(self.ctx, routers, [floatingip])
+        return (router, floatingip)
+
+    def test_floatingip_on_port_no_host(self):
+        router, fip = self._floatingip_on_port_test_setup(None)
+
+        self.assertTrue(self.mixin.get_vm_port_hostid.called)
+        self.assertFalse(self.mixin._get_agent_by_type_and_host.called)
+        self.assertFalse(self.mixin.get_fip_sync_interfaces.called)
+
+        self.assertNotIn(l3_const.FLOATINGIP_KEY, router)
+        self.assertNotIn(l3_const.FLOATINGIP_AGENT_INTF_KEY, router)
+
+    def test_floatingip_on_port_with_host(self):
+        router, fip = self._floatingip_on_port_test_setup(_uuid())
+
+        self.assertTrue(self.mixin.get_vm_port_hostid.called)
+        self.assertTrue(self.mixin._get_agent_by_type_and_host.called)
+        self.assertTrue(self.mixin.get_fip_sync_interfaces.called)
+
+        self.assertIn(l3_const.FLOATINGIP_KEY, router)
+        self.assertIn(l3_const.FLOATINGIP_AGENT_INTF_KEY, router)
+        self.assertIn(fip, router[l3_const.FLOATINGIP_KEY])
+        self.assertIn('fip_interface',
+            router[l3_const.FLOATINGIP_AGENT_INTF_KEY])
