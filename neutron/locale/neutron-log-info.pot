@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2014.2.dev114.gf095f99\n"
+"Project-Id-Version: neutron 2014.2.dev190.ga76af4a\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-14 06:10+0000\n"
+"POT-Creation-Date: 2014-09-22 06:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -115,20 +115,25 @@ msgstr ""
 msgid "Waiting on %d children to exit"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:80
+#: neutron/plugins/ml2/drivers/type_tunnel.py:79
+#, python-format
+msgid "%(type)s ID ranges: %(range)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:78
 msgid "APIC service agent starting ..."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:97
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:95
 msgid "APIC service agent started"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:191
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:189
 #, python-format
 msgid "APIC host agent: agent starting on %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:211
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:209
 #, python-format
 msgid "APIC host agent: started on %s"
 msgstr ""
@@ -138,11 +143,11 @@ msgstr ""
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/nuage/syncmanager.py:47
+#: neutron/plugins/nuage/syncmanager.py:46
 msgid "Starting the sync between Neutron and VSD"
 msgstr ""
 
-#: neutron/plugins/nuage/syncmanager.py:60
+#: neutron/plugins/nuage/syncmanager.py:59
 msgid "Sync between Neutron and VSD completed successfully"
 msgstr ""
 
