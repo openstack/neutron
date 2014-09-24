@@ -202,9 +202,9 @@ class OvsAgentSchedulerTestCaseBase(test_l3_plugin.L3NatTestCaseMixin,
                                     AgentSchedulerTestMixIn,
                                     test_plugin.NeutronDbPluginV2TestCase):
     fmt = 'json'
-    plugin_str = ('neutron.plugins.openvswitch.'
-                  'ovs_neutron_plugin.OVSNeutronPluginV2')
-    l3_plugin = None
+    plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+    l3_plugin = ('neutron.tests.unit.test_l3_plugin.'
+                 'TestL3NatAgentSchedulingServicePlugin')
 
     def setUp(self):
         # Save the global RESOURCE_ATTRIBUTE_MAP before loading plugin
@@ -1105,8 +1105,7 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                    test_agent_ext_plugin.AgentDBTestMixIn,
                                    AgentSchedulerTestMixIn,
                                    test_plugin.NeutronDbPluginV2TestCase):
-    plugin_str = ('neutron.plugins.openvswitch.'
-                  'ovs_neutron_plugin.OVSNeutronPluginV2')
+    plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
     def setUp(self):
         # Save the global RESOURCE_ATTRIBUTE_MAP before loading plugin
@@ -1271,9 +1270,9 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                  test_agent_ext_plugin.AgentDBTestMixIn,
                                  AgentSchedulerTestMixIn,
                                  test_plugin.NeutronDbPluginV2TestCase):
-    plugin_str = ('neutron.plugins.openvswitch.'
-                  'ovs_neutron_plugin.OVSNeutronPluginV2')
-    l3_plugin = None
+    plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+    l3_plugin = ('neutron.tests.unit.test_l3_plugin.'
+                 'TestL3NatAgentSchedulingServicePlugin')
 
     def setUp(self):
         self.dhcp_notifier_cls_p = mock.patch(
@@ -1309,8 +1308,9 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_router_add_to_l3_agent_notification(self):
-        plugin = manager.NeutronManager.get_plugin()
-        l3_notifier = plugin.agent_notifiers[constants.AGENT_TYPE_L3]
+        l3_plugin = (manager.NeutronManager.get_service_plugins()
+                     [service_constants.L3_ROUTER_NAT])
+        l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
         with mock.patch.object(l3_notifier, 'cast') as mock_l3:
             with self.router() as router1:
                 self._register_agent_states()
@@ -1330,8 +1330,9 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
             self._assert_notify(notifications, expected_event_type)
 
     def test_router_remove_from_l3_agent_notification(self):
-        plugin = manager.NeutronManager.get_plugin()
-        l3_notifier = plugin.agent_notifiers[constants.AGENT_TYPE_L3]
+        l3_plugin = (manager.NeutronManager.get_service_plugins()
+                     [service_constants.L3_ROUTER_NAT])
+        l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
         with mock.patch.object(l3_notifier, 'cast') as mock_l3:
             with self.router() as router1:
                 self._register_agent_states()
@@ -1351,8 +1352,9 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
             self._assert_notify(notifications, expected_event_type)
 
     def test_agent_updated_l3_agent_notification(self):
-        plugin = manager.NeutronManager.get_plugin()
-        l3_notifier = plugin.agent_notifiers[constants.AGENT_TYPE_L3]
+        l3_plugin = (manager.NeutronManager.get_service_plugins()
+                     [service_constants.L3_ROUTER_NAT])
+        l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
         with mock.patch.object(l3_notifier, 'cast') as mock_l3:
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,

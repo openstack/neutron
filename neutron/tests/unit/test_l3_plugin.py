@@ -22,6 +22,7 @@ import netaddr
 from oslo.config import cfg
 from webob import exc
 
+from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_constants
@@ -306,6 +307,13 @@ class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
                                             L3AgentSchedulerDbMixin):
 
     supported_extension_aliases = ["router", "l3_agent_scheduler"]
+
+    def __init__(self):
+        super(TestL3NatAgentSchedulingServicePlugin, self).__init__()
+        self.router_scheduler = importutils.import_object(
+            cfg.CONF.router_scheduler_driver)
+        self.agent_notifiers.update(
+            {l3_constants.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
 
 
 class L3NATdbonlyMixinTestCase(base.BaseTestCase):

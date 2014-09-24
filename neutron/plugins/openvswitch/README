@@ -1,6 +1,4 @@
-The Open vSwitch (OVS) Neutron plugin is a simple plugin to manage OVS
-features using a local agent running on each hypervisor.
+The Open vSwitch (OVS) Neutron plugin has been removed and replaced by ML2. You
+must run the migration manually to upgrade to Juno.
 
-For details on how to configure and use the plugin, see:
-
-http://openvswitch.org/openstack/documentation/
+See neutron/db/migration/migrate_to_ml2.py

@@ -32,8 +32,7 @@ from neutron.plugins.openvswitch.common import constants
 from neutron.tests import base
 
 
-NOTIFIER = ('neutron.plugins.openvswitch.'
-            'ovs_neutron_plugin.AgentNotifierApi')
+NOTIFIER = 'neutron.plugins.ml2.rpc.AgentNotifierApi'
 OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
 
 FAKE_MAC = '00:11:22:33:44:55'

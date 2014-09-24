@@ -41,6 +41,7 @@ class NecDhcpAgentNotifierTestCase(
     test_nec_plugin.NecPluginV2TestCaseBase):
 
     plugin_str = test_nec_plugin.PLUGIN_NAME
+    l3_plugin = None
 
     def setUp(self):
         self.setup_nec_plugin_base()
@@ -64,6 +65,7 @@ class NecL3AgentSchedulerWithOpenFlowRouter(
     test_nec_plugin.NecPluginV2TestCaseBase):
 
     plugin_str = test_nec_plugin.PLUGIN_NAME
+    l3_plugin = None
 
     def setUp(self):
         self.setup_nec_plugin_base()

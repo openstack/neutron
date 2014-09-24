@@ -61,8 +61,7 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
                                   test_db_loadbalancer.LoadBalancerTestMixin,
                                   test_plugin.NeutronDbPluginV2TestCase):
     fmt = 'json'
-    plugin_str = ('neutron.plugins.openvswitch.'
-                  'ovs_neutron_plugin.OVSNeutronPluginV2')
+    plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
     def setUp(self):
         # Save the global RESOURCE_ATTRIBUTE_MAP

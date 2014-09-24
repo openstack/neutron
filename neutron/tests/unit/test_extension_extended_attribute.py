@@ -26,7 +26,7 @@ from neutron.api.v2 import attributes
 from neutron.common import config
 from neutron import manager
 from neutron.plugins.common import constants
-from neutron.plugins.openvswitch import ovs_neutron_plugin
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit.extensions import extendedattribute as extattr
@@ -41,7 +41,7 @@ extensions_path = ':'.join(neutron.tests.unit.extensions.__path__)
 
 
 class ExtensionExtendedAttributeTestPlugin(
-    ovs_neutron_plugin.OVSNeutronPluginV2):
+    ml2_plugin.Ml2Plugin):
 
     supported_extension_aliases = [
         'ext-obj-test', "extended-ext-attr"
