@@ -156,7 +156,27 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # TODO(rkukura): Implement filtering.
         return nets
 
-    def _process_port_binding(self, mech_context, context, attrs):
+    def _notify_l3_agent_new_port(self, context, port):
+        if not port:
+            return
+
+        # Whenever a DVR serviceable port comes up on a
+        # node, it has to be communicated to the L3 Plugin
+        # and agent for creating the respective namespaces.
+        if (utils.is_dvr_serviced(port['device_owner'])):
+            l3plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
+            if (utils.is_extension_supported(
+                l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)):
+                l3plugin.dvr_update_router_addvm(context, port)
+
+    def _get_host_port_if_changed(self, mech_context, attrs):
+        binding = mech_context._binding
+        host = attrs and attrs.get(portbindings.HOST_ID)
+        if (attributes.is_attr_set(host) and binding.host != host):
+            return mech_context.current
+
+    def _process_port_binding(self, mech_context, attrs):
         binding = mech_context._binding
         port = mech_context.current
         changes = False
@@ -166,15 +186,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.host != host):
             binding.host = host
             changes = True
-            # Whenever a DVR serviceable port comes up on a
-            # node, it has to be communicated to the L3 Plugin
-            # and agent for creating the respective namespaces.
-            if (utils.is_dvr_serviced(port['device_owner'])):
-                l3plugin = manager.NeutronManager.get_service_plugins().get(
-                    service_constants.L3_ROUTER_NAT)
-                if (utils.is_extension_supported(
-                    l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)):
-                    l3plugin.dvr_update_router_addvm(context, port)
 
         vnic_type = attrs and attrs.get(portbindings.VNIC_TYPE)
         if (attributes.is_attr_set(vnic_type) and
@@ -767,7 +778,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding = db.add_port_binding(session, result['id'])
             mech_context = driver_context.PortContext(self, context, result,
                                                       network, binding)
-            self._process_port_binding(mech_context, context, attrs)
+            new_host_port = self._get_host_port_if_changed(mech_context, attrs)
+            self._process_port_binding(mech_context, attrs)
 
             result[addr_pair.ADDRESS_PAIRS] = (
                 self._process_create_allowed_address_pairs(
@@ -776,6 +788,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_port_create_extra_dhcp_opts(context, result,
                                                       dhcp_opts)
             self.mechanism_manager.create_port_precommit(mech_context)
+
+        # Notification must be sent after the above transaction is complete
+        self._notify_l3_agent_new_port(context, new_host_port)
 
         try:
             self.mechanism_manager.create_port_postcommit(mech_context)
@@ -831,9 +846,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.PortContext(
                 self, context, updated_port, network, binding,
                 original_port=original_port)
+            new_host_port = self._get_host_port_if_changed(mech_context, attrs)
             need_port_update_notify |= self._process_port_binding(
-                mech_context, context, attrs)
+                mech_context, attrs)
             self.mechanism_manager.update_port_precommit(mech_context)
+
+        # Notification must be sent after the above transaction is complete
+        self._notify_l3_agent_new_port(context, new_host_port)
 
         # TODO(apech) - handle errors raised by update_port, potentially
         # by re-calling update_port with the previous attributes. For

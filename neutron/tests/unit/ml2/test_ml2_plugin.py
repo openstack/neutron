@@ -23,6 +23,7 @@ from neutron.common import constants
 from neutron.common import exceptions as exc
 from neutron.common import utils
 from neutron import context
+from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
@@ -36,6 +37,7 @@ from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
+from neutron.tests import base
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.ml2.drivers import mechanism_logger as mech_logger
 from neutron.tests.unit.ml2.drivers import mechanism_test as mech_test
@@ -942,3 +944,60 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     self.assertEqual(new_name, port['port']['name'])
 
                     self._delete('ports', port['port']['id'])
+
+
+class TestMl2PluginCreateUpdatePort(base.BaseTestCase):
+    def setUp(self):
+        super(TestMl2PluginCreateUpdatePort, self).setUp()
+        self.context = mock.MagicMock()
+
+    def _ensure_transaction_is_closed(self):
+        transaction = self.context.session.begin(subtransactions=True)
+        enter = transaction.__enter__.call_count
+        exit = transaction.__exit__.call_count
+        self.assertEqual(enter, exit)
+
+    def _create_plugin_for_create_update_port(self, new_host_port):
+        plugin = ml2_plugin.Ml2Plugin()
+        plugin.extension_manager = mock.Mock()
+        plugin.type_manager = mock.Mock()
+        plugin.mechanism_manager = mock.Mock()
+        plugin.notifier = mock.Mock()
+        plugin._get_host_port_if_changed = mock.Mock(
+            return_value=new_host_port)
+
+        plugin._notify_l3_agent_new_port = mock.Mock()
+        plugin._notify_l3_agent_new_port.side_effect = (
+            lambda c, p: self._ensure_transaction_is_closed())
+
+        return plugin
+
+    def test_create_port_rpc_outside_transaction(self):
+        with contextlib.nested(
+            mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
+            mock.patch.object(base_plugin.NeutronDbPluginV2, 'create_port'),
+        ) as (init, super_create_port):
+            init.return_value = None
+
+            new_host_port = mock.Mock()
+            plugin = self._create_plugin_for_create_update_port(new_host_port)
+
+            plugin.create_port(self.context, mock.MagicMock())
+
+            plugin._notify_l3_agent_new_port.assert_called_once_with(
+                self.context, new_host_port)
+
+    def test_update_port_rpc_outside_transaction(self):
+        with contextlib.nested(
+            mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
+            mock.patch.object(base_plugin.NeutronDbPluginV2, 'update_port'),
+        ) as (init, super_update_port):
+            init.return_value = None
+
+            new_host_port = mock.Mock()
+            plugin = self._create_plugin_for_create_update_port(new_host_port)
+
+            plugin.update_port(self.context, 'fake_id', mock.MagicMock())
+
+            plugin._notify_l3_agent_new_port.assert_called_once_with(
+                self.context, new_host_port)
