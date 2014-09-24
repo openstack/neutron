@@ -1387,7 +1387,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._snat_redirect_remove(ri, p, internal_interface)
 
             if self.conf.agent_mode == 'dvr_snat' and (
-                ex_gw_port['binding:host_id'] == self.host):
+                ri.router['gw_port_host'] == self.host):
                 ns_name = self.get_snat_ns_name(ri.router['id'])
             else:
                 # not hosting agent - no work to do
