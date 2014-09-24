@@ -551,3 +551,24 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             {'extension:provider_network:set': 'rule:admin_only'},
             dict((policy, 'rule:admin_only') for policy in
                  expected_policies))
+
+    def test_process_rules(self):
+        action = "create_something"
+        # Construct RuleChecks for an action, attribute and subattribute
+        match_rule = common_policy.RuleCheck('rule', action)
+        attr_rule = common_policy.RuleCheck('rule', '%s:%s' %
+                                                    (action, 'somethings'))
+        sub_attr_rules = [common_policy.RuleCheck('rule', '%s:%s:%s' %
+                                                          (action, 'attr',
+                                                           'sub_attr_1'))]
+        # Build an AndCheck from the given RuleChecks
+        # Make the checks nested to better check the recursion
+        sub_attr_rules = common_policy.AndCheck(sub_attr_rules)
+        attr_rule = common_policy.AndCheck(
+            [attr_rule, sub_attr_rules])
+
+        match_rule = common_policy.AndCheck([match_rule, attr_rule])
+        # Assert that the rules are correctly extracted from the match_rule
+        rules = policy._process_rules_list([], match_rule)
+        self.assertEqual(['create_something', 'create_something:somethings',
+                          'create_something:attr:sub_attr_1'], rules)
