@@ -141,7 +141,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 return self._router_type[router_id]
             router = self._get_router(context, router_id)
 
-        LOG.debug(_("EDGE: router = %s"), router)
+        LOG.debug("EDGE: router = %s", router)
         if router['extra_attributes']['service_router']:
             router_type = ROUTER_TYPE_ADVANCED
         else:
@@ -172,7 +172,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
         # NOP for Edge because currently the port will be create internally
         # by VSM
-        LOG.debug(_("EDGE: _vcns_create_ext_gw_port"))
+        LOG.debug("EDGE: _vcns_create_ext_gw_port")
 
     def _vcns_delete_ext_gw_port(self, context, port_data):
         router_id = port_data['device_id']
@@ -181,7 +181,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             return
 
         # NOP for Edge
-        LOG.debug(_("EDGE: _vcns_delete_ext_gw_port"))
+        LOG.debug("EDGE: _vcns_delete_ext_gw_port")
 
     def _get_external_attachment_info(self, context, router):
         gw_port = router.gw_port
@@ -336,7 +336,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         if new_ext_net_id != org_ext_net_id and orgnexthop:
             # network changed, need to remove default gateway before vnic
             # can be configured
-            LOG.debug(_("VCNS: delete default gateway %s"), orgnexthop)
+            LOG.debug("VCNS: delete default gateway %s", orgnexthop)
             self._vcns_update_static_routes(context,
                                             router=router,
                                             edge_id=binding['edge_id'],
@@ -904,7 +904,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         self.vcns_driver.delete_firewall(context, edge_id)
 
     def create_firewall(self, context, firewall):
-        LOG.debug(_("create_firewall() called"))
+        LOG.debug("create_firewall() called")
         router_id = firewall['firewall'].get(vcns_const.ROUTER_ID)
         if not router_id:
             msg = _("router_id is not provided!")
@@ -938,7 +938,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return fw
 
     def update_firewall(self, context, id, firewall):
-        LOG.debug(_("update_firewall() called"))
+        LOG.debug("update_firewall() called")
         self._ensure_firewall_update_allowed(context, id)
         service_router_binding = self._get_resource_router_id_binding(
             context, firewall_db.Firewall, resource_id=id)
@@ -964,7 +964,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             return fw
 
     def delete_firewall(self, context, id):
-        LOG.debug(_("delete_firewall() called"))
+        LOG.debug("delete_firewall() called")
         self._firewall_set_status(
             context, id, service_constants.PENDING_DELETE)
         service_router_binding = self._get_resource_router_id_binding(
@@ -1000,7 +1000,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return fws
 
     def update_firewall_rule(self, context, id, firewall_rule):
-        LOG.debug(_("update_firewall_rule() called"))
+        LOG.debug("update_firewall_rule() called")
         self._ensure_update_or_delete_firewall_rule(context, id)
         fwr_pre = self.get_firewall_rule(context, id)
         fwr = super(NsxAdvancedPlugin, self).update_firewall_rule(
@@ -1026,7 +1026,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return fwr
 
     def update_firewall_policy(self, context, id, firewall_policy):
-        LOG.debug(_("update_firewall_policy() called"))
+        LOG.debug("update_firewall_policy() called")
         self._ensure_firewall_policy_update_allowed(context, id)
         firewall_rules_pre = self._make_firewall_rule_list_by_policy_id(
             context, id)
@@ -1053,7 +1053,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return fwp
 
     def insert_rule(self, context, id, rule_info):
-        LOG.debug(_("insert_rule() called"))
+        LOG.debug("insert_rule() called")
         self._ensure_firewall_policy_update_allowed(context, id)
         fwp = super(NsxAdvancedPlugin, self).insert_rule(
             context, id, rule_info)
@@ -1082,7 +1082,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return fwp
 
     def remove_rule(self, context, id, rule_info):
-        LOG.debug(_("remove_rule() called"))
+        LOG.debug("remove_rule() called")
         self._ensure_firewall_policy_update_allowed(context, id)
         fwp = super(NsxAdvancedPlugin, self).remove_rule(
             context, id, rule_info)
@@ -1220,7 +1220,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         self.vcns_driver.update_pool(context, edge_id, pool, members)
 
     def create_vip(self, context, vip):
-        LOG.debug(_("create_vip() called"))
+        LOG.debug("create_vip() called")
         router_id = vip['vip'].get(vcns_const.ROUTER_ID)
         if not router_id:
             msg = _("router_id is not provided!")
@@ -1608,7 +1608,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 LOG.exception(msg)
 
     def create_vpnservice(self, context, vpnservice):
-        LOG.debug(_("create_vpnservice() called"))
+        LOG.debug("create_vpnservice() called")
         router_id = vpnservice['vpnservice'].get('router_id')
         if not self._is_advanced_service_router(context, router_id):
             msg = _("router_id:%s is not an advanced router!") % router_id
@@ -1729,7 +1729,7 @@ class VcnsCallbacks(object):
         neutron_router_id = jobdata['neutron_router_id']
         name = task.userdata['router_name']
         if edge_id:
-            LOG.debug(_("Start deploying %(edge_id)s for router %(name)s"), {
+            LOG.debug("Start deploying %(edge_id)s for router %(name)s", {
                 'edge_id': edge_id,
                 'name': name})
             vcns_db.update_vcns_router_binding(
@@ -1756,10 +1756,10 @@ class VcnsCallbacks(object):
             LOG.exception(_("Router %s not found"), lrouter['uuid'])
 
         if task.status == tasks_const.TaskStatus.COMPLETED:
-            LOG.debug(_("Successfully deployed %(edge_id)s for "
-                        "router %(name)s"), {
-                            'edge_id': task.userdata['edge_id'],
-                            'name': name})
+            LOG.debug("Successfully deployed %(edge_id)s for "
+                      "router %(name)s", {
+                          'edge_id': task.userdata['edge_id'],
+                          'name': name})
             if (router_db and
                     router_db['status'] == service_constants.PENDING_CREATE):
                 router_db['status'] = service_constants.ACTIVE
@@ -1772,7 +1772,7 @@ class VcnsCallbacks(object):
                     context.session, neutron_router_id,
                     status=service_constants.ACTIVE)
         else:
-            LOG.debug(_("Failed to deploy Edge for router %s"), name)
+            LOG.debug("Failed to deploy Edge for router %s", name)
             if router_db:
                 router_db['status'] = service_constants.ERROR
             vcns_db.update_vcns_router_binding(
@@ -1788,25 +1788,25 @@ class VcnsCallbacks(object):
                                                router_id)
 
     def interface_update_result(self, task):
-        LOG.debug(_("interface_update_result %d"), task.status)
+        LOG.debug("interface_update_result %d", task.status)
 
     def snat_create_result(self, task):
-        LOG.debug(_("snat_create_result %d"), task.status)
+        LOG.debug("snat_create_result %d", task.status)
 
     def snat_delete_result(self, task):
-        LOG.debug(_("snat_delete_result %d"), task.status)
+        LOG.debug("snat_delete_result %d", task.status)
 
     def dnat_create_result(self, task):
-        LOG.debug(_("dnat_create_result %d"), task.status)
+        LOG.debug("dnat_create_result %d", task.status)
 
     def dnat_delete_result(self, task):
-        LOG.debug(_("dnat_delete_result %d"), task.status)
+        LOG.debug("dnat_delete_result %d", task.status)
 
     def routes_update_result(self, task):
-        LOG.debug(_("routes_update_result %d"), task.status)
+        LOG.debug("routes_update_result %d", task.status)
 
     def nat_update_result(self, task):
-        LOG.debug(_("nat_update_result %d"), task.status)
+        LOG.debug("nat_update_result %d", task.status)
 
 
 def _process_base_create_lswitch_args(*args, **kwargs):

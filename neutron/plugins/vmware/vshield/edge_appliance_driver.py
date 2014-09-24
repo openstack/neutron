@@ -156,7 +156,7 @@ class EdgeApplianceDriver(object):
     def _update_interface(self, task):
         edge_id = task.userdata['edge_id']
         config = task.userdata['config']
-        LOG.debug(_("VCNS: start updating vnic %s"), config)
+        LOG.debug("VCNS: start updating vnic %s", config)
         try:
             self.vcns.update_interface(edge_id, config)
         except exceptions.VcnsApiException as e:
@@ -175,7 +175,7 @@ class EdgeApplianceDriver(object):
     def update_interface(self, router_id, edge_id, index, network,
                          address=None, netmask=None, secondary=None,
                          jobdata=None):
-        LOG.debug(_("VCNS: update vnic %(index)d: %(addr)s %(netmask)s"), {
+        LOG.debug("VCNS: update vnic %(index)d: %(addr)s %(netmask)s", {
             'index': index, 'addr': address, 'netmask': netmask})
         if index == vcns_const.EXTERNAL_VNIC_INDEX:
             name = vcns_const.EXTERNAL_VNIC_NAME
@@ -205,7 +205,7 @@ class EdgeApplianceDriver(object):
     def _deploy_edge(self, task):
         userdata = task.userdata
         name = userdata['router_name']
-        LOG.debug(_("VCNS: start deploying edge %s"), name)
+        LOG.debug("VCNS: start deploying edge %s", name)
         request = userdata['request']
         try:
             header = self.vcns.deploy_edge(request)[0]
@@ -213,7 +213,7 @@ class EdgeApplianceDriver(object):
             job_id = objuri[objuri.rfind("/") + 1:]
             response = self.vcns.get_edge_id(job_id)[1]
             edge_id = response['edgeId']
-            LOG.debug(_("VCNS: deploying edge %s"), edge_id)
+            LOG.debug("VCNS: deploying edge %s", edge_id)
             userdata['edge_id'] = edge_id
             status = constants.TaskStatus.PENDING
         except exceptions.VcnsApiException:
@@ -253,7 +253,7 @@ class EdgeApplianceDriver(object):
                         "Abort.") % edge_id
                 LOG.exception(msg)
                 status = constants.TaskStatus.ERROR
-        LOG.debug(_("VCNS: Edge %s status"), edge_id)
+        LOG.debug("VCNS: Edge %s status", edge_id)
         return status
 
     def _result_edge(self, task):
@@ -267,14 +267,14 @@ class EdgeApplianceDriver(object):
                             'status': task.status
                         })
         else:
-            LOG.debug(_("VCNS: Edge %(edge_id)s deployed for "
-                        "router %(name)s"), {
-                            'edge_id': edge_id, 'name': router_name
-                        })
+            LOG.debug("VCNS: Edge %(edge_id)s deployed for "
+                      "router %(name)s", {
+                          'edge_id': edge_id, 'name': router_name
+                      })
 
     def _delete_edge(self, task):
         edge_id = task.userdata['edge_id']
-        LOG.debug(_("VCNS: start destroying edge %s"), edge_id)
+        LOG.debug("VCNS: start destroying edge %s", edge_id)
         status = constants.TaskStatus.COMPLETED
         if edge_id:
             try:
@@ -383,7 +383,7 @@ class EdgeApplianceDriver(object):
         # TODO(fank): use POST for optimization
         #             return rule_id for future reference
         rule = task.userdata['rule']
-        LOG.debug(_("VCNS: start creating nat rules: %s"), rule)
+        LOG.debug("VCNS: start creating nat rules: %s", rule)
         edge_id = task.userdata['edge_id']
         nat = self.get_nat_config(edge_id)
         location = task.userdata['location']
@@ -407,7 +407,7 @@ class EdgeApplianceDriver(object):
 
     def create_snat_rule(self, router_id, edge_id, src, translated,
                          jobdata=None, location=None):
-        LOG.debug(_("VCNS: create snat rule %(src)s/%(translated)s"), {
+        LOG.debug("VCNS: create snat rule %(src)s/%(translated)s", {
             'src': src, 'translated': translated})
         snat_rule = self._assemble_nat_rule("snat", src, translated)
         userdata = {
@@ -430,7 +430,7 @@ class EdgeApplianceDriver(object):
         edge_id = task.userdata['edge_id']
         address = task.userdata['address']
         addrtype = task.userdata['addrtype']
-        LOG.debug(_("VCNS: start deleting %(type)s rules: %(addr)s"), {
+        LOG.debug("VCNS: start deleting %(type)s rules: %(addr)s", {
             'type': addrtype, 'addr': address})
         nat = self.get_nat_config(edge_id)
         del nat['version']
@@ -448,7 +448,7 @@ class EdgeApplianceDriver(object):
         return status
 
     def delete_snat_rule(self, router_id, edge_id, src, jobdata=None):
-        LOG.debug(_("VCNS: delete snat rule %s"), src)
+        LOG.debug("VCNS: delete snat rule %s", src)
         userdata = {
             'edge_id': edge_id,
             'address': src,
@@ -466,7 +466,7 @@ class EdgeApplianceDriver(object):
                          jobdata=None, location=None):
         # TODO(fank): use POST for optimization
         #             return rule_id for future reference
-        LOG.debug(_("VCNS: create dnat rule %(dst)s/%(translated)s"), {
+        LOG.debug("VCNS: create dnat rule %(dst)s/%(translated)s", {
             'dst': dst, 'translated': translated})
         dnat_rule = self._assemble_nat_rule(
             "dnat", dst, translated)
@@ -487,7 +487,7 @@ class EdgeApplianceDriver(object):
     def delete_dnat_rule(self, router_id, edge_id, translated,
                          jobdata=None):
         # TODO(fank): pass in rule_id for optimization
-        LOG.debug(_("VCNS: delete dnat rule %s"), translated)
+        LOG.debug("VCNS: delete dnat rule %s", translated)
         userdata = {
             'edge_id': edge_id,
             'address': translated,
@@ -511,7 +511,7 @@ class EdgeApplianceDriver(object):
             return constants.TaskStatus.ABORT
 
         rules = task.userdata['rules']
-        LOG.debug(_("VCNS: start updating nat rules: %s"), rules)
+        LOG.debug("VCNS: start updating nat rules: %s", rules)
 
         nat = {
             'featureType': 'nat',
@@ -532,10 +532,10 @@ class EdgeApplianceDriver(object):
 
     def update_nat_rules(self, router_id, edge_id, snats, dnats,
                          jobdata=None):
-        LOG.debug(_("VCNS: update nat rule\n"
-                    "SNAT:%(snat)s\n"
-                    "DNAT:%(dnat)s\n"), {
-                        'snat': snats, 'dnat': dnats})
+        LOG.debug("VCNS: update nat rule\n"
+                  "SNAT:%(snat)s\n"
+                  "DNAT:%(dnat)s\n", {
+                      'snat': snats, 'dnat': dnats})
         nat_rules = []
 
         for dnat in dnats:
@@ -570,7 +570,7 @@ class EdgeApplianceDriver(object):
             return constants.TaskStatus.ABORT
         gateway = task.userdata['gateway']
         routes = task.userdata['routes']
-        LOG.debug(_("VCNS: start updating routes for %s"), edge_id)
+        LOG.debug("VCNS: start updating routes for %s", edge_id)
         static_routes = []
         for route in routes:
             static_routes.append({

@@ -49,7 +49,7 @@ class Vcns(object):
                                                           password, 'json')
 
     def do_request(self, method, uri, params=None, format='json', **kwargs):
-        LOG.debug(_("VcnsApiHelper('%(method)s', '%(uri)s', '%(body)s')"), {
+        LOG.debug("VcnsApiHelper('%(method)s', '%(uri)s', '%(body)s')", {
                   'method': method,
                   'uri': uri,
                   'body': jsonutils.dumps(params)})
@@ -57,8 +57,8 @@ class Vcns(object):
             header, content = self.jsonapi_client.request(method, uri, params)
         else:
             header, content = self.xmlapi_client.request(method, uri, params)
-        LOG.debug(_("Header: '%s'"), header)
-        LOG.debug(_("Content: '%s'"), content)
+        LOG.debug("Header: '%s'", header)
+        LOG.debug("Content: '%s'", content)
         if content == '':
             return header, {}
         if kwargs.get('decode', True):
