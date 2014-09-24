@@ -33,7 +33,7 @@ STATUS_OPTS = [
                       "or high load when the device may not be responding.")),
 ]
 
-cfg.CONF.register_opts(STATUS_OPTS)
+cfg.CONF.register_opts(STATUS_OPTS, "cfg_agent")
 
 
 def _is_pingable(ip):
@@ -76,7 +76,7 @@ class DeviceStatus(object):
 
     def get_backlogged_hosting_devices_info(self):
         wait_time = datetime.timedelta(
-            seconds=cfg.CONF.hosting_device_dead_timeout)
+            seconds=cfg.CONF.cfg_agent.hosting_device_dead_timeout)
         resp = []
         for hd_id in self.backlog_hosting_devices:
             hd = self.backlog_hosting_devices[hd_id]['hd']
@@ -158,13 +158,14 @@ class DeviceStatus(object):
                                            'ip': hd['management_ip_address']})
                 if timeutils.is_older_than(
                         hd['backlog_insertion_ts'],
-                        cfg.CONF.hosting_device_dead_timeout):
+                        cfg.CONF.cfg_agent.hosting_device_dead_timeout):
                     LOG.debug("Hosting device: %(hd_id)s @ %(ip)s hasn't "
                               "been reachable for the last %(time)d seconds. "
                               "Marking it dead.",
                               {'hd_id': hd_id,
                                'ip': hd['management_ip_address'],
-                               'time': cfg.CONF.hosting_device_dead_timeout})
+                               'time': cfg.CONF.cfg_agent.
+                              hosting_device_dead_timeout})
                     response_dict['dead'].append(hd_id)
                     hd.pop('backlog_insertion_ts', None)
                     del self.backlog_hosting_devices[hd_id]

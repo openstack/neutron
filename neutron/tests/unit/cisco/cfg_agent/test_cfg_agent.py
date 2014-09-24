@@ -71,7 +71,7 @@ class TestCiscoCfgAgentWIthStateReporting(base.BaseTestCase):
         self.conf = cfg.ConfigOpts()
         config.register_agent_state_opts_helper(cfg.CONF)
         self.conf.register_opts(base_config.core_opts)
-        self.conf.register_opts(cfg_agent.CiscoCfgAgent.OPTS)
+        self.conf.register_opts(cfg_agent.CiscoCfgAgent.OPTS, "cfg_agent")
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
         super(TestCiscoCfgAgentWIthStateReporting, self).setUp()
         self.devmgr_plugin_api_cls_p = mock.patch(
