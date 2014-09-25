@@ -80,6 +80,10 @@ class FirewallRuleInvalidAction(qexception.InvalidInput):
                 "Only action values %(values)s are supported.")
 
 
+class FirewallRuleWithPortWithoutProtocolInvalid(qexception.InvalidInput):
+    message = _("Source/destination port requires a protocol")
+
+
 class FirewallInvalidPortValue(qexception.InvalidInput):
     message = _("Invalid value for port %(port)s.")
 

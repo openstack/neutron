@@ -342,6 +342,9 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         LOG.debug(_("create_firewall_rule() called"))
         fwr = firewall_rule['firewall_rule']
         tenant_id = self._get_tenant_id_for_create(context, fwr)
+        if not fwr['protocol'] and (fwr['source_port'] or
+                                    fwr['destination_port']):
+            raise firewall.FirewallRuleWithPortWithoutProtocolInvalid()
         src_port_min, src_port_max = self._get_min_max_ports_from_range(
             fwr['source_port'])
         dst_port_min, dst_port_max = self._get_min_max_ports_from_range(
@@ -383,6 +386,14 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
             del fwr['destination_port']
         with context.session.begin(subtransactions=True):
             fwr_db = self._get_firewall_rule(context, id)
+            protocol = fwr.get('protocol', fwr_db['protocol'])
+            if not protocol:
+                sport = fwr.get('source_port_range_min',
+                                fwr_db['source_port_range_min'])
+                dport = fwr.get('destination_port_range_min',
+                                fwr_db['destination_port_range_min'])
+                if sport or dport:
+                    raise firewall.FirewallRuleWithPortWithoutProtocolInvalid()
             fwr_db.update(fwr)
             if fwr_db.firewall_policy_id:
                 fwp_db = self._get_firewall_policy(context,
