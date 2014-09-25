@@ -161,7 +161,7 @@ class TestHyperVUtilsV2(base.BaseTestCase):
 
         self._utils.disconnect_switch_port(self._FAKE_VSWITCH_NAME,
                                            self._FAKE_PORT_NAME,
-                                           delete_port)
+                                           True, delete_port)
 
         if delete_port:
             self._utils._remove_virt_resource.assert_called_with(mock_sw_port)

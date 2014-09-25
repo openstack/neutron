@@ -34,6 +34,77 @@ class HyperVUtilsTestCase(base.BaseTestCase):
         self.utils = utils.HyperVUtils()
         self.utils._wmi_conn = mock.MagicMock()
 
+    @mock.patch.object(utils.HyperVUtils, "_get_switch_port_path_by_name")
+    def test_disconnect_switch_port_not_found(self, mock_get_swp_path):
+        mock_svc = self.utils._conn.Msvm_VirtualSwitchManagementService()[0]
+        mock_get_swp_path.return_value = None
+
+        self.utils.disconnect_switch_port(mock.sentinel.FAKE_VSWITCH_NAME,
+                                          mock.sentinel.FAKE_PORT_NAME,
+                                          True, True)
+        self.assertFalse(mock_svc.DisconnectSwitchPort.called)
+        self.assertFalse(mock_svc.DeleteSwitchPort.called)
+
+    @mock.patch.object(utils.HyperVUtils, "_get_switch_port_path_by_name")
+    def test_disconnect_switch_port(self, mock_get_swp_path):
+        mock_svc = self.utils._conn.Msvm_VirtualSwitchManagementService()[0]
+        mock_svc.DisconnectSwitchPort.return_value = (0, )
+        mock_svc.DeleteSwitchPort.return_value = (0, )
+        mock_get_swp_path.return_value = mock.sentinel.FAKE_PATH
+
+        self.utils.disconnect_switch_port(mock.sentinel.FAKE_VSWITCH_NAME,
+                                          mock.sentinel.FAKE_PORT_NAME,
+                                          False, True)
+        mock_svc.DisconnectSwitchPort.assert_called_once_with(
+            SwitchPort=mock.sentinel.FAKE_PATH)
+        mock_svc.DeleteSwitchPort.assert_called_once_with(
+            SwitchPort=mock.sentinel.FAKE_PATH)
+
+    @mock.patch.object(utils.HyperVUtils, "_get_switch_port_path_by_name")
+    def test_disconnect_switch_port_disconnected(self, mock_get_swp_path):
+        mock_svc = self.utils._conn.Msvm_VirtualSwitchManagementService()[0]
+        mock_svc.DeleteSwitchPort.return_value = (0, )
+        mock_get_swp_path.return_value = mock.sentinel.FAKE_PATH
+
+        self.utils.disconnect_switch_port(mock.sentinel.FAKE_VSWITCH_NAME,
+                                          mock.sentinel.FAKE_PORT_NAME,
+                                          True, True)
+
+        self.assertFalse(mock_svc.DisconnectSwitchPort.called)
+        mock_svc.DeleteSwitchPort.assert_called_once_with(
+            SwitchPort=mock.sentinel.FAKE_PATH)
+
+    @mock.patch.object(utils.HyperVUtils, "_get_switch_port_path_by_name")
+    def test_disconnect_switch_port_disconnect_ex(self, mock_get_swp_path):
+        mock_svc = self.utils._conn.Msvm_VirtualSwitchManagementService()[0]
+        mock_svc.DisconnectSwitchPort.return_value = (
+            mock.sentinel.FAKE_VAL, )
+        mock_get_swp_path.return_value = mock.sentinel.FAKE_PATH
+
+        self.assertRaises(utils.HyperVException,
+                          self.utils.disconnect_switch_port,
+                          mock.sentinel.FAKE_VSWITCH_NAME,
+                          mock.sentinel.FAKE_PORT_NAME,
+                          False, True)
+
+        mock_svc.DisconnectSwitchPort.assert_called_once_with(
+            SwitchPort=mock.sentinel.FAKE_PATH)
+
+    @mock.patch.object(utils.HyperVUtils, "_get_switch_port_path_by_name")
+    def test_disconnect_switch_port_delete_ex(self, mock_get_swp_path):
+        mock_svc = self.utils._conn.Msvm_VirtualSwitchManagementService()[0]
+        mock_svc.DeleteSwitchPort.return_value = (mock.sentinel.FAKE_VAL, )
+        mock_get_swp_path.return_value = mock.sentinel.FAKE_PATH
+
+        self.assertRaises(utils.HyperVException,
+                          self.utils.disconnect_switch_port,
+                          mock.sentinel.FAKE_VSWITCH_NAME,
+                          mock.sentinel.FAKE_PORT_NAME,
+                          True, True)
+
+        mock_svc.DeleteSwitchPort.assert_called_once_with(
+            SwitchPort=mock.sentinel.FAKE_PATH)
+
     def test_get_vswitch_external_port(self):
         ext_port = mock.MagicMock()
         self.utils._conn.Msvm_ExternalEthernetPort.return_value = [ext_port]
