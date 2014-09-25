@@ -532,7 +532,8 @@ class IpNetnsCommand(IpCommandBase):
     def delete(self, name):
         self._as_root('delete', name, use_root_namespace=True)
 
-    def execute(self, cmds, addl_env={}, check_exit_code=True):
+    def execute(self, cmds, addl_env={}, check_exit_code=True,
+                extra_ok_codes=None):
         ns_params = []
         if self._parent.namespace:
             if not self._parent.root_helper:
@@ -546,7 +547,7 @@ class IpNetnsCommand(IpCommandBase):
         return utils.execute(
             ns_params + env_params + list(cmds),
             root_helper=self._parent.root_helper,
-            check_exit_code=check_exit_code)
+            check_exit_code=check_exit_code, extra_ok_codes=extra_ok_codes)
 
     def exists(self, name):
         output = self._parent._execute('o', 'netns', ['list'])
