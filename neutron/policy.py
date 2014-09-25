@@ -16,6 +16,8 @@
 """
 Policy engine for neutron.  Largely copied from nova.
 """
+
+import collections
 import itertools
 import logging
 import re
@@ -23,6 +25,7 @@ import re
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
+from neutron.common import constants as const
 from neutron.common import exceptions
 import neutron.common.utils as utils
 from neutron.openstack.common import excutils
@@ -119,12 +122,26 @@ def _set_rules(data):
     policy.set_rules(policies)
 
 
-def _is_attribute_explicitly_set(attribute_name, resource, target):
-    """Verify that an attribute is present and has a non-default value."""
+def _is_attribute_explicitly_set(attribute_name, resource, target, action):
+    """Verify that an attribute is present and is explicitly set."""
+    if 'update' in action:
+        # In the case of update, the function should not pay attention to a
+        # default value of an attribute, but check whether it was explicitly
+        # marked as being updated instead.
+        return (attribute_name in target[const.ATTRIBUTES_TO_UPDATE] and
+                target[attribute_name] is not attributes.ATTR_NOT_SPECIFIED)
     return ('default' in resource[attribute_name] and
             attribute_name in target and
             target[attribute_name] is not attributes.ATTR_NOT_SPECIFIED and
             target[attribute_name] != resource[attribute_name]['default'])
+
+
+def _should_validate_sub_attributes(attribute, sub_attr):
+    """Verify that sub-attributes are iterable and should be validated."""
+    validate = attribute.get('validate')
+    return (validate and isinstance(sub_attr, collections.Iterable) and
+            any([k.startswith('type:dict') and
+                 v for (k, v) in validate.iteritems()]))
 
 
 def _build_subattr_match_rule(attr_name, attr, action, target):
@@ -184,16 +201,14 @@ def _build_match_rule(action, target):
             for attribute_name in res_map[resource]:
                 if _is_attribute_explicitly_set(attribute_name,
                                                 res_map[resource],
-                                                target):
+                                                target, action):
                     attribute = res_map[resource][attribute_name]
                     if 'enforce_policy' in attribute:
                         attr_rule = policy.RuleCheck('rule', '%s:%s' %
                                                      (action, attribute_name))
-                        # Build match entries for sub-attributes, if present
-                        validate = attribute.get('validate')
-                        if (validate and any([k.startswith('type:dict') and v
-                                              for (k, v) in
-                                              validate.iteritems()])):
+                        # Build match entries for sub-attributes
+                        if _should_validate_sub_attributes(
+                                attribute, target[attribute_name]):
                             attr_rule = policy.AndCheck(
                                 [attr_rule, _build_subattr_match_rule(
                                     attribute_name, attribute,
