@@ -148,6 +148,16 @@ class DhcpBase(object):
 
         raise NotImplementedError
 
+    @classmethod
+    def get_isolated_subnets(cls, network):
+        """Returns a dict indicating whether or not a subnet is isolated."""
+        raise NotImplementedError
+
+    @classmethod
+    def should_enable_metadata(cls, conf, network):
+        """True if the metadata-proxy should be enabled for the network."""
+        raise NotImplementedError
+
 
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
@@ -514,6 +524,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         options = []
 
+        isolated_subnets = self.get_isolated_subnets(self.network)
         dhcp_ips = collections.defaultdict(list)
         subnet_idx_map = {}
         for i, subnet in enumerate(self.network.subnets):
@@ -538,7 +549,9 @@ class Dnsmasq(DhcpLocalProcess):
 
             # Add host routes for isolated network segments
 
-            if self._enable_metadata(subnet):
+            if (isolated_subnets[subnet.id] and
+                    self.conf.enable_isolated_metadata and
+                    subnet.ip_version == 4):
                 subnet_dhcp_ip = subnet_to_interface_ip[subnet.id]
                 host_routes.append(
                     '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
@@ -623,24 +636,35 @@ class Dnsmasq(DhcpLocalProcess):
 
         return ','.join((set_tag + tag, '%s' % option) + args)
 
-    def _enable_metadata(self, subnet):
-        '''Determine if the metadata route will be pushed to hosts on subnet.
+    @classmethod
+    def get_isolated_subnets(cls, network):
+        """Returns a dict indicating whether or not a subnet is isolated
 
-        If subnet has a Neutron router attached, we want the hosts to get
-        metadata from the router's proxy via their default route instead.
-        '''
-        if self.conf.enable_isolated_metadata and subnet.ip_version == 4:
-            if subnet.gateway_ip is None:
-                return True
-            else:
-                for port in self.network.ports:
-                    if port.device_owner == constants.DEVICE_OWNER_ROUTER_INTF:
-                        for alloc in port.fixed_ips:
-                            if alloc.subnet_id == subnet.id:
-                                return False
-                return True
-        else:
+        A subnet is considered non-isolated if there is a port connected to
+        the subnet, and the port's ip address matches that of the subnet's
+        gateway. The port must be owned by a nuetron router.
+        """
+        isolated_subnets = collections.defaultdict(lambda: True)
+        subnets = dict((subnet.id, subnet) for subnet in network.subnets)
+
+        for port in network.ports:
+            if port.device_owner != constants.DEVICE_OWNER_ROUTER_INTF:
+                continue
+            for alloc in port.fixed_ips:
+                if subnets[alloc.subnet_id].gateway_ip == alloc.ip_address:
+                    isolated_subnets[alloc.subnet_id] = False
+
+        return isolated_subnets
+
+    @classmethod
+    def should_enable_metadata(cls, conf, network):
+        """True if there exists a subnet for which a metadata proxy is needed
+        """
+        if not conf.use_namespaces or not conf.enable_isolated_metadata:
             return False
+
+        isolated_subnets = cls.get_isolated_subnets(network)
+        return any(isolated_subnets[subnet.id] for subnet in network.subnets)
 
     @classmethod
     def lease_update(cls):

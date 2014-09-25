@@ -88,12 +88,14 @@ fake_allocation_pool_subnet1 = dhcp.DictModel(dict(id='', start='172.9.9.2',
 
 fake_port1 = dhcp.DictModel(dict(id='12345678-1234-aaaa-1234567890ab',
                             device_id='dhcp-12345678-1234-aaaa-1234567890ab',
+                            device_owner='',
                             allocation_pools=fake_subnet1_allocation_pools,
                             mac_address='aa:bb:cc:dd:ee:ff',
                             network_id='12345678-1234-5678-1234567890ab',
                             fixed_ips=[fake_fixed_ip1]))
 
 fake_port2 = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789000',
+                            device_owner='',
                             mac_address='aa:bb:cc:dd:ee:99',
                             network_id='12345678-1234-5678-1234567890ab',
                             fixed_ips=[]))
@@ -110,6 +112,22 @@ fake_network = dhcp.NetModel(True, dict(id='12345678-1234-5678-1234567890ab',
                              admin_state_up=True,
                              subnets=[fake_subnet1, fake_subnet2],
                              ports=[fake_port1]))
+
+isolated_network = dhcp.NetModel(
+    True, dict(
+        id='12345678-1234-5678-1234567890ab',
+        tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        admin_state_up=True,
+        subnets=[fake_subnet1],
+        ports=[fake_port1]))
+
+empty_network = dhcp.NetModel(
+    True, dict(
+        id='12345678-1234-5678-1234567890ab',
+        tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        admin_state_up=True,
+        subnets=[fake_subnet1],
+        ports=[]))
 
 fake_meta_network = dhcp.NetModel(
     True, dict(id='12345678-1234-5678-1234567890ab',
@@ -497,16 +515,17 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.mock_init_p.stop()
         super(TestDhcpAgentEventHandler, self).tearDown()
 
-    def _enable_dhcp_helper(self, isolated_metadata=False):
-        if isolated_metadata:
+    def _enable_dhcp_helper(self, network, enable_isolated_metadata=False,
+                            is_isolated_network=False):
+        if enable_isolated_metadata:
             cfg.CONF.set_override('enable_isolated_metadata', True)
-        self.plugin.get_network_info.return_value = fake_network
-        self.dhcp.enable_dhcp_helper(fake_network.id)
+        self.plugin.get_network_info.return_value = network
+        self.dhcp.enable_dhcp_helper(network.id)
         self.plugin.assert_has_calls(
-            [mock.call.get_network_info(fake_network.id)])
-        self.call_driver.assert_called_once_with('enable', fake_network)
-        self.cache.assert_has_calls([mock.call.put(fake_network)])
-        if isolated_metadata:
+            [mock.call.get_network_info(network.id)])
+        self.call_driver.assert_called_once_with('enable', network)
+        self.cache.assert_has_calls([mock.call.put(network)])
+        if is_isolated_network:
             self.external_process.assert_has_calls([
                 mock.call(
                     cfg.CONF,
@@ -518,11 +537,35 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         else:
             self.assertFalse(self.external_process.call_count)
 
-    def test_enable_dhcp_helper_enable_isolated_metadata(self):
-        self._enable_dhcp_helper(isolated_metadata=True)
+    def test_enable_dhcp_helper_enable_metadata_isolated_network(self):
+        self._enable_dhcp_helper(isolated_network,
+                                 enable_isolated_metadata=True,
+                                 is_isolated_network=True)
+
+    def test_enable_dhcp_helper_enable_metadata_no_gateway(self):
+        isolated_network_no_gateway = copy.deepcopy(isolated_network)
+        isolated_network_no_gateway.subnets[0].gateway_ip = None
+
+        self._enable_dhcp_helper(isolated_network_no_gateway,
+                                 enable_isolated_metadata=True,
+                                 is_isolated_network=True)
+
+    def test_enable_dhcp_helper_enable_metadata_nonisolated_network(self):
+        nonisolated_network = copy.deepcopy(isolated_network)
+        nonisolated_network.ports[0].device_owner = "network:router_interface"
+        nonisolated_network.ports[0].fixed_ips[0].ip_address = '172.9.9.1'
+
+        self._enable_dhcp_helper(nonisolated_network,
+                                 enable_isolated_metadata=True,
+                                 is_isolated_network=False)
+
+    def test_enable_dhcp_helper_enable_metadata_empty_network(self):
+        self._enable_dhcp_helper(empty_network,
+                                 enable_isolated_metadata=True,
+                                 is_isolated_network=True)
 
     def test_enable_dhcp_helper(self):
-        self._enable_dhcp_helper()
+        self._enable_dhcp_helper(fake_network)
 
     def test_enable_dhcp_helper_down_network(self):
         self.plugin.get_network_info.return_value = fake_down_network
