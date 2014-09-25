@@ -147,7 +147,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # because all the unit tests do not explicitly set the context on
         # GETS. TODO(arosen)  context handling can probably be improved here.
         if not default_sg and context.tenant_id:
-            self._ensure_default_security_group(context, context.tenant_id)
+            tenant_id = filters.get('tenant_id')
+            if tenant_id:
+                tenant_id = tenant_id[0]
+            else:
+                tenant_id = context.tenant_id
+            self._ensure_default_security_group(context, tenant_id)
         marker_obj = self._get_marker_obj(context, 'security_group', limit,
                                           marker)
         return self._get_collection(context,
@@ -518,9 +523,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             return
 
         port_sg = p.get(ext_sg.SECURITYGROUPS, [])
+        filters = {'id': port_sg}
+        tenant_id = p.get('tenant_id')
+        if tenant_id:
+            filters['tenant_id'] = [tenant_id]
         valid_groups = set(g['id'] for g in
                            self.get_security_groups(context, fields=['id'],
-                                                    filters={'id': port_sg}))
+                                                    filters=filters))
 
         requested_groups = set(port_sg)
         port_sg_missing = requested_groups - valid_groups
