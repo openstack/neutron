@@ -27,6 +27,7 @@ down_revision = '37f322991f59'
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.engine import reflection
 
 TABLE_NAME = 'routerl3agentbindings'
 PK_NAME = 'pk_routerl3agentbindings'
@@ -49,7 +50,7 @@ def upgrade():
     # and all the duplicate records which violate the PK
     # constraint need to be removed.
     context = op.get_context()
-    if context.bind.dialect.name == 'postgresql':
+    if context.bind.dialect.name in ('postgresql', 'ibm_db_sa'):
         op.execute('DELETE FROM %(table)s WHERE id in ('
                    'SELECT %(table)s.id FROM %(table)s LEFT OUTER JOIN '
                    '(SELECT MIN(id) as id, router_id, l3_agent_id '
@@ -65,6 +66,19 @@ def upgrade():
 
     op.drop_column(TABLE_NAME, 'id')
 
+    # DB2 doesn't support nullable column in primary key
+    if context.bind.dialect.name == 'ibm_db_sa':
+        op.alter_column(
+            table_name=TABLE_NAME,
+            column_name='router_id',
+            nullable=False
+        )
+        op.alter_column(
+            table_name=TABLE_NAME,
+            column_name='l3_agent_id',
+            nullable=False
+        )
+
     op.create_primary_key(
         name=PK_NAME,
         table_name=TABLE_NAME,
@@ -79,16 +93,32 @@ def downgrade():
 
     # Drop the existed foreign key constraints
     # In order to perform primary key changes
-    op.drop_constraint(
-        name=fk_names[dialect]['l3_agent_id'],
-        table_name=TABLE_NAME,
-        type_='foreignkey'
-    )
-    op.drop_constraint(
-        name=fk_names[dialect]['router_id'],
-        table_name=TABLE_NAME,
-        type_='foreignkey'
-    )
+    db2fks = {}
+    if dialect == 'ibm_db_sa':
+        # NOTE(mriedem): In DB2 the foreign key names are randomly generated
+        # if you didn't originally explicitly name them, so the name is like
+        # SQLxxxxx where the suffix is a random integer.  Therefore we go
+        # through and just drop all of the foreign keys and save them so we
+        # can re-create them later after the primary key is dropped.
+        inspector = reflection.Inspector.from_engine(op.get_bind().engine)
+        db2fks = inspector.get_foreign_keys(TABLE_NAME)
+        for fk in db2fks:
+            op.drop_constraint(
+                name=fk.get('name'),
+                table_name=TABLE_NAME,
+                type_='foreignkey'
+            )
+    else:
+        op.drop_constraint(
+            name=fk_names[dialect]['l3_agent_id'],
+            table_name=TABLE_NAME,
+            type_='foreignkey'
+        )
+        op.drop_constraint(
+            name=fk_names[dialect]['router_id'],
+            table_name=TABLE_NAME,
+            type_='foreignkey'
+        )
 
     op.drop_constraint(
         name=PK_NAME,
@@ -101,27 +131,46 @@ def downgrade():
         sa.Column('id', sa.String(32))
     )
 
-    # Restore the foreign key constraints
-    op.create_foreign_key(
-        name=fk_names[dialect]['router_id'],
-        source=TABLE_NAME,
-        referent='routers',
-        local_cols=['router_id'],
-        remote_cols=['id'],
-        ondelete='CASCADE'
-    )
-
-    op.create_foreign_key(
-        name=fk_names[dialect]['l3_agent_id'],
-        source=TABLE_NAME,
-        referent='agents',
-        local_cols=['l3_agent_id'],
-        remote_cols=['id'],
-        ondelete='CASCADE'
-    )
+    if dialect == 'ibm_db_sa':
+        # DB2 doesn't support nullable column in primary key
+        op.alter_column(
+            table_name=TABLE_NAME,
+            column_name='id',
+            nullable=False
+        )
 
     op.create_primary_key(
         name=PK_NAME,
         table_name=TABLE_NAME,
         cols=['id']
     )
+
+    # Restore the foreign key constraints
+    if dialect == 'ibm_db_sa':
+        for fk in db2fks:
+            op.create_foreign_key(
+                name=fk.get('name'),
+                source=TABLE_NAME,
+                referent=fk.get('referred_table'),
+                local_cols=fk.get('constrained_columns'),
+                remote_cols=fk.get('referred_columns'),
+                ondelete='CASCADE'
+            )
+    else:
+        op.create_foreign_key(
+            name=fk_names[dialect]['router_id'],
+            source=TABLE_NAME,
+            referent='routers',
+            local_cols=['router_id'],
+            remote_cols=['id'],
+            ondelete='CASCADE'
+        )
+
+        op.create_foreign_key(
+            name=fk_names[dialect]['l3_agent_id'],
+            source=TABLE_NAME,
+            referent='agents',
+            local_cols=['l3_agent_id'],
+            remote_cols=['id'],
+            ondelete='CASCADE'
+        )

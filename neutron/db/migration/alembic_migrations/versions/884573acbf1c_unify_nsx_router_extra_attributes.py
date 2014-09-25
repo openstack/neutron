@@ -38,6 +38,13 @@ def _migrate_data(old_table, new_table):
                     "FROM %(old_table)s old_t "
                     "WHERE new_t.router_id = old_t.router_id") %
                    {'new_table': new_table, 'old_table': old_table})
+    elif engine.name == 'ibm_db_sa':
+        op.execute(("UPDATE %(new_table)s new_t "
+                    "SET (distributed, service_router) = "
+                    "(SELECT old_t.distributed, old_t.service_router "
+                    "FROM %(old_table)s old_t "
+                    "WHERE new_t.router_id = old_t.router_id)") %
+                   {'new_table': new_table, 'old_table': old_table})
     else:
         op.execute(("UPDATE %(new_table)s new_t "
                     "INNER JOIN %(old_table)s as old_t "
