@@ -223,8 +223,8 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         self.patch_tun_ofport = constants.OFPORT_INVALID
         if self.enable_tunneling:
             # The patch_int_ofport and patch_tun_ofport are updated
-            # here inside the call to setup_tunnel_br
-            self.setup_tunnel_br(tun_br)
+            # here inside the call to reset_tunnel_br()
+            self.reset_tunnel_br(tun_br)
 
         self.dvr_agent = ovs_dvr_neutron_agent.OVSDVRNeutronAgent(
             self.context,
@@ -236,6 +236,15 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
             cfg.CONF.host,
             self.enable_tunneling,
             self.enable_distributed_routing)
+
+        report_interval = cfg.CONF.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
+            heartbeat.start(interval=report_interval)
+
+        if self.enable_tunneling:
+            self.setup_tunnel_br()
 
         self.dvr_agent.setup_dvr_flows_on_integ_tun_br()
 
@@ -254,6 +263,9 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         # How many devices are likely used by a VM
         self.agent_state.get('configurations')['devices'] = (
             self.int_br_device_count)
+        self.agent_state.get('configurations')['in_distributed_mode'] = (
+            self.dvr_agent.in_distributed_mode())
+
         try:
             self.state_rpc.report_state(self.context,
                                         self.agent_state,
@@ -285,11 +297,6 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
-        report_interval = cfg.CONF.AGENT.report_interval
-        if report_interval:
-            heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
-            heartbeat.start(interval=report_interval)
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in self.local_vlan_map.iteritems():
@@ -732,8 +739,8 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
             ancillary_bridges.append(br)
         return ancillary_bridges
 
-    def setup_tunnel_br(self, tun_br_name=None):
-        '''Setup the tunnel bridge.
+    def reset_tunnel_br(self, tun_br_name=None):
+        '''(re)initialize the tunnel bridge.
 
         Creates tunnel bridge, and links it to the integration bridge
         using a patch port.
@@ -756,6 +763,11 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
             exit(1)
         self.tun_br.remove_all_flows()
 
+    def setup_tunnel_br(self):
+        '''Setup the tunnel bridge.
+
+        Add all flows to the tunnel bridge.
+        '''
         # Table 0 (default) will sort incoming traffic depending on in_port
         self.tun_br.add_flow(priority=1,
                              in_port=self.patch_int_ofport,
@@ -1360,13 +1372,16 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 self.setup_integration_br()
                 self.setup_physical_bridges(self.bridge_mappings)
                 if self.enable_tunneling:
+                    self.reset_tunnel_br()
                     self.setup_tunnel_br()
                     tunnel_sync = True
-                self.dvr_agent.reset_ovs_parameters(self.int_br,
-                                                    self.tun_br,
-                                                    self.patch_int_ofport,
-                                                    self.patch_tun_ofport)
-                self.dvr_agent.setup_dvr_flows_on_integ_tun_br()
+                    if self.enable_distributed_routing:
+                        self.dvr_agent.reset_ovs_parameters(self.int_br,
+                                                     self.tun_br,
+                                                     self.patch_int_ofport,
+                                                     self.patch_tun_ofport)
+                        self.dvr_agent.reset_dvr_parameters()
+                        self.dvr_agent.setup_dvr_flows_on_integ_tun_br()
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
                 LOG.info(_("Agent tunnel out of sync with plugin!"))
