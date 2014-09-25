@@ -206,7 +206,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         for sg_id, member_ips in ips.items():
             for ip in member_ips:
                 ethertype = 'IPv%d' % netaddr.IPAddress(ip).version
-                if ip not in sg_info['sg_member_ips'][sg_id][ethertype]:
+                if (ethertype in sg_info['sg_member_ips'][sg_id]
+                    and ip not in sg_info['sg_member_ips'][sg_id][ethertype]):
                     sg_info['sg_member_ips'][sg_id][ethertype].append(ip)
         return sg_info
 
