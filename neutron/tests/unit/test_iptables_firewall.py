@@ -1419,7 +1419,10 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
 
     def _fake_sg_rule(self):
         return {'fake_sgid': [
-            {'direction': 'ingress', 'remote_group_id': 'fake_sgid'}]}
+            {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
+             'ethertype': 'IPv4'},
+            {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
+             'ethertype': 'IPv6'}]}
 
     def test_prepare_port_filter_with_default_sg(self):
         self.firewall.sg_rules = self._fake_sg_rule()
@@ -1523,7 +1526,8 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
     def test_prepare_port_filter_with_sg_no_member(self):
         self.firewall.sg_rules = self._fake_sg_rule()
         self.firewall.sg_rules['fake_sgid'].append(
-            {'direction': 'ingress', 'remote_group_id': 'fake_sgid2'})
+            {'direction': 'ingress', 'remote_group_id': 'fake_sgid2',
+             'ethertype': 'IPv4'})
         self.firewall.sg_rules.update()
         self.firewall.sg_members = {'fake_sgid': {
             'IPv4': ['10.0.0.1', '10.0.0.2'], 'IPv6': ['fe80::1']}}
@@ -1539,3 +1543,27 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
                      'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
 
         self.firewall.ipset.assert_has_calls(calls)
+
+    def test_filter_defer_apply_off_with_sg_only_ipv6_rule(self):
+        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.pre_sg_rules = self._fake_sg_rule()
+        self.firewall.ipset_chains = {'IPv4fake_sgid': ['10.0.0.2'],
+                                      'IPv6fake_sgid': ['fe80::1']}
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': ['10.0.0.2'],
+            'IPv6': ['fe80::1']}}
+        self.firewall.pre_sg_members = {'fake_sgid': {
+            'IPv4': ['10.0.0.2'],
+            'IPv6': ['fe80::1']}}
+        self.firewall.sg_rules['fake_sgid'].remove(
+            {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
+             'ethertype': 'IPv4'})
+        self.firewall.sg_rules.update()
+        self.firewall._defer_apply = True
+        port = self._fake_port()
+        self.firewall.filtered_ports['tapfake_dev'] = port
+        self.firewall._pre_defer_filtered_ports = {}
+        self.firewall.filter_defer_apply_off()
+        calls = [mock.call.destroy_ipset_chain_by_name('IPv4fake_sgid')]
+
+        self.firewall.ipset.assert_has_calls(calls, True)
