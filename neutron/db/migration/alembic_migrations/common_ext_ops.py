@@ -60,9 +60,6 @@ def upgrade_l3():
 
 
 def upgrade_quota(options=None):
-    if not (options or {}).get('folsom_quota_db_enabled'):
-        return
-
     op.create_table(
         'quotas',
         sa.Column('id', sa.String(length=36), nullable=False),
@@ -79,5 +76,4 @@ def downgrade_l3():
 
 
 def downgrade_quota(options=None):
-    if (options or {}).get('folsom_quota_db_enabled'):
-        op.drop_table('quotas')
+    op.drop_table('quotas')
