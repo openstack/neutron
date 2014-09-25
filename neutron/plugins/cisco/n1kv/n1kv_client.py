@@ -333,6 +333,8 @@ class Client(object):
                 'dhcp': subnet['enable_dhcp'],
                 'dnsServersList': subnet['dns_nameservers'],
                 'networkAddress': network_address,
+                'netSegmentName': subnet['network_id'],
+                'id': subnet['id'],
                 'tenantId': subnet['tenant_id']}
         return self._post(self.ip_pool_path % subnet['id'],
                           body=body)

@@ -821,7 +821,18 @@ class TestN1kvNetworks(test_plugin.TestNetworksV2,
 class TestN1kvSubnets(test_plugin.TestSubnetsV2,
                       N1kvPluginTestCase):
 
-    pass
+    def test_create_subnet_with_invalid_parameters(self):
+        """Test subnet creation with invalid parameters sent to the VSM."""
+        with self.network() as network:
+            client_patch = patch(n1kv_client.__name__ + ".Client",
+                                 new=fake_client.TestClientInvalidRequest)
+            client_patch.start()
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': "10.0.0.0/24"}}
+            subnet_req = self.new_create_request('subnets', data)
+            subnet_resp = subnet_req.get_response(self.api)
+            # Subnet creation should fail due to invalid network name
+            self.assertEqual(subnet_resp.status_int, 400)
 
 
 class TestN1kvL3Test(test_l3_plugin.L3NatExtensionTestCase):
