@@ -24,6 +24,7 @@ import six
 
 import neutron
 from neutron.api.v2 import attributes
+from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron import context
 from neutron import manager
@@ -284,9 +285,11 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self.addCleanup(self.manager_patcher.stop)
 
     def _test_action_on_attr(self, context, action, attr, value,
-                             exception=None):
+                             exception=None, **kwargs):
         action = "%s_network" % action
         target = {'tenant_id': 'the_owner', attr: value}
+        if kwargs:
+            target.update(kwargs)
         if exception:
             self.assertRaises(exception, policy.enforce,
                               context, action, target)
@@ -295,10 +298,10 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             self.assertEqual(result, True)
 
     def _test_nonadmin_action_on_attr(self, action, attr, value,
-                                      exception=None):
+                                      exception=None, **kwargs):
         user_context = context.Context('', "user", roles=['user'])
         self._test_action_on_attr(user_context, action, attr,
-                                  value, exception)
+                                  value, exception, **kwargs)
 
     def test_nonadmin_write_on_private_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', False,
@@ -315,9 +318,11 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_nonadmin_read_on_shared_succeeds(self):
         self._test_nonadmin_action_on_attr('get', 'shared', True)
 
-    def _test_enforce_adminonly_attribute(self, action):
+    def _test_enforce_adminonly_attribute(self, action, **kwargs):
         admin_context = context.get_admin_context()
         target = {'shared': True}
+        if kwargs:
+            target.update(kwargs)
         result = policy.enforce(admin_context, action, target)
         self.assertEqual(result, True)
 
@@ -325,7 +330,14 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self._test_enforce_adminonly_attribute('create_network')
 
     def test_enforce_adminonly_attribute_update(self):
-        self._test_enforce_adminonly_attribute('update_network')
+        kwargs = {const.ATTRIBUTES_TO_UPDATE: ['shared']}
+        self._test_enforce_adminonly_attribute('update_network', **kwargs)
+
+    def test_reset_adminonly_attr_to_default_fails(self):
+        kwargs = {const.ATTRIBUTES_TO_UPDATE: ['shared']}
+        self._test_nonadmin_action_on_attr('update', 'shared', False,
+                                           exceptions.PolicyNotAuthorized,
+                                           **kwargs)
 
     def test_enforce_adminonly_attribute_no_context_is_admin_policy(self):
         del self.rules[policy.ADMIN_CTX_POLICY]
