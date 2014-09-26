@@ -987,8 +987,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         super(NuagePlugin, self).delete_router(context, id)
 
-        nuage_zone = self.nuageclient.get_zone_by_routerid(id)
-        if nuage_zone and not self._check_router_subnet_for_tenant(
+        if not self._check_router_subnet_for_tenant(
                 context, neutron_router['tenant_id']):
             user_id, group_id = self.nuageclient.get_usergroup(
                 neutron_router['tenant_id'],
