@@ -338,6 +338,12 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         fwp = firewall_policy['firewall_policy']
         with context.session.begin(subtransactions=True):
             fwp_db = self._get_firewall_policy(context, id)
+            # check tenant ids are same for fw and fwp or not
+            if not fwp.get('shared', True) and fwp_db.firewalls:
+                for fw in fwp_db['firewalls']:
+                    if fwp_db['tenant_id'] != fw['tenant_id']:
+                        raise firewall.FirewallPolicyInUse(
+                            firewall_policy_id=id)
             # check any existing rules are not shared
             if 'shared' in fwp and 'firewall_rules' not in fwp:
                 self._check_unshared_rules_for_policy(fwp_db, fwp)

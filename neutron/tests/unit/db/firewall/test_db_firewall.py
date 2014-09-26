@@ -573,6 +573,16 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                 res = req.get_response(self.ext_api)
                 self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
+    def test_update_firewall_policy_assoc_with_other_tenant_firewall(self):
+        with self.firewall_policy(shared=True, tenant_id='tenant1') as fwp:
+            fwp_id = fwp['firewall_policy']['id']
+            with self.firewall(firewall_policy_id=fwp_id):
+                data = {'firewall_policy': {'shared': False}}
+                req = self.new_update_request('firewall_policies', data,
+                                              fwp['firewall_policy']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
     def test_delete_firewall_policy(self):
         ctx = context.get_admin_context()
         with self.firewall_policy(do_delete=False) as fwp:
