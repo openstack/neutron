@@ -82,6 +82,7 @@ class test_ssl_certificate_base(test_plugin.NeutronDbPluginV2TestCase,
 
     def setUp(self):
         super(test_ssl_certificate_base, self).setUp(self.plugin_str)
+        self.setup_db()
 
 
 class TestSslSticky(test_ssl_certificate_base):

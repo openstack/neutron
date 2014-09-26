@@ -61,6 +61,7 @@ class DHCPOptsTestCase(test_base.BigSwitchTestBase,
         self.setup_config_files()
         super(test_extradhcp.ExtraDhcpOptDBTestCase,
               self).setUp(plugin=self._plugin_name)
+        self.setup_db()
         self.startHttpPatch()
 
 
@@ -78,6 +79,7 @@ class RouterDBTestBase(test_base.BigSwitchTestBase,
         super(RouterDBTestBase, self).setUp(plugin=self._plugin_name,
                                             ext_mgr=ext_mgr,
                                             service_plugins=service_plugins)
+        self.setup_db()
         cfg.CONF.set_default('allow_overlapping_ips', False)
         self.plugin_obj = manager.NeutronManager.get_service_plugins().get(
             'L3_ROUTER_NAT')
