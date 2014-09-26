@@ -706,7 +706,8 @@ class TestDnsmasq(TestBase):
                 self.assertTrue(mocks['_output_opts_file'].called)
                 self.execute.assert_called_once_with(expected,
                                                      root_helper='sudo',
-                                                     check_exit_code=True)
+                                                     check_exit_code=True,
+                                                     extra_ok_codes=None)
 
     def test_spawn(self):
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'])

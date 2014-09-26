@@ -495,6 +495,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
             ri, {'id': _uuid()})
         self.assertEqual({}, fip_statuses)
         device.addr.delete.assert_called_once_with(4, '15.1.2.3/32')
+        self.mock_driver.delete_conntrack_state.assert_called_once_with(
+            root_helper=self.conf.root_helper,
+            namespace=ri.ns_name,
+            ip='15.1.2.3/32')
 
     def test_process_router_floating_ip_nat_rules_remove(self):
         ri = mock.MagicMock()
