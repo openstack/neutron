@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
+from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from oslo.db import exception as db_exc
@@ -29,6 +32,9 @@ from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 
 LOG = log.getLogger(__name__)
+
+# limit the number of port OR LIKE statements in one query
+MAX_PORTS_PER_QUERY = 500
 
 
 def _make_segment_dict(record):
@@ -206,32 +212,64 @@ def get_port_from_device_mac(device_mac):
     return qry.first()
 
 
-def get_port_and_sgs(port_id):
-    """Get port from database with security group info."""
+def get_ports_and_sgs(port_ids):
+    """Get ports from database with security group info."""
 
-    LOG.debug(_("get_port_and_sgs() called for port_id %s"), port_id)
+    # break large queries into smaller parts
+    if len(port_ids) > MAX_PORTS_PER_QUERY:
+        LOG.debug("Number of ports %(pcount)s exceeds the maximum per "
+                  "query %(maxp)s. Partitioning queries.",
+                  {'pcount': len(port_ids), 'maxp': MAX_PORTS_PER_QUERY})
+        return (get_ports_and_sgs(port_ids[:MAX_PORTS_PER_QUERY]) +
+                get_ports_and_sgs(port_ids[MAX_PORTS_PER_QUERY:]))
+
+    LOG.debug("get_ports_and_sgs() called for port_ids %s", port_ids)
+
+    if not port_ids:
+        # if port_ids is empty, avoid querying to DB to ask it for nothing
+        return []
+    ports_to_sg_ids = get_sg_ids_grouped_by_port(port_ids)
+    return [make_port_dict_with_security_groups(port, sec_groups)
+            for port, sec_groups in ports_to_sg_ids.iteritems()]
+
+
+def get_sg_ids_grouped_by_port(port_ids):
+    sg_ids_grouped_by_port = collections.defaultdict(list)
     session = db_api.get_session()
     sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
 
     with session.begin(subtransactions=True):
+        # partial UUIDs must be individually matched with startswith.
+        # full UUIDs may be matched directly in an IN statement
+        partial_uuids = set(port_id for port_id in port_ids
+                            if not uuidutils.is_uuid_like(port_id))
+        full_uuids = set(port_ids) - partial_uuids
+        or_criteria = [models_v2.Port.id.startswith(port_id)
+                       for port_id in partial_uuids]
+        if full_uuids:
+            or_criteria.append(models_v2.Port.id.in_(full_uuids))
+
         query = session.query(models_v2.Port,
                               sg_db.SecurityGroupPortBinding.security_group_id)
         query = query.outerjoin(sg_db.SecurityGroupPortBinding,
                                 models_v2.Port.id == sg_binding_port)
-        query = query.filter(models_v2.Port.id.startswith(port_id))
-        port_and_sgs = query.all()
-        if not port_and_sgs:
-            return
-        port = port_and_sgs[0][0]
-        plugin = manager.NeutronManager.get_plugin()
-        port_dict = plugin._make_port_dict(port)
-        port_dict['security_groups'] = [
-            sg_id for port_, sg_id in port_and_sgs if sg_id]
-        port_dict['security_group_rules'] = []
-        port_dict['security_group_source_groups'] = []
-        port_dict['fixed_ips'] = [ip['ip_address']
-                                  for ip in port['fixed_ips']]
-        return port_dict
+        query = query.filter(or_(*or_criteria))
+
+        for port, sg_id in query:
+            if sg_id:
+                sg_ids_grouped_by_port[port].append(sg_id)
+    return sg_ids_grouped_by_port
+
+
+def make_port_dict_with_security_groups(port, sec_groups):
+    plugin = manager.NeutronManager.get_plugin()
+    port_dict = plugin._make_port_dict(port)
+    port_dict['security_groups'] = sec_groups
+    port_dict['security_group_rules'] = []
+    port_dict['security_group_source_groups'] = []
+    port_dict['fixed_ips'] = [ip['ip_address']
+                              for ip in port['fixed_ips']]
+    return port_dict
 
 
 def get_port_binding_host(port_id):
