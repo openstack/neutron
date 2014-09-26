@@ -79,6 +79,12 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
         super(TestBigSwitchProxyPortsV2,
               self).setUp(self._plugin_name)
 
+    def test_get_ports_no_id(self):
+        with self.port(name='test'):
+            ports = NeutronManager.get_plugin().get_ports(
+                context.get_admin_context(), fields=['name'])
+            self.assertEqual(['name'], ports[0].keys())
+
     def test_update_port_status_build(self):
         with self.port() as port:
             self.assertEqual(port['port']['status'], 'BUILD')
