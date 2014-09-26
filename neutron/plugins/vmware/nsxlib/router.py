@@ -544,6 +544,7 @@ def create_lrouter_dnat_rule_v3(cluster, router_id, dst_ip, to_dst_port=None,
 def delete_nat_rules_by_match(cluster, router_id, rule_type,
                               max_num_expected,
                               min_num_expected=0,
+                              raise_on_len_mismatch=True,
                               **kwargs):
     # remove nat rules
     nat_rules = query_nat_rules(cluster, router_id)
@@ -557,14 +558,26 @@ def delete_nat_rules_by_match(cluster, router_id, rule_type,
                 break
         else:
             to_delete_ids.append(r['uuid'])
-    if not (len(to_delete_ids) in
-            range(min_num_expected, max_num_expected + 1)):
-        raise nsx_exc.NatRuleMismatch(actual_rules=len(to_delete_ids),
-                                      min_rules=min_num_expected,
-                                      max_rules=max_num_expected)
+    num_rules_to_delete = len(to_delete_ids)
+    if (num_rules_to_delete < min_num_expected or
+        num_rules_to_delete > max_num_expected):
+        if raise_on_len_mismatch:
+            raise nsx_exc.NatRuleMismatch(actual_rules=num_rules_to_delete,
+                                          min_rules=min_num_expected,
+                                          max_rules=max_num_expected)
+        else:
+            LOG.warn(_("Found %(actual_rule_num)d matching NAT rules, which "
+                       "is not in the expected range (%(min_exp_rule_num)d,"
+                       "%(max_exp_rule_num)d)"),
+                     {'actual_rule_num': num_rules_to_delete,
+                      'min_exp_rule_num': min_num_expected,
+                      'max_exp_rule_num': max_num_expected})
 
     for rule_id in to_delete_ids:
         delete_router_nat_rule(cluster, router_id, rule_id)
+    # Return number of deleted rules - useful at least for
+    # testing purposes
+    return num_rules_to_delete
 
 
 def delete_router_nat_rule(cluster, router_id, rule_id):
