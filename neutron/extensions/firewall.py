@@ -127,6 +127,19 @@ class FirewallInternalDriverError(qexception.NeutronException):
     message = _("%(driver)s: Internal driver error.")
 
 
+class FirewallRuleConflict(qexception.Conflict):
+
+    """Firewall rule conflict exception.
+
+    Occurs when admin policy tries to use another tenant's unshared
+    rule.
+    """
+
+    message = _("Operation cannot be performed since Firewall Rule "
+                "%(firewall_rule_id)s is not shared and belongs to "
+                "another tenant %(tenant_id)s")
+
+
 fw_valid_protocol_values = [None, constants.TCP, constants.UDP, constants.ICMP]
 fw_valid_action_values = [constants.FWAAS_ALLOW, constants.FWAAS_DENY]
 
