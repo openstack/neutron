@@ -1421,5 +1421,15 @@ class TestConvertIPPrefixToCIDR(base.BaseTestCase):
             self.assertEqual(ext_sg.convert_ip_prefix_to_cidr(addr), addr)
 
 
+class TestConvertProtocol(base.BaseTestCase):
+    def test_convert_numeric_protocol(self):
+        assert(isinstance(ext_sg.convert_protocol('2'), str))
+
+    def test_convert_bad_protocol(self):
+        for val in ['bad', '256', '-1']:
+            self.assertRaises(ext_sg.SecurityGroupRuleInvalidProtocol,
+                              ext_sg.convert_protocol, val)
+
+
 class TestSecurityGroupsXML(TestSecurityGroups):
     fmt = 'xml'
