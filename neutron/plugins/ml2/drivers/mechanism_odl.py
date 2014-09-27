@@ -30,11 +30,8 @@ from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
 
-ODL_NETWORK = 'network'
 ODL_NETWORKS = 'networks'
-ODL_SUBNET = 'subnet'
 ODL_SUBNETS = 'subnets'
-ODL_PORT = 'port'
 ODL_PORTS = 'ports'
 
 odl_opts = [
@@ -97,11 +94,10 @@ class JsessionId(requests.auth.AuthBase):
             r = requests.get(self.url, auth=(self.username, self.password))
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise OpendaylightAuthError(msg=_("Failed to authenticate with "
-                                              "OpenDaylight: %s") % e)
+            raise OpendaylightAuthError(msg="Failed to authenticate with "
+                                        "OpenDaylight: %s" % e)
         except requests.exceptions.Timeout as e:
-            raise OpendaylightAuthError(msg=_("Authentication Timed"
-                                              " Out: %s") % e)
+            raise OpendaylightAuthError(msg="Authentication Timed Out: %s" % e)
 
         jsessionid = r.cookies.get('JSESSIONID')
         jsessionidsso = r.cookies.get('JSESSIONIDSSO')
@@ -179,24 +175,26 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         else:
             self.sync_single_resource(operation, object_type, context)
 
-    def filter_create_network_attributes(self, network, context, dbcontext):
+    @staticmethod
+    def filter_create_network_attributes(network, context):
         """Filter out network attributes not required for a create."""
         try_del(network, ['status', 'subnets'])
 
-    def filter_create_subnet_attributes(self, subnet, context, dbcontext):
+    @staticmethod
+    def filter_create_subnet_attributes(subnet, context):
         """Filter out subnet attributes not required for a create."""
         pass
 
-    def filter_create_port_attributes(self, port, context, dbcontext):
+    @classmethod
+    def filter_create_port_attributes(cls, port, context):
         """Filter out port attributes not required for a create."""
-        self.add_security_groups(context, dbcontext, port)
+        cls.add_security_groups(port, context)
         # TODO(kmestery): Converting to uppercase due to ODL bug
         # https://bugs.opendaylight.org/show_bug.cgi?id=477
         port['mac_address'] = port['mac_address'].upper()
         try_del(port, ['status'])
 
-    def sync_resources(self, resource_name, collection_name, resources,
-                       context, dbcontext, attr_filter):
+    def sync_resources(self, collection_name, context):
         """Sync objects from Neutron over to OpenDaylight.
 
         This will handle syncing networks, subnets, and ports from Neutron to
@@ -204,6 +202,9 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         valid for create API operations.
         """
         to_be_synced = []
+        dbcontext = context._plugin_context
+        obj_getter = getattr(context._plugin, 'get_%s' % collection_name)
+        resources = obj_getter(dbcontext)
         for resource in resources:
             try:
                 urlpath = collection_name + '/' + resource['id']
@@ -211,11 +212,12 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
             except requests.exceptions.HTTPError as e:
                 with excutils.save_and_reraise_exception() as ctx:
                     if e.response.status_code == requests.codes.not_found:
-                        attr_filter(resource, context, dbcontext)
+                        attr_filter = self.create_object_map[collection_name]
+                        attr_filter(resource, context)
                         to_be_synced.append(resource)
                         ctx.reraise = False
-
-        key = resource_name if len(to_be_synced) == 1 else collection_name
+        key = collection_name[:-1] if len(to_be_synced) == 1 else (
+            collection_name)
 
         # 400 errors are returned if an object exists, which we ignore.
         self.sendjson('post', collection_name, {key: to_be_synced},
@@ -230,44 +232,27 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         """
         if not self.out_of_sync:
             return
-        dbcontext = context._plugin_context
-        networks = context._plugin.get_networks(dbcontext)
-        subnets = context._plugin.get_subnets(dbcontext)
-        ports = context._plugin.get_ports(dbcontext)
-
-        self.sync_resources(ODL_NETWORK, ODL_NETWORKS, networks,
-                            context, dbcontext,
-                            self.filter_create_network_attributes)
-        self.sync_resources(ODL_SUBNET, ODL_SUBNETS, subnets,
-                            context, dbcontext,
-                            self.filter_create_subnet_attributes)
-        self.sync_resources(ODL_PORT, ODL_PORTS, ports,
-                            context, dbcontext,
-                            self.filter_create_port_attributes)
+        for collection_name in [ODL_NETWORKS, ODL_SUBNETS, ODL_PORTS]:
+            self.sync_resources(collection_name, context)
         self.out_of_sync = False
 
-    def filter_update_network_attributes(self, network, context, dbcontext):
+    @staticmethod
+    def filter_update_network_attributes(network, context):
         """Filter out network attributes for an update operation."""
         try_del(network, ['id', 'status', 'subnets', 'tenant_id'])
 
-    def filter_update_subnet_attributes(self, subnet, context, dbcontext):
+    @staticmethod
+    def filter_update_subnet_attributes(subnet, context):
         """Filter out subnet attributes for an update operation."""
         try_del(subnet, ['id', 'network_id', 'ip_version', 'cidr',
                          'allocation_pools', 'tenant_id'])
 
-    def filter_update_port_attributes(self, port, context, dbcontext):
+    @classmethod
+    def filter_update_port_attributes(cls, port, context):
         """Filter out port attributes for an update operation."""
-        self.add_security_groups(context, dbcontext, port)
+        cls.add_security_groups(port, context)
         try_del(port, ['network_id', 'id', 'status', 'mac_address',
                        'tenant_id', 'fixed_ips'])
-
-    create_object_map = {ODL_NETWORKS: filter_create_network_attributes,
-                         ODL_SUBNETS: filter_create_subnet_attributes,
-                         ODL_PORTS: filter_create_port_attributes}
-
-    update_object_map = {ODL_NETWORKS: filter_update_network_attributes,
-                         ODL_SUBNETS: filter_update_subnet_attributes,
-                         ODL_PORTS: filter_update_port_attributes}
 
     def sync_single_resource(self, operation, object_type, context):
         """Sync over a single resource from Neutron to OpenDaylight.
@@ -290,7 +275,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                     method = 'put'
                     attr_filter = self.update_object_map[object_type]
                 resource = context.current.copy()
-                attr_filter(self, resource, context, context._plugin_context)
+                attr_filter(resource, context)
                 # 400 errors are returned if an object exists, which we ignore.
                 self.sendjson(method, urlpath, {object_type[:-1]: resource},
                               [requests.codes.bad_request])
@@ -298,20 +283,21 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
             with excutils.save_and_reraise_exception():
                 self.out_of_sync = True
 
-    def add_security_groups(self, context, dbcontext, port):
+    @staticmethod
+    def add_security_groups(port, context):
         """Populate the 'security_groups' field with entire records."""
+        dbcontext = context._plugin_context
         groups = [context._plugin.get_security_group(dbcontext, sg)
                   for sg in port['security_groups']]
         port['security_groups'] = groups
 
     def sendjson(self, method, urlpath, obj, ignorecodes=[]):
         """Send json to the OpenDaylight controller."""
-
         headers = {'Content-Type': 'application/json'}
         data = jsonutils.dumps(obj, indent=2) if obj else None
         url = '/'.join([self.url, urlpath])
-        LOG.debug(_('ODL-----> sending URL (%s) <-----ODL') % url)
-        LOG.debug(_('ODL-----> sending JSON (%s) <-----ODL') % obj)
+        LOG.debug("Sending METHOD (%(method)s) URL (%(url)s) JSON (%(obj)s)",
+                  {'method': method, 'url': url, 'obj': obj})
         r = requests.request(method, url=url,
                              headers=headers, data=data,
                              auth=self.auth, timeout=self.timeout)
@@ -322,8 +308,8 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         r.raise_for_status()
 
     def bind_port(self, context):
-        LOG.debug(_("Attempting to bind port %(port)s on "
-                    "network %(network)s"),
+        LOG.debug("Attempting to bind port %(port)s on "
+                  "network %(network)s",
                   {'port': context.current['id'],
                    'network': context.network.current['id']})
         for segment in context.network.network_segments:
@@ -332,12 +318,12 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                                     self.vif_type,
                                     self.vif_details,
                                     status=n_const.PORT_STATUS_ACTIVE)
-                LOG.debug(_("Bound using segment: %s"), segment)
+                LOG.debug("Bound using segment: %s", segment)
                 return
             else:
-                LOG.debug(_("Refusing to bind port for segment ID %(id)s, "
-                            "segment %(seg)s, phys net %(physnet)s, and "
-                            "network type %(nettype)s"),
+                LOG.debug("Refusing to bind port for segment ID %(id)s, "
+                          "segment %(seg)s, phys net %(physnet)s, and "
+                          "network type %(nettype)s",
                           {'id': segment[api.ID],
                            'seg': segment[api.SEGMENTATION_ID],
                            'physnet': segment[api.PHYSICAL_NETWORK],
@@ -352,3 +338,14 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         network_type = segment[api.NETWORK_TYPE]
         return network_type in [constants.TYPE_LOCAL, constants.TYPE_GRE,
                                 constants.TYPE_VXLAN, constants.TYPE_VLAN]
+
+
+OpenDaylightMechanismDriver.create_object_map = {
+    ODL_NETWORKS: OpenDaylightMechanismDriver.filter_create_network_attributes,
+    ODL_SUBNETS: OpenDaylightMechanismDriver.filter_create_subnet_attributes,
+    ODL_PORTS: OpenDaylightMechanismDriver.filter_create_port_attributes}
+
+OpenDaylightMechanismDriver.update_object_map = {
+    ODL_NETWORKS: OpenDaylightMechanismDriver.filter_update_network_attributes,
+    ODL_SUBNETS: OpenDaylightMechanismDriver.filter_update_subnet_attributes,
+    ODL_PORTS: OpenDaylightMechanismDriver.filter_update_port_attributes}
