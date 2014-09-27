@@ -44,6 +44,7 @@ from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -604,8 +605,9 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             need_port_update_notify |= self._update_extra_dhcp_opts_on_port(
                 context, id, port, updated_port)
 
-        need_port_update_notify |= self.is_security_group_member_updated(
+        secgrp_member_updated = self.is_security_group_member_updated(
             context, original_port, updated_port)
+        need_port_update_notify |= secgrp_member_updated
         if original_port['admin_state_up'] != updated_port['admin_state_up']:
             need_port_update_notify = True
 
@@ -616,6 +618,14 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                       binding.network_type,
                                       binding.segmentation_id,
                                       binding.physical_network)
+
+        if secgrp_member_updated:
+            old_set = set(original_port.get(ext_sg.SECURITYGROUPS))
+            new_set = set(updated_port.get(ext_sg.SECURITYGROUPS))
+            self.notifier.security_groups_member_updated(
+                context,
+                old_set ^ new_set)
+
         return updated_port
 
     def delete_port(self, context, id, l3_port_check=True):
