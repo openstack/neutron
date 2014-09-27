@@ -149,7 +149,7 @@ def create_gateway_device(cluster, tenant_id, display_name, neutron_id,
     try:
         return nsxlib.do_request(
             HTTP_POST, nsxlib._build_uri_path(TRANSPORTNODE_RESOURCE),
-            jsonutils.dumps(body), cluster=cluster)
+            jsonutils.dumps(body, sort_keys=True), cluster=cluster)
     except api_exc.InvalidSecurityCertificate:
         raise nsx_exc.InvalidSecurityCertificate()
 
@@ -166,7 +166,7 @@ def update_gateway_device(cluster, gateway_id, tenant_id,
             HTTP_PUT,
             nsxlib._build_uri_path(TRANSPORTNODE_RESOURCE,
                                    resource_id=gateway_id),
-            jsonutils.dumps(body), cluster=cluster)
+            jsonutils.dumps(body, sort_keys=True), cluster=cluster)
     except api_exc.InvalidSecurityCertificate:
         raise nsx_exc.InvalidSecurityCertificate()
 
