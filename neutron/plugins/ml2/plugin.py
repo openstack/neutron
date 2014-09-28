@@ -51,6 +51,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import lockutils
@@ -948,6 +949,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             cur_binding = db.get_dvr_port_binding_by_host(session,
                                                           port_id,
                                                           host)
+            if not cur_binding:
+                LOG.info(_LI("Binding info for port %s was not found, "
+                             "it might have been deleted already."),
+                         port_id)
+                return
             # Commit our binding results only if port has not been
             # successfully bound concurrently by another thread or
             # process and no binding inputs have been changed.
@@ -1055,6 +1061,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                            filter(models_v2.Port.id.startswith(port_id)).
                            one())
             except sa_exc.NoResultFound:
+                LOG.debug("No ports have port_id starting with %s",
+                          port_id)
                 return
             except exc.MultipleResultsFound:
                 LOG.error(_("Multiple ports have port_id starting with %s"),
@@ -1072,8 +1080,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port_context = driver_context.DvrPortContext(
                     self, plugin_context, port, network, binding)
             else:
+                # since eager loads are disabled in port_db query
+                # related attribute port_binding could disappear in
+                # concurrent port deletion.
+                # It's not an error condition.
+                binding = port_db.port_binding
+                if not binding:
+                    LOG.info(_LI("Binding info for port %s was not found, "
+                                 "it might have been deleted already."),
+                             port_id)
+                    return
                 port_context = driver_context.PortContext(
-                    self, plugin_context, port, network, port_db.port_binding)
+                    self, plugin_context, port, network, binding)
 
         return self._bind_port_if_needed(port_context)
 

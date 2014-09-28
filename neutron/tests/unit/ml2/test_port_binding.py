@@ -19,6 +19,7 @@ from neutron import context
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.ml2 import config as config
+from neutron.plugins.ml2 import models as ml2_models
 from neutron.tests.unit import test_db_plugin as test_plugin
 
 
@@ -97,6 +98,29 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self._test_port_binding("host-ovs-filter-active",
                                 portbindings.VIF_TYPE_OVS,
                                 True, True, 'ACTIVE')
+
+    def test_update_port_binding_no_binding(self):
+        ctx = context.get_admin_context()
+        with self.port(name='name') as port:
+            # emulating concurrent binding deletion
+            (ctx.session.query(ml2_models.PortBinding).
+             filter_by(port_id=port['port']['id']).delete())
+            self.assertIsNone(
+                self.plugin.get_bound_port_context(ctx, port['port']['id']))
+
+    def test_commit_dvr_port_binding(self):
+        ctx = context.get_admin_context()
+
+        class MechContext(object):
+            pass
+
+        mctx = MechContext()
+        mctx._binding = None
+        # making a shortcut: calling private method directly to
+        # avoid bothering with "concurrent" port binding deletion
+        res = self.plugin._commit_dvr_port_binding(ctx, 'anyUUID',
+                                                   'HostA', mctx)
+        self.assertIsNone(res)
 
     def _test_update_port_binding(self, host, new_host=None):
         with mock.patch.object(self.plugin,
