@@ -73,6 +73,9 @@ class L3PluginApi(object):
               - get_agent_gateway_port
               Needed by the agent when operating in DVR/DVR_SNAT mode
         1.3 - Get the list of activated services
+        1.4 - Added L3 HA update_router_state. This method was reworked in
+              to update_ha_routers_states
+        1.5 - Added update_ha_routers_states
 
     """
 
@@ -119,6 +122,12 @@ class L3PluginApi(object):
         """Make a call to get the list of activated services."""
         cctxt = self.client.prepare(version='1.3')
         return cctxt.call(context, 'get_service_plugin_list')
+
+    def update_ha_routers_states(self, context, states):
+        """Update HA routers states."""
+        cctxt = self.client.prepare(version='1.5')
+        return cctxt.call(context, 'update_ha_routers_states',
+                          host=self.host, states=states)
 
 
 class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,

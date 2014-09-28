@@ -271,6 +271,12 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             external_port['mac_address'],
             namespace=router.ns_name) for fip in floating_ips)
 
+    def fail_ha_router(self, router):
+        device_name = router.get_ha_device_name(
+            router.router[l3_constants.HA_INTERFACE_KEY]['id'])
+        ha_device = ip_lib.IPDevice(device_name, router.ns_name)
+        ha_device.link.set_down()
+
 
 class L3AgentTestCase(L3AgentTestFramework):
     def test_observer_notifications_legacy_router(self):
@@ -286,10 +292,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         router = self.manage_router(self.agent, router_info)
         utils.wait_until_true(lambda: router.ha_state == 'master')
 
-        device_name = router.get_ha_device_name(
-            router.router[l3_constants.HA_INTERFACE_KEY]['id'])
-        ha_device = ip_lib.IPDevice(device_name, router.ns_name)
-        ha_device.link.set_down()
+        self.fail_ha_router(router)
         utils.wait_until_true(lambda: router.ha_state == 'backup')
 
         utils.wait_until_true(lambda: enqueue_mock.call_count == 3)
@@ -297,6 +300,31 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertEqual((router.router_id, 'backup'), calls[0])
         self.assertEqual((router.router_id, 'master'), calls[1])
         self.assertEqual((router.router_id, 'backup'), calls[2])
+
+    def _expected_rpc_report(self, expected):
+        calls = (args[0][1] for args in
+                 self.agent.plugin_rpc.update_ha_routers_states.call_args_list)
+
+        # Get the last state reported for each router
+        actual_router_states = {}
+        for call in calls:
+            for router_id, state in call.iteritems():
+                actual_router_states[router_id] = state
+
+        return actual_router_states == expected
+
+    def test_keepalived_state_change_bulk_rpc(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router1 = self.manage_router(self.agent, router_info)
+        self.fail_ha_router(router1)
+        router_info = self.generate_router_info(enable_ha=True)
+        router2 = self.manage_router(self.agent, router_info)
+
+        utils.wait_until_true(lambda: router1.ha_state == 'backup')
+        utils.wait_until_true(lambda: router2.ha_state == 'master')
+        utils.wait_until_true(
+            lambda: self._expected_rpc_report(
+                {router1.router_id: 'standby', router2.router_id: 'active'}))
 
     def _test_observer_notifications(self, enable_ha):
         """Test create, update, delete of router and notifications."""
