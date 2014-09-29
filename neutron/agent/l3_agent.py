@@ -687,7 +687,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.agent_gateway_port = None
 
     def _destroy_router_namespace(self, ns):
-        router_id = ns[len(NS_PREFIX):]
+        router_id = self.get_router_id(ns)
         ra.disable_ipv6_ra(router_id, ns, self.root_helper)
         if self.conf.enable_metadata_proxy:
             self._destroy_metadata_proxy(router_id, ns)
@@ -1241,6 +1241,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def get_ns_name(self, router_id):
         return (NS_PREFIX + router_id)
+
+    def get_router_id(self, ns_name):
+        return ns_name[len(NS_PREFIX):]
 
     def get_snat_ns_name(self, router_id):
         return (SNAT_NS_PREFIX + router_id)

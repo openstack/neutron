@@ -49,11 +49,11 @@ class IpLibTestFramework(base.BaseLinuxTestCase):
 
     def generate_device_details(self, name=None, ip_cidr=None,
                                 mac_address=None, namespace=None):
-        return Device(name or self.get_rand_name(),
+        return Device(name or base.get_rand_name(),
                       ip_cidr or '240.0.0.1/24',
                       mac_address or
                       utils.get_random_mac('fa:16:3e:00:00:00'.split(':')),
-                      namespace or self.get_rand_name())
+                      namespace or base.get_rand_name())
 
     def _safe_delete_device(self, device):
         try:

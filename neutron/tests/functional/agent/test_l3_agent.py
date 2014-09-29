@@ -15,16 +15,19 @@
 
 import copy
 
+import fixtures
 import mock
 from oslo.config import cfg
 
-from neutron.agent.common import config
+from neutron.agent.common import config as agent_config
 from neutron.agent import l3_agent
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
+from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
+from neutron.tests.common.agents import l3_agent as l3_test_agent
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.unit import test_l3_agent
 
@@ -36,48 +39,68 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
         self.check_sudo_enabled()
-        self._configure()
+        mock.patch('neutron.agent.l3_agent.L3PluginApi').start()
+        self.agent = self._configure_agent('agent1')
 
-    def _configure(self):
-        l3_agent._register_opts(cfg.CONF)
+    def _get_config_opts(self):
+        config = cfg.ConfigOpts()
+        config.register_opts(common_config.core_opts)
+        config.register_opts(common_config.core_cli_opts)
+        config.register_cli_opts(logging.common_cli_opts)
+        config.register_cli_opts(logging.logging_cli_opts)
+        config.register_opts(logging.generic_log_opts)
+        config.register_opts(logging.log_opts)
+        return config
+
+    def _configure_agent(self, host):
+        conf = self._get_config_opts()
+        l3_agent._register_opts(conf)
         cfg.CONF.set_override('debug', False)
-        config.setup_logging()
-        cfg.CONF.set_override(
+        agent_config.setup_logging()
+        conf.set_override(
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
-        cfg.CONF.set_override('router_delete_namespaces', True)
-        cfg.CONF.set_override('root_helper', self.root_helper, group='AGENT')
-        cfg.CONF.set_override('use_namespaces', True)
-        cfg.CONF.set_override('enable_metadata_proxy', True)
+        conf.set_override('router_delete_namespaces', True)
+        conf.set_override('root_helper', self.root_helper, group='AGENT')
 
         br_int = self.create_ovs_bridge()
-        cfg.CONF.set_override('ovs_integration_bridge', br_int.br_name)
         br_ex = self.create_ovs_bridge()
-        cfg.CONF.set_override('external_network_bridge', br_ex.br_name)
+        conf.set_override('ovs_integration_bridge', br_int.br_name)
+        conf.set_override('external_network_bridge', br_ex.br_name)
 
-        mock.patch('neutron.agent.l3_agent.L3PluginApi').start()
+        temp_dir = self.useFixture(fixtures.TempDir()).path
+        conf.set_override('state_path', temp_dir)
+        conf.set_override('metadata_proxy_socket',
+                          '%s/metadata_proxy' % temp_dir)
+        conf.set_override('ha_confs_path',
+                          '%s/ha_confs' % temp_dir)
+        conf.set_override('external_pids',
+                          '%s/external/pids' % temp_dir)
+        conf.set_override('host', host)
+        agent = l3_test_agent.TestL3NATAgent(host, conf)
+        mock.patch.object(agent, '_arping').start()
 
-        self.agent = l3_agent.L3NATAgent('localhost', cfg.CONF)
+        return agent
 
-        mock.patch.object(self.agent, '_send_gratuitous_arp_packet').start()
+    def generate_router_info(self, enable_ha):
+        return test_l3_agent.prepare_router_data(enable_snat=True,
+                                                 enable_floating_ip=True,
+                                                 enable_ha=enable_ha)
 
-    def manage_router(self, enable_ha):
-        router = test_l3_agent.prepare_router_data(enable_snat=True,
-                                                   enable_floating_ip=True,
-                                                   enable_ha=enable_ha)
-        self.addCleanup(self._delete_router, router['id'])
-        ri = self._create_router(router)
+    def manage_router(self, agent, router):
+        self.addCleanup(self._delete_router, agent, router['id'])
+        ri = self._create_router(agent, router)
         return ri
 
-    def _create_router(self, router):
-        self.agent._router_added(router['id'], router)
-        ri = self.agent.router_info[router['id']]
+    def _create_router(self, agent, router):
+        agent._router_added(router['id'], router)
+        ri = agent.router_info[router['id']]
         ri.router = router
-        self.agent.process_router(ri)
+        agent.process_router(ri)
         return ri
 
-    def _delete_router(self, router_id):
-        self.agent._router_removed(router_id)
+    def _delete_router(self, agent, router_id):
+        agent._router_removed(router_id)
 
     def _add_fip(self, router, fip_address, fixed_address='10.0.0.2'):
         fip = {'id': _uuid(),
@@ -90,9 +113,9 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         ip = ip_lib.IPWrapper(self.root_helper, router.ns_name)
         return ip.netns.exists(router.ns_name)
 
-    def _metadata_proxy_exists(self, router):
+    def _metadata_proxy_exists(self, conf, router):
         pm = external_process.ProcessManager(
-            cfg.CONF,
+            conf,
             router.router_id,
             self.root_helper,
             router.ns_name)
@@ -107,7 +130,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             namespace, self.root_helper)
 
     def get_expected_keepalive_configuration(self, router):
-        ha_confs_path = cfg.CONF.ha_confs_path
+        ha_confs_path = self.agent.conf.ha_confs_path
         router_id = router.router_id
         ha_device_name = self.agent.get_ha_device_name(router.ha_port['id'])
         ha_device_cidr = router.ha_port['ip_cidr']
@@ -174,7 +197,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._router_lifecycle(enable_ha=True)
 
     def test_keepalived_configuration(self):
-        router = self.manage_router(enable_ha=True)
+        router_info = self.generate_router_info(enable_ha=True)
+        router = self.manage_router(self.agent, router_info)
         expected = self.get_expected_keepalive_configuration(router)
 
         self.assertEqual(expected,
@@ -205,7 +229,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertIn(new_external_device_ip, new_config)
 
     def _router_lifecycle(self, enable_ha):
-        router = self.manage_router(enable_ha)
+        router_info = self.generate_router_info(enable_ha)
+        router = self.manage_router(self.agent, router_info)
 
         if enable_ha:
             self.wait_until(lambda: router.ha_state == 'master')
@@ -220,7 +245,7 @@ class L3AgentTestCase(L3AgentTestFramework):
                             router.ns_name)
 
         self.assertTrue(self._namespace_exists(router))
-        self.assertTrue(self._metadata_proxy_exists(router))
+        self.assertTrue(self._metadata_proxy_exists(self.agent.conf, router))
         self._assert_internal_devices(router)
         self._assert_external_device(router)
         self._assert_gateway(router)
@@ -232,7 +257,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             self._assert_ha_device(router)
             self.assertTrue(router.keepalived_manager.process.active)
 
-        self._delete_router(router.router_id)
+        self._delete_router(self.agent, router.router_id)
 
         self._assert_router_does_not_exist(router)
         if enable_ha:
@@ -289,9 +314,47 @@ class L3AgentTestCase(L3AgentTestFramework):
         # then the devices and iptable rules have also been deleted,
         # so there's no need to check that explicitly.
         self.assertFalse(self._namespace_exists(router))
-        self.assertFalse(self._metadata_proxy_exists(router))
+        self.assertFalse(self._metadata_proxy_exists(self.agent.conf, router))
 
     def _assert_ha_device(self, router):
         self.assertTrue(self.device_exists_with_ip_mac(
             router.router[l3_constants.HA_INTERFACE_KEY],
             self.agent.get_ha_device_name, router.ns_name))
+
+
+class L3HATestFramework(L3AgentTestFramework):
+    def setUp(self):
+        super(L3HATestFramework, self).setUp()
+        self.failover_agent = self._configure_agent('agent2')
+
+        br_int_1 = self.get_ovs_bridge(
+            self.agent.conf.ovs_integration_bridge)
+        br_int_2 = self.get_ovs_bridge(
+            self.failover_agent.conf.ovs_integration_bridge)
+
+        veth1, veth2 = self.create_veth()
+        br_int_1.add_port(veth1.name)
+        br_int_2.add_port(veth2.name)
+
+    def test_ha_router_failover(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router1 = self.manage_router(self.agent, router_info)
+
+        router_info_2 = copy.deepcopy(router_info)
+        router_info_2[l3_constants.HA_INTERFACE_KEY] = (
+            test_l3_agent.get_ha_interface(ip='169.254.0.3',
+                                           mac='22:22:22:22:22:22'))
+
+        router2 = self.manage_router(self.failover_agent, router_info_2)
+
+        self.wait_until(lambda: router1.ha_state == 'master')
+        self.wait_until(lambda: router2.ha_state == 'backup')
+
+        device_name = self.agent.get_ha_device_name(
+            router1.router[l3_constants.HA_INTERFACE_KEY]['id'])
+        ha_device = ip_lib.IPDevice(device_name, self.root_helper,
+                                    router1.ns_name)
+        ha_device.link.set_down()
+
+        self.wait_until(lambda: router2.ha_state == 'master')
+        self.wait_until(lambda: router1.ha_state == 'fault')

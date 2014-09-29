@@ -283,14 +283,17 @@ def _get_subnet_id(port):
     return port['fixed_ips'][0]['subnet_id']
 
 
-def get_ha_interface():
+#TODO(jschwarz): This is a shared function with both the unit tests
+# and the functional tests, and should be moved elsewhere (probably
+# neutron/tests/common/).
+def get_ha_interface(ip='169.254.0.2', mac='12:34:56:78:2b:5d'):
     return {'admin_state_up': True,
             'device_id': _uuid(),
             'device_owner': 'network:router_ha_interface',
-            'fixed_ips': [{'ip_address': '169.254.0.2',
+            'fixed_ips': [{'ip_address': ip,
                            'subnet_id': _uuid()}],
             'id': _uuid(),
-            'mac_address': '12:34:56:78:2b:5d',
+            'mac_address': mac,
             'name': u'L3 HA Admin port 0',
             'network_id': _uuid(),
             'status': u'ACTIVE',
