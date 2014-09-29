@@ -1023,7 +1023,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         context, id)
                 self.mechanism_manager.delete_port_precommit(mech_context)
                 bound_mech_contexts.append(mech_context)
-                self._delete_port_security_group_bindings(context, id)
             if l3plugin:
                 router_ids = l3plugin.disassociate_floatingips(
                     context, id, do_notify=False)
