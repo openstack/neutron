@@ -368,10 +368,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
 
     def _list_ports(self, fmt, expected_res_status=None,
                     net_id=None, **kwargs):
-        query_params = None
+        query_params = []
         if net_id:
-            query_params = "network_id=%s" % net_id
-        port_req = self.new_list_request('ports', fmt, query_params)
+            query_params.append("network_id=%s" % net_id)
+        if kwargs.get('device_owner'):
+            query_params.append("device_owner=%s" % kwargs.get('device_owner'))
+        port_req = self.new_list_request('ports', fmt, '&'.join(query_params))
         if ('set_context' in kwargs and
                 kwargs['set_context'] is True and
                 'tenant_id' in kwargs):
