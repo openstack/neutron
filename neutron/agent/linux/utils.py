@@ -60,7 +60,7 @@ def create_process(cmd, root_helper=None, addl_env=None):
 
 
 def execute(cmd, root_helper=None, process_input=None, addl_env=None,
-            check_exit_code=True, return_stderr=False):
+            check_exit_code=True, return_stderr=False, extra_ok_codes=None):
     try:
         obj, cmd = create_process(cmd, root_helper=root_helper,
                                   addl_env=addl_env)
@@ -71,7 +71,13 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
         m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdout: %(stdout)r\n"
               "Stderr: %(stderr)r") % {'cmd': cmd, 'code': obj.returncode,
                                        'stdout': _stdout, 'stderr': _stderr}
+
         LOG.debug(m)
+
+        extra_ok_codes = extra_ok_codes or []
+        if obj.returncode and obj.returncode in extra_ok_codes:
+            obj.returncode = None
+
         if obj.returncode and check_exit_code:
             raise RuntimeError(m)
     finally:

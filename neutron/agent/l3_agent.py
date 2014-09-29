@@ -612,6 +612,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             if ip_cidr.endswith(FLOATING_IP_CIDR_SUFFIX):
                 net = netaddr.IPNetwork(ip_cidr)
                 device.addr.delete(net.version, ip_cidr)
+                self.driver.delete_conntrack_state(
+                    root_helper=self.root_helper,
+                    namespace=ri.ns_name,
+                    ip=ip_cidr)
         return fip_statuses
 
     def _get_ex_gw_port(self, ri):

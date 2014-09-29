@@ -39,3 +39,6 @@ iptables-save: CommandFilter, iptables-save, root
 iptables-restore: CommandFilter, iptables-restore, root
 ip6tables-save: CommandFilter, ip6tables-save, root
 ip6tables-restore: CommandFilter, ip6tables-restore, root
+
+# l3 agent to delete floatingip's conntrack state
+conntrack: CommandFilter, conntrack, root
