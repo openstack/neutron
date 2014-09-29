@@ -45,6 +45,7 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import extra_dhcp_opt as edo_ext
+from neutron.extensions import l3agentscheduler
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
@@ -1019,9 +1020,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if l3plugin:
             l3plugin.notify_routers_updated(context, router_ids)
             for router in removed_routers:
-                l3plugin.remove_router_from_l3_agent(
-                    context, router['agent_id'], router['router_id'])
-
+                try:
+                    l3plugin.remove_router_from_l3_agent(
+                        context, router['agent_id'], router['router_id'])
+                except l3agentscheduler.RouterNotHostedByL3Agent:
+                    # router may have been removed by another process
+                    LOG.debug("Router %(id)s not hosted by L3 agent %(agent)s",
+                        {'id': router['router_id'],
+                         'agent': router['agent_id']})
         try:
             # for both normal and DVR Interface ports, only one invocation of
             # delete_port_postcommit.  We use gather/scatter technique for DVR
