@@ -38,7 +38,6 @@ from neutron.openstack.common.cache import cache
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common import service
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
@@ -280,16 +279,8 @@ class UnixDomainWSGIServer(wsgi.Server):
         self._socket = eventlet.listen(file_socket,
                                        family=socket.AF_UNIX,
                                        backlog=backlog)
-        if workers < 1:
-            # For the case where only one process is required.
-            self._server = self.pool.spawn_n(self._run, application,
-                                             self._socket)
-        else:
-            # Minimize the cost of checking for child exit by extending the
-            # wait interval past the default of 0.01s.
-            self._launcher = service.ProcessLauncher(wait_interval=1.0)
-            self._server = WorkerService(self, application)
-            self._launcher.launch_service(self._server, workers=workers)
+
+        self._launch(application, workers=workers)
 
     def _run(self, application, socket):
         """Start a WSGI service in a new green thread."""

@@ -56,12 +56,10 @@ class TestWSGIServer(base.BaseTestCase):
 
         server = wsgi.Server("test_multiple_processes")
         server.start(None, 0, host="127.0.0.1", workers=2)
-        launcher.running = True
-        launcher.launch_service.assert_called_once_with(server._server,
-                                                        workers=2)
+        launcher.launch_service.assert_called_once_with(mock.ANY, workers=2)
 
         server.stop()
-        self.assertFalse(launcher.running)
+        launcher.stop.assert_called_once_with()
 
         server.wait()
         launcher.wait.assert_called_once_with()

@@ -497,8 +497,8 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
 
     def test_start(self):
         mock_app = mock.Mock()
-        with mock.patch.object(self.server, 'pool') as pool:
-            self.server.start(mock_app, '/the/path', workers=0, backlog=128)
+        with mock.patch.object(self.server, '_launch') as launcher:
+            self.server.start(mock_app, '/the/path', workers=5, backlog=128)
             self.eventlet.assert_has_calls([
                 mock.call.listen(
                     '/the/path',
@@ -506,27 +506,7 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
                     backlog=128
                 )]
             )
-            pool.spawn_n.assert_called_once_with(
-                self.server._run,
-                mock_app,
-                self.eventlet.listen.return_value
-            )
-
-    @mock.patch('neutron.openstack.common.service.ProcessLauncher')
-    def test_start_multiple_workers(self, process_launcher):
-        launcher = process_launcher.return_value
-
-        mock_app = mock.Mock()
-        self.server.start(mock_app, '/the/path', workers=2, backlog=128)
-        launcher.running = True
-        launcher.launch_service.assert_called_once_with(self.server._server,
-                                                        workers=2)
-
-        self.server.stop()
-        self.assertFalse(launcher.running)
-
-        self.server.wait()
-        launcher.wait.assert_called_once_with()
+            launcher.assert_called_once_with(mock_app, workers=5)
 
     def test_run(self):
         with mock.patch.object(agent, 'logging') as logging:

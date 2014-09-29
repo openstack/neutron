@@ -40,7 +40,7 @@ service_opts = [
                help=_('Seconds between running periodic tasks')),
     cfg.IntOpt('api_workers',
                default=0,
-               help=_('Number of separate worker processes for service')),
+               help=_('Number of separate API worker processes for service')),
     cfg.IntOpt('rpc_workers',
                default=0,
                help=_('Number of RPC worker processes for service')),
