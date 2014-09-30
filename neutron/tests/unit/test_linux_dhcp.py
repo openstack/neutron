@@ -789,14 +789,21 @@ class TestDnsmasq(TestBase):
             seconds = 's'
         if has_static:
             prefix = '--dhcp-range=set:tag%d,%s,static,%s%s'
+            prefix6 = '--dhcp-range=set:tag%d,%s,static,%s,%s%s'
         else:
             prefix = '--dhcp-range=set:tag%d,%s,%s%s'
+            prefix6 = '--dhcp-range=set:tag%d,%s,%s,%s%s'
         possible_leases = 0
         for i, s in enumerate(network.subnets):
             if (s.ip_version != 6
                 or s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
-                expected.extend([prefix % (
-                    i, s.cidr.split('/')[0], lease_duration, seconds)])
+                if s.ip_version == 4:
+                    expected.extend([prefix % (
+                        i, s.cidr.split('/')[0], lease_duration, seconds)])
+                else:
+                    expected.extend([prefix6 % (
+                        i, s.cidr.split('/')[0], s.cidr.split('/')[1],
+                        lease_duration, seconds)])
                 possible_leases += netaddr.IPNetwork(s.cidr).size
 
         expected.append('--dhcp-lease-max=%d' % min(

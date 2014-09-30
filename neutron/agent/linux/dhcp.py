@@ -403,9 +403,15 @@ class Dnsmasq(DhcpLocalProcess):
 
             # mode is optional and is not set - skip it
             if mode:
-                cmd.append('--dhcp-range=%s%s,%s,%s,%s' %
-                           ('set:', self._TAG_PREFIX % i,
-                            cidr.network, mode, lease))
+                if subnet.ip_version == 4:
+                    cmd.append('--dhcp-range=%s%s,%s,%s,%s' %
+                               ('set:', self._TAG_PREFIX % i,
+                                cidr.network, mode, lease))
+                else:
+                    cmd.append('--dhcp-range=%s%s,%s,%s,%d,%s' %
+                               ('set:', self._TAG_PREFIX % i,
+                                cidr.network, mode,
+                                cidr.prefixlen, lease))
                 possible_leases += cidr.size
 
         # Cap the limit because creating lots of subnets can inflate
