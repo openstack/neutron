@@ -580,9 +580,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # to prevent deadlock waiting to acquire a DB lock
                 # held by another thread in the same process, leading
                 # to 'lock wait timeout' errors.
+                #
+                # Process L3 first, since, depending on the L3 plugin, it may
+                # involve locking the db-access semaphore, sending RPC
+                # notifications, and/or calling delete_port on this plugin.
+                # Additionally, a rollback may not be enough to undo the
+                # deletion of a floating IP with certain L3 backends.
+                self._process_l3_delete(context, id)
                 with contextlib.nested(lockutils.lock('db-access'),
                                        session.begin(subtransactions=True)):
-                    self._process_l3_delete(context, id)
                     # Get ports to auto-delete.
                     ports = (session.query(models_v2.Port).
                              enable_eagerloads(False).
