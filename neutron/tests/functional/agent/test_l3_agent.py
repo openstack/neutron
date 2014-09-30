@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+import functools
 
 import fixtures
 import mock
@@ -29,6 +30,7 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.tests.common.agents import l3_agent as l3_test_agent
 from neutron.tests.functional.agent.linux import base
+from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.unit import test_l3_agent
 
 LOG = logging.getLogger(__name__)
@@ -233,16 +235,19 @@ class L3AgentTestCase(L3AgentTestFramework):
         router = self.manage_router(self.agent, router_info)
 
         if enable_ha:
-            self.wait_until(lambda: router.ha_state == 'master')
+            helpers.wait_until_true(lambda: router.ha_state == 'master')
 
             # Keepalived notifies of a state transition when it starts,
             # not when it ends. Thus, we have to wait until keepalived finishes
             # configuring everything. We verify this by waiting until the last
             # device has an IP address.
             device = router.router[l3_constants.INTERFACE_KEY][-1]
-            self.wait_until(self.device_exists_with_ip_mac, device,
-                            self.agent.get_internal_device_name,
-                            router.ns_name)
+            device_exists = functools.partial(
+                self.device_exists_with_ip_mac,
+                device,
+                self.agent.get_internal_device_name,
+                router.ns_name)
+            helpers.wait_until_true(device_exists)
 
         self.assertTrue(self._namespace_exists(router))
         self.assertTrue(self._metadata_proxy_exists(self.agent.conf, router))
@@ -347,8 +352,8 @@ class L3HATestFramework(L3AgentTestFramework):
 
         router2 = self.manage_router(self.failover_agent, router_info_2)
 
-        self.wait_until(lambda: router1.ha_state == 'master')
-        self.wait_until(lambda: router2.ha_state == 'backup')
+        helpers.wait_until_true(lambda: router1.ha_state == 'master')
+        helpers.wait_until_true(lambda: router2.ha_state == 'backup')
 
         device_name = self.agent.get_ha_device_name(
             router1.router[l3_constants.HA_INTERFACE_KEY]['id'])
@@ -356,5 +361,5 @@ class L3HATestFramework(L3AgentTestFramework):
                                     router1.ns_name)
         ha_device.link.set_down()
 
-        self.wait_until(lambda: router2.ha_state == 'master')
-        self.wait_until(lambda: router1.ha_state == 'fault')
+        helpers.wait_until_true(lambda: router2.ha_state == 'master')
+        helpers.wait_until_true(lambda: router1.ha_state == 'fault')
