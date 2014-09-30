@@ -154,6 +154,18 @@ class FakeRouterPort(object):
             ip_address, 'dddddddd-dddd-dddd-dddd-dddddddddddd')]
 
 
+class FakeRouterPort2(object):
+    id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
+    admin_state_up = True
+    device_owner = constants.DEVICE_OWNER_ROUTER_INTF
+    fixed_ips = [FakeIPAllocation('192.168.1.1',
+                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    mac_address = '00:00:0f:rr:rr:r2'
+
+    def __init__(self):
+        self.extra_dhcp_opts = []
+
+
 class FakePortMultipleAgents1(object):
     id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
     admin_state_up = True
@@ -200,6 +212,16 @@ class FakeV4Subnet(object):
     gateway_ip = '192.168.0.1'
     enable_dhcp = True
     host_routes = [FakeV4HostRoute]
+    dns_nameservers = ['8.8.8.8']
+
+
+class FakeV4Subnet2(object):
+    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    ip_version = 4
+    cidr = '192.168.1.0/24'
+    gateway_ip = '192.168.1.1'
+    enable_dhcp = True
+    host_routes = []
     dns_nameservers = ['8.8.8.8']
 
 
@@ -368,6 +390,13 @@ class FakeDualNetworkSingleDHCP(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
+    namespace = 'qdhcp-ns'
+
+
+class FakeDualNetworkDualDHCP(object):
+    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    subnets = [FakeV4Subnet(), FakeV4Subnet2()]
+    ports = [FakePort1(), FakeRouterPort(), FakeRouterPort2()]
     namespace = 'qdhcp-ns'
 
 
@@ -959,11 +988,28 @@ class TestDnsmasq(TestBase):
         expected = (
             'tag:tag0,option:dns-server,8.8.8.8\n'
             'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,249,20.0.0.1/24,20.0.0.1,192.168.1.0/24,0.0.0.0,'
             '0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,0.0.0.0/0,192.168.0.1\n'
             'tag:tag0,option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected, FakeDualNetworkSingleDHCP())
+
+    def test_output_opts_file_dual_dhcp_rfc3442(self):
+        expected = (
+            'tag:tag0,option:dns-server,8.8.8.8\n'
+            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,249,20.0.0.1/24,20.0.0.1,192.168.1.0/24,0.0.0.0,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,option:router,192.168.0.1\n'
+            'tag:tag1,option:dns-server,8.8.8.8\n'
+            'tag:tag1,option:classless-static-route,192.168.0.0/24,0.0.0.0,'
+            '0.0.0.0/0,192.168.1.1\n'
+            'tag:tag1,249,192.168.0.0/24,0.0.0.0,0.0.0.0/0,192.168.1.1\n'
+            'tag:tag1,option:router,192.168.1.1').lstrip()
+
+        self._test_output_opts_file(expected, FakeDualNetworkDualDHCP())
 
     def test_output_opts_file_no_gateway(self):
         expected = (
@@ -1049,8 +1095,9 @@ class TestDnsmasq(TestBase):
         expected = (
             'tag:tag0,option:dns-server,8.8.8.8\n'
             'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,249,20.0.0.1/24,20.0.0.1,192.168.1.0/24,0.0.0.0,'
             '0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,0.0.0.0/0,192.168.0.1\n'
             'tag:tag0,option:router,192.168.0.1\n'
             'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:tftp-server,192.168.0.3\n'
