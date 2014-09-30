@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-29 06:03+0000\n"
+"POT-Creation-Date: 2014-09-30 06:48+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -186,7 +186,7 @@ msgid "Seconds between running periodic tasks"
 msgstr ""
 
 #: neutron/service.py:43
-msgid "Number of separate worker processes for service"
+msgid "Number of separate API worker processes for service"
 msgstr ""
 
 #: neutron/service.py:46
@@ -288,102 +288,102 @@ msgstr ""
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:342
+#: neutron/wsgi.py:340
 msgid "Missing Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:531
+#: neutron/wsgi.py:529
 #, python-format
 msgid "Data %(data)s type is %(type)s"
 msgstr ""
 
-#: neutron/wsgi.py:614
+#: neutron/wsgi.py:612
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: neutron/wsgi.py:627 neutron/wsgi.py:630
+#: neutron/wsgi.py:625 neutron/wsgi.py:628
 msgid "Inline DTD forbidden"
 msgstr ""
 
-#: neutron/wsgi.py:711
+#: neutron/wsgi.py:709
 msgid "Cannot understand XML"
 msgstr ""
 
-#: neutron/wsgi.py:820
+#: neutron/wsgi.py:818
 msgid "Unrecognized Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:824
+#: neutron/wsgi.py:822
 msgid "No Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:828
+#: neutron/wsgi.py:826
 msgid "Empty body provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:835
+#: neutron/wsgi.py:833
 msgid "Unable to deserialize body as provided Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:931
+#: neutron/wsgi.py:929
 msgid "You must implement __call__"
 msgstr ""
 
-#: neutron/wsgi.py:1024 neutron/api/v2/base.py:191 neutron/api/v2/base.py:332
+#: neutron/wsgi.py:1022 neutron/api/v2/base.py:191 neutron/api/v2/base.py:332
 #: neutron/api/v2/base.py:472 neutron/api/v2/base.py:531
 #: neutron/extensions/l3agentscheduler.py:50
 #: neutron/extensions/l3agentscheduler.py:93
 msgid "The resource could not be found."
 msgstr ""
 
-#: neutron/wsgi.py:1071
+#: neutron/wsgi.py:1069
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr ""
 
-#: neutron/wsgi.py:1077
+#: neutron/wsgi.py:1075
 msgid "Unsupported Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:1078
+#: neutron/wsgi.py:1076
 #, python-format
 msgid "InvalidContentType: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1082
+#: neutron/wsgi.py:1080
 msgid "Malformed request body"
 msgstr ""
 
-#: neutron/wsgi.py:1083
+#: neutron/wsgi.py:1081
 #, python-format
 msgid "MalformedRequestBody: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1090
+#: neutron/wsgi.py:1088
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1095
+#: neutron/wsgi.py:1093
 msgid "Internal error"
 msgstr ""
 
-#: neutron/wsgi.py:1110 neutron/wsgi.py:1212
+#: neutron/wsgi.py:1108 neutron/wsgi.py:1210
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr ""
 
-#: neutron/wsgi.py:1113
+#: neutron/wsgi.py:1111
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr ""
 
-#: neutron/wsgi.py:1231
+#: neutron/wsgi.py:1229
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr ""
 
-#: neutron/wsgi.py:1290
+#: neutron/wsgi.py:1288
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -490,7 +490,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:582 neutron/agent/l3_agent.py:1987
-#: neutron/agent/metadata/agent.py:363
+#: neutron/agent/metadata/agent.py:354
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:326
 #: neutron/services/metering/agents/metering_agent.py:270
 msgid ""
@@ -499,7 +499,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:588 neutron/agent/l3_agent.py:1992
-#: neutron/agent/metadata/agent.py:368
+#: neutron/agent/metadata/agent.py:359
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:108
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:793
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:216
@@ -1180,32 +1180,32 @@ msgstr ""
 msgid "Admin username"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:54 neutron/agent/metadata/agent.py:52
+#: neutron/agent/linux/interface.py:54 neutron/agent/metadata/agent.py:51
 #: neutron/plugins/metaplugin/common/config.py:65
 msgid "Admin password"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:57 neutron/agent/metadata/agent.py:55
+#: neutron/agent/linux/interface.py:57 neutron/agent/metadata/agent.py:54
 #: neutron/plugins/metaplugin/common/config.py:68
 msgid "Admin tenant name"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:59 neutron/agent/metadata/agent.py:57
+#: neutron/agent/linux/interface.py:59 neutron/agent/metadata/agent.py:56
 #: neutron/plugins/metaplugin/common/config.py:70
 msgid "Authentication URL"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:61 neutron/agent/metadata/agent.py:59
+#: neutron/agent/linux/interface.py:61 neutron/agent/metadata/agent.py:58
 #: neutron/common/config.py:47 neutron/plugins/metaplugin/common/config.py:72
 msgid "The type of authentication to use"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:63 neutron/agent/metadata/agent.py:61
+#: neutron/agent/linux/interface.py:63 neutron/agent/metadata/agent.py:60
 #: neutron/plugins/metaplugin/common/config.py:74
 msgid "Authentication region"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:66 neutron/agent/metadata/agent.py:71
+#: neutron/agent/linux/interface.py:66 neutron/agent/metadata/agent.py:70
 msgid "Network service endpoint type to pull from the keystone catalog"
 msgstr ""
 
@@ -1435,96 +1435,96 @@ msgid ""
 "Stderr: %(stderr)r"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:50
+#: neutron/agent/metadata/agent.py:49
 #: neutron/plugins/metaplugin/common/config.py:63
 msgid "Admin user"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:64
+#: neutron/agent/metadata/agent.py:63
 msgid "Turn off verification of the certificate for ssl"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:67
+#: neutron/agent/metadata/agent.py:66
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:74
+#: neutron/agent/metadata/agent.py:73
 msgid "IP address used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:77
+#: neutron/agent/metadata/agent.py:76
 msgid "TCP Port used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:80
+#: neutron/agent/metadata/agent.py:79
 #: neutron/plugins/vmware/dhcp_meta/nsx.py:63
 msgid "Shared secret to sign instance-id request"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:85
+#: neutron/agent/metadata/agent.py:84
 msgid "Protocol to access nova metadata, http or https"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:87
+#: neutron/agent/metadata/agent.py:86
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:91
+#: neutron/agent/metadata/agent.py:90
 msgid "Client certificate for nova metadata api server."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:94
+#: neutron/agent/metadata/agent.py:93
 msgid "Private key of client certificate."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:124
+#: neutron/agent/metadata/agent.py:123
 #: neutron/agent/metadata/namespace_proxy.py:66
 #, python-format
 msgid "Request: %s"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:133
+#: neutron/agent/metadata/agent.py:132
 #: neutron/agent/metadata/namespace_proxy.py:74
 msgid "Unexpected error."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:134
+#: neutron/agent/metadata/agent.py:133
 #: neutron/agent/metadata/namespace_proxy.py:75
 msgid "An unknown error has occurred. Please try your request again."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:180
+#: neutron/agent/metadata/agent.py:179
 msgid ""
 "Either one of parameter network_id or router_id must be passed to "
 "_get_ports method."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:229
+#: neutron/agent/metadata/agent.py:228
 msgid ""
 "The remote metadata server responded with Forbidden. This response "
 "usually occurs when shared secrets do not match."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:242
+#: neutron/agent/metadata/agent.py:241
 #: neutron/agent/metadata/namespace_proxy.py:120
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:248
+#: neutron/agent/metadata/agent.py:247
 #: neutron/agent/metadata/namespace_proxy.py:126
 #, python-format
 msgid "Unexpected response code: %s"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:308
+#: neutron/agent/metadata/agent.py:299
 msgid "Location for Metadata Proxy UNIX domain socket"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:311
+#: neutron/agent/metadata/agent.py:302
 msgid "Number of separate worker processes for metadata server"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:315
+#: neutron/agent/metadata/agent.py:306
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr ""
 
