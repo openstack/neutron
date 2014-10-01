@@ -376,6 +376,27 @@ class TestBasicRouterOperations(base.BaseTestCase):
             'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()
 
+        self.snat_ports = [{'subnet': {'cidr': '152.2.0.0/16',
+                                       'gateway_ip': '152.2.0.1',
+                                       'id': _uuid()},
+                           'network_id': _uuid(),
+                           'device_owner': 'network:router_centralized_snat',
+                           'ip_cidr': '152.2.0.13/16',
+                           'mac_address': 'fa:16:3e:80:8d:80',
+                           'fixed_ips': [{'subnet_id': _uuid(),
+                                          'ip_address': '152.2.0.13'}],
+                           'id': _uuid(), 'device_id': _uuid()},
+                          {'subnet': {'cidr': '152.10.0.0/16',
+                                      'gateway_ip': '152.10.0.1',
+                                      'id': _uuid()},
+                           'network_id': _uuid(),
+                           'device_owner': 'network:router_centralized_snat',
+                           'ip_cidr': '152.10.0.13/16',
+                           'mac_address': 'fa:16:3e:80:8d:80',
+                           'fixed_ips': [{'subnet_id': _uuid(),
+                                         'ip_address': '152.10.0.13'}],
+                           'id': _uuid(), 'device_id': _uuid()}]
+
     def _prepare_internal_network_data(self):
         port_id = _uuid()
         router_id = _uuid()
@@ -497,11 +518,17 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def test_agent_remove_internal_network(self):
         self._test_internal_network_action('remove')
 
-    def _test_external_gateway_action(self, action):
-        router = prepare_router_data(num_internal_ports=2)
+    def _test_external_gateway_action(self, action, router):
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        # Special setup for dvr routers
+        if router.get('distributed'):
+            agent.conf.agent_mode = 'dvr_snat'
+            agent.host = HOSTNAME
+            agent._create_dvr_gateway = mock.Mock()
+            agent.get_snat_interfaces = mock.Mock(return_value=self.snat_ports)
+
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'subnet_id': _uuid()}],
                       'subnet': {'gateway_ip': '20.0.0.1'},
@@ -520,17 +547,23 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                          'port_id': _uuid()}]}
             router[l3_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
             agent.external_gateway_added(ri, ex_gw_port, interface_name)
-            self.assertEqual(self.mock_driver.plug.call_count, 1)
-            self.assertEqual(self.mock_driver.init_l3.call_count, 1)
-            self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
-                                                  '20.0.0.30')
-            kwargs = {'preserve_ips': ['192.168.1.34/32'],
-                      'namespace': 'qrouter-' + router['id'],
-                      'gateway': '20.0.0.1',
-                      'extra_subnets': [{'cidr': '172.16.0.0/24'}]}
-            self.mock_driver.init_l3.assert_called_with(interface_name,
-                                                        ['20.0.0.30/24'],
-                                                        **kwargs)
+            if not router.get('distributed'):
+                self.assertEqual(self.mock_driver.plug.call_count, 1)
+                self.assertEqual(self.mock_driver.init_l3.call_count, 1)
+                self.send_arp.assert_called_once_with(ri.ns_name,
+                                                      interface_name,
+                                                      '20.0.0.30')
+                kwargs = {'preserve_ips': ['192.168.1.34/32'],
+                          'namespace': 'qrouter-' + router['id'],
+                          'gateway': '20.0.0.1',
+                          'extra_subnets': [{'cidr': '172.16.0.0/24'}]}
+                self.mock_driver.init_l3.assert_called_with(interface_name,
+                                                            ['20.0.0.30/24'],
+                                                            **kwargs)
+            else:
+                agent._create_dvr_gateway.assert_called_once_with(
+                    ri, ex_gw_port, interface_name,
+                    self.snat_ports)
 
         elif action == 'remove':
             self.device_exists.return_value = True
@@ -614,7 +647,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                                  'dvr_snat', 1)
 
     def test_agent_add_external_gateway(self):
-        self._test_external_gateway_action('add')
+        router = prepare_router_data(num_internal_ports=2)
+        self._test_external_gateway_action('add', router)
+
+    def test_agent_add_external_gateway_dist(self):
+        router = prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
+        router['gw_port_host'] = HOSTNAME
+        self._test_external_gateway_action('add', router)
 
     def _test_arping(self, namespace):
         if not namespace:
@@ -642,7 +682,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self._test_arping(namespace=False)
 
     def test_agent_remove_external_gateway(self):
-        self._test_external_gateway_action('remove')
+        router = prepare_router_data(num_internal_ports=2)
+        self._test_external_gateway_action('remove', router)
+
+    def test_agent_remove_external_gateway_dist(self):
+        router = prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
+        router['gw_port_host'] = HOSTNAME
+        self._test_external_gateway_action('remove', router)
 
     def _check_agent_method_called(self, agent, calls, namespace):
         self.mock_ip.netns.execute.assert_has_calls(
@@ -2067,31 +2114,11 @@ vrrp_instance VR_1 {
                        'mac_address': 'ca:fe:de:ad:be:ef',
                        'ip_cidr': '20.0.0.30/24'}
 
-        snat_ports = [{'subnet': {'cidr': '152.2.0.0/16',
-                                  'gateway_ip': '152.2.0.1',
-                                  'id': _uuid()},
-                       'network_id': _uuid(),
-                       'device_owner': 'network:router_centralized_snat',
-                       'ip_cidr': '152.2.0.13/16',
-                       'mac_address': 'fa:16:3e:80:8d:80',
-                       'fixed_ips': [{'subnet_id': _uuid(),
-                                      'ip_address': '152.2.0.13'}],
-                       'id': _uuid(), 'device_id': _uuid()},
-                      {'subnet': {'cidr': '152.10.0.0/16',
-                                  'gateway_ip': '152.10.0.1',
-                                  'id': _uuid()},
-                       'network_id': _uuid(),
-                       'device_owner': 'network:router_centralized_snat',
-                       'ip_cidr': '152.10.0.13/16',
-                       'mac_address': 'fa:16:3e:80:8d:80',
-                       'fixed_ips': [{'subnet_id': _uuid(),
-                                     'ip_address': '152.10.0.13'}],
-                       'id': _uuid(), 'device_id': _uuid()}]
-
         interface_name = agent.get_snat_int_device_name(port_id)
         self.device_exists.return_value = False
 
-        agent._create_dvr_gateway(ri, dvr_gw_port, interface_name, snat_ports)
+        agent._create_dvr_gateway(ri, dvr_gw_port, interface_name,
+                                  self.snat_ports)
 
         # check 2 internal ports are plugged
         # check 1 ext-gw-port is plugged
