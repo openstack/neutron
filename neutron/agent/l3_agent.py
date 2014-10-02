@@ -1781,7 +1781,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         LOG.debug(_('Got router added to agent :%r'), payload)
         self.routers_updated(context, payload)
 
-    def _process_routers(self, routers, all_routers=False):
+    def _process_routers(self, routers):
         pool = eventlet.GreenPool()
         if (self.conf.external_network_bridge and
             not ip_lib.device_exists(self.conf.external_network_bridge)):
@@ -1795,11 +1795,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # routers which should be removed.
         # If routers are from server side notification, we seek them
         # from subset of incoming routers and ones we have now.
-        if all_routers:
-            prev_router_ids = set(self.router_info)
-        else:
-            prev_router_ids = set(self.router_info) & set(
-                [router['id'] for router in routers])
+        prev_router_ids = set(self.router_info) & set(
+            [router['id'] for router in routers])
         cur_router_ids = set()
         for r in routers:
             # If namespaces are disabled, only process the router associated

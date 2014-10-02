@@ -193,5 +193,5 @@ class TestVPNAgent(base.BaseTestCase):
 
         device = mock.Mock()
         self.agent.devices = [device]
-        self.agent._process_routers(routers, False)
+        self.agent._process_routers(routers)
         device.sync.assert_called_once_with(mock.ANY, routers)
