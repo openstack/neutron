@@ -316,7 +316,7 @@ class N1kvTrunkingPlugDriver(plug.PluginSidePluggingDriver):
             except exception_type:
                 resource_ids.remove(item_id)
             except n_exc.NeutronException as e:
-                LOG.error(_('Failed to delete %(resource_name) %(net_id)s '
+                LOG.error(_('Failed to delete %(resource_name)s %(net_id)s '
                             'for service vm due to %(err)s'),
                           {'resource_name': name, 'net_id': item_id, 'err': e})
 
