@@ -32,8 +32,7 @@ from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import testlib_api
 from neutron.tests.unit import testlib_plugin
 
-TARGET_PLUGIN = ('neutron.plugins.linuxbridge.lb_neutron_plugin'
-                 '.LinuxBridgePluginV2')
+TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 _get_path = test_api_v2._get_path
 
