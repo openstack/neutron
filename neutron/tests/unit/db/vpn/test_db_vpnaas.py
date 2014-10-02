@@ -434,7 +434,7 @@ class VPNPluginDbTestCase(VPNTestMixin,
             service_plugins=service_plugins
         )
         self._subnet_id = uuidutils.generate_uuid()
-        self.core_plugin = TestVpnCorePlugin
+        self.core_plugin = TestVpnCorePlugin()
         self.plugin = vpn_plugin.VPNPlugin()
         ext_mgr = api_extensions.PluginAwareExtensionManager(
             extensions_path,
