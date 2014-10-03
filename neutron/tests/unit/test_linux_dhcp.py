@@ -130,8 +130,9 @@ class FakeRouterPort:
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:0f:rr:rr:rr'
 
-    def __init__(self):
+    def __init__(self, dev_owner=constants.DEVICE_OWNER_ROUTER_INTF):
         self.extra_dhcp_opts = []
+        self.device_owner = dev_owner
 
 
 class FakePortMultipleAgents1:
@@ -339,6 +340,13 @@ class FakeV4NetworkNoRouter:
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4SubnetNoRouter()]
     ports = [FakePort1()]
+
+
+class FakeV4NetworkDistRouter:
+    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    subnets = [FakeV4Subnet()]
+    ports = [FakePort1(),
+             FakeRouterPort(dev_owner=constants.DEVICE_OWNER_DVR_INTERFACE)]
 
 
 class FakeDualV4Pxe3Ports:
@@ -956,6 +964,26 @@ tag:tag0,option:router""".lstrip()
                               version=dhcp.Dnsmasq.MINIMUM_VERSION)
             with mock.patch.object(dm, '_make_subnet_interface_ip_map') as ipm:
                 ipm.return_value = {FakeV4SubnetNoRouter.id: '192.168.1.2'}
+
+                dm._output_opts_file()
+                self.assertTrue(ipm.called)
+
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    def test_output_opts_file_dist_neutron_router_on_subnet(self):
+        expected = (
+            'tag:tag0,option:dns-server,8.8.8.8\n'
+            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,249,20.0.0.1/24,20.0.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,option:router,192.168.0.1').lstrip()
+
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/opts'
+            dm = dhcp.Dnsmasq(self.conf, FakeV4NetworkDistRouter(),
+                              version=dhcp.Dnsmasq.MINIMUM_VERSION)
+            with mock.patch.object(dm, '_make_subnet_interface_ip_map') as ipm:
+                ipm.return_value = {FakeV4Subnet.id: '192.168.0.1'}
 
                 dm._output_opts_file()
                 self.assertTrue(ipm.called)
