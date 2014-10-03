@@ -29,8 +29,7 @@ class WrongException(Exception):
 class TestRetryDecorator(base.BaseTestCase):
     def setUp(self):
         super(TestRetryDecorator, self).setUp()
-        self.sleep_fn_p = mock.patch.object(comm_utils.RetryDecorator,
-                                            'sleep_fn')
+        self.sleep_fn_p = mock.patch("time.sleep")
         self.sleep_fn = self.sleep_fn_p.start()
 
     def test_no_retry_required(self):
