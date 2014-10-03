@@ -18,6 +18,7 @@ import fixtures
 from six import moves
 
 from neutron.agent.linux import async_process
+from neutron.agent.linux import utils
 from neutron.tests import base
 
 
@@ -61,7 +62,8 @@ class TestAsyncProcess(base.BaseTestCase):
 
         # Ensure that the same output is read twice
         self._check_stdout(proc)
-        pid = proc._get_pid_to_kill()
+        pid = utils.get_root_helper_child_pid(proc._process.pid,
+                                              proc.root_helper)
         proc._kill_process(pid)
         self._check_stdout(proc)
         proc.stop()

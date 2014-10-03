@@ -116,7 +116,8 @@ class AsyncProcess(object):
         # Halt the greenthreads
         self._kill_event.send()
 
-        pid = self._get_pid_to_kill()
+        pid = utils.get_root_helper_child_pid(
+            self._process.pid, self.root_helper)
         if pid:
             self._kill_process(pid)
 
@@ -124,33 +125,6 @@ class AsyncProcess(object):
             # Clear the kill event to ensure the process can be
             # explicitly started again.
             self._kill_event = None
-
-    def _get_pid_to_kill(self):
-        pid = self._process.pid
-        # If root helper was used, two or more processes will be created:
-        #
-        #  - a root helper process (e.g. sudo myscript)
-        #  - possibly a rootwrap script (e.g. neutron-rootwrap)
-        #  - a child process (e.g. myscript)
-        #
-        # Killing the root helper process will leave the child process
-        # running, re-parented to init, so the only way to ensure that both
-        # die is to target the child process directly.
-        if self.root_helper:
-            try:
-                pid = utils.find_child_pids(pid)[0]
-            except IndexError:
-                # Process is already dead
-                return None
-            while True:
-                try:
-                    # We shouldn't have more than one child per process
-                    # so keep getting the children of the first one
-                    pid = utils.find_child_pids(pid)[0]
-                except IndexError:
-                    # Last process in the tree, return it
-                    break
-        return pid
 
     def _kill_process(self, pid):
         try:

@@ -25,6 +25,7 @@ Tests in this module will be skipped unless:
 import eventlet
 
 from neutron.agent.linux import ovsdb_monitor
+from neutron.agent.linux import utils
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base as functional_base
 
@@ -77,7 +78,7 @@ class TestOvsdbMonitor(BaseMonitorTest):
         self.monitor.respawn_interval = 0
         old_pid = self.monitor._process.pid
         output1 = self.collect_initial_output()
-        pid = self.monitor._get_pid_to_kill()
+        pid = utils.get_root_helper_child_pid(old_pid, self.root_helper)
         self.monitor._kill_process(pid)
         self.monitor._reset_queues()
         while (self.monitor._process.pid == old_pid):

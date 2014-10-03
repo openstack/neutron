@@ -16,3 +16,5 @@ ping_filter: CommandFilter, ping, root
 
 # enable curl from namespace
 curl_filter: CommandFilter, curl, root
+tee_filter: CommandFilter, tee, root
+tee_kill: KillFilter, root, tee, -9

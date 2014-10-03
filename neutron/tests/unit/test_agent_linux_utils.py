@@ -20,6 +20,9 @@ from neutron.agent.linux import utils
 from neutron.tests import base
 
 
+_marker = object()
+
+
 class FakeCreateProcess(object):
     class FakeStdin(object):
         def close(self):
@@ -168,3 +171,36 @@ class TestFindChildPids(base.BaseTestCase):
             with mock.patch.object(utils, 'execute',
                                    side_effect=RuntimeError()):
                 utils.find_child_pids(-1)
+
+
+class TestGetRoothelperChildPid(base.BaseTestCase):
+    def _test_get_root_helper_child_pid(self, expected=_marker,
+                                        root_helper=None, pids=None):
+        def _find_child_pids(x):
+            if not pids:
+                return []
+            pids.pop(0)
+            return pids
+
+        mock_pid = object()
+        with mock.patch.object(utils, 'find_child_pids',
+                               side_effect=_find_child_pids):
+            actual = utils.get_root_helper_child_pid(mock_pid, root_helper)
+        if expected is _marker:
+            expected = str(mock_pid)
+        self.assertEqual(expected, actual)
+
+    def test_returns_process_pid_without_root_helper(self):
+        self._test_get_root_helper_child_pid()
+
+    def test_returns_child_pid_with_root_helper(self):
+        self._test_get_root_helper_child_pid(expected='2', pids=['1', '2'],
+                                             root_helper='a')
+
+    def test_returns_last_child_pid_with_root_helper(self):
+        self._test_get_root_helper_child_pid(expected='3',
+                                             pids=['1', '2', '3'],
+                                             root_helper='a')
+
+    def test_returns_none_with_root_helper(self):
+        self._test_get_root_helper_child_pid(expected=None, root_helper='a')
