@@ -776,7 +776,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _get_metadata_proxy_callback(self, router_id):
 
         def callback(pid_file):
-            metadata_proxy_socket = cfg.CONF.metadata_proxy_socket
+            metadata_proxy_socket = self.conf.metadata_proxy_socket
             proxy_cmd = ['neutron-ns-metadata-proxy',
                          '--pid_file=%s' % pid_file,
                          '--metadata_proxy_socket=%s' % metadata_proxy_socket,
@@ -784,7 +784,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                          '--state_path=%s' % self.conf.state_path,
                          '--metadata_port=%s' % self.conf.metadata_port]
             proxy_cmd.extend(config.get_log_args(
-                cfg.CONF, 'neutron-ns-metadata-proxy-%s.log' %
+                self.conf, 'neutron-ns-metadata-proxy-%s.log' %
                 router_id))
             return proxy_cmd
 
@@ -1949,7 +1949,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
                 'interface_driver': self.conf.interface_driver},
             'start_flag': True,
             'agent_type': l3_constants.AGENT_TYPE_L3}
-        report_interval = cfg.CONF.AGENT.report_interval
+        report_interval = self.conf.AGENT.report_interval
         self.use_call = True
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
