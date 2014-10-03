@@ -105,6 +105,14 @@ class FirewallDriver(object):
         finally:
             self.filter_defer_apply_off()
 
+    def update_security_group_members(self, sg_id, ips):
+        """Update group members in a security group."""
+        raise NotImplementedError()
+
+    def update_security_group_rules(self, sg_id, rules):
+        """Update rules in a security group."""
+        raise NotImplementedError()
+
 
 class NoopFirewallDriver(FirewallDriver):
     """Noop Firewall Driver.
@@ -134,3 +142,9 @@ class NoopFirewallDriver(FirewallDriver):
     @property
     def ports(self):
         return {}
+
+    def update_security_group_members(self, sg_id, ips):
+        pass
+
+    def update_security_group_rules(self, sg_id, rules):
+        pass
