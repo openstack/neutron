@@ -20,14 +20,14 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import config as ml2_config
 from neutron.plugins.ml2.drivers.brocade import (mechanism_brocade
                                                  as brocademechanism)
-from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit.ml2 import test_ml2_plugin
 
 LOG = logging.getLogger(__name__)
 MECHANISM_NAME = ('neutron.plugins.ml2.'
                   'drivers.brocade.mechanism_brocade.BrocadeMechanism')
 
 
-class TestBrocadeMechDriverV2(test_db_plugin.NeutronDbPluginV2TestCase):
+class TestBrocadeMechDriverV2(test_ml2_plugin.Ml2PluginV2TestCase):
     """Test Brocade VCS/VDX mechanism driver.
     """
 
@@ -53,17 +53,17 @@ class TestBrocadeMechDriverV2(test_db_plugin.NeutronDbPluginV2TestCase):
             self.mechanism_driver = importutils.import_object(_mechanism_name)
 
 
-class TestBrocadeMechDriverNetworksV2(test_db_plugin.TestNetworksV2,
+class TestBrocadeMechDriverNetworksV2(test_ml2_plugin.TestMl2NetworksV2,
                                       TestBrocadeMechDriverV2):
     pass
 
 
-class TestBrocadeMechDriverPortsV2(test_db_plugin.TestPortsV2,
+class TestBrocadeMechDriverPortsV2(test_ml2_plugin.TestMl2PortsV2,
                                    TestBrocadeMechDriverV2):
     pass
 
 
-class TestBrocadeMechDriverSubnetsV2(test_db_plugin.TestSubnetsV2,
+class TestBrocadeMechDriverSubnetsV2(test_ml2_plugin.TestMl2SubnetsV2,
                                      TestBrocadeMechDriverV2):
     pass
 
