@@ -25,6 +25,7 @@ from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.extensions import external_net as external_net
+from neutron.extensions import l3agentscheduler
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
@@ -266,6 +267,30 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
     def test_delete_last_vm_port_with_floatingip(self):
         self._test_delete_dvr_serviced_port(device_owner='compute:None',
                                             floating_ip=True)
+
+    def test_delete_vm_port_namespace_already_deleted(self):
+        ns_to_delete = {'host': 'myhost',
+                        'agent_id': 'vm_l3_agent',
+                        'router_id': 'my_router'}
+
+        with contextlib.nested(
+            mock.patch.object(manager.NeutronManager,
+                              'get_service_plugins',
+                              return_value=self.service_plugins),
+            self.port(do_delete=False,
+                      device_owner='compute:None'),
+            mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_port',
+                              return_value=[ns_to_delete]),
+            mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent',
+                side_effect=l3agentscheduler.RouterNotHostedByL3Agent(
+                            router_id=ns_to_delete['router_id'],
+                            agent_id=ns_to_delete['agent_id']))
+        ) as (get_service_plugin, port, dvr_delns_ifno_port,
+              remove_router_from_l3_agent):
+
+            self.plugin.delete_port(self.context, port['port']['id'])
+            remove_router_from_l3_agent.assert_called_once_with(self.context,
+                ns_to_delete['agent_id'], ns_to_delete['router_id'])
 
     def test_delete_lbaas_vip_port(self):
         self._test_delete_dvr_serviced_port(
