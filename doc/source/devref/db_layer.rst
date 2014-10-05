@@ -2,10 +2,10 @@ Neutron Database Layer
 ======================
 
 
-Testing database and models sync
---------------------------------
+Tests to verify that database migrations and models are in sync
+---------------------------------------------------------------
 
-.. automodule:: neutron.tests.unit.db.test_migration
+.. automodule:: neutron.tests.functional.db.test_migration
 
 .. autoclass:: _TestModelsMigrations
    :members:
