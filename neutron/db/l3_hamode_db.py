@@ -436,6 +436,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
 
         return query.all()
 
+    def get_l3_bindings_hosting_router_with_ha_states(
+            self, context, router_id):
+        """Return a list of [(agent, ha_state), ...]."""
+        bindings = self.get_ha_router_port_bindings(context, [router_id])
+        return [(binding.agent, binding.state) for binding in bindings]
+
     def _process_sync_ha_data(self, context, routers, host):
         routers_dict = dict((router['id'], router) for router in routers)
 
