@@ -187,6 +187,11 @@ def get_all_n1kv_credentials():
             filter_by(type='n1kv'))
 
 
+def delete_all_n1kv_credentials():
+    session = db.get_session()
+    session.query(network_models_v2.Credential).filter_by(type='n1kv').delete()
+
+
 def add_provider_network(network_id, network_type, segmentation_id):
     """Add a network to the provider network table."""
     session = db.get_session()
