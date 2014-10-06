@@ -254,7 +254,6 @@ class RouterInfo(l3_ha_agent.RouterMixin):
         self.use_namespaces = use_namespaces
         # Invoke the setter for establishing initial SNAT action
         self.router = router
-        self.ns_name = NS_PREFIX + router_id if use_namespaces else None
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=root_helper,
             use_ipv6=use_ipv6,
@@ -286,6 +285,10 @@ class RouterInfo(l3_ha_agent.RouterMixin):
         elif self.ex_gw_port:
             # Gateway port was removed, remove rules
             self._snat_action = 'remove_rules'
+
+    @property
+    def ns_name(self):
+        return NS_PREFIX + self.router_id if self.use_namespaces else None
 
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets
@@ -554,6 +557,14 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.target_ex_net_id = None
         self.use_ipv6 = ipv6_utils.is_enabled()
 
+    def _get_router_info(self, router_id, router):
+        return RouterInfo(
+            router_id=router_id,
+            root_helper=self.root_helper,
+            use_namespaces=self.conf.use_namespaces,
+            router=router,
+            use_ipv6=self.use_ipv6)
+
     def _check_config_params(self):
         """Check items in configuration files.
 
@@ -591,13 +602,14 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _cleanup_namespaces(self, router_namespaces, router_ids):
         """Destroy stale router namespaces on host when L3 agent restarts
 
-            This routine is called when self._clean_stale_namespaces is True.
+        This routine is called when self._clean_stale_namespaces is True.
 
         The argument router_namespaces is the list of all routers namespaces
         The argument router_ids is the list of ids for known routers.
         """
-        ns_to_ignore = set(NS_PREFIX + id for id in router_ids)
-        ns_to_ignore.update(SNAT_NS_PREFIX + id for id in router_ids)
+        ns_to_ignore = set(self._get_router_info(id, router=None).ns_name
+                           for id in router_ids)
+        ns_to_ignore.update(self.get_snat_ns_name(id) for id in router_ids)
         ns_to_destroy = router_namespaces - ns_to_ignore
         self._destroy_stale_router_namespaces(ns_to_destroy)
 
@@ -727,9 +739,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     raise Exception(msg)
 
     def _router_added(self, router_id, router):
-        ri = RouterInfo(router_id, self.root_helper,
-                        self.conf.use_namespaces, router,
-                        use_ipv6=self.use_ipv6)
+        ri = self._get_router_info(router_id, router)
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
             self._create_router_namespace(ri)
