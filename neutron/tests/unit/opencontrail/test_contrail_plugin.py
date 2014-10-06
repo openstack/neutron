@@ -214,7 +214,8 @@ class ContrailPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
     _plugin_name = ('%s.NeutronPluginContrailCoreV2' % CONTRAIL_PKG_PATH)
 
     def setUp(self, plugin=None, ext_mgr=None):
-
+        if 'v6' in self._testMethodName:
+            self.skipTest("OpenContrail Plugin does not support IPV6.")
         cfg.CONF.keystone_authtoken = KeyStoneInfo()
         mock.patch('requests.post').start().side_effect = FAKE_SERVER.request
         super(ContrailPluginTestCase, self).setUp(self._plugin_name)
@@ -230,19 +231,6 @@ class TestContrailSubnetsV2(test_plugin.TestSubnetsV2,
                             ContrailPluginTestCase):
     def setUp(self):
         super(TestContrailSubnetsV2, self).setUp()
-
-    # Support ipv6 in contrail is planned in Juno
-    def test_update_subnet_ipv6_attributes(self):
-        self.skipTest("Contrail isn't supporting ipv6 yet")
-
-    def test_update_subnet_ipv6_inconsistent_address_attribute(self):
-        self.skipTest("Contrail isn't supporting ipv6 yet")
-
-    def test_update_subnet_ipv6_inconsistent_enable_dhcp(self):
-        self.skipTest("Contrail isn't supporting ipv6 yet")
-
-    def test_update_subnet_ipv6_inconsistent_ra_attribute(self):
-        self.skipTest("Contrail isn't supporting ipv6 yet")
 
     def test_delete_subnet_dhcp_port_associated_with_other_subnets(self):
         self.skipTest("There is no dhcp port in contrail")
