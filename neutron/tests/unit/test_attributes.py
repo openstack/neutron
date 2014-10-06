@@ -283,6 +283,7 @@ class TestAttributes(base.BaseTestCase):
                     ['www.hostname.com', 'www.hostname.com'],
                     ['77.hostname.com'],
                     ['1000.0.0.1'],
+                    ['111111111111111111111111111111111111111111111111111111111111'],  # noqa
                     None]
 
         for ns in ns_pools:
