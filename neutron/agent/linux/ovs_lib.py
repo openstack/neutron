@@ -22,6 +22,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LI, _LW
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -401,29 +402,28 @@ class OVSBridge(BaseOVS):
             # an exeception which will be captured in this block.
             # We won't deal with the possibility of ovs-vsctl return multiple
             # rows since the interface identifier is unique
-            data = json_result['data'][0]
-            port_name = data[name_idx]
-            switch = get_bridge_for_iface(self.root_helper, port_name)
-            if switch != self.br_name:
-                LOG.info(_("Port: %(port_name)s is on %(switch)s,"
-                           " not on %(br_name)s"), {'port_name': port_name,
-                                                    'switch': switch,
-                                                    'br_name': self.br_name})
-                return
-            ofport = data[ofport_idx]
-            # ofport must be integer otherwise return None
-            if not isinstance(ofport, int) or ofport == -1:
-                LOG.warn(_("ofport: %(ofport)s for VIF: %(vif)s is not a "
-                           "positive integer"), {'ofport': ofport,
-                                                 'vif': port_id})
-                return
-            # Find VIF's mac address in external ids
-            ext_id_dict = dict((item[0], item[1]) for item in
-                               data[ext_ids_idx][1])
-            vif_mac = ext_id_dict['attached-mac']
-            return VifPort(port_name, ofport, port_id, vif_mac, self)
-        except Exception as e:
-            LOG.warn(_("Unable to parse interface details. Exception: %s"), e)
+            for data in json_result['data']:
+                port_name = data[name_idx]
+                switch = get_bridge_for_iface(self.root_helper, port_name)
+                if switch != self.br_name:
+                    continue
+                ofport = data[ofport_idx]
+                # ofport must be integer otherwise return None
+                if not isinstance(ofport, int) or ofport == -1:
+                    LOG.warn(_LW("ofport: %(ofport)s for VIF: %(vif)s is not a"
+                                 " positive integer"), {'ofport': ofport,
+                                                        'vif': port_id})
+                    return
+                # Find VIF's mac address in external ids
+                ext_id_dict = dict((item[0], item[1]) for item in
+                                   data[ext_ids_idx][1])
+                vif_mac = ext_id_dict['attached-mac']
+                return VifPort(port_name, ofport, port_id, vif_mac, self)
+            LOG.info(_LI("Port %(port_id)s not present in bridge %(br_name)s"),
+                     {'port_id': port_id, 'br_name': self.br_name})
+        except Exception as error:
+            LOG.warn(_LW("Unable to parse interface details. Exception: %s"),
+                     error)
             return
 
     def delete_ports(self, all_ports=False):
