@@ -19,18 +19,18 @@ from testtools import matchers
 from neutron.common import exceptions as exc
 import neutron.db.api as db
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
+from oslo.config import cfg
 
 PROVIDER_NET = 'phys_net1'
 TENANT_NET = 'phys_net2'
 VLAN_MIN = 200
 VLAN_MAX = 209
-NETWORK_VLAN_RANGES = {
-    PROVIDER_NET: [],
-    TENANT_NET: [(VLAN_MIN, VLAN_MAX)],
-}
+NETWORK_VLAN_RANGES = [PROVIDER_NET, "%s:%s:%s" %
+                       (TENANT_NET, VLAN_MIN, VLAN_MAX)]
 UPDATED_VLAN_RANGES = {
     PROVIDER_NET: [],
     TENANT_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
@@ -41,10 +41,20 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(VlanTypeTest, self).setUp()
+        cfg.CONF.set_override('network_vlan_ranges', NETWORK_VLAN_RANGES,
+                              group='ml2_type_vlan')
+        self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+            NETWORK_VLAN_RANGES)
         self.driver = type_vlan.VlanTypeDriver()
-        self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES
         self.driver._sync_vlan_allocations()
         self.session = db.get_session()
+
+    def test_parse_network_exception_handling(self):
+        with mock.patch.object(plugin_utils,
+                               'parse_network_vlan_ranges') as parse_ranges:
+            parse_ranges.side_effect = Exception('any exception')
+            self.assertRaises(SystemExit,
+                              self.driver._parse_network_vlan_ranges)
 
     def _get_allocation(self, session, segment):
         return session.query(type_vlan.VlanAllocation).filter_by(
@@ -128,7 +138,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
             self.assertFalse(
                 self._get_allocation(self.session, segment).allocated)
 
-        check_in_ranges(NETWORK_VLAN_RANGES)
+        check_in_ranges(self.network_vlan_ranges)
         self.driver.network_vlan_ranges = UPDATED_VLAN_RANGES
         self.driver._sync_vlan_allocations()
         check_in_ranges(UPDATED_VLAN_RANGES)

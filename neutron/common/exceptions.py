@@ -305,6 +305,10 @@ class NetworkVlanRangeError(NeutronException):
         super(NetworkVlanRangeError, self).__init__(**kwargs)
 
 
+class PhysicalNetworkNameError(NeutronException):
+    message = _("Empty physical network name.")
+
+
 class NetworkTunnelRangeError(NeutronException):
     message = _("Invalid network Tunnel range: "
                 "'%(tunnel_range)s' - %(error)s")
