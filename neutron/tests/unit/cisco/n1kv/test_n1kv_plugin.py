@@ -28,6 +28,7 @@ from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.common import config as c_conf
 from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import n1kv_models_v2
 from neutron.plugins.cisco.db import network_db_v2 as cdb
@@ -833,6 +834,17 @@ class TestN1kvSubnets(test_plugin.TestSubnetsV2,
             subnet_resp = subnet_req.get_response(self.api)
             # Subnet creation should fail due to invalid network name
             self.assertEqual(subnet_resp.status_int, 400)
+
+    def test_schedule_network_with_subnet_create(self):
+        """Test invocation of explicit scheduling for networks."""
+        with patch.object(n1kv_neutron_plugin.N1kvNeutronPluginV2,
+                          'schedule_network') as mock_method:
+            # Test with network auto-scheduling disabled
+            c_conf.CONF.set_override('network_auto_schedule', False)
+            # Subnet creation should trigger scheduling for networks
+            with self.subnet():
+                pass
+        self.assertEqual(1, mock_method.call_count)
 
 
 class TestN1kvL3Test(test_l3_plugin.L3NatExtensionTestCase):
