@@ -104,11 +104,7 @@ def enable_tests_from_config():
 
 
 def all_tests_passed():
-    res = True
-    for opt in OPTS:
-        if cfg.CONF.get(opt.name):
-            res &= opt.callback()
-    return res
+    return all(opt.callback() for opt in OPTS if cfg.CONF.get(opt.name))
 
 
 def main():
