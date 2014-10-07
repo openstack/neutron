@@ -1343,14 +1343,12 @@ class TestDeviceManager(base.BaseTestCase):
         expected = ('dhcp1ae5f96c-c527-5079-82ea-371a01645457-12345678-1234-'
                     '5678-1234567890ab')
 
-        with mock.patch('socket.gethostname') as get_host:
-            with mock.patch('uuid.uuid5') as uuid5:
-                uuid5.return_value = '1ae5f96c-c527-5079-82ea-371a01645457'
-                get_host.return_value = 'localhost'
+        with mock.patch('uuid.uuid5') as uuid5:
+            uuid5.return_value = '1ae5f96c-c527-5079-82ea-371a01645457'
 
-                dh = dhcp.DeviceManager(cfg.CONF, cfg.CONF.root_helper, None)
-                self.assertEqual(dh.get_device_id(fake_net), expected)
-                uuid5.assert_called_once_with(uuid.NAMESPACE_DNS, 'localhost')
+            dh = dhcp.DeviceManager(cfg.CONF, cfg.CONF.root_helper, None)
+            uuid5.called_once_with(uuid.NAMESPACE_DNS, cfg.CONF.host)
+            self.assertEqual(dh.get_device_id(fake_net), expected)
 
     def test_update(self):
         # Try with namespaces and no metadata network

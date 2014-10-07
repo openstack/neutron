@@ -34,6 +34,8 @@ DEVICE_OWNER_ROUTER_GW = "network:router_gateway"
 DEVICE_OWNER_FLOATINGIP = "network:floatingip"
 DEVICE_OWNER_DHCP = "network:dhcp"
 
+DEVICE_ID_RESERVED_DHCP_PORT = "reserved_dhcp_port"
+
 FLOATINGIP_KEY = '_floatingips'
 INTERFACE_KEY = '_interfaces'
 METERING_LABEL_KEY = '_metering_labels'
