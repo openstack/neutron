@@ -18,6 +18,7 @@ from oslo.config import cfg
 
 from neutron.agent import firewall
 from neutron.agent.linux import ipset_manager
+from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
@@ -40,6 +41,7 @@ LINUX_DEV_LEN = 14
 IPSET_CHAIN_LEN = 20
 IPSET_CHANGE_BULK_THRESHOLD = 10
 IPSET_ADD_BULK_THRESHOLD = 5
+comment_rule = iptables_manager.comment_rule
 
 
 class IptablesFirewallDriver(firewall.FirewallDriver):
@@ -146,9 +148,11 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _add_fallback_chain_v4v6(self):
         self.iptables.ipv4['filter'].add_chain('sg-fallback')
-        self.iptables.ipv4['filter'].add_rule('sg-fallback', '-j DROP')
+        self.iptables.ipv4['filter'].add_rule('sg-fallback', '-j DROP',
+                                              comment=ic.UNMATCH_DROP)
         self.iptables.ipv6['filter'].add_chain('sg-fallback')
-        self.iptables.ipv6['filter'].add_rule('sg-fallback', '-j DROP')
+        self.iptables.ipv6['filter'].add_rule('sg-fallback', '-j DROP',
+                                              comment=ic.UNMATCH_DROP)
 
     def _add_chain_by_name_v4v6(self, chain_name):
         self.iptables.ipv6['filter'].add_chain(chain_name)
@@ -158,12 +162,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.ipv4['filter'].ensure_remove_chain(chain_name)
         self.iptables.ipv6['filter'].ensure_remove_chain(chain_name)
 
-    def _add_rule_to_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules):
+    def _add_rule_to_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules,
+                                comment=None):
         for rule in ipv4_rules:
-            self.iptables.ipv4['filter'].add_rule(chain_name, rule)
+            self.iptables.ipv4['filter'].add_rule(chain_name, rule,
+                                                  comment=comment)
 
         for rule in ipv6_rules:
-            self.iptables.ipv6['filter'].add_rule(chain_name, rule)
+            self.iptables.ipv6['filter'].add_rule(chain_name, rule,
+                                                  comment=comment)
 
     def _get_device_name(self, port):
         return port['device']
@@ -183,17 +190,20 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                      '-j $%s' % (self.IPTABLES_DIRECTION[direction],
                                  device,
                                  SG_CHAIN)]
-        self._add_rule_to_chain_v4v6('FORWARD', jump_rule, jump_rule)
+        self._add_rule_to_chain_v4v6('FORWARD', jump_rule, jump_rule,
+                                     comment=ic.VM_INT_SG)
 
         # jump to the chain based on the device
         jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
                      '-j $%s' % (self.IPTABLES_DIRECTION[direction],
                                  device,
                                  chain_name)]
-        self._add_rule_to_chain_v4v6(SG_CHAIN, jump_rule, jump_rule)
+        self._add_rule_to_chain_v4v6(SG_CHAIN, jump_rule, jump_rule,
+                                     comment=ic.SG_TO_VM_SG)
 
         if direction == EGRESS_DIRECTION:
-            self._add_rule_to_chain_v4v6('INPUT', jump_rule, jump_rule)
+            self._add_rule_to_chain_v4v6('INPUT', jump_rule, jump_rule,
+                                         comment=ic.INPUT_TO_SG)
 
     def _split_sgr_by_ethertype(self, security_group_rules):
         ipv4_sg_rules = []
@@ -222,12 +232,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     # of the list after the allowed_address_pair rules.
                     table.add_rule(chain_name,
                                    '-m mac --mac-source %s -j RETURN'
-                                   % mac)
+                                   % mac, comment=ic.PAIR_ALLOW)
                 else:
                     table.add_rule(chain_name,
                                    '-m mac --mac-source %s -s %s -j RETURN'
-                                   % (mac, ip))
-            table.add_rule(chain_name, '-j DROP')
+                                   % (mac, ip), comment=ic.PAIR_ALLOW)
+            table.add_rule(chain_name, '-j DROP', comment=ic.PAIR_DROP)
             rules.append('-j $%s' % chain_name)
 
     def _build_ipv4v6_mac_ip_list(self, mac, ip_address, mac_ipv4_pairs,
@@ -239,9 +249,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
         #Note(nati) allow dhcp or RA packet
-        ipv4_rules += ['-p udp -m udp --sport 68 --dport 67 -j RETURN']
-        ipv6_rules += ['-p icmpv6 -j RETURN']
-        ipv6_rules += ['-p udp -m udp --sport 546 --dport 547 -j RETURN']
+        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
+        ipv6_rules += [comment_rule('-p icmpv6 -j RETURN',
+                                    comment=ic.IPV6_RA_ALLOW)]
+        ipv6_rules += [comment_rule('-p udp -m udp --sport 546 --dport 547 '
+                                    '-j RETURN', comment=None)]
         mac_ipv4_pairs = []
         mac_ipv6_pairs = []
 
@@ -266,8 +279,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
         #Note(nati) Drop dhcp packet from VM
-        ipv4_rules += ['-p udp -m udp --sport 67 --dport 68 -j DROP']
-        ipv6_rules += ['-p udp -m udp --sport 547 --dport 546 -j DROP']
+        ipv4_rules += [comment_rule('-p udp -m udp --sport 67 --dport 68 '
+                                    '-j DROP', comment=ic.DHCP_SPOOF)]
+        ipv6_rules += [comment_rule('-p udp -m udp --sport 547 --dport 546 '
+                                    '-j DROP', comment=None)]
 
     def _accept_inbound_icmpv6(self):
         # Allow multicast listener, neighbor solicitation and
@@ -454,18 +469,22 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             args += ['-j RETURN']
             iptables_rules += [' '.join(args)]
 
-        iptables_rules += ['-j $sg-fallback']
+        iptables_rules += [comment_rule('-j $sg-fallback',
+                                        comment=ic.UNMATCHED)]
 
         return iptables_rules
 
     def _drop_invalid_packets(self, iptables_rules):
         # Always drop invalid packets
-        iptables_rules += ['-m state --state ' 'INVALID -j DROP']
+        iptables_rules += [comment_rule('-m state --state ' 'INVALID -j DROP',
+                                        comment=ic.STATELESS_DROP)]
         return iptables_rules
 
     def _allow_established(self, iptables_rules):
         # Allow established connections
-        iptables_rules += ['-m state --state RELATED,ESTABLISHED -j RETURN']
+        iptables_rules += [comment_rule(
+            '-m state --state RELATED,ESTABLISHED -j RETURN',
+            comment=ic.ALLOW_ASSOC)]
         return iptables_rules
 
     def _protocol_arg(self, protocol):

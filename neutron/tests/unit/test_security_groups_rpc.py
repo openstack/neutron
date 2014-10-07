@@ -2300,11 +2300,13 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
     def setUp(self, defer_refresh_firewall=False, test_rpc_v1_1=True):
         super(TestSecurityGroupAgentWithIptables, self).setUp()
         config.register_root_helper(cfg.CONF)
+        config.register_iptables_opts(cfg.CONF)
         cfg.CONF.set_override(
             'lock_path',
             '$state_path/lock')
         set_firewall_driver(self.FIREWALL_DRIVER)
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
+        cfg.CONF.set_override('comment_iptables_rules', False, group='AGENT')
 
         self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
         self.agent.context = None
