@@ -101,7 +101,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def _make_router_dict(self, router, fields=None, process_extensions=True):
         res = dict((key, router[key]) for key in CORE_ROUTER_ATTRS)
         if router['gw_port_id']:
-            ext_gw_info = {'network_id': router.gw_port['network_id']}
+            ext_gw_info = {
+                'network_id': router.gw_port['network_id'],
+                'external_fixed_ips': [{'subnet_id': ip["subnet_id"],
+                                        'ip_address': ip["ip_address"]}
+                                       for ip in router.gw_port['fixed_ips']]}
         else:
             ext_gw_info = None
         res.update({

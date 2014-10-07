@@ -1102,11 +1102,17 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             'remove', tenant_router['router']['id'],
                             s['subnet']['id'], None, tenant_id='tenant_a')
 
-    def test_router_add_gateway_invalid_network_returns_404(self):
+    def test_router_add_gateway_invalid_network_returns_400(self):
         with self.router() as r:
             self._add_external_gateway_to_router(
                 r['router']['id'],
-                "foobar", expected_code=exc.HTTPNotFound.code)
+                "foobar", expected_code=exc.HTTPBadRequest.code)
+
+    def test_router_add_gateway_non_existent_network_returns_404(self):
+        with self.router() as r:
+            self._add_external_gateway_to_router(
+                r['router']['id'],
+                _uuid(), expected_code=exc.HTTPNotFound.code)
 
     def test_router_add_gateway_net_not_external_returns_400(self):
         with self.router() as r:
