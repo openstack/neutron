@@ -740,24 +740,17 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             raise n_exc.InvalidSharedSetting(network=original.name)
 
     def _validate_ipv6_attributes(self, subnet, cur_subnet):
+        if cur_subnet:
+            self._validate_ipv6_update_dhcp(subnet, cur_subnet)
+            return
         ra_mode_set = attributes.is_attr_set(subnet.get('ipv6_ra_mode'))
         address_mode_set = attributes.is_attr_set(
             subnet.get('ipv6_address_mode'))
-        if cur_subnet:
-            ra_mode = (subnet['ipv6_ra_mode'] if ra_mode_set
-                       else cur_subnet['ipv6_ra_mode'])
-            addr_mode = (subnet['ipv6_address_mode'] if address_mode_set
-                         else cur_subnet['ipv6_address_mode'])
-            if ra_mode_set or address_mode_set:
-                # Check that updated subnet ipv6 attributes do not conflict
-                self._validate_ipv6_combination(ra_mode, addr_mode)
-            self._validate_ipv6_update_dhcp(subnet, cur_subnet)
-        else:
-            self._validate_ipv6_dhcp(ra_mode_set, address_mode_set,
-                                     subnet['enable_dhcp'])
-            if ra_mode_set and address_mode_set:
-                self._validate_ipv6_combination(subnet['ipv6_ra_mode'],
-                                                subnet['ipv6_address_mode'])
+        self._validate_ipv6_dhcp(ra_mode_set, address_mode_set,
+                                 subnet['enable_dhcp'])
+        if ra_mode_set and address_mode_set:
+            self._validate_ipv6_combination(subnet['ipv6_ra_mode'],
+                                            subnet['ipv6_address_mode'])
         if address_mode_set:
             self._validate_eui64_applicable(subnet)
 
