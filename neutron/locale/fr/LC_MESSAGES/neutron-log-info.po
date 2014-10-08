@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-22 06:06+0000\n"
+"POT-Creation-Date: 2014-10-08 06:09+0000\n"
 "PO-Revision-Date: 2014-08-12 21:40+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
@@ -19,10 +19,15 @@ msgstr ""
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: neutron/policy.py:106
+#: neutron/policy.py:110
 #, python-format
 msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:422
+#, python-format
+msgid "Port %(port_id)s not present in bridge %(br_name)s"
 msgstr ""
 
 #: neutron/common/ipv6_utils.py:62
