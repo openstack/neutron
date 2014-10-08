@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.middleware import request_id
 import webob
 
 from neutron import auth
-from neutron.openstack.common.middleware import request_id
 from neutron.tests import base
 
 

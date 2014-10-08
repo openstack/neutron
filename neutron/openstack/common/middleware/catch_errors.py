@@ -1,6 +1,3 @@
-# Copyright (c) 2013 NEC Corporation
-# All Rights Reserved.
-#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -13,31 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Middleware that provides high-level error handling.
+"""Compatibility shim for Kilo, while operators migrate to oslo.middleware."""
 
-It catches all exceptions from subsequent applications in WSGI pipeline
-to hide internal errors from API response.
-"""
+from oslo.middleware import catch_errors
 
-import webob.dec
-import webob.exc
-
-from neutron.openstack.common.gettextutils import _  # noqa
-from neutron.openstack.common import log as logging
-from neutron.openstack.common.middleware import base
+from neutron.openstack.common import versionutils
 
 
-LOG = logging.getLogger(__name__)
-
-
-class CatchErrorsMiddleware(base.Middleware):
-
-    @webob.dec.wsgify
-    def __call__(self, req):
-        try:
-            response = req.get_response(self.application)
-        except Exception:
-            LOG.exception(_('An error occurred during '
-                            'processing the request: %s'))
-            response = webob.exc.HTTPInternalServerError()
-        return response
+@versionutils.deprecated(as_of=versionutils.deprecated.KILO,
+                         in_favor_of='oslo.middleware.CatchErrors')
+class CatchErrorsMiddleware(catch_errors.CatchErrors):
+    pass

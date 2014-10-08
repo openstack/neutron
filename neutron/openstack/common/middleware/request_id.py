@@ -1,6 +1,3 @@
-# Copyright (c) 2013 NEC Corporation
-# All Rights Reserved.
-#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -13,29 +10,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Middleware that ensures request ID.
+"""Compatibility shim for Kilo, while operators migrate to oslo.middleware."""
 
-It ensures to assign request ID for each API request and set it to
-request environment. The request ID is also added to API response.
-"""
+from oslo.middleware import request_id
 
-import webob.dec
-
-from neutron.openstack.common import context
-from neutron.openstack.common.middleware import base
+from neutron.openstack.common import versionutils
 
 
 ENV_REQUEST_ID = 'openstack.request_id'
 HTTP_RESP_HEADER_REQUEST_ID = 'x-openstack-request-id'
 
 
-class RequestIdMiddleware(base.Middleware):
-
-    @webob.dec.wsgify
-    def __call__(self, req):
-        req_id = context.generate_request_id()
-        req.environ[ENV_REQUEST_ID] = req_id
-        response = req.get_response(self.application)
-        if HTTP_RESP_HEADER_REQUEST_ID not in response.headers:
-            response.headers.add(HTTP_RESP_HEADER_REQUEST_ID, req_id)
-        return response
+@versionutils.deprecated(as_of=versionutils.deprecated.KILO,
+                         in_favor_of='oslo.middleware.RequestId')
+class RequestIdMiddleware(request_id.RequestId):
+    pass
