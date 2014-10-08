@@ -957,12 +957,20 @@ def _get_profile_bindings(db_session, profile_type=None):
     If profile type is None, return profile-tenant binding for all
     profile types.
     """
-    LOG.debug(_("_get_profile_bindings()"))
     if profile_type:
-        profile_bindings = (db_session.query(n1kv_models_v2.ProfileBinding).
-                            filter_by(profile_type=profile_type))
-        return profile_bindings
+        return (db_session.query(n1kv_models_v2.ProfileBinding).
+                filter_by(profile_type=profile_type))
     return db_session.query(n1kv_models_v2.ProfileBinding)
+
+
+def _get_profile_bindings_by_uuid(db_session, profile_id):
+    """
+    Retrieve a list of profile bindings.
+
+    Get all profile-tenant bindings based on profile UUID.
+    """
+    return (db_session.query(n1kv_models_v2.ProfileBinding).
+            filter_by(profile_id=profile_id))
 
 
 class NetworkProfile_db_mixin(object):
@@ -1099,8 +1107,10 @@ class NetworkProfile_db_mixin(object):
         original_net_p = get_network_profile(context.session, id)
         # Update network profile to tenant id binding.
         if context.is_admin and c_const.ADD_TENANTS in p:
-            if context.tenant_id not in p[c_const.ADD_TENANTS]:
-                p[c_const.ADD_TENANTS].append(context.tenant_id)
+            profile_bindings = _get_profile_bindings_by_uuid(context.session,
+                                                             profile_id=id)
+            for bindings in profile_bindings:
+                p[c_const.ADD_TENANTS].append(bindings.tenant_id)
             update_profile_binding(context.session, id,
                                    p[c_const.ADD_TENANTS], c_const.NETWORK)
             is_updated = True
