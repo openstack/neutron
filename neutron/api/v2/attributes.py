@@ -729,11 +729,11 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'default': True,
                         'convert_to': convert_to_boolean,
                         'is_visible': True},
-        'ipv6_ra_mode': {'allow_post': True, 'allow_put': True,
+        'ipv6_ra_mode': {'allow_post': True, 'allow_put': False,
                          'default': ATTR_NOT_SPECIFIED,
                          'validate': {'type:values': constants.IPV6_MODES},
                          'is_visible': True},
-        'ipv6_address_mode': {'allow_post': True, 'allow_put': True,
+        'ipv6_address_mode': {'allow_post': True, 'allow_put': False,
                               'default': ATTR_NOT_SPECIFIED,
                               'validate': {'type:values':
                                            constants.IPV6_MODES},
