@@ -30,14 +30,12 @@ OPTS = [
     cfg.StrOpt('external_pids',
                default='$state_path/external/pids',
                help=_('Location to store child pid files')),
-    cfg.BoolOpt('check_child_processes', default=False,
-                help=_("Periodically check child processes")),
     cfg.StrOpt('check_child_processes_action', default='respawn',
                choices=['respawn', 'exit'],
                help=_('Action to be executed when a child process dies')),
-    cfg.IntOpt('check_child_processes_interval', default=60,
+    cfg.IntOpt('check_child_processes_interval', default=0,
                help=_('Interval between checks of child process liveness '
-                      '(seconds)')),
+                      '(seconds), use 0 to disable')),
 ]
 
 
@@ -156,7 +154,7 @@ class ProcessMonitor(object):
 
         self._process_managers = {}
 
-        if self._config.check_child_processes:
+        if self._config.check_child_processes_interval:
             self._spawn_checking_thread()
 
     def enable(self, uuid, cmd_callback, namespace=None, service=None,
