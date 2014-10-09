@@ -354,61 +354,45 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
     def test_nexus_enable_vlan_cmd(self):
         """Verify the syntax of the command to enable a vlan on an intf.
 
+        Test of the following ml2_conf_cisco_ini config:
+        [ml2_mech_cisco_nexus:1.1.1.1]
+        hostA=1/1
+        hostB=1/2 (second pass only)
+        where vlan_id = 100
+
         Confirm that for the first VLAN configured on a Nexus interface,
         the command string sent to the switch does not contain the
         keyword 'add'.
 
         Confirm that for the second VLAN configured on a Nexus interface,
-        the command string sent to the switch contains the keyword 'add'.
+        the command string sent to the switch contains the keyword 'add'
+        if it is on the same host. Confirm it does not contain the
+        keyword 'add' when on different hosts.
 
         """
-        # First vlan should be configured without 'add' keyword
-        with self._create_resources():
-            self.assertTrue(self._is_vlan_configured(
-                vlan_creation_expected=True,
-                add_keyword_expected=False))
-            self.mock_ncclient.reset_mock()
-            self.mock_bound_segment.return_value = BOUND_SEGMENT2
-
-            # Second vlan should be configured with 'add' keyword
-            with self._create_resources(name=NETWORK_NAME_2,
-                                        device_id=DEVICE_ID_2,
-                                        cidr=CIDR_2):
+        hosts = [COMP_HOST_NAME, COMP_HOST_NAME_2]
+        for host in hosts:
+            # First vlan should be configured without 'add' keyword
+            with self._create_resources():
                 self.assertTrue(self._is_vlan_configured(
                     vlan_creation_expected=True,
-                    add_keyword_expected=True))
+                    add_keyword_expected=False))
+                self.mock_ncclient.reset_mock()
+                self.mock_bound_segment.return_value = BOUND_SEGMENT2
 
-            # Return to first segment for delete port calls.
-            self.mock_bound_segment.return_value = BOUND_SEGMENT1
+                # Second vlan should be configured with 'add' keyword
+                # when on a single host.
+                with self._create_resources(name=NETWORK_NAME_2,
+                    device_id=DEVICE_ID_2,
+                    cidr=CIDR_2,
+                    host_id=host):
+                    self.assertTrue(self._is_vlan_configured(
+                        vlan_creation_expected=True,
+                        add_keyword_expected=(host == COMP_HOST_NAME)
+                    ))
 
-    def test_nexus_add_trunk(self):
-        """Verify syntax to enable a vlan on an interface.
-
-        Test also verifies that the vlan interface is not created.
-
-        Test of the following ml2_conf_cisco_ini config:
-        [ml2_mech_cisco_nexus:1.1.1.1]
-        hostA=1/1
-        hostB=1/2
-        where vlan_id = 100
-
-        Confirm that for the first host configured on a Nexus interface,
-        the command string sent to the switch does not contain the
-        keyword 'add'.
-
-        Confirm that for the second host configured on a Nexus interface,
-        the command staring sent to the switch contains does not contain
-        the keyword 'name' [signifies vlan intf creation].
-
-        """
-        with self._create_resources(name='net1', cidr=CIDR_1):
-            self.assertTrue(self._is_in_last_nexus_cfg(['allowed', 'vlan']))
-            self.assertFalse(self._is_in_last_nexus_cfg(['add']))
-            with self._create_resources(name='net2',
-                                        cidr=CIDR_2, host_id=COMP_HOST_NAME_2):
-                self.assertTrue(
-                    self._is_in_last_nexus_cfg(['allowed', 'vlan']))
-                self.assertFalse(self._is_in_last_nexus_cfg(['name']))
+                # Return to first segment for delete port calls.
+                self.mock_bound_segment.return_value = BOUND_SEGMENT1
 
     def test_ncclient_version_detect(self):
         """Test ability to handle connection to old and new-style ncclient.
