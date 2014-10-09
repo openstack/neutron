@@ -130,13 +130,13 @@ class VPNAgent(l3_agent.L3NATAgentWithStateReport):
         for device in self.devices:
             device.destroy_router(router_id)
 
-    def _process_routers(self, routers, all_routers=False):
+    def _process_routers(self, routers):
         """Router sync event.
 
         This method overwrites parent class method.
         :param routers: list of routers
         """
-        super(VPNAgent, self)._process_routers(routers, all_routers)
+        super(VPNAgent, self)._process_routers(routers)
         for device in self.devices:
             device.sync(self.context, routers)
 
