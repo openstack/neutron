@@ -132,7 +132,8 @@ class BaseMigrateToMl2(object):
         metadata = sa.MetaData()
         check_db_schema_version(engine, metadata)
 
-        self.define_ml2_tables(metadata)
+        if hasattr(self, 'define_ml2_tables'):
+            self.define_ml2_tables(metadata)
 
         # Autoload the ports table to ensure that foreign keys to it and
         # the network table can be created for the new tables.
@@ -145,7 +146,8 @@ class BaseMigrateToMl2(object):
         self.migrate_vlan_allocations(engine)
         self.migrate_port_bindings(engine, metadata)
 
-        self.drop_old_tables(engine, save_tables)
+        if hasattr(self, 'drop_old_tables'):
+            self.drop_old_tables(engine, save_tables)
 
     def migrate_segment_dict(self, binding):
         binding['id'] = uuidutils.generate_uuid()
