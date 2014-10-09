@@ -43,19 +43,6 @@ ovs_opts = [
                 default=DEFAULT_BRIDGE_MAPPINGS,
                 help=_("List of <physical_network>:<bridge>. "
                        "Deprecated for ofagent.")),
-    cfg.StrOpt('tenant_network_type', default='local',
-               help=_("Network type for tenant networks "
-                      "(local, vlan, gre, vxlan, or none).")),
-    cfg.ListOpt('network_vlan_ranges',
-                default=DEFAULT_VLAN_RANGES,
-                help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
-                       "or <physical_network>.")),
-    cfg.ListOpt('tunnel_id_ranges',
-                default=DEFAULT_TUNNEL_RANGES,
-                help=_("List of <tun_min>:<tun_max>.")),
-    cfg.StrOpt('tunnel_type', default='',
-               help=_("The type of tunnels to use when utilizing tunnels, "
-                      "either 'gre' or 'vxlan'.")),
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 help=_("Use veths instead of patch ports to interconnect the "
                        "integration bridge to physical bridges.")),
