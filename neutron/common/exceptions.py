@@ -335,3 +335,7 @@ class DeviceIDNotOwnedByTenant(Conflict):
 
 class InvalidCIDR(BadRequest):
     message = _("Invalid CIDR %(input)s given as IP prefix")
+
+
+class RouterNotCompatibleWithAgent(NeutronException):
+    message = _("Router '%(router_id)s' is not compatible with this agent")

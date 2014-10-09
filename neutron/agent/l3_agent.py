@@ -35,6 +35,7 @@ from neutron.agent.linux import ra
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
+from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -42,7 +43,7 @@ from neutron.common import utils as common_utils
 from neutron import context
 from neutron import manager
 from neutron.openstack.common import excutils
-from neutron.openstack.common.gettextutils import _LW
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
@@ -1779,48 +1780,38 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         LOG.debug(_('Got router added to agent :%r'), payload)
         self.routers_updated(context, payload)
 
-    def _process_routers(self, routers):
-        pool = eventlet.GreenPool()
+    def _process_router_if_compatible(self, router):
         if (self.conf.external_network_bridge and
             not ip_lib.device_exists(self.conf.external_network_bridge)):
             LOG.error(_("The external network bridge '%s' does not exist"),
                       self.conf.external_network_bridge)
             return
 
+        # If namespaces are disabled, only process the router associated
+        # with the configured agent id.
+        if (not self.conf.use_namespaces and
+            router['id'] != self.conf.router_id):
+            raise n_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
+
+        # Either ex_net_id or handle_internal_only_routers must be set
+        ex_net_id = (router['external_gateway_info'] or {}).get('network_id')
+        if not ex_net_id and not self.conf.handle_internal_only_routers:
+            raise n_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
+
+        # If target_ex_net_id and ex_net_id are set they must be equal
         target_ex_net_id = self._fetch_external_net_id()
-        # if routers are all the routers we have (They are from router sync on
-        # starting or when error occurs during running), we seek the
-        # routers which should be removed.
-        # If routers are from server side notification, we seek them
-        # from subset of incoming routers and ones we have now.
-        prev_router_ids = set(self.router_info) & set(
-            [router['id'] for router in routers])
-        cur_router_ids = set()
-        for r in routers:
-            # If namespaces are disabled, only process the router associated
-            # with the configured agent id.
-            if (not self.conf.use_namespaces and
-                r['id'] != self.conf.router_id):
-                continue
-            ex_net_id = (r['external_gateway_info'] or {}).get('network_id')
-            if not ex_net_id and not self.conf.handle_internal_only_routers:
-                continue
-            if (target_ex_net_id and ex_net_id and
-                ex_net_id != target_ex_net_id):
-                # Double check that our single external_net_id has not changed
-                # by forcing a check by RPC.
-                if (ex_net_id != self._fetch_external_net_id(force=True)):
-                    continue
-            cur_router_ids.add(r['id'])
-            if r['id'] not in self.router_info:
-                self._router_added(r['id'], r)
-            ri = self.router_info[r['id']]
-            ri.router = r
-            pool.spawn_n(self.process_router, ri)
-        # identify and remove routers that no longer exist
-        for router_id in prev_router_ids - cur_router_ids:
-            pool.spawn_n(self._router_removed, router_id)
-        pool.waitall()
+        if (target_ex_net_id and ex_net_id and ex_net_id != target_ex_net_id):
+            # Double check that our single external_net_id has not changed
+            # by forcing a check by RPC.
+            if ex_net_id != self._fetch_external_net_id(force=True):
+                raise n_exc.RouterNotCompatibleWithAgent(
+                    router_id=router['id'])
+
+        if router['id'] not in self.router_info:
+            self._router_added(router['id'], router)
+        ri = self.router_info[router['id']]
+        ri.router = router
+        self.process_router(ri)
 
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():
@@ -1844,7 +1835,15 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._router_removed(update.id)
                 continue
 
-            self._process_routers([router])
+            try:
+                self._process_router_if_compatible(router)
+            except n_exc.RouterNotCompatibleWithAgent as e:
+                LOG.exception(e.msg)
+                # Was the router previously handled by this agent?
+                if router['id'] in self.router_info:
+                    LOG.error(_LE("Removing incompatible router '%s'"),
+                              router['id'])
+                    self._router_removed(router['id'])
             LOG.debug("Finished a router update for %s", update.id)
             rp.fetched_and_processed(update.timestamp)
 

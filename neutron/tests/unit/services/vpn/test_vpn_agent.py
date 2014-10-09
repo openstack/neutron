@@ -183,15 +183,14 @@ class TestVPNAgent(base.BaseTestCase):
         self.agent._router_removed(router_id)
         device.destroy_router.assert_called_once_with(router_id)
 
-    def test_process_routers(self):
+    def test_process_router_if_compatible(self):
         self.plugin_api.get_external_network_id.return_value = None
-        routers = [
-            {'id': _uuid(),
-             'admin_state_up': True,
-             'routes': [],
-             'external_gateway_info': {}}]
+        router = {'id': _uuid(),
+                  'admin_state_up': True,
+                  'routes': [],
+                  'external_gateway_info': {}}
 
         device = mock.Mock()
         self.agent.devices = [device]
-        self.agent._process_routers(routers)
-        device.sync.assert_called_once_with(mock.ANY, routers)
+        self.agent._process_router_if_compatible(router)
+        device.sync.assert_called_once_with(mock.ANY, [router])
