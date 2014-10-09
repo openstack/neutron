@@ -793,6 +793,24 @@ class TestN1kvPorts(test_plugin.TestPortsV2,
             # for network object clean up to succeed.
             client_patch.stop()
 
+    def test_delete_last_port_vmnetwork_cleanup(self):
+        """Test whether VMNetwork is cleaned up from db on last port delete."""
+        db_session = db.get_session()
+        with self.port() as port:
+            pt = port['port']
+            self.assertIsNotNone(n1kv_db_v2.
+                                 get_vm_network(db_session,
+                                                pt['n1kv:profile_id'],
+                                                pt['network_id']))
+            req = self.new_delete_request('ports', port['port']['id'])
+            req.get_response(self.api)
+            # Verify VMNetwork is cleaned up from the database on port delete.
+            self.assertRaises(c_exc.VMNetworkNotFound,
+                              n1kv_db_v2.get_vm_network,
+                              db_session,
+                              pt['n1kv:profile_id'],
+                              pt['network_id'])
+
 
 class TestN1kvPolicyProfiles(N1kvPluginTestCase):
     def setUp(self):
