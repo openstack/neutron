@@ -13,17 +13,17 @@
 #    under the License.
 
 import collections
+
 import eventlet
 import netaddr
-
 from oslo import messaging
+from oslo.utils import excutils
 
 from neutron.common import constants as l3_constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron import context as n_context
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions

@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.openstack.common import importutils
+from oslo.utils import importutils
+
 from neutron.openstack.common import log as logging
 
 

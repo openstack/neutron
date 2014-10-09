@@ -16,6 +16,7 @@
 import netaddr
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from oslo.utils import excutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 
@@ -26,7 +27,6 @@ from neutron.db import l3_dvr_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3_ext_ha_mode as l3_ha
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging

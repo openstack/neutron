@@ -19,6 +19,8 @@ from eventlet import greenthread
 from oslo.config import cfg
 from oslo.db import exception as os_db_exception
 from oslo.serialization import jsonutils
+from oslo.utils import excutils
+from oslo.utils import importutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 
@@ -52,9 +54,7 @@ from neutron.extensions import l3agentscheduler
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils

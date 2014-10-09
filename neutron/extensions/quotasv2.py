@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo.utils import importutils
 import webob
 
 from neutron.api import extensions
@@ -23,7 +24,6 @@ from neutron.api.v2 import resource
 from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
 from neutron import manager
-from neutron.openstack.common import importutils
 from neutron import quota
 from neutron import wsgi
 

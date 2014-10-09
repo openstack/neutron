@@ -25,6 +25,7 @@ import httplib2
 from neutronclient.v2_0 import client
 from oslo.config import cfg
 from oslo import messaging
+from oslo.utils import excutils
 import six.moves.urllib.parse as urlparse
 import webob
 
@@ -37,7 +38,6 @@ from neutron.common import topics
 from neutron.common import utils
 from neutron import context
 from neutron.openstack.common.cache import cache
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall

@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
@@ -21,7 +22,6 @@ from neutron.common import topics
 from neutron import context
 from neutron.extensions import firewall as fw_ext
 from neutron.openstack.common.gettextutils import _LE
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.firewall.agents import firewall_agent_api as api

@@ -15,11 +15,11 @@
 
 import collections
 import mock
+from oslo.utils import importutils
 import testtools
 
 from neutron.common import constants as n_const
 from neutron.extensions import portbindings
-from neutron.openstack.common import importutils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.cisco.nexus import constants
 from neutron.plugins.ml2.drivers.cisco.nexus import exceptions

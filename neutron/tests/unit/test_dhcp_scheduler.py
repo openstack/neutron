@@ -15,13 +15,14 @@
 
 import mock
 
+from oslo.utils import timeutils
+
 from neutron.common import constants
 from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import models_v2
-from neutron.openstack.common import timeutils
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.unit import testlib_api
 

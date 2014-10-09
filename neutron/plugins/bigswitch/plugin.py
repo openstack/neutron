@@ -48,6 +48,7 @@ import re
 import eventlet
 from oslo.config import cfg
 from oslo import messaging
+from oslo.utils import importutils
 from sqlalchemy.orm import exc as sqlexc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -78,7 +79,6 @@ from neutron.extensions import external_net
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch import config as pl_config
 from neutron.plugins.bigswitch.db import porttracker_db

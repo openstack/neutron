@@ -17,10 +17,10 @@
 
 import mock
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.db import api as db
 from neutron.openstack.common import context
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.tests.unit import test_l3_plugin
 

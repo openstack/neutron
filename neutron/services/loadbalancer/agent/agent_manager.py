@@ -13,6 +13,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
@@ -21,7 +22,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
 from neutron.openstack.common.gettextutils import _LE, _LI
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task

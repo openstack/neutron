@@ -23,6 +23,7 @@ Big Switch core plugin.
 """
 
 from oslo.config import cfg
+from oslo.utils import excutils
 
 from neutron.api import extensions as neutron_extensions
 from neutron.common import exceptions
@@ -30,7 +31,6 @@ from neutron.common import log
 from neutron.common import utils
 from neutron.db import l3_db
 from neutron.extensions import l3
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch import extensions
 from neutron.plugins.bigswitch import plugin as cplugin

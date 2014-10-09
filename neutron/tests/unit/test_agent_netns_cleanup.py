@@ -36,7 +36,7 @@ class TestNetnsCleanup(base.BaseTestCase):
         conf.AGENT.root_helper = 'sudo',
         conf.dhcp_driver = 'driver'
 
-        method_to_patch = 'neutron.openstack.common.importutils.import_object'
+        method_to_patch = 'oslo.utils.importutils.import_object'
 
         with mock.patch(method_to_patch) as import_object:
             driver = mock.Mock()

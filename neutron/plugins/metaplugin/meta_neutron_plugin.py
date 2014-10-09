@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.common import exceptions as exc
 from neutron.common import topics
@@ -24,7 +25,6 @@ from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import flavor as ext_flavor
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.metaplugin.common import config  # noqa
 from neutron.plugins.metaplugin import meta_db_v2

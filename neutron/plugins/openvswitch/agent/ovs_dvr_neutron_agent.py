@@ -15,11 +15,11 @@
 
 
 from oslo import messaging
+from oslo.utils import excutils
 
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.openvswitch.common import constants

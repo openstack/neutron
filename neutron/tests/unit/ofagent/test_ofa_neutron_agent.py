@@ -26,10 +26,10 @@ import copy
 import mock
 import netaddr
 from oslo.config import cfg
+from oslo.utils import importutils
 import testtools
 
 from neutron.common import constants as n_const
-from neutron.openstack.common import importutils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.tests.unit.ofagent import ofa_test_base

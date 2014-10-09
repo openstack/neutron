@@ -15,10 +15,10 @@
 import datetime
 
 from oslo.config import cfg
+from oslo.utils import timeutils
 
 from neutron.agent.linux import utils as linux_utils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import timeutils
 from neutron.openstack.common.gettextutils import _LI, _LW
 
 

@@ -16,12 +16,12 @@
 import collections
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.tests.functional.agent.linux import base
 

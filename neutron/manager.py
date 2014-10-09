@@ -16,10 +16,10 @@
 import weakref
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import periodic_task
 from neutron.plugins.common import constants

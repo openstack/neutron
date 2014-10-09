@@ -16,6 +16,7 @@
 #
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
@@ -24,7 +25,6 @@ from neutron.common import constants as const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.common import config
 from neutron.plugins.vmware.common import exceptions as nsx_exc

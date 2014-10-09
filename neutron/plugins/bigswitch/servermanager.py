@@ -38,9 +38,9 @@ import eventlet
 import eventlet.corolocal
 from oslo.config import cfg
 from oslo.serialization import jsonutils
+from oslo.utils import excutils
 
 from neutron.common import exceptions
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch.db import consistency_db as cdb
 

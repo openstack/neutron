@@ -18,15 +18,15 @@ import socket
 
 import netaddr
 from oslo.config import cfg
+from oslo.utils import excutils
+from oslo.utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.common import utils as n_utils
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.agent import agent_device_driver

@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.openstack.common import excutils
+from oslo.utils import excutils
+
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.dbexts import vcns_db
 from neutron.plugins.vmware.vshield.common import (

@@ -16,6 +16,7 @@
 import random
 
 from oslo.serialization import jsonutils
+from oslo.utils import timeutils
 
 from neutron.common import constants
 from neutron.common import exceptions
@@ -26,7 +27,6 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.openstack.common import log
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common import timeutils
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import nsx_utils

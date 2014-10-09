@@ -17,9 +17,9 @@
 
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from oslo.utils import excutils
 
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as p_exc

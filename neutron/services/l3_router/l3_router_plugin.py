@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
@@ -26,7 +27,6 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
-from neutron.openstack.common import importutils
 from neutron.plugins.common import constants
 
 

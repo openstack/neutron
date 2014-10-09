@@ -17,8 +17,9 @@
 Implements a Nexus-OS NETCONF over SSHv2 API Client
 """
 
-from neutron.openstack.common import excutils
-from neutron.openstack.common import importutils
+from oslo.utils import excutils
+from oslo.utils import importutils
+
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.cisco.nexus import config as conf
 from neutron.plugins.ml2.drivers.cisco.nexus import constants as const

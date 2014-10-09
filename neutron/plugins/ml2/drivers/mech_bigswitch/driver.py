@@ -18,13 +18,13 @@ import httplib
 
 import eventlet
 from oslo.config import cfg
+from oslo.utils import excutils
+from oslo.utils import timeutils
 
 from neutron import context as ctx
 from neutron.extensions import portbindings
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import log
-from neutron.openstack.common import timeutils
 from neutron.plugins.bigswitch import config as pl_config
 from neutron.plugins.bigswitch import plugin
 from neutron.plugins.bigswitch import servermanager

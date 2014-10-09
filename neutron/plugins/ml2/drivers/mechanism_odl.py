@@ -17,13 +17,13 @@ import time
 
 from oslo.config import cfg
 from oslo.serialization import jsonutils
+from oslo.utils import excutils
 import requests
 
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.extensions import portbindings
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api

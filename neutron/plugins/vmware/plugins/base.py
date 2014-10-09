@@ -17,6 +17,7 @@ import uuid
 
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from oslo.utils import excutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 import webob.exc
@@ -50,7 +51,6 @@ from neutron.extensions import portbindings as pbin
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging

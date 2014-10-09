@@ -20,6 +20,7 @@ to the PLUMgrid Network Management System called Director
 
 import netaddr
 from oslo.config import cfg
+from oslo.utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron.api.v2 import attributes
@@ -32,7 +33,6 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as sec_grp
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.plumgrid.common import exceptions as plum_excep
 from neutron.plugins.plumgrid.plumgrid_plugin import plugin_ver

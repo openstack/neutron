@@ -17,6 +17,8 @@ import random
 from keystoneclient import exceptions as k_exceptions
 from keystoneclient.v2_0 import client as k_client
 from oslo.config import cfg
+from oslo.utils import importutils
+from oslo.utils import timeutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
 
@@ -25,9 +27,7 @@ from neutron.common import utils
 from neutron import context as neutron_context
 from neutron.db import agents_db
 from neutron import manager
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.plugins.cisco.common import cisco_constants as c_constants

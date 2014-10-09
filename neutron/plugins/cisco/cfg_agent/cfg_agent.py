@@ -20,6 +20,8 @@ import time
 
 from oslo.config import cfg
 from oslo import messaging
+from oslo.utils import importutils
+from oslo.utils import timeutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import external_process
@@ -30,13 +32,11 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as n_context
 from neutron import manager
-from neutron.openstack.common import importutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.openstack.common import service
-from neutron.openstack.common import timeutils
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.plugins.cisco.cfg_agent import device_status
 from neutron.plugins.cisco.common import cisco_constants as c_constants

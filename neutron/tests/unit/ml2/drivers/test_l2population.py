@@ -14,7 +14,9 @@
 #    under the License.
 
 import contextlib
+
 import mock
+from oslo.utils import timeutils
 
 from neutron.agent import l2population_rpc
 from neutron.common import constants
@@ -24,7 +26,6 @@ from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
-from neutron.openstack.common import timeutils
 from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2 import managers

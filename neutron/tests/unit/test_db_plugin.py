@@ -19,6 +19,7 @@ import itertools
 
 import mock
 from oslo.config import cfg
+from oslo.utils import importutils
 from testtools import matchers
 import webob.exc
 
@@ -36,7 +37,6 @@ from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron import manager
-from neutron.openstack.common import importutils
 from neutron.tests import base
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
