@@ -18,6 +18,7 @@ from eventlet import greenthread
 
 from oslo.config import cfg
 from oslo.db import exception as os_db_exception
+from oslo.serialization import jsonutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 
@@ -53,7 +54,6 @@ from neutron import manager
 from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import importutils
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils

@@ -17,13 +17,13 @@ import itertools
 import operator
 
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LI, _LW
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 

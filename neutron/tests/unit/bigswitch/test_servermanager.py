@@ -18,11 +18,11 @@ import ssl
 
 import mock
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 
 from neutron import context
 from neutron import manager
 from neutron.openstack.common import importutils
-from neutron.openstack.common import jsonutils
 from neutron.plugins.bigswitch import servermanager
 from neutron.tests.unit.bigswitch import test_restproxy_plugin as test_rp
 

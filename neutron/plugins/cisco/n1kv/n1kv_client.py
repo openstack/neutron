@@ -13,13 +13,14 @@
 #    under the License.
 
 import base64
+
 import eventlet
 import netaddr
+from oslo.serialization import jsonutils
 import requests
 
 from neutron.common import exceptions as n_exc
 from neutron.extensions import providernet
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred

@@ -18,11 +18,11 @@ import contextlib
 import functools
 
 import mock
+from oslo.serialization import jsonutils
 
 from neutron import context as neutron_context
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.openstack.common import jsonutils
 from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.ml2 import config as ml2_config
 from neutron.plugins.ml2.drivers.mech_bigswitch import driver as bsn_driver

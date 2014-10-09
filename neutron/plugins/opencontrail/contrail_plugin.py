@@ -14,6 +14,7 @@
 #
 
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 import requests
 
 from neutron.api.v2 import attributes as attr
@@ -23,7 +24,6 @@ from neutron.extensions import external_net
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup
 from neutron import neutron_plugin_base_v2
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.opencontrail.common import exceptions as c_exc
 

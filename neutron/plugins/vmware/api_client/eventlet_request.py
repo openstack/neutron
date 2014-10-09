@@ -14,11 +14,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import eventlet
 import httplib
 import urllib
 
-from neutron.openstack.common import jsonutils
+import eventlet
+from oslo.serialization import jsonutils
+
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import request
 

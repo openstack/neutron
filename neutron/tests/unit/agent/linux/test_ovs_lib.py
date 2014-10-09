@@ -15,12 +15,12 @@
 import collections
 import mock
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 import testtools
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests import base

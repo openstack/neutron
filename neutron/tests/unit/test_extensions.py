@@ -16,6 +16,7 @@
 import abc
 
 import mock
+from oslo.serialization import jsonutils
 import routes
 import webob
 import webtest
@@ -24,7 +25,6 @@ from neutron.api import extensions
 from neutron.common import config
 from neutron.common import exceptions
 from neutron.db import db_base_plugin_v2
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.tests import base

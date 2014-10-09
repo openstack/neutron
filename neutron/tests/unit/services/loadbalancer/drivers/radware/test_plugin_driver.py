@@ -17,13 +17,13 @@ import re
 import contextlib
 import mock
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 from six.moves import queue as Queue
 
 from neutron.api.v2 import attributes
 from neutron import context
 from neutron.extensions import loadbalancer
 from neutron import manager
-from neutron.openstack.common import jsonutils
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers.radware import driver
 from neutron.services.loadbalancer.drivers.radware import exceptions as r_exc

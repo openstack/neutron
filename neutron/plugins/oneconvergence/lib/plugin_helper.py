@@ -18,10 +18,10 @@ import httplib
 import time
 
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 import requests
 from six.moves.urllib import parse
 
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 import neutron.plugins.oneconvergence.lib.exception as exception
 
