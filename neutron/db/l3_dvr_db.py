@@ -81,13 +81,11 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         self, context, router_id, router_db, data, gw_info):
         """Update the model to support the dvr case of a router."""
         if not attributes.is_attr_set(gw_info) and data.get('distributed'):
-            admin_ctx = context.elevated()
-            filters = {'device_id': [router_id],
-                       'device_owner': [l3_const.DEVICE_OWNER_ROUTER_INTF]}
-            ports = self._core_plugin.get_ports(admin_ctx, filters=filters)
-            for p in ports:
-                port_db = self._core_plugin._get_port(admin_ctx, p['id'])
-                port_db.update({'device_owner': DEVICE_OWNER_DVR_INTERFACE})
+            old_owner = l3_const.DEVICE_OWNER_ROUTER_INTF
+            new_owner = DEVICE_OWNER_DVR_INTERFACE
+            for rp in router_db.attached_ports.filter_by(port_type=old_owner):
+                rp.port_type = new_owner
+                rp.port.device_owner = new_owner
 
     def _update_router_db(self, context, router_id, data, gw_info):
         with context.session.begin(subtransactions=True):
@@ -119,7 +117,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                     router, new_network)
         if router.extra_attributes.distributed and router.gw_port:
             snat_p_list = self.create_snat_intf_ports_if_not_exists(
-                context.elevated(), router['id'])
+                context.elevated(), router)
             if not snat_p_list:
                 LOG.debug("SNAT interface ports not created: %s", snat_p_list)
 
@@ -134,12 +132,15 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                      self)._get_device_owner(context, router)
 
     def _get_interface_ports_for_network(self, context, network_id):
-        router_intf_qry = (context.session.query(models_v2.Port).
-                           filter_by(network_id=network_id))
-        return (router_intf_qry.
-                filter(models_v2.Port.device_owner.in_(
-                       [l3_const.DEVICE_OWNER_ROUTER_INTF,
-                        DEVICE_OWNER_DVR_INTERFACE])))
+        router_intf_qry = context.session.query(l3_db.RouterPort)
+        router_intf_qry = router_intf_qry.join(models_v2.Port)
+
+        return router_intf_qry.filter(
+            models_v2.Port.network_id == network_id,
+            l3_db.RouterPort.port_type.in_(
+                [l3_const.DEVICE_OWNER_ROUTER_INTF, DEVICE_OWNER_DVR_INTERFACE]
+            )
+        )
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
         previous_router_id = floatingip_db.router_id
@@ -208,14 +209,22 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         if add_by_port:
             port = self._add_interface_by_port(
-                context, router_id, interface_info['port_id'], device_owner)
+                context, router, interface_info['port_id'], device_owner)
         elif add_by_sub:
             port = self._add_interface_by_subnet(
-                context, router_id, interface_info['subnet_id'], device_owner)
+                context, router, interface_info['subnet_id'], device_owner)
+
+        with context.session.begin(subtransactions=True):
+            router_port = l3_db.RouterPort(
+                port_id=port['id'],
+                router_id=router.id,
+                port_type=device_owner
+            )
+            context.session.add(router_port)
 
         if router.extra_attributes.distributed and router.gw_port:
             self.add_csnat_router_interface_port(
-                context.elevated(), router_id, port['network_id'],
+                context.elevated(), router, port['network_id'],
                 port['fixed_ips'][0]['subnet_id'])
 
         router_interface_info = self._make_router_interface_info(
@@ -257,9 +266,16 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         """Query router interfaces that relate to list of router_ids."""
         if not router_ids:
             return []
-        filters = {'device_id': router_ids,
-                   'device_owner': [DEVICE_OWNER_DVR_SNAT]}
-        interfaces = self._core_plugin.get_ports(context, filters)
+        qry = context.session.query(l3_db.RouterPort)
+        qry = qry.filter(
+            l3_db.RouterPort.router_id.in_(router_ids),
+            l3_db.RouterPort.port_type == DEVICE_OWNER_DVR_SNAT
+        )
+
+        # TODO(markmcclain): This is suboptimal but was left to reduce
+        # changeset size since it is late in cycle
+        ports = [rp.port.id for rp in qry]
+        interfaces = self._core_plugin.get_ports(context, {'id': ports})
         LOG.debug("Return the SNAT ports: %s", interfaces)
         if interfaces:
             self._populate_subnet_for_ports(context, interfaces)
@@ -447,12 +463,19 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def get_snat_interface_ports_for_router(self, context, router_id):
         """Return all existing snat_router_interface ports."""
-        filters = {'device_id': [router_id],
-                   'device_owner': [DEVICE_OWNER_DVR_SNAT]}
-        return self._core_plugin.get_ports(context, filters)
+        # TODO(markmcclain): This is suboptimal but was left to reduce
+        # changeset size since it is late in cycle
+        qry = context.session.query(l3_db.RouterPort)
+        qry = qry.filter_by(
+            router_id=router_id,
+            port_type=DEVICE_OWNER_DVR_SNAT
+        )
+
+        ports = [rp.port.id for rp in qry]
+        return self._core_plugin.get_ports(context, {'id': ports})
 
     def add_csnat_router_interface_port(
-            self, context, router_id, network_id, subnet_id, do_pop=True):
+            self, context, router, network_id, subnet_id, do_pop=True):
         """Add SNAT interface to the specified router and subnet."""
         snat_port = self._core_plugin.create_port(
             context,
@@ -460,19 +483,27 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                       'network_id': network_id,
                       'mac_address': attributes.ATTR_NOT_SPECIFIED,
                       'fixed_ips': [{'subnet_id': subnet_id}],
-                      'device_id': router_id,
+                      'device_id': router.id,
                       'device_owner': DEVICE_OWNER_DVR_SNAT,
                       'admin_state_up': True,
                       'name': ''}})
         if not snat_port:
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)
-        elif do_pop:
+
+        with context.session.begin(subtransactions=True):
+            router_port = l3_db.RouterPort(
+                port_id=snat_port['id'],
+                router_id=router.id,
+                port_type=DEVICE_OWNER_DVR_SNAT
+            )
+            context.session.add(router_port)
+
+        if do_pop:
             return self._populate_subnet_for_ports(context, [snat_port])
         return snat_port
 
-    def create_snat_intf_ports_if_not_exists(
-        self, context, router_id):
+    def create_snat_intf_ports_if_not_exists(self, context, router):
         """Function to return the snat interface port list.
 
         This function will return the snat interface port list
@@ -480,24 +511,27 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         new ports and then return the list.
         """
         port_list = self.get_snat_interface_ports_for_router(
-            context, router_id)
+            context, router.id)
         if port_list:
             self._populate_subnet_for_ports(context, port_list)
             return port_list
         port_list = []
-        filters = {
-            'device_id': [router_id],
-            'device_owner': [DEVICE_OWNER_DVR_INTERFACE]}
-        int_ports = self._core_plugin.get_ports(context, filters)
+
+        int_ports = (
+            rp.port for rp in
+            router.attached_ports.filter_by(
+                port_type=DEVICE_OWNER_DVR_INTERFACE
+            )
+        )
         LOG.info(_('SNAT interface port list does not exist,'
                    ' so create one: %s'), port_list)
         for intf in int_ports:
-            if intf.get('fixed_ips'):
+            if intf.fixed_ips:
                 # Passing the subnet for the port to make sure the IP's
                 # are assigned on the right subnet if multiple subnet
                 # exists
                 snat_port = self.add_csnat_router_interface_port(
-                    context, router_id, intf['network_id'],
+                    context, router, intf['network_id'],
                     intf['fixed_ips'][0]['subnet_id'], do_pop=False)
                 port_list.append(snat_port)
         if port_list:
@@ -539,11 +573,18 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         # Each csnat router interface port is associated
         # with a subnet, so we need to pass the subnet id to
         # delete the right ports.
-        device_filter = {
-            'device_id': [router['id']],
-            'device_owner': [DEVICE_OWNER_DVR_SNAT]}
+
+        # TODO(markmcclain): This is suboptimal but was left to reduce
+        # changeset size since it is late in cycle
+        ports = (
+            rp.port.id for rp in
+            router.attached_ports.filter_by(port_type=DEVICE_OWNER_DVR_SNAT)
+        )
+
         c_snat_ports = self._core_plugin.get_ports(
-            context, filters=device_filter)
+            context,
+            filters={'id': ports}
+        )
         for p in c_snat_ports:
             if subnet_id is None:
                 self._core_plugin.delete_port(context,
