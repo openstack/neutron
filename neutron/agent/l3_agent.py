@@ -22,6 +22,7 @@ eventlet.monkey_patch()
 import netaddr
 import os
 from oslo.config import cfg
+from oslo import messaging
 import Queue
 
 from neutron.agent.common import config
@@ -41,6 +42,7 @@ from neutron.common import utils as common_utils
 from neutron import context
 from neutron import manager
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
@@ -526,17 +528,35 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.sync_progress = False
 
         # Get the list of service plugins from Neutron Server
-        try:
-            self.neutron_service_plugins = (
-                self.plugin_rpc.get_service_plugin_list(self.context))
-        except n_rpc.RemoteError as e:
-            LOG.warning(_('l3-agent cannot check service plugins '
-                          'enabled at the neutron server when startup '
-                          'due to RPC error. It happens when the server '
-                          'does not support this RPC API. If the error '
-                          'is UnsupportedVersion you can ignore '
-                          'this warning. Detail message: %s'), e)
-            self.neutron_service_plugins = None
+        # This is the first place where we contact neutron-server on startup
+        # so retry in case its not ready to respond.
+        retry_count = 5
+        while True:
+            retry_count = retry_count - 1
+            try:
+                self.neutron_service_plugins = (
+                    self.plugin_rpc.get_service_plugin_list(self.context))
+            except n_rpc.RemoteError as e:
+                with excutils.save_and_reraise_exception() as ctx:
+                    ctx.reraise = False
+                    LOG.warning(_LW('l3-agent cannot check service plugins '
+                                    'enabled at the neutron server when '
+                                    'startup due to RPC error. It happens '
+                                    'when the server does not support this '
+                                    'RPC API. If the error is '
+                                    'UnsupportedVersion you can ignore this '
+                                    'warning. Detail message: %s'), e)
+                self.neutron_service_plugins = None
+            except messaging.MessagingTimeout as e:
+                with excutils.save_and_reraise_exception() as ctx:
+                    if retry_count > 0:
+                        ctx.reraise = False
+                        LOG.warning(_LW('l3-agent cannot check service '
+                                        'plugins enabled on the neutron '
+                                        'server. Retrying. '
+                                        'Detail message: %s'), e)
+                        continue
+            break
 
         self._clean_stale_namespaces = self.conf.use_namespaces
 
