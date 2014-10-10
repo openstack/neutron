@@ -28,6 +28,7 @@ from neutron.db.vpn import vpn_validator
 from neutron.extensions import vpnaas
 from neutron import manager
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -646,7 +647,7 @@ class VPNPluginRpcDbMixin():
                     vpnservice_db = self._get_vpnservice(
                         context, vpnservice['id'])
                 except vpnaas.VPNServiceNotFound:
-                    LOG.warn(_('vpnservice %s in db is already deleted'),
+                    LOG.warn(_LW('vpnservice %s in db is already deleted'),
                              vpnservice['id'])
                     continue
 

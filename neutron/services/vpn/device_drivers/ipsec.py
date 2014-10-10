@@ -28,6 +28,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import rpc as n_rpc
 from neutron import context
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
@@ -244,7 +245,7 @@ class BaseSwanProcess():
                 self.start()
         except RuntimeError:
             LOG.exception(
-                _("Failed to enable vpn process on router %s"),
+                _LE("Failed to enable vpn process on router %s"),
                 self.id)
 
     def disable(self):
@@ -255,7 +256,7 @@ class BaseSwanProcess():
             self.remove_config()
         except RuntimeError:
             LOG.exception(
-                _("Failed to disable vpn process on router %s"),
+                _LE("Failed to disable vpn process on router %s"),
                 self.id)
 
     @abc.abstractmethod
