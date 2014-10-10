@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2014.2.dev246.gff9745c\n"
+"Project-Id-Version: neutron 2015.1.dev60.gc38f68c\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-29 06:04+0000\n"
+"POT-Creation-Date: 2014-10-10 06:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,24 +29,29 @@ msgstr ""
 msgid "Policy check error while calling %s!"
 msgstr ""
 
+#: neutron/agent/l3_agent.py:1844
+#, python-format
+msgid "Removing incompatible router '%s'"
+msgstr ""
+
 #: neutron/agent/l3_ha_agent.py:136
 #, python-format
 msgid "Unable to process HA router %s without ha port"
 msgstr ""
 
-#: neutron/agent/linux/external_process.py:229
+#: neutron/agent/linux/external_process.py:227
 #, python-format
 msgid ""
 "%(service)s for %(resource_type)s with uuid %(uuid)s not found. The "
 "process should not have died"
 msgstr ""
 
-#: neutron/agent/linux/external_process.py:249
+#: neutron/agent/linux/external_process.py:247
 #, python-format
 msgid "respawning %(service)s for uuid %(uuid)s"
 msgstr ""
 
-#: neutron/agent/linux/external_process.py:255
+#: neutron/agent/linux/external_process.py:253
 msgid "Exiting agent as programmed in check_child_processes_actions"
 msgstr ""
 
