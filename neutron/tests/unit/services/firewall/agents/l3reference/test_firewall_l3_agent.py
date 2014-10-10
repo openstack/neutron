@@ -335,8 +335,9 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
 
     def _prepare_router_data(self, use_namespaces):
         router = {'id': str(uuid.uuid4()), 'tenant_id': str(uuid.uuid4())}
+        ns = "ns-" + router['id']
         return l3_agent.RouterInfo(router['id'], self.conf.root_helper,
-                                   use_namespaces, router=router)
+                                   use_namespaces, router=router, ns_name=ns)
 
     def _get_router_info_list_with_namespace_helper(self,
                                                     router_use_namespaces):

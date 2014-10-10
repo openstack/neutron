@@ -93,8 +93,9 @@ class TestVPNAgent(base.BaseTestCase):
 
     def test_get_namespace(self):
         router_id = _uuid()
+        ns = "ns-" + router_id
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {})
+                                 self.conf.use_namespaces, {}, ns_name=ns)
         self.agent.router_info = {router_id: ri}
         namespace = self.agent.get_namespace(router_id)
         self.assertTrue(namespace.endswith(router_id))

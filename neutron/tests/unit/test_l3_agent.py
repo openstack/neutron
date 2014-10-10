@@ -431,8 +431,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_router_info_create(self):
         id = _uuid()
+        ns = "ns-" + id
         ri = l3_agent.RouterInfo(id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {})
+                                 self.conf.use_namespaces, {}, ns_name=ns)
 
         self.assertTrue(ri.ns_name.endswith(id))
 
@@ -449,8 +450,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
             'enable_snat': True,
             'routes': [],
             'gw_port': ex_gw_port}
+        ns = "ns-" + id
         ri = l3_agent.RouterInfo(id, self.conf.root_helper,
-                                 self.conf.use_namespaces, router)
+                                 self.conf.use_namespaces, router, ns_name=ns)
         self.assertTrue(ri.ns_name.endswith(id))
         self.assertEqual(ri.router, router)
 
@@ -520,9 +522,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self._test_internal_network_action('remove')
 
     def _test_external_gateway_action(self, action, router):
-        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
-                                 self.conf.use_namespaces, router=router)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router,
+                                 ns_name=agent.get_ns_name(router['id']))
         # Special setup for dvr routers
         if router.get('distributed'):
             agent.conf.agent_mode = 'dvr_snat'
@@ -590,9 +593,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_external_gateway_updated(self):
         router = prepare_router_data(num_internal_ports=2)
-        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
-                                 self.conf.use_namespaces, router=router)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router,
+                                 ns_name=agent.get_ns_name(router['id']))
         interface_name, ex_gw_port = self._prepare_ext_gw_test(agent)
 
         fake_fip = {'floatingips': [{'id': _uuid(),
