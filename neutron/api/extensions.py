@@ -32,7 +32,6 @@ from neutron.common import exceptions
 import neutron.extensions
 from neutron.manager import NeutronManager
 from neutron.openstack.common import log as logging
-from neutron import policy
 from neutron import wsgi
 
 
@@ -402,7 +401,6 @@ class ExtensionManager(object):
         self.path = path
         self.extensions = {}
         self._load_all_extensions()
-        policy.reset()
 
     def get_resources(self):
         """Returns a list of ResourceExtension objects."""
