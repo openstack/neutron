@@ -482,7 +482,7 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             br_addport_fn.return_value = "11"
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [mock.call.link_delete(),
-                              mock.call.utils_execute(['/sbin/udevadm',
+                              mock.call.utils_execute(['udevadm',
                                                        'settle',
                                                        '--timeout=10']),
                               mock.call.add_veth('int-br-eth',

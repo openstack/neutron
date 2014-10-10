@@ -604,7 +604,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             # Give udev a chance to process its rules here, to avoid
             # race conditions between commands launched by udev rules
             # and the subsequent call to ip_wrapper.add_veth
-            utils.execute(['/sbin/udevadm', 'settle', '--timeout=10'])
+            utils.execute(['udevadm', 'settle', '--timeout=10'])
 
     def _phys_br_create_veth(self, br, int_veth_name,
                              phys_veth_name, physical_network, ip_wrapper):
