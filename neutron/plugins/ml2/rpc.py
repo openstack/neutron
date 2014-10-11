@@ -165,7 +165,8 @@ class RpcCallbacks(n_rpc.RpcCallback,
             utils.is_extension_supported(l3plugin,
                                          q_const.L3_DISTRIBUTED_EXT_ALIAS)):
             try:
-                l3plugin.dvr_vmarp_table_update(rpc_context, port_id, "add")
+                port = plugin._get_port(rpc_context, port_id)
+                l3plugin.dvr_vmarp_table_update(rpc_context, port, "add")
             except exceptions.PortNotFound:
                 LOG.debug('Port %s not found during ARP update', port_id)
 

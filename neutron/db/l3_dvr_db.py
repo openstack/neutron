@@ -538,13 +538,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self._populate_subnet_for_ports(context, port_list)
         return port_list
 
-    def dvr_vmarp_table_update(self, context, port_id, action):
+    def dvr_vmarp_table_update(self, context, port_dict, action):
         """Notify the L3 agent of VM ARP table changes.
 
         Provide the details of the VM ARP to the L3 agent when
         a Nova instance gets created or deleted.
         """
-        port_dict = self._core_plugin._get_port(context, port_id)
         # Check this is a valid VM port
         if ("compute:" not in port_dict['device_owner'] or
             not port_dict['fixed_ips']):
