@@ -161,13 +161,44 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.plugin.assert_has_calls(expected)
         return retval
 
-    def test_update_dhcp_port(self):
+    def test_update_dhcp_port_verify_port_action_port_dict(self):
+        port = {'port': {'network_id': 'foo_network_id',
+                         'device_owner': constants.DEVICE_OWNER_DHCP,
+                         'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]}
+                }
+        expected_port = {'port': {'network_id': 'foo_network_id',
+                                  'device_owner': constants.DEVICE_OWNER_DHCP,
+                                  'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
+                                  },
+                         'id': 'foo_port_id'
+                         }
+
+        def _fake_port_action(plugin, context, port, action):
+            self.assertEqual(expected_port, port)
+
+        self.callbacks._port_action = _fake_port_action
         self.callbacks.update_dhcp_port(mock.Mock(),
                                         host='foo_host',
                                         port_id='foo_port_id',
-                                        port=mock.Mock())
+                                        port=port)
+
+    def test_update_dhcp_port(self):
+        port = {'port': {'network_id': 'foo_network_id',
+                         'device_owner': constants.DEVICE_OWNER_DHCP,
+                         'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]}
+                }
+        expected_port = {'port': {'network_id': 'foo_network_id',
+                                  'device_owner': constants.DEVICE_OWNER_DHCP,
+                                  'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
+                                  },
+                         'id': 'foo_port_id'
+                         }
+        self.callbacks.update_dhcp_port(mock.Mock(),
+                                        host='foo_host',
+                                        port_id='foo_port_id',
+                                        port=port)
         self.plugin.assert_has_calls(
-            mock.call.update_port(mock.ANY, 'foo_port_id', mock.ANY))
+            mock.call.update_port(mock.ANY, 'foo_port_id', expected_port))
 
     def test_get_dhcp_port_existing(self):
         port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])
