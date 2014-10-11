@@ -12,7 +12,7 @@ bind_host = 0.0.0.0
 bind_port = 9696
 
 # Path to the extensions
-api_extensions_path = unit/extensions
+api_extensions_path = neutron/tests/unit/extensions
 
 # Paste configuration file
 api_paste_config = api-paste.ini.test
