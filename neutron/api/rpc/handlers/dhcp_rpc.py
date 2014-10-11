@@ -60,7 +60,7 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
             if action == 'create_port':
                 return plugin.create_port(context, port)
             elif action == 'update_port':
-                return plugin.update_port(context, port['id'], port['port'])
+                return plugin.update_port(context, port['id'], port)
             else:
                 msg = _('Unrecognized action')
                 raise n_exc.Invalid(message=msg)
@@ -282,13 +282,11 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
     def update_dhcp_port(self, context, **kwargs):
         """Update the dhcp port."""
         host = kwargs.get('host')
-        port_id = kwargs.get('port_id')
         port = kwargs.get('port')
+        port['id'] = kwargs.get('port_id')
         LOG.debug(_('Update dhcp port %(port)s '
                     'from %(host)s.'),
                   {'port': port,
                    'host': host})
         plugin = manager.NeutronManager.get_plugin()
-        return self._port_action(plugin, context,
-                                 {'id': port_id, 'port': port},
-                                 'update_port')
+        return self._port_action(plugin, context, port, 'update_port')
