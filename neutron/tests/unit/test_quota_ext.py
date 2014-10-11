@@ -18,11 +18,13 @@ import sys
 import mock
 from oslo.config import cfg
 import testtools
+from webob import exc
 import webtest
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import config
+from neutron.common import constants
 from neutron.common import exceptions
 from neutron import context
 from neutron.db import quota_db
@@ -186,6 +188,16 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
                            self.serialize(quotas), extra_environ=env,
                            expect_errors=True)
         self.assertEqual(400, res.status_int)
+
+    def test_update_quotas_with_out_of_range_integer_returns_400(self):
+        tenant_id = 'tenant_id1'
+        env = {'neutron.context': context.Context('', tenant_id,
+                                                  is_admin=True)}
+        quotas = {'quota': {'network': constants.DB_INTEGER_MAX_VALUE + 1}}
+        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env,
+                           expect_errors=True)
+        self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
 
     def test_update_quotas_to_unlimited(self):
         tenant_id = 'tenant_id1'
