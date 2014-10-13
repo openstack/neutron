@@ -41,7 +41,7 @@ def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.create_table(
+    migration.create_table_if_not_exist(
         u'vips',
         sa.Column(u'tenant_id', sa.String(255), nullable=True),
         sa.Column(u'id', sa.String(36), nullable=False),
@@ -60,7 +60,7 @@ def upgrade(active_plugins=None, options=None):
         sa.UniqueConstraint('pool_id'),
         sa.PrimaryKeyConstraint(u'id')
     )
-    op.create_table(
+    migration.create_table_if_not_exist(
         u'sessionpersistences',
         sa.Column(u'vip_id', sa.String(36), nullable=False),
         sa.Column(u'type',
@@ -73,7 +73,7 @@ def upgrade(active_plugins=None, options=None):
         sa.ForeignKeyConstraint(['vip_id'], [u'vips.id'], ),
         sa.PrimaryKeyConstraint(u'vip_id')
     )
-    op.create_table(
+    migration.create_table_if_not_exist(
         u'pools',
         sa.Column(u'tenant_id', sa.String(255), nullable=True),
         sa.Column(u'id', sa.String(36), nullable=False),
@@ -95,7 +95,7 @@ def upgrade(active_plugins=None, options=None):
         sa.ForeignKeyConstraint(['vip_id'], [u'vips.id'], ),
         sa.PrimaryKeyConstraint(u'id')
     )
-    op.create_table(
+    migration.create_table_if_not_exist(
         u'healthmonitors',
         sa.Column(u'tenant_id', sa.String(255), nullable=True),
         sa.Column(u'id', sa.String(36), nullable=False),
@@ -116,7 +116,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column(u'admin_state_up', sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint(u'id')
     )
-    op.create_table(
+    migration.create_table_if_not_exist(
         u'poolmonitorassociations',
         sa.Column(u'pool_id', sa.String(36), nullable=False),
         sa.Column(u'monitor_id', sa.String(36), nullable=False),
@@ -124,7 +124,7 @@ def upgrade(active_plugins=None, options=None):
         sa.ForeignKeyConstraint(['pool_id'], [u'pools.id'], ),
         sa.PrimaryKeyConstraint(u'pool_id', u'monitor_id')
     )
-    op.create_table(
+    migration.create_table_if_not_exist(
         u'members',
         sa.Column(u'tenant_id', sa.String(255), nullable=True),
         sa.Column(u'id', sa.String(36), nullable=False),
@@ -137,7 +137,7 @@ def upgrade(active_plugins=None, options=None):
         sa.ForeignKeyConstraint(['pool_id'], [u'pools.id'], ),
         sa.PrimaryKeyConstraint(u'id')
     )
-    op.create_table(
+    migration.create_table_if_not_exist(
         u'poolstatisticss',
         sa.Column(u'pool_id', sa.String(36), nullable=False),
         sa.Column(u'bytes_in', sa.Integer(), nullable=False),

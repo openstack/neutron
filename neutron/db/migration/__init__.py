@@ -14,6 +14,10 @@
 #
 # @author: Mark McClain, DreamHost
 
+from alembic import context
+from alembic import op
+import sqlalchemy as sa
+
 OVS_PLUGIN = ('neutron.plugins.openvswitch.ovs_neutron_plugin'
               '.OVSNeutronPluginV2')
 CISCO_PLUGIN = 'neutron.plugins.cisco.network_plugin.PluginV2'
@@ -27,3 +31,13 @@ def should_run(active_plugins, migrate_plugins):
                 OVS_PLUGIN in migrate_plugins):
             migrate_plugins.append(CISCO_PLUGIN)
         return set(active_plugins) & set(migrate_plugins)
+
+
+def create_table_if_not_exist(table_name, *args, **kwargs):
+    if not context.is_offline_mode():
+        bind = op.get_bind()
+        insp = sa.engine.reflection.Inspector.from_engine(bind)
+        if table_name in insp.get_table_names():
+            return
+
+    op.create_table(table_name, *args, **kwargs)
