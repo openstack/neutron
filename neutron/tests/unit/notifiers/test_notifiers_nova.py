@@ -218,21 +218,21 @@ class TestNovaNotify(base.BaseTestCase):
             self.nova_notifier.nclient.server_external_events,
                 'create') as nclient_create:
             nclient_create.return_value = 'i am a string!'
-            self.nova_notifier.send_events()
+            self.nova_notifier.send_events([])
 
     def test_nova_send_event_rasies_404(self):
         with mock.patch.object(
             self.nova_notifier.nclient.server_external_events,
                 'create') as nclient_create:
             nclient_create.side_effect = nova_exceptions.NotFound
-            self.nova_notifier.send_events()
+            self.nova_notifier.send_events([])
 
     def test_nova_send_events_raises(self):
         with mock.patch.object(
             self.nova_notifier.nclient.server_external_events,
                 'create') as nclient_create:
             nclient_create.side_effect = Exception
-            self.nova_notifier.send_events()
+            self.nova_notifier.send_events([])
 
     def test_nova_send_events_returns_non_200(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
@@ -242,9 +242,8 @@ class TestNovaNotify(base.BaseTestCase):
             nclient_create.return_value = [{'code': 404,
                                             'name': 'network-changed',
                                             'server_uuid': device_id}]
-            self.nova_notifier.pending_events.append(
-                {'name': 'network-changed', 'server_uuid': device_id})
-            self.nova_notifier.send_events()
+            self.nova_notifier.send_events(
+                [{'name': 'network-changed', 'server_uuid': device_id}])
 
     def test_nova_send_events_return_200(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
@@ -254,9 +253,8 @@ class TestNovaNotify(base.BaseTestCase):
             nclient_create.return_value = [{'code': 200,
                                             'name': 'network-changed',
                                             'server_uuid': device_id}]
-            self.nova_notifier.pending_events.append(
-                {'name': 'network-changed', 'server_uuid': device_id})
-            self.nova_notifier.send_events()
+            self.nova_notifier.send_events(
+                [{'name': 'network-changed', 'server_uuid': device_id}])
 
     def test_nova_send_events_multiple(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
@@ -269,40 +267,9 @@ class TestNovaNotify(base.BaseTestCase):
                                            {'code': 200,
                                             'name': 'network-changed',
                                             'server_uuid': device_id}]
-            self.nova_notifier.pending_events.append(
-                {'name': 'network-changed', 'server_uuid': device_id})
-            self.nova_notifier.pending_events.append(
-                {'name': 'network-changed', 'server_uuid': device_id})
-            self.nova_notifier.send_events()
-
-    def test_queue_event_no_event(self):
-        with mock.patch('eventlet.spawn_n') as spawn_n:
-            self.nova_notifier.queue_event(None)
-            self.assertEqual(0, len(self.nova_notifier.pending_events))
-            self.assertEqual(0, spawn_n.call_count)
-
-    def test_queue_event_first_event(self):
-        with mock.patch('eventlet.spawn_n') as spawn_n:
-            self.nova_notifier.queue_event(mock.Mock())
-            self.assertEqual(1, len(self.nova_notifier.pending_events))
-            self.assertEqual(1, spawn_n.call_count)
-
-    def test_queue_event_multiple_events(self):
-        with mock.patch('eventlet.spawn_n') as spawn_n:
-            events = 6
-            for i in range(0, events):
-                self.nova_notifier.queue_event(mock.Mock())
-            self.assertEqual(events, len(self.nova_notifier.pending_events))
-            self.assertEqual(1, spawn_n.call_count)
-
-    def test_queue_event_call_send_events(self):
-        with mock.patch.object(self.nova_notifier,
-                               'send_events') as send_events:
-            with mock.patch('eventlet.spawn_n') as spawn_n:
-                spawn_n.side_effect = lambda func: func()
-                self.nova_notifier.queue_event(mock.Mock())
-                self.assertFalse(self.nova_notifier._waiting_to_send)
-                send_events.assert_called_once_with()
+            self.nova_notifier.send_events([
+                {'name': 'network-changed', 'server_uuid': device_id},
+                {'name': 'network-changed', 'server_uuid': device_id}])
 
     def test_reassociate_floatingip_without_disassociate_event(self):
         returned_obj = {'floatingip':
@@ -311,12 +278,15 @@ class TestNovaNotify(base.BaseTestCase):
         self.nova_notifier._waiting_to_send = True
         self.nova_notifier.send_network_change(
             'update_floatingip', original_obj, returned_obj)
-        self.assertEqual(2, len(self.nova_notifier.pending_events))
+        self.assertEqual(
+            2, len(self.nova_notifier.batch_notifier.pending_events))
 
         returned_obj_non = {'floatingip': {'port_id': None}}
         event_dis = self.nova_notifier.create_port_changed_event(
             'update_floatingip', original_obj, returned_obj_non)
         event_assoc = self.nova_notifier.create_port_changed_event(
             'update_floatingip', original_obj, returned_obj)
-        self.assertEqual(self.nova_notifier.pending_events[0], event_dis)
-        self.assertEqual(self.nova_notifier.pending_events[1], event_assoc)
+        self.assertEqual(
+            self.nova_notifier.batch_notifier.pending_events[0], event_dis)
+        self.assertEqual(
+            self.nova_notifier.batch_notifier.pending_events[1], event_assoc)

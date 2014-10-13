@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
 from keystoneclient import auth as ks_auth
 from keystoneclient.auth.identity import v2 as v2_auth
 from keystoneclient import session as ks_session
@@ -28,6 +27,7 @@ from neutron.common import constants
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
+from neutron.notifiers import batch_notifier
 from neutron.openstack.common import uuidutils
 
 
@@ -105,45 +105,8 @@ class Notifier(object):
             session=session,
             region_name=cfg.CONF.nova.region_name,
             extensions=[server_external_events])
-        self.pending_events = []
-        self._waiting_to_send = False
-
-    def queue_event(self, event):
-        """Called to queue sending an event with the next batch of events.
-
-        Sending events individually, as they occur, has been problematic as it
-        can result in a flood of sends.  Previously, there was a loopingcall
-        thread that would send batched events on a periodic interval.  However,
-        maintaining a persistent thread in the loopingcall was also
-        problematic.
-
-        This replaces the loopingcall with a mechanism that creates a
-        short-lived thread on demand when the first event is queued.  That
-        thread will sleep once for the same send_events_interval to allow other
-        events to queue up in pending_events and then will send them when it
-        wakes.
-
-        If a thread is already alive and waiting, this call will simply queue
-        the event and return leaving it up to the thread to send it.
-
-        :param event: the event that occurred.
-        """
-        if not event:
-            return
-
-        self.pending_events.append(event)
-
-        if self._waiting_to_send:
-            return
-
-        self._waiting_to_send = True
-
-        def last_out_sends():
-            eventlet.sleep(cfg.CONF.send_events_interval)
-            self._waiting_to_send = False
-            self.send_events()
-
-        eventlet.spawn_n(last_out_sends)
+        self.batch_notifier = batch_notifier.BatchNotifier(
+            cfg.CONF.send_events_interval, self.send_events)
 
     def _is_compute_port(self, port):
         try:
@@ -189,11 +152,11 @@ class Notifier(object):
             disassociate_returned_obj = {'floatingip': {'port_id': None}}
             event = self.create_port_changed_event(action, original_obj,
                                                    disassociate_returned_obj)
-            self.queue_event(event)
+            self.batch_notifier.queue_event(event)
 
         event = self.create_port_changed_event(action, original_obj,
                                                returned_obj)
-        self.queue_event(event)
+        self.batch_notifier.queue_event(event)
 
     def create_port_changed_event(self, action, original_obj, returned_obj):
         port = None
@@ -270,16 +233,10 @@ class Notifier(object):
 
     def send_port_status(self, mapper, connection, port):
         event = getattr(port, "_notify_event", None)
-        self.queue_event(event)
+        self.batch_notifier.queue_event(event)
         port._notify_event = None
 
-    def send_events(self):
-        if not self.pending_events:
-            return
-
-        batched_events = self.pending_events
-        self.pending_events = []
-
+    def send_events(self, batched_events):
         LOG.debug("Sending events: %s", batched_events)
         try:
             response = self.nclient.server_external_events.create(
