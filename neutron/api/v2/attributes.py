@@ -762,16 +762,3 @@ PLURALS = {NETWORKS: NETWORK,
            'allocation_pools': 'allocation_pool',
            'fixed_ips': 'fixed_ip',
            'extensions': 'extension'}
-EXT_NSES = {}
-
-# Namespaces to be added for backward compatibility
-# when existing extended resource attributes are
-# provided by other extension than original one.
-EXT_NSES_BC = {}
-
-
-def get_attr_metadata():
-    return {'plurals': PLURALS,
-            'xmlns': constants.XML_NS_V20,
-            constants.EXT_NS: EXT_NSES,
-            constants.EXT_NS_COMP: EXT_NSES_BC}

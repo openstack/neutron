@@ -23,8 +23,6 @@ import testtools
 import webob
 import webob.exc
 
-from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron.tests import base
 from neutron import wsgi
@@ -154,33 +152,16 @@ class SerializerTest(base.BaseTestCase):
         """Test serialize with content type json."""
         input_data = {'servers': ['test=pass']}
         content_type = 'application/json'
-        serializer = wsgi.Serializer(default_xmlns="fake")
+        serializer = wsgi.Serializer()
         result = serializer.serialize(input_data, content_type)
 
         self.assertEqual('{"servers": ["test=pass"]}', result)
-
-    def test_serialize_content_type_xml(self):
-        """Test serialize with content type xml."""
-        input_data = {'servers': ['test=pass']}
-        content_type = 'application/xml'
-        serializer = wsgi.Serializer(default_xmlns="fake")
-        result = serializer.serialize(input_data, content_type)
-        expected = (
-            '<?xml version=\'1.0\''
-            ' encoding=\'UTF-8\'?>\n'
-            '<servers xmlns="http://openstack.org/quantum/api/v2.0" '
-            'xmlns:quantum="http://openstack.org/quantum/api/v2.0" '
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<server>test=pass</server></servers>'
-        )
-
-        self.assertEqual(expected, result)
 
     def test_deserialize_raise_bad_request(self):
         """Test serialize verifies that exception is raises."""
         content_type = 'application/unknown'
         data_string = 'test'
-        serializer = wsgi.Serializer(default_xmlns="fake")
+        serializer = wsgi.Serializer()
 
         self.assertRaises(
             webob.exc.HTTPBadRequest,
@@ -190,99 +171,10 @@ class SerializerTest(base.BaseTestCase):
         """Test Serializer.deserialize with content type json."""
         content_type = 'application/json'
         data_string = '{"servers": ["test=pass"]}'
-        serializer = wsgi.Serializer(default_xmlns="fake")
+        serializer = wsgi.Serializer()
         result = serializer.deserialize(data_string, content_type)
 
         self.assertEqual({'body': {u'servers': [u'test=pass']}}, result)
-
-    def test_deserialize_xml_content_type(self):
-        """Test deserialize with content type xml."""
-        content_type = 'application/xml'
-        data_string = (
-            '<servers xmlns="fake">'
-            '<server>test=pass</server>'
-            '</servers>'
-        )
-        serializer = wsgi.Serializer(
-            default_xmlns="fake", metadata={'xmlns': 'fake'})
-        result = serializer.deserialize(data_string, content_type)
-        expected = {'body': {'servers': {'server': 'test=pass'}}}
-
-        self.assertEqual(expected, result)
-
-    def test_deserialize_xml_content_type_with_meta(self):
-        """Test deserialize with content type xml with meta."""
-        content_type = 'application/xml'
-        data_string = (
-            '<servers>'
-            '<server name="s1">'
-            '<test test="a">passed</test>'
-            '</server>'
-            '</servers>'
-        )
-
-        metadata = {'plurals': {'servers': 'server'}, 'xmlns': 'fake'}
-        serializer = wsgi.Serializer(
-            default_xmlns="fake", metadata=metadata)
-        result = serializer.deserialize(data_string, content_type)
-        expected = {'body': {'servers': [{'name': 's1', 'test': 'passed'}]}}
-
-        self.assertEqual(expected, result)
-
-    def test_serialize_xml_root_key_is_dict(self):
-        """Test Serializer.serialize with content type xml with meta dict."""
-        content_type = 'application/xml'
-        data = {'servers': {'network': (2, 3)}}
-        metadata = {'xmlns': 'fake'}
-
-        serializer = wsgi.Serializer(default_xmlns="fake", metadata=metadata)
-        result = serializer.serialize(data, content_type)
-        result = result.replace('\n', '')
-        expected = (
-            '<?xml version=\'1.0\' encoding=\'UTF-8\'?>'
-            '<servers xmlns="fake" xmlns:quantum="fake" '
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<network>(2, 3)</network></servers>'
-        )
-
-        self.assertEqual(result, expected)
-
-    def test_serialize_xml_root_key_is_list(self):
-        """Test serialize with content type xml with meta list."""
-        input_dict = {'servers': ['test=pass']}
-        content_type = 'application/xml'
-        metadata = {'application/xml': {
-                    'xmlns': 'fake'}}
-        serializer = wsgi.Serializer(default_xmlns="fake", metadata=metadata)
-        result = serializer.serialize(input_dict, content_type)
-        result = result.replace('\n', '').replace(' ', '')
-        expected = (
-            '<?xmlversion=\'1.0\''
-            'encoding=\'UTF-8\'?>'
-            '<serversxmlns="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<server>test=pass</server></servers>'
-        )
-
-        self.assertEqual(result, expected)
-
-    def test_serialize_xml_root_is_None(self):
-        input_dict = {'test': 'pass'}
-        content_type = 'application/xml'
-        serializer = wsgi.Serializer(default_xmlns="fake")
-        result = serializer.serialize(input_dict, content_type)
-        result = result.replace('\n', '').replace(' ', '')
-        expected = (
-            '<?xmlversion=\'1.0\''
-            'encoding=\'UTF-8\'?>'
-            '<testxmlns="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            'pass</test>'
-        )
-
-        self.assertEqual(result, expected)
 
 
 class RequestDeserializerTest(testtools.TestCase):
@@ -293,13 +185,7 @@ class RequestDeserializerTest(testtools.TestCase):
             def deserialize(self, data, action='default'):
                 return 'pew_json'
 
-        class XMLDeserializer(object):
-            def deserialize(self, data, action='default'):
-                return 'pew_xml'
-
-        self.body_deserializers = {
-            'application/json': JSONDeserializer(),
-            'application/xml': XMLDeserializer()}
+        self.body_deserializers = {'application/json': JSONDeserializer()}
 
         self.deserializer = wsgi.RequestDeserializer(self.body_deserializers)
 
@@ -307,15 +193,10 @@ class RequestDeserializerTest(testtools.TestCase):
         """Test RequestDeserializer.get_body_deserializer."""
         expected_json_serializer = self.deserializer.get_body_deserializer(
             'application/json')
-        expected_xml_serializer = self.deserializer.get_body_deserializer(
-            'application/xml')
 
         self.assertEqual(
             expected_json_serializer,
             self.body_deserializers['application/json'])
-        self.assertEqual(
-            expected_xml_serializer,
-            self.body_deserializers['application/xml'])
 
     def test_get_expected_content_type(self):
         """Test RequestDeserializer.get_expected_content_type."""
@@ -345,9 +226,9 @@ class RequestDeserializerTest(testtools.TestCase):
             self.deserializer, 'get_action_args') as mock_method:
             mock_method.return_value = {'action': 'create'}
             request = wsgi.Request.blank('/')
-            request.headers['Accept'] = 'application/xml'
+            request.headers['Accept'] = 'application/json'
             deserialized = self.deserializer.deserialize(request)
-            expected = ('create', {}, 'application/xml')
+            expected = ('create', {}, 'application/json')
 
             self.assertEqual(expected, deserialized)
 
@@ -368,17 +249,11 @@ class ResponseSerializerTest(testtools.TestCase):
             def serialize(self, data, action='default'):
                 return 'pew_json'
 
-        class XMLSerializer(object):
-            def serialize(self, data, action='default'):
-                return 'pew_xml'
-
         class HeadersSerializer(object):
             def serialize(self, response, data, action):
                 response.status_int = 404
 
-        self.body_serializers = {
-            'application/json': JSONSerializer(),
-            'application/xml': XMLSerializer()}
+        self.body_serializers = {'application/json': JSONSerializer()}
 
         self.serializer = wsgi.ResponseSerializer(
             self.body_serializers, HeadersSerializer())
@@ -408,13 +283,6 @@ class ResponseSerializerTest(testtools.TestCase):
 
         self.assertEqual(response.headers['Content-Type'], 'application/json')
         self.assertEqual(response.body, 'pew_json')
-        self.assertEqual(response.status_int, 404)
-
-    def test_serialize_xml_response(self):
-        response = self.serializer.serialize({}, 'application/xml')
-
-        self.assertEqual(response.headers['Content-Type'], 'application/xml')
-        self.assertEqual(response.body, 'pew_xml')
         self.assertEqual(response.status_int, 404)
 
     def test_serialize_response_None(self):
@@ -456,36 +324,18 @@ class RequestTest(base.BaseTestCase):
 
     def test_content_type_from_accept(self):
         request = wsgi.Request.blank('/tests/123')
-        request.headers["Accept"] = "application/xml"
-        result = request.best_match_content_type()
-
-        self.assertEqual(result, "application/xml")
-
-        request = wsgi.Request.blank('/tests/123')
         request.headers["Accept"] = "application/json"
         result = request.best_match_content_type()
 
         self.assertEqual(result, "application/json")
 
         request = wsgi.Request.blank('/tests/123')
-        request.headers["Accept"] = "application/xml, application/json"
+        request.headers["Accept"] = ("application/json; q=0.3")
         result = request.best_match_content_type()
 
         self.assertEqual(result, "application/json")
 
-        request = wsgi.Request.blank('/tests/123')
-        request.headers["Accept"] = ("application/json; q=0.3, "
-                                     "application/xml; q=0.9")
-        result = request.best_match_content_type()
-
-        self.assertEqual(result, "application/xml")
-
     def test_content_type_from_query_extension(self):
-        request = wsgi.Request.blank('/tests/123.xml')
-        result = request.best_match_content_type()
-
-        self.assertEqual(result, "application/xml")
-
         request = wsgi.Request.blank('/tests/123.json')
         result = request.best_match_content_type()
 
@@ -497,11 +347,11 @@ class RequestTest(base.BaseTestCase):
         self.assertEqual(result, "application/json")
 
     def test_content_type_accept_and_query_extension(self):
-        request = wsgi.Request.blank('/tests/123.xml')
+        request = wsgi.Request.blank('/tests/123.json')
         request.headers["Accept"] = "application/json"
         result = request.best_match_content_type()
 
-        self.assertEqual(result, "application/xml")
+        self.assertEqual(result, "application/json")
 
     def test_content_type_accept_default(self):
         request = wsgi.Request.blank('/tests/123.unsupported')
@@ -662,39 +512,6 @@ class JSONDeserializerTest(base.BaseTestCase):
             deserializer.deserialize(data), as_dict)
 
 
-class XMLDeserializerTest(base.BaseTestCase):
-    def test_xml_empty(self):
-        xml = '<a></a>'
-        as_dict = {'body': {'a': ''}}
-        deserializer = wsgi.XMLDeserializer()
-
-        self.assertEqual(
-            deserializer.deserialize(xml), as_dict)
-
-    def test_initialization(self):
-        xml = '<a><b>test</b></a>'
-        deserializer = wsgi.XMLDeserializer()
-
-        self.assertEqual(
-            {'body': {u'a': {u'b': u'test'}}}, deserializer(xml))
-
-    def test_default_raise_Malformed_Exception(self):
-        """Verify that exception MalformedRequestBody is raised."""
-        data_string = ""
-        deserializer = wsgi.XMLDeserializer()
-
-        self.assertRaises(
-            exception.MalformedRequestBody, deserializer.default, data_string)
-
-    def test_xml_with_utf8(self):
-        xml = '<a>\xe7\xbd\x91\xe7\xbb\x9c</a>'
-        as_dict = {'body': {'a': u'\u7f51\u7edc'}}
-        deserializer = wsgi.XMLDeserializer()
-
-        self.assertEqual(
-            deserializer.deserialize(xml), as_dict)
-
-
 class RequestHeadersDeserializerTest(base.BaseTestCase):
 
     def test_default(self):
@@ -811,7 +628,7 @@ class ResourceTest(base.BaseTestCase):
             return 'off'
         resource = wsgi.Resource(Controller(), my_fault_body_function)
         request = wsgi.Request.blank(
-            "/", method='POST', headers={'Content-Type': "xml"})
+            "/", method='POST', headers={'Content-Type': "json"})
 
         response = resource.dispatch(
             request, action='index', action_args='test')
@@ -829,7 +646,7 @@ class ResourceTest(base.BaseTestCase):
             def __init__(self):
                 self.url = 'http://where.no'
                 self.environ = 'environ'
-                self.body = '{"Content-Type": "xml"}'
+                self.body = '{"Content-Type": "json"}'
 
             def method(self):
                 pass
@@ -865,212 +682,6 @@ class FaultTest(base.BaseTestCase):
             "/", method='POST', headers={'Content-Type': "unknow"})
         response = my_fault(request)
         self.assertEqual(415, response.status_int)
-
-
-class XMLDictSerializerTest(base.BaseTestCase):
-    def test_xml(self):
-        NETWORK = {'network': {'test': None,
-                               'tenant_id': 'test-tenant',
-                               'name': 'net1',
-                               'admin_state_up': True,
-                               'subnets': [],
-                               'dict': {},
-                               'int': 3,
-                               'long': 4L,
-                               'float': 5.0,
-                               'prefix:external': True,
-                               'tests': [{'test1': 'value1'},
-                                         {'test2': 2, 'test3': 3}]}}
-        # XML is:
-        # <network xmlns="http://openstack.org/quantum/api/v2.0"
-        #    xmlns:prefix="http://xxxx.yy.com"
-        #    xmlns:quantum="http://openstack.org/quantum/api/v2.0"
-        #    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        #    <subnets quantum:type="list" />  # Empty List
-        #    <int quantum:type="int">3</int>  # Integer text
-        #    <int quantum:type="long">4</int>  # Long text
-        #    <int quantum:type="float">5.0</int>  # Float text
-        #    <dict quantum:type="dict" />     # Empty Dict
-        #    <name>net1</name>
-        #    <admin_state_up quantum:type="bool">True</admin_state_up> # Bool
-        #    <test xsi:nil="true" />          # None
-        #    <tenant_id>test-tenant</tenant_id>
-        #    # We must have a namespace defined in root for prefix:external
-        #    <prefix:external quantum:type="bool">True</prefix:external>
-        #    <tests>                          # List
-        #       <test><test1>value1</test1></test>
-        #       <test><test3 quantum:type="int">3</test3>
-        #             <test2 quantum:type="int">2</test2>
-        #       </test></tests>
-        # </network>
-
-        metadata = attributes.get_attr_metadata()
-        ns = {'prefix': 'http://xxxx.yy.com'}
-        metadata[constants.EXT_NS] = ns
-        metadata['plurals'] = {'tests': 'test'}
-        serializer = wsgi.XMLDictSerializer(metadata)
-        result = serializer.serialize(NETWORK)
-        deserializer = wsgi.XMLDeserializer(metadata)
-        new_net = deserializer.deserialize(result)['body']
-        self.assertEqual(NETWORK, new_net)
-
-    def test_None(self):
-        data = None
-        # Since it is None, we use xsi:nil='true'.
-        # In addition, we use an
-        # virtual XML root _v_root to wrap the XML doc.
-        # XML is:
-        # <_v_root xsi:nil="true"
-        #          xmlns="http://openstack.org/quantum/api/v2.0"
-        #          xmlns:quantum="http://openstack.org/quantum/api/v2.0"
-        #          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
-        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
-        result = serializer.serialize(data)
-        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
-        new_data = deserializer.deserialize(result)['body']
-        self.assertIsNone(new_data)
-
-    def test_empty_dic_xml(self):
-        data = {}
-        # Since it is an empty dict, we use quantum:type='dict' and
-        # an empty XML element to represent it. In addition, we use an
-        # virtual XML root _v_root to wrap the XML doc.
-        # XML is:
-        # <_v_root quantum:type="dict"
-        #          xmlns="http://openstack.org/quantum/api/v2.0"
-        #          xmlns:quantum="http://openstack.org/quantum/api/v2.0"
-        #          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
-        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
-        result = serializer.serialize(data)
-        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
-        new_data = deserializer.deserialize(result)['body']
-        self.assertEqual(data, new_data)
-
-    def test_non_root_one_item_dic_xml(self):
-        data = {'test1': 1}
-        # We have a key in this dict, and its value is an integer.
-        # XML is:
-        # <test1 quantum:type="int"
-        #        xmlns="http://openstack.org/quantum/api/v2.0"
-        #        xmlns:quantum="http://openstack.org/quantum/api/v2.0"
-        #        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        # 1</test1>
-
-        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
-        result = serializer.serialize(data)
-        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
-        new_data = deserializer.deserialize(result)['body']
-        self.assertEqual(data, new_data)
-
-    def test_non_root_two_items_dic_xml(self):
-        data = {'test1': 1, 'test2': '2'}
-        # We have no root element in this data, We will use a virtual
-        # root element _v_root to wrap the doct.
-        # The XML is:
-        # <_v_root xmlns="http://openstack.org/quantum/api/v2.0"
-        #          xmlns:quantum="http://openstack.org/quantum/api/v2.0"
-        #          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        #    <test1 quantum:type="int">1</test1><test2>2</test2>
-        # </_v_root>
-
-        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
-        result = serializer.serialize(data)
-        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
-        new_data = deserializer.deserialize(result)['body']
-        self.assertEqual(data, new_data)
-
-    def test_xml_root_key_is_list(self):
-        input_dict = {'servers': ['test-pass']}
-        serializer = wsgi.XMLDictSerializer(xmlns="fake")
-        result = serializer.default(input_dict)
-        result = result.replace('\n', '').replace(' ', '')
-        expected = (
-            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
-            '<serversxmlns="fake"xmlns:quantum="fake"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<server>test-pass</server></servers>'
-        )
-
-        self.assertEqual(result, expected)
-
-    def test_xml_meta_contains_node_name_list(self):
-        input_dict = {'servers': ['test-pass']}
-        servers = {'nodename': 'test',
-                   'item_name': 'test',
-                   'item_key': 'test'}
-        metadata = {'list_collections': {'servers': servers}}
-        serializer = wsgi.XMLDictSerializer(xmlns="fake", metadata=metadata)
-        result = serializer.default(input_dict)
-        result = result.replace('\n', '').replace(' ', '')
-        expected = (
-            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
-            '<serversxmlns="fake"xmlns:quantum="fake"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<server>test-pass</server></servers>'
-        )
-
-        self.assertEqual(result, expected)
-
-    def test_xml_meta_contains_node_name_dict(self):
-        input_dict = {'servers': {'a': {'2': '3'}}}
-        servers = {'servers': {
-            'nodename': 'test',
-            'item_name': 'test',
-            'item_key': 'test'}}
-        metadata = {'dict_collections': servers}
-        serializer = wsgi.XMLDictSerializer(xmlns="fake", metadata=metadata)
-        result = serializer.default(input_dict)
-        result = result.replace('\n', '').replace(' ', '')
-        expected = (
-            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
-            '<serversxmlns="fake"xmlns:quantum="fake"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<a><2>3</2></a></servers>'
-        )
-
-        self.assertEqual(result, expected)
-
-    def test_call(self):
-        data = {'servers': {'a': {'2': '3'}}}
-        serializer = wsgi.XMLDictSerializer()
-        expected = (
-            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
-            '<serversxmlns="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<a><2>3</2></a></servers>'
-        )
-        result = serializer(data)
-        result = result.replace('\n', '').replace(' ', '')
-        self.assertEqual(expected, result)
-
-    def test_xml_with_utf8(self):
-        data = {'servers': '\xe7\xbd\x91\xe7\xbb\x9c'}
-        serializer = wsgi.XMLDictSerializer()
-        expected = (
-            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
-            '<serversxmlns="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '\xe7\xbd\x91\xe7\xbb\x9c</servers>'
-        )
-        result = serializer(data)
-        result = result.replace('\n', '').replace(' ', '')
-        self.assertEqual(expected, result)
-
-    def test_xml_with_unicode(self):
-        data = {'servers': u'\u7f51\u7edc'}
-        serializer = wsgi.XMLDictSerializer()
-        expected = (
-            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
-            '<serversxmlns="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '\xe7\xbd\x91\xe7\xbb\x9c</servers>'
-        )
-        result = serializer(data)
-        result = result.replace('\n', '').replace(' ', '')
-        self.assertEqual(expected, result)
 
 
 class TestWSGIServerWithSSL(base.BaseTestCase):

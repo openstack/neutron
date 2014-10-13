@@ -456,7 +456,3 @@ class LoadBalancerExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         instance.delete_pool_health_monitor.assert_called_with(
             mock.ANY, health_monitor_id, pool_id='id1')
         self.assertEqual(res.status_int, exc.HTTPNoContent.code)
-
-
-class LoadBalancerExtensionTestCaseXML(LoadBalancerExtensionTestCase):
-    fmt = 'xml'

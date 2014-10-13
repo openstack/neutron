@@ -627,10 +627,6 @@ class ExtensionControllerTest(testlib_api.WebTestCase):
         self.assertEqual(response.status_int, 404)
 
 
-class ExtensionControllerTestXML(ExtensionControllerTest):
-    fmt = 'xml'
-
-
 def app_factory(global_conf, **local_conf):
     conf = global_conf.copy()
     conf.update(local_conf)

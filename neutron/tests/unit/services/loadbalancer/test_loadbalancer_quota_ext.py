@@ -127,10 +127,6 @@ class LBaaSQuotaExtensionDbTestCase(LBaaSQuotaExtensionTestCase):
         self.assertEqual(-1, quota['quota']['health_monitor'])
 
 
-class LBaaSQuotaExtensionDbTestCaseXML(LBaaSQuotaExtensionDbTestCase):
-    fmt = 'xml'
-
-
 class LBaaSQuotaExtensionCfgTestCase(
     LBaaSQuotaExtensionTestCase):
 
@@ -160,7 +156,3 @@ class LBaaSQuotaExtensionCfgTestCase(
                            self.serialize(quotas),
                            expect_errors=True)
         self.assertEqual(403, res.status_int)
-
-
-class LBaaSQuotaExtensionCfgTestCaseXML(LBaaSQuotaExtensionCfgTestCase):
-    fmt = 'xml'

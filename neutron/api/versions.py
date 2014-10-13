@@ -49,14 +49,7 @@ class Versions(object):
         builder = versions_view.get_view_builder(req)
         versions = [builder.build(version) for version in version_objs]
         response = dict(versions=versions)
-        metadata = {
-            "application/xml": {
-                "attributes": {
-                    "version": ["status", "id"],
-                    "link": ["rel", "href"],
-                }
-            }
-        }
+        metadata = {}
 
         content_type = req.best_match_content_type()
         body = (wsgi.Serializer(metadata=metadata).

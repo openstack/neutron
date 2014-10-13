@@ -60,8 +60,3 @@ class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 class TestSecurityGroups(ext_sg.TestSecurityGroups, SecurityGroupsTestCase):
 
     pass
-
-
-class TestSecurityGroupsXML(TestSecurityGroups):
-
-    fmt = 'xml'

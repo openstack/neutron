@@ -294,7 +294,3 @@ class TestMetering(MeteringPluginDbTestCase):
 
                     self._test_list_resources('metering-label-rule',
                                               metering_label_rule)
-
-
-class TestMeteringDbXML(TestMetering):
-    fmt = 'xml'

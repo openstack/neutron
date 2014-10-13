@@ -752,15 +752,3 @@ class TestCiscoSubnetsV2(CiscoML2MechanismTestCase,
                     res,
                     'subnets',
                     wexc.HTTPInternalServerError.code)
-
-
-class TestCiscoPortsV2XML(TestCiscoPortsV2):
-    fmt = 'xml'
-
-
-class TestCiscoNetworksV2XML(TestCiscoNetworksV2):
-    fmt = 'xml'
-
-
-class TestCiscoSubnetsV2XML(TestCiscoSubnetsV2):
-    fmt = 'xml'

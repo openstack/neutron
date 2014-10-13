@@ -4061,23 +4061,3 @@ class NeutronDbPluginV2AsMixinTestCase(testlib_api.SqlTestCase):
         self.net_data['network']['status'] = 'BUILD'
         net = self.plugin.create_network(self.context, self.net_data)
         self.assertEqual(net['status'], 'BUILD')
-
-
-class TestBasicGetXML(TestBasicGet):
-    fmt = 'xml'
-
-
-class TestNetworksV2XML(TestNetworksV2):
-    fmt = 'xml'
-
-
-class TestPortsV2XML(TestPortsV2):
-    fmt = 'xml'
-
-
-class TestSubnetsV2XML(TestSubnetsV2):
-    fmt = 'xml'
-
-
-class TestV2HTTPResponseXML(TestV2HTTPResponse):
-    fmt = 'xml'

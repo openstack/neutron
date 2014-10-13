@@ -202,10 +202,6 @@ class ServiceTypeExtensionTestCase(ServiceTypeExtensionTestCaseBase):
         self.assertEqual(res.status_int, webexc.HTTPOk.code)
 
 
-class ServiceTypeExtensionTestCaseXML(ServiceTypeExtensionTestCase):
-    fmt = 'xml'
-
-
 class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
     """Tests ServiceTypemanager as a public API."""
     def setUp(self):
@@ -227,7 +223,3 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
         data = self.deserialize(res)
         self.assertIn('service_providers', data)
         self.assertEqual(len(data['service_providers']), 2)
-
-
-class ServiceTypeManagerExtTestCaseXML(ServiceTypeManagerExtTestCase):
-    fmt = 'xml'

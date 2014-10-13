@@ -1584,7 +1584,3 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 SystemExit,
                 loadbalancer_plugin.LoadBalancerPlugin
             )
-
-
-class TestLoadBalancerXML(TestLoadBalancer):
-    fmt = 'xml'

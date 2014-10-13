@@ -203,10 +203,6 @@ class L3RouterApplianceVMTestCase(
             'neutron.db.l3_db.L3_NAT_dbonly_mixin._check_and_get_fip_assoc')
 
 
-class L3RouterApplianceVMTestCaseXML(L3RouterApplianceVMTestCase):
-    fmt = 'xml'
-
-
 class CfgAgentRouterApplianceVMTestCase(L3RouterApplianceTestCaseBase,
                                         test_l3_plugin.L3AgentDbTestCaseBase):
 

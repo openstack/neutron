@@ -1596,7 +1596,3 @@ class TestVpnaas(VPNPluginDbTestCase):
                         )
                         delete_res = delete_req.get_response(self.ext_api)
                         self.assertEqual(409, delete_res.status_int)
-
-
-class TestVpnaasXML(TestVpnaas):
-    fmt = 'xml'

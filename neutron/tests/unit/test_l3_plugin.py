@@ -214,10 +214,6 @@ class L3NatExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         self.assertEqual(res['subnet_id'], subnet_id)
 
 
-class L3NatExtensionTestCaseXML(L3NatExtensionTestCase):
-    fmt = 'xml'
-
-
 # This base plugin class is for tests.
 class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                           external_net_db.External_net_db_mixin):
@@ -2144,11 +2140,3 @@ class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase):
 
     """Unit tests for a separate L3 routing service plugin."""
     pass
-
-
-class L3NatDBIntTestCaseXML(L3NatDBIntTestCase):
-    fmt = 'xml'
-
-
-class L3NatDBSepTestCaseXML(L3NatDBSepTestCase):
-    fmt = 'xml'

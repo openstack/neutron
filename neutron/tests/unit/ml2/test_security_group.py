@@ -89,17 +89,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
         self.assertIsNone(port_dict)
 
 
-class TestMl2SecurityGroupsXML(TestMl2SecurityGroups):
-    fmt = 'xml'
-
-
 class TestMl2SGServerRpcCallBack(
     Ml2SecurityGroupsTestCase,
     test_sg_rpc.SGServerRpcCallBackTestCase):
-    pass
-
-
-class TestMl2SGServerRpcCallBackXML(
-    Ml2SecurityGroupsTestCase,
-    test_sg_rpc.SGServerRpcCallBackTestCaseXML):
     pass

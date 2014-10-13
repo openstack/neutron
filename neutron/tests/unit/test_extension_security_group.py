@@ -168,10 +168,6 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual(security_group_rule[k], v)
 
 
-class SecurityGroupsTestCaseXML(SecurityGroupsTestCase):
-    fmt = 'xml'
-
-
 class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                               securitygroups_db.SecurityGroupDbMixin):
     """Test plugin that implements necessary calls on create/delete port for
@@ -1445,7 +1441,3 @@ class TestConvertProtocol(base.BaseTestCase):
         for val in ['bad', '256', '-1']:
             self.assertRaises(ext_sg.SecurityGroupRuleInvalidProtocol,
                               ext_sg.convert_protocol, val)
-
-
-class TestSecurityGroupsXML(TestSecurityGroups):
-    fmt = 'xml'
