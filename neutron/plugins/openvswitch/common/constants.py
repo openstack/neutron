@@ -37,6 +37,7 @@ TUNNEL_NETWORK_TYPES = [p_const.TYPE_GRE, p_const.TYPE_VXLAN]
 # Various tables for DVR use of integration bridge flows
 LOCAL_SWITCHING = 0
 DVR_TO_SRC_MAC = 1
+DVR_TO_SRC_MAC_VLAN = 2
 
 # Various tables for tunneling flows
 DVR_PROCESS = 1
@@ -48,6 +49,11 @@ LEARN_FROM_TUN = 10
 UCAST_TO_TUN = 20
 ARP_RESPONDER = 21
 FLOOD_TO_TUN = 22
+
+# Various tables for DVR use of physical bridge flows
+DVR_PROCESS_VLAN = 1
+LOCAL_VLAN_TRANSLATION = 2
+DVR_NOT_LEARN_VLAN = 3
 
 # Tables for integration bridge
 # Table 0 is used for forwarding.

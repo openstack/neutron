@@ -221,6 +221,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.dvr_plugin_rpc,
             self.int_br,
             self.tun_br,
+            self.bridge_mappings,
+            self.phys_brs,
+            self.int_ofports,
+            self.phys_ofports,
             self.patch_int_ofport,
             self.patch_tun_ofport,
             cfg.CONF.host,
@@ -236,7 +240,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if self.enable_tunneling:
             self.setup_tunnel_br()
 
-        self.dvr_agent.setup_dvr_flows_on_integ_tun_br()
+        self.dvr_agent.setup_dvr_flows_on_integ_br()
+        self.dvr_agent.setup_dvr_flows_on_tun_br()
+        self.dvr_agent.setup_dvr_flows_on_phys_br()
+        self.dvr_agent.setup_dvr_mac_flows_on_all_brs()
 
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
@@ -530,10 +537,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if physical_network in self.phys_brs:
                 # outbound
                 br = self.phys_brs[physical_network]
-                br.add_flow(priority=4,
+                if self.enable_distributed_routing:
+                    br.add_flow(table=constants.LOCAL_VLAN_TRANSLATION,
+                            priority=4,
                             in_port=self.phys_ofports[physical_network],
                             dl_vlan=lvid,
                             actions="mod_vlan_vid:%s,normal" % segmentation_id)
+                else:
+                    br.add_flow(priority=4,
+                            in_port=self.phys_ofports[physical_network],
+                            dl_vlan=lvid,
+                            actions="mod_vlan_vid:%s,normal" % segmentation_id)
+
                 # inbound
                 self.int_br.add_flow(priority=3,
                                      in_port=self.
@@ -637,9 +652,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         lvm = self.local_vlan_map[net_uuid]
         lvm.vif_ports[port.vif_id] = port
 
-        self.dvr_agent.bind_port_to_dvr(port, network_type, fixed_ips,
-                                        device_owner,
-                                        local_vlan_id=lvm.vlan)
+        self.dvr_agent.bind_port_to_dvr(port, lvm,
+                                        fixed_ips,
+                                        device_owner)
 
         # Do not bind a port if it's already bound
         cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
@@ -670,8 +685,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         if vif_id in lvm.vif_ports:
             vif_port = lvm.vif_ports[vif_id]
-            self.dvr_agent.unbind_port_from_dvr(vif_port,
-                                                local_vlan_id=lvm.vlan)
+            self.dvr_agent.unbind_port_from_dvr(vif_port, lvm)
         lvm.vif_ports.pop(vif_id, None)
 
         if not lvm.vif_ports:
