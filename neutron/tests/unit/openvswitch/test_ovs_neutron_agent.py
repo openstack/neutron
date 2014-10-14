@@ -1049,6 +1049,20 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       {'2.2.2.2':
                        [[FAKE_MAC, FAKE_IP1],
                         n_const.FLOODING_ENTRY]}}}
+
+        class ActionMatcher(object):
+            def __init__(self, action_str):
+                self.ordered = self.order_ports(action_str)
+
+            def order_ports(self, action_str):
+                halves = action_str.split('output:')
+                ports = sorted(halves.pop().split(','))
+                halves.append(','.join(ports))
+                return 'output:'.join(halves)
+
+            def __eq__(self, other):
+                return self.ordered == self.order_ports(other)
+
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'deferred'),
             mock.patch.object(self.agent.tun_br, 'do_action_flows'),
@@ -1076,8 +1090,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                        'set_tunnel:seg1,output:2')]),
                 mock.call('mod', [dict(table=constants.FLOOD_TO_TUN,
                                        dl_vlan='vlan1',
-                                       actions='strip_vlan,'
-                                       'set_tunnel:seg1,output:1,2')]),
+                                       actions=ActionMatcher('strip_vlan,'
+                                       'set_tunnel:seg1,output:1,2'))]),
             ]
             do_action_flows_fn.assert_has_calls(expected_calls)
 
