@@ -26,6 +26,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import sql
 
 from neutron.common import constants
+from neutron.common import rpc as n_rpc
 from neutron.common import utils as n_utils
 from neutron import context as n_ctx
 from neutron.db import agents_db
@@ -34,7 +35,7 @@ from neutron.db import l3_attrs_db
 from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LI, _LW
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import timeutils
@@ -122,15 +123,28 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                       RouterL3AgentBinding.router_id).
             filter(sa.or_(l3_attrs_db.RouterExtraAttributes.ha == sql.false(),
                           l3_attrs_db.RouterExtraAttributes.ha == sql.null())))
-
-        for binding in down_bindings:
-            LOG.warn(_LW("Rescheduling router %(router)s from agent %(agent)s "
-                         "because the agent did not report to the server in "
-                         "the last %(dead_time)s seconds."),
-                     {'router': binding.router_id,
-                      'agent': binding.l3_agent_id,
-                      'dead_time': agent_dead_limit})
-            self.reschedule_router(context, binding.router_id)
+        try:
+            for binding in down_bindings:
+                LOG.warn(_LW(
+                    "Rescheduling router %(router)s from agent %(agent)s "
+                    "because the agent did not report to the server in "
+                    "the last %(dead_time)s seconds."),
+                    {'router': binding.router_id,
+                     'agent': binding.l3_agent_id,
+                     'dead_time': agent_dead_limit})
+                try:
+                    self.reschedule_router(context, binding.router_id)
+                except (l3agentscheduler.RouterReschedulingFailed,
+                        n_rpc.RemoteError):
+                    # Catch individual router rescheduling errors here
+                    # so one broken one doesn't stop the iteration.
+                    LOG.exception(_LE("Failed to reschedule router %s"),
+                                  binding.router_id)
+        except db_exc.DBError:
+            # Catch DB errors here so a transient DB connectivity issue
+            # doesn't stop the loopingcall.
+            LOG.exception(_LE("Exception encountered during router "
+                              "rescheduling."))
 
     def validate_agent_router_combination(self, context, agent, router):
         """Validate if the router can be correctly assigned to the agent.
