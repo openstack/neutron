@@ -50,14 +50,16 @@ def _sd_notify(unset_env, msg):
 
 def notify():
     """Send notification to Systemd that service is ready.
+
     For details see
-      http://www.freedesktop.org/software/systemd/man/sd_notify.html
+    http://www.freedesktop.org/software/systemd/man/sd_notify.html
     """
     _sd_notify(False, 'READY=1')
 
 
 def notify_once():
     """Send notification once to Systemd that service is ready.
+
     Systemd sets NOTIFY_SOCKET environment variable with the name of the
     socket listening for notifications from services.
     This method removes the NOTIFY_SOCKET environment variable to ensure
