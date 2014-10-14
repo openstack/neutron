@@ -138,6 +138,20 @@ to install and configure all of Neutron's package dependencies.  It is
 not necessary to provide this option if devstack has already been used
 to deploy Neutron to the target host.
 
+To run all the full-stack tests, you may use: ::
+
+    tox -e dsvm-fullstack
+
+Since full-stack tests often require the same resources and
+dependencies as the functional tests, using the configuration script
+tools/configure_for_func_testing.sh is advised (as described above).
+When running full-stack tests on a clean VM for the first time, we
+advise to run ./stack.sh successfully to make sure all Neutron's
+dependencies are met.  Also note that in order to preserve resources
+on the gate, running the dsvm-functional suite will also run all
+full-stack tests (and a new worker won't be assigned specifically for
+dsvm-fullstack).
+
 To run the api tests against a live Neutron daemon, deploy tempest and
 neutron with devstack and then run the following commands: ::
 

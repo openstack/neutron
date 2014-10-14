@@ -22,6 +22,7 @@ from tempest_lib import exceptions
 import testscenarios
 
 from neutron.tests.api import base_v2
+from neutron.tests import sub_base
 from neutron.tests.tempest import test as t_test
 
 # Required to generate tests from scenarios.  Not compatible with nose.
@@ -55,19 +56,19 @@ class TempestRestClient(base_v2.BaseNeutronClient):
     def _create_network(self, **kwargs):
         # Internal method - use create_network() instead
         body = self.client.create_network(**kwargs)
-        return base_v2.AttributeDict(body['network'])
+        return sub_base.AttributeDict(body['network'])
 
     def update_network(self, id_, **kwargs):
         body = self.client.update_network(id_, **kwargs)
-        return base_v2.AttributeDict(body['network'])
+        return sub_base.AttributeDict(body['network'])
 
     def get_network(self, id_, **kwargs):
         body = self.client.show_network(id_, **kwargs)
-        return base_v2.AttributeDict(body['network'])
+        return sub_base.AttributeDict(body['network'])
 
     def get_networks(self, **kwargs):
         body = self.client.list_networks(**kwargs)
-        return [base_v2.AttributeDict(x) for x in body['networks']]
+        return [sub_base.AttributeDict(x) for x in body['networks']]
 
     def delete_network(self, id_):
         self.client.delete_network(id_)

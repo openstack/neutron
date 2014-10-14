@@ -198,15 +198,16 @@ class TestPathUtilities(base.BaseTestCase):
         self.assertEqual(['ping', '8.8.8.8'],
                          utils.remove_abs_path(['/usr/bin/ping', '8.8.8.8']))
 
-    def test_cmdlines_are_equal(self):
-        self.assertTrue(utils.cmdlines_are_equal(
-            ['ping', '8.8.8.8'],
-            ['/usr/bin/ping', '8.8.8.8']))
+    def test_cmd_matches_expected_matches_abs_path(self):
+        cmd = ['/bar/../foo']
+        self.assertTrue(utils.cmd_matches_expected(cmd, cmd))
 
-    def test_cmdlines_are_equal_different_commands(self):
-        self.assertFalse(utils.cmdlines_are_equal(
-            ['ping', '8.8.8.8'],
-            ['/usr/bin/ping6', '8.8.8.8']))
+    def test_cmd_matches_expected_matches_script(self):
+        self.assertTrue(utils.cmd_matches_expected(['python', 'script'],
+                                                   ['script']))
+
+    def test_cmd_matches_expected_doesnt_match(self):
+        self.assertFalse(utils.cmd_matches_expected('foo', 'bar'))
 
 
 class TestBaseOSUtils(base.BaseTestCase):

@@ -52,6 +52,19 @@ def bool_from_env(key, strict=False, default=False):
     return strutils.bool_from_string(value, strict=strict, default=default)
 
 
+class AttributeDict(dict):
+
+    """
+    Provide attribute access (dict.key) to dictionary values.
+    """
+
+    def __getattr__(self, name):
+        """Allow attribute access for all keys in the dict."""
+        if name in self:
+            return self[name]
+        raise AttributeError(_("Unknown attribute '%s'.") % name)
+
+
 class SubBaseTestCase(testtools.TestCase):
 
     def setUp(self):
