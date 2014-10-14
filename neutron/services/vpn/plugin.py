@@ -15,6 +15,7 @@
 #    under the License.
 
 from neutron.db.vpn import vpn_db
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services import service_base
@@ -41,7 +42,7 @@ class VPNDriverPlugin(VPNPlugin, vpn_db.VPNPluginRpcDbMixin):
         # Load the service driver from neutron.conf.
         drivers, default_provider = service_base.load_drivers(
             constants.VPN, self)
-        LOG.info(_("VPN plugin using service driver: %s"), default_provider)
+        LOG.info(_LI("VPN plugin using service driver: %s"), default_provider)
         self.ipsec_driver = drivers[default_provider]
 
     def _get_driver_for_vpnservice(self, vpnservice):

@@ -32,8 +32,7 @@ from oslo.config import cfg
 
 from neutron.db import l3_db
 from neutron.db import models_v2
-from neutron.openstack.common.gettextutils import _LE
-from neutron.openstack.common.gettextutils import _LI
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.services.vpn.device_drivers import (
     cisco_csr_rest_client as csr_client)
@@ -103,8 +102,8 @@ def get_available_csrs_from_config(config_files):
                 try:
                     netaddr.IPAddress(rest_mgmt_ip)
                 except netaddr.core.AddrFormatError:
-                    LOG.error(_("Ignoring Cisco CSR for subnet %s - "
-                                "REST management is not an IP address"),
+                    LOG.error(_LE("Ignoring Cisco CSR for subnet %s - "
+                                  "REST management is not an IP address"),
                               for_router)
                     continue
                 try:

@@ -94,8 +94,8 @@ class BaseIPsecVpnAgentApi(n_rpc.RpcProxy):
             admin_state_up=True,
             active=True)
         for l3_agent in l3_agents:
-            LOG.debug(_('Notify agent at %(topic)s.%(host)s the message '
-                        '%(method)s %(args)s'),
+            LOG.debug('Notify agent at %(topic)s.%(host)s the message '
+                      '%(method)s %(args)s',
                       {'topic': self.topic,
                        'host': l3_agent.host,
                        'method': method,

@@ -101,8 +101,8 @@ class CiscoCsrIPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
             # NOTE: This is a config error for workaround. At this point we
             # can't set state of resource to error.
             return
-        LOG.debug(_('Notify agent at %(topic)s.%(host)s the message '
-                    '%(method)s %(args)s for router %(router)s'),
+        LOG.debug('Notify agent at %(topic)s.%(host)s the message '
+                  '%(method)s %(args)s for router %(router)s',
                   {'topic': self.topic,
                    'host': host,
                    'method': method,
