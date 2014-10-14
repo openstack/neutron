@@ -391,3 +391,66 @@ class AristaL3DriverTestCases_MLAG_v6(base.BaseTestCase):
                       'ip_version': 6}
 
             self.assertFalse(self.drv.remove_router_interface(None, router))
+
+
+class AristaL3DriverTestCasesMlag_one_switch_failed(base.BaseTestCase):
+    """Test cases to test with non redundant hardare in redundancy mode.
+
+    In the following test cases, the driver is configured in MLAG (redundancy
+    mode) but, one of the switches is mocked to throw exceptoin to mimic
+    failure of the switch. Ensure that the the operation does not fail when
+    one of the switches fails.
+    """
+
+    def setUp(self):
+        super(AristaL3DriverTestCasesMlag_one_switch_failed, self).setUp()
+        setup_arista_config('value', mlag=True)
+        self.drv = arista.AristaL3Driver()
+        self.drv._servers = []
+        self.drv._servers.append(mock.MagicMock())
+        self.drv._servers.append(mock.MagicMock())
+
+    def test_create_router_when_one_switch_fails(self):
+        router = {}
+        router['name'] = 'test-router-1'
+        tenant = '123'
+
+        # Make one of the switches throw an exception - i.e. fail
+        self.drv._servers[0].runCmds = mock.Mock(side_effect = Exception())
+        self.drv.create_router(None, tenant, router)
+
+    def test_delete_router_when_one_switch_fails(self):
+        router = {}
+        router['name'] = 'test-router-1'
+        tenant = '123'
+        router_id = '345'
+
+        # Make one of the switches throw an exception - i.e. fail
+        self.drv._servers[1].runCmds = mock.Mock(side_effect = Exception())
+        self.drv.delete_router(None, tenant, router_id, router)
+
+    def test_add_router_interface_when_one_switch_fails(self):
+        router = {}
+        router['name'] = 'test-router-1'
+        router['tenant_id'] = 'ten-1'
+        router['seg_id'] = '100'
+        router['ip_version'] = 4
+        router['cidr'] = '10.10.10.0/24'
+        router['gip'] = '10.10.10.1'
+
+        # Make one of the switches throw an exception - i.e. fail
+        self.drv._servers[1].runCmds = mock.Mock(side_effect = Exception())
+        self.drv.add_router_interface(None, router)
+
+    def test_remove_router_interface_when_one_switch_fails(self):
+        router = {}
+        router['name'] = 'test-router-1'
+        router['tenant_id'] = 'ten-1'
+        router['seg_id'] = '100'
+        router['ip_version'] = 4
+        router['cidr'] = '10.10.10.0/24'
+        router['gip'] = '10.10.10.1'
+
+        # Make one of the switches throw an exception - i.e. fail
+        self.drv._servers[0].runCmds = mock.Mock(side_effect = Exception())
+        self.drv.remove_router_interface(None, router)
