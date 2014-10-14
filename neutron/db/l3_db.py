@@ -1088,10 +1088,10 @@ class L3RpcNotifierMixin(object):
         self._l3_rpc_notifier = value
 
     def notify_router_updated(self, context, router_id,
-                              operation=None, data=None):
+                              operation=None):
         if router_id:
             self.l3_rpc_notifier.routers_updated(
-                context, [router_id], operation, data)
+                context, [router_id], operation)
 
     def notify_routers_updated(self, context, router_ids,
                                operation=None, data=None):
@@ -1107,13 +1107,9 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
     """Mixin class to add rpc notifier methods to db_base_plugin_v2."""
 
     def update_router(self, context, id, router):
-        r = router['router']
-        payload = {'gw_exists':
-                   r.get(EXTERNAL_GW_INFO, attributes.ATTR_NOT_SPECIFIED) !=
-                   attributes.ATTR_NOT_SPECIFIED}
         router_dict = super(L3_NAT_db_mixin, self).update_router(context,
                                                                  id, router)
-        self.notify_router_updated(context, router_dict['id'], None, payload)
+        self.notify_router_updated(context, router_dict['id'], None)
         return router_dict
 
     def delete_router(self, context, id):
@@ -1154,7 +1150,7 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
         floatingip_dict = super(L3_NAT_db_mixin, self).create_floatingip(
             context, floatingip, initial_status)
         router_id = floatingip_dict['router_id']
-        self.notify_router_updated(context, router_id, 'create_floatingip', {})
+        self.notify_router_updated(context, router_id, 'create_floatingip')
         return floatingip_dict
 
     def update_floatingip(self, context, id, floatingip):
@@ -1168,7 +1164,7 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
 
     def delete_floatingip(self, context, id):
         router_id = self._delete_floatingip(context, id)
-        self.notify_router_updated(context, router_id, 'delete_floatingip', {})
+        self.notify_router_updated(context, router_id, 'delete_floatingip')
 
     def disassociate_floatingips(self, context, port_id, do_notify=True):
         """Disassociate all floating IPs linked to specific port.
