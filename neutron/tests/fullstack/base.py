@@ -21,23 +21,21 @@ from neutron.tests.fullstack import fullstack_fixtures as f_fixtures
 
 
 class BaseFullStackTestCase(test_base.MySQLOpportunisticTestCase):
-    """Base test class for full-stack tests.
+    """Base test class for full-stack tests."""
 
-    :param process_fixtures: a list of fixture classes (not instances).
-    """
+    def __init__(self, environment=None, *args, **kwargs):
+        super(BaseFullStackTestCase, self).__init__(*args, **kwargs)
+        self.environment = (environment if environment
+                            else f_fixtures.EnvironmentFixture())
 
     def setUp(self):
         super(BaseFullStackTestCase, self).setUp()
         self.create_db_tables()
 
-        self.neutron_server = self.useFixture(
-            f_fixtures.NeutronServerFixture())
-        self.client = self.neutron_server.client
+        if self.environment:
+            self.useFixture(self.environment)
 
-    @property
-    def test_name(self):
-        """Return the name of the test currently running."""
-        return self.id().split(".")[-1]
+        self.client = self.environment.neutron_server.client
 
     def create_db_tables(self):
         """Populate the new database.

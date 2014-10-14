@@ -105,12 +105,15 @@ class NeutronConfigFixture(ConfigFixture):
             'DEFAULT': {
                 'host': self._generate_host(),
                 'state_path': self._generate_state_path(temp_dir),
+                'lock_path': '$state_path/lock',
                 'bind_port': self._generate_port(),
                 'api_paste_config': self._generate_api_paste(),
                 'policy_file': self._generate_policy_json(),
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
+                'service_plugins': ('neutron.services.l3_router.'
+                                    'l3_router_plugin.L3RouterPlugin'),
                 'rabbit_userid': 'stackrabbit',
-                'rabbit_password': 'secretrabbit',
+                'rabbit_password': '127.0.0.1',
                 'rabbit_hosts': '127.0.0.1',
                 'auth_strategy': 'noauth',
                 'verbose': 'True',
@@ -169,6 +172,10 @@ class ML2ConfigFixture(ConfigFixture):
                 'local_ip': '127.0.0.1',
                 'bridge_mappings': self._generate_bridge_mappings(),
                 'integration_bridge': self._generate_integration_bridge(),
+            },
+            'securitygroup': {
+                'firewall_driver': ('neutron.agent.linux.iptables_firewall.'
+                                    'OVSHybridIptablesFirewallDriver'),
             }
         })
 
@@ -180,4 +187,29 @@ class ML2ConfigFixture(ConfigFixture):
 
     def _generate_integration_bridge(self):
         return base.get_rand_name(prefix='br-int',
+                                  max_length=constants.DEVICE_NAME_MAX_LEN)
+
+
+class L3ConfigFixture(ConfigFixture):
+
+    def __init__(self, temp_dir, integration_bridge):
+        super(L3ConfigFixture, self).__init__(
+            temp_dir, base_filename='l3_agent.ini')
+
+        self.config.update({
+            'DEFAULT': {
+                'l3_agent_manager': ('neutron.agent.l3_agent.'
+                                     'L3NATAgentWithStateReport'),
+                'interface_driver': ('neutron.agent.linux.interface.'
+                                     'OVSInterfaceDriver'),
+                'ovs_integration_bridge': integration_bridge,
+                'external_network_bridge': self._generate_external_bridge(),
+                'router_delete_namespaces': 'True',
+                'debug': 'True',
+                'verbose': 'True',
+            }
+        })
+
+    def _generate_external_bridge(self):
+        return base.get_rand_name(prefix='br-ex',
                                   max_length=constants.DEVICE_NAME_MAX_LEN)
