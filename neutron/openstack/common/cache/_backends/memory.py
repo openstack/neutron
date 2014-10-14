@@ -14,9 +14,10 @@
 
 import collections
 
+from oslo.utils import timeutils
+
 from neutron.openstack.common.cache import backends
 from neutron.openstack.common import lockutils
-from neutron.openstack.common import timeutils
 
 
 class MemoryBackend(backends.BaseCache):
@@ -147,7 +148,7 @@ class MemoryBackend(backends.BaseCache):
             try:
                 # NOTE(flaper87): Keys with ttl == 0
                 # don't exist in the _keys_expires dict
-                self._keys_expires[value[0]].remove(value[1])
+                self._keys_expires[value[0]].remove(key)
             except (KeyError, ValueError):
                 pass
 
