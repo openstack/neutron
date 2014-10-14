@@ -13,14 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 import contextlib
 import errno
 import os
 import tempfile
 
-from neutron.openstack.common import excutils
-from neutron.openstack.common.gettextutils import _
+from oslo.utils import excutils
+
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -52,20 +51,31 @@ def read_cached_file(filename, force_reload=False):
     """
     global _FILE_CACHE
 
-    if force_reload and filename in _FILE_CACHE:
-        del _FILE_CACHE[filename]
+    if force_reload:
+        delete_cached_file(filename)
 
     reloaded = False
     mtime = os.path.getmtime(filename)
     cache_info = _FILE_CACHE.setdefault(filename, {})
 
     if not cache_info or mtime > cache_info.get('mtime', 0):
-        LOG.debug(_("Reloading cached file %s") % filename)
+        LOG.debug("Reloading cached file %s" % filename)
         with open(filename) as fap:
             cache_info['data'] = fap.read()
         cache_info['mtime'] = mtime
         reloaded = True
     return (reloaded, cache_info['data'])
+
+
+def delete_cached_file(filename):
+    """Delete cached file if present.
+
+    :param filename: filename to delete
+    """
+    global _FILE_CACHE
+
+    if filename in _FILE_CACHE:
+        del _FILE_CACHE[filename]
 
 
 def delete_if_exists(path, remove=os.unlink):
@@ -101,13 +111,13 @@ def remove_path_on_error(path, remove=delete_if_exists):
 def file_open(*args, **kwargs):
     """Open file
 
-    see built-in file() documentation for more details
+    see built-in open() documentation for more details
 
     Note: The reason this is kept in a separate module is to easily
     be able to provide a stub module that doesn't alter system
     state at all (for unit tests)
     """
-    return file(*args, **kwargs)
+    return open(*args, **kwargs)
 
 
 def write_to_tempfile(content, path=None, suffix='', prefix='tmp'):
