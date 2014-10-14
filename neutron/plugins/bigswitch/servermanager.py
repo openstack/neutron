@@ -447,8 +447,6 @@ class ServerPool(object):
                 if not self.get_topo_function:
                     raise cfg.Error(_('Server requires synchronization, '
                                       'but no topology function was defined.'))
-                # The hash was incorrect so it needs to be removed
-                hash_handler.put_hash('')
                 data = self.get_topo_function(**self.get_topo_function_args)
                 active_server.rest_call('PUT', TOPOLOGY_PATH, data,
                                         timeout=None)
