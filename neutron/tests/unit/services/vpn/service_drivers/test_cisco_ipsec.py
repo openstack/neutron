@@ -29,17 +29,13 @@ from neutron.tests.unit import testlib_api
 _uuid = uuidutils.generate_uuid
 
 FAKE_VPN_CONN_ID = _uuid()
+FAKE_SERVICE_ID = _uuid()
 FAKE_VPN_CONNECTION = {
-    'vpnservice_id': _uuid(),
+    'vpnservice_id': FAKE_SERVICE_ID,
     'id': FAKE_VPN_CONN_ID,
     'ikepolicy_id': _uuid(),
     'ipsecpolicy_id': _uuid(),
     'tenant_id': _uuid()
-}
-
-FAKE_SERVICE_ID = _uuid()
-FAKE_VPN_CONNECTION = {
-    'vpnservice_id': FAKE_SERVICE_ID
 }
 
 FAKE_ROUTER_ID = _uuid()
