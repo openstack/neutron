@@ -477,7 +477,7 @@ class L3NatTestCaseMixin(object):
                         public_sub['subnet']['network_id'],
                         port_id=private_port['port']['id'],
                         fixed_ip=fixed_ip,
-                        set_context=False)
+                        set_context=set_context)
                     yield floatingip
 
                     if floatingip:
