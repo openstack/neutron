@@ -242,12 +242,12 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                 if agent_ip == local_ip:
                     continue
 
-                after = state.get('after')
+                after = state.get('after', [])
                 for mac, ip in after:
                     self.setup_entry_for_arp_reply(br, 'add', lvm.vlan, mac,
                                                    ip)
 
-                before = state.get('before')
+                before = state.get('before', [])
                 for mac, ip in before:
                     self.setup_entry_for_arp_reply(br, 'remove', lvm.vlan, mac,
                                                    ip)
