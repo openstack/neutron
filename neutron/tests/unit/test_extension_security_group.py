@@ -959,6 +959,19 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
 
+    def test_create_security_group_rule_icmp_with_code_only(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id):
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress',
+                    const.PROTO_NAME_ICMP, None, '2')
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
     def test_list_ports_security_group(self):
         with self.network() as n:
             with self.subnet(n):

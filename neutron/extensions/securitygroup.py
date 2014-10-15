@@ -47,6 +47,11 @@ class SecurityGroupInvalidIcmpValue(qexception.InvalidInput):
                 "%(value)s. It must be 0 to 255.")
 
 
+class SecurityGroupMissingIcmpType(qexception.InvalidInput):
+    message = _("ICMP code (port-range-max) %(value)s is provided"
+                " but ICMP type (port-range-min) is missing.")
+
+
 class SecurityGroupInUse(qexception.InUse):
     message = _("Security Group %(id)s in use.")
 
