@@ -143,7 +143,13 @@ class ArpLib(object):
         ofp = datapath.ofproto
         port = msg.match['in_port']
         metadata = msg.match.get('metadata')
-        pkt = packet.Packet(msg.data)
+        # NOTE(yamamoto): Ryu packet library can raise various exceptions
+        # on a corrupted packet.
+        try:
+            pkt = packet.Packet(msg.data)
+        except Exception as e:
+            LOG.info(_LI("Unparsable packet: got exception %s"), e)
+            return
         LOG.info(_LI("packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s"),
                  {'dpid': dpid_lib.dpid_to_str(datapath.id),
                  'port': port, 'pkt': pkt})
