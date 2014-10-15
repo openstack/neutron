@@ -209,9 +209,10 @@ class MetadataProxyHandler(object):
             req.query_string,
             ''))
 
-        h = httplib2.Http(ca_certs=self.conf.auth_ca_cert,
-                          disable_ssl_certificate_validation=
-                          self.conf.nova_metadata_insecure)
+        h = httplib2.Http(
+            ca_certs=self.conf.auth_ca_cert,
+            disable_ssl_certificate_validation=self.conf.nova_metadata_insecure
+        )
         if self.conf.nova_client_cert and self.conf.nova_client_priv_key:
             h.add_certificate(self.conf.nova_client_priv_key,
                               self.conf.nova_client_cert,

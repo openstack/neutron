@@ -416,7 +416,7 @@ class AristaL3DriverTestCasesMlag_one_switch_failed(base.BaseTestCase):
         tenant = '123'
 
         # Make one of the switches throw an exception - i.e. fail
-        self.drv._servers[0].runCmds = mock.Mock(side_effect = Exception())
+        self.drv._servers[0].runCmds = mock.Mock(side_effect=Exception)
         self.drv.create_router(None, tenant, router)
 
     def test_delete_router_when_one_switch_fails(self):
@@ -426,7 +426,7 @@ class AristaL3DriverTestCasesMlag_one_switch_failed(base.BaseTestCase):
         router_id = '345'
 
         # Make one of the switches throw an exception - i.e. fail
-        self.drv._servers[1].runCmds = mock.Mock(side_effect = Exception())
+        self.drv._servers[1].runCmds = mock.Mock(side_effect=Exception)
         self.drv.delete_router(None, tenant, router_id, router)
 
     def test_add_router_interface_when_one_switch_fails(self):
@@ -439,7 +439,7 @@ class AristaL3DriverTestCasesMlag_one_switch_failed(base.BaseTestCase):
         router['gip'] = '10.10.10.1'
 
         # Make one of the switches throw an exception - i.e. fail
-        self.drv._servers[1].runCmds = mock.Mock(side_effect = Exception())
+        self.drv._servers[1].runCmds = mock.Mock(side_effect=Exception)
         self.drv.add_router_interface(None, router)
 
     def test_remove_router_interface_when_one_switch_fails(self):
@@ -452,5 +452,5 @@ class AristaL3DriverTestCasesMlag_one_switch_failed(base.BaseTestCase):
         router['gip'] = '10.10.10.1'
 
         # Make one of the switches throw an exception - i.e. fail
-        self.drv._servers[0].runCmds = mock.Mock(side_effect = Exception())
+        self.drv._servers[0].runCmds = mock.Mock(side_effect=Exception)
         self.drv.remove_router_interface(None, router)

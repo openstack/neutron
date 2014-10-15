@@ -432,7 +432,7 @@ class DeviceHandlingMixin(object):
         with context.session.begin(subtransactions=True):
             hd_db = l3_models.HostingDevice(
                 id=hd.get('id') or uuidutils.generate_uuid(),
-                complementary_id = hd.get('complementary_id'),
+                complementary_id=hd.get('complementary_id'),
                 tenant_id=tenant_id,
                 device_id=hd.get('device_id'),
                 admin_state_up=hd.get('admin_state_up', True),

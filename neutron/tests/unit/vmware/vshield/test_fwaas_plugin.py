@@ -130,12 +130,13 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
             fwp_id = fwp['firewall_policy']['id']
             attrs['firewall_policy_id'] = fwp_id
             attrs['router_id'] = self._create_and_get_router()
-            with self.firewall(name=name,
-                               firewall_policy_id=fwp_id,
-                               router_id=attrs['router_id'],
-                               admin_state_up=
-                               test_db_firewall.ADMIN_STATE_UP,
-                               expected_res_status=201) as fw:
+            with self.firewall(
+                name=name,
+                firewall_policy_id=fwp_id,
+                router_id=attrs['router_id'],
+                admin_state_up=test_db_firewall.ADMIN_STATE_UP,
+                expected_res_status=201
+            ) as fw:
                 attrs = self._replace_firewall_status(
                     attrs, const.PENDING_CREATE, const.ACTIVE)
                 for k, v in attrs.iteritems():
@@ -146,11 +147,12 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
         attrs = self._get_test_firewall_attrs(name)
         attrs['router_id'] = self._create_and_get_router()
 
-        with self.firewall(name=name,
-                           router_id=attrs['router_id'],
-                           admin_state_up=
-                           test_db_firewall.ADMIN_STATE_UP,
-                           expected_res_status=201) as fw:
+        with self.firewall(
+            name=name,
+            router_id=attrs['router_id'],
+            admin_state_up=test_db_firewall.ADMIN_STATE_UP,
+            expected_res_status=201
+        ) as fw:
             attrs = self._replace_firewall_status(
                 attrs, const.PENDING_CREATE, const.ACTIVE)
             for k, v in attrs.iteritems():
@@ -201,12 +203,13 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
         router_id = self._create_and_get_router()
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
-            with self.firewall(name='fw',
-                               firewall_policy_id=fwp_id,
-                               router_id=router_id,
-                               admin_state_up=
-                               test_db_firewall.ADMIN_STATE_UP,
-                               expected_res_status=201):
+            with self.firewall(
+                name='fw',
+                firewall_policy_id=fwp_id,
+                router_id=router_id,
+                admin_state_up=test_db_firewall.ADMIN_STATE_UP,
+                expected_res_status=201
+            ):
                 self._delete('routers', router_id,
                              expected_code=webob.exc.HTTPConflict.code)
 
@@ -311,10 +314,11 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
                                   firewall_rules=None,
                                   audited=test_db_firewall.AUDITED) as fwp:
             fwp_id = fwp['firewall_policy']['id']
-            with self.firewall(firewall_policy_id=fwp_id,
-                               router_id=self._create_and_get_router(),
-                               admin_state_up=
-                               test_db_firewall.ADMIN_STATE_UP):
+            with self.firewall(
+                firewall_policy_id=fwp_id,
+                router_id=self._create_and_get_router(),
+                admin_state_up=test_db_firewall.ADMIN_STATE_UP
+            ):
                 data = {'firewall_policy': {'name': name}}
                 req = self.new_update_request(
                     'firewall_policies', data, fwp['firewall_policy']['id'])
@@ -372,10 +376,11 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
             with self.firewall_policy() as fwp:
                 fwp_id = fwp['firewall_policy']['id']
                 attrs['firewall_policy_id'] = fwp_id
-                with self.firewall(firewall_policy_id=fwp_id,
-                                   router_id=self._create_and_get_router(),
-                                   admin_state_up=
-                                   test_db_firewall.ADMIN_STATE_UP):
+                with self.firewall(
+                    firewall_policy_id=fwp_id,
+                    router_id=self._create_and_get_router(),
+                    admin_state_up=test_db_firewall.ADMIN_STATE_UP
+                ):
                     fwr_id = fwr['firewall_rule']['id']
                     data = {'firewall_policy': {'firewall_rules': [fwr_id]}}
                     req = self.new_update_request(

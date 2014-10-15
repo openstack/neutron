@@ -272,10 +272,11 @@ class TestHaproxyNSDriver(base.BaseTestCase):
                                                          'test_interface',
                                                          'mac_addr',
                                                          namespace='test_ns')
-            self.vif_driver.init_l3.assert_called_once_with('test_interface',
-                                                            ['10.0.0.2/24'],
-                                                            namespace=
-                                                            'test_ns')
+            self.vif_driver.init_l3.assert_called_once_with(
+                'test_interface',
+                ['10.0.0.2/24'],
+                namespace='test_ns'
+            )
             cmd = ['route', 'add', 'default', 'gw', '10.0.0.1']
             cmd_arping = ['arping', '-U', '-I',
                           'test_interface', '-c',
@@ -339,10 +340,11 @@ class TestHaproxyNSDriver(base.BaseTestCase):
                                                          'test_interface',
                                                          'mac_addr',
                                                          namespace='test_ns')
-            self.vif_driver.init_l3.assert_called_once_with('test_interface',
-                                                            ['10.0.0.2/24'],
-                                                            namespace=
-                                                            'test_ns')
+            self.vif_driver.init_l3.assert_called_once_with(
+                'test_interface',
+                ['10.0.0.2/24'],
+                namespace='test_ns'
+            )
             self.assertFalse(ip_wrap.called)
             dev_exists.return_value = True
             self.assertRaises(exceptions.PreexistingDeviceFailure,
@@ -375,10 +377,11 @@ class TestHaproxyNSDriver(base.BaseTestCase):
                                                          'test_interface',
                                                          'mac_addr',
                                                          namespace='test_ns')
-            self.vif_driver.init_l3.assert_called_once_with('test_interface',
-                                                            ['10.0.0.2/24'],
-                                                            namespace=
-                                                            'test_ns')
+            self.vif_driver.init_l3.assert_called_once_with(
+                'test_interface',
+                ['10.0.0.2/24'],
+                namespace='test_ns'
+            )
             cmd = ['route', 'add', 'default', 'gw', '10.0.0.1']
             ip_wrap.assert_has_calls([
                 mock.call('sudo_test', namespace='test_ns'),

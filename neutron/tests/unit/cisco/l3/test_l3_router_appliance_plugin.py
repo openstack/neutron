@@ -326,7 +326,7 @@ class RouterSchedulingTestCase(L3RouterApplianceTestCaseBase,
                 self.assertIsNotNone(hosting_device_1)
                 cfg_dh_rpc.report_non_responding_hosting_devices(
                     self.adminContext,
-                    host = None,
+                    host=None,
                     hosting_device_ids=[hosting_device_1['id']])
             self.assertEqual(1, mock_notify.call_count)
             mock_notify.assert_called_with(
