@@ -244,7 +244,7 @@ class LinkLocalAllocator(object):
 class RouterInfo(l3_ha_agent.RouterMixin):
 
     def __init__(self, router_id, root_helper, use_namespaces, router,
-                 use_ipv6=False):
+                 use_ipv6=False, ns_name=None):
         self.router_id = router_id
         self.ex_gw_port = None
         self._snat_enabled = None
@@ -257,6 +257,7 @@ class RouterInfo(l3_ha_agent.RouterMixin):
         self.use_namespaces = use_namespaces
         # Invoke the setter for establishing initial SNAT action
         self.router = router
+        self.ns_name = ns_name
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=root_helper,
             use_ipv6=use_ipv6,
@@ -288,10 +289,6 @@ class RouterInfo(l3_ha_agent.RouterMixin):
         elif self.ex_gw_port:
             # Gateway port was removed, remove rules
             self._snat_action = 'remove_rules'
-
-    @property
-    def ns_name(self):
-        return NS_PREFIX + self.router_id if self.use_namespaces else None
 
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets
@@ -576,14 +573,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.target_ex_net_id = None
         self.use_ipv6 = ipv6_utils.is_enabled()
 
-    def _get_router_info(self, router_id, router):
-        return RouterInfo(
-            router_id=router_id,
-            root_helper=self.root_helper,
-            use_namespaces=self.conf.use_namespaces,
-            router=router,
-            use_ipv6=self.use_ipv6)
-
     def _check_config_params(self):
         """Check items in configuration files.
 
@@ -619,9 +608,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             return set()
 
     def _get_routers_namespaces(self, router_ids):
-        namespaces = set(self._get_router_info(id, router=None).ns_name
-                         for id in router_ids)
-        namespaces.update(self.get_snat_ns_name(id) for id in router_ids)
+        namespaces = set(self.get_ns_name(rid) for rid in router_ids)
+        namespaces.update(self.get_snat_ns_name(rid) for rid in router_ids)
         return namespaces
 
     def _cleanup_namespaces(self, router_namespaces, router_ids):
@@ -764,7 +752,14 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     raise Exception(msg)
 
     def _router_added(self, router_id, router):
-        ri = self._get_router_info(router_id, router)
+        ns_name = (self.get_ns_name(router_id)
+                   if self.conf.use_namespaces else None)
+        ri = RouterInfo(router_id=router_id,
+                        root_helper=self.root_helper,
+                        use_namespaces=self.conf.use_namespaces,
+                        router=router,
+                        use_ipv6=self.use_ipv6,
+                        ns_name=ns_name)
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
             self._create_router_namespace(ri)
@@ -1252,6 +1247,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def get_fip_ns_name(self, ext_net_id):
         return (FIP_NS_PREFIX + ext_net_id)
+
+    def get_ns_name(self, router_id):
+        return (NS_PREFIX + router_id)
 
     def get_snat_ns_name(self, router_id):
         return (SNAT_NS_PREFIX + router_id)
