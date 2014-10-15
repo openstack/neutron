@@ -1056,6 +1056,10 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             network = self.get_network(context, id)
+            if network['subnets']:
+                msg = _("Cannot delete network '%s', "
+                        "delete the associated subnet first") % network['name']
+                raise n_exc.InvalidInput(error_message=msg)
             if n1kv_db_v2.is_trunk_member(session, id):
                 msg = _("Cannot delete network '%s' "
                         "that is member of a trunk segment") % network['name']
