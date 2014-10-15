@@ -988,9 +988,9 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     self._delete('ports', port['port']['id'])
 
 
-class TestMl2PluginCreateUpdatePort(base.BaseTestCase):
+class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
     def setUp(self):
-        super(TestMl2PluginCreateUpdatePort, self).setUp()
+        super(TestMl2PluginCreateUpdateDeletePort, self).setUp()
         self.context = mock.MagicMock()
 
     def _ensure_transaction_is_closed(self):
@@ -1043,3 +1043,24 @@ class TestMl2PluginCreateUpdatePort(base.BaseTestCase):
 
             plugin._notify_l3_agent_new_port.assert_called_once_with(
                 self.context, new_host_port)
+
+    def test_vmarp_table_update_outside_of_delete_transaction(self):
+        l3plugin = mock.Mock()
+        l3plugin.dvr_vmarp_table_update = (
+            lambda *args, **kwargs: self._ensure_transaction_is_closed())
+        l3plugin.dvr_deletens_if_no_port.return_value = []
+        l3plugin.supported_extension_aliases = [
+            'router', constants.L3_AGENT_SCHEDULER_EXT_ALIAS,
+            constants.L3_DISTRIBUTED_EXT_ALIAS
+        ]
+        with contextlib.nested(
+            mock.patch.object(ml2_plugin.Ml2Plugin, '__init__',
+                              return_value=None),
+            mock.patch.object(manager.NeutronManager,
+                              'get_service_plugins',
+                              return_value={'L3_ROUTER_NAT': l3plugin}),
+        ):
+            plugin = self._create_plugin_for_create_update_port(mock.Mock())
+            # deleting the port will call dvr_vmarp_table_update, which will
+            # run the transaction balancing function defined in this test
+            plugin.delete_port(self.context, 'fake_id')

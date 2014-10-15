@@ -1011,8 +1011,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if l3plugin:
                 router_ids = l3plugin.disassociate_floatingips(
                     context, id, do_notify=False)
-                if is_dvr_enabled:
-                    l3plugin.dvr_vmarp_table_update(context, id, "del")
 
             LOG.debug("Calling delete_port for %(port_id)s owned by %(owner)s"
                       % {"port_id": id, "owner": device_owner})
@@ -1020,6 +1018,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         # now that we've left db transaction, we are safe to notify
         if l3plugin:
+            if is_dvr_enabled:
+                l3plugin.dvr_vmarp_table_update(context, port, "del")
             l3plugin.notify_routers_updated(context, router_ids)
             for router in removed_routers:
                 try:
