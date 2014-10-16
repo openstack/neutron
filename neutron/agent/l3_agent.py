@@ -40,7 +40,7 @@ from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as common_utils
-from neutron import context
+from neutron import context as n_context
 from neutron import manager
 from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LW
@@ -521,7 +521,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             LOG.error(msg)
             raise SystemExit(1)
 
-        self.context = context.get_admin_context_without_session()
+        self.context = n_context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, host)
         self.fullsync = True
         self.sync_progress = False
