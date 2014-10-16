@@ -124,6 +124,10 @@ connection_opts = [
     cfg.ListOpt('nsx_controllers',
                 deprecated_name='nvp_controllers',
                 help=_("Lists the NSX controllers in this cluster")),
+    cfg.IntOpt('conn_idle_timeout',
+               default=900,
+               help=_('Reconnect connection to nsx if not used within this '
+                      'amount of time.')),
 ]
 
 cluster_opts = [

@@ -129,6 +129,7 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertIsNone(cfg.CONF.default_l3_gw_service_uuid)
         self.assertIsNone(cfg.CONF.default_l2_gw_service_uuid)
         self.assertEqual('breth0', cfg.CONF.default_interface_name)
+        self.assertEqual(900, cfg.CONF.conn_idle_timeout)
 
     def test_load_api_extensions(self):
         self.config_parse(args=['--config-file', BASE_CONF_PATH,

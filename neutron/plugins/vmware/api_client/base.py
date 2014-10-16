@@ -19,6 +19,8 @@ import httplib
 import six
 import time
 
+from oslo.config import cfg
+
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware import api_client
 
@@ -32,8 +34,6 @@ DEFAULT_CONNECT_TIMEOUT = 5
 @six.add_metaclass(abc.ABCMeta)
 class ApiClientBase(object):
     """An abstract baseclass for all API client implementations."""
-
-    CONN_IDLE_TIMEOUT = 60 * 15
 
     def _create_connection(self, host, port, is_ssl):
         if is_ssl:
@@ -106,7 +106,7 @@ class ApiClientBase(object):
             LOG.debug(_("[%d] Waiting to acquire API client connection."), rid)
         priority, conn = self._conn_pool.get()
         now = time.time()
-        if getattr(conn, 'last_used', now) < now - self.CONN_IDLE_TIMEOUT:
+        if getattr(conn, 'last_used', now) < now - cfg.CONF.conn_idle_timeout:
             LOG.info(_("[%(rid)d] Connection %(conn)s idle for %(sec)0.2f "
                        "seconds; reconnecting."),
                      {'rid': rid, 'conn': api_client.ctrl_conn_to_str(conn),
