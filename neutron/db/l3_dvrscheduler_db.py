@@ -15,6 +15,7 @@
 
 import random
 
+from oslo.db import exception as db_exc
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -26,7 +27,7 @@ from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
-from neutron.i18n import _LW
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import db as ml2_db
 
@@ -299,7 +300,11 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         snat_candidates = self.get_snat_candidates(sync_router,
                                                    active_l3_agents)
         if snat_candidates:
-            chosen_agent = self.bind_snat_servicenode(
-                context, router_id, snat_candidates)
+            try:
+                chosen_agent = self.bind_snat_servicenode(
+                    context, router_id, snat_candidates)
+            except db_exc.DBDuplicateEntry:
+                LOG.info(_LI("SNAT already bound to a service node."))
+                return
             self.bind_dvr_router_servicenode(
                 context, router_id, chosen_agent)
