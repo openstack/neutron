@@ -145,6 +145,7 @@ class ApiClientBase(object):
         elif hasattr(http_conn, "no_release"):
             return
 
+        priority = http_conn.priority
         if bad_state:
             # Reconnect to provider.
             LOG.warn(_("[%(rid)d] Connection returned in bad state, "
@@ -152,8 +153,6 @@ class ApiClientBase(object):
                      {'rid': rid,
                       'conn': api_client.ctrl_conn_to_str(http_conn)})
             http_conn = self._create_connection(*self._conn_params(http_conn))
-            priority = self._next_conn_priority
-            self._next_conn_priority += 1
         elif service_unavail:
             # http_conn returned a service unaviable response, put other
             # connections to the same controller at end of priority queue,
@@ -169,8 +168,6 @@ class ApiClientBase(object):
             # put http_conn at end of queue also
             priority = self._next_conn_priority
             self._next_conn_priority += 1
-        else:
-            priority = http_conn.priority
 
         self._conn_pool.put((priority, http_conn))
         LOG.debug(_("[%(rid)d] Released connection %(conn)s. %(qsize)d "
