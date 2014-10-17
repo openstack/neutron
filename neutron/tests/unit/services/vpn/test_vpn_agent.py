@@ -95,7 +95,7 @@ class TestVPNAgent(base.BaseTestCase):
         router_id = _uuid()
         ns = "ns-" + router_id
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {}, ns_name=ns)
+                                 {}, ns_name=ns)
         self.agent.router_info = {router_id: ri}
         namespace = self.agent.get_namespace(router_id)
         self.assertTrue(namespace.endswith(router_id))
@@ -103,8 +103,7 @@ class TestVPNAgent(base.BaseTestCase):
 
     def test_add_nat_rule(self):
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {})
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper, {})
         iptables = mock.Mock()
         ri.iptables_manager.ipv4['nat'] = iptables
         self.agent.router_info = {router_id: ri}
@@ -123,8 +122,7 @@ class TestVPNAgent(base.BaseTestCase):
 
     def test_remove_rule(self):
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {})
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper, {})
         iptables = mock.Mock()
         ri.iptables_manager.ipv4['nat'] = iptables
         self.agent.router_info = {router_id: ri}
@@ -142,8 +140,7 @@ class TestVPNAgent(base.BaseTestCase):
 
     def test_iptables_apply(self):
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {})
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper, {})
         iptables = mock.Mock()
         ri.iptables_manager = iptables
         self.agent.router_info = {router_id: ri}
@@ -170,8 +167,7 @@ class TestVPNAgent(base.BaseTestCase):
         mock.patch(
             'neutron.agent.linux.iptables_manager.IptablesManager').start()
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {},
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper, {},
                                  ns_name="qrouter-%s" % router_id)
         ri.router = {
             'id': router_id,

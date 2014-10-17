@@ -59,8 +59,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
 
     def _router_added(self, router_id, router):
         LOG.debug(_("_router_added: %s"), router_id)
-        ri = l3_agent.RouterInfo(router_id, self.root_helper,
-                                 self.conf.use_namespaces, router)
+        ri = l3_agent.RouterInfo(router_id, self.root_helper, router)
         self.router_info[router_id] = ri
         super(vArmourL3NATAgent, self).process_router_add(ri)
 
