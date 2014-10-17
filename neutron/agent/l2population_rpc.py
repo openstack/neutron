@@ -67,16 +67,33 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
     '''Mixin class of L2-population call back for Tunnel.
 
     The following all methods are used in a agent as an internal method.
+
+    Some of methods in this class use Local VLAN Mapping, aka lvm.
+    It's a python object with the following attributes at least:
+
+    ============ =========================================================
+    Attribute    Description
+    ============ =========================================================
+    vlan         An identifier used by the agent to identify neutron
+                 network.
+    network_type A network type found in neutron.plugins.common.constants.
+    ============ =========================================================
+
+    NOTE(yamamoto): "Local VLAN" is an OVS-agent term.  OVS-agent internally
+    uses 802.1q VLAN tagging to isolate networks.  While this class inherited
+    the terms from OVS-agent, it does not assume the specific underlying
+    technologies.  E.g. this class is also used by ofagent, where a different
+    mechanism is used.
     '''
 
     @abc.abstractmethod
     def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         '''Add flow for fdb
 
-        This method assumes to be used by method fdb_add_tun.
+        This method is assumed to be used by method fdb_add_tun.
         We expect to add a flow entry to send a packet to specified port
         on bridge.
-        And you may edit some information for local arp respond.
+        And you may edit some information for local arp response.
 
         :param br: represent the bridge on which add_fdb_flow should be
         applied.
@@ -93,17 +110,18 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
     def del_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         '''Delete flow for fdb
 
-        This method assumes to be used by method fdb_remove_tun.
+        This method is assumed to be used by method fdb_remove_tun.
         We expect to delete a flow entry to send a packet to specified port
         from bridge.
-        And you may delete some information for local arp respond.
+        And you may delete some information for local arp response.
 
         :param br: represent the bridge on which del_fdb_flow should be
         applied.
         :param port_info: a list to contain mac and ip.
             [mac, ip]
         :remote_ip: remote ip address.
-        :param lvm: local VLAN map of network.
+        :param lvm: local VLAN map of network.  See add_fdb_flow for
+            more explanation.
         :param ofport: a port to delete.
         '''
         pass
@@ -112,16 +130,16 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
     def setup_tunnel_port(self, br, remote_ip, network_type):
         '''Setup an added tunnel port.
 
-        This method assumes to be used by method fdb_add_tun.
+        This method is assumed to be used by method fdb_add_tun.
         We expect to prepare to call add_fdb_flow. It will be mainly adding
         a port to a bridge.
-        If you need, you may do some preparation for a bridge.
+        If you need, you may do some preparations for a bridge.
 
         :param br: represent the bridge on which setup_tunnel_port should be
         applied.
         :param remote_ip: an ip for port to setup.
         :param network_type: a type of network.
-        :returns: a ofport value. the value 0 means to be unavailable port.
+        :returns: a ofport value. value 0 means the port is unavailable.
         '''
         pass
 
@@ -129,7 +147,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
     def cleanup_tunnel_port(self, br, tun_ofport, tunnel_type):
         '''Clean up a deleted tunnel port.
 
-        This method assumes to be used by method fdb_remove_tun.
+        This method is assumed to be used by method fdb_remove_tun.
         We expect to clean up after calling del_fdb_flow. It will be mainly
         deleting a port from a bridge.
         If you need, you may do some cleanup for a bridge.
@@ -146,8 +164,9 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                                   ip_address):
         '''Operate the ARP respond information.
 
-        Do operation of arp respond information for an action
-        In ovs do adding or removing flow entry to edit an arp reply.
+        Update MAC/IPv4 associations, which is typically used by
+        the local ARP responder.  For example, OVS-agent sets up
+        flow entries to perform ARP responses.
 
         :param br: represent the bridge on which setup_entry_for_arp_reply
         should be applied.
@@ -160,6 +179,15 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
         pass
 
     def get_agent_ports(self, fdb_entries, local_vlan_map):
+        """Generator to yield port info.
+
+        For each known (i.e found in local_vlan_map) network in
+        fdb_entries, yield (lvm, fdb_entries[network_id]['ports']) pair.
+
+        :param fdb_entries: l2pop fdb entries
+        :param local_vlan_map: A dict to map network_id to
+            the corresponding lvm entry.
+        """
         for network_id, values in fdb_entries.items():
             lvm = local_vlan_map.get(network_id)
             if lvm is None:
@@ -230,7 +258,8 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                                 ...
                                }
         :param local_ip: local IP address of this agent.
-        :local_vlan_map: local VLAN map of network.
+        :param local_vlan_map: A dict to map network_id to
+            the corresponding lvm entry.
         '''
 
         for network_id, agent_ports in fdb_entries.items():
