@@ -144,18 +144,6 @@ class External_net_db_mixin(object):
         if l3plugin:
             l3plugin.delete_disassociated_floatingips(context, network_id)
 
-    def _filter_nets_l3(self, context, nets, filters):
-        vals = filters and filters.get(external_net.EXTERNAL, [])
-        if not vals:
-            return nets
-
-        ext_nets = set(en['network_id']
-                       for en in context.session.query(ExternalNetwork))
-        if vals[0]:
-            return [n for n in nets if n['id'] in ext_nets]
-        else:
-            return [n for n in nets if n['id'] not in ext_nets]
-
     def get_external_network_id(self, context):
         nets = self.get_networks(context, {external_net.EXTERNAL: [True]})
         if len(nets) > 1:
