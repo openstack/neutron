@@ -620,17 +620,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ns_to_ignore = self._get_routers_namespaces(router_ids)
 
         ns_to_destroy = router_namespaces - ns_to_ignore
-        self._destroy_stale_router_namespaces(ns_to_destroy)
-
-    def _destroy_stale_router_namespaces(self, router_namespaces):
-        """Destroys the stale router namespaces
-
-        The argumenet router_namespaces is a list of stale router namespaces
-
-        As some stale router namespaces may not be able to be deleted, only
-        one attempt will be made to delete them.
-        """
-        for ns in router_namespaces:
+        for ns in ns_to_destroy:
             try:
                 self._destroy_namespace(ns)
             except RuntimeError:
@@ -1845,18 +1835,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         while True:
             pool.spawn_n(self._process_router_update)
 
-    def _router_ids(self):
-        if not self.conf.use_namespaces:
-            return [self.conf.router_id]
-
     @periodic_task.periodic_task
     def periodic_sync_routers_task(self, context):
-        self._sync_routers_task(context)
-
-    def _sync_routers_task(self, context):
         if self.services_sync:
             super(L3NATAgent, self).process_services_sync(context)
-        LOG.debug("Starting _sync_routers_task - fullsync:%s",
+        LOG.debug("Starting periodic_sync_routers_task - fullsync:%s",
                   self.fullsync)
         if not self.fullsync:
             return
@@ -1869,10 +1852,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         prev_router_ids = set(self.router_info)
 
         try:
-            router_ids = self._router_ids()
             timestamp = timeutils.utcnow()
-            routers = self.plugin_rpc.get_routers(
-                context, router_ids)
+            if self.conf.use_namespaces:
+                routers = self.plugin_rpc.get_routers(context)
+            else:
+                routers = self.plugin_rpc.get_routers(context,
+                                                      [self.conf.router_id])
 
             LOG.debug('Processing :%r', routers)
             for r in routers:
@@ -1882,7 +1867,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                       timestamp=timestamp)
                 self._queue.add(update)
             self.fullsync = False
-            LOG.debug("_sync_routers_task successfully completed")
+            LOG.debug("periodic_sync_routers_task successfully completed")
         except messaging.MessagingException:
             LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
             self.fullsync = True

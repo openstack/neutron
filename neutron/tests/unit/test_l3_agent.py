@@ -415,18 +415,18 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         return agent, ri, port
 
-    def test__sync_routers_task_raise_exception(self):
+    def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.side_effect = Exception()
         with mock.patch.object(agent, '_cleanup_namespaces') as f:
-            agent._sync_routers_task(agent.context)
+            agent.periodic_sync_routers_task(agent.context)
         self.assertFalse(f.called)
 
-    def test__sync_routers_task_call_clean_stale_namespaces(self):
+    def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.return_value = []
         with mock.patch.object(agent, '_cleanup_namespaces') as f:
-            agent._sync_routers_task(agent.context)
+            agent.periodic_sync_routers_task(agent.context)
         self.assertTrue(f.called)
 
     def test_router_info_create(self):
@@ -1516,8 +1516,8 @@ vrrp_instance VR_1 {
             # The unexpected exception has been fixed manually
             internal_network_added.side_effect = None
 
-            # _sync_routers_task finds out that _rpc_loop failed to process the
-            # router last time, it will retry in the next run.
+            # periodic_sync_routers_task finds out that _rpc_loop failed to
+            # process the router last time, it will retry in the next run.
             agent.process_router(ri)
             # We were able to add the port to ri.internal_ports
             self.assertIn(
@@ -1547,8 +1547,8 @@ vrrp_instance VR_1 {
             # The unexpected exception has been fixed manually
             internal_net_removed.side_effect = None
 
-            # _sync_routers_task finds out that _rpc_loop failed to process the
-            # router last time, it will retry in the next run.
+            # periodic_sync_routers_task finds out that _rpc_loop failed to
+            # process the router last time, it will retry in the next run.
             agent.process_router(ri)
             # We were able to remove the port from ri.internal_ports
             self.assertNotIn(
@@ -1867,7 +1867,7 @@ vrrp_instance VR_1 {
 
         self.conf.set_override('router_id', '1234')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.assertEqual(['1234'], agent._router_ids())
+        self.assertEqual('1234', agent.conf.router_id)
         self.assertFalse(agent._clean_stale_namespaces)
 
     def test_process_router_if_compatible_with_no_ext_net_in_conf(self):
