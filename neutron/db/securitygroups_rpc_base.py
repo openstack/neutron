@@ -330,7 +330,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         return ips
 
     def _get_lla_gateway_ip_for_subnet(self, context, subnet):
-        query = context.session.query(models_v2.Port)
+        query = context.session.query(models_v2.Port.mac_address)
         query = query.join(models_v2.IPAllocation)
         query = query.filter(
             models_v2.IPAllocation.subnet_id == subnet['id'])
@@ -339,12 +339,11 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         query = query.filter(models_v2.Port.device_owner ==
                              q_const.DEVICE_OWNER_ROUTER_INTF)
         try:
-            gateway_port = query.one()
+            mac_address = query.one()[0]
         except (exc.NoResultFound, exc.MultipleResultsFound):
             LOG.warn(_('No valid gateway port on subnet %s is '
                        'found for IPv6 RA'), subnet['id'])
             return
-        mac_address = gateway_port['mac_address']
         lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
             q_const.IPV6_LLA_PREFIX,
             mac_address))
