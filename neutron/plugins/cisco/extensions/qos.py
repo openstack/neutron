@@ -94,7 +94,7 @@ class QosController(common.NeutronController, wsgi.Controller):
         result = [builder.build(qos, is_detail)['qos'] for qos in qoss]
         return dict(qoss=result)
 
-    # pylint: disable-msg=E1101
+    # pylint: disable=no-member
     def show(self, request, tenant_id, id):
         """Returns qos details for the given qos id."""
         try:

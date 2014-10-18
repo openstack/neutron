@@ -32,8 +32,7 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.plugins.ml2.driver_context import NetworkContext  # noqa
-from neutron.plugins.ml2.drivers.arista.arista_l3_driver import AristaL3Driver  # noqa
-from neutron.plugins.ml2.drivers.arista.arista_l3_driver import NeutronNets  # noqa
+from neutron.plugins.ml2.drivers.arista import arista_l3_driver
 
 LOG = logging.getLogger(__name__)
 
@@ -54,8 +53,8 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self, driver=None):
 
-        self.driver = driver or AristaL3Driver()
-        self.ndb = NeutronNets()
+        self.driver = driver or arista_l3_driver.AristaL3Driver()
+        self.ndb = arista_l3_driver.NeutronNets()
         self.setup_rpc()
         self.sync_timeout = cfg.CONF.l3_arista.l3_sync_interval
         self.sync_lock = threading.Lock()
