@@ -268,7 +268,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def _select_dhcp_ips_for_network_ids(self, context, network_ids):
         if not network_ids:
             return {}
-        query = context.session.query(models_v2.Port,
+        query = context.session.query(models_v2.Port.mac_address,
+                                      models_v2.Port.network_id,
                                       models_v2.IPAllocation.ip_address)
         query = query.join(models_v2.IPAllocation)
         query = query.filter(models_v2.Port.network_id.in_(network_ids))
@@ -279,14 +280,13 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         for network_id in network_ids:
             ips[network_id] = []
 
-        for port, ip in query:
+        for mac_address, network_id, ip in query:
             if (netaddr.IPAddress(ip).version == 6
                 and not netaddr.IPAddress(ip).is_link_local()):
-                mac_address = port['mac_address']
                 ip = str(ipv6.get_ipv6_addr_by_EUI64(q_const.IPV6_LLA_PREFIX,
                     mac_address))
-            if ip not in ips[port['network_id']]:
-                ips[port['network_id']].append(ip)
+            if ip not in ips[network_id]:
+                ips[network_id].append(ip)
 
         return ips
 
