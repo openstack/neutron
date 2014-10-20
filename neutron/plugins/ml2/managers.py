@@ -152,10 +152,11 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         with session.begin(subtransactions=True):
             network_id = network['id']
             if segments:
-                for segment in segments:
+                for segment_index, segment in enumerate(segments):
                     segment = self.reserve_provider_segment(
                         session, segment)
-                    db.add_network_segment(session, network_id, segment)
+                    db.add_network_segment(session, network_id,
+                                           segment, segment_index)
             else:
                 segment = self.allocate_tenant_segment(session)
                 db.add_network_segment(session, network_id, segment)

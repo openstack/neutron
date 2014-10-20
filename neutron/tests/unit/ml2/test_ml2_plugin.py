@@ -583,20 +583,24 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         network_req = self.new_create_request('networks', data)
         network = self.deserialize(self.fmt,
                                    network_req.get_response(self.api))
-        tz = network['network'][mpnet.SEGMENTS]
-        for tz in data['network'][mpnet.SEGMENTS]:
+        segments = network['network'][mpnet.SEGMENTS]
+        for segment_index, segment in enumerate(data['network']
+                                                [mpnet.SEGMENTS]):
             for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                           pnet.SEGMENTATION_ID]:
-                self.assertEqual(tz.get(field), tz.get(field))
+                self.assertEqual(segment.get(field),
+                            segments[segment_index][field])
 
         # Tests get_network()
         net_req = self.new_show_request('networks', network['network']['id'])
         network = self.deserialize(self.fmt, net_req.get_response(self.api))
-        tz = network['network'][mpnet.SEGMENTS]
-        for tz in data['network'][mpnet.SEGMENTS]:
+        segments = network['network'][mpnet.SEGMENTS]
+        for segment_index, segment in enumerate(data['network']
+                                                [mpnet.SEGMENTS]):
             for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                           pnet.SEGMENTATION_ID]:
-                self.assertEqual(tz.get(field), tz.get(field))
+                self.assertEqual(segment.get(field),
+                            segments[segment_index][field])
 
     def test_create_network_with_provider_and_multiprovider_fail(self):
         data = {'network': {'name': 'net1',
