@@ -184,10 +184,12 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     enable_dhcp = sa.Column(sa.Boolean())
     dns_nameservers = orm.relationship(DNSNameServer,
                                        backref='subnet',
-                                       cascade='all, delete, delete-orphan')
+                                       cascade='all, delete, delete-orphan',
+                                       lazy='joined')
     routes = orm.relationship(SubnetRoute,
                               backref='subnet',
-                              cascade='all, delete, delete-orphan')
+                              cascade='all, delete, delete-orphan',
+                              lazy='joined')
     shared = sa.Column(sa.Boolean)
     ipv6_ra_mode = sa.Column(sa.Enum(constants.IPV6_SLAAC,
                                      constants.DHCPV6_STATEFUL,
