@@ -33,41 +33,23 @@ import logging
 import logging.config
 import logging.handlers
 import os
-import re
+import socket
 import sys
 import traceback
 
 from oslo.config import cfg
+from oslo.serialization import jsonutils
+from oslo.utils import importutils
 import six
 from six import moves
 
-from neutron.openstack.common.gettextutils import _
-from neutron.openstack.common import importutils
-from neutron.openstack.common import jsonutils
+_PY26 = sys.version_info[0:2] == (2, 6)
+
+from neutron.openstack.common._i18n import _
 from neutron.openstack.common import local
 
 
 _DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-_SANITIZE_KEYS = ['adminPass', 'admin_pass', 'password', 'admin_password']
-
-# NOTE(ldbragst): Let's build a list of regex objects using the list of
-# _SANITIZE_KEYS we already have. This way, we only have to add the new key
-# to the list of _SANITIZE_KEYS and we can generate regular expressions
-# for XML and JSON automatically.
-_SANITIZE_PATTERNS = []
-_FORMAT_PATTERNS = [r'(%(key)s\s*[=]\s*[\"\']).*?([\"\'])',
-                    r'(<%(key)s>).*?(</%(key)s>)',
-                    r'([\"\']%(key)s[\"\']\s*:\s*[\"\']).*?([\"\'])',
-                    r'([\'"].*?%(key)s[\'"]\s*:\s*u?[\'"]).*?([\'"])',
-                    r'([\'"].*?%(key)s[\'"]\s*,\s*\'--?[A-z]+\'\s*,\s*u?[\'"])'
-                    '.*?([\'"])',
-                    r'(%(key)s\s*--?[A-z]+\s*).*?([\s])']
-
-for key in _SANITIZE_KEYS:
-    for pattern in _FORMAT_PATTERNS:
-        reg_ex = re.compile(pattern % {'key': key}, re.DOTALL)
-        _SANITIZE_PATTERNS.append(reg_ex)
 
 
 common_cli_opts = [
@@ -138,6 +120,14 @@ generic_log_opts = [
                 help='Log output to standard error.')
 ]
 
+DEFAULT_LOG_LEVELS = ['amqp=WARN', 'amqplib=WARN', 'boto=WARN',
+                      'qpid=WARN', 'sqlalchemy=WARN', 'suds=INFO',
+                      'oslo.messaging=INFO', 'iso8601=WARN',
+                      'requests.packages.urllib3.connectionpool=WARN',
+                      'urllib3.connectionpool=WARN', 'websocket=WARN',
+                      "keystonemiddleware=WARN", "routes.middleware=WARN",
+                      "stevedore=WARN"]
+
 log_opts = [
     cfg.StrOpt('logging_context_format_string',
                default='%(asctime)s.%(msecs)03d %(process)d %(levelname)s '
@@ -156,17 +146,7 @@ log_opts = [
                '%(instance)s',
                help='Prefix each line of exception output with this format.'),
     cfg.ListOpt('default_log_levels',
-                default=[
-                    'amqp=WARN',
-                    'amqplib=WARN',
-                    'boto=WARN',
-                    'qpid=WARN',
-                    'sqlalchemy=WARN',
-                    'suds=INFO',
-                    'oslo.messaging=INFO',
-                    'iso8601=WARN',
-                    'requests.packages.urllib3.connectionpool=WARN'
-                ],
+                default=DEFAULT_LOG_LEVELS,
                 help='List of logger=LEVEL pairs.'),
     cfg.BoolOpt('publish_errors',
                 default=False,
@@ -181,11 +161,11 @@ log_opts = [
     cfg.StrOpt('instance_format',
                default='[instance: %(uuid)s] ',
                help='The format for an instance that is passed with the log '
-                    'message. '),
+                    'message.'),
     cfg.StrOpt('instance_uuid_format',
                default='[instance: %(uuid)s] ',
                help='The format for an instance UUID that is passed with the '
-                    'log message. '),
+                    'log message.'),
 ]
 
 CONF = cfg.CONF
@@ -244,44 +224,19 @@ def _get_log_file_path(binary=None):
     return None
 
 
-def mask_password(message, secret="***"):
-    """Replace password with 'secret' in message.
-
-    :param message: The string which includes security information.
-    :param secret: value with which to replace passwords.
-    :returns: The unicode value of message with the password fields masked.
-
-    For example:
-
-    >>> mask_password("'adminPass' : 'aaaaa'")
-    "'adminPass' : '***'"
-    >>> mask_password("'admin_pass' : 'aaaaa'")
-    "'admin_pass' : '***'"
-    >>> mask_password('"password" : "aaaaa"')
-    '"password" : "***"'
-    >>> mask_password("'original_password' : 'aaaaa'")
-    "'original_password' : '***'"
-    >>> mask_password("u'original_password' :   u'aaaaa'")
-    "u'original_password' :   u'***'"
-    """
-    message = six.text_type(message)
-
-    # NOTE(ldbragst): Check to see if anything in message contains any key
-    # specified in _SANITIZE_KEYS, if not then just return the message since
-    # we don't have to mask any passwords.
-    if not any(key in message for key in _SANITIZE_KEYS):
-        return message
-
-    secret = r'\g<1>' + secret + r'\g<2>'
-    for pattern in _SANITIZE_PATTERNS:
-        message = re.sub(pattern, secret, message)
-    return message
-
-
 class BaseLoggerAdapter(logging.LoggerAdapter):
 
     def audit(self, msg, *args, **kwargs):
         self.log(logging.AUDIT, msg, *args, **kwargs)
+
+    def isEnabledFor(self, level):
+        if _PY26:
+            # This method was added in python 2.7 (and it does the exact
+            # same logic, so we need to do the exact same logic so that
+            # python 2.6 has this capability as well).
+            return self.logger.isEnabledFor(level)
+        else:
+            return super(BaseLoggerAdapter, self).isEnabledFor(level)
 
 
 class LazyAdapter(BaseLoggerAdapter):
@@ -295,6 +250,11 @@ class LazyAdapter(BaseLoggerAdapter):
     def logger(self):
         if not self._logger:
             self._logger = getLogger(self.name, self.version)
+            if six.PY3:
+                # In Python 3, the code fails because the 'manager' attribute
+                # cannot be found when using a LoggerAdapter as the
+                # underlying logger. Work around this issue.
+                self._logger.manager = self._logger.logger.manager
         return self._logger
 
 
@@ -340,11 +300,10 @@ class ContextAdapter(BaseLoggerAdapter):
         self.warn(stdmsg, *args, **kwargs)
 
     def process(self, msg, kwargs):
-        # NOTE(mrodden): catch any Message/other object and
-        #                coerce to unicode before they can get
-        #                to the python logging and possibly
-        #                cause string encoding trouble
-        if not isinstance(msg, six.string_types):
+        # NOTE(jecarey): If msg is not unicode, coerce it into unicode
+        #                before it can get to the python logging and
+        #                possibly cause string encoding trouble
+        if not isinstance(msg, six.text_type):
             msg = six.text_type(msg)
 
         if 'extra' not in kwargs:
@@ -448,7 +407,7 @@ def _load_log_config(log_config_append):
     try:
         logging.config.fileConfig(log_config_append,
                                   disable_existing_loggers=False)
-    except moves.configparser.Error as exc:
+    except (moves.configparser.Error, KeyError) as exc:
         raise LogConfigError(log_config_append, six.text_type(exc))
 
 
@@ -461,9 +420,20 @@ def setup(product_name, version='unknown'):
     sys.excepthook = _create_logging_excepthook(product_name)
 
 
-def set_defaults(logging_context_format_string):
-    cfg.set_defaults(
-        log_opts, logging_context_format_string=logging_context_format_string)
+def set_defaults(logging_context_format_string=None,
+                 default_log_levels=None):
+    # Just in case the caller is not setting the
+    # default_log_level. This is insurance because
+    # we introduced the default_log_level parameter
+    # later in a backwards in-compatible change
+    if default_log_levels is not None:
+        cfg.set_defaults(
+            log_opts,
+            default_log_levels=default_log_levels)
+    if logging_context_format_string is not None:
+        cfg.set_defaults(
+            log_opts,
+            logging_context_format_string=logging_context_format_string)
 
 
 def _find_facility_from_conf():
@@ -511,18 +481,6 @@ def _setup_logging_from_conf(project, version):
     log_root = getLogger(None).logger
     for handler in log_root.handlers:
         log_root.removeHandler(handler)
-
-    if CONF.use_syslog:
-        facility = _find_facility_from_conf()
-        # TODO(bogdando) use the format provided by RFCSysLogHandler
-        #   after existing syslog format deprecation in J
-        if CONF.use_syslog_rfc_format:
-            syslog = RFCSysLogHandler(address='/dev/log',
-                                      facility=facility)
-        else:
-            syslog = logging.handlers.SysLogHandler(address='/dev/log',
-                                                    facility=facility)
-        log_root.addHandler(syslog)
 
     logpath = _get_log_file_path()
     if logpath:
@@ -581,6 +539,20 @@ def _setup_logging_from_conf(project, version):
             logger.setLevel(level)
         else:
             logger.setLevel(level_name)
+
+    if CONF.use_syslog:
+        try:
+            facility = _find_facility_from_conf()
+            # TODO(bogdando) use the format provided by RFCSysLogHandler
+            #   after existing syslog format deprecation in J
+            if CONF.use_syslog_rfc_format:
+                syslog = RFCSysLogHandler(facility=facility)
+            else:
+                syslog = logging.handlers.SysLogHandler(facility=facility)
+            log_root.addHandler(syslog)
+        except socket.error:
+            log_root.error('Unable to add syslog handler. Verify that syslog '
+                           'is running.')
 
 
 _loggers = {}
@@ -650,6 +622,12 @@ class ContextFormatter(logging.Formatter):
 
     def format(self, record):
         """Uses contextstring if request_id is set, otherwise default."""
+
+        # NOTE(jecarey): If msg is not unicode, coerce it into unicode
+        #                before it can get to the python logging and
+        #                possibly cause string encoding trouble
+        if not isinstance(record.msg, six.text_type):
+            record.msg = six.text_type(record.msg)
 
         # store project info
         record.project = self.project
