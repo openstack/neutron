@@ -148,11 +148,11 @@ class ArpLib(object):
         try:
             pkt = packet.Packet(msg.data)
         except Exception as e:
-            LOG.info(_LI("Unparsable packet: got exception %s"), e)
+            LOG.debug("Unparsable packet: got exception %s", e)
             return
-        LOG.info(_LI("packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s"),
-                 {'dpid': dpid_lib.dpid_to_str(datapath.id),
-                 'port': port, 'pkt': pkt})
+        LOG.debug("packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s",
+                  {'dpid': dpid_lib.dpid_to_str(datapath.id),
+                  'port': port, 'pkt': pkt})
 
         if metadata is None:
             LOG.info(_LI("drop non tenant packet"))
@@ -160,12 +160,12 @@ class ArpLib(object):
         network = metadata & meta.NETWORK_MASK
         pkt_ethernet = pkt.get_protocol(ethernet.ethernet)
         if not pkt_ethernet:
-            LOG.info(_LI("drop non-ethernet packet"))
+            LOG.debug("drop non-ethernet packet")
             return
         pkt_vlan = pkt.get_protocol(vlan.vlan)
         pkt_arp = pkt.get_protocol(arp.arp)
         if not pkt_arp:
-            LOG.info(_LI("drop non-arp packet"))
+            LOG.debug("drop non-arp packet")
             return
 
         arptbl = self._arp_tbl.get(network)
