@@ -153,8 +153,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                    'sg_member_ips': {}}
         rules_in_db = self._select_rules_for_ports(context, ports)
         remote_security_group_info = {}
-        for (binding, rule_in_db) in rules_in_db:
-            port_id = binding['port_id']
+        for (port_id, rule_in_db) in rules_in_db:
             remote_gid = rule_in_db.get('remote_group_id')
             security_group_id = rule_in_db.get('security_group_id')
             ethertype = rule_in_db['ethertype']
@@ -219,7 +218,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
         sgr_sgid = sg_db.SecurityGroupRule.security_group_id
 
-        query = context.session.query(sg_db.SecurityGroupPortBinding,
+        query = context.session.query(sg_binding_port,
                                       sg_db.SecurityGroupRule)
         query = query.join(sg_db.SecurityGroupRule,
                            sgr_sgid == sg_binding_sgid)
@@ -416,8 +415,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
     def security_group_rules_for_ports(self, context, ports):
         rules_in_db = self._select_rules_for_ports(context, ports)
-        for (binding, rule_in_db) in rules_in_db:
-            port_id = binding['port_id']
+        for (port_id, rule_in_db) in rules_in_db:
             port = ports[port_id]
             direction = rule_in_db['direction']
             rule_dict = {
