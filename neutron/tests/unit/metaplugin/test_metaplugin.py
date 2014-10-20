@@ -306,7 +306,20 @@ class MetaNeutronPluginV2Test(testlib_api.SqlTestCase,
             self.plugin.get_router(self.context, router_ret1['id'])
 
     def test_extension_method(self):
-        self.assertEqual('fake1', self.plugin.fake_func())
+        """Test if plugin methods are accessible from self.plugin
+
+        This test compensates for the nondeterministic ordering of
+        self.plugin's plugins dictionary. Fake Plugin 1 and Fake Plugin 2
+        both have a function called fake_func and the order of
+        self.plugin.plugins will determine which fake_func is called.
+        """
+        fake1 = self.plugin.plugins.keys().index('fake1')
+        fake2 = self.plugin.plugins.keys().index('fake2')
+        fake1_before_fake2 = fake1 < fake2
+
+        fake_func_return = 'fake1' if fake1_before_fake2 else 'fake2'
+
+        self.assertEqual(fake_func_return, self.plugin.fake_func())
         self.assertEqual('fake2', self.plugin.fake_func2())
 
     def test_extension_not_implemented_method(self):
