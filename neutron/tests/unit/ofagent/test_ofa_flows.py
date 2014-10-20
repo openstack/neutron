@@ -84,7 +84,7 @@ class TestOFAgentFlows(ofa_test_base.OFATestBase):
                  priority=0, table_id=12)),
             call(ofpp.OFPFlowMod(dp, priority=0, table_id=13)),
         ]
-        sendmsg.assert_has_calls(expected_calls)
+        sendmsg.assert_has_calls(expected_calls, any_order=True)
 
     def test_install_arp_responder(self):
         br = self.br
