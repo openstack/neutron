@@ -67,7 +67,7 @@ class TestManager(base.BaseTestCase):
         self.rpc_mock.update_pool_stats.assert_has_calls([
             mock.call('1', mock.ANY),
             mock.call('2', mock.ANY)
-        ])
+        ], any_order=True)
 
     def test_collect_stats_exception(self):
         self.driver_mock.get_stats.side_effect = Exception
@@ -91,8 +91,10 @@ class TestManager(base.BaseTestCase):
             self.assertEqual(len(reloaded), len(reload.mock_calls))
             self.assertEqual(len(destroyed), len(destroy.mock_calls))
 
-            reload.assert_has_calls([mock.call(i) for i in reloaded])
-            destroy.assert_has_calls([mock.call(i) for i in destroyed])
+            reload.assert_has_calls([mock.call(i) for i in reloaded],
+                                    any_order=True)
+            destroy.assert_has_calls([mock.call(i) for i in destroyed],
+                                     any_order=True)
             self.assertFalse(self.mgr.needs_resync)
 
     def test_sync_state_all_known(self):
@@ -187,7 +189,8 @@ class TestManager(base.BaseTestCase):
 
     def test_remove_orphans(self):
         self.mgr.remove_orphans()
-        self.driver_mock.remove_orphans.assert_called_once_with(['1', '2'])
+        orphans = {'1': "Fake", '2': "Fake"}
+        self.driver_mock.remove_orphans.assert_called_once_with(orphans.keys())
 
     def test_create_vip(self):
         vip = {'id': 'id1', 'pool_id': '1'}
@@ -364,4 +367,4 @@ class TestManager(base.BaseTestCase):
         payload = {'admin_state_up': False}
         self.mgr.agent_updated(mock.Mock(), payload)
         self.driver_mock.undeploy_instance.assert_has_calls(
-            [mock.call('1'), mock.call('2')])
+            [mock.call('1'), mock.call('2')], any_order=True)
