@@ -171,9 +171,10 @@ class TestVPNAgent(base.BaseTestCase):
             'neutron.agent.linux.iptables_manager.IptablesManager').start()
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, {})
+                                 self.conf.use_namespaces, {},
+                                 ns_name="qrouter-%s" % router_id)
         ri.router = {
-            'id': _uuid(),
+            'id': router_id,
             'admin_state_up': True,
             'routes': [],
             'external_gateway_info': {},
