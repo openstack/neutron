@@ -28,8 +28,6 @@ import netaddr
 from oslo.config import cfg
 import testtools
 
-from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.openstack.common import importutils
 from neutron.plugins.common import constants as p_const
@@ -220,10 +218,7 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         self.int_dp = self._mk_test_dp('int_br')
         self.agent.int_br = self._mk_test_br('int_br')
         self.agent.int_br.set_dp(self.int_dp)
-        self.agent.phys_brs['phys-net1'] = self._mk_test_br('phys_br1')
-        self.agent.phys_ofports['phys-net1'] = 777
         self.agent.int_ofports['phys-net1'] = 666
-        self.datapath = self._mk_test_dp('phys_br')
 
     def _create_tunnel_port_name(self, tunnel_ip, tunnel_type):
         tunnel_ip_hex = '%08x' % netaddr.IPAddress(tunnel_ip, version=4)
@@ -447,49 +442,6 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                                segmentation_id="1",
                                physical_network="physnet")
         self.assertEqual(set(['tapb1981919-f5']), self.agent.updated_ports)
-
-    def test_setup_physical_bridges(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib, "device_exists"),
-            mock.patch.object(utils, "execute"),
-            mock.patch.object(self.mod_agent.Bridge, "add_port"),
-            mock.patch.object(self.mod_agent.Bridge, "delete_port"),
-            mock.patch.object(self.mod_agent.Bridge, "set_protocols"),
-            mock.patch.object(self.mod_agent.Bridge, "set_controller"),
-            mock.patch.object(self.mod_agent.Bridge, "get_datapath_id",
-                              return_value='0xa'),
-            mock.patch.object(self.agent.int_br, "add_port"),
-            mock.patch.object(self.agent.int_br, "delete_port"),
-            mock.patch.object(ip_lib.IPWrapper, "add_veth"),
-            mock.patch.object(ip_lib.IpLinkCommand, "delete"),
-            mock.patch.object(ip_lib.IpLinkCommand, "set_up"),
-            mock.patch.object(ip_lib.IpLinkCommand, "set_mtu"),
-            mock.patch.object(self.mod_agent.ryu_api, "get_datapath",
-                              return_value=self.datapath)
-        ) as (devex_fn, utilsexec_fn,
-              ovs_addport_fn, ovs_delport_fn, ovs_set_protocols_fn,
-              ovs_set_controller_fn, ovs_datapath_id_fn, br_addport_fn,
-              br_delport_fn, addveth_fn, linkdel_fn, linkset_fn, linkmtu_fn,
-              ryu_api_fn):
-            devex_fn.return_value = True
-            parent = mock.MagicMock()
-            parent.attach_mock(utilsexec_fn, 'utils_execute')
-            parent.attach_mock(linkdel_fn, 'link_delete')
-            parent.attach_mock(addveth_fn, 'add_veth')
-            addveth_fn.return_value = (ip_lib.IPDevice("int-br-eth1"),
-                                       ip_lib.IPDevice("phy-br-eth1"))
-            ovs_addport_fn.return_value = "25"
-            br_addport_fn.return_value = "11"
-            self.agent.setup_physical_bridges({"physnet1": "br-eth"})
-            expected_calls = [mock.call.link_delete(),
-                              mock.call.utils_execute(['udevadm',
-                                                       'settle',
-                                                       '--timeout=10']),
-                              mock.call.add_veth('int-br-eth',
-                                                 'phy-br-eth')]
-            parent.assert_has_calls(expected_calls, any_order=False)
-            self.assertEqual(11, self.agent.int_ofports["physnet1"])
-            self.assertEqual(25, self.agent.phys_ofports["physnet1"])
 
     def test_setup_physical_interfaces(self):
         with mock.patch.object(self.agent.int_br, "add_port") as add_port_fn:

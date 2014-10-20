@@ -34,7 +34,6 @@ from ryu.ofproto import ofproto_v1_3 as ryu_ofp13
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
-from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as n_const
@@ -196,8 +195,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
 
     def __init__(self, ryuapp, integ_br, local_ip,
                  bridge_mappings, interface_mappings, root_helper,
-                 polling_interval, tunnel_types=None,
-                 veth_mtu=None):
+                 polling_interval, tunnel_types=None):
         """Constructor.
 
         :param ryuapp: object of the ryu app.
@@ -212,11 +210,9 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         :param tunnel_types: A list of tunnel types to enable support for in
                the agent. If set, will automatically set enable_tunneling to
                True.
-        :param veth_mtu: MTU size for veth interfaces.
         """
         super(OFANeutronAgent, self).__init__()
         self.ryuapp = ryuapp
-        self.veth_mtu = veth_mtu
         self.root_helper = root_helper
         # TODO(yamamoto): Remove this VLAN leftover
         self.available_local_vlans = set(xrange(ofa_const.LOCAL_VLAN_MIN,
@@ -250,8 +246,6 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         self.setup_integration_br()
         self.int_ofports = {}
         self.setup_physical_interfaces(interface_mappings)
-        # TODO(yamamoto): Remove physical bridge support
-        self.setup_physical_bridges(bridge_mappings)
         self.local_vlan_map = {}
         self.tun_ofports = {}
         for t in tables.TUNNEL_TYPES:
@@ -596,76 +590,6 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         br.setup_ofp()
         br.setup_default_table()
 
-    def _phys_br_prepare_create_veth(self, br, int_veth_name, phys_veth_name):
-        self.int_br.delete_port(int_veth_name)
-        br.delete_port(phys_veth_name)
-        if ip_lib.device_exists(int_veth_name, self.root_helper):
-            ip_lib.IPDevice(int_veth_name, self.root_helper).link.delete()
-            # Give udev a chance to process its rules here, to avoid
-            # race conditions between commands launched by udev rules
-            # and the subsequent call to ip_wrapper.add_veth
-            utils.execute(['udevadm', 'settle', '--timeout=10'])
-
-    def _phys_br_create_veth(self, br, int_veth_name,
-                             phys_veth_name, physical_network, ip_wrapper):
-        int_veth, phys_veth = ip_wrapper.add_veth(int_veth_name,
-                                                  phys_veth_name)
-        int_br = self.int_br
-        self.int_ofports[physical_network] = int(int_br.add_port(int_veth))
-        self.phys_ofports[physical_network] = int(br.add_port(phys_veth))
-        return (int_veth, phys_veth)
-
-    def _phys_br_enable_veth_to_pass_traffic(self, int_veth, phys_veth):
-        # enable veth to pass traffic
-        int_veth.link.set_up()
-        phys_veth.link.set_up()
-
-        if self.veth_mtu:
-            # set up mtu size for veth interfaces
-            int_veth.link.set_mtu(self.veth_mtu)
-            phys_veth.link.set_mtu(self.veth_mtu)
-
-    def _phys_br_patch_physical_bridge_with_integration_bridge(
-            self, br, physical_network, bridge, ip_wrapper):
-        int_veth_name = constants.PEER_INTEGRATION_PREFIX + bridge
-        phys_veth_name = constants.PEER_PHYSICAL_PREFIX + bridge
-        self._phys_br_prepare_create_veth(br, int_veth_name, phys_veth_name)
-        int_veth, phys_veth = self._phys_br_create_veth(br, int_veth_name,
-                                                        phys_veth_name,
-                                                        physical_network,
-                                                        ip_wrapper)
-        self._phys_br_enable_veth_to_pass_traffic(int_veth, phys_veth)
-
-    def setup_physical_bridges(self, bridge_mappings):
-        """Setup the physical network bridges.
-
-        Creates physical network bridges and links them to the
-        integration bridge using veths.
-
-        :param bridge_mappings: map physical network names to bridge names.
-        """
-        self.phys_brs = {}
-        self.phys_ofports = {}
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper)
-        for physical_network, bridge in bridge_mappings.iteritems():
-            LOG.info(_LI("Mapping physical network %(physical_network)s to "
-                         "bridge %(bridge)s"),
-                     {'physical_network': physical_network,
-                      'bridge': bridge})
-            # setup physical bridge
-            if not ip_lib.device_exists(bridge, self.root_helper):
-                LOG.error(_LE("Bridge %(bridge)s for physical network "
-                              "%(physical_network)s does not exist. Agent "
-                              "terminated!"),
-                          {'physical_network': physical_network,
-                           'bridge': bridge})
-                raise SystemExit(1)
-            br = Bridge(bridge, self.root_helper, self.ryuapp)
-            self.phys_brs[physical_network] = br
-
-            self._phys_br_patch_physical_bridge_with_integration_bridge(
-                br, physical_network, bridge, ip_wrapper)
-
     def setup_physical_interfaces(self, interface_mappings):
         """Setup the physical network interfaces.
 
@@ -1001,7 +925,6 @@ def create_agent_config_map(config):
         root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,
         tunnel_types=config.AGENT.tunnel_types,
-        veth_mtu=config.AGENT.veth_mtu,
     )
 
     # If enable_tunneling is TRUE, set tunnel_type to default to GRE
