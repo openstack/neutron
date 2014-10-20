@@ -125,7 +125,7 @@ class TestCiscoCsrIPSecConnection(base.BaseTestCase):
         steps are called in reverse order. At the end, there should be no
         rollback infromation for the connection.
         """
-        def fake_route_check_fails(*args, **kwargs):
+        def fake_route_check_fails(*args):
             if args[0] == 'Static Route':
                 # So that subsequent calls to CSR rest client (for rollback)
                 # will fake as passing.
