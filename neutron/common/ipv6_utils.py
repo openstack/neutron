@@ -20,6 +20,7 @@ import os
 
 import netaddr
 
+from neutron.common import constants
 from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log
 
@@ -61,3 +62,9 @@ def is_enabled():
         if not _IS_IPV6_ENABLED:
             LOG.info(_LI("IPv6 is not enabled on this system."))
     return _IS_IPV6_ENABLED
+
+
+def is_slaac_subnet(subnet):
+    """Check if subnet uses SLAAC addressing."""
+    return (subnet['ipv6_address_mode'] == constants.IPV6_SLAAC
+            or subnet['ipv6_address_mode'] == constants.DHCPV6_STATELESS)
