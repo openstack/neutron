@@ -62,10 +62,10 @@ class TestCiscoApicSync(base.BaseTestCase):
         sync.core_plugin.get_ports.return_value = [{'id': 'port',
                                                     'network_id': 'net'}]
         sync.sync_base()
-        self.driver.create_network_postcommit.assert_called_once()
-        self.driver.create_subnet_postcommit.assert_called_once()
-        self.get_locked_port_and_binding.assert_called_once()
-        self.driver.create_port_postcommit.assert_called_once()
+        self.assertEqual(1, self.driver.create_network_postcommit.call_count)
+        self.assertEqual(1, self.driver.create_subnet_postcommit.call_count)
+        self.assertEqual(1, self.get_locked_port_and_binding.call_count)
+        self.assertEqual(1, self.driver.create_port_postcommit.call_count)
 
     def test_sync_router(self):
         sync = apic_sync.ApicRouterSynchronizer(self.driver)
@@ -74,4 +74,5 @@ class TestCiscoApicSync(base.BaseTestCase):
                                                     'network_id': 'net',
                                                     'device_id': 'dev'}]
         sync.sync_router()
-        self.driver.add_router_interface_postcommit.assert_called_once()
+        self.assertEqual(
+            1, self.driver.add_router_interface_postcommit.call_count)

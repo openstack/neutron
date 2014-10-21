@@ -1749,25 +1749,25 @@ vrrp_instance VR_1 {
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
         agent.router_deleted(None, FAKE_ID)
-        agent._queue.add.assert_called_once()
+        self.assertEqual(1, agent._queue.add.call_count)
 
     def test_routers_updated(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
         agent.routers_updated(None, [FAKE_ID])
-        agent._queue.add.assert_called_once()
+        self.assertEqual(1, agent._queue.add.call_count)
 
     def test_removed_from_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
         agent.router_removed_from_agent(None, {'router_id': FAKE_ID})
-        agent._queue.add.assert_called_once()
+        self.assertEqual(1, agent._queue.add.call_count)
 
     def test_added_to_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
         agent.router_added_to_agent(None, [FAKE_ID])
-        agent._queue.add.assert_called_once()
+        self.assertEqual(1, agent._queue.add.call_count)
 
     def test_destroy_fip_namespace(self):
         class FakeDev(object):

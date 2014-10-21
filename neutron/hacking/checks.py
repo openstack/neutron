@@ -79,7 +79,19 @@ def no_author_tags(physical_line):
             return pos, "N322: Don't use author tags"
 
 
+def check_assert_called_once(logical_line, filename):
+    msg = ("N323: assert_called_once is a no-op. please use "
+           "assert_called_once_with to test with explicit parameters or an "
+           "assertEqual with call_count.")
+
+    if 'neutron/tests/' in filename:
+        pos = logical_line.find('.assert_called_once(')
+        if pos != -1:
+            yield (pos, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
     register(no_author_tags)
+    register(check_assert_called_once)
