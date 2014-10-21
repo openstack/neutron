@@ -26,6 +26,10 @@ from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware.nsxlib import switch
 from neutron.plugins.vmware.nsxlib import versioning
 
+# @versioning.versioned decorator makes the apparent function body
+# totally unrelated to the real function.  This confuses pylint :(
+# pylint: disable=assignment-from-no-return
+
 HTTP_GET = "GET"
 HTTP_POST = "POST"
 HTTP_DELETE = "DELETE"
