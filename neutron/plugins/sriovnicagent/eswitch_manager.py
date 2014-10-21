@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
 import os
 import re
 
@@ -30,6 +31,7 @@ class PciOsWrapper(object):
     PCI_PATH = "/sys/class/net/%s/device/virtfn%s/net"
     VIRTFN_FORMAT = "^virtfn(?P<vf_index>\d+)"
     VIRTFN_REG_EX = re.compile(VIRTFN_FORMAT)
+    MAC_VTAP_PREFIX = "upper_macvtap*"
 
     @classmethod
     def scan_vf_devices(cls, dev_name):
@@ -65,12 +67,18 @@ class PciOsWrapper(object):
         """Check if VF is assigned.
 
         Checks if a given vf index of a given device name is assigned
-        by checking the relevant path in the system
+        by checking the relevant path in the system:
+        VF is assigned if:
+            Direct VF: PCI_PATH does not exist.
+            Macvtap VF: upper_macvtap path exists.
         @param dev_name: pf network device name
         @param vf_index: vf index
         """
         path = cls.PCI_PATH % (dev_name, vf_index)
-        return not (os.path.isdir(path))
+        if not os.path.isdir(path):
+            return True
+        upper_macvtap_path = os.path.join(path, "*", cls.MAC_VTAP_PREFIX)
+        return bool(glob.glob(upper_macvtap_path))
 
 
 class EmbSwitch(object):
