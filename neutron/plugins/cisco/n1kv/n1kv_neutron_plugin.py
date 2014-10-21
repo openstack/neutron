@@ -838,8 +838,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         Send delete port request to VSM.
 
-        Delete the port on the VSM. If it is the last port on the VM Network,
-        delete the VM Network.
+        Delete the port on the VSM.
         :param context: neutron api request context
         :param port: port object which is to be deleted
         :param vm_network: VM network object with which the port is associated
