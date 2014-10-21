@@ -316,6 +316,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 router.gw_port = None
                 context.session.add(router)
                 context.session.expire(gw_port)
+            vpnservice = manager.NeutronManager.get_service_plugins().get(
+                constants.VPN)
+            if vpnservice:
+                vpnservice.check_router_in_use(context, router_id)
             self._core_plugin.delete_port(
                 admin_ctx, gw_port['id'], l3_port_check=False)
 
@@ -518,6 +522,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         subnet_db = self._core_plugin._get_subnet(context, subnet_id)
         subnet_cidr = netaddr.IPNetwork(subnet_db['cidr'])
         fip_qry = context.session.query(FloatingIP)
+        vpnservice = manager.NeutronManager.get_service_plugins().get(
+            constants.VPN)
+        if vpnservice:
+            vpnservice.check_subnet_in_use(context, subnet_id)
         for fip_db in fip_qry.filter_by(router_id=router_id):
             if netaddr.IPAddress(fip_db['fixed_ip_address']) in subnet_cidr:
                 raise l3.RouterInterfaceInUseByFloatingIP(

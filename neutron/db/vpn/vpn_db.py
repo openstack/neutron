@@ -602,6 +602,16 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
                 router_id=router_id,
                 vpnservice_id=vpnservices[0]['id'])
 
+    def check_subnet_in_use(self, context, subnet_id):
+        with context.session.begin(subtransactions=True):
+            vpnservices = context.session.query(VPNService).filter_by(
+                subnet_id=subnet_id
+            ).first()
+            if vpnservices:
+                raise vpnaas.SubnetInUseByVPNService(
+                    subnet_id=subnet_id,
+                    vpnservice_id=vpnservices['id'])
+
 
 class VPNPluginRpcDbMixin():
     def _get_agent_hosting_vpn_services(self, context, host):
