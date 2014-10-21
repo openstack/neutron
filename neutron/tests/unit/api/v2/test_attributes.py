@@ -878,3 +878,90 @@ class TestConvertToList(base.BaseTestCase):
     def test_convert_to_list_non_iterable(self):
         for item in (True, False, 1, 1.2, object()):
             self.assertEqual([item], attributes.convert_to_list(item))
+
+
+class TestResDict(base.BaseTestCase):
+    class _MyException(Exception):
+        pass
+    _EXC_CLS = _MyException
+
+    def _test_fill_default_value(self, attr_info, expected, res_dict):
+        attributes.fill_default_value(attr_info, res_dict)
+        self.assertEqual(expected, res_dict)
+
+    def test_fill_default_value(self):
+        attr_info = {
+            'key': {
+                'allow_post': True,
+                'default': attributes.ATTR_NOT_SPECIFIED,
+            },
+        }
+        self._test_fill_default_value(attr_info, {'key': 'X'}, {'key': 'X'})
+        self._test_fill_default_value(
+            attr_info, {'key': attributes.ATTR_NOT_SPECIFIED}, {})
+
+        attr_info = {
+            'key': {
+                'allow_post': True,
+            },
+        }
+        self._test_fill_default_value(attr_info, {'key': 'X'}, {'key': 'X'})
+        self.assertRaises(ValueError, self._test_fill_default_value,
+                          attr_info, {'key': 'X'}, {})
+        self.assertRaises(self._EXC_CLS, attributes.fill_default_value,
+                          attr_info, {}, self._EXC_CLS)
+        attr_info = {
+            'key': {
+                'allow_post': False,
+            },
+        }
+        self.assertRaises(ValueError, self._test_fill_default_value,
+                          attr_info, {'key': 'X'}, {'key': 'X'})
+        self._test_fill_default_value(attr_info, {}, {})
+        self.assertRaises(self._EXC_CLS, attributes.fill_default_value,
+                          attr_info, {'key': 'X'}, self._EXC_CLS)
+
+    def _test_convert_value(self, attr_info, expected, res_dict):
+        attributes.convert_value(attr_info, res_dict)
+        self.assertEqual(expected, res_dict)
+
+    def test_convert_value(self):
+        attr_info = {
+            'key': {
+            },
+        }
+        self._test_convert_value(attr_info,
+                                 {'key': attributes.ATTR_NOT_SPECIFIED},
+                                 {'key': attributes.ATTR_NOT_SPECIFIED})
+        self._test_convert_value(attr_info, {'key': 'X'}, {'key': 'X'})
+        self._test_convert_value(attr_info,
+                                 {'other_key': 'X'}, {'other_key': 'X'})
+
+        attr_info = {
+            'key': {
+                'convert_to': attributes.convert_to_int,
+            },
+        }
+        self._test_convert_value(attr_info,
+                                 {'key': attributes.ATTR_NOT_SPECIFIED},
+                                 {'key': attributes.ATTR_NOT_SPECIFIED})
+        self._test_convert_value(attr_info, {'key': 1}, {'key': '1'})
+        self._test_convert_value(attr_info, {'key': 1}, {'key': 1})
+        self.assertRaises(n_exc.InvalidInput, self._test_convert_value,
+                          attr_info, {'key': 1}, {'key': 'a'})
+
+        attr_info = {
+            'key': {
+                'validate': {'type:uuid': None},
+            },
+        }
+        self._test_convert_value(attr_info,
+                                 {'key': attributes.ATTR_NOT_SPECIFIED},
+                                 {'key': attributes.ATTR_NOT_SPECIFIED})
+        uuid_str = '01234567-1234-1234-1234-1234567890ab'
+        self._test_convert_value(attr_info,
+                                 {'key': uuid_str}, {'key': uuid_str})
+        self.assertRaises(ValueError, self._test_convert_value,
+                          attr_info, {'key': 1}, {'key': 1})
+        self.assertRaises(self._EXC_CLS, attributes.convert_value,
+                          attr_info, {'key': 1}, self._EXC_CLS)

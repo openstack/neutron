@@ -40,6 +40,7 @@ from neutron.extensions import l3
 from neutron.i18n import _LI, _LE
 from neutron import manager
 from neutron.plugins.common import constants
+from neutron.plugins.common import utils as p_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -278,15 +279,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
     def _create_router_gw_port(self, context, router, network_id, ext_ips):
         # Port has no 'tenant-id', as it is hidden from user
-        gw_port = self._core_plugin.create_port(context.elevated(), {
-            'port': {'tenant_id': '',  # intentionally not set
+        port_data = {'tenant_id': '',  # intentionally not set
                      'network_id': network_id,
-                     'mac_address': attributes.ATTR_NOT_SPECIFIED,
                      'fixed_ips': ext_ips or attributes.ATTR_NOT_SPECIFIED,
                      'device_id': router['id'],
                      'device_owner': DEVICE_OWNER_ROUTER_GW,
                      'admin_state_up': True,
-                     'name': ''}})
+                     'name': ''}
+        gw_port = p_utils.create_port(self._core_plugin,
+                                      context.elevated(), {'port': port_data})
 
         if not gw_port['fixed_ips']:
             LOG.debug('No IPs available for external network %s',
@@ -596,16 +597,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                         port['port_id'], {'port':
                             {'fixed_ips': fixed_ips}}), [subnet], False
 
-        return self._core_plugin.create_port(context, {
-            'port':
-            {'tenant_id': subnet['tenant_id'],
-             'network_id': subnet['network_id'],
-             'fixed_ips': [fixed_ip],
-             'mac_address': attributes.ATTR_NOT_SPECIFIED,
-             'admin_state_up': True,
-             'device_id': router.id,
-             'device_owner': owner,
-             'name': ''}}), [subnet], True
+        port_data = {'tenant_id': subnet['tenant_id'],
+                     'network_id': subnet['network_id'],
+                     'fixed_ips': [fixed_ip],
+                     'admin_state_up': True,
+                     'device_id': router.id,
+                     'device_owner': owner,
+                     'name': ''}
+        return p_utils.create_port(self._core_plugin, context,
+                                   {'port': port_data}), [subnet], True
 
     @staticmethod
     def _make_router_interface_info(
@@ -956,14 +956,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
             port = {'tenant_id': '',  # tenant intentionally not set
                     'network_id': f_net_id,
-                    'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                    'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
                     'admin_state_up': True,
                     'device_id': fip_id,
                     'device_owner': DEVICE_OWNER_FLOATINGIP,
                     'status': l3_constants.PORT_STATUS_NOTAPPLICABLE,
                     'name': ''}
-
             if fip.get('floating_ip_address'):
                 port['fixed_ips'] = [
                     {'ip_address': fip['floating_ip_address']}]
@@ -971,9 +968,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             if fip.get('subnet_id'):
                 port['fixed_ips'] = [
                     {'subnet_id': fip['subnet_id']}]
-            external_port = self._core_plugin.create_port(context.elevated(),
-                                                          {'port': port})
 
+            # 'status' in port dict could not be updated by default, use
+            # check_allow_post to stop the verification of system
+            external_port = p_utils.create_port(self._core_plugin,
+                                                context.elevated(),
+                                                {'port': port},
+                                                check_allow_post=False)
             # Ensure IPv4 addresses are allocated on external port
             external_ipv4_ips = self._port_ipv4_fixed_ips(external_port)
             if not external_ipv4_ips:

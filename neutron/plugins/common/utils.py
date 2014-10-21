@@ -16,6 +16,9 @@
 Common utilities and helper functions for Openstack Networking Plugins.
 """
 
+import webob.exc
+
+from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron.plugins.common import constants as p_const
 
@@ -96,3 +99,37 @@ def in_pending_status(status):
     return status in (p_const.PENDING_CREATE,
                       p_const.PENDING_UPDATE,
                       p_const.PENDING_DELETE)
+
+
+def _fixup_res_dict(context, attr_name, res_dict, check_allow_post=True):
+    attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[attr_name]
+    try:
+        attributes.populate_tenant_id(context, res_dict, attr_info, True)
+        attributes.verify_attributes(res_dict, attr_info)
+    except webob.exc.HTTPBadRequest as e:
+        # convert webob exception into ValueError as these functions are
+        # for internal use. webob exception doesn't make sense.
+        raise ValueError(e.detail)
+    attributes.fill_default_value(attr_info, res_dict,
+                                  check_allow_post=check_allow_post)
+    attributes.convert_value(attr_info, res_dict)
+    return res_dict
+
+
+def create_network(core_plugin, context, net):
+    net_data = _fixup_res_dict(context, attributes.NETWORKS,
+                               net.get('network', {}))
+    return core_plugin.create_network(context, {'network': net_data})
+
+
+def create_subnet(core_plugin, context, subnet):
+    subnet_data = _fixup_res_dict(context, attributes.SUBNETS,
+                                  subnet.get('subnet', {}))
+    return core_plugin.create_subnet(context, {'subnet': subnet_data})
+
+
+def create_port(core_plugin, context, port, check_allow_post=True):
+    port_data = _fixup_res_dict(context, attributes.PORTS,
+                                port.get('port', {}),
+                                check_allow_post=check_allow_post)
+    return core_plugin.create_port(context, {'port': port_data})

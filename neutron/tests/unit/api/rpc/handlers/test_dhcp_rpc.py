@@ -36,6 +36,8 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         set_dirty_p = mock.patch('neutron.quota.resource_registry.'
                                  'set_resources_dirty')
         self.mock_set_dirty = set_dirty_p.start()
+        self.utils_p = mock.patch('neutron.plugins.common.utils.create_port')
+        self.utils = self.utils_p.start()
 
     def test_get_active_networks(self):
         plugin_retval = [dict(id='a'), dict(id='b')]
@@ -79,6 +81,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
             'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
         }
         self.plugin.create_port.side_effect = exc
+        self.utils.side_effect = exc
         self.assertIsNone(self.callbacks._port_action(self.plugin,
                                                       mock.Mock(),
                                                       {'port': port},
@@ -87,7 +90,10 @@ class TestDhcpRpcCallback(base.BaseTestCase):
     def _test__port_action_good_action(self, action, port, expected_call):
         self.callbacks._port_action(self.plugin, mock.Mock(),
                                     port, action)
-        self.plugin.assert_has_calls([expected_call])
+        if action == 'create_port':
+            self.utils.assert_called_once_with(mock.ANY, mock.ANY, mock.ANY)
+        else:
+            self.plugin.assert_has_calls([expected_call])
 
     def test_port_action_create_port(self):
         self._test__port_action_good_action(
