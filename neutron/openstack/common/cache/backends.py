@@ -26,9 +26,9 @@ class BaseCache(object):
 
     :params parsed_url: Parsed url object.
     :params options: A dictionary with configuration parameters
-        for the cache. For example:
-            - default_ttl: An integer defining the default ttl
-            for keys.
+      for the cache. For example:
+
+        - default_ttl: An integer defining the default ttl for keys.
     """
 
     def __init__(self, parsed_url, options=None):
@@ -43,20 +43,17 @@ class BaseCache(object):
     def set(self, key, value, ttl, not_exists=False):
         """Sets or updates a cache entry
 
-        NOTE: Thread-safety is required and has to be
-        guaranteed by the backend implementation.
+        .. note:: Thread-safety is required and has to be guaranteed by the
+           backend implementation.
 
         :params key: Item key as string.
         :type key: `unicode string`
-        :params value: Value to assign to the key. This
-                       can be anything that is handled
-                       by the current backend.
-        :params ttl: Key's timeout in seconds. 0 means
-                     no timeout.
+        :params value: Value to assign to the key. This can be anything that
+          is handled by the current backend.
+        :params ttl: Key's timeout in seconds. 0 means no timeout.
         :type ttl: int
-        :params not_exists: If True, the key will be set
-                            if it doesn't exist. Otherwise,
-                            it'll always be set.
+        :params not_exists: If True, the key will be set if it doesn't exist.
+          Otherwise, it'll always be set.
         :type not_exists: bool
 
         :returns: True if the operation succeeds, False otherwise.
@@ -74,9 +71,8 @@ class BaseCache(object):
 
         :params key: Item key as string.
         :type key: `unicode string`
-        :params value: Value to assign to the key. This
-                       can be anything that is handled
-                       by the current backend.
+        :params value: Value to assign to the key. This can be anything that
+          is handled by the current backend.
         """
         try:
             return self[key]
@@ -91,15 +87,14 @@ class BaseCache(object):
     def get(self, key, default=None):
         """Gets one item from the cache
 
-        NOTE: Thread-safety is required and it has to be
-        guaranteed by the backend implementation.
+        .. note:: Thread-safety is required and it has to be guaranteed
+           by the backend implementation.
 
-        :params key: Key for the item to retrieve
-                     from the cache.
+        :params key: Key for the item to retrieve from the cache.
         :params default: The default value to return.
 
-        :returns: `key`'s value in the cache if it exists,
-                  otherwise `default` should be returned.
+        :returns: `key`'s value in the cache if it exists, otherwise
+          `default` should be returned.
         """
         return self._get(key, default)
 
@@ -115,8 +110,8 @@ class BaseCache(object):
     def __delitem__(self, key):
         """Removes an item from cache.
 
-        NOTE: Thread-safety is required and it has to be
-        guaranteed by the backend implementation.
+        .. note:: Thread-safety is required and it has to be guaranteed by
+           the backend implementation.
 
         :params key: The key to remove.
 
@@ -130,8 +125,8 @@ class BaseCache(object):
     def clear(self):
         """Removes all items from the cache.
 
-        NOTE: Thread-safety is required and it has to be
-        guaranteed by the backend implementation.
+        .. note:: Thread-safety is required and it has to be guaranteed by
+           the backend implementation.
         """
         return self._clear()
 
@@ -143,9 +138,8 @@ class BaseCache(object):
         """Increments the value for a key
 
         :params key: The key for the value to be incremented
-        :params delta: Number of units by which to increment
-                       the value. Pass a negative number to
-                       decrement the value.
+        :params delta: Number of units by which to increment the value.
+          Pass a negative number to decrement the value.
 
         :returns: The new value
         """
@@ -158,10 +152,8 @@ class BaseCache(object):
     def append_tail(self, key, tail):
         """Appends `tail` to `key`'s value.
 
-        :params key: The key of the value to which
-                     `tail` should be appended.
-        :params tail: The list of values to append to the
-                      original.
+        :params key: The key of the value to which `tail` should be appended.
+        :params tail: The list of values to append to the original.
 
         :returns: The new value
         """
@@ -181,10 +173,8 @@ class BaseCache(object):
     def append(self, key, value):
         """Appends `value` to `key`'s value.
 
-        :params key: The key of the value to which
-                     `tail` should be appended.
-        :params value: The value to append to the
-                      original.
+        :params key: The key of the value to which `tail` should be appended.
+        :params value: The value to append to the original.
 
         :returns: The new value
         """
@@ -196,8 +186,7 @@ class BaseCache(object):
 
         :params key: The key to verify.
 
-        :returns: True if the key exists,
-                  otherwise False.
+        :returns: True if the key exists, otherwise False.
         """
 
     @abc.abstractmethod
@@ -209,9 +198,8 @@ class BaseCache(object):
         """Gets keys' value from cache
 
         :params keys: List of keys to retrieve.
-        :params default: The default value to return
-                         for each key that is not in
-                         the cache.
+        :params default: The default value to return for each key that is not
+          in the cache.
 
         :returns: A  generator of (key, value)
         """
@@ -227,13 +215,12 @@ class BaseCache(object):
     def set_many(self, data, ttl=None):
         """Puts several items into the cache at once
 
-        Depending on the backend, this operation may or may
-        not be efficient. The default implementation calls
-        set for each (key, value) pair passed, other backends
-        support set_many operations as part of their protocols.
+        Depending on the backend, this operation may or may not be efficient.
+        The default implementation calls set for each (key, value) pair
+        passed, other backends support set_many operations as part of their
+        protocols.
 
-        :params data: A dictionary like {key: val} to store
-                      in the cache.
+        :params data: A dictionary like {key: val} to store in the cache.
         :params ttl: Key's timeout in seconds.
         """
 
