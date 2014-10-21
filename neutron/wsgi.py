@@ -76,6 +76,13 @@ socket_opts = [
                default=None,
                help=_("Private key file to use when starting "
                       "the server securely")),
+    cfg.BoolOpt('wsgi_keep_alive',
+                default=True,
+                help=_("Determines if connections are allowed to be held "
+                       "open by clients after a request is fulfilled. A "
+                       "value of False will ensure that the socket "
+                       "connection will be explicitly closed once a response "
+                       "has been sent to the client.")),
 ]
 
 CONF = cfg.CONF
@@ -246,7 +253,8 @@ class Server(object):
     def _run(self, application, socket):
         """Start a WSGI server in a new green thread."""
         eventlet.wsgi.server(socket, application, custom_pool=self.pool,
-                             log=logging.WritableLogger(LOG))
+                             log=logging.WritableLogger(LOG),
+                             keepalive=CONF.wsgi_keep_alive)
 
 
 class Middleware(object):
