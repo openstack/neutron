@@ -1056,11 +1056,12 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         self._register_l3_agents()
 
     def _create_ha_router(self, ha=True, tenant_id='tenant1'):
+        self.adminContext.tenant_id = tenant_id
         router = {'name': 'router1', 'admin_state_up': True}
         if ha is not None:
             router['ha'] = ha
-        return self.plugin._create_router_db(self.adminContext,
-                                             router, tenant_id)
+        return self.plugin.create_router(self.adminContext,
+                                         {'router': router})
 
 
 class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
