@@ -101,15 +101,13 @@ class BrocadeSVIPlugin(router.L3RouterPlugin):
         """ delete a vrf on NOS device."""
         router = super(BrocadeSVIPlugin, self).get_router(context, router_id)
         super(BrocadeSVIPlugin, self).delete_router(context, router_id)
-        try:
-            switch = self._switch
-            self._driver.delete_router(switch['address'],
-                                       switch['username'],
-                                       switch['password'],
-                                       switch['rbridge_id'],
-                                       str(router['id']))
-        except Exception:
-            excutils.save_and_reraise_exception()
+
+        switch = self._switch
+        self._driver.delete_router(switch['address'],
+                                   switch['username'],
+                                   switch['password'],
+                                   switch['rbridge_id'],
+                                   str(router['id']))
 
     def add_router_interface(self, context, router_id, interface_info):
         """creates svi on NOS device and assigns ip addres to SVI."""
