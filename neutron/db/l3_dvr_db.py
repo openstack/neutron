@@ -142,19 +142,17 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             )
         )
 
-    def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
-        previous_router_id = floatingip_db.router_id
-        port_id, internal_ip_address, router_id = (
-            self._check_and_get_fip_assoc(context, fip, floatingip_db))
+    def update_floatingip(self, context, id, floatingip):
+        res_fip = super(L3_NAT_with_dvr_db_mixin, self).update_floatingip(
+            context, id, floatingip)
         admin_ctx = context.elevated()
-        if (not ('port_id' in fip and fip['port_id'])) and (
-            floatingip_db['fixed_port_id'] is not None):
+        fip = floatingip['floatingip']
+        unused_agent_port = (fip.get('port_id', -1) is None and
+                            res_fip.get('fixed_port_id'))
+        if unused_agent_port:
             self.clear_unused_fip_agent_gw_port(
-                admin_ctx, floatingip_db, fip['id'])
-        floatingip_db.update({'fixed_ip_address': internal_ip_address,
-                              'fixed_port_id': port_id,
-                              'router_id': router_id,
-                              'last_known_router_id': previous_router_id})
+                admin_ctx, floatingip, fip['id'])
+        return res_fip
 
     def clear_unused_fip_agent_gw_port(
             self, context, floatingip_db, fip_id):
