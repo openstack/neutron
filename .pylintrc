@@ -25,7 +25,6 @@ disable=
  no-method-argument,
  no-self-argument,
  no-value-for-parameter,
- super-on-old-class,
 # "W" Warnings for stylistic problems or minor programming issues
  abstract-method,
  arguments-differ,

@@ -123,6 +123,9 @@ class Bridge(flows.OFAgentIntegrationBridge, ovs_lib.OVSBridge):
         self.get_datapath(retry_max)
 
 
+# RyuApp derives from `object`, but pylint can't see that without
+# having the ryu libraries available.
+# pylint: disable=super-on-old-class
 class OFANeutronAgentRyuApp(app_manager.RyuApp):
     OFP_VERSIONS = [ryu_ofp13.OFP_VERSION]
 
