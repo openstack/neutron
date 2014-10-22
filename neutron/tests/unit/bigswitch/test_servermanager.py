@@ -465,7 +465,8 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             ('www.example.org', 443), 90, '127.0.0.1'
         )])
         self.wrap_mock.assert_has_calls([mock.call(
-            self.socket_mock(), None, None, cert_reqs=ssl.CERT_NONE
+            self.socket_mock(), None, None, cert_reqs=ssl.CERT_NONE,
+            ssl_version=ssl.PROTOCOL_TLSv1
         )])
         self.assertEqual(con.sock, self.wrap_mock())
 
@@ -480,7 +481,8 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
         )])
         self.wrap_mock.assert_has_calls([mock.call(
             self.socket_mock(), None, None, ca_certs='SOMECERTS.pem',
-            cert_reqs=ssl.CERT_REQUIRED
+            cert_reqs=ssl.CERT_REQUIRED,
+            ssl_version=ssl.PROTOCOL_TLSv1
         )])
         self.assertEqual(con.sock, self.wrap_mock())
 
@@ -500,7 +502,8 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             ('www.example.org', 443), 90, '127.0.0.1'
         )])
         self.wrap_mock.assert_has_calls([mock.call(
-            self.socket_mock(), None, None, cert_reqs=ssl.CERT_NONE
+            self.socket_mock(), None, None, cert_reqs=ssl.CERT_NONE,
+            ssl_version=ssl.PROTOCOL_TLSv1
         )])
         # _tunnel() doesn't take any args
         tunnel_mock.assert_has_calls([mock.call()])
