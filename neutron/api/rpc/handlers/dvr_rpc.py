@@ -115,8 +115,6 @@ class DVRAgentRpcApiMixin(object):
 class DVRAgentRpcCallbackMixin(object):
     """Agent-side RPC (implementation) for plugin-to-agent interaction."""
 
-    dvr_agent = None
-
     def dvr_mac_address_update(self, context, **kwargs):
         """Callback for dvr_mac_addresses update.
 
@@ -124,7 +122,4 @@ class DVRAgentRpcCallbackMixin(object):
         """
         dvr_macs = kwargs.get('dvr_macs', [])
         LOG.debug("dvr_macs updated on remote: %s", dvr_macs)
-        if not self.dvr_agent:
-            LOG.warn(_("DVR agent binding currently not set."))
-            return
         self.dvr_agent.dvr_mac_address_update(dvr_macs)
