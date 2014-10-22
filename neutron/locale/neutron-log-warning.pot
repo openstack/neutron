@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev36.g63e2efb\n"
+"Project-Id-Version: neutron 2015.1.dev166.gf1384cc\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-08 06:09+0000\n"
+"POT-Creation-Date: 2014-10-22 06:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,7 @@ msgstr ""
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:545
+#: neutron/agent/l3_agent.py:541
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled at the neutron server when "
@@ -38,14 +38,14 @@ msgid ""
 "warning. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:557
+#: neutron/agent/l3_agent.py:553
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled on the neutron server. "
 "Retrying. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:183
+#: neutron/agent/securitygroups_rpc.py:186
 msgid ""
 "security_group_info_for_devices rpc call not supported by the server, "
 "falling back to old security_group_rules_for_devices which scales worse."
@@ -67,26 +67,36 @@ msgstr ""
 msgid "Unable to parse interface details. Exception: %s"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:105
+#: neutron/db/l3_agentschedulers_db.py:106
 msgid ""
 "Time since last L3 agent reschedule check has exceeded the interval "
 "between checks. Waiting before check to allow agents to send a heartbeat "
 "in case there was a clock adjustment."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:127
+#: neutron/db/l3_agentschedulers_db.py:128
 #, python-format
 msgid ""
 "Rescheduling router %(router)s from agent %(agent)s because the agent did"
 " not report to the server in the last %(dead_time)s seconds."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:405
+#: neutron/db/l3_hamode_db.py:406
 #, python-format
 msgid "The router %(router_id)s is bound multiple times on the agent %(host)s"
 msgstr ""
 
-#: neutron/openstack/common/service.py:364
+#: neutron/db/vpn/vpn_db.py:660
+#, python-format
+msgid "vpnservice %s in db is already deleted"
+msgstr ""
+
+#: neutron/openstack/common/loopingcall.py:87
+#, python-format
+msgid "task %(func_name)s run outlasted interval by %(delay).2f sec"
+msgstr ""
+
+#: neutron/openstack/common/service.py:356
 #, python-format
 msgid "pid %d not in child list"
 msgstr ""
@@ -176,5 +186,20 @@ msgstr ""
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:820
 #, python-format
 msgid "Device %s not defined on plugin"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:114
+#, python-format
+msgid "%(method)s: Request timeout%(ssl)s (%(timeout).3f sec) for CSR(%(host)s)"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:647
+#, python-format
+msgid "Unable to delete %(resource)s %(which)s: %(status)d"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:729
+#, python-format
+msgid "Unable to find connection %s"
 msgstr ""
 

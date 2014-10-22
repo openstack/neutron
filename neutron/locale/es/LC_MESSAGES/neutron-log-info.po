@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-08 06:09+0000\n"
-"PO-Revision-Date: 2014-07-18 20:49+0000\n"
+"POT-Creation-Date: 2014-10-22 06:19+0000\n"
+"PO-Revision-Date: 2014-10-21 11:04+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
 "es/)\n"
@@ -25,6 +25,53 @@ msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
 msgstr ""
 
+#: neutron/agent/securitygroups_rpc.py:80
+msgid "Disabled security-group extension."
+msgstr "La extensión security-group se ha inhabilitado."
+
+#: neutron/agent/securitygroups_rpc.py:82
+msgid "Disabled allowed-address-pairs extension."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:198
+#, python-format
+msgid ""
+"Skipping method %s as firewall is disabled or configured as "
+"NoopFirewallDriver."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:209
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "Preparando filtros para dispositivos %s"
+
+#: neutron/agent/securitygroups_rpc.py:239
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "Se ha actualizado la regla de grupo de seguridad %r"
+
+#: neutron/agent/securitygroups_rpc.py:246
+#, python-format
+msgid "Security group member updated %r"
+msgstr "Se ha actualizado el miembro de grupo de seguridad %r"
+
+#: neutron/agent/securitygroups_rpc.py:268
+msgid "Provider rule updated"
+msgstr "Se ha actualizado regla de proveedor"
+
+#: neutron/agent/securitygroups_rpc.py:280
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "Eliminar filtro de dispositivo para %r"
+
+#: neutron/agent/securitygroups_rpc.py:290
+msgid "Refresh firewall rules"
+msgstr "Renovar reglas de cortafuegos"
+
+#: neutron/agent/securitygroups_rpc.py:294
+msgid "No ports here to refresh firewall"
+msgstr ""
+
 #: neutron/agent/linux/ovs_lib.py:422
 #, python-format
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
@@ -34,7 +81,7 @@ msgstr ""
 msgid "IPv6 is not enabled on this system."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:82
+#: neutron/db/l3_agentschedulers_db.py:83
 msgid ""
 "Skipping period L3 agent status check because automatic router rescheduling "
 "is disabled."
@@ -59,6 +106,21 @@ msgstr ""
 msgid "%d probe(s) deleted"
 msgstr ""
 
+#: neutron/openstack/common/eventlet_backdoor.py:140
+#, python-format
+msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
+msgstr "Eventlet oculto escuchando en %(port)s para el proceso %(pid)d"
+
+#: neutron/openstack/common/lockutils.py:82
+#, python-format
+msgid "Created lock path: %s"
+msgstr "Candado creado ruta: %s"
+
+#: neutron/openstack/common/lockutils.py:194
+#, python-format
+msgid "Failed to remove file %(file)s"
+msgstr "No se ha podido eliminar el archivo %(file)s"
+
 #: neutron/openstack/common/periodic_task.py:126
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
@@ -69,54 +131,54 @@ msgstr "Omitiendo la tarea periódica %(task)s porque el intervalo es negativo"
 msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr "Omitiendo la tarea periódica %(task)s porque está inhabilitada"
 
-#: neutron/openstack/common/service.py:176
+#: neutron/openstack/common/service.py:174
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "Se ha captado %s, saliendo"
 
-#: neutron/openstack/common/service.py:240
+#: neutron/openstack/common/service.py:232
 msgid "Parent process has died unexpectedly, exiting"
 msgstr "El proceso padre se ha detenido inesperadamente, saliendo"
 
-#: neutron/openstack/common/service.py:271
+#: neutron/openstack/common/service.py:263
 #, python-format
 msgid "Child caught %s, exiting"
-msgstr ""
+msgstr "Hijo captado %s, saliendo"
 
-#: neutron/openstack/common/service.py:310
+#: neutron/openstack/common/service.py:302
 msgid "Forking too fast, sleeping"
 msgstr "Bifurcación demasiado rápida, en reposo"
 
-#: neutron/openstack/common/service.py:329
+#: neutron/openstack/common/service.py:321
 #, python-format
 msgid "Started child %d"
 msgstr "Se ha iniciado el hijo %d"
 
-#: neutron/openstack/common/service.py:339
+#: neutron/openstack/common/service.py:331
 #, python-format
 msgid "Starting %d workers"
 msgstr "Iniciando %d trabajadores"
 
-#: neutron/openstack/common/service.py:356
+#: neutron/openstack/common/service.py:348
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
 msgstr "Hijo %(pid)d matado por señal %(sig)d"
 
-#: neutron/openstack/common/service.py:360
+#: neutron/openstack/common/service.py:352
 #, python-format
 msgid "Child %(pid)s exited with status %(code)d"
 msgstr "El hijo %(pid)s ha salido con el estado %(code)d"
 
-#: neutron/openstack/common/service.py:399
+#: neutron/openstack/common/service.py:391
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr "Se ha captado %s, deteniendo hijos"
 
-#: neutron/openstack/common/service.py:408
+#: neutron/openstack/common/service.py:400
 msgid "Wait called after thread killed.  Cleaning up."
 msgstr ""
 
-#: neutron/openstack/common/service.py:424
+#: neutron/openstack/common/service.py:416
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "En espera de %d hijos para salir"
@@ -147,7 +209,7 @@ msgstr ""
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:907
 msgid "Agent out of sync with plugin!"
-msgstr ""
+msgstr "El agente está fuera de sincronización con el plug-in."
 
 #: neutron/plugins/nuage/syncmanager.py:46
 msgid "Starting the sync between Neutron and VSD"
@@ -157,33 +219,20 @@ msgstr ""
 msgid "Sync between Neutron and VSD completed successfully"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:137
+#: neutron/plugins/ofagent/agent/arp_lib.py:142
 msgid "No bridge is set"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:140
+#: neutron/plugins/ofagent/agent/arp_lib.py:145
 #, python-format
 msgid "Unknown bridge %(dpid)s ours %(ours)s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:147
-#, python-format
-msgid "packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s"
-msgstr ""
-
-#: neutron/plugins/ofagent/agent/arp_lib.py:152
+#: neutron/plugins/ofagent/agent/arp_lib.py:163
 msgid "drop non tenant packet"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:157
-msgid "drop non-ethernet packet"
-msgstr ""
-
-#: neutron/plugins/ofagent/agent/arp_lib.py:162
-msgid "drop non-arp packet"
-msgstr ""
-
-#: neutron/plugins/ofagent/agent/arp_lib.py:171
+#: neutron/plugins/ofagent/agent/arp_lib.py:182
 #, python-format
 msgid "unknown network %s"
 msgstr ""
@@ -191,26 +240,28 @@ msgstr ""
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:165
 msgid "Agent initialized successfully, now running... "
 msgstr ""
+"El agente se ha inicializado satisfactoriamente, ahora se está ejecutando... "
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:452
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
-msgstr ""
+msgstr "Asignando %(vlan_id)s como vlan local para net-id=%(net_uuid)s"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:502
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
-msgstr ""
+msgstr "Reclamando vlan = %(vlan_id)s de net-id = %(net_uuid)s"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:570
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
-msgstr ""
+msgstr "port_unbound() net_uuid %s no está en local_vlan_map"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:651
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
+"Correlacionando la red física %(physical_network)s con el puente %(bridge)s"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:785
 #, python-format
@@ -222,7 +273,7 @@ msgstr ""
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:799
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
-msgstr ""
+msgstr "Se ha actualizado el puerto %(device)s. Detalles: %(details)s"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:818
 #, python-format
@@ -232,15 +283,51 @@ msgstr ""
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:829
 #, python-format
 msgid "Attachment %s removed"
-msgstr ""
+msgstr "Se ha eliminado el adjunto %s"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:912
 msgid "Agent tunnel out of sync with plugin!"
+msgstr "Túnel de agente fuera de sincronización con el plug-in. "
+
+#: neutron/services/vpn/plugin.py:45
+#, python-format
+msgid "VPN plugin using service driver: %s"
 msgstr ""
 
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:57
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:335
+msgid "Sending status report update to plugin"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:715
+#, python-format
+msgid "FAILED: Create of IPSec site-to-site connection %s"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:718
+#, python-format
+msgid "SUCCESS: Created IPSec site-to-site connection %s"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:733
+#, python-format
+msgid "SUCCESS: Deleted IPSec site-to-site connection %s"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:56
 #, python-format
 msgid "Scanning config files %s for Cisco CSR configurations"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_csr_db.py:226
+#, python-format
+msgid ""
+"Mapped connection %(conn_id)s to Tunnel%(tunnel_id)d using IKE policy ID "
+"%(ike_id)d and IPSec policy ID %(ipsec_id)d"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_csr_db.py:238
+#, python-format
+msgid "Removed mapping for connection %s"
 msgstr ""
 
 #: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63

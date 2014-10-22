@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-08 06:09+0000\n"
-"PO-Revision-Date: 2014-08-17 05:19+0000\n"
+"POT-Creation-Date: 2014-10-22 06:19+0000\n"
+"PO-Revision-Date: 2014-10-21 10:35+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Telugu (India) (http://www.transifex.com/projects/p/neutron/"
 "language/te_IN/)\n"
@@ -26,6 +26,53 @@ msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
 msgstr "చేర్చడం విధానం:%(new_policy)s నిరాశపర్చింది విధానం స్థానంలో :%(old_policy)s"
 
+#: neutron/agent/securitygroups_rpc.py:80
+msgid "Disabled security-group extension."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:82
+msgid "Disabled allowed-address-pairs extension."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:198
+#, python-format
+msgid ""
+"Skipping method %s as firewall is disabled or configured as "
+"NoopFirewallDriver."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:209
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:239
+#, python-format
+msgid "Security group rule updated %r"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:246
+#, python-format
+msgid "Security group member updated %r"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:268
+msgid "Provider rule updated"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:280
+#, python-format
+msgid "Remove device filter for %r"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:290
+msgid "Refresh firewall rules"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:294
+msgid "No ports here to refresh firewall"
+msgstr ""
+
 #: neutron/agent/linux/ovs_lib.py:422
 #, python-format
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
@@ -35,7 +82,7 @@ msgstr ""
 msgid "IPv6 is not enabled on this system."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:82
+#: neutron/db/l3_agentschedulers_db.py:83
 msgid ""
 "Skipping period L3 agent status check because automatic router rescheduling "
 "is disabled."
@@ -60,6 +107,21 @@ msgstr ""
 msgid "%d probe(s) deleted"
 msgstr ""
 
+#: neutron/openstack/common/eventlet_backdoor.py:140
+#, python-format
+msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:82
+#, python-format
+msgid "Created lock path: %s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:194
+#, python-format
+msgid "Failed to remove file %(file)s"
+msgstr ""
+
 #: neutron/openstack/common/periodic_task.py:126
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
@@ -70,54 +132,54 @@ msgstr "దాని విరామం ప్రతికూల ఎందుక
 msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr "అది అసాధ్యమని ఎందుకంటే ఆవర్తన పని %(task)s దాటవేయడం"
 
-#: neutron/openstack/common/service.py:176
+#: neutron/openstack/common/service.py:174
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "%s క్యాచ్ నిష్క్రమించే"
 
-#: neutron/openstack/common/service.py:240
+#: neutron/openstack/common/service.py:232
 msgid "Parent process has died unexpectedly, exiting"
 msgstr "parrent  ప్రక్రియ నిష్క్రమించే, అనుకోకుండా మరణించాడు,"
 
-#: neutron/openstack/common/service.py:271
+#: neutron/openstack/common/service.py:263
 #, python-format
 msgid "Child caught %s, exiting"
 msgstr "చైల్డ్ నిష్క్రమించే,%s క్యాచ్"
 
-#: neutron/openstack/common/service.py:310
+#: neutron/openstack/common/service.py:302
 msgid "Forking too fast, sleeping"
 msgstr "Forking చాలా వేగంగా, పడుకుంది "
 
-#: neutron/openstack/common/service.py:329
+#: neutron/openstack/common/service.py:321
 #, python-format
 msgid "Started child %d"
 msgstr "మొదలైంది పిల్లల%d"
 
-#: neutron/openstack/common/service.py:339
+#: neutron/openstack/common/service.py:331
 #, python-format
 msgid "Starting %d workers"
 msgstr "%d కార్మికులు ప్రారంభిస్తోంది"
 
-#: neutron/openstack/common/service.py:356
+#: neutron/openstack/common/service.py:348
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
 msgstr "చైల్డ్ %(pid)d సిగ్నల్ ద్వారా హత్య %(sig)d"
 
-#: neutron/openstack/common/service.py:360
+#: neutron/openstack/common/service.py:352
 #, python-format
 msgid "Child %(pid)s exited with status %(code)d"
 msgstr "చైల్డ్ %(pid)s స్థితి తో నిష్క్రమించారు %(code)d  "
 
-#: neutron/openstack/common/service.py:399
+#: neutron/openstack/common/service.py:391
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr " పిల్లలు ఆపటం %s దోరికిను "
 
-#: neutron/openstack/common/service.py:408
+#: neutron/openstack/common/service.py:400
 msgid "Wait called after thread killed.  Cleaning up."
 msgstr "థ్రెడ్ మృతి తర్వాత అని వేచి. క్లీనింగ్ అప్."
 
-#: neutron/openstack/common/service.py:424
+#: neutron/openstack/common/service.py:416
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "%d పిల్లల వెయిటింగ్ నిష్క్రమణ"
@@ -158,33 +220,20 @@ msgstr ""
 msgid "Sync between Neutron and VSD completed successfully"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:137
+#: neutron/plugins/ofagent/agent/arp_lib.py:142
 msgid "No bridge is set"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:140
+#: neutron/plugins/ofagent/agent/arp_lib.py:145
 #, python-format
 msgid "Unknown bridge %(dpid)s ours %(ours)s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:147
-#, python-format
-msgid "packet-in dpid %(dpid)s in_port %(port)s pkt %(pkt)s"
-msgstr ""
-
-#: neutron/plugins/ofagent/agent/arp_lib.py:152
+#: neutron/plugins/ofagent/agent/arp_lib.py:163
 msgid "drop non tenant packet"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/arp_lib.py:157
-msgid "drop non-ethernet packet"
-msgstr ""
-
-#: neutron/plugins/ofagent/agent/arp_lib.py:162
-msgid "drop non-arp packet"
-msgstr ""
-
-#: neutron/plugins/ofagent/agent/arp_lib.py:171
+#: neutron/plugins/ofagent/agent/arp_lib.py:182
 #, python-format
 msgid "unknown network %s"
 msgstr ""
@@ -239,9 +288,45 @@ msgstr ""
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:57
+#: neutron/services/vpn/plugin.py:45
+#, python-format
+msgid "VPN plugin using service driver: %s"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:335
+msgid "Sending status report update to plugin"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:715
+#, python-format
+msgid "FAILED: Create of IPSec site-to-site connection %s"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:718
+#, python-format
+msgid "SUCCESS: Created IPSec site-to-site connection %s"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:733
+#, python-format
+msgid "SUCCESS: Deleted IPSec site-to-site connection %s"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:56
 #, python-format
 msgid "Scanning config files %s for Cisco CSR configurations"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_csr_db.py:226
+#, python-format
+msgid ""
+"Mapped connection %(conn_id)s to Tunnel%(tunnel_id)d using IKE policy ID "
+"%(ike_id)d and IPSec policy ID %(ipsec_id)d"
+msgstr ""
+
+#: neutron/services/vpn/service_drivers/cisco_csr_db.py:238
+#, python-format
+msgid "Removed mapping for connection %s"
 msgstr ""
 
 #: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63
