@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc
 from neutron.common import constants as q_const
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import utils
+from neutron.db import allowedaddresspairs_db as addr_pair
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
@@ -230,27 +231,32 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         if not remote_group_ids:
             return ips_by_group
         for remote_group_id in remote_group_ids:
-            ips_by_group[remote_group_id] = []
+            ips_by_group[remote_group_id] = set()
 
         ip_port = models_v2.IPAllocation.port_id
         sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
         sg_binding_sgid = sg_db.SecurityGroupPortBinding.security_group_id
 
+        # Join the security group binding table directly to the IP allocation
+        # table instead of via the Port table skip an unnecessary intermediary
         query = context.session.query(sg_binding_sgid,
-                                      models_v2.Port,
-                                      models_v2.IPAllocation.ip_address)
+                                      models_v2.IPAllocation.ip_address,
+                                      addr_pair.AllowedAddressPair.ip_address)
         query = query.join(models_v2.IPAllocation,
                            ip_port == sg_binding_port)
-        query = query.join(models_v2.Port,
-                           ip_port == models_v2.Port.id)
+        # Outerjoin because address pairs may be null and we still want the
+        # IP for the port.
+        query = query.outerjoin(
+            addr_pair.AllowedAddressPair,
+            sg_binding_port == addr_pair.AllowedAddressPair.port_id)
         query = query.filter(sg_binding_sgid.in_(remote_group_ids))
-        for security_group_id, port, ip_address in query:
-            ips_by_group[security_group_id].append(ip_address)
-            # if there are allowed_address_pairs add them
-            if getattr(port, 'allowed_address_pairs', None):
-                for address_pair in port.allowed_address_pairs:
-                    ips_by_group[security_group_id].append(
-                        address_pair['ip_address'])
+        # Each allowed address pair IP record for a port beyond the 1st
+        # will have a duplicate regular IP in the query response since
+        # the relationship is 1-to-many. Dedup with a set
+        for security_group_id, ip_address, allowed_addr_ip in query:
+            ips_by_group[security_group_id].add(ip_address)
+            if allowed_addr_ip:
+                ips_by_group[security_group_id].add(allowed_addr_ip)
         return ips_by_group
 
     def _select_remote_group_ids(self, ports):
