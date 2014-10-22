@@ -30,7 +30,7 @@ class PciOsWrapper(object):
 
     DEVICE_PATH = "/sys/class/net/%s/device"
     PCI_PATH = "/sys/class/net/%s/device/virtfn%s/net"
-    VIRTFN_FORMAT = "^virtfn(?P<vf_index>\d+)"
+    VIRTFN_FORMAT = r"^virtfn(?P<vf_index>\d+)"
     VIRTFN_REG_EX = re.compile(VIRTFN_FORMAT)
     MAC_VTAP_PREFIX = "upper_macvtap*"
 

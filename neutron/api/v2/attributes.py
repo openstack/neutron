@@ -143,7 +143,7 @@ def _validate_range(data, valid_values=None):
 
 def _validate_no_whitespace(data):
     """Validates that input has no whitespace."""
-    if re.search('\s', data):
+    if re.search(r'\s', data):
         msg = _("'%s' contains whitespace") % data
         LOG.debug(msg)
         raise n_exc.InvalidInput(error_message=msg)

@@ -42,8 +42,8 @@ from neutron.plugins.ml2.drivers import type_vlan  # noqa
 from neutron import service
 
 ACI_PORT_DESCR_FORMATS = [
-    'topology/pod-1/node-(\d+)/sys/conng/path-\[eth(\d+)/(\d+)\]',
-    'topology/pod-1/paths-(\d+)/pathep-\[eth(\d+)/(\d+)\]',
+    r'topology/pod-1/node-(\d+)/sys/conng/path-\[eth(\d+)/(\d+)\]',
+    r'topology/pod-1/paths-(\d+)/pathep-\[eth(\d+)/(\d+)\]',
 ]
 AGENT_FORCE_UPDATE_COUNT = 100
 BINARY_APIC_SERVICE_AGENT = 'neutron-cisco-apic-service-agent'

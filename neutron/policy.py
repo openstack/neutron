@@ -246,7 +246,7 @@ class OwnerCheck(policy.Check):
     def __init__(self, kind, match):
         # Process the match
         try:
-            self.target_field = re.findall('^\%\((.*)\)s$',
+            self.target_field = re.findall(r'^\%\((.*)\)s$',
                                            match)[0]
         except IndexError:
             err_reason = (_("Unable to identify a target field from:%s."

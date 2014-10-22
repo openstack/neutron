@@ -27,11 +27,8 @@ disable=
  not-callable,
  no-value-for-parameter,
  super-on-old-class,
- too-few-format-args,
 # "W" Warnings for stylistic problems or minor programming issues
  abstract-method,
- anomalous-backslash-in-string,
- anomalous-unicode-escape-in-string,
  arguments-differ,
  attribute-defined-outside-init,
  bad-builtin,

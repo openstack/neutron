@@ -119,7 +119,7 @@ class HashHandler(object):
         return result.rowcount != 0
 
     def _get_lock_owner(self, record):
-        matches = re.findall("^LOCKED_BY\[(\w+)\]", record)
+        matches = re.findall(r"^LOCKED_BY\[(\w+)\]", record)
         if not matches:
             return None
         return matches[0]

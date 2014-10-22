@@ -274,7 +274,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'expected_codes': {'allow_post': True, 'allow_put': True,
                            'validate': {
                                'type:regex':
-                               '^(\d{3}(\s*,\s*\d{3})*)$|^(\d{3}-\d{3})$'},
+                               r'^(\d{3}(\s*,\s*\d{3})*)$|^(\d{3}-\d{3})$'},
                            'default': '200',
                            'is_visible': True},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
