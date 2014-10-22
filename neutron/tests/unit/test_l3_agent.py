@@ -2178,8 +2178,9 @@ vrrp_instance VR_1 {
                                                         16, FIP_PRI)
         # TODO(mrsmith): add more asserts
 
+    @mock.patch.object(l3_agent.L3NATAgent, '_fip_ns_unsubscribe')
     @mock.patch.object(l3_agent.LinkLocalAllocator, '_write')
-    def test_floating_ip_removed_dist(self, write):
+    def test_floating_ip_removed_dist(self, write, unsubscribe):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
@@ -2194,6 +2195,7 @@ vrrp_instance VR_1 {
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         ri.dist_fip_count = 2
+        agent.fip_ns_subscribers.add(ri.router_id)
         ri.floating_ips_dict['11.22.33.44'] = FIP_PRI
         ri.fip_2_rtr = '11.22.33.42'
         ri.rtr_2_fip = '11.22.33.40'
@@ -2204,9 +2206,10 @@ vrrp_instance VR_1 {
         self.mock_rule.delete_rule_priority.assert_called_with(FIP_PRI)
         self.mock_ip_dev.route.delete_route.assert_called_with(fip_cidr,
                                                                str(s.ip))
+        self.assertFalse(unsubscribe.called, '_fip_ns_unsubscribe called!')
+
         with mock.patch.object(agent, '_destroy_fip_namespace') as f:
             ri.dist_fip_count = 1
-            agent.agent_fip_count = 1
             fip_ns_name = agent.get_fip_ns_name(
                 str(agent._fetch_external_net_id()))
             ri.rtr_fip_subnet = agent.local_subnets.allocate(ri.router_id)
@@ -2217,6 +2220,7 @@ vrrp_instance VR_1 {
             self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
                 str(fip_to_rtr.ip), table=16)
             f.assert_called_once_with(fip_ns_name)
+        unsubscribe.assert_called_once_with(ri.router_id)
 
     def test_get_service_plugin_list(self):
         service_plugins = [p_const.L3_ROUTER_NAT]
@@ -2251,6 +2255,40 @@ vrrp_instance VR_1 {
         )
         self.assertRaises(messaging.MessagingTimeout, l3_agent.L3NATAgent,
                           HOSTNAME, self.conf)
+
+    def test__fip_ns_subscribe_is_first_true(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+        is_first = agent._fip_ns_subscribe(router_id)
+        self.assertTrue(is_first)
+        self.assertEqual(len(agent.fip_ns_subscribers), 1)
+
+    def test__fip_ns_subscribe_is_first_false(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+        router2_id = _uuid()
+        agent._fip_ns_subscribe(router_id)
+        is_first = agent._fip_ns_subscribe(router2_id)
+        self.assertFalse(is_first)
+        self.assertEqual(len(agent.fip_ns_subscribers), 2)
+
+    def test__fip_ns_unsubscribe_is_last_true(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+        agent.fip_ns_subscribers.add(router_id)
+        is_last = agent._fip_ns_unsubscribe(router_id)
+        self.assertTrue(is_last)
+        self.assertEqual(len(agent.fip_ns_subscribers), 0)
+
+    def test__fip_ns_unsubscribe_is_last_false(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+        router2_id = _uuid()
+        agent.fip_ns_subscribers.add(router_id)
+        agent.fip_ns_subscribers.add(router2_id)
+        is_last = agent._fip_ns_unsubscribe(router_id)
+        self.assertFalse(is_last)
+        self.assertEqual(len(agent.fip_ns_subscribers), 1)
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):
