@@ -13,6 +13,7 @@
 #    under the License.
 #
 
+from oslo_config import cfg
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import sql
@@ -23,6 +24,12 @@ from neutron.extensions import l3
 
 
 LOG = logging.getLogger(__name__)
+OPTS = [
+    cfg.BoolOpt('enable_snat_by_default', default=True,
+                help=_('Define the default value of enable_snat if not '
+                       'provided in external_gateway_info.'))
+]
+cfg.CONF.register_opts(OPTS)
 EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
 
 # Modify the Router Data Model adding the enable_snat attribute
@@ -55,10 +62,8 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         # Load the router only if necessary
         if not router:
             router = self._get_router(context, router_id)
-        # if enable_snat is not specified then use the default value (True)
-        enable_snat = not info or info.get('enable_snat', True)
         with context.session.begin(subtransactions=True):
-            router.enable_snat = enable_snat
+            router.enable_snat = self._get_enable_snat(info)
 
         # Calls superclass, pass router db object for avoiding re-loading
         super(L3_NAT_dbonly_mixin, self)._update_router_gw_info(
@@ -66,6 +71,13 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         # Returning the router might come back useful if this
         # method is overridden in child classes
         return router
+
+    @staticmethod
+    def _get_enable_snat(info):
+        if info and 'enable_snat' in info:
+            return info['enable_snat']
+        # if enable_snat is not specified then use the default value
+        return cfg.CONF.enable_snat_by_default
 
     def _build_routers_list(self, context, routers, gw_ports):
         for rtr in routers:
