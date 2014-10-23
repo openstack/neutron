@@ -39,9 +39,12 @@ class ExtraDhcpOpt(model_base.BASEV2, models_v2.HasId):
                         nullable=False)
     opt_name = sa.Column(sa.String(64), nullable=False)
     opt_value = sa.Column(sa.String(255), nullable=False)
-    __table_args__ = (sa.UniqueConstraint('port_id',
-                                          'opt_name',
-                                          name='uidx_portid_optname'),
+    ip_version = sa.Column(sa.Integer, server_default='4', nullable=False)
+    __table_args__ = (sa.UniqueConstraint(
+        'port_id',
+        'opt_name',
+        'ip_version',
+        name='uniq_extradhcpopts0portid0optname0ipversion'),
                       model_base.BASEV2.__table_args__,)
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
@@ -62,10 +65,12 @@ class ExtraDhcpOptMixin(object):
         with context.session.begin(subtransactions=True):
             for dopt in extra_dhcp_opts:
                 if dopt['opt_value']:
+                    ip_version = dopt.get('ip_version', 4)
                     db = ExtraDhcpOpt(
                         port_id=port['id'],
                         opt_name=dopt['opt_name'],
-                        opt_value=dopt['opt_value'])
+                        opt_value=dopt['opt_value'],
+                        ip_version=ip_version)
                     context.session.add(db)
         return self._extend_port_extra_dhcp_opts_dict(context, port)
 
@@ -76,7 +81,8 @@ class ExtraDhcpOptMixin(object):
     def _get_port_extra_dhcp_opts_binding(self, context, port_id):
         query = self._model_query(context, ExtraDhcpOpt)
         binding = query.filter(ExtraDhcpOpt.port_id == port_id)
-        return [{'opt_name': r.opt_name, 'opt_value': r.opt_value}
+        return [{'opt_name': r.opt_name, 'opt_value': r.opt_value,
+                 'ip_version': r.ip_version}
                 for r in binding]
 
     def _update_extra_dhcp_opts_on_port(self, context, id, port,
@@ -93,20 +99,25 @@ class ExtraDhcpOptMixin(object):
             with context.session.begin(subtransactions=True):
                 for upd_rec in dopts:
                     for opt in opt_db:
-                        if opt['opt_name'] == upd_rec['opt_name']:
+                        if (opt['opt_name'] == upd_rec['opt_name']
+                                and opt['ip_version'] == upd_rec.get(
+                                    'ip_version', 4)):
                             # to handle deleting of a opt from the port.
                             if upd_rec['opt_value'] is None:
                                 context.session.delete(opt)
-                            elif opt['opt_value'] != upd_rec['opt_value']:
-                                opt.update(
-                                    {'opt_value': upd_rec['opt_value']})
+                            else:
+                                if opt['opt_value'] != upd_rec['opt_value']:
+                                    opt.update(
+                                        {'opt_value': upd_rec['opt_value']})
                             break
                     else:
                         if upd_rec['opt_value'] is not None:
+                            ip_version = upd_rec.get('ip_version', 4)
                             db = ExtraDhcpOpt(
                                 port_id=id,
                                 opt_name=upd_rec['opt_name'],
-                                opt_value=upd_rec['opt_value'])
+                                opt_value=upd_rec['opt_value'],
+                                ip_version=ip_version)
                             context.session.add(db)
 
             if updated_port:
@@ -117,7 +128,8 @@ class ExtraDhcpOptMixin(object):
 
     def _extend_port_dict_extra_dhcp_opt(self, res, port):
         res[edo_ext.EXTRADHCPOPTS] = [{'opt_name': dho.opt_name,
-                                       'opt_value': dho.opt_value}
+                                       'opt_value': dho.opt_value,
+                                       'ip_version': dho.ip_version}
                                       for dho in port.dhcp_opts]
         return res
 

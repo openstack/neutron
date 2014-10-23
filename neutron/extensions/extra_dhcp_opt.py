@@ -55,7 +55,10 @@ EXTENDED_ATTRIBUTES_2_0 = {
                  'opt_name': {'type:not_empty_string': None,
                               'required': True},
                  'opt_value': {'type:not_empty_string_or_none': None,
-                               'required': True}}}}}}
+                               'required': True},
+                 'ip_version': {'convert_to': attr.convert_to_int,
+                                'type:values': [4, 6],
+                                'required': False}}}}}}
 
 
 class Extra_dhcp_opt(extensions.ExtensionDescriptor):
