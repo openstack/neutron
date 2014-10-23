@@ -2016,15 +2016,10 @@ vrrp_instance VR_1 {
         ns_list = agent._list_namespaces()
         agent._cleanup_namespaces(ns_list, [r['id'] for r in router_list])
 
-        # Expect process manager to disable one radvd per stale namespace
-        expected_pm_disables = len(stale_namespace_list)
-
         # Expect process manager to disable metadata proxy per qrouter ns
         qrouters = [n for n in stale_namespace_list
                     if n.startswith(l3_agent.NS_PREFIX)]
-        expected_pm_disables += len(qrouters)
 
-        self.assertEqual(expected_pm_disables, pm.disable.call_count)
         self.assertEqual(agent._destroy_router_namespace.call_count,
                          len(qrouters))
         self.assertEqual(agent._destroy_snat_namespace.call_count,

@@ -644,7 +644,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         one attempt will be made to delete them.
         """
         for ns in router_namespaces:
-            ra.disable_ipv6_ra(ns[len(NS_PREFIX):], ns, self.root_helper)
             try:
                 self._destroy_namespace(ns)
             except RuntimeError:
@@ -654,8 +653,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _destroy_namespace(self, ns):
         if ns.startswith(NS_PREFIX):
-            if self.conf.enable_metadata_proxy:
-                self._destroy_metadata_proxy(ns[len(NS_PREFIX):], ns)
             self._destroy_router_namespace(ns)
         elif ns.startswith(FIP_NS_PREFIX):
             self._destroy_fip_namespace(ns)
@@ -704,6 +701,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.agent_gateway_port = None
 
     def _destroy_router_namespace(self, ns):
+        router_id = ns[len(NS_PREFIX):]
+        ra.disable_ipv6_ra(router_id, ns, self.root_helper)
+        if self.conf.enable_metadata_proxy:
+            self._destroy_metadata_proxy(router_id, ns)
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
@@ -807,8 +808,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         for c, r in self.metadata_nat_rules():
             ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
         ri.iptables_manager.apply()
-        if self.conf.enable_metadata_proxy:
-            self._destroy_metadata_proxy(ri.router_id, ri.ns_name)
         del self.router_info[router_id]
         self._destroy_router_namespace(ri.ns_name)
 
