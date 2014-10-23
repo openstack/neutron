@@ -662,7 +662,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                 mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
                           'ip2', 'mac2')
             ]
-            self.ryuapp.add_arp_table_entry.assert_has_calls(calls)
+            self.ryuapp.add_arp_table_entry.assert_has_calls(calls,
+                                                             any_order=True)
             setup_tun_fn.assert_called_once_with(self.agent.int_br,
                                                  '192.0.2.1', 'gre')
 
@@ -685,7 +686,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                 mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
                           'ip2', 'mac2')
             ]
-            self.ryuapp.add_arp_table_entry.assert_has_calls(calls)
+            self.ryuapp.add_arp_table_entry.assert_has_calls(calls,
+                                                             any_order=True)
             self.assertFalse(setup_tun_fn.called)
 
     def test_add_arp_table_entry_vlan(self):
@@ -716,7 +718,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                 mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
                           'ip2')
             ]
-            self.ryuapp.del_arp_table_entry.assert_has_calls(calls)
+            self.ryuapp.del_arp_table_entry.assert_has_calls(calls,
+                                                             any_order=True)
             cleanup_tun_fn.assert_called_once_with(self.agent.int_br, 1, 'gre')
 
     def _test_del_arp_table_entry_non_tunnel(self, network_type):
@@ -738,7 +741,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                 mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
                           'ip2')
             ]
-            self.ryuapp.del_arp_table_entry.assert_has_calls(calls)
+            self.ryuapp.del_arp_table_entry.assert_has_calls(calls,
+                                                             any_order=True)
             self.assertFalse(cleanup_tun_fn.called)
 
     def test_del_arp_table_entry_vlan(self):
