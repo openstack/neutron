@@ -326,6 +326,9 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # are processed in the same order as the relevant API requests
         self.updated_ports.add(ports.get_normalized_port_name(port['id']))
 
+    def _tunnel_port_lookup(self, network_type, remote_ip):
+        return self.tun_ofports[network_type].get(remote_ip)
+
     @log.log
     def fdb_add(self, context, fdb_entries):
         for lvm, agent_ports in self.get_agent_ports(fdb_entries,
@@ -336,7 +339,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     self._fdb_add_arp(lvm, {self.local_ip: local})
                 if len(agent_ports):
                     self.fdb_add_tun(context, self.int_br, lvm, agent_ports,
-                                     self.tun_ofports)
+                                     self._tunnel_port_lookup)
             else:
                 self._fdb_add_arp(lvm, agent_ports)
 
@@ -350,7 +353,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     self._fdb_remove_arp(lvm, {self.local_ip: local})
                 if len(agent_ports):
                     self.fdb_remove_tun(context, self.int_br, lvm, agent_ports,
-                                        self.tun_ofports)
+                                        self._tunnel_port_lookup)
             else:
                 self._fdb_remove_arp(lvm, agent_ports)
 

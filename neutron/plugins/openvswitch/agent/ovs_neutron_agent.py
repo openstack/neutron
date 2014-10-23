@@ -372,6 +372,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ofport = self.tun_br_ofports[tunnel_type].get(tunnel_ip)
         self.cleanup_tunnel_port(self.tun_br, ofport, tunnel_type)
 
+    def _tunnel_port_lookup(self, network_type, remote_ip):
+        return self.tun_br_ofports[network_type].get(remote_ip)
+
     def fdb_add(self, context, fdb_entries):
         LOG.debug("fdb_add received")
         for lvm, agent_ports in self.get_agent_ports(fdb_entries,
@@ -381,10 +384,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 if not self.enable_distributed_routing:
                     with self.tun_br.deferred() as deferred_br:
                         self.fdb_add_tun(context, deferred_br, lvm,
-                                         agent_ports, self.tun_br_ofports)
+                                         agent_ports, self._tunnel_port_lookup)
                 else:
                     self.fdb_add_tun(context, self.tun_br, lvm,
-                                     agent_ports, self.tun_br_ofports)
+                                     agent_ports, self._tunnel_port_lookup)
 
     def fdb_remove(self, context, fdb_entries):
         LOG.debug("fdb_remove received")
@@ -395,10 +398,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 if not self.enable_distributed_routing:
                     with self.tun_br.deferred() as deferred_br:
                         self.fdb_remove_tun(context, deferred_br, lvm,
-                                            agent_ports, self.tun_br_ofports)
+                                            agent_ports,
+                                            self._tunnel_port_lookup)
                 else:
                     self.fdb_remove_tun(context, self.tun_br, lvm,
-                                        agent_ports, self.tun_br_ofports)
+                                        agent_ports, self._tunnel_port_lookup)
 
     def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         if port_info == q_const.FLOODING_ENTRY:
