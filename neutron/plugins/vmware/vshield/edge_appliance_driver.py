@@ -16,9 +16,7 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware.vshield.common import (
-    constants as vcns_const)
-from neutron.plugins.vmware.vshield.common import constants as common_constants
+from neutron.plugins.vmware.vshield.common import constants as vcns_const
 from neutron.plugins.vmware.vshield.common import exceptions
 from neutron.plugins.vmware.vshield.tasks import constants
 from neutron.plugins.vmware.vshield.tasks import tasks
@@ -108,11 +106,11 @@ class EdgeApplianceDriver(object):
 
     def _edge_status_to_level(self, status):
         if status == 'GREEN':
-            status_level = common_constants.RouterStatus.ROUTER_STATUS_ACTIVE
+            status_level = vcns_const.RouterStatus.ROUTER_STATUS_ACTIVE
         elif status in ('GREY', 'YELLOW'):
-            status_level = common_constants.RouterStatus.ROUTER_STATUS_DOWN
+            status_level = vcns_const.RouterStatus.ROUTER_STATUS_DOWN
         else:
-            status_level = common_constants.RouterStatus.ROUTER_STATUS_ERROR
+            status_level = vcns_const.RouterStatus.ROUTER_STATUS_ERROR
         return status_level
 
     def _enable_loadbalancer(self, edge):
@@ -131,13 +129,13 @@ class EdgeApplianceDriver(object):
         except exceptions.VcnsApiException as e:
             LOG.exception(_("VCNS: Failed to get edge status:\n%s"),
                           e.response)
-            status_level = common_constants.RouterStatus.ROUTER_STATUS_ERROR
+            status_level = vcns_const.RouterStatus.ROUTER_STATUS_ERROR
             try:
                 desc = jsonutils.loads(e.response)
                 if desc.get('errorCode') == (
                     vcns_const.VCNS_ERROR_CODE_EDGE_NOT_RUNNING):
                     status_level = (
-                        common_constants.RouterStatus.ROUTER_STATUS_DOWN)
+                        vcns_const.RouterStatus.ROUTER_STATUS_DOWN)
             except ValueError:
                 LOG.exception(e.response)
 
