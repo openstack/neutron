@@ -23,7 +23,6 @@ class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
-        self.assertFalse(cfg.CONF.OVS.enable_tunneling)
         self.assertEqual('br-tun', cfg.CONF.OVS.tunnel_bridge)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', cfg.CONF.AGENT.root_helper)

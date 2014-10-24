@@ -64,17 +64,10 @@ class CreateAgentConfigMap(ofa_test_base.OFAAgentTestBase):
         with testtools.ExpectedException(ValueError):
             self.mod_agent.create_agent_config_map(cfg.CONF)
 
-    def test_create_agent_config_map_enable_tunneling(self):
-        # Verify setting only enable_tunneling will default tunnel_type to GRE
-        cfg.CONF.set_override('tunnel_types', None, group='AGENT')
-        cfg.CONF.set_override('enable_tunneling', True, group='OVS')
-        cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
-        cfgmap = self.mod_agent.create_agent_config_map(cfg.CONF)
-        self.assertEqual(cfgmap['tunnel_types'], [p_const.TYPE_GRE])
-
     def test_create_agent_config_map_fails_no_local_ip(self):
         # An ip address is required for tunneling but there is no default
-        cfg.CONF.set_override('enable_tunneling', True, group='OVS')
+        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_VXLAN],
+                              group='AGENT')
         with testtools.ExpectedException(ValueError):
             self.mod_agent.create_agent_config_map(cfg.CONF)
 
