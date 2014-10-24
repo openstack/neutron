@@ -54,7 +54,7 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
         self.setup_rpc()
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
-        self.start_periodic_agent_status_check()
+        self.start_periodic_l3_agent_status_check()
         super(L3RouterPlugin, self).__init__()
 
     def setup_rpc(self):

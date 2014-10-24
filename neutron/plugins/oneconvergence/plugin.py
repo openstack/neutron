@@ -136,6 +136,7 @@ class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             cfg.CONF.network_scheduler_driver)
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
+        self.start_periodic_dhcp_agent_status_check()
 
     def oneconvergence_init(self):
         """Initialize the connections and set the log levels for the plugin."""

@@ -102,6 +102,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.network_scheduler = importutils.import_object(
             q_conf.CONF.network_scheduler_driver
         )
+        self.start_periodic_dhcp_agent_status_check()
 
     def _setup_rpc(self):
         # RPC support

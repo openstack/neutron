@@ -239,6 +239,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             cfg.CONF.router_scheduler_driver
         )
         self.brocade_init()
+        self.start_periodic_dhcp_agent_status_check()
 
     def brocade_init(self):
         """Brocade specific initialization."""
