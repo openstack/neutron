@@ -15,7 +15,7 @@ httplib2>=0.7.5
 requests>=2.2.0,!=2.4.0
 iso8601>=0.1.9
 jsonrpclib
-Jinja2
+Jinja2>=2.6  # BSD License (3 clause)
 keystonemiddleware>=1.0.0
 netaddr>=0.7.12
 python-neutronclient>=2.3.6,<3
