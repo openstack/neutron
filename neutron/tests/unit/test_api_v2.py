@@ -368,18 +368,20 @@ class APIv2TestCase(APIv2TestBase):
         calls = []
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
+
         self.api.get(_get_path('networks'),
                      {'page_reverse': 'True'})
         kwargs = self._get_collection_kwargs(page_reverse=True)
         calls.append(mock.call.get_networks(mock.ANY, **kwargs))
         instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
+        instance.get_networks.reset_mock()
+
         self.api.get(_get_path('networks'),
                      {'page_reverse': 'False'})
         kwargs = self._get_collection_kwargs(page_reverse=False)
         calls.append(mock.call.get_networks(mock.ANY, **kwargs))
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_page_reverse_with_non_bool(self):
         instance = self.plugin.return_value
