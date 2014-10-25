@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
+
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers import mech_openvswitch
@@ -21,7 +23,8 @@ from neutron.tests.unit.ml2 import _test_mech_agent as base
 
 class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     VIF_TYPE = portbindings.VIF_TYPE_OVS
-    CAP_PORT_FILTER = True
+    VIF_DETAILS = {portbindings.CAP_PORT_FILTER: True,
+                   portbindings.OVS_HYBRID_PLUG: True}
     AGENT_TYPE = constants.AGENT_TYPE_OVS
 
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
@@ -49,6 +52,18 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
         self.driver.initialize()
 
 
+class OpenvswitchMechanismSGDisabledBaseTestCase(
+    OpenvswitchMechanismBaseTestCase):
+    VIF_DETAILS = {portbindings.CAP_PORT_FILTER: False,
+                   portbindings.OVS_HYBRID_PLUG: False}
+
+    def setUp(self):
+        cfg.CONF.set_override('enable_security_group',
+                              False,
+                              group='SECURITYGROUP')
+        super(OpenvswitchMechanismSGDisabledBaseTestCase, self).setUp()
+
+
 class OpenvswitchMechanismGenericTestCase(OpenvswitchMechanismBaseTestCase,
                                           base.AgentMechanismGenericTestCase):
     pass
@@ -71,4 +86,10 @@ class OpenvswitchMechanismVlanTestCase(OpenvswitchMechanismBaseTestCase,
 
 class OpenvswitchMechanismGreTestCase(OpenvswitchMechanismBaseTestCase,
                                       base.AgentMechanismGreTestCase):
+    pass
+
+
+class OpenvswitchMechanismSGDisabledLocalTestCase(
+    OpenvswitchMechanismSGDisabledBaseTestCase,
+    base.AgentMechanismLocalTestCase):
     pass

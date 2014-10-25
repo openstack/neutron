@@ -107,15 +107,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self, configfile=None):
         super(RyuNeutronPluginV2, self).__init__()
-        self.base_binding_dict = {
-            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
-            portbindings.VIF_DETAILS: {
-                # TODO(rkukura): Replace with new VIF security details
-                portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases,
-                portbindings.OVS_HYBRID_PLUG: True
-            }
-        }
+        self.base_binding_dict = self._get_base_binding_dict()
         portbindings_base.register_port_dict_function()
         self.tunnel_key = db_api_v2.TunnelKey(
             cfg.CONF.OVS.tunnel_key_min, cfg.CONF.OVS.tunnel_key_max)
@@ -133,6 +125,14 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # register known all network list on startup
         self._create_all_tenant_network()
+
+    def _get_base_binding_dict(self):
+        sg_enabled = sg_rpc.is_firewall_enabled()
+        vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
+                       portbindings.OVS_HYBRID_PLUG: sg_enabled}
+        binding = {portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
+                   portbindings.VIF_DETAILS: vif_details}
+        return binding
 
     def _setup_rpc(self):
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,

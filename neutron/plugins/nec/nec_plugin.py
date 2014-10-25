@@ -421,15 +421,11 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self._cleanup_ofc_tenant(context, tenant_id)
 
     def _get_base_binding_dict(self):
-        binding = {
-            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
-            portbindings.VIF_DETAILS: {
-                # TODO(rkukura): Replace with new VIF security details
-                portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases,
-                portbindings.OVS_HYBRID_PLUG: True
-            }
-        }
+        sg_enabled = sg_rpc.is_firewall_enabled()
+        vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
+                       portbindings.OVS_HYBRID_PLUG: sg_enabled}
+        binding = {portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
+                   portbindings.VIF_DETAILS: vif_details}
         return binding
 
     def _extend_port_dict_binding_portinfo(self, port_res, portinfo):

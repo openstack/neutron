@@ -29,19 +29,27 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
     # VIF_TYPE must be overridden according to plugin vif_type
     VIF_TYPE = portbindings.VIF_TYPE_OTHER
-    # The plugin supports the port security feature such as
-    # security groups and anti spoofing.
-    HAS_PORT_FILTER = False
+    # VIF_DETAILS must be overridden according to plugin vif_details
+    VIF_DETAILS = None
 
     def _check_response_portbindings(self, port):
         self.assertEqual(port[portbindings.VIF_TYPE], self.VIF_TYPE)
-        vif_details = port[portbindings.VIF_DETAILS]
         # REVISIT(rkukura): Consider reworking tests to enable ML2 to bind
+
         if self.VIF_TYPE not in [portbindings.VIF_TYPE_UNBOUND,
                                  portbindings.VIF_TYPE_BINDING_FAILED]:
-            # TODO(rkukura): Replace with new VIF security details
-            self.assertEqual(vif_details[portbindings.CAP_PORT_FILTER],
-                             self.HAS_PORT_FILTER)
+            # NOTE(r-mibu): The following six lines are just for backward
+            # compatibility.  In this class, HAS_PORT_FILTER has been replaced
+            # by VIF_DETAILS which can be set expected vif_details to check,
+            # but all replacement of HAS_PORT_FILTER in successor has not been
+            # completed.
+            if self.VIF_DETAILS is None:
+                expected = getattr(self, 'HAS_PORT_FILTER', False)
+                vif_details = port[portbindings.VIF_DETAILS]
+                port_filter = vif_details[portbindings.CAP_PORT_FILTER]
+                self.assertEqual(expected, port_filter)
+                return
+            self.assertEqual(self.VIF_DETAILS, port[portbindings.VIF_DETAILS])
 
     def _check_response_no_portbindings(self, port):
         self.assertIn('status', port)
