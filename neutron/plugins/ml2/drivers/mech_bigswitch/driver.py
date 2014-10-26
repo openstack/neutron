@@ -22,6 +22,7 @@ from oslo.config import cfg
 from neutron import context as ctx
 from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import log
 from neutron.openstack.common import timeutils
 from neutron.plugins.bigswitch import config as pl_config
@@ -49,7 +50,7 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
     """
 
     def initialize(self):
-        LOG.debug(_('Initializing driver'))
+        LOG.debug('Initializing driver')
 
         # register plugin config opts
         pl_config.register_config()
@@ -67,7 +68,7 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
         # Track hosts running IVS to avoid excessive calls to the backend
         self.ivs_host_cache = {}
 
-        LOG.debug(_("Initialization done"))
+        LOG.debug("Initialization done")
 
     @put_context_in_serverpool
     def create_network_postcommit(self, context):
@@ -106,8 +107,8 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
                         e.status == httplib.NOT_FOUND and
                         servermanager.NXNETWORK in e.reason):
                         ctxt.reraise = False
-                        LOG.error(_("Iconsistency with backend controller "
-                                    "triggering full synchronization."))
+                        LOG.error(_LE("Inconsistency with backend controller "
+                                      "triggering full synchronization."))
                         topoargs = self.servers.get_topo_function_args
                         self._send_all_data(
                             send_ports=topoargs['get_ports'],
@@ -134,8 +135,8 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
         prepped_port = self._map_state_and_status(prepped_port)
         if (portbindings.HOST_ID not in prepped_port or
             prepped_port[portbindings.HOST_ID] == ''):
-            LOG.warning(_("Ignoring port notification to controller because "
-                          "of missing host ID."))
+            LOG.warning(_LW("Ignoring port notification to controller because "
+                            "of missing host ID."))
             # in ML2, controller doesn't care about ports without
             # the host_id set
             return False

@@ -39,8 +39,8 @@ class L2populationAgentNotifyAPI(n_rpc.RpcProxy):
                                                         topics.UPDATE)
 
     def _notification_fanout(self, context, method, fdb_entries):
-        LOG.debug(_('Fanout notify l2population agents at %(topic)s '
-                    'the message %(method)s with %(fdb_entries)s'),
+        LOG.debug('Fanout notify l2population agents at %(topic)s '
+                  'the message %(method)s with %(fdb_entries)s',
                   {'topic': self.topic,
                    'method': method,
                    'fdb_entries': fdb_entries})
@@ -52,8 +52,8 @@ class L2populationAgentNotifyAPI(n_rpc.RpcProxy):
                          topic=self.topic_l2pop_update)
 
     def _notification_host(self, context, method, fdb_entries, host):
-        LOG.debug(_('Notify l2population agent %(host)s at %(topic)s the '
-                    'message %(method)s with %(fdb_entries)s'),
+        LOG.debug('Notify l2population agent %(host)s at %(topic)s the '
+                  'message %(method)s with %(fdb_entries)s',
                   {'host': host,
                    'topic': self.topic,
                    'method': method,

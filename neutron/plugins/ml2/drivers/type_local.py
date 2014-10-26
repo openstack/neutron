@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron.common import exceptions as exc
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
@@ -32,7 +33,7 @@ class LocalTypeDriver(api.TypeDriver):
     """
 
     def __init__(self):
-        LOG.info(_("ML2 LocalTypeDriver initialization complete"))
+        LOG.info(_LI("ML2 LocalTypeDriver initialization complete"))
 
     def get_type(self):
         return p_const.TYPE_LOCAL

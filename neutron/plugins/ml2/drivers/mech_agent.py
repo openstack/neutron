@@ -17,6 +17,7 @@ import abc
 import six
 
 from neutron.extensions import portbindings
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 
@@ -51,26 +52,26 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         pass
 
     def bind_port(self, context):
-        LOG.debug(_("Attempting to bind port %(port)s on "
-                    "network %(network)s"),
+        LOG.debug("Attempting to bind port %(port)s on "
+                  "network %(network)s",
                   {'port': context.current['id'],
                    'network': context.network.current['id']})
         vnic_type = context.current.get(portbindings.VNIC_TYPE,
                                         portbindings.VNIC_NORMAL)
         if vnic_type not in self.supported_vnic_types:
-            LOG.debug(_("Refusing to bind due to unsupported vnic_type: %s"),
+            LOG.debug("Refusing to bind due to unsupported vnic_type: %s",
                       vnic_type)
             return
         for agent in context.host_agents(self.agent_type):
-            LOG.debug(_("Checking agent: %s"), agent)
+            LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
                 for segment in context.network.network_segments:
                     if self.try_to_bind_segment_for_agent(context, segment,
                                                           agent):
-                        LOG.debug(_("Bound using segment: %s"), segment)
+                        LOG.debug("Bound using segment: %s", segment)
                         return
             else:
-                LOG.warning(_("Attempting to bind with dead agent: %s"),
+                LOG.warning(_LW("Attempting to bind with dead agent: %s"),
                             agent)
 
     @abc.abstractmethod

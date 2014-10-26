@@ -17,6 +17,7 @@ from oslo.config import cfg
 
 from neutron.common import constants as n_consts
 from neutron.extensions import portbindings
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
@@ -88,9 +89,9 @@ class NuageMechanismDriver(plugin.NuagePlugin,
                 LOG.debug("Bound using segment: %s", segment)
                 return
             else:
-                LOG.error(_("Refusing to bind port for segment ID %(id)s, "
-                          "segment %(seg)s, phys net %(physnet)s, and "
-                          "network type %(nettype)s"),
+                LOG.error(_LE("Refusing to bind port for segment ID %(id)s, "
+                              "segment %(seg)s, phys net %(physnet)s, and "
+                              "network type %(nettype)s"),
                           {'id': segment[api.ID],
                            'seg': segment[api.SEGMENTATION_ID],
                            'physnet': segment[api.PHYSICAL_NETWORK],

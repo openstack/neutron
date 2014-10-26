@@ -16,6 +16,7 @@
 from oslo.db import exception as db_exc
 
 from neutron.common import exceptions as exc
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 
@@ -137,7 +138,7 @@ class TypeDriverHelper(api.TypeDriver):
                           {"type": network_type, "attempt": attempt,
                            "segment": raw_segment})
 
-        LOG.warning(_("Allocate %(type)s segment from pool failed "
-                      "after %(number)s failed attempts"),
+        LOG.warning(_LW("Allocate %(type)s segment from pool failed "
+                        "after %(number)s failed attempts"),
                     {"type": network_type, "number": DB_MAX_ATTEMPTS})
         raise exc.NoNetworkFoundInMaximumAllowedAttempts()

@@ -42,7 +42,7 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
 
         # Extract configuration parameters from the configuration file.
         self._nexus_switches = conf.ML2MechCiscoConfig.nexus_dict
-        LOG.debug(_("nexus_switches found = %s"), self._nexus_switches)
+        LOG.debug("nexus_switches found = %s", self._nexus_switches)
 
         self.driver = nexus_network_driver.CiscoNexusDriver()
 
@@ -117,12 +117,12 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
             previous_bindings = [row for row in all_bindings
                     if row.instance_id != device_id]
             if previous_bindings or (switch_ip in vlan_already_created):
-                LOG.debug("Nexus: trunk vlan %s"), vlan_name
+                LOG.debug("Nexus: trunk vlan %s", vlan_name)
                 self.driver.enable_vlan_on_trunk_int(switch_ip, vlan_id,
                                                      intf_type, nexus_port)
             else:
                 vlan_already_created.append(switch_ip)
-                LOG.debug("Nexus: create & trunk vlan %s"), vlan_name
+                LOG.debug("Nexus: create & trunk vlan %s", vlan_name)
                 self.driver.create_and_trunk_vlan(
                     switch_ip, vlan_id, vlan_name, intf_type, nexus_port)
 

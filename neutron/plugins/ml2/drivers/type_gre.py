@@ -22,7 +22,7 @@ from sqlalchemy import sql
 from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.db import model_base
-from neutron.openstack.common.gettextutils import _LE
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
@@ -72,8 +72,8 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
         try:
             self._initialize(cfg.CONF.ml2_type_gre.tunnel_id_ranges)
         except exc.NetworkTunnelRangeError:
-            LOG.exception(_("Failed to parse tunnel_id_ranges. "
-                            "Service terminated!"))
+            LOG.exception(_LE("Failed to parse tunnel_id_ranges. "
+                              "Service terminated!"))
             raise SystemExit()
 
     def sync_allocations(self):
@@ -84,7 +84,7 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
             tun_min, tun_max = gre_id_range
             if tun_max + 1 - tun_min > 1000000:
                 LOG.error(_LE("Skipping unreasonable gre ID range "
-                            "%(tun_min)s:%(tun_max)s"),
+                              "%(tun_min)s:%(tun_max)s"),
                           {'tun_min': tun_min, 'tun_max': tun_max})
             else:
                 gre_ids |= set(moves.xrange(tun_min, tun_max + 1))
@@ -129,5 +129,5 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
         except db_exc.DBDuplicateEntry:
             gre_endpoint = (session.query(GreEndpoints).
                             filter_by(ip_address=ip).one())
-            LOG.warning(_("Gre endpoint with ip %s already exists"), ip)
+            LOG.warning(_LW("Gre endpoint with ip %s already exists"), ip)
         return gre_endpoint

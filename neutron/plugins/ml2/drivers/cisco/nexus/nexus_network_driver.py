@@ -154,7 +154,7 @@ class CiscoNexusDriver(object):
         """Build the VLAN config string xml snippet to be used."""
         confstr = snippet % (intf_type, interface, vlanid, intf_type)
         confstr = self.create_xml_snippet(confstr)
-        LOG.debug(_("NexusDriver: %s"), confstr)
+        LOG.debug("NexusDriver: %s", confstr)
         return confstr
 
     def enable_vlan_on_trunk_int(self, nexus_host, vlanid, intf_type,
@@ -196,7 +196,7 @@ class CiscoNexusDriver(object):
                               intf_type, nexus_port):
         """Create VLAN and trunk it on the specified ports."""
         self.create_vlan(nexus_host, vlan_id, vlan_name)
-        LOG.debug(_("NexusDriver created VLAN: %s"), vlan_id)
+        LOG.debug("NexusDriver created VLAN: %s", vlan_id)
         if nexus_port:
             self.enable_vlan_on_trunk_int(nexus_host, vlan_id, intf_type,
                                           nexus_port)

@@ -16,6 +16,7 @@
 from neutron.common import constants as n_const
 from neutron.common import log
 from neutron.extensions import portbindings
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
@@ -35,7 +36,7 @@ class FslsdnMechanismDriver(api.MechanismDriver):
 
         self.vif_type = portbindings.VIF_TYPE_OVS
         self.vif_details = {portbindings.CAP_PORT_FILTER: True}
-        LOG.info(_("Initializing CRD client... "))
+        LOG.info(_LI("Initializing CRD client... "))
         self._crdclient = config.get_crdclient()
 
     # Network Management

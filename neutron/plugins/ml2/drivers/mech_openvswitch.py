@@ -45,9 +45,9 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('bridge_mappings', {})
         tunnel_types = agent['configurations'].get('tunnel_types', [])
-        LOG.debug(_("Checking segment: %(segment)s "
-                    "for mappings: %(mappings)s "
-                    "with tunnel_types: %(tunnel_types)s"),
+        LOG.debug("Checking segment: %(segment)s "
+                  "for mappings: %(mappings)s "
+                  "with tunnel_types: %(tunnel_types)s",
                   {'segment': segment, 'mappings': mappings,
                    'tunnel_types': tunnel_types})
         network_type = segment[api.NETWORK_TYPE]

@@ -21,6 +21,7 @@ from oslo.config import cfg
 
 from neutron import context as nctx
 from neutron.db import db_base_plugin_v2
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 
@@ -369,13 +370,13 @@ class AristaL3Driver(object):
         command_end = ['exit']
         full_command = command_start + commands + command_end
 
-        LOG.info(_('Executing command on Arista EOS: %s'), full_command)
+        LOG.info(_LI('Executing command on Arista EOS: %s'), full_command)
 
         try:
             # this returns array of return values for every command in
             # full_command list
             ret = server.runCmds(version=1, cmds=full_command)
-            LOG.info(_('Results of execution on Arista EOS: %s'), ret)
+            LOG.info(_LI('Results of execution on Arista EOS: %s'), ret)
 
         except Exception:
             msg = (_('Error occured while trying to execute '

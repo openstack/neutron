@@ -24,6 +24,7 @@ from neutron.common import exceptions as exc
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import model_base
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
@@ -88,10 +89,10 @@ class VlanTypeDriver(helpers.TypeDriverHelper):
             self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
                 cfg.CONF.ml2_type_vlan.network_vlan_ranges)
         except Exception:
-            LOG.exception(_("Failed to parse network_vlan_ranges. "
-                            "Service terminated!"))
+            LOG.exception(_LE("Failed to parse network_vlan_ranges. "
+                              "Service terminated!"))
             sys.exit(1)
-        LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
+        LOG.info(_LI("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
     def _sync_vlan_allocations(self):
         session = db_api.get_session()
@@ -125,9 +126,9 @@ class VlanTypeDriver(helpers.TypeDriverHelper):
                             # it's not allocatable, so check if its allocated
                             if not alloc.allocated:
                                 # it's not, so remove it from table
-                                LOG.debug(_("Removing vlan %(vlan_id)s on "
-                                            "physical network "
-                                            "%(physical_network)s from pool"),
+                                LOG.debug("Removing vlan %(vlan_id)s on "
+                                          "physical network "
+                                          "%(physical_network)s from pool",
                                           {'vlan_id': alloc.vlan_id,
                                            'physical_network':
                                            physical_network})
@@ -146,8 +147,8 @@ class VlanTypeDriver(helpers.TypeDriverHelper):
             for allocs in allocations.itervalues():
                 for alloc in allocs:
                     if not alloc.allocated:
-                        LOG.debug(_("Removing vlan %(vlan_id)s on physical "
-                                    "network %(physical_network)s from pool"),
+                        LOG.debug("Removing vlan %(vlan_id)s on physical "
+                                  "network %(physical_network)s from pool",
                                   {'vlan_id': alloc.vlan_id,
                                    'physical_network':
                                    alloc.physical_network})
@@ -158,7 +159,7 @@ class VlanTypeDriver(helpers.TypeDriverHelper):
 
     def initialize(self):
         self._sync_vlan_allocations()
-        LOG.info(_("VlanTypeDriver initialization complete"))
+        LOG.info(_LI("VlanTypeDriver initialization complete"))
 
     def is_partial_segment(self, segment):
         return segment.get(api.SEGMENTATION_ID) is None
@@ -249,7 +250,7 @@ class VlanTypeDriver(helpers.TypeDriverHelper):
                                'physical_network': physical_network})
 
         if not count:
-            LOG.warning(_("No vlan_id %(vlan_id)s found on physical "
-                          "network %(physical_network)s"),
+            LOG.warning(_LW("No vlan_id %(vlan_id)s found on physical "
+                            "network %(physical_network)s"),
                         {'vlan_id': vlan_id,
                          'physical_network': physical_network})

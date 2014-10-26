@@ -21,6 +21,7 @@ from neutron.common import exceptions as exc
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
@@ -36,12 +37,12 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         # Mapping from type name to DriverManager
         self.drivers = {}
 
-        LOG.info(_("Configured type driver names: %s"),
+        LOG.info(_LI("Configured type driver names: %s"),
                  cfg.CONF.ml2.type_drivers)
         super(TypeManager, self).__init__('neutron.ml2.type_drivers',
                                           cfg.CONF.ml2.type_drivers,
                                           invoke_on_load=True)
-        LOG.info(_("Loaded type driver names: %s"), self.names())
+        LOG.info(_LI("Loaded type driver names: %s"), self.names())
         self._register_types()
         self._check_tenant_network_types(cfg.CONF.ml2.tenant_network_types)
 
@@ -49,15 +50,15 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         for ext in self:
             network_type = ext.obj.get_type()
             if network_type in self.drivers:
-                LOG.error(_("Type driver '%(new_driver)s' ignored because type"
-                            " driver '%(old_driver)s' is already registered"
-                            " for type '%(type)s'"),
+                LOG.error(_LE("Type driver '%(new_driver)s' ignored because"
+                              " type driver '%(old_driver)s' is already"
+                              " registered for type '%(type)s'"),
                           {'new_driver': ext.name,
                            'old_driver': self.drivers[network_type].name,
                            'type': network_type})
             else:
                 self.drivers[network_type] = ext
-        LOG.info(_("Registered types: %s"), self.drivers.keys())
+        LOG.info(_LI("Registered types: %s"), self.drivers.keys())
 
     def _check_tenant_network_types(self, types):
         self.tenant_network_types = []
@@ -65,11 +66,10 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             if network_type in self.drivers:
                 self.tenant_network_types.append(network_type)
             else:
-                msg = _("No type driver for tenant network_type: %s. "
-                        "Service terminated!") % network_type
-                LOG.error(msg)
+                LOG.error(_LE("No type driver for tenant network_type: %s. "
+                              "Service terminated!"), network_type)
                 raise SystemExit(1)
-        LOG.info(_("Tenant network_types: %s"), self.tenant_network_types)
+        LOG.info(_LI("Tenant network_types: %s"), self.tenant_network_types)
 
     def _process_provider_segment(self, segment):
         network_type = self._get_attribute(segment, provider.NETWORK_TYPE)
@@ -124,7 +124,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         id = network['id']
         segments = db.get_network_segments(context.session, id)
         if not segments:
-            LOG.error(_("Network %s has no segments"), id)
+            LOG.error(_LE("Network %s has no segments"), id)
             network[provider.NETWORK_TYPE] = None
             network[provider.PHYSICAL_NETWORK] = None
             network[provider.SEGMENTATION_ID] = None
@@ -142,7 +142,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def initialize(self):
         for network_type, driver in self.drivers.iteritems():
-            LOG.info(_("Initializing driver for type '%s'"), network_type)
+            LOG.info(_LI("Initializing driver for type '%s'"), network_type)
             driver.obj.initialize()
 
     def create_network_segments(self, context, network, tenant_id):
@@ -202,8 +202,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             if driver:
                 driver.obj.release_segment(session, segment)
             else:
-                LOG.error(_("Failed to release segment '%s' because "
-                            "network type is not supported."), segment)
+                LOG.error(_LE("Failed to release segment '%s' because "
+                              "network type is not supported."), segment)
 
     def allocate_dynamic_segment(self, session, network_id, segment):
         """Allocate a dynamic segment using a partial or full segment dict."""
@@ -229,8 +229,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 driver.obj.release_segment(session, segment)
                 db.delete_network_segment(session, segment_id)
             else:
-                LOG.error(_("Failed to release segment '%s' because "
-                            "network type is not supported."), segment)
+                LOG.error(_LE("Failed to release segment '%s' because "
+                              "network type is not supported."), segment)
         else:
             LOG.debug("No segment found with id %(segment_id)s", segment_id)
 
@@ -245,13 +245,13 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         # the order in which the drivers are called.
         self.ordered_mech_drivers = []
 
-        LOG.info(_("Configured mechanism driver names: %s"),
+        LOG.info(_LI("Configured mechanism driver names: %s"),
                  cfg.CONF.ml2.mechanism_drivers)
         super(MechanismManager, self).__init__('neutron.ml2.mechanism_drivers',
                                                cfg.CONF.ml2.mechanism_drivers,
                                                invoke_on_load=True,
                                                name_order=True)
-        LOG.info(_("Loaded mechanism driver names: %s"), self.names())
+        LOG.info(_LI("Loaded mechanism driver names: %s"), self.names())
         self._register_mechanisms()
 
     def _register_mechanisms(self):
@@ -263,14 +263,14 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         for ext in self:
             self.mech_drivers[ext.name] = ext
             self.ordered_mech_drivers.append(ext)
-        LOG.info(_("Registered mechanism drivers: %s"),
+        LOG.info(_LI("Registered mechanism drivers: %s"),
                  [driver.name for driver in self.ordered_mech_drivers])
 
     def initialize(self):
         # For ML2 to support bulk operations, each driver must support them
         self.native_bulk_support = True
         for driver in self.ordered_mech_drivers:
-            LOG.info(_("Initializing mechanism driver '%s'"), driver.name)
+            LOG.info(_LI("Initializing mechanism driver '%s'"), driver.name)
             driver.obj.initialize()
             self.native_bulk_support &= getattr(driver.obj,
                                                 'native_bulk_support', True)
@@ -292,7 +292,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 getattr(driver.obj, method_name)(context)
             except Exception:
                 LOG.exception(
-                    _("Mechanism driver '%(name)s' failed in %(method)s"),
+                    _LE("Mechanism driver '%(name)s' failed in %(method)s"),
                     {'name': driver.name, 'method': method_name}
                 )
                 error = True
@@ -594,11 +594,11 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                                'segment': binding.segment})
                     return
             except Exception:
-                LOG.exception(_("Mechanism driver %s failed in "
-                                "bind_port"),
+                LOG.exception(_LE("Mechanism driver %s failed in "
+                                  "bind_port"),
                               driver.name)
         binding.vif_type = portbindings.VIF_TYPE_BINDING_FAILED
-        LOG.warning(_("Failed to bind port %(port)s on host %(host)s"),
+        LOG.warning(_LW("Failed to bind port %(port)s on host %(host)s"),
                     {'port': context._port['id'],
                      'host': binding.host})
 
@@ -611,13 +611,13 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         # the order in which the drivers are called.
         self.ordered_ext_drivers = []
 
-        LOG.info(_("Configured extension driver names: %s"),
+        LOG.info(_LI("Configured extension driver names: %s"),
                  cfg.CONF.ml2.extension_drivers)
         super(ExtensionManager, self).__init__('neutron.ml2.extension_drivers',
                                                cfg.CONF.ml2.extension_drivers,
                                                invoke_on_load=True,
                                                name_order=True)
-        LOG.info(_("Loaded extension driver names: %s"), self.names())
+        LOG.info(_LI("Loaded extension driver names: %s"), self.names())
         self._register_drivers()
 
     def _register_drivers(self):
@@ -628,13 +628,13 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         """
         for ext in self:
             self.ordered_ext_drivers.append(ext)
-        LOG.info(_("Registered extension drivers: %s"),
+        LOG.info(_LI("Registered extension drivers: %s"),
                  [driver.name for driver in self.ordered_ext_drivers])
 
     def initialize(self):
         # Initialize each driver in the list.
         for driver in self.ordered_ext_drivers:
-            LOG.info(_("Initializing extension driver '%s'"), driver.name)
+            LOG.info(_LI("Initializing extension driver '%s'"), driver.name)
             driver.obj.initialize()
 
     def extension_aliases(self):
@@ -642,7 +642,7 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         for driver in self.ordered_ext_drivers:
             alias = driver.obj.extension_alias
             exts.append(alias)
-            LOG.info(_("Got %(alias)s extension from driver '%(drv)s'"),
+            LOG.info(_LI("Got %(alias)s extension from driver '%(drv)s'"),
                      {'alias': alias, 'drv': driver.name})
         return exts
 
@@ -653,7 +653,7 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
                 getattr(driver.obj, method_name)(session, data, result)
             except Exception:
                 LOG.exception(
-                    _("Extension driver '%(name)s' failed in %(method)s"),
+                    _LE("Extension driver '%(name)s' failed in %(method)s"),
                     {'name': driver.name, 'method': method_name}
                 )
 
@@ -689,19 +689,19 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         """Notify all extension drivers to extend network dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_network_dict(session, result)
-            LOG.info(_("Extended network dict for driver '%(drv)s'"),
+            LOG.info(_LI("Extended network dict for driver '%(drv)s'"),
                      {'drv': driver.name})
 
     def extend_subnet_dict(self, session, result):
         """Notify all extension drivers to extend subnet dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_subnet_dict(session, result)
-            LOG.info(_("Extended subnet dict for driver '%(drv)s'"),
+            LOG.info(_LI("Extended subnet dict for driver '%(drv)s'"),
                      {'drv': driver.name})
 
     def extend_port_dict(self, session, result):
         """Notify all extension drivers to extend port dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_port_dict(session, result)
-            LOG.info(_("Extended port dict for driver '%(drv)s'"),
+            LOG.info(_LI("Extended port dict for driver '%(drv)s'"),
                      {'drv': driver.name})

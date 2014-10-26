@@ -16,8 +16,7 @@ import abc
 
 from neutron.common import exceptions as exc
 from neutron.common import topics
-from neutron.openstack.common.gettextutils import _LI
-from neutron.openstack.common.gettextutils import _LW
+from neutron.openstack.common.gettextutils import _LI, _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api

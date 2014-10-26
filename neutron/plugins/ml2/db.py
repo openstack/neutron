@@ -26,6 +26,7 @@ from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import portbindings
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.ml2 import driver_api as api
@@ -59,8 +60,8 @@ def add_network_segment(session, network_id, segment, segment_index=0,
         )
         session.add(record)
         segment[api.ID] = record.id
-    LOG.info(_("Added segment %(id)s of type %(network_type)s for network"
-               " %(network_id)s"),
+    LOG.info(_LI("Added segment %(id)s of type %(network_type)s for network"
+                 " %(network_id)s"),
              {'id': record.id,
               'network_type': record.network_type,
               'network_id': record.network_id})
@@ -203,13 +204,13 @@ def get_port(session, port_id):
         except exc.NoResultFound:
             return
         except exc.MultipleResultsFound:
-            LOG.error(_("Multiple ports have port_id starting with %s"),
+            LOG.error(_LE("Multiple ports have port_id starting with %s"),
                       port_id)
             return
 
 
 def get_port_from_device_mac(device_mac):
-    LOG.debug(_("get_port_from_device_mac() called for mac %s"), device_mac)
+    LOG.debug("get_port_from_device_mac() called for mac %s", device_mac)
     session = db_api.get_session()
     qry = session.query(models_v2.Port).filter_by(mac_address=device_mac)
     return qry.first()
@@ -283,11 +284,11 @@ def get_port_binding_host(port_id):
                      filter(models.PortBinding.port_id.startswith(port_id)).
                      one())
         except exc.NoResultFound:
-            LOG.debug(_("No binding found for port %(port_id)s"),
+            LOG.debug("No binding found for port %(port_id)s",
                       {'port_id': port_id})
             return
         except exc.MultipleResultsFound:
-            LOG.error(_("Multiple ports have port_id starting with %s"),
+            LOG.error(_LE("Multiple ports have port_id starting with %s"),
                       port_id)
             return
     return query.host

@@ -22,6 +22,7 @@ from neutron.common import topics
 from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import driver_api as api
@@ -63,8 +64,8 @@ class RpcCallbacks(n_rpc.RpcCallback,
                                                      port_id,
                                                      host)
         if not port_context:
-            LOG.warning(_("Device %(device)s requested by agent "
-                          "%(agent_id)s not found in database"),
+            LOG.warning(_LW("Device %(device)s requested by agent "
+                            "%(agent_id)s not found in database"),
                         {'device': device, 'agent_id': agent_id})
             return {'device': device}
 
@@ -72,9 +73,9 @@ class RpcCallbacks(n_rpc.RpcCallback,
         port = port_context.current
 
         if not segment:
-            LOG.warning(_("Device %(device)s requested by agent "
-                          "%(agent_id)s on network %(network_id)s not "
-                          "bound, vif_type: %(vif_type)s"),
+            LOG.warning(_LW("Device %(device)s requested by agent "
+                            "%(agent_id)s on network %(network_id)s not "
+                            "bound, vif_type: %(vif_type)s"),
                         {'device': device,
                          'agent_id': agent_id,
                          'network_id': port['network_id'],
@@ -100,7 +101,7 @@ class RpcCallbacks(n_rpc.RpcCallback,
                  'fixed_ips': port['fixed_ips'],
                  'device_owner': port['device_owner'],
                  'profile': port[portbindings.PROFILE]}
-        LOG.debug(_("Returning: %s"), entry)
+        LOG.debug("Returning: %s", entry)
         return entry
 
     def get_devices_details_list(self, rpc_context, **kwargs):
@@ -119,16 +120,16 @@ class RpcCallbacks(n_rpc.RpcCallback,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         host = kwargs.get('host')
-        LOG.debug(_("Device %(device)s no longer exists at agent "
-                    "%(agent_id)s"),
+        LOG.debug("Device %(device)s no longer exists at agent "
+                  "%(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
         port_id = plugin._device_to_port_id(device)
         port_exists = True
         if (host and not plugin.port_bound_to_host(rpc_context,
                                                    port_id, host)):
-            LOG.debug(_("Device %(device)s not bound to the"
-                        " agent host %(host)s"),
+            LOG.debug("Device %(device)s not bound to the"
+                      " agent host %(host)s",
                       {'device': device, 'host': host})
             return {'device': device,
                     'exists': port_exists}
@@ -145,14 +146,14 @@ class RpcCallbacks(n_rpc.RpcCallback,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         host = kwargs.get('host')
-        LOG.debug(_("Device %(device)s up at agent %(agent_id)s"),
+        LOG.debug("Device %(device)s up at agent %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
         port_id = plugin._device_to_port_id(device)
         if (host and not plugin.port_bound_to_host(rpc_context,
                                                    port_id, host)):
-            LOG.debug(_("Device %(device)s not bound to the"
-                        " agent host %(host)s"),
+            LOG.debug("Device %(device)s not bound to the"
+                      " agent host %(host)s",
                       {'device': device, 'host': host})
             return
 

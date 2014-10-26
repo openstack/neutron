@@ -22,7 +22,7 @@ from sqlalchemy import sql
 from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.db import model_base
-from neutron.openstack.common.gettextutils import _LE
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
@@ -79,8 +79,8 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
         try:
             self._initialize(cfg.CONF.ml2_type_vxlan.vni_ranges)
         except exc.NetworkTunnelRangeError:
-            LOG.exception(_("Failed to parse vni_ranges. "
-                            "Service terminated!"))
+            LOG.exception(_LE("Failed to parse vni_ranges. "
+                              "Service terminated!"))
             raise SystemExit()
 
     def sync_allocations(self):
@@ -129,7 +129,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
     def get_endpoints(self):
         """Get every vxlan endpoints from database."""
 
-        LOG.debug(_("get_vxlan_endpoints() called"))
+        LOG.debug("get_vxlan_endpoints() called")
         session = db_api.get_session()
 
         with session.begin(subtransactions=True):
@@ -139,7 +139,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
                     for vxlan_endpoint in vxlan_endpoints]
 
     def add_endpoint(self, ip, udp_port=VXLAN_UDP_PORT):
-        LOG.debug(_("add_vxlan_endpoint() called for ip %s"), ip)
+        LOG.debug("add_vxlan_endpoint() called for ip %s", ip)
         session = db_api.get_session()
         try:
             vxlan_endpoint = VxlanEndpoints(ip_address=ip,
@@ -148,5 +148,5 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
         except db_exc.DBDuplicateEntry:
             vxlan_endpoint = (session.query(VxlanEndpoints).
                               filter_by(ip_address=ip).one())
-            LOG.warning(_("Vxlan endpoint with ip %s already exists"), ip)
+            LOG.warning(_LW("Vxlan endpoint with ip %s already exists"), ip)
         return vxlan_endpoint

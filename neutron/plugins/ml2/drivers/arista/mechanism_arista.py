@@ -20,6 +20,7 @@ import jsonrpclib
 from oslo.config import cfg
 
 from neutron.common import constants as n_const
+from neutron.openstack.common.gettextutils import _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api
@@ -73,8 +74,8 @@ class AristaRPCWrapper(object):
             self.cli_commands['timestamp'] = cmd
         except arista_exc.AristaRpcError:
             self.cli_commands['timestamp'] = []
-            msg = _("'timestamp' command '%s' is not available on EOS") % cmd
-            LOG.warn(msg)
+            LOG.warn(_LW("'timestamp' command '%s' is not available on EOS"),
+                     cmd)
 
     def _keystone_url(self):
         keystone_auth_url = ('%s://%s:%s/v2.0/' %
@@ -327,10 +328,8 @@ class AristaRPCWrapper(object):
             try:
                 vm = vms[port['device_id']]
             except KeyError:
-                msg = _("VM id %(vmid)s not found for port %(portid)s") % {
-                    'vmid': port['device_id'],
-                    'portid': port['id']}
-                LOG.warn(msg)
+                LOG.warn(_LW("VM id %(vmid)s not found for port %(portid)s"),
+                         {'vmid': port['device_id'], 'portid': port['id']})
                 continue
 
             port_name = '' if 'name' not in port else 'name "%s"' % (
@@ -346,8 +345,7 @@ class AristaRPCWrapper(object):
                 append_cmd('port id %s %s network-id %s' %
                            (port['id'], port_name, port['network_id']))
             else:
-                msg = _("Unknown device owner: %s") % port['device_owner']
-                LOG.warn(msg)
+                LOG.warn(_LW("Unknown device owner: %s"), port['device_owner'])
                 continue
 
         append_cmd('exit')
@@ -450,7 +448,7 @@ class AristaRPCWrapper(object):
         if commands_to_log:
             log_cmds = commands_to_log
 
-        LOG.info(_('Executing command on Arista EOS: %s'), log_cmds)
+        LOG.info(_LI('Executing command on Arista EOS: %s'), log_cmds)
 
         try:
             # this returns array of return values for every command in
@@ -562,7 +560,7 @@ class SyncService(object):
         try:
             # Send trigger to EOS that the ML2->EOS sync has started.
             self._rpc.sync_start()
-            LOG.info(_('Sync start trigger sent to EOS'))
+            LOG.info(_LI('Sync start trigger sent to EOS'))
         except arista_exc.AristaRpcError:
             LOG.warning(EOS_UNREACHABLE_MSG)
             return
@@ -579,13 +577,13 @@ class SyncService(object):
     def synchronize(self):
         """Sends data to EOS which differs from neutron DB."""
 
-        LOG.info(_('Syncing Neutron <-> EOS'))
+        LOG.info(_LI('Syncing Neutron <-> EOS'))
         try:
             # Get the time at which entities in the region were updated.
             # If the times match, then ML2 is in sync with EOS. Otherwise
             # perform a complete sync.
             if not self._force_sync and self._rpc.region_in_sync():
-                LOG.info(_('OpenStack and EOS are in sync!'))
+                LOG.info(_LI('OpenStack and EOS are in sync!'))
                 return
         except arista_exc.AristaRpcError:
             LOG.warning(EOS_UNREACHABLE_MSG)
@@ -607,10 +605,10 @@ class SyncService(object):
             # No tenants configured in Neutron. Clear all EOS state
             try:
                 self._rpc.delete_this_region()
-                msg = _('No Tenants configured in Neutron DB. But %d '
-                        'tenants discovered in EOS during synchronization.'
-                        'Entire EOS region is cleared') % len(eos_tenants)
-                LOG.info(msg)
+                LOG.info(_LI('No Tenants configured in Neutron DB. But %d '
+                             'tenants discovered in EOS during '
+                             'synchronization. Entire EOS region is cleared'),
+                         len(eos_tenants))
                 # Re-register with EOS so that the timestamp is updated.
                 self._rpc.register_with_eos()
                 # Region has been completely cleaned. So there is nothing to
@@ -772,9 +770,8 @@ class AristaDriver(driver_api.MechanismDriver):
                     LOG.info(EOS_UNREACHABLE_MSG)
                     raise ml2_exc.MechanismDriverError()
             else:
-                msg = _('Network %s is not created as it is not found in'
-                        'Arista DB') % network_id
-                LOG.info(msg)
+                LOG.info(_LI('Network %s is not created as it is not found in '
+                             'Arista DB'), network_id)
 
     def update_network_precommit(self, context):
         """At the moment we only support network name change
@@ -786,8 +783,7 @@ class AristaDriver(driver_api.MechanismDriver):
         new_network = context.current
         orig_network = context.original
         if new_network['name'] != orig_network['name']:
-            msg = _('Network name changed to %s') % new_network['name']
-            LOG.info(msg)
+            LOG.info(_LI('Network name changed to %s'), new_network['name'])
 
     def update_network_postcommit(self, context):
         """At the moment we only support network name change
@@ -814,9 +810,8 @@ class AristaDriver(driver_api.MechanismDriver):
                         LOG.info(EOS_UNREACHABLE_MSG)
                         raise ml2_exc.MechanismDriverError()
                 else:
-                    msg = _('Network %s is not updated as it is not found in'
-                            'Arista DB') % network_id
-                    LOG.info(msg)
+                    LOG.info(_LI('Network %s is not updated as it is not found'
+                                 ' in Arista DB'), network_id)
 
     def delete_network_precommit(self, context):
         """Delete the network infromation from the DB."""
@@ -906,9 +901,8 @@ class AristaDriver(driver_api.MechanismDriver):
                         LOG.info(EOS_UNREACHABLE_MSG)
                         raise ml2_exc.MechanismDriverError()
                 else:
-                    msg = _('VM %s is not created as it is not found in '
-                            'Arista DB') % device_id
-                    LOG.info(msg)
+                    LOG.info(_LI('VM %s is not created as it is not found in '
+                                 'Arista DB'), device_id)
 
     def update_port_precommit(self, context):
         """Update the name of a given port.
@@ -921,8 +915,7 @@ class AristaDriver(driver_api.MechanismDriver):
         new_port = context.current
         orig_port = context.original
         if new_port['name'] != orig_port['name']:
-            msg = _('Port name changed to %s') % new_port['name']
-            LOG.info(msg)
+            LOG.info(_LI('Port name changed to %s'), new_port['name'])
 
     def update_port_postcommit(self, context):
         """Update the name of a given port in EOS.
@@ -971,9 +964,8 @@ class AristaDriver(driver_api.MechanismDriver):
                         LOG.info(EOS_UNREACHABLE_MSG)
                         raise ml2_exc.MechanismDriverError()
                 else:
-                    msg = _('VM %s is not updated as it is not found in '
-                            'Arista DB') % device_id
-                    LOG.info(msg)
+                    LOG.info(_LI('VM %s is not updated as it is not found in '
+                                 'Arista DB'), device_id)
 
     def delete_port_precommit(self, context):
         """Delete information about a VM and host from the DB."""

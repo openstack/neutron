@@ -22,6 +22,7 @@ from ncclient import manager
 from xml.etree import ElementTree
 
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.brocade.nos import nctemplates as template
 
@@ -81,9 +82,9 @@ class NOSdriver():
 
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Connect failed to switch"))
+                LOG.exception(_LE("Connect failed to switch"))
 
-        LOG.debug(_("Connect success to host %(host)s:%(ssh_port)d"),
+        LOG.debug("Connect success to host %(host)s:%(ssh_port)d",
                   dict(host=host, ssh_port=SSH_PORT))
         return self.mgr
 
@@ -100,7 +101,7 @@ class NOSdriver():
             return self.nos_version_request(mgr)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def is_virtual_fabric_enabled(self, host, username, password):
@@ -110,7 +111,7 @@ class NOSdriver():
             return (self.virtual_fabric_info(mgr) == "enabled")
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def create_network(self, host, username, password, net_id):
@@ -138,7 +139,7 @@ class NOSdriver():
             self.activate_port_profile(mgr, name)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def delete_network(self, host, username, password, net_id):
@@ -155,7 +156,7 @@ class NOSdriver():
             self.delete_vlan_interface(mgr, net_id)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def associate_mac_to_network(self, host, username, password,
@@ -168,7 +169,7 @@ class NOSdriver():
             self.associate_mac_to_port_profile(mgr, name, mac)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def dissociate_mac_from_network(self, host, username, password,
@@ -181,7 +182,7 @@ class NOSdriver():
             self.dissociate_mac_from_port_profile(mgr, name, mac)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def create_vlan_interface(self, mgr, vlan_id):
@@ -324,7 +325,7 @@ class NOSdriver():
             self.activate_svi(mgr, rbridge_id, vlan_id)
         except Exception as ex:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error: %s"), ex)
                 self.close_session()
 
     def delete_svi(self, host, username, password,
@@ -335,7 +336,7 @@ class NOSdriver():
             self.remove_svi(mgr, rbridge_id, vlan_id)
         except Exception as ex:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error: %s"), ex)
                 self.close_session()
 
     def create_router(self, host, username, password, rbridge_id, router_id):
@@ -348,7 +349,7 @@ class NOSdriver():
             self.create_vrf(mgr, rbridge_id, vrf_name)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
         try:
             # For Nos5.0.0
@@ -367,7 +368,7 @@ class NOSdriver():
                                                              vrf_name)
                 except Exception:
                     with excutils.save_and_reraise_exception():
-                        LOG.exception(_("NETCONF error"))
+                        LOG.exception(_LE("NETCONF error"))
                         self.close_session()
 
                 ctxt.reraise = False
@@ -381,7 +382,7 @@ class NOSdriver():
             self.delete_vrf(mgr, rbridge_id, vrf_name)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def bind_vrf_to_svi(self, host, username, password, rbridge_id,
@@ -394,7 +395,7 @@ class NOSdriver():
             self.add_vrf_to_svi(mgr, rbridge_id, vlan_id, vrf_name)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def unbind_vrf_to_svi(self, host, username, password, rbridge_id,
@@ -407,7 +408,7 @@ class NOSdriver():
             self.delete_vrf_from_svi(mgr, rbridge_id, vlan_id, vrf_name)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error"))
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def create_vrf(self, mgr, rbridge_id, vrf_name):

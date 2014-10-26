@@ -17,6 +17,7 @@
 import sqlalchemy.orm.exc as sa_exc
 
 import neutron.db.api as db
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as c_exc
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_models_v2
@@ -27,7 +28,7 @@ LOG = logging.getLogger(__name__)
 
 def get_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Lists a nexusport binding."""
-    LOG.debug(_("get_nexusport_binding() called"))
+    LOG.debug("get_nexusport_binding() called")
     return _lookup_all_nexus_bindings(port_id=port_id,
                                       vlan_id=vlan_id,
                                       switch_ip=switch_ip,
@@ -36,13 +37,13 @@ def get_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
 
 def get_nexusvlan_binding(vlan_id, switch_ip):
     """Lists a vlan and switch binding."""
-    LOG.debug(_("get_nexusvlan_binding() called"))
+    LOG.debug("get_nexusvlan_binding() called")
     return _lookup_all_nexus_bindings(vlan_id=vlan_id, switch_ip=switch_ip)
 
 
 def add_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Adds a nexusport binding."""
-    LOG.debug(_("add_nexusport_binding() called"))
+    LOG.debug("add_nexusport_binding() called")
     session = db.get_session()
     binding = nexus_models_v2.NexusPortBinding(port_id=port_id,
                                                vlan_id=vlan_id,
@@ -55,7 +56,7 @@ def add_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
 
 def remove_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Removes a nexusport binding."""
-    LOG.debug(_("remove_nexusport_binding() called"))
+    LOG.debug("remove_nexusport_binding() called")
     session = db.get_session()
     binding = _lookup_all_nexus_bindings(session=session,
                                          vlan_id=vlan_id,
@@ -71,9 +72,9 @@ def remove_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
 def update_nexusport_binding(port_id, new_vlan_id):
     """Updates nexusport binding."""
     if not new_vlan_id:
-        LOG.warning(_("update_nexusport_binding called with no vlan"))
+        LOG.warning(_LW("update_nexusport_binding called with no vlan"))
         return
-    LOG.debug(_("update_nexusport_binding called"))
+    LOG.debug("update_nexusport_binding called")
     session = db.get_session()
     binding = _lookup_one_nexus_binding(session=session, port_id=port_id)
     binding.vlan_id = new_vlan_id
@@ -84,14 +85,14 @@ def update_nexusport_binding(port_id, new_vlan_id):
 
 def get_nexusvm_bindings(vlan_id, instance_id):
     """Lists nexusvm bindings."""
-    LOG.debug(_("get_nexusvm_bindings() called"))
+    LOG.debug("get_nexusvm_bindings() called")
     return _lookup_all_nexus_bindings(instance_id=instance_id,
                                       vlan_id=vlan_id)
 
 
 def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):
     """Lists nexusvm bindings."""
-    LOG.debug(_("get_port_vlan_switch_binding() called"))
+    LOG.debug("get_port_vlan_switch_binding() called")
     return _lookup_all_nexus_bindings(port_id=port_id,
                                       switch_ip=switch_ip,
                                       vlan_id=vlan_id)
@@ -99,8 +100,8 @@ def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):
 
 def get_port_switch_bindings(port_id, switch_ip):
     """List all vm/vlan bindings on a Nexus switch port."""
-    LOG.debug(_("get_port_switch_bindings() called, "
-                "port:'%(port_id)s', switch:'%(switch_ip)s'"),
+    LOG.debug("get_port_switch_bindings() called, "
+              "port:'%(port_id)s', switch:'%(switch_ip)s'",
               {'port_id': port_id, 'switch_ip': switch_ip})
     try:
         return _lookup_all_nexus_bindings(port_id=port_id,
