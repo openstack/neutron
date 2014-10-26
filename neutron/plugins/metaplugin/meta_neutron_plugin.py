@@ -252,7 +252,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         nets = []
         for flavor, plugin in self.plugins.items():
             if (filters and ext_flavor.FLAVOR_NETWORK in filters and
-                    not flavor in filters[ext_flavor.FLAVOR_NETWORK]):
+                    flavor not in filters[ext_flavor.FLAVOR_NETWORK]):
                 continue
             if filters:
                 #NOTE: copy each time since a target plugin may modify
