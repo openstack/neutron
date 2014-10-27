@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-22 06:19+0000\n"
-"PO-Revision-Date: 2014-10-21 10:51+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"POT-Creation-Date: 2014-10-27 06:05+0000\n"
+"PO-Revision-Date: 2014-10-26 19:50+0000\n"
+"Last-Translator: Maxime COQUEREL <max.coquerel@gmail.com>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -295,11 +295,11 @@ msgstr "Tunnel d'agent désynchronisé avec le plug-in !"
 #: neutron/services/vpn/plugin.py:45
 #, python-format
 msgid "VPN plugin using service driver: %s"
-msgstr ""
+msgstr "Plugin VPN utilisant le pilote de service: %s"
 
 #: neutron/services/vpn/device_drivers/cisco_ipsec.py:335
 msgid "Sending status report update to plugin"
-msgstr ""
+msgstr "Envoi du rapport de mise à jour du plugin"
 
 #: neutron/services/vpn/device_drivers/cisco_ipsec.py:715
 #, python-format
@@ -332,7 +332,7 @@ msgstr ""
 #: neutron/services/vpn/service_drivers/cisco_csr_db.py:238
 #, python-format
 msgid "Removed mapping for connection %s"
-msgstr ""
+msgstr "Suppression du mappage de connexion %s"
 
 #: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63
 #, python-format
