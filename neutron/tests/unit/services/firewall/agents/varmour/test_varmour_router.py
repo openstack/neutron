@@ -143,7 +143,7 @@ class TestVarmourRouter(base.BaseTestCase):
             router['enable_snat'] = enable_snat
 
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
-                                 self.conf.use_namespaces, router=router)
+                                 router=router)
         return ri
 
     def test_agent_add_internal_network(self):

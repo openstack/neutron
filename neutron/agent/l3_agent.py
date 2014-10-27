@@ -243,7 +243,7 @@ class LinkLocalAllocator(object):
 
 class RouterInfo(l3_ha_agent.RouterMixin):
 
-    def __init__(self, router_id, root_helper, use_namespaces, router,
+    def __init__(self, router_id, root_helper, router,
                  use_ipv6=False, ns_name=None):
         self.router_id = router_id
         self.ex_gw_port = None
@@ -254,7 +254,6 @@ class RouterInfo(l3_ha_agent.RouterMixin):
         self.floating_ips = set()
         self.floating_ips_dict = {}
         self.root_helper = root_helper
-        self.use_namespaces = use_namespaces
         # Invoke the setter for establishing initial SNAT action
         self.router = router
         self.ns_name = ns_name
@@ -766,7 +765,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                    if self.conf.use_namespaces else None)
         ri = RouterInfo(router_id=router_id,
                         root_helper=self.root_helper,
-                        use_namespaces=self.conf.use_namespaces,
                         router=router,
                         use_ipv6=self.use_ipv6,
                         ns_name=ns_name)

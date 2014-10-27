@@ -151,7 +151,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
             router['enable_snat'] = enable_snat
 
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
-                                 self.conf.use_namespaces, router=router)
+                                 router=router)
         return ri
 
     def _add_firewall_rules(self, fw, rule_count=1):
