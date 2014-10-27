@@ -57,6 +57,8 @@ class TestIsEnabled(base.BaseTestCase):
     def setUp(self):
         super(TestIsEnabled, self).setUp()
         ipv6_utils._IS_IPV6_ENABLED = None
+        self.mock_exists = mock.patch("os.path.exists",
+                                      return_value=True).start()
         mock_open = mock.patch("__builtin__.open").start()
         self.mock_read = mock_open.return_value.__enter__.return_value.read
 
@@ -69,6 +71,12 @@ class TestIsEnabled(base.BaseTestCase):
         self.mock_read.return_value = "1"
         enabled = ipv6_utils.is_enabled()
         self.assertFalse(enabled)
+
+    def test_disabled_non_exists(self):
+        self.mock_exists.return_value = False
+        enabled = ipv6_utils.is_enabled()
+        self.assertFalse(enabled)
+        self.assertFalse(self.mock_read.called)
 
     def test_memoize(self):
         self.mock_read.return_value = "0"
