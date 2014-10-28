@@ -736,8 +736,7 @@ class Dnsmasq(DhcpLocalProcess):
         subnets = dict((subnet.id, subnet) for subnet in network.subnets)
 
         for port in network.ports:
-            if port.device_owner not in (constants.DEVICE_OWNER_ROUTER_INTF,
-                                         constants.DEVICE_OWNER_DVR_INTERFACE):
+            if port.device_owner not in constants.ROUTER_INTERFACE_OWNERS:
                 continue
             for alloc in port.fixed_ips:
                 if subnets[alloc.subnet_id].gateway_ip == alloc.ip_address:

@@ -555,9 +555,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                                 subnet_id))
 
         for p in subnet_ports:
-            if (p['device_owner'] not in (
-                l3_constants.DEVICE_OWNER_ROUTER_INTF,
-                l3_constants.DEVICE_OWNER_DVR_INTERFACE)):
+            if p['device_owner'] not in l3_constants.ROUTER_INTERFACE_OWNERS:
                 for fixed_ip in p['fixed_ips']:
                     self._update_arp_entry(ri, fixed_ip['ip_address'],
                                            p['mac_address'],

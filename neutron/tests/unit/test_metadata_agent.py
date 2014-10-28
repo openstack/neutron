@@ -25,12 +25,6 @@ from neutron.common import utils
 from neutron.tests import base
 
 
-EXPECTED_OWNER_ROUTERS = [
-    constants.DEVICE_OWNER_ROUTER_INTF,
-    constants.DEVICE_OWNER_DVR_INTERFACE
-]
-
-
 class FakeConf(object):
     admin_user = 'neutron'
     admin_password = 'password'
@@ -73,7 +67,7 @@ class TestMetadataProxyHandlerRpc(TestMetadataProxyHandlerBase):
         ip = '1.2.3.4'
         networks = ('net_id1', 'net_id2')
         expected = {'device_id': [router_id],
-                    'device_owner': EXPECTED_OWNER_ROUTERS,
+                    'device_owner': constants.ROUTER_INTERFACE_OWNERS,
                     'network_id': networks,
                     'fixed_ips': {'ip_address': [ip]}}
         actual = self.handler._get_port_filters(router_id, ip, networks)
@@ -159,7 +153,7 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
         networks = self.handler._get_router_networks(router_id)
         mock_list_ports.assert_called_once_with(
             device_id=router_id,
-            device_owner=EXPECTED_OWNER_ROUTERS)
+            device_owner=constants.ROUTER_INTERFACE_OWNERS)
         self.assertEqual(expected, networks)
 
     def _test_get_router_networks_twice_helper(self):
@@ -174,7 +168,7 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
             networks = self.handler._get_router_networks(router_id)
             mock_list_ports.assert_called_once_with(
                 device_id=router_id,
-                device_owner=EXPECTED_OWNER_ROUTERS)
+                device_owner=constants.ROUTER_INTERFACE_OWNERS)
             self.assertEqual(expected_networks, networks)
             networks = self.handler._get_router_networks(router_id)
 
@@ -275,7 +269,7 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
                 new_qclient_call,
                 mock.call().list_ports(
                     device_id=router_id,
-                    device_owner=EXPECTED_OWNER_ROUTERS
+                    device_owner=constants.ROUTER_INTERFACE_OWNERS
                 ),
                 mock.call().get_auth_info()
             ])
@@ -409,7 +403,7 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
             new_qclient_call,
             mock.call().list_ports(
                 device_id=router_id,
-                device_owner=EXPECTED_OWNER_ROUTERS
+                device_owner=constants.ROUTER_INTERFACE_OWNERS
             ),
             mock.call().get_auth_info(),
             cached_qclient_call,

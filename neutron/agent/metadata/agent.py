@@ -179,9 +179,7 @@ class MetadataProxyHandler(object):
         filters = {}
         if router_id:
             filters['device_id'] = [router_id]
-            filters['device_owner'] = [
-                n_const.DEVICE_OWNER_ROUTER_INTF,
-                n_const.DEVICE_OWNER_DVR_INTERFACE]
+            filters['device_owner'] = n_const.ROUTER_INTERFACE_OWNERS
         if ip_address:
             filters['fixed_ips'] = {'ip_address': [ip_address]}
         if networks:
