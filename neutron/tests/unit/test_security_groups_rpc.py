@@ -970,10 +970,6 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id2)
 
 
-class SGServerRpcCallBackTestCaseXML(SGServerRpcCallBackTestCase):
-    fmt = 'xml'
-
-
 class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
     def setUp(self):
         super(SGAgentRpcCallBackMixinTestCase, self).setUp()

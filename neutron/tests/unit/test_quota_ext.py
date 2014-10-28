@@ -320,10 +320,6 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         self.assertEqual(400, res.status_int)
 
 
-class QuotaExtensionDbTestCaseXML(QuotaExtensionDbTestCase):
-    fmt = 'xml'
-
-
 class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
     fmt = 'json'
 
@@ -376,10 +372,6 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
         res = self.api.delete(_get_path('quotas', id=tenant_id, fmt=self.fmt),
                               extra_environ=env, expect_errors=True)
         self.assertEqual(403, res.status_int)
-
-
-class QuotaExtensionCfgTestCaseXML(QuotaExtensionCfgTestCase):
-    fmt = 'xml'
 
 
 class TestDbQuotaDriver(base.BaseTestCase):

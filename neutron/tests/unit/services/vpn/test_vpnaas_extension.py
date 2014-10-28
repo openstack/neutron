@@ -520,7 +520,3 @@ class VpnaasExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     def test_ipsec_site_connection_delete(self):
         """Test case to delete a ipsec_site_connection."""
         self._test_entity_delete('ipsec_site_connection')
-
-
-class VpnaasExtensionTestCaseXML(VpnaasExtensionTestCase):
-    fmt = 'xml'

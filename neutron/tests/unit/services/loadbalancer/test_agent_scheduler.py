@@ -215,7 +215,3 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
                 'fake_id',
                 expected_code=exc.HTTPForbidden.code,
                 admin_context=False)
-
-
-class LBaaSAgentSchedulerTestCaseXML(LBaaSAgentSchedulerTestCase):
-    fmt = 'xml'

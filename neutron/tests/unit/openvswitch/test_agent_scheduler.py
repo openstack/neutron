@@ -1413,7 +1413,3 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 mock.ANY, l3_notifier.make_msg(
                     'agent_updated', payload={'admin_state_up': False}),
                 topic='l3_agent.hosta')
-
-
-class OvsAgentSchedulerTestCaseXML(OvsAgentSchedulerTestCase):
-    fmt = 'xml'

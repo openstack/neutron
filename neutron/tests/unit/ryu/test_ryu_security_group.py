@@ -84,7 +84,3 @@ class TestRyuSecurityGroups(RyuSecurityGroupsTestCase,
         plugin = manager.NeutronManager.get_plugin()
         port_dict = plugin.get_port_from_device('bad_device_id')
         self.assertIsNone(port_dict)
-
-
-class TestRyuSecurityGroupsXML(TestRyuSecurityGroups):
-    fmt = 'xml'

@@ -180,7 +180,3 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int, exc.HTTPNoContent.code)
                 (l3_mock.delete_disassociated_floatingips
                  .assert_called_once_with(mock.ANY, net['network']['id']))
-
-
-class ExtNetDBTestCaseXML(ExtNetDBTestCase):
-    fmt = 'xml'

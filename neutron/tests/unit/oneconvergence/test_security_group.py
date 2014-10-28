@@ -70,12 +70,6 @@ class TestOneConvergenceSGServerRpcCallBack(
     pass
 
 
-class TestOneConvergenceSGServerRpcCallBackXML(
-    OneConvergenceSecurityGroupsTestCase,
-    test_sg_rpc.SGServerRpcCallBackTestCaseXML):
-    pass
-
-
 class TestOneConvergenceSecurityGroups(OneConvergenceSecurityGroupsTestCase,
                                        test_sg.TestSecurityGroups,
                                        test_sg_rpc.SGNotificationTestMixin):
@@ -113,7 +107,3 @@ class TestOneConvergenceSecurityGroups(OneConvergenceSecurityGroupsTestCase,
         plugin = manager.NeutronManager.get_plugin()
         port_dict = plugin.get_port_from_device('bad_device_id')
         self.assertIsNone(port_dict)
-
-
-class TestOneConvergenceSecurityGroupsXML(TestOneConvergenceSecurityGroups):
-    fmt = 'xml'

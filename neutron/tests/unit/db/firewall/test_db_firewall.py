@@ -1237,7 +1237,3 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                                   expected_code=webob.exc.HTTPNotFound.code,
                                   expected_body=None,
                                   body_data={'firewall_rule_id': None})
-
-
-class TestFirewallDBPluginXML(TestFirewallDBPlugin):
-    fmt = 'xml'

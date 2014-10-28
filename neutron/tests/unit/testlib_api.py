@@ -15,7 +15,6 @@
 
 import testtools
 
-from neutron.api.v2 import attributes
 from neutron.db import api as db_api
 # Import all data models
 from neutron.db.migration.models import head  # noqa
@@ -81,11 +80,8 @@ class WebTestCase(SqlTestCase):
     def setUp(self):
         super(WebTestCase, self).setUp()
         json_deserializer = wsgi.JSONDeserializer()
-        xml_deserializer = wsgi.XMLDeserializer(
-            attributes.get_attr_metadata())
         self._deserializers = {
             'application/json': json_deserializer,
-            'application/xml': xml_deserializer,
         }
 
     def deserialize(self, response):
@@ -95,8 +91,7 @@ class WebTestCase(SqlTestCase):
 
     def serialize(self, data):
         ctype = 'application/%s' % self.fmt
-        result = wsgi.Serializer(
-            attributes.get_attr_metadata()).serialize(data, ctype)
+        result = wsgi.Serializer().serialize(data, ctype)
         return result
 
 

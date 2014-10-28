@@ -56,10 +56,6 @@ class TestMlnxSecurityGroups(MlnxSecurityGroupsTestCase,
     pass
 
 
-class TestMlnxSecurityGroupsXML(TestMlnxSecurityGroups):
-    fmt = 'xml'
-
-
 class TestMlnxSecurityGroupsDB(MlnxSecurityGroupsTestCase):
     def test_security_group_get_port_from_device(self):
         with self.network() as n:
@@ -94,7 +90,3 @@ class TestMlnxSecurityGroupsDB(MlnxSecurityGroupsTestCase):
     def test_security_group_get_port_from_device_with_no_port(self):
         port_dict = mlnx_db.get_port_from_device('bad_device_id')
         self.assertIsNone(port_dict)
-
-
-class TestMlnxSecurityGroupsDBXML(TestMlnxSecurityGroupsDB):
-    fmt = 'xml'

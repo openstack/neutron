@@ -36,7 +36,7 @@ RESOURCES = {'network': 'networks',
 SUB_RESOURCES = {}
 COLLECTION_ACTIONS = ['index', 'create']
 MEMBER_ACTIONS = ['show', 'update', 'delete']
-REQUIREMENTS = {'id': attributes.UUID_PATTERN, 'format': 'xml|json'}
+REQUIREMENTS = {'id': attributes.UUID_PATTERN, 'format': 'json'}
 
 
 class Index(wsgi.Application):
@@ -45,9 +45,7 @@ class Index(wsgi.Application):
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
-        metadata = {'application/xml': {'attributes': {
-                    'resource': ['name', 'collection'],
-                    'link': ['href', 'rel']}}}
+        metadata = {}
 
         layout = []
         for name, collection in self.resources.iteritems():

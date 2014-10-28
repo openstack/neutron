@@ -56,12 +56,6 @@ class TestNecSGServerRpcCallBack(
     pass
 
 
-class TestNecSGServerRpcCallBackXML(
-    test_sg_rpc.SGServerRpcCallBackTestCaseXML,
-    NecSecurityGroupsTestCase):
-    pass
-
-
 class TestNecSecurityGroups(NecSecurityGroupsTestCase,
                             test_sg.TestSecurityGroups,
                             test_sg_rpc.SGNotificationTestMixin):
@@ -92,7 +86,3 @@ class TestNecSecurityGroups(NecSecurityGroupsTestCase,
                 self.assertEqual([fixed_ips[0]['ip_address']],
                                  port_dict['fixed_ips'])
                 self._delete('ports', port_id)
-
-
-class TestNecSecurityGroupsXML(TestNecSecurityGroups):
-    fmt = 'xml'

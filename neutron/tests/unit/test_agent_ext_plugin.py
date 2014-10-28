@@ -251,7 +251,3 @@ class AgentDBTestCase(AgentDBTestMixIn,
         agents = self._list_agents(
             query_string='binary=neutron-l3-agent&host=' + L3_HOSTB)
         self.assertFalse(agents['agents'][0]['alive'])
-
-
-class AgentDBTestCaseXML(AgentDBTestCase):
-    fmt = 'xml'

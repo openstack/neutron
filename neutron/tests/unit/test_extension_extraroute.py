@@ -469,10 +469,6 @@ class ExtraRouteDBIntTestCase(test_l3.L3NatDBIntTestCase,
         self.setup_notification_driver()
 
 
-class ExtraRouteDBIntTestCaseXML(ExtraRouteDBIntTestCase):
-    fmt = 'xml'
-
-
 class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
                               ExtraRouteDBTestCaseBase):
     def setUp(self):
@@ -492,7 +488,3 @@ class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
             service_plugins=service_plugins)
 
         self.setup_notification_driver()
-
-
-class ExtraRouteDBSepTestCaseXML(ExtraRouteDBSepTestCase):
-    fmt = 'xml'
