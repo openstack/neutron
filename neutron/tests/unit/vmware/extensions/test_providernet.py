@@ -47,6 +47,15 @@ class TestProvidernet(test_nsx_plugin.NsxPluginV2TestCase):
         self.assertEqual(net['network'][pnet.SEGMENTATION_ID], 411)
         self.assertEqual(net['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
 
+        # Test that we can create another provider network using the same
+        # vlan_id on another physical network.
+        data['network'][pnet.PHYSICAL_NETWORK] = 'physnet2'
+        network_req = self.new_create_request('networks', data, self.fmt)
+        net = self.deserialize(self.fmt, network_req.get_response(self.api))
+        self.assertEqual(net['network'][pnet.NETWORK_TYPE], 'vlan')
+        self.assertEqual(net['network'][pnet.SEGMENTATION_ID], 411)
+        self.assertEqual(net['network'][pnet.PHYSICAL_NETWORK], 'physnet2')
+
 
 class TestMultiProviderNetworks(test_nsx_plugin.NsxPluginV2TestCase):
 
