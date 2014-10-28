@@ -40,7 +40,7 @@ class PolicyFileTestCase(base.BaseTestCase):
         policy.reset()
         self.addCleanup(policy.reset)
         self.context = context.Context('fake', 'fake', is_admin=False)
-        self.target = {}
+        self.target = {'tenant_id': 'fake'}
         self.tempdir = self.useFixture(fixtures.TempDir())
 
     def test_modified_policy_reloads(self):
@@ -62,6 +62,7 @@ class PolicyFileTestCase(base.BaseTestCase):
             # sleep(1)
             policy._POLICY_CACHE = {}
             policy.init()
+            self.target = {'tenant_id': 'fake_tenant'}
             self.assertRaises(exceptions.PolicyNotAuthorized,
                               policy.enforce,
                               self.context,
@@ -233,6 +234,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCE)
         self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
             "context_is_admin": "role:admin",
+            "context_is_advsvc": "role:advsvc",
             "admin_or_network_owner": "rule:context_is_admin or "
                                       "tenant_id:%(network:tenant_id)s",
             "admin_or_owner": ("rule:context_is_admin or "
@@ -247,11 +249,13 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "create_network:shared": "rule:admin_only",
             "update_network": '@',
             "update_network:shared": "rule:admin_only",
-
-            "get_network": "rule:admin_or_owner or "
-                           "rule:shared or "
-                           "rule:external",
-            "create_port:mac": "rule:admin_or_network_owner",
+            "get_network": "rule:admin_or_owner or rule:shared or "
+                           "rule:external or rule:context_is_advsvc",
+            "create_port:mac": "rule:admin_or_network_owner or "
+                               "rule:context_is_advsvc",
+            "update_port": "rule:admin_or_owner or rule:context_is_advsvc",
+            "get_port": "rule:admin_or_owner or rule:context_is_advsvc",
+            "delete_port": "rule:admin_or_owner or rule:context_is_advsvc",
             "create_something": "rule:admin_or_owner",
             "create_something:attr": "rule:admin_or_owner",
             "create_something:attr:sub_attr_1": "rule:admin_or_owner",
@@ -282,9 +286,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         fake_manager_instance = fake_manager.return_value
         fake_manager_instance.plugin = plugin_klass()
 
-    def _test_action_on_attr(self, context, action, attr, value,
+    def _test_action_on_attr(self, context, action, obj, attr, value,
                              exception=None, **kwargs):
-        action = "%s_network" % action
+        action = "%s_%s" % (action, obj)
         target = {'tenant_id': 'the_owner', attr: value}
         if kwargs:
             target.update(kwargs)
@@ -298,7 +302,14 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def _test_nonadmin_action_on_attr(self, action, attr, value,
                                       exception=None, **kwargs):
         user_context = context.Context('', "user", roles=['user'])
-        self._test_action_on_attr(user_context, action, attr,
+        self._test_action_on_attr(user_context, action, "network", attr,
+                                  value, exception, **kwargs)
+
+    def _test_advsvc_action_on_attr(self, action, obj, attr, value,
+                                    exception=None, **kwargs):
+        user_context = context.Context('', "user",
+                                       roles=['user', 'advsvc'])
+        self._test_action_on_attr(user_context, action, obj, attr,
                                   value, exception, **kwargs)
 
     def test_nonadmin_write_on_private_fails(self):
@@ -312,6 +323,31 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_nonadmin_write_on_shared_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', True,
                                            exceptions.PolicyNotAuthorized)
+
+    def test_advsvc_get_network_works(self):
+        self._test_advsvc_action_on_attr('get', 'network', 'shared', False)
+
+    def test_advsvc_create_network_fails(self):
+        self._test_advsvc_action_on_attr('create', 'network', 'shared', False,
+                                         exceptions.PolicyNotAuthorized)
+
+    def test_advsvc_create_port_works(self):
+        self._test_advsvc_action_on_attr('create', 'port:mac', 'shared', False)
+
+    def test_advsvc_get_port_works(self):
+        self._test_advsvc_action_on_attr('get', 'port', 'shared', False)
+
+    def test_advsvc_update_port_works(self):
+        kwargs = {const.ATTRIBUTES_TO_UPDATE: ['shared']}
+        self._test_advsvc_action_on_attr('update', 'port', 'shared', True,
+                                         **kwargs)
+
+    def test_advsvc_delete_port_works(self):
+        self._test_advsvc_action_on_attr('delete', 'port', 'shared', False)
+
+    def test_advsvc_create_subnet_fails(self):
+        self._test_advsvc_action_on_attr('create', 'subnet', 'shared', False,
+                                         exceptions.PolicyNotAuthorized)
 
     def test_nonadmin_read_on_shared_succeeds(self):
         self._test_nonadmin_action_on_attr('get', 'shared', True)

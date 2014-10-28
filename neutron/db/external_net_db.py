@@ -57,8 +57,9 @@ class External_net_db_mixin(object):
     def _network_filter_hook(self, context, original_model, conditions):
         if conditions is not None and not hasattr(conditions, '__iter__'):
             conditions = (conditions, )
-        # Apply the external network filter only in non-admin context
-        if not context.is_admin and hasattr(original_model, 'tenant_id'):
+        # Apply the external network filter only in non-admin and non-advsvc
+        # context
+        if self.model_query_scope(context, original_model):
             conditions = expr.or_(ExternalNetwork.network_id != expr.null(),
                                   *conditions)
         return conditions
