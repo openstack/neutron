@@ -25,7 +25,6 @@ disable=
  maybe-no-member,
  no-member,
  no-method-argument,
- no-name-in-module,
  no-self-argument,
  not-callable,
  no-value-for-parameter,
@@ -128,6 +127,10 @@ ignore-iface-methods=
 deprecated-modules=
 # should use openstack.common.jsonutils
  json
+
+[TYPECHECK]
+# List of module names for which member attributes should not be checked
+ignored-modules=six.moves,_MovedItems
 
 [REPORTS]
 # Tells whether to display a full report or only the messages
