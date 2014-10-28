@@ -73,8 +73,10 @@ class BaseTestCase(testtools.TestCase):
         super(BaseTestCase, self).setUp()
 
         # Configure this first to ensure pm debugging support for setUp()
-        if os.environ.get('OS_POST_MORTEM_DEBUG') in TRUE_STRING:
-            self.addOnException(post_mortem_debug.exception_handler)
+        debugger = os.environ.get('OS_POST_MORTEM_DEBUGGER')
+        if debugger:
+            self.addOnException(post_mortem_debug.get_exception_handler(
+                debugger))
 
         if os.environ.get('OS_DEBUG') in TRUE_STRING:
             _level = std_logging.DEBUG

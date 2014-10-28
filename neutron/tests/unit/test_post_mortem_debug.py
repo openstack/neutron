@@ -34,12 +34,25 @@ class TestTesttoolsExceptionHandler(base.BaseTestCase):
                 with mock.patch.object(post_mortem_debug,
                                        'get_ignored_traceback',
                                        return_value=mock.Mock()):
-                    post_mortem_debug.exception_handler(exc_info)
+                    post_mortem_debug.get_exception_handler()(exc_info)
 
         # traceback will become post_mortem_debug.FilteredTraceback
         filtered_exc_info = (exc_info[0], exc_info[1], mock.ANY)
         mock_print_exception.assert_called_once_with(*filtered_exc_info)
         mock_post_mortem.assert_called_once_with(mock.ANY)
+
+    def test__get_debugger(self):
+        def import_mock(name, *args):
+            mod_mock = mock.Mock()
+            mod_mock.__name__ = name
+            mod_mock.post_mortem = mock.Mock()
+            return mod_mock
+
+        with mock.patch('__builtin__.__import__', side_effect=import_mock):
+                pdb_debugger = post_mortem_debug._get_debugger('pdb')
+                pudb_debugger = post_mortem_debug._get_debugger('pudb')
+                self.assertEqual('pdb', pdb_debugger.__name__)
+                self.assertEqual('pudb', pudb_debugger.__name__)
 
 
 class TestFilteredTraceback(base.BaseTestCase):
