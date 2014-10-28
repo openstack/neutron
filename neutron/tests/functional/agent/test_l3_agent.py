@@ -40,7 +40,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def _configure(self):
         l3_agent._register_opts(cfg.CONF)
-        cfg.CONF.set_override('debug', True)
+        cfg.CONF.set_override('debug', False)
         config.setup_logging()
         cfg.CONF.set_override(
             'interface_driver',
