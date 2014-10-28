@@ -787,9 +787,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def _verify_snat_rules(self, rules, router, negate=False):
         interfaces = router[l3_constants.INTERFACE_KEY]
         source_cidrs = []
-        for interface in interfaces:
-            prefix = interface['subnet']['cidr'].split('/')[1]
-            source_cidr = "%s/%s" % (interface['fixed_ips'][0]['ip_address'],
+        for iface in interfaces:
+            prefix = iface['subnet']['cidr'].split('/')[1]
+            source_cidr = "%s/%s" % (iface['fixed_ips'][0]['ip_address'],
                                      prefix)
             source_cidrs.append(source_cidr)
         source_nat_ip = router['gw_port']['fixed_ips'][0]['ip_address']
