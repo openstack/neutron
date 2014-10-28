@@ -208,9 +208,14 @@ class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         return all(word in last_cfg for word in words)
 
     def _is_vlan_configured(self, vlan_creation_expected=True,
-                            add_keyword_expected=False):
+                            first_vlan_addition=False):
+        """Confirm if VLAN was configured or not."""
         vlan_created = self._is_in_nexus_cfg(['vlan', 'vlan-name'])
         add_appears = self._is_in_last_nexus_cfg(['add'])
+        # The first VLAN being configured should be done without the
+        # ADD keyword. Thereafter additional VLANs to be configured
+        # should be done with the ADD keyword.
+        add_keyword_expected = not first_vlan_addition
         return (self._is_in_last_nexus_cfg(['allowed', 'vlan']) and
                 vlan_created == vlan_creation_expected and
                 add_appears == add_keyword_expected)
@@ -288,6 +293,24 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
             expected_http = wexc.HTTPInternalServerError.code
         self.assertEqual(status, expected_http)
 
+    def _mock_config_first_trunk(self):
+        """Mock the behavior for the first VLAN addition.
+
+        When the first VLAN is being added to the interface the usage of
+        the ADD keyword should raise an exception specifying that the ADD
+        keyword cannot be used till a VLAN list is created and to create
+        a VLAN list the configuration should not contain the ADD keyword.
+
+        """
+        config = "switchport trunk allowed vlan add"
+        exc = Exception("switchport trunk allowed vlan list is empty, "
+                        "please specify a list using "
+                        "'switchport trunk allowed vlan X' "
+                        "before using the add option")
+        return (self._patch_ncclient(
+                'connect.return_value.edit_config.side_effect',
+                self._config_dependent_side_effect(config, exc)))
+
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
 
@@ -351,44 +374,90 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                     'ports',
                     wexc.HTTPInternalServerError.code)
 
-    def test_nexus_enable_vlan_cmd(self):
+    def test_nexus_enable_vlan_cmd_on_same_host(self):
         """Verify the syntax of the command to enable a vlan on an intf.
 
         Test of the following ml2_conf_cisco_ini config:
         [ml2_mech_cisco_nexus:1.1.1.1]
-        hostA=1/1
-        hostB=1/2 (second pass only)
-        where vlan_id = 100
+        Resource A on host=COMP_HOST_NAME with vlan_id = 1000
+        Resource B on host=COMP_HOST_NAME with vlan_id = 1001
 
-        Confirm that for the first VLAN configured on a Nexus interface,
-        the command string sent to the switch does not contain the
-        keyword 'add'.
+        Confirm that when configuring the first VLAN on a Nexus interface,
+        the final command string sent to the switch does not contain the
+        keyword 'add'. The initial attempt will contain 'add' but when
+        the switch rejects it, the re-attempt shouldn't contain the 'add'.
 
         Confirm that for the second VLAN configured on a Nexus interface,
         the command string sent to the switch contains the keyword 'add'
-        if it is on the same host. Confirm it does not contain the
-        keyword 'add' when on different hosts.
+        since it is on the same host.
 
         """
-        hosts = [COMP_HOST_NAME, COMP_HOST_NAME_2]
-        for host in hosts:
-            # First vlan should be configured without 'add' keyword
+        # First vlan should be configured without 'add' keyword and an
+        # exception should be raised when it is done with the 'add'
+        # thereby triggering a re-attempt without the 'add'.
+        with self._mock_config_first_trunk():
             with self._create_resources():
                 self.assertTrue(self._is_vlan_configured(
-                    vlan_creation_expected=True,
-                    add_keyword_expected=False))
+                        vlan_creation_expected=True,
+                        first_vlan_addition=True))
                 self.mock_ncclient.reset_mock()
                 self.mock_bound_segment.return_value = BOUND_SEGMENT2
 
-                # Second vlan should be configured with 'add' keyword
-                # when on a single host.
-                with self._create_resources(name=NETWORK_NAME_2,
-                    device_id=DEVICE_ID_2,
-                    cidr=CIDR_2,
-                    host_id=host):
-                    self.assertTrue(self._is_vlan_configured(
+                # Second vlan should be configured with the 'add' keyword
+                # when on first host.
+                with(self._patch_ncclient(
+                        'connect.return_value.edit_config.side_effect',
+                        None)):
+                    with self._create_resources(name=NETWORK_NAME_2,
+                                                device_id=DEVICE_ID_2,
+                                                cidr=CIDR_2,
+                                                host_id=COMP_HOST_NAME):
+                        self.assertTrue(self._is_vlan_configured(
+                                vlan_creation_expected=True,
+                                first_vlan_addition=False
+                        ))
+
+                    # Return to first segment for delete port calls.
+                    self.mock_bound_segment.return_value = BOUND_SEGMENT1
+
+    def test_nexus_enable_vlan_cmd_on_different_hosts(self):
+        """Verify the syntax of the command to enable a vlan on an intf.
+
+        Test of the following ml2_conf_cisco_ini config:
+        [ml2_mech_cisco_nexus:1.1.1.1]
+        Resource A on host=COMP_HOST_NAME with vlan_id = 1000
+        Resource B on host=COMP_HOST_NAME_2 with vlan_id = 1001
+
+        Confirm that when configuring the first VLAN on a Nexus interface,
+        the final command string sent to the switch does not contain the
+        keyword 'add'. The initial attempt will contain 'add' but when
+        the switch rejects it, the re-attempt shouldn't contain the 'add'.
+
+        Confirm that for the second VLAN configured on a Nexus interface,
+        the command string sent to the switch does not contain the
+        keyword 'add' since it is on a different host.
+
+        """
+        # First vlan should be configured without 'add' keyword and an
+        # exception should be raised when it is done with the 'add'
+        # thereby triggering a re-attempt without the 'add'.
+        with self._mock_config_first_trunk():
+            with self._create_resources():
+                self.assertTrue(self._is_vlan_configured(
                         vlan_creation_expected=True,
-                        add_keyword_expected=(host == COMP_HOST_NAME)
+                        first_vlan_addition=True))
+                self.mock_ncclient.reset_mock()
+                self.mock_bound_segment.return_value = BOUND_SEGMENT2
+
+                # Second vlan should be configured without the 'add' keyword
+                # when on second host.
+                with self._create_resources(name=NETWORK_NAME_2,
+                                            device_id=DEVICE_ID_2,
+                                            cidr=CIDR_2,
+                                            host_id=COMP_HOST_NAME_2):
+                    self.assertTrue(self._is_vlan_configured(
+                            vlan_creation_expected=True,
+                            first_vlan_addition=True
                     ))
 
                 # Return to first segment for delete port calls.
@@ -463,35 +532,38 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                 req.get_response(self.api)
                 self.assertTrue(self._is_vlan_configured(
                     vlan_creation_expected=vlan_creation_expected,
-                    add_keyword_expected=False))
+                    first_vlan_addition=True))
                 self.mock_ncclient.reset_mock()
                 yield
             self._delete('ports', port['port']['id'])
 
         # Create network and subnet
-        with self.network(name=NETWORK_NAME) as network:
-            with self.subnet(network=network, cidr=CIDR_1) as subnet:
+        with self._mock_config_first_trunk():
+            with self.network(name=NETWORK_NAME) as network:
+                with self.subnet(network=network, cidr=CIDR_1) as subnet:
 
-                # Create an instance on first compute host
-                with _create_port_check_vlan(COMP_HOST_NAME, DEVICE_ID_1,
-                                             vlan_creation_expected=True):
-                    # Create an instance on second compute host
-                    with _create_port_check_vlan(COMP_HOST_NAME_2, DEVICE_ID_2,
-                                                 vlan_creation_expected=False):
-                        pass
+                    # Create an instance on first compute host
+                    with _create_port_check_vlan(COMP_HOST_NAME, DEVICE_ID_1,
+                                                 vlan_creation_expected=True):
+                        # Create an instance on second compute host
+                        with _create_port_check_vlan(
+                            COMP_HOST_NAME_2,
+                            DEVICE_ID_2,
+                            vlan_creation_expected=False):
+                            pass
 
-                    # Instance on second host is now terminated.
-                    # Vlan should be untrunked from port, but vlan should
-                    # still exist on the switch.
+                        # Instance on second host is now terminated.
+                        # Vlan should be untrunked from port, but vlan should
+                        # still exist on the switch.
+                        self.assertTrue(self._is_vlan_unconfigured(
+                                vlan_deletion_expected=False))
+                        self.mock_ncclient.reset_mock()
+
+                    # Instance on first host is now terminated.
+                    # Vlan should be untrunked from port and vlan should have
+                    # been deleted from the switch.
                     self.assertTrue(self._is_vlan_unconfigured(
-                        vlan_deletion_expected=False))
-                    self.mock_ncclient.reset_mock()
-
-                # Instance on first host is now terminated.
-                # Vlan should be untrunked from port and vlan should have
-                # been deleted from the switch.
-                self.assertTrue(self._is_vlan_unconfigured(
-                    vlan_deletion_expected=True))
+                            vlan_deletion_expected=True))
 
     def test_nexus_vm_migration(self):
         """Verify VM (live) migration.
