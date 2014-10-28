@@ -66,7 +66,6 @@ disable=
  unused-argument,
  unused-import,
  unused-variable,
- useless-else-on-loop,
 # "C" Coding convention violations
  bad-continuation,
  invalid-name,
