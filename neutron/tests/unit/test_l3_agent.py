@@ -271,9 +271,11 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_routers.side_effect = Exception()
+        self.plugin_api.get_routers.side_effect = ValueError()
         with mock.patch.object(agent, '_cleanup_namespaces') as f:
-            agent.periodic_sync_routers_task(agent.context)
+            self.assertRaises(ValueError, agent.periodic_sync_routers_task,
+                              agent.context)
+            self.assertTrue(agent.fullsync)
         self.assertFalse(f.called)
 
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
