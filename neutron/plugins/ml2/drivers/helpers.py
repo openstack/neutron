@@ -20,8 +20,8 @@ from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 
 
-# Number of retries to find a valid segment candidate and allocate it
-DB_MAX_RETRIES = 10
+# Number of attempts to find a valid segment candidate and allocate it
+DB_MAX_ATTEMPTS = 10
 
 
 LOG = log.getLogger(__name__)
@@ -107,8 +107,8 @@ class TypeDriverHelper(api.TypeDriver):
                       filter_by(allocated=False, **filters))
 
             # Selected segment can be allocated before update by someone else,
-            # We retry until update success or DB_MAX_RETRIES retries
-            for attempt in range(1, DB_MAX_RETRIES + 1):
+            # We retry until update success or DB_MAX_ATTEMPTS attempts
+            for attempt in range(1, DB_MAX_ATTEMPTS + 1):
                 alloc = select.first()
 
                 if not alloc:
@@ -139,5 +139,5 @@ class TypeDriverHelper(api.TypeDriver):
 
         LOG.warning(_("Allocate %(type)s segment from pool failed "
                       "after %(number)s failed attempts"),
-                    {"type": network_type, "number": DB_MAX_RETRIES})
+                    {"type": network_type, "number": DB_MAX_ATTEMPTS})
         raise exc.NoNetworkFoundInMaximumAllowedAttempts()
