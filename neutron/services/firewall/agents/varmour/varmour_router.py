@@ -294,7 +294,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
         self._va_config_router_snat_rules(ri, plist)
         self._va_config_floating_ips(ri)
 
-    def _handle_router_snat_rules(self, ri, ex_gw_port, internal_cidrs,
+    def _handle_router_snat_rules(self, ri, ex_gw_port,
                                   interface_name, action):
         return
 
