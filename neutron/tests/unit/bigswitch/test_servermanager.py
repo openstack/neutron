@@ -16,6 +16,7 @@
 #
 import httplib
 import socket
+import ssl
 
 from contextlib import nested
 import mock
@@ -54,7 +55,8 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
                 pl.servers._get_combined_cert_for_server,
                 *('example.org', 443)
             )
-            sslgetmock.assert_has_calls([mock.call(('example.org', 443))])
+            sslgetmock.assert_has_calls([mock.call(
+                ('example.org', 443), ssl_version=ssl.PROTOCOL_TLSv1)])
 
     def test_consistency_watchdog(self):
         pl = NeutronManager.get_plugin()
