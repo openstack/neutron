@@ -238,9 +238,10 @@ class DhcpAgent(manager.Manager):
                 self.conf, network)
 
         for subnet in network.subnets:
-            if subnet.enable_dhcp and subnet.ip_version == 4:
+            if subnet.enable_dhcp:
                 if self.call_driver('enable', network):
-                    if self.conf.use_namespaces and enable_metadata:
+                    if (subnet.ip_version == 4 and self.conf.use_namespaces
+                        and enable_metadata):
                         self.enable_isolated_metadata_proxy(network)
                         enable_metadata = False  # Don't trigger twice
                     self.cache.put(network)
