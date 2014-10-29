@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import mock
 
 from neutron.common import constants
@@ -24,6 +25,7 @@ from neutron.extensions import providernet as pnet
 from neutron import manager
 from neutron.openstack.common import timeutils
 from neutron.plugins.ml2 import config as config
+from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
 from neutron.tests.unit import test_db_plugin as test_plugin
@@ -794,3 +796,17 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
                     self.mock_fanout.assert_called_with(
                         mock.ANY, expected, topic=self.fanout_topic)
+
+    def test_delete_port_invokes_update_device_down(self):
+        l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
+        l2pop_mech.L2PopulationAgentNotify = mock.Mock()
+        l2pop_mech.rpc_ctx = mock.Mock()
+        with contextlib.nested(
+                mock.patch.object(l2pop_mech,
+                           '_update_port_down',
+                           return_value=None),
+                mock.patch.object(l2pop_mech.L2PopulationAgentNotify,
+                                  'remove_fdb_entries')) as (upd_port_down,
+                                                             rem_fdb_entries):
+            l2pop_mech.delete_port_postcommit(mock.Mock())
+            self.assertTrue(upd_port_down.called)
