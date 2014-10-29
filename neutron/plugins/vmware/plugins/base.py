@@ -756,9 +756,14 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         for segment in segments:
             network_type = segment.get(pnet.NETWORK_TYPE)
             physical_network = segment.get(pnet.PHYSICAL_NETWORK)
+            physical_network_set = attr.is_attr_set(physical_network)
             segmentation_id = segment.get(pnet.SEGMENTATION_ID)
             network_type_set = attr.is_attr_set(network_type)
             segmentation_id_set = attr.is_attr_set(segmentation_id)
+
+            # If the physical_network_uuid isn't passed in use the default one.
+            if not physical_network_set:
+                physical_network = cfg.CONF.default_tz_uuid
 
             err_msg = None
             if not network_type_set:
@@ -782,8 +787,11 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                 'max_id': constants.MAX_VLAN_TAG})
                 else:
                     # Verify segment is not already allocated
-                    bindings = nsx_db.get_network_bindings_by_vlanid(
-                        context.session, segmentation_id)
+                    bindings = (
+                        nsx_db.get_network_bindings_by_vlanid_and_physical_net(
+                            context.session, segmentation_id,
+                            physical_network)
+                    )
                     if bindings:
                         raise n_exc.VlanIdInUse(
                             vlan_id=segmentation_id,
