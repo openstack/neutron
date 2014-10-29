@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import os
 import sys
 
@@ -68,7 +69,7 @@ class DhcpAgent(manager.Manager):
 
     def __init__(self, host=None):
         super(DhcpAgent, self).__init__(host=host)
-        self.needs_resync_reasons = []
+        self.needs_resync_reasons = collections.defaultdict(list)
         self.conf = cfg.CONF
         self.cache = NetworkCache()
         self.root_helper = config.get_root_helper(self.conf)
@@ -136,7 +137,7 @@ class DhcpAgent(manager.Manager):
                           'that the network and/or its subnet(s) still exist.')
                         % {'net_id': network.id, 'action': action})
         except Exception as e:
-            self.schedule_resync(e)
+            self.schedule_resync(e, network.id)
             if (isinstance(e, n_rpc.RemoteError)
                 and e.exc_type == 'NetworkNotFound'
                 or isinstance(e, exceptions.NetworkNotFound)):
@@ -145,13 +146,18 @@ class DhcpAgent(manager.Manager):
                 LOG.exception(_('Unable to %(action)s dhcp for %(net_id)s.')
                               % {'net_id': network.id, 'action': action})
 
-    def schedule_resync(self, reason):
-        """Schedule a resync for a given reason."""
-        self.needs_resync_reasons.append(reason)
+    def schedule_resync(self, reason, network=None):
+        """Schedule a resync for a given network and reason. If no network is
+        specified, resync all networks.
+        """
+        self.needs_resync_reasons[network].append(reason)
 
     @utils.synchronized('dhcp-agent')
-    def sync_state(self):
-        """Sync the local DHCP state with Neutron."""
+    def sync_state(self, networks=None):
+        """Sync the local DHCP state with Neutron. If no networks are passed,
+        or 'None' is one of the networks, sync all of the networks.
+        """
+        only_nets = set([] if (not networks or None in networks) else networks)
         LOG.info(_('Synchronizing state'))
         pool = eventlet.GreenPool(cfg.CONF.num_sync_threads)
         known_network_ids = set(self.cache.get_network_ids())
@@ -163,12 +169,15 @@ class DhcpAgent(manager.Manager):
                 try:
                     self.disable_dhcp_helper(deleted_id)
                 except Exception as e:
-                    self.schedule_resync(e)
+                    self.schedule_resync(e, deleted_id)
                     LOG.exception(_('Unable to sync network state on deleted '
                                     'network %s'), deleted_id)
 
             for network in active_networks:
-                pool.spawn(self.safe_configure_dhcp_for_network, network)
+                if (not only_nets or  # specifically resync all
+                        network.id not in known_network_ids or  # missing net
+                        network.id in only_nets):  # specific network to sync
+                    pool.spawn(self.safe_configure_dhcp_for_network, network)
             pool.waitall()
             LOG.info(_('Synchronizing state complete'))
 
@@ -185,11 +194,13 @@ class DhcpAgent(manager.Manager):
                 # be careful to avoid a race with additions to list
                 # from other threads
                 reasons = self.needs_resync_reasons
-                self.needs_resync_reasons = []
-                for r in reasons:
-                    LOG.debug(_("resync: %(reason)s"),
-                              {"reason": r})
-                self.sync_state()
+                self.needs_resync_reasons = collections.defaultdict(list)
+                for net, r in reasons.items():
+                    if not net:
+                        net = "*"
+                    LOG.debug(_("resync (%(network)s): %(reason)s"),
+                              {"reason": r, "network": net})
+                self.sync_state(reasons.keys())
 
     def periodic_resync(self):
         """Spawn a thread to periodically resync the dhcp state."""
@@ -202,7 +213,7 @@ class DhcpAgent(manager.Manager):
                 LOG.warn(_('Network %s has been deleted.'), network_id)
             return network
         except Exception as e:
-            self.schedule_resync(e)
+            self.schedule_resync(e, network_id)
             LOG.exception(_('Network %s info call failed.'), network_id)
 
     def enable_dhcp_helper(self, network_id):
