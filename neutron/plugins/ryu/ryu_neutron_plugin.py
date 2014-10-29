@@ -21,6 +21,7 @@ from ryu.app import rest_nw_id
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
@@ -142,7 +143,8 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.endpoints = [RyuRpcCallbacks(self.ofp_api_host),
                           securitygroups_rpc.SecurityGroupServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
-                          l3_rpc.L3RpcCallback()]
+                          l3_rpc.L3RpcCallback(),
+                          metadata_rpc.MetadataRpcCallback()]
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)
         self.conn.consume_in_threads()

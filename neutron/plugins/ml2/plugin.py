@@ -25,6 +25,7 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import dvr_rpc
+from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
@@ -146,7 +147,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                           securitygroups_rpc.SecurityGroupServerRpcCallback(),
                           dvr_rpc.DVRServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
-                          agents_db.AgentExtRpcCallback()]
+                          agents_db.AgentExtRpcCallback(),
+                          metadata_rpc.MetadataRpcCallback()]
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(self.topic, self.endpoints,

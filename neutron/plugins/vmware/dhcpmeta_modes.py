@@ -19,6 +19,7 @@ from oslo.config import cfg
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
+from neutron.api.rpc.handlers import metadata_rpc
 from neutron.common import constants as const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -73,7 +74,8 @@ class DhcpMetadataAccess(object):
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [dhcp_rpc.DhcpRpcCallback(),
-                          agents_db.AgentExtRpcCallback()]
+                          agents_db.AgentExtRpcCallback(),
+                          metadata_rpc.MetadataRpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             notifier or dhcp_rpc_agent_api.DhcpAgentNotifyAPI())

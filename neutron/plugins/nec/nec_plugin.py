@@ -17,6 +17,7 @@ from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
@@ -161,7 +162,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             dhcp_rpc.DhcpRpcCallback(),
             l3_rpc.L3RpcCallback(),
             self.callback_sg,
-            agents_db.AgentExtRpcCallback()]
+            agents_db.AgentExtRpcCallback(),
+            metadata_rpc.MetadataRpcCallback()]
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)
         # Consume from all consumers in threads
