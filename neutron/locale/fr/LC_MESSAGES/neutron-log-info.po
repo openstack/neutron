@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-27 06:05+0000\n"
-"PO-Revision-Date: 2014-10-26 19:50+0000\n"
+"POT-Creation-Date: 2014-10-29 06:06+0000\n"
+"PO-Revision-Date: 2014-10-28 14:52+0000\n"
 "Last-Translator: Maxime COQUEREL <max.coquerel@gmail.com>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
 "fr/)\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: neutron/policy.py:110
+#: neutron/policy.py:111
 #, python-format
 msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
@@ -76,7 +76,7 @@ msgstr ""
 #: neutron/agent/linux/ovs_lib.py:422
 #, python-format
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
-msgstr ""
+msgstr "Port %(port_id)s n'est pas présent dans le pont %(br_name)s"
 
 #: neutron/common/ipv6_utils.py:62
 msgid "IPv6 is not enabled on this system."
