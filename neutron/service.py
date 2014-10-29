@@ -129,7 +129,7 @@ class RpcWorker(object):
     def stop(self):
         for server in self._servers:
             if isinstance(server, rpc_server.MessageHandlingServer):
-                server.kill()
+                server.stop()
             self._servers = []
 
 
