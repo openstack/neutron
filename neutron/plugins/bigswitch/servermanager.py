@@ -383,7 +383,8 @@ class ServerPool(object):
         a given path.
         '''
         try:
-            cert = ssl.get_server_certificate((server, port))
+            cert = ssl.get_server_certificate((server, port),
+                                              ssl_version=ssl.PROTOCOL_TLSv1)
         except Exception as e:
             raise cfg.Error(_('Could not retrieve initial '
                               'certificate from controller %(server)s. '
