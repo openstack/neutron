@@ -148,7 +148,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                        direction, excluded):
         r_ips = self.get_metering_label_rules(context,
                                               filters={'metering_label_id':
-                                                       label_id,
+                                                       [label_id],
                                                        'direction':
                                                        [direction],
                                                        'excluded':

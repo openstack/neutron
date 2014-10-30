@@ -39,7 +39,7 @@ class MeteringLabelRuleNotFound(qexception.NotFound):
     message = _("Metering label rule %(rule_id)s does not exist")
 
 
-class MeteringLabelRuleOverlaps(qexception.NotFound):
+class MeteringLabelRuleOverlaps(qexception.Conflict):
     message = _("Metering label rule with remote_ip_prefix "
                 "%(remote_ip_prefix)s overlaps another")
 

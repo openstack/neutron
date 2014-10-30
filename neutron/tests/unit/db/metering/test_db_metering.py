@@ -267,6 +267,29 @@ class TestMetering(MeteringPluginDbTestCase):
                 self._test_list_resources('metering-label-rule',
                                           metering_label_rule)
 
+    def test_create_overlap_metering_label_rules(self):
+        name = 'my label'
+        description = 'my metering label'
+
+        with self.metering_label(name, description) as metering_label:
+            metering_label_id = metering_label['metering_label']['id']
+
+            direction = 'egress'
+            remote_ip_prefix1 = '192.168.0.0/24'
+            remote_ip_prefix2 = '192.168.0.0/16'
+            excluded = True
+
+            with self.metering_label_rule(metering_label_id,
+                                          direction,
+                                          remote_ip_prefix1,
+                                          excluded):
+                res = self._create_metering_label_rule(self.fmt,
+                                                       metering_label_id,
+                                                       direction,
+                                                       remote_ip_prefix2,
+                                                       excluded)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
     def test_create_metering_label_rule_two_labels(self):
         name1 = 'my label 1'
         name2 = 'my label 2'
