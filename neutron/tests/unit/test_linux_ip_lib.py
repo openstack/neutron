@@ -766,8 +766,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
             execute.assert_called_once_with(['ip', 'netns', 'exec', 'ns', 'ip',
                                              'link', 'list'],
                                             root_helper='sudo',
-                                            check_exit_code=True,
-                                            extra_ok_codes=None)
+                                            check_exit_code=True)
 
     def test_execute_env_var_prepend(self):
         self.parent.namespace = 'ns'
@@ -777,8 +776,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
             execute.assert_called_once_with(
                 ['ip', 'netns', 'exec', 'ns', 'env', 'FOO=1', 'BAR=2',
                  'ip', 'link', 'list'],
-                root_helper='sudo', check_exit_code=True,
-                extra_ok_codes=None)
+                root_helper='sudo', check_exit_code=True)
 
 
 class TestDeviceExists(base.BaseTestCase):

@@ -46,8 +46,7 @@ class TestProcessManager(base.BaseTestCase):
                 name.assert_called_once_with(ensure_pids_dir=True)
                 self.execute.assert_called_once_with(['the', 'cmd'],
                                                      root_helper='sudo',
-                                                     check_exit_code=True,
-                                                     extra_ok_codes=None)
+                                                     check_exit_code=True)
 
     def test_enable_with_namespace(self):
         callback = mock.Mock()
