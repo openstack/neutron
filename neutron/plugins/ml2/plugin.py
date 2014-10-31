@@ -1176,12 +1176,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port_host = db.get_port_binding_host(port_id)
             return (port_host == host)
 
-    def get_port_from_device(self, device):
-        port_id = self._device_to_port_id(device)
-        port = db.get_port_and_sgs(port_id)
-        if port:
-            port['device'] = device
-        return port
+    def get_ports_from_devices(self, devices):
+        port_ids_to_devices = dict((self._device_to_port_id(device), device)
+                                   for device in devices)
+        port_ids = port_ids_to_devices.keys()
+        ports = db.get_ports_and_sgs(port_ids)
+        for port in ports:
+            # map back to original requested id
+            port_id = next((port_id for port_id in port_ids
+                           if port['id'].startswith(port_id)), None)
+            port['device'] = port_ids_to_devices.get(port_id)
+
+        return ports
 
     def _device_to_port_id(self, device):
         # REVISIT(rkukura): Consider calling into MechanismDrivers to
