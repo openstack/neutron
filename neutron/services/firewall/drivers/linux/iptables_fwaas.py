@@ -227,9 +227,9 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
 
     def _remove_chain_by_name(self, ver, chain_name, ipt_mgr):
         if ver == IPV4:
-            ipt_mgr.ipv4['filter'].ensure_remove_chain(chain_name)
+            ipt_mgr.ipv4['filter'].remove_chain(chain_name)
         else:
-            ipt_mgr.ipv6['filter'].ensure_remove_chain(chain_name)
+            ipt_mgr.ipv6['filter'].remove_chain(chain_name)
 
     def _add_rules_to_chain(self, ipt_mgr, ver, chain_name, rules):
         if ver == IPV4:
