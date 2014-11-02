@@ -224,7 +224,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                  'shared': False,
                  'admin_state_up': True,
                  'status': constants.NET_STATUS_ACTIVE}}
-        network = self._core_plugin.create_network(context, args)
+        network = self._core_plugin.create_network(admin_ctx, args)
         try:
             ha_network = self._create_ha_network_tenant_binding(admin_ctx,
                                                                 tenant_id,
