@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev166.gf1384cc\n"
+"Project-Id-Version: neutron 2015.1.dev238.gd810707\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-22 06:20+0000\n"
+"POT-Creation-Date: 2014-11-02 06:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,19 +17,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: neutron/policy.py:119
+#: neutron/policy.py:120
 #, python-format
 msgid ""
 "Backward compatibility unavailable for deprecated policy %s. The policy "
 "will not be enforced"
 msgstr ""
 
-#: neutron/policy.py:311
+#: neutron/policy.py:312
 #, python-format
 msgid "Policy check error while calling %s!"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1852
+#: neutron/agent/l3_agent.py:1849
 #, python-format
 msgid "Removing incompatible router '%s'"
 msgstr ""
@@ -65,10 +65,20 @@ msgstr ""
 msgid "Failed deleting egress connection state of floatingip %s"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:58
+#: neutron/agent/linux/ip_link_support.py:107
+msgid "Failed executing ip command"
+msgstr ""
+
+#: neutron/cmd/sanity_check.py:60
 msgid ""
 "Nova notifications are enabled, but novaclient is not installed. Either "
 "disable nova notifications or install python-novaclient."
+msgstr ""
+
+#: neutron/cmd/sanity_check.py:80
+msgid ""
+"Check for VF management support failed. Please ensure that the version of"
+" ip link being used has VF support."
 msgstr ""
 
 #: neutron/db/l3_agentschedulers_db.py:141
@@ -231,7 +241,7 @@ msgstr ""
 msgid "Error while processing VIF ports"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2098
+#: neutron/plugins/vmware/plugins/base.py:2106
 #, python-format
 msgid ""
 "Rolling back database changes for gateway device %s because of an error "

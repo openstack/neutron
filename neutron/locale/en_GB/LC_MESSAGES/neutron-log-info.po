@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-22 06:19+0000\n"
-"PO-Revision-Date: 2014-10-21 10:51+0000\n"
+"POT-Creation-Date: 2014-11-02 06:04+0000\n"
+"PO-Revision-Date: 2014-10-29 20:02+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: English (United Kingdom) (http://www.transifex.com/projects/p/"
 "neutron/language/en_GB/)\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: neutron/policy.py:110
+#: neutron/policy.py:111
 #, python-format
 msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
@@ -184,6 +184,12 @@ msgstr "Wait called after thread killed.  Cleaning up."
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "Waiting on %d children to exit"
+
+#: neutron/plugins/ml2/plugin.py:953 neutron/plugins/ml2/plugin.py:1089
+#, python-format
+msgid ""
+"Binding info for port %s was not found, it might have been deleted already."
+msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_tunnel.py:79
 #, python-format

@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-10-29 06:06+0000\n"
-"PO-Revision-Date: 2014-10-28 14:52+0000\n"
-"Last-Translator: Maxime COQUEREL <max.coquerel@gmail.com>\n"
+"POT-Creation-Date: 2014-11-02 06:04+0000\n"
+"PO-Revision-Date: 2014-10-29 20:02+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -183,6 +183,12 @@ msgstr "Pause demandée après suppression de thread. Nettoyage."
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "En attente %d enfants pour sortie"
+
+#: neutron/plugins/ml2/plugin.py:953 neutron/plugins/ml2/plugin.py:1089
+#, python-format
+msgid ""
+"Binding info for port %s was not found, it might have been deleted already."
+msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_tunnel.py:79
 #, python-format
