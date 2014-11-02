@@ -218,10 +218,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                         ctx.reraise = False
         key = collection_name[:-1] if len(to_be_synced) == 1 else (
             collection_name)
-
-        # 400 errors are returned if an object exists, which we ignore.
-        self.sendjson('post', collection_name, {key: to_be_synced},
-                      [requests.codes.bad_request])
+        self.sendjson('post', collection_name, {key: to_be_synced})
 
     @utils.synchronized('odl-sync-full')
     def sync_full(self, context):
@@ -276,9 +273,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                     attr_filter = self.update_object_map[object_type]
                 resource = context.current.copy()
                 attr_filter(resource, context)
-                # 400 errors are returned if an object exists, which we ignore.
-                self.sendjson(method, urlpath, {object_type[:-1]: resource},
-                              [requests.codes.bad_request])
+                self.sendjson(method, urlpath, {object_type[:-1]: resource})
         except Exception:
             with excutils.save_and_reraise_exception():
                 self.out_of_sync = True
@@ -291,7 +286,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                   for sg in port['security_groups']]
         port['security_groups'] = groups
 
-    def sendjson(self, method, urlpath, obj, ignorecodes=[]):
+    def sendjson(self, method, urlpath, obj):
         """Send json to the OpenDaylight controller."""
         headers = {'Content-Type': 'application/json'}
         data = jsonutils.dumps(obj, indent=2) if obj else None
@@ -301,10 +296,6 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         r = requests.request(method, url=url,
                              headers=headers, data=data,
                              auth=self.auth, timeout=self.timeout)
-
-        # ignorecodes contains a list of HTTP error codes to ignore.
-        if r.status_code in ignorecodes:
-            return
         r.raise_for_status()
 
     def bind_port(self, context):
