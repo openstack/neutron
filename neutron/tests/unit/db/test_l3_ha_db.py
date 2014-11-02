@@ -54,19 +54,25 @@ class L3HATestFramework(testlib_api.SqlTestCase,
         self.notif_m = notif_p.start()
         cfg.CONF.set_override('allow_overlapping_ips', True)
 
-    def _create_router(self, ha=True, tenant_id='tenant1', distributed=None):
+    def _create_router(self, ha=True, tenant_id='tenant1', distributed=None,
+                       ctx=None):
+        if ctx is None:
+            ctx = self.admin_ctx
+        ctx.tenant_id = tenant_id
         router = {'name': 'router1', 'admin_state_up': True}
         if ha is not None:
             router['ha'] = ha
         if distributed is not None:
             router['distributed'] = distributed
-        return self.plugin._create_router_db(self.admin_ctx, router, tenant_id)
+        return self.plugin._create_router_db(ctx, router, tenant_id)
 
-    def _update_router(self, router_id, ha=True, distributed=None):
+    def _update_router(self, router_id, ha=True, distributed=None, ctx=None):
+        if ctx is None:
+            ctx = self.admin_ctx
         data = {'ha': ha} if ha is not None else {}
         if distributed is not None:
             data['distributed'] = distributed
-        return self.plugin._update_router_db(self.admin_ctx, router_id,
+        return self.plugin._update_router_db(ctx, router_id,
                                              data, None)
 
 
@@ -388,3 +394,22 @@ class L3HATestCase(L3HATestFramework):
 
         routers_after = self.plugin.get_routers(self.admin_ctx)
         self.assertEqual(routers_before, routers_after)
+
+
+class L3HAUserTestCase(L3HATestFramework):
+
+    def setUp(self):
+        super(L3HAUserTestCase, self).setUp()
+        self.user_ctx = context.Context('', _uuid())
+        self.plugin = FakeL3Plugin()
+
+    def test_create_ha_router(self):
+        self._create_router(ctx=self.user_ctx)
+
+    def test_update_router(self):
+        router = self._create_router(ctx=self.user_ctx)
+        self._update_router(router['id'], ha=False, ctx=self.user_ctx)
+
+    def test_delete_router(self):
+        router = self._create_router(ctx=self.user_ctx)
+        self.plugin.delete_router(self.user_ctx, router['id'])
