@@ -27,7 +27,7 @@ LOG = log.getLogger(__name__)
 
 sriov_opts = [
     cfg.ListOpt('supported_pci_vendor_devs',
-               default=['15b3:1004', '8086:10c9'],
+               default=['15b3:1004', '8086:10ca'],
                help=_("Supported PCI vendor devices, defined by "
                       "vendor_id:product_id according to the PCI ID "
                       "Repository. Default enables support for Intel "
