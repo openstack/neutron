@@ -23,13 +23,12 @@ from neutron.tests.unit.nuage import test_netpartition
 from neutron.tests.unit.nuage import test_nuage_plugin
 from neutron.tests.unit import test_extension_extraroute as extraroute_test
 from neutron.tests.unit import test_extension_security_group as test_sg
-from neutron.tests.unit import test_l3_plugin
 
 _uuid = uuidutils.generate_uuid
 
 
 class TestL3Sync(test_nuage_plugin.NuagePluginV2TestCase,
-                 test_l3_plugin.L3NatDBIntTestCase):
+                 extraroute_test.ExtraRouteDBIntTestCase):
 
     def setUp(self):
         self.session = context.get_admin_context().session
@@ -153,15 +152,6 @@ class TestL3Sync(test_nuage_plugin.NuagePluginV2TestCase,
 
     def test_network_update_external_failure(self):
         self._test_network_update_external_failure()
-
-
-class TestExtraRouteSync(extraroute_test.ExtraRouteDBIntTestCase):
-
-    def setUp(self):
-        self.session = context.get_admin_context().session
-        self.syncmanager = sync.SyncManager(
-            test_nuage_plugin.getNuageClient())
-        super(TestExtraRouteSync, self).setUp()
 
     def test_route_sync(self):
         route = {'destination': '135.207.0.0/16', 'nexthop': '10.0.1.3'}

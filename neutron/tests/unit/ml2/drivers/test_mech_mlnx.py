@@ -62,11 +62,6 @@ class MlnxMechanismFlatTestCase(MlnxMechanismBaseTestCase,
     pass
 
 
-class MlnxMechanismVlanTestCase(MlnxMechanismBaseTestCase,
-                                base.AgentMechanismVlanTestCase):
-    pass
-
-
 class MlnxMechanismVnicTypeTestCase(MlnxMechanismBaseTestCase,
                                     base.AgentMechanismVlanTestCase):
     def _check_vif_type_for_vnic_type(self, vnic_type,

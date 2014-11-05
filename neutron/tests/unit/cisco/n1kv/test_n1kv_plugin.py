@@ -237,20 +237,6 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Restore the original RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
-    def test_plugin(self):
-        self._make_network('json',
-                           'some_net',
-                           True,
-                           tenant_id=self.tenant_id,
-                           set_context=True)
-
-        req = self.new_list_request('networks', params="fields=tenant_id")
-        req.environ['neutron.context'] = context.Context('', self.tenant_id)
-        res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 200)
-        body = self.deserialize('json', res)
-        self.assertIn('tenant_id', body['networks'][0])
-
 
 class TestN1kvNetworkProfiles(N1kvPluginTestCase):
     def _prepare_net_profile_data(self,
@@ -958,6 +944,20 @@ class TestN1kvPolicyProfiles(N1kvPluginTestCase):
 
 class TestN1kvNetworks(test_plugin.TestNetworksV2,
                        N1kvPluginTestCase):
+
+    def test_plugin(self):
+        self._make_network('json',
+                           'some_net',
+                           True,
+                           tenant_id=self.tenant_id,
+                           set_context=True)
+
+        req = self.new_list_request('networks', params="fields=tenant_id")
+        req.environ['neutron.context'] = context.Context('', self.tenant_id)
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 200)
+        body = self.deserialize('json', res)
+        self.assertIn('tenant_id', body['networks'][0])
 
     def _prepare_net_data(self, net_profile_id):
         return {'network': {'name': 'net1',

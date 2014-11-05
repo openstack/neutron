@@ -46,29 +46,12 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
         super(OpenDaylightTestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
-        self.segment = {'api.NETWORK_TYPE': ""}
         self.mech = mechanism_odl.OpenDaylightMechanismDriver()
         mechanism_odl.OpenDaylightMechanismDriver.sendjson = (
             self.check_sendjson)
 
     def check_sendjson(self, method, urlpath, obj, ignorecodes=[]):
         self.assertFalse(urlpath.startswith("http://"))
-
-    def test_check_segment(self):
-        """Validate the check_segment call."""
-        self.segment[api.NETWORK_TYPE] = constants.TYPE_LOCAL
-        self.assertTrue(self.mech.check_segment(self.segment))
-        self.segment[api.NETWORK_TYPE] = constants.TYPE_FLAT
-        self.assertFalse(self.mech.check_segment(self.segment))
-        self.segment[api.NETWORK_TYPE] = constants.TYPE_VLAN
-        self.assertTrue(self.mech.check_segment(self.segment))
-        self.segment[api.NETWORK_TYPE] = constants.TYPE_GRE
-        self.assertTrue(self.mech.check_segment(self.segment))
-        self.segment[api.NETWORK_TYPE] = constants.TYPE_VXLAN
-        self.assertTrue(self.mech.check_segment(self.segment))
-        # Validate a network type not currently supported
-        self.segment[api.NETWORK_TYPE] = 'mpls'
-        self.assertFalse(self.mech.check_segment(self.segment))
 
 
 class OpenDayLightMechanismConfigTests(testlib_api.SqlTestCase):
@@ -373,3 +356,20 @@ class OpenDaylightMechanismDriverTestCase(base.BaseTestCase):
                             requests.codes.not_implemented):
             self._test_delete_resource_postcommit(
                 'port', status_code, requests.exceptions.HTTPError)
+
+    def test_check_segment(self):
+        """Validate the check_segment call."""
+        segment = {'api.NETWORK_TYPE': ""}
+        segment[api.NETWORK_TYPE] = constants.TYPE_LOCAL
+        self.assertTrue(self.mech.check_segment(segment))
+        segment[api.NETWORK_TYPE] = constants.TYPE_FLAT
+        self.assertFalse(self.mech.check_segment(segment))
+        segment[api.NETWORK_TYPE] = constants.TYPE_VLAN
+        self.assertTrue(self.mech.check_segment(segment))
+        segment[api.NETWORK_TYPE] = constants.TYPE_GRE
+        self.assertTrue(self.mech.check_segment(segment))
+        segment[api.NETWORK_TYPE] = constants.TYPE_VXLAN
+        self.assertTrue(self.mech.check_segment(segment))
+        # Validate a network type not currently supported
+        segment[api.NETWORK_TYPE] = 'mpls'
+        self.assertFalse(self.mech.check_segment(segment))
