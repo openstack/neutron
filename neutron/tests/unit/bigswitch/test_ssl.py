@@ -13,6 +13,7 @@
 #    under the License.
 import contextlib
 import os
+import ssl
 
 import mock
 from oslo.config import cfg
@@ -106,7 +107,8 @@ class TestSslSticky(test_ssl_certificate_base):
             self.getcacerts_m.assert_has_calls([mock.call(self.ca_certs_path)])
             # cert should have been fetched via SSL lib
             self.sslgetcert_m.assert_has_calls(
-                [mock.call((self.servername, 443))]
+                [mock.call((self.servername, 443),
+                           ssl_version=ssl.PROTOCOL_TLSv1)]
             )
 
             # cert should have been recorded
