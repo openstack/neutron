@@ -18,7 +18,6 @@ from oslo import messaging
 
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron.common import utils as n_utils
 from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LW, _LI
@@ -151,7 +150,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
     def get_dvr_mac_address(self):
         try:
             self.get_dvr_mac_address_with_retry()
-        except n_rpc.RemoteError as e:
+        except messaging.RemoteError as e:
             LOG.warning(_LW('L2 agent could not get DVR MAC address at '
                             'startup due to RPC error.  It happens when the '
                             'server does not support this RPC API.  Detailed '
