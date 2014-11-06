@@ -16,6 +16,8 @@ import collections
 import eventlet
 import netaddr
 
+from oslo import messaging
+
 from neutron.common import constants as l3_constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -284,7 +286,7 @@ class RoutingServiceHelper():
             if device_ids:
                 return self.plugin_rpc.get_routers(self.context,
                                                    hd_ids=device_ids)
-        except n_rpc.RPCException:
+        except messaging.MessagingException:
             LOG.exception(_("RPC Error in fetching routers from plugin"))
             self.fullsync = True
 

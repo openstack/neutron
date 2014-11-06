@@ -24,6 +24,7 @@ eventlet.monkey_patch()
 import httplib2
 from neutronclient.v2_0 import client
 from oslo.config import cfg
+from oslo import messaging
 import six.moves.urllib.parse as urlparse
 import webob
 
@@ -167,7 +168,7 @@ class MetadataProxyHandler(object):
         if self.use_rpc:
             try:
                 return self.plugin_rpc.get_ports(self.context, filters)
-            except (n_rpc.RPCException, AttributeError):
+            except (messaging.MessagingException, AttributeError):
                 # TODO(obondarev): remove fallback once RPC is proven
                 # to work fine with metadata agent (K or L release at most)
                 LOG.warning(_LW('Server does not support metadata RPC, '
