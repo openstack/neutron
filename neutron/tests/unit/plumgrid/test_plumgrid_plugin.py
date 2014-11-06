@@ -81,6 +81,7 @@ class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
     _unsupported = (
         'test_create_subnet_default_gw_conflict_allocation_pool_returns_409',
         'test_create_subnet_defaults', 'test_create_subnet_gw_values',
+        'test_create_subnet_ipv6_gw_values',
         'test_update_subnet_gateway_in_allocation_pool_returns_409',
         'test_update_subnet_allocation_pools',
         'test_update_subnet_allocation_pools_invalid_pool_for_cidr')

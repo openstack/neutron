@@ -1419,6 +1419,22 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(res.status_int,
                              webob.exc.HTTPClientError.code)
 
+    def test_requested_fixed_ip_address_v6_slaac_router_iface(self):
+        with self.subnet(gateway_ip='fe80::1',
+                         cidr='fe80::/64',
+                         ip_version=6,
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': 'fe80::1'}]}
+            net_id = subnet['subnet']['network_id']
+            device_owner = constants.DEVICE_OWNER_ROUTER_INTF
+            res = self._create_port(self.fmt, net_id=net_id,
+                                    device_owner=device_owner, **kwargs)
+            port = self.deserialize(self.fmt, res)
+            self.assertEqual(len(port['port']['fixed_ips']), 1)
+            self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
+                             'fe80::1')
+
     def test_requested_subnet_id_v6_slaac(self):
         with self.subnet(gateway_ip='fe80::1',
                          cidr='2607:f0d0:1002:51::/64',
@@ -2829,6 +2845,38 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'allocation_pools': allocation_pools}
         self._test_create_subnet(expected=expected,
                                  gateway_ip=gateway)
+
+    def test_create_subnet_ipv6_gw_values(self):
+        cidr = '2001::/64'
+        # Gateway is last IP in IPv6 DHCPv6 stateful subnet
+        gateway = '2001::ffff:ffff:ffff:fffe'
+        allocation_pools = [{'start': '2001::1',
+                             'end': '2001::ffff:ffff:ffff:fffd'}]
+        expected = {'gateway_ip': gateway,
+                    'cidr': cidr,
+                    'allocation_pools': allocation_pools}
+        self._test_create_subnet(expected=expected, gateway_ip=gateway,
+                                 cidr=cidr, ip_version=6,
+                                 ipv6_ra_mode=constants.DHCPV6_STATEFUL,
+                                 ipv6_address_mode=constants.DHCPV6_STATEFUL)
+        # Gateway is first IP in IPv6 DHCPv6 stateful subnet
+        gateway = '2001::1'
+        allocation_pools = [{'start': '2001::2',
+                             'end': '2001::ffff:ffff:ffff:fffe'}]
+        expected = {'gateway_ip': gateway,
+                    'cidr': cidr,
+                    'allocation_pools': allocation_pools}
+        self._test_create_subnet(expected=expected, gateway_ip=gateway,
+                                 cidr=cidr, ip_version=6,
+                                 ipv6_ra_mode=constants.DHCPV6_STATEFUL,
+                                 ipv6_address_mode=constants.DHCPV6_STATEFUL)
+        # Gateway not specified for IPv6 SLAAC subnet
+        expected = {'gateway_ip': None,
+                    'cidr': cidr}
+        self._test_create_subnet(expected=expected,
+                                 cidr=cidr, ip_version=6,
+                                 ipv6_ra_mode=constants.IPV6_SLAAC,
+                                 ipv6_address_mode=constants.IPV6_SLAAC)
 
     def test_create_subnet_gw_outside_cidr_returns_400(self):
         with self.network() as network:
