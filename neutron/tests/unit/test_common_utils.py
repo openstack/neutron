@@ -161,6 +161,22 @@ class UtilTestParseVlanRanges(base.BaseTestCase):
         return self._err_prefix + v_range_str + self._err_range
 
 
+class TestVlanNetworkNameValid(base.BaseTestCase):
+    def parse_vlan_ranges(self, vlan_range):
+        return plugin_utils.parse_network_vlan_ranges(vlan_range)
+
+    def test_validate_provider_phynet_name_mixed(self):
+        self.assertRaises(n_exc.PhysicalNetworkNameError,
+                          self.parse_vlan_ranges,
+                          ['', ':23:30', 'physnet1',
+                           'tenant_net:100:200'])
+
+    def test_validate_provider_phynet_name_bad(self):
+        self.assertRaises(n_exc.PhysicalNetworkNameError,
+                          self.parse_vlan_ranges,
+                          [':1:34'])
+
+
 class TestVlanRangeVerifyValid(UtilTestParseVlanRanges):
     def verify_range(self, vlan_range):
         return plugin_utils.verify_vlan_range(vlan_range)

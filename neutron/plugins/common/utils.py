@@ -61,6 +61,8 @@ def parse_network_vlan_range(network_vlan_range):
             vlan_range = (int(vlan_min), int(vlan_max))
         except ValueError as ex:
             raise n_exc.NetworkVlanRangeError(vlan_range=entry, error=ex)
+        if not network:
+            raise n_exc.PhysicalNetworkNameError()
         verify_vlan_range(vlan_range)
         return network, vlan_range
     else:

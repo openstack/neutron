@@ -87,8 +87,6 @@ class VlanTypeDriver(helpers.TypeDriverHelper):
         try:
             self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
                 cfg.CONF.ml2_type_vlan.network_vlan_ranges)
-            # TODO(rkukura): Validate that each physical_network name
-            # is neither empty nor too long.
         except Exception:
             LOG.exception(_("Failed to parse network_vlan_ranges. "
                             "Service terminated!"))
