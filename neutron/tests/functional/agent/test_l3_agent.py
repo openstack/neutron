@@ -55,9 +55,8 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         br_ex = self.create_ovs_bridge()
         cfg.CONF.set_override('external_network_bridge', br_ex.br_name)
 
-        mock.patch('neutron.common.rpc.RpcProxy.cast').start()
-        mock.patch('neutron.common.rpc.RpcProxy.call').start()
-        mock.patch('neutron.common.rpc.RpcProxy.fanout_cast').start()
+        mock.patch('neutron.agent.l3_agent.L3PluginApi').start()
+
         self.agent = l3_agent.L3NATAgent('localhost', cfg.CONF)
 
         mock.patch.object(self.agent, '_send_gratuitous_arp_packet').start()
