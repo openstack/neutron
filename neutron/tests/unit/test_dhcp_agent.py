@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import copy
 import sys
 import uuid
@@ -30,6 +31,7 @@ from neutron.agent.linux import interface
 from neutron.common import config as common_config
 from neutron.common import constants as const
 from neutron.common import exceptions
+from neutron import context
 from neutron.tests import base
 
 
@@ -929,101 +931,57 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
 
 class TestDhcpPluginApiProxy(base.BaseTestCase):
-    def setUp(self):
-        super(TestDhcpPluginApiProxy, self).setUp()
-        self.proxy = dhcp_agent.DhcpPluginApi('foo', {}, None)
-        self.proxy.host = 'foo'
+    def _test_dhcp_api(self, method, **kwargs):
+        ctxt = context.get_admin_context()
+        proxy = dhcp_agent.DhcpPluginApi('foo', ctxt, None)
+        proxy.host = 'foo'
 
-        self.call_p = mock.patch.object(self.proxy, 'call')
-        self.call = self.call_p.start()
-        self.make_msg_p = mock.patch.object(self.proxy, 'make_msg')
-        self.make_msg = self.make_msg_p.start()
+        with contextlib.nested(
+            mock.patch.object(proxy.client, 'call'),
+            mock.patch.object(proxy.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = proxy.client
+            rpc_mock.return_value = kwargs.pop('return_value', [])
 
-    def test_get_network_info(self):
-        self.call.return_value = dict(a=1)
-        retval = self.proxy.get_network_info('netid')
-        self.assertEqual(retval.a, 1)
-        self.assertTrue(self.call.called)
-        self.make_msg.assert_called_once_with('get_network_info',
-                                              network_id='netid',
-                                              host='foo')
+            prepare_args = {}
+            if 'version' in kwargs:
+                prepare_args['version'] = kwargs.pop('version')
 
-    def test_get_dhcp_port(self):
-        self.call.return_value = dict(a=1)
-        retval = self.proxy.get_dhcp_port('netid', 'devid')
-        self.assertEqual(retval.a, 1)
-        self.assertTrue(self.call.called)
-        self.make_msg.assert_called_once_with('get_dhcp_port',
-                                              network_id='netid',
-                                              device_id='devid',
-                                              host='foo')
+            retval = getattr(proxy, method)(**kwargs)
+            self.assertEqual(retval, rpc_mock.return_value)
 
-    def test_get_dhcp_port_none(self):
-        self.call.return_value = None
-        self.assertIsNone(self.proxy.get_dhcp_port('netid', 'devid'))
+            prepare_mock.assert_called_once_with(**prepare_args)
+            kwargs['host'] = proxy.host
+            rpc_mock.assert_called_once_with(ctxt, method, **kwargs)
 
     def test_get_active_networks_info(self):
-        self.proxy.get_active_networks_info()
-        self.make_msg.assert_called_once_with('get_active_networks_info',
-                                              host='foo')
+        self._test_dhcp_api('get_active_networks_info')
+
+    def test_get_network_info(self):
+        self._test_dhcp_api('get_network_info', network_id='fake_id',
+                            return_value=None)
+
+    def test_get_dhcp_port(self):
+        self._test_dhcp_api('get_dhcp_port', network_id='fake_id',
+                            device_id='fake_id_2', return_value=None)
 
     def test_create_dhcp_port(self):
-        port_body = (
-            {'port':
-                {'name': '', 'admin_state_up': True,
-                 'network_id': fake_network.id,
-                 'tenant_id': fake_network.tenant_id,
-                 'fixed_ips': [{'subnet_id': fake_fixed_ip1.subnet_id}],
-                 'device_id': mock.ANY}})
-
-        self.proxy.create_dhcp_port(port_body)
-        self.make_msg.assert_called_once_with('create_dhcp_port',
-                                              port=port_body,
-                                              host='foo')
-
-    def test_create_dhcp_port_none(self):
-        self.call.return_value = None
-        port_body = (
-            {'port':
-                {'name': '', 'admin_state_up': True,
-                 'network_id': fake_network.id,
-                 'tenant_id': fake_network.tenant_id,
-                 'fixed_ips': [{'subnet_id': fake_fixed_ip1.subnet_id}],
-                 'device_id': mock.ANY}})
-        self.assertIsNone(self.proxy.create_dhcp_port(port_body))
-
-    def test_update_dhcp_port_none(self):
-        self.call.return_value = None
-        port_body = {'port': {'fixed_ips':
-                              [{'subnet_id': fake_fixed_ip1.subnet_id}]}}
-        self.assertIsNone(self.proxy.update_dhcp_port(fake_port1.id,
-                                                      port_body))
+        self._test_dhcp_api('create_dhcp_port', port='fake_port',
+                            return_value=None)
 
     def test_update_dhcp_port(self):
-        port_body = {'port': {'fixed_ips':
-                              [{'subnet_id': fake_fixed_ip1.subnet_id}]}}
-        self.proxy.update_dhcp_port(fake_port1.id, port_body)
-        self.make_msg.assert_called_once_with('update_dhcp_port',
-                                              port_id=fake_port1.id,
-                                              port=port_body,
-                                              host='foo')
+        self._test_dhcp_api('update_dhcp_port', port_id='fake_id',
+                            port='fake_port', return_value=None)
 
     def test_release_dhcp_port(self):
-        self.proxy.release_dhcp_port('netid', 'devid')
-        self.assertTrue(self.call.called)
-        self.make_msg.assert_called_once_with('release_dhcp_port',
-                                              network_id='netid',
-                                              device_id='devid',
-                                              host='foo')
+        self._test_dhcp_api('release_dhcp_port', network_id='fake_id',
+                            device_id='fake_id_2')
 
     def test_release_port_fixed_ip(self):
-        self.proxy.release_port_fixed_ip('netid', 'devid', 'subid')
-        self.assertTrue(self.call.called)
-        self.make_msg.assert_called_once_with('release_port_fixed_ip',
-                                              network_id='netid',
-                                              subnet_id='subid',
-                                              device_id='devid',
-                                              host='foo')
+        self._test_dhcp_api('release_port_fixed_ip', network_id='fake_id',
+                            device_id='fake_id_2', subnet_id='fake_id_3')
 
 
 class TestNetworkCache(base.BaseTestCase):

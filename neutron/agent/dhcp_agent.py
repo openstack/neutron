@@ -399,7 +399,7 @@ class DhcpAgent(manager.Manager):
         pm.disable()
 
 
-class DhcpPluginApi(n_rpc.RpcProxy):
+class DhcpPluginApi(object):
     """Agent side of the dhcp rpc API.
 
     API version history:
@@ -409,76 +409,66 @@ class DhcpPluginApi(n_rpc.RpcProxy):
 
     """
 
-    BASE_RPC_API_VERSION = '1.1'
-
     def __init__(self, topic, context, use_namespaces):
-        super(DhcpPluginApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self.context = context
         self.host = cfg.CONF.host
         self.use_namespaces = use_namespaces
+        target = messaging.Target(topic=topic, version='1.1')
+        self.client = n_rpc.get_client(target)
 
     def get_active_networks_info(self):
         """Make a remote process call to retrieve all network info."""
-        networks = self.call(self.context,
-                             self.make_msg('get_active_networks_info',
-                                           host=self.host))
+        cctxt = self.client.prepare()
+        networks = cctxt.call(self.context, 'get_active_networks_info',
+                              host=self.host)
         return [dhcp.NetModel(self.use_namespaces, n) for n in networks]
 
     def get_network_info(self, network_id):
         """Make a remote process call to retrieve network info."""
-        network = self.call(self.context,
-                            self.make_msg('get_network_info',
-                                          network_id=network_id,
-                                          host=self.host))
+        cctxt = self.client.prepare()
+        network = cctxt.call(self.context, 'get_network_info',
+                             network_id=network_id, host=self.host)
         if network:
             return dhcp.NetModel(self.use_namespaces, network)
 
     def get_dhcp_port(self, network_id, device_id):
         """Make a remote process call to get the dhcp port."""
-        port = self.call(self.context,
-                         self.make_msg('get_dhcp_port',
-                                       network_id=network_id,
-                                       device_id=device_id,
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        port = cctxt.call(self.context, 'get_dhcp_port',
+                          network_id=network_id, device_id=device_id,
+                          host=self.host)
         if port:
             return dhcp.DictModel(port)
 
     def create_dhcp_port(self, port):
         """Make a remote process call to create the dhcp port."""
-        port = self.call(self.context,
-                         self.make_msg('create_dhcp_port',
-                                       port=port,
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        port = cctxt.call(self.context, 'create_dhcp_port',
+                          port=port, host=self.host)
         if port:
             return dhcp.DictModel(port)
 
     def update_dhcp_port(self, port_id, port):
         """Make a remote process call to update the dhcp port."""
-        port = self.call(self.context,
-                         self.make_msg('update_dhcp_port',
-                                       port_id=port_id,
-                                       port=port,
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        port = cctxt.call(self.context, 'update_dhcp_port',
+                          port_id=port_id, port=port, host=self.host)
         if port:
             return dhcp.DictModel(port)
 
     def release_dhcp_port(self, network_id, device_id):
         """Make a remote process call to release the dhcp port."""
-        return self.call(self.context,
-                         self.make_msg('release_dhcp_port',
-                                       network_id=network_id,
-                                       device_id=device_id,
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        return cctxt.call(self.context, 'release_dhcp_port',
+                          network_id=network_id, device_id=device_id,
+                          host=self.host)
 
     def release_port_fixed_ip(self, network_id, device_id, subnet_id):
         """Make a remote process call to release a fixed_ip on the port."""
-        return self.call(self.context,
-                         self.make_msg('release_port_fixed_ip',
-                                       network_id=network_id,
-                                       subnet_id=subnet_id,
-                                       device_id=device_id,
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        return cctxt.call(self.context, 'release_port_fixed_ip',
+                          network_id=network_id, subnet_id=subnet_id,
+                          device_id=device_id, host=self.host)
 
 
 class NetworkCache(object):
