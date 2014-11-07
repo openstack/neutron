@@ -172,6 +172,6 @@ def main():
     # attach the Neutron conf to the Alembic conf
     config.neutron_config = CONF
 
-    CONF()
+    CONF(project='neutron')
     #TODO(gongysh) enable logging
     CONF.command.func(config, CONF.command.name)
