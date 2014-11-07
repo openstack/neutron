@@ -413,12 +413,12 @@ class DhcpPluginApi(object):
         self.context = context
         self.host = cfg.CONF.host
         self.use_namespaces = use_namespaces
-        target = messaging.Target(topic=topic, version='1.1')
+        target = messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def get_active_networks_info(self):
         """Make a remote process call to retrieve all network info."""
-        cctxt = self.client.prepare()
+        cctxt = self.client.prepare(version='1.1')
         networks = cctxt.call(self.context, 'get_active_networks_info',
                               host=self.host)
         return [dhcp.NetModel(self.use_namespaces, n) for n in networks]
@@ -442,7 +442,7 @@ class DhcpPluginApi(object):
 
     def create_dhcp_port(self, port):
         """Make a remote process call to create the dhcp port."""
-        cctxt = self.client.prepare()
+        cctxt = self.client.prepare(version='1.1')
         port = cctxt.call(self.context, 'create_dhcp_port',
                           port=port, host=self.host)
         if port:
@@ -450,7 +450,7 @@ class DhcpPluginApi(object):
 
     def update_dhcp_port(self, port_id, port):
         """Make a remote process call to update the dhcp port."""
-        cctxt = self.client.prepare()
+        cctxt = self.client.prepare(version='1.1')
         port = cctxt.call(self.context, 'update_dhcp_port',
                           port_id=port_id, port=port, host=self.host)
         if port:

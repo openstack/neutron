@@ -957,7 +957,7 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
             rpc_mock.assert_called_once_with(ctxt, method, **kwargs)
 
     def test_get_active_networks_info(self):
-        self._test_dhcp_api('get_active_networks_info')
+        self._test_dhcp_api('get_active_networks_info', version='1.1')
 
     def test_get_network_info(self):
         self._test_dhcp_api('get_network_info', network_id='fake_id',
@@ -969,11 +969,11 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
 
     def test_create_dhcp_port(self):
         self._test_dhcp_api('create_dhcp_port', port='fake_port',
-                            return_value=None)
+                            return_value=None, version='1.1')
 
     def test_update_dhcp_port(self):
         self._test_dhcp_api('update_dhcp_port', port_id='fake_id',
-                            port='fake_port', return_value=None)
+                            port='fake_port', return_value=None, version='1.1')
 
     def test_release_dhcp_port(self):
         self._test_dhcp_api('release_dhcp_port', network_id='fake_id',
