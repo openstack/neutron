@@ -46,23 +46,20 @@ from neutron import wsgi
 LOG = logging.getLogger(__name__)
 
 
-class MetadataPluginAPI(n_rpc.RpcProxy):
+class MetadataPluginAPI(object):
     """Agent-side RPC (stub) for agent-to-plugin interaction.
 
     API version history:
         1.0 - Initial version.
     """
 
-    BASE_RPC_API_VERSION = '1.0'
-
     def __init__(self, topic):
-        super(MetadataPluginAPI, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def get_ports(self, context, filters):
-        return self.call(context,
-                         self.make_msg('get_ports',
-                                       filters=filters))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'get_ports', filters=filters)
 
 
 class MetadataProxyHandler(object):
