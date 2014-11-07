@@ -14,9 +14,14 @@
 #    under the License.
 
 
+from oslo import messaging
+
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as n_const
+from neutron.common import rpc as n_rpc
 from neutron.common import utils as n_utils
+from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LW, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.openvswitch.common import constants
 
@@ -118,50 +123,81 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
                  enable_distributed_routing=False):
         self.context = context
         self.plugin_rpc = plugin_rpc
-        self.int_br = integ_br
-        self.tun_br = tun_br
-        self.patch_int_ofport = patch_int_ofport
-        self.patch_tun_ofport = patch_tun_ofport
         self.host = host
         self.enable_tunneling = enable_tunneling
         self.enable_distributed_routing = enable_distributed_routing
+        self.reset_ovs_parameters(integ_br, tun_br,
+                                  patch_int_ofport, patch_tun_ofport)
+        self.reset_dvr_parameters()
+        self.dvr_mac_address = None
+        if self.enable_tunneling and self.enable_distributed_routing:
+            self.get_dvr_mac_address()
 
     def reset_ovs_parameters(self, integ_br, tun_br,
                              patch_int_ofport, patch_tun_ofport):
         '''Reset the openvswitch parameters'''
-        if not (self.enable_tunneling and self.enable_distributed_routing):
-            return
         self.int_br = integ_br
         self.tun_br = tun_br
         self.patch_int_ofport = patch_int_ofport
         self.patch_tun_ofport = patch_tun_ofport
+
+    def reset_dvr_parameters(self):
+        '''Reset the DVR parameters'''
+        self.local_dvr_map = {}
+        self.local_csnat_map = {}
+        self.local_ports = {}
+        self.registered_dvr_macs = set()
+
+    def get_dvr_mac_address(self):
+        try:
+            self.get_dvr_mac_address_with_retry()
+        except n_rpc.RemoteError as e:
+            LOG.warning(_LW('L2 agent could not get DVR MAC address at '
+                            'startup due to RPC error.  It happens when the '
+                            'server does not support this RPC API.  Detailed '
+                            'message: %s'), e)
+        except messaging.MessagingTimeout:
+            LOG.error(_LE('DVR: Failed to obtain a valid local '
+                          'DVR MAC address - L2 Agent operating '
+                          'in Non-DVR Mode'))
+
+        if not self.in_distributed_mode():
+            # switch all traffic using L2 learning
+            self.int_br.add_flow(table=constants.LOCAL_SWITCHING,
+                                 priority=1, actions="normal")
+
+    def get_dvr_mac_address_with_retry(self):
+        # Get the local DVR MAC Address from the Neutron Server.
+        # This is the first place where we contact the server on startup
+        # so retry in case it's not ready to respond
+        for retry_count in reversed(range(5)):
+            try:
+                details = self.plugin_rpc.get_dvr_mac_address_by_host(
+                    self.context, self.host)
+            except messaging.MessagingTimeout as e:
+                with excutils.save_and_reraise_exception() as ctx:
+                    if retry_count > 0:
+                        ctx.reraise = False
+                        LOG.warning(_LW('L2 agent could not get DVR MAC '
+                                        'address from server. Retrying. '
+                                        'Detailed message: %s'), e)
+            else:
+                LOG.debug("L2 Agent DVR: Received response for "
+                          "get_dvr_mac_address_by_host() from "
+                          "plugin: %r", details)
+                self.dvr_mac_address = details['mac_address']
+                return
 
     def setup_dvr_flows_on_integ_tun_br(self):
         '''Setup up initial dvr flows into br-int and br-tun'''
         if not (self.enable_tunneling and self.enable_distributed_routing):
             return
-        LOG.debug("L2 Agent operating in DVR Mode")
-        self.dvr_mac_address = None
-        self.local_dvr_map = {}
-        self.local_csnat_map = {}
-        self.local_ports = {}
-        self.registered_dvr_macs = set()
-        # get the local DVR MAC Address
-        try:
-            details = self.plugin_rpc.get_dvr_mac_address_by_host(
-                self.context, self.host)
-            LOG.debug("L2 Agent DVR: Received response for "
-                      "get_dvr_mac_address_by_host() from "
-                      "plugin: %r", details)
-            self.dvr_mac_address = details['mac_address']
-        except Exception:
-            LOG.error(_("DVR: Failed to obtain local DVR Mac address"))
-            self.enable_distributed_routing = False
-            # switch all traffic using L2 learning
-            self.int_br.add_flow(table=constants.LOCAL_SWITCHING,
-                                 priority=1, actions="normal")
+
+        if not self.in_distributed_mode():
             return
 
+        LOG.info(_LI("L2 Agent operating in DVR Mode with MAC %s"),
+                 self.dvr_mac_address)
         # Remove existing flows in integration bridge
         self.int_br.remove_all_flows()
 
@@ -218,11 +254,6 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
                              constants.PATCH_LV_TO_TUN)
 
     def dvr_mac_address_update(self, dvr_macs):
-        if not (self.enable_tunneling and self.enable_distributed_routing):
-            return
-
-        LOG.debug("DVR Mac address update with host-mac: %s", dvr_macs)
-
         if not self.dvr_mac_address:
             LOG.debug("Self mac unknown, ignoring this "
                       "dvr_mac_address_update() ")
@@ -264,18 +295,26 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
             LOG.debug("Added DVR MAC flow for %s", newmac)
             self.registered_dvr_macs.add(newmac)
 
+    def in_distributed_mode(self):
+        return self.dvr_mac_address is not None
+
     def is_dvr_router_interface(self, device_owner):
         return device_owner == n_const.DEVICE_OWNER_DVR_INTERFACE
 
     def process_tunneled_network(self, network_type, lvid, segmentation_id):
         if not (self.enable_tunneling and self.enable_distributed_routing):
             return
+
+        if self.in_distributed_mode():
+            table_id = constants.DVR_NOT_LEARN
+        else:
+            table_id = constants.LEARN_FROM_TUN
         self.tun_br.add_flow(table=constants.TUN_TABLE[network_type],
                              priority=1,
                              tun_id=segmentation_id,
                              actions="mod_vlan_vid:%s,"
                              "resubmit(,%s)" %
-                             (lvid, constants.DVR_NOT_LEARN))
+                             (lvid, table_id))
 
     def _bind_distributed_router_interface_port(self, port, fixed_ips,
                                                 device_owner, local_vlan):
@@ -505,8 +544,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
 
     def bind_port_to_dvr(self, port, network_type, fixed_ips,
                          device_owner, local_vlan_id):
-        # a port coming up as distributed router interface
-        if not (self.enable_tunneling and self.enable_distributed_routing):
+        if not self.in_distributed_mode():
             return
 
         if network_type not in constants.TUNNEL_NETWORK_TYPES:
@@ -696,7 +734,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
         self.local_ports.pop(port.vif_id, None)
 
     def unbind_port_from_dvr(self, vif_port, local_vlan_id):
-        if not (self.enable_tunneling and self.enable_distributed_routing):
+        if not self.in_distributed_mode():
             return
         # Handle port removed use-case
         if vif_port and vif_port.vif_id not in self.local_ports:
