@@ -27,6 +27,7 @@ import fixtures
 import mock
 from oslo.config import cfg
 from oslo.messaging import conffixture as messaging_conffixture
+from oslo.utils import strutils
 import testtools
 
 from neutron.common import config
@@ -37,7 +38,6 @@ from neutron.tests import post_mortem_debug
 
 CONF = cfg.CONF
 CONF.import_opt('state_path', 'neutron.common.config')
-TRUE_STRING = ['True', '1']
 LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
 ROOTDIR = os.path.dirname(__file__)
@@ -54,6 +54,11 @@ def fake_use_fatal_exceptions(*args):
 
 def fake_consume_in_threads(self):
     return []
+
+
+def bool_from_env(key, strict=False, default=False):
+    value = os.environ.get(key)
+    return strutils.bool_from_string(value, strict=strict, default=default)
 
 
 class BaseTestCase(testtools.TestCase):
@@ -78,11 +83,11 @@ class BaseTestCase(testtools.TestCase):
             self.addOnException(post_mortem_debug.get_exception_handler(
                 debugger))
 
-        if os.environ.get('OS_DEBUG') in TRUE_STRING:
+        if bool_from_env('OS_DEBUG'):
             _level = std_logging.DEBUG
         else:
             _level = std_logging.INFO
-        capture_logs = os.environ.get('OS_LOG_CAPTURE') in TRUE_STRING
+        capture_logs = bool_from_env('OS_LOG_CAPTURE')
         if not capture_logs:
             std_logging.basicConfig(format=LOG_FORMAT, level=_level)
         self.log_fixture = self.useFixture(
@@ -117,10 +122,10 @@ class BaseTestCase(testtools.TestCase):
         self.addCleanup(mock.patch.stopall)
         self.addCleanup(CONF.reset)
 
-        if os.environ.get('OS_STDOUT_CAPTURE') in TRUE_STRING:
+        if bool_from_env('OS_STDOUT_CAPTURE'):
             stdout = self.useFixture(fixtures.StringStream('stdout')).stream
             self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
-        if os.environ.get('OS_STDERR_CAPTURE') in TRUE_STRING:
+        if bool_from_env('OS_STDERR_CAPTURE'):
             stderr = self.useFixture(fixtures.StringStream('stderr')).stream
             self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
         self.useFixture(fixtures.MonkeyPatch(

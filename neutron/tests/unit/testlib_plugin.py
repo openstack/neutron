@@ -14,7 +14,6 @@
 #    under the License.
 
 import gc
-import os
 import weakref
 
 import mock
@@ -42,7 +41,7 @@ class PluginSetupHelper(object):
         # configured to do so since calling gc.collect() after every
         # test increases test suite execution time by ~50%.
         check_plugin_deallocation = (
-            os.environ.get('OS_CHECK_PLUGIN_DEALLOCATION') in base.TRUE_STRING)
+            base.bool_from_env('OS_CHECK_PLUGIN_DEALLOCATION'))
         if check_plugin_deallocation:
             plugin = weakref.ref(nm._instance.plugin)
 
