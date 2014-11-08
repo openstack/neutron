@@ -47,7 +47,6 @@ disable=
  global-statement,
  global-variable-not-assigned,
  logging-not-lazy,
- lost-exception,
  no-init,
  non-parent-init-called,
  pointless-string-statement,
