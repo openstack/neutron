@@ -576,6 +576,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         ports = (
             rp.port.id for rp in
             router.attached_ports.filter_by(port_type=DEVICE_OWNER_DVR_SNAT)
+            if rp.port
         )
 
         c_snat_ports = self._core_plugin.get_ports(

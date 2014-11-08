@@ -24,6 +24,7 @@ from neutron.common import exceptions as exc
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
+from neutron.db import l3_db
 from neutron.extensions import external_net as external_net
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import multiprovidernet as mpnet
@@ -295,6 +296,38 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
     def test_delete_lbaas_vip_port(self):
         self._test_delete_dvr_serviced_port(
             device_owner=constants.DEVICE_OWNER_LOADBALANCER)
+
+    def test_concurrent_csnat_port_delete(self):
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        r = plugin.create_router(
+            self.context,
+            {'router': {'name': 'router', 'admin_state_up': True}})
+        with self.subnet() as s:
+            p = plugin.add_router_interface(self.context, r['id'],
+                                            {'subnet_id': s['subnet']['id']})
+
+        # lie to turn the port into an SNAT interface
+        with self.context.session.begin():
+            rp = self.context.session.query(l3_db.RouterPort).filter_by(
+                port_id=p['port_id']).first()
+            rp.port_type = constants.DEVICE_OWNER_ROUTER_SNAT
+
+        # take the port away before csnat gets a chance to delete it
+        # to simulate a concurrent delete
+        orig_get_ports = plugin._core_plugin.get_ports
+
+        def get_ports_with_delete_first(*args, **kwargs):
+            plugin._core_plugin.delete_port(self.context,
+                                            p['port_id'],
+                                            l3_port_check=False)
+            return orig_get_ports(*args, **kwargs)
+        plugin._core_plugin.get_ports = get_ports_with_delete_first
+
+        # This should be able to handle a concurrent delete without raising
+        # an exception
+        router = plugin._get_router(self.context, r['id'])
+        plugin.delete_csnat_router_interface_ports(self.context, router)
 
 
 class TestMl2PortBinding(Ml2PluginV2TestCase,
