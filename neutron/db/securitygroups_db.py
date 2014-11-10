@@ -296,7 +296,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     def _get_ip_proto_number(self, protocol):
         if protocol is None:
             return
-        return IP_PROTOCOL_MAP.get(protocol, protocol)
+        # According to bug 1381379, protocol is always set to string to avoid
+        # problems with comparing int and string in PostgreSQL. Here this
+        # string is converted to int to give an opportunity to use it as
+        # before.
+        return int(IP_PROTOCOL_MAP.get(protocol, protocol))
 
     def _validate_port_range(self, rule):
         """Check that port_range is valid."""
