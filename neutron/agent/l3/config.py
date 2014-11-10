@@ -55,5 +55,9 @@ OPTS = [
     cfg.BoolOpt('enable_metadata_proxy', default=True,
                 help=_("Allow running metadata proxy.")),
     cfg.BoolOpt('router_delete_namespaces', default=False,
-                help=_("Delete namespace after removing a router."))
+                help=_("Delete namespace after removing a router.")),
+    cfg.StrOpt('metadata_access_mark',
+               default='0x1',
+               help=_('Iptables mangle mark used to mark metadata valid '
+                      'requests'))
 ]
