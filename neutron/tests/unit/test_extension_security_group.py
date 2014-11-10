@@ -1443,6 +1443,9 @@ class TestConvertProtocol(base.BaseTestCase):
             self.assertRaises(ext_sg.SecurityGroupRuleInvalidProtocol,
                               ext_sg.convert_protocol, val)
 
+    def test_convert_numeric_protocol_to_string(self):
+        self.assertIsInstance(ext_sg.convert_protocol(2), str)
+
 
 class TestSecurityGroupsXML(TestSecurityGroups):
     fmt = 'xml'
