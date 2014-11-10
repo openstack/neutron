@@ -122,7 +122,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             context, router['id'])
         added, removed = utils.diff_list_of_dict(old_routes,
                                                  routes)
-        LOG.debug(_('Added routes are %s'), added)
+        LOG.debug('Added routes are %s', added)
         for route in added:
             router_routes = RouterRoute(
                 router_id=router['id'],
@@ -130,7 +130,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 nexthop=route['nexthop'])
             context.session.add(router_routes)
 
-        LOG.debug(_('Removed routes are %s'), removed)
+        LOG.debug('Removed routes are %s', removed)
         for route in removed:
             context.session.delete(
                 routes_dict[(route['destination'], route['nexthop'])])

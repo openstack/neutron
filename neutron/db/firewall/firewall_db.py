@@ -264,7 +264,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                     param="Source, destination port")
 
     def create_firewall(self, context, firewall):
-        LOG.debug(_("create_firewall() called"))
+        LOG.debug("create_firewall() called")
         fw = firewall['firewall']
         tenant_id = self._get_tenant_id_for_create(context, fw)
         # distributed routers may required a more complex state machine;
@@ -285,7 +285,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         return self._make_firewall_dict(firewall_db)
 
     def update_firewall(self, context, id, firewall):
-        LOG.debug(_("update_firewall() called"))
+        LOG.debug("update_firewall() called")
         fw = firewall['firewall']
         with context.session.begin(subtransactions=True):
             count = context.session.query(Firewall).filter_by(id=id).update(fw)
@@ -294,7 +294,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         return self.get_firewall(context, id)
 
     def delete_firewall(self, context, id):
-        LOG.debug(_("delete_firewall() called"))
+        LOG.debug("delete_firewall() called")
         with context.session.begin(subtransactions=True):
             # Note: Plugin should ensure that it's okay to delete if the
             # firewall is active
@@ -303,23 +303,23 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                 raise firewall.FirewallNotFound(firewall_id=id)
 
     def get_firewall(self, context, id, fields=None):
-        LOG.debug(_("get_firewall() called"))
+        LOG.debug("get_firewall() called")
         fw = self._get_firewall(context, id)
         return self._make_firewall_dict(fw, fields)
 
     def get_firewalls(self, context, filters=None, fields=None):
-        LOG.debug(_("get_firewalls() called"))
+        LOG.debug("get_firewalls() called")
         return self._get_collection(context, Firewall,
                                     self._make_firewall_dict,
                                     filters=filters, fields=fields)
 
     def get_firewalls_count(self, context, filters=None):
-        LOG.debug(_("get_firewalls_count() called"))
+        LOG.debug("get_firewalls_count() called")
         return self._get_collection_count(context, Firewall,
                                           filters=filters)
 
     def create_firewall_policy(self, context, firewall_policy):
-        LOG.debug(_("create_firewall_policy() called"))
+        LOG.debug("create_firewall_policy() called")
         fwp = firewall_policy['firewall_policy']
         tenant_id = self._get_tenant_id_for_create(context, fwp)
         with context.session.begin(subtransactions=True):
@@ -334,7 +334,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         return self._make_firewall_policy_dict(fwp_db)
 
     def update_firewall_policy(self, context, id, firewall_policy):
-        LOG.debug(_("update_firewall_policy() called"))
+        LOG.debug("update_firewall_policy() called")
         fwp = firewall_policy['firewall_policy']
         with context.session.begin(subtransactions=True):
             fwp_db = self._get_firewall_policy(context, id)
@@ -356,7 +356,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         return self._make_firewall_policy_dict(fwp_db)
 
     def delete_firewall_policy(self, context, id):
-        LOG.debug(_("delete_firewall_policy() called"))
+        LOG.debug("delete_firewall_policy() called")
         with context.session.begin(subtransactions=True):
             fwp = self._get_firewall_policy(context, id)
             # Ensure that the firewall_policy  is not
@@ -368,23 +368,23 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                 context.session.delete(fwp)
 
     def get_firewall_policy(self, context, id, fields=None):
-        LOG.debug(_("get_firewall_policy() called"))
+        LOG.debug("get_firewall_policy() called")
         fwp = self._get_firewall_policy(context, id)
         return self._make_firewall_policy_dict(fwp, fields)
 
     def get_firewall_policies(self, context, filters=None, fields=None):
-        LOG.debug(_("get_firewall_policies() called"))
+        LOG.debug("get_firewall_policies() called")
         return self._get_collection(context, FirewallPolicy,
                                     self._make_firewall_policy_dict,
                                     filters=filters, fields=fields)
 
     def get_firewalls_policies_count(self, context, filters=None):
-        LOG.debug(_("get_firewall_policies_count() called"))
+        LOG.debug("get_firewall_policies_count() called")
         return self._get_collection_count(context, FirewallPolicy,
                                           filters=filters)
 
     def create_firewall_rule(self, context, firewall_rule):
-        LOG.debug(_("create_firewall_rule() called"))
+        LOG.debug("create_firewall_rule() called")
         fwr = firewall_rule['firewall_rule']
         self._validate_fwr_protocol_parameters(fwr)
         tenant_id = self._get_tenant_id_for_create(context, fwr)
@@ -416,7 +416,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         return self._make_firewall_rule_dict(fwr_db)
 
     def update_firewall_rule(self, context, id, firewall_rule):
-        LOG.debug(_("update_firewall_rule() called"))
+        LOG.debug("update_firewall_rule() called")
         fwr = firewall_rule['firewall_rule']
         fwr_db = self._get_firewall_rule(context, id)
         if fwr_db.firewall_policy_id:
@@ -452,7 +452,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         return self._make_firewall_rule_dict(fwr_db)
 
     def delete_firewall_rule(self, context, id):
-        LOG.debug(_("delete_firewall_rule() called"))
+        LOG.debug("delete_firewall_rule() called")
         with context.session.begin(subtransactions=True):
             fwr = self._get_firewall_rule(context, id)
             if fwr.firewall_policy_id:
@@ -460,18 +460,18 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
             context.session.delete(fwr)
 
     def get_firewall_rule(self, context, id, fields=None):
-        LOG.debug(_("get_firewall_rule() called"))
+        LOG.debug("get_firewall_rule() called")
         fwr = self._get_firewall_rule(context, id)
         return self._make_firewall_rule_dict(fwr, fields)
 
     def get_firewall_rules(self, context, filters=None, fields=None):
-        LOG.debug(_("get_firewall_rules() called"))
+        LOG.debug("get_firewall_rules() called")
         return self._get_collection(context, FirewallRule,
                                     self._make_firewall_rule_dict,
                                     filters=filters, fields=fields)
 
     def get_firewalls_rules_count(self, context, filters=None):
-        LOG.debug(_("get_firewall_rules_count() called"))
+        LOG.debug("get_firewall_rules_count() called")
         return self._get_collection_count(context, FirewallRule,
                                           filters=filters)
 
@@ -480,7 +480,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
             raise firewall.FirewallRuleInfoMissing()
 
     def insert_rule(self, context, id, rule_info):
-        LOG.debug(_("insert_rule() called"))
+        LOG.debug("insert_rule() called")
         self._validate_insert_remove_rule_request(id, rule_info)
         firewall_rule_id = rule_info['firewall_rule_id']
         insert_before = True
@@ -526,7 +526,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                                                  position)
 
     def remove_rule(self, context, id, rule_info):
-        LOG.debug(_("remove_rule() called"))
+        LOG.debug("remove_rule() called")
         self._validate_insert_remove_rule_request(id, rule_info)
         firewall_rule_id = rule_info['firewall_rule_id']
         if not firewall_rule_id:

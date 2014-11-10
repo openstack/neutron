@@ -34,6 +34,7 @@ from neutron.extensions import l3
 from neutron import manager
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
@@ -138,17 +139,17 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             mac_address = ':'.join(map(lambda x: "%02x" % x, mac))
             if NeutronDbPluginV2._check_unique_mac(context, network_id,
                                                    mac_address):
-                LOG.debug(_("Generated mac for network %(network_id)s "
-                            "is %(mac_address)s"),
+                LOG.debug("Generated mac for network %(network_id)s "
+                          "is %(mac_address)s",
                           {'network_id': network_id,
                            'mac_address': mac_address})
                 return mac_address
             else:
-                LOG.debug(_("Generated mac %(mac_address)s exists. Remaining "
-                            "attempts %(max_retries)s."),
+                LOG.debug("Generated mac %(mac_address)s exists. Remaining "
+                          "attempts %(max_retries)s.",
                           {'mac_address': mac_address,
                            'max_retries': max_retries - (i + 1)})
-        LOG.error(_("Unable to generate mac address after %s attempts"),
+        LOG.error(_LE("Unable to generate mac address after %s attempts"),
                   max_retries)
         raise n_exc.MacAddressGenerationFailure(net_id=network_id)
 
@@ -166,8 +167,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     def _delete_ip_allocation(context, network_id, subnet_id, ip_address):
 
         # Delete the IP address from the IPAllocate table
-        LOG.debug(_("Delete allocated IP %(ip_address)s "
-                    "(%(network_id)s/%(subnet_id)s)"),
+        LOG.debug("Delete allocated IP %(ip_address)s "
+                  "(%(network_id)s/%(subnet_id)s)",
                   {'ip_address': ip_address,
                    'network_id': network_id,
                    'subnet_id': subnet_id})
@@ -257,8 +258,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             models_v2.IPAllocationPool).options(
                 orm.noload('available_ranges')).with_lockmode('update')
         for subnet in sorted(subnets):
-            LOG.debug(_("Rebuilding availability ranges for subnet %s")
-                      % subnet)
+            LOG.debug("Rebuilding availability ranges for subnet %s",
+                      subnet)
 
             # Create a set of all currently allocated addresses
             ip_qry_results = ip_qry.filter_by(subnet_id=subnet['id'])
@@ -517,14 +518,14 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         to_add = self._test_fixed_ips_for_port(context, network_id, new_ips,
                                                device_owner)
         for ip in original_ips:
-            LOG.debug(_("Port update. Hold %s"), ip)
+            LOG.debug("Port update. Hold %s", ip)
             NeutronDbPluginV2._delete_ip_allocation(context,
                                                     network_id,
                                                     ip['subnet_id'],
                                                     ip['ip_address'])
 
         if to_add:
-            LOG.debug(_("Port update. Adding %s"), to_add)
+            LOG.debug("Port update. Adding %s", to_add)
             ips = self._allocate_fixed_ips(context, to_add, mac_address)
         return ips, prev_ips
 
@@ -615,9 +616,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                              "subnet") %
                            {'cidr': new_subnet_cidr,
                             'network_id': network.id})
-                LOG.info(_("Validation for CIDR: %(new_cidr)s failed - "
-                           "overlaps with subnet %(subnet_id)s "
-                           "(CIDR: %(cidr)s)"),
+                LOG.info(_LI("Validation for CIDR: %(new_cidr)s failed - "
+                             "overlaps with subnet %(subnet_id)s "
+                             "(CIDR: %(cidr)s)"),
                          {'new_cidr': new_subnet_cidr,
                           'subnet_id': subnet.id,
                           'cidr': subnet.cidr})
@@ -635,31 +636,31 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         subnet_first_ip = netaddr.IPAddress(subnet.first + 1)
         subnet_last_ip = netaddr.IPAddress(subnet.last - 1)
 
-        LOG.debug(_("Performing IP validity checks on allocation pools"))
+        LOG.debug("Performing IP validity checks on allocation pools")
         ip_sets = []
         for ip_pool in ip_pools:
             try:
                 start_ip = netaddr.IPAddress(ip_pool['start'])
                 end_ip = netaddr.IPAddress(ip_pool['end'])
             except netaddr.AddrFormatError:
-                LOG.info(_("Found invalid IP address in pool: "
-                           "%(start)s - %(end)s:"),
+                LOG.info(_LI("Found invalid IP address in pool: "
+                             "%(start)s - %(end)s:"),
                          {'start': ip_pool['start'],
                           'end': ip_pool['end']})
                 raise n_exc.InvalidAllocationPool(pool=ip_pool)
             if (start_ip.version != subnet.version or
                     end_ip.version != subnet.version):
-                LOG.info(_("Specified IP addresses do not match "
-                           "the subnet IP version"))
+                LOG.info(_LI("Specified IP addresses do not match "
+                             "the subnet IP version"))
                 raise n_exc.InvalidAllocationPool(pool=ip_pool)
             if end_ip < start_ip:
-                LOG.info(_("Start IP (%(start)s) is greater than end IP "
-                           "(%(end)s)"),
+                LOG.info(_LI("Start IP (%(start)s) is greater than end IP "
+                             "(%(end)s)"),
                          {'start': ip_pool['start'], 'end': ip_pool['end']})
                 raise n_exc.InvalidAllocationPool(pool=ip_pool)
             if start_ip < subnet_first_ip or end_ip > subnet_last_ip:
-                LOG.info(_("Found pool larger than subnet "
-                           "CIDR:%(start)s - %(end)s"),
+                LOG.info(_LI("Found pool larger than subnet "
+                             "CIDR:%(start)s - %(end)s"),
                          {'start': ip_pool['start'],
                           'end': ip_pool['end']})
                 raise n_exc.OutOfBoundsAllocationPool(
@@ -671,8 +672,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 ip_pool['start'],
                 ip_pool['end']).cidrs()))
 
-        LOG.debug(_("Checking for overlaps among allocation pools "
-                    "and gateway ip"))
+        LOG.debug("Checking for overlaps among allocation pools "
+                  "and gateway ip")
         ip_ranges = ip_pools[:]
 
         # Use integer cursors as an efficient way for implementing
@@ -682,8 +683,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 if ip_sets[l_cursor] & ip_sets[r_cursor]:
                     l_range = ip_ranges[l_cursor]
                     r_range = ip_ranges[r_cursor]
-                    LOG.info(_("Found overlapping ranges: %(l_range)s and "
-                               "%(r_range)s"),
+                    LOG.info(_LI("Found overlapping ranges: %(l_range)s and "
+                                 "%(r_range)s"),
                              {'l_range': l_range, 'r_range': r_range})
                     raise n_exc.OverlappingAllocationPools(
                         pool_1=l_range,
@@ -891,8 +892,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         except Exception:
             context.session.rollback()
             with excutils.save_and_reraise_exception():
-                LOG.error(_("An exception occurred while creating "
-                            "the %(resource)s:%(item)s"),
+                LOG.error(_LE("An exception occurred while creating "
+                              "the %(resource)s:%(item)s"),
                           {'resource': resource, 'item': item})
         return objects
 
@@ -1431,8 +1432,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 self.delete_port(context, port_id)
             except n_exc.PortNotFound:
                 # Don't raise if something else concurrently deleted the port
-                LOG.debug(_("Ignoring PortNotFound when deleting port '%s'. "
-                            "The port has already been deleted."),
+                LOG.debug("Ignoring PortNotFound when deleting port '%s'. "
+                          "The port has already been deleted.",
                           port_id)
 
     def _delete_port(self, context, id):

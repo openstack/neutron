@@ -23,6 +23,7 @@ from neutron.db import allowedaddresspairs_db as addr_pair
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -355,8 +356,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         try:
             mac_address = query.one()[0]
         except (exc.NoResultFound, exc.MultipleResultsFound):
-            LOG.warn(_('No valid gateway port on subnet %s is '
-                       'found for IPv6 RA'), subnet['id'])
+            LOG.warn(_LW('No valid gateway port on subnet %s is '
+                         'found for IPv6 RA'), subnet['id'])
             return
         lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
             q_const.IPV6_LLA_PREFIX,

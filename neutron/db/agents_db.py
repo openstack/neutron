@@ -28,6 +28,7 @@ from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
 from neutron import manager
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import timeutils
 
@@ -95,8 +96,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
                       '%(host)s' % {'agent_type': agent_type, 'host': host})
             return
         if self.is_agent_down(agent.heartbeat_timestamp):
-            LOG.warn(_('%(agent_type)s agent %(agent_id)s is not active')
-                     % {'agent_type': agent_type, 'agent_id': agent.id})
+            LOG.warn(_LW('%(agent_type)s agent %(agent_id)s is not active'),
+                     {'agent_type': agent_type, 'agent_id': agent.id})
         return agent
 
     @classmethod
@@ -108,8 +109,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
         try:
             conf = jsonutils.loads(agent_db.configurations)
         except Exception:
-            msg = _('Configuration for agent %(agent_type)s on host %(host)s'
-                    ' is invalid.')
+            msg = _LW('Configuration for agent %(agent_type)s on host %(host)s'
+                      ' is invalid.')
             LOG.warn(msg, {'agent_type': agent_db.agent_type,
                            'host': agent_db.host})
             conf = {}
@@ -229,7 +230,7 @@ class AgentExtRpcCallback(n_rpc.RpcCallback):
         time = kwargs['time']
         time = timeutils.parse_strtime(time)
         if self.START_TIME > time:
-            LOG.debug(_("Message with invalid timestamp received"))
+            LOG.debug("Message with invalid timestamp received")
             return
         agent_state = kwargs['agent_state']['agent_state']
         if not self.plugin:
