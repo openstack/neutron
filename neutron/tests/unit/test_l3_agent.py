@@ -2024,9 +2024,21 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.conf.set_override('metadata_port', '8775')
         self.conf.set_override('enable_metadata_proxy', True)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        rules = ('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
-                 '-p tcp -m tcp --dport 8775 -j ACCEPT')
-        self.assertEqual([rules], agent.metadata_filter_rules())
+        rules = [('INPUT', '-m mark --mark 0x1 -j ACCEPT'),
+                 ('INPUT', '-s 0.0.0.0/0 -p tcp -m tcp --dport 8775 -j DROP')]
+        self.assertEqual(rules, agent.metadata_filter_rules())
+
+    def test_metadata_mangle_rules(self):
+        self.conf.set_override('enable_metadata_proxy', False)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertEqual([], agent.metadata_mangle_rules())
+
+        self.conf.set_override('metadata_port', '8775')
+        self.conf.set_override('enable_metadata_proxy', True)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        rules = [('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 -p tcp '
+                  '-m tcp --dport 80 -j MARK --set-xmark 0x1/0xffffffff')]
+        self.assertEqual(rules, agent.metadata_mangle_rules())
 
     def _cleanup_namespace_test(self,
                                 stale_namespace_list,
