@@ -19,6 +19,7 @@ from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as const
 from neutron.plugins.openvswitch.common import constants as ovs_const
@@ -67,11 +68,11 @@ def ofctl_arg_supported(root_helper, cmd, **kwargs):
             agent_utils.execute(full_args, root_helper=root_helper)
         except RuntimeError as e:
             LOG.debug("Exception while checking supported feature via "
-                      "command %s. Exception: %s" % (full_args, e))
+                      "command %s. Exception: %s", (full_args, e))
             return False
         except Exception:
-            LOG.exception(_("Unexpected exception while checking supported"
-                            " feature via command: %s") % full_args)
+            LOG.exception(_LE("Unexpected exception while checking supported"
+                              " feature via command: %s"), full_args)
             return False
         else:
             return True
@@ -102,7 +103,7 @@ def vf_management_supported(root_helper):
             LOG.debug("ip link command does not support vf capability")
             return False
     except ip_link_support.UnsupportedIpLinkCommand:
-        LOG.exception(_("Unexpected exception while checking supported "
-                        "ip link command"))
+        LOG.exception(_LE("Unexpected exception while checking supported "
+                          "ip link command"))
         return False
     return True
