@@ -118,8 +118,6 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def setUp(self):
         patch = mock.patch.dict('sys.modules', {
-            'ryu': mock.MagicMock(),
-            'ryu.app': mock.MagicMock(),
             'heleosapi': mock.MagicMock(),
             'midonetclient': mock.MagicMock(),
             'midonetclient.neutron': mock.MagicMock(),
