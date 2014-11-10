@@ -18,6 +18,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import log as logging
 
 
@@ -62,8 +63,8 @@ class DhcpAgentNotifyAPI(n_rpc.RpcProxy):
                     context, 'network_create_end',
                     {'network': {'id': network['id']}}, agent['host'])
         elif not existing_agents:
-            LOG.warn(_('Unable to schedule network %s: no agents available; '
-                       'will retry on subsequent port creation events.'),
+            LOG.warn(_LW('Unable to schedule network %s: no agents available; '
+                         'will retry on subsequent port creation events.'),
                      network['id'])
         return new_agents + existing_agents
 
@@ -75,24 +76,24 @@ class DhcpAgentNotifyAPI(n_rpc.RpcProxy):
         len_enabled_agents = len(enabled_agents)
         len_active_agents = len(active_agents)
         if len_active_agents < len_enabled_agents:
-            LOG.warn(_("Only %(active)d of %(total)d DHCP agents associated "
-                       "with network '%(net_id)s' are marked as active, so "
-                       " notifications may be sent to inactive agents.")
-                     % {'active': len_active_agents,
-                        'total': len_enabled_agents,
-                        'net_id': network_id})
+            LOG.warn(_LW("Only %(active)d of %(total)d DHCP agents associated "
+                         "with network '%(net_id)s' are marked as active, so "
+                         "notifications may be sent to inactive agents."),
+                     {'active': len_active_agents,
+                      'total': len_enabled_agents,
+                      'net_id': network_id})
         if not enabled_agents:
             num_ports = self.plugin.get_ports_count(
                 context, {'network_id': [network_id]})
             notification_required = (
                 num_ports > 0 and len(network['subnets']) >= 1)
             if notification_required:
-                LOG.error(_("Will not send event %(method)s for network "
-                            "%(net_id)s: no agent available. Payload: "
-                            "%(payload)s")
-                          % {'method': method,
-                             'net_id': network_id,
-                             'payload': payload})
+                LOG.error(_LE("Will not send event %(method)s for network "
+                              "%(net_id)s: no agent available. Payload: "
+                              "%(payload)s"),
+                          {'method': method,
+                           'net_id': network_id,
+                           'payload': payload})
         return enabled_agents
 
     def _is_reserved_dhcp_port(self, port):

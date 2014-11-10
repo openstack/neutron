@@ -24,6 +24,7 @@ from neutron import context as neutron_context
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as plugin_constants
 
@@ -67,8 +68,8 @@ class L3RpcCallback(n_rpc.RpcCallback):
         context = neutron_context.get_admin_context()
         if not self.l3plugin:
             routers = {}
-            LOG.error(_('No plugin for L3 routing registered! Will reply '
-                        'to l3 agent with empty router dictionary.'))
+            LOG.error(_LE('No plugin for L3 routing registered! Will reply '
+                          'to l3 agent with empty router dictionary.'))
         elif utils.is_extension_supported(
                 self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
@@ -81,13 +82,13 @@ class L3RpcCallback(n_rpc.RpcCallback):
         if utils.is_extension_supported(
             self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             self._ensure_host_set_on_ports(context, host, routers)
-        LOG.debug(_("Routers returned to l3 agent:\n %s"),
+        LOG.debug("Routers returned to l3 agent:\n %s",
                   jsonutils.dumps(routers, indent=5))
         return routers
 
     def _ensure_host_set_on_ports(self, context, host, routers):
         for router in routers:
-            LOG.debug(_("Checking router: %(id)s for host: %(host)s"),
+            LOG.debug("Checking router: %(id)s for host: %(host)s",
                       {'id': router['id'], 'host': host})
             if router.get('gw_port') and router.get('distributed'):
                 self._ensure_host_set_on_port(context,
@@ -147,7 +148,7 @@ class L3RpcCallback(n_rpc.RpcCallback):
         """
         context = neutron_context.get_admin_context()
         net_id = self.plugin.get_external_network_id(context)
-        LOG.debug(_("External network ID returned to l3 agent: %s"),
+        LOG.debug("External network ID returned to l3 agent: %s",
                   net_id)
         return net_id
 
@@ -159,15 +160,15 @@ class L3RpcCallback(n_rpc.RpcCallback):
         """Update operational status for a floating IP."""
         with context.session.begin(subtransactions=True):
             for (floatingip_id, status) in fip_statuses.iteritems():
-                LOG.debug(_("New status for floating IP %(floatingip_id)s: "
-                            "%(status)s"), {'floatingip_id': floatingip_id,
-                                            'status': status})
+                LOG.debug("New status for floating IP %(floatingip_id)s: "
+                          "%(status)s", {'floatingip_id': floatingip_id,
+                                         'status': status})
                 try:
                     self.l3plugin.update_floatingip_status(context,
                                                            floatingip_id,
                                                            status)
                 except l3.FloatingIPNotFound:
-                    LOG.debug(_("Floating IP: %s no longer present."),
+                    LOG.debug("Floating IP: %s no longer present.",
                               floatingip_id)
             # Find all floating IPs known to have been the given router
             # for which an update was not received. Set them DOWN mercilessly

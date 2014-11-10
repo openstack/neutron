@@ -24,6 +24,7 @@ from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 
 
@@ -79,9 +80,9 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
                     else:
                         ctxt.reraise = True
                 net_id = port['port']['network_id']
-                LOG.warn(_("Action %(action)s for network %(net_id)s "
-                           "could not complete successfully: %(reason)s")
-                         % {"action": action, "net_id": net_id, 'reason': e})
+                LOG.warn(_LW("Action %(action)s for network %(net_id)s "
+                             "could not complete successfully: %(reason)s"),
+                         {"action": action, "net_id": net_id, 'reason': e})
 
     def get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active network ids."""
@@ -89,14 +90,14 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         # left so that neutron-dhcp-agents will still continue to work if
         # neutron-server is upgraded and not the agent.
         host = kwargs.get('host')
-        LOG.debug(_('get_active_networks requested from %s'), host)
+        LOG.debug('get_active_networks requested from %s', host)
         nets = self._get_active_networks(context, **kwargs)
         return [net['id'] for net in nets]
 
     def get_active_networks_info(self, context, **kwargs):
         """Returns all the networks/subnets/ports in system."""
         host = kwargs.get('host')
-        LOG.debug(_('get_active_networks_info from %s'), host)
+        LOG.debug('get_active_networks_info from %s', host)
         networks = self._get_active_networks(context, **kwargs)
         plugin = manager.NeutronManager.get_plugin()
         filters = {'network_id': [network['id'] for network in networks]}
@@ -116,15 +117,15 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         """Retrieve and return a extended information about a network."""
         network_id = kwargs.get('network_id')
         host = kwargs.get('host')
-        LOG.debug(_('Network %(network_id)s requested from '
-                    '%(host)s'), {'network_id': network_id,
-                                  'host': host})
+        LOG.debug('Network %(network_id)s requested from '
+                  '%(host)s', {'network_id': network_id,
+                               'host': host})
         plugin = manager.NeutronManager.get_plugin()
         try:
             network = plugin.get_network(context, network_id)
         except n_exc.NetworkNotFound:
-            LOG.warn(_("Network %s could not be found, it might have "
-                       "been deleted concurrently."), network_id)
+            LOG.warn(_LW("Network %s could not be found, it might have "
+                         "been deleted concurrently."), network_id)
             return
         filters = dict(network_id=[network_id])
         network['subnets'] = plugin.get_subnets(context, filters=filters)
@@ -145,10 +146,10 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         # There could be more than one dhcp server per network, so create
         # a device id that combines host and network ids
 
-        LOG.debug(_('Port %(device_id)s for %(network_id)s requested from '
-                    '%(host)s'), {'device_id': device_id,
-                                  'network_id': network_id,
-                                  'host': host})
+        LOG.debug('Port %(device_id)s for %(network_id)s requested from '
+                  '%(host)s', {'device_id': device_id,
+                               'network_id': network_id,
+                               'host': host})
         plugin = manager.NeutronManager.get_plugin()
         retval = None
 
@@ -179,16 +180,16 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
 
         if retval is None:
             # No previous port exists, so create a new one.
-            LOG.debug(_('DHCP port %(device_id)s on network %(network_id)s '
-                        'does not exist on %(host)s'),
+            LOG.debug('DHCP port %(device_id)s on network %(network_id)s '
+                      'does not exist on %(host)s',
                       {'device_id': device_id,
                        'network_id': network_id,
                        'host': host})
             try:
                 network = plugin.get_network(context, network_id)
             except n_exc.NetworkNotFound:
-                LOG.warn(_("Network %s could not be found, it might have "
-                           "been deleted concurrently."), network_id)
+                LOG.warn(_LW("Network %s could not be found, it might have "
+                             "been deleted concurrently."), network_id)
                 return
 
             port_dict = dict(
@@ -219,8 +220,8 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         network_id = kwargs.get('network_id')
         device_id = kwargs.get('device_id')
 
-        LOG.debug(_('DHCP port deletion for %(network_id)s request from '
-                    '%(host)s'),
+        LOG.debug('DHCP port deletion for %(network_id)s request from '
+                  '%(host)s',
                   {'network_id': network_id, 'host': host})
         plugin = manager.NeutronManager.get_plugin()
         plugin.delete_ports_by_device_id(context, device_id, network_id)
@@ -232,8 +233,8 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         device_id = kwargs.get('device_id')
         subnet_id = kwargs.get('subnet_id')
 
-        LOG.debug(_('DHCP port remove fixed_ip for %(subnet_id)s request '
-                    'from %(host)s'),
+        LOG.debug('DHCP port remove fixed_ip for %(subnet_id)s request '
+                  'from %(host)s',
                   {'subnet_id': subnet_id, 'host': host})
         plugin = manager.NeutronManager.get_plugin()
         filters = dict(network_id=[network_id], device_id=[device_id])
@@ -256,8 +257,8 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         # neutron-server is upgraded and not the agent.
         host = kwargs.get('host')
 
-        LOG.warning(_('Updating lease expiration is now deprecated. Issued  '
-                      'from host %s.'), host)
+        LOG.warning(_LW('Updating lease expiration is now deprecated. Issued  '
+                        'from host %s.'), host)
 
     def create_dhcp_port(self, context, **kwargs):
         """Create and return dhcp port information.
@@ -267,8 +268,8 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         """
         host = kwargs.get('host')
         port = kwargs.get('port')
-        LOG.debug(_('Create dhcp port %(port)s '
-                    'from %(host)s.'),
+        LOG.debug('Create dhcp port %(port)s '
+                  'from %(host)s.',
                   {'port': port,
                    'host': host})
 
@@ -284,8 +285,8 @@ class DhcpRpcCallback(n_rpc.RpcCallback):
         host = kwargs.get('host')
         port = kwargs.get('port')
         port['id'] = kwargs.get('port_id')
-        LOG.debug(_('Update dhcp port %(port)s '
-                    'from %(host)s.'),
+        LOG.debug('Update dhcp port %(port)s '
+                  'from %(host)s.',
                   {'port': port,
                    'host': host})
         plugin = manager.NeutronManager.get_plugin()

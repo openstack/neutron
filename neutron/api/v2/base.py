@@ -27,6 +27,7 @@ from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import policy as common_policy
 from neutron import policy
@@ -89,8 +90,8 @@ class Controller(object):
                     _("Native pagination depend on native sorting")
                 )
             if not self._allow_sorting:
-                LOG.info(_("Allow sorting is enabled because native "
-                           "pagination requires native sorting"))
+                LOG.info(_LI("Allow sorting is enabled because native "
+                             "pagination requires native sorting"))
                 self._allow_sorting = True
 
         if parent:
@@ -360,8 +361,8 @@ class Controller(object):
                     obj_deleter(request.context, obj['id'], **kwargs)
                 except Exception:
                     # broad catch as our only purpose is to log the exception
-                    LOG.exception(_("Unable to undo add for "
-                                    "%(resource)s %(id)s"),
+                    LOG.exception(_LE("Unable to undo add for "
+                                      "%(resource)s %(id)s"),
                                   {'resource': self._resource,
                                    'id': obj['id']})
             # TODO(salvatore-orlando): The object being processed when the
@@ -581,7 +582,7 @@ class Controller(object):
         if not body:
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
-        LOG.debug(_("Request body: %(body)s"), {'body': body})
+        LOG.debug("Request body: %(body)s", {'body': body})
         if collection in body:
             if not allow_bulk:
                 raise webob.exc.HTTPBadRequest(_("Bulk operation "
