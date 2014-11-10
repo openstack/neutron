@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-02 06:04+0000\n"
-"PO-Revision-Date: 2014-10-29 20:02+0000\n"
+"POT-Creation-Date: 2014-11-09 06:07+0000\n"
+"PO-Revision-Date: 2014-11-07 13:07+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: English (United Kingdom) (http://www.transifex.com/projects/p/"
 "neutron/language/en_GB/)\n"
@@ -79,7 +79,7 @@ msgstr ""
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
 msgstr ""
 
-#: neutron/common/ipv6_utils.py:62
+#: neutron/common/ipv6_utils.py:63
 msgid "IPv6 is not enabled on this system."
 msgstr ""
 
@@ -293,6 +293,11 @@ msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:912
 msgid "Agent tunnel out of sync with plugin!"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:199
+#, python-format
+msgid "L2 Agent operating in DVR Mode with MAC %s"
 msgstr ""
 
 #: neutron/services/vpn/plugin.py:45
