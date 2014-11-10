@@ -1,0 +1,16 @@
+# neutron-rootwrap command filters for nodes on which
+# neutron-ofagent-agent is expected to control network
+#
+# This file should be owned by (and only-writeable by) the root user
+
+# format seems to be
+# cmd-name: filter-name, raw-command, user, args
+
+[Filters]
+
+# ovs_lib
+ovs-vsctl: CommandFilter, ovs-vsctl, root
+
+# ip_lib
+ip: IpFilter, ip, root
+ip_exec: IpNetnsExecFilter, ip, root
