@@ -122,8 +122,8 @@ class IptablesTable(object):
         named chains without interfering with one another.
 
         At the moment, its wrapped name is <binary name>-<chain name>,
-        so if nova-compute creates a chain named 'OUTPUT', it'll actually
-        end up named 'nova-compute-OUTPUT'.
+        so if neutron-openvswitch-agent creates a chain named 'OUTPUT',
+        it'll actually end up being named 'neutron-openvswi-OUTPUT'.
 
         """
         name = get_chain_name(name, wrap)
@@ -278,10 +278,10 @@ class IptablesManager(object):
 
     A number of chains are set up to begin with.
 
-    First, neutron-filter-top. It's added at the top of FORWARD and OUTPUT. Its
-    name is not wrapped, so it's shared between the various nova workers. It's
-    intended for rules that need to live at the top of the FORWARD and OUTPUT
-    chains. It's in both the ipv4 and ipv6 set of tables.
+    First, neutron-filter-top. It's added at the top of FORWARD and OUTPUT.
+    Its name is not wrapped, so it's shared between the various neutron
+    workers. It's intended for rules that need to live at the top of the
+    FORWARD and OUTPUT chains. It's in both the ipv4 and ipv6 set of tables.
 
     For ipv4 and ipv6, the built-in INPUT, OUTPUT, and FORWARD filter chains
     are wrapped, meaning that the "real" INPUT chain has a rule that jumps to
@@ -313,7 +313,7 @@ class IptablesManager(object):
         self.ipv6 = {'filter': IptablesTable(binary_name=self.wrap_name)}
 
         # Add a neutron-filter-top chain. It's intended to be shared
-        # among the various nova components. It sits at the very top
+        # among the various neutron components. It sits at the very top
         # of FORWARD and OUTPUT.
         for tables in [self.ipv4, self.ipv6]:
             tables['filter'].add_chain('neutron-filter-top', wrap=False)
@@ -354,8 +354,8 @@ class IptablesManager(object):
 
         if not state_less:
             # Add a neutron-postrouting-bottom chain. It's intended to be
-            # shared among the various nova components. We set it as the last
-            # chain of POSTROUTING chain.
+            # shared among the various neutron components. We set it as the
+            # last chain of POSTROUTING chain.
             self.ipv4['nat'].add_chain('neutron-postrouting-bottom',
                                        wrap=False)
             self.ipv4['nat'].add_rule('POSTROUTING',
