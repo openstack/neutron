@@ -47,8 +47,12 @@ def _directory_to_check_translation(filename):
     dirs = ["neutron/agent",
             "neutron/api",
             "neutron/cmd",
+            "neutron/common",
             "neutron/db",
-            "neutron/extensions"]
+            "neutron/debug",
+            "neutron/extensions",
+            "neutron/hacking",
+            "neutron/locale"]
     return any([dir in filename for dir in dirs])
 
 

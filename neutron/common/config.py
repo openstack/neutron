@@ -26,6 +26,7 @@ from paste import deploy
 
 from neutron.api.v2 import attributes
 from neutron.common import utils
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 from neutron import version
 
@@ -161,7 +162,7 @@ def setup_logging():
     """Sets up the logging options for a log with supplied name."""
     product_name = "neutron"
     logging.setup(product_name)
-    LOG.info(_("Logging enabled!"))
+    LOG.info(_LI("Logging enabled!"))
 
 
 def load_paste_app(app_name):
@@ -177,7 +178,7 @@ def load_paste_app(app_name):
         raise cfg.ConfigFilesNotFoundError(
             config_files=[cfg.CONF.api_paste_config])
     config_path = os.path.abspath(config_path)
-    LOG.info(_("Config paste file: %s"), config_path)
+    LOG.info(_LI("Config paste file: %s"), config_path)
 
     try:
         app = deploy.loadapp("config:%s" % config_path, name=app_name)

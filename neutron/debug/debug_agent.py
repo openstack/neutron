@@ -23,6 +23,7 @@ from neutron.agent.common import config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 
 
@@ -64,7 +65,7 @@ class NeutronDebugAgent():
             namespace = self._get_namespace(port)
 
         if ip_lib.device_exists(interface_name, self.root_helper, namespace):
-            LOG.debug(_('Reusing existing device: %s.'), interface_name)
+            LOG.debug('Reusing existing device: %s.', interface_name)
         else:
             self.driver.plug(network.id,
                              port.id,
@@ -119,7 +120,7 @@ class NeutronDebugAgent():
             try:
                 ip.netns.delete(namespace)
             except Exception:
-                LOG.warn(_('Failed to delete namespace %s'), namespace)
+                LOG.warn(_LW('Failed to delete namespace %s'), namespace)
         else:
             self.driver.unplug(self.driver.get_device_name(port),
                                bridge=bridge)
