@@ -54,22 +54,19 @@ def create_consumers(endpoints, prefix, topic_details):
     return connection
 
 
-class PluginReportStateAPI(n_rpc.RpcProxy):
-    BASE_RPC_API_VERSION = '1.0'
-
+class PluginReportStateAPI(object):
     def __init__(self, topic):
-        super(PluginReportStateAPI, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def report_state(self, context, agent_state, use_call=False):
-        msg = self.make_msg('report_state',
-                            agent_state={'agent_state':
-                                         agent_state},
-                            time=timeutils.strtime())
-        if use_call:
-            return self.call(context, msg)
-        else:
-            return self.cast(context, msg)
+        cctxt = self.client.prepare()
+        kwargs = {
+            'agent_state': {'agent_state': agent_state},
+            'time': timeutils.strtime(),
+        }
+        method = cctxt.call if use_call else cctxt.cast
+        return method(context, 'report_state', **kwargs)
 
 
 class PluginApi(n_rpc.RpcProxy):

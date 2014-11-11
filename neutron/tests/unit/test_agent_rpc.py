@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import mock
 from oslo import messaging
 
@@ -65,32 +66,42 @@ class AgentPluginReportState(base.BaseTestCase):
         topic = 'test'
         reportStateAPI = rpc.PluginReportStateAPI(topic)
         expected_agent_state = {'agent': 'test'}
-        with mock.patch.object(reportStateAPI, 'call') as call:
+        with contextlib.nested(
+            mock.patch.object(reportStateAPI.client, 'call'),
+            mock.patch.object(reportStateAPI.client, 'cast'),
+            mock.patch.object(reportStateAPI.client, 'prepare'),
+        ) as (
+            mock_call, mock_cast, mock_prepare
+        ):
+            mock_prepare.return_value = reportStateAPI.client
             ctxt = context.RequestContext('fake_user', 'fake_project')
             reportStateAPI.report_state(ctxt, expected_agent_state,
                                         use_call=True)
-            self.assertEqual(call.call_args[0][0], ctxt)
-            self.assertEqual(call.call_args[0][1]['method'],
-                             'report_state')
-            self.assertEqual(call.call_args[0][1]['args']['agent_state'],
+            self.assertEqual(mock_call.call_args[0][0], ctxt)
+            self.assertEqual(mock_call.call_args[0][1], 'report_state')
+            self.assertEqual(mock_call.call_args[1]['agent_state'],
                              {'agent_state': expected_agent_state})
-            self.assertIsInstance(call.call_args[0][1]['args']['time'],
-                                  str)
+            self.assertIsInstance(mock_call.call_args[1]['time'], str)
 
     def test_plugin_report_state_cast(self):
         topic = 'test'
         reportStateAPI = rpc.PluginReportStateAPI(topic)
         expected_agent_state = {'agent': 'test'}
-        with mock.patch.object(reportStateAPI, 'cast') as cast:
+        with contextlib.nested(
+            mock.patch.object(reportStateAPI.client, 'call'),
+            mock.patch.object(reportStateAPI.client, 'cast'),
+            mock.patch.object(reportStateAPI.client, 'prepare'),
+        ) as (
+            mock_call, mock_cast, mock_prepare
+        ):
+            mock_prepare.return_value = reportStateAPI.client
             ctxt = context.RequestContext('fake_user', 'fake_project')
             reportStateAPI.report_state(ctxt, expected_agent_state)
-            self.assertEqual(cast.call_args[0][0], ctxt)
-            self.assertEqual(cast.call_args[0][1]['method'],
-                             'report_state')
-            self.assertEqual(cast.call_args[0][1]['args']['agent_state'],
+            self.assertEqual(mock_cast.call_args[0][0], ctxt)
+            self.assertEqual(mock_cast.call_args[0][1], 'report_state')
+            self.assertEqual(mock_cast.call_args[1]['agent_state'],
                              {'agent_state': expected_agent_state})
-            self.assertIsInstance(cast.call_args[0][1]['args']['time'],
-                                  str)
+            self.assertIsInstance(mock_cast.call_args[1]['time'], str)
 
 
 class AgentRPCMethods(base.BaseTestCase):
