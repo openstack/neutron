@@ -1269,6 +1269,72 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertEqual(body['floatingip']['fixed_ip_address'],
                                  ip_address)
 
+    def test_floatingip_create_different_fixed_ip_same_port(self):
+        '''This tests that it is possible to delete a port that has
+        multiple floating ip addresses associated with it (each floating
+        address associated with a unique fixed address).
+        '''
+
+        with self.router() as r:
+            with self.subnet(cidr='11.0.0.0/24') as public_sub:
+                self._set_net_external(public_sub['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+
+                with self.subnet() as private_sub:
+                    ip_range = list(netaddr.IPNetwork(
+                        private_sub['subnet']['cidr']))
+                    fixed_ips = [{'ip_address': str(ip_range[-3])},
+                                 {'ip_address': str(ip_range[-2])}]
+
+                    self._router_interface_action(
+                        'add', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+
+                    with self.port(subnet=private_sub,
+                                   fixed_ips=fixed_ips) as p:
+
+                        fip1 = self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'],
+                            p['port']['id'],
+                            fixed_ip=str(ip_range[-2]))
+                        fip2 = self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'],
+                            p['port']['id'],
+                            fixed_ip=str(ip_range[-3]))
+
+                        # Test that floating ips are assigned successfully.
+                        body = self._show('floatingips',
+                                          fip1['floatingip']['id'])
+                        self.assertEqual(
+                            body['floatingip']['port_id'],
+                            fip1['floatingip']['port_id'])
+
+                        body = self._show('floatingips',
+                                          fip2['floatingip']['id'])
+                        self.assertEqual(
+                            body['floatingip']['port_id'],
+                            fip2['floatingip']['port_id'])
+
+                    # Test that port has been successfully deleted.
+                    body = self._show('ports', p['port']['id'],
+                                      expected_code=exc.HTTPNotFound.code)
+
+                    for fip in [fip1, fip2]:
+                        self._delete('floatingips',
+                                     fip['floatingip']['id'])
+
+                    self._router_interface_action(
+                        'remove', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+
     def test_floatingip_update_different_fixed_ip_same_port(self):
         with self.subnet() as s:
             ip_range = list(netaddr.IPNetwork(s['subnet']['cidr']))
