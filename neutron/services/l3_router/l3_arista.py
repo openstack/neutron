@@ -29,6 +29,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_gwmode_db
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.plugins.ml2.driver_context import NetworkContext  # noqa
@@ -109,8 +110,8 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             return new_router
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("Error creating router on Arista HW "
-                            "router=%s ") % new_router)
+                LOG.error(_LE("Error creating router on Arista HW router=%s "),
+                          new_router)
                 super(AristaL3ServicePlugin, self).delete_router(context,
                                                     new_router['id'])
 
@@ -132,8 +133,8 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                       original_router, new_router)
             return new_router
         except Exception:
-            LOG.error(_("Error updating router on Arista HW "
-                        "router=%s ") % new_router)
+            LOG.error(_LE("Error updating router on Arista HW router=%s "),
+                      new_router)
 
     @log.log
     def delete_router(self, context, router_id):
@@ -147,8 +148,8 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self.driver.delete_router(context, tenant_id, router_id, router)
         except Exception as e:
-            LOG.error(_("Error deleting router on Arista HW "
-                        "router %(r)s exception=%(e)s") %
+            LOG.error(_LE("Error deleting router on Arista HW "
+                          "router %(r)s exception=%(e)s"),
                       {'r': router, 'e': e})
 
         with context.session.begin(subtransactions=True):
@@ -193,8 +194,8 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             return new_router
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("Error Adding subnet %(subnet)s to "
-                            "router %(router_id)s on Arista HW") %
+                LOG.error(_LE("Error Adding subnet %(subnet)s to "
+                              "router %(router_id)s on Arista HW"),
                           {'subnet': subnet, 'router_id': router_id})
                 super(AristaL3ServicePlugin, self).remove_router_interface(
                                                     context,
@@ -227,11 +228,11 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.driver.remove_router_interface(context, router_info)
             return new_router
         except Exception as exc:
-            LOG.error(_("Error removing interface %(interface)s from "
-                        "router %(router_id)s on Arista HW"
-                        "Exception =(exc)s") % {'interface': interface_info,
-                                                'router_id': router_id,
-                                                'exc': exc})
+            LOG.error(_LE("Error removing interface %(interface)s from "
+                          "router %(router_id)s on Arista HW"
+                          "Exception =(exc)s"),
+                      {'interface': interface_info, 'router_id': router_id,
+                       'exc': exc})
 
     def synchronize(self):
         """Synchronizes Router DB from Neturon DB with EOS.
@@ -242,7 +243,7 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         Uses idempotent properties of EOS configuration, which means
         same commands can be repeated.
         """
-        LOG.info(_('Syncing Neutron Router DB <-> EOS'))
+        LOG.info(_LI('Syncing Neutron Router DB <-> EOS'))
         ctx = nctx.get_admin_context()
 
         routers = super(AristaL3ServicePlugin, self).get_routers(ctx)
@@ -273,10 +274,9 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     try:
                         self.driver.add_router_interface(self, r)
                     except Exception:
-                        LOG.error(_("Error Adding interface %(subnet_id)s to "
-                                    "router %(router_id)s on Arista HW") %
-                                  {'subnet_id': subnet_id,
-                                   'router_id': r})
+                        LOG.error(_LE("Error Adding interface %(subnet_id)s "
+                                      "to router %(router_id)s on Arista HW"),
+                                  {'subnet_id': subnet_id, 'router_id': r})
 
     def _validate_interface_info(self, interface_info):
         port_id_specified = interface_info and 'port_id' in interface_info
