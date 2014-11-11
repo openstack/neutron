@@ -15,6 +15,7 @@
 
 from neutron.agent.linux import iptables_manager
 from neutron.extensions import firewall as fw_ext
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.services.firewall.drivers import fwaas_base
 
@@ -46,10 +47,10 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
     """IPTables driver for Firewall As A Service."""
 
     def __init__(self):
-        LOG.debug(_("Initializing fwaas iptables driver"))
+        LOG.debug("Initializing fwaas iptables driver")
 
     def create_firewall(self, agent_mode, apply_list, firewall):
-        LOG.debug(_('Creating firewall %(fw_id)s for tenant %(tid)s)'),
+        LOG.debug('Creating firewall %(fw_id)s for tenant %(tid)s)',
                   {'fw_id': firewall['id'], 'tid': firewall['tenant_id']})
         try:
             if firewall['admin_state_up']:
@@ -58,7 +59,7 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
                 self.apply_default_policy(agent_mode, apply_list, firewall)
         except (LookupError, RuntimeError):
             # catch known library exceptions and raise Fwaas generic exception
-            LOG.exception(_("Failed to create firewall: %s"), firewall['id'])
+            LOG.exception(_LE("Failed to create firewall: %s"), firewall['id'])
             raise fw_ext.FirewallInternalDriverError(driver=FWAAS_DRIVER_NAME)
 
     def _get_ipt_mgrs_with_if_prefix(self, agent_mode, router_info):
@@ -87,7 +88,7 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
         return ipt_mgrs
 
     def delete_firewall(self, agent_mode, apply_list, firewall):
-        LOG.debug(_('Deleting firewall %(fw_id)s for tenant %(tid)s)'),
+        LOG.debug('Deleting firewall %(fw_id)s for tenant %(tid)s)',
                   {'fw_id': firewall['id'], 'tid': firewall['tenant_id']})
         fwid = firewall['id']
         try:
@@ -102,11 +103,11 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
                     ipt_mgr.defer_apply_off()
         except (LookupError, RuntimeError):
             # catch known library exceptions and raise Fwaas generic exception
-            LOG.exception(_("Failed to delete firewall: %s"), fwid)
+            LOG.exception(_LE("Failed to delete firewall: %s"), fwid)
             raise fw_ext.FirewallInternalDriverError(driver=FWAAS_DRIVER_NAME)
 
     def update_firewall(self, agent_mode, apply_list, firewall):
-        LOG.debug(_('Updating firewall %(fw_id)s for tenant %(tid)s)'),
+        LOG.debug('Updating firewall %(fw_id)s for tenant %(tid)s)',
                   {'fw_id': firewall['id'], 'tid': firewall['tenant_id']})
         try:
             if firewall['admin_state_up']:
@@ -115,11 +116,11 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
                 self.apply_default_policy(agent_mode, apply_list, firewall)
         except (LookupError, RuntimeError):
             # catch known library exceptions and raise Fwaas generic exception
-            LOG.exception(_("Failed to update firewall: %s"), firewall['id'])
+            LOG.exception(_LE("Failed to update firewall: %s"), firewall['id'])
             raise fw_ext.FirewallInternalDriverError(driver=FWAAS_DRIVER_NAME)
 
     def apply_default_policy(self, agent_mode, apply_list, firewall):
-        LOG.debug(_('Applying firewall %(fw_id)s for tenant %(tid)s)'),
+        LOG.debug('Applying firewall %(fw_id)s for tenant %(tid)s)',
                   {'fw_id': firewall['id'], 'tid': firewall['tenant_id']})
         fwid = firewall['id']
         try:
@@ -140,8 +141,8 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
                     ipt_mgr.defer_apply_off()
         except (LookupError, RuntimeError):
             # catch known library exceptions and raise Fwaas generic exception
-            LOG.exception(_("Failed to apply default policy on firewall: %s"),
-                          fwid)
+            LOG.exception(
+                _LE("Failed to apply default policy on firewall: %s"), fwid)
             raise fw_ext.FirewallInternalDriverError(driver=FWAAS_DRIVER_NAME)
 
     def _setup_firewall(self, agent_mode, apply_list, firewall):

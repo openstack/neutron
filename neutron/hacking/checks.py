@@ -57,6 +57,7 @@ def _directory_to_check_translation(filename):
             "neutron/openstack",
             "neutron/scheduler",
             "neutron/server",
+            "neutron/services/firewall",
             "neutron/services/l3_router"]
     return any([dir in filename for dir in dirs])
 
