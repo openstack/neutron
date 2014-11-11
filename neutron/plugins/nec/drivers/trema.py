@@ -13,7 +13,9 @@
 #    under the License.
 
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.common import ofc_client
+from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec import ofc_driver_base
 
 
@@ -66,8 +68,19 @@ class TremaFilterDriverMixin(object):
     def filter_supported(cls):
         return True
 
-    def create_filter(self, ofc_network_id, filter_dict,
-                      portinfo=None, filter_id=None, apply_ports=None):
+    def create_filter(self, context, filter_dict, filter_id=None):
+        ofc_network_id = ndb.get_ofc_id(context.session, "ofc_network",
+                                        filter_dict['network_id'])
+        # Prepare portinfo
+        in_port_id = filter_dict.get('in_port')
+        if in_port_id:
+            portinfo = ndb.get_portinfo(context.session, in_port_id)
+            if not portinfo:
+                raise nexc.PortInfoNotFound(id=in_port_id)
+        else:
+            portinfo = None
+
+        # Prepare filter body
         if filter_dict['action'].upper() in ["ACCEPT", "ALLOW"]:
             ofc_action = "ALLOW"
         elif filter_dict['action'].upper() in ["DROP", "DENY"]:

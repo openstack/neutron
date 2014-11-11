@@ -16,7 +16,6 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
-from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec.db import packetfilter as pf_db
 
 
@@ -162,16 +161,12 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
                     "packet_filter=%s."), packet_filter)
 
         pf_id = packet_filter['id']
-        in_port_id = packet_filter.get('in_port')
         current = packet_filter['status']
 
         pf_status = current
         if not packet_filter['admin_state_up']:
             LOG.debug(_("activate_packet_filter_if_ready(): skip pf_id=%s, "
                         "packet_filter.admin_state_up is False."), pf_id)
-        elif in_port_id and not ndb.get_portinfo(context.session, in_port_id):
-            LOG.debug(_("activate_packet_filter_if_ready(): skip "
-                        "pf_id=%s, no portinfo for the in_port."), pf_id)
         elif self.ofc.exists_ofc_packet_filter(context, packet_filter['id']):
             LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
                         "ofc_packet_filter already exists."))
@@ -182,6 +177,9 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
                 self.ofc.create_ofc_packet_filter(context, pf_id,
                                                   packet_filter)
                 pf_status = pf_db.PF_STATUS_ACTIVE
+            except nexc.PortInfoNotFound:
+                LOG.debug(_("Skipped to create a packet filter pf_id=%s "
+                            "on OFC, no portinfo for the in_port."), pf_id)
             except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
                 LOG.error(_("Failed to create packet_filter id=%(id)s on "
                             "OFC: %(exc)s"), {'id': pf_id, 'exc': exc})

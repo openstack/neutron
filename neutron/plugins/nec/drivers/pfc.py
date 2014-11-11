@@ -22,7 +22,9 @@ from neutron.common import constants
 from neutron.common import exceptions as qexc
 from neutron.common import log as call_log
 from neutron import manager
+from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import ofc_client
+from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec.extensions import packetfilter as ext_pf
 from neutron.plugins.nec import ofc_driver_base
 
@@ -168,6 +170,21 @@ class PFCFilterDriverMixin(object):
             elif not create:
                 body[key] = ""
 
+    def _extract_ofc_filter_port_id(self, ofc_port_id):
+        """Return ofc port id description for packet filter.
+
+        It returns either of the following format:
+        {'tenant': xxxx, 'network': xxxx, 'port': xxxx} or
+        {'tenant': xxxx, 'router': xxxx, 'interface': xxxx}
+        If no matching ofc id is found, InvalidOFCIdFormat is raised.
+        """
+        if config.OFC.support_packet_filter_on_ofc_router:
+            try:
+                return self._extract_ofc_router_inf_id(ofc_port_id)
+            except InvalidOFCIdFormat:
+                pass
+        return self._extract_ofc_port_id(ofc_port_id)
+
     def _generate_body(self, filter_dict, apply_ports=None, create=True):
         body = {}
 
@@ -214,7 +231,8 @@ class PFCFilterDriverMixin(object):
             body['apply_ports'] = []
             for p in apply_ports:
                 try:
-                    body['apply_ports'].append(self._extract_ofc_port_id(p[1]))
+                    _ofc_id = self._extract_ofc_filter_port_id(p[1])
+                    body['apply_ports'].append(_ofc_id)
                 except InvalidOFCIdFormat:
                     pass
 
@@ -257,8 +275,11 @@ class PFCFilterDriverMixin(object):
         self._validate_filter_common(filter_dict)
 
     @call_log.log
-    def create_filter(self, ofc_network_id, filter_dict,
-                      portinfo=None, filter_id=None, apply_ports=None):
+    def create_filter(self, context, filter_dict, filter_id=None):
+        in_port_id = filter_dict.get('in_port')
+        apply_ports = ndb.get_active_ports_on_ofc(
+            context, filter_dict['network_id'], in_port_id)
+
         body = self._generate_body(filter_dict, apply_ports, create=True)
         res = self.client.post(self.filters_path, body=body)
         # filter_id passed from a caller is not used.
@@ -282,16 +303,24 @@ class PFCFilterDriverMixin(object):
             return match.group('filter_id')
         raise InvalidOFCIdFormat(resource='filter', ofc_id=ofc_filter_id)
 
-    def convert_ofc_filter_id(self, context, ofc_filter_id):
-        # PFC Packet Filter is supported after the format of mapping tables
-        # are changed, so it is enough just to return ofc_filter_id
-        return ofc_filter_id
-
 
 class PFCRouterDriverMixin(object):
 
     router_supported = True
     router_nat_supported = False
+
+    match_ofc_router_inf_id = re.compile(
+        "^/tenants/(?P<tenant_id>[^/]+)/routers/(?P<router_id>[^/]+)"
+        "/interfaces/(?P<router_inf_id>[^/]+)$")
+
+    def _extract_ofc_router_inf_id(self, ofc_router_inf_id):
+        match = self.match_ofc_router_inf_id.match(ofc_router_inf_id)
+        if match:
+            return {'tenant': match.group('tenant_id'),
+                    'router': match.group('router_id'),
+                    'interface': match.group('router_inf_id')}
+        raise InvalidOFCIdFormat(resource='router-interface',
+                                 ofc_id=ofc_router_inf_id)
 
     def create_router(self, ofc_tenant_id, router_id, description):
         path = '%s/routers' % ofc_tenant_id

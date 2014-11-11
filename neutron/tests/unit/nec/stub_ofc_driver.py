@@ -142,8 +142,7 @@ class StubOFCDriver(ofc_driver_base.OFCDriverBase):
     def filter_supported(cls):
         return True
 
-    def create_filter(self, ofc_network_id, filter_dict,
-                      portinfo=None, filter_id=None, apply_ports=None):
+    def create_filter(self, context, filter_dict, filter_id=None):
         return "ofc-" + filter_id[:-4]
 
     def delete_filter(self, ofc_filter_id):
