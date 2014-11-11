@@ -120,7 +120,7 @@ class AgentMechanismBaseTestCase(base.BaseTestCase):
     # The following must be overridden for the specific mechanism
     # driver being tested:
     VIF_TYPE = None
-    CAP_PORT_FILTER = None
+    VIF_DETAILS = None
     AGENT_TYPE = None
     AGENTS = None
     AGENTS_DEAD = None
@@ -136,8 +136,17 @@ class AgentMechanismBaseTestCase(base.BaseTestCase):
         self.assertEqual(context._bound_vif_type, self.VIF_TYPE)
         vif_details = context._bound_vif_details
         self.assertIsNotNone(vif_details)
-        self.assertEqual(vif_details[portbindings.CAP_PORT_FILTER],
-                         self.CAP_PORT_FILTER)
+        # NOTE(r-mibu): The following five lines are just for backward
+        # compatibility.  In this class, HAS_PORT_FILTER has been replaced
+        # by VIF_DETAILS which can be set expected vif_details to check,
+        # but all replacement of HAS_PORT_FILTER in successor has not been
+        # completed.
+        if self.VIF_DETAILS is None:
+            expected = getattr(self, 'CAP_PORT_FILTER', None)
+            port_filter = vif_details[portbindings.CAP_PORT_FILTER]
+            self.assertEqual(expected, port_filter)
+            return
+        self.assertEqual(self.VIF_DETAILS, vif_details)
 
 
 class AgentMechanismGenericTestCase(AgentMechanismBaseTestCase):
