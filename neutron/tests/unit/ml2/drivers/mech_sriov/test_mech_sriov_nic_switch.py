@@ -25,7 +25,7 @@ from neutron.plugins.ml2.drivers.mech_sriov import mech_driver
 from neutron.tests.unit.ml2 import _test_mech_agent as base
 
 MELLANOX_CONNECTX3_PCI_INFO = '15b3:1004'
-DEFAULT_PCI_INFO = ['15b3:1004', '8086:10c9']
+DEFAULT_PCI_INFO = ['15b3:1004', '8086:10ca']
 
 
 class TestFakePortContext(base.FakePortContext):
