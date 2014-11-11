@@ -77,7 +77,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule(
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.ensure_remove_chain('sg-chain'),
+                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
@@ -904,7 +904,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'sg-fallback',
                      '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.ensure_remove_chain('sg-chain'),
+                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
@@ -1011,7 +1011,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'sg-fallback',
                      '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.ensure_remove_chain('sg-chain'),
+                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule(
@@ -1082,10 +1082,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'ofake_dev',
                      '-j $sg-fallback', comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT'),
-                 mock.call.ensure_remove_chain('ifake_dev'),
-                 mock.call.ensure_remove_chain('ofake_dev'),
-                 mock.call.ensure_remove_chain('sfake_dev'),
-                 mock.call.ensure_remove_chain('sg-chain'),
+                 mock.call.remove_chain('ifake_dev'),
+                 mock.call.remove_chain('ofake_dev'),
+                 mock.call.remove_chain('sfake_dev'),
+                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule(
@@ -1156,10 +1156,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     '-j $sg-fallback',
                                     comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT'),
-                 mock.call.ensure_remove_chain('ifake_dev'),
-                 mock.call.ensure_remove_chain('ofake_dev'),
-                 mock.call.ensure_remove_chain('sfake_dev'),
-                 mock.call.ensure_remove_chain('sg-chain'),
+                 mock.call.remove_chain('ifake_dev'),
+                 mock.call.remove_chain('ofake_dev'),
+                 mock.call.remove_chain('sfake_dev'),
+                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain')]
 
         self.v4filter_inst.assert_has_calls(calls)
@@ -1259,7 +1259,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule(
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.ensure_remove_chain('sg-chain'),
+                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
@@ -1338,7 +1338,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule(
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.ensure_remove_chain('sg-chain'),
+                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',

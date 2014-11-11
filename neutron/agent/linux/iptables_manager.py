@@ -138,19 +138,6 @@ class IptablesTable(object):
         else:
             return self.unwrapped_chains
 
-    def ensure_remove_chain(self, name, wrap=True):
-        """Ensure the chain is removed.
-
-        This removal "cascades". All rule in the chain are removed, as are
-        all rules in other chains that jump to it.
-        """
-        name = get_chain_name(name, wrap)
-        chain_set = self._select_chain_set(wrap)
-        if name not in chain_set:
-            return
-
-        self.remove_chain(name, wrap)
-
     def remove_chain(self, name, wrap=True):
         """Remove named chain.
 

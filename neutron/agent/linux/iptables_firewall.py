@@ -159,8 +159,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.ipv4['filter'].add_chain(chain_name)
 
     def _remove_chain_by_name_v4v6(self, chain_name):
-        self.iptables.ipv4['filter'].ensure_remove_chain(chain_name)
-        self.iptables.ipv6['filter'].ensure_remove_chain(chain_name)
+        self.iptables.ipv4['filter'].remove_chain(chain_name)
+        self.iptables.ipv6['filter'].remove_chain(chain_name)
 
     def _add_rule_to_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules,
                                 comment=None):
