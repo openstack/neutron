@@ -22,6 +22,7 @@ from sqlalchemy import sql
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.openstack.common.gettextutils import _LI, _LW
 from neutron.openstack.common import log as logging
 
 
@@ -48,9 +49,9 @@ class ChanceScheduler(object):
             except db_exc.DBDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 context.session.rollback()
-                LOG.info(_('Agent %s already present'), agent)
-            LOG.debug(_('Network %(network_id)s is scheduled to be '
-                        'hosted by DHCP agent %(agent_id)s'),
+                LOG.info(_LI('Agent %s already present'), agent)
+            LOG.debug('Network %(network_id)s is scheduled to be '
+                      'hosted by DHCP agent %(agent_id)s',
                       {'network_id': network_id,
                        'agent_id': agent})
 
@@ -67,7 +68,7 @@ class ChanceScheduler(object):
             dhcp_agents = plugin.get_dhcp_agents_hosting_networks(
                 context, [network['id']], active=True)
             if len(dhcp_agents) >= agents_per_network:
-                LOG.debug(_('Network %s is hosted already'),
+                LOG.debug('Network %s is hosted already',
                           network['id'])
                 return
             n_agents = agents_per_network - len(dhcp_agents)
@@ -76,7 +77,7 @@ class ChanceScheduler(object):
                     'agent_type': [constants.AGENT_TYPE_DHCP],
                     'admin_state_up': [True]})
             if not enabled_dhcp_agents:
-                LOG.warn(_('No more DHCP agents'))
+                LOG.warn(_LW('No more DHCP agents'))
                 return
             active_dhcp_agents = [
                 agent for agent in set(enabled_dhcp_agents)
@@ -85,7 +86,7 @@ class ChanceScheduler(object):
                 and agent not in dhcp_agents
             ]
             if not active_dhcp_agents:
-                LOG.warn(_('No more DHCP agents'))
+                LOG.warn(_LW('No more DHCP agents'))
                 return
             n_agents = min(len(active_dhcp_agents), n_agents)
             chosen_agents = random.sample(active_dhcp_agents, n_agents)
@@ -105,7 +106,7 @@ class ChanceScheduler(object):
             net_ids = set(s['network_id'] for s in subnets
                           if s['enable_dhcp'])
             if not net_ids:
-                LOG.debug(_('No non-hosted networks'))
+                LOG.debug('No non-hosted networks')
                 return False
             query = context.session.query(agents_db.Agent)
             query = query.filter(agents_db.Agent.agent_type ==
@@ -116,7 +117,7 @@ class ChanceScheduler(object):
             for dhcp_agent in dhcp_agents:
                 if agents_db.AgentDbMixin.is_agent_down(
                     dhcp_agent.heartbeat_timestamp):
-                    LOG.warn(_('DHCP agent %s is not active'), dhcp_agent.id)
+                    LOG.warn(_LW('DHCP agent %s is not active'), dhcp_agent.id)
                     continue
                 for net_id in net_ids:
                     agents = plugin.get_dhcp_agents_hosting_networks(
