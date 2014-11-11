@@ -214,13 +214,18 @@ class RootHelperProcess(subprocess.Popen):
 class NetcatTester(object):
     TESTING_STRING = 'foo'
 
-    def __init__(self, client_namespace, server_namespace, address, port,
-                 root_helper='', udp=False):
+    def __init__(
+            self, client_namespace, server_namespace, server_address, port,
+            client_address=None, root_helper='', udp=False):
         self.client_namespace = client_namespace
         self.server_namespace = server_namespace
         self._client_process = None
         self._server_process = None
-        self.address = address
+        # Use client_address to specify an address to connect client to that is
+        # different from the one that server side is going to listen on (useful
+        # when testing floating IPs)
+        self.client_address = client_address or server_address
+        self.server_address = server_address
         self.port = str(port)
         self.root_helper = root_helper
         self.udp = udp
@@ -231,7 +236,8 @@ class NetcatTester(object):
             if not self._server_process:
                 self._spawn_server_process()
             self._client_process = self._spawn_nc_in_namespace(
-                self.client_namespace.namespace)
+                self.client_namespace.namespace,
+                address=self.client_address)
         return self._client_process
 
     @property
@@ -242,7 +248,9 @@ class NetcatTester(object):
 
     def _spawn_server_process(self):
         self._server_process = self._spawn_nc_in_namespace(
-            self.server_namespace.namespace, listen=True)
+            self.server_namespace.namespace,
+            address=self.server_address,
+            listen=True)
 
     def test_connectivity(self, respawn=False):
         stop_required = (respawn and self._client_process and
@@ -257,8 +265,8 @@ class NetcatTester(object):
 
         return message == self.TESTING_STRING
 
-    def _spawn_nc_in_namespace(self, namespace, listen=False):
-        cmd = ['nc', self.address, self.port]
+    def _spawn_nc_in_namespace(self, namespace, address, listen=False):
+        cmd = ['nc', address, self.port]
         if self.udp:
             cmd.append('-u')
         if listen:
