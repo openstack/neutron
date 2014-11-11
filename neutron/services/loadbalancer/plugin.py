@@ -20,6 +20,7 @@ from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import loadbalancer
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer import agent_scheduler
@@ -75,9 +76,9 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
                               if pool['provider'] not in provider_names])
         # resources are left without provider - stop the service
         if lost_providers:
-            msg = _("Delete associated loadbalancer pools before "
-                    "removing providers %s") % list(lost_providers)
-            LOG.exception(msg)
+            LOG.exception(_LE("Delete associated loadbalancer pools before "
+                              "removing providers %s"),
+                          list(lost_providers))
             raise SystemExit(1)
 
     def _get_driver_for_provider(self, provider):
@@ -183,7 +184,8 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
             # that should not happen
             # if it's still a case - something goes wrong
             # log the error and mark the pool as ERROR
-            LOG.error(_('Failed to delete pool %s, putting it in ERROR state'),
+            LOG.error(_LE('Failed to delete pool %s, putting it in ERROR '
+                          'state'),
                       id)
             with excutils.save_and_reraise_exception():
                 self.update_status(context, ldb.Pool,

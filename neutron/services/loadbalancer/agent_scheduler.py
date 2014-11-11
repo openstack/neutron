@@ -24,6 +24,7 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import model_base
 from neutron.extensions import lbaas_agentscheduler
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -98,21 +99,21 @@ class ChanceScheduler(object):
             lbaas_agent = plugin.get_lbaas_agent_hosting_pool(
                 context, pool['id'])
             if lbaas_agent:
-                LOG.debug(_('Pool %(pool_id)s has already been hosted'
-                            ' by lbaas agent %(agent_id)s'),
+                LOG.debug('Pool %(pool_id)s has already been hosted'
+                          ' by lbaas agent %(agent_id)s',
                           {'pool_id': pool['id'],
                            'agent_id': lbaas_agent['id']})
                 return
 
             active_agents = plugin.get_lbaas_agents(context, active=True)
             if not active_agents:
-                LOG.warn(_('No active lbaas agents for pool %s'), pool['id'])
+                LOG.warn(_LW('No active lbaas agents for pool %s'), pool['id'])
                 return
 
             candidates = plugin.get_lbaas_agent_candidates(device_driver,
                                                            active_agents)
             if not candidates:
-                LOG.warn(_('No lbaas agent supporting device driver %s'),
+                LOG.warn(_LW('No lbaas agent supporting device driver %s'),
                          device_driver)
                 return
 
@@ -121,8 +122,8 @@ class ChanceScheduler(object):
             binding.agent = chosen_agent
             binding.pool_id = pool['id']
             context.session.add(binding)
-            LOG.debug(_('Pool %(pool_id)s is scheduled to '
-                        'lbaas agent %(agent_id)s'),
+            LOG.debug('Pool %(pool_id)s is scheduled to lbaas agent '
+                      '%(agent_id)s',
                       {'pool_id': pool['id'],
                        'agent_id': chosen_agent['id']})
             return chosen_agent

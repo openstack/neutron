@@ -24,6 +24,7 @@ from neutron.db import agents_db
 from neutron.db.loadbalancer import loadbalancer_db
 from neutron.extensions import lbaas_agentscheduler
 from neutron.extensions import portbindings
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -67,7 +68,8 @@ class LoadBalancerCallbacks(n_rpc.RpcCallback):
             if not agents:
                 return []
             elif len(agents) > 1:
-                LOG.warning(_('Multiple lbaas agents found on host %s'), host)
+                LOG.warning(_LW('Multiple lbaas agents found on host %s'),
+                            host)
             pools = self.plugin.list_pools_on_lbaas_agent(context,
                                                           agents[0].id)
             pool_ids = [pool['id'] for pool in pools['pools']]
@@ -158,9 +160,9 @@ class LoadBalancerCallbacks(n_rpc.RpcCallback):
         except n_exc.NotFound:
             # update_status may come from agent on an object which was
             # already deleted from db with other request
-            LOG.warning(_('Cannot update status: %(obj_type)s %(obj_id)s '
-                          'not found in the DB, it was probably deleted '
-                          'concurrently'),
+            LOG.warning(_LW('Cannot update status: %(obj_type)s %(obj_id)s '
+                            'not found in the DB, it was probably deleted '
+                            'concurrently'),
                         {'obj_type': obj_type, 'obj_id': obj_id})
 
     def pool_destroyed(self, context, pool_id=None):
@@ -181,8 +183,7 @@ class LoadBalancerCallbacks(n_rpc.RpcCallback):
                 port_id
             )
         except n_exc.PortNotFound:
-            msg = _('Unable to find port %s to plug.')
-            LOG.debug(msg, port_id)
+            LOG.debug('Unable to find port %s to plug.', port_id)
             return
 
         port['admin_state_up'] = True
@@ -205,9 +206,9 @@ class LoadBalancerCallbacks(n_rpc.RpcCallback):
                 port_id
             )
         except n_exc.PortNotFound:
-            msg = _('Unable to find port %s to unplug.  This can occur when '
-                    'the Vip has been deleted first.')
-            LOG.debug(msg, port_id)
+            LOG.debug('Unable to find port %s to unplug. This can occur when '
+                      'the Vip has been deleted first.',
+                      port_id)
             return
 
         port['admin_state_up'] = False
@@ -222,9 +223,9 @@ class LoadBalancerCallbacks(n_rpc.RpcCallback):
             )
 
         except n_exc.PortNotFound:
-            msg = _('Unable to find port %s to unplug.  This can occur when '
-                    'the Vip has been deleted first.')
-            LOG.debug(msg, port_id)
+            LOG.debug('Unable to find port %s to unplug.  This can occur when '
+                      'the Vip has been deleted first.',
+                      port_id)
 
     def update_pool_stats(self, context, pool_id=None, stats=None, host=None):
         self.plugin.update_pool_stats(context, pool_id, data=stats)

@@ -33,6 +33,7 @@ from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as lb_db
 from neutron.extensions import loadbalancer
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers import abstract_driver
@@ -227,9 +228,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                 self.l4_action_name, ext_vip, context)
 
         finally:
-            LOG.debug(_('vip: %(vip)s, '
-                        'extended_vip: %(extended_vip)s, '
-                        'service_name: %(service_name)s, '),
+            LOG.debug('vip: %(vip)s, extended_vip: %(extended_vip)s, '
+                      'service_name: %(service_name)s, ',
                       log_info)
 
     def update_vip(self, context, old_vip, vip):
@@ -261,16 +261,15 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             ports = self.plugin._core_plugin.get_ports(context,
                                                        filters=port_filter)
             if ports:
-                LOG.debug(_('Retrieved pip nport: %(port)r for '
-                            'vip: %(vip)s'), {'port': ports[0],
-                                              'vip': vip['id']})
+                LOG.debug('Retrieved pip nport: %(port)r for vip: %(vip)s',
+                          {'port': ports[0], 'vip': vip['id']})
 
                 delete_pip_nport_function = self._get_delete_pip_nports(
                     context, ports)
             else:
                 delete_pip_nport_function = None
-                LOG.debug(_('Found no pip nports associated with '
-                            'vip: %s'), vip['id'])
+                LOG.debug('Found no pip nports associated with vip: %s',
+                          vip['id'])
 
             # removing the WF will cause deletion of the configuration from the
             # device
@@ -278,8 +277,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
 
         except r_exc.RESTRequestFailure:
             pool_id = ext_vip['pool_id']
-            LOG.exception(_('Failed to remove workflow %s. '
-                            'Going to set vip to ERROR status'),
+            LOG.exception(_LE('Failed to remove workflow %s. '
+                              'Going to set vip to ERROR status'),
                           pool_id)
 
             self.plugin.update_status(context, lb_db.Vip, ids['vip'],
@@ -292,11 +291,11 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                     try:
                         self.plugin._core_plugin.delete_port(
                             context, port['id'])
-                        LOG.debug(_('pip nport id: %s'), port['id'])
+                        LOG.debug('pip nport id: %s', port['id'])
                     except Exception as exception:
                         # stop exception propagation, nport may have
                         # been deleted by other means
-                        LOG.warning(_('pip nport delete failed: %r'),
+                        LOG.warning(_LW('pip nport delete failed: %r'),
                                     exception)
         return _delete_pip_nports
 
@@ -384,9 +383,9 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
 
         debug_params = {"hm_id": health_monitor['id'], "pool_id": pool_id,
                         "delete": delete, "vip_id": vip_id}
-        LOG.debug(_('_handle_pool_health_monitor. health_monitor = %(hm_id)s '
-                    'pool_id = %(pool_id)s delete = %(delete)s '
-                    'vip_id = %(vip_id)s'),
+        LOG.debug('_handle_pool_health_monitor. health_monitor = %(hm_id)s '
+                  'pool_id = %(pool_id)s delete = %(delete)s '
+                  'vip_id = %(vip_id)s',
                   debug_params)
 
         if vip_id:
@@ -415,7 +414,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
 
     def _start_completion_handling_thread(self):
         if not self.completion_handler_started:
-            LOG.info(_('Starting operation completion handling thread'))
+            LOG.info(_LI('Starting operation completion handling thread'))
             self.completion_handler.start()
             self.completion_handler_started = True
 
@@ -445,7 +444,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         response = _rest_wrapper(self.rest_client.call('POST', resource,
                                  {'parameters': params},
                                  TEMPLATE_HEADER))
-        LOG.debug(_('_update_workflow response: %s '), response)
+        LOG.debug('_update_workflow response: %s ', response)
 
         if action not in self.actions_to_skip:
             ids = params.pop('__ids__', None)
@@ -454,7 +453,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                                        lbaas_entity,
                                        entity_id,
                                        delete=delete)
-            LOG.debug(_('Pushing operation %s to the queue'), oper)
+            LOG.debug('Pushing operation %s to the queue', oper)
 
             self._start_completion_handling_thread()
             self.queue.put_nowait(oper)
@@ -462,7 +461,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
     def _remove_workflow(self, ids, context, post_remove_function):
 
         wf_name = ids['pool']
-        LOG.debug(_('Remove the workflow %s') % wf_name)
+        LOG.debug('Remove the workflow %s' % wf_name)
         resource = '/api/workflow/%s' % (wf_name)
         rest_return = self.rest_client.call('DELETE', resource, None, None)
         response = _rest_wrapper(rest_return, [204, 202, 404])
@@ -470,12 +469,12 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             if post_remove_function:
                 try:
                     post_remove_function(True)
-                    LOG.debug(_('Post-remove workflow function '
-                                '%r completed'), post_remove_function)
+                    LOG.debug('Post-remove workflow function %r completed',
+                              post_remove_function)
                 except Exception:
                     with excutils.save_and_reraise_exception():
-                        LOG.exception(_('Post-remove workflow function '
-                                        '%r failed'), post_remove_function)
+                        LOG.exception(_LE('Post-remove workflow function '
+                                          '%r failed'), post_remove_function)
             self.plugin._delete_db_vip(context, ids['vip'])
         else:
             oper = OperationAttributes(
@@ -485,7 +484,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                 ids['vip'],
                 delete=True,
                 post_op_function=post_remove_function)
-            LOG.debug(_('Pushing operation %s to the queue'), oper)
+            LOG.debug('Pushing operation %s to the queue', oper)
 
             self._start_completion_handling_thread()
             self.queue.put_nowait(oper)
@@ -591,7 +590,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                                                            resource,
                                                            params,
                                                            TEMPLATE_HEADER))
-            LOG.debug(_('create_workflow response: %s'), str(response))
+            LOG.debug('create_workflow response: %s', response)
 
     def _verify_workflow_templates(self):
         """Verify the existence of workflows on vDirect server."""
@@ -680,14 +679,14 @@ class vDirectRESTClient:
                         'sec_server': self.secondary_server,
                         'port': self.port,
                         'ssl': self.ssl}
-        LOG.debug(_('vDirectRESTClient:init server=%(server)s, '
-                    'secondary server=%(sec_server)s, '
-                    'port=%(port)d, '
-                    'ssl=%(ssl)r'), debug_params)
+        LOG.debug('vDirectRESTClient:init server=%(server)s, '
+                  'secondary server=%(sec_server)s, '
+                  'port=%(port)d, ssl=%(ssl)r',
+                  debug_params)
 
     def _flip_servers(self):
-        LOG.warning(_('Fliping servers. Current is: %(server)s, '
-                      'switching to %(secondary)s'),
+        LOG.warning(_LW('Fliping servers. Current is: %(server)s, '
+                        'switching to %(secondary)s'),
                     {'server': self.server,
                      'secondary': self.secondary_server})
         self.server, self.secondary_server = self.secondary_server, self.server
@@ -699,19 +698,19 @@ class vDirectRESTClient:
                               headers, binary)
             return resp
         else:
-            LOG.exception(_('REST client is not able to recover '
-                            'since only one vDirect server is '
+            LOG.exception(_LE('REST client is not able to recover '
+                              'since only one vDirect server is '
                             'configured.'))
             return -1, None, None, None
 
     def call(self, action, resource, data, headers, binary=False):
         resp = self._call(action, resource, data, headers, binary)
         if resp[RESP_STATUS] == -1:
-            LOG.warning(_('vDirect server is not responding (%s).'),
+            LOG.warning(_LW('vDirect server is not responding (%s).'),
                         self.server)
             return self._recover(action, resource, data, headers, binary)
         elif resp[RESP_STATUS] in (301, 307):
-            LOG.warning(_('vDirect server is not active (%s).'),
+            LOG.warning(_LW('vDirect server is not active (%s).'),
                         self.server)
             return self._recover(action, resource, data, headers, binary)
         else:
@@ -739,14 +738,14 @@ class vDirectRESTClient:
             conn = httplib.HTTPSConnection(
                 self.server, self.port, timeout=self.timeout)
             if conn is None:
-                LOG.error(_('vdirectRESTClient: Could not establish HTTPS '
+                LOG.error(_LE('vdirectRESTClient: Could not establish HTTPS '
                           'connection'))
                 return 0, None, None, None
         else:
             conn = httplib.HTTPConnection(
                 self.server, self.port, timeout=self.timeout)
             if conn is None:
-                LOG.error(_('vdirectRESTClient: Could not establish HTTP '
+                LOG.error(_LE('vdirectRESTClient: Could not establish HTTP '
                           'connection'))
                 return 0, None, None, None
 
@@ -763,7 +762,7 @@ class vDirectRESTClient:
             ret = (response.status, response.reason, respstr, respdata)
         except Exception as e:
             log_dict = {'action': action, 'e': e}
-            LOG.error(_('vdirectRESTClient: %(action)s failure, %(e)r'),
+            LOG.error(_LE('vdirectRESTClient: %(action)s failure, %(e)r'),
                       log_dict)
             ret = -1, None, None, None
         conn.close()
@@ -831,9 +830,9 @@ class OperationCompletionHandler(threading.Thread):
             debug_data = {'oper': oper,
                           'sec_to_completion': sec_to_completion,
                           'success': success}
-            LOG.debug(_('Operation %(oper)s is completed after '
+            LOG.debug('Operation %(oper)s is completed after '
                       '%(sec_to_completion)d sec '
-                      'with success status: %(success)s :'),
+                      'with success status: %(success)s :',
                       debug_data)
             db_status = None
             if not success:
@@ -843,7 +842,8 @@ class OperationCompletionHandler(threading.Thread):
                 else:
                     msg = "unknown"
                 error_params = {"operation": oper, "msg": msg}
-                LOG.error(_('Operation %(operation)s failed. Reason: %(msg)s'),
+                LOG.error(_LE('Operation %(operation)s failed. Reason: '
+                              '%(msg)s'),
                           error_params)
                 db_status = constants.ERROR
             else:
@@ -870,12 +870,11 @@ class OperationCompletionHandler(threading.Thread):
                 if self.opers_to_handle_before_rest <= 0:
                     self.opers_to_handle_before_rest = self.queue.qsize() + 1
 
-                LOG.debug('Operation consumed from the queue: ' +
-                          str(oper))
+                LOG.debug('Operation consumed from the queue: %s', oper)
                 # check the status - if oper is done: update the db ,
                 # else push the oper again to the queue
                 if not self.handle_operation_completion(oper):
-                    LOG.debug(_('Operation %s is not completed yet..') % oper)
+                    LOG.debug('Operation %s is not completed yet..', oper)
                     # Not completed - push to the queue again
                     self.queue.put_nowait(oper)
 
@@ -899,15 +898,13 @@ class OperationCompletionHandler(threading.Thread):
             log_data = {'func': oper.post_op_function, 'oper': oper}
             try:
                 oper.post_op_function(success)
-                LOG.debug(_('Post-operation function '
-                            '%(func)r completed '
-                            'after operation %(oper)r'),
+                LOG.debug('Post-operation function %(func)r completed '
+                          'after operation %(oper)r',
                           log_data)
             except Exception:
                 with excutils.save_and_reraise_exception():
-                    LOG.exception(_('Post-operation function '
-                                    '%(func)r failed '
-                                    'after operation %(oper)r'),
+                    LOG.exception(_LE('Post-operation function %(func)r '
+                                      'failed after operation %(oper)r'),
                                   log_data)
 
 
@@ -946,7 +943,7 @@ def _update_vip_graph_status(plugin, oper, status):
 
     ctx = context.get_admin_context(load_admin_roles=False)
 
-    LOG.debug(_('_update: %s '), oper)
+    LOG.debug('_update: %s ', oper)
     if oper.lbaas_entity == lb_db.PoolMonitorAssociation:
         plugin.update_pool_health_monitor(ctx,
                                           oper.entity_id,
@@ -986,7 +983,7 @@ def _update_vip_graph_status_cascade(plugin, ids, ctx, status):
 
 def _remove_object_from_db(plugin, oper):
     """Remove a specific entity from db."""
-    LOG.debug(_('_remove_object_from_db %s'), str(oper))
+    LOG.debug('_remove_object_from_db %s', oper)
 
     ctx = context.get_admin_context(load_admin_roles=False)
 
@@ -1052,7 +1049,7 @@ def _translate_vip_object_graph(extended_vip, plugin, context):
         return ids
 
     trans_vip = {}
-    LOG.debug('Vip graph to be translated: ' + str(extended_vip))
+    LOG.debug('Vip graph to be translated: %s', extended_vip)
     for vip_property in VIP_PROPERTIES:
         trans_vip['vip_' + vip_property] = extended_vip.get(
             vip_property, TRANSLATION_DEFAULTS.get(vip_property))
@@ -1109,5 +1106,5 @@ def _translate_vip_object_graph(extended_vip, plugin, context):
     trans_vip['__ids__'] = ids
     if 'pip_address' in extended_vip:
         trans_vip['pip_address'] = extended_vip['pip_address']
-    LOG.debug('Translated Vip graph: ' + str(trans_vip))
+    LOG.debug('Translated Vip graph: %s', trans_vip)
     return trans_vip

@@ -22,6 +22,7 @@ from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.extensions import loadbalancer as lb_ext
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as pcon
 from neutron.plugins.embrane.common import contexts as embrane_ctx
@@ -126,8 +127,8 @@ class EmbraneLbaas(abstract_driver.LoadBalancerAbstractDriver):
             subnet = self.plugin._core_plugin.get_subnet(context,
                                                          db_pool["subnet_id"])
         except n_exc.SubnetNotFound:
-            LOG.warning(_("Subnet assigned to pool %s doesn't exist, "
-                          "backend port can't be created"), db_pool['id'])
+            LOG.warning(_LW("Subnet assigned to pool %s doesn't exist, "
+                            "backend port can't be created"), db_pool['id'])
             return
 
         fixed_ip = {'subnet_id': subnet['id'],

@@ -20,6 +20,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
@@ -116,7 +117,7 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
         except Exception:
-            LOG.exception(_("Failed reporting state!"))
+            LOG.exception(_LE("Failed reporting state!"))
 
     def initialize_service_hook(self, started_by):
         self.sync_state()
@@ -136,7 +137,7 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
                 if stats:
                     self.plugin_rpc.update_pool_stats(pool_id, stats)
             except Exception:
-                LOG.exception(_('Error updating statistics on pool %s'),
+                LOG.exception(_LE('Error updating statistics on pool %s'),
                               pool_id)
                 self.needs_resync = True
 
@@ -152,7 +153,7 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
                 self._reload_pool(pool_id)
 
         except Exception:
-            LOG.exception(_('Unable to retrieve ready devices'))
+            LOG.exception(_LE('Unable to retrieve ready devices'))
             self.needs_resync = True
 
         self.remove_orphans()
@@ -169,8 +170,7 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
             logical_config = self.plugin_rpc.get_logical_device(pool_id)
             driver_name = logical_config['driver']
             if driver_name not in self.device_drivers:
-                LOG.error(_('No device driver '
-                            'on agent: %s.'), driver_name)
+                LOG.error(_LE('No device driver on agent: %s.'), driver_name)
                 self.plugin_rpc.update_status(
                     'pool', pool_id, constants.ERROR)
                 return
@@ -179,7 +179,8 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
             self.instance_mapping[pool_id] = driver_name
             self.plugin_rpc.pool_deployed(pool_id)
         except Exception:
-            LOG.exception(_('Unable to deploy instance for pool: %s'), pool_id)
+            LOG.exception(_LE('Unable to deploy instance for pool: %s'),
+                          pool_id)
             self.needs_resync = True
 
     def _destroy_pool(self, pool_id):
@@ -189,7 +190,8 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
             del self.instance_mapping[pool_id]
             self.plugin_rpc.pool_destroyed(pool_id)
         except Exception:
-            LOG.exception(_('Unable to destroy device for pool: %s'), pool_id)
+            LOG.exception(_LE('Unable to destroy device for pool: %s'),
+                          pool_id)
             self.needs_resync = True
 
     def remove_orphans(self):
@@ -202,8 +204,8 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
                 pass  # Not all drivers will support this
 
     def _handle_failed_driver_call(self, operation, obj_type, obj_id, driver):
-        LOG.exception(_('%(operation)s %(obj)s %(id)s failed on device driver '
-                        '%(driver)s'),
+        LOG.exception(_LE('%(operation)s %(obj)s %(id)s failed on device '
+                          'driver %(driver)s'),
                       {'operation': operation.capitalize(), 'obj': obj_type,
                        'id': obj_id, 'driver': driver})
         self.plugin_rpc.update_status(obj_type, obj_id, constants.ERROR)
@@ -234,7 +236,7 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
 
     def create_pool(self, context, pool, driver_name):
         if driver_name not in self.device_drivers:
-            LOG.error(_('No device driver on agent: %s.'), driver_name)
+            LOG.error(_LE('No device driver on agent: %s.'), driver_name)
             self.plugin_rpc.update_status('pool', pool['id'], constants.ERROR)
             return
 
@@ -328,7 +330,7 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
                 self.needs_resync = True
             else:
                 for pool_id in self.instance_mapping.keys():
-                    LOG.info(_("Destroying pool %s due to agent disabling"),
+                    LOG.info(_LI("Destroying pool %s due to agent disabling"),
                              pool_id)
                     self._destroy_pool(pool_id)
-            LOG.info(_("Agent_updated by server side %s!"), payload)
+            LOG.info(_LI("Agent_updated by server side %s!"), payload)
