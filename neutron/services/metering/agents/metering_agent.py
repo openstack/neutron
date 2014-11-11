@@ -29,6 +29,7 @@ from neutron.common import topics
 from neutron.common import utils
 from neutron import context
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
@@ -56,7 +57,7 @@ class MeteringPluginRpc(n_rpc.RpcProxy):
                                            host=self.host),
                              topic=topics.METERING_PLUGIN)
         except Exception:
-            LOG.exception(_("Failed synchronizing routers"))
+            LOG.exception(_LE("Failed synchronizing routers"))
 
 
 class MeteringAgent(MeteringPluginRpc, manager.Manager):
@@ -93,7 +94,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
 
     def _load_drivers(self):
         """Loads plugin-driver from configuration."""
-        LOG.info(_("Loading Metering driver %s"), self.conf.driver)
+        LOG.info(_LI("Loading Metering driver %s"), self.conf.driver)
         if not self.conf.driver:
             raise SystemExit(_('A metering driver must be specified'))
         self.metering_driver = importutils.import_object(
@@ -110,7 +111,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
                     'last_update': info['last_update'],
                     'host': self.host}
 
-            LOG.debug(_("Send metering report: %s"), data)
+            LOG.debug("Send metering report: %s", data)
             notifier = n_rpc.get_notifier('metering')
             notifier.info(self.context, 'l3.meter', data)
             info['pkts'] = 0
@@ -174,11 +175,11 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         try:
             return getattr(self.metering_driver, func_name)(context, meterings)
         except AttributeError:
-            LOG.exception(_("Driver %(driver)s does not implement %(func)s"),
+            LOG.exception(_LE("Driver %(driver)s does not implement %(func)s"),
                           {'driver': self.conf.driver,
                            'func': func_name})
         except RuntimeError:
-            LOG.exception(_("Driver %(driver)s:%(func)s runtime error"),
+            LOG.exception(_LE("Driver %(driver)s:%(func)s runtime error"),
                           {'driver': self.conf.driver,
                            'func': func_name})
 
@@ -213,23 +214,23 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
                                    'update_routers')
 
     def _get_traffic_counters(self, context, routers):
-        LOG.debug(_("Get router traffic counters"))
+        LOG.debug("Get router traffic counters")
         return self._invoke_driver(context, routers, 'get_traffic_counters')
 
     def update_metering_label_rules(self, context, routers):
-        LOG.debug(_("Update metering rules from agent"))
+        LOG.debug("Update metering rules from agent")
         return self._invoke_driver(context, routers,
                                    'update_metering_label_rules')
 
     def add_metering_label(self, context, routers):
-        LOG.debug(_("Creating a metering label from agent"))
+        LOG.debug("Creating a metering label from agent")
         return self._invoke_driver(context, routers,
                                    'add_metering_label')
 
     def remove_metering_label(self, context, routers):
         self._add_metering_infos()
 
-        LOG.debug(_("Delete a metering label from agent"))
+        LOG.debug("Delete a metering label from agent")
         return self._invoke_driver(context, routers,
                                    'remove_metering_label')
 
@@ -267,15 +268,15 @@ class MeteringAgentWithStateReport(MeteringAgent):
             self.use_call = False
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_("Neutron server does not support state report."
-                       " State report for this agent will be disabled."))
+            LOG.warn(_LW("Neutron server does not support state report."
+                         " State report for this agent will be disabled."))
             self.heartbeat.stop()
             return
         except Exception:
-            LOG.exception(_("Failed reporting state!"))
+            LOG.exception(_LE("Failed reporting state!"))
 
     def agent_updated(self, context, payload):
-        LOG.info(_("agent_updated by server side %s!"), payload)
+        LOG.info(_LI("agent_updated by server side %s!"), payload)
 
 
 def main():

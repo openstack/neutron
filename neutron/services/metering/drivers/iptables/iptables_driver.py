@@ -21,6 +21,7 @@ from neutron.agent.linux import iptables_manager
 from neutron.common import constants as constants
 from neutron.common import ipv6_utils
 from neutron.common import log
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.services.metering.drivers import abstract_driver
@@ -88,7 +89,8 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
         if not self.conf.interface_driver:
             raise SystemExit(_('An interface driver must be specified'))
-        LOG.info(_("Loading interface driver %s"), self.conf.interface_driver)
+        LOG.info(_LI("Loading interface driver %s"),
+                 self.conf.interface_driver)
         self.driver = importutils.import_object(self.conf.interface_driver,
                                                 self.conf)
 
