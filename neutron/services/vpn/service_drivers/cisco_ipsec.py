@@ -93,7 +93,7 @@ class CiscoCsrIPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
         Find the host for the router being notified and then
         dispatches a notification for the VPN device driver.
         """
-        admin_context = context.is_admin and context or context.elevated()
+        admin_context = context if context.is_admin else context.elevated()
         if not version:
             version = self.RPC_API_VERSION
         host = via_cfg_file.get_host_for_router(admin_context, router_id)

@@ -107,7 +107,7 @@ class ControllerMixin(object):
 
     def reset_reponses(self, req=None):
         # Clear all staged responses.
-        reqs = req and [req] or ['post', 'get']  # Both if none specified.
+        reqs = [req] if req else ['post', 'get']  # Both if none specified.
         for req in reqs:
             del self.response[req][:]
             self.restart_responses(req)
@@ -126,7 +126,7 @@ class ControllerMixin(object):
     def _stage_mocked_response(self, req, mock_status, mo, **attrs):
         response = mock.MagicMock()
         response.status_code = mock_status
-        mo_attrs = attrs and [{mo: {'attributes': attrs}}] or []
+        mo_attrs = [{mo: {'attributes': attrs}}] if attrs else []
         response.json.return_value = {'imdata': mo_attrs}
         self.response[req].append(response)
 

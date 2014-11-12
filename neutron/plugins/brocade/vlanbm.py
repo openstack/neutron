@@ -41,7 +41,7 @@ class VlanBitmap(object):
     def get_next_vlan(self, vlan_id=None):
         """Try to get a specific vlan if requested or get the next vlan."""
         min_vlan_search = vlan_id or MIN_VLAN
-        max_vlan_search = (vlan_id and vlan_id + 1) or MAX_VLAN
+        max_vlan_search = (vlan_id + 1) if vlan_id else MAX_VLAN
 
         for vlan in moves.xrange(min_vlan_search, max_vlan_search):
             if vlan not in self.vlans:

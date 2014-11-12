@@ -63,9 +63,7 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
     try:
         obj, cmd = create_process(cmd, root_helper=root_helper,
                                   addl_env=addl_env)
-        _stdout, _stderr = (process_input and
-                            obj.communicate(process_input) or
-                            obj.communicate())
+        _stdout, _stderr = obj.communicate(process_input)
         obj.stdin.close()
         m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdout: %(stdout)r\n"
               "Stderr: %(stderr)r") % {'cmd': cmd, 'code': obj.returncode,
@@ -88,7 +86,7 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
         #               it two execute calls in a row hangs the second one
         greenthread.sleep(0)
 
-    return return_stderr and (_stdout, _stderr) or _stdout
+    return (_stdout, _stderr) if return_stderr else _stdout
 
 
 def get_interface_mac(interface):
@@ -157,7 +155,7 @@ def get_value_from_conf_file(cfg_root, uuid, cfg_file, converter=None):
     try:
         with open(file_name, 'r') as f:
             try:
-                return converter and converter(f.read()) or f.read()
+                return converter(f.read()) if converter else f.read()
             except ValueError:
                 msg = _('Unable to convert value in %s')
     except IOError:

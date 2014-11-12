@@ -268,7 +268,7 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
         self._add_rules_to_chain(ipt_mgr, IPV6, 'FORWARD', jump_rule)
 
     def _convert_fwaas_to_iptables_rule(self, rule):
-        action = rule.get('action') == 'allow' and 'ACCEPT' or 'DROP'
+        action = 'ACCEPT' if rule.get('action') == 'allow' else 'DROP'
         args = [self._protocol_arg(rule.get('protocol')),
                 self._port_arg('dport',
                                rule.get('protocol'),

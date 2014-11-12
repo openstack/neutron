@@ -90,14 +90,14 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
                 else:
                     bind_port.host = host
             else:
-                host = (bind_port and bind_port.host or None)
+                host = bind_port.host if bind_port else None
         self._extend_port_dict_binding_host(port, host)
 
     def get_port_host(self, context, port_id):
         with context.session.begin(subtransactions=True):
             bind_port = context.session.query(
                 PortBindingPort).filter_by(port_id=port_id).first()
-            return bind_port and bind_port.host or None
+            return bind_port.host if bind_port else None
 
     def _extend_port_dict_binding_host(self, port_res, host):
         super(PortBindingMixin, self).extend_port_dict_binding(
@@ -105,7 +105,7 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
         port_res[portbindings.HOST_ID] = host
 
     def extend_port_dict_binding(self, port_res, port_db):
-        host = (port_db.portbinding and port_db.portbinding.host or None)
+        host = port_db.portbinding.host if port_db.portbinding else None
         self._extend_port_dict_binding_host(port_res, host)
 
 

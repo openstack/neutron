@@ -412,8 +412,8 @@ def check_is_admin(context):
     target = credentials
     # Backward compatibility: if ADMIN_CTX_POLICY is not
     # found, default to validating role:admin
-    admin_policy = (ADMIN_CTX_POLICY in policy._rules
-                    and ADMIN_CTX_POLICY or 'role:admin')
+    admin_policy = (ADMIN_CTX_POLICY if ADMIN_CTX_POLICY in policy._rules
+                    else 'role:admin')
     return policy.check(admin_policy, target, credentials)
 
 

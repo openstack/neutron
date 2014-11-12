@@ -86,7 +86,7 @@ class BaseIPsecVpnAgentApi(n_rpc.RpcProxy):
         This method will find where is the router, and
         dispatch notification for the agent.
         """
-        admin_context = context.is_admin and context or context.elevated()
+        admin_context = context if context.is_admin else context.elevated()
         if not version:
             version = self.RPC_API_VERSION
         l3_agents = self.driver.l3_plugin.get_l3_agents_hosting_routers(
