@@ -665,6 +665,28 @@ class TestBasicRouterOperations(base.BaseTestCase):
             else:
                 self.assertIn(r.rule, expected_rules)
 
+    def test__get_snat_idx_ipv4(self):
+        ip_cidr = '101.12.13.00/24'
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        snat_idx = agent._get_snat_idx(ip_cidr)
+        # 0x650C0D00 is numerical value of 101.12.13.00
+        self.assertEqual(0x650C0D00, snat_idx)
+
+    def test__get_snat_idx_ipv6(self):
+        ip_cidr = '2620:0:a03:e100::/64'
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        snat_idx = agent._get_snat_idx(ip_cidr)
+        # 0x3D345705 is 30 bit xor folded crc32 of the ip_cidr
+        self.assertEqual(0x3D345705, snat_idx)
+
+    def test__get_snat_idx_ipv6_below_32768(self):
+        ip_cidr = 'd488::/30'
+        # crc32 of this ip_cidr is 0x1BD7
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        snat_idx = agent._get_snat_idx(ip_cidr)
+        # 0x1BD7 + 0x3FFFFFFF = 0x40001BD6
+        self.assertEqual(0x40001BD6, snat_idx)
+
     def test__map_internal_interfaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data(num_internal_ports=4)
