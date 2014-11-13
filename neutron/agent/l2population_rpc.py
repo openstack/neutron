@@ -31,7 +31,7 @@ class L2populationRpcCallBackMixin(object):
 
     The following methods are called through RPC.
         add_fdb_entries(), remove_fdb_entries(), update_fdb_entries()
-    The following methods are used in a agent as an internal method.
+    The following methods are used in an agent as internal methods.
         fdb_add(), fdb_remove(), fdb_update()
     '''
 
@@ -66,15 +66,15 @@ class L2populationRpcCallBackMixin(object):
 class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
     '''Mixin class of L2-population call back for Tunnel.
 
-    The following all methods are used in a agent as an internal method.
+    The following methods are all used in agents as internal methods.
 
-    Some of methods in this class use Local VLAN Mapping, aka lvm.
-    It's a python object with the following attributes at least:
+    Some of the methods in this class use Local VLAN Mapping, aka lvm.
+    It's a python object with at least the following attributes:
 
     ============ =========================================================
     Attribute    Description
     ============ =========================================================
-    vlan         An identifier used by the agent to identify neutron
+    vlan         An identifier used by the agent to identify a neutron
                  network.
     network_type A network type found in neutron.plugins.common.constants.
     ============ =========================================================
@@ -120,7 +120,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
         :param port_info: a list to contain mac and ip.
             [mac, ip]
         :remote_ip: remote ip address.
-        :param lvm: local VLAN map of network.  See add_fdb_flow for
+        :param lvm: local VLAN map of a network. See add_fdb_flow for
             more explanation.
         :param ofport: a port to delete.
         '''
@@ -137,9 +137,9 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
 
         :param br: represent the bridge on which setup_tunnel_port should be
         applied.
-        :param remote_ip: an ip for port to setup.
-        :param network_type: a type of network.
-        :returns: a ofport value. value 0 means the port is unavailable.
+        :param remote_ip: an ip for a port to setup.
+        :param network_type: a type of a network.
+        :returns: an ofport value. value 0 means the port is unavailable.
         '''
         pass
 
@@ -155,7 +155,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
         :param br: represent the bridge on which cleanup_tunnel_port should be
         applied.
         :param tun_ofport: a port value to cleanup.
-        :param tunnel_type: a type of tunnel.
+        :param tunnel_type: a type of a tunnel.
         '''
         pass
 
@@ -170,8 +170,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
 
         :param br: represent the bridge on which setup_entry_for_arp_reply
         should be applied.
-        :param action: an action to operate for arp respond infomation.
-            "add" or "remove"
+        :param action: add/remove flow for arp response information.
         :param local_vid: id in local VLAN map of network's ARP entry.
         :param mac_address: MAC string value.
         :param ip_address: IP string value.
@@ -246,7 +245,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
         :param context: RPC context.
         :param br: represent the bridge on which fdb_chg_ip_tun should be
         applied.
-        :param fdb_entries: fdb dicts that contain all mac/IP informations per
+        :param fdb_entries: fdb dicts that contain all mac/IP information per
                             agent and network.
                                {'net1':
                                 {'agent_ip':
