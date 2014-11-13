@@ -275,6 +275,5 @@ def create_connection(new=True):
 
 
 # exceptions
-RPCException = messaging.MessagingException
 RemoteError = messaging.RemoteError
 MessagingTimeout = messaging.MessagingTimeout

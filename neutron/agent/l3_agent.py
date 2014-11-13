@@ -1896,7 +1896,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._queue.add(update)
             self.fullsync = False
             LOG.debug(_("_sync_routers_task successfully completed"))
-        except n_rpc.RPCException:
+        except messaging.MessagingException:
             LOG.exception(_("Failed synchronizing routers due to RPC error"))
             self.fullsync = True
         except Exception:
