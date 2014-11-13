@@ -15,11 +15,15 @@
 
 """Test of Policy Engine For Neutron"""
 
+import StringIO
 import urllib2
 
 import fixtures
 import mock
+from oslo.config import cfg
+from oslo.serialization import jsonutils
 import six
+import six.moves.urllib.request as urlrequest
 
 import neutron
 from neutron.api.v2 import attributes
@@ -28,7 +32,6 @@ from neutron.common import exceptions
 from neutron import context
 from neutron import manager
 from neutron.openstack.common import importutils
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import policy as common_policy
 from neutron import policy
 from neutron.tests import base
@@ -37,46 +40,35 @@ from neutron.tests import base
 class PolicyFileTestCase(base.BaseTestCase):
     def setUp(self):
         super(PolicyFileTestCase, self).setUp()
-        policy.reset()
         self.addCleanup(policy.reset)
         self.context = context.Context('fake', 'fake', is_admin=False)
         self.target = {'tenant_id': 'fake'}
         self.tempdir = self.useFixture(fixtures.TempDir())
 
     def test_modified_policy_reloads(self):
-        def fake_find_config_file(_1, _2):
-            return self.tempdir.join('policy')
-
-        with mock.patch.object(neutron.common.utils,
-                               'find_config_file',
-                               new=fake_find_config_file):
-            tmpfilename = fake_find_config_file(None, None)
-            action = "example:test"
-            with open(tmpfilename, "w") as policyfile:
-                policyfile.write("""{"example:test": ""}""")
-            policy.init()
-            policy.enforce(self.context, action, self.target)
-            with open(tmpfilename, "w") as policyfile:
-                policyfile.write("""{"example:test": "!"}""")
-            # NOTE(vish): reset stored policy cache so we don't have to
-            # sleep(1)
-            policy._POLICY_CACHE = {}
-            policy.init()
-            self.target = {'tenant_id': 'fake_tenant'}
-            self.assertRaises(exceptions.PolicyNotAuthorized,
-                              policy.enforce,
-                              self.context,
-                              action,
-                              self.target)
+        tmpfilename = self.tempdir.join('policy')
+        action = "example:test"
+        with open(tmpfilename, "w") as policyfile:
+            policyfile.write("""{"example:test": ""}""")
+        cfg.CONF.set_override('policy_file', tmpfilename)
+        policy.refresh()
+        policy.enforce(self.context, action, self.target)
+        with open(tmpfilename, "w") as policyfile:
+            policyfile.write("""{"example:test": "!"}""")
+        policy.refresh()
+        self.target = {'tenant_id': 'fake_tenant'}
+        self.assertRaises(common_policy.PolicyNotAuthorized,
+                          policy.enforce,
+                          self.context,
+                          action,
+                          self.target)
 
 
 class PolicyTestCase(base.BaseTestCase):
     def setUp(self):
         super(PolicyTestCase, self).setUp()
-        policy.reset()
         self.addCleanup(policy.reset)
         # NOTE(vish): preload rules to circumvent reloading from file
-        policy.init()
         rules = {
             "true": '@',
             "example:allowed": '@',
@@ -88,21 +80,21 @@ class PolicyTestCase(base.BaseTestCase):
             "example:lowercase_admin": "role:admin or role:sysadmin",
             "example:uppercase_admin": "role:ADMIN or role:sysadmin",
         }
+        policy.refresh()
         # NOTE(vish): then overload underlying rules
-        common_policy.set_rules(common_policy.Rules(
-            dict((k, common_policy.parse_rule(v))
-                 for k, v in rules.items())))
+        policy.set_rules(dict((k, common_policy.parse_rule(v))
+                              for k, v in rules.items()))
         self.context = context.Context('fake', 'fake', roles=['member'])
         self.target = {}
 
     def test_enforce_nonexistent_action_throws(self):
         action = "example:noexist"
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, self.target)
 
     def test_enforce_bad_action_throws(self):
         action = "example:denied"
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, self.target)
 
     def test_check_bad_action_noraise(self):
@@ -123,16 +115,13 @@ class PolicyTestCase(base.BaseTestCase):
         result = policy.enforce(self.context, action, self.target)
         self.assertEqual(result, True)
 
-    def test_enforce_http_true(self):
-
-        def fakeurlopen(url, post_data):
-            return six.StringIO("True")
-
-        with mock.patch.object(urllib2, 'urlopen', new=fakeurlopen):
-            action = "example:get_http"
-            target = {}
-            result = policy.enforce(self.context, action, target)
-            self.assertEqual(result, True)
+    @mock.patch.object(urlrequest, 'urlopen',
+                       return_value=StringIO.StringIO("True"))
+    def test_enforce_http_true(self, mock_urlrequest):
+        action = "example:get_http"
+        target = {}
+        result = policy.enforce(self.context, action, target)
+        self.assertEqual(result, True)
 
     def test_enforce_http_false(self):
 
@@ -142,20 +131,21 @@ class PolicyTestCase(base.BaseTestCase):
         with mock.patch.object(urllib2, 'urlopen', new=fakeurlopen):
             action = "example:get_http"
             target = {}
-            self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                              self.context, action, target)
+            self.assertRaises(common_policy.PolicyNotAuthorized,
+                              policy.enforce, self.context,
+                              action, target)
 
     def test_templatized_enforcement(self):
         target_mine = {'tenant_id': 'fake'}
         target_not_mine = {'tenant_id': 'another'}
         action = "example:my_file"
         policy.enforce(self.context, action, target_mine)
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target_not_mine)
 
     def test_early_AND_enforcement(self):
         action = "example:early_and_fail"
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, self.target)
 
     def test_early_OR_enforcement(self):
@@ -176,36 +166,26 @@ class DefaultPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(DefaultPolicyTestCase, self).setUp()
-        policy.reset()
-        policy.init()
-        self.addCleanup(policy.reset)
-
+        self.tempdir = self.useFixture(fixtures.TempDir())
+        tmpfilename = self.tempdir.join('policy.json')
         self.rules = {
             "default": '',
             "example:exist": '!',
         }
-
-        self._set_rules('default')
+        with open(tmpfilename, "w") as policyfile:
+            jsonutils.dump(self.rules, policyfile)
+        cfg.CONF.set_override('policy_file', tmpfilename)
+        policy.refresh()
+        self.addCleanup(policy.reset)
 
         self.context = context.Context('fake', 'fake')
 
-    def _set_rules(self, default_rule):
-        rules = common_policy.Rules(
-            dict((k, common_policy.parse_rule(v))
-                 for k, v in self.rules.items()), default_rule)
-        common_policy.set_rules(rules)
-
     def test_policy_called(self):
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, "example:exist", {})
 
     def test_not_found_policy_calls_default(self):
         policy.enforce(self.context, "example:noexist", {})
-
-    def test_default_not_found(self):
-        self._set_rules("default_noexist")
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          self.context, "example:noexist", {})
 
 
 FAKE_RESOURCE_NAME = 'something'
@@ -225,8 +205,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(NeutronPolicyTestCase, self).setUp()
-        policy.reset()
-        policy.init()
+        policy.refresh()
         self.addCleanup(policy.reset)
         self.admin_only_legacy = "role:admin"
         self.admin_or_owner_legacy = "role:admin or tenant_id:%(tenant_id)s"
@@ -251,6 +230,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "update_network:shared": "rule:admin_only",
             "get_network": "rule:admin_or_owner or rule:shared or "
                            "rule:external or rule:context_is_advsvc",
+            "create_subnet": "rule:admin_or_network_owner",
             "create_port:mac": "rule:admin_or_network_owner or "
                                "rule:context_is_advsvc",
             "update_port": "rule:admin_or_owner or rule:context_is_advsvc",
@@ -267,8 +247,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                             "rule:shared"
         }.items())
 
-        def fakepolicyinit():
-            common_policy.set_rules(common_policy.Rules(self.rules))
+        def fakepolicyinit(**kwargs):
+            enf = policy._ENFORCER
+            enf.set_rules(common_policy.Rules(self.rules))
 
         def remove_fake_resource():
             del attributes.RESOURCE_ATTRIBUTE_MAP["%ss" % FAKE_RESOURCE_NAME]
@@ -314,22 +295,22 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_nonadmin_write_on_private_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', False,
-                                           exceptions.PolicyNotAuthorized)
+                                           common_policy.PolicyNotAuthorized)
 
     def test_nonadmin_read_on_private_fails(self):
         self._test_nonadmin_action_on_attr('get', 'shared', False,
-                                           exceptions.PolicyNotAuthorized)
+                                           common_policy.PolicyNotAuthorized)
 
     def test_nonadmin_write_on_shared_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', True,
-                                           exceptions.PolicyNotAuthorized)
+                                           common_policy.PolicyNotAuthorized)
 
     def test_advsvc_get_network_works(self):
         self._test_advsvc_action_on_attr('get', 'network', 'shared', False)
 
     def test_advsvc_create_network_fails(self):
         self._test_advsvc_action_on_attr('create', 'network', 'shared', False,
-                                         exceptions.PolicyNotAuthorized)
+                                         common_policy.PolicyNotAuthorized)
 
     def test_advsvc_create_port_works(self):
         self._test_advsvc_action_on_attr('create', 'port:mac', 'shared', False)
@@ -347,7 +328,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_advsvc_create_subnet_fails(self):
         self._test_advsvc_action_on_attr('create', 'subnet', 'shared', False,
-                                         exceptions.PolicyNotAuthorized)
+                                         common_policy.PolicyNotAuthorized)
 
     def test_nonadmin_read_on_shared_succeeds(self):
         self._test_nonadmin_action_on_attr('get', 'shared', True)
@@ -370,7 +351,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_reset_adminonly_attr_to_default_fails(self):
         kwargs = {const.ATTRIBUTES_TO_UPDATE: ['shared']}
         self._test_nonadmin_action_on_attr('update', 'shared', False,
-                                           exceptions.PolicyNotAuthorized,
+                                           common_policy.PolicyNotAuthorized,
                                            **kwargs)
 
     def test_enforce_adminonly_attribute_no_context_is_admin_policy(self):
@@ -384,7 +365,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_enforce_adminonly_attribute_nonadminctx_returns_403(self):
         action = "create_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
     def test_enforce_adminonly_nonadminctx_no_ctx_is_admin_policy_403(self):
@@ -395,7 +376,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             self.admin_or_owner_legacy)
         action = "create_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
     def _test_build_subattribute_match_rule(self, validate_value):
@@ -436,7 +417,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         action = "create_something"
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
                                                 'sub_attr_2': 'y'}}
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target, None)
 
     def test_enforce_regularuser_on_read(self):
@@ -536,7 +517,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         rules = dict((k, common_policy.parse_rule(v)) for k, v in {
             "some_other_rule": "role:admin",
         }.items())
-        common_policy.set_rules(common_policy.Rules(rules))
+        policy.set_rules(common_policy.Rules(rules))
         # 'admin' role is expected for bw compatibility
         self.assertEqual(['admin'], policy.get_admin_roles())
 
@@ -544,7 +525,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         rules = dict((k, common_policy.parse_rule(v)) for k, v in {
             policy.ADMIN_CTX_POLICY: "role:admin",
         }.items())
-        common_policy.set_rules(common_policy.Rules(rules))
+        policy.set_rules(common_policy.Rules(rules))
         self.assertEqual(['admin'], policy.get_admin_roles())
 
     def test_get_roles_with_rule_check(self):
@@ -552,7 +533,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             policy.ADMIN_CTX_POLICY: "rule:some_other_rule",
             "some_other_rule": "role:admin",
         }.items())
-        common_policy.set_rules(common_policy.Rules(rules))
+        policy.set_rules(common_policy.Rules(rules))
         self.assertEqual(['admin'], policy.get_admin_roles())
 
     def test_get_roles_with_or_check(self):
@@ -572,15 +553,15 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def _test_set_rules_with_deprecated_policy(self, input_rules,
                                                expected_rules):
-        policy._set_rules(jsonutils.dumps(input_rules))
+        policy.set_rules(input_rules.copy())
         # verify deprecated policy has been removed
         for pol in input_rules.keys():
-            self.assertNotIn(pol, common_policy._rules)
+            self.assertNotIn(pol, policy._ENFORCER.rules)
         # verify deprecated policy was correctly translated. Iterate
         # over items for compatibility with unittest2 in python 2.6
         for rule in expected_rules:
-            self.assertIn(rule, common_policy._rules)
-            self.assertEqual(str(common_policy._rules[rule]),
+            self.assertIn(rule, policy._ENFORCER.rules)
+            self.assertEqual(str(policy._ENFORCER.rules[rule]),
                              expected_rules[rule])
 
     def test_set_rules_with_deprecated_view_policy(self):

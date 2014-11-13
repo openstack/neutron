@@ -41,8 +41,6 @@ core_opts = [
                help=_("The API paste config file to use")),
     cfg.StrOpt('api_extensions_path', default="",
                help=_("The path for API extensions")),
-    cfg.StrOpt('policy_file', default="policy.json",
-               help=_("The policy file to use")),
     cfg.StrOpt('auth_strategy', default='keystone',
                help=_("The type of authentication to use")),
     cfg.StrOpt('core_plugin',

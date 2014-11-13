@@ -31,10 +31,10 @@ class TestL3Sync(test_nuage_plugin.NuagePluginV2TestCase,
                  extraroute_test.ExtraRouteDBIntTestCase):
 
     def setUp(self):
-        self.session = context.get_admin_context().session
+        super(TestL3Sync, self).setUp()
         self.syncmanager = sync.SyncManager(
             test_nuage_plugin.getNuageClient())
-        super(TestL3Sync, self).setUp()
+        self.session = context.get_admin_context().session
 
     def _make_floatingip_for_tenant_port(self, net_id, port_id, tenant_id):
         data = {'floatingip': {'floating_network_id': net_id,
@@ -194,10 +194,10 @@ class TestL3Sync(test_nuage_plugin.NuagePluginV2TestCase,
 class TestNetPartSync(test_netpartition.NetPartitionTestCase):
 
     def setUp(self):
-        self.session = context.get_admin_context().session
         self.syncmanager = sync.SyncManager(
             test_nuage_plugin.getNuageClient())
         super(TestNetPartSync, self).setUp()
+        self.session = context.get_admin_context().session
 
     def test_net_partition_sync(self):
         # If the net-partition exists in neutron and not in VSD,
@@ -225,10 +225,10 @@ class TestNetPartSync(test_netpartition.NetPartitionTestCase):
 class TestL2Sync(test_nuage_plugin.NuagePluginV2TestCase):
 
     def setUp(self):
-        self.session = context.get_admin_context().session
+        super(TestL2Sync, self).setUp()
         self.syncmanager = sync.SyncManager(
             test_nuage_plugin.getNuageClient())
-        super(TestL2Sync, self).setUp()
+        self.session = context.get_admin_context().session
 
     def test_subnet_sync(self):
         # If the subnet exists in neutron and not in VSD,
@@ -274,10 +274,10 @@ class TestL2Sync(test_nuage_plugin.NuagePluginV2TestCase):
 class TestSecurityGroupSync(test_sg.TestSecurityGroups):
 
     def setUp(self):
-        self.session = context.get_admin_context().session
         self.syncmanager = sync.SyncManager(
             test_nuage_plugin.getNuageClient())
         super(TestSecurityGroupSync, self).setUp()
+        self.session = context.get_admin_context().session
 
     def test_sg_get(self):
         with self.security_group() as sg:
