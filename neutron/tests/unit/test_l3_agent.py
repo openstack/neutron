@@ -1150,6 +1150,12 @@ vrrp_instance VR_1 {
              'floating_ip_address': '15.1.2.3',
              'fixed_ip_address': '192.168.0.1',
              'floating_network_id': _uuid(),
+             'port_id': _uuid()},
+            {'id': _uuid(),
+             'host': 'some-other-host',
+             'floating_ip_address': '15.1.2.4',
+             'fixed_ip_address': '192.168.0.10',
+             'floating_network_id': _uuid(),
              'port_id': _uuid()}]}
 
         router = prepare_router_data(enable_snat=True)
