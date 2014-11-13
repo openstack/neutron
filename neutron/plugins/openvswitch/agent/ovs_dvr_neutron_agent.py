@@ -20,7 +20,7 @@ from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.openstack.common import excutils
-from neutron.openstack.common.gettextutils import _LE, _LW, _LI
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.openvswitch.common import constants
 
@@ -326,16 +326,16 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
             ldm = self.local_dvr_map[subnet_uuid]
             csnat_ofport = ldm.get_csnat_ofport()
             if csnat_ofport == constants.OFPORT_INVALID:
-                LOG.error(_("DVR: Duplicate DVR router interface detected "
-                          "for subnet %s"), subnet_uuid)
+                LOG.error(_LE("DVR: Duplicate DVR router interface detected "
+                              "for subnet %s"), subnet_uuid)
                 return
         else:
             # set up LocalDVRSubnetMapping available for this subnet
             subnet_info = self.plugin_rpc.get_subnet_for_dvr(self.context,
                                                              subnet_uuid)
             if not subnet_info:
-                LOG.error(_("DVR: Unable to retrieve subnet information"
-                          " for subnet_id %s"), subnet_uuid)
+                LOG.error(_LE("DVR: Unable to retrieve subnet information "
+                              "for subnet_id %s"), subnet_uuid)
                 return
             LOG.debug("get_subnet_for_dvr for subnet %s returned with %s" %
                       (subnet_uuid, subnet_info))
@@ -493,9 +493,9 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
             # dvr routed subnet
             ovsport = self.local_ports[port.vif_id]
             subs = list(ovsport.get_subnets())
-            LOG.error(_("Centralized-SNAT port %s already seen on "),
+            LOG.error(_LE("Centralized-SNAT port %s already seen on "),
                       port.vif_id)
-            LOG.error(_("a different subnet %s"), subs[0])
+            LOG.error(_LE("a different subnet %s"), subs[0])
             return
         # since centralized-SNAT (CSNAT) port must have only one fixed
         # IP, directly use fixed_ips[0]
