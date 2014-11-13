@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import rpc as n_rpc
+from oslo import messaging
+
 from neutron import manager
 
 
@@ -20,16 +21,16 @@ from neutron import manager
 # from neutron/agent/securitygroups_rpc.py.
 
 
-class SecurityGroupServerRpcCallback(n_rpc.RpcCallback):
+class SecurityGroupServerRpcCallback(object):
     """Callback for SecurityGroup agent RPC in plugin implementations."""
 
     # API version history:
     #   1.1 - Initial version
     #   1.2 - security_group_info_for_devices introduced as an optimization
 
-    # NOTE: RPC_API_VERSION must not be overridden in subclasses
+    # NOTE: target must not be overridden in subclasses
     # to keep RPC API version consistent across plugins.
-    RPC_API_VERSION = '1.2'
+    target = messaging.Target(version='1.2')
 
     @property
     def plugin(self):

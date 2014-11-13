@@ -23,6 +23,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
@@ -116,9 +117,9 @@ class HyperVPluginApi(agent_rpc.PluginApi,
     pass
 
 
-class HyperVNeutronAgent(n_rpc.RpcCallback):
+class HyperVNeutronAgent(object):
     # Set RPC API version to 1.1 by default.
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     def __init__(self):
         super(HyperVNeutronAgent, self).__init__()
