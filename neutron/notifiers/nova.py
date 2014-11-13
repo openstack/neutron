@@ -128,6 +128,18 @@ class Notifier(object):
         if not cfg.CONF.notify_nova_on_port_data_changes:
             return
 
+        # When neutron re-assigns floating ip from an original instance
+        # port to a new instance port without disassociate it first, an
+        # event should be sent for original instance, that will make nova
+        # know original instance's info, and update database for it.
+        if (action == 'update_floatingip'
+                and returned_obj['floatingip'].get('port_id')
+                and original_obj.get('port_id')):
+            disassociate_returned_obj = {'floatingip': {'port_id': None}}
+            event = self.create_port_changed_event(action, original_obj,
+                                                   disassociate_returned_obj)
+            self.queue_event(event)
+
         event = self.create_port_changed_event(action, original_obj,
                                                returned_obj)
         self.queue_event(event)
