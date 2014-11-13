@@ -26,6 +26,7 @@ from neutron.tests import base
 
 
 dummy_policy_id = 'dummy-ipsec-policy-id-name'
+TEST_VRF = 'nrouter-123456'
 BASE_URL = 'https://%s:55443/api/v1/'
 LOCAL_URL = 'https://localhost:55443/api/v1/'
 
@@ -33,18 +34,18 @@ URI_HOSTNAME = 'global/host-name'
 URI_USERS = 'global/local-users'
 URI_AUTH = 'auth/token-services'
 URI_INTERFACE_GE1 = 'interfaces/GigabitEthernet1'
-URI_PSK = 'vpn-svc/ike/keyrings'
+URI_PSK = 'vrf/' + TEST_VRF + '/vpn-svc/ike/keyrings'
 URI_PSK_ID = URI_PSK + '/%s'
 URI_IKE_POLICY = 'vpn-svc/ike/policies'
 URI_IKE_POLICY_ID = URI_IKE_POLICY + '/%s'
 URI_IPSEC_POLICY = 'vpn-svc/ipsec/policies'
 URI_IPSEC_POLICY_ID = URI_IPSEC_POLICY + '/%s'
-URI_IPSEC_CONN = 'vpn-svc/site-to-site'
+URI_IPSEC_CONN = 'vrf/' + TEST_VRF + '/vpn-svc/site-to-site'
 URI_IPSEC_CONN_ID = URI_IPSEC_CONN + '/%s'
 URI_KEEPALIVE = 'vpn-svc/ike/keepalive'
-URI_ROUTES = 'routing-svc/static-routes'
+URI_ROUTES = 'vrf/' + TEST_VRF + '/routing-svc/static-routes'
 URI_ROUTES_ID = URI_ROUTES + '/%s'
-URI_SESSIONS = 'vpn-svc/site-to-site/active/sessions'
+URI_SESSIONS = 'vrf/' + TEST_VRF + '/vpn-svc/site-to-site/active/sessions'
 
 
 # Note: Helper functions to test reuse of IDs.
@@ -69,6 +70,7 @@ class CiscoCsrBaseTestCase(base.BaseTestCase):
         self.base_url = BASE_URL % host
         self.requests = self.useFixture(mock_fixture.Fixture())
         info = {'rest_mgmt_ip': host, 'tunnel_ip': tunnel_ip,
+                'vrf': 'nrouter-123456',
                 'username': 'stack', 'password': 'cisco', 'timeout': timeout}
         self.csr = csr_client.CsrRestClient(info)
 
@@ -1131,6 +1133,7 @@ class TestCsrRestIPSecConnectionCreate(CiscoCsrBaseTestCase):
                    u'ipsec-policy-id': u'%s' % ipsec_policy_id,
                    u'ike-profile-id': None,
                    u'mtu': 1500,
+                   u'tunnel-vrf': TEST_VRF,
                    u'local-device': {
                        u'ip-address': '10.3.0.1/24',
                        u'tunnel-ip-address': '10.10.10.10'
@@ -1161,6 +1164,7 @@ class TestCsrRestIPSecConnectionCreate(CiscoCsrBaseTestCase):
                                u'ike-profile-id': None,
                                u'vpn-type': u'site-to-site',
                                u'mtu': 1500,
+                               u'tunnel-vrf': TEST_VRF,
                                u'ip-version': u'ipv4'}
         expected_connection.update(connection_info)
         location = self.csr.create_ipsec_connection(connection_info)
@@ -1206,6 +1210,7 @@ class TestCsrRestIPSecConnectionCreate(CiscoCsrBaseTestCase):
                                u'ike-profile-id': None,
                                u'vpn-type': u'site-to-site',
                                u'mtu': 1500,
+                               u'tunnel-vrf': TEST_VRF,
                                u'ip-version': u'ipv4'}
         expected_connection.update(connection_info)
         location = self.csr.create_ipsec_connection(connection_info)
@@ -1213,7 +1218,7 @@ class TestCsrRestIPSecConnectionCreate(CiscoCsrBaseTestCase):
                         self.csr.delete_ipsec_connection,
                         tunnel_name)
         self.assertEqual(requests.codes.CREATED, self.csr.status)
-        self.assertIn('vpn-svc/site-to-site/' + tunnel_name, location)
+        self.assertIn(URI_IPSEC_CONN_ID % tunnel_name, location)
 
         # Check the hard-coded items that get set as well...
         self._helper_register_ipsec_conn_get(tunnel_name, override={
@@ -1247,6 +1252,7 @@ class TestCsrRestIPSecConnectionCreate(CiscoCsrBaseTestCase):
         }
         expected_connection = {u'kind': u'object#vpn-site-to-site',
                                u'ike-profile-id': None,
+                               u'tunnel-vrf': TEST_VRF,
                                u'vpn-type': u'site-to-site',
                                u'ip-version': u'ipv4'}
         expected_connection.update(connection_info)
@@ -1285,6 +1291,7 @@ class TestCsrRestIPSecConnectionCreate(CiscoCsrBaseTestCase):
         }
         expected_connection = {u'kind': u'object#vpn-site-to-site',
                                u'ike-profile-id': None,
+                               u'tunnel-vrf': TEST_VRF,
                                u'vpn-type': u'site-to-site',
                                u'ip-version': u'ipv4'}
         expected_connection.update(connection_info)
@@ -1427,6 +1434,7 @@ class TestCsrRestIPSecConnectionCreate(CiscoCsrBaseTestCase):
         }
         expected_connection = {u'kind': u'object#vpn-site-to-site',
                                u'ike-profile-id': None,
+                               u'tunnel-vrf': TEST_VRF,
                                u'vpn-type': u'site-to-site',
                                u'ip-version': u'ipv4'}
         expected_connection.update(connection_info)

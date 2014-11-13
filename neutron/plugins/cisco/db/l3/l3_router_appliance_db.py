@@ -22,10 +22,13 @@ from sqlalchemy.sql import expression as expr
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
+from neutron.common import topics
 from neutron import context as n_context
+from neutron.db import agents_db
 from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import models_v2
+from neutron.db import portbindings_db as p_binding
 from neutron.extensions import providernet as pr_net
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
@@ -573,3 +576,53 @@ class L3RouterApplianceDBMixin(extraroute_db.ExtraRoute_dbonly_mixin):
                                           active=True)
         else:
             return []
+
+    def get_active_routers_for_host(self, context, host):
+        query = context.session.query(
+            l3_models.RouterHostingDeviceBinding.router_id)
+        query = query.join(
+            models_v2.Port,
+            l3_models.RouterHostingDeviceBinding.hosting_device_id ==
+            models_v2.Port.device_id)
+        query = query.join(p_binding.PortBindingPort)
+        query = query.filter(p_binding.PortBindingPort.host == host)
+        query = query.filter(models_v2.Port.name == 'mgmt')
+        router_ids = [item[0] for item in query]
+        if router_ids:
+            return self.get_sync_data_ext(context, router_ids=router_ids,
+                                          active=True)
+        else:
+            return []
+
+    @staticmethod
+    def _agent_state_filter(check_active, last_heartbeat):
+        """Filters only active agents, if requested."""
+        if not check_active:
+            return True
+        return not agents_db.AgentDbMixin.is_agent_down(last_heartbeat)
+
+    def get_host_for_router(self, context, router, admin_state_up=None,
+                            check_active=False):
+        query = context.session.query(agents_db.Agent.host,
+                                      agents_db.Agent.heartbeat_timestamp)
+        query = query.join(
+            p_binding.PortBindingPort,
+            p_binding.PortBindingPort.host == agents_db.Agent.host)
+        query = query.join(
+            models_v2.Port,
+            models_v2.Port.id == p_binding.PortBindingPort.port_id)
+        query = query.join(
+            l3_models.RouterHostingDeviceBinding,
+            l3_models.RouterHostingDeviceBinding.hosting_device_id ==
+            models_v2.Port.device_id)
+        query = query.filter(
+            agents_db.Agent.topic == topics.L3_AGENT,
+            l3_models.RouterHostingDeviceBinding.router_id == router)
+        if admin_state_up is not None:
+            query = query.filter(
+                agents_db.Agent.admin_state_up == admin_state_up)
+        entry = query.first()
+        if entry and L3RouterApplianceDBMixin._agent_state_filter(check_active,
+                                                                  entry[1]):
+            return entry[0]
+        return ""

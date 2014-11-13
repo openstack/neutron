@@ -39,6 +39,13 @@ interface GigabitEthernet1
  ip address <ip> <mask>
  no shutdown
 
+virtual-service csr_mgmt
+ ip shared host-interface GigabitEthernet1
+ activate
+
+remote-management
+ restful-api local-port 55443
+
 ip route 0.0.0.0 0.0.0.0 GigabitEthernet1 <gw>
 ip name-server <name_server>
 

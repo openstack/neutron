@@ -58,28 +58,32 @@ ENABLE_INTF = """
 
 #=================================================#
 # Create VRF
-# $(config)ip routing
-# $(config)ip vrf nrouter-e7d4y5
+# $(config)vrf definition nrouter-e7d4y5
+# $(config-vrf)address-family ipv4
+# $(config-vrf-af)exit-address-family
+# $(config-vrf)address-family ipv6
+# $(config-vrf-af)exit-address-family
 #=================================================#
 CREATE_VRF = """
 <config>
         <cli-config-data>
-            <cmd>ip routing</cmd>
-            <cmd>ip vrf %s</cmd>
+            <cmd>vrf definition %s</cmd>
+            <cmd>address-family ipv4</cmd>
+            <cmd>exit-address-family</cmd>
+            <cmd>address-family ipv6</cmd>
+            <cmd>exit-address-family</cmd>
         </cli-config-data>
 </config>
 """
 
 #=================================================#
 # Remove VRF
-# $(config)ip routing
-# $(config)no ip vrf nrouter-e7d4y5
+# $(config)no vrf definition nrouter-e7d4y5
 #=================================================#
 REMOVE_VRF = """
 <config>
         <cli-config-data>
-            <cmd>ip routing</cmd>
-            <cmd>no ip vrf %s</cmd>
+            <cmd>no vrf definition %s</cmd>
         </cli-config-data>
 </config>
 """
@@ -96,7 +100,7 @@ CREATE_SUBINTERFACE = """
         <cli-config-data>
             <cmd>interface %s</cmd>
             <cmd>encapsulation dot1Q %s</cmd>
-            <cmd>ip vrf forwarding %s</cmd>
+            <cmd>vrf forwarding %s</cmd>
             <cmd>ip address %s %s</cmd>
         </cli-config-data>
 </config>
@@ -127,7 +131,7 @@ SET_INTC_HSRP = """
 <config>
         <cli-config-data>
             <cmd>interface %s</cmd>
-            <cmd>ip vrf forwarding %s</cmd>
+            <cmd>vrf forwarding %s</cmd>
             <cmd>standby version 2</cmd>
             <cmd>standby %s priority %s</cmd>
             <cmd>standby %s ip %s</cmd>

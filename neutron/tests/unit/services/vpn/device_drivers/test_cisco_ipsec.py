@@ -70,12 +70,10 @@ class TestCiscoCsrIPSecConnection(base.BaseTestCase):
                              'lifetime_value': 3600},
             'cisco': {'site_conn_id': 'Tunnel0',
                       'ike_policy_id': 222,
-                      'ipsec_policy_id': 333,
-                      'router_public_ip': '172.24.4.23'}
+                      'ipsec_policy_id': 333}
         }
         self.csr = mock.Mock(spec=csr_client.CsrRestClient)
         self.csr.status = 201  # All calls to CSR REST API succeed
-        self.csr.tunnel_ip = '172.24.4.23'
         self.ipsec_conn = ipsec_driver.CiscoCsrIPSecConnection(self.conn_info,
                                                                self.csr)
 
@@ -241,8 +239,7 @@ class TestCiscoCsrIPsecConnectionCreateTransforms(base.BaseTestCase):
                              'lifetime_value': 3600},
             'cisco': {'site_conn_id': 'Tunnel0',
                       'ike_policy_id': 222,
-                      'ipsec_policy_id': 333,
-                      'router_public_ip': '172.24.4.23'}
+                      'ipsec_policy_id': 333}
         }
         self.csr = mock.Mock(spec=csr_client.CsrRestClient)
         self.csr.tunnel_ip = '172.24.4.23'
@@ -437,12 +434,14 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
             ipsec_driver.CiscoCsrIPSecConnection,
             'set_admin_state').start()
         self.csr = mock.Mock()
-        self.router_info = {u'router_info': {'rest_mgmt_ip': '2.2.2.2',
-                                             'tunnel_ip': '1.1.1.3',
-                                             'username': 'me',
-                                             'password': 'password',
-                                             'timeout': 120,
-                                             'external_ip': u'1.1.1.1'}}
+        self.router_info = {
+            u'router_info': {'rest_mgmt_ip': '2.2.2.2',
+                             'tunnel_ip': '1.1.1.3',
+                             'username': 'me',
+                             'password': 'password',
+                             'timeout': 120,
+                             'outer_if_name': u'GigabitEthernet3.102',
+                             'inner_if_name': u'GigabitEthernet3.101'}}
         self.service123_data = {u'id': u'123',
                                 u'status': constants.DOWN,
                                 u'admin_state_up': False}

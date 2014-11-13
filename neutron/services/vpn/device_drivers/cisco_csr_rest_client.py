@@ -30,7 +30,6 @@ HEADER_CONTENT_TYPE_JSON = {'content-type': 'application/json'}
 URL_BASE = 'https://%(host)s/api/v1/%(resource)s'
 
 # CSR RESTapi URIs
-
 URI_VPN_IPSEC_POLICIES = 'vpn-svc/ipsec/policies'
 URI_VPN_IPSEC_POLICIES_ID = URI_VPN_IPSEC_POLICIES + '/%s'
 URI_VPN_IKE_POLICIES = 'vpn-svc/ike/policies'
@@ -62,10 +61,12 @@ class CsrRestClient(object):
     def __init__(self, settings):
         self.port = str(settings.get('protocol_port', 55443))
         self.host = ':'.join([settings.get('rest_mgmt_ip', ''), self.port])
-        self.tunnel_ip = settings.get('external_ip', '')
         self.auth = (settings['username'], settings['password'])
-        self.tunnel_if_name = settings.get('tunnel_if_name', '')
+        self.inner_if_name = settings.get('inner_if_name', '')
+        self.outer_if_name = settings.get('outer_if_name', '')
         self.token = None
+        self.vrf = settings.get('vrf', '')
+        self.vrf_prefix = 'vrf/%s/' % self.vrf if self.vrf else ""
         self.status = requests.codes.OK
         self.timeout = settings.get('timeout')
         self.max_tries = 5
@@ -212,6 +213,8 @@ class CsrRestClient(object):
         return self._do_request('DELETE', resource,
                                 more_headers=HEADER_CONTENT_TYPE_JSON)
 
+    # VPN Specific APIs
+
     def create_ike_policy(self, policy_info):
         base_ike_policy_info = {u'version': u'v1',
                                 u'local-auth-method': u'pre-share'}
@@ -226,19 +229,22 @@ class CsrRestClient(object):
                                  payload=base_ipsec_policy_info)
 
     def create_pre_shared_key(self, psk_info):
-        return self.post_request(URI_VPN_IKE_KEYRINGS, payload=psk_info)
+        return self.post_request(self.vrf_prefix + URI_VPN_IKE_KEYRINGS,
+                                 payload=psk_info)
 
     def create_ipsec_connection(self, connection_info):
         base_conn_info = {
             u'vpn-type': u'site-to-site',
             u'ip-version': u'ipv4',
             u'local-device': {
-                u'tunnel-ip-address': self.tunnel_ip,
-                u'ip-address': self.tunnel_if_name
+                u'tunnel-ip-address': self.outer_if_name,
+                u'ip-address': self.inner_if_name
             }
         }
         connection_info.update(base_conn_info)
-        return self.post_request(URI_VPN_SITE_TO_SITE,
+        if self.vrf:
+            connection_info[u'tunnel-vrf'] = self.vrf
+        return self.post_request(self.vrf_prefix + URI_VPN_SITE_TO_SITE,
                                  payload=connection_info)
 
     def configure_ike_keepalive(self, keepalive_info):
@@ -247,11 +253,12 @@ class CsrRestClient(object):
         return self.put_request(URI_VPN_IKE_KEEPALIVE, keepalive_info)
 
     def create_static_route(self, route_info):
-        return self.post_request(URI_ROUTING_STATIC_ROUTES,
+        return self.post_request(self.vrf_prefix + URI_ROUTING_STATIC_ROUTES,
                                  payload=route_info)
 
     def delete_static_route(self, route_id):
-        return self.delete_request(URI_ROUTING_STATIC_ROUTES_ID % route_id)
+        return self.delete_request(
+            self.vrf_prefix + URI_ROUTING_STATIC_ROUTES_ID % route_id)
 
     def set_ipsec_connection_state(self, tunnel, admin_up=True):
         """Set the IPSec site-to-site connection (tunnel) admin state.
@@ -259,10 +266,12 @@ class CsrRestClient(object):
         Note: When a tunnel is created, it will be admin up.
         """
         info = {u'vpn-interface-name': tunnel, u'enabled': admin_up}
-        return self.put_request(URI_VPN_SITE_TO_SITE_STATE % tunnel, info)
+        return self.put_request(
+            self.vrf_prefix + URI_VPN_SITE_TO_SITE_STATE % tunnel, info)
 
     def delete_ipsec_connection(self, conn_id):
-        return self.delete_request(URI_VPN_SITE_TO_SITE_ID % conn_id)
+        return self.delete_request(
+            self.vrf_prefix + URI_VPN_SITE_TO_SITE_ID % conn_id)
 
     def delete_ipsec_policy(self, policy_id):
         return self.delete_request(URI_VPN_IPSEC_POLICIES_ID % policy_id)
@@ -271,10 +280,12 @@ class CsrRestClient(object):
         return self.delete_request(URI_VPN_IKE_POLICIES_ID % policy_id)
 
     def delete_pre_shared_key(self, key_id):
-        return self.delete_request(URI_VPN_IKE_KEYRINGS_ID % key_id)
+        return self.delete_request(
+            self.vrf_prefix + URI_VPN_IKE_KEYRINGS_ID % key_id)
 
     def read_tunnel_statuses(self):
-        results = self.get_request(URI_VPN_SITE_ACTIVE_SESSIONS)
+        results = self.get_request(self.vrf_prefix +
+                                   URI_VPN_SITE_ACTIVE_SESSIONS)
         if self.status != requests.codes.OK or not results:
             return []
         tunnels = [(t[u'vpn-interface-name'], t[u'status'])
