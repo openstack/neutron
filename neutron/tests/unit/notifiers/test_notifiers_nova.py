@@ -303,3 +303,20 @@ class TestNovaNotify(base.BaseTestCase):
                 self.nova_notifier.queue_event(mock.Mock())
                 self.assertFalse(self.nova_notifier._waiting_to_send)
                 send_events.assert_called_once_with()
+
+    def test_reassociate_floatingip_without_disassociate_event(self):
+        returned_obj = {'floatingip':
+                        {'port_id': 'f5348a16-609a-4971-b0f0-4b8def5235fb'}}
+        original_obj = {'port_id': '5a39def4-3d3f-473d-9ff4-8e90064b9cc1'}
+        self.nova_notifier._waiting_to_send = True
+        self.nova_notifier.send_network_change(
+            'update_floatingip', original_obj, returned_obj)
+        self.assertEqual(2, len(self.nova_notifier.pending_events))
+
+        returned_obj_non = {'floatingip': {'port_id': None}}
+        event_dis = self.nova_notifier.create_port_changed_event(
+            'update_floatingip', original_obj, returned_obj_non)
+        event_assoc = self.nova_notifier.create_port_changed_event(
+            'update_floatingip', original_obj, returned_obj)
+        self.assertEqual(self.nova_notifier.pending_events[0], event_dis)
+        self.assertEqual(self.nova_notifier.pending_events[1], event_assoc)
