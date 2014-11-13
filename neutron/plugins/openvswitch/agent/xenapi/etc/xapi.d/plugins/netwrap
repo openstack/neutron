@@ -36,6 +36,7 @@ ALLOWED_CMDS = [
     'ip',
     'ovs-ofctl',
     'ovs-vsctl',
+    'ovsdb-client',
     ]
 
 
