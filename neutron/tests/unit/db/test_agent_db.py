@@ -103,7 +103,7 @@ class TestAgentsDbMixin(testlib_api.SqlTestCase):
         #                   attempt on fail
         with mock.patch('sqlalchemy.orm.Session.add') as add_mock:
             add_mock.side_effect = [
-                exc.DBDuplicateEntry(columns=['agent_type', 'host']),
+                exc.DBDuplicateEntry(),
                 None
             ]
 
