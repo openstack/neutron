@@ -18,6 +18,7 @@ import time
 
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from oslo import messaging
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy import orm
@@ -26,7 +27,6 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import sql
 
 from neutron.common import constants
-from neutron.common import rpc as n_rpc
 from neutron.common import utils as n_utils
 from neutron import context as n_ctx
 from neutron.db import agents_db
@@ -135,7 +135,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 try:
                     self.reschedule_router(context, binding.router_id)
                 except (l3agentscheduler.RouterReschedulingFailed,
-                        n_rpc.RemoteError):
+                        messaging.RemoteError):
                     # Catch individual router rescheduling errors here
                     # so one broken one doesn't stop the iteration.
                     LOG.exception(_LE("Failed to reschedule router %s"),

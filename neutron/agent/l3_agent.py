@@ -108,9 +108,9 @@ class L3PluginApi(n_rpc.RpcProxy):
     def get_external_network_id(self, context):
         """Make a remote process call to retrieve the external network id.
 
-        @raise n_rpc.RemoteError: with TooManyExternalNetworks as
-                                  exc_type if there are more than one
-                                  external network
+        @raise messaging.RemoteError: with TooManyExternalNetworks as
+                                      exc_type if there are more than one
+                                      external network
         """
         return self.call(context,
                          self.make_msg('get_external_network_id',
@@ -534,7 +534,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             try:
                 self.neutron_service_plugins = (
                     self.plugin_rpc.get_service_plugin_list(self.context))
-            except n_rpc.RemoteError as e:
+            except messaging.RemoteError as e:
                 with excutils.save_and_reraise_exception() as ctx:
                     ctx.reraise = False
                     LOG.warning(_LW('l3-agent cannot check service plugins '
@@ -750,7 +750,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self.target_ex_net_id = self.plugin_rpc.get_external_network_id(
                 self.context)
             return self.target_ex_net_id
-        except n_rpc.RemoteError as e:
+        except messaging.RemoteError as e:
             with excutils.save_and_reraise_exception() as ctx:
                 if e.exc_type == 'TooManyExternalNetworks':
                     ctx.reraise = False

@@ -30,7 +30,6 @@ from neutron.agent.linux import interface
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc as n_rpc
 from neutron.openstack.common import processutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
@@ -2221,7 +2220,7 @@ vrrp_instance VR_1 {
         self.assertTrue(self.plugin_api.get_service_plugin_list.called)
 
     def test_get_service_plugin_list_failed(self):
-        raise_rpc = n_rpc.RemoteError()
+        raise_rpc = messaging.RemoteError()
         self.plugin_api.get_service_plugin_list.side_effect = raise_rpc
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertIsNone(agent.neutron_service_plugins)

@@ -26,7 +26,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
@@ -533,7 +532,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         with contextlib.nested(
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                'get_dvr_mac_address_by_host',
-                               side_effect=n_rpc.RemoteError),
+                               side_effect=messaging.RemoteError),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'add_flow')) as (gd_mac, add_int_flow_fn):
 

@@ -22,6 +22,7 @@ eventlet.monkey_patch()
 
 import netaddr
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
@@ -138,7 +139,7 @@ class DhcpAgent(manager.Manager):
                         % {'net_id': network.id, 'action': action})
         except Exception as e:
             self.schedule_resync(e, network.id)
-            if (isinstance(e, n_rpc.RemoteError)
+            if (isinstance(e, messaging.RemoteError)
                 and e.exc_type == 'NetworkNotFound'
                 or isinstance(e, exceptions.NetworkNotFound)):
                 LOG.warning(_("Network %s has been deleted."), network.id)
