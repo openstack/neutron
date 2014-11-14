@@ -306,40 +306,26 @@ class TestNecAgentCallback(TestNecAgentBase):
 
 class TestNecAgentPluginApi(TestNecAgentBase):
 
-    def _test_plugin_api(self, expected_failure=False):
+    def test_plugin_api(self):
         with contextlib.nested(
-            mock.patch.object(nec_neutron_agent.NECPluginApi, 'make_msg'),
-            mock.patch.object(nec_neutron_agent.NECPluginApi, 'call'),
-            mock.patch.object(nec_neutron_agent, 'LOG')
-        ) as (make_msg, apicall, log):
+            mock.patch.object(self.agent.plugin_rpc.client, 'prepare'),
+            mock.patch.object(self.agent.plugin_rpc.client, 'call'),
+        ) as (mock_prepare, mock_call):
+            mock_prepare.return_value = self.agent.plugin_rpc.client
+
             agent_id = 'nec-q-agent.dummy-host'
-            if expected_failure:
-                apicall.side_effect = Exception()
+            port_added = [{'id': 'id-1', 'mac': 'mac-1', 'port_no': '1'},
+                          {'id': 'id-2', 'mac': 'mac-2', 'port_no': '2'}]
+            port_removed = ['id-3', 'id-4', 'id-5']
 
             self.agent.plugin_rpc.update_ports(
                 mock.sentinel.ctx, agent_id, OVS_DPID_0X,
-                # port_added
-                [{'id': 'id-1', 'mac': 'mac-1', 'port_no': '1'},
-                 {'id': 'id-2', 'mac': 'mac-2', 'port_no': '2'}],
-                # port_removed
-                ['id-3', 'id-4', 'id-5'])
+                port_added, port_removed)
 
-            make_msg.assert_called_once_with(
-                'update_ports', topic='q-agent-notifier',
-                agent_id=agent_id, datapath_id=OVS_DPID_0X,
-                port_added=[{'id': 'id-1', 'mac': 'mac-1', 'port_no': '1'},
-                            {'id': 'id-2', 'mac': 'mac-2', 'port_no': '2'}],
-                port_removed=['id-3', 'id-4', 'id-5'])
-
-            apicall.assert_called_once_with(mock.sentinel.ctx,
-                                            make_msg.return_value)
-
-            self.assertTrue(log.info.called)
-            if expected_failure:
-                self.assertTrue(log.warn.called)
-
-    def test_plugin_api(self):
-        self._test_plugin_api()
+            mock_call.assert_called_once_with(
+                    mock.sentinel.ctx, 'update_ports',
+                    agent_id=agent_id, datapath_id=OVS_DPID_0X,
+                    port_added=port_added, port_removed=port_removed)
 
 
 class TestNecAgentMain(base.BaseTestCase):

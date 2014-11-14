@@ -43,7 +43,6 @@ LOG = logging.getLogger(__name__)
 
 
 class NECPluginApi(agent_rpc.PluginApi):
-    BASE_RPC_API_VERSION = '1.0'
 
     def update_ports(self, context, agent_id, datapath_id,
                      port_added, port_removed):
@@ -51,13 +50,12 @@ class NECPluginApi(agent_rpc.PluginApi):
         LOG.info(_("Update ports: added=%(added)s, "
                    "removed=%(removed)s"),
                  {'added': port_added, 'removed': port_removed})
-        self.call(context,
-                  self.make_msg('update_ports',
-                                topic=topics.AGENT,
-                                agent_id=agent_id,
-                                datapath_id=datapath_id,
-                                port_added=port_added,
-                                port_removed=port_removed))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'update_ports',
+                          agent_id=agent_id,
+                          datapath_id=datapath_id,
+                          port_added=port_added,
+                          port_removed=port_removed)
 
 
 class NECAgentRpcCallback(n_rpc.RpcCallback):

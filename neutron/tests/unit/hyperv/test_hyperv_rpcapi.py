@@ -18,6 +18,7 @@
 Unit Tests for hyperv neutron rpc
 """
 
+import contextlib
 import mock
 
 from neutron.agent import rpc as agent_rpc
@@ -31,8 +32,10 @@ from neutron.tests import base
 
 class rpcHyperVApiTestCase(base.BaseTestCase):
 
-    def _test_hyperv_neutron_api(
+    def _test_hyperv_neutron_api_legacy(
             self, rpcapi, topic, method, rpc_method, **kwargs):
+        # NOTE(russellb) This version of the test method is used for interfaces
+        # not yet converted away from using the RpcProxy compatibility class.
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if rpc_method == 'call' else None
         expected_version = kwargs.pop('version', None)
@@ -54,9 +57,34 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
         ]
         rpc_method_mock.assert_has_calls(expected)
 
+    def _test_hyperv_neutron_api(
+            self, rpcapi, topic, method, rpc_method, **kwargs):
+        ctxt = context.RequestContext('fake_user', 'fake_project')
+        expected_retval = 'foo' if rpc_method == 'call' else None
+        expected_version = kwargs.pop('version', None)
+
+        with contextlib.nested(
+            mock.patch.object(rpcapi.client, rpc_method),
+            mock.patch.object(rpcapi.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = rpcapi.client
+            rpc_mock.return_value = expected_retval
+            retval = getattr(rpcapi, method)(ctxt, **kwargs)
+
+        self.assertEqual(retval, expected_retval)
+
+        prepare_args = {}
+        if expected_version:
+            prepare_args['version'] = expected_version
+        prepare_mock.assert_called_once_with(**prepare_args)
+
+        rpc_mock.assert_called_once_with(ctxt, method, **kwargs)
+
     def test_delete_network(self):
         rpcapi = ana.AgentNotifierApi(topics.AGENT)
-        self._test_hyperv_neutron_api(
+        self._test_hyperv_neutron_api_legacy(
             rpcapi,
             topics.get_topic_name(
                 topics.AGENT,
@@ -67,7 +95,7 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
 
     def test_port_update(self):
         rpcapi = ana.AgentNotifierApi(topics.AGENT)
-        self._test_hyperv_neutron_api(
+        self._test_hyperv_neutron_api_legacy(
             rpcapi,
             topics.get_topic_name(
                 topics.AGENT,
@@ -81,7 +109,7 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
 
     def test_port_delete(self):
         rpcapi = ana.AgentNotifierApi(topics.AGENT)
-        self._test_hyperv_neutron_api(
+        self._test_hyperv_neutron_api_legacy(
             rpcapi,
             topics.get_topic_name(
                 topics.AGENT,
@@ -92,7 +120,7 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
 
     def test_tunnel_update(self):
         rpcapi = ana.AgentNotifierApi(topics.AGENT)
-        self._test_hyperv_neutron_api(
+        self._test_hyperv_neutron_api_legacy(
             rpcapi,
             topics.get_topic_name(
                 topics.AGENT,
