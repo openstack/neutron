@@ -36,15 +36,11 @@ class SecurityGroupServerRpcCallback(n_rpc.RpcCallback):
         return manager.NeutronManager.get_plugin()
 
     def _get_devices_info(self, devices):
-        devices_info = {}
-        for device in devices:
-            port = self.plugin.get_port_from_device(device)
-            if not port:
-                continue
-            if port['device_owner'].startswith('network:'):
-                continue
-            devices_info[port['id']] = port
-        return devices_info
+        return dict(
+            (port['id'], port)
+            for port in self.plugin.get_ports_from_devices(devices)
+            if port and not port['device_owner'].startswith('network:')
+        )
 
     def security_group_rules_for_devices(self, context, **kwargs):
         """Callback method to return security group rules for each port.

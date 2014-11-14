@@ -40,7 +40,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def get_port_from_device(self, device):
         """Get port dict from device name on an agent.
 
-        Subclass must provide this method.
+        Subclass must provide this method or get_ports_from_devices.
 
         :param device: device name which identifies a port on the agent side.
         What is specified in "device" depends on a plugin agent implementation.
@@ -54,8 +54,17 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         - security_group_source_groups
         - fixed_ips
         """
-        raise NotImplementedError(_("%s must implement get_port_from_device.")
+        raise NotImplementedError(_("%s must implement get_port_from_device "
+                                    "or get_ports_from_devices.")
                                   % self.__class__.__name__)
+
+    def get_ports_from_devices(self, devices):
+        """Bulk method of get_port_from_device.
+
+        Subclasses may override this to provide better performance for DB
+        queries, backend calls, etc.
+        """
+        return [self.get_port_from_device(device) for device in devices]
 
     def create_security_group_rule(self, context, security_group_rule):
         bulk_rule = {'security_group_rules': [security_group_rule]}
