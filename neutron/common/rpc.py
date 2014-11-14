@@ -272,7 +272,3 @@ class Connection(object):
 # functions
 def create_connection(new=True):
     return Connection()
-
-
-# exceptions
-MessagingTimeout = messaging.MessagingTimeout
