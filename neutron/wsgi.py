@@ -28,6 +28,7 @@ import time
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True, thread=True)
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 import routes.middleware
 import webob.dec
 import webob.exc
@@ -37,7 +38,6 @@ from neutron import context
 from neutron.db import api
 from neutron.openstack.common import excutils
 from neutron.openstack.common import gettextutils
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import service as common_service
 from neutron.openstack.common import systemd

@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.serialization import jsonutils
+
 from neutron.openstack.common import importutils
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.common import comm_utils
 from neutron.plugins.mlnx.common import exceptions

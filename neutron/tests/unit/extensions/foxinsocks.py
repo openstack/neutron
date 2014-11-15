@@ -15,8 +15,9 @@
 
 import abc
 
+from oslo.serialization import jsonutils
+
 from neutron.api import extensions
-from neutron.openstack.common import jsonutils
 from neutron import wsgi
 
 

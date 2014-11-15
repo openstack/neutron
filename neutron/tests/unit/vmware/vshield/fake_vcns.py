@@ -14,7 +14,8 @@
 
 import copy
 
-from neutron.openstack.common import jsonutils
+from oslo.serialization import jsonutils
+
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.vshield.common import exceptions
 

@@ -15,8 +15,8 @@
 #
 
 import mock
+from oslo.serialization import jsonutils
 
-from neutron.openstack.common import jsonutils
 from neutron.plugins.vmware.api_client import exception
 from neutron.plugins.vmware.common import utils as nsx_utils
 from neutron.plugins.vmware import nsxlib

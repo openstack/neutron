@@ -14,10 +14,10 @@
 
 import time
 
+from oslo.serialization import jsonutils
 import requests
 
 from neutron.openstack.common import excutils
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc

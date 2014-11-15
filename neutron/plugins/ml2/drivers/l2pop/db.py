@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.serialization import jsonutils
 from sqlalchemy import sql
 
 from neutron.common import constants as const
 from neutron.db import agents_db
 from neutron.db import common_db_mixin as base_db
 from neutron.db import models_v2
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import timeutils
 from neutron.plugins.ml2.drivers.l2pop import constants as l2_const
 from neutron.plugins.ml2 import models as ml2_models

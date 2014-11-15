@@ -22,10 +22,9 @@ from __future__ import print_function
 
 import re
 
+from oslo.serialization import jsonutils
 from six import moves
 from wsgiref import simple_server
-
-from neutron.openstack.common import jsonutils
 
 
 class TestNetworkCtrl(object):

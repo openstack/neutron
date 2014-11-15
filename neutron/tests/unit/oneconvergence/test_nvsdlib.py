@@ -14,8 +14,8 @@
 #
 
 import mock
+from oslo.serialization import jsonutils
 
-from neutron.openstack.common import jsonutils
 from neutron.plugins.oneconvergence.lib import nvsdlib
 from neutron.tests import base
 

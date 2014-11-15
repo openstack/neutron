@@ -13,10 +13,11 @@
 #    under the License.
 
 import base64
+
+from oslo.serialization import jsonutils
 import requests
 
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

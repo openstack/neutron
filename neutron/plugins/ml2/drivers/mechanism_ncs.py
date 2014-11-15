@@ -16,9 +16,9 @@
 import re
 
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 import requests
 
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 

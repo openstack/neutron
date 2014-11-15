@@ -14,9 +14,9 @@
 
 import mock
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 import requests
 
-from neutron.openstack.common import jsonutils
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.common import ofc_client

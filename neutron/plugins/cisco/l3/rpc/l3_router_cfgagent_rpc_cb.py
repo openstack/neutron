@@ -12,11 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.serialization import jsonutils
+
 from neutron.common import constants
 from neutron.common import utils
 from neutron import context as neutron_context
 from neutron.extensions import portbindings
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

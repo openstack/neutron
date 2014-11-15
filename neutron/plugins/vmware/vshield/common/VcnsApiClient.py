@@ -15,8 +15,8 @@
 import base64
 
 import eventlet
+from oslo.serialization import jsonutils
 
-from neutron.openstack.common import jsonutils
 from neutron.plugins.vmware.vshield.common import exceptions
 
 httplib2 = eventlet.import_patched('httplib2')

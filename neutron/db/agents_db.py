@@ -17,6 +17,7 @@ from eventlet import greenthread
 
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from oslo.serialization import jsonutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
@@ -27,7 +28,6 @@ from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
 from neutron import manager
 from neutron.openstack.common import excutils
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import timeutils
 

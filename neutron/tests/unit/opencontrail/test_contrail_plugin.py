@@ -20,6 +20,7 @@ import uuid
 import mock
 import netaddr
 from oslo.config import cfg
+from oslo.serialization import jsonutils
 from testtools import matchers
 import webob.exc
 
@@ -34,7 +35,6 @@ from neutron.db import l3_db
 from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common import jsonutils
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extension_security_group as test_sg

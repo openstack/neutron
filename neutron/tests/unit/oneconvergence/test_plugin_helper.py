@@ -13,9 +13,9 @@
 #    under the License.
 
 import mock
+from oslo.serialization import jsonutils
 import requests
 
-from neutron.openstack.common import jsonutils
 from neutron.plugins.oneconvergence.lib import config  # noqa
 from neutron.plugins.oneconvergence.lib import plugin_helper as client
 from neutron.tests import base

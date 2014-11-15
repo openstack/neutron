@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import mock
+from oslo.serialization import jsonutils
 
 from neutron.common import exceptions
-from neutron.openstack.common import jsonutils
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import utils

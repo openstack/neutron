@@ -14,9 +14,9 @@
 #    under the License.
 
 import mock
+from oslo.serialization import jsonutils
 import requests
 
-from neutron.openstack.common import jsonutils
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import config as config
 from neutron.plugins.ml2 import driver_api as api
