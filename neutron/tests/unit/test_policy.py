@@ -15,6 +15,7 @@
 
 """Test of Policy Engine For Neutron"""
 
+import contextlib
 import StringIO
 import urllib2
 
@@ -601,3 +602,12 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         rules = policy._process_rules_list([], match_rule)
         self.assertEqual(['create_something', 'create_something:somethings',
                           'create_something:attr:sub_attr_1'], rules)
+
+    def test_log_rule_list(self):
+        with contextlib.nested(
+            mock.patch.object(policy.LOG, 'isEnabledFor', return_value=True),
+            mock.patch.object(policy.LOG, 'debug')
+        ) as (is_e, dbg):
+            policy.log_rule_list(common_policy.RuleCheck('rule', 'create_'))
+            self.assertTrue(is_e.called)
+            self.assertTrue(dbg.called)

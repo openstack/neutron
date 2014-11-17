@@ -225,11 +225,6 @@ def _build_match_rule(action, target):
                                     attribute_name, attribute,
                                     action, target)])
                         match_rule = policy.AndCheck([match_rule, attr_rule])
-    # Check that the logger has a DEBUG log level
-    if (cfg.CONF.debug and LOG.logger.level == logging.NOTSET or
-            LOG.logger.level == logging.DEBUG):
-        rules = _process_rules_list([], match_rule)
-        LOG.debug("Enforcing rules: %s", rules)
     return match_rule
 
 
@@ -369,6 +364,12 @@ def _prepare_check(context, action, target):
     return match_rule, target, credentials
 
 
+def log_rule_list(match_rule):
+    if LOG.isEnabledFor(logging.DEBUG):
+        rules = _process_rules_list([], match_rule)
+        LOG.debug("Enforcing rules: %s", rules)
+
+
 def check(context, action, target, plugin=None, might_not_exist=False):
     """Verifies that the action is valid on the target in this context.
 
@@ -388,7 +389,12 @@ def check(context, action, target, plugin=None, might_not_exist=False):
     """
     if might_not_exist and not (_ENFORCER.rules and action in _ENFORCER.rules):
         return True
-    return _ENFORCER.enforce(*(_prepare_check(context, action, target)))
+    match_rule, target, credentials = _prepare_check(context, action, target)
+    result = _ENFORCER.enforce(match_rule, target, credentials)
+    # logging applied rules in case of failure
+    if not result:
+        log_rule_list(match_rule)
+    return result
 
 
 def enforce(context, action, target, plugin=None):
@@ -408,10 +414,11 @@ def enforce(context, action, target, plugin=None):
     """
     rule, target, credentials = _prepare_check(context, action, target)
     try:
-        result = _ENFORCER.enforce(rule, target, credentials,
-                                   action=action, do_raise=True)
+        result = _ENFORCER.enforce(rule, target, credentials, action=action,
+                                   do_raise=True)
     except policy.PolicyNotAuthorized:
         with excutils.save_and_reraise_exception():
+            log_rule_list(rule)
             LOG.debug("Failed policy check for '%s'", action)
     return result
 
