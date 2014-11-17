@@ -2641,6 +2641,36 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     self.assertEqual(res.status_int,
                                      webob.exc.HTTPNoContent.code)
 
+    def test_delete_subnet_ipv6_slaac_port_exists(self):
+        """Test IPv6 SLAAC subnet delete when a port is still using subnet."""
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        # Create an IPv6 SLAAC subnet and a port using that subnet
+        subnet = self._make_subnet(self.fmt, network, gateway='fe80::1',
+                                   cidr='fe80::/64', ip_version=6,
+                                   ipv6_ra_mode=constants.IPV6_SLAAC,
+                                   ipv6_address_mode=constants.IPV6_SLAAC)
+        res = self._create_port(self.fmt, net_id=network['network']['id'])
+        port = self.deserialize(self.fmt, res)
+        self.assertEqual(1, len(port['port']['fixed_ips']))
+
+        # The port should have an address from the subnet
+        req = self.new_show_request('ports', port['port']['id'], self.fmt)
+        res = req.get_response(self.api)
+        sport = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(1, len(sport['port']['fixed_ips']))
+
+        # Delete the subnet
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+        # The port should no longer have an address from the deleted subnet
+        req = self.new_show_request('ports', port['port']['id'], self.fmt)
+        res = req.get_response(self.api)
+        sport = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(0, len(sport['port']['fixed_ips']))
+
     def test_delete_network(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
