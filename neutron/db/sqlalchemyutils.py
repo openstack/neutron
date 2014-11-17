@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+
 from six import moves
 import sqlalchemy
 from sqlalchemy.orm import properties
@@ -105,3 +107,27 @@ def paginate_query(query, model, limit, sorts, marker_obj=None):
         query = query.limit(limit)
 
     return query
+
+
+default_tx_isolation_level = None
+
+
+def get_default_tx_level(engine):
+    global default_tx_isolation_level
+    if not default_tx_isolation_level:
+        default_tx_isolation_level = engine.dialect.get_isolation_level(
+            engine.raw_connection())
+    return default_tx_isolation_level
+
+
+@contextlib.contextmanager
+def set_mysql_tx_isolation_level(session, level):
+    engine = session.connection().engine
+    if (engine.name == "mysql" and level != get_default_tx_level(engine)):
+        session.connection().execution_options(
+            isolation_level=level)
+    yield
+    engine = session.connection().engine
+    if engine.name == "mysql":
+        session.connection().execution_options(
+            isolation_level=get_default_tx_level(engine))

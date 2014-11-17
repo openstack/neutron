@@ -48,6 +48,7 @@ from neutron.db import extradhcpopt_db
 from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
+from neutron.db import sqlalchemyutils as sqla
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import l3agentscheduler
@@ -538,7 +539,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         net_data = network[attributes.NETWORK]
         tenant_id = self._get_tenant_id_for_create(context, net_data)
         session = context.session
-        with session.begin(subtransactions=True):
+        with contextlib.nested(
+            session.begin(subtransactions=True),
+            sqla.set_mysql_tx_isolation_level(session, "READ COMMITTED")
+        ):
             self._ensure_default_security_group(context, tenant_id)
             result = super(Ml2Plugin, self).create_network(context, network)
             self.extension_manager.process_create_network(session, net_data,
