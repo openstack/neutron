@@ -40,8 +40,6 @@ class rpcApiTestCase(base.BaseTestCase):
             expected_kwargs['version'] = kwargs.pop('version')
         if not expected_msg:
             expected_msg = rpcapi.make_msg(method, **kwargs)
-        if rpc_method == 'cast' and method == 'run_instance':
-            kwargs['call'] = False
 
         self.fake_args = None
         self.fake_kwargs = None

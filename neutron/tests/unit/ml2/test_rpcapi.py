@@ -170,8 +170,6 @@ class RpcApiTestCase(base.BaseTestCase):
         expected_retval = 'foo' if method == 'call' else None
         expected_version = kwargs.pop('version', None)
         expected_msg = rpcapi.make_msg(method, **kwargs)
-        if rpc_method == 'cast' and method == 'run_instance':
-            kwargs['call'] = False
 
         rpc = n_rpc.RpcProxy
         with mock.patch.object(rpc, rpc_method) as rpc_method_mock:
