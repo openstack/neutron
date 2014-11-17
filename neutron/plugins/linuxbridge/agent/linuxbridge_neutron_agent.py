@@ -27,6 +27,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from six import moves
 
 from neutron.agent import l2population_rpc as l2pop_rpc
 from neutron.agent.linux import ip_lib
@@ -523,7 +524,7 @@ class LinuxBridgeManager:
                          'command': 'bridge fdb',
                          'mode': 'VXLAN UCAST'})
             return False
-        for segmentation_id in range(1, constants.MAX_VXLAN_VNI + 1):
+        for segmentation_id in moves.xrange(1, constants.MAX_VXLAN_VNI + 1):
             if not ip_lib.device_exists(
                     self.get_vxlan_device_name(segmentation_id)):
                 break
