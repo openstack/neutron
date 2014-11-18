@@ -35,3 +35,16 @@ class IptablesManagerTestCase(base.BaseIPVethTestCase):
                                                  base.ICMP_BLOCK_RULE)
         self.iptables.apply()
         self.pinger.assert_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+
+    def test_mangle_icmp(self):
+        self.pinger.assert_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.iptables.ipv4['mangle'].add_rule('INPUT', base.ICMP_MARK_RULE)
+        self.iptables.ipv4['filter'].add_rule('INPUT', base.MARKED_BLOCK_RULE)
+        self.iptables.apply()
+        self.pinger.assert_no_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.iptables.ipv4['mangle'].remove_rule('INPUT',
+                                                 base.ICMP_MARK_RULE)
+        self.iptables.ipv4['filter'].remove_rule('INPUT',
+                                                 base.MARKED_BLOCK_RULE)
+        self.iptables.apply()
+        self.pinger.assert_ping_from_ns(self.src_ns, self.DST_ADDRESS)

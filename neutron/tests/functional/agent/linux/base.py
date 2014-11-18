@@ -24,6 +24,11 @@ from neutron.tests.functional import base as functional_base
 
 
 BR_PREFIX = 'test-br'
+MARK_VALUE = '0x1'
+MARK_MASK = '0xffffffff'
+ICMP_MARK_RULE = ('-j MARK --set-xmark %(value)s/%(mask)s'
+                  % {'value': MARK_VALUE, 'mask': MARK_MASK})
+MARKED_BLOCK_RULE = '-m mark --mark %s -j DROP' % MARK_VALUE
 ICMP_BLOCK_RULE = '-p icmp -j DROP'
 
 
