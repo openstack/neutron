@@ -35,6 +35,17 @@ log_translation = re.compile(
     r"(.)*LOG\.(audit|error|info|warn|warning|critical|exception)\(\s*('|\")")
 author_tag_re = (re.compile("^\s*#\s*@?(a|A)uthor"),
                  re.compile("^\.\.\s+moduleauthor::"))
+log_translation_hint = re.compile(
+    r"(.)*LOG\.(audit|error|info|warn|warning|critical|exception)"
+    "\(\s*(_\(|'|\")")
+
+
+def _directory_to_check_translation(filename):
+    # In order to try and speed up the integration of this we will
+    # do it on a directory by directory basis. The last patch of the
+    # series will remove this and the entire code base will be validated.
+    dirs = ["neutron/agent"]
+    return any([dir in filename for dir in dirs])
 
 
 def validate_log_translations(logical_line, physical_line, filename):
@@ -46,6 +57,11 @@ def validate_log_translations(logical_line, physical_line, filename):
     msg = "N320: Log messages require translations!"
     if log_translation.match(logical_line):
         yield (0, msg)
+
+    if _directory_to_check_translation(filename):
+        msg = "N320: Log messages require translation hints!"
+        if log_translation_hint.match(logical_line):
+            yield (0, msg)
 
 
 def use_jsonutils(logical_line, filename):
@@ -79,6 +95,21 @@ def no_author_tags(physical_line):
             return pos, "N322: Don't use author tags"
 
 
+def no_translate_debug_logs(logical_line, filename):
+    """Check for 'LOG.debug(_('
+
+    As per our translation policy,
+    https://wiki.openstack.org/wiki/LoggingStandards#Log_Translation
+    we shouldn't translate debug level logs.
+
+    * This check assumes that 'LOG' is a logger.
+    N319
+    """
+    if _directory_to_check_translation(filename):
+        if logical_line.startswith("LOG.debug(_("):
+            yield(0, "N319 Don't translate debug level logs")
+
+
 def check_assert_called_once(logical_line, filename):
     msg = ("N323: assert_called_once is a no-op. please use "
            "assert_called_once_with to test with explicit parameters or an "
@@ -95,3 +126,4 @@ def factory(register):
     register(use_jsonutils)
     register(no_author_tags)
     register(check_assert_called_once)
+    register(no_translate_debug_logs)

@@ -31,6 +31,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import utils as commonutils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
@@ -216,14 +217,14 @@ class DhcpLocalProcess(DhcpBase):
                 cmd = ['kill', '-9', pid]
                 utils.execute(cmd, self.root_helper)
             else:
-                LOG.debug(_('DHCP for %(net_id)s is stale, pid %(pid)d '
-                            'does not exist, performing cleanup'),
+                LOG.debug('DHCP for %(net_id)s is stale, pid %(pid)d '
+                          'does not exist, performing cleanup',
                           {'net_id': self.network.id, 'pid': pid})
             if not retain_port:
                 self.device_manager.destroy(self.network,
                                             self.interface_name)
         else:
-            LOG.debug(_('No DHCP started for %s'), self.network.id)
+            LOG.debug('No DHCP started for %s', self.network.id)
 
         self._remove_config_files()
 
@@ -234,8 +235,8 @@ class DhcpLocalProcess(DhcpBase):
                 try:
                     ns_ip.netns.delete(self.network.namespace)
                 except RuntimeError:
-                    msg = _('Failed trying to delete namespace: %s')
-                    LOG.exception(msg, self.network.namespace)
+                    LOG.exception(_LE('Failed trying to delete namespace: %s'),
+                                  self.network.namespace)
 
     def _remove_config_files(self):
         confs_dir = os.path.abspath(os.path.normpath(self.conf.dhcp_confs))
@@ -325,15 +326,15 @@ class Dnsmasq(DhcpLocalProcess):
             ver = re.findall("\d+.\d+", out)[0]
             is_valid_version = float(ver) >= cls.MINIMUM_VERSION
             if not is_valid_version:
-                LOG.error(_('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
-                            'DHCP AGENT MAY NOT RUN CORRECTLY! '
-                            'Please ensure that its version is %s '
-                            'or above!'), cls.MINIMUM_VERSION)
+                LOG.error(_LE('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
+                              'DHCP AGENT MAY NOT RUN CORRECTLY! '
+                              'Please ensure that its version is %s '
+                              'or above!'), cls.MINIMUM_VERSION)
                 raise SystemExit(1)
         except (OSError, RuntimeError, IndexError, ValueError):
-            LOG.error(_('Unable to determine dnsmasq version. '
-                        'Please ensure that its version is %s '
-                        'or above!'), cls.MINIMUM_VERSION)
+            LOG.error(_LE('Unable to determine dnsmasq version. '
+                          'Please ensure that its version is %s '
+                          'or above!'), cls.MINIMUM_VERSION)
             raise SystemExit(1)
         return float(ver)
 
@@ -436,8 +437,8 @@ class Dnsmasq(DhcpLocalProcess):
         # If all subnets turn off dhcp, kill the process.
         if not self._enable_dhcp():
             self.disable()
-            LOG.debug(_('Killing dhcpmasq for network since all subnets have '
-                        'turned off DHCP: %s'), self.network.id)
+            LOG.debug('Killing dhcpmasq for network since all subnets have '
+                      'turned off DHCP: %s', self.network.id)
             return
 
         self._release_unused_leases()
@@ -448,8 +449,8 @@ class Dnsmasq(DhcpLocalProcess):
             cmd = ['kill', '-HUP', self.pid]
             utils.execute(cmd, self.root_helper)
         else:
-            LOG.debug(_('Pid %d is stale, relaunching dnsmasq'), self.pid)
-        LOG.debug(_('Reloading allocations for network: %s'), self.network.id)
+            LOG.debug('Pid %d is stale, relaunching dnsmasq', self.pid)
+        LOG.debug('Reloading allocations for network: %s', self.network.id)
         self.device_manager.update(self.network, self.interface_name)
 
     def _iter_hosts(self):
@@ -500,7 +501,7 @@ class Dnsmasq(DhcpLocalProcess):
         buf = six.StringIO()
         filename = self.get_conf_file_name('host')
 
-        LOG.debug(_('Building host file: %s'), filename)
+        LOG.debug('Building host file: %s', filename)
         for (port, alloc, hostname, name) in self._iter_hosts():
             # (dzyu) Check if it is legal ipv6 address, if so, need wrap
             # it with '[]' to let dnsmasq to distinguish MAC address from
@@ -509,7 +510,7 @@ class Dnsmasq(DhcpLocalProcess):
             if netaddr.valid_ipv6(ip_address):
                 ip_address = '[%s]' % ip_address
 
-            LOG.debug(_('Adding %(mac)s : %(name)s : %(ip)s'),
+            LOG.debug('Adding %(mac)s : %(name)s : %(ip)s',
                       {"mac": port.mac_address, "name": name,
                        "ip": ip_address})
 
@@ -522,7 +523,7 @@ class Dnsmasq(DhcpLocalProcess):
                           (port.mac_address, name, ip_address))
 
         utils.replace_file(filename, buf.getvalue())
-        LOG.debug(_('Done building host file %s'), filename)
+        LOG.debug('Done building host file %s', filename)
         return filename
 
     def _read_hosts_file_leases(self, filename):
@@ -788,17 +789,16 @@ class DeviceManager(object):
         self.root_helper = root_helper
         self.plugin = plugin
         if not conf.interface_driver:
-            msg = _('An interface driver must be specified')
-            LOG.error(msg)
+            LOG.error(_LE('An interface driver must be specified'))
             raise SystemExit(1)
         try:
             self.driver = importutils.import_object(
                 conf.interface_driver, conf)
         except Exception as e:
-            msg = (_("Error importing interface driver '%(driver)s': "
-                   "%(inner)s") % {'driver': conf.interface_driver,
-                                   'inner': e})
-            LOG.error(msg)
+            LOG.error(_LE("Error importing interface driver '%(driver)s': "
+                          "%(inner)s"),
+                      {'driver': conf.interface_driver,
+                       'inner': e})
             raise SystemExit(1)
 
     def get_interface_name(self, network, port):
@@ -835,8 +835,9 @@ class DeviceManager(object):
                 continue
 
             if gateway != subnet.gateway_ip:
-                m = _('Setting gateway for dhcp netns on net %(n)s to %(ip)s')
-                LOG.debug(m, {'n': network.id, 'ip': subnet.gateway_ip})
+                LOG.debug('Setting gateway for dhcp netns on net %(n)s to '
+                          '%(ip)s',
+                          {'n': network.id, 'ip': subnet.gateway_ip})
 
                 device.route.add_gateway(subnet.gateway_ip)
 
@@ -845,8 +846,7 @@ class DeviceManager(object):
         # No subnets on the network have a valid gateway.  Clean it up to avoid
         # confusion from seeing an invalid gateway here.
         if gateway is not None:
-            msg = _('Removing gateway for dhcp netns on net %s')
-            LOG.debug(msg, network.id)
+            LOG.debug('Removing gateway for dhcp netns on net %s', network.id)
 
             device.route.delete_gateway(gateway)
 
@@ -889,8 +889,8 @@ class DeviceManager(object):
 
         # check for a reserved DHCP port
         if dhcp_port is None:
-            LOG.debug(_('DHCP port %(device_id)s on network %(network_id)s'
-                        ' does not yet exist. Checking for a reserved port.'),
+            LOG.debug('DHCP port %(device_id)s on network %(network_id)s'
+                      ' does not yet exist. Checking for a reserved port.',
                       {'device_id': device_id, 'network_id': network.id})
             for port in network.ports:
                 port_device_id = getattr(port, 'device_id', None)
@@ -903,9 +903,9 @@ class DeviceManager(object):
 
         # DHCP port has not yet been created.
         if dhcp_port is None:
-            LOG.debug(_('DHCP port %(device_id)s on network %(network_id)s'
-                        ' does not yet exist.'), {'device_id': device_id,
-                                                  'network_id': network.id})
+            LOG.debug('DHCP port %(device_id)s on network %(network_id)s'
+                      ' does not yet exist.', {'device_id': device_id,
+                                               'network_id': network.id})
             port_dict = dict(
                 name='',
                 admin_state_up=True,
@@ -938,7 +938,7 @@ class DeviceManager(object):
         if ip_lib.ensure_device_is_ready(interface_name,
                                          self.root_helper,
                                          network.namespace):
-            LOG.debug(_('Reusing existing device: %s.'), interface_name)
+            LOG.debug('Reusing existing device: %s.', interface_name)
         else:
             self.driver.plug(network.id,
                              port.id,

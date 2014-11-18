@@ -17,6 +17,7 @@ import eventlet.event
 import eventlet.queue
 
 from neutron.agent.linux import utils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 
 
@@ -79,13 +80,13 @@ class AsyncProcess(object):
         if self._kill_event:
             raise AsyncProcessException(_('Process is already started'))
         else:
-            LOG.debug(_('Launching async process [%s].'), self.cmd)
+            LOG.debug('Launching async process [%s].', self.cmd)
             self._spawn()
 
     def stop(self):
         """Halt the process and watcher threads."""
         if self._kill_event:
-            LOG.debug(_('Halting async process [%s].'), self.cmd)
+            LOG.debug('Halting async process [%s].', self.cmd)
             self._kill()
         else:
             raise AsyncProcessException(_('Process is not running.'))
@@ -160,20 +161,20 @@ class AsyncProcess(object):
             stale_pid = (isinstance(ex, RuntimeError) and
                          'No such process' in str(ex))
             if not stale_pid:
-                LOG.exception(_('An error occurred while killing [%s].'),
+                LOG.exception(_LE('An error occurred while killing [%s].'),
                               self.cmd)
                 return False
         return True
 
     def _handle_process_error(self):
         """Kill the async process and respawn if necessary."""
-        LOG.debug(_('Halting async process [%s] in response to an error.'),
+        LOG.debug('Halting async process [%s] in response to an error.',
                   self.cmd)
         respawning = self.respawn_interval >= 0
         self._kill(respawning=respawning)
         if respawning:
             eventlet.sleep(self.respawn_interval)
-            LOG.debug(_('Respawning async process [%s].'), self.cmd)
+            LOG.debug('Respawning async process [%s].', self.cmd)
             self._spawn()
 
     def _watch_process(self, callback, kill_event):
@@ -182,8 +183,8 @@ class AsyncProcess(object):
                 if not callback():
                     break
             except Exception:
-                LOG.exception(_('An error occurred while communicating '
-                                'with async process [%s].'), self.cmd)
+                LOG.exception(_LE('An error occurred while communicating '
+                                  'with async process [%s].'), self.cmd)
                 break
             # Ensure that watching a process with lots of output does
             # not block execution of other greenthreads.

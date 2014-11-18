@@ -23,7 +23,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.openstack.common import excutils
-from neutron.openstack.common.gettextutils import _LI, _LW
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 
@@ -70,8 +70,8 @@ class BaseOVS(object):
             return utils.execute(full_args, root_helper=self.root_helper)
         except Exception as e:
             with excutils.save_and_reraise_exception() as ctxt:
-                LOG.error(_("Unable to execute %(cmd)s. "
-                            "Exception: %(exception)s"),
+                LOG.error(_LE("Unable to execute %(cmd)s. "
+                              "Exception: %(exception)s"),
                           {'cmd': full_args, 'exception': e})
                 if not check_error:
                     ctxt.reraise = False
@@ -168,7 +168,8 @@ class OVSBridge(BaseOVS):
             return utils.execute(full_args, root_helper=self.root_helper,
                                  process_input=process_input)
         except Exception as e:
-            LOG.error(_("Unable to execute %(cmd)s. Exception: %(exception)s"),
+            LOG.error(_LE("Unable to execute %(cmd)s. Exception: "
+                          "%(exception)s"),
                       {'cmd': full_args, 'exception': e})
 
     def count_flows(self):
@@ -239,9 +240,9 @@ class OVSBridge(BaseOVS):
         ofport = self.get_port_ofport(port_name)
         if (tunnel_type == constants.TYPE_VXLAN and
                 ofport == INVALID_OFPORT):
-            LOG.error(_('Unable to create VXLAN tunnel port. Please ensure '
-                        'that an openvswitch version that supports VXLAN is '
-                        'installed.'))
+            LOG.error(_LE('Unable to create VXLAN tunnel port. Please ensure '
+                          'that an openvswitch version that supports VXLAN is '
+                          'installed.'))
         return ofport
 
     def add_patch_port(self, local_name, remote_name):
@@ -288,8 +289,8 @@ class OVSBridge(BaseOVS):
             return utils.execute(args, root_helper=self.root_helper).strip()
         except Exception as e:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("Unable to execute %(cmd)s. "
-                            "Exception: %(exception)s"),
+                LOG.error(_LE("Unable to execute %(cmd)s. "
+                              "Exception: %(exception)s"),
                           {'cmd': args, 'exception': e})
 
     # returns a VIF object for each VIF port
@@ -336,7 +337,7 @@ class OVSBridge(BaseOVS):
             try:
                 int_ofport = int(ofport)
             except (ValueError, TypeError):
-                LOG.warn(_("Found not yet ready openvswitch port: %s"), row)
+                LOG.warn(_LW("Found not yet ready openvswitch port: %s"), row)
             else:
                 if int_ofport > 0:
                     if ("iface-id" in external_ids and
@@ -351,7 +352,7 @@ class OVSBridge(BaseOVS):
                             external_ids["xs-vif-uuid"])
                         edge_ports.add(iface_id)
                 else:
-                    LOG.warn(_("Found failed openvswitch port: %s"), row)
+                    LOG.warn(_LW("Found failed openvswitch port: %s"), row)
         return edge_ports
 
     def get_port_tag_dict(self):
@@ -519,7 +520,7 @@ class DeferredOVSBridge(object):
         if exc_type is None:
             self.apply_flows()
         else:
-            LOG.exception(_("OVS flows could not be applied on bridge %s"),
+            LOG.exception(_LE("OVS flows could not be applied on bridge %s"),
                           self.br.br_name)
 
 
@@ -529,7 +530,7 @@ def get_bridge_for_iface(root_helper, iface):
     try:
         return utils.execute(args, root_helper=root_helper).strip()
     except Exception:
-        LOG.exception(_("Interface %s not found."), iface)
+        LOG.exception(_LE("Interface %s not found."), iface)
         return None
 
 
@@ -540,7 +541,7 @@ def get_bridges(root_helper):
         return utils.execute(args, root_helper=root_helper).strip().split("\n")
     except Exception as e:
         with excutils.save_and_reraise_exception():
-            LOG.exception(_("Unable to retrieve bridges. Exception: %s"), e)
+            LOG.exception(_LE("Unable to retrieve bridges. Exception: %s"), e)
 
 
 def get_bridge_external_bridge_id(root_helper, bridge):
@@ -549,7 +550,7 @@ def get_bridge_external_bridge_id(root_helper, bridge):
     try:
         return utils.execute(args, root_helper=root_helper).strip()
     except Exception:
-        LOG.exception(_("Bridge %s not found."), bridge)
+        LOG.exception(_LE("Bridge %s not found."), bridge)
         return None
 
 

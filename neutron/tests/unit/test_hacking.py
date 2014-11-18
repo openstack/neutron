@@ -41,6 +41,12 @@ class HackingTestCase(base.BaseTestCase):
                 self.assertEqual(
                     0, len(list(checks.validate_log_translations(ok,
                                                                  ok, 'f'))))
+            filename = 'neutron/agent/f'
+            bad = "LOG.%s(_('BAD - by directory'))" % log
+            self.assertEqual(
+                1, len(list(checks.validate_log_translations(bad,
+                                                             bad,
+                                                             filename))))
 
     def test_use_jsonutils(self):
         def __get_msg(fun):

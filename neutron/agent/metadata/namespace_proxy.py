@@ -26,6 +26,7 @@ import webob
 from neutron.agent.linux import daemon
 from neutron.common import config
 from neutron.common import utils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron import wsgi
 
@@ -63,7 +64,7 @@ class NetworkMetadataProxyHandler(object):
 
     @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):
-        LOG.debug(_("Request: %s"), req)
+        LOG.debug("Request: %s", req)
         try:
             return self._proxy_request(req.remote_addr,
                                        req.method,
@@ -71,7 +72,7 @@ class NetworkMetadataProxyHandler(object):
                                        req.query_string,
                                        req.body)
         except Exception:
-            LOG.exception(_("Unexpected error."))
+            LOG.exception(_LE("Unexpected error."))
             msg = _('An unknown error has occurred. '
                     'Please try your request again.')
             return webob.exc.HTTPInternalServerError(explanation=unicode(msg))

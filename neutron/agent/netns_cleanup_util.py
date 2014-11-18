@@ -29,6 +29,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.api.v2 import attributes
 from neutron.common import config
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 
@@ -113,7 +114,7 @@ def unplug_device(conf, device):
             bridge = ovs_lib.OVSBridge(bridge_name, root_helper)
             bridge.delete_port(device.name)
         else:
-            LOG.debug(_('Unable to find bridge for device: %s'), device.name)
+            LOG.debug('Unable to find bridge for device: %s', device.name)
 
 
 def destroy_namespace(conf, namespace, force=False):
@@ -137,7 +138,7 @@ def destroy_namespace(conf, namespace, force=False):
 
         ip.garbage_collect_namespace()
     except Exception:
-        LOG.exception(_('Error unable to destroy namespace: %s'), namespace)
+        LOG.exception(_LE('Error unable to destroy namespace: %s'), namespace)
 
 
 def main():
