@@ -171,27 +171,26 @@ class TestFirewallAgentApi(base.BaseTestCase):
         super(TestFirewallAgentApi, self).setUp()
 
         self.api = fwaas_plugin.FirewallAgentApi('topic', 'host')
-        self.mock_fanoutcast = mock.patch.object(self.api,
-                                                 'fanout_cast').start()
-        self.mock_msg = mock.patch.object(self.api, 'make_msg').start()
 
     def test_init(self):
-        self.assertEqual(self.api.topic, 'topic')
+        self.assertEqual(self.api.client.target.topic, 'topic')
         self.assertEqual(self.api.host, 'host')
 
     def _call_test_helper(self, method_name):
-        rv = getattr(self.api, method_name)(mock.sentinel.context, 'test')
-        self.assertEqual(rv, self.mock_fanoutcast.return_value)
-        self.mock_fanoutcast.assert_called_once_with(
-            mock.sentinel.context,
-            self.mock_msg.return_value
-        )
+        with contextlib.nested(
+            mock.patch.object(self.api.client, 'cast'),
+            mock.patch.object(self.api.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = self.api.client
+            getattr(self.api, method_name)(mock.sentinel.context, 'test')
 
-        self.mock_msg.assert_called_once_with(
-            method_name,
-            firewall='test',
-            host='host'
-        )
+        prepare_args = {'fanout': True}
+        prepare_mock.assert_called_once_with(**prepare_args)
+
+        rpc_mock.assert_called_once_with(mock.sentinel.context, method_name,
+                                         firewall='test', host='host')
 
     def test_create_firewall(self):
         self._call_test_helper('create_firewall')

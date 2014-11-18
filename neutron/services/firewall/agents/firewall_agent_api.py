@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
@@ -33,28 +34,25 @@ FWaaSOpts = [
 cfg.CONF.register_opts(FWaaSOpts, 'fwaas')
 
 
-class FWaaSPluginApiMixin(n_rpc.RpcProxy):
+class FWaaSPluginApiMixin(object):
     """Agent side of the FWaaS agent to FWaaS Plugin RPC API."""
 
-    RPC_API_VERSION = '1.0'
-
     def __init__(self, topic, host):
-        super(FWaaSPluginApiMixin,
-              self).__init__(topic=topic,
-                             default_version=self.RPC_API_VERSION)
         self.host = host
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def set_firewall_status(self, context, firewall_id, status):
         """Make a RPC to set the status of a firewall."""
-        return self.call(context,
-                         self.make_msg('set_firewall_status', host=self.host,
-                                       firewall_id=firewall_id, status=status))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'set_firewall_status', host=self.host,
+                          firewall_id=firewall_id, status=status)
 
     def firewall_deleted(self, context, firewall_id):
         """Make a RPC to indicate that the firewall resources are deleted."""
-        return self.call(context,
-                         self.make_msg('firewall_deleted', host=self.host,
-                                       firewall_id=firewall_id))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'firewall_deleted', host=self.host,
+                          firewall_id=firewall_id)
 
 
 class FWaaSAgentRpcCallbackMixin(object):
