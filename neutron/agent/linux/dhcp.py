@@ -663,8 +663,25 @@ class Dnsmasq(DhcpLocalProcess):
 
     @classmethod
     def should_enable_metadata(cls, conf, network):
-        """True if there exists a subnet for which a metadata proxy is needed
+        """Determine whether the metadata proxy is needed for a network
+
+        This method returns True for truly isolated networks (ie: not attached
+        to a router), when the enable_isolated_metadata flag is True.
+
+        This method also returns True when enable_metadata_network is True,
+        and the network passed as a parameter has a subnet in the link-local
+        CIDR, thus characterizing it as a "metadata" network. The metadata
+        network is used by solutions which do not leverage the l3 agent for
+        providing access to the metadata service via logical routers built
+        with 3rd party backends.
         """
+        if conf.enable_metadata_network and conf.enable_isolated_metadata:
+            # check if the network has a metadata subnet
+            meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_CIDR)
+            if any(netaddr.IPNetwork(s.cidr) in meta_cidr
+                   for s in network.subnets):
+                return True
+
         if not conf.use_namespaces or not conf.enable_isolated_metadata:
             return False
 

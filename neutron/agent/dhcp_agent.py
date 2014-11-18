@@ -18,7 +18,7 @@
 import os
 
 import eventlet
-import netaddr
+
 from oslo.config import cfg
 
 from neutron.agent.common import config
@@ -326,10 +326,9 @@ class DhcpAgent(manager.Manager):
         # or all the networks connected via a router
         # to the one passed as a parameter
         neutron_lookup_param = '--network_id=%s' % network.id
-        meta_cidr = netaddr.IPNetwork(dhcp.METADATA_DEFAULT_CIDR)
-        has_metadata_subnet = any(netaddr.IPNetwork(s.cidr) in meta_cidr
-                                  for s in network.subnets)
-        if (self.conf.enable_metadata_network and has_metadata_subnet):
+        # When the metadata network is enabled, the proxy might
+        # be started for the router attached to the network
+        if self.conf.enable_metadata_network:
             router_ports = [port for port in network.ports
                             if (port.device_owner ==
                                 constants.DEVICE_OWNER_ROUTER_INTF)]

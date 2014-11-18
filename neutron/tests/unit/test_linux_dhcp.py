@@ -83,12 +83,12 @@ class FakeRouterPort:
     id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
     admin_state_up = True
     device_owner = constants.DEVICE_OWNER_ROUTER_INTF
-    fixed_ips = [FakeIPAllocation('192.168.0.1',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:0f:rr:rr:rr'
 
-    def __init__(self):
+    def __init__(self, ip_address='192.168.0.1'):
         self.extra_dhcp_opts = []
+        self.fixed_ips = [FakeIPAllocation(
+            ip_address, 'dddddddd-dddd-dddd-dddd-dddddddddddd')]
 
 
 class FakePortMultipleAgents1:
@@ -138,6 +138,16 @@ class FakeV4Subnet:
     enable_dhcp = True
     host_routes = [FakeV4HostRoute]
     dns_nameservers = ['8.8.8.8']
+
+
+class FakeV4MetadataSubnet:
+    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    ip_version = 4
+    cidr = '169.254.169.254/30'
+    gateway_ip = '169.254.169.253'
+    enable_dhcp = True
+    host_routes = []
+    dns_nameservers = []
 
 
 class FakeV4SubnetGatewayRoute:
@@ -273,6 +283,12 @@ class FakeV4NetworkNoRouter:
     ports = [FakePort1()]
 
 
+class FakeV4MetadataNetwork:
+    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    subnets = [FakeV4MetadataSubnet()]
+    ports = [FakeRouterPort(ip_address='169.254.169.253')]
+
+
 class FakeDualV4Pxe3Ports:
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
@@ -397,13 +413,15 @@ class TestBase(base.BaseTestCase):
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp.OPTS)
         config.register_interface_driver_opts_helper(self.conf)
+        config.register_use_namespaces_opts_helper(self.conf)
         instance = mock.patch("neutron.agent.linux.dhcp.DeviceManager")
         self.mock_mgr = instance.start()
         self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                            default=True))
+        self.conf.register_opt(cfg.BoolOpt('enable_metadata_network',
+                                           default=False))
         self.conf(args=args)
         self.conf.set_override('state_path', '')
-        self.conf.use_namespaces = True
 
         self.replace_p = mock.patch('neutron.agent.linux.utils.replace_file')
         self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
@@ -1244,3 +1262,26 @@ tag:tag0,option:router""".lstrip()
 
     def test_check_version_failed_cmd_execution(self):
         self._check_version('Error while executing command', 0)
+
+    def test_should_enable_metadata_namespaces_disabled_returns_false(self):
+        self.conf.set_override('use_namespaces', False)
+        self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(self.conf,
+                                                             mock.ANY))
+
+    def test_should_enable_metadata_isolated_network_returns_true(self):
+        self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
+            self.conf, FakeV4NetworkNoRouter()))
+
+    def test_should_enable_metadata_non_isolated_network_returns_false(self):
+        self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(
+            self.conf, FakeV4MetadataNetwork()))
+
+    def test_should_enable_metadata_isolated_meta_disabled_returns_false(self):
+        self.conf.set_override('enable_isolated_metadata', False)
+        self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(self.conf,
+                                                             mock.ANY))
+
+    def test_should_enable_metadata_with_metadata_network_returns_true(self):
+        self.conf.set_override('enable_metadata_network', True)
+        self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
+            self.conf, FakeV4MetadataNetwork()))
