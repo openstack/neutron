@@ -303,8 +303,8 @@ class DeviceHandlingMixin(object):
             agents = [hosting_device.cfg_agent for hosting_device in query
                       if hosting_device.cfg_agent is not None]
         if active is not None:
-            agents = [agent for agent in agents if not
-                      self.is_agent_down(agent['heartbeat_timestamp'])]
+            agents = [a for a in agents if not
+                      self.is_agent_down(a['heartbeat_timestamp'])]
         return agents
 
     def auto_schedule_hosting_devices(self, context, agent_host):

@@ -330,7 +330,7 @@ class NsxSynchronizer():
 
         for network in networks:
             lswitches = neutron_nsx_mappings.get(network['id'], [])
-            lswitches = [lswitch.get('data') for lswitch in lswitches]
+            lswitches = [lsw.get('data') for lsw in lswitches]
             self.synchronize_network(ctx, network, lswitches)
 
     def synchronize_router(self, context, neutron_router_data,
