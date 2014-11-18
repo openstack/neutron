@@ -38,19 +38,19 @@ class BoolOptCallback(cfg.BoolOpt):
 def check_ovs_vxlan():
     result = checks.vxlan_supported(root_helper=cfg.CONF.AGENT.root_helper)
     if not result:
-        LOG.error(_('Check for Open vSwitch VXLAN support failed. '
-                    'Please ensure that the version of openvswitch '
-                    'being used has VXLAN support.'))
+        LOG.error(_LE('Check for Open vSwitch VXLAN support failed. '
+                      'Please ensure that the version of openvswitch '
+                      'being used has VXLAN support.'))
     return result
 
 
 def check_ovs_patch():
     result = checks.patch_supported(root_helper=cfg.CONF.AGENT.root_helper)
     if not result:
-        LOG.error(_('Check for Open vSwitch patch port support failed. '
-                    'Please ensure that the version of openvswitch '
-                    'being used has patch port support or disable features '
-                    'requiring patch ports (gre/vxlan, etc.).'))
+        LOG.error(_LE('Check for Open vSwitch patch port support failed. '
+                      'Please ensure that the version of openvswitch '
+                      'being used has patch port support or disable features '
+                      'requiring patch ports (gre/vxlan, etc.).'))
     return result
 
 
@@ -67,9 +67,9 @@ def check_arp_responder():
     result = checks.arp_responder_supported(
         root_helper=cfg.CONF.AGENT.root_helper)
     if not result:
-        LOG.error(_('Check for Open vSwitch ARP responder support failed. '
-                    'Please ensure that the version of openvswitch '
-                    'being used has ARP flows support.'))
+        LOG.error(_LE('Check for Open vSwitch ARP responder support failed. '
+                      'Please ensure that the version of openvswitch '
+                      'being used has ARP flows support.'))
     return result
 
 

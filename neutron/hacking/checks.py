@@ -44,7 +44,8 @@ def _directory_to_check_translation(filename):
     # In order to try and speed up the integration of this we will
     # do it on a directory by directory basis. The last patch of the
     # series will remove this and the entire code base will be validated.
-    dirs = ["neutron/agent"]
+    dirs = ["neutron/agent",
+            "neutron/cmd"]
     return any([dir in filename for dir in dirs])
 
 
