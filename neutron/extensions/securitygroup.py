@@ -174,7 +174,7 @@ def convert_ip_prefix_to_cidr(ip_prefix):
 
 
 def _validate_name_not_default(data, valid_values=None):
-    if data == "default":
+    if data.lower() == "default":
         raise SecurityGroupDefaultAlreadyExists()
 
 
