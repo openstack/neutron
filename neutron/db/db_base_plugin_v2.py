@@ -954,8 +954,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 self._delete_port(context, port['id'])
 
             # clean up subnets
-            subnets_qry = context.session.query(models_v2.Subnet)
-            subnets_qry.filter_by(network_id=id).delete()
+            subnets = self._get_subnets_by_network(context, id)
+            for subnet in subnets:
+                self.delete_subnet(context, subnet['id'])
+
             context.session.delete(network)
 
     def get_network(self, context, id, fields=None):

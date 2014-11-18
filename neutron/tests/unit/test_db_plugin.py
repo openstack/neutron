@@ -2648,10 +2648,14 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
-        self._make_subnet(self.fmt, network, gateway_ip, cidr, ip_version=4)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip, cidr,
+                                   ip_version=4)
         req = self.new_delete_request('networks', network['network']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+        req = self.new_show_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_create_subnet_bad_tenant(self):
         with self.network() as network:

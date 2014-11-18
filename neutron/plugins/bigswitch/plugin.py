@@ -863,8 +863,6 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self._send_update_network(orig_net, context)
             return new_subnet
 
-    # NOTE(kevinbenton): workaround for eventlet/mysql deadlock
-    @utils.synchronized('bsn-port-barrier')
     @put_context_in_serverpool
     def delete_subnet(self, context, id):
         LOG.debug(_("NeutronRestProxyV2: delete_subnet() called"))
