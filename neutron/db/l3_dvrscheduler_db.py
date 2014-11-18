@@ -26,6 +26,7 @@ from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import db as ml2_db
 
@@ -293,7 +294,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         """Schedule the snat router on l3 service agent."""
         active_l3_agents = self.get_l3_agents(context, active=True)
         if not active_l3_agents:
-            LOG.warn(_('No active L3 agents found for SNAT'))
+            LOG.warn(_LW('No active L3 agents found for SNAT'))
             return
         snat_candidates = self.get_snat_candidates(sync_router,
                                                    active_l3_agents)

@@ -24,6 +24,7 @@ from neutron.db import l3_dvrscheduler_db as l3_dvrsched_db
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 
 
@@ -73,8 +74,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         """Allow centralized -> distributed state transition only."""
         if (router_db.extra_attributes.distributed and
             router_res.get('distributed') is False):
-            LOG.info(_("Centralizing distributed router %s "
-                       "is not supported"), router_db['id'])
+            LOG.info(_LI("Centralizing distributed router %s "
+                         "is not supported"), router_db['id'])
             raise NotImplementedError()
 
     def _update_distributed_attr(
@@ -438,8 +439,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             f_port = self.get_agent_gw_ports_exist_for_network(
                 context, network_id, host, l3_agent_db['id'])
             if not f_port:
-                LOG.info(_('Agent Gateway port does not exist,'
-                           ' so create one: %s'), f_port)
+                LOG.info(_LI('Agent Gateway port does not exist,'
+                             ' so create one: %s'), f_port)
                 agent_port = self._core_plugin.create_port(
                     context,
                     {'port': {'tenant_id': '',
@@ -521,8 +522,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 port_type=DEVICE_OWNER_DVR_INTERFACE
             )
         )
-        LOG.info(_('SNAT interface port list does not exist,'
-                   ' so create one: %s'), port_list)
+        LOG.info(_LI('SNAT interface port list does not exist,'
+                     ' so create one: %s'), port_list)
         for intf in int_ports:
             if intf.fixed_ips:
                 # Passing the subnet for the port to make sure the IP's

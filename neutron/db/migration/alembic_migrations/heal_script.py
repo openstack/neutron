@@ -27,6 +27,7 @@ from sqlalchemy.sql import text
 from sqlalchemy import types
 
 from neutron.db.migration.models import frozen as frozen_models
+from neutron.openstack.common.gettextutils import _LI
 
 LOG = logging.getLogger(__name__)
 
@@ -225,13 +226,15 @@ def check_foreign_keys(metadata):
         fk_models_set = set(fk_models.keys())
         for key in (fk_db_set - fk_models_set):
             dropped_fks.append(('drop_key', fk_db[key], table))
-            LOG.info(_("Detected removed foreign key %(fk)r on "
-                       "table %(table)r"), {'fk': fk_db[key], 'table': table})
+            LOG.info(_LI("Detected removed foreign key %(fk)r on "
+                         "table %(table)r"),
+                     {'fk': fk_db[key], 'table': table})
         for key in (fk_models_set - fk_db_set):
             added_fks.append(('add_key', fk_models[key]))
-            LOG.info(_("Detected added foreign key for column %(fk)r on table "
-                       "%(table)r"), {'fk': fk_models[key].column.name,
-                                      'table': table})
+            LOG.info(_LI("Detected added foreign key for column %(fk)r on "
+                         "table %(table)r"),
+                     {'fk': fk_models[key].column.name,
+                      'table': table})
     return (added_fks, dropped_fks)
 
 
@@ -250,7 +253,7 @@ def rename(table):
     if table in frozen_models.renamed_tables:
         if check_if_table_exists(frozen_models.renamed_tables[table]):
             op.rename_table(frozen_models.renamed_tables[table], table)
-            LOG.info(_("Table %(old_t)r was renamed to %(new_t)r"), {
+            LOG.info(_LI("Table %(old_t)r was renamed to %(new_t)r"), {
                 'old_t': table, 'new_t': frozen_models.renamed_tables[table]})
             return True
     return False

@@ -29,6 +29,7 @@ from neutron.db import models_v2
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -903,8 +904,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 raise l3.L3PortInUse(port_id=port_id,
                                      device_owner=port_db['device_owner'])
             else:
-                LOG.debug(_("Port %(port_id)s has owner %(port_owner)s, but "
-                            "no IP address, so it can be deleted"),
+                LOG.debug("Port %(port_id)s has owner %(port_owner)s, but "
+                          "no IP address, so it can be deleted",
                           {'port_id': port_db['id'],
                            'port_owner': port_db['device_owner']})
 
@@ -1018,13 +1019,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             for port in ports:
                 fixed_ips = port.get('fixed_ips', [])
                 if len(fixed_ips) > 1:
-                    LOG.info(_("Ignoring multiple IPs on router port %s"),
+                    LOG.info(_LI("Ignoring multiple IPs on router port %s"),
                              port['id'])
                     continue
                 elif not fixed_ips:
                     # Skip ports without IPs, which can occur if a subnet
                     # attached to a router is deleted
-                    LOG.info(_("Skipping port %s as no IP is configure on it"),
+                    LOG.info(_LI("Skipping port %s as no IP is configure on "
+                                 "it"),
                              port['id'])
                     continue
                 yield (port, fixed_ips[0])
