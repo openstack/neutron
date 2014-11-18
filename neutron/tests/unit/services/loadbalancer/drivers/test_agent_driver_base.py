@@ -434,30 +434,29 @@ class TestLoadBalancerAgentApi(base.BaseTestCase):
         super(TestLoadBalancerAgentApi, self).setUp()
 
         self.api = agent_driver_base.LoadBalancerAgentApi('topic')
-        self.mock_cast = mock.patch.object(self.api, 'cast').start()
-        self.mock_msg = mock.patch.object(self.api, 'make_msg').start()
 
     def test_init(self):
-        self.assertEqual(self.api.topic, 'topic')
+        self.assertEqual(self.api.client.target.topic, 'topic')
 
     def _call_test_helper(self, method_name, method_args):
-        rv = getattr(self.api, method_name)(mock.sentinel.context,
-                                            host='host',
-                                            **method_args)
-        self.assertEqual(rv, self.mock_cast.return_value)
-        self.mock_cast.assert_called_once_with(
-            mock.sentinel.context,
-            self.mock_msg.return_value,
-            topic='topic.host',
-            version=None
-        )
+        with contextlib.nested(
+            mock.patch.object(self.api.client, 'cast'),
+            mock.patch.object(self.api.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = self.api.client
+            getattr(self.api, method_name)(mock.sentinel.context,
+                                           host='host',
+                                           **method_args)
+
+        prepare_args = {'server': 'host'}
+        prepare_mock.assert_called_once_with(**prepare_args)
 
         if method_name == 'agent_updated':
             method_args = {'payload': method_args}
-        self.mock_msg.assert_called_once_with(
-            method_name,
-            **method_args
-        )
+        rpc_mock.assert_called_once_with(mock.sentinel.context, method_name,
+                                         **method_args)
 
     def test_agent_updated(self):
         self._call_test_helper('agent_updated', {'admin_state_up': 'test'})
