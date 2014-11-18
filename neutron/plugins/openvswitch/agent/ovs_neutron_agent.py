@@ -907,7 +907,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                     # Give udev a chance to process its rules here, to avoid
                     # race conditions between commands launched by udev rules
                     # and the subsequent call to ip_wrapper.add_veth
-                    utils.execute(['/sbin/udevadm', 'settle', '--timeout=10'])
+                    utils.execute(['udevadm', 'settle', '--timeout=10'])
                 int_veth, phys_veth = ip_wrapper.add_veth(int_if_name,
                                                           phys_if_name)
                 int_ofport = self.int_br.add_port(int_veth)

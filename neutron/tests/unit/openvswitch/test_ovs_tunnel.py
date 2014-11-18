@@ -670,7 +670,7 @@ class TunnelTestUseVethInterco(TunnelTest):
 
         self.inta_expected = [mock.call.link.set_up()]
         self.intb_expected = [mock.call.link.set_up()]
-        self.execute_expected = [mock.call(['/sbin/udevadm', 'settle',
+        self.execute_expected = [mock.call(['udevadm', 'settle',
                                             '--timeout=10'])]
 
 
