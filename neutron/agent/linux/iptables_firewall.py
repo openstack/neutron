@@ -320,12 +320,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _get_remote_sg_ids(self, port, direction):
         sg_ids = port.get('security_groups', [])
-        remote_sg_ids = []
+        remote_sg_ids = {constants.IPv4: [], constants.IPv6: []}
         for sg_id in sg_ids:
-            remote_sg_ids.extend([rule['remote_group_id']
-                                  for rule in self.sg_rules.get(sg_id, []) if
-                                  rule['direction'] == direction
-                                  and rule.get('remote_group_id')])
+            for rule in self.sg_rules.get(sg_id, []):
+                if rule['direction'] == direction:
+                    remote_sg_id = rule.get('remote_group_id')
+                    ether_type = rule.get('ethertype')
+                    if remote_sg_id and ether_type:
+                        remote_sg_ids[ether_type].append(remote_sg_id)
         return remote_sg_ids
 
     def _add_rule_by_security_group(self, port, direction):
@@ -394,16 +396,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     self.ipset_chains[chain_name].remove(del_ip)
 
     def _update_ipset_chain_member(self, security_group_ids):
-        for sg_id in security_group_ids or []:
-            for ethertype in ['IPv4', 'IPv6']:
+        for ethertype, sg_ids in security_group_ids.items():
+            for sg_id in sg_ids:
                 add_ips = self._get_new_sg_member_ips(sg_id, ethertype)
                 del_ips = self._get_deleted_sg_member_ips(sg_id, ethertype)
                 cur_member_ips = self._get_cur_sg_member_ips(sg_id, ethertype)
                 chain_name = ethertype + sg_id[:IPSET_CHAIN_LEN]
                 if chain_name not in self.ipset_chains and cur_member_ips:
                     self.ipset_chains[chain_name] = []
-                    self.ipset.create_ipset_chain(
-                        chain_name, ethertype)
+                    self.ipset.create_ipset_chain(chain_name, ethertype)
                     self._bulk_set_ips_to_chain(chain_name,
                                                 cur_member_ips, ethertype)
                 elif (len(add_ips) + len(del_ips)
@@ -537,31 +538,46 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._defer_apply = True
 
     def _remove_unused_security_group_info(self):
-        need_removed_ipset_chains = set()
+        need_removed_ipset_chains = {constants.IPv4: set(),
+                                     constants.IPv6: set()}
         need_removed_security_groups = set()
-        remote_group_ids = set()
+        remote_group_ids = {constants.IPv4: set(),
+                            constants.IPv6: set()}
         cur_group_ids = set()
         for port in self.filtered_ports.values():
-            source_groups = port.get('security_group_source_groups', [])
-            remote_group_ids.update(source_groups)
+            for direction in INGRESS_DIRECTION, EGRESS_DIRECTION:
+                for ethertype, sg_ids in self._get_remote_sg_ids(
+                        port, direction).items():
+                    remote_group_ids[ethertype].update(sg_ids)
             groups = port.get('security_groups', [])
             cur_group_ids.update(groups)
 
-        need_removed_ipset_chains.update(
-            [x for x in self.pre_sg_members if x not in remote_group_ids])
-        need_removed_security_groups.update(
-            [x for x in self.pre_sg_rules if x not in cur_group_ids])
-        # Remove unused remote security group member ips
-        for remove_chain_id in need_removed_ipset_chains:
-            if remove_chain_id in self.sg_members:
-                self.sg_members.pop(remove_chain_id, None)
-            if self.enable_ipset:
-                for ethertype in ['IPv4', 'IPv6']:
+        for ethertype in [constants.IPv4, constants.IPv6]:
+            need_removed_ipset_chains[ethertype].update(
+                [x for x in self.pre_sg_members if x not in remote_group_ids[
+                    ethertype]])
+            need_removed_security_groups.update(
+                [x for x in self.pre_sg_rules if x not in cur_group_ids])
+
+        # Remove unused remote ipset set
+        for ethertype, remove_chain_ids in need_removed_ipset_chains.items():
+            for remove_chain_id in remove_chain_ids:
+                if self.sg_members.get(remove_chain_id, {}).get(ethertype, []):
+                    self.sg_members[remove_chain_id][ethertype] = []
+                if self.enable_ipset:
                     removed_chain = (
                         ethertype + remove_chain_id[:IPSET_CHAIN_LEN])
                     if removed_chain in self.ipset_chains:
-                        self.ipset.destroy_ipset_chain_by_name(removed_chain)
+                        self.ipset.destroy_ipset_chain_by_name(
+                            removed_chain)
                         self.ipset_chains.pop(removed_chain, None)
+
+        # Remove unused remote security group member ips
+        sg_ids = self.sg_members.keys()
+        for sg_id in sg_ids:
+            if not (self.sg_members[sg_id].get(constants.IPv4, [])
+                    or self.sg_members[sg_id].get(constants.IPv6, [])):
+                self.sg_members.pop(sg_id, None)
 
         # Remove unused security group rules
         for remove_group_id in need_removed_security_groups:
