@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev257.gb61fdf7\n"
+"Project-Id-Version: neutron 2015.1.dev336.g5ddeabe\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-09 06:07+0000\n"
+"POT-Creation-Date: 2014-11-19 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,26 +17,174 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: neutron/policy.py:120
+#: neutron/policy.py:129
 #, python-format
 msgid ""
 "Backward compatibility unavailable for deprecated policy %s. The policy "
 "will not be enforced"
 msgstr ""
 
-#: neutron/policy.py:312
+#: neutron/policy.py:317
 #, python-format
 msgid "Policy check error while calling %s!"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1849
+#: neutron/agent/dhcp_agent.py:147
+#, python-format
+msgid "Unable to %(action)s dhcp for %(net_id)s."
+msgstr ""
+
+#: neutron/agent/dhcp_agent.py:174
+#, python-format
+msgid "Unable to sync network state on deleted network %s"
+msgstr ""
+
+#: neutron/agent/dhcp_agent.py:187
+msgid "Unable to sync network state."
+msgstr ""
+
+#: neutron/agent/dhcp_agent.py:218
+#, python-format
+msgid "Network %s info call failed."
+msgstr ""
+
+#: neutron/agent/dhcp_agent.py:591 neutron/agent/l3_agent.py:2006
+#: neutron/agent/metadata/agent.py:416
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:283
+msgid "Failed reporting state!"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:507 neutron/tests/unit/test_l3_agent.py:1974
+#, python-format
+msgid "Error importing interface driver '%s'"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:579 neutron/agent/linux/dhcp.py:792
+msgid "An interface driver must be specified"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:584
+msgid "Router id is required if not using namespaces."
+msgstr ""
+
+#: neutron/agent/l3_agent.py:602
+msgid "RuntimeError in obtaining router list for namespace cleanup."
+msgstr ""
+
+#: neutron/agent/l3_agent.py:637
+#, python-format
+msgid "Failed to destroy stale router namespace %s"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:653 neutron/agent/linux/dhcp.py:238
+#, python-format
+msgid "Failed trying to delete namespace: %s"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:855
+#, python-format
+msgid "Ignoring multiple IPs on router port %s"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1206
+#, python-format
+msgid "Failed sending gratuitous ARP: %s"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1271
+msgid "DVR: no map match_port found!"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1475
+msgid "DVR: error adding redirection logic"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1487
+msgid "DVR: removed snat failed"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1588
+msgid "Missing subnet/agent_gateway_port"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1729
+msgid "DVR: Failed updating arp entry"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1778
+#, python-format
+msgid "The external network bridge '%s' does not exist"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1818
+#, python-format
+msgid "Failed to fetch router information for '%s'"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1836
 #, python-format
 msgid "Removing incompatible router '%s'"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1887
+msgid "Failed synchronizing routers due to RPC error"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:1890
+msgid "Failed synchronizing routers"
 msgstr ""
 
 #: neutron/agent/l3_ha_agent.py:136
 #, python-format
 msgid "Unable to process HA router %s without ha port"
+msgstr ""
+
+#: neutron/agent/netns_cleanup_util.py:141
+#, python-format
+msgid "Error unable to destroy namespace: %s"
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:164
+#, python-format
+msgid "An error occurred while killing [%s]."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:186
+#, python-format
+msgid "An error occurred while communicating with async process [%s]."
+msgstr ""
+
+#: neutron/agent/linux/daemon.py:36
+#, python-format
+msgid "Error while handling pidfile: %s"
+msgstr ""
+
+#: neutron/agent/linux/daemon.py:93
+msgid "Fork failed"
+msgstr ""
+
+#: neutron/agent/linux/daemon.py:135
+#, python-format
+msgid "Pidfile %s already exist. Daemon already running?"
+msgstr ""
+
+#: neutron/agent/linux/dhcp.py:329
+#, python-format
+msgid ""
+"FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
+" Please ensure that its version is %s or above!"
+msgstr ""
+
+#: neutron/agent/linux/dhcp.py:335
+#, python-format
+msgid ""
+"Unable to determine dnsmasq version. Please ensure that its version is %s"
+" or above!"
+msgstr ""
+
+#: neutron/agent/linux/dhcp.py:798
+#, python-format
+msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
 #: neutron/agent/linux/external_process.py:227
@@ -65,8 +213,77 @@ msgstr ""
 msgid "Failed deleting egress connection state of floatingip %s"
 msgstr ""
 
+#: neutron/agent/linux/interface.py:285 neutron/agent/linux/interface.py:330
+#: neutron/agent/linux/interface.py:397 neutron/agent/linux/interface.py:439
+#, python-format
+msgid "Failed unplugging interface '%s'"
+msgstr ""
+
 #: neutron/agent/linux/ip_link_support.py:107
 msgid "Failed executing ip command"
+msgstr ""
+
+#: neutron/agent/linux/iptables_manager.py:446
+#, python-format
+msgid ""
+"IPTablesManager.apply failed to apply the following set of iptables "
+"rules:\n"
+"%s"
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:73 neutron/agent/linux/ovs_lib.py:171
+#: neutron/agent/linux/ovs_lib.py:292
+#, python-format
+msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:243
+msgid ""
+"Unable to create VXLAN tunnel port. Please ensure that an openvswitch "
+"version that supports VXLAN is installed."
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:523
+#, python-format
+msgid "OVS flows could not be applied on bridge %s"
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:533
+#, python-format
+msgid "Interface %s not found."
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:544
+#, python-format
+msgid "Unable to retrieve bridges. Exception: %s"
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:553
+#, python-format
+msgid "Bridge %s not found."
+msgstr ""
+
+#: neutron/agent/linux/ovsdb_monitor.py:51
+#, python-format
+msgid "Error received from ovsdb monitor: %s"
+msgstr ""
+
+#: neutron/agent/metadata/agent.py:156
+#: neutron/agent/metadata/namespace_proxy.py:75
+msgid "Unexpected error."
+msgstr ""
+
+#: neutron/cmd/sanity_check.py:41
+msgid ""
+"Check for Open vSwitch VXLAN support failed. Please ensure that the "
+"version of openvswitch being used has VXLAN support."
+msgstr ""
+
+#: neutron/cmd/sanity_check.py:50
+msgid ""
+"Check for Open vSwitch patch port support failed. Please ensure that the "
+"version of openvswitch being used has patch port support or disable "
+"features requiring patch ports (gre/vxlan, etc.)."
 msgstr ""
 
 #: neutron/cmd/sanity_check.py:60
@@ -75,10 +292,45 @@ msgid ""
 "disable nova notifications or install python-novaclient."
 msgstr ""
 
+#: neutron/cmd/sanity_check.py:70
+msgid ""
+"Check for Open vSwitch ARP responder support failed. Please ensure that "
+"the version of openvswitch being used has ARP flows support."
+msgstr ""
+
 #: neutron/cmd/sanity_check.py:80
 msgid ""
 "Check for VF management support failed. Please ensure that the version of"
 " ip link being used has VF support."
+msgstr ""
+
+#: neutron/cmd/sanity/checks.py:74
+#, python-format
+msgid "Unexpected exception while checking supported feature via command: %s"
+msgstr ""
+
+#: neutron/cmd/sanity/checks.py:106
+msgid "Unexpected exception while checking supported ip link command"
+msgstr ""
+
+#: neutron/db/db_base_plugin_v2.py:152
+#, python-format
+msgid "Unable to generate mac address after %s attempts"
+msgstr ""
+
+#: neutron/db/db_base_plugin_v2.py:895
+#, python-format
+msgid "An exception occurred while creating the %(resource)s:%(item)s"
+msgstr ""
+
+#: neutron/db/dvr_mac_db.py:97
+#, python-format
+msgid "MAC generation error after %s attempts"
+msgstr ""
+
+#: neutron/db/dvr_mac_db.py:169
+#, python-format
+msgid "Could not retrieve gateway port for subnet %s"
 msgstr ""
 
 #: neutron/db/l3_agentschedulers_db.py:141
@@ -88,6 +340,16 @@ msgstr ""
 
 #: neutron/db/l3_agentschedulers_db.py:146
 msgid "Exception encountered during router rescheduling."
+msgstr ""
+
+#: neutron/db/metering/metering_rpc.py:45
+#, python-format
+msgid "Unable to find agent %s."
+msgstr ""
+
+#: neutron/extensions/l3agentscheduler.py:49
+#: neutron/extensions/l3agentscheduler.py:92
+msgid "No plugin for L3 routing registered to handle router scheduling"
 msgstr ""
 
 #: neutron/openstack/common/excutils.py:76
@@ -116,6 +378,17 @@ msgstr ""
 #: neutron/openstack/common/periodic_task.py:202
 #, python-format
 msgid "Error during %(full_task_name)s: %(e)s"
+msgstr ""
+
+#: neutron/openstack/common/policy.py:535
+#: neutron/openstack/common/policy.py:815
+#, python-format
+msgid "Failed to understand rule %s"
+msgstr ""
+
+#: neutron/openstack/common/policy.py:545
+#, python-format
+msgid "No handler for matches of kind %s"
 msgstr ""
 
 #: neutron/openstack/common/service.py:269
@@ -180,10 +453,6 @@ msgstr ""
 msgid "Agent failed to create agent config map"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:283
-msgid "Failed reporting state!"
-msgstr ""
-
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:449
 #, python-format
 msgid "No local VLAN available for net-id=%s"
@@ -241,7 +510,7 @@ msgstr ""
 msgid "Error while processing VIF ports"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:160
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:159
 msgid ""
 "DVR: Failed to obtain a valid local DVR MAC address - L2 Agent operating "
 "in Non-DVR Mode"
@@ -259,22 +528,22 @@ msgstr ""
 msgid "Not enough candidates, a HA router needs at least %s agents"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:123
+#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:124
 #, python-format
 msgid "%(method)s: Unable to connect to CSR(%(host)s)"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:128
+#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:129
 #, python-format
 msgid "%(method)s: Unexpected error for CSR (%(host)s): %(error)s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:158
+#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:159
 #, python-format
 msgid "Failed authentication with CSR %(host)s [%(status)s]"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:193
+#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:194
 #, python-format
 msgid "%(method)s: Request timeout for CSR(%(host)s)"
 msgstr ""
@@ -303,60 +572,5 @@ msgstr ""
 #: neutron/services/vpn/device_drivers/ipsec.py:259
 #, python-format
 msgid "Failed to disable vpn process on router %s"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:61
-#, python-format
-msgid "Config file parse error: %s"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:75
-#, python-format
-msgid "Ignoring Cisco CSR configuration entry - router IP %s is not valid"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:88
-#, python-format
-msgid "Ignoring Cisco CSR for router %(router)s - missing %(field)s setting"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:96
-#, python-format
-msgid "Ignoring Cisco CSR for router %s - timeout is not a floating point number"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:105
-#, python-format
-msgid "Ignoring Cisco CSR for subnet %s - REST management is not an IP address"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:112
-#, python-format
-msgid "Ignoring Cisco CSR for router %s - local tunnel is not an IP address"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:118
-#, python-format
-msgid "Malformed interface name for Cisco CSR router entry - %s"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:154
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:201
-msgid "No routers found in INI file!"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:173
-#, python-format
-msgid "Unable to lookup router ID based on router's public IP (%s) in INI file"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:176
-#, python-format
-msgid "No matching routers on host %s"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:210
-#, python-format
-msgid "Unable to find host for router %s"
 msgstr ""
 
