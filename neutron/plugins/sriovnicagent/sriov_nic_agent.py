@@ -306,7 +306,7 @@ class SriovNicAgentConfigParser(object):
         self._validate()
 
     def _validate(self):
-        """ Validate configuration.
+        """Validate configuration.
 
         Validate that network_device in excluded_device
         exists in device mappings

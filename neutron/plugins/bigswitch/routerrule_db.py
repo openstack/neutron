@@ -46,7 +46,7 @@ class NextHop(model_base.BASEV2):
 
 
 class RouterRule_db_mixin(l3_db.L3_NAT_db_mixin):
-    """ Mixin class to support route rule configuration on a router"""
+    """Mixin class to support route rule configuration on a router."""
     def update_router(self, context, id, router):
         r = router['router']
         with context.session.begin(subtransactions=True):

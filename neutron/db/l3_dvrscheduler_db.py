@@ -282,7 +282,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                   'agent %(id)s', {'router_id': router_id, 'id': agent_id})
 
     def get_snat_bindings(self, context, router_ids):
-        """ Retrieves the dvr snat bindings for a router."""
+        """Retrieves the dvr snat bindings for a router."""
         if not router_ids:
             return []
         query = context.session.query(CentralizedSnatL3AgentBinding)
