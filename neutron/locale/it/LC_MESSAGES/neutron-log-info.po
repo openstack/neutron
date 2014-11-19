@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-09 06:07+0000\n"
-"PO-Revision-Date: 2014-11-07 13:07+0000\n"
+"POT-Creation-Date: 2014-11-19 06:07+0000\n"
+"PO-Revision-Date: 2014-11-18 20:51+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
 "it/)\n"
@@ -20,11 +20,46 @@ msgstr ""
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: neutron/policy.py:111
+#: neutron/policy.py:120
 #, python-format
 msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
 msgstr ""
+
+#: neutron/agent/dhcp_agent.py:110 neutron/agent/dhcp_agent.py:603
+msgid "DHCP agent started"
+msgstr "Agent DHCP avviato"
+
+#: neutron/agent/dhcp_agent.py:162
+msgid "Synchronizing state"
+msgstr "Stato sincronizzazione"
+
+#: neutron/agent/dhcp_agent.py:183
+msgid "Synchronizing state complete"
+msgstr ""
+
+#: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:2011
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr "agent_updated dal lato server %s!"
+
+#: neutron/agent/l3_agent.py:1913
+msgid "L3 agent started"
+msgstr "Agent L3 avviato"
+
+#: neutron/agent/ovs_cleanup_util.py:74
+#, python-format
+msgid "Deleting port: %s"
+msgstr ""
+
+#: neutron/agent/ovs_cleanup_util.py:104
+#, python-format
+msgid "Cleaning bridge: %s"
+msgstr ""
+
+#: neutron/agent/ovs_cleanup_util.py:111
+msgid "OVS cleanup completed successfully"
+msgstr "Ripulitura di OVS completata correttamente"
 
 #: neutron/agent/securitygroups_rpc.py:80
 msgid "Disabled security-group extension."
@@ -73,7 +108,23 @@ msgstr "Aggiorna regole firewall"
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:422
+#: neutron/agent/linux/interface.py:265 neutron/agent/linux/interface.py:320
+#: neutron/agent/linux/interface.py:383 neutron/agent/linux/interface.py:430
+#, python-format
+msgid "Device %s already exists"
+msgstr "L'unità %s già esiste"
+
+#: neutron/agent/linux/iptables_firewall.py:98
+#, python-format
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "Tentativo di aggiornare il filtro della porta che non è filtrata %s"
+
+#: neutron/agent/linux/iptables_firewall.py:109
+#, python-format
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "Tentativo di rimuovere il filtro della porta che non è filtrata %r"
+
+#: neutron/agent/linux/ovs_lib.py:423
 #, python-format
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
 msgstr ""
@@ -82,10 +133,70 @@ msgstr ""
 msgid "IPv6 is not enabled on this system."
 msgstr ""
 
+#: neutron/db/db_base_plugin_v2.py:619
+#, python-format
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"Convalida per CIDR: %(new_cidr)s non riuscita - si sovrappone con la "
+"sottorete %(subnet_id)s (CIDR: %(cidr)s)"
+
+#: neutron/db/db_base_plugin_v2.py:646
+#, python-format
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "Trovato un indirizzo IP invalido nel pool: %(start)s - %(end)s:"
+
+#: neutron/db/db_base_plugin_v2.py:653
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr ""
+"Gli indirizzi IP specificati non corrispondono alla versione IP della "
+"sottorete"
+
+#: neutron/db/db_base_plugin_v2.py:657
+#, python-format
+msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
+msgstr "L'IP iniziale (%(start)s) è superiore all'IP finale (%(end)s)"
+
+#: neutron/db/db_base_plugin_v2.py:662
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "Trovato un pool più grande della sottorete CIDR:%(start)s - %(end)s"
+
+#: neutron/db/db_base_plugin_v2.py:686
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "Trovati gli intervalli di sovrapposizione: %(l_range)s e %(r_range)s"
+
 #: neutron/db/l3_agentschedulers_db.py:83
 msgid ""
 "Skipping period L3 agent status check because automatic router rescheduling "
 "is disabled."
+msgstr ""
+
+#: neutron/db/l3_db.py:1022
+#, python-format
+msgid "Ignoring multiple IPs on router port %s"
+msgstr "Ignora IP multipli sulla porta del router %s"
+
+#: neutron/db/l3_db.py:1028
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "La porta %s viene ignorata in quanto non ha nessun IP configurato"
+
+#: neutron/db/l3_dvr_db.py:77
+#, python-format
+msgid "Centralizing distributed router %s is not supported"
+msgstr ""
+
+#: neutron/db/l3_dvr_db.py:442
+#, python-format
+msgid "Agent Gateway port does not exist, so create one: %s"
+msgstr ""
+
+#: neutron/db/l3_dvr_db.py:525
+#, python-format
+msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
 
 #: neutron/db/l3_hamode_db.py:176
@@ -100,6 +211,21 @@ msgstr ""
 msgid ""
 "Number of available agents lower than max_l3_agents_per_router. L3 agents "
 "available: %s"
+msgstr ""
+
+#: neutron/db/migration/alembic_migrations/heal_script.py:229
+#, python-format
+msgid "Detected removed foreign key %(fk)r on table %(table)r"
+msgstr ""
+
+#: neutron/db/migration/alembic_migrations/heal_script.py:234
+#, python-format
+msgid "Detected added foreign key for column %(fk)r on table %(table)r"
+msgstr ""
+
+#: neutron/db/migration/alembic_migrations/heal_script.py:256
+#, python-format
+msgid "Table %(old_t)r was renamed to %(new_t)r"
 msgstr ""
 
 #: neutron/debug/commands.py:107
@@ -295,7 +421,7 @@ msgstr "Collegamento %s rimosso"
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "Il tunnel agent non è sincronizzato con il plugin!"
 
-#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:199
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:198
 #, python-format
 msgid "L2 Agent operating in DVR Mode with MAC %s"
 msgstr ""
@@ -322,11 +448,6 @@ msgstr ""
 #: neutron/services/vpn/device_drivers/cisco_ipsec.py:733
 #, python-format
 msgid "SUCCESS: Deleted IPSec site-to-site connection %s"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_cfg_loader.py:56
-#, python-format
-msgid "Scanning config files %s for Cisco CSR configurations"
 msgstr ""
 
 #: neutron/services/vpn/service_drivers/cisco_csr_db.py:226
