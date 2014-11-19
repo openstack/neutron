@@ -299,9 +299,9 @@ class OwnerCheck(policy.Check):
             # resource is handled by the core plugin. It might be worth
             # having a way to map resources to plugins so to make this
             # check more general
-            # FIXME(ihrachys): if import is put in global, circular
+            # NOTE(ihrachys): if import is put in global, circular
             # import failure occurs
-            from neutron import manager
+            manager = importutils.import_module('neutron.manager')
             f = getattr(manager.NeutronManager.get_instance().plugin,
                         'get_%s' % parent_res)
             # f *must* exist, if not found it is better to let neutron
