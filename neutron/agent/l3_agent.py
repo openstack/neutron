@@ -78,7 +78,7 @@ PRIORITY_SYNC_ROUTERS_TASK = 1
 DELETE_ROUTER = 1
 
 
-class L3PluginApi(n_rpc.RpcProxy):
+class L3PluginApi(object):
     """Agent side of the l3 agent RPC API.
 
     API version history:
@@ -92,18 +92,16 @@ class L3PluginApi(n_rpc.RpcProxy):
 
     """
 
-    BASE_RPC_API_VERSION = '1.0'
-
     def __init__(self, topic, host):
-        super(L3PluginApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self.host = host
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def get_routers(self, context, router_ids=None):
         """Make a remote process call to retrieve the sync data for routers."""
-        return self.call(context,
-                         self.make_msg('sync_routers', host=self.host,
-                                       router_ids=router_ids))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'sync_routers', host=self.host,
+                          router_ids=router_ids)
 
     def get_external_network_id(self, context):
         """Make a remote process call to retrieve the external network id.
@@ -112,40 +110,31 @@ class L3PluginApi(n_rpc.RpcProxy):
                                       exc_type if there are more than one
                                       external network
         """
-        return self.call(context,
-                         self.make_msg('get_external_network_id',
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'get_external_network_id', host=self.host)
 
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Call the plugin update floating IPs's operational status."""
-        return self.call(context,
-                         self.make_msg('update_floatingip_statuses',
-                                       router_id=router_id,
-                                       fip_statuses=fip_statuses),
-                         version='1.1')
+        cctxt = self.client.prepare(version='1.1')
+        return cctxt.call(context, 'update_floatingip_statuses',
+                          router_id=router_id, fip_statuses=fip_statuses)
 
     def get_ports_by_subnet(self, context, subnet_id):
         """Retrieve ports by subnet id."""
-        return self.call(context,
-                         self.make_msg('get_ports_by_subnet', host=self.host,
-                                       subnet_id=subnet_id),
-                         topic=self.topic,
-                         version='1.2')
+        cctxt = self.client.prepare(version='1.2')
+        return cctxt.call(context, 'get_ports_by_subnet', host=self.host,
+                          subnet_id=subnet_id)
 
     def get_agent_gateway_port(self, context, fip_net):
         """Get or create an agent_gateway_port."""
-        return self.call(context,
-                         self.make_msg('get_agent_gateway_port',
-                                       network_id=fip_net, host=self.host),
-                         topic=self.topic,
-                         version='1.2')
+        cctxt = self.client.prepare(version='1.2')
+        return cctxt.call(context, 'get_agent_gateway_port',
+                          network_id=fip_net, host=self.host)
 
     def get_service_plugin_list(self, context):
         """Make a call to get the list of activated services."""
-        return self.call(context,
-                         self.make_msg('get_service_plugin_list'),
-                         topic=self.topic,
-                         version='1.3')
+        cctxt = self.client.prepare(version='1.3')
+        return cctxt.call(context, 'get_service_plugin_list')
 
 
 class LinkLocalAddressPair(netaddr.IPNetwork):
