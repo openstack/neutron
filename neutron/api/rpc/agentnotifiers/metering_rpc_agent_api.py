@@ -44,8 +44,8 @@ class MeteringAgentNotifyAPI(n_rpc.RpcProxy):
                 admin_state_up=True,
                 active=True)
             for l3_agent in l3_agents:
-                LOG.debug(_('Notify metering agent at %(topic)s.%(host)s '
-                            'the message %(method)s'),
+                LOG.debug('Notify metering agent at %(topic)s.%(host)s '
+                          'the message %(method)s',
                           {'topic': self.topic,
                            'host': l3_agent.host,
                            'method': method})
@@ -59,8 +59,8 @@ class MeteringAgentNotifyAPI(n_rpc.RpcProxy):
                       topic='%s.%s' % (self.topic, host))
 
     def _notification_fanout(self, context, method, router_id):
-        LOG.debug(_('Fanout notify metering agent at %(topic)s the message '
-                    '%(method)s on router %(router_id)s'),
+        LOG.debug('Fanout notify metering agent at %(topic)s the message '
+                  '%(method)s on router %(router_id)s',
                   {'topic': self.topic,
                    'method': method,
                    'router_id': router_id})

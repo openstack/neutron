@@ -20,6 +20,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 
@@ -37,9 +38,9 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
 
     def _notification_host(self, context, method, payload, host):
         """Notify the agent that is hosting the router."""
-        LOG.debug(_('Nofity agent at %(host)s the message '
-                    '%(method)s'), {'host': host,
-                                    'method': method})
+        LOG.debug('Nofity agent at %(host)s the message '
+                  '%(method)s', {'host': host,
+                                 'method': method})
         self.cast(
             context, self.make_msg(method,
                                    payload=payload),
@@ -59,8 +60,8 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
             if shuffle_agents:
                 random.shuffle(l3_agents)
             for l3_agent in l3_agents:
-                LOG.debug(_('Notify agent at %(topic)s.%(host)s the message '
-                            '%(method)s'),
+                LOG.debug('Notify agent at %(topic)s.%(host)s the message '
+                          '%(method)s',
                           {'topic': l3_agent.topic,
                            'host': l3_agent.host,
                            'method': method})
@@ -102,8 +103,8 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         if not plugin:
-            LOG.error(_('No plugin for L3 routing registered. Cannot notify '
-                        'agents with the message %s'), method)
+            LOG.error(_LE('No plugin for L3 routing registered. Cannot notify '
+                          'agents with the message %s'), method)
             return
         if utils.is_extension_supported(
                 plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
@@ -120,8 +121,8 @@ class L3AgentNotifyAPI(n_rpc.RpcProxy):
 
     def _notification_fanout(self, context, method, router_id):
         """Fanout the deleted router to all L3 agents."""
-        LOG.debug(_('Fanout notify agent at %(topic)s the message '
-                    '%(method)s on router %(router_id)s'),
+        LOG.debug('Fanout notify agent at %(topic)s the message '
+                  '%(method)s on router %(router_id)s',
                   {'topic': topics.L3_AGENT,
                    'method': method,
                    'router_id': router_id})
