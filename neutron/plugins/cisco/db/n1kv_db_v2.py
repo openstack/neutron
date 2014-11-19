@@ -1599,8 +1599,11 @@ class PolicyProfile_db_mixin(object):
         """
         db_session = db.get_session()
         with db_session.begin(subtransactions=True):
-            return (db_session.query(n1kv_models_v2.PolicyProfile).
-                    filter_by(name=name).one())
+            try:
+                return (db_session.query(n1kv_models_v2.PolicyProfile).
+                        filter_by(name=name).one())
+            except exc.NoResultFound:
+                raise c_exc.PolicyProfileNameNotFound(profile_name=name)
 
     def _remove_all_fake_policy_profiles(self):
         """
