@@ -67,8 +67,12 @@ class CsrUnknownMappingError(exceptions.NeutronException):
                 "attribute %(attr)s of %(resource)s")
 
 
-class CiscoCsrIPsecVpnDriverApi(n_rpc.RpcProxy):
+class CiscoCsrIPsecVpnDriverApi(object):
     """RPC API for agent to plugin messaging."""
+
+    def __init__(self, topic):
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def get_vpn_services_on_host(self, context, host):
         """Get list of vpnservices on this host.
@@ -76,15 +80,13 @@ class CiscoCsrIPsecVpnDriverApi(n_rpc.RpcProxy):
         The vpnservices including related ipsec_site_connection,
         ikepolicy, ipsecpolicy, and Cisco info on this host.
         """
-        return self.call(context,
-                         self.make_msg('get_vpn_services_on_host',
-                                       host=host))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'get_vpn_services_on_host', host=host)
 
     def update_status(self, context, status):
         """Update status for all VPN services and connections."""
-        return self.cast(context,
-                         self.make_msg('update_status',
-                                       status=status))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'update_status', status=status)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -117,7 +119,7 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         self.conn.create_consumer(node_topic, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
         self.agent_rpc = (
-            CiscoCsrIPsecVpnDriverApi(topics.CISCO_IPSEC_DRIVER_TOPIC, '1.0'))
+            CiscoCsrIPsecVpnDriverApi(topics.CISCO_IPSEC_DRIVER_TOPIC))
         self.periodic_report = loopingcall.FixedIntervalLoopingCall(
             self.report_status, context)
         self.periodic_report.start(

@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+
 import mock
 from oslo.config import cfg
 
@@ -240,15 +242,19 @@ class TestIPsecDriver(base.BaseTestCase):
 
     def _test_update(self, func, args):
         ctxt = n_ctx.Context('', 'somebody')
-        with mock.patch.object(self.driver.agent_rpc, 'cast') as cast:
+        with contextlib.nested(
+            mock.patch.object(self.driver.agent_rpc.client, 'cast'),
+            mock.patch.object(self.driver.agent_rpc.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = self.driver.agent_rpc.client
             func(ctxt, *args)
-            cast.assert_called_once_with(
-                ctxt,
-                {'args': {},
-                 'namespace': None,
-                 'method': 'vpnservice_updated'},
-                version='1.0',
-                topic='ipsec_agent.fake_host')
+
+        prepare_args = {'server': 'fake_host', 'version': '1.0'}
+        prepare_mock.assert_called_once_with(**prepare_args)
+
+        rpc_mock.assert_called_once_with(ctxt, 'vpnservice_updated')
 
     def test_create_ipsec_site_connection(self):
         self._test_update(self.driver.create_ipsec_site_connection,

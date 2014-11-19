@@ -107,9 +107,8 @@ class CiscoCsrIPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
                    'method': method,
                    'args': kwargs,
                    'router': router_id})
-        self.cast(context, self.make_msg(method, **kwargs),
-                  version=version,
-                  topic='%s.%s' % (self.topic, host))
+        cctxt = self.client.prepare(server=host, version=version)
+        cctxt.cast(context, method, **kwargs)
 
 
 class CiscoCsrIPsecVPNDriver(service_drivers.VpnDriver):
