@@ -19,18 +19,18 @@ from oslo.config import cfg
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.freescale import mechanism_fslsdn
 from neutron.tests import base
-from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit.ml2 import test_ml2_plugin
 
 
 """Unit testing for Freescale SDN mechanism driver."""
 
 
-class TestFslSdnMechDriverV2(test_db_plugin.NeutronDbPluginV2TestCase):
+class TestFslSdnMechDriverV2(test_ml2_plugin.Ml2PluginV2TestCase):
+    _mechanism_drivers = ['fslsdn']
 
     """Testing mechanism driver with ML2 plugin."""
 
     def setUp(self):
-        cfg.CONF.set_override('mechanism_drivers', ['fslsdn'], 'ml2')
 
         def mocked_fslsdn_init(self):
             # Mock CRD client, since it requires CRD service running.
@@ -41,18 +41,18 @@ class TestFslSdnMechDriverV2(test_db_plugin.NeutronDbPluginV2TestCase):
             super(TestFslSdnMechDriverV2, self).setUp()
 
 
-class TestFslSdnMechDriverNetworksV2(test_db_plugin.TestNetworksV2,
+class TestFslSdnMechDriverNetworksV2(test_ml2_plugin.TestMl2NetworksV2,
                                      TestFslSdnMechDriverV2):
     pass
 
 
-class TestFslSdnMechDriverPortsV2(test_db_plugin.TestPortsV2,
+class TestFslSdnMechDriverPortsV2(test_ml2_plugin.TestMl2PortsV2,
                                   TestFslSdnMechDriverV2):
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     CAP_PORT_FILTER = True
 
 
-class TestFslSdnMechDriverSubnetsV2(test_db_plugin.TestSubnetsV2,
+class TestFslSdnMechDriverSubnetsV2(test_ml2_plugin.TestMl2SubnetsV2,
                                     TestFslSdnMechDriverV2):
     pass
 

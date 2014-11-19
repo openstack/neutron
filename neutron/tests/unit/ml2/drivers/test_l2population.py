@@ -24,11 +24,10 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
 from neutron.openstack.common import timeutils
-from neutron.plugins.ml2 import config as config
 from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
-from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit.ml2 import test_ml2_plugin as test_plugin
 
 HOST = 'my_l2_host'
 L2_AGENT = {
@@ -81,32 +80,23 @@ L2_AGENT_5 = {
     'topic': constants.L2_AGENT_TOPIC,
     'configurations': {'tunneling_ip': '20.0.0.5',
                        'tunnel_types': [],
-                       'bridge_mappings': {'phys1': 'br'},
+                       'bridge_mappings': {'physnet1': 'br'},
                        'l2pop_network_types': ['vlan']},
     'agent_type': constants.AGENT_TYPE_OFA,
     'tunnel_type': [],
     'start_flag': True
 }
 
-PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 NOTIFIER = 'neutron.plugins.ml2.rpc.AgentNotifierApi'
 DEVICE_OWNER_COMPUTE = 'compute:None'
 
 
-class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
+class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
+    _mechanism_drivers = ['openvswitch', 'linuxbridge',
+                          'ofagent', 'l2population']
 
     def setUp(self):
-        # Enable the test mechanism driver to ensure that
-        # we can successfully call through to all mechanism
-        # driver apis.
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     ['openvswitch', 'linuxbridge',
-                                      'ofagent', 'l2population'],
-                                     'ml2')
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     ['phys1:1:100'],
-                                     'ml2_type_vlan')
-        super(TestL2PopulationRpcTestCase, self).setUp(PLUGIN_NAME)
+        super(TestL2PopulationRpcTestCase, self).setUp()
 
         self.adminContext = context.get_admin_context()
 
@@ -122,7 +112,7 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                            **net_arg)
 
         net_arg = {pnet.NETWORK_TYPE: 'vlan',
-                   pnet.PHYSICAL_NETWORK: 'phys1',
+                   pnet.PHYSICAL_NETWORK: 'physnet1',
                    pnet.SEGMENTATION_ID: '2'}
         self._network2 = self._make_network(self.fmt, 'net2', True,
                                             arg_list=(pnet.NETWORK_TYPE,

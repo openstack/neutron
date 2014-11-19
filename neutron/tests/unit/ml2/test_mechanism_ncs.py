@@ -13,23 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.plugins.ml2 import config as config
 from neutron.plugins.ml2.drivers import mechanism_ncs
-from neutron.tests.unit import test_db_plugin as test_plugin
-
-PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+from neutron.tests.unit.ml2 import test_ml2_plugin as test_plugin
 
 
-class NCSTestCase(test_plugin.NeutronDbPluginV2TestCase):
+class NCSTestCase(test_plugin.Ml2PluginV2TestCase):
+    _mechanism_drivers = ['logger', 'ncs']
 
     def setUp(self):
         # Enable the test mechanism driver to ensure that
         # we can successfully call through to all mechanism
         # driver apis.
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     ['logger', 'ncs'],
-                                     'ml2')
-        super(NCSTestCase, self).setUp(PLUGIN_NAME)
+        super(NCSTestCase, self).setUp()
         self.port_create_status = 'DOWN'
         mechanism_ncs.NCSMechanismDriver.sendjson = self.check_sendjson
 
@@ -38,13 +33,13 @@ class NCSTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.assertFalse(urlpath.startswith("http://"))
 
 
-class NCSMechanismTestBasicGet(test_plugin.TestBasicGet, NCSTestCase):
+class NCSMechanismTestBasicGet(test_plugin.TestMl2BasicGet, NCSTestCase):
     pass
 
 
-class NCSMechanismTestNetworksV2(test_plugin.TestNetworksV2, NCSTestCase):
+class NCSMechanismTestNetworksV2(test_plugin.TestMl2NetworksV2, NCSTestCase):
     pass
 
 
-class NCSMechanismTestPortsV2(test_plugin.TestPortsV2, NCSTestCase):
+class NCSMechanismTestPortsV2(test_plugin.TestMl2PortsV2, NCSTestCase):
     pass

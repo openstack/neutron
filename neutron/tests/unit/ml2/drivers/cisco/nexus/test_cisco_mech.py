@@ -24,7 +24,6 @@ from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import config as ml2_config
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers.cisco.nexus import config as cisco_config
@@ -32,12 +31,10 @@ from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as c_exc
 from neutron.plugins.ml2.drivers.cisco.nexus import mech_cisco_nexus
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_network_driver
-from neutron.plugins.ml2.drivers import type_vlan as vlan_config
-from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit.ml2 import test_ml2_plugin
 
 
 LOG = logging.getLogger(__name__)
-ML2_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 PHYS_NET = 'physnet1'
 COMP_HOST_NAME = 'testhost'
 COMP_HOST_NAME_2 = 'testhost_2'
@@ -61,7 +58,8 @@ BOUND_SEGMENT2 = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                   api.SEGMENTATION_ID: VLAN_START + 1}
 
 
-class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
+class CiscoML2MechanismTestCase(test_ml2_plugin.Ml2PluginV2TestCase):
+    _mechanism_drivers = ['cisco_nexus']
 
     def setUp(self):
         """Configure for end-to-end neutron testing using a mock ncclient.
@@ -74,20 +72,6 @@ class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
           driver
 
         """
-
-        # Configure the ML2 mechanism drivers and network types
-        ml2_opts = {
-            'mechanism_drivers': ['cisco_nexus'],
-            'tenant_network_types': ['vlan'],
-        }
-        for opt, val in ml2_opts.items():
-                ml2_config.cfg.CONF.set_override(opt, val, 'ml2')
-
-        # Configure the ML2 VLAN parameters
-        phys_vrange = ':'.join([PHYS_NET, str(VLAN_START), str(VLAN_END)])
-        vlan_config.cfg.CONF.set_override('network_vlan_ranges',
-                                          [phys_vrange],
-                                          'ml2_type_vlan')
 
         # Configure the Cisco Nexus mechanism driver
         nexus_config = {
@@ -135,7 +119,7 @@ class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             '_is_status_active').start()
         self.mock_status.side_effect = _mock_check_bind_state
 
-        super(CiscoML2MechanismTestCase, self).setUp(ML2_PLUGIN)
+        super(CiscoML2MechanismTestCase, self).setUp()
 
         self.port_create_status = 'DOWN'
 
@@ -228,19 +212,19 @@ class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
 
 class TestCiscoBasicGet(CiscoML2MechanismTestCase,
-                        test_db_plugin.TestBasicGet):
+                        test_ml2_plugin.TestMl2BasicGet):
 
     pass
 
 
 class TestCiscoV2HTTPResponse(CiscoML2MechanismTestCase,
-                              test_db_plugin.TestV2HTTPResponse):
+                              test_ml2_plugin.TestMl2V2HTTPResponse):
 
     pass
 
 
 class TestCiscoPortsV2(CiscoML2MechanismTestCase,
-                       test_db_plugin.TestPortsV2):
+                       test_ml2_plugin.TestMl2PortsV2):
 
     @contextlib.contextmanager
     def _create_resources(self, name=NETWORK_NAME, cidr=CIDR_1,
@@ -718,7 +702,7 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
 
 
 class TestCiscoNetworksV2(CiscoML2MechanismTestCase,
-                          test_db_plugin.TestNetworksV2):
+                          test_ml2_plugin.TestMl2NetworksV2):
 
     def test_create_networks_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -769,7 +753,7 @@ class TestCiscoNetworksV2(CiscoML2MechanismTestCase,
 
 
 class TestCiscoSubnetsV2(CiscoML2MechanismTestCase,
-                         test_db_plugin.TestSubnetsV2):
+                         test_ml2_plugin.TestMl2SubnetsV2):
 
     def test_create_subnets_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr

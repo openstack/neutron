@@ -23,28 +23,23 @@ from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mechanism_odl
 from neutron.plugins.ml2 import plugin
 from neutron.tests import base
-from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit.ml2 import test_ml2_plugin as test_plugin
 from neutron.tests.unit import testlib_api
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 
-class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
+class OpenDaylightTestCase(test_plugin.Ml2PluginV2TestCase):
+    _mechanism_drivers = ['logger', 'opendaylight']
 
     def setUp(self):
-        # Enable the test mechanism driver to ensure that
-        # we can successfully call through to all mechanism
-        # driver apis.
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     ['logger', 'opendaylight'],
-                                     'ml2')
         # Set URL/user/pass so init doesn't throw a cfg required error.
         # They are not used in these tests since sendjson is overwritten.
         config.cfg.CONF.set_override('url', 'http://127.0.0.1:9999', 'ml2_odl')
         config.cfg.CONF.set_override('username', 'someuser', 'ml2_odl')
         config.cfg.CONF.set_override('password', 'somepass', 'ml2_odl')
 
-        super(OpenDaylightTestCase, self).setUp(PLUGIN_NAME)
+        super(OpenDaylightTestCase, self).setUp()
         self.port_create_status = 'DOWN'
         self.mech = mechanism_odl.OpenDaylightMechanismDriver()
         mechanism_odl.OpenDaylightMechanismDriver.sendjson = (
@@ -84,22 +79,22 @@ class OpenDayLightMechanismConfigTests(testlib_api.SqlTestCase):
         self._test_missing_config(password=None)
 
 
-class OpenDaylightMechanismTestBasicGet(test_plugin.TestBasicGet,
+class OpenDaylightMechanismTestBasicGet(test_plugin.TestMl2BasicGet,
                                         OpenDaylightTestCase):
     pass
 
 
-class OpenDaylightMechanismTestNetworksV2(test_plugin.TestNetworksV2,
+class OpenDaylightMechanismTestNetworksV2(test_plugin.TestMl2NetworksV2,
                                           OpenDaylightTestCase):
     pass
 
 
-class OpenDaylightMechanismTestSubnetsV2(test_plugin.TestSubnetsV2,
+class OpenDaylightMechanismTestSubnetsV2(test_plugin.TestMl2SubnetsV2,
                                          OpenDaylightTestCase):
     pass
 
 
-class OpenDaylightMechanismTestPortsV2(test_plugin.TestPortsV2,
+class OpenDaylightMechanismTestPortsV2(test_plugin.TestMl2PortsV2,
                                        OpenDaylightTestCase):
     pass
 
