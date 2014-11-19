@@ -17,7 +17,7 @@ import mock
 
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_gre
-from neutron.tests.unit.ml2 import test_type_vxlan
+from neutron.tests.unit.ml2 import test_type_tunnel
 from neutron.tests.unit import testlib_api
 
 
@@ -25,7 +25,7 @@ TUNNEL_IP_ONE = "10.10.10.10"
 TUNNEL_IP_TWO = "10.10.10.20"
 
 
-class GreTypeTest(test_type_vxlan.TunnelTypeTestMixin,
+class GreTypeTest(test_type_tunnel.TunnelTypeTestMixin,
                   testlib_api.SqlTestCase):
     DRIVER_CLASS = type_gre.GreTypeDriver
     TYPE = p_const.TYPE_GRE
@@ -49,6 +49,6 @@ class GreTypeTest(test_type_vxlan.TunnelTypeTestMixin,
         log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
 
 
-class GreTypeMultiRangeTest(test_type_vxlan.TunnelTypeMultiRangeTestMixin,
+class GreTypeMultiRangeTest(test_type_tunnel.TunnelTypeMultiRangeTestMixin,
                            testlib_api.SqlTestCase):
     DRIVER_CLASS = type_gre.GreTypeDriver
