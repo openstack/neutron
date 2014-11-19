@@ -7,8 +7,8 @@ https://github.com/osrg/ryu/wiki/OpenStack
 
 # -- Notes for updating from Icehouce
 
-OVS.bridge_mappings is deprecated for ofagent.  It's planned to be
-removed in Kilo.  Please use AGENT.physical_interface_mappings instead.
+OVS.bridge_mappings is deprecated for ofagent.  It was removed in Kilo.
+Please use AGENT.physical_interface_mappings instead.
 To mimic an existing setup with bridge_mapping, you can create
 a veth pair, link one side of it to the bridge, and then specify
 the other side in physical_interface_mappings.
