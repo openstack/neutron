@@ -31,6 +31,7 @@ from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
+from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -729,7 +730,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("Ports to auto-deallocate: %s"), allocated)
                 only_auto_del = all(not a.port_id or
                                     a.ports.device_owner in db_base_plugin_v2.
-                                    AUTO_DELETE_PORT_OWNERS
+                                    AUTO_DELETE_PORT_OWNERS or
+                                    ipv6_utils.is_slaac_subnet(subnet)
                                     for a in allocated)
                 if not only_auto_del:
                     LOG.debug(_("Tenant-owned ports exist"))

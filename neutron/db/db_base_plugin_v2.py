@@ -1279,9 +1279,13 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                          filter_by(network_id=subnet['network_id']).
                          with_lockmode('update'))
 
-            # remove network owned ports
+            # Remove network owned ports, and delete IP allocations
+            # for IPv6 addresses which were automatically generated
+            # via SLAAC
+            is_ipv6_slaac_subnet = ipv6_utils.is_slaac_subnet(subnet)
             for a in allocated:
-                if a.ports.device_owner in AUTO_DELETE_PORT_OWNERS:
+                if (is_ipv6_slaac_subnet or
+                    a.ports.device_owner in AUTO_DELETE_PORT_OWNERS):
                     NeutronDbPluginV2._delete_ip_allocation(
                         context, subnet.network_id, id, a.ip_address)
                 else:
