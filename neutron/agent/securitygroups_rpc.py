@@ -241,16 +241,20 @@ class SecurityGroupAgentRpcMixin(object):
         :param updated_devices: set containining identifiers for
         updated devices
         """
-        if new_devices:
-            LOG.debug(_("Preparing device filters for %d new devices"),
-                      len(new_devices))
-            self.prepare_devices_filter(new_devices)
         # These data structures are cleared here in order to avoid
         # losing updates occurring during firewall refresh
         devices_to_refilter = self.devices_to_refilter
         global_refresh_firewall = self.global_refresh_firewall
         self.devices_to_refilter = set()
         self.global_refresh_firewall = False
+        # We must call prepare_devices_filter() after we've grabbed
+        # self.devices_to_refilter since an update for a new port
+        # could arrive while we're processing, and we need to make
+        # sure we don't skip it.  It will get handled the next time.
+        if new_devices:
+            LOG.debug("Preparing device filters for %d new devices",
+                      len(new_devices))
+            self.prepare_devices_filter(new_devices)
         # TODO(salv-orlando): Avoid if possible ever performing the global
         # refresh providing a precise list of devices for which firewall
         # should be refreshed
