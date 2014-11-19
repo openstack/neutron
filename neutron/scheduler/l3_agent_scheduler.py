@@ -220,6 +220,10 @@ class L3Scheduler(object):
                       {'agent_id': chosen_agent.id,
                        'router_id': router_id})
             return
+        except db_exc.DBReferenceError:
+            LOG.debug('Router %s has already been removed '
+                      'by concurrent operation', router_id)
+            return
 
         LOG.debug('Router %(router_id)s is scheduled to L3 agent '
                   '%(agent_id)s', {'router_id': router_id,

@@ -482,6 +482,12 @@ class L3SchedulerTestBaseMixin(object):
             args, kwargs = flog.call_args
             self.assertIn('is scheduled', args[0])
 
+    def test_bind_absent_router(self):
+        scheduler = l3_agent_scheduler.ChanceScheduler()
+        # checking that bind_router() is not throwing
+        # when supplied with router_id of non-existing router
+        scheduler.bind_router(self.adminContext, "dummyID", self.agent1)
+
     def test_bind_existing_router(self):
         router = self._make_router(self.fmt,
                                    tenant_id=str(uuid.uuid4()),
