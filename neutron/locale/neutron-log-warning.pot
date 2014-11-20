@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev336.g5ddeabe\n"
+"Project-Id-Version: neutron 2015.1.dev362.g9b1cda6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-19 06:07+0000\n"
+"POT-Creation-Date: 2014-11-20 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -89,7 +89,7 @@ msgstr ""
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
-#: neutron/agent/rpc.py:110
+#: neutron/agent/rpc.py:107
 msgid "DVR functionality requires a server upgrade."
 msgstr ""
 
@@ -161,6 +161,66 @@ msgstr ""
 msgid ""
 "The remote metadata server responded with Forbidden. This response "
 "usually occurs when shared secrets do not match."
+msgstr ""
+
+#: neutron/api/api_common.py:102
+#, python-format
+msgid ""
+"Invalid value for pagination_max_limit: %s. It should be an integer "
+"greater to 0"
+msgstr ""
+
+#: neutron/api/extensions.py:543
+#, python-format
+msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
+msgstr ""
+
+#: neutron/api/extensions.py:551
+#, python-format
+msgid "Extension file %(f)s wasn't loaded due to %(exception)s"
+msgstr ""
+
+#: neutron/api/extensions.py:592
+#, python-format
+msgid "Extension %s not supported by any of loaded plugins"
+msgstr ""
+
+#: neutron/api/extensions.py:604
+#, python-format
+msgid "Loaded plugins do not implement extension %s interface"
+msgstr ""
+
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:66
+#, python-format
+msgid ""
+"Unable to schedule network %s: no agents available; will retry on "
+"subsequent port creation events."
+msgstr ""
+
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:79
+#, python-format
+msgid ""
+"Only %(active)d of %(total)d DHCP agents associated with network "
+"'%(net_id)s' are marked as active, so notifications may be sent to "
+"inactive agents."
+msgstr ""
+
+#: neutron/api/rpc/handlers/dhcp_rpc.py:83
+#, python-format
+msgid ""
+"Action %(action)s for network %(net_id)s could not complete successfully:"
+" %(reason)s"
+msgstr ""
+
+#: neutron/api/rpc/handlers/dhcp_rpc.py:127
+#: neutron/api/rpc/handlers/dhcp_rpc.py:191
+#, python-format
+msgid "Network %s could not be found, it might have been deleted concurrently."
+msgstr ""
+
+#: neutron/api/rpc/handlers/dhcp_rpc.py:260
+#, python-format
+msgid "Updating lease expiration is now deprecated. Issued  from host %s."
 msgstr ""
 
 #: neutron/db/agents_db.py:99
@@ -293,17 +353,17 @@ msgstr ""
 msgid "VM port %s not found in neutron for sync"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:290
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:284
 #, python-format
 msgid "Unable to create tunnel port. Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:713
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:637
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:820
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:744
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
