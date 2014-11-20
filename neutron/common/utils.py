@@ -66,9 +66,9 @@ class cache_method_results(object):
         try:
             item = target_self._cache.get(key, self._not_cached)
         except TypeError:
-            LOG.debug(_("Method %(func_name)s cannot be cached due to "
-                        "unhashable parameters: args: %(args)s, kwargs: "
-                        "%(kwargs)s"),
+            LOG.debug("Method %(func_name)s cannot be cached due to "
+                      "unhashable parameters: args: %(args)s, kwargs: "
+                      "%(kwargs)s",
                       {'func_name': func_name,
                        'args': args,
                        'kwargs': kwargs})
@@ -89,9 +89,9 @@ class cache_method_results(object):
                     'class': target_self.__class__.__name__})
         if not target_self._cache:
             if self._first_call:
-                LOG.debug(_("Instance of class %(module)s.%(class)s doesn't "
-                            "contain attribute _cache therefore results "
-                            "cannot be cached for %(func_name)s."),
+                LOG.debug("Instance of class %(module)s.%(class)s doesn't "
+                          "contain attribute _cache therefore results "
+                          "cannot be cached for %(func_name)s.",
                           {'module': target_self.__module__,
                            'class': target_self.__class__.__name__,
                            'func_name': self.func.__name__})
@@ -115,7 +115,7 @@ def read_cached_file(filename, cache_info, reload_func=None):
     """
     mtime = os.path.getmtime(filename)
     if not cache_info or mtime != cache_info.get('mtime'):
-        LOG.debug(_("Reloading cached file %s"), filename)
+        LOG.debug("Reloading cached file %s", filename)
         with open(filename) as fap:
             cache_info['data'] = fap.read()
         cache_info['mtime'] = mtime
