@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev336.g5ddeabe\n"
+"Project-Id-Version: neutron 2015.1.dev362.g9b1cda6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-19 06:07+0000\n"
+"POT-Creation-Date: 2014-11-20 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -125,6 +125,24 @@ msgstr ""
 #: neutron/agent/linux/ovs_lib.py:423
 #, python-format
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
+msgstr ""
+
+#: neutron/api/extensions.py:403
+msgid "Initializing extension manager."
+msgstr ""
+
+#: neutron/api/extensions.py:561
+#, python-format
+msgid "Loaded extension: %s"
+msgstr ""
+
+#: neutron/api/v2/base.py:93
+msgid "Allow sorting is enabled because native pagination requires native sorting"
+msgstr ""
+
+#: neutron/api/v2/resource.py:94
+#, python-format
+msgid "%(action)s failed (client error): %(exc)s"
 msgstr ""
 
 #: neutron/common/ipv6_utils.py:63
@@ -304,7 +322,7 @@ msgstr ""
 msgid "Waiting on %d children to exit"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:953 neutron/plugins/ml2/plugin.py:1089
+#: neutron/plugins/ml2/plugin.py:955 neutron/plugins/ml2/plugin.py:1091
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted "
@@ -335,7 +353,7 @@ msgid "APIC host agent: started on %s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:907
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:831
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
@@ -365,53 +383,48 @@ msgstr ""
 msgid "unknown network %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:165
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:452
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:446
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:502
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:496
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:570
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:564
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:651
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr ""
-
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:785
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:709
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be"
 " processed"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:799
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:723
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:818
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:742
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:829
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:753
 #, python-format
 msgid "Attachment %s removed"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:912
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:836
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 

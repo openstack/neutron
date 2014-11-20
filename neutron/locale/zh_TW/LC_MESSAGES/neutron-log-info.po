@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-19 06:07+0000\n"
-"PO-Revision-Date: 2014-11-18 20:51+0000\n"
+"POT-Creation-Date: 2014-11-20 06:08+0000\n"
+"PO-Revision-Date: 2014-11-19 22:42+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (Taiwan) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_TW/)\n"
@@ -126,6 +126,25 @@ msgstr "已嘗試移除未過濾的埠過濾器 %r"
 #: neutron/agent/linux/ovs_lib.py:423
 #, python-format
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
+msgstr ""
+
+#: neutron/api/extensions.py:403
+msgid "Initializing extension manager."
+msgstr "正在起始設定延伸管理程式。"
+
+#: neutron/api/extensions.py:561
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "已載入延伸：%s"
+
+#: neutron/api/v2/base.py:93
+msgid ""
+"Allow sorting is enabled because native pagination requires native sorting"
+msgstr "已啟用容許排序，因為原生分頁需要原生排序"
+
+#: neutron/api/v2/resource.py:94
+#, python-format
+msgid "%(action)s failed (client error): %(exc)s"
 msgstr ""
 
 #: neutron/common/ipv6_utils.py:63
@@ -306,7 +325,7 @@ msgstr ""
 msgid "Waiting on %d children to exit"
 msgstr "正在等待 %d 個子項結束"
 
-#: neutron/plugins/ml2/plugin.py:953 neutron/plugins/ml2/plugin.py:1089
+#: neutron/plugins/ml2/plugin.py:955 neutron/plugins/ml2/plugin.py:1091
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -336,7 +355,7 @@ msgid "APIC host agent: started on %s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:907
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:831
 msgid "Agent out of sync with plugin!"
 msgstr "代理程式與外掛程式不同步！"
 
@@ -366,53 +385,48 @@ msgstr ""
 msgid "unknown network %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:165
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
 msgid "Agent initialized successfully, now running... "
 msgstr "已順利地起始設定代理程式，現正在執行中..."
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:452
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:446
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr "正在將 %(vlan_id)s 指派為 net-id = %(net_uuid)s 的本端 VLAN"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:502
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:496
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "正在從 net-id = %(net_uuid)s 收回 VLAN = %(vlan_id)s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:570
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:564
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr "port_unbound() net_uuid %s 不在 local_vlan_map 中"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:651
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr "正在將實體網路 %(physical_network)s 對映到橋接器 %(bridge)s"
-
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:785
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:709
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be "
 "processed"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:799
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:723
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:818
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:742
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:829
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:753
 #, python-format
 msgid "Attachment %s removed"
 msgstr "已移除連接裝置 %s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:912
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:836
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "代理程式通道與外掛程式不同步！"
 
