@@ -94,6 +94,16 @@ class RequestTestCase(base.BaseTestCase):
     def test_context_without_neutron_context(self):
         self.assertTrue(self.req.context.is_admin)
 
+    def test_request_context_elevated(self):
+        user_context = context.Context(
+            'fake_user', 'fake_project', admin=False)
+        self.assertFalse(user_context.is_admin)
+        admin_context = user_context.elevated()
+        self.assertFalse(user_context.is_admin)
+        self.assertTrue(admin_context.is_admin)
+        self.assertNotIn('admin', user_context.roles)
+        self.assertIn('admin', admin_context.roles)
+
     def test_best_match_language(self):
         # Test that we are actually invoking language negotiation by webop
         request = wsgi.Request.blank('/')
