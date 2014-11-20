@@ -102,6 +102,9 @@ class TestOneConvergenceL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self):
+        if 'v6' in self._testMethodName:
+            self.skipTest("NVSD Plugin does not support IPV6.")
+
         def mocked_oneconvergence_init(self):
             def side_effect(*args, **kwargs):
                 return {'id': str(uuid.uuid4())}

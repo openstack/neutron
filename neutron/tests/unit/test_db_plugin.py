@@ -2904,8 +2904,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  cidr=cidr, ip_version=6,
                                  ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                                  ipv6_address_mode=constants.DHCPV6_STATEFUL)
-        # Gateway not specified for IPv6 SLAAC subnet
-        expected = {'gateway_ip': None,
+        # If gateway_ip is not specified, allocate first IP from the subnet
+        expected = {'gateway_ip': gateway,
                     'cidr': cidr}
         self._test_create_subnet(expected=expected,
                                  cidr=cidr, ip_version=6,

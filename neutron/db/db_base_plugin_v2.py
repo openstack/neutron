@@ -1086,10 +1086,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         s = subnet['subnet']
 
         if s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED:
-            if s['ip_version'] == 6 and ipv6_utils.is_slaac_subnet(s):
-                s['gateway_ip'] = None
-            else:
-                s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
+            s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
 
         if s['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
             s['allocation_pools'] = self._allocate_pools_for_subnet(context, s)
