@@ -23,6 +23,7 @@ from sqlalchemy.orm import attributes as sql_attr
 from neutron.common import constants
 from neutron import context
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
@@ -178,12 +179,12 @@ class Notifier(object):
         port._notify_event = None
         # If there is no device_id set there is nothing we can do here.
         if not port.device_id:
-            LOG.debug(_("device_id is not set on port yet."))
+            LOG.debug("device_id is not set on port yet.")
             return
 
         if not port.id:
-            LOG.warning(_("Port ID not set! Nova will not be notified of "
-                          "port status change."))
+            LOG.warning(_LW("Port ID not set! Nova will not be notified of "
+                            "port status change."))
             return
 
         # We only want to notify about nova ports.
@@ -207,9 +208,9 @@ class Notifier(object):
             event_name = VIF_PLUGGED
         # All the remaining state transitions are of no interest to nova
         else:
-            LOG.debug(_("Ignoring state change previous_port_status: "
-                        "%(pre_status)s current_port_status: %(cur_status)s"
-                        " port_id %(id)s") %
+            LOG.debug("Ignoring state change previous_port_status: "
+                      "%(pre_status)s current_port_status: %(cur_status)s"
+                      " port_id %(id)s",
                       {'pre_status': previous_port_status,
                        'cur_status': current_port_status,
                        'id': port.id})
@@ -233,19 +234,19 @@ class Notifier(object):
         batched_events = self.pending_events
         self.pending_events = []
 
-        LOG.debug(_("Sending events: %s"), batched_events)
+        LOG.debug("Sending events: %s", batched_events)
         try:
             response = self.nclient.server_external_events.create(
                 batched_events)
         except nova_exceptions.NotFound:
-            LOG.warning(_("Nova returned NotFound for event: %s"),
+            LOG.warning(_LW("Nova returned NotFound for event: %s"),
                         batched_events)
         except Exception:
-            LOG.exception(_("Failed to notify nova on events: %s"),
+            LOG.exception(_LE("Failed to notify nova on events: %s"),
                           batched_events)
         else:
             if not isinstance(response, list):
-                LOG.error(_("Error response returned from nova: %s"),
+                LOG.error(_LE("Error response returned from nova: %s"),
                           response)
                 return
             response_error = False
@@ -256,10 +257,10 @@ class Notifier(object):
                     response_error = True
                     continue
                 if code != 200:
-                    LOG.warning(_("Nova event: %s returned with failed "
-                                  "status"), event)
+                    LOG.warning(_LW("Nova event: %s returned with failed "
+                                    "status"), event)
                 else:
-                    LOG.info(_("Nova event response: %s"), event)
+                    LOG.info(_LI("Nova event response: %s"), event)
             if response_error:
-                LOG.error(_("Error response returned from nova: %s"),
+                LOG.error(_LE("Error response returned from nova: %s"),
                           response)
