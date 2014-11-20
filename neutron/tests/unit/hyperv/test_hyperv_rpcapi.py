@@ -37,8 +37,6 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
         expected_retval = 'foo' if method == 'call' else None
         expected_version = kwargs.pop('version', None)
         expected_msg = rpcapi.make_msg(method, **kwargs)
-        if rpc_method == 'cast' and method == 'run_instance':
-            kwargs['call'] = False
 
         proxy = n_rpc.RpcProxy
         with mock.patch.object(proxy, rpc_method) as rpc_method_mock:
