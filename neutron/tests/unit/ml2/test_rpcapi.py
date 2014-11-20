@@ -18,6 +18,7 @@ Unit Tests for ml2 rpc
 """
 
 import collections
+import contextlib
 
 import mock
 
@@ -165,7 +166,10 @@ class RpcCallbacksTestCase(base.BaseTestCase):
 
 class RpcApiTestCase(base.BaseTestCase):
 
-    def _test_rpc_api(self, rpcapi, topic, method, rpc_method, **kwargs):
+    def _test_rpc_api_legacy(self, rpcapi, topic, method, rpc_method,
+                             **kwargs):
+        # NOTE(russellb) This can be removed once AgentNotifierApi has been
+        # converted over to no longer use the RpcProxy compatibility class.
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if rpc_method == 'call' else None
         expected_version = kwargs.pop('version', None)
@@ -187,35 +191,61 @@ class RpcApiTestCase(base.BaseTestCase):
         ]
         rpc_method_mock.assert_has_calls(expected)
 
+    def _test_rpc_api(self, rpcapi, topic, method, rpc_method, **kwargs):
+        ctxt = context.RequestContext('fake_user', 'fake_project')
+        expected_retval = 'foo' if rpc_method == 'call' else None
+        expected_version = kwargs.pop('version', None)
+
+        with contextlib.nested(
+            mock.patch.object(rpcapi.client, rpc_method),
+            mock.patch.object(rpcapi.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = rpcapi.client
+            rpc_mock.return_value = expected_retval
+            retval = getattr(rpcapi, method)(ctxt, **kwargs)
+
+        prepare_args = {}
+        if expected_version:
+            prepare_args['version'] = expected_version
+        prepare_mock.assert_called_once_with(**prepare_args)
+
+        self.assertEqual(retval, expected_retval)
+        rpc_mock.assert_called_once_with(ctxt, method, **kwargs)
+
     def test_delete_network(self):
         rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
-        self._test_rpc_api(rpcapi,
-                           topics.get_topic_name(topics.AGENT,
-                                                 topics.NETWORK,
-                                                 topics.DELETE),
-                           'network_delete', rpc_method='fanout_cast',
-                           network_id='fake_request_spec')
+        self._test_rpc_api_legacy(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      topics.NETWORK,
+                                      topics.DELETE),
+                'network_delete', rpc_method='fanout_cast',
+                network_id='fake_request_spec')
 
     def test_port_update(self):
         rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
-        self._test_rpc_api(rpcapi,
-                           topics.get_topic_name(topics.AGENT,
-                                                 topics.PORT,
-                                                 topics.UPDATE),
-                           'port_update', rpc_method='fanout_cast',
-                           port='fake_port',
-                           network_type='fake_network_type',
-                           segmentation_id='fake_segmentation_id',
-                           physical_network='fake_physical_network')
+        self._test_rpc_api_legacy(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      topics.PORT,
+                                      topics.UPDATE),
+                'port_update', rpc_method='fanout_cast',
+                port='fake_port',
+                network_type='fake_network_type',
+                segmentation_id='fake_segmentation_id',
+                physical_network='fake_physical_network')
 
     def test_tunnel_update(self):
         rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
-        self._test_rpc_api(rpcapi,
-                           topics.get_topic_name(topics.AGENT,
-                                                 type_tunnel.TUNNEL,
-                                                 topics.UPDATE),
-                           'tunnel_update', rpc_method='fanout_cast',
-                           tunnel_ip='fake_ip', tunnel_type='gre')
+        self._test_rpc_api_legacy(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      type_tunnel.TUNNEL,
+                                      topics.UPDATE),
+                'tunnel_update', rpc_method='fanout_cast',
+                tunnel_ip='fake_ip', tunnel_type='gre')
 
     def test_device_details(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)

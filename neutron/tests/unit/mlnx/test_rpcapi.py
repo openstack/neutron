@@ -17,6 +17,9 @@
 Unit Tests for Mellanox RPC (major reuse of linuxbridge rpc unit tests)
 """
 
+import contextlib
+import mock
+
 import fixtures
 from oslo.config import cfg
 
@@ -29,8 +32,10 @@ from neutron.tests import base
 
 class rpcApiTestCase(base.BaseTestCase):
 
-    def _test_mlnx_api(self, rpcapi, topic, method, rpc_method,
-                       expected_msg=None, **kwargs):
+    def _test_mlnx_api_legacy(self, rpcapi, topic, method, rpc_method,
+                              expected_msg=None, **kwargs):
+        # NOTE(russellb) This method can be removed once the AgentNotifierApi
+        # has been converted to no longer use the RpcProxy class.
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if rpc_method == 'call' else None
         expected_kwargs = {}
@@ -64,14 +69,38 @@ class rpcApiTestCase(base.BaseTestCase):
             self.assertEqual(expected_arg, arg)
         self.assertEqual(expected_kwargs, self.fake_kwargs)
 
+    def _test_mlnx_api(self, rpcapi, topic, method, rpc_method, **kwargs):
+        ctxt = context.RequestContext('fake_user', 'fake_project')
+        expected_retval = 'foo' if rpc_method == 'call' else None
+        expected_version = kwargs.pop('version', None)
+
+        with contextlib.nested(
+            mock.patch.object(rpcapi.client, rpc_method),
+            mock.patch.object(rpcapi.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = rpcapi.client
+            rpc_mock.return_value = expected_retval
+            retval = getattr(rpcapi, method)(ctxt, **kwargs)
+
+        prepare_args = {}
+        if expected_version:
+            prepare_args['version'] = expected_version
+        prepare_mock.assert_called_once_with(**prepare_args)
+
+        self.assertEqual(retval, expected_retval)
+        rpc_mock.assert_called_once_with(ctxt, method, **kwargs)
+
     def test_delete_network(self):
         rpcapi = agent_notify_api.AgentNotifierApi(topics.AGENT)
-        self._test_mlnx_api(rpcapi,
-                            topics.get_topic_name(topics.AGENT,
-                                                  topics.NETWORK,
-                                                  topics.DELETE),
-                            'network_delete', rpc_method='fanout_cast',
-                            network_id='fake_request_spec')
+        self._test_mlnx_api_legacy(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      topics.NETWORK,
+                                      topics.DELETE),
+                'network_delete', rpc_method='fanout_cast',
+                network_id='fake_request_spec')
 
     def test_port_update(self):
         cfg.CONF.set_override('rpc_support_old_agents', False, 'AGENT')
@@ -81,16 +110,17 @@ class rpcApiTestCase(base.BaseTestCase):
                                        network_type='vlan',
                                        physical_network='fake_net',
                                        segmentation_id='fake_vlan_id')
-        self._test_mlnx_api(rpcapi,
-                            topics.get_topic_name(topics.AGENT,
-                                                  topics.PORT,
-                                                  topics.UPDATE),
-                            'port_update', rpc_method='fanout_cast',
-                            expected_msg=expected_msg,
-                            port='fake_port',
-                            network_type='vlan',
-                            physical_network='fake_net',
-                            vlan_id='fake_vlan_id')
+        self._test_mlnx_api_legacy(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      topics.PORT,
+                                      topics.UPDATE),
+                'port_update', rpc_method='fanout_cast',
+                expected_msg=expected_msg,
+                port='fake_port',
+                network_type='vlan',
+                physical_network='fake_net',
+                vlan_id='fake_vlan_id')
 
     def test_port_update_ib(self):
         cfg.CONF.set_override('rpc_support_old_agents', False, 'AGENT')
@@ -100,16 +130,17 @@ class rpcApiTestCase(base.BaseTestCase):
                                        network_type='ib',
                                        physical_network='fake_net',
                                        segmentation_id='fake_vlan_id')
-        self._test_mlnx_api(rpcapi,
-                            topics.get_topic_name(topics.AGENT,
-                                                  topics.PORT,
-                                                  topics.UPDATE),
-                            'port_update', rpc_method='fanout_cast',
-                            expected_msg=expected_msg,
-                            port='fake_port',
-                            network_type='ib',
-                            physical_network='fake_net',
-                            vlan_id='fake_vlan_id')
+        self._test_mlnx_api_legacy(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      topics.PORT,
+                                      topics.UPDATE),
+                'port_update', rpc_method='fanout_cast',
+                expected_msg=expected_msg,
+                port='fake_port',
+                network_type='ib',
+                physical_network='fake_net',
+                vlan_id='fake_vlan_id')
 
     def test_port_update_old_agent(self):
         cfg.CONF.set_override('rpc_support_old_agents', True, 'AGENT')
@@ -120,16 +151,17 @@ class rpcApiTestCase(base.BaseTestCase):
                                        physical_network='fake_net',
                                        segmentation_id='fake_vlan_id',
                                        vlan_id='fake_vlan_id')
-        self._test_mlnx_api(rpcapi,
-                            topics.get_topic_name(topics.AGENT,
-                                                  topics.PORT,
-                                                  topics.UPDATE),
-                            'port_update', rpc_method='fanout_cast',
-                            expected_msg=expected_msg,
-                            port='fake_port',
-                            network_type='vlan',
-                            physical_network='fake_net',
-                            vlan_id='fake_vlan_id')
+        self._test_mlnx_api_legacy(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      topics.PORT,
+                                      topics.UPDATE),
+                'port_update', rpc_method='fanout_cast',
+                expected_msg=expected_msg,
+                port='fake_port',
+                network_type='vlan',
+                physical_network='fake_net',
+                vlan_id='fake_vlan_id')
 
     def test_device_details(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)

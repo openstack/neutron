@@ -226,22 +226,19 @@ class TestOVSNeutronOFPRyuAgent(RyuAgentTestCase):
 
 class TestRyuPluginApi(RyuAgentTestCase):
     def test_get_ofp_rest_api_addr(self):
+        rpcapi = self.mod_agent.RyuPluginApi('foo')
         with contextlib.nested(
-            mock.patch(self._AGENT_NAME + '.RyuPluginApi.make_msg',
-                       return_value='msg'),
-            mock.patch(self._AGENT_NAME + '.RyuPluginApi.call',
-                       return_value='10.0.0.1')
-        ) as (mock_msg, mock_call):
-            api = self.mod_agent.RyuPluginApi('topics')
-            addr = api.get_ofp_rest_api_addr('context')
+            mock.patch.object(rpcapi.client, 'call'),
+            mock.patch.object(rpcapi.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = rpcapi.client
+            rpc_mock.return_value = 'return'
+            addr = rpcapi.get_ofp_rest_api_addr('context')
 
-        self.assertEqual(addr, '10.0.0.1')
-        mock_msg.assert_has_calls([
-            mock.call('get_ofp_rest_api')
-        ])
-        mock_call.assert_has_calls([
-            mock.call('context', 'msg')
-        ])
+        self.assertEqual('return', addr)
+        rpc_mock.assert_called_once_with('context', 'get_ofp_rest_api')
 
 
 class TestVifPortSet(RyuAgentTestCase):

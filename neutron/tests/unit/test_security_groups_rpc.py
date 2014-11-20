@@ -1509,20 +1509,22 @@ class FakeSGRpcApi(agent_rpc.PluginApi,
 
 
 class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
-    def setUp(self):
-        super(SecurityGroupServerRpcApiTestCase, self).setUp()
-        self.rpc = FakeSGRpcApi('fake_topic')
-        self.rpc.call = mock.Mock()
-
     def test_security_group_rules_for_devices(self):
-        self.rpc.security_group_rules_for_devices(None, ['fake_device'])
-        self.rpc.call.assert_has_calls(
-            [mock.call(None,
-             {'args':
-                 {'devices': ['fake_device']},
-              'method': 'security_group_rules_for_devices',
-              'namespace': None},
-             version='1.1')])
+        rpcapi = FakeSGRpcApi('fake_topic')
+
+        with contextlib.nested(
+            mock.patch.object(rpcapi.client, 'call'),
+            mock.patch.object(rpcapi.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = rpcapi.client
+            rpcapi.security_group_rules_for_devices('context', ['fake_device'])
+
+        rpc_mock.assert_called_once_with(
+                'context',
+                'security_group_rules_for_devices',
+                devices=['fake_device'])
 
 
 class FakeSGNotifierAPI(n_rpc.RpcProxy,

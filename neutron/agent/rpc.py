@@ -69,7 +69,7 @@ class PluginReportStateAPI(object):
         return method(context, 'report_state', **kwargs)
 
 
-class PluginApi(n_rpc.RpcProxy):
+class PluginApi(object):
     '''Agent side of the rpc API.
 
     API version history:
@@ -79,51 +79,45 @@ class PluginApi(n_rpc.RpcProxy):
               the device port
     '''
 
-    BASE_RPC_API_VERSION = '1.1'
-
     def __init__(self, topic):
-        super(PluginApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def get_device_details(self, context, device, agent_id, host=None):
-        return self.call(context,
-                         self.make_msg('get_device_details', device=device,
-                                       agent_id=agent_id, host=host))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'get_device_details', device=device,
+                          agent_id=agent_id, host=host)
 
     def get_devices_details_list(self, context, devices, agent_id, host=None):
         res = []
         try:
-            res = self.call(context,
-                            self.make_msg('get_devices_details_list',
-                                          devices=devices,
-                                          agent_id=agent_id,
-                                          host=host),
-                            version='1.3')
+            cctxt = self.client.prepare(version='1.3')
+            res = cctxt.call(context, 'get_devices_details_list',
+                             devices=devices, agent_id=agent_id, host=host)
         except messaging.UnsupportedVersion:
             # If the server has not been upgraded yet, a DVR-enabled agent
             # may not work correctly, however it can function in 'degraded'
             # mode, in that DVR routers may not be in the system yet, and
             # it might be not necessary to retrieve info about the host.
             LOG.warn(_LW('DVR functionality requires a server upgrade.'))
+            cctxt = self.client.prepare()
             res = [
-                self.call(context,
-                          self.make_msg('get_device_details', device=device,
-                                        agent_id=agent_id, host=host))
+                self.get_device_details(context, device, agent_id, host)
                 for device in devices
             ]
         return res
 
     def update_device_down(self, context, device, agent_id, host=None):
-        return self.call(context,
-                         self.make_msg('update_device_down', device=device,
-                                       agent_id=agent_id, host=host))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'update_device_down', device=device,
+                          agent_id=agent_id, host=host)
 
     def update_device_up(self, context, device, agent_id, host=None):
-        return self.call(context,
-                         self.make_msg('update_device_up', device=device,
-                                       agent_id=agent_id, host=host))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'update_device_up', device=device,
+                          agent_id=agent_id, host=host)
 
     def tunnel_sync(self, context, tunnel_ip, tunnel_type=None):
-        return self.call(context,
-                         self.make_msg('tunnel_sync', tunnel_ip=tunnel_ip,
-                                       tunnel_type=tunnel_type))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'tunnel_sync', tunnel_ip=tunnel_ip,
+                          tunnel_type=tunnel_type)

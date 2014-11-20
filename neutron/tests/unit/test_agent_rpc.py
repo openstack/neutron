@@ -27,8 +27,14 @@ class AgentRPCPluginApi(base.BaseTestCase):
         agent = rpc.PluginApi('fake_topic')
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expect_val = 'foo'
-        with mock.patch('neutron.common.rpc.RpcProxy.call') as rpc_call:
-            rpc_call.return_value = expect_val
+        with contextlib.nested(
+            mock.patch.object(agent.client, 'call'),
+            mock.patch.object(agent.client, 'prepare'),
+        ) as (
+            mock_call, mock_prepare
+        ):
+            mock_prepare.return_value = agent.client
+            mock_call.return_value = expect_val
             func_obj = getattr(agent, method)
             if method == 'tunnel_sync':
                 actual_val = func_obj(ctxt, 'fake_tunnel_ip')
@@ -47,8 +53,14 @@ class AgentRPCPluginApi(base.BaseTestCase):
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expect_val_get_device_details = 'foo'
         expect_val = [expect_val_get_device_details]
-        with mock.patch('neutron.common.rpc.RpcProxy.call') as rpc_call:
-            rpc_call.side_effect = [messaging.UnsupportedVersion('1.2'),
+        with contextlib.nested(
+            mock.patch.object(agent.client, 'call'),
+            mock.patch.object(agent.client, 'prepare'),
+        ) as (
+            mock_call, mock_prepare
+        ):
+            mock_prepare.return_value = agent.client
+            mock_call.side_effect = [messaging.UnsupportedVersion('1.2'),
                                     expect_val_get_device_details]
             func_obj = getattr(agent, 'get_devices_details_list')
             actual_val = func_obj(ctxt, ['fake_device'], 'fake_agent_id')
