@@ -332,6 +332,13 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self.deserialize(self.fmt, res)
         self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
+    def test_create_default_security_group_check_case_insensitive(self):
+        name = 'DEFAULT'
+        description = 'my webservers'
+        res = self._create_security_group(self.fmt, name, description)
+        self.deserialize(self.fmt, res)
+        self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
+
     def test_list_security_groups(self):
         with contextlib.nested(self.security_group(name='sg1',
                                                    description='sg'),
