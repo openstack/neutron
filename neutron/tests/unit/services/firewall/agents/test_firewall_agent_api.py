@@ -52,46 +52,26 @@ class TestFWaaSAgentApi(base.BaseTestCase):
     def test_init(self):
         self.assertEqual(self.api.host, 'host')
 
-    def test_set_firewall_status(self):
+    def _test_firewall_method(self, method_name, **kwargs):
         with contextlib.nested(
-            mock.patch.object(self.api, 'make_msg'),
-            mock.patch.object(self.api, 'call')
-        ) as (mock_make_msg, mock_call):
+            mock.patch.object(self.api.client, 'call'),
+            mock.patch.object(self.api.client, 'prepare'),
+        ) as (
+            rpc_mock, prepare_mock
+        ):
+            prepare_mock.return_value = self.api.client
+            getattr(self.api, method_name)(mock.sentinel.context, 'test',
+                                           **kwargs)
 
-            self.assertEqual(
-                self.api.set_firewall_status(
-                    mock.sentinel.context,
-                    'firewall_id',
-                    'status'),
-                mock_call.return_value)
+        prepare_args = {}
+        prepare_mock.assert_called_once_with(**prepare_args)
 
-            mock_make_msg.assert_called_once_with(
-                'set_firewall_status',
-                host='host',
-                firewall_id='firewall_id',
-                status='status')
+        rpc_mock.assert_called_once_with(mock.sentinel.context, method_name,
+                                         firewall_id='test', host='host',
+                                         **kwargs)
 
-            mock_call.assert_called_once_with(
-                mock.sentinel.context,
-                mock_make_msg.return_value)
+    def test_set_firewall_status(self):
+        self._test_firewall_method('set_firewall_status', status='fake_status')
 
     def test_firewall_deleted(self):
-        with contextlib.nested(
-            mock.patch.object(self.api, 'make_msg'),
-            mock.patch.object(self.api, 'call')
-        ) as (mock_make_msg, mock_call):
-
-            self.assertEqual(
-                self.api.firewall_deleted(
-                    mock.sentinel.context,
-                    'firewall_id'),
-                mock_call.return_value)
-
-            mock_make_msg.assert_called_once_with(
-                'firewall_deleted',
-                host='host',
-                firewall_id='firewall_id')
-
-            mock_call.assert_called_once_with(
-                mock.sentinel.context,
-                mock_make_msg.return_value)
+        self._test_firewall_method('firewall_deleted')

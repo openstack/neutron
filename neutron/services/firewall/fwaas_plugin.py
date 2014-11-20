@@ -97,35 +97,28 @@ class FirewallCallbacks(object):
         return fw_tenant_list
 
 
-class FirewallAgentApi(n_rpc.RpcProxy):
+class FirewallAgentApi(object):
     """Plugin side of plugin to agent RPC API."""
 
-    API_VERSION = '1.0'
-
     def __init__(self, topic, host):
-        super(FirewallAgentApi, self).__init__(topic, self.API_VERSION)
         self.host = host
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def create_firewall(self, context, firewall):
-        return self.fanout_cast(
-            context,
-            self.make_msg('create_firewall', firewall=firewall,
-                          host=self.host)
-        )
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, 'create_firewall', firewall=firewall,
+                   host=self.host)
 
     def update_firewall(self, context, firewall):
-        return self.fanout_cast(
-            context,
-            self.make_msg('update_firewall', firewall=firewall,
-                          host=self.host)
-        )
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, 'update_firewall', firewall=firewall,
+                   host=self.host)
 
     def delete_firewall(self, context, firewall):
-        return self.fanout_cast(
-            context,
-            self.make_msg('delete_firewall', firewall=firewall,
-                          host=self.host)
-        )
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, 'delete_firewall', firewall=firewall,
+                   host=self.host)
 
 
 class FirewallCountExceeded(n_exception.Conflict):
