@@ -20,6 +20,7 @@ import urllib
 import eventlet
 from oslo.serialization import jsonutils
 
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import request
 
@@ -119,7 +120,7 @@ class EventletApiRequest(request.ApiRequest):
             with eventlet.timeout.Timeout(self._request_timeout, False):
                 return self._handle_request()
 
-            LOG.info(_('[%d] Request timeout.'), self._rid())
+            LOG.info(_LI('[%d] Request timeout.'), self._rid())
             self._request_error = Exception(_('Request timeout'))
             return None
         else:
@@ -146,14 +147,15 @@ class EventletApiRequest(request.ApiRequest):
                         continue
                     # else fall through to return the error code
 
-                LOG.debug(_("[%(rid)d] Completed request '%(method)s %(url)s'"
-                            ": %(status)s"),
+                LOG.debug("[%(rid)d] Completed request '%(method)s %(url)s'"
+                          ": %(status)s",
                           {'rid': self._rid(), 'method': self._method,
                            'url': self._url, 'status': req.status})
                 self._request_error = None
                 response = req
             else:
-                LOG.info(_('[%(rid)d] Error while handling request: %(req)s'),
+                LOG.info(_LI('[%(rid)d] Error while handling request: '
+                             '%(req)s'),
                          {'rid': self._rid(), 'req': req})
                 self._request_error = req
                 response = None
@@ -209,7 +211,7 @@ class GetApiProvidersRequestEventlet(EventletApiRequest):
                                 ret.append(_provider_from_listen_addr(addr))
                 return ret
         except Exception as e:
-            LOG.warn(_("[%(rid)d] Failed to parse API provider: %(e)s"),
+            LOG.warn(_LW("[%(rid)d] Failed to parse API provider: %(e)s"),
                      {'rid': self._rid(), 'e': e})
             # intentionally fall through
         return None

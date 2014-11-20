@@ -18,6 +18,7 @@ from oslo.serialization import jsonutils
 from oslo.utils import excutils
 
 from neutron.common import exceptions as exception
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
@@ -253,8 +254,8 @@ def update_explicit_routes_lrouter(cluster, router_id, routes):
                                                      router_id, route)
                 added_routes.append(uuid)
     except api_exc.NsxApiException:
-        LOG.exception(_('Cannot update NSX routes %(routes)s for '
-                        'router %(router_id)s'),
+        LOG.exception(_LE('Cannot update NSX routes %(routes)s for '
+                          'router %(router_id)s'),
                       {'routes': routes, 'router_id': router_id})
         # Roll back to keep NSX in consistent state
         with excutils.save_and_reraise_exception():
@@ -347,8 +348,8 @@ def create_router_lport(cluster, lrouter_uuid, tenant_id, neutron_port_id,
     result = nsxlib.do_request(HTTP_POST, path, jsonutils.dumps(lport_obj),
                                cluster=cluster)
 
-    LOG.debug(_("Created logical port %(lport_uuid)s on "
-                "logical router %(lrouter_uuid)s"),
+    LOG.debug("Created logical port %(lport_uuid)s on "
+              "logical router %(lrouter_uuid)s",
               {'lport_uuid': result['uuid'],
                'lrouter_uuid': lrouter_uuid})
     return result
@@ -375,8 +376,8 @@ def update_router_lport(cluster, lrouter_uuid, lrouter_port_uuid,
     result = nsxlib.do_request(HTTP_PUT, path,
                                jsonutils.dumps(lport_obj),
                                cluster=cluster)
-    LOG.debug(_("Updated logical port %(lport_uuid)s on "
-                "logical router %(lrouter_uuid)s"),
+    LOG.debug("Updated logical port %(lport_uuid)s on "
+              "logical router %(lrouter_uuid)s",
               {'lport_uuid': lrouter_port_uuid, 'lrouter_uuid': lrouter_uuid})
     return result
 
@@ -386,8 +387,8 @@ def delete_router_lport(cluster, lrouter_uuid, lport_uuid):
     path = nsxlib._build_uri_path(LROUTERPORT_RESOURCE, lport_uuid,
                                   lrouter_uuid)
     nsxlib.do_request(HTTP_DELETE, path, cluster=cluster)
-    LOG.debug(_("Delete logical router port %(lport_uuid)s on "
-                "logical router %(lrouter_uuid)s"),
+    LOG.debug("Delete logical router port %(lport_uuid)s on "
+              "logical router %(lrouter_uuid)s",
               {'lport_uuid': lport_uuid,
                'lrouter_uuid': lrouter_uuid})
 
@@ -456,7 +457,7 @@ def _create_nat_match_obj(**kwargs):
 
 
 def _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj):
-    LOG.debug(_("Creating NAT rule: %s"), nat_rule_obj)
+    LOG.debug("Creating NAT rule: %s", nat_rule_obj)
     uri = nsxlib._build_uri_path(LROUTERNAT_RESOURCE,
                                  parent_resource_id=router_id)
     return nsxlib.do_request(HTTP_POST, uri, jsonutils.dumps(nat_rule_obj),
@@ -471,13 +472,13 @@ def _build_snat_rule_obj(min_src_ip, max_src_ip, nat_match_obj):
 
 
 def create_lrouter_nosnat_rule_v2(cluster, _router_id, _match_criteria=None):
-    LOG.info(_("No SNAT rules cannot be applied as they are not available in "
-               "this version of the NSX platform"))
+    LOG.info(_LI("No SNAT rules cannot be applied as they are not available "
+                 "in this version of the NSX platform"))
 
 
 def create_lrouter_nodnat_rule_v2(cluster, _router_id, _match_criteria=None):
-    LOG.info(_("No DNAT rules cannot be applied as they are not available in "
-               "this version of the NSX platform"))
+    LOG.info(_LI("No DNAT rules cannot be applied as they are not available "
+                 "in this version of the NSX platform"))
 
 
 def create_lrouter_snat_rule_v2(cluster, router_id,
@@ -577,9 +578,9 @@ def delete_nat_rules_by_match(cluster, router_id, rule_type,
                                           min_rules=min_num_expected,
                                           max_rules=max_num_expected)
         else:
-            LOG.warn(_("Found %(actual_rule_num)d matching NAT rules, which "
-                       "is not in the expected range (%(min_exp_rule_num)d,"
-                       "%(max_exp_rule_num)d)"),
+            LOG.warn(_LW("Found %(actual_rule_num)d matching NAT rules, which "
+                         "is not in the expected range (%(min_exp_rule_num)d,"
+                         "%(max_exp_rule_num)d)"),
                      {'actual_rule_num': num_rules_to_delete,
                       'min_exp_rule_num': min_num_expected,
                       'max_exp_rule_num': max_num_expected})

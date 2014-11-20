@@ -74,7 +74,7 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
             # this should not occur whilst a mapping already exists
             current = get_nsx_switch_and_port_id(session, neutron_id)
             if current[1] == nsx_port_id:
-                LOG.debug(_("Port mapping for %s already available"),
+                LOG.debug("Port mapping for %s already available",
                           neutron_id)
                 ctxt.reraise = False
     except db_exc.DBError:
@@ -121,8 +121,8 @@ def get_nsx_switch_and_port_id(session, neutron_id):
                    one())
         return mapping['nsx_switch_id'], mapping['nsx_port_id']
     except exc.NoResultFound:
-        LOG.debug(_("NSX identifiers for neutron port %s not yet "
-                    "stored in Neutron DB"), neutron_id)
+        LOG.debug("NSX identifiers for neutron port %s not yet "
+                  "stored in Neutron DB", neutron_id)
         return None, None
 
 
@@ -132,8 +132,8 @@ def get_nsx_router_id(session, neutron_id):
                    filter_by(neutron_id=neutron_id).one())
         return mapping['nsx_id']
     except exc.NoResultFound:
-        LOG.debug(_("NSX identifiers for neutron router %s not yet "
-                    "stored in Neutron DB"), neutron_id)
+        LOG.debug("NSX identifiers for neutron router %s not yet "
+                  "stored in Neutron DB", neutron_id)
 
 
 def get_nsx_security_group_id(session, neutron_id):
@@ -147,8 +147,8 @@ def get_nsx_security_group_id(session, neutron_id):
                    one())
         return mapping['nsx_id']
     except exc.NoResultFound:
-        LOG.debug(_("NSX identifiers for neutron security group %s not yet "
-                    "stored in Neutron DB"), neutron_id)
+        LOG.debug("NSX identifiers for neutron security group %s not yet "
+                  "stored in Neutron DB", neutron_id)
         return None
 
 

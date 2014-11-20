@@ -18,6 +18,7 @@
 from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
 from neutron.extensions import external_net
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.common import exceptions as p_exc
 from neutron.plugins.vmware.dhcp_meta import nsx
@@ -78,7 +79,7 @@ class DhcpMetadataBuilder(object):
             try:
                 self.plugin.delete_port(context, port['id'])
             except n_exc.PortNotFound:
-                LOG.error(_('Port %s is already gone'), port['id'])
+                LOG.error(_LE('Port %s is already gone'), port['id'])
 
     def dhcp_allocate(self, context, network_id, subnet):
         """Allocate dhcp resources for the subnet."""

@@ -15,6 +15,7 @@
 #    under the License.
 #
 
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -27,8 +28,8 @@ def find_version(headers):
             if header_name == 'server':
                 return Version(header_value.split('/')[1])
         except IndexError:
-            LOG.warning(_("Unable to fetch NSX version from response "
-                          "headers :%s"), headers)
+            LOG.warning(_LW("Unable to fetch NSX version from response "
+                            "headers :%s"), headers)
 
 
 class Version(object):

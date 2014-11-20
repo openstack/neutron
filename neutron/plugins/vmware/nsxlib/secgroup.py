@@ -18,6 +18,7 @@ from oslo.utils import excutils
 
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.i18n import _LW
 from neutron.openstack.common import log
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware import nsxlib
@@ -92,7 +93,7 @@ def create_security_profile(cluster, tenant_id, neutron_id, security_profile):
                                                 {'ethertype': 'IPv6'}]}
 
         update_security_group_rules(cluster, rsp['uuid'], rules)
-    LOG.debug(_("Created Security Profile: %s"), rsp)
+    LOG.debug("Created Security Profile: %s", rsp)
     return rsp
 
 
@@ -118,7 +119,7 @@ def update_security_group_rules(cluster, spid, rules):
         LOG.error(nsxlib.format_exception("Unknown", e, locals()))
         #FIXME(salvatore-orlando): This should not raise NeutronException
         raise exceptions.NeutronException()
-    LOG.debug(_("Updated Security Profile: %s"), rsp)
+    LOG.debug("Updated Security Profile: %s", rsp)
     return rsp
 
 
@@ -138,5 +139,5 @@ def delete_security_profile(cluster, spid):
     except exceptions.NotFound:
         with excutils.save_and_reraise_exception():
             # This is not necessarily an error condition
-            LOG.warn(_("Unable to find security profile %s on NSX backend"),
+            LOG.warn(_LW("Unable to find security profile %s on NSX backend"),
                      spid)

@@ -73,10 +73,11 @@ def _directory_to_check_translation(filename):
             "neutron/scheduler",
             "neutron/server",
             "neutron/services",
+            "neutron/plugins/cisco",
             "neutron/plugins/ml2",
             "neutron/plugins/openvswitch",
             "neutron/plugins/linuxbridge",
-            "neutron/plugins/cisco"]
+            "neutron/plugins/vmware"]
     return any([dir in filename for dir in dirs])
 
 
