@@ -27,7 +27,7 @@ from neutron.common import utils
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_hamode_db
-from neutron.openstack.common.gettextutils import _LE
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import log as logging
 
 
@@ -67,8 +67,8 @@ class L3Scheduler(object):
             l3_agents = plugin.get_l3_agents_hosting_routers(
                 context, [router['id']], admin_state_up=True)
             if l3_agents:
-                LOG.debug(('Router %(router_id)s has already been '
-                           'hosted by L3 agent %(agent_id)s'),
+                LOG.debug('Router %(router_id)s has already been '
+                          'hosted by L3 agent %(agent_id)s',
                           {'router_id': router['id'],
                            'agent_id': l3_agents[0]['id']})
             else:
@@ -153,8 +153,8 @@ class L3Scheduler(object):
         target_routers = self.get_routers_can_schedule(
             context, plugin, unscheduled_routers, l3_agent)
         if not target_routers:
-            LOG.warn(_('No routers compatible with L3 agent configuration'
-                       ' on host %s'), host)
+            LOG.warn(_LW('No routers compatible with L3 agent configuration'
+                         ' on host %s'), host)
             return False
 
         self.bind_routers(context, plugin, target_routers, l3_agent)
@@ -170,15 +170,15 @@ class L3Scheduler(object):
             l3_agents = plugin.get_l3_agents_hosting_routers(
                 context, [sync_router['id']], admin_state_up=True)
             if l3_agents and not sync_router.get('distributed', False):
-                LOG.debug(_('Router %(router_id)s has already been hosted'
-                            ' by L3 agent %(agent_id)s'),
+                LOG.debug('Router %(router_id)s has already been hosted'
+                          ' by L3 agent %(agent_id)s',
                           {'router_id': sync_router['id'],
                            'agent_id': l3_agents[0]['id']})
                 return
 
             active_l3_agents = plugin.get_l3_agents(context, active=True)
             if not active_l3_agents:
-                LOG.warn(_('No active L3 agents'))
+                LOG.warn(_LW('No active L3 agents'))
                 return
             new_l3agents = plugin.get_l3_agent_candidates(context,
                                                           sync_router,
@@ -190,7 +190,7 @@ class L3Scheduler(object):
             else:
                 candidates = new_l3agents
                 if not candidates:
-                    LOG.warn(_('No L3 agents can host the router %s'),
+                    LOG.warn(_LW('No L3 agents can host the router %s'),
                              sync_router['id'])
 
             return candidates

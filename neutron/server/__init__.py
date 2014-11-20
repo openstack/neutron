@@ -29,6 +29,7 @@ from neutron.common import config
 from neutron import service
 
 from neutron.openstack.common import gettextutils
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 gettextutils.install('neutron', lazy=True)
 
@@ -51,7 +52,8 @@ def main():
         try:
             neutron_rpc = service.serve_rpc()
         except NotImplementedError:
-            LOG.info(_("RPC was already started in parent process by plugin."))
+            LOG.info(_LI("RPC was already started in parent process by "
+                         "plugin."))
         else:
             rpc_thread = pool.spawn(neutron_rpc.wait)
 
