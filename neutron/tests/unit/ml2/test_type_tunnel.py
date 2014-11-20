@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
+import mock
 from six import moves
 import testtools
 from testtools import matchers
@@ -21,6 +23,10 @@ from neutron.common import exceptions as exc
 from neutron.db import api as db
 from neutron.plugins.ml2 import driver_api as api
 
+TUNNEL_IP_ONE = "10.10.10.10"
+TUNNEL_IP_TWO = "10.10.10.20"
+HOST_ONE = 'fake_host_one'
+HOST_TWO = 'fake_host_two'
 TUN_MIN = 100
 TUN_MAX = 109
 TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
@@ -219,3 +225,94 @@ class TunnelTypeMultiRangeTestMixin(object):
                     self.TUN_MIN1, self.TUN_MAX1):
             alloc = self.driver.get_allocation(self.session, key)
             self.assertFalse(alloc.allocated)
+
+
+class TunnelRpcCallbackTestMixin(object):
+
+    DRIVER_CLASS = None
+    TYPE = None
+
+    def setUp(self):
+        super(TunnelRpcCallbackTestMixin, self).setUp()
+        self.driver = self.DRIVER_CLASS()
+
+    def _test_tunnel_sync(self, kwargs, delete_tunnel=False):
+        with contextlib.nested(
+            mock.patch.object(self.notifier, 'tunnel_update'),
+            mock.patch.object(self.notifier, 'tunnel_delete')
+        ) as (tunnel_update, tunnel_delete):
+            details = self.callbacks.tunnel_sync('fake_context', **kwargs)
+            tunnels = details['tunnels']
+            for tunnel in tunnels:
+                self.assertEqual(kwargs['tunnel_ip'], tunnel['ip_address'])
+                self.assertEqual(kwargs['host'], tunnel['host'])
+            self.assertTrue(tunnel_update.called)
+            if delete_tunnel:
+                self.assertTrue(tunnel_delete.called)
+            else:
+                self.assertFalse(tunnel_delete.called)
+
+    def _test_tunnel_sync_raises(self, kwargs):
+        with contextlib.nested(
+            mock.patch.object(self.notifier, 'tunnel_update'),
+            mock.patch.object(self.notifier, 'tunnel_delete')
+        ) as (tunnel_update, tunnel_delete):
+            self.assertRaises(exc.InvalidInput,
+                              self.callbacks.tunnel_sync,
+                              'fake_context', **kwargs)
+            self.assertFalse(tunnel_update.called)
+            self.assertFalse(tunnel_delete.called)
+
+    def test_tunnel_sync_called_without_host_passed(self):
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
+                  'host': None}
+        self._test_tunnel_sync(kwargs)
+
+    def test_tunnel_sync_called_with_host_passed_for_existing_tunnel_ip(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, None)
+
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_ONE}
+        self._test_tunnel_sync(kwargs)
+
+    def test_tunnel_sync_called_with_host_passed(self):
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_ONE}
+        self._test_tunnel_sync(kwargs)
+
+    def test_tunnel_sync_called_for_existing_endpoint(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_ONE}
+        self._test_tunnel_sync(kwargs)
+
+    def test_tunnel_sync_called_for_existing_host_with_tunnel_ip_changed(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+
+        kwargs = {'tunnel_ip': TUNNEL_IP_TWO, 'tunnel_type': self.TYPE,
+                  'host': HOST_ONE}
+        self._test_tunnel_sync(kwargs, True)
+
+    def test_tunnel_sync_called_with_used_tunnel_ip_case_one(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
+
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_TWO}
+        self._test_tunnel_sync_raises(kwargs)
+
+    def test_tunnel_sync_called_with_used_tunnel_ip_case_two(self):
+        self.driver.add_endpoint(TUNNEL_IP_ONE, None)
+        self.driver.add_endpoint(TUNNEL_IP_TWO, HOST_TWO)
+
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_TWO}
+        self._test_tunnel_sync_raises(kwargs)
+
+    def test_tunnel_sync_called_without_tunnel_ip(self):
+        kwargs = {'tunnel_type': self.TYPE, 'host': None}
+        self._test_tunnel_sync_raises(kwargs)
+
+    def test_tunnel_sync_called_without_tunnel_type(self):
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'host': None}
+        self._test_tunnel_sync_raises(kwargs)

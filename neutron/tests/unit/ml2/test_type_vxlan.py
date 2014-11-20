@@ -17,6 +17,7 @@ import mock
 
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_vxlan
+from neutron.tests.unit.ml2 import test_rpcapi
 from neutron.tests.unit.ml2 import test_type_tunnel
 from neutron.tests.unit import testlib_api
 
@@ -96,3 +97,10 @@ class VxlanTypeTest(test_type_tunnel.TunnelTypeTestMixin,
 class VxlanTypeMultiRangeTest(test_type_tunnel.TunnelTypeMultiRangeTestMixin,
                               testlib_api.SqlTestCase):
     DRIVER_CLASS = type_vxlan.VxlanTypeDriver
+
+
+class VxlanTypeRpcCallbackTest(test_type_tunnel.TunnelRpcCallbackTestMixin,
+                               test_rpcapi.RpcCallbacksTestCase,
+                               testlib_api.SqlTestCase):
+        DRIVER_CLASS = type_vxlan.VxlanTypeDriver
+        TYPE = p_const.TYPE_VXLAN

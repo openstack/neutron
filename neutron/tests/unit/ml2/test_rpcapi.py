@@ -29,6 +29,7 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import topics
 from neutron.plugins.ml2.drivers import type_tunnel
+from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc as plugin_rpc
 from neutron.tests import base
 
@@ -37,7 +38,10 @@ class RpcCallbacksTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(RpcCallbacksTestCase, self).setUp()
-        self.callbacks = plugin_rpc.RpcCallbacks(mock.Mock(), mock.Mock())
+        self.type_manager = managers.TypeManager()
+        self.notifier = plugin_rpc.AgentNotifierApi(topics.AGENT)
+        self.callbacks = plugin_rpc.RpcCallbacks(self.notifier,
+                                                 self.type_manager)
         self.manager = mock.patch.object(
             plugin_rpc.manager, 'NeutronManager').start()
         self.l3plugin = mock.Mock()
@@ -234,6 +238,17 @@ class RpcApiTestCase(base.BaseTestCase):
                 fanout=True,
                 tunnel_ip='fake_ip', tunnel_type='gre')
 
+    def test_tunnel_delete(self):
+        rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
+        self._test_rpc_api(
+                rpcapi,
+                topics.get_topic_name(topics.AGENT,
+                                      type_tunnel.TUNNEL,
+                                      topics.DELETE),
+                'tunnel_delete', rpc_method='cast',
+                fanout=True,
+                tunnel_ip='fake_ip', tunnel_type='gre')
+
     def test_device_details(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
         self._test_rpc_api(rpcapi, None,
@@ -263,7 +278,9 @@ class RpcApiTestCase(base.BaseTestCase):
         self._test_rpc_api(rpcapi, None,
                            'tunnel_sync', rpc_method='call',
                            tunnel_ip='fake_tunnel_ip',
-                           tunnel_type=None)
+                           tunnel_type=None,
+                           host='fake_host',
+                           version='1.4')
 
     def test_update_device_up(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)

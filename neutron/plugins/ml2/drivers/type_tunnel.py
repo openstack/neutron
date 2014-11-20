@@ -265,4 +265,13 @@ class TunnelAgentRpcApiMixin(object):
         cctxt.cast(context, 'tunnel_update', tunnel_ip=tunnel_ip,
                    tunnel_type=tunnel_type)
 
-    # TODO(romilg): Add tunnel_delete rpc in dependent patch-set
+    def _get_tunnel_delete_topic(self):
+        return topics.get_topic_name(self.topic,
+                                     TUNNEL,
+                                     topics.DELETE)
+
+    def tunnel_delete(self, context, tunnel_ip, tunnel_type):
+        cctxt = self.client.prepare(topic=self._get_tunnel_delete_topic(),
+                                    fanout=True)
+        cctxt.cast(context, 'tunnel_delete', tunnel_ip=tunnel_ip,
+                   tunnel_type=tunnel_type)
