@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo import messaging
+
 from neutron.common import log
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -57,13 +58,13 @@ class DVRServerRpcApiMixin(object):
                          version=self.DVR_RPC_VERSION)
 
 
-class DVRServerRpcCallback(n_rpc.RpcCallback):
+class DVRServerRpcCallback(object):
     """Plugin-side RPC (implementation) for agent-to-plugin interaction."""
 
     # History
     #   1.0 Initial version
 
-    RPC_API_VERSION = "1.0"
+    target = messaging.Target(version='1.0')
 
     @property
     def plugin(self):

@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo import messaging
+
 from neutron.common import constants as q_const
-from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
 from neutron.plugins.hyperv import db as hyperv_db
 
@@ -22,12 +23,12 @@ from neutron.plugins.hyperv import db as hyperv_db
 LOG = logging.getLogger(__name__)
 
 
-class HyperVRpcCallbacks(n_rpc.RpcCallback):
+class HyperVRpcCallbacks(object):
 
     # history
     # 1.1 Support Security Group RPC
     # 1.2 Support get_devices_details_list
-    RPC_API_VERSION = '1.2'
+    target = messaging.Target(version='1.2')
 
     def __init__(self, notifier):
         super(HyperVRpcCallbacks, self).__init__()

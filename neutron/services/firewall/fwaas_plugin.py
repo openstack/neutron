@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.common import exceptions as n_exception
 from neutron.common import rpc as n_rpc
@@ -28,8 +29,8 @@ from neutron.plugins.common import constants as const
 LOG = logging.getLogger(__name__)
 
 
-class FirewallCallbacks(n_rpc.RpcCallback):
-    RPC_API_VERSION = '1.0'
+class FirewallCallbacks(object):
+    target = messaging.Target(version='1.0')
 
     def __init__(self, plugin):
         super(FirewallCallbacks, self).__init__()

@@ -14,11 +14,11 @@
 # limitations under the License.
 
 from oslo.config import cfg
+from oslo import messaging
 from oslo.serialization import jsonutils
 
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron import context as neutron_context
 from neutron.extensions import l3
@@ -32,7 +32,7 @@ from neutron.plugins.common import constants as plugin_constants
 LOG = logging.getLogger(__name__)
 
 
-class L3RpcCallback(n_rpc.RpcCallback):
+class L3RpcCallback(object):
     """L3 agent RPC callback in plugin implementations."""
 
     # 1.0  L3PluginApi BASE_RPC_API_VERSION
@@ -40,7 +40,7 @@ class L3RpcCallback(n_rpc.RpcCallback):
     # 1.2 Added methods for DVR support
     # 1.3 Added a method that returns the list of activated services
     # 1.4 Added L3 HA update_router_state
-    RPC_API_VERSION = '1.4'
+    target = messaging.Target(version='1.4')
 
     @property
     def plugin(self):

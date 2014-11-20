@@ -14,6 +14,8 @@
 #    under the License.
 import netaddr
 
+from oslo import messaging
+
 from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
 from neutron.services.vpn.common import topics
@@ -26,13 +28,13 @@ IPSEC = 'ipsec'
 BASE_IPSEC_VERSION = '1.0'
 
 
-class IPsecVpnDriverCallBack(n_rpc.RpcCallback):
+class IPsecVpnDriverCallBack(object):
     """Callback for IPSecVpnDriver rpc."""
 
     # history
     #   1.0 Initial version
 
-    RPC_API_VERSION = BASE_IPSEC_VERSION
+    target = messaging.Target(version=BASE_IPSEC_VERSION)
 
     def __init__(self, driver):
         super(IPsecVpnDriverCallBack, self).__init__()

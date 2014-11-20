@@ -13,15 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neutron.common import rpc as n_rpc
+from oslo import messaging
+
 from neutron import manager
 
 
-class MetadataRpcCallback(n_rpc.RpcCallback):
+class MetadataRpcCallback(object):
     """Metadata agent RPC callback in plugin implementations."""
 
     # 1.0  MetadataPluginAPI BASE_RPC_API_VERSION
-    RPC_API_VERSION = '1.0'
+    target = messaging.Target(version='1.0')
 
     @property
     def plugin(self):

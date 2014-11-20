@@ -23,13 +23,13 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -50,9 +50,9 @@ class SdnvePluginApi(agent_rpc.PluginApi):
                          self.make_msg('sdnve_info', info=info))
 
 
-class SdnveNeutronAgent(n_rpc.RpcCallback):
+class SdnveNeutronAgent(object):
 
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     def __init__(self, integ_br, interface_mappings,
                  info, root_helper, polling_interval,

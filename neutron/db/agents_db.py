@@ -17,12 +17,12 @@ from eventlet import greenthread
 
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from oslo import messaging
 from oslo.serialization import jsonutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
-from neutron.common import rpc as n_rpc
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
@@ -215,10 +215,10 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
                     return self._create_or_update_agent(context, agent)
 
 
-class AgentExtRpcCallback(n_rpc.RpcCallback):
+class AgentExtRpcCallback(object):
     """Processes the rpc report in plugin implementations."""
 
-    RPC_API_VERSION = '1.0'
+    target = messaging.Target(version='1.0')
     START_TIME = timeutils.utcnow()
 
     def __init__(self, plugin=None):
