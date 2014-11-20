@@ -294,6 +294,20 @@ class TestBigSwitchProxyNetworksV2(test_plugin.TestNetworksV2,
                              self._get_networks(n['network']['tenant_id']
                                                 )[0]['id'])
 
+    def test_notify_on_security_group_change(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with self.port() as p:
+            with contextlib.nested(
+                mock.patch.object(plugin, 'notifier'),
+                mock.patch.object(plugin, 'is_security_group_member_updated',
+                                  return_value=True)
+            ) as (n_mock, s_mock):
+                # any port update should trigger a notification due to s_mock
+                data = {'port': {'name': 'aNewName'}}
+                self.new_update_request(
+                    'ports', data, p['port']['id']).get_response(self.api)
+                self.assertTrue(n_mock.port_update.called)
+
 
 class TestBigSwitchProxySubnetsV2(test_plugin.TestSubnetsV2,
                                   BigSwitchProxyPluginV2TestCase):

@@ -787,10 +787,13 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                 self.servers.rest_update_port(net_tenant_id,
                                               new_port["network_id"],
                                               mapped_port)
-            agent_update_required = self.update_security_group_on_port(
+            need_port_update_notify = self.update_security_group_on_port(
                 context, port_id, port, orig_port, new_port)
-        agent_update_required |= self.is_security_group_member_updated(
+        need_port_update_notify |= self.is_security_group_member_updated(
             context, orig_port, new_port)
+
+        if need_port_update_notify:
+            self.notifier.port_update(context, new_port)
 
         # return new_port
         return new_port
