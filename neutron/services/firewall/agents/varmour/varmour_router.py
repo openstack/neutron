@@ -30,6 +30,7 @@ from neutron.agent.linux import ip_lib
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import topics
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import service
 from neutron import service as neutron_service
@@ -44,7 +45,7 @@ LOG = logging.getLogger(__name__)
 class vArmourL3NATAgent(l3_agent.L3NATAgent,
                         firewall_l3_agent.FWaaSL3AgentRpcCallback):
     def __init__(self, host, conf=None):
-        LOG.debug(_('vArmourL3NATAgent: __init__'))
+        LOG.debug('vArmourL3NATAgent: __init__')
         self.rest = varmour_api.vArmourRestAPI()
         super(vArmourL3NATAgent, self).__init__(host, conf)
 
@@ -58,13 +59,13 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
         return
 
     def _router_added(self, router_id, router):
-        LOG.debug(_("_router_added: %s"), router_id)
+        LOG.debug("_router_added: %s", router_id)
         ri = l3_agent.RouterInfo(router_id, self.root_helper, router)
         self.router_info[router_id] = ri
         super(vArmourL3NATAgent, self).process_router_add(ri)
 
     def _router_removed(self, router_id):
-        LOG.debug(_("_router_removed: %s"), router_id)
+        LOG.debug("_router_removed: %s", router_id)
 
         ri = self.router_info[router_id]
         if ri:
@@ -98,13 +99,14 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
         if not ips:
             raise Exception(_("Router port %s has no IP address") % port['id'])
         if len(ips) > 1:
-            LOG.warn(_("Ignoring multiple IPs on router port %s"), port['id'])
+            LOG.warn(_LW("Ignoring multiple IPs on router port %s"),
+                     port['id'])
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
 
     def _va_unset_zone_interfaces(self, zone_name, remove_zone=False):
         # return True if zone exists; otherwise, return False
-        LOG.debug(_("_va_unset_zone_interfaces: %s"), zone_name)
+        LOG.debug("_va_unset_zone_interfaces: %s", zone_name)
         resp = self.rest.rest_api('GET', va_utils.REST_URL_CONF_ZONE)
         if resp and resp['status'] == 200:
             zlist = resp['body']['response']
@@ -136,7 +138,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
         return pif + '.0'
 
     def _va_set_interface_ip(self, pif, cidr):
-        LOG.debug(_("_va_set_interface_ip: %(pif)s %(cidr)s"),
+        LOG.debug("_va_set_interface_ip: %(pif)s %(cidr)s",
                   {'pif': pif, 'cidr': cidr})
 
         lif = self._va_pif_2_lif(pif)
@@ -156,7 +158,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
 
     def _va_config_trusted_zone(self, ri, plist):
         zone = va_utils.get_trusted_zone_name(ri)
-        LOG.debug(_("_va_config_trusted_zone: %s"), zone)
+        LOG.debug("_va_config_trusted_zone: %s", zone)
 
         body = {
             'name': zone,
@@ -187,7 +189,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
 
     def _va_config_untrusted_zone(self, ri, plist):
         zone = va_utils.get_untrusted_zone_name(ri)
-        LOG.debug(_("_va_config_untrusted_zone: %s"), zone)
+        LOG.debug("_va_config_untrusted_zone: %s", zone)
 
         body = {
             'name': zone,
@@ -202,7 +204,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
 
         # add new gateway ports to untrusted zone
         if ri.ex_gw_port:
-            LOG.debug(_("_va_config_untrusted_zone: gw=%r"), ri.ex_gw_port)
+            LOG.debug("_va_config_untrusted_zone: gw=%r", ri.ex_gw_port)
             dev = self.get_external_device_name(ri.ex_gw_port['id'])
             pif = self._va_get_port_name(plist, dev)
             if pif:
@@ -215,7 +217,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
                 self.rest.commit()
 
     def _va_config_router_snat_rules(self, ri, plist):
-        LOG.debug(_('_va_config_router_snat_rules: %s'), ri.router['id'])
+        LOG.debug('_va_config_router_snat_rules: %s', ri.router['id'])
 
         prefix = va_utils.get_snat_rule_name(ri)
         self.rest.del_cfg_objs(va_utils.REST_URL_CONF_NAT_RULE, prefix)
@@ -247,7 +249,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
             self.rest.commit()
 
     def _va_config_floating_ips(self, ri):
-        LOG.debug(_('_va_config_floating_ips: %s'), ri.router['id'])
+        LOG.debug('_va_config_floating_ips: %s', ri.router['id'])
 
         prefix = va_utils.get_dnat_rule_name(ri)
         self.rest.del_cfg_objs(va_utils.REST_URL_CONF_NAT_RULE, prefix)
@@ -269,7 +271,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
             self.rest.commit()
 
     def process_router(self, ri):
-        LOG.debug(_("process_router: %s"), ri.router['id'])
+        LOG.debug("process_router: %s", ri.router['id'])
         super(vArmourL3NATAgent, self).process_router(ri)
 
         self.rest.auth()
@@ -280,10 +282,10 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
             try:
                 plist = resp['body']['response']
             except ValueError:
-                LOG.warn(_("Unable to parse interface mapping."))
+                LOG.warn(_LW("Unable to parse interface mapping."))
                 return
         else:
-            LOG.warn(_("Unable to read interface mapping."))
+            LOG.warn(_LW("Unable to read interface mapping."))
             return
 
         if ri.ex_gw_port:
@@ -302,7 +304,7 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
 
     def external_gateway_added(self, ri, ex_gw_port,
                                interface_name, internal_cidrs):
-        LOG.debug(_("external_gateway_added: %s"), ri.router['id'])
+        LOG.debug("external_gateway_added: %s", ri.router['id'])
 
         if not ip_lib.device_exists(interface_name,
                                     root_helper=self.root_helper,

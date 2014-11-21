@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.services.firewall.agents.varmour import varmour_api
 from neutron.services.firewall.agents.varmour import varmour_utils as va_utils
@@ -23,17 +24,17 @@ LOG = logging.getLogger(__name__)
 
 class vArmourFwaasDriver(fwaas_base.FwaasDriverBase):
     def __init__(self):
-        LOG.debug(_("Initializing fwaas vArmour driver"))
+        LOG.debug("Initializing fwaas vArmour driver")
 
         self.rest = varmour_api.vArmourRestAPI()
 
     def create_firewall(self, apply_list, firewall):
-        LOG.debug(_('create_firewall (%s)'), firewall['id'])
+        LOG.debug('create_firewall (%s)', firewall['id'])
 
         return self.update_firewall(apply_list, firewall)
 
     def update_firewall(self, apply_list, firewall):
-        LOG.debug(_("update_firewall (%s)"), firewall['id'])
+        LOG.debug("update_firewall (%s)", firewall['id'])
 
         if firewall['admin_state_up']:
             return self._update_firewall(apply_list, firewall)
@@ -41,12 +42,12 @@ class vArmourFwaasDriver(fwaas_base.FwaasDriverBase):
             return self.apply_default_policy(apply_list, firewall)
 
     def delete_firewall(self, apply_list, firewall):
-        LOG.debug(_("delete_firewall (%s)"), firewall['id'])
+        LOG.debug("delete_firewall (%s)", firewall['id'])
 
         return self.apply_default_policy(apply_list, firewall)
 
     def apply_default_policy(self, apply_list, firewall):
-        LOG.debug(_("apply_default_policy (%s)"), firewall['id'])
+        LOG.debug("apply_default_policy (%s)", firewall['id'])
 
         self.rest.auth()
 
@@ -56,7 +57,7 @@ class vArmourFwaasDriver(fwaas_base.FwaasDriverBase):
         return True
 
     def _update_firewall(self, apply_list, firewall):
-        LOG.debug(_("Updating firewall (%s)"), firewall['id'])
+        LOG.debug("Updating firewall (%s)", firewall['id'])
 
         self.rest.auth()
 
@@ -105,7 +106,7 @@ class vArmourFwaasDriver(fwaas_base.FwaasDriverBase):
 
                 self.rest.commit()
             else:
-                LOG.warn(_("Unsupported IP version rule."))
+                LOG.warn(_LW("Unsupported IP version rule."))
 
     def _clear_policy(self, ri, fw):
         prefix = va_utils.get_firewall_object_prefix(ri, fw)

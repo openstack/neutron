@@ -19,6 +19,7 @@ import httplib2
 from oslo.config import cfg
 from oslo.serialization import jsonutils
 
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.services.firewall.agents.varmour import varmour_utils as va_utils
 
@@ -60,7 +61,7 @@ class AuthenticationFailure(vArmourAPIException):
 class vArmourRestAPI(object):
 
     def __init__(self):
-        LOG.debug(_('vArmourRestAPI: started'))
+        LOG.debug('vArmourRestAPI: started')
         self.user = cfg.CONF.vArmour.username
         self.passwd = cfg.CONF.vArmour.password
         self.server = cfg.CONF.vArmour.director
@@ -93,14 +94,14 @@ class vArmourRestAPI(object):
             enc = base64.b64encode('%s:%s' % (self.user, self.key))
             headers['Authorization'] = 'Basic ' + enc
 
-        LOG.debug(_("vArmourRestAPI: %(server)s %(port)s"),
+        LOG.debug("vArmourRestAPI: %(server)s %(port)s",
                   {'server': self.server, 'port': self.port})
 
         try:
             action = "https://" + self.server + ":" + self.port + url
 
-            LOG.debug(_("vArmourRestAPI Sending: "
-                        "%(method)s %(action)s %(headers)s %(body_data)s"),
+            LOG.debug("vArmourRestAPI Sending: "
+                      "%(method)s %(action)s %(headers)s %(body_data)s",
                       {'method': method, 'action': action,
                        'headers': headers, 'body_data': body_data})
 
@@ -110,7 +111,7 @@ class vArmourRestAPI(object):
                                        body=body_data,
                                        headers=headers)
 
-            LOG.debug(_("vArmourRestAPI Response: %(status)s %(resp_str)s"),
+            LOG.debug("vArmourRestAPI Response: %(status)s %(resp_str)s",
                       {'status': resp.status, 'resp_str': resp_str})
 
             if resp.status == 200:
@@ -118,7 +119,8 @@ class vArmourRestAPI(object):
                         'reason': resp.reason,
                         'body': jsonutils.loads(resp_str)}
         except Exception:
-            LOG.error(_('vArmourRestAPI: Could not establish HTTP connection'))
+            LOG.error(_LE('vArmourRestAPI: Could not establish HTTP '
+                          'connection'))
 
     def del_cfg_objs(self, url, prefix):
         resp = self.rest_api('GET', url)
