@@ -17,6 +17,7 @@ import functools
 
 from heleosapi import exceptions as h_exc
 
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.services.loadbalancer import constants as lcon
 from neutron.services.loadbalancer.drivers.embrane import constants as econ
@@ -106,8 +107,8 @@ def _delete_load_balancer(driver, context, vip):
     try:
         driver._heleos_api.delete_dva(context.tenant_id, vip['id'])
     except h_exc.DvaNotFound:
-        LOG.warning(_('The load balancer %s had no physical representation, '
-                      'likely already deleted'), vip['id'])
+        LOG.warning(_LW('The load balancer %s had no physical representation, '
+                        'likely already deleted'), vip['id'])
     return econ.DELETED
 
 

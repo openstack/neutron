@@ -17,6 +17,7 @@ from eventlet import greenthread
 from eventlet import queue
 from heleosapi import exceptions as h_exc
 
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.embrane.common import contexts as ctx
 from neutron.services.loadbalancer.drivers.embrane.agent import lb_operations
@@ -103,4 +104,4 @@ class Dispatcher(object):
                             operation_context.n_context,
                             operation_context.item)
             except Exception:
-                LOG.exception(_('Unhandled exception occurred'))
+                LOG.exception(_LE('Unhandled exception occurred'))

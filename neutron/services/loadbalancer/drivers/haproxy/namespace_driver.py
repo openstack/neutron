@@ -25,6 +25,7 @@ from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.common import utils as n_utils
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -168,7 +169,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
             pool_stats['members'] = self._get_servers_stats(parsed_stats)
             return pool_stats
         else:
-            LOG.warn(_('Stats socket not found for pool %s'), pool_id)
+            LOG.warn(_LW('Stats socket not found for pool %s'), pool_id)
             return {}
 
     def _get_backend_stats(self, parsed_stats):
@@ -210,7 +211,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
 
             return self._parse_stats(raw_stats)
         except socket.error as e:
-            LOG.warn(_('Error while connecting to stats socket: %s'), e)
+            LOG.warn(_LW('Error while connecting to stats socket: %s'), e)
             return {}
 
     def _parse_stats(self, raw_stats):
@@ -389,6 +390,6 @@ def kill_pids_in_file(root_helper, pid_path):
                     utils.execute(['kill', '-9', pid], root_helper)
                 except RuntimeError:
                     LOG.exception(
-                        _('Unable to kill haproxy process: %s'),
+                        _LE('Unable to kill haproxy process: %s'),
                         pid
                     )

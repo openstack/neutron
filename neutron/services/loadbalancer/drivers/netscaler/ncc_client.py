@@ -18,6 +18,7 @@ from oslo.serialization import jsonutils
 import requests
 
 from neutron.common import exceptions as n_exc
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -52,9 +53,8 @@ class NSClient(object):
 
     def __init__(self, service_uri, username, password):
         if not service_uri:
-            msg = _("No NetScaler Control Center URI specified. "
-                    "Cannot connect.")
-            LOG.exception(msg)
+            LOG.exception(_LE("No NetScaler Control Center URI specified. "
+                              "Cannot connect."))
             raise NCCException(NCCException.CONNECTION_ERROR)
         self.service_uri = service_uri.strip('/')
         self.auth = None
@@ -131,53 +131,47 @@ class NSClient(object):
             response = requests.request(method, url=resource_uri,
                                         headers=headers, data=body)
         except requests.exceptions.ConnectionError:
-            msg = (_("Connection error occurred while connecting to %s") %
-                   self.service_uri)
-            LOG.exception(msg)
+            LOG.exception(_LE("Connection error occurred while connecting "
+                              "to %s"),
+                          self.service_uri)
             raise NCCException(NCCException.CONNECTION_ERROR)
         except requests.exceptions.SSLError:
-            msg = (_("SSL error occurred while connecting to %s") %
-                   self.service_uri)
-            LOG.exception(msg)
+            LOG.exception(_LE("SSL error occurred while connecting to %s"),
+                          self.service_uri)
             raise NCCException(NCCException.CONNECTION_ERROR)
         except requests.exceptions.Timeout:
-            msg = _("Request to %s timed out") % self.service_uri
-            LOG.exception(msg)
+            LOG.exception(_LE("Request to %s timed out"), self.service_uri)
             raise NCCException(NCCException.CONNECTION_ERROR)
         except (requests.exceptions.URLRequired,
                 requests.exceptions.InvalidURL,
                 requests.exceptions.MissingSchema,
                 requests.exceptions.InvalidSchema):
-            msg = _("Request did not specify a valid URL")
-            LOG.exception(msg)
+            LOG.exception(_LE("Request did not specify a valid URL"))
             raise NCCException(NCCException.REQUEST_ERROR)
         except requests.exceptions.TooManyRedirects:
-            msg = _("Too many redirects occurred for request to %s")
-            LOG.exception(msg)
+            LOG.exception(_LE("Too many redirects occurred for request to %s"))
             raise NCCException(NCCException.REQUEST_ERROR)
         except requests.exceptions.RequestException:
-            msg = (_("A request error while connecting to %s") %
-                   self.service_uri)
-            LOG.exception(msg)
+            LOG.exception(_LE("A request error while connecting to %s"),
+                          self.service_uri)
             raise NCCException(NCCException.REQUEST_ERROR)
         except Exception:
-            msg = (_("A unknown error occurred during request to %s") %
-                   self.service_uri)
-            LOG.exception(msg)
+            LOG.exception(_LE("A unknown error occurred during request to %s"),
+                          self.service_uri)
             raise NCCException(NCCException.UNKNOWN_ERROR)
         resp_dict = self._get_response_dict(response)
-        LOG.debug(_("Response: %s"), resp_dict['body'])
+        LOG.debug("Response: %s", resp_dict['body'])
         response_status = resp_dict['status']
         if response_status == requests.codes.unauthorized:
-            LOG.exception(_("Unable to login. Invalid credentials passed."
-                          "for: %s"), self.service_uri)
+            LOG.exception(_LE("Unable to login. Invalid credentials passed."
+                              "for: %s"),
+                          self.service_uri)
             raise NCCException(NCCException.RESPONSE_ERROR)
         if not self._is_valid_response(response_status):
-            msg = (_("Failed %(method)s operation on %(url)s "
-                   "status code: %(response_status)s") %
-                   {"method": method,
-                    "url": resource_uri,
-                    "response_status": response_status})
-            LOG.exception(msg)
+            LOG.exception(_LE("Failed %(method)s operation on %(url)s "
+                              "status code: %(response_status)s"),
+                          {"method": method,
+                           "url": resource_uri,
+                           "response_status": response_status})
             raise NCCException(NCCException.RESPONSE_ERROR)
         return response_status, resp_dict
