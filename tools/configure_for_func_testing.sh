@@ -211,6 +211,14 @@ function _install_post_devstack {
     _install_databases
     _install_rootwrap_sudoers
 
+    if is_ubuntu; then
+        install_package isc-dhcp-client
+    elif is_fedora; then
+        install_package dhclient
+    else
+        exit_distro_not_supported "installing dhclient package"
+    fi
+
     # Installing python-openvswitch from packages is a stop-gap while
     # python-openvswitch remains unavailable from pypi.  This also
     # requires that sitepackages=True be set in tox.ini to allow the

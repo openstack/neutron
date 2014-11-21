@@ -16,6 +16,9 @@ import os
 
 import fixtures
 
+from neutron.agent.linux import utils
+from neutron.tests import tools
+
 
 class RecursivePermDirFixture(fixtures.Fixture):
     """Ensure at least perms permissions on directory and ancestors."""
@@ -34,3 +37,22 @@ class RecursivePermDirFixture(fixtures.Fixture):
                 os.chmod(current_directory, perms | self.least_perms)
             previous_directory = current_directory
             current_directory = os.path.dirname(current_directory)
+
+
+class AdminDirFixture(fixtures.Fixture):
+    """Handle directory create/delete with admin permissions required"""
+
+    def __init__(self, directory):
+        super(AdminDirFixture, self).__init__()
+        self.directory = directory
+
+    def _setUp(self):
+        # NOTE(cbrandily): Ensure we will not delete a directory existing
+        # before test run during cleanup.
+        if os.path.exists(self.directory):
+            tools.fail('%s already exists' % self.directory)
+
+        create_cmd = ['mkdir', '-p', self.directory]
+        delete_cmd = ['rm', '-r', self.directory]
+        utils.execute(create_cmd, run_as_root=True)
+        self.addCleanup(utils.execute, delete_cmd, run_as_root=True)
