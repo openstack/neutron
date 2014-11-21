@@ -175,6 +175,21 @@ def _validate_mac_address_or_none(data, valid_values=None):
 def _validate_ip_address(data, valid_values=None):
     try:
         netaddr.IPAddress(_validate_no_whitespace(data))
+        # The followings are quick checks for IPv6 (has ':') and
+        # IPv4.  (has 3 periods like 'xx.xx.xx.xx')
+        # NOTE(yamamoto): netaddr uses libraries provided by the underlying
+        # platform to convert addresses.  For example, inet_aton(3).
+        # Some platforms, including NetBSD and OS X, have inet_aton
+        # implementation which accepts more varying forms of addresses than
+        # we want to accept here.  The following check is to reject such
+        # addresses.  For Example:
+        #   >>> netaddr.IPAddress('1' * 59)
+        #   IPAddress('199.28.113.199')
+        #   >>> netaddr.IPAddress(str(int('1' * 59) & 0xffffffff))
+        #   IPAddress('199.28.113.199')
+        #   >>>
+        if ':' not in data and data.count('.') != 3:
+            raise ValueError()
     except Exception:
         msg = _("'%s' is not a valid IP address") % data
         LOG.debug(msg)
