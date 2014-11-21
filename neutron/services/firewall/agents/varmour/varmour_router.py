@@ -97,7 +97,6 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
         ips = port['fixed_ips']
         if not ips:
             raise Exception(_("Router port %s has no IP address") % port['id'])
-            return
         if len(ips) > 1:
             LOG.warn(_("Ignoring multiple IPs on router port %s"), port['id'])
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
