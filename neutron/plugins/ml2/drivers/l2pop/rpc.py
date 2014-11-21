@@ -13,12 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+import copy
+
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
+
+
+PortInfo = collections.namedtuple("PortInfo", "mac_address ip_address")
 
 
 class L2populationAgentNotifyAPI(n_rpc.RpcProxy):
@@ -39,8 +45,10 @@ class L2populationAgentNotifyAPI(n_rpc.RpcProxy):
                    'method': method,
                    'fdb_entries': fdb_entries})
 
+        marshalled_fdb_entries = self._marshall_fdb_entries(fdb_entries)
         self.fanout_cast(context,
-                         self.make_msg(method, fdb_entries=fdb_entries),
+                         self.make_msg(method,
+                                       fdb_entries=marshalled_fdb_entries),
                          topic=self.topic_l2pop_update)
 
     def _notification_host(self, context, method, fdb_entries, host):
@@ -50,8 +58,10 @@ class L2populationAgentNotifyAPI(n_rpc.RpcProxy):
                    'topic': self.topic,
                    'method': method,
                    'fdb_entries': fdb_entries})
+        marshalled_fdb_entries = self._marshall_fdb_entries(fdb_entries)
         self.cast(context,
-                  self.make_msg(method, fdb_entries=fdb_entries),
+                  self.make_msg(method,
+                                fdb_entries=marshalled_fdb_entries),
                   topic='%s.%s' % (self.topic_l2pop_update, host))
 
     def add_fdb_entries(self, context, fdb_entries, host=None):
@@ -80,3 +90,28 @@ class L2populationAgentNotifyAPI(n_rpc.RpcProxy):
             else:
                 self._notification_fanout(context, 'update_fdb_entries',
                                           fdb_entries)
+
+    @staticmethod
+    def _marshall_fdb_entries(fdb_entries):
+        """Prepares fdb_entries for serialization to JSON for RPC.
+
+        All methods in this class that send messages should call this to
+        marshall fdb_entries for the wire.
+
+        :param fdb_entries: Original fdb_entries data-structure.  Looks like:
+            {
+                <uuid>: {
+                    ...,
+                    'ports': {
+                        <ip address>: [ PortInfo, ...  ],
+                        ...
+
+        :returns: Deep copy with PortInfo converted to [mac, ip]
+        """
+        marshalled = copy.deepcopy(fdb_entries)
+        for value in marshalled.values():
+            if 'ports' in value:
+                for address, port_infos in value['ports'].items():
+                    value['ports'][address] = [[mac, ip]
+                                               for mac, ip in port_infos]
+        return marshalled

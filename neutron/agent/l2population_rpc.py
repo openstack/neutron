@@ -21,6 +21,7 @@ import six
 from neutron.common import constants as n_const
 from neutron.common import log
 from neutron.openstack.common import log as logging
+from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 
 LOG = logging.getLogger(__name__)
 
@@ -38,17 +39,43 @@ class L2populationRpcCallBackMixin(object):
     @log.log
     def add_fdb_entries(self, context, fdb_entries, host=None):
         if not host or host == cfg.CONF.host:
-            self.fdb_add(context, fdb_entries)
+            self.fdb_add(context, self._unmarshall_fdb_entries(fdb_entries))
 
     @log.log
     def remove_fdb_entries(self, context, fdb_entries, host=None):
         if not host or host == cfg.CONF.host:
-            self.fdb_remove(context, fdb_entries)
+            self.fdb_remove(context, self._unmarshall_fdb_entries(fdb_entries))
 
     @log.log
     def update_fdb_entries(self, context, fdb_entries, host=None):
         if not host or host == cfg.CONF.host:
-            self.fdb_update(context, fdb_entries)
+            self.fdb_update(context, self._unmarshall_fdb_entries(fdb_entries))
+
+    @staticmethod
+    def _unmarshall_fdb_entries(fdb_entries):
+        """Prepares fdb_entries from JSON.
+
+        All methods in this class that receive messages should call this to
+        unmarshall fdb_entries from the wire.
+
+        :param fdb_entries: Original fdb_entries data-structure.  Looks like:
+            {
+                <uuid>: {
+                    ...,
+                    'ports': {
+                        <ip address>: [ [<mac>, <ip>], ...  ],
+                        ...
+
+        :returns: Deep copy with [<mac>, <ip>] converted to PortInfo
+        """
+        unmarshalled = dict(fdb_entries)
+        for value in unmarshalled.values():
+            if 'ports' in value:
+                value['ports'] = dict(
+                    (address, [l2pop_rpc.PortInfo(*pi) for pi in port_infos])
+                    for address, port_infos in value['ports'].items()
+                )
+        return unmarshalled
 
     @abc.abstractmethod
     def fdb_add(self, context, fdb_entries):
@@ -97,9 +124,10 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
 
         :param br: represent the bridge on which add_fdb_flow should be
         applied.
-        :param port_info: list to include mac and ip.
+        :param port_info: PortInfo instance to include mac and ip.
+            .mac_address
+            .ip_address
 
-            [mac, ip]
         :remote_ip: remote ip address.
         :param lvm: a local VLAN map of network.
         :param ofport: a port to add.
@@ -117,8 +145,10 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
 
         :param br: represent the bridge on which del_fdb_flow should be
         applied.
-        :param port_info: a list to contain mac and ip.
-            [mac, ip]
+        :param port_info: PortInfo instance to include mac and ip.
+            .mac_address
+            .ip_address
+
         :remote_ip: remote ip address.
         :param lvm: local VLAN map of a network. See add_fdb_flow for
             more explanation.
@@ -249,13 +279,16 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                             agent and network.
                                {'net1':
                                 {'agent_ip':
-                                 {'before': [[mac, ip]],
-                                  'after': [[mac, ip]]
+                                 {'before': PortInfo,
+                                  'after': PortInfo
                                  }
                                 }
                                 'net2':
                                 ...
                                }
+
+                             PortInfo has .mac_address and .ip_address attrs.
+
         :param local_ip: local IP address of this agent.
         :param local_vlan_map: A dict to map network_id to
             the corresponding lvm entry.
@@ -271,11 +304,13 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                     continue
 
                 after = state.get('after', [])
-                for mac, ip in after:
-                    self.setup_entry_for_arp_reply(br, 'add', lvm.vlan, mac,
-                                                   ip)
+                for mac_ip in after:
+                    self.setup_entry_for_arp_reply(br, 'add', lvm.vlan,
+                                                   mac_ip.mac_address,
+                                                   mac_ip.ip_address)
 
                 before = state.get('before', [])
-                for mac, ip in before:
-                    self.setup_entry_for_arp_reply(br, 'remove', lvm.vlan, mac,
-                                                   ip)
+                for mac_ip in before:
+                    self.setup_entry_for_arp_reply(br, 'remove', lvm.vlan,
+                                                   mac_ip.mac_address,
+                                                   mac_ip.ip_address)

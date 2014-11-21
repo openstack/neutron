@@ -16,6 +16,7 @@
 import contextlib
 import mock
 
+from neutron.agent import l2population_rpc
 from neutron.common import constants
 from neutron.common import topics
 from neutron import context
@@ -25,6 +26,7 @@ from neutron.extensions import providernet as pnet
 from neutron import manager
 from neutron.openstack.common import timeutils
 from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
+from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
 from neutron.tests.unit.ml2 import test_ml2_plugin as test_plugin
@@ -89,6 +91,8 @@ L2_AGENT_5 = {
 
 NOTIFIER = 'neutron.plugins.ml2.rpc.AgentNotifierApi'
 DEVICE_OWNER_COMPUTE = 'compute:None'
+
+FLOODING_ENTRY_AS_LIST = list(constants.FLOODING_ENTRY)
 
 
 class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
@@ -157,6 +161,48 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                               agent_state={'agent_state': L2_AGENT_5},
                               time=timeutils.strtime())
 
+    def test_port_info_compare(self):
+        # An assumption the code makes is that PortInfo compares equal to
+        # equivalent regular tuples.
+        self.assertEqual(("mac", "ip"), l2pop_rpc.PortInfo("mac", "ip"))
+
+        flooding_entry = l2pop_rpc.PortInfo(*constants.FLOODING_ENTRY)
+        self.assertEqual(constants.FLOODING_ENTRY, flooding_entry)
+
+    def test__unmarshall_fdb_entries(self):
+        entries = {'foouuid': {
+            'segment_id': 1001,
+            'ports': {'192.168.0.10': [['00:00:00:00:00:00', '0.0.0.0'],
+                                       ['fa:16:3e:ff:8c:0f', '10.0.0.6']]},
+            'network_type': 'vxlan'}}
+
+        mixin = l2population_rpc.L2populationRpcCallBackMixin
+        entries = mixin._unmarshall_fdb_entries(entries)
+
+        port_info_list = entries['foouuid']['ports']['192.168.0.10']
+        # Check that the lists have been properly converted to PortInfo
+        self.assertIsInstance(port_info_list[0], l2pop_rpc.PortInfo)
+        self.assertIsInstance(port_info_list[1], l2pop_rpc.PortInfo)
+        self.assertEqual(('00:00:00:00:00:00', '0.0.0.0'), port_info_list[0])
+        self.assertEqual(('fa:16:3e:ff:8c:0f', '10.0.0.6'), port_info_list[1])
+
+    def test__marshall_fdb_entries(self):
+        entries = {'foouuid': {
+            'segment_id': 1001,
+            'ports': {'192.168.0.10': [('00:00:00:00:00:00', '0.0.0.0'),
+                                       ('fa:16:3e:ff:8c:0f', '10.0.0.6')]},
+            'network_type': 'vxlan'}}
+
+        entries = l2pop_rpc.L2populationAgentNotifyAPI._marshall_fdb_entries(
+            entries)
+
+        port_info_list = entries['foouuid']['ports']['192.168.0.10']
+        # Check that the PortInfo tuples have been converted to list
+        self.assertIsInstance(port_info_list[0], list)
+        self.assertIsInstance(port_info_list[1], list)
+        self.assertEqual(['00:00:00:00:00:00', '0.0.0.0'], port_info_list[0])
+        self.assertEqual(['fa:16:3e:ff:8c:0f', '10.0.0.6'], port_info_list[1])
+
     def test_fdb_add_called(self):
         self._register_ml2_agents()
 
@@ -183,7 +229,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                 {'fdb_entries':
                                  {p1['network_id']:
                                   {'ports':
-                                   {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                   {'20.0.0.1': [FLOODING_ENTRY_AS_LIST,
                                                  [p1['mac_address'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
@@ -243,7 +289,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                 {'fdb_entries':
                                  {p1['network_id']:
                                   {'ports':
-                                   {'20.0.0.5': [constants.FLOODING_ENTRY,
+                                   {'20.0.0.5': [FLOODING_ENTRY_AS_LIST,
                                                  [p1['mac_address'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vlan',
@@ -289,7 +335,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                  {'fdb_entries':
                                   {p1['network_id']:
                                    {'ports':
-                                    {'20.0.0.2': [constants.FLOODING_ENTRY,
+                                    {'20.0.0.2': [FLOODING_ENTRY_AS_LIST,
                                                   [p2['mac_address'],
                                                    p2_ips[0]]]},
                                     'network_type': 'vxlan',
@@ -310,7 +356,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                  {'fdb_entries':
                                   {p1['network_id']:
                                    {'ports':
-                                    {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                    {'20.0.0.1': [FLOODING_ENTRY_AS_LIST,
                                                   [p1['mac_address'],
                                                    p1_ips[0]]]},
                                     'network_type': 'vxlan',
@@ -358,7 +404,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                           {p1['network_id']:
                                            {'ports':
                                             {'20.0.0.2':
-                                             [constants.FLOODING_ENTRY,
+                                             [FLOODING_ENTRY_AS_LIST,
                                               [p1['mac_address'],
                                                p1_ips[0]]]},
                                             'network_type': 'vxlan',
@@ -382,7 +428,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                           {p1['network_id']:
                                            {'ports':
                                             {'20.0.0.1':
-                                             [constants.FLOODING_ENTRY,
+                                             [FLOODING_ENTRY_AS_LIST,
                                               [p3['mac_address'],
                                                p3_ips[0]]]},
                                             'network_type': 'vxlan',
@@ -471,7 +517,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                 {'fdb_entries':
                                  {p2['network_id']:
                                   {'ports':
-                                   {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                   {'20.0.0.1': [FLOODING_ENTRY_AS_LIST,
                                                  [p2['mac_address'],
                                                   p2_ips[0]]]},
                                    'network_type': 'vxlan',
@@ -552,7 +598,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                             {'fdb_entries':
                              {p1['network_id']:
                               {'ports':
-                               {'20.0.0.1': [constants.FLOODING_ENTRY,
+                               {'20.0.0.1': [FLOODING_ENTRY_AS_LIST,
                                              [p1['mac_address'],
                                               p1_ips[0]]]},
                                'network_type': 'vxlan',
@@ -594,8 +640,8 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                  {'chg_ip':
                                   {p1['network_id']:
                                    {'20.0.0.1':
-                                    {'after': [[p1['mac_address'],
-                                                '10.0.0.10']]}}}}},
+                                    {'after': [(p1['mac_address'],
+                                                '10.0.0.10')]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
 
@@ -616,10 +662,10 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                  {'chg_ip':
                                   {p1['network_id']:
                                    {'20.0.0.1':
-                                    {'before': [[p1['mac_address'],
-                                                 '10.0.0.10']],
-                                     'after': [[p1['mac_address'],
-                                                '10.0.0.16']]}}}}},
+                                    {'before': [(p1['mac_address'],
+                                                 '10.0.0.10')],
+                                     'after': [(p1['mac_address'],
+                                                '10.0.0.16')]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
 
@@ -639,8 +685,8 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                  {'chg_ip':
                                   {p1['network_id']:
                                    {'20.0.0.1':
-                                    {'before': [[p1['mac_address'],
-                                                 '10.0.0.2']]}}}}},
+                                    {'before': [(p1['mac_address'],
+                                                 '10.0.0.2')]}}}}},
                                 'namespace': None,
                                 'method': 'update_fdb_entries'}
 
@@ -718,7 +764,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                 {'fdb_entries':
                                  {p1['network_id']:
                                   {'ports':
-                                   {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                   {'20.0.0.1': [FLOODING_ENTRY_AS_LIST,
                                                  [p1['mac_address'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
@@ -776,7 +822,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                 {'fdb_entries':
                                  {p1['network_id']:
                                   {'ports':
-                                   {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                   {'20.0.0.1': [FLOODING_ENTRY_AS_LIST,
                                                  [p1['mac_address'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',

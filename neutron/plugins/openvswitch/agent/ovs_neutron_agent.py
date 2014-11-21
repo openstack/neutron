@@ -382,12 +382,13 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                         actions="strip_vlan,set_tunnel:%s,output:%s" %
                         (lvm.segmentation_id, ofports))
         else:
-            self.setup_entry_for_arp_reply(br, 'add', lvm.vlan, port_info[0],
-                                           port_info[1])
+            self.setup_entry_for_arp_reply(br, 'add', lvm.vlan,
+                                           port_info.mac_address,
+                                           port_info.ip_address)
             br.add_flow(table=constants.UCAST_TO_TUN,
                         priority=2,
                         dl_vlan=lvm.vlan,
-                        dl_dst=port_info[0],
+                        dl_dst=port_info.mac_address,
                         actions="strip_vlan,set_tunnel:%s,output:%s" %
                         (lvm.segmentation_id, ofport))
 
@@ -405,10 +406,11 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 br.delete_flows(table=constants.FLOOD_TO_TUN, dl_vlan=lvm.vlan)
         else:
             self.setup_entry_for_arp_reply(br, 'remove', lvm.vlan,
-                                           port_info[0], port_info[1])
+                                           port_info.mac_address,
+                                           port_info.ip_address)
             br.delete_flows(table=constants.UCAST_TO_TUN,
                             dl_vlan=lvm.vlan,
-                            dl_dst=port_info[0])
+                            dl_dst=port_info.mac_address)
 
     def _fdb_chg_ip(self, context, fdb_entries):
         LOG.debug("update chg_ip received")

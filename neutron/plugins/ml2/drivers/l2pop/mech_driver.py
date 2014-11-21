@@ -40,8 +40,9 @@ class L2populationMechanismDriver(api.MechanismDriver,
         self.migrated_ports = {}
 
     def _get_port_fdb_entries(self, port):
-        return [[port['mac_address'],
-                 ip['ip_address']] for ip in port['fixed_ips']]
+        return [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
+                                   ip_address=ip['ip_address'])
+                for ip in port['fixed_ips']]
 
     def delete_port_postcommit(self, context):
         port = context.current
@@ -75,8 +76,12 @@ class L2populationMechanismDriver(api.MechanismDriver,
             return
         agent, agent_host, agent_ip, segment, port_fdb_entries = port_infos
 
-        orig_mac_ip = [[port['mac_address'], ip] for ip in orig_ips]
-        port_mac_ip = [[port['mac_address'], ip] for ip in port_ips]
+        orig_mac_ip = [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
+                                          ip_address=ip)
+                       for ip in orig_ips]
+        port_mac_ip = [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
+                                          ip_address=ip)
+                       for ip in port_ips]
 
         upd_fdb_entries = {port['network_id']: {agent_ip: {}}}
 

@@ -18,6 +18,7 @@ import collections
 import mock
 
 from neutron.agent import l2population_rpc
+from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
 from neutron.tests import base
 
@@ -81,9 +82,9 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
                          port='port3')]
 
         self.agent_ports = {
-            self.ports[0].ip: [[self.lvms[0].mac, self.lvms[0].ip]],
-            self.ports[1].ip: [[self.lvms[1].mac, self.lvms[1].ip]],
-            self.ports[2].ip: [[self.lvms[2].mac, self.lvms[2].ip]],
+            self.ports[0].ip: [(self.lvms[0].mac, self.lvms[0].ip)],
+            self.ports[1].ip: [(self.lvms[1].mac, self.lvms[1].ip)],
+            self.ports[2].ip: [(self.lvms[2].mac, self.lvms[2].ip)],
         }
 
         self.fdb_entries1 = {
@@ -92,21 +93,21 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
                 'segment_id': self.lvms[0].segid,
                 'ports': {
                     self.local_ip: [],
-                    self.ports[0].ip: [[self.lvms[0].mac, self.lvms[0].ip]]},
+                    self.ports[0].ip: [(self.lvms[0].mac, self.lvms[0].ip)]},
             },
             self.lvms[1].net: {
                 'network_type': self.type_gre,
                 'segment_id': self.lvms[1].segid,
                 'ports': {
                     self.local_ip: [],
-                    self.ports[1].ip: [[self.lvms[1].mac, self.lvms[1].ip]]},
+                    self.ports[1].ip: [(self.lvms[1].mac, self.lvms[1].ip)]},
             },
             self.lvms[2].net: {
                 'network_type': self.type_gre,
                 'segment_id': self.lvms[2].segid,
                 'ports': {
                     self.local_ip: [],
-                    self.ports[2].ip: [[self.lvms[2].mac, self.lvms[2].ip]]},
+                    self.ports[2].ip: [(self.lvms[2].mac, self.lvms[2].ip)]},
             },
         }
 
@@ -129,18 +130,24 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
         self.upd_fdb_entry1_val = {
             self.lvms[0].net: {
                 self.ports[0].ip: {
-                    'before': [[self.lvms[0].mac, self.lvms[0].ip]],
-                    'after': [[self.lvms[1].mac, self.lvms[1].ip]],
+                    'before': [l2pop_rpc.PortInfo(self.lvms[0].mac,
+                               self.lvms[0].ip)],
+                    'after': [l2pop_rpc.PortInfo(self.lvms[1].mac,
+                              self.lvms[1].ip)],
                 },
                 self.ports[1].ip: {
-                    'before': [[self.lvms[0].mac, self.lvms[0].ip]],
-                    'after': [[self.lvms[1].mac, self.lvms[1].ip]],
+                    'before': [l2pop_rpc.PortInfo(self.lvms[0].mac,
+                               self.lvms[0].ip)],
+                    'after': [l2pop_rpc.PortInfo(self.lvms[1].mac,
+                              self.lvms[1].ip)],
                 },
             },
             self.lvms[1].net: {
                 self.ports[2].ip: {
-                    'before': [[self.lvms[0].mac, self.lvms[0].ip]],
-                    'after': [[self.lvms[2].mac, self.lvms[2].ip]],
+                    'before': [l2pop_rpc.PortInfo(self.lvms[0].mac,
+                               self.lvms[0].ip)],
+                    'after': [l2pop_rpc.PortInfo(self.lvms[2].mac,
+                              self.lvms[2].ip)],
                 },
             },
         }

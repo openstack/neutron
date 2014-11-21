@@ -28,6 +28,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
 from neutron.plugins.openvswitch.common import constants
 from neutron.tests import base
@@ -1092,7 +1093,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun2',
                       'ports':
                       {'agent_ip':
-                       [[FAKE_MAC, FAKE_IP1],
+                       [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1),
                         n_const.FLOODING_ENTRY]}}}
         with mock.patch.object(self.agent.tun_br,
                                "deferred") as defer_fn:
@@ -1109,7 +1110,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun1',
                       'ports':
                       {'2.2.2.2':
-                       [[FAKE_MAC, FAKE_IP1],
+                       [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1),
                         n_const.FLOODING_ENTRY]}}}
 
         class ActionMatcher(object):
@@ -1164,7 +1165,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun2',
                       'ports':
                       {'2.2.2.2':
-                       [[FAKE_MAC, FAKE_IP1],
+                       [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1),
                         n_const.FLOODING_ENTRY]}}}
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'deferred'),
@@ -1194,7 +1195,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         fdb_entry = {'net1':
                      {'network_type': 'gre',
                       'segment_id': 'tun1',
-                      'ports': {'1.1.1.1': [[FAKE_MAC, FAKE_IP1]]}}}
+                      'ports': {'1.1.1.1': [l2pop_rpc.PortInfo(FAKE_MAC,
+                                                               FAKE_IP1)]}}}
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'deferred'),
             mock.patch.object(self.agent.tun_br, 'do_action_flows'),
@@ -1204,7 +1206,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             deferred_fn.return_value = deferred_br
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(add_tun_fn.called)
-            fdb_entry['net1']['ports']['10.10.10.10'] = [[FAKE_MAC, FAKE_IP1]]
+            fdb_entry['net1']['ports']['10.10.10.10'] = [
+                l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1)]
             self.agent.fdb_add(None, fdb_entry)
             add_tun_fn.assert_called_with(
                 deferred_br, 'gre-0a0a0a0a', '10.10.10.10', 'gre')
@@ -1230,8 +1233,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         fdb_entries = {'chg_ip':
                        {'net1':
                         {'agent_ip':
-                         {'before': [[FAKE_MAC, FAKE_IP1]],
-                          'after': [[FAKE_MAC, FAKE_IP2]]}}}}
+                         {'before': [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1)],
+                          'after': [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP2)]}}}}
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'deferred'),
             mock.patch.object(self.agent.tun_br, 'do_action_flows'),

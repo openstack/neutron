@@ -31,10 +31,12 @@ import testtools
 from neutron.common import constants as n_const
 from neutron.openstack.common import importutils
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.tests.unit.ofagent import ofa_test_base
 
 
 NOTIFIER = ('neutron.plugins.ml2.rpc.AgentNotifierApi')
+FLOODING_ENTRY = l2pop_rpc.PortInfo(*n_const.FLOODING_ENTRY)
 
 
 def _mock_port(is_neutron=True, normalized_name=None):
@@ -512,8 +514,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                       'segment_id': 'tun2',
                       'ports':
                       {'agent_ip':
-                       [['mac', 'ip'],
-                        n_const.FLOODING_ENTRY]}}}
+                       [l2pop_rpc.PortInfo('mac', 'ip'),
+                        FLOODING_ENTRY]}}}
         with contextlib.nested(
             mock.patch.object(self.agent.ryuapp, "add_arp_table_entry"),
             mock.patch.object(self.agent.ryuapp, "del_arp_table_entry"),
@@ -532,8 +534,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                       'segment_id': 'tun1',
                       'ports':
                       {self.lvms[1].ip:
-                       [['mac', 'ip'],
-                        n_const.FLOODING_ENTRY]}}}
+                       [l2pop_rpc.PortInfo('mac', 'ip'),
+                        FLOODING_ENTRY]}}}
         with contextlib.nested(
             mock.patch.object(self.agent, '_setup_tunnel_port'),
             mock.patch.object(self.agent.int_br, 'install_tunnel_output'),
@@ -556,8 +558,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                       'segment_id': 'tun2',
                       'ports':
                       {self.lvms[1].ip:
-                       [['mac', 'ip'],
-                        n_const.FLOODING_ENTRY]}}}
+                       [l2pop_rpc.PortInfo('mac', 'ip'),
+                        FLOODING_ENTRY]}}}
         with contextlib.nested(
             mock.patch.object(self.agent.int_br, 'install_tunnel_output'),
             mock.patch.object(self.agent.int_br, 'delete_tunnel_output'),
@@ -575,11 +577,13 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         fdb_entry = {self.lvms[0].net:
                      {'network_type': self.tunnel_type,
                       'segment_id': 'tun1',
-                      'ports': {self.lvms[0].ip: [['mac', 'ip']]}}}
+                      'ports': {self.lvms[0].ip: [l2pop_rpc.PortInfo('mac',
+                                                                     'ip')]}}}
         with mock.patch.object(self.agent, '_setup_tunnel_port') as add_tun_fn:
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(add_tun_fn.called)
-            fdb_entry[self.lvms[0].net]['ports'][tunnel_ip] = [['mac', 'ip']]
+            fdb_entry[self.lvms[0].net]['ports'][tunnel_ip] = [
+                l2pop_rpc.PortInfo('mac', 'ip')]
             self.agent.fdb_add(None, fdb_entry)
             add_tun_fn.assert_called_with(
                 self.agent.int_br, tun_name, tunnel_ip, self.tunnel_type)
@@ -589,7 +593,7 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         fdb_entry = {self.lvms[1].net:
                      {'network_type': self.tunnel_type,
                       'segment_id': 'tun2',
-                      'ports': {self.lvms[1].ip: [n_const.FLOODING_ENTRY]}}}
+                      'ports': {self.lvms[1].ip: [FLOODING_ENTRY]}}}
         with mock.patch.object(self.agent.int_br,
                                'delete_port') as del_port_fn:
             self.agent.fdb_remove(None, fdb_entry)
@@ -600,11 +604,14 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         fdb_entry = {self.lvms[0].net:
                      {'network_type': self.tunnel_type,
                       'segment_id': 'tun1',
-                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
-                                                  ['mac1', 'ip1']],
-                                self.lvms[1].ip: [['mac2', 'ip2']],
-                                '192.0.2.1': [n_const.FLOODING_ENTRY,
-                                              ['mac3', 'ip3']]}}}
+                      'ports': {self.lvms[0].ip: [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac1', 'ip1')],
+                                self.lvms[1].ip: [
+                                    l2pop_rpc.PortInfo('mac2', 'ip2')],
+                                '192.0.2.1': [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac3', 'ip3')]}}}
         with mock.patch.object(self.agent,
                                'setup_tunnel_port') as setup_tun_fn:
             self.agent.fdb_add(None, fdb_entry)
@@ -624,11 +631,14 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         fdb_entry = {self.lvms[0].net:
                      {'network_type': network_type,
                       'segment_id': 'tun1',
-                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
-                                                  ['mac1', 'ip1']],
-                                self.lvms[1].ip: [['mac2', 'ip2']],
-                                '192.0.2.1': [n_const.FLOODING_ENTRY,
-                                              ['mac3', 'ip3']]}}}
+                      'ports': {self.lvms[0].ip: [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac1', 'ip1')],
+                                self.lvms[1].ip: [
+                                    l2pop_rpc.PortInfo('mac2', 'ip2')],
+                                '192.0.2.1': [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac3', 'ip3')]}}}
         with mock.patch.object(self.agent,
                                'setup_tunnel_port') as setup_tun_fn:
             self.agent.fdb_add(None, fdb_entry)
@@ -656,11 +666,14 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         fdb_entry = {self.lvms[0].net:
                      {'network_type': self.tunnel_type,
                       'segment_id': 'tun1',
-                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
-                                                  ['mac1', 'ip1']],
-                                self.lvms[1].ip: [['mac2', 'ip2']],
-                                '192.0.2.1': [n_const.FLOODING_ENTRY,
-                                              ['mac3', 'ip3']]}}}
+                      'ports': {self.lvms[0].ip: [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac1', 'ip1')],
+                                self.lvms[1].ip: [
+                                    l2pop_rpc.PortInfo('mac2', 'ip2')],
+                                '192.0.2.1': [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac3', 'ip3')]}}}
         with mock.patch.object(self.agent,
                                'cleanup_tunnel_port') as cleanup_tun_fn:
             self.agent.fdb_remove(None, fdb_entry)
@@ -679,11 +692,14 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         fdb_entry = {self.lvms[0].net:
                      {'network_type': network_type,
                       'segment_id': 'tun1',
-                      'ports': {self.lvms[0].ip: [n_const.FLOODING_ENTRY,
-                                                  ['mac1', 'ip1']],
-                                self.lvms[1].ip: [['mac2', 'ip2']],
-                                '192.0.2.1': [n_const.FLOODING_ENTRY,
-                                              ['mac3', 'ip3']]}}}
+                      'ports': {self.lvms[0].ip: [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac1', 'ip1')],
+                                self.lvms[1].ip: [
+                                    l2pop_rpc.PortInfo('mac2', 'ip2')],
+                                '192.0.2.1': [
+                                    FLOODING_ENTRY,
+                                    l2pop_rpc.PortInfo('mac3', 'ip3')]}}}
         with mock.patch.object(self.agent,
                                'cleanup_tunnel_port') as cleanup_tun_fn:
             self.agent.fdb_remove(None, fdb_entry)
