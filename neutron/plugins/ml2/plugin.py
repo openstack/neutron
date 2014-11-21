@@ -53,8 +53,8 @@ from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils

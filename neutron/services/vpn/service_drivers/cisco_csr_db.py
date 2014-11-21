@@ -20,7 +20,7 @@ from neutron.common import exceptions
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db.vpn import vpn_db
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

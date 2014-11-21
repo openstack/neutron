@@ -24,8 +24,8 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
+from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron import policy

@@ -21,7 +21,7 @@ from oslo.config import cfg
 
 from neutron import context as nctx
 from neutron.db import db_base_plugin_v2
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 

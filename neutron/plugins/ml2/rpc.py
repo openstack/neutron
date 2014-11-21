@@ -21,8 +21,8 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron.extensions import portbindings
+from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import driver_api as api

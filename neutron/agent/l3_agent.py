@@ -44,8 +44,8 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron import context as n_context
+from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task

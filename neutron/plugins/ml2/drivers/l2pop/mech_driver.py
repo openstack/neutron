@@ -18,7 +18,7 @@ from oslo.config import cfg
 from neutron.common import constants as const
 from neutron import context as n_context
 from neutron.db import api as db_api
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.l2pop import config  # noqa

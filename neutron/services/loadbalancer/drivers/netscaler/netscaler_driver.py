@@ -16,7 +16,7 @@ from oslo.config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.db.loadbalancer import loadbalancer_db
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers import abstract_driver

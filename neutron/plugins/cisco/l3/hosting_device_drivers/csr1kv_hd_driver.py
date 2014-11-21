@@ -16,8 +16,8 @@ import netaddr
 
 from oslo.config import cfg
 
+from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.l3 import hosting_device_drivers
 

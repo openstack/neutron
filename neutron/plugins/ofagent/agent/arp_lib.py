@@ -23,7 +23,7 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import vlan
 
 from neutron.common import log
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 import neutron.plugins.ofagent.agent.metadata as meta
 

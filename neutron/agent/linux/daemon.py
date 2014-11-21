@@ -18,7 +18,7 @@ import os
 import signal
 import sys
 
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

@@ -17,7 +17,7 @@ import sys
 
 from neutron.cmd.sanity import checks
 from neutron.common import config
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from oslo.config import cfg
 

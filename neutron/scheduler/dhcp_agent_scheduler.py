@@ -22,7 +22,7 @@ from sqlalchemy import sql
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.openstack.common.gettextutils import _LI, _LW
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 
 

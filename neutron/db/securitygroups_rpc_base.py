@@ -23,7 +23,7 @@ from neutron.db import allowedaddresspairs_db as addr_pair
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

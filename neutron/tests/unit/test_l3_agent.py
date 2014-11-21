@@ -30,7 +30,7 @@ from neutron.agent.linux import interface
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import processutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const

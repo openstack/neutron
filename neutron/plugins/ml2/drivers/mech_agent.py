@@ -17,7 +17,7 @@ import abc
 import six
 
 from neutron.extensions import portbindings
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 

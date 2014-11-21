@@ -24,7 +24,7 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import model_base
 from neutron.extensions import lbaas_agentscheduler
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

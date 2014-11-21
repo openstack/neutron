@@ -32,7 +32,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import utils as commonutils
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 

@@ -15,7 +15,7 @@
 
 from neutron.agent.linux import iptables_manager
 from neutron.extensions import firewall as fw_ext
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.services.firewall.drivers import fwaas_base
 

@@ -21,7 +21,7 @@ import os
 import netaddr
 
 from neutron.common import constants
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log
 
 

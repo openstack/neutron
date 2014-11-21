@@ -18,8 +18,8 @@ from oslo.config import cfg
 from oslo.utils import timeutils
 
 from neutron.agent.linux import utils as linux_utils
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.gettextutils import _LI, _LW
 
 
 LOG = logging.getLogger(__name__)

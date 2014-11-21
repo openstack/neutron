@@ -20,7 +20,7 @@ import jsonrpclib
 from oslo.config import cfg
 
 from neutron.common import constants as n_const
-from neutron.openstack.common.gettextutils import _LI, _LW
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api

@@ -19,7 +19,7 @@ import httplib2
 from oslo.config import cfg
 from oslo.serialization import jsonutils
 
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.services.firewall.agents.varmour import varmour_utils as va_utils
 

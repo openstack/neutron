@@ -23,8 +23,8 @@ from neutron.common import utils
 from neutron.db import model_base
 from neutron.extensions import dvr as ext_dvr
 from neutron.extensions import portbindings
+from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from oslo.config import cfg
 from sqlalchemy.orm import exc

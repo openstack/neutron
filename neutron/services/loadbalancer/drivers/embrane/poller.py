@@ -18,7 +18,7 @@ from heleosapi import exceptions as h_exc
 from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as sdb
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as ccon

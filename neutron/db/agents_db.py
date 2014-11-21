@@ -28,8 +28,8 @@ from sqlalchemy import sql
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
+from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

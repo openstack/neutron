@@ -27,7 +27,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.extensions import flavor
-from neutron.openstack.common.gettextutils import _LE, _LI
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 
 

@@ -21,7 +21,7 @@ from oslo.config import cfg
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import exceptions
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 
 VALID_STATES = ['MASTER', 'BACKUP']

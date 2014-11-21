@@ -23,8 +23,8 @@ from neutron.common import utils
 from neutron import context as neutron_context
 from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as plugin_constants
 

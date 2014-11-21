@@ -35,8 +35,8 @@ from neutron.db import portbindings_db
 from neutron.db import quota_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
+from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils as uuidutils
 from neutron.plugins.cisco.common import cisco_constants as c_const

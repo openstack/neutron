@@ -21,7 +21,7 @@ from oslo.config import cfg
 
 from neutron.agent.linux import keepalived
 from neutron.common import constants as l3_constants
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import periodic_task
 

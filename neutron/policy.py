@@ -30,7 +30,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions
 import neutron.common.utils as utils
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log
 from neutron.openstack.common import policy
 

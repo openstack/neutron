@@ -51,7 +51,7 @@ from neutron.extensions import portbindings as pbin
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as plugin_const

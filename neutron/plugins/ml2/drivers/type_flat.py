@@ -19,7 +19,7 @@ import sqlalchemy as sa
 
 from neutron.common import exceptions as exc
 from neutron.db import model_base
-from neutron.openstack.common.gettextutils import _LI, _LW
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api

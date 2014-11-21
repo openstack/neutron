@@ -17,7 +17,7 @@ import functools
 
 from heleosapi import exceptions as h_exc
 
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.services.loadbalancer import constants as lcon
 from neutron.services.loadbalancer.drivers.embrane import constants as econ

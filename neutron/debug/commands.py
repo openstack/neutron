@@ -18,7 +18,7 @@ from neutronclient.common import utils
 from neutronclient.neutron import v2_0 as client
 from neutronclient.neutron.v2_0 import port
 
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 
 

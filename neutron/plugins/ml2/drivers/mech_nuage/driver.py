@@ -17,7 +17,7 @@ from oslo.config import cfg
 
 from neutron.common import constants as n_consts
 from neutron.extensions import portbindings
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api

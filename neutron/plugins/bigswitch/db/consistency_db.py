@@ -23,7 +23,7 @@ from oslo.db.sqlalchemy import session
 import sqlalchemy as sa
 
 from neutron.db import model_base
-from neutron.openstack.common.gettextutils import _LI, _LW
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

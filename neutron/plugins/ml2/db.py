@@ -25,8 +25,8 @@ from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import portbindings
+from neutron.i18n import _LE, _LI
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.ml2 import driver_api as api

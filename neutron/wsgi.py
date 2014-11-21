@@ -28,6 +28,7 @@ import time
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True, thread=True)
 from oslo.config import cfg
+from oslo import i18n
 from oslo.serialization import jsonutils
 from oslo.utils import excutils
 import routes.middleware
@@ -37,7 +38,6 @@ import webob.exc
 from neutron.common import exceptions as exception
 from neutron import context
 from neutron.db import api
-from neutron.openstack.common import gettextutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import service as common_service
 from neutron.openstack.common import systemd
@@ -349,7 +349,7 @@ class Request(webob.Request):
         """
         if not self.accept_language:
             return None
-        all_languages = gettextutils.get_available_languages('neutron')
+        all_languages = i18n.get_available_languages('neutron')
         return self.accept_language.best_match(all_languages)
 
     @property
@@ -717,7 +717,7 @@ class Router(object):
         if not match:
             language = req.best_match_language()
             msg = _('The resource could not be found.')
-            msg = gettextutils.translate(msg, language)
+            msg = i18n.translate(msg, language)
             return webob.exc.HTTPNotFound(explanation=msg)
         app = match['controller']
         return app

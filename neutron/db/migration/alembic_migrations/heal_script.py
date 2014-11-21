@@ -27,7 +27,7 @@ from sqlalchemy.sql import text
 from sqlalchemy import types
 
 from neutron.db.migration.models import frozen as frozen_models
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 
 LOG = logging.getLogger(__name__)
 
