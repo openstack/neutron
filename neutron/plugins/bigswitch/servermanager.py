@@ -589,12 +589,12 @@ class ServerPool(object):
     def rest_create_floatingip(self, tenant_id, floatingip):
         resource = FLOATINGIPS_PATH % (tenant_id, floatingip['id'])
         errstr = _("Unable to create floating IP: %s")
-        self.rest_action('PUT', resource, errstr=errstr)
+        self.rest_action('PUT', resource, floatingip, errstr=errstr)
 
     def rest_update_floatingip(self, tenant_id, floatingip, oldid):
         resource = FLOATINGIPS_PATH % (tenant_id, oldid)
         errstr = _("Unable to update floating IP: %s")
-        self.rest_action('PUT', resource, errstr=errstr)
+        self.rest_action('PUT', resource, floatingip, errstr=errstr)
 
     def rest_delete_floatingip(self, tenant_id, oldid):
         resource = FLOATINGIPS_PATH % (tenant_id, oldid)

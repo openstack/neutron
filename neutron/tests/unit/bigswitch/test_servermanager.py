@@ -459,13 +459,17 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
     def test_floating_calls(self):
         pl = manager.NeutronManager.get_plugin()
         with mock.patch(SERVERMANAGER + '.ServerPool.rest_action') as ramock:
-            pl.servers.rest_create_floatingip('tenant', {'id': 'somefloat'})
-            pl.servers.rest_update_floatingip('tenant', {'name': 'myfl'}, 'id')
+            body1 = {'id': 'somefloat'}
+            body2 = {'name': 'myfl'}
+            pl.servers.rest_create_floatingip('tenant', body1)
+            pl.servers.rest_update_floatingip('tenant', body2, 'id')
             pl.servers.rest_delete_floatingip('tenant', 'oldid')
             ramock.assert_has_calls([
                 mock.call('PUT', '/tenants/tenant/floatingips/somefloat',
+                          body1,
                           errstr=u'Unable to create floating IP: %s'),
                 mock.call('PUT', '/tenants/tenant/floatingips/id',
+                          body2,
                           errstr=u'Unable to update floating IP: %s'),
                 mock.call('DELETE', '/tenants/tenant/floatingips/oldid',
                           errstr=u'Unable to delete floating IP: %s')
