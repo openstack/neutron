@@ -220,6 +220,11 @@ function _install_post_devstack {
 
     if is_ubuntu; then
         install_package netcat-openbsd
+        install_package isc-dhcp-client
+    elif is_fedora; then
+        install_package dhclient
+    else
+        exit_distro_not_supported "installing dhclient package"
     fi
 
     # Installing python-openvswitch from packages is a stop-gap while
