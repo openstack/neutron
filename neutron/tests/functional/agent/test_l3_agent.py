@@ -19,11 +19,16 @@ import functools
 import fixtures
 import mock
 from oslo.config import cfg
+import webob
+import webob.dec
+import webob.exc
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
+from neutron.agent.metadata import agent as metadata_agent
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.openstack.common import log as logging
@@ -35,6 +40,8 @@ from neutron.tests.unit import test_l3_agent
 
 LOG = logging.getLogger(__name__)
 _uuid = uuidutils.generate_uuid
+
+METADATA_REQUEST_TIMEOUT = 60
 
 
 class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
@@ -363,3 +370,64 @@ class L3HATestFramework(L3AgentTestFramework):
 
         helpers.wait_until_true(lambda: router2.ha_state == 'master')
         helpers.wait_until_true(lambda: router1.ha_state == 'fault')
+
+
+class MetadataFakeProxyHandler(object):
+
+    def __init__(self, status):
+        self.status = status
+
+    @webob.dec.wsgify()
+    def __call__(self, req):
+        return webob.Response(status=self.status)
+
+
+class MetadataL3AgentTestCase(L3AgentTestFramework):
+
+    def _create_metadata_fake_server(self, status):
+        server = metadata_agent.UnixDomainWSGIServer('metadata-fake-server')
+        self.addCleanup(server.stop)
+        server.start(MetadataFakeProxyHandler(status),
+                     self.agent.conf.metadata_proxy_socket,
+                     workers=0, backlog=4096)
+
+    def test_access_to_metadata_proxy(self):
+        """Test access to the l3-agent metadata proxy.
+
+        The test creates:
+         * A l3-agent metadata service:
+           * A router (which creates a metadata proxy in the router namespace),
+           * A fake metadata server
+         * A "client" namespace (simulating a vm) with a port on router
+           internal subnet.
+
+        The test queries from the "client" namespace the metadata proxy on
+        http://169.254.169.254 and asserts that the metadata proxy added
+        the X-Forwarded-For and X-Neutron-Router-Id headers to the request
+        and forwarded the http request to the fake metadata server and the
+        response to the "client" namespace.
+        """
+        router_info = self.generate_router_info(enable_ha=False)
+        router = self.manage_router(self.agent, router_info)
+        self._create_metadata_fake_server(webob.exc.HTTPOk.code)
+
+        # Create and configure client namespace
+        client_ns = self._create_namespace()
+        router_ip_cidr = router.internal_ports[0]['ip_cidr']
+        ip_cidr = self.shift_ip_cidr(router_ip_cidr)
+        br_int = self.get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
+        port = self.bind_namespace_to_cidr(client_ns, br_int, ip_cidr)
+        self.set_namespace_gateway(port, router_ip_cidr.partition('/')[0])
+
+        # Query metadata proxy
+        url = 'http://%(host)s:%(port)s' % {'host': dhcp.METADATA_DEFAULT_IP,
+                                            'port': dhcp.METADATA_PORT}
+        cmd = 'curl', '--max-time', METADATA_REQUEST_TIMEOUT, '-D-', url
+        try:
+            raw_headers = client_ns.netns.execute(cmd)
+        except RuntimeError:
+            self.fail('metadata proxy unreachable on %s before timeout' % url)
+
+        # Check status code
+        firstline = raw_headers.splitlines()[0]
+        self.assertIn(str(webob.exc.HTTPOk.code), firstline.split())

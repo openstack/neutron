@@ -14,6 +14,8 @@
 
 import random
 
+import netaddr
+
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
@@ -24,6 +26,7 @@ from neutron.tests.functional import base as functional_base
 
 
 BR_PREFIX = 'test-br'
+PORT_PREFIX = 'test-port'
 ICMP_BLOCK_RULE = '-p icmp -j DROP'
 VETH_PREFIX = 'tst-vth'
 
@@ -48,6 +51,14 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
             if error_text in str(e) and not self.fail_on_missing_deps:
                 self.skipTest(skip_msg)
             raise
+
+    def _create_namespace(self):
+        ip_cmd = ip_lib.IPWrapper(self.root_helper)
+        name = "func-%s" % uuidutils.generate_uuid()
+        namespace = ip_cmd.ensure_namespace(name)
+        self.addCleanup(namespace.netns.delete, namespace.namespace)
+
+        return namespace
 
     def create_resource(self, name_prefix, creation_func, *args, **kwargs):
         """Create a new resource that does not already exist.
@@ -74,11 +85,27 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
         veth1, veth2 = ip_wrapper.add_veth(name1, name2)
         return veth1, veth2
 
+    def set_namespace_gateway(self, port_dev, gateway_ip):
+        """Set gateway for the namespace associated to the port."""
+        if not port_dev.namespace:
+            self.fail('tests should not change test machine gateway')
+        port_dev.route.add_gateway(gateway_ip)
+
+    def shift_ip_cidr(self, ip_cidr, offset=1):
+        """Shift ip_cidr offset times.
+
+        example: shift_ip_cidr("1.2.3.4/24", 2) ==> "1.2.3.6/24"
+        """
+        net = netaddr.IPNetwork(ip_cidr)
+        net.value += offset
+        return str(net)
+
 
 class BaseOVSLinuxTestCase(BaseLinuxTestCase):
     def setUp(self):
         super(BaseOVSLinuxTestCase, self).setUp()
         self.ovs = ovs_lib.BaseOVS(self.root_helper)
+        self.ip = ip_lib.IPWrapper(self.root_helper)
 
     def create_ovs_bridge(self, br_prefix=BR_PREFIX):
         br = self.create_resource(br_prefix, self.ovs.add_bridge)
@@ -87,6 +114,29 @@ class BaseOVSLinuxTestCase(BaseLinuxTestCase):
 
     def get_ovs_bridge(self, br_name):
         return ovs_lib.OVSBridge(br_name, self.root_helper)
+
+    def create_ovs_port_in_ns(self, br, ns):
+        def create_port(name):
+            br.add_port(name)
+            self.addCleanup(br.delete_port, name)
+            br.set_db_attribute('Interface', name, 'type', 'internal')
+            return name
+        port_name = self.create_resource(PORT_PREFIX, create_port)
+        port_dev = self.ip.device(port_name)
+        ns.add_device_to_namespace(port_dev)
+        port_dev.link.set_up()
+        return port_dev
+
+    def bind_namespace_to_cidr(self, namespace, br, ip_cidr):
+        """Bind namespace to cidr (on layer2 and 3).
+
+        Bind the namespace to a subnet by creating an ovs port in the namespace
+        and configuring port ip.
+        """
+        net = netaddr.IPNetwork(ip_cidr)
+        port_dev = self.create_ovs_port_in_ns(br, namespace)
+        port_dev.addr.add(net.version, str(net), net.broadcast)
+        return port_dev
 
 
 class BaseIPVethTestCase(BaseLinuxTestCase):
@@ -103,14 +153,6 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
     def _set_ip_up(device, cidr, broadcast, ip_version=4):
         device.addr.add(ip_version=ip_version, cidr=cidr, broadcast=broadcast)
         device.link.set_up()
-
-    def _create_namespace(self):
-        ip_cmd = ip_lib.IPWrapper(self.root_helper)
-        name = "func-%s" % uuidutils.generate_uuid()
-        namespace = ip_cmd.ensure_namespace(name)
-        self.addCleanup(namespace.netns.delete, namespace.namespace)
-
-        return namespace
 
     def prepare_veth_pairs(self, src_addr=None,
                            dst_addr=None,
