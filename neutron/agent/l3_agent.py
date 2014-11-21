@@ -962,11 +962,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # Process SNAT rules for external gateway
         if (not ri.router['distributed'] or
             ex_gw_port and ri.router['gw_port_host'] == self.host):
-            # Get IPv4 only internal CIDRs
-            internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports
-                              if netaddr.IPNetwork(p['ip_cidr']).version == 4]
             ri.perform_snat_action(self._handle_router_snat_rules,
-                                   internal_cidrs, interface_name)
+                                   interface_name)
 
         # Process SNAT/DNAT rules for floating IPs
         fip_statuses = {}
@@ -1005,7 +1002,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             else:
                 ri.disable_keepalived()
 
-    def _handle_router_snat_rules(self, ri, ex_gw_port, internal_cidrs,
+    def _handle_router_snat_rules(self, ri, ex_gw_port,
                                   interface_name, action):
         # Remove all the rules
         # This is safe because if use_namespaces is set as False
@@ -1034,7 +1031,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 ex_gw_ip = ip_addr['ip_address']
                 if netaddr.IPAddress(ex_gw_ip).version == 4:
                     rules = self.external_gateway_nat_rules(ex_gw_ip,
-                                                            internal_cidrs,
                                                             interface_name)
                     for rule in rules:
                         iptables_manager.ipv4['nat'].add_rule(*rule)
@@ -1450,14 +1446,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                           '--to-port %s' % self.conf.metadata_port))
         return rules
 
-    def external_gateway_nat_rules(self, ex_gw_ip, internal_cidrs,
-                                   interface_name):
+    def external_gateway_nat_rules(self, ex_gw_ip, interface_name):
         rules = [('POSTROUTING', '! -i %(interface_name)s '
                   '! -o %(interface_name)s -m conntrack ! '
                   '--ctstate DNAT -j ACCEPT' %
-                  {'interface_name': interface_name})]
-        for cidr in internal_cidrs:
-            rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
+                  {'interface_name': interface_name}),
+                 ('snat', '-o %s -j SNAT --to-source %s' %
+                  (interface_name, ex_gw_ip))]
         return rules
 
     def _snat_redirect_add(self, ri, gateway, sn_port, sn_int):
@@ -1569,11 +1564,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._clear_vips(ri, interface_name)
             self.driver.unplug(interface_name, namespace=ri.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
-
-    def internal_network_nat_rules(self, ex_gw_ip, internal_cidr):
-        rules = [('snat', '-s %s -j SNAT --to-source %s' %
-                 (internal_cidr, ex_gw_ip))]
-        return rules
 
     def _create_agent_gateway_port(self, ri, network_id):
         """Create Floating IP gateway port.
