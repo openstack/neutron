@@ -1998,11 +1998,12 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         Create the gateway service on NSX platform and corresponding data
         structures in Neutron datase.
         """
-        # Ensure the default gateway in the config file is in sync with the db
-        self._ensure_default_network_gateway()
-        # Need to re-do authZ checks here in order to avoid creation on NSX
         gw_data = network_gateway[networkgw.GATEWAY_RESOURCE_NAME]
         tenant_id = self._get_tenant_id_for_create(context, gw_data)
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
+        # Validate provided gateway device list
+        self._validate_device_list(context, tenant_id, gw_data)
         devices = gw_data['devices']
         # Populate default physical network where not specified
         for device in devices:
@@ -2029,7 +2030,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             raise nsx_exc.NsxPluginException(err_msg=err_msg)
         gw_data['id'] = nsx_uuid
         return super(NsxPluginV2, self).create_network_gateway(
-            context, network_gateway)
+            context, network_gateway, validate_device_list=False)
 
     def delete_network_gateway(self, context, gateway_id):
         """Remove a layer-2 network gateway.

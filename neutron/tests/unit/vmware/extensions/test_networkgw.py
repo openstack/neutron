@@ -557,6 +557,13 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                 'json', _uuid(), name=name, devices=devices)
             self.assertEqual(404, res.status_int)
 
+    def test_create_network_gateway_non_existent_device_raises_404(self):
+        name = 'test-gw'
+        devices = [{'id': _uuid(), 'interface_name': 'xxx'}]
+        res = self._create_network_gateway(
+            'json', _uuid(), name=name, devices=devices)
+        self.assertEqual(404, res.status_int)
+
     def test_delete_network_gateway(self):
         tenant_id = _uuid()
         with self._gateway_device(tenant_id=tenant_id) as dev:
@@ -979,9 +986,12 @@ class TestNetworkGateway(test_nsx_plugin.NsxPluginV2TestCase,
         with mock.patch.object(nsxlib.l2gateway,
                                'create_l2_gw_service',
                                new=raise_nsx_api_exc):
-            with self._gateway_device() as dev:
+            tenant_id = _uuid()
+            with self._gateway_device(tenant_id=tenant_id) as dev:
                 res = self._create_network_gateway(
-                    self.fmt, 'xxx', name='yyy',
+                    self.fmt,
+                    tenant_id,
+                    name='yyy',
                     devices=[{'id': dev[self.dev_resource]['id']}])
             self.assertEqual(500, res.status_int)
 
@@ -989,9 +999,12 @@ class TestNetworkGateway(test_nsx_plugin.NsxPluginV2TestCase,
         with mock.patch.object(nsxlib.l2gateway,
                                'create_l2_gw_service',
                                side_effect=api_exc.Conflict):
-            with self._gateway_device() as dev:
+            tenant_id = _uuid()
+            with self._gateway_device(tenant_id=tenant_id) as dev:
                 res = self._create_network_gateway(
-                    self.fmt, 'xxx', name='yyy',
+                    self.fmt,
+                    tenant_id,
+                    name='yyy',
                     devices=[{'id': dev[self.dev_resource]['id']}])
             self.assertEqual(409, res.status_int)
 
