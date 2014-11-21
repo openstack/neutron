@@ -48,6 +48,7 @@ class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
         service_plugins = {'L3_ROUTER_NAT': self._l3_plugin_name}
         super(BigSwitchProxyPluginV2TestCase,
               self).setUp(self._plugin_name, service_plugins=service_plugins)
+        self.setup_db()
         self.port_create_status = 'BUILD'
         self.startHttpPatch()
 

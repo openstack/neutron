@@ -40,7 +40,6 @@ from oslo.config import cfg
 from oslo.serialization import jsonutils
 
 from neutron.common import exceptions
-from neutron.common import utils
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch.db import consistency_db as cdb
@@ -191,11 +190,17 @@ class ServerProxy(object):
                 # don't clear hash from DB if a hash header wasn't present
                 if hash_value is not None:
                     hash_handler.put_hash(hash_value)
+                else:
+                    hash_handler.clear_lock()
                 try:
                     respdata = jsonutils.loads(respstr)
                 except ValueError:
                     # response was not JSON, ignore the exception
                     pass
+            else:
+                # release lock so others don't have to wait for timeout
+                hash_handler.clear_lock()
+
             ret = (response.status, response.reason, respstr, respdata)
         except httplib.HTTPException:
             # If we were using a cached connection, try again with a new one.
@@ -419,7 +424,6 @@ class ServerPool(object):
         """
         return resp[0] in SUCCESS_CODES
 
-    @utils.synchronized('bsn-rest-call')
     def rest_call(self, action, resource, data, headers, ignore_codes,
                   timeout=False):
         context = self.get_context_ref()
@@ -430,7 +434,7 @@ class ServerPool(object):
             # backend controller
             cdict.pop('auth_token', None)
             headers[REQ_CONTEXT_HEADER] = jsonutils.dumps(cdict)
-        hash_handler = cdb.HashHandler(context=context)
+        hash_handler = cdb.HashHandler()
         good_first = sorted(self.servers, key=lambda x: x.failed)
         first_response = None
         for active_server in good_first:
