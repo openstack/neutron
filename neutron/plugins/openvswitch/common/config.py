@@ -37,8 +37,8 @@ ovs_opts = [
     cfg.StrOpt('tun_peer_patch_port', default='patch-int',
                help=_("Peer patch port in tunnel bridge for integration "
                       "bridge.")),
-    cfg.StrOpt('local_ip', default='',
-               help=_("Local IP address of GRE tunnel endpoints.")),
+    cfg.IPOpt('local_ip', version=4,
+              help=_("Local IP address of tunnel endpoint.")),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
                 help=_("List of <physical_network>:<bridge>. "
