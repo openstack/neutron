@@ -728,11 +728,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                              filter_by(network_id=subnet['network_id']).
                              with_lockmode('update').all())
                 LOG.debug(_("Ports to auto-deallocate: %s"), allocated)
-                only_auto_del = all(not a.port_id or
-                                    a.ports.device_owner in db_base_plugin_v2.
-                                    AUTO_DELETE_PORT_OWNERS or
-                                    ipv6_utils.is_slaac_subnet(subnet)
-                                    for a in allocated)
+                only_auto_del = ipv6_utils.is_slaac_subnet(subnet) or all(
+                    not a.port_id or a.ports.device_owner in db_base_plugin_v2.
+                    AUTO_DELETE_PORT_OWNERS for a in allocated)
                 if not only_auto_del:
                     LOG.debug(_("Tenant-owned ports exist"))
                     raise exc.SubnetInUse(subnet_id=id)
