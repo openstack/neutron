@@ -11,13 +11,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import random
 import time
 
 from oslo.config import cfg
 import six
 
-from neutron.openstack.common.gettextutils import _, _LE, _LI
+from neutron.openstack.common._i18n import _, _LE, _LI
 from neutron.openstack.common import log as logging
 
 
@@ -34,6 +35,11 @@ CONF.register_opts(periodic_opts)
 LOG = logging.getLogger(__name__)
 
 DEFAULT_INTERVAL = 60.0
+
+
+def list_opts():
+    """Entry point for oslo.config-generator."""
+    return [(None, copy.deepcopy(periodic_opts))]
 
 
 class InvalidPeriodicTaskArg(Exception):
