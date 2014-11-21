@@ -250,6 +250,9 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         self.iter_num = 0
         self.run_daemon_loop = True
 
+        # The initialization is complete; we can start receiving messages
+        self.connection.consume_in_threads()
+
     def _report_state(self):
         # How many devices are likely used by a VM
         self.agent_state.get('configurations')['devices'] = (
@@ -284,7 +287,8 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                               topics.UPDATE, cfg.CONF.host])
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
-                                                     consumers)
+                                                     consumers,
+                                                     start_listening=False)
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
