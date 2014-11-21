@@ -259,6 +259,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.iter_num = 0
         self.run_daemon_loop = True
 
+        # The initialization is complete; we can start receiving messages
+        self.connection.consume_in_threads()
+
     def _report_state(self):
         # How many devices are likely used by a VM
         self.agent_state.get('configurations')['devices'] = (
@@ -296,7 +299,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                               topics.UPDATE, cfg.CONF.host])
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
-                                                     consumers)
+                                                     consumers,
+                                                     start_listening=False)
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in self.local_vlan_map.iteritems():
