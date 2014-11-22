@@ -30,32 +30,24 @@ class DVRServerRpcApiMixin(object):
 
     @log.log
     def get_dvr_mac_address_by_host(self, context, host):
-        return self.call(context,
-                         self.make_msg('get_dvr_mac_address_by_host',
-                                       host=host),
-                         version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        return cctxt.call(context, 'get_dvr_mac_address_by_host', host=host)
 
     @log.log
     def get_dvr_mac_address_list(self, context):
-        return self.call(context,
-                         self.make_msg('get_dvr_mac_address_list'),
-                         version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        return cctxt.call(context, 'get_dvr_mac_address_list')
 
     @log.log
     def get_ports_on_host_by_subnet(self, context, host, subnet):
-        return self.call(context,
-                         self.make_msg(
-                             'get_ports_on_host_by_subnet',
-                             host=host,
-                             subnet=subnet),
-                         version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        return cctxt.call(context, 'get_ports_on_host_by_subnet',
+                          host=host, subnet=subnet)
 
     @log.log
     def get_subnet_for_dvr(self, context, subnet):
-        return self.call(context,
-                         self.make_msg('get_subnet_for_dvr',
-                                       subnet=subnet),
-                         version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        return cctxt.call(context, 'get_subnet_for_dvr', subnet=subnet)
 
 
 class DVRServerRpcCallback(object):

@@ -38,18 +38,15 @@ class FWaaSL3PluginApi(api.FWaaSPluginApiMixin):
     def get_firewalls_for_tenant(self, context, **kwargs):
         """Get the Firewalls with rules from the Plugin to send to driver."""
         LOG.debug("Retrieve Firewall with rules from Plugin")
-
-        return self.call(context,
-                         self.make_msg('get_firewalls_for_tenant',
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'get_firewalls_for_tenant', host=self.host)
 
     def get_tenants_with_firewalls(self, context, **kwargs):
         """Get all Tenants that have Firewalls configured from plugin."""
         LOG.debug("Retrieve Tenants with Firewalls configured from Plugin")
-
-        return self.call(context,
-                         self.make_msg('get_tenants_with_firewalls',
-                                       host=self.host))
+        cctxt = self.client.prepare()
+        return cctxt.call(context,
+                          'get_tenants_with_firewalls', host=self.host)
 
 
 class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
