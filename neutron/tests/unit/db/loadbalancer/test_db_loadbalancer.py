@@ -1121,6 +1121,14 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                                     (m1, m2, m3),
                                                     ('delay', 'asc'), 2, 2)
 
+    def test_update_pool_invalid_lb_method(self):
+        with self.pool() as pool:
+            update_data = {'pool': {'lb_method': 'dummy'}}
+            req = self.new_update_request('pools', update_data,
+                                          pool['pool']['id'], fmt=self.fmt)
+            res = req.get_response(self.ext_api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
     def test_update_pool_stats_with_no_stats(self):
         keys = ["bytes_in", "bytes_out",
                 "active_connections",
