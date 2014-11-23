@@ -19,6 +19,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
@@ -40,21 +41,17 @@ from neutron import service as neutron_service
 LOG = logging.getLogger(__name__)
 
 
-class MeteringPluginRpc(n_rpc.RpcProxy):
-
-    BASE_RPC_API_VERSION = '1.0'
+class MeteringPluginRpc(object):
 
     def __init__(self, host):
-        super(MeteringPluginRpc,
-              self).__init__(topic=topics.METERING_AGENT,
-                             default_version=self.BASE_RPC_API_VERSION)
+        target = messaging.Target(topic=topics.METERING_PLUGIN, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def _get_sync_data_metering(self, context):
         try:
-            return self.call(context,
-                             self.make_msg('get_sync_data_metering',
-                                           host=self.host),
-                             topic=topics.METERING_PLUGIN)
+            cctxt = self.client.prepare()
+            return cctxt.call(context, 'get_sync_data_metering',
+                              host=self.host)
         except Exception:
             LOG.exception(_("Failed synchronizing routers"))
 
