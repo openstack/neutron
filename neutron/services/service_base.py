@@ -20,6 +20,7 @@ import six
 from neutron.api import extensions
 from neutron.db import servicetype_db as sdb
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.services import provider_configuration as pconf
@@ -78,14 +79,14 @@ def load_drivers(service_type, plugin):
             drivers[provider['name']] = importutils.import_object(
                 provider['driver'], plugin
             )
-            LOG.debug(_("Loaded '%(provider)s' provider for service "
-                        "%(service_type)s"),
+            LOG.debug("Loaded '%(provider)s' provider for service "
+                      "%(service_type)s",
                       {'provider': provider['driver'],
                        'service_type': service_type})
         except ImportError:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Error loading provider '%(provider)s' for "
-                                "service %(service_type)s"),
+                LOG.exception(_LE("Error loading provider '%(provider)s' for "
+                                  "service %(service_type)s"),
                               {'provider': provider['driver'],
                                'service_type': service_type})
 
@@ -95,7 +96,7 @@ def load_drivers(service_type, plugin):
             None, service_type)
         default_provider = provider['name']
     except pconf.DefaultServiceProviderNotFound:
-        LOG.info(_("Default provider is not specified for service type %s"),
+        LOG.info(_LI("Default provider is not specified for service type %s"),
                  service_type)
 
     return drivers, default_provider
