@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-20 06:08+0000\n"
-"PO-Revision-Date: 2014-11-19 22:42+0000\n"
+"POT-Creation-Date: 2014-11-23 06:06+0000\n"
+"PO-Revision-Date: 2014-11-21 13:33+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
 "language/ko_KR/)\n"
@@ -37,12 +37,12 @@ msgstr "상태 동기화 중"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:2011
+#: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:2001
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "서버측 %s!에 의한 agent_updated"
 
-#: neutron/agent/l3_agent.py:1913
+#: neutron/agent/l3_agent.py:1903
 msgid "L3 agent started"
 msgstr "L3 에이전트가 시작됨"
 
@@ -68,42 +68,42 @@ msgstr "보안 그룹 확장을 사용하지 않습니다. "
 msgid "Disabled allowed-address-pairs extension."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:198
+#: neutron/agent/securitygroups_rpc.py:196
 #, python-format
 msgid ""
 "Skipping method %s as firewall is disabled or configured as "
 "NoopFirewallDriver."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:209
+#: neutron/agent/securitygroups_rpc.py:207
 #, python-format
 msgid "Preparing filters for devices %s"
 msgstr "%s 디바이스에 대한 필터 준비"
 
-#: neutron/agent/securitygroups_rpc.py:239
+#: neutron/agent/securitygroups_rpc.py:237
 #, python-format
 msgid "Security group rule updated %r"
 msgstr "보안 그룹 규칙이 %r을(를) 업데이트함"
 
-#: neutron/agent/securitygroups_rpc.py:246
+#: neutron/agent/securitygroups_rpc.py:244
 #, python-format
 msgid "Security group member updated %r"
 msgstr "보안 그룹 멤버가 %r을(를) 업데이트함"
 
-#: neutron/agent/securitygroups_rpc.py:268
+#: neutron/agent/securitygroups_rpc.py:266
 msgid "Provider rule updated"
 msgstr "제공자 규칙이 업데이트됨"
 
-#: neutron/agent/securitygroups_rpc.py:280
+#: neutron/agent/securitygroups_rpc.py:278
 #, python-format
 msgid "Remove device filter for %r"
 msgstr "%r의 디바이스 필터 제거"
 
-#: neutron/agent/securitygroups_rpc.py:290
+#: neutron/agent/securitygroups_rpc.py:288
 msgid "Refresh firewall rules"
 msgstr "방화벽 규칙 새로 고치기"
 
-#: neutron/agent/securitygroups_rpc.py:294
+#: neutron/agent/securitygroups_rpc.py:292
 msgid "No ports here to refresh firewall"
 msgstr ""
 
@@ -148,6 +148,15 @@ msgstr ""
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
 msgstr ""
+
+#: neutron/common/config.py:165
+msgid "Logging enabled!"
+msgstr "로깅 사용!"
+
+#: neutron/common/config.py:181
+#, python-format
+msgid "Config paste file: %s"
+msgstr "구성 붙여넣기 파일: %s"
 
 #: neutron/common/ipv6_utils.py:63
 msgid "IPv6 is not enabled on this system."
@@ -251,6 +260,11 @@ msgstr ""
 msgid "%d probe(s) deleted"
 msgstr ""
 
+#: neutron/notifiers/nova.py:263
+#, python-format
+msgid "Nova event response: %s"
+msgstr ""
+
 #: neutron/openstack/common/eventlet_backdoor.py:140
 #, python-format
 msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
@@ -328,7 +342,11 @@ msgstr "쓰레드가 죽기를 기다려서, 지웁니다. "
 msgid "Waiting on %d children to exit"
 msgstr "%d 하위에서 종료하기를 대기 중임"
 
-#: neutron/plugins/ml2/plugin.py:955 neutron/plugins/ml2/plugin.py:1091
+#: neutron/plugins/bigswitch/db/consistency_db.py:196
+msgid "Failed to take lock. Another process updated the DB first."
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:953 neutron/plugins/ml2/plugin.py:1089
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -358,7 +376,7 @@ msgid "APIC host agent: started on %s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:831
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:834
 msgid "Agent out of sync with plugin!"
 msgstr "에이전트가 플러그인과 동기화되지 않았습니다!"
 
@@ -392,50 +410,127 @@ msgstr ""
 msgid "Agent initialized successfully, now running... "
 msgstr "에이전트가 초기화되었으며, 지금 실행 중... "
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:446
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:449
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr "%(vlan_id)s을(를) net-id=%(net_uuid)s에 대한 로컬 vlan으로 지정 중"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:496
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:499
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "net-id = %(net_uuid)s에서 vlan = %(vlan_id)s 재확보 중"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:564
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:567
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr "port_unbound() net_uuid %s이(가) local_vlan_map에 있지 않음"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:709
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:712
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be "
 "processed"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:723
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:726
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "%(device)s 포트가 업데이트되었습니다. 세부사항: %(details)s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:742
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:745
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:753
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:756
 #, python-format
 msgid "Attachment %s removed"
 msgstr "첨부 %s이(가) 제거됨"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:836
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:839
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "에이전트 터널이 플러그인과 동기화되지 않았습니다!"
 
 #: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:198
 #, python-format
 msgid "L2 Agent operating in DVR Mode with MAC %s"
+msgstr ""
+
+#: neutron/scheduler/dhcp_agent_scheduler.py:52
+#, python-format
+msgid "Agent %s already present"
+msgstr ""
+
+#: neutron/server/__init__.py:55
+msgid "RPC was already started in parent process by plugin."
+msgstr ""
+
+#: neutron/services/l3_router/l3_arista.py:246
+msgid "Syncing Neutron Router DB <-> EOS"
+msgstr ""
+
+#: neutron/services/l3_router/brocade/l3_router_plugin.py:74
+#, python-format
+msgid "rbridge id %s"
+msgstr ""
+
+#: neutron/services/l3_router/brocade/l3_router_plugin.py:153
+#, python-format
+msgid "BrocadeSVIPlugin.add_router_interface ports_count %d"
+msgstr ""
+
+#: neutron/services/loadbalancer/agent/agent_manager.py:333
+#, python-format
+msgid "Destroying pool %s due to agent disabling"
+msgstr ""
+
+#: neutron/services/loadbalancer/agent/agent_manager.py:336
+#, python-format
+msgid "Agent_updated by server side %s!"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:168
+#, python-format
+msgid "NetScaler driver poolmember creation: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:415
+#, python-format
+msgid "Found an existing SNAT port for subnet %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:418
+#, python-format
+msgid "Found no SNAT ports for subnet %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:438
+#, python-format
+msgid "Created SNAT port: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:445
+#, python-format
+msgid "Removed SNAT port: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:451
+#, python-format
+msgid "No SNAT port found for subnet %s. Creating one..."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:458
+#, python-format
+msgid "SNAT port: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:467
+#, python-format
+msgid "Removing SNAT port for subnet %s as this is the last pool using it..."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:417
+msgid "Starting operation completion handling thread"
 msgstr ""
 
 #: neutron/services/vpn/plugin.py:45
@@ -474,12 +569,12 @@ msgstr ""
 msgid "Removed mapping for connection %s"
 msgstr ""
 
-#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:62
 #, python-format
 msgid "spawned: %d"
 msgstr ""
 
-#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:75
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:74
 #, python-format
 msgid "_handle_request called: %s"
 msgstr ""
