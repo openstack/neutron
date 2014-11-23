@@ -31,7 +31,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
-from neutron.i18n import _LE, _LI
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
@@ -54,10 +54,10 @@ class EswitchManager(object):
             for port in data['ports']:
                 if port['port_mac'] == port_mac:
                     return port['port_id']
-        err_msg = _("Agent cache inconsistency - port id "
-                    "is not stored for %s") % port_mac
-        LOG.error(err_msg)
-        raise exceptions.MlnxException(err_msg=err_msg)
+        LOG.error(_LE("Agent cache inconsistency - port id "
+                      "is not stored for %s"), port_mac)
+        raise exceptions.MlnxException(err_msg=("Agent cache inconsistency, "
+                                                "check logs"))
 
     def get_vnics_mac(self):
         return set(self.utils.get_attached_vnics().keys())
@@ -69,7 +69,7 @@ class EswitchManager(object):
         if network_id in self.network_map:
             del self.network_map[network_id]
         else:
-            LOG.debug(_("Network %s not defined on Agent."), network_id)
+            LOG.debug("Network %s not defined on Agent.", network_id)
 
     def port_down(self, network_id, physical_network, port_mac):
         """Sets port to down.
@@ -82,7 +82,7 @@ class EswitchManager(object):
                 if port['port_mac'] == port_mac:
                     self.utils.port_down(physical_network, port_mac)
                     return
-        LOG.info(_('Network %s is not available on this agent'), network_id)
+        LOG.info(_LI('Network %s is not available on this agent'), network_id)
 
     def port_up(self, network_id, network_type,
                 physical_network, seg_id, port_id, port_mac):
@@ -93,7 +93,7 @@ class EswitchManager(object):
         - configure eswitch vport
         - set port to Up
         """
-        LOG.debug(_("Connecting port %s"), port_id)
+        LOG.debug("Connecting port %s", port_id)
 
         if network_id not in self.network_map:
             self.provision_network(port_id, port_mac,
@@ -103,8 +103,8 @@ class EswitchManager(object):
         net_map['ports'].append({'port_id': port_id, 'port_mac': port_mac})
 
         if network_type == p_const.TYPE_VLAN:
-            LOG.info(_('Binding Segmentation ID %(seg_id)s'
-                       'to eSwitch for vNIC mac_address %(mac)s'),
+            LOG.info(_LI('Binding Segmentation ID %(seg_id)s '
+                         'to eSwitch for vNIC mac_address %(mac)s'),
                      {'seg_id': seg_id,
                       'mac': port_mac})
             self.utils.set_port_vlan_id(physical_network,
@@ -112,7 +112,7 @@ class EswitchManager(object):
                                         port_mac)
             self.utils.port_up(physical_network, port_mac)
         else:
-            LOG.error(_('Unsupported network type %s'), network_type)
+            LOG.error(_LE('Unsupported network type %s'), network_type)
 
     def port_release(self, port_mac):
         """Clear port configuration from eSwitch."""
@@ -122,17 +122,17 @@ class EswitchManager(object):
                     self.utils.port_release(net_data['physical_network'],
                                             port['port_mac'])
                     return
-        LOG.info(_('Port_mac %s is not available on this agent'), port_mac)
+        LOG.info(_LI('Port_mac %s is not available on this agent'), port_mac)
 
     def provision_network(self, port_id, port_mac,
                           network_id, network_type,
                           physical_network, segmentation_id):
-        LOG.info(_("Provisioning network %s"), network_id)
+        LOG.info(_LI("Provisioning network %s"), network_id)
         if network_type == p_const.TYPE_VLAN:
-            LOG.debug(_("Creating VLAN Network"))
+            LOG.debug("Creating VLAN Network")
         else:
-            LOG.error(_("Unknown network type %(network_type)s "
-                        "for network %(network_id)s"),
+            LOG.error(_LE("Unknown network type %(network_type)s "
+                          "for network %(network_id)s"),
                       {'network_type': network_type,
                        'network_id': network_id})
             return
@@ -160,12 +160,12 @@ class MlnxEswitchRpcCallbacks(n_rpc.RpcCallback,
         self.sg_agent = agent
 
     def network_delete(self, context, **kwargs):
-        LOG.debug(_("network_delete received"))
+        LOG.debug("network_delete received")
         network_id = kwargs.get('network_id')
         if not network_id:
-            LOG.warning(_("Invalid Network ID, cannot remove Network"))
+            LOG.warning(_LW("Invalid Network ID, cannot remove Network"))
         else:
-            LOG.debug(_("Delete network %s"), network_id)
+            LOG.debug("Delete network %s", network_id)
             self.eswitch.remove_network(network_id)
 
     def port_update(self, context, **kwargs):
@@ -213,11 +213,11 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
         except Exception:
-            LOG.exception(_("Failed reporting state!"))
+            LOG.exception(_LE("Failed reporting state!"))
 
     def _setup_rpc(self):
         self.agent_id = 'mlnx-agent.%s' % socket.gethostname()
-        LOG.info(_("RPC agent_id: %s"), self.agent_id)
+        LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
         self.plugin_rpc = MlnxEswitchPluginApi(topics.PLUGIN)
@@ -291,7 +291,7 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             else:
                 self.eswitch.port_down(network_id, physical_network, port_mac)
         else:
-            LOG.debug(_("No port %s defined on agent."), port_id)
+            LOG.debug("No port %s defined on agent.", port_id)
 
     def treat_devices_added_or_updated(self, devices):
         try:
@@ -308,10 +308,10 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
 
         for dev_details in devs_details_list:
             device = dev_details['device']
-            LOG.info(_("Adding or updating port with mac %s"), device)
+            LOG.info(_LI("Adding or updating port with mac %s"), device)
 
             if 'port_id' in dev_details:
-                LOG.info(_("Port %s updated"), device)
+                LOG.info(_LI("Port %s updated"), device)
                 LOG.debug("Device details %s", str(dev_details))
                 self.treat_vif_port(dev_details['port_id'],
                                     dev_details['device'],
@@ -336,7 +336,7 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
     def treat_devices_removed(self, devices):
         resync = False
         for device in devices:
-            LOG.info(_("Removing device with mac_address %s"), device)
+            LOG.info(_LI("Removing device with mac_address %s"), device)
             try:
                 port_id = self.eswitch.get_port_id_by_mac(device)
                 dev_details = self.plugin_rpc.update_device_down(self.context,
@@ -344,14 +344,14 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                                                                  self.agent_id,
                                                                  cfg.CONF.host)
             except Exception as e:
-                LOG.debug(_("Removing port failed for device %(device)s "
-                          "due to %(exc)s"), {'device': device, 'exc': e})
+                LOG.debug("Removing port failed for device %(device)s "
+                          "due to %(exc)s", {'device': device, 'exc': e})
                 resync = True
                 continue
             if dev_details['exists']:
-                LOG.info(_("Port %s updated."), device)
+                LOG.info(_LI("Port %s updated."), device)
             else:
-                LOG.debug(_("Device %s not defined on plugin"), device)
+                LOG.debug("Device %s not defined on plugin", device)
             self.eswitch.port_release(device)
         return resync
 
@@ -361,7 +361,7 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                 port_info['updated'])
 
     def daemon_loop(self):
-        LOG.info(_("eSwitch Agent Started!"))
+        LOG.info(_LI("eSwitch Agent Started!"))
         sync = True
         port_info = {'current': set(),
                      'added': set(),
@@ -372,8 +372,8 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             try:
                 port_info = self.scan_ports(previous=port_info, sync=sync)
             except exceptions.RequestTimeout:
-                LOG.exception(_("Request timeout in agent event loop "
-                                "eSwitchD is not responding - exiting..."))
+                LOG.exception(_LE("Request timeout in agent event loop "
+                                  "eSwitchD is not responding - exiting..."))
                 raise SystemExit(1)
             if sync:
                 LOG.info(_LI("Agent out of sync with plugin!"))
@@ -390,8 +390,8 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             if (elapsed < self._polling_interval):
                 time.sleep(self._polling_interval - elapsed)
             else:
-                LOG.debug(_("Loop iteration exceeded interval "
-                            "(%(polling_interval)s vs. %(elapsed)s)"),
+                LOG.debug("Loop iteration exceeded interval "
+                          "(%(polling_interval)s vs. %(elapsed)s)",
                           {'polling_interval': self._polling_interval,
                            'elapsed': elapsed})
 
@@ -404,20 +404,20 @@ def main():
         interface_mappings = q_utils.parse_mappings(
             cfg.CONF.ESWITCH.physical_interface_mappings)
     except ValueError as e:
-        LOG.error(_("Parsing physical_interface_mappings failed: %s."
-                    " Agent terminated!"), e)
+        LOG.error(_LE("Parsing physical_interface_mappings failed: %s. "
+                      "Agent terminated!"), e)
         sys.exit(1)
-    LOG.info(_("Interface mappings: %s"), interface_mappings)
+    LOG.info(_LI("Interface mappings: %s"), interface_mappings)
 
     try:
         agent = MlnxEswitchNeutronAgent(interface_mappings)
     except Exception as e:
-        LOG.error(_("Failed on Agent initialisation : %s."
-                    " Agent terminated!"), e)
+        LOG.error(_LE("Failed on Agent initialisation : %s. "
+                      "Agent terminated!"), e)
         sys.exit(1)
 
     # Start everything.
-    LOG.info(_("Agent initialised successfully, now running... "))
+    LOG.info(_LI("Agent initialised successfully, now running... "))
     agent.daemon_loop()
     sys.exit(0)
 

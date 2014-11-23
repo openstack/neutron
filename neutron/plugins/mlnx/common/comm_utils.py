@@ -53,8 +53,8 @@ class RetryDecorator(object):
                 try:
                     return original_func(*args, **kwargs)
                 except self.exc:
-                    LOG.debug(_("Request timeout - call again after "
-                              "%s seconds"), sleep_interval)
+                    LOG.debug("Request timeout - call again after "
+                              "%s seconds", sleep_interval)
                     time.sleep(sleep_interval)
                     num_of_iter -= 1
                     sleep_interval *= self.backoff_rate

@@ -16,6 +16,7 @@
 from oslo.serialization import jsonutils
 from oslo.utils import importutils
 
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.common import comm_utils
 from neutron.plugins.mlnx.common import exceptions
@@ -28,9 +29,8 @@ LOG = logging.getLogger(__name__)
 class EswitchUtils(object):
     def __init__(self, daemon_endpoint, timeout):
         if not zmq:
-            msg = _("Failed to import eventlet.green.zmq. "
-                    "Won't connect to eSwitchD - exiting...")
-            LOG.error(msg)
+            LOG.error(_LE("Failed to import eventlet.green.zmq. "
+                          "Won't connect to eSwitchD - exiting..."))
             raise SystemExit(1)
         self.__conn = None
         self.daemon = daemon_endpoint
@@ -72,22 +72,22 @@ class EswitchUtils(object):
             return
         elif msg['status'] == 'FAIL':
             msg_dict = dict(action=msg['action'], reason=msg['reason'])
-            error_msg = _("Action %(action)s failed: %(reason)s") % msg_dict
+            error_msg = _LE("Action %(action)s failed: %(reason)s") % msg_dict
         else:
-            error_msg = _("Unknown operation status %s") % msg['status']
+            error_msg = _LE("Unknown operation status %s") % msg['status']
         LOG.error(error_msg)
         raise exceptions.OperationFailed(err_msg=error_msg)
 
     def get_attached_vnics(self):
-        LOG.debug(_("get_attached_vnics"))
+        LOG.debug("get_attached_vnics")
         msg = jsonutils.dumps({'action': 'get_vnics', 'fabric': '*'})
         vnics = self.send_msg(msg)
         return vnics
 
     def set_port_vlan_id(self, physical_network,
                          segmentation_id, port_mac):
-        LOG.debug(_("Set Vlan  %(segmentation_id)s on Port %(port_mac)s "
-                    "on Fabric %(physical_network)s"),
+        LOG.debug("Set Vlan  %(segmentation_id)s on Port %(port_mac)s "
+                  "on Fabric %(physical_network)s",
                   {'port_mac': port_mac,
                    'segmentation_id': segmentation_id,
                    'physical_network': physical_network})
@@ -99,7 +99,7 @@ class EswitchUtils(object):
 
     def define_fabric_mappings(self, interface_mapping):
         for fabric, phy_interface in interface_mapping.iteritems():
-            LOG.debug(_("Define Fabric %(fabric)s on interface %(ifc)s"),
+            LOG.debug("Define Fabric %(fabric)s on interface %(ifc)s",
                       {'fabric': fabric,
                        'ifc': phy_interface})
             msg = jsonutils.dumps({'action': 'define_fabric_mapping',
@@ -108,7 +108,7 @@ class EswitchUtils(object):
             self.send_msg(msg)
 
     def port_up(self, fabric, port_mac):
-        LOG.debug(_("Port Up for %(port_mac)s on fabric %(fabric)s"),
+        LOG.debug("Port Up for %(port_mac)s on fabric %(fabric)s",
                   {'port_mac': port_mac, 'fabric': fabric})
         msg = jsonutils.dumps({'action': 'port_up',
                                'fabric': fabric,
@@ -117,7 +117,7 @@ class EswitchUtils(object):
         self.send_msg(msg)
 
     def port_down(self, fabric, port_mac):
-        LOG.debug(_("Port Down for %(port_mac)s on fabric %(fabric)s"),
+        LOG.debug("Port Down for %(port_mac)s on fabric %(fabric)s",
                   {'port_mac': port_mac, 'fabric': fabric})
         msg = jsonutils.dumps({'action': 'port_down',
                                'fabric': fabric,
@@ -126,7 +126,7 @@ class EswitchUtils(object):
         self.send_msg(msg)
 
     def port_release(self, fabric, port_mac):
-        LOG.debug(_("Port Release for %(port_mac)s on fabric %(fabric)s"),
+        LOG.debug("Port Release for %(port_mac)s on fabric %(fabric)s",
                   {'port_mac': port_mac, 'fabric': fabric})
         msg = jsonutils.dumps({'action': 'port_release',
                                'fabric': fabric,

@@ -43,6 +43,7 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils
@@ -116,7 +117,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver
         )
-        LOG.debug(_("Mellanox Embedded Switch Plugin initialisation complete"))
+        LOG.debug("Mellanox Embedded Switch Plugin initialisation complete")
 
     def _setup_rpc(self):
         # RPC support
@@ -157,23 +158,24 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.physical_net_type = cfg.CONF.MLNX.physical_network_type
         if self.physical_net_type not in (constants.TYPE_ETH,
                                           constants.TYPE_IB):
-            LOG.error(_("Invalid physical network type %(type)s."
-                      "Server terminated!"), {'type': self.physical_net_type})
+            LOG.error(_LE("Invalid physical network type %(type)s. "
+                          "Server terminated!"),
+                      {'type': self.physical_net_type})
             raise SystemExit(1)
         try:
             self.phys_network_type_maps = utils.parse_mappings(
                 cfg.CONF.MLNX.physical_network_type_mappings)
         except ValueError as e:
-            LOG.error(_("Parsing physical_network_type failed: %s."
-                      " Server terminated!"), e)
+            LOG.error(_LE("Parsing physical_network_type failed: %s. "
+                          "Server terminated!"), e)
             raise SystemExit(1)
         for network, type in self.phys_network_type_maps.iteritems():
             if type not in (constants.TYPE_ETH, constants.TYPE_IB):
-                LOG.error(_("Invalid physical network type %(type)s "
-                          " for network %(net)s. Server terminated!"),
+                LOG.error(_LE("Invalid physical network type %(type)s "
+                              "for network %(net)s. Server terminated!"),
                           {'net': network, 'type': type})
                 raise SystemExit(1)
-        LOG.info(_("Physical Network type mappings: %s"),
+        LOG.info(_LI("Physical Network type mappings: %s"),
                  self.phys_network_type_maps)
 
     def _parse_network_vlan_ranges(self):
@@ -181,9 +183,9 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
                 cfg.CONF.MLNX.network_vlan_ranges)
         except Exception as ex:
-            LOG.error(_("%s. Server terminated!"), ex)
+            LOG.error(_LE("%s. Server terminated!"), ex)
             sys.exit(1)
-        LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
+        LOG.info(_LI("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
     def _extend_network_dict_provider(self, context, network):
         binding = db.get_network_binding(context.session, network['id'])
@@ -203,8 +205,8 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if self.tenant_network_type not in [svc_constants.TYPE_VLAN,
                                             svc_constants.TYPE_LOCAL,
                                             svc_constants.TYPE_NONE]:
-            LOG.error(_("Invalid tenant_network_type: %s. "
-                        "Service terminated!"),
+            LOG.error(_LE("Invalid tenant_network_type: %s. "
+                          "Service terminated!"),
                       self.tenant_network_type)
             sys.exit(1)
 
@@ -238,7 +240,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             physical_network = None
 
         else:
-            msg = _("provider:network_type %s not supported") % network_type
+            msg = _LE("provider:network_type %s not supported") % network_type
             raise n_exc.InvalidInput(error_message=msg)
         physical_network = self._process_net_type(network_type,
                                                   physical_network,
@@ -247,28 +249,28 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _process_flat_net(self, segmentation_id_set):
         if segmentation_id_set:
-            msg = _("provider:segmentation_id specified for flat network")
+            msg = _LE("provider:segmentation_id specified for flat network")
             raise n_exc.InvalidInput(error_message=msg)
 
     def _process_vlan_net(self, segmentation_id, segmentation_id_set):
         if not segmentation_id_set:
-            msg = _("provider:segmentation_id required")
+            msg = _LE("provider:segmentation_id required")
             raise n_exc.InvalidInput(error_message=msg)
         if not utils.is_valid_vlan_tag(segmentation_id):
-            msg = (_("provider:segmentation_id out of range "
-                     "(%(min_id)s through %(max_id)s)") %
+            msg = (_LE("provider:segmentation_id out of range "
+                       "(%(min_id)s through %(max_id)s)") %
                    {'min_id': q_const.MIN_VLAN_TAG,
                     'max_id': q_const.MAX_VLAN_TAG})
             raise n_exc.InvalidInput(error_message=msg)
 
     def _process_local_net(self, physical_network_set, segmentation_id_set):
         if physical_network_set:
-            msg = _("provider:physical_network specified for local "
-                    "network")
+            msg = _LE("provider:physical_network specified for local "
+                      "network")
             raise n_exc.InvalidInput(error_message=msg)
         if segmentation_id_set:
-            msg = _("provider:segmentation_id specified for local "
-                    "network")
+            msg = _LE("provider:segmentation_id specified for local "
+                      "network")
             raise n_exc.InvalidInput(error_message=msg)
 
     def _process_net_type(self, network_type,
@@ -278,13 +280,13 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                             svc_constants.TYPE_FLAT]:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
-                    msg = _("Unknown provider:physical_network "
-                            "%s") % physical_network
+                    msg = _LE("Unknown provider:physical_network "
+                              "%s") % physical_network
                     raise n_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
                 physical_network = 'default'
             else:
-                msg = _("provider:physical_network required")
+                msg = _LE("provider:physical_network required")
                 raise n_exc.InvalidInput(error_message=msg)
         return physical_network
 
@@ -319,13 +321,13 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self.base_binding_dict[portbindings.VIF_TYPE] = vnic_type
                     return vnic_type
                 else:
-                    msg = (_("Unsupported vnic type %(vnic_type)s "
-                             "for physical network type %(net_type)s") %
+                    msg = (_LE("Unsupported vnic type %(vnic_type)s "
+                               "for physical network type %(net_type)s") %
                            {'vnic_type': vnic_type, 'net_type': phy_net_type})
             else:
-                msg = _("Invalid vnic_type on port_create")
+                msg = _LE("Invalid vnic_type on port_create")
         else:
-            msg = _("vnic_type is not defined in port profile")
+            msg = _LE("vnic_type is not defined in port profile")
         raise n_exc.InvalidInput(error_message=msg)
 
     def create_network(self, context, network):
@@ -365,11 +367,11 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_l3_create(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
             # note - exception will rollback entire transaction
-            LOG.debug(_("Created network: %s"), net['id'])
+            LOG.debug("Created network: %s", net['id'])
             return net
 
     def update_network(self, context, net_id, network):
-        LOG.debug(_("Update network"))
+        LOG.debug("Update network")
         provider._raise_if_updates_provider_attributes(network['network'])
 
         session = context.session
@@ -382,7 +384,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return net
 
     def delete_network(self, context, net_id):
-        LOG.debug(_("Delete network"))
+        LOG.debug("Delete network")
         session = context.session
         with session.begin(subtransactions=True):
             binding = db.get_network_binding(session, net_id)
@@ -430,7 +432,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return port
 
     def create_port(self, context, port):
-        LOG.debug(_("create_port with %s"), port)
+        LOG.debug("create_port with %s", port)
         session = context.session
         port_data = port['port']
         with session.begin(subtransactions=True):

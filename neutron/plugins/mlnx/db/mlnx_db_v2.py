@@ -20,6 +20,7 @@ from neutron.common import exceptions as n_exc
 import neutron.db.api as db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
+from neutron.i18n import _LW
 from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.common import config  # noqa
@@ -39,10 +40,10 @@ def _remove_non_allocatable_vlans(session, allocations,
                 # it's not allocatable, so check if its allocated
                 if not entry.allocated:
                     # it's not, so remove it from table
-                    LOG.debug(_(
+                    LOG.debug(
                         "Removing vlan %(seg_id)s on "
                         "physical network "
-                        "%(net)s from pool"),
+                        "%(net)s from pool",
                         {'seg_id': entry.segmentation_id,
                          'net': physical_network})
                     session.delete(entry)
@@ -60,8 +61,8 @@ def _remove_unconfigured_vlans(session, allocations):
     for entries in allocations.itervalues():
         for entry in entries:
             if not entry.allocated:
-                LOG.debug(_("Removing vlan %(seg_id)s on physical "
-                            "network %(net)s from pool"),
+                LOG.debug("Removing vlan %(seg_id)s on physical "
+                          "network %(net)s from pool",
                           {'seg_id': entry.segmentation_id,
                            'net': entry.physical_network})
                 session.delete(entry)
@@ -116,8 +117,8 @@ def reserve_network(session):
                  first())
         if not entry:
             raise n_exc.NoNetworkAvailable()
-        LOG.debug(_("Reserving vlan %(seg_id)s on physical network "
-                    "%(net)s from pool"),
+        LOG.debug("Reserving vlan %(seg_id)s on physical network "
+                  "%(net)s from pool",
                   {'seg_id': entry.segmentation_id,
                    'net': entry.physical_network})
         entry.allocated = True
@@ -135,13 +136,13 @@ def reserve_specific_network(session, physical_network, segmentation_id):
             if entry.allocated:
                 raise n_exc.VlanIdInUse(vlan_id=segmentation_id,
                                         physical_network=physical_network)
-            LOG.debug(_("Reserving specific vlan %(seg_id)s "
-                        "on physical network %(phy_net)s from pool"),
+            LOG.debug("Reserving specific vlan %(seg_id)s "
+                      "on physical network %(phy_net)s from pool",
                       log_args)
             entry.allocated = True
         except exc.NoResultFound:
-            LOG.debug(_("Reserving specific vlan %(seg_id)s on "
-                        "physical network %(phy_net)s outside pool"),
+            LOG.debug("Reserving specific vlan %(seg_id)s on "
+                      "physical network %(phy_net)s outside pool",
                       log_args)
             entry = mlnx_models_v2.SegmentationIdAllocation(physical_network,
                                                             segmentation_id)
@@ -167,19 +168,19 @@ def release_network(session, physical_network,
                     inside = True
                     break
             if inside:
-                LOG.debug(_("Releasing vlan %(seg_id)s "
-                            "on physical network "
-                            "%(phy_net)s to pool"),
+                LOG.debug("Releasing vlan %(seg_id)s "
+                          "on physical network "
+                          "%(phy_net)s to pool",
                           log_args)
             else:
-                LOG.debug(_("Releasing vlan %(seg_id)s "
-                            "on physical network "
-                            "%(phy_net)s outside pool"),
+                LOG.debug("Releasing vlan %(seg_id)s "
+                          "on physical network "
+                          "%(phy_net)s outside pool",
                           log_args)
                 session.delete(state)
         except exc.NoResultFound:
-            LOG.warning(_("vlan_id %(seg_id)s on physical network "
-                          "%(phy_net)s not found"),
+            LOG.warning(_LW("vlan_id %(seg_id)s on physical network "
+                            "%(phy_net)s not found"),
                         log_args)
 
 
@@ -209,7 +210,7 @@ def get_port_profile_binding(session, port_id):
 
 def get_port_from_device(device):
     """Get port from database."""
-    LOG.debug(_("get_port_from_device() called"))
+    LOG.debug("get_port_from_device() called")
     session = db.get_session()
     sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
 
@@ -236,7 +237,7 @@ def get_port_from_device(device):
 
 def get_port_from_device_mac(device_mac):
     """Get port from database."""
-    LOG.debug(_("Get_port_from_device_mac() called"))
+    LOG.debug("Get_port_from_device_mac() called")
     session = db.get_session()
     qry = session.query(models_v2.Port).filter_by(mac_address=device_mac)
     return qry.first()
@@ -244,7 +245,7 @@ def get_port_from_device_mac(device_mac):
 
 def set_port_status(port_id, status):
     """Set the port status."""
-    LOG.debug(_("Set_port_status as %s called"), status)
+    LOG.debug("Set_port_status as %s called", status)
     session = db.get_session()
     try:
         port = session.query(models_v2.Port).filter_by(id=port_id).one()
