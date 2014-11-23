@@ -21,6 +21,8 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
+from oslo import messaging
+
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -57,11 +59,12 @@ class NVSDAgentRpcCallback(n_rpc.RpcCallback):
             self.sg_agent.refresh_firewall()
 
 
-class SecurityGroupServerRpcApi(n_rpc.RpcProxy,
-                                sg_rpc.SecurityGroupServerRpcApiMixin):
+class SecurityGroupServerRpcApi(sg_rpc.SecurityGroupServerRpcApiMixin):
+
     def __init__(self, topic):
-        super(SecurityGroupServerRpcApi, self).__init__(
-            topic=topic, default_version=sg_rpc.SG_RPC_VERSION)
+        self.topic = topic
+        target = messaging.Target(topic=topic, version=sg_rpc.SG_RPC_VERSION)
+        self.client = n_rpc.get_client(target)
 
 
 class SecurityGroupAgentRpcCallback(

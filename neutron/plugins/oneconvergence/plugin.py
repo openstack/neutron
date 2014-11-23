@@ -15,6 +15,7 @@
 """Implementation of OneConvergence Neutron Plugin."""
 
 from oslo.config import cfg
+from oslo import messaging
 from oslo.utils import excutils
 from oslo.utils import importutils
 
@@ -61,21 +62,18 @@ class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
         return port
 
 
-class NVSDPluginV2AgentNotifierApi(n_rpc.RpcProxy,
-                                   sg_rpc.SecurityGroupAgentRpcApiMixin):
-
-    BASE_RPC_API_VERSION = '1.0'
+class NVSDPluginV2AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     def __init__(self, topic):
-        super(NVSDPluginV2AgentNotifierApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        self.topic = topic
         self.topic_port_update = topics.get_topic_name(topic, topics.PORT,
                                                        topics.UPDATE)
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def port_update(self, context, port):
-        self.fanout_cast(context,
-                         self.make_msg('port_update', port=port),
-                         topic=self.topic_port_update)
+        cctxt = self.client.prepare(topic=self.topic_port_update, fanout=True)
+        cctxt.cast(context, 'port_update', port=port)
 
 
 class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
