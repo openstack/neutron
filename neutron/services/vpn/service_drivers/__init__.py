@@ -15,6 +15,7 @@
 
 import abc
 
+from oslo import messaging
 import six
 
 from neutron.common import rpc as n_rpc
@@ -71,13 +72,14 @@ class VpnDriver(object):
         pass
 
 
-class BaseIPsecVpnAgentApi(n_rpc.RpcProxy):
+class BaseIPsecVpnAgentApi(object):
     """Base class for IPSec API to agent."""
 
     def __init__(self, topic, default_version, driver):
         self.topic = topic
         self.driver = driver
-        super(BaseIPsecVpnAgentApi, self).__init__(topic, default_version)
+        target = messaging.Target(topic=topic, version=default_version)
+        self.client = n_rpc.get_client(target)
 
     def _agent_notification(self, context, method, router_id,
                             version=None, **kwargs):
@@ -100,10 +102,8 @@ class BaseIPsecVpnAgentApi(n_rpc.RpcProxy):
                        'host': l3_agent.host,
                        'method': method,
                        'args': kwargs})
-            self.cast(
-                context, self.make_msg(method, **kwargs),
-                version=version,
-                topic='%s.%s' % (self.topic, l3_agent.host))
+            cctxt = self.client.prepare(server=l3_agent.host, version=version)
+            cctxt.cast(context, method, **kwargs)
 
     def vpnservice_updated(self, context, router_id, **kwargs):
         """Send update event of vpnservices."""

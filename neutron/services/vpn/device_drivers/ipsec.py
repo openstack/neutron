@@ -442,9 +442,12 @@ class OpenSwanProcess(BaseSwanProcess):
         self.connection_status = {}
 
 
-class IPsecVpnDriverApi(n_rpc.RpcProxy):
+class IPsecVpnDriverApi(object):
     """IPSecVpnDriver RPC api."""
-    IPSEC_PLUGIN_VERSION = '1.0'
+
+    def __init__(self, topic):
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def get_vpn_services_on_host(self, context, host):
         """Get list of vpnservices.
@@ -452,10 +455,8 @@ class IPsecVpnDriverApi(n_rpc.RpcProxy):
         The vpnservices including related ipsec_site_connection,
         ikepolicy and ipsecpolicy on this host
         """
-        return self.call(context,
-                         self.make_msg('get_vpn_services_on_host',
-                                       host=host),
-                         version=self.IPSEC_PLUGIN_VERSION)
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'get_vpn_services_on_host', host=host)
 
     def update_status(self, context, status):
         """Update local status.
@@ -463,10 +464,8 @@ class IPsecVpnDriverApi(n_rpc.RpcProxy):
         This method call updates status attribute of
         VPNServices.
         """
-        return self.cast(context,
-                         self.make_msg('update_status',
-                                       status=status),
-                         version=self.IPSEC_PLUGIN_VERSION)
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'update_status', status=status)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -504,7 +503,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
         self.endpoints = [self]
         self.conn.create_consumer(node_topic, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
-        self.agent_rpc = IPsecVpnDriverApi(topics.IPSEC_DRIVER_TOPIC, '1.0')
+        self.agent_rpc = IPsecVpnDriverApi(topics.IPSEC_DRIVER_TOPIC)
         self.process_status_cache_check = loopingcall.FixedIntervalLoopingCall(
             self.report_status, self.context)
         self.process_status_cache_check.start(
