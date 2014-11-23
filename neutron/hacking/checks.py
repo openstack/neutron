@@ -73,12 +73,28 @@ def _directory_to_check_translation(filename):
             "neutron/scheduler",
             "neutron/server",
             "neutron/services",
+            #"neutron/plugins",
+            "neutron/plugins/bigswitch",
+            #"neutron/plugins/brocade",
             "neutron/plugins/cisco",
-            "neutron/plugins/ml2",
-            "neutron/plugins/openvswitch",
+            "neutron/plugins/common",
+            #"neutron/plugins/embrane",
+            #"neutron/plugins/hyperv",
+            #"neutron/plugins/ibm",
             "neutron/plugins/linuxbridge",
-            "neutron/plugins/vmware",
-            "neutron/plugins/mlnx"]
+            #"neutron/plugins/metaplugin",
+            #"neutron/plugins/midonet",
+            "neutron/plugins/ml2",
+            "neutron/plugins/mlnx",
+            #"neutron/plugins/nec",
+            #"neutron/plugins/nuage",
+            #"neutron/plugins/ofagent",
+            #"neutron/plugins/oneconvergence",
+            #"neutron/plugins/opencontrail",
+            "neutron/plugins/openvswitch",
+            #"neutron/plugins/plumgrid",
+            #"neutron/plugins/sriovnicagent",
+            "neutron/plugins/vmware"]
     return any([dir in filename for dir in dirs])
 
 

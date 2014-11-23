@@ -34,6 +34,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
+from neutron.i18n import _LE
 from neutron.openstack.common import log
 from neutron.plugins.bigswitch import config as pl_config
 
@@ -51,8 +52,8 @@ class IVSBridge(ovs_lib.OVSBridge):
             return utils.execute(full_args, root_helper=self.root_helper)
         except Exception as e:
             with excutils.save_and_reraise_exception() as ctxt:
-                LOG.error(_("Unable to execute %(cmd)s. "
-                            "Exception: %(exception)s"),
+                LOG.error(_LE("Unable to execute %(cmd)s. "
+                              "Exception: %(exception)s"),
                           {'cmd': full_args, 'exception': e})
                 if not check_error:
                     ctxt.reraise = False
@@ -112,14 +113,14 @@ class RestProxyAgent(n_rpc.RpcCallback,
                                                      consumers)
 
     def port_update(self, context, **kwargs):
-        LOG.debug(_("Port update received"))
+        LOG.debug("Port update received")
         port = kwargs.get('port')
         vif_port = self.int_br.get_vif_port_by_id(port['id'])
         if not vif_port:
-            LOG.debug(_("Port %s is not present on this host."), port['id'])
+            LOG.debug("Port %s is not present on this host.", port['id'])
             return
 
-        LOG.debug(_("Port %s found. Refreshing firewall."), port['id'])
+        LOG.debug("Port %s found. Refreshing firewall.", port['id'])
         if ext_sg.SECURITYGROUPS in port:
             self.sg_agent.refresh_firewall()
 
@@ -147,18 +148,18 @@ class RestProxyAgent(n_rpc.RpcCallback,
             try:
                 port_info = self._update_ports(ports)
                 if port_info:
-                    LOG.debug(_("Agent loop has new device"))
+                    LOG.debug("Agent loop has new device")
                     self._process_devices_filter(port_info)
                     ports = port_info['current']
             except Exception:
-                LOG.exception(_("Error in agent event loop"))
+                LOG.exception(_LE("Error in agent event loop"))
 
             elapsed = max(time.time() - start, 0)
             if (elapsed < self.polling_interval):
                 time.sleep(self.polling_interval - elapsed)
             else:
-                LOG.debug(_("Loop iteration exceeded interval "
-                            "(%(polling_interval)s vs. %(elapsed)s)!"),
+                LOG.debug("Loop iteration exceeded interval "
+                          "(%(polling_interval)s vs. %(elapsed)s)!",
                           {'polling_interval': self.polling_interval,
                            'elapsed': elapsed})
 

@@ -221,5 +221,5 @@ class HashHandler(object):
             else:
                 conhash = ConsistencyHash(hash_id=self.hash_id, hash=hash)
                 self.session.merge(conhash)
-        LOG.debug(_("Consistency hash for group %(hash_id)s updated "
-                    "to %(hash)s"), {'hash_id': self.hash_id, 'hash': hash})
+        LOG.debug("Consistency hash for group %(hash_id)s updated "
+                  "to %(hash)s", {'hash_id': self.hash_id, 'hash': hash})
