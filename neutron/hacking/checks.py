@@ -59,7 +59,8 @@ def _directory_to_check_translation(filename):
             "neutron/server",
             "neutron/services/firewall",
             "neutron/services/l3_router",
-            "neutron/services/loadbalancer"]
+            "neutron/services/loadbalancer",
+            "neutron/services/metering"]
     return any([dir in filename for dir in dirs])
 
 
