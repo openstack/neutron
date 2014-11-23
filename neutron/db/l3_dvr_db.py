@@ -77,11 +77,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             LOG.info(_LI("Centralizing distributed router %s "
                          "is not supported"), router_db['id'])
             raise NotImplementedError()
+        # TODO(Swami): Add a check for Services FWaaS and VPNaaS
 
     def _update_distributed_attr(
         self, context, router_id, router_db, data, gw_info):
         """Update the model to support the dvr case of a router."""
-        if not attributes.is_attr_set(gw_info) and data.get('distributed'):
+        if data.get('distributed'):
             old_owner = l3_const.DEVICE_OWNER_ROUTER_INTF
             new_owner = DEVICE_OWNER_DVR_INTERFACE
             for rp in router_db.attached_ports.filter_by(port_type=old_owner):
@@ -93,15 +94,28 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             router_db = super(
                 L3_NAT_with_dvr_db_mixin, self)._update_router_db(
                     context, router_id, data, gw_info)
+            migrating_to_distributed = (
+                not router_db.extra_attributes.distributed and
+                data.get('distributed') is True)
             self._validate_router_migration(router_db, data)
-            # FIXME(swami): need to add migration status so that the scheduler
-            # can pick the migration request and move stuff over. For now
-            # only the distributed flag and router interface's owner change.
-            # Instead of complaining on _validate_router_migration, let's
-            # succeed here and complete the task in a follow-up patch
             router_db.extra_attributes.update(data)
             self._update_distributed_attr(
                 context, router_id, router_db, data, gw_info)
+            if migrating_to_distributed:
+                if router_db['gw_port_id']:
+                    # If the Legacy router is getting migrated to a DVR
+                    # router, make sure to create corresponding
+                    # snat interface ports that are to be consumed by
+                    # the Service Node.
+                    if not self.create_snat_intf_ports_if_not_exists(
+                        context.elevated(), router_db):
+                        LOG.debug("SNAT interface ports not created: %s",
+                                  router_db['id'])
+                cur_agents = self.list_l3_agents_hosting_router(
+                    context, router_db['id'])['agents']
+                for agent in cur_agents:
+                    self._unbind_router(context, router_db['id'],
+                                        agent['id'])
             return router_db
 
     def _delete_current_gw_port(self, context, router_id, router, new_network):
@@ -116,6 +130,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         super(L3_NAT_with_dvr_db_mixin,
               self)._create_gw_port(context, router_id,
                                     router, new_network)
+        # Make sure that the gateway port exists before creating the
+        # snat interface ports for distributed router.
         if router.extra_attributes.distributed and router.gw_port:
             snat_p_list = self.create_snat_intf_ports_if_not_exists(
                 context.elevated(), router)
