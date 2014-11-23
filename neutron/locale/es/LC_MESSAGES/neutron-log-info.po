@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-20 06:08+0000\n"
-"PO-Revision-Date: 2014-11-19 22:42+0000\n"
+"POT-Creation-Date: 2014-11-23 06:06+0000\n"
+"PO-Revision-Date: 2014-11-21 13:33+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
 "es/)\n"
@@ -37,12 +37,12 @@ msgstr "Sincronizando estado"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:2011
+#: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:2001
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "agent_updated por el lado del servidor %s!"
 
-#: neutron/agent/l3_agent.py:1913
+#: neutron/agent/l3_agent.py:1903
 msgid "L3 agent started"
 msgstr "Se ha iniciado al agente L3"
 
@@ -68,42 +68,42 @@ msgstr "La extensión security-group se ha inhabilitado."
 msgid "Disabled allowed-address-pairs extension."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:198
+#: neutron/agent/securitygroups_rpc.py:196
 #, python-format
 msgid ""
 "Skipping method %s as firewall is disabled or configured as "
 "NoopFirewallDriver."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:209
+#: neutron/agent/securitygroups_rpc.py:207
 #, python-format
 msgid "Preparing filters for devices %s"
 msgstr "Preparando filtros para dispositivos %s"
 
-#: neutron/agent/securitygroups_rpc.py:239
+#: neutron/agent/securitygroups_rpc.py:237
 #, python-format
 msgid "Security group rule updated %r"
 msgstr "Se ha actualizado la regla de grupo de seguridad %r"
 
-#: neutron/agent/securitygroups_rpc.py:246
+#: neutron/agent/securitygroups_rpc.py:244
 #, python-format
 msgid "Security group member updated %r"
 msgstr "Se ha actualizado el miembro de grupo de seguridad %r"
 
-#: neutron/agent/securitygroups_rpc.py:268
+#: neutron/agent/securitygroups_rpc.py:266
 msgid "Provider rule updated"
 msgstr "Se ha actualizado regla de proveedor"
 
-#: neutron/agent/securitygroups_rpc.py:280
+#: neutron/agent/securitygroups_rpc.py:278
 #, python-format
 msgid "Remove device filter for %r"
 msgstr "Eliminar filtro de dispositivo para %r"
 
-#: neutron/agent/securitygroups_rpc.py:290
+#: neutron/agent/securitygroups_rpc.py:288
 msgid "Refresh firewall rules"
 msgstr "Renovar reglas de cortafuegos"
 
-#: neutron/agent/securitygroups_rpc.py:294
+#: neutron/agent/securitygroups_rpc.py:292
 msgid "No ports here to refresh firewall"
 msgstr ""
 
@@ -148,6 +148,15 @@ msgstr ""
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
 msgstr ""
+
+#: neutron/common/config.py:165
+msgid "Logging enabled!"
+msgstr "Registro habilitado."
+
+#: neutron/common/config.py:181
+#, python-format
+msgid "Config paste file: %s"
+msgstr "Archivo de configuración de pegar: %s"
 
 #: neutron/common/ipv6_utils.py:63
 msgid "IPv6 is not enabled on this system."
@@ -257,6 +266,11 @@ msgstr ""
 msgid "%d probe(s) deleted"
 msgstr ""
 
+#: neutron/notifiers/nova.py:263
+#, python-format
+msgid "Nova event response: %s"
+msgstr ""
+
 #: neutron/openstack/common/eventlet_backdoor.py:140
 #, python-format
 msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
@@ -334,7 +348,11 @@ msgstr "Espéra llamada después que el hilo ha sido matado. Limpiando."
 msgid "Waiting on %d children to exit"
 msgstr "En espera de %d hijos para salir"
 
-#: neutron/plugins/ml2/plugin.py:955 neutron/plugins/ml2/plugin.py:1091
+#: neutron/plugins/bigswitch/db/consistency_db.py:196
+msgid "Failed to take lock. Another process updated the DB first."
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:953 neutron/plugins/ml2/plugin.py:1089
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -364,7 +382,7 @@ msgid "APIC host agent: started on %s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:831
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:834
 msgid "Agent out of sync with plugin!"
 msgstr "El agente está fuera de sincronización con el plug-in."
 
@@ -399,50 +417,127 @@ msgid "Agent initialized successfully, now running... "
 msgstr ""
 "El agente se ha inicializado satisfactoriamente, ahora se está ejecutando... "
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:446
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:449
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr "Asignando %(vlan_id)s como vlan local para net-id=%(net_uuid)s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:496
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:499
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "Reclamando vlan = %(vlan_id)s de net-id = %(net_uuid)s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:564
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:567
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr "port_unbound() net_uuid %s no está en local_vlan_map"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:709
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:712
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be "
 "processed"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:723
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:726
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "Se ha actualizado el puerto %(device)s. Detalles: %(details)s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:742
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:745
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:753
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:756
 #, python-format
 msgid "Attachment %s removed"
 msgstr "Se ha eliminado el adjunto %s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:836
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:839
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "Túnel de agente fuera de sincronización con el plug-in. "
 
 #: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:198
 #, python-format
 msgid "L2 Agent operating in DVR Mode with MAC %s"
+msgstr ""
+
+#: neutron/scheduler/dhcp_agent_scheduler.py:52
+#, python-format
+msgid "Agent %s already present"
+msgstr ""
+
+#: neutron/server/__init__.py:55
+msgid "RPC was already started in parent process by plugin."
+msgstr ""
+
+#: neutron/services/l3_router/l3_arista.py:246
+msgid "Syncing Neutron Router DB <-> EOS"
+msgstr ""
+
+#: neutron/services/l3_router/brocade/l3_router_plugin.py:74
+#, python-format
+msgid "rbridge id %s"
+msgstr ""
+
+#: neutron/services/l3_router/brocade/l3_router_plugin.py:153
+#, python-format
+msgid "BrocadeSVIPlugin.add_router_interface ports_count %d"
+msgstr ""
+
+#: neutron/services/loadbalancer/agent/agent_manager.py:333
+#, python-format
+msgid "Destroying pool %s due to agent disabling"
+msgstr ""
+
+#: neutron/services/loadbalancer/agent/agent_manager.py:336
+#, python-format
+msgid "Agent_updated by server side %s!"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:168
+#, python-format
+msgid "NetScaler driver poolmember creation: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:415
+#, python-format
+msgid "Found an existing SNAT port for subnet %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:418
+#, python-format
+msgid "Found no SNAT ports for subnet %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:438
+#, python-format
+msgid "Created SNAT port: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:445
+#, python-format
+msgid "Removed SNAT port: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:451
+#, python-format
+msgid "No SNAT port found for subnet %s. Creating one..."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:458
+#, python-format
+msgid "SNAT port: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/netscaler/netscaler_driver.py:467
+#, python-format
+msgid "Removing SNAT port for subnet %s as this is the last pool using it..."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:417
+msgid "Starting operation completion handling thread"
 msgstr ""
 
 #: neutron/services/vpn/plugin.py:45
@@ -481,12 +576,12 @@ msgstr ""
 msgid "Removed mapping for connection %s"
 msgstr ""
 
-#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:63
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:62
 #, python-format
 msgid "spawned: %d"
 msgstr ""
 
-#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:75
+#: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:74
 #, python-format
 msgid "_handle_request called: %s"
 msgstr ""

@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev362.g9b1cda6\n"
+"Project-Id-Version: neutron 2015.1.dev434.g6a589e7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-20 06:08+0000\n"
+"POT-Creation-Date: 2014-11-23 06:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,7 +56,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:585 neutron/agent/l3_agent.py:2001
+#: neutron/agent/dhcp_agent.py:585 neutron/agent/l3_agent.py:1991
 #: neutron/agent/metadata/agent.py:411
 msgid ""
 "Neutron server does not support state report. State report for this agent"
@@ -84,27 +84,27 @@ msgstr ""
 msgid "Info for router %s were not found. Skipping router removal"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1123
+#: neutron/agent/l3_agent.py:1119
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
-#: neutron/agent/rpc.py:107
+#: neutron/agent/rpc.py:102
 msgid "DVR functionality requires a server upgrade."
 msgstr ""
 
 #: neutron/agent/securitygroups_rpc.py:67
-#: neutron/agent/securitygroups_rpc.py:159
+#: neutron/agent/securitygroups_rpc.py:157
 msgid "Driver configuration doesn't match with enable_security_group"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:114
+#: neutron/agent/securitygroups_rpc.py:112
 msgid ""
 "Security group agent binding currently not set. This should be set by the"
 " end of the init process."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:186
+#: neutron/agent/securitygroups_rpc.py:184
 msgid ""
 "security_group_info_for_devices rpc call not supported by the server, "
 "falling back to old security_group_rules_for_devices which scales worse."
@@ -266,6 +266,25 @@ msgstr ""
 msgid "vpnservice %s in db is already deleted"
 msgstr ""
 
+#: neutron/debug/debug_agent.py:123
+#, python-format
+msgid "Failed to delete namespace %s"
+msgstr ""
+
+#: neutron/notifiers/nova.py:186
+msgid "Port ID not set! Nova will not be notified of port status change."
+msgstr ""
+
+#: neutron/notifiers/nova.py:242
+#, python-format
+msgid "Nova returned NotFound for event: %s"
+msgstr ""
+
+#: neutron/notifiers/nova.py:260
+#, python-format
+msgid "Nova event: %s returned with failed status"
+msgstr ""
+
 #: neutron/openstack/common/loopingcall.py:87
 #, python-format
 msgid "task %(func_name)s run outlasted interval by %(delay).2f sec"
@@ -279,6 +298,22 @@ msgstr ""
 #: neutron/openstack/common/service.py:356
 #, python-format
 msgid "pid %d not in child list"
+msgstr ""
+
+#: neutron/plugins/bigswitch/db/consistency_db.py:189
+#, python-format
+msgid ""
+"Gave up waiting for consistency DB lock, trying to take it. Current hash "
+"is: %s"
+msgstr ""
+
+#: neutron/plugins/bigswitch/db/consistency_db.py:205
+msgid "Hash record already gone, no lock to clear."
+msgstr ""
+
+#: neutron/plugins/bigswitch/db/consistency_db.py:209
+#, python-format
+msgid "Another server already removed the lock. %s"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_tunnel.py:143
@@ -358,12 +393,12 @@ msgstr ""
 msgid "Unable to create tunnel port. Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:637
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:640
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:744
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:747
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
@@ -381,6 +416,116 @@ msgstr ""
 msgid ""
 "L2 agent could not get DVR MAC address from server. Retrying. Detailed "
 "message: %s"
+msgstr ""
+
+#: neutron/scheduler/dhcp_agent_scheduler.py:80
+#: neutron/scheduler/dhcp_agent_scheduler.py:89
+msgid "No more DHCP agents"
+msgstr ""
+
+#: neutron/scheduler/dhcp_agent_scheduler.py:120
+#, python-format
+msgid "DHCP agent %s is not active"
+msgstr ""
+
+#: neutron/scheduler/l3_agent_scheduler.py:156
+#, python-format
+msgid "No routers compatible with L3 agent configuration on host %s"
+msgstr ""
+
+#: neutron/scheduler/l3_agent_scheduler.py:181
+msgid "No active L3 agents"
+msgstr ""
+
+#: neutron/scheduler/l3_agent_scheduler.py:193
+#, python-format
+msgid "No L3 agents can host the router %s"
+msgstr ""
+
+#: neutron/services/firewall/fwaas_plugin.py:71
+#, python-format
+msgid "Firewall %(fw)s unexpectedly deleted by agent, status was %(status)s"
+msgstr ""
+
+#: neutron/services/firewall/agents/varmour/varmour_router.py:102
+#, python-format
+msgid "Ignoring multiple IPs on router port %s"
+msgstr ""
+
+#: neutron/services/firewall/agents/varmour/varmour_router.py:285
+msgid "Unable to parse interface mapping."
+msgstr ""
+
+#: neutron/services/firewall/agents/varmour/varmour_router.py:288
+msgid "Unable to read interface mapping."
+msgstr ""
+
+#: neutron/services/firewall/drivers/varmour/varmour_fwaas.py:109
+msgid "Unsupported IP version rule."
+msgstr ""
+
+#: neutron/services/loadbalancer/agent_scheduler.py:110
+#, python-format
+msgid "No active lbaas agents for pool %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/agent_scheduler.py:116
+#, python-format
+msgid "No lbaas agent supporting device driver %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:72
+#, python-format
+msgid "Multiple lbaas agents found on host %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:164
+#, python-format
+msgid ""
+"Cannot update status: %(obj_type)s %(obj_id)s not found in the DB, it was"
+" probably deleted concurrently"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/driver.py:130
+#, python-format
+msgid "Subnet assigned to pool %s doesn't exist, backend port can't be created"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/agent/lb_operations.py:110
+#, python-format
+msgid ""
+"The load balancer %s had no physical representation, likely already "
+"deleted"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:172
+#, python-format
+msgid "Stats socket not found for pool %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:214
+#, python-format
+msgid "Error while connecting to stats socket: %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:298
+#, python-format
+msgid "pip nport delete failed: %r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:688
+#, python-format
+msgid "Fliping servers. Current is: %(server)s, switching to %(secondary)s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:709
+#, python-format
+msgid "vDirect server is not responding (%s)."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:713
+#, python-format
+msgid "vDirect server is not active (%s)."
 msgstr ""
 
 #: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:115
