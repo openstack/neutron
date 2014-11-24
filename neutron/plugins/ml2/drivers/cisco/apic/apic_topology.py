@@ -21,6 +21,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
@@ -138,30 +139,21 @@ class ApicTopologyService(manager.Manager):
                 self.peers[(host, interface)] = nlink
 
 
-class ApicTopologyServiceNotifierApi(rpc.RpcProxy):
-
-    RPC_API_VERSION = '1.1'
+class ApicTopologyServiceNotifierApi(object):
 
     def __init__(self):
-        super(ApicTopologyServiceNotifierApi, self).__init__(
-            topic=TOPIC_APIC_SERVICE,
-            default_version=self.RPC_API_VERSION)
+        target = messaging.Target(topic=TOPIC_APIC_SERVICE, version='1.0')
+        self.client = rpc.get_client(target)
 
     def update_link(self, context, host, interface, mac, switch, module, port):
-        self.fanout_cast(
-            context, self.make_msg(
-                'update_link',
-                host=host, interface=interface, mac=mac,
-                switch=switch, module=module, port=port),
-            topic=TOPIC_APIC_SERVICE)
+        cctxt = self.client.prepare(version='1.1', fanout=True)
+        cctxt.cast(context, 'update_link', host=host, interface=interface,
+                   mac=mac, switch=switch, module=module, port=port)
 
     def delete_link(self, context, host, interface):
-        self.fanout_cast(
-            context, self.make_msg(
-                'delete_link',
-                host=host, interface=interface, mac=None,
-                switch=0, module=0, port=0),
-            topic=TOPIC_APIC_SERVICE)
+        cctxt = self.client.prepare(version='1.1', fanout=True)
+        cctxt.cast(context, 'delete_link', host=host, interface=interface,
+                   mac=None, switch=0, module=0, port=0)
 
 
 class ApicTopologyAgent(manager.Manager):
