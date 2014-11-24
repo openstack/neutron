@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-23 06:06+0000\n"
-"PO-Revision-Date: 2014-11-21 13:33+0000\n"
+"POT-Creation-Date: 2014-11-24 06:07+0000\n"
+"PO-Revision-Date: 2014-11-23 20:04+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
@@ -38,6 +38,7 @@ msgid "Synchronizing state complete"
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:2001
+#: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "服务器端 %s 已更新代理！"
@@ -214,12 +215,12 @@ msgstr "正在跳过端口 %s，因为没有在该端口上配置任何 IP"
 msgid "Centralizing distributed router %s is not supported"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:442
+#: neutron/db/l3_dvr_db.py:458
 #, python-format
 msgid "Agent Gateway port does not exist, so create one: %s"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:525
+#: neutron/db/l3_dvr_db.py:541
 #, python-format
 msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
@@ -463,6 +464,11 @@ msgstr ""
 msgid "RPC was already started in parent process by plugin."
 msgstr ""
 
+#: neutron/services/service_base.py:99
+#, python-format
+msgid "Default provider is not specified for service type %s"
+msgstr ""
+
 #: neutron/services/l3_router/l3_arista.py:246
 msgid "Syncing Neutron Router DB <-> EOS"
 msgstr ""
@@ -531,26 +537,36 @@ msgstr ""
 msgid "Starting operation completion handling thread"
 msgstr ""
 
+#: neutron/services/metering/agents/metering_agent.py:94
+#, python-format
+msgid "Loading Metering driver %s"
+msgstr ""
+
+#: neutron/services/metering/drivers/iptables/iptables_driver.py:92
+#, python-format
+msgid "Loading interface driver %s"
+msgstr ""
+
 #: neutron/services/vpn/plugin.py:45
 #, python-format
 msgid "VPN plugin using service driver: %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:335
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:337
 msgid "Sending status report update to plugin"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:715
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:717
 #, python-format
 msgid "FAILED: Create of IPSec site-to-site connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:718
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:720
 #, python-format
 msgid "SUCCESS: Created IPSec site-to-site connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:733
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:735
 #, python-format
 msgid "SUCCESS: Deleted IPSec site-to-site connection %s"
 msgstr ""

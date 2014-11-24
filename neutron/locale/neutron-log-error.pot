@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev434.g6a589e7\n"
+"Project-Id-Version: neutron 2015.1.dev449.gd42055c\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-23 06:07+0000\n"
+"POT-Creation-Date: 2014-11-24 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,6 +52,7 @@ msgstr ""
 #: neutron/agent/metadata/agent.py:416
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:277
 #: neutron/services/loadbalancer/agent/agent_manager.py:120
+#: neutron/services/metering/agents/metering_agent.py:273
 msgid "Failed reporting state!"
 msgstr ""
 
@@ -132,6 +133,7 @@ msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
 #: neutron/agent/l3_agent.py:1880
+#: neutron/services/metering/agents/metering_agent.py:57
 msgid "Failed synchronizing routers"
 msgstr ""
 
@@ -585,6 +587,11 @@ msgstr ""
 msgid "Not enough candidates, a HA router needs at least %s agents"
 msgstr ""
 
+#: neutron/services/service_base.py:88
+#, python-format
+msgid "Error loading provider '%(provider)s' for service %(service_type)s"
+msgstr ""
+
 #: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:144
 #, python-format
 msgid "Firewall Driver Error for %(func_name)s for fw: %(fwid)s"
@@ -817,6 +824,16 @@ msgstr ""
 msgid "Post-operation function %(func)r failed after operation %(oper)r"
 msgstr ""
 
+#: neutron/services/metering/agents/metering_agent.py:175
+#, python-format
+msgid "Driver %(driver)s does not implement %(func)s"
+msgstr ""
+
+#: neutron/services/metering/agents/metering_agent.py:179
+#, python-format
+msgid "Driver %(driver)s:%(func)s runtime error"
+msgstr ""
+
 #: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:124
 #, python-format
 msgid "%(method)s: Unable to connect to CSR(%(host)s)"
@@ -837,18 +854,18 @@ msgstr ""
 msgid "%(method)s: Request timeout for CSR(%(host)s)"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:621
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:623
 #, python-format
 msgid "Unable to create %(resource)s %(which)s: %(status)d"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:634
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:662
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:636
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:664
 #, python-format
 msgid "Internal error - '%s' is not defined"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:741
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:743
 #, python-format
 msgid "Unable to change %(tunnel)s admin state to %(state)s"
 msgstr ""
