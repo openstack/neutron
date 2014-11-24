@@ -514,6 +514,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         if not subnet['gateway_ip']:
             msg = _('Subnet for router interface must have a gateway IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
+        if (subnet['ip_version'] == 6 and subnet['ipv6_ra_mode'] is None
+                and subnet['ipv6_address_mode'] is not None):
+            msg = (_('IPv6 subnet %s configured to receive RAs from an '
+                   'external router cannot be added to Neutron Router.') %
+                   subnet['id'])
+            raise n_exc.BadRequest(resource='router', msg=msg)
         self._check_for_dup_router_subnet(context, router,
                                           subnet['network_id'],
                                           subnet_id,
