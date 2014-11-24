@@ -46,6 +46,7 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import context
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.brocade.db import models as brocade_db
 from neutron.plugins.brocade import vlanbm as vbm
@@ -90,7 +91,7 @@ class BridgeRpcCallbacks(object):
 
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
+        LOG.debug("Device %(device)s details requested from %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         port = brocade_db.get_port(rpc_context,
                                    device[len(q_const.TAP_DEVICE_PREFIX):])
@@ -105,7 +106,7 @@ class BridgeRpcCallbacks(object):
 
         else:
             entry = {'device': device}
-            LOG.debug(_("%s can not be found in database"), device)
+            LOG.debug("%s can not be found in database", device)
         return entry
 
     def get_devices_details_list(self, rpc_context, **kwargs):
@@ -132,7 +133,7 @@ class BridgeRpcCallbacks(object):
         else:
             entry = {'device': device,
                      'exists': False}
-            LOG.debug(_("%s can not be found in database"), device)
+            LOG.debug("%s can not be found in database", device)
         return entry
 
 
@@ -292,8 +293,8 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                             vlan_id)
             except Exception:
                 # Proper formatting
-                LOG.exception(_("Brocade NOS driver error"))
-                LOG.debug(_("Returning the allocated vlan (%d) to the pool"),
+                LOG.exception(_LE("Brocade NOS driver error"))
+                LOG.debug("Returning the allocated vlan (%d) to the pool",
                           vlan_id)
                 self._vlan_bitmap.release_vlan(int(vlan_id))
                 raise Exception(_("Brocade plugin raised exception, "
@@ -302,7 +303,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             brocade_db.create_network(context, net_uuid, vlan_id)
             self._process_l3_create(context, net, network['network'])
 
-        LOG.info(_("Allocated vlan (%d) from the pool"), vlan_id)
+        LOG.info(_LI("Allocated vlan (%d) from the pool"), vlan_id)
         return net
 
     def delete_network(self, context, net_id):
@@ -336,7 +337,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                             vlan_id)
             except Exception:
                 # Proper formatting
-                LOG.exception(_("Brocade NOS driver error"))
+                LOG.exception(_LE("Brocade NOS driver error"))
                 raise Exception(_("Brocade plugin raised exception, "
                                   "check logs"))
 
@@ -389,7 +390,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                       mac)
             except Exception:
                 # Proper formatting
-                LOG.exception(_("Brocade NOS driver error"))
+                LOG.exception(_LE("Brocade NOS driver error"))
                 raise Exception(_("Brocade plugin raised exception, "
                                   "check logs"))
 
@@ -419,7 +420,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                          vlan_id,
                                                          mac)
             except Exception:
-                LOG.exception(_("Brocade NOS driver error"))
+                LOG.exception(_LE("Brocade NOS driver error"))
                 raise Exception(
                     _("Brocade plugin raised exception, check logs"))
 
