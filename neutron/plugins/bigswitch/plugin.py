@@ -47,6 +47,7 @@ import re
 
 import eventlet
 from oslo.config import cfg
+from oslo import messaging
 from sqlalchemy.orm import exc as sqlexc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -92,22 +93,18 @@ SYNTAX_ERROR_MESSAGE = _('Syntax error in server config file, aborting plugin')
 METADATA_SERVER_IP = '169.254.169.254'
 
 
-class AgentNotifierApi(n_rpc.RpcProxy,
-                       sg_rpc.SecurityGroupAgentRpcApiMixin):
-
-    BASE_RPC_API_VERSION = '1.1'
+class AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     def __init__(self, topic):
-        super(AgentNotifierApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
-        self.topic_port_update = topics.get_topic_name(
-            topic, topics.PORT, topics.UPDATE)
+        self.topic = topic
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def port_update(self, context, port):
-        self.fanout_cast(context,
-                         self.make_msg('port_update',
-                                       port=port),
-                         topic=self.topic_port_update)
+        topic_port_update = topics.get_topic_name(self.client.target.topic,
+                                                  topics.PORT, topics.UPDATE)
+        cctxt = self.client.prepare(fanout=True, topic=topic_port_update)
+        cctxt.cast(context, 'port_update', port=port)
 
 
 class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
