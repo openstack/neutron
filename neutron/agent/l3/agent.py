@@ -202,6 +202,16 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                    default='$state_path/metadata_proxy',
                    help=_('Location of Metadata Proxy UNIX domain '
                           'socket')),
+        cfg.StrOpt('metadata_proxy_user',
+                   default='',
+                   help=_("User (uid or name) running metadata proxy after "
+                          "its initialization (if empty: L3 agent effective "
+                          "user)")),
+        cfg.StrOpt('metadata_proxy_group',
+                   default='',
+                   help=_("Group (gid or name) running metadata proxy after "
+                          "its initialization (if empty: L3 agent effective "
+                          "group)"))
     ]
 
     def __init__(self, host, conf=None):
@@ -512,16 +522,24 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_removed, ri)
 
+    def _get_metadata_proxy_user_group(self):
+        user = self.conf.metadata_proxy_user or os.geteuid()
+        group = self.conf.metadata_proxy_group or os.getegid()
+        return user, group
+
     def _get_metadata_proxy_callback(self, router_id):
 
         def callback(pid_file):
             metadata_proxy_socket = self.conf.metadata_proxy_socket
+            user, group = self._get_metadata_proxy_user_group()
             proxy_cmd = ['neutron-ns-metadata-proxy',
                          '--pid_file=%s' % pid_file,
                          '--metadata_proxy_socket=%s' % metadata_proxy_socket,
                          '--router_id=%s' % router_id,
                          '--state_path=%s' % self.conf.state_path,
-                         '--metadata_port=%s' % self.conf.metadata_port]
+                         '--metadata_port=%s' % self.conf.metadata_port,
+                         '--metadata_proxy_user=%s' % user,
+                         '--metadata_proxy_group=%s' % group]
             proxy_cmd.extend(config.get_log_args(
                 self.conf, 'neutron-ns-metadata-proxy-%s.log' %
                 router_id))

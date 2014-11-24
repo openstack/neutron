@@ -307,7 +307,9 @@ class TestProxyDaemon(base.BaseTestCase):
                         daemon.assert_has_calls([
                             mock.call('pidfile', 9697,
                                       router_id='router_id',
-                                      network_id=None),
+                                      network_id=None,
+                                      user=mock.ANY,
+                                      group=mock.ANY),
                             mock.call().start()]
                         )
 
@@ -328,6 +330,8 @@ class TestProxyDaemon(base.BaseTestCase):
                         daemon.assert_has_calls([
                             mock.call('pidfile', 9697,
                                       router_id='router_id',
-                                      network_id=None),
+                                      network_id=None,
+                                      user=mock.ANY,
+                                      group=mock.ANY),
                             mock.call().run()]
                         )
