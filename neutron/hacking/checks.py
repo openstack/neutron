@@ -60,7 +60,8 @@ def _directory_to_check_translation(filename):
             "neutron/services",
             "neutron/plugins/ml2",
             "neutron/plugins/openvswitch",
-            "neutron/plugins/linuxbridge"]
+            "neutron/plugins/linuxbridge",
+            "neutron/plugins/cisco"]
     return any([dir in filename for dir in dirs])
 
 

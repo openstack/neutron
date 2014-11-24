@@ -18,6 +18,7 @@ from novaclient.v1_1 import client
 from oslo.config import cfg
 
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_constants
 
@@ -64,7 +65,7 @@ class ServiceVMManager(object):
                 nova_exc.EndpointNotFound, nova_exc.AmbiguousEndpoints,
                 nova_exc.ConnectionRefused, nova_exc.ClientException,
                 Exception) as e:
-            LOG.error(_('Failure determining running Nova services: %s'), e)
+            LOG.error(_LE('Failure determining running Nova services: %s'), e)
             return False
         return not bool(required.difference(
             [service.binary for service in services
@@ -81,8 +82,8 @@ class ServiceVMManager(object):
                 nova_exc.EndpointNotFound, nova_exc.AmbiguousEndpoints,
                 nova_exc.ConnectionRefused, nova_exc.ClientException,
                 Exception) as e:
-            LOG.error(_('Failed to get status of service VM instance %(id)s, '
-                        'due to %(err)s'), {'id': vm_id, 'err': e})
+            LOG.error(_LE('Failed to get status of service VM instance '
+                          '%(id)s, due to %(err)s'), {'id': vm_id, 'err': e})
             status = c_constants.SVM_ERROR
         return status
 
@@ -97,7 +98,7 @@ class ServiceVMManager(object):
             image = n_utils.find_resource(self._nclient.images, vm_image)
             flavor = n_utils.find_resource(self._nclient.flavors, vm_flavor)
         except (nova_exc.CommandError, Exception) as e:
-            LOG.error(_('Failure finding needed Nova resource: %s'), e)
+            LOG.error(_LE('Failure finding needed Nova resource: %s'), e)
             return
 
         try:
@@ -119,7 +120,7 @@ class ServiceVMManager(object):
                 nova_exc.EndpointNotFound, nova_exc.AmbiguousEndpoints,
                 nova_exc.ConnectionRefused, nova_exc.ClientException,
                 Exception) as e:
-            LOG.error(_('Failed to create service VM instance: %s'), e)
+            LOG.error(_LE('Failed to create service VM instance: %s'), e)
             return
         return {'id': server.id}
 
@@ -135,6 +136,6 @@ class ServiceVMManager(object):
                 nova_exc.EndpointNotFound, nova_exc.AmbiguousEndpoints,
                 nova_exc.ConnectionRefused, nova_exc.ClientException,
                 Exception) as e:
-            LOG.error(_('Failed to delete service VM instance %(id)s, '
+            LOG.error(_LE('Failed to delete service VM instance %(id)s, '
                         'due to %(err)s'), {'id': vm_id, 'err': e})
             return False

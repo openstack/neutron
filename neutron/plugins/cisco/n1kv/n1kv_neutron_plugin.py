@@ -35,6 +35,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet
 from neutron import manager
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils as uuidutils
@@ -123,7 +124,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         is instantiated for the first time and then continue to poll for
         policy profile updates.
         """
-        LOG.debug(_('_setup_vsm'))
+        LOG.debug('_setup_vsm')
         self.agent_vsm = True
         # Poll VSM for create/delete of policy profile.
         eventlet.spawn(self._poll_policy_profiles)
@@ -142,7 +143,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         from the VSM. Hence we associate the policy profiles with fake
         tenant-ids.
         """
-        LOG.debug(_('_populate_policy_profiles'))
+        LOG.debug('_populate_policy_profiles')
         try:
             n1kvclient = n1kv_client.Client()
             policy_profiles = n1kvclient.list_port_profiles()
@@ -169,7 +170,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._remove_all_fake_policy_profiles()
         except (cisco_exceptions.VSMError,
                 cisco_exceptions.VSMConnectionFailed):
-            LOG.warning(_('No policy profile populated from VSM'))
+            LOG.warning(_LW('No policy profile populated from VSM'))
 
     def _extend_network_dict_provider(self, context, network):
         """Add extended network parameters."""
@@ -424,7 +425,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                               that needs to be trunked
         :param oper: Operation to be performed
         """
-        LOG.debug(_('_populate_member_segments %s'), segment_pairs)
+        LOG.debug('_populate_member_segments %s', segment_pairs)
         trunk_list = []
         for (segment, dot1qtag) in segment_pairs:
             net = self.get_network(context, segment)
@@ -468,7 +469,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 else:
                     pair_list.append((segment1, segment2))
             else:
-                LOG.debug(_('Invalid UUID supplied in %s'), pair)
+                LOG.debug('Invalid UUID supplied in %s', pair)
                 msg = _("Invalid UUID supplied")
                 raise n_exc.InvalidInput(error_message=msg)
         return pair_list
@@ -527,7 +528,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         raise n_exc.InvalidInput(error_message=msg)
                 pair_list.append((segment, dot1qtag))
             else:
-                LOG.debug(_('%s is not a valid uuid'), segment)
+                LOG.debug('%s is not a valid uuid', segment)
                 msg = _("'%s' is not a valid UUID") % segment
                 raise n_exc.InvalidInput(error_message=msg)
         return pair_list
@@ -589,7 +590,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param network_profile: network profile dictionary
         :param tenant_id: UUID representing the tenant
         """
-        LOG.debug(_('_send_create_logical_network'))
+        LOG.debug('_send_create_logical_network')
         n1kvclient = n1kv_client.Client()
         n1kvclient.create_logical_network(network_profile, tenant_id)
 
@@ -612,7 +613,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param context: neutron api request context
         :param profile: network profile dictionary
         """
-        LOG.debug(_('_send_create_network_profile_request: %s'), profile['id'])
+        LOG.debug('_send_create_network_profile_request: %s', profile['id'])
         n1kvclient = n1kv_client.Client()
         n1kvclient.create_network_segment_pool(profile, context.tenant_id)
 
@@ -622,7 +623,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         :param profile: network profile dictionary
         """
-        LOG.debug(_('_send_update_network_profile_request: %s'), profile['id'])
+        LOG.debug('_send_update_network_profile_request: %s', profile['id'])
         n1kvclient = n1kv_client.Client()
         n1kvclient.update_network_segment_pool(profile)
 
@@ -632,7 +633,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         :param profile: network profile dictionary
         """
-        LOG.debug(_('_send_delete_network_profile_request: %s'),
+        LOG.debug('_send_delete_network_profile_request: %s',
                   profile['name'])
         n1kvclient = n1kv_client.Client()
         n1kvclient.delete_network_segment_pool(profile['id'])
@@ -647,7 +648,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param segment_pairs: List of segments in UUID pairs
                               that need to be bridged
         """
-        LOG.debug(_('_send_create_network_request: %s'), network['id'])
+        LOG.debug('_send_create_network_request: %s', network['id'])
         profile = self.get_network_profile(context,
                                            network[n1kv.PROFILE_ID])
         n1kvclient = n1kv_client.Client()
@@ -679,7 +680,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param del_segments: List of segments bindings
                              that need to be deleted
         """
-        LOG.debug(_('_send_update_network_request: %s'), network['id'])
+        LOG.debug('_send_update_network_request: %s', network['id'])
         db_session = context.session
         profile = n1kv_db_v2.get_network_profile(
             db_session, network[n1kv.PROFILE_ID])
@@ -701,8 +702,8 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             body['segmentType'] = profile['sub_type']
             body['addSegments'] = network['add_segment_list']
             body['delSegments'] = network['del_segment_list']
-            LOG.debug(_('add_segments=%s'), body['addSegments'])
-            LOG.debug(_('del_segments=%s'), body['delSegments'])
+            LOG.debug('add_segments=%s', body['addSegments'])
+            LOG.debug('del_segments=%s', body['delSegments'])
             if profile['sub_type'] == c_const.NETWORK_TYPE_OVERLAY:
                 encap_profile = (network['id'] +
                                  c_const.ENCAPSULATION_PROFILE_SUFFIX)
@@ -726,7 +727,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param context: neutron api request context
         :param network: network dictionary
         """
-        LOG.debug(_('_send_delete_network_request: %s'), network['id'])
+        LOG.debug('_send_delete_network_request: %s', network['id'])
         n1kvclient = n1kv_client.Client()
         session = context.session
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_OVERLAY:
@@ -766,7 +767,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param context: neutron api request context
         :param subnet: subnet dictionary
         """
-        LOG.debug(_('_send_create_subnet_request: %s'), subnet['id'])
+        LOG.debug('_send_create_subnet_request: %s', subnet['id'])
         n1kvclient = n1kv_client.Client()
         n1kvclient.create_ip_pool(subnet)
 
@@ -776,7 +777,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         :param subnet: subnet dictionary
         """
-        LOG.debug(_('_send_update_subnet_request: %s'), subnet['name'])
+        LOG.debug('_send_update_subnet_request: %s', subnet['name'])
         n1kvclient = n1kv_client.Client()
         n1kvclient.update_ip_pool(subnet)
 
@@ -787,7 +788,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param context: neutron api request context
         :param subnet: subnet dictionary
         """
-        LOG.debug(_('_send_delete_subnet_request: %s'), subnet['name'])
+        LOG.debug('_send_delete_subnet_request: %s', subnet['name'])
         body = {'ipPool': subnet['id'], 'deleteSubnet': True}
         n1kvclient = n1kv_client.Client()
         n1kvclient.update_network_segment(subnet['network_id'], body=body)
@@ -813,7 +814,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param vm_network_name: string representing the name of the VM
                                 network
         """
-        LOG.debug(_('_send_create_port_request: %s'), port)
+        LOG.debug('_send_create_port_request: %s', port)
         n1kvclient = n1kv_client.Client()
         if port_count == 1:
             n1kvclient.create_vm_network(port,
@@ -830,7 +831,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param mac_address: string representing the mac address
         :param vm_network_name: VM network name to which the port is bound
         """
-        LOG.debug(_('_send_update_port_request: %s'), port_id)
+        LOG.debug('_send_update_port_request: %s', port_id)
         body = {'portId': port_id,
                 'macAddress': mac_address}
         n1kvclient = n1kv_client.Client()
@@ -845,7 +846,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param port: port object which is to be deleted
         :param vm_network: VM network object with which the port is associated
         """
-        LOG.debug(_('_send_delete_port_request: %s'), port['id'])
+        LOG.debug('_send_delete_port_request: %s', port['id'])
         n1kvclient = n1kv_client.Client()
         n1kvclient.delete_n1kv_port(vm_network['name'], port['id'])
 
@@ -874,7 +875,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                           network['network'])
         profile_id = self._process_network_profile(context, network['network'])
         segment_pairs = None
-        LOG.debug(_('Create network: profile_id=%s'), profile_id)
+        LOG.debug('Create network: profile_id=%s', profile_id)
         session = context.session
         with session.begin(subtransactions=True):
             if not network_type:
@@ -882,10 +883,10 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 (physical_network, network_type, segmentation_id,
                     multicast_ip) = n1kv_db_v2.alloc_network(session,
                                                              profile_id)
-                LOG.debug(_('Physical_network %(phy_net)s, '
-                            'seg_type %(net_type)s, '
-                            'seg_id %(seg_id)s, '
-                            'multicast_ip %(multicast_ip)s'),
+                LOG.debug('Physical_network %(phy_net)s, '
+                          'seg_type %(net_type)s, '
+                          'seg_id %(seg_id)s, '
+                          'multicast_ip %(multicast_ip)s',
                           {'phy_net': physical_network,
                            'net_type': network_type,
                            'seg_id': segmentation_id,
@@ -894,7 +895,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     segment_pairs = (
                         self._parse_multi_segments(context, network['network'],
                                                    n1kv.SEGMENT_ADD))
-                    LOG.debug(_('Seg list %s '), segment_pairs)
+                    LOG.debug('Seg list %s ', segment_pairs)
                 elif network_type == c_const.NETWORK_TYPE_TRUNK:
                     network_profile = self.get_network_profile(context,
                                                                profile_id)
@@ -904,7 +905,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                    physical_network,
                                                    network_profile['sub_type']
                                                    ))
-                    LOG.debug(_('Seg list %s '), segment_pairs)
+                    LOG.debug('Seg list %s ', segment_pairs)
                 else:
                     if not segmentation_id:
                         raise n_exc.TenantNetworksDisabled()
@@ -945,7 +946,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             with excutils.save_and_reraise_exception():
                 self._delete_network_db(context, net['id'])
         else:
-            LOG.debug(_("Created network: %s"), net['id'])
+            LOG.debug("Created network: %s", net['id'])
             return net
 
     def update_network(self, context, id, network):
@@ -1003,7 +1004,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if binding.network_type != c_const.NETWORK_TYPE_MULTI_SEGMENT:
                 self._send_update_network_request(context, net, add_segments,
                                                   del_segments)
-            LOG.debug(_("Updated network: %s"), net['id'])
+            LOG.debug("Updated network: %s", net['id'])
             return net
 
     def delete_network(self, context, id):
@@ -1053,7 +1054,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param id: UUID representing the network to fetch
         :returns: requested network dictionary
         """
-        LOG.debug(_("Get network: %s"), id)
+        LOG.debug("Get network: %s", id)
         net = super(N1kvNeutronPluginV2, self).get_network(context, id, None)
         self._extend_network_dict_provider(context, net)
         self._extend_network_dict_profile(context, net)
@@ -1075,7 +1076,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         dictionary. Only these fields will be returned.
         :returns: list of network dictionaries.
         """
-        LOG.debug(_("Get networks"))
+        LOG.debug("Get networks")
         nets = super(N1kvNeutronPluginV2, self).get_networks(context, filters,
                                                              None)
         for net in nets:
@@ -1126,7 +1127,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         profile_id = self._process_policy_profile(context,
                                                   port['port'])
-        LOG.debug(_('Create port: profile_id=%s'), profile_id)
+        LOG.debug('Create port: profile_id=%s', profile_id)
         session = context.session
         with session.begin(subtransactions=True):
             pt = super(N1kvNeutronPluginV2, self).create_port(context,
@@ -1173,7 +1174,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             with excutils.save_and_reraise_exception():
                 self._delete_port_db(context, pt, vm_network)
         else:
-            LOG.debug(_("Created port: %s"), pt)
+            LOG.debug("Created port: %s", pt)
             return pt
 
     def update_port(self, context, id, port):
@@ -1184,7 +1185,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param id: UUID representing the port to update
         :returns: updated port object
         """
-        LOG.debug(_("Update port: %s"), id)
+        LOG.debug("Update port: %s", id)
         with context.session.begin(subtransactions=True):
             updated_port = super(N1kvNeutronPluginV2,
                                  self).update_port(context, id, port)
@@ -1247,7 +1248,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                        dictionary. Only these fields will be returned.
         :returns: port dictionary
         """
-        LOG.debug(_("Get port: %s"), id)
+        LOG.debug("Get port: %s", id)
         port = super(N1kvNeutronPluginV2, self).get_port(context, id, None)
         self._extend_port_dict_profile(context, port)
         return self._fields(port, fields)
@@ -1267,7 +1268,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         dictionary. Only these fields will be returned.
         :returns: list of port dictionaries
         """
-        LOG.debug(_("Get ports"))
+        LOG.debug("Get ports")
         ports = super(N1kvNeutronPluginV2, self).get_ports(context, filters,
                                                            None)
         for port in ports:
@@ -1283,7 +1284,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param subnet: subnet dictionary
         :returns: subnet object
         """
-        LOG.debug(_('Create subnet'))
+        LOG.debug('Create subnet')
         sub = super(N1kvNeutronPluginV2, self).create_subnet(context, subnet)
         try:
             self._send_create_subnet_request(context, sub)
@@ -1293,7 +1294,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 super(N1kvNeutronPluginV2,
                       self).delete_subnet(context, sub['id'])
         else:
-            LOG.debug(_("Created subnet: %s"), sub['id'])
+            LOG.debug("Created subnet: %s", sub['id'])
             if not q_conf.CONF.network_auto_schedule:
                 # Schedule network to a DHCP agent
                 net = self.get_network(context, sub['network_id'])
@@ -1308,7 +1309,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param id: UUID representing subnet to update
         :returns: updated subnet object
         """
-        LOG.debug(_('Update subnet'))
+        LOG.debug('Update subnet')
         sub = super(N1kvNeutronPluginV2, self).update_subnet(context,
                                                              id,
                                                              subnet)
@@ -1323,7 +1324,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param id: UUID representing subnet to delete
         :returns: deleted subnet object
         """
-        LOG.debug(_('Delete subnet: %s'), id)
+        LOG.debug('Delete subnet: %s', id)
         subnet = self.get_subnet(context, id)
         self._send_delete_subnet_request(context, subnet)
         return super(N1kvNeutronPluginV2, self).delete_subnet(context, id)
@@ -1338,7 +1339,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         dictionary. Only these fields will be returned.
         :returns: subnet object
         """
-        LOG.debug(_("Get subnet: %s"), id)
+        LOG.debug("Get subnet: %s", id)
         subnet = super(N1kvNeutronPluginV2, self).get_subnet(context, id,
                                                              None)
         return self._fields(subnet, fields)
@@ -1358,7 +1359,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         dictionary. Only these fields will be returned.
         :returns: list of dictionaries of subnets
         """
-        LOG.debug(_("Get subnets"))
+        LOG.debug("Get subnets")
         subnets = super(N1kvNeutronPluginV2, self).get_subnets(context,
                                                                filters,
                                                                None)
