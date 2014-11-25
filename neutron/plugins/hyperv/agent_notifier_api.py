@@ -17,10 +17,7 @@ from oslo import messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.openstack.common import log as logging
 from neutron.plugins.hyperv.common import constants
-
-LOG = logging.getLogger(__name__)
 
 
 class AgentNotifierApi(object):

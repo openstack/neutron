@@ -17,6 +17,7 @@ import sys
 
 from oslo.config import cfg
 
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.hyperv.agent import utils
 from neutron.plugins.hyperv.agent import utilsv2
@@ -57,13 +58,14 @@ def get_hypervutils():
     force_v1_flag = CONF.hyperv.force_hyperv_utils_v1
     if _check_min_windows_version(6, 3):
         if force_v1_flag:
-            LOG.warning(_('V1 virtualization namespace no longer supported on '
-                          'Windows Server / Hyper-V Server 2012 R2 or above.'))
+            LOG.warning(_LW('V1 virtualization namespace no longer supported '
+                            'on Windows Server / Hyper-V Server 2012 R2 or '
+                            'above.'))
         cls = utilsv2.HyperVUtilsV2R2
     elif not force_v1_flag and _check_min_windows_version(6, 2):
         cls = utilsv2.HyperVUtilsV2
     else:
         cls = utils.HyperVUtils
-    LOG.debug(_("Loading class: %(module_name)s.%(class_name)s"),
+    LOG.debug("Loading class: %(module_name)s.%(class_name)s",
               {'module_name': cls.__module__, 'class_name': cls.__name__})
     return cls()

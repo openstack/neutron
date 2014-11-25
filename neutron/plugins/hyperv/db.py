@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc
 from neutron.common import exceptions as n_exc
 import neutron.db.api as db_api
 from neutron.db import models_v2
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.hyperv.common import constants
 from neutron.plugins.hyperv import model as hyperv_model
@@ -34,8 +35,8 @@ class HyperVPluginDB(object):
             alloc_q = alloc_q.filter_by(allocated=False)
             alloc = alloc_q.first()
             if alloc:
-                LOG.debug(_("Reserving vlan %(vlan_id)s on physical network "
-                            "%(physical_network)s from pool"),
+                LOG.debug("Reserving vlan %(vlan_id)s on physical network "
+                          "%(physical_network)s from pool",
                           {'vlan_id': alloc.vlan_id,
                            'physical_network': alloc.physical_network})
                 alloc.allocated = True
@@ -49,8 +50,8 @@ class HyperVPluginDB(object):
                                         vlan_id=constants.FLAT_VLAN_ID)
             alloc = alloc_q.first()
             if alloc:
-                LOG.debug(_("Reserving flat physical network "
-                            "%(physical_network)s from pool"),
+                LOG.debug("Reserving flat physical network "
+                          "%(physical_network)s from pool",
                           {'physical_network': alloc.physical_network})
                 alloc.allocated = True
                 return alloc.physical_network
@@ -72,8 +73,8 @@ class HyperVPluginDB(object):
                         raise n_exc.VlanIdInUse(
                             vlan_id=vlan_id,
                             physical_network=physical_network)
-                LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
-                            "network %(physical_network)s from pool"),
+                LOG.debug("Reserving specific vlan %(vlan_id)s on physical "
+                          "network %(physical_network)s from pool",
                           {'vlan_id': vlan_id,
                            'physical_network': physical_network})
                 alloc.allocated = True
@@ -129,13 +130,13 @@ class HyperVPluginDB(object):
                 alloc = alloc_q.one()
                 alloc.allocated = False
                 #session.delete(alloc)
-                LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
-                            "%(physical_network)s"),
+                LOG.debug("Releasing vlan %(vlan_id)s on physical network "
+                          "%(physical_network)s",
                           {'vlan_id': vlan_id,
                            'physical_network': physical_network})
             except exc.NoResultFound:
-                LOG.warning(_("vlan_id %(vlan_id)s on physical network "
-                              "%(physical_network)s not found"),
+                LOG.warning(_LW("vlan_id %(vlan_id)s on physical network "
+                                "%(physical_network)s not found"),
                             {'vlan_id': vlan_id,
                              'physical_network': physical_network})
 
@@ -159,10 +160,9 @@ class HyperVPluginDB(object):
                     # it's not allocatable, so check if its allocated
                     if not alloc.allocated:
                         # it's not, so remove it from table
-                        LOG.debug(_(
-                            "Removing vlan %(vlan_id)s on "
-                            "physical network "
-                            "%(physical_network)s from pool"),
+                        LOG.debug(
+                            "Removing vlan %(vlan_id)s on physical network "
+                            "%(physical_network)s from pool",
                             {'vlan_id': alloc.vlan_id,
                                 'physical_network': physical_network})
                         session.delete(alloc)
@@ -172,8 +172,8 @@ class HyperVPluginDB(object):
         for allocs in allocations.itervalues():
             for alloc in allocs:
                 if not alloc.allocated:
-                    LOG.debug(_("Removing vlan %(vlan_id)s on physical "
-                                "network %(physical_network)s from pool"),
+                    LOG.debug("Removing vlan %(vlan_id)s on physical "
+                              "network %(physical_network)s from pool",
                               {'vlan_id': alloc.vlan_id,
                                'physical_network': alloc.physical_network})
                     session.delete(alloc)

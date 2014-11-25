@@ -39,7 +39,7 @@ class HyperVRpcCallbacks(object):
         """Agent requests device details."""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
+        LOG.debug("Device %(device)s details requested from %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         port = self._db.get_port(device)
         if port:
@@ -55,7 +55,7 @@ class HyperVRpcCallbacks(object):
             self._db.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
         else:
             entry = {'device': device}
-            LOG.debug(_("%s can not be found in database"), device)
+            LOG.debug("%s can not be found in database", device)
         return entry
 
     def get_devices_details_list(self, rpc_context, **kwargs):
@@ -73,7 +73,7 @@ class HyperVRpcCallbacks(object):
         # TODO(garyk) - live migration and port status
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
+        LOG.debug("Device %(device)s no longer exists on %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         port = self._db.get_port(device)
         if port:
@@ -84,7 +84,7 @@ class HyperVRpcCallbacks(object):
         else:
             entry = {'device': device,
                      'exists': False}
-            LOG.debug(_("%s can not be found in database"), device)
+            LOG.debug("%s can not be found in database", device)
         return entry
 
     def tunnel_sync(self, rpc_context, **kwargs):
