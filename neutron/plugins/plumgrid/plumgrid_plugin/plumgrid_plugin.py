@@ -33,6 +33,7 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as sec_grp
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.plumgrid.common import exceptions as plum_excep
 from neutron.plugins.plumgrid.plumgrid_plugin import plugin_ver
@@ -70,7 +71,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     binding_set = "extension:port_binding:set"
 
     def __init__(self):
-        LOG.info(_('Neutron PLUMgrid Director: Starting Plugin'))
+        LOG.info(_LI('Neutron PLUMgrid Director: Starting Plugin'))
 
         super(NeutronPluginPLUMgridV2, self).__init__()
         self.plumgrid_init()
@@ -88,7 +89,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         plum_driver = cfg.CONF.plumgriddirector.driver
 
         # PLUMgrid Director info validation
-        LOG.info(_('Neutron PLUMgrid Director: %s'), director_plumgrid)
+        LOG.info(_LI('Neutron PLUMgrid Director: %s'), director_plumgrid)
         self._plumlib = importutils.import_object(plum_driver)
         self._plumlib.director_conn(director_plumgrid, director_port, timeout,
                                     director_admin, director_password)
@@ -765,8 +766,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _network_admin_state(self, network):
         if network["network"].get("admin_state_up") is False:
-            LOG.warning(_("Networks with admin_state_up=False are not "
-                          "supported by PLUMgrid plugin yet."))
+            LOG.warning(_LW("Networks with admin_state_up=False are not "
+                            "supported by PLUMgrid plugin yet."))
         return network
 
     def _allocate_pools_for_subnet(self, context, subnet):
