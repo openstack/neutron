@@ -153,6 +153,11 @@ class PolicyProfileIdNotFound(exceptions.NotFound):
     message = _("Policy Profile %(profile_id)s could not be found.")
 
 
+class PolicyProfileNameNotFound(exceptions.NotFound):
+    """Policy Profile with the given name cannot be found."""
+    message = _("Policy Profile %(profile_name)s could not be found.")
+
+
 class NetworkProfileAlreadyExists(exceptions.NeutronException):
     """Network Profile cannot be created since it already exists."""
     message = _("Network Profile %(profile_id)s "

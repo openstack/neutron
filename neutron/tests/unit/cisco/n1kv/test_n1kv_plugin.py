@@ -941,6 +941,18 @@ class TestN1kvPolicyProfiles(N1kvPluginTestCase):
         # Request the list using admin and verify it returns
         self._test_get_policy_profiles(expected_profiles=profiles, admin=True)
 
+    def test_get_policy_profiles_by_name(self):
+        with mock.patch(n1kv_client.__name__ + ".Client",
+                        new=fake_client.TestClient):
+            instance = n1kv_neutron_plugin.N1kvNeutronPluginV2()
+            profile = instance._get_policy_profile_by_name('pp-1')
+            self.assertEqual('pp-1', profile['name'])
+            self.assertEqual('00000000-0000-0000-0000-000000000001',
+                             profile['id'])
+            self.assertRaises(c_exc.PolicyProfileNameNotFound,
+                              instance._get_policy_profile_by_name,
+                              "name")
+
 
 class TestN1kvNetworks(test_plugin.TestNetworksV2,
                        N1kvPluginTestCase):
