@@ -20,7 +20,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import excutils
-from neutron.openstack.common.gettextutils import _LE
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as const
@@ -72,7 +72,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
 
         # Initialize credential store after database initialization
         cred.Store.initialize()
-        LOG.debug(_("%(module)s.%(name)s init done"),
+        LOG.debug("%(module)s.%(name)s init done",
                   {'module': __name__,
                    'name': self.__class__.__name__})
 
@@ -113,9 +113,9 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         plugin implementation) for completing this operation.
         """
         if plugin_key not in self._plugins:
-            LOG.info(_("No %s Plugin loaded"), plugin_key)
-            LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
-                     "ignored"),
+            LOG.info(_LI("No %s Plugin loaded"), plugin_key)
+            LOG.info(_LI("%(plugin_key)s: %(function_name)s with args "
+                         "%(args)s ignored"),
                      {'plugin_key': plugin_key,
                       'function_name': function_name,
                       'args': args})
@@ -138,7 +138,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug(_("create_network() called"))
+        LOG.debug("create_network() called")
         provider_vlan_id = self._get_provider_vlan_id(network[const.NETWORK])
         args = [context, network]
         switch_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
@@ -151,8 +151,8 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             cdb.add_provider_network(network_id,
                                      const.NETWORK_TYPE_VLAN,
                                      provider_vlan_id)
-            LOG.debug(_("Provider network added to DB: %(network_id)s, "
-                        "%(vlan_id)s"),
+            LOG.debug("Provider network added to DB: %(network_id)s, "
+                      "%(vlan_id)s",
                       {'network_id': network_id, 'vlan_id': provider_vlan_id})
         return switch_output
 
@@ -162,7 +162,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug(_("update_network() called"))
+        LOG.debug("update_network() called")
 
         # We can only support updating of provider attributes if all the
         # configured sub-plugins support it. Currently we have no method
@@ -186,7 +186,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                                        self._func_name(),
                                                        args)
         if cdb.remove_provider_network(id):
-            LOG.debug(_("Provider network removed from DB: %s"), id)
+            LOG.debug("Provider network removed from DB: %s", id)
         return switch_output
 
     def get_network(self, context, id, fields=None):
@@ -228,7 +228,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug(_("create_port() called"))
+        LOG.debug("create_port() called")
         args = [context, port]
         return self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                               self._func_name(),
@@ -254,7 +254,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug(_("update_port() called"))
+        LOG.debug("update_port() called")
         args = [context, id, port]
         return self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                               self._func_name(),
@@ -266,7 +266,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug(_("delete_port() called"))
+        LOG.debug("delete_port() called")
         port = self.get_port(context, id)
 
         try:

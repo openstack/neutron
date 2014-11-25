@@ -84,7 +84,7 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
         # Extend the fault map
         self._extend_fault_map()
 
-        LOG.debug(_("Plugin initialization complete"))
+        LOG.debug("Plugin initialization complete")
 
     def __getattribute__(self, name):
         """Delegate core API calls to the model class.
@@ -129,44 +129,44 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     """
     def get_all_qoss(self, tenant_id):
         """Get all QoS levels."""
-        LOG.debug(_("get_all_qoss() called"))
+        LOG.debug("get_all_qoss() called")
         qoslist = cdb.get_all_qoss(tenant_id)
         return qoslist
 
     def get_qos_details(self, tenant_id, qos_id):
         """Get QoS Details."""
-        LOG.debug(_("get_qos_details() called"))
+        LOG.debug("get_qos_details() called")
         return cdb.get_qos(tenant_id, qos_id)
 
     def create_qos(self, tenant_id, qos_name, qos_desc):
         """Create a QoS level."""
-        LOG.debug(_("create_qos() called"))
+        LOG.debug("create_qos() called")
         qos = cdb.add_qos(tenant_id, qos_name, str(qos_desc))
         return qos
 
     def delete_qos(self, tenant_id, qos_id):
         """Delete a QoS level."""
-        LOG.debug(_("delete_qos() called"))
+        LOG.debug("delete_qos() called")
         return cdb.remove_qos(tenant_id, qos_id)
 
     def rename_qos(self, tenant_id, qos_id, new_name):
         """Rename QoS level."""
-        LOG.debug(_("rename_qos() called"))
+        LOG.debug("rename_qos() called")
         return cdb.update_qos(tenant_id, qos_id, new_name)
 
     def get_all_credentials(self):
         """Get all credentials."""
-        LOG.debug(_("get_all_credentials() called"))
+        LOG.debug("get_all_credentials() called")
         credential_list = cdb.get_all_credentials()
         return credential_list
 
     def get_credential_details(self, credential_id):
         """Get a particular credential."""
-        LOG.debug(_("get_credential_details() called"))
+        LOG.debug("get_credential_details() called")
         return cdb.get_credential(credential_id)
 
     def rename_credential(self, credential_id, new_name, new_password):
         """Rename the particular credential resource."""
-        LOG.debug(_("rename_credential() called"))
+        LOG.debug("rename_credential() called")
         return cdb.update_credential(credential_id, new_name,
                                      new_password=new_password)

@@ -17,6 +17,7 @@ import netaddr
 from oslo.config import cfg
 
 from neutron import manager
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.l3 import hosting_device_drivers
 
@@ -63,7 +64,7 @@ class CSR1kvHostingDeviceDriver(hosting_device_drivers.HostingDeviceDriver):
                     vm_cfg_data += line
             return {'iosxe_config.txt': vm_cfg_data}
         except IOError as e:
-            LOG.error(_('Failed to create config file: %s. Trying to'
+            LOG.error(_LE('Failed to create config file: %s. Trying to'
                         'clean up.'), str(e))
             self.delete_configdrive_files(context, mgmtport)
             raise

@@ -23,6 +23,7 @@ from ncclient import manager
 
 from oslo.config import cfg
 
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions as cfg_exc
 from neutron.plugins.cisco.cfg_agent.device_drivers.csr1kv import (
     cisco_csr1kv_snippets as snippets)
@@ -59,7 +60,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
             self._csr_conn = None
             self._intfs_enabled = False
         except KeyError as e:
-            LOG.error(_("Missing device parameter:%s. Aborting "
+            LOG.error(_LE("Missing device parameter:%s. Aborting "
                         "CSR1kvRoutingDriver initialization"), e)
             raise cfg_exc.CSR1kvInitializationException()
 
@@ -225,7 +226,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
         elif action is 'delete':
             self._remove_static_route(dest, dest_mask, next_hop, vrf_name)
         else:
-            LOG.error(_('Unknown route command %s'), action)
+            LOG.error(_LE('Unknown route command %s'), action)
 
     def _csr_create_vrf(self, ri):
         vrf_name = self._csr_get_vrf_name(ri)
@@ -317,7 +318,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
         parse = ciscoconfparse.CiscoConfParse(ioscfg)
         intfs_raw = parse.find_lines("^interface GigabitEthernet")
         intfs = [raw_if.strip().split(' ')[1] for raw_if in intfs_raw]
-        LOG.info(_("Interfaces:%s"), intfs)
+        LOG.info(_LI("Interfaces:%s"), intfs)
         return intfs
 
     def _get_interface_ip(self, interface_name):
@@ -332,9 +333,9 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
         for line in children:
             if 'ip address' in line:
                 ip_address = line.strip().split(' ')[2]
-                LOG.info(_("IP Address:%s"), ip_address)
+                LOG.info(_LI("IP Address:%s"), ip_address)
                 return ip_address
-        LOG.warn(_("Cannot find interface: %s"), interface_name)
+        LOG.warning(_LW("Cannot find interface: %s"), interface_name)
         return None
 
     def _interface_exists(self, interface):
@@ -369,7 +370,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
                 confstr = snippets.ENABLE_INTF % i
                 rpc_obj = conn.edit_config(target='running', config=confstr)
                 if self._check_response(rpc_obj, 'ENABLE_INTF'):
-                    LOG.info(_("Enabled interface %s "), i)
+                    LOG.info(_LI("Enabled interface %s "), i)
                     time.sleep(1)
         except Exception:
             return False
@@ -388,7 +389,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
             #  raw format ['ip vrf <vrf-name>',....]
             vrf_name = line.strip().split(' ')[2]
             vrfs.append(vrf_name)
-        LOG.info(_("VRFs:%s"), vrfs)
+        LOG.info(_LI("VRFs:%s"), vrfs)
         return vrfs
 
     def _get_capabilities(self):
@@ -433,7 +434,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
         if acls_raw:
             if exp_cfg_lines[1] in acls_raw:
                 return True
-            LOG.error(_("Mismatch in ACL configuration for %s"), acl_no)
+            LOG.error(_LE("Mismatch in ACL configuration for %s"), acl_no)
             return False
         LOG.debug("%s is not present in config", acl_no)
         return False
@@ -462,9 +463,9 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
             confstr = snippets.CREATE_VRF % vrf_name
             rpc_obj = conn.edit_config(target='running', config=confstr)
             if self._check_response(rpc_obj, 'CREATE_VRF'):
-                LOG.info(_("VRF %s successfully created"), vrf_name)
+                LOG.info(_LI("VRF %s successfully created"), vrf_name)
         except Exception:
-            LOG.exception(_("Failed creating VRF %s"), vrf_name)
+            LOG.exception(_LE("Failed creating VRF %s"), vrf_name)
 
     def _remove_vrf(self, vrf_name):
         if vrf_name in self._get_vrfs():
@@ -472,13 +473,13 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
             confstr = snippets.REMOVE_VRF % vrf_name
             rpc_obj = conn.edit_config(target='running', config=confstr)
             if self._check_response(rpc_obj, 'REMOVE_VRF'):
-                LOG.info(_("VRF %s removed"), vrf_name)
+                LOG.info(_LI("VRF %s removed"), vrf_name)
         else:
-            LOG.warning(_("VRF %s not present"), vrf_name)
+            LOG.warning(_LW("VRF %s not present"), vrf_name)
 
     def _create_subinterface(self, subinterface, vlan_id, vrf_name, ip, mask):
         if vrf_name not in self._get_vrfs():
-            LOG.error(_("VRF %s not present"), vrf_name)
+            LOG.error(_LE("VRF %s not present"), vrf_name)
         confstr = snippets.CREATE_SUBINTERFACE % (subinterface, vlan_id,
                                                   vrf_name, ip, mask)
         self._edit_running_config(confstr, 'CREATE_SUBINTERFACE')
@@ -491,7 +492,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
 
     def _set_ha_HSRP(self, subinterface, vrf_name, priority, group, ip):
         if vrf_name not in self._get_vrfs():
-            LOG.error(_("VRF %s not present"), vrf_name)
+            LOG.error(_LE("VRF %s not present"), vrf_name)
         confstr = snippets.SET_INTC_HSRP % (subinterface, vrf_name, group,
                                             priority, group, ip)
         action = "SET_INTC_HSRP (Group: %s, Priority: % s)" % (group, priority)
@@ -676,7 +677,7 @@ class CSR1kvRoutingDriver(devicedriver_api.RoutingDriverBase):
         xml_str = rpc_obj.xml
         if "<ok />" in xml_str:
             LOG.debug("RPCReply for %s is OK", snippet_name)
-            LOG.info(_("%s successfully executed"), snippet_name)
+            LOG.info(_LI("%s successfully executed"), snippet_name)
             return True
         # Not Ok, we throw a ConfigurationException
         e_type = rpc_obj._root[0][0].text

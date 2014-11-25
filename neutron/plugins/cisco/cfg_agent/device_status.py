@@ -19,6 +19,8 @@ from oslo.config import cfg
 from neutron.agent.linux import utils as linux_utils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import timeutils
+from neutron.openstack.common.gettextutils import _LI, _LW
+
 
 LOG = logging.getLogger(__name__)
 
@@ -54,7 +56,7 @@ def _is_pingable(ip):
         linux_utils.execute(ping_cmd, check_exit_code=True)
         return True
     except RuntimeError:
-        LOG.warn(_("Cannot ping ip address: %s"), ip)
+        LOG.warning(_LW("Cannot ping ip address: %s"), ip)
         return False
 
 
@@ -138,22 +140,22 @@ class DeviceStatus(object):
             hd = self.backlog_hosting_devices[hd_id]['hd']
             if not timeutils.is_older_than(hd['created_at'],
                                            hd['booting_time']):
-                LOG.info(_("Hosting device: %(hd_id)s @ %(ip)s hasn't passed "
-                           "minimum boot time. Skipping it. "),
+                LOG.info(_LI("Hosting device: %(hd_id)s @ %(ip)s hasn't "
+                             "passed minimum boot time. Skipping it. "),
                          {'hd_id': hd_id, 'ip': hd['management_ip_address']})
                 continue
-            LOG.info(_("Checking hosting device: %(hd_id)s @ %(ip)s for "
+            LOG.info(_LI("Checking hosting device: %(hd_id)s @ %(ip)s for "
                        "reachability."), {'hd_id': hd_id,
                                           'ip': hd['management_ip_address']})
             if _is_pingable(hd['management_ip_address']):
                 hd.pop('backlog_insertion_ts', None)
                 del self.backlog_hosting_devices[hd_id]
                 response_dict['reachable'].append(hd_id)
-                LOG.info(_("Hosting device: %(hd_id)s @ %(ip)s is now "
+                LOG.info(_LI("Hosting device: %(hd_id)s @ %(ip)s is now "
                            "reachable. Adding it to response"),
                          {'hd_id': hd_id, 'ip': hd['management_ip_address']})
             else:
-                LOG.info(_("Hosting device: %(hd_id)s @ %(ip)s still not "
+                LOG.info(_LI("Hosting device: %(hd_id)s @ %(ip)s still not "
                            "reachable "), {'hd_id': hd_id,
                                            'ip': hd['management_ip_address']})
                 if timeutils.is_older_than(

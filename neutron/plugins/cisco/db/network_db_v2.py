@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 
 def get_all_qoss(tenant_id):
     """Lists all the qos to tenant associations."""
-    LOG.debug(_("get_all_qoss() called"))
+    LOG.debug("get_all_qoss() called")
     session = db.get_session()
     return (session.query(network_models_v2.QoS).
             filter_by(tenant_id=tenant_id).all())
@@ -35,7 +35,7 @@ def get_all_qoss(tenant_id):
 
 def get_qos(tenant_id, qos_id):
     """Lists the qos given a tenant_id and qos_id."""
-    LOG.debug(_("get_qos() called"))
+    LOG.debug("get_qos() called")
     session = db.get_session()
     try:
         return (session.query(network_models_v2.QoS).
@@ -48,7 +48,7 @@ def get_qos(tenant_id, qos_id):
 
 def add_qos(tenant_id, qos_name, qos_desc):
     """Adds a qos to tenant association."""
-    LOG.debug(_("add_qos() called"))
+    LOG.debug("add_qos() called")
     session = db.get_session()
     try:
         qos = (session.query(network_models_v2.QoS).

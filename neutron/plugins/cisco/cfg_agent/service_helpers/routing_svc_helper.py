@@ -25,7 +25,7 @@ from neutron.common import utils as common_utils
 from neutron import context as n_context
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
-
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions
 from neutron.plugins.cisco.cfg_agent.device_drivers import driver_mgr
 from neutron.plugins.cisco.cfg_agent import device_status
@@ -226,7 +226,7 @@ class RoutingServiceHelper():
                     self._drivermgr.remove_driver_for_hosting_device(hd_id)
             LOG.debug("Routing service processing successfully completed")
         except Exception:
-            LOG.exception(_("Failed processing routers"))
+            LOG.exception(_LE("Failed processing routers"))
             self.fullsync = True
 
     def collect_state(self, configurations):
@@ -287,7 +287,7 @@ class RoutingServiceHelper():
                 return self.plugin_rpc.get_routers(self.context,
                                                    hd_ids=device_ids)
         except messaging.MessagingException:
-            LOG.exception(_("RPC Error in fetching routers from plugin"))
+            LOG.exception(_LE("RPC Error in fetching routers from plugin"))
             self.fullsync = True
 
     @staticmethod
@@ -374,7 +374,7 @@ class RoutingServiceHelper():
                     cur_router_ids.add(r['id'])
                     hd = r['hosting_device']
                     if not self._dev_status.is_hosting_device_reachable(hd):
-                        LOG.info(_("Router: %(id)s is on an unreachable "
+                        LOG.info(_LI("Router: %(id)s is on an unreachable "
                                    "hosting device. "), {'id': r['id']})
                         continue
                     if r['id'] not in self.router_info:
@@ -383,11 +383,11 @@ class RoutingServiceHelper():
                     ri.router = r
                     self._process_router(ri)
                 except KeyError as e:
-                    LOG.exception(_("Key Error, missing key: %s"), e)
+                    LOG.exception(_LE("Key Error, missing key: %s"), e)
                     self.updated_routers.add(r['id'])
                     continue
                 except cfg_exceptions.DriverException as e:
-                    LOG.exception(_("Driver Exception on router:%(id)s. "
+                    LOG.exception(_LE("Driver Exception on router:%(id)s. "
                                     "Error is %(e)s"), {'id': r['id'], 'e': e})
                     self.updated_routers.update(r['id'])
                     continue
@@ -398,7 +398,7 @@ class RoutingServiceHelper():
                 for router in removed_routers:
                     self._router_removed(router['id'])
         except Exception:
-            LOG.exception(_("Exception in processing routers on device:%s"),
+            LOG.exception(_LE("Exception in processing routers on device:%s"),
                           device_id)
             self.sync_devices.add(device_id)
 
@@ -541,7 +541,7 @@ class RoutingServiceHelper():
         """
         ri = self.router_info.get(router_id)
         if ri is None:
-            LOG.warn(_("Info for router %s was not found. "
+            LOG.warning(_LW("Info for router %s was not found. "
                        "Skipping router removal"), router_id)
             return
         ri.router['gw_port'] = None
@@ -556,7 +556,7 @@ class RoutingServiceHelper():
             del self.router_info[router_id]
             self.removed_routers.discard(router_id)
         except cfg_exceptions.DriverException:
-            LOG.warn(_("Router remove for router_id: %s was incomplete. "
+            LOG.warning(_LW("Router remove for router_id: %s was incomplete. "
                        "Adding the router to removed_routers list"), router_id)
             self.removed_routers.add(router_id)
             # remove this router from updated_routers if it is there. It might
@@ -634,6 +634,7 @@ class RoutingServiceHelper():
         if not ips:
             raise Exception(_("Router port %s has no IP address") % port['id'])
         if len(ips) > 1:
-            LOG.error(_("Ignoring multiple IPs on router port %s"), port['id'])
+            LOG.error(_LE("Ignoring multiple IPs on router port %s"),
+                      port['id'])
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)

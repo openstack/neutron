@@ -19,7 +19,6 @@ from oslo import messaging
 
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.cisco.cfg_agent import cfg_agent
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions
@@ -35,8 +34,6 @@ from neutron.tests import base
 _uuid = uuidutils.generate_uuid
 HOST = 'myhost'
 FAKE_ID = _uuid()
-
-LOG = logging.getLogger(__name__)
 
 
 def prepare_router_data(enable_snat=None, num_internal_ports=1):

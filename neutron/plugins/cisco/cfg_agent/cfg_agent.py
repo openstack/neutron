@@ -36,6 +36,7 @@ from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.openstack.common import service
 from neutron.openstack.common import timeutils
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.plugins.cisco.cfg_agent import device_status
 from neutron.plugins.cisco.common import cisco_constants as c_constants
 from neutron import service as neutron_service
@@ -132,7 +133,7 @@ class CiscoCfgAgent(manager.Manager):
             self.routing_service_helper = importutils.import_object(
                 svc_helper_class, host, self.conf, self)
         except ImportError as e:
-            LOG.warn(_("Error in loading routing service helper. Class "
+            LOG.warning(_LW("Error in loading routing service helper. Class "
                        "specified is %(class)s. Reason:%(reason)s"),
                      {'class': self.conf.cfg_agent.routing_svc_helper_class,
                       'reason': e})
@@ -143,7 +144,7 @@ class CiscoCfgAgent(manager.Manager):
         self.loop.start(interval=self.conf.cfg_agent.rpc_loop_interval)
 
     def after_start(self):
-        LOG.info(_("Cisco cfg agent started"))
+        LOG.info(_LI("Cisco cfg agent started"))
 
     def get_routing_service_helper(self):
         return self.routing_service_helper
@@ -203,7 +204,7 @@ class CiscoCfgAgent(manager.Manager):
             self.routing_service_helper.process_service(device_ids,
                                                         removed_devices_info)
         else:
-            LOG.warn(_("No routing service helper loaded"))
+            LOG.warning(_LW("No routing service helper loaded"))
         LOG.debug("Processing services completed")
 
     def _process_backlogged_hosting_devices(self, context):
@@ -232,7 +233,7 @@ class CiscoCfgAgent(manager.Manager):
                 if payload['hosting_data'].keys():
                     self.process_services(removed_devices_info=payload)
         except KeyError as e:
-            LOG.error(_("Invalid payload format for received RPC message "
+            LOG.error(_LE("Invalid payload format for received RPC message "
                         "`hosting_devices_removed`. Error is %{error}s. "
                         "Payload is %(payload)s"),
                       {'error': e, 'payload': payload})
@@ -276,20 +277,20 @@ class CiscoCfgAgentWithStateReport(CiscoCfgAgent):
             self.send_agent_report(self.agent_state, context)
             res = self.devmgr_rpc.register_for_duty(context)
             if res is True:
-                LOG.info(_("[Agent registration] Agent successfully "
+                LOG.info(_LI("[Agent registration] Agent successfully "
                            "registered"))
                 return
             elif res is False:
-                LOG.warn(_("[Agent registration] Neutron server said that "
-                           "device manager was not ready. Retrying in %0.2f "
-                           "seconds "), REGISTRATION_RETRY_DELAY)
+                LOG.warning(_LW("[Agent registration] Neutron server said "
+                                "that device manager was not ready. Retrying "
+                                "in %0.2f seconds "), REGISTRATION_RETRY_DELAY)
                 time.sleep(REGISTRATION_RETRY_DELAY)
             elif res is None:
-                LOG.error(_("[Agent registration] Neutron server said that no "
-                            "device manager was found. Cannot "
-                            "continue. Exiting!"))
+                LOG.error(_LE("[Agent registration] Neutron server said that "
+                              "no device manager was found. Cannot continue. "
+                              "Exiting!"))
                 raise SystemExit("Cfg Agent exiting")
-        LOG.error(_("[Agent registration] %d unsuccessful registration "
+        LOG.error(_LE("[Agent registration] %d unsuccessful registration "
                     "attempts. Exiting!"), MAX_REGISTRATION_ATTEMPTS)
         raise SystemExit("Cfg Agent exiting")
 
@@ -323,12 +324,12 @@ class CiscoCfgAgentWithStateReport(CiscoCfgAgent):
             LOG.debug("Send agent report successfully completed")
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_("Neutron server does not support state report. "
+            LOG.warning(_LW("Neutron server does not support state report. "
                        "State report for this agent will be disabled."))
             self.heartbeat.stop()
             return
         except Exception:
-            LOG.exception(_("Failed sending agent report!"))
+            LOG.exception(_LE("Failed sending agent report!"))
 
 
 def main(manager='neutron.plugins.cisco.cfg_agent.'

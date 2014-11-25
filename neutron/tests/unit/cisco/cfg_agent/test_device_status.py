@@ -16,7 +16,6 @@ import sys
 import datetime
 import mock
 
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
 sys.modules['ncclient'] = mock.MagicMock()
@@ -25,7 +24,6 @@ from neutron.plugins.cisco.cfg_agent import device_status
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
-LOG = logging.getLogger(__name__)
 
 TYPE_STRING = 'string'
 TYPE_DATETIME = 'datetime'

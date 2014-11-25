@@ -19,6 +19,7 @@ from oslo.config import cfg
 from neutron import context as n_context
 from neutron import manager
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -95,8 +96,8 @@ class DeviceHandlingTestSupportMixin(object):
                 self._delete('ports', port['id'])
             except Exception as e:
                 with excutils.save_and_reraise_exception(reraise=False):
-                    LOG.error('Failed to delete port %(p_id)s for vm instance '
-                              '%(v_id)s due to %(err)s',
+                    LOG.error(_LE('Failed to delete port %(p_id)s for vm '
+                                  'instance %(v_id)s due to %(err)s'),
                               {'p_id': port['id'], 'v_id': vm_id, 'err': e})
                     raise nova_exc.InternalServerError()
 
