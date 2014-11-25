@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev434.g6a589e7\n"
+"Project-Id-Version: neutron 2015.1.dev449.gd42055c\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-23 06:06+0000\n"
+"POT-Creation-Date: 2014-11-24 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1844,7 +1844,7 @@ msgid ""
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:441 neutron/db/l3_db.py:593 neutron/db/l3_dvr_db.py:238
+#: neutron/db/l3_db.py:441 neutron/db/l3_db.py:593 neutron/db/l3_dvr_db.py:254
 #: neutron/plugins/bigswitch/l3_router_plugin.py:170
 #: neutron/plugins/bigswitch/l3_router_plugin.py:179
 #: neutron/plugins/opencontrail/contrail_plugin.py:499
@@ -1914,11 +1914,11 @@ msgid ""
 " Only admin can override."
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:457
+#: neutron/db/l3_dvr_db.py:473
 msgid "Unable to create the Agent Gateway Port"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:490
+#: neutron/db/l3_dvr_db.py:506
 msgid "Unable to create the SNAT Interface Port"
 msgstr ""
 
@@ -2594,21 +2594,21 @@ msgid ""
 " %(pool)s"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:309
+#: neutron/extensions/loadbalancer.py:311
 msgid "Number of vips allowed per tenant. A negative value means unlimited."
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:313
+#: neutron/extensions/loadbalancer.py:315
 msgid "Number of pools allowed per tenant. A negative value means unlimited."
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:317
+#: neutron/extensions/loadbalancer.py:319
 msgid ""
 "Number of pool members allowed per tenant. A negative value means "
 "unlimited."
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:321
+#: neutron/extensions/loadbalancer.py:323
 msgid ""
 "Number of health monitors allowed per tenant. A negative value means "
 "unlimited."
@@ -3710,7 +3710,6 @@ msgid "[Agent registration] %d unsuccessful registration attempts. Exiting!"
 msgstr ""
 
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:326
-#: neutron/services/metering/agents/metering_agent.py:270
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
@@ -6087,7 +6086,6 @@ msgstr ""
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:178
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:276
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:131
-#: neutron/services/metering/agents/metering_agent.py:275
 msgid "Failed reporting state!"
 msgstr ""
 
@@ -12937,24 +12935,9 @@ msgstr ""
 msgid "Multiple providers specified for service %s"
 msgstr ""
 
-#: neutron/services/service_base.py:70
+#: neutron/services/service_base.py:71
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
-msgstr ""
-
-#: neutron/services/service_base.py:81
-#, python-format
-msgid "Loaded '%(provider)s' provider for service %(service_type)s"
-msgstr ""
-
-#: neutron/services/service_base.py:87
-#, python-format
-msgid "Error loading provider '%(provider)s' for service %(service_type)s"
-msgstr ""
-
-#: neutron/services/service_base.py:98
-#, python-format
-msgid "Default provider is not specified for service type %s"
 msgstr ""
 
 #: neutron/services/firewall/fwaas_plugin.py:132
@@ -13278,74 +13261,24 @@ msgstr ""
 msgid "%(operation)s operation is not supported for %(entity)s."
 msgstr ""
 
-#: neutron/services/metering/agents/metering_agent.py:59
-msgid "Failed synchronizing routers"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:68
+#: neutron/services/metering/agents/metering_agent.py:66
 msgid "Metering driver"
 msgstr ""
 
-#: neutron/services/metering/agents/metering_agent.py:70
+#: neutron/services/metering/agents/metering_agent.py:68
 msgid "Interval between two metering measures"
 msgstr ""
 
-#: neutron/services/metering/agents/metering_agent.py:72
+#: neutron/services/metering/agents/metering_agent.py:70
 msgid "Interval between two metering reports"
 msgstr ""
 
 #: neutron/services/metering/agents/metering_agent.py:96
-#, python-format
-msgid "Loading Metering driver %s"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:98
 msgid "A metering driver must be specified"
 msgstr ""
 
-#: neutron/services/metering/agents/metering_agent.py:113
-#, python-format
-msgid "Send metering report: %s"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:177
-#, python-format
-msgid "Driver %(driver)s does not implement %(func)s"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:181
-#, python-format
-msgid "Driver %(driver)s:%(func)s runtime error"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:216
-msgid "Get router traffic counters"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:220
-msgid "Update metering rules from agent"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:225
-msgid "Creating a metering label from agent"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:232
-msgid "Delete a metering label from agent"
-msgstr ""
-
-#: neutron/services/metering/agents/metering_agent.py:278
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr ""
-
-#: neutron/services/metering/drivers/iptables/iptables_driver.py:90
-msgid "An interface driver must be specified"
-msgstr ""
-
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:91
-#, python-format
-msgid "Loading interface driver %s"
+msgid "An interface driver must be specified"
 msgstr ""
 
 #: neutron/services/vpn/agent.py:26
