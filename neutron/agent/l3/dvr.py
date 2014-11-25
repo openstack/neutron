@@ -358,7 +358,7 @@ class AgentMixin(object):
         ri.floating_ips_dict[floating_ip] = rule_pr
         fip_2_rtr_name = self.get_fip_int_device_name(ri.router_id)
         ip_rule = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
-        ip_rule.add_rule_from(fixed_ip, FIP_RT_TBL, rule_pr)
+        ip_rule.add(fixed_ip, FIP_RT_TBL, rule_pr)
         #Add routing rule in fip namespace
         fip_ns_name = self.get_fip_ns_name(str(fip['floating_network_id']))
         rtr_2_fip, _ = ri.rtr_fip_subnet.get_pair()
@@ -384,10 +384,10 @@ class AgentMixin(object):
             ri.rtr_fip_subnet = self.local_subnets.allocate(ri.router_id)
         rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
         fip_ns_name = self.get_fip_ns_name(str(self._fetch_external_net_id()))
-        ip_rule_rtr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
         if floating_ip in ri.floating_ips_dict:
             rule_pr = ri.floating_ips_dict[floating_ip]
-            ip_rule_rtr.delete_rule_priority(rule_pr)
+            ip_rule = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
+            ip_rule.delete(floating_ip, FIP_RT_TBL, rule_pr)
             self.fip_priorities.add(rule_pr)
             #TODO(rajeev): Handle else case - exception/log?
 
@@ -415,12 +415,13 @@ class AgentMixin(object):
     def _snat_redirect_add(self, ri, gateway, sn_port, sn_int):
         """Adds rules and routes for SNAT redirection."""
         try:
-            snat_idx = self._get_snat_idx(sn_port['ip_cidr'])
+            ip_cidr = sn_port['ip_cidr']
+            snat_idx = self._get_snat_idx(ip_cidr)
             ns_ipr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
             ns_ipd = ip_lib.IPDevice(sn_int, self.root_helper,
                                      namespace=ri.ns_name)
             ns_ipd.route.add_gateway(gateway, table=snat_idx)
-            ns_ipr.add_rule_from(sn_port['ip_cidr'], snat_idx, snat_idx)
+            ns_ipr.add(ip_cidr, snat_idx, snat_idx)
             ns_ipr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
                                  'send_redirects=0' % sn_int])
         except Exception:
@@ -429,12 +430,13 @@ class AgentMixin(object):
     def _snat_redirect_remove(self, ri, sn_port, sn_int):
         """Removes rules and routes for SNAT redirection."""
         try:
-            snat_idx = self._get_snat_idx(sn_port['ip_cidr'])
+            ip_cidr = sn_port['ip_cidr']
+            snat_idx = self._get_snat_idx(ip_cidr)
             ns_ipr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
             ns_ipd = ip_lib.IPDevice(sn_int, self.root_helper,
                                      namespace=ri.ns_name)
             ns_ipd.route.delete_gateway(table=snat_idx)
-            ns_ipr.delete_rule_priority(snat_idx)
+            ns_ipr.delete(ip_cidr, snat_idx, snat_idx)
         except Exception:
             LOG.exception(_LE('DVR: removed snat failed'))
 
