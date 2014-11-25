@@ -35,9 +35,24 @@ log_translation = re.compile(
     r"(.)*LOG\.(audit|error|info|warn|warning|critical|exception)\(\s*('|\")")
 author_tag_re = (re.compile("^\s*#\s*@?(a|A)uthor"),
                  re.compile("^\.\.\s+moduleauthor::"))
-log_translation_hint = re.compile(
-    r"(.)*LOG\.(audit|error|info|warn|warning|critical|exception)"
-    "\(\s*(_\(|'|\")")
+_all_hints = set(['_', '_LI', '_LE', '_LW', '_LC'])
+_all_log_levels = {
+    # NOTE(yamamoto): Following nova which uses _() for audit.
+    'audit': '_',
+    'error': '_LE',
+    'info': '_LI',
+    'warn': '_LW',
+    'warning': '_LW',
+    'critical': '_LC',
+    'exception': '_LE',
+}
+log_translation_hints = []
+for level, hint in _all_log_levels.iteritems():
+    r = "(.)*LOG\.%(level)s\(\s*((%(wrong_hints)s)\(|'|\")" % {
+        'level': level,
+        'wrong_hints': '|'.join(_all_hints - set([hint])),
+    }
+    log_translation_hints.append(re.compile(r))
 
 
 def _directory_to_check_translation(filename):
@@ -77,8 +92,9 @@ def validate_log_translations(logical_line, physical_line, filename):
 
     if _directory_to_check_translation(filename):
         msg = "N320: Log messages require translation hints!"
-        if log_translation_hint.match(logical_line):
-            yield (0, msg)
+        for log_translation_hint in log_translation_hints:
+            if log_translation_hint.match(logical_line):
+                yield (0, msg)
 
 
 def use_jsonutils(logical_line, filename):

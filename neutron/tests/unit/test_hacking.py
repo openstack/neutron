@@ -17,9 +17,18 @@ from neutron.tests import base
 class HackingTestCase(base.BaseTestCase):
 
     def test_log_translations(self):
-        logs = ['audit', 'error', 'info', 'warn', 'warning', 'critical',
-                'exception']
+        expected_marks = {
+            'audit': '_',
+            'error': '_LE',
+            'info': '_LI',
+            'warn': '_LW',
+            'warning': '_LW',
+            'critical': '_LC',
+            'exception': '_LE',
+        }
+        logs = expected_marks.keys()
         levels = ['_LI', '_LW', '_LE', '_LC']
+        all_marks = levels + ['_']
         debug = "LOG.debug('OK')"
         self.assertEqual(
             0, len(list(checks.validate_log_translations(debug, debug, 'f'))))
@@ -42,11 +51,13 @@ class HackingTestCase(base.BaseTestCase):
                     0, len(list(checks.validate_log_translations(ok,
                                                                  ok, 'f'))))
             filename = 'neutron/agent/f'
-            bad = "LOG.%s(_('BAD - by directory'))" % log
-            self.assertEqual(
-                1, len(list(checks.validate_log_translations(bad,
-                                                             bad,
-                                                             filename))))
+            for mark in all_marks:
+                stmt = "LOG.%s(%s('test'))" % (log, mark)
+                self.assertEqual(
+                    0 if expected_marks[log] == mark else 1,
+                    len(list(checks.validate_log_translations(stmt,
+                                                              stmt,
+                                                              filename))))
 
     def test_use_jsonutils(self):
         def __get_msg(fun):
