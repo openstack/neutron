@@ -159,17 +159,17 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             l3_db.RouterPort.port_type.in_(l3_const.ROUTER_INTERFACE_OWNERS)
         )
 
-    def update_floatingip(self, context, id, floatingip):
-        res_fip = super(L3_NAT_with_dvr_db_mixin, self).update_floatingip(
-            context, id, floatingip)
-        admin_ctx = context.elevated()
-        fip = floatingip['floatingip']
-        unused_agent_port = (fip.get('port_id', -1) is None and
-                            res_fip.get('fixed_port_id'))
-        if unused_agent_port:
+    def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
+        """Override to delete the fip agent gw port on disassociate."""
+        fip_port = fip.get('port_id')
+        unused_fip_agent_gw_port = (
+            fip_port is None and floatingip_db['fixed_port_id'])
+        if unused_fip_agent_gw_port:
+            admin_ctx = context.elevated()
             self.clear_unused_fip_agent_gw_port(
-                admin_ctx, floatingip)
-        return res_fip
+                admin_ctx, floatingip_db)
+        super(L3_NAT_with_dvr_db_mixin, self)._update_fip_assoc(
+            context, fip, floatingip_db, external_port)
 
     def clear_unused_fip_agent_gw_port(
             self, context, floatingip_db):

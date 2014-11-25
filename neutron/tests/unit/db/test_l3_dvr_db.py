@@ -310,3 +310,22 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
         self.assertIn(fip, router[l3_const.FLOATINGIP_KEY])
         self.assertIn('fip_interface',
             router[l3_const.FLOATINGIP_AGENT_INTF_KEY])
+
+    def test_delete_disassociated_floatingip_agent_port(self):
+        fip = {
+            'id': _uuid(),
+            'port_id': None
+        }
+        floatingip = {
+            'id': _uuid(),
+            'fixed_port_id': 1234,
+        }
+        with contextlib.nested(
+            mock.patch.object(self.mixin,
+                              'clear_unused_fip_agent_gw_port'),
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              '_update_fip_assoc'),
+                 ) as (vf, cf):
+            self.mixin._update_fip_assoc(
+                self.ctx, fip, floatingip, mock.ANY)
+            self.assertTrue(vf.called)
