@@ -32,6 +32,7 @@ from neutron.db import l3_gwmode_db
 from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
@@ -143,13 +144,13 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 portbindings.VIF_TYPE] = portbindings.VIF_TYPE_OVS
 
     def set_controller(self, context):
-        LOG.info(_("Set a new controller if needed."))
+        LOG.info(_LI("Set a new controller if needed."))
         new_controller = self.sdnve_client.sdnve_get_controller()
         if new_controller:
             self.notifier.info_update(
                 context,
                 {'new_controller': new_controller})
-            LOG.info(_("Set the controller to a new controller: %s"),
+            LOG.info(_LI("Set the controller to a new controller: %s"),
                      new_controller)
 
     def _process_request(self, request, current):
@@ -167,7 +168,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def create_network(self, context, network):
-        LOG.debug(_("Create network in progress: %r"), network)
+        LOG.debug("Create network in progress: %r", network)
         session = context.session
 
         tenant_id = self._get_tenant_id_for_create(context, network['network'])
@@ -189,12 +190,12 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             raise sdnve_exc.SdnveException(
                 msg=(_('Create net failed in SDN-VE: %s') % res))
 
-        LOG.debug(_("Created network: %s"), net['id'])
+        LOG.debug("Created network: %s", net['id'])
         return net
 
     @_ha
     def update_network(self, context, id, network):
-        LOG.debug(_("Update network in progress: %r"), network)
+        LOG.debug("Update network in progress: %r", network)
         session = context.session
 
         processed_request = {}
@@ -220,7 +221,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def delete_network(self, context, id):
-        LOG.debug(_("Delete network in progress: %s"), id)
+        LOG.debug("Delete network in progress: %s", id)
         session = context.session
 
         with session.begin(subtransactions=True):
@@ -230,18 +231,18 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         (res, data) = self.sdnve_client.sdnve_delete('network', id)
         if res not in constants.HTTP_ACCEPTABLE:
             LOG.error(
-                _("Delete net failed after deleting the network in DB: %s"),
+                _LE("Delete net failed after deleting the network in DB: %s"),
                 res)
 
     @_ha
     def get_network(self, context, id, fields=None):
-        LOG.debug(_("Get network in progress: %s"), id)
+        LOG.debug("Get network in progress: %s", id)
         return super(SdnvePluginV2, self).get_network(context, id, fields)
 
     @_ha
     def get_networks(self, context, filters=None, fields=None, sorts=None,
                      limit=None, marker=None, page_reverse=False):
-        LOG.debug(_("Get networks in progress"))
+        LOG.debug("Get networks in progress")
         return super(SdnvePluginV2, self).get_networks(
             context, filters, fields, sorts, limit, marker, page_reverse)
 
@@ -251,7 +252,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def create_port(self, context, port):
-        LOG.debug(_("Create port in progress: %r"), port)
+        LOG.debug("Create port in progress: %r", port)
         session = context.session
 
         # Set port status as 'ACTIVE' to avoid needing the agent
@@ -267,14 +268,14 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # requires a tenant id
             tenant_id = port.get('tenant_id')
             if not tenant_id:
-                LOG.debug(_("Create port does not have tenant id info"))
+                LOG.debug("Create port does not have tenant id info")
                 original_network = super(SdnvePluginV2, self).get_network(
                     context, port['network_id'])
                 original_tenant_id = original_network['tenant_id']
                 port['tenant_id'] = original_tenant_id
                 LOG.debug(
-                    _("Create port does not have tenant id info; "
-                      "obtained is: %s"),
+                    "Create port does not have tenant id info; "
+                    "obtained is: %s",
                     port['tenant_id'])
 
             os_tenant_id = tenant_id
@@ -296,12 +297,12 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             raise sdnve_exc.SdnveException(
                 msg=(_('Create port failed in SDN-VE: %s') % res))
 
-        LOG.debug(_("Created port: %s"), port.get('id', 'id not found'))
+        LOG.debug("Created port: %s", port.get('id', 'id not found'))
         return port
 
     @_ha
     def update_port(self, context, id, port):
-        LOG.debug(_("Update port in progress: %r"), port)
+        LOG.debug("Update port in progress: %r", port)
         session = context.session
 
         processed_request = {}
@@ -334,7 +335,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def delete_port(self, context, id, l3_port_check=True):
-        LOG.debug(_("Delete port in progress: %s"), id)
+        LOG.debug("Delete port in progress: %s", id)
 
         # if needed, check to see if this is a port owned by
         # an l3-router.  If so, we should prevent deletion.
@@ -347,8 +348,8 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         (res, data) = self.sdnve_client.sdnve_delete('port', id)
         if res not in constants.HTTP_ACCEPTABLE:
             LOG.error(
-                _("Delete port operation failed in SDN-VE "
-                  "after deleting the port from DB: %s"), res)
+                _LE("Delete port operation failed in SDN-VE "
+                    "after deleting the port from DB: %s"), res)
 
     #
     # Subnet
@@ -356,7 +357,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def create_subnet(self, context, subnet):
-        LOG.debug(_("Create subnet in progress: %r"), subnet)
+        LOG.debug("Create subnet in progress: %r", subnet)
         new_subnet = super(SdnvePluginV2, self).create_subnet(context, subnet)
 
         # Note(mb): Use of null string currently required by controller
@@ -370,13 +371,13 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             raise sdnve_exc.SdnveException(
                 msg=(_('Create subnet failed in SDN-VE: %s') % res))
 
-        LOG.debug(_("Subnet created: %s"), new_subnet['id'])
+        LOG.debug("Subnet created: %s", new_subnet['id'])
 
         return new_subnet
 
     @_ha
     def update_subnet(self, context, id, subnet):
-        LOG.debug(_("Update subnet in progress: %r"), subnet)
+        LOG.debug("Update subnet in progress: %r", subnet)
         session = context.session
 
         processed_request = {}
@@ -407,13 +408,13 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def delete_subnet(self, context, id):
-        LOG.debug(_("Delete subnet in progress: %s"), id)
+        LOG.debug("Delete subnet in progress: %s", id)
         super(SdnvePluginV2, self).delete_subnet(context, id)
 
         (res, data) = self.sdnve_client.sdnve_delete('subnet', id)
         if res not in constants.HTTP_ACCEPTABLE:
-            LOG.error(_("Delete subnet operation failed in SDN-VE after "
-                        "deleting the subnet from DB: %s"), res)
+            LOG.error(_LE("Delete subnet operation failed in SDN-VE after "
+                          "deleting the subnet from DB: %s"), res)
 
     #
     # Router
@@ -421,11 +422,11 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def create_router(self, context, router):
-        LOG.debug(_("Create router in progress: %r"), router)
+        LOG.debug("Create router in progress: %r", router)
 
         if router['router']['admin_state_up'] is False:
-            LOG.warning(_('Ignoring admin_state_up=False for router=%r.  '
-                          'Overriding with True'), router)
+            LOG.warning(_LW('Ignoring admin_state_up=False for router=%r.  '
+                            'Overriding with True'), router)
             router['router']['admin_state_up'] = True
 
         tenant_id = self._get_tenant_id_for_create(context, router['router'])
@@ -444,13 +445,13 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             raise sdnve_exc.SdnveException(
                 msg=(_('Create router failed in SDN-VE: %s') % res))
 
-        LOG.debug(_("Router created: %r"), new_router)
+        LOG.debug("Router created: %r", new_router)
         return new_router
 
     @_ha
     def update_router(self, context, id, router):
-        LOG.debug(_("Update router in progress: id=%(id)s "
-                    "router=%(router)r"),
+        LOG.debug("Update router in progress: id=%(id)s "
+                  "router=%(router)r",
                   {'id': id, 'router': router})
         session = context.session
 
@@ -486,27 +487,27 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def delete_router(self, context, id):
-        LOG.debug(_("Delete router in progress: %s"), id)
+        LOG.debug("Delete router in progress: %s", id)
 
         super(SdnvePluginV2, self).delete_router(context, id)
 
         (res, data) = self.sdnve_client.sdnve_delete('router', id)
         if res not in constants.HTTP_ACCEPTABLE:
             LOG.error(
-                _("Delete router operation failed in SDN-VE after "
-                  "deleting the router in DB: %s"), res)
+                _LE("Delete router operation failed in SDN-VE after "
+                    "deleting the router in DB: %s"), res)
 
     @_ha
     def add_router_interface(self, context, router_id, interface_info):
-        LOG.debug(_("Add router interface in progress: "
-                    "router_id=%(router_id)s "
-                    "interface_info=%(interface_info)r"),
+        LOG.debug("Add router interface in progress: "
+                  "router_id=%(router_id)s "
+                  "interface_info=%(interface_info)r",
                   {'router_id': router_id, 'interface_info': interface_info})
 
         new_interface = super(SdnvePluginV2, self).add_router_interface(
             context, router_id, interface_info)
         LOG.debug(
-            _("SdnvePluginV2.add_router_interface called. Port info: %s"),
+            "SdnvePluginV2.add_router_interface called. Port info: %s",
             new_interface)
         request_info = interface_info.copy()
         request_info['port_id'] = new_interface['port_id']
@@ -523,13 +524,13 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 msg=(_('Update router-add-interface failed in SDN-VE: %s') %
                      res))
 
-        LOG.debug(_("Added router interface: %r"), new_interface)
+        LOG.debug("Added router interface: %r", new_interface)
         return new_interface
 
     def _add_router_interface_only(self, context, router_id, interface_info):
-        LOG.debug(_("Add router interface only called: "
-                    "router_id=%(router_id)s "
-                    "interface_info=%(interface_info)r"),
+        LOG.debug("Add router interface only called: "
+                  "router_id=%(router_id)s "
+                  "interface_info=%(interface_info)r",
                   {'router_id': router_id, 'interface_info': interface_info})
 
         port_id = interface_info.get('port_id')
@@ -537,15 +538,15 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             (res, data) = self.sdnve_client.sdnve_update(
                 'router', router_id + '/add_router_interface', interface_info)
             if res not in constants.HTTP_ACCEPTABLE:
-                LOG.error(_("SdnvePluginV2._add_router_interface_only: "
-                            "failed to add the interface in the roll back."
-                            " of a remove_router_interface operation"))
+                LOG.error(_LE("SdnvePluginV2._add_router_interface_only: "
+                              "failed to add the interface in the roll back."
+                              " of a remove_router_interface operation"))
 
     @_ha
     def remove_router_interface(self, context, router_id, interface_info):
-        LOG.debug(_("Remove router interface in progress: "
-                    "router_id=%(router_id)s "
-                    "interface_info=%(interface_info)r"),
+        LOG.debug("Remove router interface in progress: "
+                  "router_id=%(router_id)s "
+                  "interface_info=%(interface_info)r",
                   {'router_id': router_id, 'interface_info': interface_info})
 
         subnet_id = interface_info.get('subnet_id')
@@ -554,7 +555,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if not port_id:
                 raise sdnve_exc.BadInputException(msg=_('No port ID'))
             myport = super(SdnvePluginV2, self).get_port(context, port_id)
-            LOG.debug(_("SdnvePluginV2.remove_router_interface port: %s"),
+            LOG.debug("SdnvePluginV2.remove_router_interface port: %s",
                       myport)
             myfixed_ips = myport.get('fixed_ips')
             if not myfixed_ips:
@@ -563,7 +564,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if subnet_id:
                 interface_info['subnet_id'] = subnet_id
                 LOG.debug(
-                    _("SdnvePluginV2.remove_router_interface subnet_id: %s"),
+                    "SdnvePluginV2.remove_router_interface subnet_id: %s",
                     subnet_id)
         else:
             if not port_id:
@@ -607,7 +608,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def create_floatingip(self, context, floatingip):
-        LOG.debug(_("Create floatingip in progress: %r"),
+        LOG.debug("Create floatingip in progress: %r",
                   floatingip)
         new_floatingip = super(SdnvePluginV2, self).create_floatingip(
             context, floatingip)
@@ -621,12 +622,12 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 msg=(_('Creating floating ip operation failed '
                        'in SDN-VE controller: %s') % res))
 
-        LOG.debug(_("Created floatingip : %r"), new_floatingip)
+        LOG.debug("Created floatingip : %r", new_floatingip)
         return new_floatingip
 
     @_ha
     def update_floatingip(self, context, id, floatingip):
-        LOG.debug(_("Update floatingip in progress: %r"), floatingip)
+        LOG.debug("Update floatingip in progress: %r", floatingip)
         session = context.session
 
         processed_request = {}
@@ -652,9 +653,9 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @_ha
     def delete_floatingip(self, context, id):
-        LOG.debug(_("Delete floatingip in progress: %s"), id)
+        LOG.debug("Delete floatingip in progress: %s", id)
         super(SdnvePluginV2, self).delete_floatingip(context, id)
 
         (res, data) = self.sdnve_client.sdnve_delete('floatingip', id)
         if res not in constants.HTTP_ACCEPTABLE:
-            LOG.error(_("Delete floatingip failed in SDN-VE: %s"), res)
+            LOG.error(_LE("Delete floatingip failed in SDN-VE: %s"), res)

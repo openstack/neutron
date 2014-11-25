@@ -80,7 +80,7 @@ def _directory_to_check_translation(filename):
             "neutron/plugins/common",
             "neutron/plugins/embrane",
             "neutron/plugins/hyperv",
-            #"neutron/plugins/ibm",
+            "neutron/plugins/ibm",
             "neutron/plugins/linuxbridge",
             "neutron/plugins/metaplugin",
             "neutron/plugins/midonet",
