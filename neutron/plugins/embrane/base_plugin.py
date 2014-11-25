@@ -25,6 +25,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import l3
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.embrane.agent import dispatcher
 from neutron.plugins.embrane.common import config  # noqa
@@ -102,7 +103,7 @@ class EmbranePlugin(object):
         try:
             self._update_db_interfaces_state(context, neutron_router)
         except Exception:
-            LOG.exception(_("Unhandled exception occurred"))
+            LOG.exception(_LE("Unhandled exception occurred"))
         return self._set_db_router_state(context, neutron_router, state)
 
     def _retrieve_prefix_from_port(self, context, neutron_port):
@@ -167,12 +168,12 @@ class EmbranePlugin(object):
                 self._esm_api.get_dva(id)
         except h_exc.DvaNotFound:
 
-            LOG.error(_("The following routers have not physical match: %s"),
+            LOG.error(_LE("The following routers have not physical match: %s"),
                       id)
             self._set_db_router_state(context, neutron_router,
                                       p_con.Status.ERROR)
 
-        LOG.debug(_("Requested router: %s"), neutron_router)
+        LOG.debug("Requested router: %s", neutron_router)
         return self._make_router_dict(neutron_router, fields)
 
     def get_routers(self, context, filters=None, fields=None, sorts=None,
@@ -186,7 +187,7 @@ class EmbranePlugin(object):
         try:
             self._esm_api.get_dvas(id_list)
         except h_exc.DvaNotFound:
-            LOG.error(_("The following routers have not physical match: %s"),
+            LOG.error(_LE("The following routers have not physical match: %s"),
                       repr(id_list))
             error_routers = []
             for id in id_list:
@@ -224,7 +225,7 @@ class EmbranePlugin(object):
             d_context=embrane_ctx.DispatcherContext(
                 p_con.Events.DELETE_ROUTER, neutron_router, context,
                 state_change), args=())
-        LOG.debug(_("Deleting router=%s"), neutron_router)
+        LOG.debug("Deleting router=%s", neutron_router)
         return neutron_router
 
     def add_router_interface(self, context, router_id, interface_info):
