@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-24 06:07+0000\n"
-"PO-Revision-Date: 2014-11-23 20:04+0000\n"
+"POT-Creation-Date: 2014-11-25 06:07+0000\n"
+"PO-Revision-Date: 2014-11-25 05:11+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Japanese (http://www.transifex.com/projects/p/neutron/"
 "language/ja/)\n"
@@ -38,13 +38,13 @@ msgstr "状態の同期中"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:2001
+#: neutron/agent/dhcp_agent.py:600 neutron/agent/l3_agent.py:1989
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "サーバー・サイド %s による agent_updated!"
 
-#: neutron/agent/l3_agent.py:1903
+#: neutron/agent/l3_agent.py:1891
 msgid "L3 agent started"
 msgstr "L3 エージェントが始動しました"
 
@@ -349,15 +349,296 @@ msgstr "%d 個の子で終了を待機しています"
 msgid "Failed to take lock. Another process updated the DB first."
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:953 neutron/plugins/ml2/plugin.py:1089
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:807
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "RPC agent_id: %s"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:878
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:726
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1120
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "ポート %(device)s が更新されました。詳細: %(details)s"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:911
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "デバイス %s がプラグインで定義されていません"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:918
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:756
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1175
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1192
+#, python-format
+msgid "Attachment %s removed"
+msgstr "接続機構 %s が削除されました"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:930
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1204
+#, python-format
+msgid "Port %s updated."
+msgstr "ポート %s が更新されました。"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:983
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "LinuxBridge Agent RPC デーモンが開始しました。"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:993
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:834
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1370
+msgid "Agent out of sync with plugin!"
+msgstr "エージェントがプラグインと非同期です。"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1027
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "インターフェース・マッピング: %s"
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1034
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1565
+msgid "Agent initialized successfully, now running... "
+msgstr "エージェントが正常に初期化されました。現在実行中です... "
+
+#: neutron/plugins/ml2/db.py:63
+#, python-format
+msgid ""
+"Added segment %(id)s of type %(network_type)s for network %(network_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:40
+#, python-format
+msgid "Configured type driver names: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:45
+#, python-format
+msgid "Loaded type driver names: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:61
+#, python-format
+msgid "Registered types: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:72
+#, python-format
+msgid "Tenant network_types: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:145
+#, python-format
+msgid "Initializing driver for type '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:248
+#, python-format
+msgid "Configured mechanism driver names: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:254
+#, python-format
+msgid "Loaded mechanism driver names: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:266
+#, python-format
+msgid "Registered mechanism drivers: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:273
+#, python-format
+msgid "Initializing mechanism driver '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:614
+#, python-format
+msgid "Configured extension driver names: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:620
+#, python-format
+msgid "Loaded extension driver names: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:631
+#, python-format
+msgid "Registered extension drivers: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:637
+#, python-format
+msgid "Initializing extension driver '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:645
+#, python-format
+msgid "Got %(alias)s extension from driver '%(drv)s'"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:692
+#, python-format
+msgid "Extended network dict for driver '%(drv)s'"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:699
+#, python-format
+msgid "Extended subnet dict for driver '%(drv)s'"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:706
+#, python-format
+msgid "Extended port dict for driver '%(drv)s'"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:139
+msgid "Modular L2 Plugin initialization complete"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:272
+#, python-format
+msgid "Attempt %(count)s to bind port %(port)s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:954 neutron/plugins/ml2/plugin.py:1090
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:79
+#: neutron/plugins/ml2/drivers/type_flat.py:70
+msgid "Arbitrary flat physical_network names allowed"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_flat.py:76
+#, python-format
+msgid "Allowable flat physical_network names: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_flat.py:83
+msgid "ML2 FlatTypeDriver initialization complete"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_local.py:36
+msgid "ML2 LocalTypeDriver initialization complete"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_tunnel.py:78
 #, python-format
 msgid "%(type)s ID ranges: %(range)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_vlan.py:95
+#, python-format
+msgid "Network VLAN ranges: %s"
+msgstr "ネットワーク VLAN の範囲: %s"
+
+#: neutron/plugins/ml2/drivers/type_vlan.py:162
+msgid "VlanTypeDriver initialization complete"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/arista_l3_driver.py:373
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:451
+#, python-format
+msgid "Executing command on Arista EOS: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/arista_l3_driver.py:379
+#, python-format
+msgid "Results of execution on Arista EOS: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:563
+msgid "Sync start trigger sent to EOS"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:580
+msgid "Syncing Neutron <-> EOS"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:586
+msgid "OpenStack and EOS are in sync!"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:608
+#, python-format
+msgid ""
+"No Tenants configured in Neutron DB. But %d tenants discovered in EOS during "
+"synchronization. Entire EOS region is cleared"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:773
+#, python-format
+msgid "Network %s is not created as it is not found in Arista DB"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:786
+#, python-format
+msgid "Network name changed to %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:813
+#, python-format
+msgid "Network %s is not updated as it is not found in Arista DB"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:904
+#, python-format
+msgid "VM %s is not created as it is not found in Arista DB"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:918
+#, python-format
+msgid "Port name changed to %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:967
+#, python-format
+msgid "VM %s is not updated as it is not found in Arista DB"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:151
+#, python-format
+msgid ""
+"create network (precommit): %(network_id)s of network type = "
+"%(network_type)s with vlan = %(vlan_id)s for tenant %(tenant_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:188
+#, python-format
+msgid ""
+"created network (postcommit): %(network_id)s of network type = "
+"%(network_type)s with vlan = %(vlan_id)s for tenant %(tenant_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:217
+#, python-format
+msgid ""
+"delete network (precommit): %(network_id)s with vlan = %(vlan_id)s for "
+"tenant %(tenant_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:246
+#, python-format
+msgid ""
+"delete network (postcommit): %(network_id)s with vlan = %(vlan_id)s for "
+"tenant %(tenant_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:320
+#, python-format
+msgid ""
+"created port (postcommit): port_id=%(port_id)s network_id=%(network_id)s "
+"tenant_id=%(tenant_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:375
+#, python-format
+msgid ""
+"delete port (postcommit): port_id=%(port_id)s network_id=%(network_id)s "
+"tenant_id=%(tenant_id)s"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:78
@@ -378,10 +659,9 @@ msgstr ""
 msgid "APIC host agent: started on %s"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:379
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:834
-msgid "Agent out of sync with plugin!"
-msgstr "エージェントがプラグインと非同期です。"
+#: neutron/plugins/ml2/drivers/freescale/mechanism_fslsdn.py:39
+msgid "Initializing CRD client... "
+msgstr ""
 
 #: neutron/plugins/nuage/syncmanager.py:46
 msgid "Starting the sync between Neutron and VSD"
@@ -409,17 +689,15 @@ msgstr ""
 msgid "unknown network %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
-msgid "Agent initialized successfully, now running... "
-msgstr "エージェントが正常に初期化されました。現在実行中です... "
-
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:449
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:481
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr ""
 "%(vlan_id)s を net-id=%(net_uuid)s のローカル VLAN として割り当てています"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:499
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:575
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "VLAN = %(vlan_id)s を net-id = %(net_uuid)s から再利用中"
@@ -430,34 +708,54 @@ msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr "port_unbound() net_uuid %s が local_vlan_map にありません"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:712
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1114
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be "
 "processed"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:726
-#, python-format
-msgid "Port %(device)s updated. Details: %(details)s"
-msgstr "ポート %(device)s が更新されました。詳細: %(details)s"
-
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:745
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1144
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:756
-#, python-format
-msgid "Attachment %s removed"
-msgstr "接続機構 %s が削除されました"
-
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:839
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1392
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "エージェント・トンネルがプラグインと非同期です"
 
 #: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:198
 #, python-format
 msgid "L2 Agent operating in DVR Mode with MAC %s"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:670
+#, python-format
+msgid "port_unbound(): net_uuid %s not in local_vlan_map"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:743
+#, python-format
+msgid "Adding %s to list of bridges."
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:884
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr ""
+"物理ネットワーク %(physical_network)s をブリッジ %(bridge)s にマップしていま"
+"す"
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:994
+#, python-format
+msgid "Port '%(port_name)s' has lost its vlan tag '%(vlan_tag)d'!"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1163
+#, python-format
+msgid "Ancillary Port %s added"
 msgstr ""
 
 #: neutron/scheduler/dhcp_agent_scheduler.py:52

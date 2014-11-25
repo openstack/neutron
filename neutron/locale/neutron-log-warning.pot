@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev434.g6a589e7\n"
+"Project-Id-Version: neutron 2015.1.dev465.g2dde360\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-23 06:06+0000\n"
+"POT-Creation-Date: 2014-11-25 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,8 +56,9 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:585 neutron/agent/l3_agent.py:1991
+#: neutron/agent/dhcp_agent.py:585 neutron/agent/l3_agent.py:1979
 #: neutron/agent/metadata/agent.py:411
+#: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
@@ -79,12 +80,12 @@ msgid ""
 "Retrying. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:780
+#: neutron/agent/l3_agent.py:770
 #, python-format
 msgid "Info for router %s were not found. Skipping router removal"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1119
+#: neutron/agent/l3_agent.py:1109
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
@@ -316,9 +317,130 @@ msgstr ""
 msgid "Another server already removed the lock. %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:143
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:83
+msgid "VXLAN is enabled, a valid local_ip must be provided"
+msgstr ""
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:97
+msgid "Invalid Network ID, will lead to incorrect bridgename"
+msgstr ""
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:104
+msgid "Invalid VLAN ID, will lead to incorrect subinterface name"
+msgstr ""
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:111
+msgid "Invalid Interface ID, will lead to incorrect tap device name"
+msgstr ""
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:120
+#, python-format
+msgid "Invalid Segmentation ID: %s, will lead to incorrect vxlan device name"
+msgstr ""
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:520
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:554
+#, python-format
+msgid ""
+"Option \"%(option)s\" must be supported by command \"%(command)s\" to "
+"enable %(mode)s mode"
+msgstr ""
+
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:548
+msgid ""
+"VXLAN muticast group must be provided in vxlan_group option to enable "
+"VXLAN MCAST mode"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:601
+#, python-format
+msgid "Failed to bind port %(port)s on host %(host)s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:478
+#, python-format
+msgid ""
+"In _notify_port_updated(), no bound segment for port %(port_id)s on "
+"network %(network_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:639
+msgid "A concurrent port creation has occurred"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:1114
+#, python-format
+msgid "Port %(port)s updated up by agent not found"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:1144
+#, python-format
+msgid "Port %s not found during update"
+msgstr ""
+
+#: neutron/plugins/ml2/rpc.py:67
+#, python-format
+msgid "Device %(device)s requested by agent %(agent_id)s not found in database"
+msgstr ""
+
+#: neutron/plugins/ml2/rpc.py:76
+#, python-format
+msgid ""
+"Device %(device)s requested by agent %(agent_id)s on network "
+"%(network_id)s not bound, vif_type: %(vif_type)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/helpers.py:141
+#, python-format
+msgid ""
+"Allocate %(type)s segment from pool failed after %(number)s failed "
+"attempts"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/mech_agent.py:74
+#: neutron/plugins/ml2/drivers/mech_sriov/mech_driver.py:113
+#, python-format
+msgid "Attempting to bind with dead agent: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_flat.py:131
+#, python-format
+msgid "No flat network found on physical network %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_gre.py:132
+#, python-format
+msgid "Gre endpoint with ip %s already exists"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_tunnel.py:142
 #, python-format
 msgid "%(type)s tunnel %(id)s not found"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_vlan.py:253
+#, python-format
+msgid "No vlan_id %(vlan_id)s found on physical network %(physical_network)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_vxlan.py:151
+#, python-format
+msgid "Vxlan endpoint with ip %s already exists"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:77
+#, python-format
+msgid "'timestamp' command '%s' is not available on EOS"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:331
+#, python-format
+msgid "VM id %(vmid)s not found for port %(portid)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/arista/mechanism_arista.py:348
+#, python-format
+msgid "Unknown device owner: %s"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:66
@@ -339,6 +461,23 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:108
 #, python-format
 msgid "Add interface postcommit failed for port %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/nexus/nexus_db_v2.py:75
+msgid "update_nexusport_binding called with no vlan"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:155
+msgid "Unable to retrieve the agent ip, check the agent configuration."
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:161
+#, python-format
+msgid "Port %(port)s updated by agent %(agent)s isn't bound to any segment"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:138
+msgid "Ignoring port notification to controller because of missing host ID."
 msgstr ""
 
 #: neutron/plugins/nuage/syncmanager.py:298
@@ -389,16 +528,19 @@ msgid "VM port %s not found in neutron for sync"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:284
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1301
 #, python-format
 msgid "Unable to create tunnel port. Invalid remote IP: %s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:640
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1023
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:747
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1146
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
@@ -416,6 +558,18 @@ msgstr ""
 msgid ""
 "L2 agent could not get DVR MAC address from server. Retrying. Detailed "
 "message: %s"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:451
+#, python-format
+msgid "Action %s not supported"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:863
+#, python-format
+msgid ""
+"Creating an interface named %(name)s exceeds the %(limit)d character "
+"limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
 #: neutron/scheduler/dhcp_agent_scheduler.py:80
@@ -533,12 +687,12 @@ msgstr ""
 msgid "%(method)s: Request timeout%(ssl)s (%(timeout).3f sec) for CSR(%(host)s)"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:647
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:649
 #, python-format
 msgid "Unable to delete %(resource)s %(which)s: %(status)d"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:729
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:731
 #, python-format
 msgid "Unable to find connection %s"
 msgstr ""
