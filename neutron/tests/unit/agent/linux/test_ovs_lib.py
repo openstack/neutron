@@ -218,6 +218,27 @@ class OVS_Lib_Test(base.BaseTestCase):
     def _build_timeout_opt(self, exp_timeout):
         return "--timeout=%d" % exp_timeout if exp_timeout else self.TO
 
+    def test_replace_port(self):
+        pname = "tap5"
+        self.br.replace_port(pname)
+        self.execute.assert_called_once_with(
+            ["ovs-vsctl", self.TO,
+             "--", "--if-exists", "del-port", pname,
+             "--", "add-port", self.BR_NAME, pname],
+            root_helper=self.root_helper)
+
+    def test_replace_port_with_attrs(self):
+        pname = "tap5"
+        self.br.replace_port(pname, ('type', 'internal'),
+                             ('external-ids:iface-status', 'active'))
+        self.execute.assert_called_once_with(
+            ["ovs-vsctl", self.TO,
+             "--", "--if-exists", "del-port", pname,
+             "--", "add-port", self.BR_NAME, pname,
+             "--", "set", "Interface", pname,
+             "type=internal", "external-ids:iface-status=active"],
+            root_helper=self.root_helper)
+
     def _test_delete_port(self, exp_timeout=None):
         exp_timeout_str = self._build_timeout_opt(exp_timeout)
         pname = "tap5"

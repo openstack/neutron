@@ -207,17 +207,14 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
     def _ovs_add_port(self, bridge, device_name, port_id, mac_address,
                       internal=True):
-        cmd = ['ovs-vsctl', '--', '--if-exists', 'del-port', device_name, '--',
-               'add-port', bridge, device_name]
+        attrs = [('external-ids:iface-id', port_id),
+                 ('external-ids:iface-status', 'active'),
+                 ('external-ids:attached-mac', mac_address)]
         if internal:
-            cmd += ['--', 'set', 'Interface', device_name, 'type=internal']
-        cmd += ['--', 'set', 'Interface', device_name,
-                'external-ids:iface-id=%s' % port_id,
-                '--', 'set', 'Interface', device_name,
-                'external-ids:iface-status=active',
-                '--', 'set', 'Interface', device_name,
-                'external-ids:attached-mac=%s' % mac_address]
-        utils.execute(cmd, self.root_helper)
+            attrs.insert(0, ('type', 'internal'))
+
+        ovs = ovs_lib.OVSBridge(bridge, self.root_helper)
+        ovs.replace_port(device_name, *attrs)
 
     def plug(self, network_id, port_id, device_name, mac_address,
              bridge=None, namespace=None, prefix=None):
