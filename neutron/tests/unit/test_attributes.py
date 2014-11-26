@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import string
 import testtools
 
 from neutron.api.v2 import attributes
@@ -121,6 +122,14 @@ class TestAttributes(base.BaseTestCase):
                           attributes._validate_no_whitespace,
                           'i\thave\twhitespace')
 
+        for ws in string.whitespace:
+            self.assertRaises(n_exc.InvalidInput,
+                              attributes._validate_no_whitespace,
+                              '%swhitespace-at-head' % ws)
+            self.assertRaises(n_exc.InvalidInput,
+                              attributes._validate_no_whitespace,
+                              'whitespace-at-tail%s' % ws)
+
     def test_validate_range(self):
         msg = attributes._validate_range(1, [1, 9])
         self.assertIsNone(msg)
@@ -188,6 +197,10 @@ class TestAttributes(base.BaseTestCase):
         else:
             self.assertEqual(msg, err_msg % mac_addr)
 
+        mac_addr = "ff:16:3e:4f:00:00\r"
+        msg = validator(mac_addr)
+        self.assertEqual(msg, err_msg % mac_addr)
+
     def test_validate_mac_address(self):
         self._test_validate_mac_address(attributes._validate_mac_address)
 
@@ -216,6 +229,16 @@ class TestAttributes(base.BaseTestCase):
         msg = attributes._validate_ip_address(ip_addr)
         self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
 
+        for ws in string.whitespace:
+            ip_addr = '%s111.1.1.1' % ws
+            msg = attributes._validate_ip_address(ip_addr)
+            self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+
+        for ws in string.whitespace:
+            ip_addr = '111.1.1.1%s' % ws
+            msg = attributes._validate_ip_address(ip_addr)
+            self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+
     def test_validate_ip_pools(self):
         pools = [[{'end': '10.0.0.254'}],
                  [{'start': '10.0.0.254'}],
@@ -237,6 +260,13 @@ class TestAttributes(base.BaseTestCase):
         for pool in pools:
             msg = attributes._validate_ip_pools(pool)
             self.assertIsNone(msg)
+
+        invalid_ip = '10.0.0.2\r'
+        pools = [[{'end': '10.0.0.254', 'start': invalid_ip}]]
+        for pool in pools:
+            msg = attributes._validate_ip_pools(pool)
+            self.assertEqual(msg,
+                             "'%s' is not a valid IP address" % invalid_ip)
 
     def test_validate_fixed_ips(self):
         fixed_ips = [
@@ -498,6 +528,12 @@ class TestAttributes(base.BaseTestCase):
         else:
             error = "'%s' is not a valid IP subnet" % cidr
             self.assertEqual(msg, error)
+
+        # Invalid - IPv4 with trailing CR
+        cidr = "10.0.2.0/24\r"
+        msg = validator(cidr, None)
+        error = "'%s' is not a valid IP subnet" % cidr
+        self.assertEqual(msg, error)
 
     def test_validate_subnet(self):
         self._test_validate_subnet(attributes._validate_subnet)
