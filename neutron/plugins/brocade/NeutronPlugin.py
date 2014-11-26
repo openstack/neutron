@@ -164,8 +164,7 @@ class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
         return port
 
 
-class AgentNotifierApi(n_rpc.RpcProxy,
-                       sg_rpc.SecurityGroupAgentRpcApiMixin):
+class AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
     """Agent side of the linux bridge rpc API.
 
     API version history:
@@ -175,12 +174,10 @@ class AgentNotifierApi(n_rpc.RpcProxy,
 
     """
 
-    BASE_RPC_API_VERSION = '1.1'
-
     def __init__(self, topic):
-        super(AgentNotifierApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self.topic = topic
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
         self.topic_network_delete = topics.get_topic_name(topic,
                                                           topics.NETWORK,
                                                           topics.DELETE)
@@ -189,18 +186,14 @@ class AgentNotifierApi(n_rpc.RpcProxy,
                                                        topics.UPDATE)
 
     def network_delete(self, context, network_id):
-        self.fanout_cast(context,
-                         self.make_msg('network_delete',
-                                       network_id=network_id),
-                         topic=self.topic_network_delete)
+        cctxt = self.client.prepare(topic=self.topic_network_delete,
+                                    fanout=True)
+        cctxt.cast(context, 'network_delete', network_id=network_id)
 
     def port_update(self, context, port, physical_network, vlan_id):
-        self.fanout_cast(context,
-                         self.make_msg('port_update',
-                                       port=port,
-                                       physical_network=physical_network,
-                                       vlan_id=vlan_id),
-                         topic=self.topic_port_update)
+        cctxt = self.client.prepare(topic=self.topic_port_update, fanout=True)
+        cctxt.cast(context, 'port_update', port=port,
+                   physical_network=physical_network, vlan_id=vlan_id)
 
 
 class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
