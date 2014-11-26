@@ -565,10 +565,12 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         # Raise a timeout every time until we give up, currently 5 tries
         self._setup_for_dvr_test()
         self.agent.dvr_agent.dvr_mac_address = None
-        with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                               'get_dvr_mac_address_by_host',
-                               side_effect=raise_timeout):
-
+        with contextlib.nested(
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                 'get_dvr_mac_address_by_host',
+                                 side_effect=raise_timeout),
+                mock.patch.object(utils, "execute"),
+        ) as (rpc_mock, execute_mock):
             self.agent.dvr_agent.get_dvr_mac_address()
             self.assertIsNone(self.agent.dvr_agent.dvr_mac_address)
             self.assertFalse(self.agent.dvr_agent.in_distributed_mode())
