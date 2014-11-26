@@ -1,6 +1,6 @@
 hacking>=0.8.0,<0.9
 
-cliff>=1.4.3
+cliff>=1.4.3,<1.9
 coverage>=3.6
 discover
 fixtures>=0.3.14
@@ -9,7 +9,7 @@ python-subunit>=0.0.18
 ordereddict
 sphinx>=1.1.2,<1.1.999
 testrepository>=0.0.18
-testtools>=0.9.34
+testtools>=0.9.34,!=1.2.0,!=1.4.0
 WebTest>=2.0
 # Packages for the Cisco Plugin
 ###############################
