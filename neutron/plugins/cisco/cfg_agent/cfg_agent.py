@@ -19,6 +19,7 @@ import sys
 import time
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.agent.common import config
 from neutron.agent.linux import external_process
@@ -48,15 +49,13 @@ REGISTRATION_RETRY_DELAY = 2
 MAX_REGISTRATION_ATTEMPTS = 30
 
 
-class CiscoDeviceManagementApi(n_rpc.RpcProxy):
+class CiscoDeviceManagementApi(object):
     """Agent side of the device manager RPC API."""
 
-    BASE_RPC_API_VERSION = '1.0'
-
     def __init__(self, topic, host):
-        super(CiscoDeviceManagementApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self.host = host
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def report_dead_hosting_devices(self, context, hd_ids=None):
         """Report that a hosting device cannot be contacted (presumed dead).
@@ -65,19 +64,14 @@ class CiscoDeviceManagementApi(n_rpc.RpcProxy):
         :param: hosting_device_ids: list of non-responding hosting devices
         :return: None
         """
-        # Cast since we don't expect a return value.
-        self.cast(context,
-                  self.make_msg('report_non_responding_hosting_devices',
-                                host=self.host,
-                                hosting_device_ids=hd_ids),
-                  topic=self.topic)
+        cctxt = self.client.prepare()
+        cctxt.cast(context, 'report_non_responding_hosting_devices',
+                   host=self.host, hosting_device_ids=hd_ids)
 
     def register_for_duty(self, context):
         """Report that a config agent is ready for duty."""
-        return self.call(context,
-                         self.make_msg('register_for_duty',
-                                       host=self.host),
-                         topic=self.topic)
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'register_for_duty', host=self.host)
 
 
 class CiscoCfgAgent(manager.Manager):

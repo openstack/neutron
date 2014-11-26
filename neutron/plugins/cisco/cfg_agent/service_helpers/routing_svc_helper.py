@@ -85,15 +85,13 @@ class RouterInfo(object):
         return N_ROUTER_PREFIX + self.router_id
 
 
-class CiscoRoutingPluginApi(n_rpc.RpcProxy):
+class CiscoRoutingPluginApi(object):
     """RoutingServiceHelper(Agent) side of the  routing RPC API."""
 
-    BASE_RPC_API_VERSION = '1.1'
-
     def __init__(self, topic, host):
-        super(CiscoRoutingPluginApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self.host = host
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     def get_routers(self, context, router_ids=None, hd_ids=None):
         """Make a remote process call to retrieve the sync data for routers.
@@ -103,12 +101,9 @@ class CiscoRoutingPluginApi(n_rpc.RpcProxy):
         :param hd_ids : hosting device ids, only routers assigned to these
                         hosting devices will be returned.
         """
-        return self.call(context,
-                         self.make_msg('cfg_sync_routers',
-                                       host=self.host,
-                                       router_ids=router_ids,
-                                       hosting_device_ids=hd_ids),
-                         topic=self.topic)
+        cctxt = self.client.prepare(version='1.1')
+        return cctxt.call(context, 'cfg_sync_routers', host=self.host,
+                          router_ids=router_ids, hosting_device_ids=hd_ids)
 
 
 class RoutingServiceHelper():
