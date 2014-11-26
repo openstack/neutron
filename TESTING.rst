@@ -184,7 +184,22 @@ overwritten during the next tox run.
 Post-mortem debugging
 ~~~~~~~~~~~~~~~~~~~~~
 
-Setting OS_POST_MORTEM_DEBUG=1 in the shell environment will ensure
-that pdb.post_mortem() will be invoked on test failure::
+Setting OS_POST_MORTEM_DEBUGGER in the shell environment will ensure
+that the debugger .post_mortem() method will be invoked on test failure::
 
-    $ OS_POST_MORTEM_DEBUG=1 ./run_tests.sh -d [test module path]
+    $ OS_POST_MORTEM_DEBUGGER=pdb ./run_tests.sh -d [test module path]
+
+Supported debuggers are pdb, and pudb. Pudb is full-screen, console-based
+visual debugger for Python which let you inspect variables, the stack,
+and breakpoints in a very visual way, keeping a high degree of compatibility
+with pdb::
+
+    $ ./.venv/bin/pip install pudb
+
+    $ OS_POST_MORTEM_DEBUGGER=pudb ./run_tests.sh -d [test module path]
+
+References
+==========
+
+.. [#pudb] PUDB debugger:
+   https://pypi.python.org/pypi/pudb
