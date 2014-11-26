@@ -17,7 +17,9 @@
 System-level utilities and helper functions.
 """
 
-import logging as stdlib_logging
+import errno
+import logging
+import multiprocessing
 import os
 import random
 import shlex
@@ -25,9 +27,10 @@ import signal
 
 from eventlet.green import subprocess
 from eventlet import greenthread
+from oslo.utils import strutils
+import six
 
-from neutron.openstack.common.gettextutils import _
-from neutron.openstack.common import log as logging
+from neutron.openstack.common._i18n import _
 
 
 LOG = logging.getLogger(__name__)
@@ -53,11 +56,18 @@ class ProcessExecutionError(Exception):
         self.description = description
 
         if description is None:
-            description = "Unexpected error while running command."
+            description = _("Unexpected error while running command.")
         if exit_code is None:
             exit_code = '-'
-        message = ("%s\nCommand: %s\nExit code: %s\nStdout: %r\nStderr: %r"
-                   % (description, cmd, exit_code, stdout, stderr))
+        message = _('%(description)s\n'
+                    'Command: %(cmd)s\n'
+                    'Exit code: %(exit_code)s\n'
+                    'Stdout: %(stdout)r\n'
+                    'Stderr: %(stderr)r') % {'description': description,
+                                             'cmd': cmd,
+                                             'exit_code': exit_code,
+                                             'stdout': stdout,
+                                             'stderr': stderr}
         super(ProcessExecutionError, self).__init__(message)
 
 
@@ -81,6 +91,9 @@ def execute(*cmd, **kwargs):
     :type cmd:              string
     :param process_input:   Send to opened process.
     :type process_input:    string
+    :param env_variables:   Environment variables and their values that
+                            will be set for the process.
+    :type env_variables:    dict
     :param check_exit_code: Single bool, int, or list of allowed exit
                             codes.  Defaults to [0].  Raise
                             :class:`ProcessExecutionError` unless
@@ -102,8 +115,7 @@ def execute(*cmd, **kwargs):
                             execute this command. Defaults to false.
     :type shell:            boolean
     :param loglevel:        log level for execute commands.
-    :type loglevel:         int.  (Should be stdlib_logging.DEBUG or
-                            stdlib_logging.INFO)
+    :type loglevel:         int.  (Should be logging.DEBUG or logging.INFO)
     :returns:               (stdout, stderr) from process execution
     :raises:                :class:`UnknownArgumentError` on
                             receiving unknown arguments
@@ -111,6 +123,7 @@ def execute(*cmd, **kwargs):
     """
 
     process_input = kwargs.pop('process_input', None)
+    env_variables = kwargs.pop('env_variables', None)
     check_exit_code = kwargs.pop('check_exit_code', [0])
     ignore_exit_code = False
     delay_on_retry = kwargs.pop('delay_on_retry', True)
@@ -118,7 +131,7 @@ def execute(*cmd, **kwargs):
     run_as_root = kwargs.pop('run_as_root', False)
     root_helper = kwargs.pop('root_helper', '')
     shell = kwargs.pop('shell', False)
-    loglevel = kwargs.pop('loglevel', stdlib_logging.DEBUG)
+    loglevel = kwargs.pop('loglevel', logging.DEBUG)
 
     if isinstance(check_exit_code, bool):
         ignore_exit_code = not check_exit_code
@@ -127,22 +140,22 @@ def execute(*cmd, **kwargs):
         check_exit_code = [check_exit_code]
 
     if kwargs:
-        raise UnknownArgumentError(_('Got unknown keyword args '
-                                     'to utils.execute: %r') % kwargs)
+        raise UnknownArgumentError(_('Got unknown keyword args: %r') % kwargs)
 
     if run_as_root and hasattr(os, 'geteuid') and os.geteuid() != 0:
         if not root_helper:
             raise NoRootWrapSpecified(
-                message=('Command requested root, but did not specify a root '
-                         'helper.'))
+                message=_('Command requested root, but did not '
+                          'specify a root helper.'))
         cmd = shlex.split(root_helper) + list(cmd)
 
     cmd = map(str, cmd)
+    sanitized_cmd = strutils.mask_password(' '.join(cmd))
 
     while attempts > 0:
         attempts -= 1
         try:
-            LOG.log(loglevel, _('Running cmd (subprocess): %s'), ' '.join(cmd))
+            LOG.log(loglevel, _('Running cmd (subprocess): %s'), sanitized_cmd)
             _PIPE = subprocess.PIPE  # pylint: disable=E1101
 
             if os.name == 'nt':
@@ -158,27 +171,39 @@ def execute(*cmd, **kwargs):
                                    stderr=_PIPE,
                                    close_fds=close_fds,
                                    preexec_fn=preexec_fn,
-                                   shell=shell)
+                                   shell=shell,
+                                   env=env_variables)
             result = None
-            if process_input is not None:
-                result = obj.communicate(process_input)
-            else:
-                result = obj.communicate()
+            for _i in six.moves.range(20):
+                # NOTE(russellb) 20 is an arbitrary number of retries to
+                # prevent any chance of looping forever here.
+                try:
+                    if process_input is not None:
+                        result = obj.communicate(process_input)
+                    else:
+                        result = obj.communicate()
+                except OSError as e:
+                    if e.errno in (errno.EAGAIN, errno.EINTR):
+                        continue
+                    raise
+                break
             obj.stdin.close()  # pylint: disable=E1101
             _returncode = obj.returncode  # pylint: disable=E1101
-            LOG.log(loglevel, _('Result was %s') % _returncode)
+            LOG.log(loglevel, 'Result was %s' % _returncode)
             if not ignore_exit_code and _returncode not in check_exit_code:
                 (stdout, stderr) = result
+                sanitized_stdout = strutils.mask_password(stdout)
+                sanitized_stderr = strutils.mask_password(stderr)
                 raise ProcessExecutionError(exit_code=_returncode,
-                                            stdout=stdout,
-                                            stderr=stderr,
-                                            cmd=' '.join(cmd))
+                                            stdout=sanitized_stdout,
+                                            stderr=sanitized_stderr,
+                                            cmd=sanitized_cmd)
             return result
         except ProcessExecutionError:
             if not attempts:
                 raise
             else:
-                LOG.log(loglevel, _('%r failed. Retrying.'), cmd)
+                LOG.log(loglevel, _('%r failed. Retrying.'), sanitized_cmd)
                 if delay_on_retry:
                     greenthread.sleep(random.randint(20, 200) / 100.0)
         finally:
@@ -205,7 +230,7 @@ def trycmd(*args, **kwargs):
         out, err = execute(*args, **kwargs)
         failed = False
     except ProcessExecutionError as exn:
-        out, err = '', str(exn)
+        out, err = '', six.text_type(exn)
         failed = True
 
     if not failed and discard_warnings and err:
@@ -217,7 +242,8 @@ def trycmd(*args, **kwargs):
 
 def ssh_execute(ssh, cmd, process_input=None,
                 addl_env=None, check_exit_code=True):
-    LOG.debug(_('Running cmd (SSH): %s'), cmd)
+    sanitized_cmd = strutils.mask_password(cmd)
+    LOG.debug('Running cmd (SSH): %s', sanitized_cmd)
     if addl_env:
         raise InvalidArgumentError(_('Environment not supported over SSH'))
 
@@ -231,18 +257,33 @@ def ssh_execute(ssh, cmd, process_input=None,
     # NOTE(justinsb): This seems suspicious...
     # ...other SSH clients have buffering issues with this approach
     stdout = stdout_stream.read()
+    sanitized_stdout = strutils.mask_password(stdout)
     stderr = stderr_stream.read()
+    sanitized_stderr = strutils.mask_password(stderr)
+
     stdin_stream.close()
 
     exit_status = channel.recv_exit_status()
 
     # exit_status == -1 if no exit code was returned
     if exit_status != -1:
-        LOG.debug(_('Result was %s') % exit_status)
+        LOG.debug('Result was %s' % exit_status)
         if check_exit_code and exit_status != 0:
             raise ProcessExecutionError(exit_code=exit_status,
-                                        stdout=stdout,
-                                        stderr=stderr,
-                                        cmd=cmd)
+                                        stdout=sanitized_stdout,
+                                        stderr=sanitized_stderr,
+                                        cmd=sanitized_cmd)
 
-    return (stdout, stderr)
+    return (sanitized_stdout, sanitized_stderr)
+
+
+def get_worker_count():
+    """Utility to get the default worker count.
+
+    @return: The number of CPUs if that can be determined, else a default
+             worker count of 1 is returned.
+    """
+    try:
+        return multiprocessing.cpu_count()
+    except NotImplementedError:
+        return 1

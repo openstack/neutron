@@ -27,6 +27,7 @@ It also allows setting of formatting information through conf.
 
 """
 
+import copy
 import inspect
 import itertools
 import logging
@@ -173,6 +174,16 @@ CONF.register_cli_opts(common_cli_opts)
 CONF.register_cli_opts(logging_cli_opts)
 CONF.register_opts(generic_log_opts)
 CONF.register_opts(log_opts)
+
+
+def list_opts():
+    """Entry point for oslo.config-generator."""
+    return [(None, copy.deepcopy(common_cli_opts)),
+            (None, copy.deepcopy(logging_cli_opts)),
+            (None, copy.deepcopy(generic_log_opts)),
+            (None, copy.deepcopy(log_opts)),
+            ]
+
 
 # our new audit level
 # NOTE(jkoelker) Since we synthesized an audit level, make the logging
@@ -546,9 +557,11 @@ def _setup_logging_from_conf(project, version):
             # TODO(bogdando) use the format provided by RFCSysLogHandler
             #   after existing syslog format deprecation in J
             if CONF.use_syslog_rfc_format:
-                syslog = RFCSysLogHandler(facility=facility)
+                syslog = RFCSysLogHandler(address='/dev/log',
+                                          facility=facility)
             else:
-                syslog = logging.handlers.SysLogHandler(facility=facility)
+                syslog = logging.handlers.SysLogHandler(address='/dev/log',
+                                                        facility=facility)
             log_root.addHandler(syslog)
         except socket.error:
             log_root.error('Unable to add syslog handler. Verify that syslog '
