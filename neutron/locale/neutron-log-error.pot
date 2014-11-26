@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev465.g2dde360\n"
+"Project-Id-Version: neutron 2015.1.dev488.g963d699\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-25 06:08+0000\n"
+"POT-Creation-Date: 2014-11-26 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,7 +48,7 @@ msgstr ""
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:591 neutron/agent/l3_agent.py:1984
+#: neutron/agent/dhcp_agent.py:595 neutron/agent/l3_agent.py:1984
 #: neutron/agent/metadata/agent.py:416
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:793
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:277
@@ -86,6 +86,7 @@ msgid "Failed trying to delete namespace: %s"
 msgstr ""
 
 #: neutron/agent/l3_agent.py:845
+#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:632
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -461,6 +462,219 @@ msgstr ""
 
 #: neutron/openstack/common/service.py:269
 msgid "Unhandled exception"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:230
+#, python-format
+msgid ""
+"Invalid payload format for received RPC message "
+"`hosting_devices_removed`. Error is %{error}s. Payload is %(payload)s"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:283
+msgid ""
+"[Agent registration] Neutron server said that no device manager was "
+"found. Cannot continue. Exiting!"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:287
+#, python-format
+msgid "[Agent registration] %d unsuccessful registration attempts. Exiting!"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:326
+msgid "Failed sending agent report!"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/device_drivers/driver_mgr.py:80
+#, python-format
+msgid ""
+"Error loading cfg agent driver %(driver)s for hosting device template "
+"%(t_name)s(%(t_id)s)"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:63
+#, python-format
+msgid "Missing device parameter:%s. Aborting CSR1kvRoutingDriver initialization"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:229
+#, python-format
+msgid "Unknown route command %s"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:437
+#, python-format
+msgid "Mismatch in ACL configuration for %s"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:468
+#, python-format
+msgid "Failed creating VRF %s"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:482
+#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:495
+#, python-format
+msgid "VRF %s not present"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:224
+msgid "Failed processing routers"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:285
+msgid "RPC Error in fetching routers from plugin"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:381
+#, python-format
+msgid "Key Error, missing key: %s"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:385
+#, python-format
+msgid "Driver Exception on router:%(id)s. Error is %(e)s"
+msgstr ""
+
+#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:396
+#, python-format
+msgid "Exception in processing routers on device:%s"
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:123
+#, python-format
+msgid "No tenant with a name or ID of %s exists."
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:126
+#, python-format
+msgid "Multiple tenants matches found for %s"
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:145
+msgid "The virtual management network has no subnet. Please assign one."
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:155
+msgid ""
+"The virtual management network does not have unique name. Please ensure "
+"that it is."
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:159
+msgid "There is no virtual management network. Please create one."
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:181
+msgid ""
+"The security group for the virtual management network does not have "
+"unique name. Please ensure that it is."
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:186
+msgid ""
+"There is no security group for the virtual management network. Please "
+"create one."
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:200
+msgid "Error loading hosting device driver"
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:213
+msgid "Error loading plugging driver"
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/device_handling_db.py:422
+#, python-format
+msgid "Failed to delete hosting device %s service VM. Will un-register it anyway."
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:410
+#, python-format
+msgid "DB inconsistency: No type and hosting info associated with router %s"
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:415
+#, python-format
+msgid "DB inconsistency: Multiple type and hosting info associated with router %s"
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:438
+#, python-format
+msgid "DB inconsistency: No hosting info associated with router %s"
+msgstr ""
+
+#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:515
+#, python-format
+msgid "Failed to allocate hosting port for port %s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/service_vm_lib.py:68
+#, python-format
+msgid "Failure determining running Nova services: %s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/service_vm_lib.py:85
+#, python-format
+msgid "Failed to get status of service VM instance %(id)s, due to %(err)s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/service_vm_lib.py:101
+#, python-format
+msgid "Failure finding needed Nova resource: %s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/service_vm_lib.py:123
+#, python-format
+msgid "Failed to create service VM instance: %s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/service_vm_lib.py:139
+#, python-format
+msgid "Failed to delete service VM instance %(id)s, due to %(err)s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/hosting_device_drivers/csr1kv_hd_driver.py:67
+#, python-format
+msgid "Failed to create config file: %s. Trying toclean up."
+msgstr ""
+
+#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:108
+#, python-format
+msgid ""
+"The %(resource)s %(name)s does not have unique name. Please refer to "
+"admin guide and create one."
+msgstr ""
+
+#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:113
+#, python-format
+msgid ""
+"There is no %(resource)s %(name)s. Please refer to admin guide and create"
+" one."
+msgstr ""
+
+#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:213
+#, python-format
+msgid "Error %s when creating service VM resources. Cleaning up."
+msgstr ""
+
+#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:321
+#, python-format
+msgid ""
+"Failed to delete %(resource_name)s %(net_id)s for service vm due to "
+"%(err)s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:453
+#, python-format
+msgid "Hosting port DB inconsistency for hosting device %s"
+msgstr ""
+
+#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:506
+#, python-format
+msgid "Port trunk pair DB inconsistency for port %s"
 msgstr ""
 
 #: neutron/plugins/cisco/models/virt_phy_sw_v2.py:279
@@ -1219,5 +1433,10 @@ msgstr ""
 #: neutron/services/vpn/device_drivers/ipsec.py:259
 #, python-format
 msgid "Failed to disable vpn process on router %s"
+msgstr ""
+
+#: neutron/tests/unit/cisco/l3/device_handling_test_support.py:99
+#, python-format
+msgid "Failed to delete port %(p_id)s for vm instance %(v_id)s due to %(err)s"
 msgstr ""
 
