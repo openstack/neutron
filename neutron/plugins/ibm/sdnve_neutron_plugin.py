@@ -18,6 +18,7 @@
 import functools
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
@@ -54,24 +55,19 @@ class SdnveRpcCallbacks():
         return info
 
 
-class AgentNotifierApi(n_rpc.RpcProxy):
+class AgentNotifierApi(object):
     '''Agent side of the SDN-VE rpc API.'''
 
-    BASE_RPC_API_VERSION = '1.0'
-
     def __init__(self, topic):
-        super(AgentNotifierApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
-
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
         self.topic_info_update = topics.get_topic_name(topic,
                                                        constants.INFO,
                                                        topics.UPDATE)
 
     def info_update(self, context, info):
-        self.fanout_cast(context,
-                         self.make_msg('info_update',
-                                       info=info),
-                         topic=self.topic_info_update)
+        cctxt = self.client.prepare(topic=self.topic_info_update, fanout=True)
+        cctxt.cast(context, 'info_update', info=info)
 
 
 def _ha(func):
