@@ -44,12 +44,12 @@ class TestNetworkCtrl(object):
 
     def match(self, prior, method_regexp, uri_regexp, handler, data=None,
               multi=True):
-        """Add to the list of exptected inputs.
+        """Add to the list of expected inputs.
 
         The incoming request is matched in the order of priority. For same
         priority, match the oldest match request first.
 
-        :param prior: intgere priority of this match (e.g. 100)
+        :param prior: integer priority of this match (e.g. 100)
         :param method_regexp: regexp to match method (e.g. 'PUT|POST')
         :param uri_regexp: regexp to match uri (e.g. '/quantum/v?.?/')
         :param handler: function with signature:
@@ -74,7 +74,7 @@ class TestNetworkCtrl(object):
         lo, hi = 0, len(self.matches)
         while lo < hi:
             mid = (lo + hi) // 2
-            if prior < self.matches[mid]:
+            if prior < self.matches[mid][0]:
                 hi = mid
             else:
                 lo = mid + 1
@@ -90,8 +90,8 @@ class TestNetworkCtrl(object):
         retstatus = self.default_status
         retbody = self.default_response
         for i in moves.xrange(len(self.matches)):
-            (prior, method_regexp, uri_regexp, handler, data, multi) = \
-                self.matches[i]
+            (unused_prior, method_regexp, uri_regexp, handler, data,
+             multi) = self.matches[i]
             if re.match(method_regexp, method) and re.match(uri_regexp, uri):
                 kwargs = {
                     'data': data,
