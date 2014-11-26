@@ -237,16 +237,20 @@ class DhcpAgent(manager.Manager):
 
         enable_metadata = self.dhcp_driver_cls.should_enable_metadata(
                 self.conf, network)
+        dhcp_network_enabled = False
 
         for subnet in network.subnets:
             if subnet.enable_dhcp:
                 if self.call_driver('enable', network):
-                    if (subnet.ip_version == 4 and self.conf.use_namespaces
-                        and enable_metadata):
-                        self.enable_isolated_metadata_proxy(network)
-                        enable_metadata = False  # Don't trigger twice
+                    dhcp_network_enabled = True
                     self.cache.put(network)
                 break
+
+        if enable_metadata and dhcp_network_enabled:
+            for subnet in network.subnets:
+                if subnet.ip_version == 4 and subnet.enable_dhcp:
+                    self.enable_isolated_metadata_proxy(network)
+                    break
 
     def disable_dhcp_helper(self, network_id):
         """Disable DHCP for a network known to the agent."""

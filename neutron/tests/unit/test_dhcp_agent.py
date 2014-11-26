@@ -127,6 +127,13 @@ fake_network_ipv6 = dhcp.NetModel(True, dict(
                              admin_state_up=True,
                              subnets=[fake_ipv6_subnet]))
 
+fake_network_ipv6_ipv4 = dhcp.NetModel(True, dict(
+                             id='12345678-1234-5678-1234567890ab',
+                             tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                             admin_state_up=True,
+                             subnets=[fake_ipv6_subnet, fake_subnet1],
+                             ports=[fake_port1]))
+
 isolated_network = dhcp.NetModel(
     True, dict(
         id='12345678-1234-5678-1234567890ab',
@@ -602,6 +609,26 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self._enable_dhcp_helper(empty_network,
                                  enable_isolated_metadata=True,
                                  is_isolated_network=True)
+
+    def test_enable_dhcp_helper_enable_metadata_ipv6_ipv4_network(self):
+        self._enable_dhcp_helper(fake_network_ipv6_ipv4,
+                                 enable_isolated_metadata=True,
+                                 is_isolated_network=True)
+
+    def test_enable_dhcp_helper_driver_failure_ipv6_ipv4_network(self):
+        self.plugin.get_network_info.return_value = fake_network_ipv6_ipv4
+        self.call_driver.return_value = False
+        cfg.CONF.set_override('enable_isolated_metadata', True)
+        with mock.patch.object(
+            self.dhcp, 'enable_isolated_metadata_proxy') as enable_metadata:
+            self.dhcp.enable_dhcp_helper(fake_network_ipv6_ipv4.id)
+            self.plugin.assert_has_calls(
+                [mock.call.get_network_info(fake_network_ipv6_ipv4.id)])
+            self.call_driver.assert_called_once_with('enable',
+                                                     fake_network_ipv6_ipv4)
+            self.assertFalse(self.cache.called)
+            self.assertFalse(enable_metadata.called)
+            self.assertFalse(self.external_process.called)
 
     def test_enable_dhcp_helper(self):
         self._enable_dhcp_helper(fake_network)
