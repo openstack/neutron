@@ -72,13 +72,6 @@ MAX_VXLAN_VNI = 2 ** 24 - 1
 
 FLOODING_ENTRY = ('00:00:00:00:00:00', '0.0.0.0')
 
-TYPE_BOOL = "bool"
-TYPE_INT = "int"
-TYPE_LONG = "long"
-TYPE_FLOAT = "float"
-TYPE_LIST = "list"
-TYPE_DICT = "dict"
-
 AGENT_TYPE_DHCP = 'DHCP agent'
 AGENT_TYPE_OVS = 'Open vSwitch agent'
 AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
