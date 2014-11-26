@@ -21,6 +21,7 @@ import mock
 from oslo.config import cfg
 from oslo.db import exception as db_exc
 from oslo import messaging
+from oslo.utils import timeutils
 from webob import exc
 
 from neutron.api import extensions
@@ -36,7 +37,6 @@ from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.extensions import l3agentscheduler
 from neutron import manager
-from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.tests import fake_notifier

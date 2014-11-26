@@ -15,12 +15,12 @@
 
 import itertools
 from oslo import messaging
+from oslo.utils import timeutils
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import timeutils
 
 
 LOG = logging.getLogger(__name__)

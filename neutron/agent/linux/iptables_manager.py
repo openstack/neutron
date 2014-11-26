@@ -23,12 +23,12 @@ import os
 import re
 
 from oslo.config import cfg
+from oslo.utils import excutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging

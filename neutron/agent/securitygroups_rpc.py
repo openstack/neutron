@@ -18,11 +18,11 @@ import functools
 
 from oslo.config import cfg
 from oslo import messaging
+from oslo.utils import importutils
 
 from neutron.agent import firewall
 from neutron.common import topics
 from neutron.openstack.common.gettextutils import _LI, _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

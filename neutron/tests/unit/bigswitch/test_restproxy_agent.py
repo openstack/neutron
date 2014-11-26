@@ -16,8 +16,8 @@
 import contextlib
 
 import mock
+from oslo.utils import importutils
 
-from neutron.openstack.common import importutils
 from neutron.tests import base
 
 OVSBRIDGE = 'neutron.agent.linux.ovs_lib.OVSBridge'

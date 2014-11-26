@@ -16,11 +16,11 @@
 import sys
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.debug import debug_agent
-from neutron.openstack.common import importutils
 from neutronclient.common import exceptions as exc
 from neutronclient import shell
 

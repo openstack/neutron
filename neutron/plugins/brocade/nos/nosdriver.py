@@ -19,8 +19,8 @@ Neutron network life-cycle management.
 """
 
 from ncclient import manager
+from oslo.utils import excutils
 
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.brocade.nos import nctemplates as template
 

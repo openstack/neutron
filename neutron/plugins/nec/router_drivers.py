@@ -15,11 +15,11 @@
 import abc
 import httplib
 
+from oslo.utils import excutils
 import six
 
 from neutron.common import log as call_log
 from neutron.common import utils
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import constants as nconst
 from neutron.plugins.nec.common import exceptions as nexc

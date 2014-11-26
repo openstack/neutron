@@ -16,8 +16,8 @@
 
 
 import mock
+from oslo.utils import importutils
 
-from neutron.openstack.common import importutils
 import neutron.plugins.ofagent.agent.metadata as meta
 from neutron.tests.unit.ofagent import ofa_test_base
 

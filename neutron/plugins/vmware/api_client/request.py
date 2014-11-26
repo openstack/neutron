@@ -17,14 +17,14 @@
 
 import abc
 import copy
-import eventlet
 import httplib
 import time
 
+import eventlet
+from oslo.utils import excutils
 import six
 import six.moves.urllib.parse as urlparse
 
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware import api_client
 

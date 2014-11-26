@@ -17,7 +17,7 @@
 Neutron base exception handling.
 """
 
-from neutron.openstack.common import excutils
+from oslo.utils import excutils
 
 
 class NeutronException(Exception):

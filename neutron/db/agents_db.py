@@ -19,6 +19,8 @@ from oslo.config import cfg
 from oslo.db import exception as db_exc
 from oslo import messaging
 from oslo.serialization import jsonutils
+from oslo.utils import excutils
+from oslo.utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
@@ -27,10 +29,8 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
 from neutron import manager
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import timeutils
 
 LOG = logging.getLogger(__name__)
 cfg.CONF.register_opt(

@@ -12,9 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.openstack.common import excutils
+from oslo.utils import excutils
+from oslo.utils import importutils
+
 from neutron.openstack.common.gettextutils import _LE
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions
 

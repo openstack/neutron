@@ -15,12 +15,12 @@
 
 import mock
 from oslo.db import exception as exc
+from oslo.utils import timeutils
 
 from neutron.common import constants
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.openstack.common import timeutils
 from neutron.tests.unit import testlib_api
 
 

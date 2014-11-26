@@ -14,8 +14,8 @@
 # limitations under the License.
 
 import mock
+from oslo.utils import importutils
 
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import config as ml2_config
 from neutron.plugins.ml2.drivers.brocade import (mechanism_brocade

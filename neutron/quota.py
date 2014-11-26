@@ -17,10 +17,10 @@
 import sys
 
 from oslo.config import cfg
+from oslo.utils import importutils
 import webob
 
 from neutron.common import exceptions
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

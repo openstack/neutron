@@ -16,6 +16,7 @@
 
 import netaddr
 from oslo.config import cfg
+from oslo.utils import excutils
 
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -28,7 +29,6 @@ from neutron.extensions import firewall as fw_ext
 from neutron.extensions import l3
 from neutron.extensions import routedserviceinsertion as rsi
 from neutron.extensions import vpnaas as vpn_ext
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.vmware.api_client import exception as api_exc

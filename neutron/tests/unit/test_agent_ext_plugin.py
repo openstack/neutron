@@ -17,6 +17,7 @@ import copy
 import time
 
 from oslo.config import cfg
+from oslo.utils import timeutils
 from webob import exc
 
 from neutron.api.v2 import attributes
@@ -27,7 +28,6 @@ from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import agent
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin

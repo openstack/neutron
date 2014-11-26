@@ -15,9 +15,9 @@
 
 
 import mock
+from oslo.utils import importutils
 
 from neutron.extensions import portbindings
-from neutron.openstack.common import importutils
 from neutron.plugins.brocade import NeutronPlugin as brocade_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin

@@ -23,14 +23,14 @@ import logging
 import re
 
 from oslo.config import cfg
+from oslo.utils import excutils
+from oslo.utils import importutils
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions
 import neutron.common.utils as utils
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log
 from neutron.openstack.common import policy
 

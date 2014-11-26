@@ -24,6 +24,7 @@ import sys
 import netaddr
 from oslo.config import cfg
 from oslo.serialization import jsonutils
+from oslo.utils import importutils
 import six
 
 from neutron.agent.linux import ip_lib
@@ -32,7 +33,6 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import utils as commonutils
 from neutron.openstack.common.gettextutils import _LE
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 

@@ -23,6 +23,7 @@ eventlet.monkey_patch()
 import netaddr
 from oslo.config import cfg
 from oslo import messaging
+from oslo.utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
@@ -39,7 +40,6 @@ from neutron.common import utils
 from neutron import context
 from neutron import manager
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import service

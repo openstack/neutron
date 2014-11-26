@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from oslo.utils import excutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -27,7 +28,6 @@ from neutron.db import models_v2
 from neutron.db.vpn import vpn_validator
 from neutron.extensions import vpnaas
 from neutron import manager
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils

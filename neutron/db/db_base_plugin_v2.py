@@ -17,6 +17,7 @@ import random
 
 import netaddr
 from oslo.config import cfg
+from oslo.utils import excutils
 from sqlalchemy import and_
 from sqlalchemy import event
 from sqlalchemy import orm
@@ -33,7 +34,6 @@ from neutron.db import sqlalchemyutils
 from neutron.extensions import l3
 from neutron import manager
 from neutron import neutron_plugin_base_v2
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils

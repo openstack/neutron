@@ -16,6 +16,7 @@ import uuid
 
 from oslo.config import cfg
 from oslo import messaging
+from oslo.utils import importutils
 
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
@@ -26,7 +27,6 @@ from neutron.db.loadbalancer import loadbalancer_db
 from neutron.extensions import lbaas_agentscheduler
 from neutron.extensions import portbindings
 from neutron.openstack.common.gettextutils import _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers import abstract_driver

@@ -23,6 +23,9 @@ import netaddr
 import os
 from oslo.config import cfg
 from oslo import messaging
+from oslo.utils import excutils
+from oslo.utils import importutils
+from oslo.utils import timeutils
 import Queue
 
 from neutron.agent.common import config
@@ -42,15 +45,12 @@ from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron import context as n_context
 from neutron import manager
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.openstack.common import processutils
 from neutron.openstack.common import service
-from neutron.openstack.common import timeutils
 from neutron import service as neutron_service
 from neutron.services.firewall.agents.l3reference import firewall_l3_agent
 

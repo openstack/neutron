@@ -14,10 +14,10 @@
 #    under the License.
 
 from oslo.serialization import jsonutils
+from oslo.utils import excutils
 
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware import nsxlib

@@ -23,10 +23,10 @@ import tempfile
 
 from eventlet.green import subprocess
 from eventlet import greenthread
+from oslo.utils import excutils
 
 from neutron.common import constants
 from neutron.common import utils
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 
 

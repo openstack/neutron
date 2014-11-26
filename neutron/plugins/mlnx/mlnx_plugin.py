@@ -16,6 +16,7 @@
 import sys
 
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -42,7 +43,6 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils

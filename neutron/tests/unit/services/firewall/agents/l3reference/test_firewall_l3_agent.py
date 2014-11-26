@@ -66,7 +66,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
     def test_fw_config_match(self):
         test_agent_class = _setup_test_agent_class([constants.FIREWALL])
         cfg.CONF.set_override('enabled', True, 'fwaas')
-        with mock.patch('neutron.openstack.common.importutils.import_object'):
+        with mock.patch('oslo.utils.importutils.import_object'):
             test_agent_class(cfg.CONF)
 
     def test_fw_config_mismatch_plugin_enabled_agent_disabled(self):
@@ -77,7 +77,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
     def test_fw_plugin_list_unavailable(self):
         test_agent_class = _setup_test_agent_class(None)
         cfg.CONF.set_override('enabled', False, 'fwaas')
-        with mock.patch('neutron.openstack.common.importutils.import_object'):
+        with mock.patch('oslo.utils.importutils.import_object'):
             test_agent_class(cfg.CONF)
 
     def test_create_firewall(self):

@@ -18,6 +18,7 @@ import netaddr
 import webob.exc
 
 from oslo.config import cfg
+from oslo.utils import excutils
 
 from neutron.api import api_common
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -26,7 +27,6 @@ from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import policy as common_policy

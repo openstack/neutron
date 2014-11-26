@@ -15,6 +15,8 @@
 import eventlet
 
 from oslo.config import cfg as q_conf
+from oslo.utils import excutils
+from oslo.utils import importutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
@@ -34,9 +36,7 @@ from neutron.db import quota_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
 from neutron import manager
-from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _LW
-from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils as uuidutils
 from neutron.plugins.cisco.common import cisco_constants as c_const

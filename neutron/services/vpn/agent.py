@@ -12,11 +12,12 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 from oslo.config import cfg
+from oslo.utils import importutils
 
 from neutron.agent import l3_agent
 from neutron.extensions import vpnaas
-from neutron.openstack.common import importutils
 
 vpn_agent_opts = [
     cfg.MultiStrOpt(

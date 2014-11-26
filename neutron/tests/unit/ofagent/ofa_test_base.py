@@ -17,8 +17,8 @@
 
 import mock
 from oslo.config import cfg
+from oslo.utils import importutils
 
-from neutron.openstack.common import importutils
 from neutron.tests import base
 from neutron.tests.unit.ofagent import fake_oflib
 

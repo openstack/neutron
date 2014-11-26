@@ -23,6 +23,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from oslo.utils import excutils
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
@@ -33,7 +34,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log
 from neutron.plugins.bigswitch import config as pl_config
 

@@ -19,6 +19,7 @@ import time
 from oslo.config import cfg
 from oslo.db import exception as db_exc
 from oslo import messaging
+from oslo.utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy import orm
@@ -38,7 +39,6 @@ from neutron import manager
 from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common import timeutils
 
 
 LOG = logging.getLogger(__name__)

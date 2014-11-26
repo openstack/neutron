@@ -13,6 +13,7 @@
 # under the License.
 
 import mock
+from oslo.utils import timeutils
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants as n_constants
@@ -24,7 +25,6 @@ from neutron.db.metering import metering_rpc
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
 from neutron import manager
-from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests.unit.db.metering import test_db_metering

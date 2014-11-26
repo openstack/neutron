@@ -17,6 +17,8 @@ import re
 
 import netaddr
 from oslo.config import cfg
+from oslo.utils import excutils
+from oslo.utils import importutils
 from sqlalchemy.orm import exc
 
 from neutron.api import extensions as neutron_extensions
@@ -36,8 +38,6 @@ from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common import excutils
-from neutron.openstack.common import importutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall

@@ -20,6 +20,7 @@ from midonetclient import api
 from midonetclient import exc
 from midonetclient.neutron import client as n_client
 from oslo.config import cfg
+from oslo.utils import excutils
 from sqlalchemy.orm import exc as sa_exc
 from webob import exc as w_exc
 
@@ -42,7 +43,6 @@ from neutron.extensions import external_net as ext_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.midonet.common import config  # noqa
 from neutron.plugins.midonet.common import net_util

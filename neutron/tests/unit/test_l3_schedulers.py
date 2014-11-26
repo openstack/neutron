@@ -19,6 +19,8 @@ import uuid
 
 import mock
 from oslo.config import cfg
+from oslo.utils import importutils
+from oslo.utils import timeutils
 from sqlalchemy.orm import query
 
 from neutron.common import constants
@@ -33,8 +35,6 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron import manager
-from neutron.openstack.common import importutils
-from neutron.openstack.common import timeutils
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
 from neutron.tests.unit import test_db_plugin

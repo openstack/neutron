@@ -18,6 +18,7 @@ from oslo.config import cfg
 import contextlib
 
 import mock
+from oslo.utils import importutils
 import webob.exc
 
 from neutron.api import extensions as api_ext
@@ -27,7 +28,6 @@ from neutron.db.firewall import firewall_db as fdb
 import neutron.extensions
 from neutron.extensions import firewall
 from neutron import manager
-from neutron.openstack.common import importutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.services.firewall import fwaas_plugin
