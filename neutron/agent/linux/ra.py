@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import jinja2
 import netaddr
 from oslo.config import cfg
 import six
@@ -33,31 +34,25 @@ OPTS = [
 
 cfg.CONF.register_opts(OPTS)
 
-prefix_fmt = """interface %s
+CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
 {
    AdvSendAdvert on;
    MinRtrAdvInterval 3;
    MaxRtrAdvInterval 10;
-   prefix %s
+
+   {% if ra_mode == constants.DHCPV6_STATELESS %}
+   AdvOtherConfigFlag on;
+   {% endif %}
+
+   {% if ra_mode in (constants.IPV6_SLAAC, constants.DHCPV6_STATELESS) %}
+   prefix {{ prefix }}
    {
         AdvOnLink on;
         AdvAutonomous on;
    };
+   {% endif %}
 };
-"""
-
-default_fmt = """interface %s
-{
-   AdvSendAdvert on;
-   MinRtrAdvInterval 3;
-   MaxRtrAdvInterval 10;
-};
-"""
-
-
-def _is_slaac(ra_mode):
-    return (ra_mode == constants.IPV6_SLAAC or
-            ra_mode == constants.DHCPV6_STATELESS)
+""")
 
 
 def _generate_radvd_conf(router_id, router_ports, dev_name_helper):
@@ -67,14 +62,15 @@ def _generate_radvd_conf(router_id, router_ports, dev_name_helper):
                                           True)
     buf = six.StringIO()
     for p in router_ports:
-        if netaddr.IPNetwork(p['subnet']['cidr']).version == 6:
+        prefix = p['subnet']['cidr']
+        if netaddr.IPNetwork(prefix).version == 6:
             interface_name = dev_name_helper(p['id'])
-            if _is_slaac(p['subnet']['ipv6_ra_mode']):
-                conf_str = prefix_fmt % (interface_name,
-                                         p['subnet']['cidr'])
-            else:
-                conf_str = default_fmt % interface_name
-            buf.write('%s' % conf_str)
+            ra_mode = p['subnet']['ipv6_ra_mode']
+            buf.write('%s' % CONFIG_TEMPLATE.render(
+                ra_mode=ra_mode,
+                interface_name=interface_name,
+                prefix=prefix,
+                constants=constants))
 
     utils.replace_file(radvd_conf, buf.getvalue())
     return radvd_conf
