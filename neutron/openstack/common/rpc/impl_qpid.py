@@ -224,7 +224,7 @@ class DirectConsumer(ConsumerBase):
         elif conf.qpid_topology_version == 2:
             node_name = "amq.direct/%s" % msg_id
             node_opts = {}
-            link_name = None
+            link_name = msg_id
         else:
             raise_invalid_topology_version()
 
