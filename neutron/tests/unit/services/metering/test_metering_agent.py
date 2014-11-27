@@ -158,3 +158,9 @@ class TestMeteringDriver(base.BaseTestCase):
                                              {'driver': self.noop_driver,
                                               'func':
                                               'add_metering_label'})
+
+    def test_init_chain(self):
+        with mock.patch('neutron.openstack.common.'
+                        'periodic_task.PeriodicTasks.__init__') as init:
+            metering_agent.MeteringAgent('my agent', cfg.CONF)
+        init.assert_called_once_with()
