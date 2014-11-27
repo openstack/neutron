@@ -64,3 +64,10 @@ class TestCiscoPluginModel(base.BaseTestCase):
             model._invoke_plugin_per_device(model, const.NEXUS_PLUGIN,
                                             'create_network')
             self.assertFalse(mock_create_network.called)
+
+        with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
+                               'update_port') as mock_update_port:
+            model = virt_phy_sw_v2.VirtualPhysicalSwitchModelV2()
+            model._invoke_plugin_per_device(model, const.NEXUS_PLUGIN,
+                                            'update_port')
+            self.assertFalse(mock_update_port.called)

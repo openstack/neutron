@@ -387,21 +387,23 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                                     args)
         try:
             # Check if the nexus plugin needs to be invoked
-            old_host_id, create_args = self._check_nexus_net_create_needed(
-                port['port'], old_port)
+            if self.is_nexus_plugin:
+                old_host_id, create_args = self._check_nexus_net_create_needed(
+                    port['port'], old_port)
 
-            # In the case of migration, invoke it to remove
-            # the previous port binding
-            if old_host_id:
-                vlan_id = self._get_segmentation_id(old_port['network_id'])
-                delete_args = [old_port['device_id'], vlan_id]
-                self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                               "delete_port",
-                                               delete_args)
+                # In the case of migration, invoke it to remove
+                # the previous port binding
+                if old_host_id:
+                    vlan_id = self._get_segmentation_id(old_port['network_id'])
+                    delete_args = [old_port['device_id'], vlan_id]
+                    self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                   "delete_port",
+                                                   delete_args)
 
-            # Invoke the Nexus plugin to create a net and/or new port binding
-            if create_args:
-                self._invoke_nexus_for_net_create(context, *create_args)
+                # Invoke the Nexus plugin to create a net and/or new
+                # port binding
+                if create_args:
+                    self._invoke_nexus_for_net_create(context, *create_args)
 
             return ovs_output
         except Exception:
