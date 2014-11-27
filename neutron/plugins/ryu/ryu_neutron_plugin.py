@@ -210,6 +210,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             self.tunnel_key.delete(session, id)
+            self._process_l3_delete(context, id)
             super(RyuNeutronPluginV2, self).delete_network(context, id)
 
     def create_port(self, context, port):

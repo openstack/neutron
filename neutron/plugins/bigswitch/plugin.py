@@ -627,18 +627,8 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
         # Validate args
         orig_net = super(NeutronRestProxyV2, self).get_network(context, net_id)
-
-        filter = {'network_id': [net_id]}
-        ports = self.get_ports(context, filters=filter)
-
-        # check if there are any tenant owned ports in-use
-        auto_delete_port_owners = db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS
-        only_auto_del = all(p['device_owner'] in auto_delete_port_owners
-                            for p in ports)
-
-        if not only_auto_del:
-            raise exceptions.NetworkInUse(net_id=net_id)
         with context.session.begin(subtransactions=True):
+            self._process_l3_delete(context, net_id)
             ret_val = super(NeutronRestProxyV2, self).delete_network(context,
                                                                      net_id)
             self._send_delete_network(orig_net, context)
@@ -1112,6 +1102,18 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             context, port_id, do_notify=do_notify)
         self._send_floatingip_update(context)
         return router_ids
+
+    # overriding method from l3_db as original method calls
+    # self.delete_floatingip() which in turn calls self.delete_port() which
+    # is locked with 'bsn-port-barrier'
+    def delete_disassociated_floatingips(self, context, network_id):
+        query = self._model_query(context, l3_db.FloatingIP)
+        query = query.filter_by(floating_network_id=network_id,
+                                fixed_port_id=None,
+                                router_id=None)
+        for fip in query:
+            context.session.delete(fip)
+            self._delete_port(context.elevated(), fip['floating_port_id'])
 
     def _send_floatingip_update(self, context):
         try:

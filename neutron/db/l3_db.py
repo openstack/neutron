@@ -718,6 +718,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                     marker_obj=marker_obj,
                                     page_reverse=page_reverse)
 
+    def delete_disassociated_floatingips(self, context, network_id):
+        query = self._model_query(context, FloatingIP)
+        query = query.filter_by(floating_network_id=network_id,
+                                fixed_port_id=None,
+                                router_id=None)
+        for fip in query:
+            self.delete_floatingip(context, fip.id)
+
     def get_floatingips_count(self, context, filters=None):
         return self._get_collection_count(context, FloatingIP,
                                           filters=filters)

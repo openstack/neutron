@@ -43,7 +43,10 @@ class Fake1(db_base_plugin_v2.NeutronDbPluginV2,
         return net
 
     def delete_network(self, context, id):
-        return super(Fake1, self).delete_network(context, id)
+        session = context.session
+        with session.begin(subtransactions=True):
+            self._process_l3_delete(context, id)
+            return super(Fake1, self).delete_network(context, id)
 
     def create_port(self, context, port):
         port = super(Fake1, self).create_port(context, port)

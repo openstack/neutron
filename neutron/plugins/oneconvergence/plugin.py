@@ -221,6 +221,7 @@ class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             #get all the subnets under the network to delete them
             subnets = self._get_subnets_by_network(context, net_id)
 
+            self._process_l3_delete(context, net_id)
             super(OneConvergencePluginV2, self).delete_network(context,
                                                                net_id)
 

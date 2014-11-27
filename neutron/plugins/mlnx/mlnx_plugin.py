@@ -379,6 +379,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             binding = db.get_network_binding(session, net_id)
+            self._process_l3_delete(context, net_id)
             super(MellanoxEswitchPlugin, self).delete_network(context,
                                                               net_id)
             if binding.segmentation_id != constants.LOCAL_VLAN_ID:

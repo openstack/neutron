@@ -234,6 +234,11 @@ class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_l3_update(context, net, network['network'])
         return net
 
+    def delete_network(self, context, id):
+        with context.session.begin(subtransactions=True):
+            self._process_l3_delete(context, id)
+            super(TestL3NatBasePlugin, self).delete_network(context, id)
+
     def delete_port(self, context, id, l3_port_check=True):
         plugin = NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
@@ -1683,6 +1688,13 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               r['router']['id'],
                                               s['subnet']['id'],
                                               None)
+
+    def test_delete_ext_net_with_disassociated_floating_ips(self):
+        with self.network() as net:
+            net_id = net['network']['id']
+            self._set_net_external(net_id)
+            with self.subnet(network=net, do_delete=False):
+                self._make_floatingip(self.fmt, net_id)
 
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):

@@ -1070,6 +1070,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # the network_binding record is deleted via cascade from
             # the network record, so explicit removal is not necessary
         self._send_delete_network_request(context, network)
+        self._process_l3_delete(context, id)
         LOG.debug("Deleted network: %s", id)
 
     def _delete_network_db(self, context, id):
