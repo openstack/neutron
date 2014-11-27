@@ -15,14 +15,14 @@ jsonrpclib
 Jinja2
 kombu>=2.4.8
 netaddr>=0.7.6
-python-neutronclient>=2.3.4,<3
+python-neutronclient>=2.3.4,<2.4
 SQLAlchemy>=0.7.8,!=0.9.5,<=0.9.99
 WebOb>=1.2.3
-python-keystoneclient>=0.7.0
+python-keystoneclient>=0.7.0,<0.12
 alembic>=0.4.1
 six>=1.6.0
-stevedore>=0.14
-oslo.config>=1.2.0
-oslo.rootwrap
+stevedore>=0.14,<1.2
+oslo.config>=1.2.0,<1.5
+oslo.rootwrap<1.4
 
-python-novaclient>=2.17.0
+python-novaclient>=2.17.0,<2.21
