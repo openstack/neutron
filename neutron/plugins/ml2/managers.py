@@ -21,7 +21,7 @@ from neutron.common import exceptions as exc
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db

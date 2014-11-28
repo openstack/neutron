@@ -30,7 +30,7 @@ from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import portbindings_db as p_binding
 from neutron.extensions import providernet as pr_net
-from neutron.openstack.common.gettextutils import _LE, _LI
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall

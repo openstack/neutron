@@ -26,10 +26,10 @@ from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron import context as neutron_context
 from neutron.db import agents_db
+from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.plugins.cisco.common import cisco_constants as c_constants
 from neutron.plugins.cisco.db.l3 import l3_models
 from neutron.plugins.cisco.l3 import service_vm_lib

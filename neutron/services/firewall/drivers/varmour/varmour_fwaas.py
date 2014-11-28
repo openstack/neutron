@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.services.firewall.agents.varmour import varmour_api
 from neutron.services.firewall.agents.varmour import varmour_utils as va_utils

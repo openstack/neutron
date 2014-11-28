@@ -15,7 +15,7 @@
 import eventlet
 
 from neutron.agent.linux import async_process
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 
 

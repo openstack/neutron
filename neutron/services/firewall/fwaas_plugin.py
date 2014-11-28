@@ -22,7 +22,7 @@ from neutron.common import topics
 from neutron import context as neutron_context
 from neutron.db.firewall import firewall_db
 from neutron.extensions import firewall as fw_ext
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as const
 

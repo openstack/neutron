@@ -18,8 +18,8 @@ from oslo.config import cfg
 from oslo.utils import excutils
 
 from neutron import context as n_context
+from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants

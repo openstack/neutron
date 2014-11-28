@@ -27,8 +27,8 @@ import webob.exc
 
 from neutron.common import exceptions
 import neutron.extensions
+from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron import policy
 from neutron import wsgi

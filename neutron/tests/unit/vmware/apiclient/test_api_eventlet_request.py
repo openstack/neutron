@@ -19,7 +19,7 @@ import eventlet
 from eventlet.green import urllib2
 import mock
 
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import eventlet_client as client
 from neutron.plugins.vmware.api_client import eventlet_request as request

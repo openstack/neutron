@@ -14,13 +14,13 @@
 #    under the License.
 
 import mock
+from oslo import i18n
 from webob import exc
 import webtest
 
 from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import exceptions as n_exc
 from neutron import context
-from neutron.openstack.common import gettextutils
 from neutron.tests import base
 from neutron import wsgi
 
@@ -102,9 +102,9 @@ class RequestTestCase(base.BaseTestCase):
     def test_best_match_language(self):
         # Test that we are actually invoking language negotiation by webop
         request = wsgi.Request.blank('/')
-        gettextutils.get_available_languages = mock.MagicMock()
-        gettextutils.get_available_languages.return_value = ['known-language',
-                                                             'es', 'zh']
+        i18n.get_available_languages = mock.MagicMock()
+        i18n.get_available_languages.return_value = ['known-language',
+                                                     'es', 'zh']
         request.headers['Accept-Language'] = 'known-language'
         language = request.best_match_language()
         self.assertEqual(language, 'known-language')
@@ -150,9 +150,8 @@ class ResourceTestCase(base.BaseTestCase):
         self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
                          expected_res)
 
-    @mock.patch('neutron.openstack.common.gettextutils.translate')
+    @mock.patch('oslo.i18n.translate')
     def test_unmapped_neutron_error_localized(self, mock_translation):
-        gettextutils.install('blaa', lazy=True)
         msg_translation = 'Translated error'
         mock_translation.return_value = msg_translation
         msg = _('Unmapped error')
@@ -196,9 +195,8 @@ class ResourceTestCase(base.BaseTestCase):
         self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
                          expected_res)
 
-    @mock.patch('neutron.openstack.common.gettextutils.translate')
+    @mock.patch('oslo.i18n.translate')
     def test_mapped_neutron_error_localized(self, mock_translation):
-        gettextutils.install('blaa', lazy=True)
         msg_translation = 'Translated error'
         mock_translation.return_value = msg_translation
         msg = _('Unmapped error')

@@ -23,8 +23,8 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.extensions import portbindings
+from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 
 

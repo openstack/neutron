@@ -23,7 +23,7 @@ from ncclient import manager
 
 from oslo.config import cfg
 
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
+from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions as cfg_exc
 from neutron.plugins.cisco.cfg_agent.device_drivers.csr1kv import (
     cisco_csr1kv_snippets as snippets)

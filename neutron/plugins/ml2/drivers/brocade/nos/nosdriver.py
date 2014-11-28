@@ -22,7 +22,7 @@ from ncclient import manager
 from oslo.utils import excutils
 from xml.etree import ElementTree
 
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.brocade.nos import nctemplates as template
 

@@ -17,7 +17,7 @@ import re
 
 from neutron.agent.linux import utils
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 
 

@@ -30,7 +30,7 @@ from neutron.agent.linux import ip_lib
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import topics
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import service
 from neutron import service as neutron_service

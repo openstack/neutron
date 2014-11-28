@@ -23,7 +23,7 @@ import six
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron import context as ctx
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall

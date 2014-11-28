@@ -26,12 +26,9 @@ eventlet.monkey_patch()
 from oslo.config import cfg
 
 from neutron.common import config
-from neutron import service
-
-from neutron.openstack.common import gettextutils
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
-gettextutils.install('neutron', lazy=True)
+from neutron import service
 
 LOG = logging.getLogger(__name__)
 

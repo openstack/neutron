@@ -16,7 +16,7 @@
 from oslo.db import exception as db_exc
 
 from neutron.common import exceptions as exc
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 

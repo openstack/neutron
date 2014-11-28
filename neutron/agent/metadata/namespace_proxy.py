@@ -26,7 +26,7 @@ import webob
 from neutron.agent.linux import daemon
 from neutron.common import config
 from neutron.common import utils
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron import wsgi
 

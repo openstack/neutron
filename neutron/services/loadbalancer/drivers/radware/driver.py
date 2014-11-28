@@ -33,7 +33,7 @@ from neutron.common import log as call_log
 from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as lb_db
 from neutron.extensions import loadbalancer
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers import abstract_driver

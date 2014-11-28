@@ -15,7 +15,7 @@
 from oslo.utils import excutils
 from oslo.utils import importutils
 
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions
 

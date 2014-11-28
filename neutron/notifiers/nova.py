@@ -22,8 +22,8 @@ from sqlalchemy.orm import attributes as sql_attr
 
 from neutron.common import constants
 from neutron import context
+from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 

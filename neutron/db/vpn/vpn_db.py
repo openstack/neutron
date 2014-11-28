@@ -27,8 +27,8 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db.vpn import vpn_validator
 from neutron.extensions import vpnaas
+from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants

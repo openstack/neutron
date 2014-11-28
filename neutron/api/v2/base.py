@@ -27,7 +27,7 @@ from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
-from neutron.openstack.common.gettextutils import _LE, _LI
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import policy as common_policy
 from neutron import policy

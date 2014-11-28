@@ -19,7 +19,7 @@
 from oslo.config import cfg
 from oslo.utils import importutils
 
-from neutron.openstack.common.gettextutils import _LE, _LI
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import driver_api
 from neutron.plugins.ml2.drivers.brocade.db import models as brocade_db

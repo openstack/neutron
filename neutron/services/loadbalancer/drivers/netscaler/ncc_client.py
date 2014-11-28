@@ -18,7 +18,7 @@ from oslo.serialization import jsonutils
 import requests
 
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common.gettextutils import _LE
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

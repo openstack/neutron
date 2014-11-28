@@ -27,7 +27,7 @@ from neutron.common import utils
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_hamode_db
-from neutron.openstack.common.gettextutils import _LE, _LW
+from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log as logging
 
 

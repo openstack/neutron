@@ -26,7 +26,7 @@ from paste import deploy
 
 from neutron.api.v2 import attributes
 from neutron.common import utils
-from neutron.openstack.common.gettextutils import _LI
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 from neutron import version
 

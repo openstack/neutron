@@ -17,7 +17,7 @@
 import sqlalchemy.orm.exc as sa_exc
 
 import neutron.db.api as db
-from neutron.openstack.common.gettextutils import _LW
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as c_exc
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_models_v2
