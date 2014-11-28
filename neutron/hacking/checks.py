@@ -127,20 +127,22 @@ def no_translate_debug_logs(logical_line, filename):
             yield(0, "N319 Don't translate debug level logs")
 
 
-def check_assert_called_once(logical_line, filename):
-    msg = ("N323: assert_called_once is a no-op. please use "
-           "assert_called_once_with to test with explicit parameters or an "
-           "assertEqual with call_count.")
-
+def check_assert_called_once_with(logical_line, filename):
+    # Try to detect unintended calls of nonexistent mock methods like:
+    #    assert_called_once
+    #    assertCalledOnceWith
     if 'neutron/tests/' in filename:
-        pos = logical_line.find('.assert_called_once(')
-        if pos != -1:
-            yield (pos, msg)
+        if '.assert_called_once_with(' in logical_line:
+            return
+        if '.assertcalledonce' in logical_line.lower().replace('_', ''):
+            msg = ("N323: Possible use of no-op mock method. "
+                   "please use assert_called_once_with.")
+            yield (0, msg)
 
 
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
     register(no_author_tags)
-    register(check_assert_called_once)
+    register(check_assert_called_once_with)
     register(no_translate_debug_logs)
