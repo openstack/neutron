@@ -83,7 +83,7 @@ L2_AGENT_5 = {
     'topic': constants.L2_AGENT_TOPIC,
     'configurations': {'tunneling_ip': '20.0.0.5',
                        'tunnel_types': [],
-                       'bridge_mappings': {'physnet1': 'br'},
+                       'interface_mappings': {'physnet1': 'eth9'},
                        'l2pop_network_types': ['vlan']},
     'agent_type': constants.AGENT_TYPE_OFA,
     'tunnel_type': [],

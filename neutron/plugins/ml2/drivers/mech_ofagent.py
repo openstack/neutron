@@ -50,16 +50,13 @@ class OfagentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             vif_details)
 
     def check_segment_for_agent(self, segment, agent):
-        bridge_mappings = agent['configurations'].get('bridge_mappings', {})
         interface_mappings = agent['configurations'].get('interface_mappings',
                                                          {})
         tunnel_types = agent['configurations'].get('tunnel_types', [])
         LOG.debug("Checking segment: %(segment)s "
-                  "for bridge_mappings: %(bridge_mappings)s "
-                  "and interface_mappings: %(interface_mappings)s "
+                  "for interface_mappings: %(interface_mappings)s "
                   "with tunnel_types: %(tunnel_types)s",
                   {'segment': segment,
-                   'bridge_mappings': bridge_mappings,
                    'interface_mappings': interface_mappings,
                    'tunnel_types': tunnel_types})
         network_type = segment[api.NETWORK_TYPE]
@@ -67,6 +64,5 @@ class OfagentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             network_type == p_const.TYPE_LOCAL or
             network_type in tunnel_types or
             (network_type in [p_const.TYPE_FLAT, p_const.TYPE_VLAN] and
-                (segment[api.PHYSICAL_NETWORK] in bridge_mappings
-                or segment[api.PHYSICAL_NETWORK] in interface_mappings))
+                segment[api.PHYSICAL_NETWORK] in interface_mappings)
         )
