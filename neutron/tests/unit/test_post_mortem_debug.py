@@ -34,7 +34,7 @@ class TestTesttoolsExceptionHandler(base.BaseTestCase):
                 with mock.patch.object(post_mortem_debug,
                                        'get_ignored_traceback',
                                        return_value=mock.Mock()):
-                    post_mortem_debug.get_exception_handler()(exc_info)
+                    post_mortem_debug.get_exception_handler('pdb')(exc_info)
 
         # traceback will become post_mortem_debug.FilteredTraceback
         filtered_exc_info = (exc_info[0], exc_info[1], mock.ANY)
