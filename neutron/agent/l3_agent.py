@@ -1845,15 +1845,22 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if self._clean_stale_namespaces:
             namespaces = self._list_namespaces()
         prev_router_ids = set(self.router_info)
+        timestamp = timeutils.utcnow()
 
         try:
-            timestamp = timeutils.utcnow()
             if self.conf.use_namespaces:
                 routers = self.plugin_rpc.get_routers(context)
             else:
                 routers = self.plugin_rpc.get_routers(context,
                                                       [self.conf.router_id])
 
+        except messaging.MessagingException:
+            LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
+            self.fullsync = True
+        except Exception:
+            LOG.exception(_LE("Failed synchronizing routers"))
+            self.fullsync = True
+        else:
             LOG.debug('Processing :%r', routers)
             for r in routers:
                 update = RouterUpdate(r['id'],
@@ -1863,13 +1870,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._queue.add(update)
             self.fullsync = False
             LOG.debug("periodic_sync_routers_task successfully completed")
-        except messaging.MessagingException:
-            LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
-            self.fullsync = True
-        except Exception:
-            LOG.exception(_LE("Failed synchronizing routers"))
-            self.fullsync = True
-        else:
+
             # Resync is not necessary for the cleanup of stale namespaces
             curr_router_ids = set([r['id'] for r in routers])
 
