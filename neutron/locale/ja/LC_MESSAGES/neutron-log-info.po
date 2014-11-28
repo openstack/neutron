@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-26 06:07+0000\n"
-"PO-Revision-Date: 2014-11-25 18:38+0000\n"
+"POT-Creation-Date: 2014-11-28 06:08+0000\n"
+"PO-Revision-Date: 2014-11-27 15:17+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Japanese (http://www.transifex.com/projects/p/neutron/"
 "language/ja/)\n"
@@ -38,13 +38,13 @@ msgstr "状態の同期中"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:604 neutron/agent/l3_agent.py:1989
+#: neutron/agent/dhcp_agent.py:604 neutron/agent/l3_agent.py:1991
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "サーバー・サイド %s による agent_updated!"
 
-#: neutron/agent/l3_agent.py:1891
+#: neutron/agent/l3_agent.py:1893
 msgid "L3 agent started"
 msgstr "L3 エージェントが始動しました"
 
@@ -283,12 +283,12 @@ msgstr "作成されたロックのパス: %s"
 msgid "Failed to remove file %(file)s"
 msgstr "%(file)sの削除に失敗しました"
 
-#: neutron/openstack/common/periodic_task.py:126
+#: neutron/openstack/common/periodic_task.py:132
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
 msgstr "タスクの間隔が負であるため、定期タスク %(task)s をスキップしています"
 
-#: neutron/openstack/common/periodic_task.py:131
+#: neutron/openstack/common/periodic_task.py:137
 #, python-format
 msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr "タスクが使用不可であるため、定期タスク %(task)s をスキップしています"
@@ -490,15 +490,16 @@ msgid ""
 "Trying again in %(time)d seconds."
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:116
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:117
 #, python-format
 msgid "No %s Plugin loaded"
-msgstr ""
+msgstr "%s プラグインはロードされませんでした"
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:117
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:118
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr ""
+"%(plugin_key)s: 引数 %(args)s が指定された %(function_name)s は無視されます"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:807
 #, python-format
@@ -792,20 +793,20 @@ msgid ""
 "tenant_id=%(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:78
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:79
 msgid "APIC service agent starting ..."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:95
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:96
 msgid "APIC service agent started"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:189
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:181
 #, python-format
 msgid "APIC host agent: agent starting on %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:209
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:201
 #, python-format
 msgid "APIC host agent: started on %s"
 msgstr ""

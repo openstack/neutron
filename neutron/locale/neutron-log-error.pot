@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev488.g963d699\n"
+"Project-Id-Version: neutron 2015.1.dev518.g213aa4f\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-26 06:08+0000\n"
+"POT-Creation-Date: 2014-11-28 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,7 +48,7 @@ msgstr ""
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:595 neutron/agent/l3_agent.py:1984
+#: neutron/agent/dhcp_agent.py:595 neutron/agent/l3_agent.py:1986
 #: neutron/agent/metadata/agent.py:416
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:793
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:277
@@ -112,30 +112,30 @@ msgstr ""
 msgid "Missing subnet/agent_gateway_port"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1712
+#: neutron/agent/l3_agent.py:1714
 msgid "DVR: Failed updating arp entry"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1761
+#: neutron/agent/l3_agent.py:1763
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1801
+#: neutron/agent/l3_agent.py:1803
 #, python-format
 msgid "Failed to fetch router information for '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1819
+#: neutron/agent/l3_agent.py:1821
 #, python-format
 msgid "Removing incompatible router '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1865
+#: neutron/agent/l3_agent.py:1867
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1868
+#: neutron/agent/l3_agent.py:1870
 #: neutron/services/metering/agents/metering_agent.py:57
 msgid "Failed synchronizing routers"
 msgstr ""
@@ -421,16 +421,6 @@ msgstr ""
 msgid "Error response returned from nova: %s"
 msgstr ""
 
-#: neutron/openstack/common/excutils.py:76
-#, python-format
-msgid "Original exception being dropped: %s"
-msgstr ""
-
-#: neutron/openstack/common/excutils.py:105
-#, python-format
-msgid "Unexpected exception occurred %d time(s)... retrying."
-msgstr ""
-
 #: neutron/openstack/common/lockutils.py:117
 #, python-format
 msgid "Could not release the acquired lock `%s`"
@@ -444,7 +434,7 @@ msgstr ""
 msgid "in dynamic looping call"
 msgstr ""
 
-#: neutron/openstack/common/periodic_task.py:202
+#: neutron/openstack/common/periodic_task.py:208
 #, python-format
 msgid "Error during %(full_task_name)s: %(e)s"
 msgstr ""
@@ -486,7 +476,7 @@ msgstr ""
 msgid "Failed sending agent report!"
 msgstr ""
 
-#: neutron/plugins/cisco/cfg_agent/device_drivers/driver_mgr.py:80
+#: neutron/plugins/cisco/cfg_agent/device_drivers/driver_mgr.py:81
 #, python-format
 msgid ""
 "Error loading cfg agent driver %(driver)s for hosting device template "
@@ -677,7 +667,7 @@ msgstr ""
 msgid "Port trunk pair DB inconsistency for port %s"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:279
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:280
 #, python-format
 msgid "Unable to delete port '%(pname)s' on switch. Exception: %(exp)s"
 msgstr ""
@@ -932,25 +922,25 @@ msgstr ""
 msgid "NETCONF error: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:110
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:111
 msgid "APIC service agent: failed in reporting state"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:205
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:197
 #, python-format
 msgid "No such interface (ignored): %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:255
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:247
 msgid "APIC service agent: exception in LLDP parsing"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:310
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:302
 #, python-format
 msgid "APIC service agent: can not get MACaddr for %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:326
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:318
 msgid "APIC host agent: failed in reporting state"
 msgstr ""
 
@@ -1242,12 +1232,12 @@ msgid ""
 "router_id=%(router_id)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:79
+#: neutron/services/loadbalancer/plugin.py:80
 #, python-format
 msgid "Delete associated loadbalancer pools before removing providers %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:187
+#: neutron/services/loadbalancer/plugin.py:188
 #, python-format
 msgid "Failed to delete pool %s, putting it in ERROR state"
 msgstr ""

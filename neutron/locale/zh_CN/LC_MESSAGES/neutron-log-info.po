@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-26 06:07+0000\n"
-"PO-Revision-Date: 2014-11-25 18:38+0000\n"
+"POT-Creation-Date: 2014-11-28 06:08+0000\n"
+"PO-Revision-Date: 2014-11-27 15:17+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
@@ -37,13 +37,13 @@ msgstr "正在使状态同步"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:604 neutron/agent/l3_agent.py:1989
+#: neutron/agent/dhcp_agent.py:604 neutron/agent/l3_agent.py:1991
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "服务器端 %s 已更新代理！"
 
-#: neutron/agent/l3_agent.py:1891
+#: neutron/agent/l3_agent.py:1893
 msgid "L3 agent started"
 msgstr "已启动 L3 代理"
 
@@ -279,12 +279,12 @@ msgstr "已创建锁路径：%s"
 msgid "Failed to remove file %(file)s"
 msgstr "移动文件%(file)s失败"
 
-#: neutron/openstack/common/periodic_task.py:126
+#: neutron/openstack/common/periodic_task.py:132
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
 msgstr "正在跳过周期性任务 %(task)s，因为其时间间隔为负"
 
-#: neutron/openstack/common/periodic_task.py:131
+#: neutron/openstack/common/periodic_task.py:137
 #, python-format
 msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr "正在跳过周期性任务 %(task)s，因为它已禁用"
@@ -486,15 +486,15 @@ msgid ""
 "Trying again in %(time)d seconds."
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:116
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr ""
-
 #: neutron/plugins/cisco/models/virt_phy_sw_v2.py:117
 #, python-format
+msgid "No %s Plugin loaded"
+msgstr "未装入任何 %s 插件"
+
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:118
+#, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr ""
+msgstr "%(plugin_key)s：已忽略具有自变量 %(args)s 的 %(function_name)s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:807
 #, python-format
@@ -788,20 +788,20 @@ msgid ""
 "tenant_id=%(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:78
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:79
 msgid "APIC service agent starting ..."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:95
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:96
 msgid "APIC service agent started"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:189
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:181
 #, python-format
 msgid "APIC host agent: agent starting on %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:209
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:201
 #, python-format
 msgid "APIC host agent: started on %s"
 msgstr ""

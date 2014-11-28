@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev488.g963d699\n"
+"Project-Id-Version: neutron 2015.1.dev518.g213aa4f\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-26 06:07+0000\n"
+"POT-Creation-Date: 2014-11-28 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -991,9 +991,9 @@ msgstr ""
 msgid "Duplicate hostroute '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:298 neutron/tests/unit/test_attributes.py:461
-#: neutron/tests/unit/test_attributes.py:475
-#: neutron/tests/unit/test_attributes.py:483
+#: neutron/api/v2/attributes.py:298 neutron/tests/unit/test_attributes.py:491
+#: neutron/tests/unit/test_attributes.py:505
+#: neutron/tests/unit/test_attributes.py:513
 #, python-format
 msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
 msgstr ""
@@ -1864,7 +1864,7 @@ msgstr ""
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:641 neutron/plugins/nec/nec_router.py:195
+#: neutron/db/l3_db.py:641 neutron/plugins/nec/nec_router.py:196
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
@@ -2884,27 +2884,27 @@ msgstr ""
 msgid "Unable to acquire lock on `%(filename)s` due to %(exception)s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:287
+#: neutron/openstack/common/log.py:298
 #, python-format
 msgid "Deprecated: %s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:395
+#: neutron/openstack/common/log.py:406
 #, python-format
 msgid "Error loading logging config %(log_config)s: %(err_msg)s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:456
+#: neutron/openstack/common/log.py:467
 #, python-format
 msgid "syslog facility must be one of: %s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:707
+#: neutron/openstack/common/log.py:720
 #, python-format
 msgid "Fatal call to deprecated config: %(msg)s"
 msgstr ""
 
-#: neutron/openstack/common/periodic_task.py:40
+#: neutron/openstack/common/periodic_task.py:46
 #, python-format
 msgid "Unexpected argument for periodic task creation: %(arg)s."
 msgstr ""
@@ -2931,53 +2931,45 @@ msgstr ""
 msgid "Rules must be an instance of dict or Rules, got %s instead"
 msgstr ""
 
-#: neutron/openstack/common/processutils.py:130
-#, python-format
-msgid "Got unknown keyword args to utils.execute: %r"
+#: neutron/openstack/common/processutils.py:59
+msgid "Unexpected error while running command."
 msgstr ""
 
-#: neutron/openstack/common/processutils.py:145
+#: neutron/openstack/common/processutils.py:62
+#, python-format
+msgid ""
+"%(description)s\n"
+"Command: %(cmd)s\n"
+"Exit code: %(exit_code)s\n"
+"Stdout: %(stdout)r\n"
+"Stderr: %(stderr)r"
+msgstr ""
+
+#: neutron/openstack/common/processutils.py:143
+#, python-format
+msgid "Got unknown keyword args: %r"
+msgstr ""
+
+#: neutron/openstack/common/processutils.py:148
+msgid "Command requested root, but did not specify a root helper."
+msgstr ""
+
+#: neutron/openstack/common/processutils.py:158
 #, python-format
 msgid "Running cmd (subprocess): %s"
 msgstr ""
 
-#: neutron/openstack/common/processutils.py:169
-#: neutron/openstack/common/processutils.py:241
-#, python-format
-msgid "Result was %s"
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:181
+#: neutron/openstack/common/processutils.py:206
 #, python-format
 msgid "%r failed. Retrying."
 msgstr ""
 
-#: neutron/openstack/common/processutils.py:220
-#, python-format
-msgid "Running cmd (SSH): %s"
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:222
+#: neutron/openstack/common/processutils.py:248
 msgid "Environment not supported over SSH"
 msgstr ""
 
-#: neutron/openstack/common/processutils.py:226
+#: neutron/openstack/common/processutils.py:252
 msgid "process_input not supported over SSH"
-msgstr ""
-
-#: neutron/openstack/common/strutils.py:92
-#, python-format
-msgid "Unrecognized value '%(val)s', acceptable values are: %(acceptable)s"
-msgstr ""
-
-#: neutron/openstack/common/strutils.py:197
-#, python-format
-msgid "Invalid unit system: \"%s\""
-msgstr ""
-
-#: neutron/openstack/common/strutils.py:206
-#, python-format
-msgid "Invalid string format: %s"
 msgstr ""
 
 #: neutron/openstack/common/middleware/catch_errors.py:40
@@ -3449,8 +3441,8 @@ msgid "Agent loop has new device"
 msgstr ""
 
 #: neutron/plugins/bigswitch/agent/restproxy_agent.py:154
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:221
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:157
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:223
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:160
 msgid "Error in agent event loop"
 msgstr ""
 
@@ -3603,7 +3595,7 @@ msgstr ""
 msgid "NETCONF error: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/network_plugin.py:115
+#: neutron/plugins/cisco/network_plugin.py:114
 #, python-format
 msgid "'%(model)s' object has no attribute '%(name)s'"
 msgstr ""
@@ -5282,7 +5274,7 @@ msgstr ""
 
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:109
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:216
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:178
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:180
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:131
 msgid "Failed reporting state!"
 msgstr ""
@@ -6619,11 +6611,11 @@ msgstr ""
 msgid "Type of VM network interface: mlnx_direct or hostdev"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent_notify_api.py:48
+#: neutron/plugins/mlnx/agent_notify_api.py:47
 msgid "Sending delete network message"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent_notify_api.py:56
+#: neutron/plugins/mlnx/agent_notify_api.py:54
 msgid "Sending update port message"
 msgstr ""
 
@@ -6764,8 +6756,8 @@ msgid "Delete network %s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:220
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:140
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:107
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:142
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:110
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:100
 #, python-format
 msgid "RPC agent_id: %s"
@@ -6985,112 +6977,112 @@ msgstr ""
 msgid "Set_port_status as %s called"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:206
+#: neutron/plugins/nec/nec_plugin.py:208
 #, python-format
 msgid "_cleanup_ofc_tenant: No OFC tenant for %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:209
+#: neutron/plugins/nec/nec_plugin.py:211
 #, python-format
 msgid "delete_ofc_tenant() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:225
+#: neutron/plugins/nec/nec_plugin.py:227
 msgid "activate_port_if_ready(): skip, port.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:229
+#: neutron/plugins/nec/nec_plugin.py:231
 msgid "activate_port_if_ready(): skip, network.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:233
+#: neutron/plugins/nec/nec_plugin.py:235
 msgid "activate_port_if_ready(): skip, no portinfo for this port."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:237
+#: neutron/plugins/nec/nec_plugin.py:239
 msgid "activate_port_if_ready(): skip, ofc_port already exists."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:245
+#: neutron/plugins/nec/nec_plugin.py:247
 #, python-format
 msgid "create_ofc_port() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:258
+#: neutron/plugins/nec/nec_plugin.py:260
 #, python-format
 msgid "deactivate_port(): skip, ofc_port for port=%s does not exist."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:277
+#: neutron/plugins/nec/nec_plugin.py:279
 #, python-format
 msgid "deactivate_port(): OFC port for port=%s is already removed."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:285
+#: neutron/plugins/nec/nec_plugin.py:287
 #, python-format
 msgid "Failed to delete port=%(port)s from OFC: %(exc)s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:304
+#: neutron/plugins/nec/nec_plugin.py:306
 #, python-format
 msgid "NECPluginV2.create_network() called, network=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:321
+#: neutron/plugins/nec/nec_plugin.py:323
 #, python-format
 msgid "Failed to create network id=%(id)s on OFC: %(exc)s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:337
+#: neutron/plugins/nec/nec_plugin.py:339
 #, python-format
 msgid "NECPluginV2.update_network() called, id=%(id)s network=%(network)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:381
+#: neutron/plugins/nec/nec_plugin.py:383
 #, python-format
 msgid "NECPluginV2.delete_network() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:415
+#: neutron/plugins/nec/nec_plugin.py:417
 #, python-format
 msgid "delete_network() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:552
+#: neutron/plugins/nec/nec_plugin.py:554
 #, python-format
 msgid "NECPluginV2.create_port() called, port=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:616
+#: neutron/plugins/nec/nec_plugin.py:618
 #, python-format
 msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:644
+#: neutron/plugins/nec/nec_plugin.py:646
 #, python-format
 msgid "NECPluginV2.delete_port() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:711
+#: neutron/plugins/nec/nec_plugin.py:709
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:721
+#: neutron/plugins/nec/nec_plugin.py:719
 #, python-format
 msgid ""
 "update_ports(): ignore unchanged portinfo in port_added message "
 "(port_id=%s)."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:741
+#: neutron/plugins/nec/nec_plugin.py:739
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message due to portinfo for "
 "port_id=%s was not registered"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:746
+#: neutron/plugins/nec/nec_plugin.py:744
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message received from different host "
@@ -7098,139 +7090,139 @@ msgid ""
 "received_datapath_id=%(received)s)."
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:56
+#: neutron/plugins/nec/nec_router.py:57
 #, python-format
 msgid "RouterMixin.create_router() called, router=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:82
+#: neutron/plugins/nec/nec_router.py:83
 #, python-format
 msgid "RouterMixin.update_router() called, id=%(id)s, router=%(router)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:100
+#: neutron/plugins/nec/nec_router.py:101
 #, python-format
 msgid "RouterMixin.delete_router() called, id=%s."
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:119
+#: neutron/plugins/nec/nec_router.py:120
 #, python-format
 msgid ""
 "RouterMixin.add_router_interface() called, id=%(id)s, "
 "interface=%(interface)s."
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:126
+#: neutron/plugins/nec/nec_router.py:127
 #, python-format
 msgid ""
 "RouterMixin.remove_router_interface() called, id=%(id)s, "
 "interface=%(interface)s."
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:310
+#: neutron/plugins/nec/nec_router.py:311
 #, python-format
 msgid ""
 "OFC does not support router with provider=%(provider)s, so removed it "
 "from supported provider (new router driver map=%(driver_map)s)"
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:318
+#: neutron/plugins/nec/nec_router.py:319
 #, python-format
 msgid ""
 "default_router_provider %(default)s is supported! Please specify one of "
 "%(supported)s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:332
+#: neutron/plugins/nec/nec_router.py:333
 #, python-format
 msgid "Enabled router drivers: %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_router.py:335
+#: neutron/plugins/nec/nec_router.py:336
 #, python-format
 msgid ""
 "No router provider is enabled. neutron-server terminated! "
 "(supported=%(supported)s, configured=%(config)s)"
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:38
+#: neutron/plugins/nec/packet_filter.py:39
 msgid "Disabled packet-filter extension."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:43
+#: neutron/plugins/nec/packet_filter.py:44
 #, python-format
 msgid "create_packet_filter() called, packet_filter=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:59
+#: neutron/plugins/nec/packet_filter.py:60
 #, python-format
 msgid "update_packet_filter() called, id=%(id)s packet_filter=%(packet_filter)s ."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:132
-#: neutron/plugins/nec/packet_filter.py:184
+#: neutron/plugins/nec/packet_filter.py:133
+#: neutron/plugins/nec/packet_filter.py:185
 #, python-format
 msgid "Failed to create packet_filter id=%(id)s on OFC: %(exc)s"
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:142
+#: neutron/plugins/nec/packet_filter.py:143
 #, python-format
 msgid "delete_packet_filter() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:160
+#: neutron/plugins/nec/packet_filter.py:161
 #, python-format
 msgid "activate_packet_filter_if_ready() called, packet_filter=%s."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:168
+#: neutron/plugins/nec/packet_filter.py:169
 #, python-format
 msgid ""
 "activate_packet_filter_if_ready(): skip pf_id=%s, "
 "packet_filter.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:171
+#: neutron/plugins/nec/packet_filter.py:172
 msgid ""
 "_activate_packet_filter_if_ready(): skip, ofc_packet_filter already "
 "exists."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:174
+#: neutron/plugins/nec/packet_filter.py:175
 #, python-format
 msgid "activate_packet_filter_if_ready(): create packet_filter id=%s on OFC."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:181
+#: neutron/plugins/nec/packet_filter.py:182
 #, python-format
 msgid ""
 "Skipped to create a packet filter pf_id=%s on OFC, no portinfo for the "
 "in_port."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:197
+#: neutron/plugins/nec/packet_filter.py:198
 #, python-format
 msgid "deactivate_packet_filter_if_ready() called, packet_filter=%s."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:202
+#: neutron/plugins/nec/packet_filter.py:203
 #, python-format
 msgid ""
 "deactivate_packet_filter(): skip, Not found OFC Mapping for packet_filter"
 " id=%s."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:207
+#: neutron/plugins/nec/packet_filter.py:208
 #, python-format
 msgid "deactivate_packet_filter(): deleting packet_filter id=%s from OFC."
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:216
+#: neutron/plugins/nec/packet_filter.py:217
 #, python-format
 msgid "Failed to delete packet_filter id=%(id)s from OFC: %(exc)s"
 msgstr ""
 
-#: neutron/plugins/nec/packet_filter.py:247
+#: neutron/plugins/nec/packet_filter.py:248
 #, python-format
 msgid "Error occurred while disabling packet filter(s) for port %s"
 msgstr ""
@@ -7267,18 +7259,18 @@ msgstr ""
 msgid "delete_router_interface() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:50
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:52
 #, python-format
 msgid "Update ports: added=%(added)s, removed=%(removed)s"
 msgstr ""
 
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:72
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:49
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:74
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:51
 #, python-format
 msgid "port_update received: %s"
 msgstr ""
 
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:216
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:218
 msgid "No port changed."
 msgstr ""
 
@@ -7465,7 +7457,7 @@ msgstr ""
 msgid "Add provider binding (router=%(router_id)s, provider=%(provider)s)"
 msgstr ""
 
-#: neutron/plugins/nec/drivers/__init__.py:35
+#: neutron/plugins/nec/drivers/__init__.py:36
 #, python-format
 msgid "Loading OFC driver: %s"
 msgstr ""
@@ -7739,32 +7731,32 @@ msgstr ""
 msgid "Number of seconds to retry acquiring an Open vSwitch datapath"
 msgstr ""
 
-#: neutron/plugins/oneconvergence/plugin.py:238
+#: neutron/plugins/oneconvergence/plugin.py:236
 msgid "Failed to create subnet, deleting it from neutron"
 msgstr ""
 
-#: neutron/plugins/oneconvergence/plugin.py:302
+#: neutron/plugins/oneconvergence/plugin.py:300
 #, python-format
 msgid "Deleting newly created neutron port %s"
 msgstr ""
 
-#: neutron/plugins/oneconvergence/plugin.py:375
+#: neutron/plugins/oneconvergence/plugin.py:373
 msgid "Failed to create floatingip"
 msgstr ""
 
-#: neutron/plugins/oneconvergence/plugin.py:414
+#: neutron/plugins/oneconvergence/plugin.py:412
 msgid "Failed to create router"
 msgstr ""
 
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:152
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:155
 msgid "Port list is updated"
 msgstr ""
 
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:159
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:162
 msgid "AGENT looping....."
 msgstr ""
 
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:171
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:174
 msgid "NVSD Agent initialized successfully, now running... "
 msgstr ""
 
@@ -10297,216 +10289,216 @@ msgstr ""
 msgid "Failed to enable loadbalancer service config"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:39
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:40
 #, python-format
 msgid "Invalid action value %s in a firewall rule"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:48
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:49
 #, python-format
 msgid "Invalid action value %s in a vshield firewall rule"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:188
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:189
 #, python-format
 msgid "Failed to get firewall with edge id: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:206
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:207
 #, python-format
 msgid "No rule id:%s found in the edge_firewall_binding"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:216
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:217
 #, python-format
 msgid "Failed to get firewall rule: %(rule_id)s with edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:232
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:233
 #, python-format
 msgid "Failed to update firewall with edge_id: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:244
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:245
 #, python-format
 msgid "Failed to delete firewall with edge_id:%s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:258
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:259
 #, python-format
 msgid "Failed to update firewall rule: %(rule_id)s with edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:271
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:272
 #, python-format
 msgid "Failed to delete firewall rule: %(rule_id)s with edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:288
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:316
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:289
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:317
 #, python-format
 msgid "Failed to add firewall rule above: %(rule_id)s with edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:327
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:328
 #, python-format
 msgid "Failed to append a firewall rulewith edge_id: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:348
+#: neutron/plugins/vmware/vshield/edge_firewall_driver.py:349
 msgid "Can't execute insert rule operation without reference rule_id"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:50
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:51
 #, python-format
 msgid ""
 "Unsupported ike_version: %s! Only 'v1' ike version is supported on "
 "vshield Edge!"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:64
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:65
 msgid ""
 "IKEPolicy and IPsecPolicy should have consistent auth_algorithm, "
 "encryption_algorithm and pfs for VSE!"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:72
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:73
 #, python-format
 msgid ""
 "Unsupported encryption_algorithm: %s! '3des', 'aes-128' and 'aes-256' are"
 " supported on VSE right now."
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:81
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:82
 #, python-format
 msgid "Unsupported pfs: %s! 'group2' and 'group5' are supported on VSE right now."
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:89
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:90
 #, python-format
 msgid ""
 "Unsupported transform protocol: %s! 'esp' is supported by default on VSE "
 "right now."
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:98
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:99
 #, python-format
 msgid ""
 "Unsupported encapsulation mode: %s! 'tunnel' is supported by default on "
 "VSE right now."
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:136
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:137
 #, python-format
 msgid "Failed to update ipsec vpn configuration with edge_id: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:143
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:144
 #, python-format
 msgid "IPsec config not found on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:146
+#: neutron/plugins/vmware/vshield/edge_ipsecvpn_driver.py:147
 #, python-format
 msgid "Failed to delete ipsec vpn configuration with edge_id: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:152
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:153
 #, python-format
 msgid "Invalid %(protocol)s persistence method: %(type)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:178
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:179
 #, python-format
 msgid "Failed to create app profile on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:189
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:190
 #, python-format
 msgid "Failed to create vip on vshield edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:207
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:208
 #, python-format
 msgid "vip_binding not found with id: %(id)s edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:224
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:225
 msgid "Failed to get vip on edge"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:241
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:242
 #, python-format
 msgid "Failed to update app profile on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:249
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:250
 #, python-format
 msgid "Failed to update vip on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:260
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:261
 #, python-format
 msgid "vip not found on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:263
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:264
 #, python-format
 msgid "Failed to delete vip on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:268
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:269
 #, python-format
 msgid "app profile not found on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:271
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:272
 #, python-format
 msgid "Failed to delete app profile on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:282
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:283
 msgid "Failed to create pool"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:299
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:300
 #, python-format
 msgid "pool_binding not found with id: %(id)s edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:309
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:310
 msgid "Failed to get pool on edge"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:321
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:322
 msgid "Failed to update pool"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:331
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:332
 msgid "Failed to delete pool"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:341
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:342
 #, python-format
 msgid "Failed to create monitor on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:359
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:360
 #, python-format
 msgid "monitor_binding not found with id: %(id)s edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:369
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:370
 #, python-format
 msgid "Failed to get monitor on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:386
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:387
 #, python-format
 msgid "Failed to update monitor on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:397
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:398
 msgid "Failed to delete monitor"
 msgstr ""
 
@@ -10730,12 +10722,12 @@ msgstr ""
 msgid "BrocadeSVIPlugin: adding redundant router interface is not supported"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:88
+#: neutron/services/loadbalancer/plugin.py:89
 #, python-format
 msgid "Error retrieving driver for provider %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:96
+#: neutron/services/loadbalancer/plugin.py:97
 #, python-format
 msgid "Error retrieving provider for pool %s"
 msgstr ""
@@ -11009,7 +11001,7 @@ msgstr ""
 msgid "An interface driver must be specified"
 msgstr ""
 
-#: neutron/services/vpn/agent.py:26
+#: neutron/services/vpn/agent.py:27
 msgid "The vpn device drivers Neutron will use"
 msgstr ""
 
@@ -11093,6 +11085,16 @@ msgstr ""
 msgid ""
 "Cisco CSR does not support %(resource)s attribute %(key)s with value "
 "'%(value)s'"
+msgstr ""
+
+#: neutron/tests/post_mortem_debug.py:34
+#, python-format
+msgid "can't import %s module as a post mortem debugger"
+msgstr ""
+
+#: neutron/tests/post_mortem_debug.py:37
+#, python-format
+msgid "%s is not a supported post mortem debugger"
 msgstr ""
 
 #: neutron/tests/functional/agent/linux/simple_daemon.py:37
