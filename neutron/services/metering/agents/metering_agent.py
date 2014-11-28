@@ -45,6 +45,11 @@ LOG = logging.getLogger(__name__)
 class MeteringPluginRpc(object):
 
     def __init__(self, host):
+        # NOTE(yamamoto): super.__init__() call here is not only for
+        # aesthetics.  Because of multiple inheritances in MeteringAgent,
+        # it's actually necessary to initialize parent classes of
+        # manager.Manager correctly.
+        super(MeteringPluginRpc, self).__init__()
         target = messaging.Target(topic=topics.METERING_PLUGIN, version='1.0')
         self.client = n_rpc.get_client(target)
 
