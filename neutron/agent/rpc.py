@@ -89,7 +89,6 @@ class PluginApi(object):
                           agent_id=agent_id, host=host)
 
     def get_devices_details_list(self, context, devices, agent_id, host=None):
-        res = []
         try:
             cctxt = self.client.prepare(version='1.3')
             res = cctxt.call(context, 'get_devices_details_list',
@@ -100,7 +99,6 @@ class PluginApi(object):
             # mode, in that DVR routers may not be in the system yet, and
             # it might be not necessary to retrieve info about the host.
             LOG.warn(_LW('DVR functionality requires a server upgrade.'))
-            cctxt = self.client.prepare()
             res = [
                 self.get_device_details(context, device, agent_id, host)
                 for device in devices
