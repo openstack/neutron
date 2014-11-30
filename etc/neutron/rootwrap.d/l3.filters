@@ -24,7 +24,6 @@ metadata_proxy_local: CommandFilter, /usr/local/bin/neutron-ns-metadata-proxy, r
 # RHEL invocation of the metadata proxy will report /usr/bin/python
 kill_metadata: KillFilter, root, python, -9
 kill_metadata7: KillFilter, root, python2.7, -9
-kill_metadata6: KillFilter, root, python2.6, -9
 kill_radvd_usr: KillFilter, root, /usr/sbin/radvd, -9, -HUP
 kill_radvd: KillFilter, root, /sbin/radvd, -9, -HUP
 
