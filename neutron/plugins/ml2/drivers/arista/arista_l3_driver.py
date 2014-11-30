@@ -409,7 +409,7 @@ class AristaL3Driver(object):
         return socket.inet_ntop(socket.AF_INET6, struct.pack("!QQ", hi, lo))
 
     def _get_router_ip(self, cidr, ip_count, ip_ver):
-        """ For a given IP subnet and IP version type, generate IP for router.
+        """For a given IP subnet and IP version type, generate IP for router.
 
         This method takes the network address (cidr) and selects an
         IP address that should be assigned to virtual router running
