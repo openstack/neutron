@@ -62,6 +62,10 @@ class BigSwitchTestBase(object):
         self.spawn_p = mock.patch(SPAWN, new=lambda *args, **kwargs: None)
         # prevent the consistency watchdog from starting
         self.watch_p = mock.patch(CWATCH, new=lambda *args, **kwargs: None)
+        # disable exception log to prevent json parse error from showing
+        self.log_exc_p = mock.patch(SERVER_MANAGER + ".LOG.exception",
+                                    new=lambda *args, **kwargs: None)
+        self.log_exc_p.start()
         self.plugin_notifier_p.start()
         self.spawn_p.start()
         self.watch_p.start()
