@@ -187,8 +187,7 @@ class TunnelAgentRpcApiMixin(object):
                                      topics.UPDATE)
 
     def tunnel_update(self, context, tunnel_ip, tunnel_type):
-        self.fanout_cast(context,
-                         self.make_msg('tunnel_update',
-                                       tunnel_ip=tunnel_ip,
-                                       tunnel_type=tunnel_type),
-                         topic=self._get_tunnel_update_topic())
+        cctxt = self.client.prepare(topic=self._get_tunnel_update_topic(),
+                                    fanout=True)
+        cctxt.cast(context, 'tunnel_update', tunnel_ip=tunnel_ip,
+                   tunnel_type=tunnel_type)
