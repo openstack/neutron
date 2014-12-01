@@ -88,7 +88,8 @@ def execute_alembic_command(command):
         # Here methods add_table, drop_index, etc is running. Name of method is
         # the first element of the tuple, arguments to this method comes from
         # the next element(s).
-        METHODS[command[0]](*command[1:])
+        if command[0] in METHODS:
+            METHODS[command[0]](*command[1:])
     else:
         # For all commands that changing type, nullable or other parameters
         # of the column is used alter_column method from alembic.
