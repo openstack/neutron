@@ -41,6 +41,11 @@ def get_network_bindings_by_vlanid_and_physical_net(session, vlan_id,
             all())
 
 
+def delete_network_bindings(session, network_id):
+    return (session.query(models.TzNetworkBinding).
+            filter_by(network_id=network_id).delete())
+
+
 def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
     with session.begin(subtransactions=True):
         binding = models.TzNetworkBinding(network_id, binding_type,

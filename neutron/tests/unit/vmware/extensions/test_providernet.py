@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+import webob.exc
 
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import providernet as pnet
@@ -23,7 +24,7 @@ from neutron.tests.unit.vmware import test_nsx_plugin
 
 class TestProvidernet(test_nsx_plugin.NsxPluginV2TestCase):
 
-    def test_create_provider_network_default_physical_net(self):
+    def test_create_delete_provider_network_default_physical_net(self):
         data = {'network': {'name': 'net1',
                             'admin_state_up': True,
                             'tenant_id': 'admin',
@@ -33,6 +34,9 @@ class TestProvidernet(test_nsx_plugin.NsxPluginV2TestCase):
         net = self.deserialize(self.fmt, network_req.get_response(self.api))
         self.assertEqual(net['network'][pnet.NETWORK_TYPE], 'vlan')
         self.assertEqual(net['network'][pnet.SEGMENTATION_ID], 411)
+        req = self.new_delete_request('networks', net['network']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_create_provider_network(self):
         data = {'network': {'name': 'net1',
