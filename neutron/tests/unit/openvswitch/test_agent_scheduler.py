@@ -1361,20 +1361,23 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         l3_plugin = (manager.NeutronManager.get_service_plugins()
                      [service_constants.L3_ROUTER_NAT])
         l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
-        with mock.patch.object(l3_notifier, 'cast') as mock_l3:
-            with self.router() as router1:
-                self._register_agent_states()
-                hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
-                                              L3_HOSTA)
-                self._add_router_to_l3_agent(hosta_id,
-                                             router1['router']['id'])
-                routers = [router1['router']['id']]
-            mock_l3.assert_called_with(
-                mock.ANY,
-                l3_notifier.make_msg(
-                    'router_added_to_agent',
-                    payload=routers),
-                topic='l3_agent.hosta')
+        with contextlib.nested(
+            mock.patch.object(l3_notifier.client, 'prepare',
+                              return_value=l3_notifier.client),
+            mock.patch.object(l3_notifier.client, 'cast'),
+            self.router(),
+        ) as (
+            mock_prepare, mock_cast, router1
+        ):
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
+                                          L3_HOSTA)
+            self._add_router_to_l3_agent(hosta_id,
+                                         router1['router']['id'])
+            routers = [router1['router']['id']]
+            mock_prepare.assert_called_with(server='hosta')
+            mock_cast.assert_called_with(
+                mock.ANY, 'router_added_to_agent', payload=routers)
             notifications = fake_notifier.NOTIFICATIONS
             expected_event_type = 'l3_agent.router.add'
             self._assert_notify(notifications, expected_event_type)
@@ -1383,20 +1386,25 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         l3_plugin = (manager.NeutronManager.get_service_plugins()
                      [service_constants.L3_ROUTER_NAT])
         l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
-        with mock.patch.object(l3_notifier, 'cast') as mock_l3:
-            with self.router() as router1:
-                self._register_agent_states()
-                hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
-                                              L3_HOSTA)
-                self._add_router_to_l3_agent(hosta_id,
-                                             router1['router']['id'])
-                self._remove_router_from_l3_agent(hosta_id,
-                                                  router1['router']['id'])
-            mock_l3.assert_called_with(
-                mock.ANY, l3_notifier.make_msg(
-                    'router_removed_from_agent',
-                    payload={'router_id': router1['router']['id']}),
-                topic='l3_agent.hosta')
+        with contextlib.nested(
+            mock.patch.object(l3_notifier.client, 'prepare',
+                              return_value=l3_notifier.client),
+            mock.patch.object(l3_notifier.client, 'cast'),
+            self.router(),
+        ) as (
+            mock_prepare, mock_cast, router1
+        ):
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
+                                          L3_HOSTA)
+            self._add_router_to_l3_agent(hosta_id,
+                                         router1['router']['id'])
+            self._remove_router_from_l3_agent(hosta_id,
+                                              router1['router']['id'])
+            mock_prepare.assert_called_with(server='hosta')
+            mock_cast.assert_called_with(
+                    mock.ANY, 'router_removed_from_agent',
+                    payload={'router_id': router1['router']['id']})
             notifications = fake_notifier.NOTIFICATIONS
             expected_event_type = 'l3_agent.router.remove'
             self._assert_notify(notifications, expected_event_type)
@@ -1405,12 +1413,19 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         l3_plugin = (manager.NeutronManager.get_service_plugins()
                      [service_constants.L3_ROUTER_NAT])
         l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
-        with mock.patch.object(l3_notifier, 'cast') as mock_l3:
+        with contextlib.nested(
+            mock.patch.object(l3_notifier.client, 'prepare',
+                              return_value=l3_notifier.client),
+            mock.patch.object(l3_notifier.client, 'cast'),
+        ) as (
+            mock_prepare, mock_cast
+        ):
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
             self._disable_agent(hosta_id, admin_state_up=False)
-            mock_l3.assert_called_with(
-                mock.ANY, l3_notifier.make_msg(
-                    'agent_updated', payload={'admin_state_up': False}),
-                topic='l3_agent.hosta')
+
+            mock_prepare.assert_called_with(server='hosta')
+
+            mock_cast.assert_called_with(
+                mock.ANY, 'agent_updated', payload={'admin_state_up': False})
