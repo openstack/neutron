@@ -19,6 +19,7 @@ from neutron.common import constants
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
+from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.extensions import l3_ext_ha_mode
 from neutron import manager
@@ -29,12 +30,9 @@ from neutron.tests.unit import testlib_plugin
 _uuid = uuidutils.generate_uuid
 
 
-class FakeL3Plugin(common_db_mixin.CommonDbMixin,
-                   l3_hamode_db.L3_HA_NAT_db_mixin):
-    pass
-
-
-class FakeL3PluginWithAgents(FakeL3Plugin,
+class FakeL3PluginWithAgents(common_db_mixin.CommonDbMixin,
+                             l3_hamode_db.L3_HA_NAT_db_mixin,
+                             l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                              agents_db.AgentDbMixin):
     pass
 
@@ -47,12 +45,26 @@ class L3HATestFramework(testlib_api.SqlTestCase,
         self.admin_ctx = context.get_admin_context()
         self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
         self.core_plugin = manager.NeutronManager.get_plugin()
-        mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin, 'get_l3_agents',
-                          create=True, return_value=[1, 2]).start()
         notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
                                     '_notify_ha_interfaces_updated')
         self.notif_m = notif_p.start()
         cfg.CONF.set_override('allow_overlapping_ips', True)
+
+        self.plugin = FakeL3PluginWithAgents()
+        self._register_agents()
+
+    def _register_agents(self):
+        agent_status = {
+            'agent_type': constants.AGENT_TYPE_L3,
+            'binary': 'neutron-l3-agent',
+            'host': 'l3host',
+            'topic': 'N/A'
+        }
+
+        self.plugin.create_or_update_agent(self.admin_ctx, agent_status)
+        agent_status['host'] = 'l3host_2'
+        self.plugin.create_or_update_agent(self.admin_ctx, agent_status)
+        self.agent1, self.agent2 = self.plugin.get_agents(self.admin_ctx)
 
     def _create_router(self, ha=True, tenant_id='tenant1', distributed=None,
                        ctx=None):
@@ -75,26 +87,6 @@ class L3HATestFramework(testlib_api.SqlTestCase,
         return self.plugin._update_router_db(ctx, router_id,
                                              data, None)
 
-
-class L3HAGetSyncDataTestCase(L3HATestFramework):
-
-    def setUp(self):
-        super(L3HAGetSyncDataTestCase, self).setUp()
-        self.plugin = FakeL3PluginWithAgents()
-        self._register_agents()
-
-    def _register_agents(self):
-        agent_status = {
-            'agent_type': constants.AGENT_TYPE_L3,
-            'binary': 'neutron-l3-agent',
-            'host': 'l3host',
-            'topic': 'N/A'
-        }
-        self.plugin.create_or_update_agent(self.admin_ctx, agent_status)
-        agent_status['host'] = 'l3host_2'
-        self.plugin.create_or_update_agent(self.admin_ctx, agent_status)
-        self.agent1, self.agent2 = self.plugin.get_agents(self.admin_ctx)
-
     def _bind_router(self, router_id):
         with self.admin_ctx.session.begin(subtransactions=True):
             bindings = self.plugin.get_ha_router_port_bindings(self.admin_ctx,
@@ -104,47 +96,8 @@ class L3HAGetSyncDataTestCase(L3HATestFramework):
                     [self.agent1['id'], self.agent2['id']], bindings):
                 binding.l3_agent_id = agent_id
 
-    def test_l3_agent_routers_query_interface(self):
-        router = self._create_router()
-        self._bind_router(router['id'])
-        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
-                                                        self.agent1['host'])
-        self.assertEqual(1, len(routers))
-        router = routers[0]
-
-        self.assertIsNotNone(router.get('ha'))
-
-        interface = router.get(constants.HA_INTERFACE_KEY)
-        self.assertIsNotNone(interface)
-
-        self.assertEqual(constants.DEVICE_OWNER_ROUTER_HA_INTF,
-                         interface['device_owner'])
-        self.assertEqual(cfg.CONF.l3_ha_net_cidr, interface['subnet']['cidr'])
-
-    def test_update_state(self):
-        router = self._create_router()
-        self._bind_router(router['id'])
-        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
-                                                        self.agent1['host'])
-        state = routers[0].get(constants.HA_ROUTER_STATE_KEY)
-        self.assertEqual('standby', state)
-
-        self.plugin.update_router_state(self.admin_ctx, router['id'], 'active',
-                                        self.agent1['host'])
-
-        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
-                                                        self.agent1['host'])
-
-        state = routers[0].get(constants.HA_ROUTER_STATE_KEY)
-        self.assertEqual('active', state)
-
 
 class L3HATestCase(L3HATestFramework):
-
-    def setUp(self):
-        super(L3HATestCase, self).setUp()
-        self.plugin = FakeL3Plugin()
-
     def test_verify_configuration_succeed(self):
         # Default configuration should pass
         self.plugin._verify_configuration()
@@ -210,6 +163,40 @@ class L3HATestCase(L3HATestFramework):
                           self._update_router,
                           router['id'],
                           distributed=True)
+
+    def test_l3_agent_routers_query_interface(self):
+        router = self._create_router()
+        self._bind_router(router['id'])
+        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
+                                                        self.agent1['host'])
+        self.assertEqual(1, len(routers))
+        router = routers[0]
+
+        self.assertIsNotNone(router.get('ha'))
+
+        interface = router.get(constants.HA_INTERFACE_KEY)
+        self.assertIsNotNone(interface)
+
+        self.assertEqual(constants.DEVICE_OWNER_ROUTER_HA_INTF,
+                         interface['device_owner'])
+        self.assertEqual(cfg.CONF.l3_ha_net_cidr, interface['subnet']['cidr'])
+
+    def test_update_state(self):
+        router = self._create_router()
+        self._bind_router(router['id'])
+        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
+                                                        self.agent1['host'])
+        state = routers[0].get(constants.HA_ROUTER_STATE_KEY)
+        self.assertEqual('standby', state)
+
+        self.plugin.update_router_state(self.admin_ctx, router['id'], 'active',
+                                        self.agent1['host'])
+
+        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
+                                                        self.agent1['host'])
+
+        state = routers[0].get(constants.HA_ROUTER_STATE_KEY)
+        self.assertEqual('active', state)
 
     def test_unique_ha_network_per_tenant(self):
         tenant1 = _uuid()
@@ -407,7 +394,6 @@ class L3HAUserTestCase(L3HATestFramework):
     def setUp(self):
         super(L3HAUserTestCase, self).setUp()
         self.user_ctx = context.Context('', _uuid())
-        self.plugin = FakeL3Plugin()
 
     def test_create_ha_router(self):
         self._create_router(ctx=self.user_ctx)
