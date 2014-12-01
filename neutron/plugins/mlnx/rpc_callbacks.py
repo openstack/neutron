@@ -34,7 +34,7 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
         """Agent requests device details."""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
+        LOG.debug("Device %(device)s details requested from %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
         port = plugin.get_port_from_device(device)
@@ -57,7 +57,7 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
                 db.set_port_status(port['id'], new_status)
         else:
             entry = {'device': device}
-            LOG.debug(_("%s can not be found in database"), device)
+            LOG.debug("%s can not be found in database", device)
         return entry
 
     def get_devices_details_list(self, rpc_context, **kwargs):
@@ -74,7 +74,7 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
         """Device no longer exists on agent."""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
+        LOG.debug("Device %(device)s no longer exists on %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
         port = plugin.get_port_from_device(device)
@@ -87,14 +87,14 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
         else:
             entry = {'device': device,
                      'exists': False}
-            LOG.debug(_("%s can not be found in database"), device)
+            LOG.debug("%s can not be found in database", device)
         return entry
 
     def update_device_up(self, rpc_context, **kwargs):
         """Device is up on agent."""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug(_("Device %(device)s up %(agent_id)s"),
+        LOG.debug("Device %(device)s up %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
         port = plugin.get_port_from_device(device)
@@ -103,4 +103,4 @@ class MlnxRpcCallbacks(n_rpc.RpcCallback):
                 # Set port status to ACTIVE
                 db.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
         else:
-            LOG.debug(_("%s can not be found in database"), device)
+            LOG.debug("%s can not be found in database", device)

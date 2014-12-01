@@ -44,14 +44,14 @@ class AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
         self.client = n_rpc.get_client(target)
 
     def network_delete(self, context, network_id):
-        LOG.debug(_("Sending delete network message"))
+        LOG.debug("Sending delete network message")
         cctxt = self.client.prepare(topic=self.topic_network_delete,
                                     fanout=True)
         cctxt.cast(context, 'network_delete', network_id=network_id)
 
     def port_update(self, context, port, physical_network,
                     network_type, vlan_id):
-        LOG.debug(_("Sending update port message"))
+        LOG.debug("Sending update port message")
         kwargs = {'port': port,
                   'network_type': network_type,
                   'physical_network': physical_network,
