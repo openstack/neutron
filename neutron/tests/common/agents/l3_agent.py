@@ -13,10 +13,10 @@
 #    under the License.
 
 
-from neutron.agent import l3_agent
+from neutron.agent.l3 import agent
 
 
-class TestL3NATAgent(l3_agent.L3NATAgentWithStateReport):
+class TestL3NATAgent(agent.L3NATAgentWithStateReport):
     NESTED_NAMESPACE_SEPARATOR = '@'
 
     def get_ns_name(self, router_id):

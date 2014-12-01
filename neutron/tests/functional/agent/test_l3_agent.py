@@ -20,7 +20,7 @@ import mock
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
-from neutron.agent import l3_agent
+from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.common import config as common_config
@@ -39,7 +39,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
         self.check_sudo_enabled()
-        mock.patch('neutron.agent.l3_agent.L3PluginApi').start()
+        mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
         self.agent = self._configure_agent('agent1')
 
     def _get_config_opts(self):

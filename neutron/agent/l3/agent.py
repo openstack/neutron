@@ -15,7 +15,6 @@
 
 import sys
 
-import datetime
 import eventlet
 eventlet.monkey_patch()
 
@@ -26,10 +25,12 @@ from oslo import messaging
 from oslo.utils import excutils
 from oslo.utils import importutils
 from oslo.utils import timeutils
-import Queue
 
 from neutron.agent.common import config
-from neutron.agent import l3_ha_agent
+from neutron.agent.l3 import ha
+from neutron.agent.l3 import link_local_allocator as lla
+from neutron.agent.l3 import router_info
+from neutron.agent.l3 import router_processing_queue as queue
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
@@ -77,10 +78,6 @@ FIP_PR_START = 32768
 FIP_PR_END = FIP_PR_START + 40000
 RPC_LOOP_INTERVAL = 1
 FLOATING_IP_CIDR_SUFFIX = '/32'
-# Lower value is higher priority
-PRIORITY_RPC = 0
-PRIORITY_SYNC_ROUTERS_TASK = 1
-DELETE_ROUTER = 1
 
 
 class L3PluginApi(object):
@@ -142,295 +139,8 @@ class L3PluginApi(object):
         return cctxt.call(context, 'get_service_plugin_list')
 
 
-class LinkLocalAddressPair(netaddr.IPNetwork):
-    def __init__(self, addr):
-        super(LinkLocalAddressPair, self).__init__(addr)
-
-    def get_pair(self):
-        """Builds an address pair from the first and last addresses. """
-        return (netaddr.IPNetwork("%s/%s" % (self.network, self.prefixlen)),
-                netaddr.IPNetwork("%s/%s" % (self.broadcast, self.prefixlen)))
-
-
-class LinkLocalAllocator(object):
-    """Manages allocation of link local IP addresses.
-
-    These link local addresses are used for routing inside the fip namespaces.
-    The associations need to persist across agent restarts to maintain
-    consistency.  Without this, there is disruption in network connectivity
-    as the agent rewires the connections with the new IP address assocations.
-
-    Persisting these in the database is unnecessary and would degrade
-    performance.
-    """
-    def __init__(self, state_file, subnet):
-        """Read the file with previous allocations recorded.
-
-        See the note in the allocate method for more detail.
-        """
-        self.state_file = state_file
-        subnet = netaddr.IPNetwork(subnet)
-
-        self.allocations = {}
-
-        self.remembered = {}
-        for line in self._read():
-            key, cidr = line.strip().split(',')
-            self.remembered[key] = LinkLocalAddressPair(cidr)
-
-        self.pool = set(LinkLocalAddressPair(s) for s in subnet.subnet(31))
-        self.pool.difference_update(self.remembered.values())
-
-    def allocate(self, key):
-        """Try to allocate a link local address pair.
-
-        I expect this to work in all cases because I expect the pool size to be
-        large enough for any situation.  Nonetheless, there is some defensive
-        programming in here.
-
-        Since the allocations are persisted, there is the chance to leak
-        allocations which should have been released but were not.  This leak
-        could eventually exhaust the pool.
-
-        So, if a new allocation is needed, the code first checks to see if
-        there are any remembered allocations for the key.  If not, it checks
-        the free pool.  If the free pool is empty then it dumps the remembered
-        allocations to free the pool.  This final desparate step will not
-        happen often in practice.
-        """
-        if key in self.remembered:
-            self.allocations[key] = self.remembered.pop(key)
-            return self.allocations[key]
-
-        if not self.pool:
-            # Desparate times.  Try to get more in the pool.
-            self.pool.update(self.remembered.values())
-            self.remembered.clear()
-            if not self.pool:
-                # More than 256 routers on a compute node!
-                raise RuntimeError(_("Cannot allocate link local address"))
-
-        self.allocations[key] = self.pool.pop()
-        self._write_allocations()
-        return self.allocations[key]
-
-    def release(self, key):
-        self.pool.add(self.allocations.pop(key))
-        self._write_allocations()
-
-    def _write_allocations(self):
-        current = ["%s,%s\n" % (k, v) for k, v in self.allocations.items()]
-        remembered = ["%s,%s\n" % (k, v) for k, v in self.remembered.items()]
-        current.extend(remembered)
-        self._write(current)
-
-    def _write(self, lines):
-        with open(self.state_file, "w") as f:
-            f.writelines(lines)
-
-    def _read(self):
-        if not os.path.exists(self.state_file):
-            return []
-        with open(self.state_file) as f:
-            return f.readlines()
-
-
-class RouterInfo(l3_ha_agent.RouterMixin):
-
-    def __init__(self, router_id, root_helper, router,
-                 use_ipv6=False, ns_name=None):
-        self.router_id = router_id
-        self.ex_gw_port = None
-        self._snat_enabled = None
-        self._snat_action = None
-        self.internal_ports = []
-        self.snat_ports = []
-        self.floating_ips = set()
-        self.floating_ips_dict = {}
-        self.root_helper = root_helper
-        # Invoke the setter for establishing initial SNAT action
-        self.router = router
-        self.ns_name = ns_name
-        self.iptables_manager = iptables_manager.IptablesManager(
-            root_helper=root_helper,
-            use_ipv6=use_ipv6,
-            namespace=self.ns_name)
-        self.snat_iptables_manager = None
-        self.routes = []
-        # DVR Data
-        # Linklocal subnet for router and floating IP namespace link
-        self.rtr_fip_subnet = None
-        self.dist_fip_count = 0
-
-        super(RouterInfo, self).__init__()
-
-    @property
-    def router(self):
-        return self._router
-
-    @router.setter
-    def router(self, value):
-        self._router = value
-        if not self._router:
-            return
-        # enable_snat by default if it wasn't specified by plugin
-        self._snat_enabled = self._router.get('enable_snat', True)
-        # Set a SNAT action for the router
-        if self._router.get('gw_port'):
-            self._snat_action = ('add_rules' if self._snat_enabled
-                                 else 'remove_rules')
-        elif self.ex_gw_port:
-            # Gateway port was removed, remove rules
-            self._snat_action = 'remove_rules'
-
-    def perform_snat_action(self, snat_callback, *args):
-        # Process SNAT rules for attached subnets
-        if self._snat_action:
-            snat_callback(self, self._router.get('gw_port'),
-                          *args, action=self._snat_action)
-        self._snat_action = None
-
-
-class RouterUpdate(object):
-    """Encapsulates a router update
-
-    An instance of this object carries the information necessary to prioritize
-    and process a request to update a router.
-    """
-    def __init__(self, router_id, priority,
-                 action=None, router=None, timestamp=None):
-        self.priority = priority
-        self.timestamp = timestamp
-        if not timestamp:
-            self.timestamp = timeutils.utcnow()
-        self.id = router_id
-        self.action = action
-        self.router = router
-
-    def __lt__(self, other):
-        """Implements priority among updates
-
-        Lower numerical priority always gets precedence.  When comparing two
-        updates of the same priority then the one with the earlier timestamp
-        gets procedence.  In the unlikely event that the timestamps are also
-        equal it falls back to a simple comparison of ids meaning the
-        precedence is essentially random.
-        """
-        if self.priority != other.priority:
-            return self.priority < other.priority
-        if self.timestamp != other.timestamp:
-            return self.timestamp < other.timestamp
-        return self.id < other.id
-
-
-class ExclusiveRouterProcessor(object):
-    """Manager for access to a router for processing
-
-    This class controls access to a router in a non-blocking way.  The first
-    instance to be created for a given router_id is granted exclusive access to
-    the router.
-
-    Other instances may be created for the same router_id while the first
-    instance has exclusive access.  If that happens then it doesn't block and
-    wait for access.  Instead, it signals to the master instance that an update
-    came in with the timestamp.
-
-    This way, a thread will not block to wait for access to a router.  Instead
-    it effectively signals to the thread that is working on the router that
-    something has changed since it started working on it.  That thread will
-    simply finish its current iteration and then repeat.
-
-    This class keeps track of the last time that a router data was fetched and
-    processed.  The timestamp that it keeps must be before when the data used
-    to process the router last was fetched from the database.  But, as close as
-    possible.  The timestamp should not be recorded, however, until the router
-    has been processed using the fetch data.
-    """
-    _masters = {}
-    _router_timestamps = {}
-
-    def __init__(self, router_id):
-        self._router_id = router_id
-
-        if router_id not in self._masters:
-            self._masters[router_id] = self
-            self._queue = []
-
-        self._master = self._masters[router_id]
-
-    def _i_am_master(self):
-        return self == self._master
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if self._i_am_master():
-            del self._masters[self._router_id]
-
-    def _get_router_data_timestamp(self):
-        return self._router_timestamps.get(self._router_id,
-                                           datetime.datetime.min)
-
-    def fetched_and_processed(self, timestamp):
-        """Records the data timestamp after it is used to update the router"""
-        new_timestamp = max(timestamp, self._get_router_data_timestamp())
-        self._router_timestamps[self._router_id] = new_timestamp
-
-    def queue_update(self, update):
-        """Queues an update from a worker
-
-        This is the queue used to keep new updates that come in while a router
-        is being processed.  These updates have already bubbled to the front of
-        the RouterProcessingQueue.
-        """
-        self._master._queue.append(update)
-
-    def updates(self):
-        """Processes the router until updates stop coming
-
-        Only the master instance will process the router.  However, updates may
-        come in from other workers while it is in progress.  This method loops
-        until they stop coming.
-        """
-        if self._i_am_master():
-            while self._queue:
-                # Remove the update from the queue even if it is old.
-                update = self._queue.pop(0)
-                # Process the update only if it is fresh.
-                if self._get_router_data_timestamp() < update.timestamp:
-                    yield update
-
-
-class RouterProcessingQueue(object):
-    """Manager of the queue of routers to process."""
-    def __init__(self):
-        self._queue = Queue.PriorityQueue()
-
-    def add(self, update):
-        self._queue.put(update)
-
-    def each_update_to_next_router(self):
-        """Grabs the next router from the queue and processes
-
-        This method uses a for loop to process the router repeatedly until
-        updates stop bubbling to the front of the queue.
-        """
-        next_update = self._queue.get()
-
-        with ExclusiveRouterProcessor(next_update.id) as rp:
-            # Queue the update whether this worker is the master or not.
-            rp.queue_update(next_update)
-
-            # Here, if the current worker is not the master, the call to
-            # rp.updates() will not yield and so this will essentially be a
-            # noop.
-            for update in rp.updates():
-                yield (rp, update)
-
-
 class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
-                 l3_ha_agent.AgentMixin,
+                 ha.AgentMixin,
                  manager.Manager):
     """Manager for L3NatAgent
 
@@ -554,12 +264,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # dvr data
         self.agent_gateway_port = None
         self.fip_ns_subscribers = set()
-        self.local_subnets = LinkLocalAllocator(
+        self.local_subnets = lla.LinkLocalAllocator(
             os.path.join(self.conf.state_path, 'fip-linklocal-networks'),
             FIP_LL_SUBNET)
         self.fip_priorities = set(range(FIP_PR_START, FIP_PR_END))
 
-        self._queue = RouterProcessingQueue()
+        self._queue = queue.RouterProcessingQueue()
         super(L3NATAgent, self).__init__(conf=self.conf)
 
         self.target_ex_net_id = None
@@ -745,11 +455,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _router_added(self, router_id, router):
         ns_name = (self.get_ns_name(router_id)
                    if self.conf.use_namespaces else None)
-        ri = RouterInfo(router_id=router_id,
-                        root_helper=self.root_helper,
-                        router=router,
-                        use_ipv6=self.use_ipv6,
-                        ns_name=ns_name)
+        ri = router_info.RouterInfo(router_id=router_id,
+                                    root_helper=self.root_helper,
+                                    router=router,
+                                    use_ipv6=self.use_ipv6,
+                                    ns_name=ns_name)
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
             self._create_router_namespace(ri)
@@ -1698,7 +1408,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
         LOG.debug('Got router deleted notification for %s', router_id)
-        update = RouterUpdate(router_id, PRIORITY_RPC, action=DELETE_ROUTER)
+        update = queue.RouterUpdate(router_id,
+                                    queue.PRIORITY_RPC,
+                                    action=queue.DELETE_ROUTER)
         self._queue.add(update)
 
     def _update_arp_entry(self, ri, ip, mac, subnet_id, operation):
@@ -1751,13 +1463,15 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             if isinstance(routers[0], dict):
                 routers = [router['id'] for router in routers]
             for id in routers:
-                update = RouterUpdate(id, PRIORITY_RPC)
+                update = queue.RouterUpdate(id, queue.PRIORITY_RPC)
                 self._queue.add(update)
 
     def router_removed_from_agent(self, context, payload):
         LOG.debug('Got router removed from agent :%r', payload)
         router_id = payload['router_id']
-        update = RouterUpdate(router_id, PRIORITY_RPC, action=DELETE_ROUTER)
+        update = queue.RouterUpdate(router_id,
+                                    queue.PRIORITY_RPC,
+                                    action=queue.DELETE_ROUTER)
         self._queue.add(update)
 
     def router_added_to_agent(self, context, payload):
@@ -1801,7 +1515,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         for rp, update in self._queue.each_update_to_next_router():
             LOG.debug("Starting router update for %s", update.id)
             router = update.router
-            if update.action != DELETE_ROUTER and not router:
+            if update.action != queue.DELETE_ROUTER and not router:
                 try:
                     update.timestamp = timeutils.utcnow()
                     routers = self.plugin_rpc.get_routers(self.context,
@@ -1870,10 +1584,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         else:
             LOG.debug('Processing :%r', routers)
             for r in routers:
-                update = RouterUpdate(r['id'],
-                                      PRIORITY_SYNC_ROUTERS_TASK,
-                                      router=r,
-                                      timestamp=timestamp)
+                update = queue.RouterUpdate(r['id'],
+                                            queue.PRIORITY_SYNC_ROUTERS_TASK,
+                                            router=r,
+                                            timestamp=timestamp)
                 self._queue.add(update)
             self.fullsync = False
             LOG.debug("periodic_sync_routers_task successfully completed")
@@ -1884,10 +1598,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             # Two kinds of stale routers:  Routers for which info is cached in
             # self.router_info and the others.  First, handle the former.
             for router_id in prev_router_ids - curr_router_ids:
-                update = RouterUpdate(router_id,
-                                      PRIORITY_SYNC_ROUTERS_TASK,
-                                      timestamp=timestamp,
-                                      action=DELETE_ROUTER)
+                update = queue.RouterUpdate(router_id,
+                                            queue.PRIORITY_SYNC_ROUTERS_TASK,
+                                            timestamp=timestamp,
+                                            action=queue.DELETE_ROUTER)
                 self._queue.add(update)
 
             # Next, one effort to clean out namespaces for which we don't have
@@ -2001,7 +1715,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
 
 def _register_opts(conf):
     conf.register_opts(L3NATAgent.OPTS)
-    conf.register_opts(l3_ha_agent.OPTS)
+    conf.register_opts(ha.OPTS)
     config.register_interface_driver_opts_helper(conf)
     config.register_use_namespaces_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
@@ -2010,7 +1724,7 @@ def _register_opts(conf):
     conf.register_opts(external_process.OPTS)
 
 
-def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
+def main(manager='neutron.agent.l3.agent.L3NATAgentWithStateReport'):
     _register_opts(cfg.CONF)
     common_config.init(sys.argv[1:])
     config.setup_logging()

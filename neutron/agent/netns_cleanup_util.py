@@ -23,7 +23,7 @@ from oslo.utils import importutils
 
 from neutron.agent.common import config as agent_config
 from neutron.agent import dhcp_agent
-from neutron.agent import l3_agent
+from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
