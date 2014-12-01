@@ -61,7 +61,7 @@ def device_id_to_vm_id(device_id, obfuscate=False):
 def check_and_truncate(display_name):
     if (attributes.is_attr_set(display_name) and
             len(display_name) > MAX_DISPLAY_NAME_LEN):
-        LOG.debug(_("Specified name:'%s' exceeds maximum length. "
-                    "It will be truncated on NSX"), display_name)
+        LOG.debug("Specified name:'%s' exceeds maximum length. "
+                  "It will be truncated on NSX", display_name)
         return display_name[:MAX_DISPLAY_NAME_LEN]
     return display_name or ''

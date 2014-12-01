@@ -17,6 +17,7 @@
 
 import httplib
 
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import base
 from neutron.plugins.vmware.api_client import eventlet_client
@@ -86,7 +87,7 @@ class NsxApiClient(eventlet_client.EventletApiClient):
             retries=self._retries, redirects=self._redirects)
         g.start()
         response = g.join()
-        LOG.debug(_('Request returns "%s"'), response)
+        LOG.debug('Request returns "%s"', response)
 
         # response is a modified HTTPResponse object or None.
         # response.read() will not work on response as the underlying library
@@ -99,7 +100,7 @@ class NsxApiClient(eventlet_client.EventletApiClient):
 
         if response is None:
             # Timeout.
-            LOG.error(_('Request timed out: %(method)s to %(url)s'),
+            LOG.error(_LE('Request timed out: %(method)s to %(url)s'),
                       {'method': method, 'url': url})
             raise exception.RequestTimeout()
 
@@ -110,15 +111,15 @@ class NsxApiClient(eventlet_client.EventletApiClient):
         # Fail-fast: Check for exception conditions and raise the
         # appropriate exceptions for known error codes.
         if status in exception.ERROR_MAPPINGS:
-            LOG.error(_("Received error code: %s"), status)
-            LOG.error(_("Server Error Message: %s"), response.body)
+            LOG.error(_LE("Received error code: %s"), status)
+            LOG.error(_LE("Server Error Message: %s"), response.body)
             exception.ERROR_MAPPINGS[status](response)
 
         # Continue processing for non-error condition.
         if (status != httplib.OK and status != httplib.CREATED
                 and status != httplib.NO_CONTENT):
-            LOG.error(_("%(method)s to %(url)s, unexpected response code: "
-                        "%(status)d (content = '%(body)s')"),
+            LOG.error(_LE("%(method)s to %(url)s, unexpected response code: "
+                          "%(status)d (content = '%(body)s')"),
                       {'method': method, 'url': url,
                        'status': response.status, 'body': response.body})
             return None
@@ -134,6 +135,6 @@ class NsxApiClient(eventlet_client.EventletApiClient):
             # one of the server that responds.
             self.request('GET', '/ws.v1/control-cluster/node')
             if not self._version:
-                LOG.error(_('Unable to determine NSX version. '
-                          'Plugin might not work as expected.'))
+                LOG.error(_LE('Unable to determine NSX version. '
+                              'Plugin might not work as expected.'))
         return self._version

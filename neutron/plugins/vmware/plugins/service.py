@@ -29,6 +29,7 @@ from neutron.extensions import firewall as fw_ext
 from neutron.extensions import l3
 from neutron.extensions import routedserviceinsertion as rsi
 from neutron.extensions import vpnaas as vpn_ext
+from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.vmware.api_client import exception as api_exc
@@ -538,7 +539,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             try:
                 self.vcns_driver.delete_lswitch(lswitch_id)
             except exceptions.ResourceNotFound:
-                LOG.warning(_("Did not found lswitch %s in NSX"), lswitch_id)
+                LOG.warning(_LW("Did not found lswitch %s in NSX"), lswitch_id)
 
             # delete edge
             jobdata = {
@@ -884,15 +885,14 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         except exceptions.VcnsApiException as e:
             self._firewall_set_status(
                 context, fw['id'], service_constants.ERROR)
-            msg = (_("Failed to create firewall on vShield Edge "
-                     "bound on router %s") % router_id)
-            LOG.exception(msg)
+            LOG.exception(_LE("Failed to create firewall on vShield Edge "
+                              "bound on router %s"), router_id)
             raise e
 
         except exceptions.VcnsBadRequest as e:
             self._firewall_set_status(
                 context, fw['id'], service_constants.ERROR)
-            LOG.exception(_("Bad Firewall request Input"))
+            LOG.exception(_LE("Bad Firewall request Input"))
             raise e
 
     def _vcns_delete_firewall(self, context, router_id=None, **kwargs):
@@ -1113,8 +1113,8 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 context, loadbalancer_db.Vip, resource_id=vip_id)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to find the edge with "
-                                "vip_id: %s"), vip_id)
+                LOG.exception(_LE("Failed to find the edge with "
+                                  "vip_id: %s"), vip_id)
         return self._get_edge_id_by_vcns_edge_binding(
             context, service_router_binding.router_id)
 
@@ -1184,8 +1184,8 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                     context, edge_id, hm)
             except Exception:
                 with excutils.save_and_reraise_exception():
-                    LOG.exception(_("Failed to create healthmonitor "
-                                    "associated with pool id: %s!") % pool_id)
+                    LOG.exception(_LE("Failed to create healthmonitor "
+                                      "associated with pool id: %s!"), pool_id)
                     for monitor_ide in pool.get('health_monitors'):
                         if monitor_ide == monitor_id:
                             break
@@ -1201,7 +1201,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self.vcns_driver.create_pool(context, edge_id, pool, members)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to create pool on vshield edge"))
+                LOG.exception(_LE("Failed to create pool on vshield edge"))
                 self.vcns_driver.delete_pool(
                     context, pool_id, edge_id)
                 for monitor_id in pool.get('health_monitors'):
@@ -1261,7 +1261,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self.vcns_driver.create_vip(context, edge_id, v)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to create vip!"))
+                LOG.exception(_LE("Failed to create vip!"))
                 self._delete_resource_router_id_binding(
                     context, v['id'], loadbalancer_db.Vip)
                 super(NsxAdvancedPlugin, self).delete_vip(context, v['id'])
@@ -1301,7 +1301,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self.vcns_driver.update_vip(context, v, session_persistence_update)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to update vip with id: %s!"), id)
+                LOG.exception(_LE("Failed to update vip with id: %s!"), id)
                 self._resource_set_status(context, loadbalancer_db.Vip,
                                           id, service_constants.ERROR, v)
 
@@ -1318,7 +1318,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self.vcns_driver.delete_vip(context, id)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to delete vip with id: %s!"), id)
+                LOG.exception(_LE("Failed to delete vip with id: %s!"), id)
                 self._resource_set_status(context, loadbalancer_db.Vip,
                                           id, service_constants.ERROR)
         edge_id = self._get_edge_id_by_vip_id(context, id)
@@ -1374,7 +1374,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._vcns_update_pool(context, p)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to update pool with id: %s!"), id)
+                LOG.exception(_LE("Failed to update pool with id: %s!"), id)
                 self._resource_set_status(context, loadbalancer_db.Pool,
                                           p['id'], service_constants.ERROR, p)
         self._resource_set_status(context, loadbalancer_db.Pool,
@@ -1396,7 +1396,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._vcns_update_pool(context, pool)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to update pool with the member"))
+                LOG.exception(_LE("Failed to update pool with the member"))
                 super(NsxAdvancedPlugin, self).delete_member(context, m['id'])
 
         self._resource_set_status(context, loadbalancer_db.Pool,
@@ -1422,8 +1422,8 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                     self._vcns_update_pool(context, old_pool)
                 except Exception:
                     with excutils.save_and_reraise_exception():
-                        LOG.exception(_("Failed to update old pool "
-                                        "with the member"))
+                        LOG.exception(_LE("Failed to update old pool "
+                                          "with the member"))
                         super(NsxAdvancedPlugin, self).delete_member(
                             context, m['id'])
                 self._resource_set_status(
@@ -1443,7 +1443,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._vcns_update_pool(context, pool)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to update pool with the member"))
+                LOG.exception(_LE("Failed to update pool with the member"))
                 super(NsxAdvancedPlugin, self).delete_member(
                     context, m['id'])
 
@@ -1466,7 +1466,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._vcns_update_pool(context, pool)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to update pool with the member"))
+                LOG.exception(_LE("Failed to update pool with the member"))
         self._resource_set_status(context, loadbalancer_db.Pool,
                                   pool_id, service_constants.ACTIVE)
 
@@ -1486,8 +1486,8 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                         context, edge_id, old_hm, hm)
                 except Exception:
                     with excutils.save_and_reraise_exception():
-                        LOG.exception(_("Failed to update monitor "
-                                        "with id: %s!"), id)
+                        LOG.exception(_LE("Failed to update monitor "
+                                          "with id: %s!"), id)
         return hm
 
     def create_pool_health_monitor(self, context,
@@ -1525,7 +1525,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._vcns_update_pool(context, pool)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to associate monitor with pool!"))
+                LOG.exception(_LE("Failed to associate monitor with pool!"))
                 self._resource_set_status(
                     context, loadbalancer_db.Pool,
                     pool_id, service_constants.ERROR)
@@ -1556,7 +1556,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             except Exception:
                 with excutils.save_and_reraise_exception():
                     LOG.exception(
-                        _("Failed to update pool with pool_monitor!"))
+                        _LE("Failed to update pool with pool_monitor!"))
                     self._resource_set_status(
                         context, loadbalancer_db.Pool,
                         pool_id, service_constants.ERROR)
@@ -1598,14 +1598,14 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 edge_id, sites, enabled=vpn_service.admin_state_up)
         except exceptions.VcnsBadRequest:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Bad or unsupported Input request!"))
+                LOG.exception(_LE("Bad or unsupported Input request!"))
         except exceptions.VcnsApiException:
             with excutils.save_and_reraise_exception():
-                msg = (_("Failed to update ipsec VPN configuration "
-                         "with vpnservice: %(vpnservice_id)s on vShield Edge: "
-                         "%(edge_id)s") % {'vpnservice_id': vpnservice_id,
-                                           'edge_id': edge_id})
-                LOG.exception(msg)
+                LOG.exception(_LE("Failed to update ipsec VPN configuration "
+                                  "with vpnservice: %(vpnservice_id)s on "
+                                  "vShield Edge: %(edge_id)s"),
+                              {'vpnservice_id': vpnservice_id,
+                               'edge_id': edge_id})
 
     def create_vpnservice(self, context, vpnservice):
         LOG.debug("create_vpnservice() called")
@@ -1753,7 +1753,7 @@ class VcnsCallbacks(object):
                 context, neutron_router_id)
         except l3.RouterNotFound:
             # Router might have been deleted before deploy finished
-            LOG.exception(_("Router %s not found"), lrouter['uuid'])
+            LOG.exception(_LE("Router %s not found"), lrouter['uuid'])
 
         if task.status == tasks_const.TaskStatus.COMPLETED:
             LOG.debug("Successfully deployed %(edge_id)s for "

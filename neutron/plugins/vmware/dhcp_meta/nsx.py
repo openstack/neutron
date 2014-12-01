@@ -24,6 +24,7 @@ from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.extensions import external_net
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.common import exceptions as p_exc
 from neutron.plugins.vmware.dhcp_meta import constants as d_const
@@ -133,12 +134,11 @@ class DhcpAgentNotifyAPI(object):
                 # down below as well as handle_port_metadata_access
                 self.plugin.create_port(context, {'port': dhcp_port})
             except p_exc.PortConfigurationError as e:
-                err_msg = (_("Error while creating subnet %(cidr)s for "
-                             "network %(network)s. Please, contact "
-                             "administrator") %
-                           {"cidr": subnet["cidr"],
-                            "network": network_id})
-                LOG.error(err_msg)
+                LOG.error(_LE("Error while creating subnet %(cidr)s for "
+                              "network %(network)s. Please, contact "
+                              "administrator"),
+                          {"cidr": subnet["cidr"],
+                           "network": network_id})
                 db_base_plugin_v2.NeutronDbPluginV2.delete_port(
                     self.plugin, context, e.port_id)
                 if clean_on_err:
@@ -203,12 +203,13 @@ def check_services_requirements(cluster):
 
 
 def handle_network_dhcp_access(plugin, context, network, action):
-    LOG.info(_("Performing DHCP %(action)s for resource: %(resource)s")
-             % {"action": action, "resource": network})
+    LOG.info(_LI("Performing DHCP %(action)s for resource: %(resource)s"),
+             {"action": action, "resource": network})
     if action == 'create_network':
         network_id = network['id']
         if network.get(external_net.EXTERNAL):
-            LOG.info(_("Network %s is external: no LSN to create"), network_id)
+            LOG.info(_LI("Network %s is external: no LSN to create"),
+                     network_id)
             return
         plugin.lsn_manager.lsn_create(context, network_id)
     elif action == 'delete_network':
@@ -216,13 +217,13 @@ def handle_network_dhcp_access(plugin, context, network, action):
         # is just the network id
         network_id = network
         plugin.lsn_manager.lsn_delete_by_network(context, network_id)
-    LOG.info(_("Logical Services Node for network "
-               "%s configured successfully"), network_id)
+    LOG.info(_LI("Logical Services Node for network "
+                 "%s configured successfully"), network_id)
 
 
 def handle_port_dhcp_access(plugin, context, port, action):
-    LOG.info(_("Performing DHCP %(action)s for resource: %(resource)s")
-             % {"action": action, "resource": port})
+    LOG.info(_LI("Performing DHCP %(action)s for resource: %(resource)s"),
+             {"action": action, "resource": port})
     if port["device_owner"] == const.DEVICE_OWNER_DHCP:
         network_id = port["network_id"]
         if action == "create_port":
@@ -238,9 +239,8 @@ def handle_port_dhcp_access(plugin, context, port, action):
                 plugin.lsn_manager.lsn_port_dhcp_setup(
                     context, network_id, port['id'], subnet_data, subnet)
             except p_exc.PortConfigurationError:
-                err_msg = (_("Error while configuring DHCP for "
-                             "port %s"), port['id'])
-                LOG.error(err_msg)
+                LOG.error(_LE("Error while configuring DHCP for "
+                              "port %s"), port['id'])
                 raise n_exc.NeutronException()
         elif action == "delete_port":
             plugin.lsn_manager.lsn_port_dispose(context, network_id,
@@ -250,8 +250,8 @@ def handle_port_dhcp_access(plugin, context, port, action):
             # do something only if there are IP's and dhcp is enabled
             subnet_id = port["fixed_ips"][0]['subnet_id']
             if not plugin.get_subnet(context, subnet_id)['enable_dhcp']:
-                LOG.info(_("DHCP is disabled for subnet %s: nothing "
-                           "to do"), subnet_id)
+                LOG.info(_LI("DHCP is disabled for subnet %s: nothing "
+                             "to do"), subnet_id)
                 return
             host_data = {
                 "mac_address": port["mac_address"],
@@ -269,7 +269,7 @@ def handle_port_dhcp_access(plugin, context, port, action):
                     if action == 'create_port':
                         db_base_plugin_v2.NeutronDbPluginV2.delete_port(
                             plugin, context, port['id'])
-    LOG.info(_("DHCP for port %s configured successfully"), port['id'])
+    LOG.info(_LI("DHCP for port %s configured successfully"), port['id'])
 
 
 def handle_port_metadata_access(plugin, context, port, is_delete=False):
@@ -277,7 +277,8 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
         network_id = port["network_id"]
         network = plugin.get_network(context, network_id)
         if network[external_net.EXTERNAL]:
-            LOG.info(_("Network %s is external: nothing to do"), network_id)
+            LOG.info(_LI("Network %s is external: nothing to do"),
+                     network_id)
             return
         subnet_id = port["fixed_ips"][0]['subnet_id']
         host_data = {
@@ -285,7 +286,7 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
             "tenant_id": port["tenant_id"],
             "ip_address": port["fixed_ips"][0]['ip_address']
         }
-        LOG.info(_("Configuring metadata entry for port %s"), port)
+        LOG.info(_LI("Configuring metadata entry for port %s"), port)
         if not is_delete:
             handler = plugin.lsn_manager.lsn_port_meta_host_add
         else:
@@ -297,12 +298,13 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
                 if not is_delete:
                     db_base_plugin_v2.NeutronDbPluginV2.delete_port(
                         plugin, context, port['id'])
-        LOG.info(_("Metadata for port %s configured successfully"), port['id'])
+        LOG.info(_LI("Metadata for port %s configured successfully"),
+                 port['id'])
 
 
 def handle_router_metadata_access(plugin, context, router_id, interface=None):
-    LOG.info(_("Handle metadata access via router: %(r)s and "
-               "interface %(i)s") % {'r': router_id, 'i': interface})
+    LOG.info(_LI("Handle metadata access via router: %(r)s and "
+                 "interface %(i)s"), {'r': router_id, 'i': interface})
     if interface:
         try:
             plugin.get_port(context, interface['port_id'])
@@ -318,4 +320,4 @@ def handle_router_metadata_access(plugin, context, router_id, interface=None):
                 if is_enabled:
                     l3_db.L3_NAT_db_mixin.remove_router_interface(
                         plugin, context, router_id, interface)
-    LOG.info(_("Metadata for router %s handled successfully"), router_id)
+    LOG.info(_LI("Metadata for router %s handled successfully"), router_id)

@@ -25,6 +25,7 @@ from oslo.utils import excutils
 import six
 import six.moves.urllib.parse as urlparse
 
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware import api_client
 
@@ -86,8 +87,8 @@ class ApiRequest(object):
             return error
 
         url = self._url
-        LOG.debug(_("[%(rid)d] Issuing - request url: %(conn)s "
-                    "body: %(body)s"),
+        LOG.debug("[%(rid)d] Issuing - request url: %(conn)s "
+                  "body: %(body)s",
                   {'rid': self._rid(), 'conn': self._request_str(conn, url),
                    'body': self._body})
         issued_time = time.time()
@@ -114,22 +115,22 @@ class ApiRequest(object):
                 gen = self._api_client.config_gen
                 if gen:
                     headers["X-Nvp-Wait-For-Config-Generation"] = gen
-                    LOG.debug(_("Setting X-Nvp-Wait-For-Config-Generation "
-                                "request header: '%s'"), gen)
+                    LOG.debug("Setting X-Nvp-Wait-For-Config-Generation "
+                              "request header: '%s'", gen)
                 try:
                     conn.request(self._method, url, self._body, headers)
                 except Exception as e:
                     with excutils.save_and_reraise_exception():
-                        LOG.warn(_("[%(rid)d] Exception issuing request: "
-                                   "%(e)s"),
+                        LOG.warn(_LW("[%(rid)d] Exception issuing request: "
+                                     "%(e)s"),
                                  {'rid': self._rid(), 'e': e})
 
                 response = conn.getresponse()
                 response.body = response.read()
                 response.headers = response.getheaders()
                 elapsed_time = time.time() - issued_time
-                LOG.debug(_("[%(rid)d] Completed request '%(conn)s': "
-                            "%(status)s (%(elapsed)s seconds)"),
+                LOG.debug("[%(rid)d] Completed request '%(conn)s': "
+                          "%(status)s (%(elapsed)s seconds)",
                           {'rid': self._rid(),
                            'conn': self._request_str(conn, url),
                            'status': response.status,
@@ -137,8 +138,8 @@ class ApiRequest(object):
 
                 new_gen = response.getheader('X-Nvp-Config-Generation', None)
                 if new_gen:
-                    LOG.debug(_("Reading X-Nvp-config-Generation response "
-                                "header: '%s'"), new_gen)
+                    LOG.debug("Reading X-Nvp-config-Generation response "
+                              "header: '%s'", new_gen)
                     if (self._api_client.config_gen is None or
                         self._api_client.config_gen < int(new_gen)):
                         self._api_client.config_gen = int(new_gen)
@@ -164,8 +165,8 @@ class ApiRequest(object):
                                            httplib.TEMPORARY_REDIRECT]:
                     break
                 elif redirects >= self._redirects:
-                    LOG.info(_("[%d] Maximum redirects exceeded, aborting "
-                               "request"), self._rid())
+                    LOG.info(_LI("[%d] Maximum redirects exceeded, aborting "
+                                 "request"), self._rid())
                     break
                 redirects += 1
 
@@ -174,7 +175,7 @@ class ApiRequest(object):
                 if url is None:
                     response.status = httplib.INTERNAL_SERVER_ERROR
                     break
-                LOG.info(_("[%(rid)d] Redirecting request to: %(conn)s"),
+                LOG.info(_LI("[%(rid)d] Redirecting request to: %(conn)s"),
                          {'rid': self._rid(),
                           'conn': self._request_str(conn, url)})
                 # yield here, just in case we are not out of the loop yet
@@ -187,8 +188,8 @@ class ApiRequest(object):
             # queue.
             if (response.status == httplib.INTERNAL_SERVER_ERROR and
                 response.status > httplib.NOT_IMPLEMENTED):
-                LOG.warn(_("[%(rid)d] Request '%(method)s %(url)s' "
-                           "received: %(status)s"),
+                LOG.warn(_LW("[%(rid)d] Request '%(method)s %(url)s' "
+                             "received: %(status)s"),
                          {'rid': self._rid(), 'method': self._method,
                           'url': self._url, 'status': response.status})
                 raise Exception(_('Server error return: %s'), response.status)
@@ -200,8 +201,8 @@ class ApiRequest(object):
                 msg = unicode(e)
             if response is None:
                 elapsed_time = time.time() - issued_time
-            LOG.warn(_("[%(rid)d] Failed request '%(conn)s': '%(msg)s' "
-                       "(%(elapsed)s seconds)"),
+            LOG.warn(_LW("[%(rid)d] Failed request '%(conn)s': '%(msg)s' "
+                         "(%(elapsed)s seconds)"),
                      {'rid': self._rid(), 'conn': self._request_str(conn, url),
                       'msg': msg, 'elapsed': elapsed_time})
             self._request_error = e
@@ -234,8 +235,8 @@ class ApiRequest(object):
                 url = value
                 break
         if not url:
-            LOG.warn(_("[%d] Received redirect status without location header"
-                       " field"), self._rid())
+            LOG.warn(_LW("[%d] Received redirect status without location "
+                         "header field"), self._rid())
             return (conn, None)
         # Accept location with the following format:
         # 1. /path, redirect to same node
@@ -251,12 +252,13 @@ class ApiRequest(object):
                     url = result.path
                 return (conn, url)      # case 1
             else:
-                LOG.warn(_("[%(rid)d] Received invalid redirect location: "
-                           "'%(url)s'"), {'rid': self._rid(), 'url': url})
+                LOG.warn(_LW("[%(rid)d] Received invalid redirect location: "
+                             "'%(url)s'"), {'rid': self._rid(), 'url': url})
                 return (conn, None)     # case 3
         elif result.scheme not in ["http", "https"] or not result.hostname:
-            LOG.warn(_("[%(rid)d] Received malformed redirect "
-                       "location: %(url)s"), {'rid': self._rid(), 'url': url})
+            LOG.warn(_LW("[%(rid)d] Received malformed redirect "
+                         "location: %(url)s"),
+                     {'rid': self._rid(), 'url': url})
             return (conn, None)         # case 3
         # case 2, redirect location includes a scheme
         # so setup a new connection and authenticate

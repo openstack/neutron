@@ -20,6 +20,7 @@ from eventlet import event
 from eventlet import greenthread
 
 from neutron.common import exceptions
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.vmware.vshield.tasks import constants
@@ -93,12 +94,11 @@ class Task():
             try:
                 func(self)
             except Exception:
-                msg = _("Task %(task)s encountered exception in %(func)s "
-                        "at state %(state)s") % {
-                            'task': str(self),
-                            'func': str(func),
-                            'state': state}
-                LOG.exception(msg)
+                LOG.exception(_LE("Task %(task)s encountered exception in "
+                                  "%(func)s at state %(state)s"),
+                              {'task': str(self),
+                               'func': str(func),
+                               'state': state})
 
         self._move_state(state)
 
@@ -179,16 +179,14 @@ class TaskManager():
 
     def _execute(self, task):
         """Execute task."""
-        msg = _("Start task %s") % str(task)
-        LOG.debug(msg)
+        LOG.debug("Start task %s", str(task))
         task._start()
         try:
             status = task._execute_callback(task)
         except Exception:
-            msg = _("Task %(task)s encountered exception in %(cb)s") % {
-                'task': str(task),
-                'cb': str(task._execute_callback)}
-            LOG.exception(msg)
+            LOG.exception(_LE("Task %(task)s encountered exception in %(cb)s"),
+                          {'task': str(task),
+                           'cb': str(task._execute_callback)})
             status = constants.TaskStatus.ERROR
 
         LOG.debug("Task %(task)s return %(status)s", {
@@ -205,10 +203,9 @@ class TaskManager():
         try:
             task._result_callback(task)
         except Exception:
-            msg = _("Task %(task)s encountered exception in %(cb)s") % {
-                'task': str(task),
-                'cb': str(task._result_callback)}
-            LOG.exception(msg)
+            LOG.exception(_LE("Task %(task)s encountered exception in %(cb)s"),
+                          {'task': str(task),
+                           'cb': str(task._result_callback)})
 
         LOG.debug("Task %(task)s return %(status)s",
                   {'task': str(task), 'status': task.status})
@@ -228,10 +225,10 @@ class TaskManager():
             try:
                 status = task._status_callback(task)
             except Exception:
-                msg = _("Task %(task)s encountered exception in %(cb)s") % {
-                    'task': str(task),
-                    'cb': str(task._status_callback)}
-                LOG.exception(msg)
+                LOG.exception(_LE("Task %(task)s encountered exception in "
+                                  "%(cb)s"),
+                              {'task': str(task),
+                               'cb': str(task._status_callback)})
                 status = constants.TaskStatus.ERROR
             task._update_status(status)
             if status != constants.TaskStatus.PENDING:
@@ -293,7 +290,7 @@ class TaskManager():
                 if self._stopped:
                     # Gracefully terminate this thread if the _stopped
                     # attribute was set to true
-                    LOG.info(_("Stopping TaskManager"))
+                    LOG.info(_LI("Stopping TaskManager"))
                     break
 
                 # get a task from queue, or timeout for periodic status check
@@ -318,8 +315,8 @@ class TaskManager():
                     else:
                         self._enqueue(task)
             except Exception:
-                LOG.exception(_("TaskManager terminating because "
-                                "of an exception"))
+                LOG.exception(_LE("TaskManager terminating because "
+                                  "of an exception"))
                 break
 
     def add(self, task):
@@ -340,7 +337,7 @@ class TaskManager():
         if self._monitor_busy:
             self._monitor.wait()
         self._abort()
-        LOG.info(_("TaskManager terminated"))
+        LOG.info(_LI("TaskManager terminated"))
 
     def has_pending_task(self):
         if self._tasks_queue or self._tasks or self._main_thread_exec_task:
@@ -372,7 +369,7 @@ class TaskManager():
             try:
                 self._check_pending_tasks()
             except Exception:
-                LOG.exception(_("Exception in _check_pending_tasks"))
+                LOG.exception(_LE("Exception in _check_pending_tasks"))
             self._monitor_busy = False
 
         if self._thread is not None:

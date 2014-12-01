@@ -281,7 +281,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             gw_db.devices.extend([NetworkGatewayDeviceReference(**device)
                                   for device in gw_data['devices']])
             context.session.add(gw_db)
-        LOG.debug(_("Created network gateway with id:%s"), gw_db['id'])
+        LOG.debug("Created network gateway with id:%s", gw_db['id'])
         return self._make_network_gateway_dict(gw_db)
 
     def update_network_gateway(self, context, id, network_gateway):
@@ -293,7 +293,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             # Ensure there is something to update before doing it
             if any([gw_db[k] != gw_data[k] for k in gw_data]):
                 gw_db.update(gw_data)
-        LOG.debug(_("Updated network gateway with id:%s"), id)
+        LOG.debug("Updated network gateway with id:%s", id)
         return self._make_network_gateway_dict(gw_db)
 
     def get_network_gateway(self, context, id, fields=None):
@@ -308,7 +308,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             if gw_db.default:
                 raise NetworkGatewayUnchangeable(gateway_id=id)
             context.session.delete(gw_db)
-        LOG.debug(_("Network gateway '%s' was destroyed."), id)
+        LOG.debug("Network gateway '%s' was destroyed.", id)
 
     def get_network_gateways(self, context, filters=None, fields=None,
                              sorts=None, limit=None, marker=None,
@@ -325,8 +325,8 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
     def connect_network(self, context, network_gateway_id,
                         network_mapping_info):
         network_id = self._validate_network_mapping_info(network_mapping_info)
-        LOG.debug(_("Connecting network '%(network_id)s' to gateway "
-                    "'%(network_gateway_id)s'"),
+        LOG.debug("Connecting network '%(network_id)s' to gateway "
+                  "'%(network_gateway_id)s'",
                   {'network_id': network_id,
                    'network_gateway_id': network_gateway_id})
         with context.session.begin(subtransactions=True):
@@ -374,8 +374,8 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 LOG.error(err_msg)
                 raise exceptions.InvalidInput(error_message=err_msg)
             port_id = port['id']
-            LOG.debug(_("Gateway port for '%(network_gateway_id)s' "
-                        "created on network '%(network_id)s':%(port_id)s"),
+            LOG.debug("Gateway port for '%(network_gateway_id)s' "
+                      "created on network '%(network_id)s':%(port_id)s",
                       {'network_gateway_id': network_gateway_id,
                        'network_id': network_id,
                        'port_id': port_id})
@@ -390,7 +390,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 self._delete_ip_allocation(context, network_id,
                                            fixed_ip['subnet_id'],
                                            fixed_ip['ip_address'])
-            LOG.debug(_("Ensured no Ip addresses are configured on port %s"),
+            LOG.debug("Ensured no Ip addresses are configured on port %s",
                       port_id)
             return {'connection_info':
                     {'network_gateway_id': network_gateway_id,
@@ -400,8 +400,8 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
     def disconnect_network(self, context, network_gateway_id,
                            network_mapping_info):
         network_id = self._validate_network_mapping_info(network_mapping_info)
-        LOG.debug(_("Disconnecting network '%(network_id)s' from gateway "
-                    "'%(network_gateway_id)s'"),
+        LOG.debug("Disconnecting network '%(network_id)s' from gateway "
+                  "'%(network_gateway_id)s'",
                   {'network_id': network_id,
                    'network_gateway_id': network_gateway_id})
         with context.session.begin(subtransactions=True):
@@ -494,7 +494,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 connector_ip=device_data['connector_ip'],
                 status=initial_status)
             context.session.add(device_db)
-        LOG.debug(_("Created network gateway device: %s"), device_db['id'])
+        LOG.debug("Created network gateway device: %s", device_db['id'])
         return self._make_gateway_device_dict(device_db)
 
     def update_gateway_device(self, context, gateway_device_id,
@@ -505,7 +505,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             # Ensure there is something to update before doing it
             if any([device_db[k] != device_data[k] for k in device_data]):
                 device_db.update(device_data)
-        LOG.debug(_("Updated network gateway device: %s"),
+        LOG.debug("Updated network gateway device: %s",
                   gateway_device_id)
         return self._make_gateway_device_dict(
             device_db, include_nsx_id=include_nsx_id)
@@ -518,4 +518,4 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 raise GatewayDeviceInUse(device_id=device_id)
             device_db = self._get_gateway_device(context, device_id)
             context.session.delete(device_db)
-        LOG.debug(_("Deleted network gateway device: %s."), device_id)
+        LOG.debug("Deleted network gateway device: %s.", device_id)

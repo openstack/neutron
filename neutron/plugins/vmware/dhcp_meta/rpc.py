@@ -25,6 +25,7 @@ from neutron.common import exceptions as ntn_exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.db import models_v2
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import config
@@ -64,8 +65,9 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
             # route. This is done via the enable_isolated_metadata
             # option if desired.
             if not subnet.get('gateway_ip'):
-                LOG.info(_('Subnet %s does not have a gateway, the metadata '
-                           'route will not be created'), subnet['id'])
+                LOG.info(_LI('Subnet %s does not have a gateway, the '
+                             'metadata route will not be created'),
+                         subnet['id'])
                 return
             metadata_routes = [r for r in subnet.routes
                                if r['destination'] == METADATA_DHCP_ROUTE]
@@ -88,11 +90,11 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
 
 def handle_router_metadata_access(plugin, context, router_id, interface=None):
     if cfg.CONF.NSX.metadata_mode != config.MetadataModes.DIRECT:
-        LOG.debug(_("Metadata access network is disabled"))
+        LOG.debug("Metadata access network is disabled")
         return
     if not cfg.CONF.allow_overlapping_ips:
-        LOG.warn(_("Overlapping IPs must be enabled in order to setup "
-                   "the metadata access network"))
+        LOG.warn(_LW("Overlapping IPs must be enabled in order to setup "
+                     "the metadata access network"))
         return
     ctx_elevated = context.elevated()
     device_filter = {'device_id': [router_id],
@@ -111,16 +113,16 @@ def handle_router_metadata_access(plugin, context, router_id, interface=None):
                 _destroy_metadata_access_network(
                     plugin, ctx_elevated, router_id, ports)
         else:
-            LOG.debug(_("No router interface found for router '%s'. "
-                        "No metadata access network should be "
-                        "created or destroyed"), router_id)
+            LOG.debug("No router interface found for router '%s'. "
+                      "No metadata access network should be "
+                      "created or destroyed", router_id)
     # TODO(salvatore-orlando): A better exception handling in the
     # NSX plugin would allow us to improve error handling here
     except (ntn_exc.NeutronException, nsx_exc.NsxPluginException,
             api_exc.NsxApiException):
         # Any exception here should be regarded as non-fatal
-        LOG.exception(_("An error occurred while operating on the "
-                        "metadata access network for router:'%s'"),
+        LOG.exception(_LE("An error occurred while operating on the "
+                          "metadata access network for router:'%s'"),
                       router_id)
 
 

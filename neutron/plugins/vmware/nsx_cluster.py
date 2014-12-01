@@ -15,6 +15,7 @@
 
 from oslo.config import cfg
 
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.common import exceptions
 
@@ -58,8 +59,8 @@ class NSXCluster(object):
             raise exceptions.InvalidClusterConfiguration(
                 invalid_attrs=self._required_attributes)
         if self._important_attributes:
-            LOG.info(_("The following cluster attributes were "
-                       "not specified: %s'"), self._important_attributes)
+            LOG.info(_LI("The following cluster attributes were "
+                         "not specified: %s'"), self._important_attributes)
         # The API client will be explicitly created by users of this class
         self.api_client = None
 
