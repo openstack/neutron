@@ -22,6 +22,7 @@ from oslo import messaging
 from oslo.utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
@@ -381,6 +382,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 column = getattr(agents_db.Agent, key, None)
                 if column:
                     query = query.filter(column.in_(value))
+
+            agent_modes = filters.get('agent_modes', [])
+            if agent_modes:
+                agent_mode_key = '\"agent_mode\": \"'
+                configuration_filter = (
+                    [agents_db.Agent.configurations.contains('%s%s\"' %
+                     (agent_mode_key, agent_mode))
+                     for agent_mode in agent_modes])
+                query = query.filter(or_(*configuration_filter))
 
         return [l3_agent
                 for l3_agent in query
