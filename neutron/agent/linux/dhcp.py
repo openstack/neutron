@@ -532,7 +532,7 @@ class Dnsmasq(DhcpLocalProcess):
             with open(filename) as f:
                 for l in f.readlines():
                     host = l.strip().split(',')
-                    leases.add((host[2], host[0]))
+                    leases.add((host[2].strip('[]'), host[0]))
         return leases
 
     def _release_unused_leases(self):
