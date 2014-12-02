@@ -28,7 +28,6 @@ import os.path
 import sys
 
 import fixtures
-import mock
 from oslo.config import cfg
 from oslo.messaging import conffixture as messaging_conffixture
 
@@ -108,11 +107,6 @@ class BaseTestCase(sub_base.SubBaseTestCase):
         self.useFixture(fixtures.MonkeyPatch(
             'neutron.common.rpc.Connection.consume_in_threads',
             fake_consume_in_threads))
-
-        # immediately return RPC calls
-        self.useFixture(fixtures.MonkeyPatch(
-            'neutron.common.rpc.RpcProxy._RpcProxy__call_rpc_method',
-            mock.MagicMock()))
 
         self.useFixture(fixtures.MonkeyPatch(
             'oslo.messaging.Notifier', fake_notifier.FakeNotifier))
