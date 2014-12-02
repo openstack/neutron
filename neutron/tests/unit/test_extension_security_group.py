@@ -319,6 +319,13 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.assertEqual(res['security_group']['description'],
                              data['security_group']['description'])
 
+    def test_check_default_security_group_description(self):
+        with self.network():
+            res = self.new_list_request('security-groups')
+            sg = self.deserialize(self.fmt, res.get_response(self.ext_api))
+            self.assertEqual('Default security group',
+                             sg['security_groups'][0]['description'])
+
     def test_default_security_group(self):
         with self.network():
             res = self.new_list_request('security-groups')

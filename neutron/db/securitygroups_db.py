@@ -507,9 +507,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         default_group = self.get_security_groups(context, filters,
                                                  default_sg=True)
         if not default_group:
-            security_group = {'security_group': {'name': 'default',
-                                                 'tenant_id': tenant_id,
-                                                 'description': 'default'}}
+            security_group = {
+                'security_group': {'name': 'default',
+                                   'tenant_id': tenant_id,
+                                   'description': _('Default security group')}
+            }
             ret = self.create_security_group(context, security_group, True)
             return ret['id']
         else:
