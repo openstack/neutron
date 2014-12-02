@@ -82,8 +82,8 @@ def get_provider_by_router(session, router_id):
 
 def add_router_provider_binding(session, provider, router_id):
     """Add a router provider association."""
-    LOG.debug(_("Add provider binding "
-                "(router=%(router_id)s, provider=%(provider)s)"),
+    LOG.debug("Add provider binding "
+              "(router=%(router_id)s, provider=%(provider)s)",
               {'router_id': router_id, 'provider': provider})
     binding = RouterProvider(provider=provider, router_id=router_id)
     session.add(binding)

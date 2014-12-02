@@ -25,6 +25,7 @@ from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.extensions import l3
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import constants as nconst
@@ -54,8 +55,8 @@ class RouterMixin(extraroute_db.ExtraRoute_db_mixin,
 
     def create_router(self, context, router):
         """Create a new router entry on DB, and create it on OFC."""
-        LOG.debug(_("RouterMixin.create_router() called, "
-                    "router=%s ."), router)
+        LOG.debug("RouterMixin.create_router() called, "
+                  "router=%s .", router)
         tenant_id = self._get_tenant_id_for_create(context, router['router'])
 
         provider = get_provider_with_default(
@@ -80,8 +81,8 @@ class RouterMixin(extraroute_db.ExtraRoute_db_mixin,
                                                        new_router['id'])
 
     def update_router(self, context, router_id, router):
-        LOG.debug(_("RouterMixin.update_router() called, "
-                    "id=%(id)s, router=%(router)s ."),
+        LOG.debug("RouterMixin.update_router() called, "
+                  "id=%(id)s, router=%(router)s .",
                   {'id': router_id, 'router': router})
 
         with context.session.begin(subtransactions=True):
@@ -98,7 +99,7 @@ class RouterMixin(extraroute_db.ExtraRoute_db_mixin,
         return new_rtr
 
     def delete_router(self, context, router_id):
-        LOG.debug(_("RouterMixin.delete_router() called, id=%s."), router_id)
+        LOG.debug("RouterMixin.delete_router() called, id=%s.", router_id)
 
         router = super(RouterMixin, self).get_router(context, router_id)
         tenant_id = router['tenant_id']
@@ -117,15 +118,15 @@ class RouterMixin(extraroute_db.ExtraRoute_db_mixin,
         self._cleanup_ofc_tenant(context, tenant_id)
 
     def add_router_interface(self, context, router_id, interface_info):
-        LOG.debug(_("RouterMixin.add_router_interface() called, "
-                    "id=%(id)s, interface=%(interface)s."),
+        LOG.debug("RouterMixin.add_router_interface() called, "
+                  "id=%(id)s, interface=%(interface)s.",
                   {'id': router_id, 'interface': interface_info})
         return super(RouterMixin, self).add_router_interface(
             context, router_id, interface_info)
 
     def remove_router_interface(self, context, router_id, interface_info):
-        LOG.debug(_("RouterMixin.remove_router_interface() called, "
-                    "id=%(id)s, interface=%(interface)s."),
+        LOG.debug("RouterMixin.remove_router_interface() called, "
+                  "id=%(id)s, interface=%(interface)s.",
                   {'id': router_id, 'interface': interface_info})
         return super(RouterMixin, self).remove_router_interface(
             context, router_id, interface_info)
@@ -308,7 +309,7 @@ def load_driver(plugin, ofc_manager):
     if (PROVIDER_OPENFLOW in ROUTER_DRIVER_MAP and
         not ofc_manager.driver.router_supported):
         LOG.warning(
-            _('OFC does not support router with provider=%(provider)s, '
+            _LW('OFC does not support router with provider=%(provider)s, '
               'so removed it from supported provider '
               '(new router driver map=%(driver_map)s)'),
             {'provider': PROVIDER_OPENFLOW,
@@ -316,7 +317,7 @@ def load_driver(plugin, ofc_manager):
         del ROUTER_DRIVER_MAP[PROVIDER_OPENFLOW]
 
     if config.PROVIDER.default_router_provider not in ROUTER_DRIVER_MAP:
-        LOG.error(_('default_router_provider %(default)s is supported! '
+        LOG.error(_LE('default_router_provider %(default)s is supported! '
                     'Please specify one of %(supported)s'),
                   {'default': config.PROVIDER.default_router_provider,
                    'supported': ROUTER_DRIVER_MAP.keys()})
@@ -330,11 +331,12 @@ def load_driver(plugin, ofc_manager):
         driver_klass = importutils.import_class(ROUTER_DRIVER_MAP[driver])
         ROUTER_DRIVERS[driver] = driver_klass(plugin, ofc_manager)
 
-    LOG.info(_('Enabled router drivers: %s'), ROUTER_DRIVERS.keys())
+    LOG.info(_LI('Enabled router drivers: %s'), ROUTER_DRIVERS.keys())
 
     if not ROUTER_DRIVERS:
-        LOG.error(_('No router provider is enabled. neutron-server terminated!'
-                    ' (supported=%(supported)s, configured=%(config)s)'),
+        LOG.error(_LE('No router provider is enabled. neutron-server '
+                      'terminated! (supported=%(supported)s, '
+                      'configured=%(config)s)'),
                   {'supported': ROUTER_DRIVER_MAP.keys(),
                    'config': config.PROVIDER.router_providers})
         raise SystemExit(1)
