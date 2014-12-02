@@ -37,9 +37,9 @@ from neutron.plugins.oneconvergence.lib import config
 LOG = logging.getLogger(__name__)
 
 
-class NVSDAgentRpcCallback(n_rpc.RpcCallback):
+class NVSDAgentRpcCallback(object):
 
-    RPC_API_VERSION = '1.0'
+    target = messaging.Target(version='1.0')
 
     def __init__(self, context, agent, sg_agent):
         super(NVSDAgentRpcCallback, self).__init__()
@@ -67,11 +67,9 @@ class SecurityGroupServerRpcApi(sg_rpc.SecurityGroupServerRpcApiMixin):
         self.client = n_rpc.get_client(target)
 
 
-class SecurityGroupAgentRpcCallback(
-    n_rpc.RpcCallback,
-    sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+class SecurityGroupAgentRpcCallback(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
-    RPC_API_VERSION = sg_rpc.SG_RPC_VERSION
+    target = messaging.Target(version=sg_rpc.SG_RPC_VERSION)
 
     def __init__(self, context, sg_agent):
         super(SecurityGroupAgentRpcCallback, self).__init__()
@@ -89,11 +87,11 @@ class SecurityGroupAgentRpc(sg_rpc.SecurityGroupAgentRpcMixin):
         self.init_firewall()
 
 
-class NVSDNeutronAgent(n_rpc.RpcCallback):
+class NVSDNeutronAgent(object):
     # history
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     def __init__(self, integ_br, root_helper, polling_interval):
         super(NVSDNeutronAgent, self).__init__()

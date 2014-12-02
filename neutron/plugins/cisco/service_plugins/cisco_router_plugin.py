@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo import messaging
+
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
@@ -25,10 +27,10 @@ from neutron.plugins.cisco.l3.rpc import devices_cfgagent_rpc_cb as devices_rpc
 from neutron.plugins.common import constants
 
 
-class CiscoRouterPluginRpcCallbacks(n_rpc.RpcCallback,
-                                    l3_router_rpc.L3RouterCfgRpcCallbackMixin,
+class CiscoRouterPluginRpcCallbacks(l3_router_rpc.L3RouterCfgRpcCallbackMixin,
                                     devices_rpc.DeviceCfgRpcCallbackMixin):
-    RPC_API_VERSION = '1.1'
+
+    target = messaging.Target(version='1.1')
 
     def __init__(self, l3plugin):
         super(CiscoRouterPluginRpcCallbacks, self).__init__()

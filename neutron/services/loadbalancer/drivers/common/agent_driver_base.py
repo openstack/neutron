@@ -49,14 +49,14 @@ class DriverNotSpecified(n_exc.NeutronException):
                 "in plugin driver.")
 
 
-class LoadBalancerCallbacks(n_rpc.RpcCallback):
+class LoadBalancerCallbacks(object):
 
-    RPC_API_VERSION = '2.0'
     # history
     #   1.0 Initial version
     #   2.0 Generic API for agent based drivers
     #       - get_logical_device() handling changed;
     #       - pool_deployed() and update_status() methods added;
+    target = messaging.Target(version='2.0')
 
     def __init__(self, plugin):
         super(LoadBalancerCallbacks, self).__init__()

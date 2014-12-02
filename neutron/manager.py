@@ -16,9 +16,9 @@
 import weakref
 
 from oslo.config import cfg
+from oslo import messaging
 from oslo.utils import importutils
 
-from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import periodic_task
@@ -30,10 +30,10 @@ from stevedore import driver
 LOG = logging.getLogger(__name__)
 
 
-class Manager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
+class Manager(periodic_task.PeriodicTasks):
 
     # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    target = messaging.Target(version='1.0')
 
     def __init__(self, host=None):
         if not host:

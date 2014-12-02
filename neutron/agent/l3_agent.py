@@ -441,7 +441,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
               - del_arp_entry
               Needed by the L3 service when dealing with DVR
     """
-    RPC_API_VERSION = '1.2'
+    target = messaging.Target(version='1.2')
 
     OPTS = [
         cfg.StrOpt('agent_mode', default='legacy',

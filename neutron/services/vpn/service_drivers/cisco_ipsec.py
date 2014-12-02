@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo import messaging
+
 from neutron.common import rpc as n_rpc
 from neutron.db.vpn import vpn_db
 from neutron.openstack.common import log as logging
@@ -33,14 +35,14 @@ MAX_CSR_MTU = 9192
 VRF_SUFFIX_LEN = 6
 
 
-class CiscoCsrIPsecVpnDriverCallBack(n_rpc.RpcCallback):
+class CiscoCsrIPsecVpnDriverCallBack(object):
 
     """Handler for agent to plugin RPC messaging."""
 
     # history
     #   1.0 Initial version
 
-    RPC_API_VERSION = BASE_IPSEC_VERSION
+    target = messaging.Target(version=BASE_IPSEC_VERSION)
 
     def __init__(self, driver):
         super(CiscoCsrIPsecVpnDriverCallBack, self).__init__()
@@ -77,12 +79,11 @@ class CiscoCsrIPsecVpnDriverCallBack(n_rpc.RpcCallback):
         plugin.update_status_by_agent(context, status)
 
 
-class CiscoCsrIPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
-                               n_rpc.RpcCallback):
+class CiscoCsrIPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi):
 
     """API and handler for Cisco IPSec plugin to agent RPC messaging."""
 
-    RPC_API_VERSION = BASE_IPSEC_VERSION
+    target = messaging.Target(version=BASE_IPSEC_VERSION)
 
     def __init__(self, topic, default_version, driver):
         super(CiscoCsrIPsecVpnAgentApi, self).__init__(
@@ -97,7 +98,7 @@ class CiscoCsrIPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
         """
         admin_context = context if context.is_admin else context.elevated()
         if not version:
-            version = self.RPC_API_VERSION
+            version = self.target.version
         host = self.driver.l3_plugin.get_host_for_router(admin_context,
                                                          router_id)
         LOG.debug('Notify agent at %(topic)s.%(host)s the message '

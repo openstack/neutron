@@ -94,7 +94,7 @@ class CiscoCfgAgent(manager.Manager):
     The main entry points in this class are the `process_services()` and
     `_backlog_task()` .
     """
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     OPTS = [
         cfg.IntOpt('rpc_loop_interval', default=10,

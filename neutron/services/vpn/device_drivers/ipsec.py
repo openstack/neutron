@@ -480,12 +480,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
 
     # history
     #   1.0 Initial version
-
-    RPC_API_VERSION = '1.0'
-
-    # TODO(ihrachys): we can't use RpcCallback here due to inheritance
-    # issues
-    target = messaging.Target(version=RPC_API_VERSION)
+    target = messaging.Target(version='1.0')
 
     def __init__(self, agent, host):
         self.agent = agent

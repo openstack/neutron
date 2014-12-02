@@ -12,10 +12,11 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.common import constants as q_const
-from neutron.common import rpc as n_rpc
 from neutron.db import api as db_api
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -24,11 +25,11 @@ from neutron.plugins.mlnx.db import mlnx_db_v2 as db
 LOG = logging.getLogger(__name__)
 
 
-class MlnxRpcCallbacks(n_rpc.RpcCallback):
+class MlnxRpcCallbacks(object):
     # History
     #  1.1 Support Security Group RPC
     #  1.2 Support get_devices_details_list
-    RPC_API_VERSION = '1.2'
+    target = messaging.Target(version='1.2')
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""

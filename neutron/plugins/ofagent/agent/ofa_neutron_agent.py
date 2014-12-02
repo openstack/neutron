@@ -24,6 +24,7 @@ import time
 
 import netaddr
 from oslo.config import cfg
+from oslo import messaging
 from ryu.app.ofctl import api as ryu_api
 from ryu.base import app_manager
 from ryu.controller import handler
@@ -38,7 +39,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as n_const
 from neutron.common import log
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -175,8 +175,7 @@ class OFANeutronAgentRyuApp(app_manager.RyuApp):
         self.arplib.del_arp_table_entry(network, ip)
 
 
-class OFANeutronAgent(n_rpc.RpcCallback,
-                      sg_rpc.SecurityGroupAgentRpcCallbackMixin,
+class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                       l2population_rpc.L2populationRpcCallBackTunnelMixin):
     """A agent for OpenFlow Agent ML2 mechanism driver.
 
@@ -191,7 +190,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
     # history
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     def __init__(self, ryuapp, integ_br, local_ip,
                  bridge_mappings, interface_mappings, root_helper,

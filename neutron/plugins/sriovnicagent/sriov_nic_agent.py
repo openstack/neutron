@@ -22,12 +22,12 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from oslo import messaging
 
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as q_constants
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
@@ -42,13 +42,12 @@ from neutron.plugins.sriovnicagent import eswitch_manager as esm
 LOG = logging.getLogger(__name__)
 
 
-class SriovNicSwitchRpcCallbacks(n_rpc.RpcCallback,
-                                 sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
     # history
     #   1.1 Support Security Group RPC
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     def __init__(self, context, agent):
         super(SriovNicSwitchRpcCallbacks, self).__init__()

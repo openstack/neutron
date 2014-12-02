@@ -12,6 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo import messaging
+
 from neutron.common import constants as consts
 from neutron.common import utils
 from neutron.i18n import _LE
@@ -24,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 class MeteringRpcCallbacks(object):
 
-    RPC_API_VERSION = '1.0'
+    target = messaging.Target(version='1.0')
 
     def __init__(self, meter_plugin):
         self.meter_plugin = meter_plugin

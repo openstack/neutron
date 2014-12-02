@@ -688,9 +688,9 @@ class NECPluginV2AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
         cctxt.cast(context, 'port_update', port=port)
 
 
-class NECPluginV2RPCCallbacks(n_rpc.RpcCallback):
+class NECPluginV2RPCCallbacks(object):
 
-    RPC_API_VERSION = '1.0'
+    target = messaging.Target(version='1.0')
 
     def __init__(self, plugin):
         super(NECPluginV2RPCCallbacks, self).__init__()
