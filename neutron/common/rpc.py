@@ -134,20 +134,6 @@ class RequestContextSerializer(om_serializer.Serializer):
                                load_admin_roles=False, **rpc_ctxt_dict)
 
 
-class RpcCallback(object):
-    '''
-    This class is created to facilitate migration from oslo-incubator
-    RPC layer implementation to oslo.messaging and is intended to set
-    callback version using oslo.messaging API once the migration is
-    applied.
-    '''
-    RPC_API_VERSION = '1.0'
-
-    def __init__(self):
-        super(RpcCallback, self).__init__()
-        self.target = messaging.Target(version=self.RPC_API_VERSION)
-
-
 class Service(service.Service):
     """Service object for binaries running on hosts.
 
