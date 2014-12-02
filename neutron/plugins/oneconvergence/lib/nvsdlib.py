@@ -106,7 +106,7 @@ class NVSDApi(object):
 
         nvsd_net = response.json()
 
-        LOG.debug(_("Network %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Network %(id)s created under tenant %(tenant_id)s",
                   {'id': nvsd_net['id'], 'tenant_id': tenant_id})
 
         return nvsd_net
@@ -123,7 +123,7 @@ class NVSDApi(object):
                           resource='network', tenant_id=tenant_id,
                           resource_id=network_id)
 
-        LOG.debug(_("Network %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Network %(id)s updated under tenant %(tenant_id)s",
                   {'id': network_id, 'tenant_id': tenant_id})
 
     def delete_network(self, network, subnets=[]):
@@ -144,7 +144,7 @@ class NVSDApi(object):
         self.send_request("DELETE", path, resource='network',
                           tenant_id=tenant_id, resource_id=network_id)
 
-        LOG.debug(_("Network %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Network %(id)s deleted under tenant %(tenant_id)s",
                   {'id': network_id, 'tenant_id': tenant_id})
 
     def create_subnet(self, subnet):
@@ -157,7 +157,7 @@ class NVSDApi(object):
         self.send_request("POST", uri, body=jsonutils.dumps(subnet),
                           resource='subnet', tenant_id=tenant_id)
 
-        LOG.debug(_("Subnet %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Subnet %(id)s created under tenant %(tenant_id)s",
                   {'id': subnet['id'], 'tenant_id': tenant_id})
 
     def delete_subnet(self, subnet):
@@ -171,7 +171,7 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='subnet',
                           tenant_id=tenant_id, resource_id=subnet_id)
 
-        LOG.debug(_("Subnet %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Subnet %(id)s deleted under tenant %(tenant_id)s",
                   {'id': subnet_id, 'tenant_id': tenant_id})
 
     def update_subnet(self, subnet, subnet_update):
@@ -187,7 +187,7 @@ class NVSDApi(object):
                           resource='subnet', tenant_id=tenant_id,
                           resource_id=subnet_id)
 
-        LOG.debug(_("Subnet %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Subnet %(id)s updated under tenant %(tenant_id)s",
                   {'id': subnet_id, 'tenant_id': tenant_id})
 
     def create_port(self, tenant_id, port):
@@ -219,7 +219,7 @@ class NVSDApi(object):
         self.send_request("POST", path, body=jsonutils.dumps(lport),
                           resource='port', tenant_id=tenant_id)
 
-        LOG.debug(_("Port %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Port %(id)s created under tenant %(tenant_id)s",
                   {'id': port['id'], 'tenant_id': tenant_id})
 
     def update_port(self, tenant_id, port, port_update):
@@ -243,7 +243,7 @@ class NVSDApi(object):
                           resource='port', tenant_id=tenant_id,
                           resource_id=port_id)
 
-        LOG.debug(_("Port %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Port %(id)s updated under tenant %(tenant_id)s",
                   {'id': port_id, 'tenant_id': tenant_id})
 
     def delete_port(self, port_id, port):
@@ -256,7 +256,7 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='port', tenant_id=tenant_id,
                           resource_id=port_id)
 
-        LOG.debug(_("Port %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Port %(id)s deleted under tenant %(tenant_id)s",
                   {'id': port_id, 'tenant_id': tenant_id})
 
     def _get_ports(self, tenant_id, network_id):
@@ -278,7 +278,7 @@ class NVSDApi(object):
                           resource='floating_ip',
                           tenant_id=tenant_id)
 
-        LOG.debug(_("Flatingip %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Flatingip %(id)s created under tenant %(tenant_id)s",
                   {'id': floating_ip['id'], 'tenant_id': tenant_id})
 
     def update_floatingip(self, floating_ip, floating_ip_update):
@@ -296,7 +296,7 @@ class NVSDApi(object):
                           tenant_id=tenant_id,
                           resource_id=floating_ip_id)
 
-        LOG.debug(_("Flatingip %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Flatingip %(id)s updated under tenant %(tenant_id)s",
                   {'id': floating_ip_id, 'tenant_id': tenant_id})
 
     def delete_floatingip(self, floating_ip):
@@ -310,7 +310,7 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='floating_ip',
                           tenant_id=tenant_id, resource_id=floating_ip_id)
 
-        LOG.debug(_("Flatingip %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Flatingip %(id)s deleted under tenant %(tenant_id)s",
                   {'id': floating_ip_id, 'tenant_id': tenant_id})
 
     def create_router(self, router):
@@ -323,7 +323,7 @@ class NVSDApi(object):
                           resource='router',
                           tenant_id=tenant_id)
 
-        LOG.debug(_("Router %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Router %(id)s created under tenant %(tenant_id)s",
                   {'id': router['id'], 'tenant_id': tenant_id})
 
     def update_router(self, router):
@@ -339,7 +339,7 @@ class NVSDApi(object):
                           resource='router', tenant_id=tenant_id,
                           resource_id=router_id)
 
-        LOG.debug(_("Router %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Router %(id)s updated under tenant %(tenant_id)s",
                   {'id': router_id, 'tenant_id': tenant_id})
 
     def delete_router(self, tenant_id, router_id):
@@ -349,5 +349,5 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='router',
                           tenant_id=tenant_id, resource_id=router_id)
 
-        LOG.debug(_("Router %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Router %(id)s deleted under tenant %(tenant_id)s",
                   {'id': router_id, 'tenant_id': tenant_id})

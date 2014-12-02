@@ -22,6 +22,7 @@ from oslo.serialization import jsonutils
 import requests
 from six.moves.urllib import parse
 
+from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log as logging
 import neutron.plugins.oneconvergence.lib.exception as exception
 
@@ -85,20 +86,20 @@ class NVSDController(object):
                                            headers=headers, data=data)
                 break
             except Exception as e:
-                LOG.error(_("Login Failed: %s"), e)
-                LOG.error(_("Unable to establish connection"
-                            " with Controller %s"), self.api_url)
-                LOG.error(_("Retrying after 1 second..."))
+                LOG.error(_LE("Login Failed: %s"), e)
+                LOG.error(_LE("Unable to establish connection"
+                              " with Controller %s"), self.api_url)
+                LOG.error(_LE("Retrying after 1 second..."))
                 time.sleep(1)
 
         if response.status_code == requests.codes.ok:
-            LOG.debug(_("Login Successful %(uri)s "
-                        "%(status)s"), {'uri': self.api_url,
-                                        'status': response.status_code})
+            LOG.debug("Login Successful %(uri)s "
+                      "%(status)s", {'uri': self.api_url,
+                                     'status': response.status_code})
             self.auth_token = jsonutils.loads(response.content)["session_uuid"]
-            LOG.debug(_("AuthToken = %s"), self.auth_token)
+            LOG.debug("AuthToken = %s", self.auth_token)
         else:
-            LOG.error(_("login failed"))
+            LOG.error(_LE("login failed"))
 
         return
 
@@ -106,7 +107,7 @@ class NVSDController(object):
         """Issue a request to NVSD controller."""
 
         if self.auth_token is None:
-            LOG.warning(_("No Token, Re-login"))
+            LOG.warning(_LW("No Token, Re-login"))
             self.login()
 
         headers = {"Content-Type": content_type}
@@ -122,20 +123,20 @@ class NVSDController(object):
             response = self.do_request(method, url=url,
                                        headers=headers, data=body)
 
-            LOG.debug(_("request: %(method)s %(uri)s successful"),
+            LOG.debug("request: %(method)s %(uri)s successful",
                       {'method': method, 'uri': self.api_url + uri})
             request_ok = True
         except httplib.IncompleteRead as e:
             response = e.partial
             request_ok = True
         except Exception as e:
-            LOG.error(_("request: Request failed from "
+            LOG.error(_LE("request: Request failed from "
                         "Controller side :%s"), e)
 
         if response is None:
             # Timeout.
-            LOG.error(_("Response is Null, Request timed out: %(method)s to "
-                        "%(uri)s"), {'method': method, 'uri': uri})
+            LOG.error(_LE("Response is Null, Request timed out: %(method)s to "
+                          "%(uri)s"), {'method': method, 'uri': uri})
             self.auth_token = None
             raise exception.RequestTimeout()
 
@@ -146,25 +147,26 @@ class NVSDController(object):
             raise exception.UnAuthorizedException()
 
         if status in self.error_codes:
-            LOG.error(_("Request %(method)s %(uri)s body = %(body)s failed "
-                        "with status %(status)s"), {'method': method,
-                                                    'uri': uri, 'body': body,
-                                                    'status': status})
-            LOG.error(_("%s"), response.reason)
+            LOG.error(_LE("Request %(method)s %(uri)s body = %(body)s failed "
+                          "with status %(status)s. Reason: %(reason)s)"),
+                      {'method': method,
+                       'uri': uri, 'body': body,
+                       'status': status,
+                       'reason': response.reason})
             raise self.error_codes[status]()
         elif status not in (requests.codes.ok, requests.codes.created,
                             requests.codes.no_content):
-            LOG.error(_("%(method)s to %(url)s, unexpected response code: "
-                        "%(status)d"), {'method': method, 'url': url,
-                                        'status': status})
+            LOG.error(_LE("%(method)s to %(url)s, unexpected response code: "
+                          "%(status)d"), {'method': method, 'url': url,
+                                          'status': status})
             return
 
         if not request_ok:
-            LOG.error(_("Request failed from Controller side with "
+            LOG.error(_LE("Request failed from Controller side with "
                         "Status=%s"), status)
             raise exception.ServerException()
         else:
-            LOG.debug(_("Success: %(method)s %(url)s status=%(status)s"),
+            LOG.debug("Success: %(method)s %(url)s status=%(status)s",
                       {'method': method, 'url': self.api_url + uri,
                        'status': status})
         response.body = response.content
