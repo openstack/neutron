@@ -98,11 +98,9 @@ class DVRAgentRpcApiMixin(object):
         """Notify dvr mac address updates."""
         if not dvr_macs:
             return
-        self.fanout_cast(context,
-                         self.make_msg('dvr_mac_address_update',
-                                       dvr_macs=dvr_macs),
-                         version=self.DVR_RPC_VERSION,
-                         topic=self._get_dvr_update_topic())
+        cctxt = self.client.prepare(topic=self._get_dvr_update_topic(),
+                                    version=self.DVR_RPC_VERSION, fanout=True)
+        cctxt.cast(context, 'dvr_mac_address_update', dvr_macs=dvr_macs)
 
 
 class DVRAgentRpcCallbackMixin(object):
