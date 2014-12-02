@@ -788,7 +788,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc)
+                self.sg_plugin_rpc, defer_refresh_firewall=True)
         self.setup_rpc(self.interface_mappings.values())
         self.daemon_loop()
 
@@ -859,11 +859,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         resync_a = False
         resync_b = False
 
-        self.sg_agent.prepare_devices_filter(device_info.get('added'))
-
-        if device_info.get('updated'):
-            self.sg_agent.refresh_firewall()
-
+        self.sg_agent.setup_port_filters(device_info.get('added'),
+                                         device_info.get('updated'))
         # Updated devices are processed the same as new ones, as their
         # admin_state_up may have changed. The set union prevents duplicating
         # work when a device is new and updated in the same polling iteration.
@@ -1011,7 +1008,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                 LOG.info(_LI("Agent out of sync with plugin!"))
                 sync = False
 
-            if self._device_info_has_changes(device_info):
+            if (self._device_info_has_changes(device_info)
+                or self.sg_agent.firewall_refresh_needed()):
                 LOG.debug("Agent loop found changes! %s", device_info)
                 try:
                     sync = self.process_network_devices(device_info)
