@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+import six
 
 from alembic import command as alembic_command
 from alembic import config as alembic_config
@@ -60,7 +61,7 @@ def do_alembic_command(config, cmd, *args, **kwargs):
     try:
         getattr(alembic_command, cmd)(config, *args, **kwargs)
     except alembic_util.CommandError as e:
-        alembic_util.err(str(e))
+        alembic_util.err(six.text_type(e))
 
 
 def do_check_migration(config, cmd):

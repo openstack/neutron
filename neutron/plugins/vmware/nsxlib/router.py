@@ -630,7 +630,7 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         raise nsx_exc.NsxPluginException(err_msg=msg)
     except api_exc.NsxApiException as e:
         msg = _("An exception occurred while updating IP addresses on a "
-                "router logical port:%s") % str(e)
+                "router logical port:%s") % e
         LOG.exception(msg)
         raise nsx_exc.NsxPluginException(err_msg=msg)
 

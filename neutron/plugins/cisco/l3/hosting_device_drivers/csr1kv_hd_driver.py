@@ -63,9 +63,9 @@ class CSR1kvHostingDeviceDriver(hosting_device_drivers.HostingDeviceDriver):
                                         tokens)) + '\n'
                     vm_cfg_data += line
             return {'iosxe_config.txt': vm_cfg_data}
-        except IOError as e:
-            LOG.error(_LE('Failed to create config file: %s. Trying to'
-                        'clean up.'), str(e))
+        except IOError:
+            LOG.exception(_LE('Failed to create config file. Trying to '
+                              'clean up.'))
             self.delete_configdrive_files(context, mgmtport)
             raise
 

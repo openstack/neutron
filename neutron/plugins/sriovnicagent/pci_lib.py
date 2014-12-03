@@ -56,7 +56,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         except Exception as e:
             LOG.exception(_LE("Failed executing ip command"))
             raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=str(e))
+                                     reason=e)
         vf_lines = self._get_vf_link_show(vf_list, out)
         vf_details_list = []
         if vf_lines:
@@ -78,7 +78,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         except Exception as e:
             LOG.exception(_LE("Failed executing ip command"))
             raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=str(e))
+                                     reason=e)
         vf_lines = self._get_vf_link_show([vf_index], out)
         if vf_lines:
             vf_details = self._parse_vf_link_show(vf_lines[0])
@@ -105,7 +105,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         except Exception as e:
             LOG.exception(_LE("Failed executing ip command"))
             raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=str(e))
+                                     reason=e)
 
     def _get_vf_link_show(self, vf_list, link_show_out):
         """Get link show output for VFs

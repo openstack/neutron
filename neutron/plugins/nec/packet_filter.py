@@ -217,7 +217,7 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
             with excutils.save_and_reraise_exception():
                 LOG.error(_LE("Failed to delete packet_filter id=%(id)s "
                               "from OFC: %(exc)s"),
-                          {'id': pf_id, 'exc': str(exc)})
+                          {'id': pf_id, 'exc': exc})
                 self._update_resource_status_if_changed(
                     context, "packet_filter", packet_filter,
                     pf_db.PF_STATUS_ERROR)
