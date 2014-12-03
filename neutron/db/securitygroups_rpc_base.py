@@ -207,7 +207,7 @@ class SecurityGroupServerRpcCallbackMixin(object):
     def _select_dhcp_ips_for_network_ids(self, context, network_ids):
         if not network_ids:
             return {}
-        query = context.session.query(models_v2.Port,
+        query = context.session.query(models_v2.Port.network_id,
                                       models_v2.IPAllocation.ip_address)
         query = query.join(models_v2.IPAllocation)
         query = query.filter(models_v2.Port.network_id.in_(network_ids))
@@ -218,8 +218,8 @@ class SecurityGroupServerRpcCallbackMixin(object):
         for network_id in network_ids:
             ips[network_id] = []
 
-        for port, ip in query:
-            ips[port['network_id']].append(ip)
+        for network_id, ip in query:
+            ips[network_id].append(ip)
         return ips
 
     def _convert_remote_group_id_to_ip_prefix(self, context, ports):
