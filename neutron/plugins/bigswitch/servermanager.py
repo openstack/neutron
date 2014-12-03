@@ -41,6 +41,7 @@ from oslo.serialization import jsonutils
 from oslo.utils import excutils
 
 from neutron.common import exceptions
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch.db import consistency_db as cdb
 
@@ -114,11 +115,11 @@ class ServerProxy(object):
             body = self.rest_call('GET', CAPABILITIES_PATH)[2]
             self.capabilities = jsonutils.loads(body)
         except Exception:
-            LOG.exception(_("Couldn't retrieve capabilities. "
-                            "Newer API calls won't be supported."))
-        LOG.info(_("The following capabilities were received "
-                   "for %(server)s: %(cap)s"), {'server': self.server,
-                                                'cap': self.capabilities})
+            LOG.exception(_LE("Couldn't retrieve capabilities. "
+                              "Newer API calls won't be supported."))
+        LOG.info(_LI("The following capabilities were received "
+                     "for %(server)s: %(cap)s"), {'server': self.server,
+                                                  'cap': self.capabilities})
         return self.capabilities
 
     def rest_call(self, action, resource, data='', headers=None,
@@ -144,11 +145,11 @@ class ServerProxy(object):
         if self.auth:
             headers['Authorization'] = self.auth
 
-        LOG.debug(_("ServerProxy: server=%(server)s, port=%(port)d, "
-                    "ssl=%(ssl)r"),
+        LOG.debug("ServerProxy: server=%(server)s, port=%(port)d, "
+                  "ssl=%(ssl)r",
                   {'server': self.server, 'port': self.port, 'ssl': self.ssl})
-        LOG.debug(_("ServerProxy: resource=%(resource)s, data=%(data)r, "
-                    "headers=%(headers)r, action=%(action)s"),
+        LOG.debug("ServerProxy: resource=%(resource)s, data=%(data)r, "
+                  "headers=%(headers)r, action=%(action)s",
                   {'resource': resource, 'data': data, 'headers': headers,
                    'action': action})
 
@@ -168,16 +169,16 @@ class ServerProxy(object):
                 self.currentconn = HTTPSConnectionWithValidation(
                     self.server, self.port, timeout=timeout)
                 if self.currentconn is None:
-                    LOG.error(_('ServerProxy: Could not establish HTTPS '
-                                'connection'))
+                    LOG.error(_LE('ServerProxy: Could not establish HTTPS '
+                                  'connection'))
                     return 0, None, None, None
                 self.currentconn.combined_cert = self.combined_cert
             else:
                 self.currentconn = httplib.HTTPConnection(
                     self.server, self.port, timeout=timeout)
                 if self.currentconn is None:
-                    LOG.error(_('ServerProxy: Could not establish HTTP '
-                                'connection'))
+                    LOG.error(_LE('ServerProxy: Could not establish HTTP '
+                                  'connection'))
                     return 0, None, None, None
 
         try:
@@ -218,14 +219,14 @@ class ServerProxy(object):
                                   timeout=timeout, reconnect=True)
         except (socket.timeout, socket.error) as e:
             self.currentconn.close()
-            LOG.error(_('ServerProxy: %(action)s failure, %(e)r'),
+            LOG.error(_LE('ServerProxy: %(action)s failure, %(e)r'),
                       {'action': action, 'e': e})
             ret = 0, None, None, None
-        LOG.debug(_("ServerProxy: status=%(status)d, reason=%(reason)r, "
-                    "ret=%(ret)s, data=%(data)r"), {'status': ret[0],
-                                                    'reason': ret[1],
-                                                    'ret': ret[2],
-                                                    'data': ret[3]})
+        LOG.debug("ServerProxy: status=%(status)d, reason=%(reason)r, "
+                  "ret=%(ret)s, data=%(data)r", {'status': ret[0],
+                                                 'reason': ret[1],
+                                                 'ret': ret[2],
+                                                 'data': ret[3]})
         return ret
 
 
@@ -242,7 +243,7 @@ class ServerPool(object):
 
     def __init__(self, timeout=False,
                  base_uri=BASE_URI, name='NeutronRestProxy'):
-        LOG.debug(_("ServerPool: initializing"))
+        LOG.debug("ServerPool: initializing")
         # 'servers' is the list of network controller REST end-points
         # (used in order specified till one succeeds, and it is sticky
         # till next failure). Use 'server_auth' to encode api-key
@@ -281,7 +282,7 @@ class ServerPool(object):
         eventlet.spawn(self._consistency_watchdog,
                        cfg.CONF.RESTPROXY.consistency_interval)
         ServerPool._instance = self
-        LOG.debug(_("ServerPool: initialization done"))
+        LOG.debug("ServerPool: initialization done")
 
     def set_context(self, context):
         # this context needs to be local to the greenthread
@@ -396,9 +397,9 @@ class ServerPool(object):
                               'Error details: %(error)s') %
                             {'server': server, 'error': str(e)})
 
-        LOG.warning(_("Storing to certificate for host %(server)s "
-                      "at %(path)s") % {'server': server,
-                                        'path': path})
+        LOG.warning(_LW("Storing to certificate for host %(server)s "
+                        "at %(path)s"), {'server': server,
+                                         'path': path})
         self._file_put_contents(path, cert)
 
         return cert
@@ -465,14 +466,14 @@ class ServerPool(object):
                 active_server.failed = False
                 return ret
             else:
-                LOG.error(_('ServerProxy: %(action)s failure for servers: '
-                            '%(server)r Response: %(response)s'),
+                LOG.error(_LE('ServerProxy: %(action)s failure for servers: '
+                              '%(server)r Response: %(response)s'),
                           {'action': action,
                            'server': (active_server.server,
                                       active_server.port),
                            'response': ret[3]})
-                LOG.error(_("ServerProxy: Error details: status=%(status)d, "
-                            "reason=%(reason)r, ret=%(ret)s, data=%(data)r"),
+                LOG.error(_LE("ServerProxy: Error details: status=%(status)d, "
+                              "reason=%(reason)r, ret=%(ret)s, data=%(data)r"),
                           {'status': ret[0], 'reason': ret[1], 'ret': ret[2],
                            'data': ret[3]})
                 active_server.failed = True
@@ -485,8 +486,8 @@ class ServerPool(object):
         if action == 'DELETE':
             hash_handler.put_hash('INCONSISTENT,INCONSISTENT')
         # All servers failed, reset server list and try again next time
-        LOG.error(_('ServerProxy: %(action)s failure for all servers: '
-                    '%(server)r'),
+        LOG.error(_LE('ServerProxy: %(action)s failure for all servers: '
+                      '%(server)r'),
                   {'action': action,
                    'server': tuple((s.server,
                                     s.port) for s in self.servers)})
@@ -510,9 +511,9 @@ class ServerPool(object):
             LOG.error(errstr, resp[2])
             raise RemoteRestError(reason=resp[2], status=resp[0])
         if resp[0] in ignore_codes:
-            LOG.warning(_("NeutronRestProxyV2: Received and ignored error "
-                          "code %(code)s on %(action)s action to resource "
-                          "%(resource)s"),
+            LOG.warning(_LW("NeutronRestProxyV2: Received and ignored error "
+                            "code %(code)s on %(action)s action to resource "
+                            "%(resource)s"),
                         {'code': resp[2], 'action': action,
                          'resource': resource})
         return resp
@@ -568,8 +569,9 @@ class ServerPool(object):
         device_id = port.get("device_id")
         if not port["mac_address"] or not device_id:
             # controller only cares about ports attached to devices
-            LOG.warning(_("No device MAC attached to port %s. "
-                          "Skipping notification to controller."), port["id"])
+            LOG.warning(_LW("No device MAC attached to port %s. "
+                            "Skipping notification to controller."),
+                        port["id"])
             return
         data["attachment"] = {"id": device_id,
                               "mac": port["mac_address"]}
@@ -608,12 +610,12 @@ class ServerPool(object):
 
     def _consistency_watchdog(self, polling_interval=60):
         if 'consistency' not in self.get_capabilities():
-            LOG.warning(_("Backend server(s) do not support automated "
-                          "consitency checks."))
+            LOG.warning(_LW("Backend server(s) do not support automated "
+                            "consitency checks."))
             return
         if not polling_interval:
-            LOG.warning(_("Consistency watchdog disabled by polling interval "
-                          "setting of %s."), polling_interval)
+            LOG.warning(_LW("Consistency watchdog disabled by polling "
+                            "interval setting of %s."), polling_interval)
             return
         while True:
             # If consistency is supported, all we have to do is make any
@@ -624,8 +626,8 @@ class ServerPool(object):
             try:
                 self.rest_action('GET', HEALTH_PATH)
             except Exception:
-                LOG.exception(_("Encountered an error checking controller "
-                                "health."))
+                LOG.exception(_LE("Encountered an error checking controller "
+                                  "health."))
 
 
 class HTTPSConnectionWithValidation(httplib.HTTPSConnection):

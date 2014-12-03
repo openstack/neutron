@@ -72,7 +72,7 @@ class RouterRule_db_mixin(l3_db.L3_NAT_db_mixin):
                                           router_db,
                                           r['router_rules'])
             else:
-                LOG.debug(_('No rules in router'))
+                LOG.debug('No rules in router')
             router_db['router_rules'] = self._get_router_rules_by_router_id(
                 context, router_db['id'])
 
@@ -86,7 +86,7 @@ class RouterRule_db_mixin(l3_db.L3_NAT_db_mixin):
         del_context = context.session.query(RouterRule)
         del_context.filter_by(router_id=router['id']).delete()
         context.session.expunge_all()
-        LOG.debug(_('Updating router rules to %s'), rules)
+        LOG.debug('Updating router rules to %s', rules)
         for rule in rules:
             router_rule = RouterRule(
                 router_id=router['id'],

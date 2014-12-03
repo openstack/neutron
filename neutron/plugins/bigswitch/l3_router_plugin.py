@@ -31,6 +31,7 @@ from neutron.common import log
 from neutron.common import utils
 from neutron.db import l3_db
 from neutron.extensions import l3
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch import extensions
 from neutron.plugins.bigswitch import plugin as cplugin
@@ -209,8 +210,8 @@ class L3RestProxy(cplugin.NeutronRestProxyV2Base,
             except servermanager.RemoteRestError as e:
                 with excutils.save_and_reraise_exception():
                     LOG.error(
-                        _("NeutronRestProxyV2: Unable to create remote "
-                          "floating IP: %s"), e)
+                        _LE("NeutronRestProxyV2: Unable to create remote "
+                            "floating IP: %s"), e)
             # return created floating IP
             return new_fl_ip
 
@@ -278,7 +279,7 @@ class L3RestProxy(cplugin.NeutronRestProxyV2Base,
         except exceptions.TooManyExternalNetworks:
             # get_external_network can raise errors when multiple external
             # networks are detected, which isn't supported by the Plugin
-            LOG.error(_("NeutronRestProxyV2: too many external networks"))
+            LOG.error(_LE("NeutronRestProxyV2: too many external networks"))
 
     def _get_tenant_default_router_rules(self, tenant):
         rules = cfg.CONF.ROUTER.tenant_default_router_rule
