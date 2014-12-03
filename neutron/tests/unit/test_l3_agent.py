@@ -27,6 +27,7 @@ from neutron.agent.common import config as agent_config
 from neutron.agent import l3_agent
 from neutron.agent import l3_ha_agent
 from neutron.agent.linux import interface
+from neutron.agent.linux import ra
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
@@ -2349,6 +2350,39 @@ vrrp_instance VR_1 {
             agent.get_fip_ns_name(external_net_id))
         self.assertFalse(nat.add_rule.called)
         nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
+
+    def test_spawn_radvd(self):
+        router = prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+
+        conffile = '/fake/radvd.conf'
+        pidfile = '/fake/radvd.pid'
+
+        # we don't want the whole process manager to be mocked to be
+        # able to catch execute() calls
+        self.external_process_p.stop()
+        self.ip_cls_p.stop()
+
+        get_pid_file_name = ('neutron.agent.linux.external_process.'
+                             'ProcessManager.get_pid_file_name')
+        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+            with mock.patch(get_pid_file_name) as get_pid:
+                get_pid.return_value = pidfile
+                ra._spawn_radvd(router['id'],
+                                conffile,
+                                ri.ns_name,
+                                self.conf.root_helper)
+            cmd = execute.call_args[0][0]
+
+        self.assertIn('radvd', cmd)
+
+        _join = lambda *args: ' '.join(args)
+
+        cmd = _join(*cmd)
+        self.assertIn(_join('-C', conffile), cmd)
+        self.assertIn(_join('-p', pidfile), cmd)
+        self.assertIn(_join('-m', 'syslog'), cmd)
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):
