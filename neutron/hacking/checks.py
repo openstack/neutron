@@ -93,7 +93,7 @@ def _directory_to_check_translation(filename):
             #"neutron/plugins/opencontrail",
             "neutron/plugins/openvswitch",
             #"neutron/plugins/plumgrid",
-            #"neutron/plugins/sriovnicagent",
+            "neutron/plugins/sriovnicagent",
             "neutron/plugins/vmware"]
     return any([dir in filename for dir in dirs])
 
