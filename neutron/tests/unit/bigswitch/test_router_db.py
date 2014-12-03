@@ -137,6 +137,23 @@ class RouterDBTestCase(RouterDBTestBase,
                     # remove extra port created
                     self._delete('ports', p2['port']['id'])
 
+    def test_add_network_to_ext_gw_backend_body(self):
+        plugin_obj = manager.NeutronManager.get_plugin()
+        with contextlib.nested(
+            self.network(), self.router()
+        ) as (n1, r1):
+            with self.subnet(network=n1, cidr='10.10.10.10/24') as s1:
+                self._set_net_external(s1['subnet']['network_id'])
+                with mock.patch.object(plugin_obj.servers,
+                                       'rest_update_router') as upmock:
+                    self._add_external_gateway_to_router(r1['router']['id'],
+                                                         n1['network']['id'])
+        router_body = upmock.mock_calls[0][1][1]
+        self.assertEqual(
+            plugin_obj.get_network(context.get_admin_context(),
+                                   n1['network']['id']),
+            router_body['external_gateway_info']['network'])
+
     def test_multi_tenant_flip_alllocation(self):
         tenant1_id = _uuid()
         tenant2_id = _uuid()
