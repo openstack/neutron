@@ -13,7 +13,7 @@ Neutron Specific Commandments
 - [N321] Validate that jsonutils module is used instead of json
 - [N322] We do not use @authors tags in source files. We have git to track
   authorship.
-- [N323] assert_called_once() is not a valid method
+- [N323] Detect common errors with assert_called_once_with
 
 Creating Unit Tests
 -------------------

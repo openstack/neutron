@@ -805,26 +805,26 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
         with mock.patch.object(self.dhcp, 'enable_dhcp_helper') as enable:
             self.dhcp.network_create_end(None, payload)
-            enable.assertCalledOnceWith(fake_network.id)
+            enable.assert_called_once_with(fake_network.id)
 
     def test_network_update_end_admin_state_up(self):
         payload = dict(network=dict(id=fake_network.id, admin_state_up=True))
         with mock.patch.object(self.dhcp, 'enable_dhcp_helper') as enable:
             self.dhcp.network_update_end(None, payload)
-            enable.assertCalledOnceWith(fake_network.id)
+            enable.assert_called_once_with(fake_network.id)
 
     def test_network_update_end_admin_state_down(self):
         payload = dict(network=dict(id=fake_network.id, admin_state_up=False))
         with mock.patch.object(self.dhcp, 'disable_dhcp_helper') as disable:
             self.dhcp.network_update_end(None, payload)
-            disable.assertCalledOnceWith(fake_network.id)
+            disable.assert_called_once_with(fake_network.id)
 
     def test_network_delete_end(self):
         payload = dict(network_id=fake_network.id)
 
         with mock.patch.object(self.dhcp, 'disable_dhcp_helper') as disable:
             self.dhcp.network_delete_end(None, payload)
-            disable.assertCalledOnceWith(fake_network.id)
+            disable.assert_called_once_with(fake_network.id)
 
     def test_refresh_dhcp_helper_no_dhcp_enabled_networks(self):
         network = dhcp.NetModel(True, dict(id='net-id',
