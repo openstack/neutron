@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo import messaging
+
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -25,9 +27,8 @@ from neutron.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class DhcpAgentNotifyAPI(n_rpc.RpcProxy):
+class DhcpAgentNotifyAPI(object):
     """API for plugin to notify DHCP agent."""
-    BASE_RPC_API_VERSION = '1.0'
     # It seems dhcp agent does not support bulk operation
     VALID_RESOURCES = ['network', 'subnet', 'port']
     VALID_METHOD_NAMES = ['network.create.end',
@@ -41,9 +42,9 @@ class DhcpAgentNotifyAPI(n_rpc.RpcProxy):
                           'port.delete.end']
 
     def __init__(self, topic=topics.DHCP_AGENT, plugin=None):
-        super(DhcpAgentNotifyAPI, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self._plugin = plugin
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     @property
     def plugin(self):
@@ -134,17 +135,13 @@ class DhcpAgentNotifyAPI(n_rpc.RpcProxy):
     def _cast_message(self, context, method, payload, host,
                       topic=topics.DHCP_AGENT):
         """Cast the payload to the dhcp agent running on the host."""
-        self.cast(
-            context, self.make_msg(method,
-                                   payload=payload),
-            topic='%s.%s' % (topic, host))
+        cctxt = self.client.prepare(topic=topic, server=host)
+        cctxt.cast(context, method, payload=payload)
 
     def _fanout_message(self, context, method, payload):
         """Fanout the payload to all dhcp agents."""
-        self.fanout_cast(
-            context, self.make_msg(method,
-                                   payload=payload),
-            topic=topics.DHCP_AGENT)
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, method, payload=payload)
 
     def network_removed_from_agent(self, context, network_id, host):
         self._cast_message(context, 'network_delete_end',
