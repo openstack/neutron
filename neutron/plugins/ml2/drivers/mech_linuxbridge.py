@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.agent import securitygroups_rpc
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
@@ -34,10 +35,11 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """
 
     def __init__(self):
+        sg_enabled = securitygroups_rpc.is_firewall_enabled()
         super(LinuxbridgeMechanismDriver, self).__init__(
             constants.AGENT_TYPE_LINUXBRIDGE,
             portbindings.VIF_TYPE_BRIDGE,
-            {portbindings.CAP_PORT_FILTER: True})
+            {portbindings.CAP_PORT_FILTER: sg_enabled})
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('interface_mappings', {})
