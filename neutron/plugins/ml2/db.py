@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import collections
-
 from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
@@ -234,7 +232,7 @@ def get_ports_and_sgs(port_ids):
 
 
 def get_sg_ids_grouped_by_port(port_ids):
-    sg_ids_grouped_by_port = collections.defaultdict(list)
+    sg_ids_grouped_by_port = {}
     session = db_api.get_session()
     sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
 
@@ -256,6 +254,8 @@ def get_sg_ids_grouped_by_port(port_ids):
         query = query.filter(or_(*or_criteria))
 
         for port, sg_id in query:
+            if port not in sg_ids_grouped_by_port:
+                sg_ids_grouped_by_port[port] = []
             if sg_id:
                 sg_ids_grouped_by_port[port].append(sg_id)
     return sg_ids_grouped_by_port

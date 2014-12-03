@@ -65,18 +65,28 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
             self.fmt, net_id, security_groups=[sg['security_group']['id']])
         return port['port']
 
+    def _make_port_without_sec_group(self, net_id):
+        port = self._make_port(
+            self.fmt, net_id, security_groups=[])
+        return port['port']
+
     def test_security_group_get_ports_from_devices(self):
         with self.network() as n:
             with self.subnet(n):
-                port1 = self._make_port_with_new_sec_group(n['network']['id'])
-                port2 = self._make_port_with_new_sec_group(n['network']['id'])
+                orig_ports = [
+                    self._make_port_with_new_sec_group(n['network']['id']),
+                    self._make_port_with_new_sec_group(n['network']['id']),
+                    self._make_port_without_sec_group(n['network']['id'])
+                ]
                 plugin = manager.NeutronManager.get_plugin()
                 # should match full ID and starting chars
                 ports = plugin.get_ports_from_devices(
-                    [port1['id'], port2['id'][0:8]])
-                self.assertEqual(2, len(ports))
+                    [orig_ports[0]['id'], orig_ports[1]['id'][0:8],
+                     orig_ports[2]['id']])
+                self.assertEqual(len(orig_ports), len(ports))
                 for port_dict in ports:
-                    p = port1 if port1['id'] == port_dict['id'] else port2
+                    p = next(p for p in orig_ports
+                             if p['id'] == port_dict['id'])
                     self.assertEqual(p['id'], port_dict['id'])
                     self.assertEqual(p['security_groups'],
                                      port_dict[ext_sg.SECURITYGROUPS])
