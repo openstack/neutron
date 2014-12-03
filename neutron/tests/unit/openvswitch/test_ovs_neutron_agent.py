@@ -219,6 +219,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                     self.agent.dvr_agent.plugin_rpc, 'get_subnet_for_dvr',
                     return_value={'gateway_ip': '1.1.1.1',
                                   'cidr': '1.1.1.0/24',
+                                  'ip_version': 4,
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                     'get_ports_on_host_by_subnet',
@@ -241,8 +242,14 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 self.assertTrue(add_flow_tun_fn.called)
                 self.assertTrue(delete_flows_int_fn.called)
 
-    def _test_port_bound_for_dvr(self, device_owner):
+    def _test_port_bound_for_dvr(self, device_owner, ip_version=4):
         self._setup_for_dvr_test()
+        if ip_version == 4:
+            gateway_ip = '1.1.1.1'
+            cidr = '1.1.1.0/24'
+        else:
+            gateway_ip = '2001:100::1'
+            cidr = '2001:100::0/64'
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                         'set_db_attribute',
                         return_value=True):
@@ -253,8 +260,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_subnet_for_dvr',
                                   return_value={
-                                      'gateway_ip': '1.1.1.1',
-                                      'cidr': '1.1.1.0/24',
+                                      'gateway_ip': gateway_ip,
+                                      'cidr': cidr,
+                                      'ip_version': ip_version,
                                       'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                     'get_ports_on_host_by_subnet',
@@ -274,24 +282,96 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                     None, None, self._fixed_ips,
                     n_const.DEVICE_OWNER_DVR_INTERFACE,
                     False)
+                expected = [
+                    mock.call(
+                        table=constants.TUN_TABLE['vxlan'],
+                        priority=1, tun_id=None,
+                        actions="mod_vlan_vid:%s,"
+                        "resubmit(,%s)" %
+                        (self.agent.local_vlan_map[self._net_uuid].vlan,
+                         constants.DVR_NOT_LEARN)),
+                    mock.call(
+                        table=constants.DVR_PROCESS, priority=2,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan),
+                        dl_dst=self._port.vif_mac,
+                        actions='drop'),
+                    mock.call(
+                        table=constants.DVR_PROCESS, priority=1,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan),
+                        dl_src=self._port.vif_mac,
+                        actions="mod_dl_src:%s,resubmit(,%s)" % (
+                            self.agent.dvr_agent.dvr_mac_address,
+                            constants.PATCH_LV_TO_TUN))]
+                if ip_version == 4:
+                    expected.insert(1, mock.call(
+                        proto='arp',
+                        nw_dst=gateway_ip, actions='drop',
+                        priority=3, table=constants.DVR_PROCESS,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan)))
+                else:
+                    expected.insert(1, mock.call(
+                        icmp_type=n_const.ICMPV6_TYPE_RA, proto='icmp6',
+                        dl_src='aa:bb:cc:11:22:33', actions='drop',
+                        priority=3, table=constants.DVR_PROCESS,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan)))
+
+                self.assertEqual(expected, add_flow_tun_fn.call_args_list)
                 self.agent.port_bound(self._compute_port, self._net_uuid,
                                       'vxlan', None, None,
                                       self._compute_fixed_ips,
                                       device_owner, False)
-                self.assertTrue(add_flow_tun_fn.called)
-                self.assertTrue(add_flow_int_fn.called)
+                expected = [
+                    mock.call(table=constants.DVR_TO_SRC_MAC, priority=4,
+                        dl_dst=self._compute_port.vif_mac,
+                        dl_vlan=self.agent.local_vlan_map[self._net_uuid].vlan,
+                        actions="strip_vlan,mod_dl_src:%s,"
+                        "output:%s" %
+                        ('aa:bb:cc:11:22:33', self._compute_port.ofport))
+                ]
+                if ip_version == 4:
+                    expected.append(mock.call(
+                        table=constants.DVR_TO_SRC_MAC,
+                        priority=2, proto='ip',
+                        nw_dst=cidr,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan),
+                        actions="strip_vlan,mod_dl_src:%s,"
+                        "output:%s" %
+                        ('aa:bb:cc:11:22:33', self._compute_port.ofport)))
+                else:
+                    expected.append(mock.call(
+                        table=constants.DVR_TO_SRC_MAC,
+                        priority=2, proto='ipv6',
+                        ipv6_dst=cidr,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan),
+                        actions="strip_vlan,mod_dl_src:%s,"
+                        "output:%s" %
+                        ('aa:bb:cc:11:22:33', self._compute_port.ofport)))
+                self.assertEqual(expected, add_flow_int_fn.call_args_list)
                 self.assertTrue(delete_flows_int_fn.called)
 
     def test_port_bound_for_dvr_with_compute_ports(self):
-        self._test_port_bound_for_dvr(device_owner="compute:None")
+        self._test_port_bound_for_dvr(
+            device_owner="compute:None")
+        self._test_port_bound_for_dvr(
+            device_owner="compute:None", ip_version=6)
 
     def test_port_bound_for_dvr_with_lbaas_vip_ports(self):
         self._test_port_bound_for_dvr(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
+        self._test_port_bound_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCER, ip_version=6)
 
     def test_port_bound_for_dvr_with_dhcp_ports(self):
         self._test_port_bound_for_dvr(
             device_owner=n_const.DEVICE_OWNER_DHCP)
+        self._test_port_bound_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_DHCP, ip_version=6)
 
     def test_port_bound_for_dvr_with_csnat_ports(self, ofport=10):
         self._setup_for_dvr_test()
@@ -306,6 +386,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                     self.agent.dvr_agent.plugin_rpc, 'get_subnet_for_dvr',
                     return_value={'gateway_ip': '1.1.1.1',
                                   'cidr': '1.1.1.0/24',
+                                  'ip_version': 4,
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                     'get_ports_on_host_by_subnet',
@@ -329,7 +410,19 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 self.assertTrue(delete_flows_int_fn.called)
 
     def test_treat_devices_removed_for_dvr_interface(self, ofport=10):
+        self._test_treat_devices_removed_for_dvr_interface(ofport)
+        self._test_treat_devices_removed_for_dvr_interface(
+            ofport, ip_version=6)
+
+    def _test_treat_devices_removed_for_dvr_interface(self, ofport=10,
+                                                      ip_version=4):
         self._setup_for_dvr_test()
+        if ip_version == 4:
+            gateway_ip = '1.1.1.1'
+            cidr = '1.1.1.0/24'
+        else:
+            gateway_ip = '2001:100::1'
+            cidr = '2001:100::0/64'
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                         'set_db_attribute',
                         return_value=True):
@@ -339,8 +432,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                            return_value=str(self._old_local_vlan)),
                 mock.patch.object(
                     self.agent.dvr_agent.plugin_rpc, 'get_subnet_for_dvr',
-                    return_value={'gateway_ip': '1.1.1.1',
-                                  'cidr': '1.1.1.0/24',
+                    return_value={'gateway_ip': gateway_ip,
+                                  'cidr': cidr,
+                                  'ip_version': ip_version,
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                     'get_ports_on_host_by_subnet',
@@ -374,11 +468,58 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                                    delete_flows_int_fn,
                                                    delete_flows_tun_fn):
                 self.agent.treat_devices_removed([self._port.vif_id])
-                self.assertTrue(delete_flows_int_fn.called)
-                self.assertTrue(delete_flows_tun_fn.called)
+                if ip_version == 4:
+                    expected = [mock.call(
+                        table=constants.DVR_TO_SRC_MAC,
+                        nw_dst=cidr,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan),
+                        proto='ip')]
+                else:
+                    expected = [mock.call(
+                        table=constants.DVR_TO_SRC_MAC,
+                        ipv6_dst=cidr,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan),
+                        proto='ipv6')]
+                self.assertEqual(expected,
+                                 delete_flows_int_fn.call_args_list)
+                if ip_version == 4:
+                    expected = [mock.call(
+                        proto='arp',
+                        nw_dst=gateway_ip,
+                        table=constants.DVR_PROCESS,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan))]
+                else:
+                    expected = [mock.call(
+                        icmp_type=n_const.ICMPV6_TYPE_RA, proto='icmp6',
+                        dl_src='aa:bb:cc:11:22:33',
+                        table=constants.DVR_PROCESS,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan))]
+                expected.extend([
+                    mock.call(
+                        table=constants.DVR_PROCESS,
+                        dl_dst=self._port.vif_mac,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan)),
+                    mock.call(
+                        table=constants.DVR_PROCESS,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan),
+                        dl_src=self._port.vif_mac)
+                ])
+                self.assertEqual(expected, delete_flows_tun_fn.call_args_list)
 
-    def _test_treat_devices_removed_for_dvr(self, device_owner):
+    def _test_treat_devices_removed_for_dvr(self, device_owner, ip_version=4):
         self._setup_for_dvr_test()
+        if ip_version == 4:
+            gateway_ip = '1.1.1.1'
+            cidr = '1.1.1.0/24'
+        else:
+            gateway_ip = '2001:100::1'
+            cidr = '2001:100::0/64'
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                         'set_db_attribute',
                         return_value=True):
@@ -388,8 +529,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                            return_value=str(self._old_local_vlan)),
                 mock.patch.object(
                     self.agent.dvr_agent.plugin_rpc, 'get_subnet_for_dvr',
-                    return_value={'gateway_ip': '1.1.1.1',
-                                  'cidr': '1.1.1.0/24',
+                    return_value={'gateway_ip': gateway_ip,
+                                  'cidr': cidr,
+                                  'ip_version': ip_version,
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                     'get_ports_on_host_by_subnet',
@@ -427,18 +569,45 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                                    update_dev_down_fn,
                                                    delete_flows_int_fn):
                 self.agent.treat_devices_removed([self._compute_port.vif_id])
-                self.assertTrue(delete_flows_int_fn.called)
+                expected = [
+                    mock.call(
+                        table=constants.DVR_TO_SRC_MAC,
+                        dl_dst=self._compute_port.vif_mac,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan))]
+                if ip_version == 4:
+                    expected.append(mock.call(
+                        table=constants.DVR_TO_SRC_MAC,
+                        proto='ip', nw_dst=cidr,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan))
+                    )
+                else:
+                    expected.append(mock.call(
+                        table=constants.DVR_TO_SRC_MAC,
+                        proto='ipv6', ipv6_dst=cidr,
+                        dl_vlan=(
+                            self.agent.local_vlan_map[self._net_uuid].vlan))
+                    )
+                self.assertEqual(expected, delete_flows_int_fn.call_args_list)
 
     def test_treat_devices_removed_for_dvr_with_compute_ports(self):
-        self._test_treat_devices_removed_for_dvr(device_owner="compute:None")
+        self._test_treat_devices_removed_for_dvr(
+            device_owner="compute:None")
+        self._test_treat_devices_removed_for_dvr(
+            device_owner="compute:None", ip_version=6)
 
     def test_treat_devices_removed_for_dvr_with_lbaas_vip_ports(self):
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCER, ip_version=6)
 
     def test_treat_devices_removed_for_dvr_with_dhcp_ports(self):
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_DHCP)
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_DHCP, ip_version=6)
 
     def test_treat_devices_removed_for_dvr_csnat_port(self, ofport=10):
         self._setup_for_dvr_test()
@@ -453,6 +622,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                     self.agent.dvr_agent.plugin_rpc, 'get_subnet_for_dvr',
                     return_value={'gateway_ip': '1.1.1.1',
                                   'cidr': '1.1.1.0/24',
+                                  'ip_version': 4,
                                   'gateway_mac': 'aa:bb:cc:11:22:33'}),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                     'get_ports_on_host_by_subnet',
