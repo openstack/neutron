@@ -1399,6 +1399,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def external_gateway_removed(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
+            self.process_router_floating_ip_nat_rules(ri)
+            self.process_router_floating_ip_addresses(ri, ex_gw_port)
             for p in ri.internal_ports:
                 internal_interface = self.get_internal_device_name(p['id'])
                 self._snat_redirect_remove(ri, p, internal_interface)
