@@ -30,6 +30,7 @@ from neutron.db import portbindings_base
 from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils
@@ -202,7 +203,7 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
     def _parse_network_vlan_ranges(self):
         self._network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
             cfg.CONF.HYPERV.network_vlan_ranges)
-        LOG.info(_("Network VLAN ranges: %s"), self._network_vlan_ranges)
+        LOG.info(_LI("Network VLAN ranges: %s"), self._network_vlan_ranges)
 
     def _check_vlan_id_in_range(self, physical_network, vlan_id):
         for r in self._network_vlan_ranges[physical_network]:
@@ -253,7 +254,7 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
             self._process_l3_create(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
 
-            LOG.debug(_("Created network: %s"), net['id'])
+            LOG.debug("Created network: %s", net['id'])
             return net
 
     def _extend_network_dict_provider(self, context, network):

@@ -148,7 +148,7 @@ class HyperVUtils(object):
 
         desc = job.Description
         elap = job.ElapsedTime
-        LOG.debug(_("WMI job succeeded: %(desc)s, Elapsed=%(elap)s"),
+        LOG.debug("WMI job succeeded: %(desc)s, Elapsed=%(elap)s",
                   {'desc': desc, 'elap': elap})
 
     def _create_switch_port(self, vswitch_name, switch_port_name):
