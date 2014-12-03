@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev559.gab8d675\n"
+"Project-Id-Version: neutron 2015.1.dev570.g4216502\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-02 06:13+0000\n"
+"POT-Creation-Date: 2014-12-03 06:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1845,8 +1845,8 @@ msgid ""
 msgstr ""
 
 #: neutron/db/l3_db.py:441 neutron/db/l3_db.py:593 neutron/db/l3_dvr_db.py:254
-#: neutron/plugins/bigswitch/l3_router_plugin.py:170
-#: neutron/plugins/bigswitch/l3_router_plugin.py:179
+#: neutron/plugins/bigswitch/l3_router_plugin.py:171
+#: neutron/plugins/bigswitch/l3_router_plugin.py:180
 #: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:182
 #: neutron/plugins/opencontrail/contrail_plugin.py:499
 msgid "Either subnet_id or port_id must be specified"
@@ -1942,6 +1942,10 @@ msgstr ""
 #: neutron/db/routedserviceinsertion_db.py:34
 #, python-format
 msgid "Resource type '%(resource_type)s' is longer than %(maxlen)d characters"
+msgstr ""
+
+#: neutron/db/securitygroups_db.py:513
+msgid "Default security group"
 msgstr ""
 
 #: neutron/db/securitygroups_rpc_base.py:58
@@ -3103,381 +3107,118 @@ msgstr ""
 msgid "Virtual switch type."
 msgstr ""
 
-#: neutron/plugins/bigswitch/l3_router_plugin.py:58
+#: neutron/plugins/bigswitch/l3_router_plugin.py:59
 msgid "L3 Router Service Plugin for Big Switch fabric"
 msgstr ""
 
-#: neutron/plugins/bigswitch/l3_router_plugin.py:212
-#, python-format
-msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/l3_router_plugin.py:281
-msgid "NeutronRestProxyV2: too many external networks"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:92
+#: neutron/plugins/bigswitch/plugin.py:93
 msgid "Syntax error in server config file, aborting plugin"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:122
-#, python-format
-msgid "get_port_and_sgs() called for port_id %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:232
+#: neutron/plugins/bigswitch/plugin.py:233
 #, python-format
 msgid "Unable to update remote topology: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:317
-#, python-format
-msgid ""
-"Setting admin_state_up=False is not supported in this plugin version. "
-"Ignoring setting for resource: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:323
-#, python-format
-msgid ""
-"Operational status is internally set by the plugin. Ignoring setting "
-"status=%s."
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:348
-#, python-format
-msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs."
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:397
-msgid "Iconsistency with backend controller triggering full synchronization."
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:414
-#, python-format
-msgid "NeutronRestProxyV2: Unable to create port: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:475
-#, python-format
-msgid "NeutronRestProxy: Starting plugin. Version=%s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:502
-msgid "NeutronRestProxyV2: initialization done"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:547
-msgid "NeutronRestProxyV2: create_network() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:590
-msgid "NeutronRestProxyV2.update_network() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:618
-msgid "NeutronRestProxyV2: delete_network() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:656
-msgid "NeutronRestProxyV2: create_port() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:748
-msgid "NeutronRestProxyV2: update_port() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:811
-msgid "NeutronRestProxyV2: delete_port() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:834
-msgid "NeutronRestProxyV2: create_subnet() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:851
-msgid "NeutronRestProxyV2: update_subnet() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:868
-msgid "NeutronRestProxyV2: delete_subnet() called"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:892
-msgid "Adding host route: "
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:893
-#, python-format
-msgid "Destination:%(dst)s nexthop:%(next)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/routerrule_db.py:75
-msgid "No rules in router"
-msgstr ""
-
-#: neutron/plugins/bigswitch/routerrule_db.py:89
-#, python-format
-msgid "Updating router rules to %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:78
+#: neutron/plugins/bigswitch/servermanager.py:79
 #, python-format
 msgid "Error in REST call to remote network controller: %(reason)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:117
-msgid "Couldn't retrieve capabilities. Newer API calls won't be supported."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:119
-#, python-format
-msgid "The following capabilities were received for %(server)s: %(cap)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:147
-#, python-format
-msgid "ServerProxy: server=%(server)s, port=%(port)d, ssl=%(ssl)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:150
-#, python-format
-msgid ""
-"ServerProxy: resource=%(resource)s, data=%(data)r, headers=%(headers)r, "
-"action=%(action)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:171
-msgid "ServerProxy: Could not establish HTTPS connection"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:179
-msgid "ServerProxy: Could not establish HTTP connection"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:221
-#, python-format
-msgid "ServerProxy: %(action)s failure, %(e)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:224
-#, python-format
-msgid ""
-"ServerProxy: status=%(status)d, reason=%(reason)r, ret=%(ret)s, "
-"data=%(data)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:245
-msgid "ServerPool: initializing"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:268
+#: neutron/plugins/bigswitch/servermanager.py:269
 msgid "Servers not defined. Aborting server manager."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:275
+#: neutron/plugins/bigswitch/servermanager.py:276
 #, python-format
 msgid "Servers must be defined as <ip>:<port>. Configuration was %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:284
-msgid "ServerPool: initialization done"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:334
+#: neutron/plugins/bigswitch/servermanager.py:335
 #, python-format
 msgid "ssl_cert_directory [%s] does not exist. Create it or disable ssl."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:351
+#: neutron/plugins/bigswitch/servermanager.py:352
 #, python-format
 msgid "No certificates were found to verify controller %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:394
+#: neutron/plugins/bigswitch/servermanager.py:395
 #, python-format
 msgid ""
 "Could not retrieve initial certificate from controller %(server)s. Error "
 "details: %(error)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:399
-#, python-format
-msgid "Storing to certificate for host %(server)s at %(path)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:453
+#: neutron/plugins/bigswitch/servermanager.py:454
 msgid "Server requires synchronization, but no topology function was defined."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:468
-#, python-format
-msgid ""
-"ServerProxy: %(action)s failure for servers: %(server)r Response: "
-"%(response)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:474
-#, python-format
-msgid ""
-"ServerProxy: Error details: status=%(status)d, reason=%(reason)r, "
-"ret=%(ret)s, data=%(data)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:488
-#, python-format
-msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:513
-#, python-format
-msgid ""
-"NeutronRestProxyV2: Received and ignored error code %(code)s on "
-"%(action)s action to resource %(resource)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:523
+#: neutron/plugins/bigswitch/servermanager.py:524
 #, python-format
 msgid "Unable to create remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:529
+#: neutron/plugins/bigswitch/servermanager.py:530
 #, python-format
 msgid "Unable to update remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:534
+#: neutron/plugins/bigswitch/servermanager.py:535
 #, python-format
 msgid "Unable to delete remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:540
+#: neutron/plugins/bigswitch/servermanager.py:541
 #, python-format
 msgid "Unable to add router interface: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:545
+#: neutron/plugins/bigswitch/servermanager.py:546
 #, python-format
 msgid "Unable to delete remote intf: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:551
+#: neutron/plugins/bigswitch/servermanager.py:552
 #, python-format
 msgid "Unable to create remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:557
-#: neutron/plugins/bigswitch/servermanager.py:562
+#: neutron/plugins/bigswitch/servermanager.py:558
+#: neutron/plugins/bigswitch/servermanager.py:563
 #, python-format
 msgid "Unable to update remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:571
-#, python-format
-msgid "No device MAC attached to port %s. Skipping notification to controller."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:576
+#: neutron/plugins/bigswitch/servermanager.py:578
 #, python-format
 msgid "Unable to create remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:581
+#: neutron/plugins/bigswitch/servermanager.py:583
 #, python-format
 msgid "Unable to delete remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:591
+#: neutron/plugins/bigswitch/servermanager.py:593
 #, python-format
 msgid "Unable to create floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:596
+#: neutron/plugins/bigswitch/servermanager.py:598
 #, python-format
 msgid "Unable to update floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:601
+#: neutron/plugins/bigswitch/servermanager.py:603
 #, python-format
 msgid "Unable to delete floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:606
+#: neutron/plugins/bigswitch/servermanager.py:608
 #, python-format
 msgid "Unable to retrieve switch: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:611
-msgid "Backend server(s) do not support automated consitency checks."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:615
-#, python-format
-msgid "Consistency watchdog disabled by polling interval setting of %s."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:627
-msgid "Encountered an error checking controller health."
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:54
-#, python-format
-msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:115
-msgid "Port update received"
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:119
-#, python-format
-msgid "Port %s is not present on this host."
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:122
-#, python-format
-msgid "Port %s found. Refreshing firewall."
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:150
-msgid "Agent loop has new device"
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:154
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:223
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:160
-msgid "Error in agent event loop"
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:160
-#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:224
-#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:285
-#, python-format
-msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/consistency_db.py:224
-#, python-format
-msgid "Consistency hash for group %(hash_id)s updated to %(hash)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/porttracker_db.py:39
-msgid "No host_id in port request to track port location."
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/porttracker_db.py:42
-#, python-format
-msgid "Received an empty port ID for host_id '%s'"
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/porttracker_db.py:45
-#, python-format
-msgid "Received an empty host_id for port '%s'"
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/porttracker_db.py:47
-#, python-format
-msgid "Logging port %(port)s on host_id %(host)s"
 msgstr ""
 
 #: neutron/plugins/bigswitch/extensions/routerrule.py:26
@@ -5303,6 +5044,12 @@ msgstr ""
 msgid "Agent in the rpc loop."
 msgstr ""
 
+#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:224
+#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:285
+#, python-format
+msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
+msgstr ""
+
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:238
 #, python-format
 msgid "Controller IPs: %s"
@@ -6954,6 +6701,11 @@ msgstr ""
 
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:218
 msgid "No port changed."
+msgstr ""
+
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:223
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:160
+msgid "Error in agent event loop"
 msgstr ""
 
 #: neutron/plugins/nec/common/config.py:34

@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev559.gab8d675\n"
+"Project-Id-Version: neutron 2015.1.dev570.g4216502\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-02 06:14+0000\n"
+"POT-Creation-Date: 2014-12-03 06:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -240,6 +240,7 @@ msgstr ""
 
 #: neutron/agent/linux/ovs_lib.py:73 neutron/agent/linux/ovs_lib.py:171
 #: neutron/agent/linux/ovs_lib.py:292
+#: neutron/plugins/bigswitch/agent/restproxy_agent.py:55
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
 msgstr ""
@@ -453,6 +454,69 @@ msgstr ""
 
 #: neutron/openstack/common/service.py:269
 msgid "Unhandled exception"
+msgstr ""
+
+#: neutron/plugins/bigswitch/l3_router_plugin.py:213
+#, python-format
+msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
+msgstr ""
+
+#: neutron/plugins/bigswitch/l3_router_plugin.py:282
+msgid "NeutronRestProxyV2: too many external networks"
+msgstr ""
+
+#: neutron/plugins/bigswitch/plugin.py:398
+msgid "Iconsistency with backend controller triggering full synchronization."
+msgstr ""
+
+#: neutron/plugins/bigswitch/plugin.py:415
+#, python-format
+msgid "NeutronRestProxyV2: Unable to create port: %s"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:118
+msgid "Couldn't retrieve capabilities. Newer API calls won't be supported."
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:172
+msgid "ServerProxy: Could not establish HTTPS connection"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:180
+msgid "ServerProxy: Could not establish HTTP connection"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:222
+#, python-format
+msgid "ServerProxy: %(action)s failure, %(e)r"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:469
+#, python-format
+msgid ""
+"ServerProxy: %(action)s failure for servers: %(server)r Response: "
+"%(response)s"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:475
+#, python-format
+msgid ""
+"ServerProxy: Error details: status=%(status)d, reason=%(reason)r, "
+"ret=%(ret)s, data=%(data)r"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:489
+#, python-format
+msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:629
+msgid "Encountered an error checking controller health."
+msgstr ""
+
+#: neutron/plugins/bigswitch/agent/restproxy_agent.py:155
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:386
+msgid "Error in agent event loop"
 msgstr ""
 
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:230
@@ -1055,10 +1119,6 @@ msgstr ""
 msgid ""
 "Request timeout in agent event loop eSwitchD is not responding - "
 "exiting..."
-msgstr ""
-
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:386
-msgid "Error in agent event loop"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:415

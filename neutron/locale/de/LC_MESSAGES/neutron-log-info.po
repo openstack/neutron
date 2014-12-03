@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-02 06:14+0000\n"
-"PO-Revision-Date: 2014-12-01 19:17+0000\n"
+"POT-Creation-Date: 2014-12-03 06:13+0000\n"
+"PO-Revision-Date: 2014-12-03 03:25+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: German (http://www.transifex.com/projects/p/neutron/language/"
 "de/)\n"
@@ -348,6 +348,16 @@ msgstr "Warten aufgerufen nach dem der Thread abgebrochen wurde. Bereinige."
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "Warten auf Beenden von %d untergeordneten Elementen"
+
+#: neutron/plugins/bigswitch/plugin.py:476
+#, python-format
+msgid "NeutronRestProxy: Starting plugin. Version=%s"
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:120
+#, python-format
+msgid "The following capabilities were received for %(server)s: %(cap)s"
+msgstr ""
 
 #: neutron/plugins/bigswitch/db/consistency_db.py:196
 msgid "Failed to take lock. Another process updated the DB first."
