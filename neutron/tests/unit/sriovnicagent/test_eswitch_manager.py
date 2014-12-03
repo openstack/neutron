@@ -363,3 +363,22 @@ class TestPciOsWrapper(base.BaseTestCase):
 
     def test_is_assigned_vf_false(self):
         self._mock_assign_vf(False)
+
+    def _mock_assign_vf_macvtap(self, macvtap_exists):
+        def _glob(file_path):
+            return ["upper_macvtap0"] if macvtap_exists else []
+
+        with contextlib.nested(
+            mock.patch("os.path.isdir",
+                       return_value=True),
+            mock.patch("glob.glob",
+                       side_effect=_glob)):
+            result = esm.PciOsWrapper.is_assigned_vf(self.DEV_NAME,
+                                                     self.VF_INDEX)
+            self.assertEqual(macvtap_exists, result)
+
+    def test_is_assigned_vf_macvtap_true(self):
+        self._mock_assign_vf_macvtap(True)
+
+    def test_is_assigned_vf_macvtap_false(self):
+        self._mock_assign_vf_macvtap(False)
