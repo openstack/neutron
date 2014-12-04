@@ -26,11 +26,6 @@ from neutron.plugins.common import constants
 from neutron.tests import base
 from neutron.tests import tools
 
-try:
-    OrderedDict = collections.OrderedDict
-except AttributeError:
-    import ordereddict
-    OrderedDict = ordereddict.OrderedDict
 
 OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
 
@@ -244,26 +239,30 @@ class OVS_Lib_Test(base.BaseTestCase):
         lsw_id = 18
         cidr = '192.168.1.0/24'
 
-        flow_dict_1 = OrderedDict([('priority', 2),
-                                   ('dl_src', 'ca:fe:de:ad:be:ef'),
-                                   ('actions', 'strip_vlan,output:0')])
-        flow_dict_2 = OrderedDict([('priority', 1),
-                                   ('actions', 'normal')])
-        flow_dict_3 = OrderedDict([('priority', 2),
-                                   ('actions', 'drop')])
-        flow_dict_4 = OrderedDict([('priority', 2),
-                                   ('in_port', ofport),
-                                   ('actions', 'drop')])
-        flow_dict_5 = OrderedDict([
+        flow_dict_1 = collections.OrderedDict([
+            ('priority', 2),
+            ('dl_src', 'ca:fe:de:ad:be:ef'),
+            ('actions', 'strip_vlan,output:0')])
+        flow_dict_2 = collections.OrderedDict([
+            ('priority', 1),
+            ('actions', 'normal')])
+        flow_dict_3 = collections.OrderedDict([
+            ('priority', 2),
+            ('actions', 'drop')])
+        flow_dict_4 = collections.OrderedDict([
+            ('priority', 2),
+            ('in_port', ofport),
+            ('actions', 'drop')])
+        flow_dict_5 = collections.OrderedDict([
             ('priority', 4),
             ('in_port', ofport),
             ('dl_vlan', vid),
             ('actions', "strip_vlan,set_tunnel:%s,normal" % (lsw_id))])
-        flow_dict_6 = OrderedDict([
+        flow_dict_6 = collections.OrderedDict([
             ('priority', 3),
             ('tun_id', lsw_id),
             ('actions', "mod_vlan_vid:%s,output:%s" % (vid, ofport))])
-        flow_dict_7 = OrderedDict([
+        flow_dict_7 = collections.OrderedDict([
             ('priority', 4),
             ('nw_src', cidr),
             ('proto', 'arp'),
@@ -320,10 +319,11 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.execute.assert_has_calls(expected_calls)
 
     def test_add_flow_timeout_set(self):
-        flow_dict = OrderedDict([('priority', 1),
-                                 ('hard_timeout', 1000),
-                                 ('idle_timeout', 2000),
-                                 ('actions', 'normal')])
+        flow_dict = collections.OrderedDict([
+            ('priority', 1),
+            ('hard_timeout', 1000),
+            ('idle_timeout', 2000),
+            ('actions', 'normal')])
 
         self.br.add_flow(**flow_dict)
         self.execute.assert_called_once_with(
@@ -333,7 +333,7 @@ class OVS_Lib_Test(base.BaseTestCase):
             root_helper=self.root_helper)
 
     def test_add_flow_default_priority(self):
-        flow_dict = OrderedDict([('actions', 'normal')])
+        flow_dict = collections.OrderedDict([('actions', 'normal')])
 
         self.br.add_flow(**flow_dict)
         self.execute.assert_called_once_with(

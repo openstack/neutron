@@ -512,9 +512,6 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
         con = self.sm.HTTPSConnectionWithValidation(
             'www.example.org', 443, timeout=90)
         con.source_address = '127.0.0.1'
-        if not hasattr(con, 'set_tunnel'):
-            # no tunnel support in py26
-            return
         con.set_tunnel('myproxy.local', 3128)
         con.request("GET", "/")
         self.socket_mock.assert_has_calls([mock.call(

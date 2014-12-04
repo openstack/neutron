@@ -637,13 +637,8 @@ class HTTPSConnectionWithValidation(httplib.HTTPSConnection):
     combined_cert = None
 
     def connect(self):
-        try:
-            sock = socket.create_connection((self.host, self.port),
-                                            self.timeout, self.source_address)
-        except AttributeError:
-            # python 2.6 doesn't have the source_address attribute
-            sock = socket.create_connection((self.host, self.port),
-                                            self.timeout)
+        sock = socket.create_connection((self.host, self.port),
+                                        self.timeout, self.source_address)
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
