@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev570.g4216502\n"
+"Project-Id-Version: neutron 2015.1.dev594.g371e9ac\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-03 06:13+0000\n"
+"POT-Creation-Date: 2014-12-04 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,7 +56,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:589 neutron/agent/l3_agent.py:1982
+#: neutron/agent/dhcp_agent.py:589 neutron/agent/l3_agent.py:1984
 #: neutron/agent/metadata/agent.py:411
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:273
@@ -192,14 +192,14 @@ msgstr ""
 msgid "Loaded plugins do not implement extension %s interface"
 msgstr ""
 
-#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:66
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:67
 #, python-format
 msgid ""
 "Unable to schedule network %s: no agents available; will retry on "
 "subsequent port creation events."
 msgstr ""
 
-#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:79
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:80
 #, python-format
 msgid ""
 "Only %(active)d of %(total)d DHCP agents associated with network "
@@ -445,6 +445,17 @@ msgstr ""
 msgid "No policy profile populated from VSM"
 msgstr ""
 
+#: neutron/plugins/hyperv/db.py:138
+#, python-format
+msgid "vlan_id %(vlan_id)s on physical network %(physical_network)s not found"
+msgstr ""
+
+#: neutron/plugins/hyperv/agent/utilsfactory.py:61
+msgid ""
+"V1 virtualization namespace no longer supported on Windows Server / "
+"Hyper-V Server 2012 R2 or above."
+msgstr ""
+
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:83
 msgid "VXLAN is enabled, a valid local_ip must be provided"
 msgstr ""
@@ -478,6 +489,21 @@ msgstr ""
 msgid ""
 "VXLAN muticast group must be provided in vxlan_group option to enable "
 "VXLAN MCAST mode"
+msgstr ""
+
+#: neutron/plugins/midonet/midonet_lib.py:174
+msgid "Tried to delete mapping from non-existent subnet"
+msgstr ""
+
+#: neutron/plugins/midonet/midonet_lib.py:393
+#, python-format
+msgid "Attempted to unlink a port that was not linked. %s"
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:1022
+msgid ""
+"DHCP agent is not working correctly. No port to reach the Metadata server"
+" on this network"
 msgstr ""
 
 #: neutron/plugins/ml2/managers.py:601
@@ -707,6 +733,27 @@ msgstr ""
 msgid ""
 "Creating an interface named %(name)s exceeds the %(limit)d character "
 "limitation. It was shortened to %(new_name)s to fit."
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/eswitch_manager.py:148
+#: neutron/plugins/sriovnicagent/eswitch_manager.py:161
+#, python-format
+msgid "Cannot find vf index for pci slot %s"
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/eswitch_manager.py:286
+#, python-format
+msgid "device pci mismatch: %(device_mac)s - %(pci_slot)s"
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/pci_lib.py:127
+#, python-format
+msgid "Cannot find vfs %(vfs)s in device %(dev_name)s"
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/pci_lib.py:143
+#, python-format
+msgid "failed to parse vf link show line %(line)s: for %(device)s"
 msgstr ""
 
 #: neutron/plugins/vmware/dhcpmeta_modes.py:110
