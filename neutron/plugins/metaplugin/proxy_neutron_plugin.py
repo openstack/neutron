@@ -18,6 +18,7 @@ from oslo.config import cfg
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
+from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log as logging
 from neutronclient.common import exceptions
 from neutronclient.v2_0 import client
@@ -63,14 +64,14 @@ class ProxyPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self._get_client().update_subnet(id, subnet)
         except Exception as e:
-            LOG.error(_("Update subnet failed: %s"), e)
+            LOG.error(_LE("Update subnet failed: %s"), e)
         return subnet_in_db
 
     def delete_subnet(self, context, id):
         try:
             self._get_client().delete_subnet(id)
         except exceptions.NotFound:
-            LOG.warn(_("Subnet in remote have already deleted"))
+            LOG.warn(_LW("Subnet in remote have already deleted"))
         return super(ProxyPluginV2, self).delete_subnet(context, id)
 
     def create_network(self, context, network):
@@ -91,14 +92,14 @@ class ProxyPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self._get_client().update_network(id, network)
         except Exception as e:
-            LOG.error(_("Update network failed: %s"), e)
+            LOG.error(_LE("Update network failed: %s"), e)
         return network_in_db
 
     def delete_network(self, context, id):
         try:
             self._get_client().delete_network(id)
         except exceptions.NetworkNotFoundClient:
-            LOG.warn(_("Network in remote have already deleted"))
+            LOG.warn(_LW("Network in remote have already deleted"))
         return super(ProxyPluginV2, self).delete_network(context, id)
 
     def create_port(self, context, port):
@@ -119,7 +120,7 @@ class ProxyPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self._get_client().update_port(id, port)
         except Exception as e:
-            LOG.error(_("Update port failed: %s"), e)
+            LOG.error(_LE("Update port failed: %s"), e)
         return port_in_db
 
     def delete_port(self, context, id, l3_port_check=True):
@@ -130,5 +131,5 @@ class ProxyPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self._get_client().delete_port(id)
         except exceptions.PortNotFoundClient:
-            LOG.warn(_("Port in remote have already deleted"))
+            LOG.warn(_LW("Port in remote have already deleted"))
         return super(ProxyPluginV2, self).delete_port(context, id)

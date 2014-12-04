@@ -25,6 +25,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import flavor as ext_flavor
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.metaplugin.common import config  # noqa
 from neutron.plugins.metaplugin import meta_db_v2
@@ -69,7 +70,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self, configfile=None):
         super(MetaPluginV2, self).__init__()
-        LOG.debug(_("Start initializing metaplugin"))
+        LOG.debug("Start initializing metaplugin")
         self.supported_extension_aliases = ['flavor', 'external-net']
         if cfg.CONF.META.supported_extension_aliases:
             cfg_aliases = cfg.CONF.META.supported_extension_aliases.split(',')
@@ -162,7 +163,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             _meta_flavor_filter_hook)
 
     def _load_plugin(self, plugin_provider):
-        LOG.debug(_("Plugin location: %s"), plugin_provider)
+        LOG.debug("Plugin location: %s", plugin_provider)
         plugin_klass = importutils.import_class(plugin_provider)
         return plugin_klass()
 
@@ -213,17 +214,17 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             flavor = self.default_flavor
         plugin = self._get_plugin(flavor)
         net = plugin.create_network(context, network)
-        LOG.debug(_("Created network: %(net_id)s with flavor "
-                    "%(flavor)s"), {'net_id': net['id'], 'flavor': flavor})
+        LOG.debug("Created network: %(net_id)s with flavor "
+                  "%(flavor)s", {'net_id': net['id'], 'flavor': flavor})
         try:
             meta_db_v2.add_network_flavor_binding(context.session,
                                                   flavor, str(net['id']))
         except Exception:
-            LOG.exception(_('Failed to add flavor bindings'))
+            LOG.exception(_LE('Failed to add flavor bindings'))
             plugin.delete_network(context, net['id'])
             raise FaildToAddFlavorBinding()
 
-        LOG.debug(_("Created network: %s"), net['id'])
+        LOG.debug("Created network: %s", net['id'])
         self._extend_network_dict(context, net)
         return net
 
@@ -356,18 +357,18 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             flavor = self.default_l3_flavor
         plugin = self._get_l3_plugin(flavor)
         r_in_db = plugin.create_router(context, router)
-        LOG.debug(_("Created router: %(router_id)s with flavor "
-                    "%(flavor)s"),
+        LOG.debug("Created router: %(router_id)s with flavor "
+                  "%(flavor)s",
                   {'router_id': r_in_db['id'], 'flavor': flavor})
         try:
             meta_db_v2.add_router_flavor_binding(context.session,
                                                  flavor, str(r_in_db['id']))
         except Exception:
-            LOG.exception(_('Failed to add flavor bindings'))
+            LOG.exception(_LE('Failed to add flavor bindings'))
             plugin.delete_router(context, r_in_db['id'])
             raise FaildToAddFlavorBinding()
 
-        LOG.debug(_("Created router: %s"), r_in_db['id'])
+        LOG.debug("Created router: %s", r_in_db['id'])
         self._extend_router_dict(context, r_in_db)
         return r_in_db
 
