@@ -150,6 +150,15 @@ class OVSBridge(BaseOVS):
                         port_name])
         return self.get_port_ofport(port_name)
 
+    def replace_port(self, port_name, *interface_attr_tuples):
+        """Replace existing port or create it, and configure port interface."""
+        cmd = ['--', '--if-exists', 'del-port', port_name,
+               '--', 'add-port', self.br_name, port_name]
+        if interface_attr_tuples:
+            cmd += ['--', 'set', 'Interface', port_name]
+            cmd += ['%s=%s' % kv for kv in interface_attr_tuples]
+        self.run_vsctl(cmd)
+
     def delete_port(self, port_name):
         self.run_vsctl(["--", "--if-exists", "del-port", self.br_name,
                         port_name])
