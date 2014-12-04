@@ -25,6 +25,7 @@ eventlet.monkey_patch()
 import netaddr
 from neutron.plugins.openvswitch.agent import ovs_dvr_neutron_agent
 from oslo.config import cfg
+from oslo import messaging
 from six import moves
 
 from neutron.agent import l2population_rpc
@@ -38,7 +39,6 @@ from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as q_const
 from neutron.common import exceptions
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
@@ -96,8 +96,7 @@ class OVSSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         self.init_firewall(defer_refresh_firewall=True)
 
 
-class OVSNeutronAgent(n_rpc.RpcCallback,
-                      sg_rpc.SecurityGroupAgentRpcCallbackMixin,
+class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                       l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       dvr_rpc.DVRAgentRpcCallbackMixin):
     '''Implements OVS-based tunneling, VLANs and flat networks.
@@ -130,7 +129,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
     #   1.2 Support DVR (Distributed Virtual Router) RPC
-    RPC_API_VERSION = '1.2'
+    target = messaging.Target(version='1.2')
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,

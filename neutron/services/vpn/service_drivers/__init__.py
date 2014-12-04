@@ -90,7 +90,7 @@ class BaseIPsecVpnAgentApi(object):
         """
         admin_context = context if context.is_admin else context.elevated()
         if not version:
-            version = self.RPC_API_VERSION
+            version = self.target.version
         l3_agents = self.driver.l3_plugin.get_l3_agents_hosting_routers(
             admin_context, [router_id],
             admin_state_up=True,

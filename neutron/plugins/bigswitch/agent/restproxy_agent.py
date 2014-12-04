@@ -23,6 +23,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo.config import cfg
+from oslo import messaging
 from oslo.utils import excutils
 
 from neutron.agent.linux import ovs_lib
@@ -30,7 +31,6 @@ from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
@@ -84,10 +84,9 @@ class SecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         self.init_firewall()
 
 
-class RestProxyAgent(n_rpc.RpcCallback,
-                     sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     def __init__(self, integ_br, polling_interval, root_helper, vs='ovs'):
         super(RestProxyAgent, self).__init__()

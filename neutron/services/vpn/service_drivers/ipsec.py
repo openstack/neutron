@@ -54,11 +54,10 @@ class IPsecVpnDriverCallBack(object):
         plugin.update_status_by_agent(context, status)
 
 
-class IPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
-                       n_rpc.RpcCallback):
+class IPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi):
     """Agent RPC API for IPsecVPNAgent."""
 
-    RPC_API_VERSION = BASE_IPSEC_VERSION
+    target = messaging.Target(version=BASE_IPSEC_VERSION)
 
     def __init__(self, topic, default_version, driver):
         super(IPsecVpnAgentApi, self).__init__(

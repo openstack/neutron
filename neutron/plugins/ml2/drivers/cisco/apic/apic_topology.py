@@ -58,7 +58,7 @@ LOG = logging.getLogger(__name__)
 
 class ApicTopologyService(manager.Manager):
 
-    RPC_API_VERSION = '1.1'
+    target = messaging.Target(version='1.1')
 
     def __init__(self, host=None):
         if host is None:

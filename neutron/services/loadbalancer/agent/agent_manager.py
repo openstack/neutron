@@ -13,12 +13,12 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo import messaging
 from oslo.utils import importutils
 
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
 from neutron.i18n import _LE, _LI
@@ -44,9 +44,8 @@ class DeviceNotFoundOnAgent(n_exc.NotFound):
     msg = _('Unknown device with pool_id %(pool_id)s')
 
 
-class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
+class LbaasAgentManager(periodic_task.PeriodicTasks):
 
-    RPC_API_VERSION = '2.0'
     # history
     #   1.0 Initial version
     #   1.1 Support agent_updated call
@@ -54,6 +53,7 @@ class LbaasAgentManager(n_rpc.RpcCallback, periodic_task.PeriodicTasks):
     #       - modify/reload/destroy_pool methods were removed;
     #       - added methods to handle create/update/delete for every lbaas
     #       object individually;
+    target = messaging.Target(version='2.0')
 
     def __init__(self, conf):
         super(LbaasAgentManager, self).__init__()

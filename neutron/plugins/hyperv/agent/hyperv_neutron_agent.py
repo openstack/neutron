@@ -30,7 +30,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
 from neutron.i18n import _LE, _LI
@@ -79,10 +78,9 @@ CONF.register_opts(agent_opts, "AGENT")
 config.register_agent_state_opts_helper(cfg.CONF)
 
 
-class HyperVSecurityAgent(n_rpc.RpcCallback,
-                          sg_rpc.SecurityGroupAgentRpcMixin):
-    # Set RPC API version to 1.1 by default.
-    RPC_API_VERSION = '1.1'
+class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpcMixin):
+
+    target = messaging.Target(version='1.1')
 
     def __init__(self, context, plugin_rpc):
         super(HyperVSecurityAgent, self).__init__()
@@ -103,10 +101,9 @@ class HyperVSecurityAgent(n_rpc.RpcCallback,
                                                      consumers)
 
 
-class HyperVSecurityCallbackMixin(n_rpc.RpcCallback,
-                                  sg_rpc.SecurityGroupAgentRpcCallbackMixin):
-    # Set RPC API version to 1.1 by default.
-    RPC_API_VERSION = '1.1'
+class HyperVSecurityCallbackMixin(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+
+    target = messaging.Target(version='1.1')
 
     def __init__(self, sg_agent):
         super(HyperVSecurityCallbackMixin, self).__init__()

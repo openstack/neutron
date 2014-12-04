@@ -35,10 +35,8 @@ from neutron.plugins.ml2.drivers import type_tunnel
 LOG = log.getLogger(__name__)
 
 
-class RpcCallbacks(n_rpc.RpcCallback,
-                   type_tunnel.TunnelRpcCallbackMixin):
+class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
-    RPC_API_VERSION = '1.3'
     # history
     #   1.0 Initial version (from openvswitch/linuxbridge)
     #   1.1 Support Security Group RPC
@@ -46,6 +44,7 @@ class RpcCallbacks(n_rpc.RpcCallback,
     #   1.3 get_device_details rpc signature upgrade to obtain 'host' and
     #       return value to include fixed_ips and device_owner for
     #       the device port
+    target = messaging.Target(version='1.3')
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
