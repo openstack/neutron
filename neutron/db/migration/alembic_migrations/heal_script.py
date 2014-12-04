@@ -27,7 +27,7 @@ from sqlalchemy.sql import text
 from sqlalchemy import types
 
 from neutron.db.migration.models import frozen as frozen_models
-from neutron.i18n import _LI
+from neutron.i18n import _LI, _LW
 
 LOG = logging.getLogger(__name__)
 
@@ -71,12 +71,7 @@ def heal():
     }
     mc = alembic.migration.MigrationContext.configure(op.get_bind(), opts=opts)
     set_storage_engine(op.get_bind(), "InnoDB")
-    diff1 = autogen.compare_metadata(mc, models_metadata)
-    # Alembic does not contain checks for foreign keys. Because of that it
-    # checks separately.
-    added_fks, dropped_fks = check_foreign_keys(models_metadata)
-    diff = dropped_fks + diff1 + added_fks
-    # For each difference run command
+    diff = autogen.compare_metadata(mc, models_metadata)
     for el in diff:
         execute_alembic_command(el)
 
@@ -91,6 +86,8 @@ def execute_alembic_command(command):
         # the next element(s).
         if command[0] in METHODS:
             METHODS[command[0]](*command[1:])
+        else:
+            LOG.warning(_LW("Ignoring alembic command %s"), command[0])
     else:
         # For all commands that changing type, nullable or other parameters
         # of the column is used alter_column method from alembic.
@@ -188,55 +185,22 @@ def remove_constraint(constraint):
 
 
 @alembic_command_method
-def drop_key(fk_name, fk_table):
-    op.drop_constraint(fk_name, fk_table, type_='foreignkey')
+def remove_fk(fk):
+    op.drop_constraint(fk.name, fk.parent.name, type_='foreignkey')
 
 
 @alembic_command_method
-def add_key(fk):
+def add_fk(fk):
     fk_name = fk.name
-    fk_table = fk.parent.table.name
-    fk_ref = fk.column.table.name
-    fk_local_cols = [fk.parent.name]
-    fk_remote_cols = [fk.column.name]
+    # As per Mike Bayer's comment, using _fk_spec method is preferable to
+    # direct access to ForeignKeyConstraint attributes
+    fk_spec = alembic.ddl.base._fk_spec(fk)
+    fk_table = fk_spec[1]
+    fk_ref = fk_spec[4]
+    fk_local_cols = fk_spec[2]
+    fk_remote_cols = fk_spec[5]
     op.create_foreign_key(fk_name, fk_table, fk_ref, fk_local_cols,
                           fk_remote_cols)
-
-
-def check_foreign_keys(metadata):
-    # This methods checks foreign keys that tables contain in models with
-    # foreign keys that are in db.
-    added_fks = []
-    dropped_fks = []
-    bind = op.get_bind()
-    insp = sqlalchemy.engine.reflection.Inspector.from_engine(bind)
-    # Get all tables from db
-    db_tables = insp.get_table_names()
-    # Get all tables from models
-    model_tables = metadata.tables
-    for table in db_tables:
-        if table not in model_tables:
-            continue
-        # Get all necessary information about key of current table from db
-        fk_db = dict((_get_fk_info_db(i), i['name']) for i in
-                     insp.get_foreign_keys(table))
-        fk_db_set = set(fk_db.keys())
-        # Get all necessary information about key of current table from models
-        fk_models = dict((_get_fk_info_from_model(fk), fk) for fk in
-                         model_tables[table].foreign_keys)
-        fk_models_set = set(fk_models.keys())
-        for key in (fk_db_set - fk_models_set):
-            dropped_fks.append(('drop_key', fk_db[key], table))
-            LOG.info(_LI("Detected removed foreign key %(fk)r on "
-                         "table %(table)r"),
-                     {'fk': fk_db[key], 'table': table})
-        for key in (fk_models_set - fk_db_set):
-            added_fks.append(('add_key', fk_models[key]))
-            LOG.info(_LI("Detected added foreign key for column %(fk)r on "
-                         "table %(table)r"),
-                     {'fk': fk_models[key].column.name,
-                      'table': table})
-    return (added_fks, dropped_fks)
 
 
 def check_if_table_exists(table):
@@ -262,15 +226,6 @@ def rename(table):
 
 def column_names(obj):
     return [col.name for col in obj.columns if hasattr(col, 'name')]
-
-
-def _get_fk_info_db(fk):
-    return (tuple(fk['constrained_columns']), fk['referred_table'],
-            tuple(fk['referred_columns']))
-
-
-def _get_fk_info_from_model(fk):
-    return ((fk.parent.name,), fk.column.table.name, (fk.column.name,))
 
 
 def _compare_type(ctxt, insp_col, meta_col, insp_type, meta_type):
