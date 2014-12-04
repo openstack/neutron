@@ -17,6 +17,7 @@ import functools
 
 from heleosapi import exceptions as h_exc
 
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.embrane.common import constants as p_con
 
@@ -92,8 +93,8 @@ def _delete_dva(api, tenant_id, neutron_router):
     try:
         api.delete_dva(tenant_id, neutron_router["id"])
     except h_exc.DvaNotFound:
-        LOG.warning(_("The router %s had no physical representation,"
-                      "likely already deleted"), neutron_router["id"])
+        LOG.warning(_LW("The router %s had no physical representation,"
+                        "likely already deleted"), neutron_router["id"])
     return p_con.Status.DELETED
 
 
@@ -121,8 +122,8 @@ def _shrink_dva_iface(api, tenant_id, neutron_router, port_id):
         dva = api.shrink_interface(tenant_id, neutron_router["id"],
                                    neutron_router["admin_state_up"], port_id)
     except h_exc.InterfaceNotFound:
-        LOG.warning(_("Interface %s not found in the heleos back-end,"
-                      "likely already deleted"), port_id)
+        LOG.warning(_LW("Interface %s not found in the heleos back-end,"
+                        "likely already deleted"), port_id)
         return (p_con.Status.ACTIVE if neutron_router["admin_state_up"] else
                 p_con.Status.READY)
     except h_exc.PreliminaryOperationsFailed as ex:

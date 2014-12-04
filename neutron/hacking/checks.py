@@ -78,7 +78,7 @@ def _directory_to_check_translation(filename):
             #"neutron/plugins/brocade",
             "neutron/plugins/cisco",
             "neutron/plugins/common",
-            #"neutron/plugins/embrane",
+            "neutron/plugins/embrane",
             "neutron/plugins/hyperv",
             #"neutron/plugins/ibm",
             "neutron/plugins/linuxbridge",
