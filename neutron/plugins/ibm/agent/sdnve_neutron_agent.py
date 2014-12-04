@@ -46,8 +46,8 @@ cfg.CONF.import_group('SDNVE_AGENT', 'neutron.plugins.ibm.common.config')
 class SdnvePluginApi(agent_rpc.PluginApi):
 
     def sdnve_info(self, context, info):
-        return self.call(context,
-                         self.make_msg('sdnve_info', info=info))
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'sdnve_info', info=info)
 
 
 class SdnveNeutronAgent(object):
