@@ -87,7 +87,7 @@ def _directory_to_check_translation(filename):
             "neutron/plugins/ml2",
             "neutron/plugins/mlnx",
             #"neutron/plugins/nec",
-            #"neutron/plugins/nuage",
+            "neutron/plugins/nuage",
             #"neutron/plugins/ofagent",
             #"neutron/plugins/oneconvergence",
             "neutron/plugins/opencontrail",
