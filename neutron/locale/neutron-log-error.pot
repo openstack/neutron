@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev570.g4216502\n"
+"Project-Id-Version: neutron 2015.1.dev594.g371e9ac\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-03 06:13+0000\n"
+"POT-Creation-Date: 2014-12-04 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,18 +48,20 @@ msgstr ""
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:595 neutron/agent/l3_agent.py:1987
+#: neutron/agent/dhcp_agent.py:595 neutron/agent/l3_agent.py:1989
 #: neutron/agent/metadata/agent.py:416
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:151
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:795
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:216
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:277
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:277
+#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:132
 #: neutron/services/loadbalancer/agent/agent_manager.py:120
 #: neutron/services/metering/agents/metering_agent.py:278
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:507 neutron/tests/unit/test_l3_agent.py:1947
+#: neutron/agent/l3_agent.py:507 neutron/tests/unit/test_l3_agent.py:1939
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
@@ -101,42 +103,42 @@ msgstr ""
 msgid "DVR: no map match_port found!"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1463
+#: neutron/agent/l3_agent.py:1465
 msgid "DVR: error adding redirection logic"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1475
+#: neutron/agent/l3_agent.py:1477
 msgid "DVR: removed snat failed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1571
+#: neutron/agent/l3_agent.py:1573
 msgid "Missing subnet/agent_gateway_port"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1714
+#: neutron/agent/l3_agent.py:1716
 msgid "DVR: Failed updating arp entry"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1763
+#: neutron/agent/l3_agent.py:1765
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1803
+#: neutron/agent/l3_agent.py:1805
 #, python-format
 msgid "Failed to fetch router information for '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1821
+#: neutron/agent/l3_agent.py:1823
 #, python-format
 msgid "Removing incompatible router '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1858
+#: neutron/agent/l3_agent.py:1860
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1861
+#: neutron/agent/l3_agent.py:1863
 #: neutron/services/metering/agents/metering_agent.py:62
 msgid "Failed synchronizing routers"
 msgstr ""
@@ -227,6 +229,9 @@ msgid "Failed unplugging interface '%s'"
 msgstr ""
 
 #: neutron/agent/linux/ip_link_support.py:107
+#: neutron/plugins/sriovnicagent/pci_lib.py:57
+#: neutron/plugins/sriovnicagent/pci_lib.py:79
+#: neutron/plugins/sriovnicagent/pci_lib.py:106
 msgid "Failed executing ip command"
 msgstr ""
 
@@ -303,7 +308,7 @@ msgstr ""
 msgid "Extension path '%s' doesn't exist!"
 msgstr ""
 
-#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:91
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:92
 #, python-format
 msgid ""
 "Will not send event %(method)s for network %(net_id)s: no agent "
@@ -456,12 +461,12 @@ msgstr ""
 msgid "Unhandled exception"
 msgstr ""
 
-#: neutron/plugins/bigswitch/l3_router_plugin.py:213
+#: neutron/plugins/bigswitch/l3_router_plugin.py:218
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/l3_router_plugin.py:282
+#: neutron/plugins/bigswitch/l3_router_plugin.py:287
 msgid "NeutronRestProxyV2: too many external networks"
 msgstr ""
 
@@ -515,6 +520,7 @@ msgid "Encountered an error checking controller health."
 msgstr ""
 
 #: neutron/plugins/bigswitch/agent/restproxy_agent.py:155
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:451
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:386
 msgid "Error in agent event loop"
 msgstr ""
@@ -737,6 +743,27 @@ msgstr ""
 msgid "Unable to delete port '%(pname)s' on switch. Exception: %(exp)s"
 msgstr ""
 
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:302
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:115
+#, python-format
+msgid "Unsupported network type %s"
+msgstr ""
+
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:332
+#, python-format
+msgid "Port metrics raw enabling for port: %s"
+msgstr ""
+
+#: neutron/plugins/hyperv/agent/security_groups_driver.py:62
+#, python-format
+msgid "Hyper-V Exception: %(hyperv_exeption)s while adding rule: %(rule)s"
+msgstr ""
+
+#: neutron/plugins/hyperv/agent/security_groups_driver.py:72
+#, python-format
+msgid "Hyper-V Exception: %(hyperv_exeption)s while removing rule: %(rule)s"
+msgstr ""
+
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:183
 #, python-format
 msgid "Failed creating vxlan interface for %(segmentation_id)s"
@@ -782,6 +809,7 @@ msgid "Unable to obtain MAC address for unique ID. Agent terminated!"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1003
+#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:275
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr ""
@@ -790,6 +818,38 @@ msgstr ""
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:407
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:187
+#, python-format
+msgid "There is no %(name)s with ID %(id)s in MidoNet."
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:580
+#, python-format
+msgid "Failed to create a port on network %(net_id)s: %(err)s"
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:597
+#, python-format
+msgid "There is no port with ID %(id)s in MidoNet."
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:649
+#, python-format
+msgid "Failed to delete DHCP mapping for port %(id)s"
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:1031
+#, python-format
+msgid ""
+"Failed to create MidoNet resources to add router interface. "
+"info=%(info)s, router_id=%(router_id)s"
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:1148
+#, python-format
+msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
 #: neutron/plugins/ml2/db.py:207 neutron/plugins/ml2/db.py:291
@@ -1105,11 +1165,6 @@ msgstr ""
 msgid "Agent cache inconsistency - port id is not stored for %s"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:115
-#, python-format
-msgid "Unsupported network type %s"
-msgstr ""
-
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:134
 #, python-format
 msgid "Unknown network type %(network_type)s for network %(network_id)s"
@@ -1297,6 +1352,24 @@ msgstr ""
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1552
 #, python-format
 msgid "%s Agent terminated!"
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/eswitch_manager.py:47
+#, python-format
+msgid "Failed to get devices for %s"
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:182
+#, python-format
+msgid "Failed to set device %s state"
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:335
+msgid "Failed on Agent configuration parse. Agent terminated!"
+msgstr ""
+
+#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:349
+msgid "Agent Initialization Failed"
 msgstr ""
 
 #: neutron/plugins/vmware/api_client/base.py:184
