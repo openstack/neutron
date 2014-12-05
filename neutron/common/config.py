@@ -142,7 +142,7 @@ db_options.set_defaults(cfg.CONF,
 
 def init(args, **kwargs):
     cfg.CONF(args=args, project='neutron',
-             version='%%prog %s' % version.version_info.release_string(),
+             version='%%(prog)s %s' % version.version_info.release_string(),
              **kwargs)
 
     # FIXME(ihrachys): if import is put in global, circular import
