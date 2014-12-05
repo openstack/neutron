@@ -39,12 +39,6 @@ from neutron import manager
 from neutron.tests import base
 from neutron.tests.unit import test_extension_security_group as test_sg
 
-try:
-    OrderedDict = collections.OrderedDict
-except AttributeError:
-    import ordereddict
-    OrderedDict = ordereddict.OrderedDict
-
 FAKE_PREFIX = {const.IPv4: '10.0.0.0/24',
                const.IPv6: '2001:db8::/64'}
 FAKE_IP = {const.IPv4: '10.0.0.1',
@@ -1210,10 +1204,9 @@ class SecurityGroupAgentEnhancedRpcTestCase(
         super(SecurityGroupAgentEnhancedRpcTestCase, self).setUp(
             defer_refresh_firewall=defer_refresh_firewall)
         fake_sg_info = {
-            'security_groups':
-                OrderedDict([
-                    ('fake_sgid2', []),
-                    ('fake_sgid1', [{'remote_group_id': 'fake_sgid2'}])]),
+            'security_groups': collections.OrderedDict([
+                ('fake_sgid2', []),
+                ('fake_sgid1', [{'remote_group_id': 'fake_sgid2'}])]),
             'sg_member_ips': {'fake_sgid2': {'IPv4': [], 'IPv6': []}},
             'devices': self.firewall.ports}
         self.agent.plugin_rpc.security_group_info_for_devices.return_value = (
