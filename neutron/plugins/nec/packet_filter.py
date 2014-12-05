@@ -14,6 +14,7 @@
 
 from oslo.utils import excutils
 
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
@@ -36,12 +37,12 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
 
     def remove_packet_filter_extension_if_disabled(self, aliases):
         if not self.packet_filter_enabled:
-            LOG.debug(_('Disabled packet-filter extension.'))
+            LOG.debug('Disabled packet-filter extension.')
             aliases.remove('packet-filter')
 
     def create_packet_filter(self, context, packet_filter):
         """Create a new packet_filter entry on DB, then try to activate it."""
-        LOG.debug(_("create_packet_filter() called, packet_filter=%s ."),
+        LOG.debug("create_packet_filter() called, packet_filter=%s .",
                   packet_filter)
 
         if hasattr(self.ofc.driver, 'validate_filter_create'):
@@ -57,8 +58,8 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
 
         If any rule of the packet_filter was changed, recreate it on OFC.
         """
-        LOG.debug(_("update_packet_filter() called, "
-                    "id=%(id)s packet_filter=%(packet_filter)s ."),
+        LOG.debug("update_packet_filter() called, "
+                  "id=%(id)s packet_filter=%(packet_filter)s .",
                   {'id': id, 'packet_filter': packet_filter})
 
         pf_data = packet_filter['packet_filter']
@@ -130,8 +131,8 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
             with excutils.save_and_reraise_exception():
                 if (isinstance(exc, nexc.OFCException) or
                     isinstance(exc, nexc.OFCConsistencyBroken)):
-                    LOG.error(_("Failed to create packet_filter id=%(id)s on "
-                                "OFC: %(exc)s"),
+                    LOG.error(_LE("Failed to create packet_filter id=%(id)s "
+                                  "on OFC: %(exc)s"),
                               {'id': pf_id, 'exc': exc})
                 new_status = pf_db.PF_STATUS_ERROR
                 if new_status != prev_status:
@@ -140,7 +141,7 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
 
     def delete_packet_filter(self, context, id):
         """Deactivate and delete packet_filter."""
-        LOG.debug(_("delete_packet_filter() called, id=%s ."), id)
+        LOG.debug("delete_packet_filter() called, id=%s .", id)
 
         # validate ownership
         pf = self.get_packet_filter(context, id)
@@ -158,32 +159,32 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
             * packet_filter admin_state is UP
             * (if 'in_port' is specified) portinfo is available
         """
-        LOG.debug(_("activate_packet_filter_if_ready() called, "
-                    "packet_filter=%s."), packet_filter)
+        LOG.debug("activate_packet_filter_if_ready() called, "
+                  "packet_filter=%s.", packet_filter)
 
         pf_id = packet_filter['id']
         current = packet_filter['status']
 
         pf_status = current
         if not packet_filter['admin_state_up']:
-            LOG.debug(_("activate_packet_filter_if_ready(): skip pf_id=%s, "
-                        "packet_filter.admin_state_up is False."), pf_id)
+            LOG.debug("activate_packet_filter_if_ready(): skip pf_id=%s, "
+                      "packet_filter.admin_state_up is False.", pf_id)
         elif self.ofc.exists_ofc_packet_filter(context, packet_filter['id']):
-            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
-                        "ofc_packet_filter already exists."))
+            LOG.debug("_activate_packet_filter_if_ready(): skip, "
+                      "ofc_packet_filter already exists.")
         else:
-            LOG.debug(_("activate_packet_filter_if_ready(): create "
-                        "packet_filter id=%s on OFC."), pf_id)
+            LOG.debug("activate_packet_filter_if_ready(): create "
+                      "packet_filter id=%s on OFC.", pf_id)
             try:
                 self.ofc.create_ofc_packet_filter(context, pf_id,
                                                   packet_filter)
                 pf_status = pf_db.PF_STATUS_ACTIVE
             except nexc.PortInfoNotFound:
-                LOG.debug(_("Skipped to create a packet filter pf_id=%s "
-                            "on OFC, no portinfo for the in_port."), pf_id)
+                LOG.debug("Skipped to create a packet filter pf_id=%s "
+                          "on OFC, no portinfo for the in_port.", pf_id)
             except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
-                LOG.error(_("Failed to create packet_filter id=%(id)s on "
-                            "OFC: %(exc)s"), {'id': pf_id, 'exc': exc})
+                LOG.error(_LE("Failed to create packet_filter id=%(id)s on "
+                              "OFC: %(exc)s"), {'id': pf_id, 'exc': exc})
                 pf_status = pf_db.PF_STATUS_ERROR
 
         if pf_status != current:
@@ -195,18 +196,18 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
 
     def deactivate_packet_filter(self, context, packet_filter):
         """Deactivate packet_filter by deleting filter from OFC if exixts."""
-        LOG.debug(_("deactivate_packet_filter_if_ready() called, "
-                    "packet_filter=%s."), packet_filter)
+        LOG.debug("deactivate_packet_filter_if_ready() called, "
+                  "packet_filter=%s.", packet_filter)
         pf_id = packet_filter['id']
 
         if not self.ofc.exists_ofc_packet_filter(context, pf_id):
-            LOG.debug(_("deactivate_packet_filter(): skip, "
-                        "Not found OFC Mapping for packet_filter id=%s."),
+            LOG.debug("deactivate_packet_filter(): skip, "
+                      "Not found OFC Mapping for packet_filter id=%s.",
                       pf_id)
             return packet_filter
 
-        LOG.debug(_("deactivate_packet_filter(): "
-                    "deleting packet_filter id=%s from OFC."), pf_id)
+        LOG.debug("deactivate_packet_filter(): "
+                  "deleting packet_filter id=%s from OFC.", pf_id)
         try:
             self.ofc.delete_ofc_packet_filter(context, pf_id)
             self._update_resource_status_if_changed(
@@ -214,8 +215,8 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
             return packet_filter
         except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("Failed to delete packet_filter id=%(id)s "
-                            "from OFC: %(exc)s"),
+                LOG.error(_LE("Failed to delete packet_filter id=%(id)s "
+                              "from OFC: %(exc)s"),
                           {'id': pf_id, 'exc': str(exc)})
                 self._update_resource_status_if_changed(
                     context, "packet_filter", packet_filter,

@@ -20,6 +20,7 @@ import six
 
 from neutron.common import log as call_log
 from neutron.common import utils
+from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import constants as nconst
 from neutron.plugins.nec.common import exceptions as nexc
@@ -120,8 +121,7 @@ class RouterOpenFlowDriver(RouterDriverBase):
                 if (isinstance(exc, nexc.OFCException) and
                     exc.status == httplib.CONFLICT):
                     raise nexc.RouterOverLimit(provider=PROVIDER_OPENFLOW)
-                reason = _("create_router() failed due to %s") % exc
-                LOG.error(reason)
+                LOG.error(_LE("create_router() failed due to %s"), exc)
                 new_status = nconst.ROUTER_STATUS_ERROR
                 self._update_resource_status(context, "router",
                                              router['id'],
@@ -149,8 +149,8 @@ class RouterOpenFlowDriver(RouterDriverBase):
                 new_router['status'] = new_status
             except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
                 with excutils.save_and_reraise_exception():
-                    reason = _("_update_ofc_routes() failed due to %s") % exc
-                    LOG.error(reason)
+                    LOG.error(_LE("_update_ofc_routes() failed due to %s"),
+                              exc)
                     new_status = nconst.ROUTER_STATUS_ERROR
                     self.plugin._update_resource_status(
                         context, "router", router_id, new_status)
@@ -164,7 +164,7 @@ class RouterOpenFlowDriver(RouterDriverBase):
             self.ofc.delete_ofc_router(context, router_id, router)
         except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("delete_router() failed due to %s"), exc)
+                LOG.error(_LE("delete_router() failed due to %s"), exc)
                 self.plugin._update_resource_status(
                     context, "router", router_id, nconst.ROUTER_STATUS_ERROR)
 
@@ -175,10 +175,11 @@ class RouterOpenFlowDriver(RouterDriverBase):
         # Such port is invalid for a router port and we don't create a port
         # on OFC. The port is removed in l3_db._create_router_gw_port.
         if not port['fixed_ips']:
-            msg = _('RouterOpenFlowDriver.add_interface(): the requested port '
-                    'has no subnet. add_interface() is skipped. '
-                    'router_id=%(id)s, port=%(port)s)')
-            LOG.warning(msg, {'id': router_id, 'port': port})
+            LOG.warning(_LW('RouterOpenFlowDriver.add_interface(): the '
+                            'requested port '
+                            'has no subnet. add_interface() is skipped. '
+                            'router_id=%(id)s, port=%(port)s)'),
+                        {'id': router_id, 'port': port})
             return port
         fixed_ip = port['fixed_ips'][0]
         subnet = self.plugin._get_subnet(context, fixed_ip['subnet_id'])
@@ -195,8 +196,7 @@ class RouterOpenFlowDriver(RouterDriverBase):
             return port
         except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
             with excutils.save_and_reraise_exception():
-                reason = _("add_router_interface() failed due to %s") % exc
-                LOG.error(reason)
+                LOG.error(_LE("add_router_interface() failed due to %s"), exc)
                 new_status = nconst.ROUTER_STATUS_ERROR
                 self.plugin._update_resource_status(
                     context, "port", port_id, new_status)
@@ -213,8 +213,8 @@ class RouterOpenFlowDriver(RouterDriverBase):
             return port
         except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
             with excutils.save_and_reraise_exception():
-                reason = _("delete_router_interface() failed due to %s") % exc
-                LOG.error(reason)
+                LOG.error(_LE("delete_router_interface() failed due to %s"),
+                          exc)
                 new_status = nconst.ROUTER_STATUS_ERROR
                 self.plugin._update_resource_status(context, "port", port_id,
                                                     new_status)

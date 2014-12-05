@@ -36,6 +36,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.nec.common import config
@@ -49,8 +50,8 @@ class NECPluginApi(agent_rpc.PluginApi):
     def update_ports(self, context, agent_id, datapath_id,
                      port_added, port_removed):
         """RPC to update information of ports on Neutron Server."""
-        LOG.info(_("Update ports: added=%(added)s, "
-                   "removed=%(removed)s"),
+        LOG.info(_LI("Update ports: added=%(added)s, "
+                     "removed=%(removed)s"),
                  {'added': port_added, 'removed': port_removed})
         cctxt = self.client.prepare()
         return cctxt.call(context, 'update_ports',
@@ -71,7 +72,7 @@ class NECAgentRpcCallback(object):
         self.sg_agent = sg_agent
 
     def port_update(self, context, **kwargs):
-        LOG.debug(_("port_update received: %s"), kwargs)
+        LOG.debug("port_update received: %s", kwargs)
         port = kwargs.get('port')
         # Validate that port is on OVS
         vif_port = self.agent.int_br.get_vif_port_by_id(port['id'])
@@ -137,7 +138,7 @@ class NECNeutronAgent(object):
     def setup_rpc(self):
         self.host = socket.gethostname()
         self.agent_id = 'nec-q-agent.%s' % self.host
-        LOG.info(_("RPC agent_id: %s"), self.agent_id)
+        LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
         self.context = q_context.get_admin_context_without_session()
@@ -175,7 +176,7 @@ class NECNeutronAgent(object):
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
         except Exception:
-            LOG.exception(_("Failed reporting state!"))
+            LOG.exception(_LE("Failed reporting state!"))
 
     def _vif_port_to_port_info(self, vif_port):
         return dict(id=vif_port.vif_id, port_no=vif_port.ofport,
@@ -213,12 +214,12 @@ class NECNeutronAgent(object):
                                              port_added, port_removed)
                 self._process_security_group(port_added, port_removed)
             else:
-                LOG.debug(_("No port changed."))
+                LOG.debug("No port changed.")
 
             self.cur_ports = new_ports
             self.need_sync = False
         except Exception:
-            LOG.exception(_("Error in agent event loop"))
+            LOG.exception(_LE("Error in agent event loop"))
             self.need_sync = True
 
     def daemon_loop(self):
