@@ -20,6 +20,7 @@ to the PLUMgrid Network Management System called Director
 
 from plumgridlib import plumlib
 
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class Plumlib(object):
     """
 
     def __init__(self):
-        LOG.info(_('Python PLUMgrid Library Started '))
+        LOG.info(_LI('Python PLUMgrid Library Started '))
 
     def director_conn(self, director_plumgrid, director_port, timeout,
                       director_admin, director_password):
