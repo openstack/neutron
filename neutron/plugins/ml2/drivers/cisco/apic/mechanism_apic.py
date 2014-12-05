@@ -17,9 +17,9 @@ from apicapi import apic_manager
 from keystoneclient.v2_0 import client as keyclient
 import netaddr
 from oslo.config import cfg
+from oslo_concurrency import lockutils
 
 from neutron.common import constants as n_constants
-from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api

@@ -29,6 +29,7 @@ import os.path
 import fixtures
 from oslo.config import cfg
 from oslo.messaging import conffixture as messaging_conffixture
+from oslo_concurrency.fixture import lockutils
 
 from neutron.common import config
 from neutron.common import rpc as n_rpc
@@ -84,6 +85,8 @@ class BaseTestCase(sub_base.SubBaseTestCase):
                 level=std_logging.ERROR,
                 nuke_handlers=capture_logs,
             ))
+
+        self.useFixture(lockutils.ExternalLockFixture())
 
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
         cfg.CONF.set_override('state_path', self.temp_dir)

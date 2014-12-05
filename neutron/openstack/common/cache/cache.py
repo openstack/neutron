@@ -20,6 +20,20 @@ Supported configuration options:
 `key_namespace`: Namespace under which keys will be created.
 """
 
+########################################################################
+#
+# THIS MODULE IS DEPRECATED
+#
+# Please refer to
+# https://etherpad.openstack.org/p/kilo-neutron-library-proposals for
+# the discussion leading to this deprecation.
+#
+# We recommend helping with the new neutron.cache library being created
+# as a wrapper for dogpile.
+#
+########################################################################
+
+
 from six.moves.urllib import parse
 from stevedore import driver
 

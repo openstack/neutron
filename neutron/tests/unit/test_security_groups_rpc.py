@@ -2515,9 +2515,6 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         super(TestSecurityGroupAgentWithIptables, self).setUp()
         config.register_root_helper(cfg.CONF)
         config.register_iptables_opts(cfg.CONF)
-        cfg.CONF.set_override(
-            'lock_path',
-            '$state_path/lock')
         set_firewall_driver(self.FIREWALL_DRIVER)
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
         cfg.CONF.set_override('comment_iptables_rules', False, group='AGENT')
