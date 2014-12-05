@@ -27,7 +27,7 @@ current tests should be passing.
 Virtual environments
 ~~~~~~~~~~~~~~~~~~~~
 
-Testing OpenStack projects, including Neutron, is made easier with `DevStack <https://github.com/openstack-dev/devstack>`_.
+Testing OpenStack projects, including Neutron, is made easier with `DevStack <https://git.openstack.org/cgit/openstack-dev/devstack>`_.
 
 Create a machine (such as a VM or Vagrant box) running a distribution supported
 by DevStack and install DevStack there. For example, there is a Vagrant script
