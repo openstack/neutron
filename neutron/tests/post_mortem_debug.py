@@ -16,25 +16,23 @@
 import functools
 import traceback
 
-DEFAULT_DEBUGGER = 'pdb'
 
-
-def get_exception_handler(debugger_name=None):
-    debugger = _get_debugger(debugger_name or DEFAULT_DEBUGGER)
+def get_exception_handler(debugger_name):
+    debugger = _get_debugger(debugger_name)
     return functools.partial(_exception_handler, debugger)
 
 
 def _get_debugger(debugger_name):
     try:
         debugger = __import__(debugger_name)
-        if 'post_mortem' in dir(debugger):
-            return debugger
     except ImportError:
-        raise ValueError(
-            _("can't import %s module as a post mortem debugger") %
-            debugger_name)
-    raise ValueError(
-        _("%s is not a supported post mortem debugger") % debugger_name)
+        raise ValueError("can't import %s module as a post mortem debugger" %
+                         debugger_name)
+    if 'post_mortem' in dir(debugger):
+        return debugger
+    else:
+        raise ValueError("%s is not a supported post mortem debugger" %
+                         debugger_name)
 
 
 def _exception_handler(debugger, exc_info):
