@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.ibm.common import constants
 
@@ -27,36 +28,36 @@ class FakeClient():
     '''Fake Client for SDNVE controller.'''
 
     def __init__(self, **kwargs):
-        LOG.info(_('Fake SDNVE controller initialized'))
+        LOG.info(_LI('Fake SDNVE controller initialized'))
 
     def sdnve_list(self, resource, **_params):
-        LOG.info(_('Fake SDNVE controller: list'))
+        LOG.info(_LI('Fake SDNVE controller: list'))
         return (HTTP_OK, None)
 
     def sdnve_show(self, resource, specific, **_params):
-        LOG.info(_('Fake SDNVE controller: show'))
+        LOG.info(_LI('Fake SDNVE controller: show'))
         return (HTTP_OK, None)
 
     def sdnve_create(self, resource, body):
-        LOG.info(_('Fake SDNVE controller: create'))
+        LOG.info(_LI('Fake SDNVE controller: create'))
         return (HTTP_OK, None)
 
     def sdnve_update(self, resource, specific, body=None):
-        LOG.info(_('Fake SDNVE controller: update'))
+        LOG.info(_LI('Fake SDNVE controller: update'))
         return (HTTP_OK, None)
 
     def sdnve_delete(self, resource, specific):
-        LOG.info(_('Fake SDNVE controller: delete'))
+        LOG.info(_LI('Fake SDNVE controller: delete'))
         return (HTTP_OK, None)
 
     def sdnve_get_tenant_byid(self, id):
-        LOG.info(_('Fake SDNVE controller: get tenant by id'))
+        LOG.info(_LI('Fake SDNVE controller: get tenant by id'))
         return id, constants.TENANT_TYPE_OF
 
     def sdnve_check_and_create_tenant(self, id, network_type=None):
-        LOG.info(_('Fake SDNVE controller: check and create tenant'))
+        LOG.info(_LI('Fake SDNVE controller: check and create tenant'))
         return id
 
     def sdnve_get_controller(self):
-        LOG.info(_('Fake SDNVE controller: get controller'))
+        LOG.info(_LI('Fake SDNVE controller: get controller'))
         return None
