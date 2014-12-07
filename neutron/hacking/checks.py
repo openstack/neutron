@@ -31,8 +31,6 @@ Guidelines for writing new hacking checks
 
 """
 
-log_translation = re.compile(
-    r"(.)*LOG\.(audit|error|info|warn|warning|critical|exception)\(\s*('|\")")
 author_tag_re = (re.compile("^\s*#\s*@?(a|A)uthor"),
                  re.compile("^\.\.\s+moduleauthor::"))
 _all_hints = set(['_', '_LI', '_LE', '_LW', '_LC'])
@@ -55,64 +53,17 @@ for level, hint in _all_log_levels.iteritems():
     log_translation_hints.append(re.compile(r))
 
 
-def _directory_to_check_translation(filename):
-    # In order to try and speed up the integration of this we will
-    # do it on a directory by directory basis. The last patch of the
-    # series will remove this and the entire code base will be validated.
-    dirs = ["neutron/agent",
-            "neutron/api",
-            "neutron/cmd",
-            "neutron/common",
-            "neutron/db",
-            "neutron/debug",
-            "neutron/extensions",
-            "neutron/hacking",
-            "neutron/locale",
-            "neutron/notifiers",
-            "neutron/openstack",
-            "neutron/scheduler",
-            "neutron/server",
-            "neutron/services",
-            #"neutron/plugins",
-            "neutron/plugins/bigswitch",
-            "neutron/plugins/brocade",
-            "neutron/plugins/cisco",
-            "neutron/plugins/common",
-            "neutron/plugins/embrane",
-            "neutron/plugins/hyperv",
-            "neutron/plugins/ibm",
-            "neutron/plugins/linuxbridge",
-            "neutron/plugins/metaplugin",
-            "neutron/plugins/midonet",
-            "neutron/plugins/ml2",
-            "neutron/plugins/mlnx",
-            "neutron/plugins/nec",
-            "neutron/plugins/nuage",
-            "neutron/plugins/ofagent",
-            "neutron/plugins/oneconvergence",
-            "neutron/plugins/opencontrail",
-            "neutron/plugins/openvswitch",
-            "neutron/plugins/plumgrid",
-            "neutron/plugins/sriovnicagent",
-            "neutron/plugins/vmware"]
-    return any([dir in filename for dir in dirs])
-
-
 def validate_log_translations(logical_line, physical_line, filename):
     # Translations are not required in the test directory
     if "neutron/tests" in filename:
         return
     if pep8.noqa(physical_line):
         return
-    msg = "N320: Log messages require translations!"
-    if log_translation.match(logical_line):
-        yield (0, msg)
 
-    if _directory_to_check_translation(filename):
-        msg = "N320: Log messages require translation hints!"
-        for log_translation_hint in log_translation_hints:
-            if log_translation_hint.match(logical_line):
-                yield (0, msg)
+    msg = "N320: Log messages require translation hints!"
+    for log_translation_hint in log_translation_hints:
+        if log_translation_hint.match(logical_line):
+            yield (0, msg)
 
 
 def use_jsonutils(logical_line, filename):
@@ -156,10 +107,9 @@ def no_translate_debug_logs(logical_line, filename):
     * This check assumes that 'LOG' is a logger.
     N319
     """
-    if _directory_to_check_translation(filename):
-        for hint in _all_hints:
-            if logical_line.startswith("LOG.debug(%s(" % hint):
-                yield(0, "N319 Don't translate debug level logs")
+    for hint in _all_hints:
+        if logical_line.startswith("LOG.debug(%s(" % hint):
+            yield(0, "N319 Don't translate debug level logs")
 
 
 def check_assert_called_once_with(logical_line, filename):

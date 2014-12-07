@@ -21,6 +21,7 @@ from oslo.utils import importutils
 import webob
 
 from neutron.common import exceptions
+from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -223,12 +224,12 @@ class QuotaEngine(object):
                     QUOTA_DB_MODULE not in sys.modules):
                 # If quotas table is not loaded, force config quota driver.
                 _driver_class = QUOTA_CONF_DRIVER
-                LOG.info(_("ConfDriver is used as quota_driver because the "
-                           "loaded plugin does not support 'quotas' table."))
+                LOG.info(_LI("ConfDriver is used as quota_driver because the "
+                             "loaded plugin does not support 'quotas' table."))
             if isinstance(_driver_class, basestring):
                 _driver_class = importutils.import_object(_driver_class)
             self._driver = _driver_class
-            LOG.info(_('Loaded quota_driver: %s.'), _driver_class)
+            LOG.info(_LI('Loaded quota_driver: %s.'), _driver_class)
         return self._driver
 
     def __contains__(self, resource):
@@ -237,7 +238,7 @@ class QuotaEngine(object):
     def register_resource(self, resource):
         """Register a resource."""
         if resource.name in self._resources:
-            LOG.warn(_('%s is already registered.'), resource.name)
+            LOG.warn(_LW('%s is already registered.'), resource.name)
             return
         self._resources[resource.name] = resource
 

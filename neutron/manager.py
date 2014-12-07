@@ -20,6 +20,7 @@ from oslo import messaging
 from oslo.utils import importutils
 
 from neutron.common import utils
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import periodic_task
 from neutron.plugins.common import constants
@@ -109,7 +110,7 @@ class NeutronManager(object):
         #                intentionally to allow v2 plugins to be monitored
         #                for performance metrics.
         plugin_provider = cfg.CONF.core_plugin
-        LOG.info(_("Loading core plugin: %s"), plugin_provider)
+        LOG.info(_LI("Loading core plugin: %s"), plugin_provider)
         self.plugin = self._get_plugin_instance('neutron.core_plugins',
                                                 plugin_provider)
         msg = validate_post_plugin_load()
@@ -134,14 +135,14 @@ class NeutronManager(object):
             try:
                 plugin_class = importutils.import_class(plugin_provider)
             except ImportError as e2:
-                LOG.exception(_("Error loading plugin by name, %s"), e1)
-                LOG.exception(_("Error loading plugin by class, %s"), e2)
+                LOG.exception(_LE("Error loading plugin by name, %s"), e1)
+                LOG.exception(_LE("Error loading plugin by class, %s"), e2)
                 raise ImportError(_("Plugin not found."))
         return plugin_class()
 
     def _load_services_from_core_plugin(self):
         """Puts core plugin in service_plugins for supported services."""
-        LOG.debug(_("Loading services supported by the core plugin"))
+        LOG.debug("Loading services supported by the core plugin")
 
         # supported service types are derived from supported extensions
         for ext_alias in getattr(self.plugin,
@@ -149,7 +150,7 @@ class NeutronManager(object):
             if ext_alias in constants.EXT_TO_SERVICE_MAPPING:
                 service_type = constants.EXT_TO_SERVICE_MAPPING[ext_alias]
                 self.service_plugins[service_type] = self.plugin
-                LOG.info(_("Service %s is supported by the core plugin"),
+                LOG.info(_LI("Service %s is supported by the core plugin"),
                          service_type)
 
     def _load_service_plugins(self):
@@ -162,12 +163,12 @@ class NeutronManager(object):
         self._load_services_from_core_plugin()
 
         plugin_providers = cfg.CONF.service_plugins
-        LOG.debug(_("Loading service plugins: %s"), plugin_providers)
+        LOG.debug("Loading service plugins: %s", plugin_providers)
         for provider in plugin_providers:
             if provider == '':
                 continue
 
-            LOG.info(_("Loading Plugin: %s"), provider)
+            LOG.info(_LI("Loading Plugin: %s"), provider)
             plugin_inst = self._get_plugin_instance('neutron.service_plugins',
                                                     provider)
 
@@ -187,8 +188,8 @@ class NeutronManager(object):
                     hasattr(plugin_inst, 'agent_notifiers')):
                 self.plugin.agent_notifiers.update(plugin_inst.agent_notifiers)
 
-            LOG.debug(_("Successfully loaded %(type)s plugin. "
-                        "Description: %(desc)s"),
+            LOG.debug("Successfully loaded %(type)s plugin. "
+                      "Description: %(desc)s",
                       {"type": plugin_inst.get_plugin_type(),
                        "desc": plugin_inst.get_plugin_description()})
 

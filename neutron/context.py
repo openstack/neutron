@@ -80,8 +80,7 @@ class ContextBase(common_context.RequestContext):
         # Log only once the context has been configured to prevent
         # format errors.
         if kwargs:
-            LOG.debug(_('Arguments dropped when creating '
-                        'context: %s'), kwargs)
+            LOG.debug('Arguments dropped when creating context: %s', kwargs)
 
     @property
     def project_id(self):
