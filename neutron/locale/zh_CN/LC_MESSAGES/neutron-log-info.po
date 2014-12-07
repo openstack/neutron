@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-05 06:09+0000\n"
-"PO-Revision-Date: 2014-12-05 00:25+0000\n"
+"POT-Creation-Date: 2014-12-07 06:07+0000\n"
+"PO-Revision-Date: 2014-12-05 22:51+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
@@ -599,6 +599,7 @@ msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:808
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:217
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:141
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:100
 #, python-format
 msgid "RPC agent_id: %s"
@@ -643,7 +644,7 @@ msgstr "LinuxBridge 代理 RPC 守护程序已启动！"
 msgid "Interface mappings: %s"
 msgstr "接口映射：%s"
 
-#: neutron/plugins/ml2/db.py:63
+#: neutron/plugins/ml2/db.py:61
 #, python-format
 msgid ""
 "Added segment %(id)s of type %(network_type)s for network %(network_id)s"
@@ -943,6 +944,36 @@ msgstr ""
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:417
 msgid "Agent initialised successfully, now running... "
 msgstr ""
+
+#: neutron/plugins/nec/nec_plugin.py:279
+#, python-format
+msgid "deactivate_port(): OFC port for port=%s is already removed."
+msgstr ""
+
+#: neutron/plugins/nec/nec_router.py:334
+#, python-format
+msgid "Enabled router drivers: %s"
+msgstr ""
+
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:53
+#, python-format
+msgid "Update ports: added=%(added)s, removed=%(removed)s"
+msgstr "请更新端口：added=%(added)s，removed=%(removed)s"
+
+#: neutron/plugins/nec/common/ofc_client.py:108
+#, python-format
+msgid "Specified resource %s does not exist on OFC "
+msgstr ""
+
+#: neutron/plugins/nec/common/ofc_client.py:140
+#, python-format
+msgid "Waiting for %s seconds due to OFC Service_Unavailable."
+msgstr ""
+
+#: neutron/plugins/nec/drivers/__init__.py:37
+#, python-format
+msgid "Loading OFC driver: %s"
+msgstr "正在装入 OFC 驱动程序：%s"
 
 #: neutron/plugins/nuage/syncmanager.py:46
 msgid "Starting the sync between Neutron and VSD"

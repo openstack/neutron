@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev626.g1b0c20e\n"
+"Project-Id-Version: neutron 2015.1.dev641.gccdff95\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-05 06:09+0000\n"
+"POT-Creation-Date: 2014-12-07 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -53,6 +53,7 @@ msgstr ""
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:148
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:794
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:213
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:179
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:276
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:276
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:131
@@ -522,6 +523,7 @@ msgstr ""
 #: neutron/plugins/bigswitch/agent/restproxy_agent.py:154
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:448
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:383
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:222
 msgid "Error in agent event loop"
 msgstr ""
 
@@ -907,7 +909,7 @@ msgstr ""
 msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
-#: neutron/plugins/ml2/db.py:207 neutron/plugins/ml2/db.py:291
+#: neutron/plugins/ml2/db.py:205 neutron/plugins/ml2/db.py:291
 #: neutron/plugins/ml2/plugin.py:1069
 #, python-format
 msgid "Multiple ports have port_id starting with %s"
@@ -1244,6 +1246,76 @@ msgstr ""
 #: neutron/plugins/mlnx/agent/utils.py:77
 #, python-format
 msgid "Unknown operation status %s"
+msgstr ""
+
+#: neutron/plugins/nec/nec_plugin.py:247
+#, python-format
+msgid "create_ofc_port() failed due to %s"
+msgstr ""
+
+#: neutron/plugins/nec/nec_plugin.py:287
+#, python-format
+msgid "Failed to delete port=%(port)s from OFC: %(exc)s"
+msgstr ""
+
+#: neutron/plugins/nec/nec_plugin.py:323
+#, python-format
+msgid "Failed to create network id=%(id)s on OFC: %(exc)s"
+msgstr ""
+
+#: neutron/plugins/nec/nec_plugin.py:417
+#, python-format
+msgid "delete_network() failed due to %s"
+msgstr ""
+
+#: neutron/plugins/nec/nec_router.py:320
+#, python-format
+msgid ""
+"default_router_provider %(default)s is supported! Please specify one of "
+"%(supported)s"
+msgstr ""
+
+#: neutron/plugins/nec/nec_router.py:337
+#, python-format
+msgid ""
+"No router provider is enabled. neutron-server terminated! "
+"(supported=%(supported)s, configured=%(config)s)"
+msgstr ""
+
+#: neutron/plugins/nec/packet_filter.py:134
+#: neutron/plugins/nec/packet_filter.py:186
+#, python-format
+msgid "Failed to create packet_filter id=%(id)s on OFC: %(exc)s"
+msgstr ""
+
+#: neutron/plugins/nec/packet_filter.py:218
+#, python-format
+msgid "Failed to delete packet_filter id=%(id)s from OFC: %(exc)s"
+msgstr ""
+
+#: neutron/plugins/nec/router_drivers.py:124
+#, python-format
+msgid "create_router() failed due to %s"
+msgstr ""
+
+#: neutron/plugins/nec/router_drivers.py:152
+#, python-format
+msgid "_update_ofc_routes() failed due to %s"
+msgstr ""
+
+#: neutron/plugins/nec/router_drivers.py:167
+#, python-format
+msgid "delete_router() failed due to %s"
+msgstr ""
+
+#: neutron/plugins/nec/router_drivers.py:199
+#, python-format
+msgid "add_router_interface() failed due to %s"
+msgstr ""
+
+#: neutron/plugins/nec/router_drivers.py:216
+#, python-format
+msgid "delete_router_interface() failed due to %s"
 msgstr ""
 
 #: neutron/plugins/nuage/syncmanager.py:55

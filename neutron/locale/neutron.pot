@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev626.g1b0c20e\n"
+"Project-Id-Version: neutron 2015.1.dev641.gccdff95\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-05 06:08+0000\n"
+"POT-Creation-Date: 2014-12-07 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1900,7 +1900,7 @@ msgstr ""
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:641 neutron/plugins/nec/nec_router.py:196
+#: neutron/db/l3_db.py:641 neutron/plugins/nec/nec_router.py:197
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
@@ -4748,7 +4748,6 @@ msgid "Delete floatingip failed in SDN-VE: %s"
 msgstr ""
 
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:109
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:178
 msgid "Failed reporting state!"
 msgstr ""
 
@@ -5667,312 +5666,9 @@ msgstr ""
 msgid "Operation Failed: %(err_msg)s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:208
-#, python-format
-msgid "_cleanup_ofc_tenant: No OFC tenant for %s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:211
-#, python-format
-msgid "delete_ofc_tenant() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:227
-msgid "activate_port_if_ready(): skip, port.admin_state_up is False."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:231
-msgid "activate_port_if_ready(): skip, network.admin_state_up is False."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:235
-msgid "activate_port_if_ready(): skip, no portinfo for this port."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:239
-msgid "activate_port_if_ready(): skip, ofc_port already exists."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:247
-#, python-format
-msgid "create_ofc_port() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:260
-#, python-format
-msgid "deactivate_port(): skip, ofc_port for port=%s does not exist."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:279
-#, python-format
-msgid "deactivate_port(): OFC port for port=%s is already removed."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:287
-#, python-format
-msgid "Failed to delete port=%(port)s from OFC: %(exc)s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:306
-#, python-format
-msgid "NECPluginV2.create_network() called, network=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:323
-#, python-format
-msgid "Failed to create network id=%(id)s on OFC: %(exc)s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:339
-#, python-format
-msgid "NECPluginV2.update_network() called, id=%(id)s network=%(network)s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:383
-#, python-format
-msgid "NECPluginV2.delete_network() called, id=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:417
-#, python-format
-msgid "delete_network() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:554
-#, python-format
-msgid "NECPluginV2.create_port() called, port=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:618
-#, python-format
-msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:646
-#, python-format
-msgid "NECPluginV2.delete_port() called, id=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:709
-#, python-format
-msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:719
-#, python-format
-msgid ""
-"update_ports(): ignore unchanged portinfo in port_added message "
-"(port_id=%s)."
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:739
-#, python-format
-msgid ""
-"update_ports(): ignore port_removed message due to portinfo for "
-"port_id=%s was not registered"
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:744
-#, python-format
-msgid ""
-"update_ports(): ignore port_removed message received from different host "
-"(registered_datapath_id=%(registered)s, "
-"received_datapath_id=%(received)s)."
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:57
-#, python-format
-msgid "RouterMixin.create_router() called, router=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:83
-#, python-format
-msgid "RouterMixin.update_router() called, id=%(id)s, router=%(router)s ."
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:101
-#, python-format
-msgid "RouterMixin.delete_router() called, id=%s."
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:120
-#, python-format
-msgid ""
-"RouterMixin.add_router_interface() called, id=%(id)s, "
-"interface=%(interface)s."
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:127
-#, python-format
-msgid ""
-"RouterMixin.remove_router_interface() called, id=%(id)s, "
-"interface=%(interface)s."
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:311
-#, python-format
-msgid ""
-"OFC does not support router with provider=%(provider)s, so removed it "
-"from supported provider (new router driver map=%(driver_map)s)"
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:319
-#, python-format
-msgid ""
-"default_router_provider %(default)s is supported! Please specify one of "
-"%(supported)s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:333
-#, python-format
-msgid "Enabled router drivers: %s"
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:336
-#, python-format
-msgid ""
-"No router provider is enabled. neutron-server terminated! "
-"(supported=%(supported)s, configured=%(config)s)"
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:39
-msgid "Disabled packet-filter extension."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:44
-#, python-format
-msgid "create_packet_filter() called, packet_filter=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:60
-#, python-format
-msgid "update_packet_filter() called, id=%(id)s packet_filter=%(packet_filter)s ."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:133
-#: neutron/plugins/nec/packet_filter.py:185
-#, python-format
-msgid "Failed to create packet_filter id=%(id)s on OFC: %(exc)s"
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:143
-#, python-format
-msgid "delete_packet_filter() called, id=%s ."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:161
-#, python-format
-msgid "activate_packet_filter_if_ready() called, packet_filter=%s."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:169
-#, python-format
-msgid ""
-"activate_packet_filter_if_ready(): skip pf_id=%s, "
-"packet_filter.admin_state_up is False."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:172
-msgid ""
-"_activate_packet_filter_if_ready(): skip, ofc_packet_filter already "
-"exists."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:175
-#, python-format
-msgid "activate_packet_filter_if_ready(): create packet_filter id=%s on OFC."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:182
-#, python-format
-msgid ""
-"Skipped to create a packet filter pf_id=%s on OFC, no portinfo for the "
-"in_port."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:198
-#, python-format
-msgid "deactivate_packet_filter_if_ready() called, packet_filter=%s."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:203
-#, python-format
-msgid ""
-"deactivate_packet_filter(): skip, Not found OFC Mapping for packet_filter"
-" id=%s."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:208
-#, python-format
-msgid "deactivate_packet_filter(): deleting packet_filter id=%s from OFC."
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:217
-#, python-format
-msgid "Failed to delete packet_filter id=%(id)s from OFC: %(exc)s"
-msgstr ""
-
-#: neutron/plugins/nec/packet_filter.py:248
+#: neutron/plugins/nec/packet_filter.py:249
 #, python-format
 msgid "Error occurred while disabling packet filter(s) for port %s"
-msgstr ""
-
-#: neutron/plugins/nec/router_drivers.py:123
-#, python-format
-msgid "create_router() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/router_drivers.py:152
-#, python-format
-msgid "_update_ofc_routes() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/router_drivers.py:167
-#, python-format
-msgid "delete_router() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/router_drivers.py:178
-#, python-format
-msgid ""
-"RouterOpenFlowDriver.add_interface(): the requested port has no subnet. "
-"add_interface() is skipped. router_id=%(id)s, port=%(port)s)"
-msgstr ""
-
-#: neutron/plugins/nec/router_drivers.py:198
-#, python-format
-msgid "add_router_interface() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/router_drivers.py:216
-#, python-format
-msgid "delete_router_interface() failed due to %s"
-msgstr ""
-
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:52
-#, python-format
-msgid "Update ports: added=%(added)s, removed=%(removed)s"
-msgstr ""
-
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:74
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:51
-#, python-format
-msgid "port_update received: %s"
-msgstr ""
-
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:140
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:108
-#, python-format
-msgid "RPC agent_id: %s"
-msgstr ""
-
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:216
-msgid "No port changed."
-msgstr ""
-
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:221
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:158
-msgid "Error in agent event loop"
 msgstr ""
 
 #: neutron/plugins/nec/common/config.py:34
@@ -6094,73 +5790,18 @@ msgid ""
 "supported only for router provider %(expected_provider)s."
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:53
+#: neutron/plugins/nec/common/ofc_client.py:54
 #, python-format
 msgid "Operation on OFC failed: %(status)s%(msg)s"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:77
-#, python-format
-msgid "Client request: %(host)s:%(port)s %(method)s %(action)s [%(body)s]"
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:86
-#, python-format
-msgid "OFC returns [%(status)s:%(data)s]"
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:103
-#, python-format
-msgid "OFC returns ServiceUnavailable (retry-after=%s)"
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:107
-#, python-format
-msgid "Specified resource %s does not exist on OFC "
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:111
-#, python-format
-msgid "Operation on OFC failed: status=%(status)s, detail=%(detail)s"
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:114
+#: neutron/plugins/nec/common/ofc_client.py:115
 msgid "Operation on OFC failed"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:123
+#: neutron/plugins/nec/common/ofc_client.py:124
 #, python-format
 msgid "Failed to connect OFC : %s"
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:139
-#, python-format
-msgid "Waiting for %s seconds due to OFC Service_Unavailable."
-msgstr ""
-
-#: neutron/plugins/nec/db/api.py:102
-#, python-format
-msgid "del_ofc_item(): NotFound item (resource=%(resource)s, id=%(id)s) "
-msgstr ""
-
-#: neutron/plugins/nec/db/api.py:136
-#, python-format
-msgid "del_portinfo(): NotFound portinfo for port_id: %s"
-msgstr ""
-
-#: neutron/plugins/nec/db/api.py:157
-#, python-format
-msgid "get_port_with_securitygroups() called:port_id=%s"
-msgstr ""
-
-#: neutron/plugins/nec/db/router.py:85
-#, python-format
-msgid "Add provider binding (router=%(router_id)s, provider=%(provider)s)"
-msgstr ""
-
-#: neutron/plugins/nec/drivers/__init__.py:36
-#, python-format
-msgid "Loading OFC driver: %s"
 msgstr ""
 
 #: neutron/plugins/nec/drivers/pfc.py:33
@@ -6449,8 +6090,22 @@ msgstr ""
 msgid "Failed to create router"
 msgstr ""
 
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:51
+#, python-format
+msgid "port_update received: %s"
+msgstr ""
+
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:108
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr ""
+
 #: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:153
 msgid "Port list is updated"
+msgstr ""
+
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:158
+msgid "Error in agent event loop"
 msgstr ""
 
 #: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:160
@@ -8454,16 +8109,6 @@ msgstr ""
 msgid ""
 "Cisco CSR does not support %(resource)s attribute %(key)s with value "
 "'%(value)s'"
-msgstr ""
-
-#: neutron/tests/post_mortem_debug.py:34
-#, python-format
-msgid "can't import %s module as a post mortem debugger"
-msgstr ""
-
-#: neutron/tests/post_mortem_debug.py:37
-#, python-format
-msgid "%s is not a supported post mortem debugger"
 msgstr ""
 
 #: neutron/tests/functional/agent/linux/simple_daemon.py:37

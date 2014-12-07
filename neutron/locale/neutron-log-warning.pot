@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev626.g1b0c20e\n"
+"Project-Id-Version: neutron 2015.1.dev641.gccdff95\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-05 06:09+0000\n"
+"POT-Creation-Date: 2014-12-07 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -663,6 +663,45 @@ msgstr ""
 #: neutron/plugins/mlnx/db/mlnx_db_v2.py:182
 #, python-format
 msgid "vlan_id %(seg_id)s on physical network %(phy_net)s not found"
+msgstr ""
+
+#: neutron/plugins/nec/nec_plugin.py:212
+#, python-format
+msgid "delete_ofc_tenant() failed due to %s"
+msgstr ""
+
+#: neutron/plugins/nec/nec_router.py:312
+#, python-format
+msgid ""
+"OFC does not support router with provider=%(provider)s, so removed it "
+"from supported provider (new router driver map=%(driver_map)s)"
+msgstr ""
+
+#: neutron/plugins/nec/router_drivers.py:178
+#, python-format
+msgid ""
+"RouterOpenFlowDriver.add_interface(): the requested port has no subnet. "
+"add_interface() is skipped. router_id=%(id)s, port=%(port)s)"
+msgstr ""
+
+#: neutron/plugins/nec/common/ofc_client.py:104
+#, python-format
+msgid "OFC returns ServiceUnavailable (retry-after=%s)"
+msgstr ""
+
+#: neutron/plugins/nec/common/ofc_client.py:112
+#, python-format
+msgid "Operation on OFC failed: status=%(status)s, detail=%(detail)s"
+msgstr ""
+
+#: neutron/plugins/nec/db/api.py:103
+#, python-format
+msgid "del_ofc_item(): NotFound item (resource=%(resource)s, id=%(id)s) "
+msgstr ""
+
+#: neutron/plugins/nec/db/api.py:137
+#, python-format
+msgid "del_portinfo(): NotFound portinfo for port_id: %s"
 msgstr ""
 
 #: neutron/plugins/nuage/syncmanager.py:298
