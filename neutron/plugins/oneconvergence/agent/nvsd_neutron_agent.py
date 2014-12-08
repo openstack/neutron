@@ -31,6 +31,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as n_context
 from neutron.extensions import securitygroup as ext_sg
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.oneconvergence.lib import config
 
@@ -48,7 +49,7 @@ class NVSDAgentRpcCallback(object):
         self.sg_agent = sg_agent
 
     def port_update(self, context, **kwargs):
-        LOG.debug(_("port_update received: %s"), kwargs)
+        LOG.debug("port_update received: %s", kwargs)
         port = kwargs.get('port')
         # Validate that port is on OVS
         vif_port = self.agent.int_br.get_vif_port_by_id(port['id'])
@@ -105,7 +106,7 @@ class NVSDNeutronAgent(object):
 
         self.host = socket.gethostname()
         self.agent_id = 'nvsd-q-agent.%s' % self.host
-        LOG.info(_("RPC agent_id: %s"), self.agent_id)
+        LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
         self.context = n_context.get_admin_context_without_session()
@@ -150,14 +151,14 @@ class NVSDNeutronAgent(object):
             try:
                 port_info = self._update_ports(ports)
                 if port_info:
-                    LOG.debug(_("Port list is updated"))
+                    LOG.debug("Port list is updated")
                     self._process_devices_filter(port_info)
                     ports = port_info['current']
                     self.ports = ports
             except Exception:
-                LOG.exception(_("Error in agent event loop"))
+                LOG.exception(_LE("Error in agent event loop"))
 
-            LOG.debug(_("AGENT looping....."))
+            LOG.debug("AGENT looping.....")
             time.sleep(self.polling_interval)
 
 
@@ -169,7 +170,7 @@ def main():
     root_helper = config.AGENT.root_helper
     polling_interval = config.AGENT.polling_interval
     agent = NVSDNeutronAgent(integ_br, root_helper, polling_interval)
-    LOG.info(_("NVSD Agent initialized successfully, now running... "))
+    LOG.info(_LI("NVSD Agent initialized successfully, now running... "))
 
     # Start everything.
     agent.daemon_loop()
