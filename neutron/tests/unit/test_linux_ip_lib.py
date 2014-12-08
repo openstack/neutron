@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
 import mock
 
 from neutron.agent.linux import ip_lib
@@ -191,11 +193,29 @@ class TestSubProcessBase(base.BaseTestCase):
                                              root_helper='sudo',
                                              log_fail_as_error=True)
 
-    def test_as_root_no_root_helper(self):
+    def test_enforce_root_helper_no_root_helper(self):
         base = ip_lib.SubProcessBase()
-        self.assertRaises(exceptions.SudoRequired,
-                          base._as_root,
-                          [], 'link', ('list',))
+        not_root = 42
+        with mock.patch.object(os, 'geteuid', return_value=not_root):
+            self.assertRaises(exceptions.SudoRequired,
+                              base.enforce_root_helper)
+
+    def test_enforce_root_helper_with_root_helper_supplied(self):
+        base = ip_lib.SubProcessBase('sudo')
+        try:
+            base.enforce_root_helper()
+        except exceptions.SudoRequired:
+            self.fail('enforce_root_helper should not raise SudoRequired '
+                      'when a root_helper is supplied.')
+
+    def test_enforce_root_helper_with_no_root_helper_but_root(self):
+        base = ip_lib.SubProcessBase()
+        with mock.patch.object(os, 'geteuid', return_value=0):
+            try:
+                base.enforce_root_helper()
+            except exceptions.SudoRequired:
+                self.fail('enforce_root_helper should not require a root '
+                          'helper when run as root.')
 
 
 class TestIpWrapper(base.BaseTestCase):

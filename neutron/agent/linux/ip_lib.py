@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
 import netaddr
 from oslo.config import cfg
 
@@ -60,9 +62,12 @@ class SubProcessBase(object):
             return self._execute(options, command, args,
                                  log_fail_as_error=self.log_fail_as_error)
 
-    def _as_root(self, options, command, args, use_root_namespace=False):
-        if not self.root_helper:
+    def enforce_root_helper(self):
+        if not self.root_helper and os.geteuid() != 0:
             raise exceptions.SudoRequired()
+
+    def _as_root(self, options, command, args, use_root_namespace=False):
+        self.enforce_root_helper()
 
         namespace = self.namespace if not use_root_namespace else None
 
@@ -536,8 +541,7 @@ class IpNetnsCommand(IpCommandBase):
                 extra_ok_codes=None):
         ns_params = []
         if self._parent.namespace:
-            if not self._parent.root_helper:
-                raise exceptions.SudoRequired()
+            self._parent.enforce_root_helper()
             ns_params = ['ip', 'netns', 'exec', self._parent.namespace]
 
         env_params = []
