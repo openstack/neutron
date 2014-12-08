@@ -147,7 +147,7 @@ def no_author_tags(physical_line):
 
 
 def no_translate_debug_logs(logical_line, filename):
-    """Check for 'LOG.debug(_('
+    """Check for 'LOG.debug(_(' and 'LOG.debug(_Lx('
 
     As per our translation policy,
     https://wiki.openstack.org/wiki/LoggingStandards#Log_Translation
@@ -157,8 +157,9 @@ def no_translate_debug_logs(logical_line, filename):
     N319
     """
     if _directory_to_check_translation(filename):
-        if logical_line.startswith("LOG.debug(_("):
-            yield(0, "N319 Don't translate debug level logs")
+        for hint in _all_hints:
+            if logical_line.startswith("LOG.debug(%s(" % hint):
+                yield(0, "N319 Don't translate debug level logs")
 
 
 def check_assert_called_once_with(logical_line, filename):
