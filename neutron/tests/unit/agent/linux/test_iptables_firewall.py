@@ -892,7 +892,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         if ethertype == 'IPv6':
             filter_inst = self.v6filter_inst
 
-            dhcp_rule = [mock.call.add_rule('ofake_dev',
+            dhcp_rule = [mock.call.add_rule('ofake_dev', '-p icmpv6 '
+                                            '--icmpv6-type %s -j DROP'
+                                            % constants.ICMPV6_TYPE_RA,
+                                            comment=None),
+                         mock.call.add_rule('ofake_dev',
                                             '-p icmpv6 -j RETURN',
                                             comment=None),
                          mock.call.add_rule('ofake_dev', '-p udp -m udp '

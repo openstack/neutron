@@ -32,5 +32,6 @@ INVALID_DROP = ("Drop packets that appear related to an existing connection "
                 "(e.g. TCP ACK/FIN) but do not have an entry in conntrack.")
 ALLOW_ASSOC = ('Direct packets associated with a known session to the RETURN '
                'chain.')
-IPV6_RA_ALLOW = 'Allow IPv6 ICMP traffic to allow RA packets.'
 PORT_SEC_ACCEPT = 'Accept all packets when port security is disabled.'
+IPV6_RA_DROP = 'Drop IPv6 Router Advts from VM Instance.'
+IPV6_ICMP_ALLOW = 'Allow IPv6 ICMP traffic.'
