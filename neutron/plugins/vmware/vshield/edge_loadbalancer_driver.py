@@ -21,7 +21,12 @@ from neutron.plugins.vmware.vshield.common import (
     constants as vcns_const)
 from neutron.plugins.vmware.vshield.common import (
     exceptions as vcns_exc)
-from neutron.services.loadbalancer import constants as lb_constants
+try:
+    from neutron_lbaas.services.loadbalancer import constants as lb_constants
+except Exception:
+    print("WARNING: missing neutron-lbaas package")
+    # TODO(dougw) - this is going away
+    from neutron.services.loadbalancer import constants as lb_constants
 
 LOG = logging.getLogger(__name__)
 

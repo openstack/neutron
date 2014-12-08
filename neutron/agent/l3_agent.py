@@ -52,7 +52,12 @@ from neutron.openstack.common import periodic_task
 from neutron.openstack.common import processutils
 from neutron.openstack.common import service
 from neutron import service as neutron_service
-from neutron.services.firewall.agents.l3reference import firewall_l3_agent
+try:
+    from neutron_fwaas.services.firewall.agents.l3reference \
+        import firewall_l3_agent
+except Exception:
+    # TODO(dougw) - REMOVE THIS FROM NEUTRON; during l3_agent refactor only
+    from neutron.services.firewall.agents.l3reference import firewall_l3_agent
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qrouter-'
