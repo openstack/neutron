@@ -1341,10 +1341,38 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 port_info.get('removed') or
                 port_info.get('updated'))
 
-    def check_ovs_restart(self):
+    def check_ovs_status(self):
         # Check for the canary flow
         canary_flow = self.int_br.dump_flows_for_table(constants.CANARY_TABLE)
-        return not canary_flow
+        if canary_flow == '':
+            LOG.warn(_LW("OVS is restarted. OVSNeutronAgent will reset "
+                         "bridges and recover ports."))
+            return constants.OVS_RESTARTED
+        elif canary_flow is None:
+            LOG.warn(_LW("OVS is dead. OVSNeutronAgent will keep running "
+                         "and checking OVS status periodically."))
+            return constants.OVS_DEAD
+        else:
+            # OVS is in normal status
+            return constants.OVS_NORMAL
+
+    def loop_count_and_wait(self, start_time, port_stats):
+        # sleep till end of polling interval
+        elapsed = time.time() - start_time
+        LOG.debug("Agent rpc_loop - iteration:%(iter_num)d "
+                  "completed. Processed ports statistics: "
+                  "%(port_stats)s. Elapsed:%(elapsed).3f",
+                  {'iter_num': self.iter_num,
+                   'port_stats': port_stats,
+                   'elapsed': elapsed})
+        if elapsed < self.polling_interval:
+            time.sleep(self.polling_interval - elapsed)
+        else:
+            LOG.debug("Loop iteration exceeded interval "
+                      "(%(polling_interval)s vs. %(elapsed)s)!",
+                      {'polling_interval': self.polling_interval,
+                       'elapsed': elapsed})
+        self.iter_num = self.iter_num + 1
 
     def rpc_loop(self, polling_manager=None):
         if not polling_manager:
@@ -1355,7 +1383,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         updated_ports_copy = set()
         ancillary_ports = set()
         tunnel_sync = True
-        ovs_restarted = False
+        ovs_status = constants.OVS_NORMAL
         while self.run_daemon_loop:
             start = time.time()
             port_stats = {'regular': {'added': 0,
@@ -1371,8 +1399,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 ancillary_ports.clear()
                 sync = False
                 polling_manager.force_polling()
-            ovs_restarted = self.check_ovs_restart()
-            if ovs_restarted:
+            ovs_status = self.check_ovs_status()
+            if ovs_status == constants.OVS_RESTARTED:
                 self.setup_integration_br()
                 self.setup_physical_bridges(self.bridge_mappings)
                 if self.enable_tunneling:
@@ -1386,6 +1414,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      self.patch_tun_ofport)
                         self.dvr_agent.reset_dvr_parameters()
                         self.dvr_agent.setup_dvr_flows_on_integ_tun_br()
+            elif ovs_status == constants.OVS_DEAD:
+                # Agent doesn't apply any operations when ovs is dead, to
+                # prevent unexpected failure or crash. Sleep and continue
+                # loop in which ovs status will be checked periodically.
+                self.loop_count_and_wait(start, port_stats)
+                continue
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
                 LOG.info(_LI("Agent tunnel out of sync with plugin!"))
@@ -1394,6 +1428,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 except Exception:
                     LOG.exception(_LE("Error while synchronizing tunnels"))
                     tunnel_sync = True
+            ovs_restarted = (ovs_status == constants.OVS_RESTARTED)
             if self._agent_has_updates(polling_manager) or ovs_restarted:
                 try:
                     LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
@@ -1466,22 +1501,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     self.updated_ports |= updated_ports_copy
                     sync = True
 
-            # sleep till end of polling interval
-            elapsed = (time.time() - start)
-            LOG.debug("Agent rpc_loop - iteration:%(iter_num)d "
-                      "completed. Processed ports statistics: "
-                      "%(port_stats)s. Elapsed:%(elapsed).3f",
-                      {'iter_num': self.iter_num,
-                       'port_stats': port_stats,
-                       'elapsed': elapsed})
-            if (elapsed < self.polling_interval):
-                time.sleep(self.polling_interval - elapsed)
-            else:
-                LOG.debug("Loop iteration exceeded interval "
-                          "(%(polling_interval)s vs. %(elapsed)s)!",
-                          {'polling_interval': self.polling_interval,
-                           'elapsed': elapsed})
-            self.iter_num = self.iter_num + 1
+            self.loop_count_and_wait(start, port_stats)
 
     def daemon_loop(self):
         with polling.get_polling_manager(

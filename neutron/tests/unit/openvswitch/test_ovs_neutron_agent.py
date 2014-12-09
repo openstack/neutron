@@ -14,6 +14,7 @@
 
 import contextlib
 import sys
+import time
 
 import mock
 import netaddr
@@ -1429,7 +1430,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.call(self.agent.tun_br, 'gre-0a0a0a0a', '10.10.10.10', 'gre')]
         self.agent._setup_tunnel_port.assert_has_calls(expected_calls)
 
-    def test_ovs_restart(self):
+    def test_ovs_status(self):
         reply2 = {'current': set(['tap0']),
                   'added': set(['tap2']),
                   'removed': set([])}
@@ -1446,21 +1447,24 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
                               'process_network_ports'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
-                              'check_ovs_restart'),
+                              'check_ovs_status'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
                               'setup_integration_br'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
-                              'setup_physical_bridges')
+                              'setup_physical_bridges'),
+            mock.patch.object(time, 'sleep')
         ) as (spawn_fn, log_exception, scan_ports, process_network_ports,
-              check_ovs_restart, setup_int_br, setup_phys_br):
+              check_ovs_status, setup_int_br, setup_phys_br, time_sleep):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
-            check_ovs_restart.side_effect = [False, True]
+            check_ovs_status.side_effect = [constants.OVS_NORMAL,
+                                            constants.OVS_DEAD,
+                                            constants.OVS_RESTARTED]
 
-            # This will exit after the second loop
+            # This will exit after the third loop
             try:
                 self.agent.daemon_loop()
             except Exception:

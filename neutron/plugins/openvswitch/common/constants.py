@@ -71,3 +71,8 @@ ARP_RESPONDER_ACTIONS = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
                          'load:%(mac)#x->NXM_NX_ARP_SHA[],'
                          'load:%(ip)#x->NXM_OF_ARP_SPA[],'
                          'in_port')
+
+# Represent ovs status
+OVS_RESTARTED = 0
+OVS_NORMAL = 1
+OVS_DEAD = 2
