@@ -35,8 +35,6 @@ class KeepalivedManagerTestCase(functional_base.BaseSudoTestCase,
     def _configure(self):
         cfg.CONF.set_override('debug', False)
         config.setup_logging()
-        config.register_root_helper(cfg.CONF)
-        cfg.CONF.set_override('root_helper', self.root_helper, group='AGENT')
 
     def test_keepalived_spawn(self):
         expected_config = self._get_config()

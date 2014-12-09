@@ -16,8 +16,10 @@
 import os
 import time
 
-from neutron.tests import base
+from oslo.config import cfg
 
+from neutron.agent.common import config
+from neutron.tests import base
 
 SUDO_CMD = 'sudo -n'
 TIMEOUT = 60
@@ -50,9 +52,12 @@ class BaseSudoTestCase(base.BaseTestCase):
     def setUp(self):
         super(BaseSudoTestCase, self).setUp()
         self.sudo_enabled = base.bool_from_env('OS_SUDO_TESTING')
-        self.root_helper = os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD)
         self.fail_on_missing_deps = (
             base.bool_from_env('OS_FAIL_ON_MISSING_DEPS'))
+
+        self.root_helper = os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD)
+        config.register_root_helper(cfg.CONF)
+        cfg.CONF.set_override('root_helper', self.root_helper, group='AGENT')
 
     def check_sudo_enabled(self):
         if not self.sudo_enabled:
