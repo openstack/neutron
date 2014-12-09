@@ -131,7 +131,13 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         if ('/' not in self.ha_cidr or net.network != net.ip):
             raise l3_ha.HANetworkCIDRNotValid(cidr=self.ha_cidr)
 
-        if cfg.CONF.min_l3_agents_per_router < constants.MINIMUM_AGENTS_FOR_HA:
+        max_agents = cfg.CONF.max_l3_agents_per_router
+        min_agents = cfg.CONF.min_l3_agents_per_router
+        if max_agents < min_agents:
+            raise l3_ha.HAMaximumAgentsNumberNotValid(
+                max_agents=max_agents, min_agents=min_agents)
+
+        if min_agents < constants.MINIMUM_AGENTS_FOR_HA:
             raise l3_ha.HAMinimumAgentsNumberNotValid()
 
     def __init__(self):
