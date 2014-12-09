@@ -19,10 +19,10 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.dbexts import vcns_db
 from neutron.plugins.vmware.vshield.common import exceptions as vcns_exc
 from neutron.plugins.vmware.vshield import vcns_driver
-from neutron.services.loadbalancer import constants as lb_constants
-from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
 from neutron.tests.unit import vmware
 from neutron.tests.unit.vmware.vshield import fake_vcns
+from neutron_lbaas.services.loadbalancer import constants as lb_constants
+from neutron_lbaas.tests.unit.db.loadbalancer import test_db_loadbalancer
 
 _uuid = uuidutils.generate_uuid
 

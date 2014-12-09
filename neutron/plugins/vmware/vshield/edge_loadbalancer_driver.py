@@ -25,8 +25,6 @@ try:
     from neutron_lbaas.services.loadbalancer import constants as lb_constants
 except Exception:
     print("WARNING: missing neutron-lbaas package")
-    # TODO(dougw) - this is going away
-    from neutron.services.loadbalancer import constants as lb_constants
 
 LOG = logging.getLogger(__name__)
 

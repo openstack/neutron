@@ -24,22 +24,16 @@ try:
     from neutron_fwaas.db.firewall import firewall_db
 except Exception:
     print("WARNING: missing neutron-fwaas package")
-    # TODO(dougw) - temporary, this is going away
-    from neutron.db.firewall import firewall_db
 from neutron.db import l3_db
 try:
     from neutron_lbaas.db.loadbalancer import loadbalancer_db
 except Exception:
     print("WARNING: missing neutron-lbaas package")
-    # TODO(dougw) - temporary, this is going away
-    from neutron.db.loadbalancer import loadbalancer_db
 from neutron.db import routedserviceinsertion_db as rsi_db
 try:
     from neutron_vpnaas.db.vpn import vpn_db
 except Exception:
     print("WARNING: missing neutron-vpnaas package")
-    # TODO(dougw) - temporary, this is going away
-    from neutron.db.vpn import vpn_db
 from neutron.extensions import firewall as fw_ext
 from neutron.extensions import l3
 from neutron.extensions import routedserviceinsertion as rsi
