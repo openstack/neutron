@@ -47,7 +47,6 @@ disable=
  logging-not-lazy,
  no-init,
  non-parent-init-called,
- pointless-string-statement,
  protected-access,
  redefined-builtin,
  redefined-outer-name,

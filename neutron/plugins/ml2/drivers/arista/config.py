@@ -16,14 +16,14 @@
 
 from oslo.config import cfg
 
-""" Arista ML2 Mechanism driver specific configuration knobs.
 
-Following are user configurable options for Arista ML2 Mechanism
-driver. The eapi_username, eapi_password, and eapi_host are
-required options. Region Name must be the same that is used by
-Keystone service. This option is available to support multiple
-OpenStack/Neutron controllers.
-"""
+# Arista ML2 Mechanism driver specific configuration knobs.
+#
+# Following are user configurable options for Arista ML2 Mechanism
+# driver. The eapi_username, eapi_password, and eapi_host are
+# required options. Region Name must be the same that is used by
+# Keystone service. This option is available to support multiple
+# OpenStack/Neutron controllers.
 
 ARISTA_DRIVER_OPTS = [
     cfg.StrOpt('eapi_username',

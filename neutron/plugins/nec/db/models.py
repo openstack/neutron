@@ -19,7 +19,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 
 
-"""New mapping tables."""
+# New mapping tables.
 
 
 class OFCId(object):
