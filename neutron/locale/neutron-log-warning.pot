@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev641.gccdff95\n"
+"Project-Id-Version: neutron 2015.1.dev657.ge55e715\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-07 06:07+0000\n"
+"POT-Creation-Date: 2014-12-10 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,7 +56,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3_agent.py:1984
+#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3_agent.py:1989
 #: neutron/agent/metadata/agent.py:411
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:273
@@ -65,7 +65,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:528
+#: neutron/agent/l3_agent.py:533
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled at the neutron server when "
@@ -74,19 +74,19 @@ msgid ""
 "warning. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:540
+#: neutron/agent/l3_agent.py:545
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled on the neutron server. "
 "Retrying. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:770
+#: neutron/agent/l3_agent.py:775
 #, python-format
 msgid "Info for router %s were not found. Skipping router removal"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:1109
+#: neutron/agent/l3_agent.py:1114
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
@@ -466,6 +466,11 @@ msgid ""
 "Hyper-V Server 2012 R2 or above."
 msgstr ""
 
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:428
+#, python-format
+msgid "Ignoring admin_state_up=False for router=%r.  Overriding with True"
+msgstr ""
+
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:83
 msgid "VXLAN is enabled, a valid local_ip must be provided"
 msgstr ""
@@ -767,6 +772,10 @@ msgstr ""
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1145
 #, python-format
 msgid "Device %s not defined on plugin"
+msgstr ""
+
+#: neutron/plugins/oneconvergence/lib/plugin_helper.py:110
+msgid "No Token, Re-login"
 msgstr ""
 
 #: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:154
@@ -1104,7 +1113,7 @@ msgid ""
 "security group %(sec_group_id)s was not found on the backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:542
+#: neutron/plugins/vmware/plugins/service.py:557
 #, python-format
 msgid "Did not found lswitch %s in NSX"
 msgstr ""
@@ -1144,28 +1153,6 @@ msgstr ""
 msgid "No L3 agents can host the router %s"
 msgstr ""
 
-#: neutron/services/firewall/fwaas_plugin.py:71
-#, python-format
-msgid "Firewall %(fw)s unexpectedly deleted by agent, status was %(status)s"
-msgstr ""
-
-#: neutron/services/firewall/agents/varmour/varmour_router.py:102
-#, python-format
-msgid "Ignoring multiple IPs on router port %s"
-msgstr ""
-
-#: neutron/services/firewall/agents/varmour/varmour_router.py:285
-msgid "Unable to parse interface mapping."
-msgstr ""
-
-#: neutron/services/firewall/agents/varmour/varmour_router.py:288
-msgid "Unable to read interface mapping."
-msgstr ""
-
-#: neutron/services/firewall/drivers/varmour/varmour_fwaas.py:109
-msgid "Unsupported IP version rule."
-msgstr ""
-
 #: neutron/services/loadbalancer/agent_scheduler.py:110
 #, python-format
 msgid "No active lbaas agents for pool %s"
@@ -1174,18 +1161,6 @@ msgstr ""
 #: neutron/services/loadbalancer/agent_scheduler.py:116
 #, python-format
 msgid "No lbaas agent supporting device driver %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:72
-#, python-format
-msgid "Multiple lbaas agents found on host %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:164
-#, python-format
-msgid ""
-"Cannot update status: %(obj_type)s %(obj_id)s not found in the DB, it was"
-" probably deleted concurrently"
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/embrane/driver.py:130
@@ -1198,50 +1173,5 @@ msgstr ""
 msgid ""
 "The load balancer %s had no physical representation, likely already "
 "deleted"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:172
-#, python-format
-msgid "Stats socket not found for pool %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:214
-#, python-format
-msgid "Error while connecting to stats socket: %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:298
-#, python-format
-msgid "pip nport delete failed: %r"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:688
-#, python-format
-msgid "Fliping servers. Current is: %(server)s, switching to %(secondary)s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:709
-#, python-format
-msgid "vDirect server is not responding (%s)."
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:713
-#, python-format
-msgid "vDirect server is not active (%s)."
-msgstr ""
-
-#: neutron/services/vpn/device_drivers/cisco_csr_rest_client.py:115
-#, python-format
-msgid "%(method)s: Request timeout%(ssl)s (%(timeout).3f sec) for CSR(%(host)s)"
-msgstr ""
-
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:645
-#, python-format
-msgid "Unable to delete %(resource)s %(which)s: %(status)d"
-msgstr ""
-
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:727
-#, python-format
-msgid "Unable to find connection %s"
 msgstr ""
 
