@@ -25,6 +25,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
+from neutron.api.v2 import attributes
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
@@ -143,9 +144,15 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
         return query.all()
 
     def get_agents(self, context, filters=None, fields=None):
-        return self._get_collection(context, Agent,
-                                    self._make_agent_dict,
-                                    filters=filters, fields=fields)
+        agents = self._get_collection(context, Agent,
+                                      self._make_agent_dict,
+                                      filters=filters, fields=fields)
+        alive = filters and filters.get('alive', None)
+        if alive:
+            # alive filter will be a list
+            alive = attributes.convert_to_boolean(alive[0])
+            agents = [agent for agent in agents if agent['alive'] == alive]
+        return agents
 
     def _get_agent_by_type_and_host(self, context, agent_type, host):
         query = self._model_query(context, Agent)
