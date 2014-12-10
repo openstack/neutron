@@ -220,7 +220,10 @@ class ProcessMonitor(object):
 
     @lockutils.synchronized("_check_child_processes")
     def _check_child_processes(self):
-        for service_id in self._process_managers:
+        # we build the list of keys before iterating in the loop to cover
+        # the case where other threads add or remove items from the
+        # dictionary which otherwise will cause a RuntimeError
+        for service_id in list(self._process_managers):
             pm = self._process_managers.get(service_id)
 
             if pm and not pm.active:
