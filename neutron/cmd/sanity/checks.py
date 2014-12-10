@@ -29,11 +29,19 @@ from neutron.plugins.openvswitch.common import constants as ovs_const
 LOG = logging.getLogger(__name__)
 
 
-def vxlan_supported(root_helper, from_ip='192.0.2.1', to_ip='192.0.2.2'):
+def ovs_vxlan_supported(root_helper, from_ip='192.0.2.1', to_ip='192.0.2.2'):
     name = "vxlantest-" + utils.get_random_string(6)
     with ovs_lib.OVSBridge(name, root_helper) as br:
         port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_VXLAN)
         return port != ovs_lib.INVALID_OFPORT
+
+
+def iproute2_vxlan_supported(root_helper):
+    ip = ip_lib.IPWrapper(root_helper)
+    name = "vxlantest-" + utils.get_random_string(4)
+    port = ip.add_vxlan(name, 3000)
+    ip.del_veth(name)
+    return name == port.name
 
 
 def patch_supported(root_helper):

@@ -25,6 +25,8 @@ from oslo.config import cfg
 LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('AGENT', 'neutron.plugins.openvswitch.common.config')
 cfg.CONF.import_group('OVS', 'neutron.plugins.openvswitch.common.config')
+cfg.CONF.import_group('VXLAN', 'neutron.plugins.linuxbridge.common.config')
+cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
 cfg.CONF.import_group('ml2_sriov',
                       'neutron.plugins.ml2.drivers.mech_sriov.mech_driver')
 
@@ -38,11 +40,20 @@ class BoolOptCallback(cfg.BoolOpt):
 
 
 def check_ovs_vxlan():
-    result = checks.vxlan_supported(root_helper=cfg.CONF.AGENT.root_helper)
+    result = checks.ovs_vxlan_supported(root_helper=cfg.CONF.AGENT.root_helper)
     if not result:
         LOG.error(_LE('Check for Open vSwitch VXLAN support failed. '
                       'Please ensure that the version of openvswitch '
                       'being used has VXLAN support.'))
+    return result
+
+
+def check_iproute2_vxlan():
+    result = checks.iproute2_vxlan_supported(
+                root_helper=cfg.CONF.AGENT.root_helper)
+    if not result:
+        LOG.error(_LE('Check for iproute2 VXLAN support failed. Please ensure '
+                      'that the iproute2 has VXLAN support.'))
     return result
 
 
@@ -108,9 +119,11 @@ def check_vf_management():
 
 # Define CLI opts to test specific features, with a calback for the test
 OPTS = [
-    BoolOptCallback('ovs_vxlan', check_ovs_vxlan,
-                    help=_('Check for vxlan support')),
-    BoolOptCallback('ovs_patch', check_ovs_patch,
+    BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
+                    help=_('Check for OVS vxlan support')),
+    BoolOptCallback('iproute2_vxlan', check_iproute2_vxlan, default=False,
+                    help=_('Check for iproute2 vxlan support')),
+    BoolOptCallback('ovs_patch', check_ovs_patch, default=False,
                     help=_('Check for patch port support')),
     BoolOptCallback('nova_notify', check_nova_notify,
                     help=_('Check for nova notification support')),
@@ -131,6 +144,9 @@ def enable_tests_from_config():
 
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_override('ovs_vxlan', True)
+    if ('vxlan' in cfg.CONF.ml2.type_drivers or
+            cfg.CONF.VXLAN.enable_vxlan):
+        cfg.CONF.set_override('iproute2_vxlan', True)
     if cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_override('ovs_patch', True)
     if not cfg.CONF.OVS.use_veth_interconnection:
