@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as q_const
@@ -350,8 +351,10 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             models_v2.IPAllocation.subnet_id == subnet['id'])
         query = query.filter(
             models_v2.IPAllocation.ip_address == subnet['gateway_ip'])
-        query = query.filter(models_v2.Port.device_owner ==
-                             q_const.DEVICE_OWNER_ROUTER_INTF)
+        query = query.filter(or_(models_v2.Port.device_owner ==
+                             q_const.DEVICE_OWNER_ROUTER_INTF,
+                                 models_v2.Port.device_owner ==
+                             q_const.DEVICE_OWNER_DVR_INTERFACE))
         try:
             gateway_port = query.one()
         except (exc.NoResultFound, exc.MultipleResultsFound):
