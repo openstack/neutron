@@ -19,3 +19,4 @@ WebTest>=2.0
 oslotest>=1.2.0  # Apache-2.0
 psycopg2
 MySQL-python
+tempest-lib
