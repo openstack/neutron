@@ -1,4 +1,4 @@
-# Copyright 2014 Embrane, Inc.
+# Copyright 2014 A10 Networks, Inc
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,16 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sql
+from neutron.i18n import _LE
+from neutron.openstack.common import log as logging
 
-from neutron.db import model_base
+LOG = logging.getLogger(__name__)
+
+try:
+    from neutron_vpnaas.services.vpn import plugin
+except Exception as e:
+    LOG.error(_LE("VPN service plugin requires neutron-vpnaas module"))
+    raise e
 
 
-class PoolPort(model_base.BASEV2):
-    """Represents the connection between pools and ports."""
-    __tablename__ = 'embrane_pool_port'
-
-    pool_id = sql.Column(sql.String(36), sql.ForeignKey('pools.id'),
-                         primary_key=True)
-    port_id = sql.Column(sql.String(36), sql.ForeignKey('ports.id'),
-                         nullable=False)
+class VPNDriverPlugin(plugin.VPNDriverPlugin):
+    pass
