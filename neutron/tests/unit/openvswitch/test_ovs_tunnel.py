@@ -127,7 +127,8 @@ class TunnelTest(base.BaseTestCase):
         add_veth = self.ipwrapper.return_value.add_veth
         add_veth.return_value = [self.inta, self.intb]
 
-        self.get_bridges = mock.patch.object(ovs_lib, 'get_bridges').start()
+        self.get_bridges = mock.patch.object(ovs_lib.BaseOVS,
+                                             'get_bridges').start()
         self.get_bridges.return_value = [self.INT_BRIDGE,
                                          self.TUN_BRIDGE,
                                          self.MAP_TUN_BRIDGE]
@@ -242,7 +243,7 @@ class TunnelTest(base.BaseTestCase):
         self.ipdevice_expected = []
         self.ipwrapper_expected = [mock.call('sudo')]
 
-        self.get_bridges_expected = [mock.call('sudo'), mock.call('sudo')]
+        self.get_bridges_expected = [mock.call(), mock.call()]
 
         self.inta_expected = []
         self.intb_expected = []
@@ -669,7 +670,7 @@ class TunnelTestUseVethInterco(TunnelTest):
                                  'phy-%s' % self.MAP_TUN_BRIDGE)
         ]
 
-        self.get_bridges_expected = [mock.call('sudo'), mock.call('sudo')]
+        self.get_bridges_expected = [mock.call(), mock.call()]
 
         self.inta_expected = [mock.call.link.set_up()]
         self.intb_expected = [mock.call.link.set_up()]
