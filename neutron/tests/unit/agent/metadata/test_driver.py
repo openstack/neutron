@@ -47,8 +47,7 @@ class TestMetadataDriver(base.BaseTestCase):
             metadata_driver.MetadataDriver.metadata_nat_rules(8775))
 
     def test_metadata_filter_rules(self):
-        rules = ('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
-                 '-p tcp -m tcp --dport 8775 -j ACCEPT')
+        rules = ('INPUT', '-s 0.0.0.0/0 -p tcp -m tcp --dport 8775 -j ACCEPT')
         self.assertEqual(
             [rules],
             metadata_driver.MetadataDriver.metadata_filter_rules(8775))
