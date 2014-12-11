@@ -59,6 +59,13 @@ class HackingTestCase(base.BaseTestCase):
                                                               stmt,
                                                               filename))))
 
+    def test_no_translate_debug_logs(self):
+        filename = 'neutron/agent/f'
+        for hint in checks._all_hints:
+            bad = "LOG.debug(%s('bad'))" % hint
+            self.assertEqual(
+                1, len(list(checks.no_translate_debug_logs(bad, filename))))
+
     def test_use_jsonutils(self):
         def __get_msg(fun):
             msg = ("N321: jsonutils.%(fun)s must be used instead of "
