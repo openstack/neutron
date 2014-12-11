@@ -16,11 +16,11 @@
 """Context: context for security/db session."""
 
 import copy
-
 import datetime
 
+from oslo_context import context as oslo_context
+
 from neutron.db import api as db_api
-from neutron.openstack.common import context as common_context
 from neutron.openstack.common import local
 from neutron.openstack.common import log as logging
 from neutron import policy
@@ -29,7 +29,7 @@ from neutron import policy
 LOG = logging.getLogger(__name__)
 
 
-class ContextBase(common_context.RequestContext):
+class ContextBase(oslo_context.RequestContext):
     """Security context and request information.
 
     Represents the user taking a given action within the system.

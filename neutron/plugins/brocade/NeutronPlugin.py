@@ -22,6 +22,7 @@
 from oslo.config import cfg
 from oslo import messaging
 from oslo.utils import importutils
+from oslo_context import context as oslo_context
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -45,7 +46,6 @@ from neutron.db import portbindings_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common import context
 from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.brocade.db import models as brocade_db
@@ -228,7 +228,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                    physical_interface)
         self.base_binding_dict = self._get_base_binding_dict()
         portbindings_base.register_port_dict_function()
-        self.ctxt = context.get_admin_context()
+        self.ctxt = oslo_context.get_admin_context()
         self.ctxt.session = db.get_session()
         self._vlan_bitmap = vbm.VlanBitmap(self.ctxt)
         self._setup_rpc()
@@ -253,7 +253,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.rpc_context = context.RequestContext('neutron', 'neutron',
+        self.rpc_context = oslo_context.RequestContext('neutron', 'neutron',
                                                   is_admin=False)
         self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [BridgeRpcCallbacks(),

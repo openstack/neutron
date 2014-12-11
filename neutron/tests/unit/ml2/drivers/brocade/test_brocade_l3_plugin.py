@@ -18,9 +18,9 @@
 import mock
 from oslo.config import cfg
 from oslo.utils import importutils
+from oslo_context import context as oslo_context
 
 from neutron.db import api as db
-from neutron.openstack.common import context
 from neutron.openstack.common import log as logging
 from neutron.tests.unit import test_l3_plugin
 
@@ -44,7 +44,7 @@ class BrocadeSVIPlugin_TestCases(test_l3_plugin.TestL3NatBasePlugin):
             LOG.info(_("rbridge id %s"), self._switch['rbridge_id'])
             self._driver = mock.MagicMock()
 
-        self.context = context.get_admin_context()
+        self.context = oslo_context.get_admin_context()
         self.context.session = db.get_session()
         self.l3_plugin = importutils.import_object(L3_SVC_PLUGIN)
         with mock.patch.object(self.l3_plugin,

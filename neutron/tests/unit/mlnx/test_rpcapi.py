@@ -21,10 +21,10 @@ import contextlib
 import mock
 
 from oslo.config import cfg
+from oslo_context import context as oslo_context
 
 from neutron.agent import rpc as agent_rpc
 from neutron.common import topics
-from neutron.openstack.common import context
 from neutron.plugins.mlnx import agent_notify_api
 from neutron.tests import base
 
@@ -32,7 +32,7 @@ from neutron.tests import base
 class rpcApiTestCase(base.BaseTestCase):
 
     def _test_mlnx_api(self, rpcapi, topic, method, rpc_method, **kwargs):
-        ctxt = context.RequestContext('fake_user', 'fake_project')
+        ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if rpc_method == 'call' else None
         expected_version = kwargs.pop('version', None)
         fanout = kwargs.pop('fanout', False)
