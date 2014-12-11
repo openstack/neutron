@@ -22,7 +22,6 @@ import mock
 from oslo.config import cfg
 from oslo.db.sqlalchemy import test_base
 from oslo.db.sqlalchemy import test_migrations
-import pkg_resources as pkg
 import sqlalchemy
 
 from neutron.db.migration import cli as migration
@@ -33,18 +32,33 @@ LOG = logging.getLogger(__name__)
 
 
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
-cfg.CONF.import_opt('service_plugins', 'neutron.common.config')
 
-
-def _discover_plugins(plugin_type):
-    return [
-        '%s.%s' % (entrypoint.module_name, entrypoint.attrs[0])
-        for entrypoint in
-        pkg.iter_entry_points(plugin_type)
-    ]
-
-SERVICE_PLUGINS = _discover_plugins("neutron.service_plugins")
 CORE_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+
+# These tables are still in the neutron database, but their models have moved
+# to the separate advanced services repositories. We skip the migration checks
+# for these tables for now. The checks will be re-instated soon in the tests
+# for each separate repository.
+# TODO(akamyshnikova): delete these lists when the tables are removed from
+# neutron database.
+EXTERNAL_VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
+                          'ipsec_site_connections', 'cisco_csr_identifier_map',
+                          'ikepolicies']
+
+EXTERNAL_LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools',
+                         'healthmonitors', 'poolstatisticss', 'members',
+                         'poolloadbalanceragentbindings', 'embrane_pool_port',
+                         'poolmonitorassociations']
+
+EXTERNAL_FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
+
+EXTERNAL_TABLES = (EXTERNAL_FWAAS_TABLES + EXTERNAL_LBAAS_TABLES +
+                   EXTERNAL_VPNAAS_TABLES)
+
+# TODO(akamyshnikova): Temporarily skip checking FKs on these tables.
+TABLES_WITH_EXTERNAL_FK = ['vcns_edge_monitor_bindings',
+                           'vcns_edge_pool_bindings', 'vcns_edge_vip_bindings',
+                           'vcns_firewall_rule_bindings']
 
 
 class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
@@ -122,8 +136,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         self.addCleanup(patch.stop)
         super(_TestModelsMigrations, self).setUp()
         self.cfg = self.useFixture(config.Config())
-        self.cfg.config(service_plugins=SERVICE_PLUGINS,
-                        core_plugin=CORE_PLUGIN)
+        self.cfg.config(core_plugin=CORE_PLUGIN)
         self.alembic_config = migration.get_alembic_config()
         self.alembic_config.neutron_config = cfg.CONF
 
@@ -139,16 +152,14 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         return head_models.get_metadata()
 
     def include_object(self, object_, name, type_, reflected, compare_to):
-        if type_ == 'table' and name == 'alembic_version':
+        if type_ == 'table' and (name == 'alembic_version'
+                                 or name in EXTERNAL_TABLES):
                 return False
 
         return super(_TestModelsMigrations, self).include_object(
             object_, name, type_, reflected, compare_to)
 
     def test_models_sync(self):
-        # TODO(dougw) - re-enable, with exclusion list
-        self.skipTest("Temporarily disabled during services split")
-
         # drop all tables after a test run
         self.addCleanup(self._cleanup)
 
@@ -210,6 +221,14 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
                     if col in insp.get_pk_constraint(
                             table_name)['constrained_columns']:
                         return False
+            # TODO(akamyshnikova): Remove this skip once the logic for
+            # vcns_*_bindings is fixed. (Part of advanced services split.)
+            elif ((element[0] == 'remove_fk'
+                  and element[1].parent.name in TABLES_WITH_EXTERNAL_FK)
+                  or (element[0] == 'drop_key'
+                      and element[2] in TABLES_WITH_EXTERNAL_FK)):
+                return False
+
         else:
             for modified, _, table, column, _, _, new in element:
                 if modified == 'modify_default' and dialect == 'mysql':
