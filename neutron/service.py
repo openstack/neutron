@@ -236,7 +236,7 @@ class Service(n_rpc.Service):
 
         :param host: defaults to CONF.host
         :param binary: defaults to basename of executable
-        :param topic: defaults to bin_name - 'nova-' part
+        :param topic: defaults to bin_name - 'neutron-' part
         :param manager: defaults to CONF.<topic>_manager
         :param report_interval: defaults to CONF.report_interval
         :param periodic_interval: defaults to CONF.periodic_interval
