@@ -19,6 +19,7 @@ import uuid
 
 import mock
 from oslo.config import cfg
+from oslo.db import exception as db_exc
 from oslo.utils import importutils
 from oslo.utils import timeutils
 from sqlalchemy.orm import query
@@ -969,6 +970,19 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
             }
         }
         return agent, router
+
+    def test_schedule_snat_router_duplicate_entry(self):
+        self._prepare_schedule_snat_tests()
+        with contextlib.nested(
+            mock.patch.object(self.dut, 'get_l3_agents'),
+            mock.patch.object(self.dut, 'get_snat_candidates'),
+            mock.patch.object(self.dut, 'bind_snat_servicenode',
+                              side_effect=db_exc.DBDuplicateEntry()),
+            mock.patch.object(self.dut, 'bind_dvr_router_servicenode')
+        ) as (mock_gl3, mock_snat_canidates, mock_bind_snat, mock_bind_dvr):
+            self.dut.schedule_snat_router(self.adminContext, 'foo', 'bar')
+        self.assertTrue(mock_bind_snat.called)
+        self.assertFalse(mock_bind_dvr.called)
 
     def test_schedule_router_unbind_snat_servicenode_negativetest(self):
         router = {
