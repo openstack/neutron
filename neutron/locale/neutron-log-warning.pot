@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev657.ge55e715\n"
+"Project-Id-Version: neutron 2015.1.dev675.g21da71f\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-10 06:07+0000\n"
+"POT-Creation-Date: 2014-12-12 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,39 +56,13 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3_agent.py:1989
+#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3/agent.py:1710
 #: neutron/agent/metadata/agent.py:411
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:273
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
-msgstr ""
-
-#: neutron/agent/l3_agent.py:533
-#, python-format
-msgid ""
-"l3-agent cannot check service plugins enabled at the neutron server when "
-"startup due to RPC error. It happens when the server does not support "
-"this RPC API. If the error is UnsupportedVersion you can ignore this "
-"warning. Detail message: %s"
-msgstr ""
-
-#: neutron/agent/l3_agent.py:545
-#, python-format
-msgid ""
-"l3-agent cannot check service plugins enabled on the neutron server. "
-"Retrying. Detail message: %s"
-msgstr ""
-
-#: neutron/agent/l3_agent.py:775
-#, python-format
-msgid "Info for router %s were not found. Skipping router removal"
-msgstr ""
-
-#: neutron/agent/l3_agent.py:1114
-#, python-format
-msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
 #: neutron/agent/rpc.py:101
@@ -110,6 +84,32 @@ msgstr ""
 msgid ""
 "security_group_info_for_devices rpc call not supported by the server, "
 "falling back to old security_group_rules_for_devices which scales worse."
+msgstr ""
+
+#: neutron/agent/l3/agent.py:243
+#, python-format
+msgid ""
+"l3-agent cannot check service plugins enabled at the neutron server when "
+"startup due to RPC error. It happens when the server does not support "
+"this RPC API. If the error is UnsupportedVersion you can ignore this "
+"warning. Detail message: %s"
+msgstr ""
+
+#: neutron/agent/l3/agent.py:255
+#, python-format
+msgid ""
+"l3-agent cannot check service plugins enabled on the neutron server. "
+"Retrying. Detail message: %s"
+msgstr ""
+
+#: neutron/agent/l3/agent.py:485
+#, python-format
+msgid "Info for router %s were not found. Skipping router removal"
+msgstr ""
+
+#: neutron/agent/l3/agent.py:824
+#, python-format
+msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
 #: neutron/agent/linux/iptables_manager.py:155
@@ -261,11 +261,6 @@ msgstr ""
 #: neutron/db/securitygroups_rpc_base.py:359
 #, python-format
 msgid "No valid gateway port on subnet %s is found for IPv6 RA"
-msgstr ""
-
-#: neutron/db/vpn/vpn_db.py:660
-#, python-format
-msgid "vpnservice %s in db is already deleted"
 msgstr ""
 
 #: neutron/debug/debug_agent.py:123
@@ -1113,7 +1108,7 @@ msgid ""
 "security group %(sec_group_id)s was not found on the backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:557
+#: neutron/plugins/vmware/plugins/service.py:551
 #, python-format
 msgid "Did not found lswitch %s in NSX"
 msgstr ""
@@ -1151,27 +1146,5 @@ msgstr ""
 #: neutron/scheduler/l3_agent_scheduler.py:193
 #, python-format
 msgid "No L3 agents can host the router %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/agent_scheduler.py:110
-#, python-format
-msgid "No active lbaas agents for pool %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/agent_scheduler.py:116
-#, python-format
-msgid "No lbaas agent supporting device driver %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/embrane/driver.py:130
-#, python-format
-msgid "Subnet assigned to pool %s doesn't exist, backend port can't be created"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/embrane/agent/lb_operations.py:110
-#, python-format
-msgid ""
-"The load balancer %s had no physical representation, likely already "
-"deleted"
 msgstr ""
 

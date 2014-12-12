@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev657.ge55e715\n"
+"Project-Id-Version: neutron 2015.1.dev675.g21da71f\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-10 06:07+0000\n"
+"POT-Creation-Date: 2014-12-12 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,14 +36,10 @@ msgstr ""
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3_agent.py:1999
+#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1720
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
-msgstr ""
-
-#: neutron/agent/l3_agent.py:1901
-msgid "L3 agent started"
 msgstr ""
 
 #: neutron/agent/ovs_cleanup_util.py:74
@@ -105,6 +101,10 @@ msgstr ""
 
 #: neutron/agent/securitygroups_rpc.py:292
 msgid "No ports here to refresh firewall"
+msgstr ""
+
+#: neutron/agent/l3/agent.py:1622
+msgid "L3 agent started"
 msgstr ""
 
 #: neutron/agent/linux/interface.py:262 neutron/agent/linux/interface.py:317
@@ -1395,18 +1395,6 @@ msgstr ""
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:92
 #, python-format
 msgid "Loading interface driver %s"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_csr_db.py:226
-#, python-format
-msgid ""
-"Mapped connection %(conn_id)s to Tunnel%(tunnel_id)d using IKE policy ID "
-"%(ike_id)d and IPSec policy ID %(ipsec_id)d"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_csr_db.py:238
-#, python-format
-msgid "Removed mapping for connection %s"
 msgstr ""
 
 #: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:62
