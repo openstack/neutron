@@ -41,29 +41,27 @@ class TestAsyncProcess(base.BaseTestCase):
             eventlet.sleep(0.01)
 
     def test_stopping_async_process_lifecycle(self):
-        with self.assert_max_execution_time():
-            proc = async_process.AsyncProcess(['tail', '-f',
-                                               self.test_file_path])
-            proc.start()
-            self._check_stdout(proc)
-            proc.stop()
+        proc = async_process.AsyncProcess(['tail', '-f',
+                                           self.test_file_path])
+        proc.start()
+        self._check_stdout(proc)
+        proc.stop()
 
-            # Ensure that the process and greenthreads have stopped
-            proc._process.wait()
-            self.assertEqual(proc._process.returncode, -9)
-            for watcher in proc._watchers:
-                watcher.wait()
+        # Ensure that the process and greenthreads have stopped
+        proc._process.wait()
+        self.assertEqual(proc._process.returncode, -9)
+        for watcher in proc._watchers:
+            watcher.wait()
 
     def test_async_process_respawns(self):
-        with self.assert_max_execution_time():
-            proc = async_process.AsyncProcess(['tail', '-f',
-                                               self.test_file_path],
-                                              respawn_interval=0)
-            proc.start()
+        proc = async_process.AsyncProcess(['tail', '-f',
+                                           self.test_file_path],
+                                          respawn_interval=0)
+        proc.start()
 
-            # Ensure that the same output is read twice
-            self._check_stdout(proc)
-            pid = proc._get_pid_to_kill()
-            proc._kill_process(pid)
-            self._check_stdout(proc)
-            proc.stop()
+        # Ensure that the same output is read twice
+        self._check_stdout(proc)
+        pid = proc._get_pid_to_kill()
+        proc._kill_process(pid)
+        self._check_stdout(proc)
+        proc.stop()

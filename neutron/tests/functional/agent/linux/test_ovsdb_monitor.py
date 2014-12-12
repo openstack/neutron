@@ -74,18 +74,17 @@ class TestOvsdbMonitor(BaseMonitorTest):
             eventlet.sleep(0.01)
 
     def test_killed_monitor_respawns(self):
-        with self.assert_max_execution_time():
-            self.monitor.respawn_interval = 0
-            old_pid = self.monitor._process.pid
-            output1 = self.collect_initial_output()
-            pid = self.monitor._get_pid_to_kill()
-            self.monitor._kill_process(pid)
-            self.monitor._reset_queues()
-            while (self.monitor._process.pid == old_pid):
-                eventlet.sleep(0.01)
-            output2 = self.collect_initial_output()
-            # Initial output should appear twice
-            self.assertEqual(output1, output2)
+        self.monitor.respawn_interval = 0
+        old_pid = self.monitor._process.pid
+        output1 = self.collect_initial_output()
+        pid = self.monitor._get_pid_to_kill()
+        self.monitor._kill_process(pid)
+        self.monitor._reset_queues()
+        while (self.monitor._process.pid == old_pid):
+            eventlet.sleep(0.01)
+        output2 = self.collect_initial_output()
+        # Initial output should appear twice
+        self.assertEqual(output1, output2)
 
 
 class TestSimpleInterfaceMonitor(BaseMonitorTest):
@@ -104,7 +103,6 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         self.assertFalse(self.monitor.has_updates,
                          'has_updates without port addition should be False')
         self.create_resource('test-port-', self.bridge.add_port)
-        with self.assert_max_execution_time():
-            # has_updates after port addition should become True
-            while not self.monitor.has_updates:
-                eventlet.sleep(0.01)
+        # has_updates after port addition should become True
+        while not self.monitor.has_updates:
+            eventlet.sleep(0.01)
