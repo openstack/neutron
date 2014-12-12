@@ -17,6 +17,7 @@ import six
 
 from alembic import command as alembic_command
 from alembic import config as alembic_config
+from alembic import environment
 from alembic import script as alembic_script
 from alembic import util as alembic_util
 from oslo.config import cfg
@@ -89,7 +90,8 @@ def do_upgrade_downgrade(config, cmd):
         revision = sign + str(CONF.command.delta)
     else:
         revision = CONF.command.revision
-
+    if CONF.command.name == 'upgrade' and not CONF.command.sql:
+        run_sanity_checks(config, revision)
     do_alembic_command(config, cmd, revision, sql=CONF.command.sql)
 
 
@@ -189,6 +191,22 @@ def get_alembic_config():
                                                 'alembic.ini'))
     config.set_main_option('script_location', get_script_location(CONF))
     return config
+
+
+def run_sanity_checks(config, revision):
+    script_dir = alembic_script.ScriptDirectory.from_config(config)
+
+    def check_sanity(rev, context):
+        for script in script_dir.iterate_revisions(revision, rev):
+            if hasattr(script.module, 'check_sanity'):
+                script.module.check_sanity(context.connection)
+        return []
+
+    with environment.EnvironmentContext(config, script_dir,
+                                        fn=check_sanity,
+                                        starting_rev=None,
+                                        destination_rev=revision):
+        script_dir.run_env()
 
 
 def main():

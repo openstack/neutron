@@ -76,7 +76,8 @@ class TestCli(base.BaseTestCase):
         self.mock_alembic_err.side_effect = SystemExit
 
     def _main_test_helper(self, argv, func_name, exp_args=(), exp_kwargs={}):
-        with mock.patch.object(sys, 'argv', argv):
+        with mock.patch.object(sys, 'argv', argv), mock.patch.object(
+                cli, 'run_sanity_checks'):
             cli.main()
             self.do_alembic_cmd.assert_has_calls(
                 [mock.call(mock.ANY, func_name, *exp_args, **exp_kwargs)]

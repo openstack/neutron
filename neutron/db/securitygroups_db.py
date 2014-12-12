@@ -40,6 +40,21 @@ class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     description = sa.Column(sa.String(255))
 
 
+class DefaultSecurityGroup(model_base.BASEV2):
+    __tablename__ = 'default_security_group'
+
+    tenant_id = sa.Column(sa.String(255), primary_key=True, nullable=False)
+    security_group_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey("securitygroups.id",
+                                                ondelete="CASCADE"),
+                                  nullable=False)
+    security_group = orm.relationship(
+        SecurityGroup, lazy='joined',
+        backref=orm.backref('default_security_group', cascade='all,delete'),
+        primaryjoin="SecurityGroup.id==DefaultSecurityGroup.security_group_id",
+    )
+
+
 class SecurityGroupPortBinding(model_base.BASEV2):
     """Represents binding between neutron ports and security profiles."""
 
@@ -118,8 +133,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                               tenant_id=tenant_id,
                                               name=s['name'])
             context.session.add(security_group_db)
+            if default_sg:
+                context.session.add(DefaultSecurityGroup(
+                    security_group=security_group_db,
+                    tenant_id=security_group_db['tenant_id']))
             for ethertype in ext_sg.sg_supported_ethertypes:
-                if s.get('name') == 'default':
+                if default_sg:
                     # Allow intercommunication
                     ingress_rule = SecurityGroupRule(
                         id=uuidutils.generate_uuid(), tenant_id=tenant_id,
@@ -503,19 +522,21 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         :returns: the default security group id.
         """
-        filters = {'name': ['default'], 'tenant_id': [tenant_id]}
-        default_group = self.get_security_groups(context, filters,
-                                                 default_sg=True)
-        if not default_group:
+        query = self._model_query(context, DefaultSecurityGroup)
+        try:
+            default_group = query.filter(
+                DefaultSecurityGroup.tenant_id == tenant_id).one()
+        except exc.NoResultFound:
             security_group = {
                 'security_group': {'name': 'default',
                                    'tenant_id': tenant_id,
                                    'description': _('Default security group')}
             }
-            ret = self.create_security_group(context, security_group, True)
+            ret = self.create_security_group(context, security_group,
+                                             default_sg=True)
             return ret['id']
         else:
-            return default_group[0]['id']
+            return default_group['security_group_id']
 
     def _get_security_groups_on_port(self, context, port):
         """Check that all security groups on port belong to tenant.
