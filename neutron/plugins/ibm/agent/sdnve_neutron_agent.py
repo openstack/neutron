@@ -142,9 +142,7 @@ class SdnveNeutronAgent(object):
         if self.int_br and new_controller:
             LOG.debug("info_update received. New controller"
                       "is to be set to: %s", new_controller)
-            self.int_br.run_vsctl(["set-controller",
-                                   self.int_bridge_name,
-                                   "tcp:" + new_controller])
+            self.int_br.set_controller(["tcp:" + new_controller])
             if out_of_band:
                 LOG.debug("info_update received. New controller"
                           "is set to be out of band")
@@ -175,8 +173,7 @@ class SdnveNeutronAgent(object):
 
         # set the controller
         if controller_ip:
-            int_br.run_vsctl(
-                ["set-controller", bridge_name, "tcp:" + controller_ip])
+            int_br.set_controller(["tcp:" + controller_ip])
         if out_of_band:
             int_br.set_db_attribute("controller", bridge_name,
                                     "connection-mode", "out-of-band")
