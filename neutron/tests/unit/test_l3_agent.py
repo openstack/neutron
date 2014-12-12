@@ -813,7 +813,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def _test_process_router(self, ri):
         router = ri.router
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.host = HOSTNAME
         fake_fip_id = 'fake_fip_id'
+        agent.create_dvr_fip_interfaces = mock.Mock()
         agent.process_router_floating_ip_addresses = mock.Mock()
         agent.process_router_floating_ip_nat_rules = mock.Mock()
         agent.process_router_floating_ip_addresses.return_value = {
@@ -824,7 +826,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
             {'id': fake_fip_id,
              'floating_ip_address': '8.8.8.8',
              'fixed_ip_address': '7.7.7.7',
-             'port_id': _uuid()}]}
+             'port_id': _uuid(),
+             'host': HOSTNAME}]}
         agent.process_router(ri)
         ex_gw_port = agent._get_ex_gw_port(ri)
         agent.process_router_floating_ip_addresses.assert_called_with(
@@ -889,15 +892,17 @@ class TestBasicRouterOperations(base.BaseTestCase):
     @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
     def _test_process_router_floating_ip_addresses_add(self, ri,
                                                        agent, IPDevice):
-        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
+        floating_ips = agent.get_floating_ips(ri)
         fip_id = floating_ips[0]['id']
         IPDevice.return_value = device = mock.Mock()
         device.addr.list.return_value = []
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
+        ex_gw_port = {'id': _uuid()}
 
         with mock.patch.object(lla.LinkLocalAllocator, '_write'):
+            agent.create_dvr_fip_interfaces(ri, ex_gw_port)
             fip_statuses = agent.process_router_floating_ip_addresses(
-                ri, {'id': _uuid()})
+                ri, ex_gw_port)
         self.assertEqual({fip_id: l3_constants.FLOATINGIP_STATUS_ACTIVE},
                          fip_statuses)
         device.addr.add.assert_called_once_with(4, '15.1.2.3/32', '15.1.2.3')
@@ -910,10 +915,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         }
 
         ri = mock.MagicMock()
-        ri.router.get.return_value = [fip]
         ri.router['distributed'].__nonzero__ = lambda self: False
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.get_floating_ips = mock.Mock(return_value=[fip])
 
         agent.process_router_floating_ip_nat_rules(ri)
 
@@ -928,7 +933,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
             {'id': _uuid(),
              'floating_ip_address': '15.1.2.3',
              'fixed_ip_address': '192.168.0.1',
-             'port_id': _uuid()}]}
+             'floating_network_id': _uuid(),
+             'port_id': _uuid(),
+             'host': HOSTNAME}]}
 
         router = prepare_router_data(enable_snat=True)
         router[l3_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
@@ -2175,4 +2182,5 @@ class TestBasicRouterOperations(base.BaseTestCase):
                           mock.sentinel.ex_gw_port)
 
         agent.process_router_floating_ip_addresses.assert_called_with(
-            mock.sentinel.ri, mock.sentinel.ex_gw_port)
+            mock.sentinel.ri,
+            mock.sentinel.ex_gw_port)
