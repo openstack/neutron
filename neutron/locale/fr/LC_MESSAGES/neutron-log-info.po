@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-10 06:07+0000\n"
-"PO-Revision-Date: 2014-12-10 00:24+0000\n"
+"POT-Creation-Date: 2014-12-12 06:07+0000\n"
+"PO-Revision-Date: 2014-12-10 22:16+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
 "fr/)\n"
@@ -38,15 +38,11 @@ msgstr "Etat de synchronisation"
 msgid "Synchronizing state complete"
 msgstr "Etat de synchronisation complet"
 
-#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3_agent.py:1999
+#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1720
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "agent_updated au niveau du serveur %s !"
-
-#: neutron/agent/l3_agent.py:1901
-msgid "L3 agent started"
-msgstr "Agent de niveau 3 démarré"
 
 #: neutron/agent/ovs_cleanup_util.py:74
 #, python-format
@@ -108,6 +104,10 @@ msgstr "Régénération des règles de pare-feu"
 #: neutron/agent/securitygroups_rpc.py:292
 msgid "No ports here to refresh firewall"
 msgstr ""
+
+#: neutron/agent/l3/agent.py:1622
+msgid "L3 agent started"
+msgstr "Agent de niveau 3 démarré"
 
 #: neutron/agent/linux/interface.py:262 neutron/agent/linux/interface.py:317
 #: neutron/agent/linux/interface.py:380 neutron/agent/linux/interface.py:427
@@ -1422,18 +1422,6 @@ msgstr ""
 #, python-format
 msgid "Loading interface driver %s"
 msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_csr_db.py:226
-#, python-format
-msgid ""
-"Mapped connection %(conn_id)s to Tunnel%(tunnel_id)d using IKE policy ID "
-"%(ike_id)d and IPSec policy ID %(ipsec_id)d"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_csr_db.py:238
-#, python-format
-msgid "Removed mapping for connection %s"
-msgstr "Suppression du mappage de connexion %s"
 
 #: neutron/tests/unit/vmware/apiclient/test_api_eventlet_request.py:62
 #, python-format
