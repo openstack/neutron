@@ -19,7 +19,7 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.openstack.common import uuidutils
-from neutron.tests.functional.agent.linux import pinger
+from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base as functional_base
 
 
@@ -97,7 +97,7 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
     def setUp(self):
         super(BaseIPVethTestCase, self).setUp()
         self.check_sudo_enabled()
-        self.pinger = pinger.Pinger(self)
+        self.pinger = helpers.Pinger(self)
 
     @staticmethod
     def _set_ip_up(device, cidr, broadcast, ip_version=4):
