@@ -29,4 +29,5 @@ class BigSwitchDhcpAgentNotifierTestCase(
         self.setup_config_files()
         self.setup_patches()
         super(BigSwitchDhcpAgentNotifierTestCase, self).setUp()
+        self.setup_db()
         self.startHttpPatch()

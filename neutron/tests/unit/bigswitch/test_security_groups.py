@@ -30,6 +30,7 @@ class RestProxySecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase,
         self.setup_patches()
         self._attribute_map_bk_ = {}
         super(RestProxySecurityGroupsTestCase, self).setUp(self.plugin_str)
+        self.setup_db()
         plugin = manager.NeutronManager.get_plugin()
         self.notifier = plugin.notifier
         self.rpc = plugin.endpoints[0]
