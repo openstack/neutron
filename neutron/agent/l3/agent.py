@@ -568,15 +568,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
         return [ip_dev.name for ip_dev in ip_devs]
 
-    @common_utils.exception_logger()
-    def process_router(self, ri):
-        # TODO(mrsmith) - we shouldn't need to check here
-        if 'distributed' not in ri.router:
-            ri.router['distributed'] = False
-        ri.iptables_manager.defer_apply_on()
-        ex_gw_port = self._get_ex_gw_port(ri)
+    def _process_internal_ports(self, ri):
         internal_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
-        snat_ports = ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
         existing_port_ids = set([p['id'] for p in ri.internal_ports])
         current_port_ids = set([p['id'] for p in internal_ports
                                 if p['admin_state_up']])
@@ -604,6 +597,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
                 old_ipv6_port = True
 
+        # Enable RA
         if new_ipv6_port or old_ipv6_port:
             ra.enable_ipv6_ra(ri.router_id,
                               ri.ns_name,
@@ -624,8 +618,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                namespace=ri.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
 
-        # TODO(salv-orlando): RouterInfo would be a better place for
-        # this logic too
+    def _process_external_gateway(self, ri):
+        ex_gw_port = self._get_ex_gw_port(ri)
         ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
                          ri.ex_gw_port and ri.ex_gw_port['id'])
 
@@ -651,6 +645,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         elif not ex_gw_port and ri.ex_gw_port:
             self.external_gateway_removed(ri, ri.ex_gw_port, interface_name)
 
+        existing_devices = self._get_existing_devices(ri)
         stale_devs = [dev for dev in existing_devices
                       if dev.startswith(EXTERNAL_DEV_PREFIX)
                       and dev != interface_name]
@@ -662,50 +657,69 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                namespace=ri.ns_name,
                                prefix=EXTERNAL_DEV_PREFIX)
 
-        # Process static routes for router
-        self.routes_updated(ri)
         # Process SNAT rules for external gateway
         if (not ri.router['distributed'] or
             ex_gw_port and self.get_gw_port_host(ri.router) == self.host):
             ri.perform_snat_action(self._handle_router_snat_rules,
                                    interface_name)
 
-        # Process SNAT/DNAT rules for floating IPs
+    def _process_snat_dnat_for_fip(self, ri):
+        ex_gw_port = self._get_ex_gw_port(ri)
+        if not ex_gw_port:
+            return
         fip_statuses = {}
         try:
-            if ex_gw_port:
-                existing_floating_ips = ri.floating_ips
-                self.process_router_floating_ip_nat_rules(ri)
-                ri.iptables_manager.defer_apply_off()
-                # Once NAT rules for floating IPs are safely in place
-                # configure their addresses on the external gateway port
-                fip_statuses = self.process_router_floating_ip_addresses(
-                    ri, ex_gw_port)
+            existing_floating_ips = ri.floating_ips
+            self.process_router_floating_ip_nat_rules(ri)
+            ri.iptables_manager.defer_apply_off()
+            # Once NAT rules for floating IPs are safely in place
+            # configure their addresses on the external gateway port
+            fip_statuses = self.process_router_floating_ip_addresses(
+                ri, ex_gw_port)
         except Exception:
             # TODO(salv-orlando): Less broad catching
             # All floating IPs must be put in error state
             for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
                 fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ERROR
 
-        if ex_gw_port:
-            # Identify floating IPs which were disabled
-            ri.floating_ips = set(fip_statuses.keys())
-            for fip_id in existing_floating_ips - ri.floating_ips:
-                fip_statuses[fip_id] = l3_constants.FLOATINGIP_STATUS_DOWN
-            # Update floating IP status on the neutron server
-            self.plugin_rpc.update_floatingip_statuses(
-                self.context, ri.router_id, fip_statuses)
+        # Identify floating IPs which were disabled
+        ri.floating_ips = set(fip_statuses.keys())
+        for fip_id in existing_floating_ips - ri.floating_ips:
+            fip_statuses[fip_id] = l3_constants.FLOATINGIP_STATUS_DOWN
+        # Update floating IP status on the neutron server
+        self.plugin_rpc.update_floatingip_statuses(
+            self.context, ri.router_id, fip_statuses)
 
-        # Update ex_gw_port and enable_snat on the router info cache
-        ri.ex_gw_port = ex_gw_port
-        ri.snat_ports = snat_ports
-        ri.enable_snat = ri.router.get('enable_snat')
-
+    def _process_ha_router(self, ri):
         if ri.is_ha:
             if ri.ha_port:
                 ri.spawn_keepalived()
             else:
                 ri.disable_keepalived()
+
+    @common_utils.exception_logger()
+    def process_router(self, ri):
+        # TODO(mrsmith) - we shouldn't need to check here
+        if 'distributed' not in ri.router:
+            ri.router['distributed'] = False
+
+        ri.iptables_manager.defer_apply_on()
+        self._process_internal_ports(ri)
+        self._process_external_gateway(ri)
+
+        # Process static routes for router
+        self.routes_updated(ri)
+
+        # Process SNAT/DNAT rules for floating IPs
+        self._process_snat_dnat_for_fip(ri)
+
+        # Enable or disable keepalived for ha routers
+        self._process_ha_router(ri)
+
+        # Update ex_gw_port and enable_snat on the router info cache
+        ri.ex_gw_port = self._get_ex_gw_port(ri)
+        ri.snat_ports = ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
+        ri.enable_snat = ri.router.get('enable_snat')
 
     def _handle_router_snat_rules(self, ri, ex_gw_port,
                                   interface_name, action):
