@@ -32,7 +32,7 @@ class NeutronKeystoneContext(wsgi.Middleware):
         # Determine the user ID
         user_id = req.headers.get('X_USER_ID')
         if not user_id:
-            LOG.debug(_("X_USER_ID is not found in request"))
+            LOG.debug("X_USER_ID is not found in request")
             return webob.exc.HTTPUnauthorized()
 
         # Determine the tenant

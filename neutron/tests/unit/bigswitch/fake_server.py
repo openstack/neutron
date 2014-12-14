@@ -67,8 +67,8 @@ class HTTPConnectionMock(object):
             self.response = HTTPResponseMock500(None, errmsg=errmsg)
 
     def request(self, action, uri, body, headers):
-        LOG.debug(_("Request: action=%(action)s, uri=%(uri)r, "
-                    "body=%(body)s, headers=%(headers)s"),
+        LOG.debug("Request: action=%(action)s, uri=%(uri)r, "
+                  "body=%(body)s, headers=%(headers)s",
                   {'action': action, 'uri': uri,
                    'body': body, 'headers': headers})
         if self.broken and "ExceptOnBadServer" in uri:

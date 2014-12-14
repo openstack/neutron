@@ -168,8 +168,8 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
         return
     data = validate[key[0]]
     if not isinstance(data, dict):
-        LOG.debug(_("Attribute type descriptor is not a dict. Unable to "
-                    "generate any sub-attr policy rule for %s."),
+        LOG.debug("Attribute type descriptor is not a dict. Unable to "
+                  "generate any sub-attr policy rule for %s.",
                   attr_name)
         return
     sub_attr_rules = [policy.RuleCheck('rule', '%s:%s:%s' %
@@ -275,7 +275,7 @@ class OwnerCheck(policy.Check):
                     parent_res, parent_field = do_split(separator)
                     break
                 except ValueError:
-                    LOG.debug(_("Unable to find ':' as separator in %s."),
+                    LOG.debug("Unable to find ':' as separator in %s.",
                               self.target_field)
             else:
                 # If we are here split failed with both separators
@@ -346,10 +346,9 @@ class FieldCheck(policy.Check):
         target_value = target_dict.get(self.field)
         # target_value might be a boolean, explicitly compare with None
         if target_value is None:
-            LOG.debug(_("Unable to find requested field: %(field)s in "
-                        "target: %(target_dict)s"),
-                      {'field': self.field,
-                       'target_dict': target_dict})
+            LOG.debug("Unable to find requested field: %(field)s in target: "
+                      "%(target_dict)s",
+                      {'field': self.field, 'target_dict': target_dict})
             return False
         return target_value == self.value
 

@@ -27,8 +27,6 @@ class HackingTestCase(base.BaseTestCase):
             'exception': '_LE',
         }
         logs = expected_marks.keys()
-        levels = ['_LI', '_LW', '_LE', '_LC']
-        all_marks = levels + ['_']
         debug = "LOG.debug('OK')"
         self.assertEqual(
             0, len(list(checks.validate_log_translations(debug, debug, 'f'))))
@@ -36,35 +34,25 @@ class HackingTestCase(base.BaseTestCase):
             bad = 'LOG.%s("Bad")' % log
             self.assertEqual(
                 1, len(list(checks.validate_log_translations(bad, bad, 'f'))))
-            ok = "LOG.%s(_('OK'))" % log
-            self.assertEqual(
-                0, len(list(checks.validate_log_translations(ok, ok, 'f'))))
             ok = "LOG.%s('OK')    # noqa" % log
             self.assertEqual(
                 0, len(list(checks.validate_log_translations(ok, ok, 'f'))))
             ok = "LOG.%s(variable)" % log
             self.assertEqual(
                 0, len(list(checks.validate_log_translations(ok, ok, 'f'))))
-            for level in levels:
-                ok = "LOG.%s(%s('OK'))" % (log, level)
-                self.assertEqual(
-                    0, len(list(checks.validate_log_translations(ok,
-                                                                 ok, 'f'))))
-            filename = 'neutron/agent/f'
-            for mark in all_marks:
+
+            for mark in checks._all_hints:
                 stmt = "LOG.%s(%s('test'))" % (log, mark)
                 self.assertEqual(
                     0 if expected_marks[log] == mark else 1,
-                    len(list(checks.validate_log_translations(stmt,
-                                                              stmt,
-                                                              filename))))
+                    len(list(checks.validate_log_translations(stmt, stmt,
+                                                              'f'))))
 
     def test_no_translate_debug_logs(self):
-        filename = 'neutron/agent/f'
         for hint in checks._all_hints:
             bad = "LOG.debug(%s('bad'))" % hint
             self.assertEqual(
-                1, len(list(checks.no_translate_debug_logs(bad, filename))))
+                1, len(list(checks.no_translate_debug_logs(bad, 'f'))))
 
     def test_use_jsonutils(self):
         def __get_msg(fun):
