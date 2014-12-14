@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-12 06:07+0000\n"
-"PO-Revision-Date: 2014-12-10 22:16+0000\n"
+"POT-Creation-Date: 2014-12-14 06:05+0000\n"
+"PO-Revision-Date: 2014-12-14 03:11+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
 "neutron/language/pt_BR/)\n"
@@ -19,6 +19,21 @@ msgstr ""
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+#: neutron/manager.py:113
+#, python-format
+msgid "Loading core plugin: %s"
+msgstr ""
+
+#: neutron/manager.py:153
+#, python-format
+msgid "Service %s is supported by the core plugin"
+msgstr "Serviço %s é suportado pelo plugin núcleo"
+
+#: neutron/manager.py:171
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "Carregando Plug-in: %s"
+
 #: neutron/policy.py:120
 #, python-format
 msgid ""
@@ -26,6 +41,42 @@ msgid ""
 msgstr ""
 "Inserindo política: %(new_policy)s no lugar de política deprecada: "
 "%(old_policy)s"
+
+#: neutron/quota.py:227
+msgid ""
+"ConfDriver is used as quota_driver because the loaded plugin does not "
+"support 'quotas' table."
+msgstr ""
+
+#: neutron/quota.py:232
+#, python-format
+msgid "Loaded quota_driver: %s."
+msgstr ""
+
+#: neutron/service.py:178
+#, python-format
+msgid "Neutron service started, listening on %(host)s:%(port)s"
+msgstr "Serviço Neutron iniciado, escutando em %(host)s:%(port)s"
+
+#: neutron/wsgi.py:763
+#, python-format
+msgid "%(method)s %(url)s"
+msgstr "%(method)s %(url)s"
+
+#: neutron/wsgi.py:780
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "Exceção de HTTP lançada: %s"
+
+#: neutron/wsgi.py:796
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s retornado com HTTP %(status)d"
+
+#: neutron/wsgi.py:799
+#, python-format
+msgid "%(url)s returned a fault: %(exception)s"
+msgstr "%(url)s retornou uma falha: %(exception)s"
 
 #: neutron/agent/dhcp_agent.py:109 neutron/agent/dhcp_agent.py:605
 msgid "DHCP agent started"
@@ -39,7 +90,7 @@ msgstr "Sincronizando estado"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1720
+#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1734
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -106,7 +157,7 @@ msgstr "Atualizar regras de firewall"
 msgid "No ports here to refresh firewall"
 msgstr "Nenhuma porta aqui para atualizar firewall"
 
-#: neutron/agent/l3/agent.py:1622
+#: neutron/agent/l3/agent.py:1636
 msgid "L3 agent started"
 msgstr "Agente L3 iniciado"
 
@@ -232,6 +283,10 @@ msgstr ""
 #: neutron/db/l3_dvr_db.py:541
 #, python-format
 msgid "SNAT interface port list does not exist, so create one: %s"
+msgstr ""
+
+#: neutron/db/l3_dvrscheduler_db.py:307
+msgid "SNAT already bound to a service node."
 msgstr ""
 
 #: neutron/db/l3_hamode_db.py:175
