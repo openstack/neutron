@@ -15,6 +15,7 @@
 #
 
 import contextlib
+import time
 
 import mock
 from oslo.config import cfg
@@ -519,8 +520,10 @@ class TunnelTest(base.BaseTestCase):
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
                               'process_network_ports'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
-                              'tunnel_sync')
-        ) as (log_exception, scan_ports, process_network_ports, ts):
+                              'tunnel_sync'),
+            mock.patch.object(time, 'sleep')
+        ) as (log_exception, scan_ports, process_network_ports,
+              ts, time_sleep):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]
