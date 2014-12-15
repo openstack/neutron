@@ -50,7 +50,6 @@ from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
-from neutron.openstack.common import processutils
 from neutron.openstack.common import service
 from neutron import service as neutron_service
 try:
@@ -831,8 +830,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             net = netaddr.IPNetwork(ip_cidr)
             try:
                 device.addr.add(net.version, ip_cidr, str(net.broadcast))
-            except (processutils.UnknownArgumentError,
-                    processutils.ProcessExecutionError):
+            except RuntimeError:
                 # any exception occurred here should cause the floating IP
                 # to be set in error state
                 LOG.warn(_LW("Unable to configure IP address for "

@@ -33,7 +33,6 @@ from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.i18n import _LE
-from neutron.openstack.common import processutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
@@ -1113,7 +1112,7 @@ vrrp_instance VR_1 {
     @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
     def test_process_router_floating_ip_with_device_add_error(self, IPDevice):
         IPDevice.return_value = device = mock.Mock()
-        device.addr.add.side_effect = processutils.ProcessExecutionError
+        device.addr.add.side_effect = RuntimeError()
         device.addr.list.return_value = []
         fip_id = _uuid()
         fip = {
