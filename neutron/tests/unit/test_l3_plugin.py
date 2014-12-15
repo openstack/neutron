@@ -765,6 +765,17 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         # nsx metadata access case
                         self.assertIn(payload['tenant_id'], [stid, ''])
 
+    def test_router_add_interface_ipv6_subnet_without_gateway_ip(self):
+        with self.router() as r:
+            with self.subnet(ip_version=6, cidr='fe80::/64',
+                             gateway_ip=None) as s:
+                error_code = exc.HTTPBadRequest.code
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None,
+                                              expected_code=error_code)
+
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):
         with mock.patch('neutron.context.Context.to_dict') as tdict:
             tenant_id = _uuid()
