@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev675.g21da71f\n"
+"Project-Id-Version: neutron 2015.1.dev699.g6a985c8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-12 06:07+0000\n"
+"POT-Creation-Date: 2014-12-14 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,6 +27,11 @@ msgstr ""
 #: neutron/policy.py:166
 #, python-format
 msgid "Unable to find data type descriptor for attribute %s"
+msgstr ""
+
+#: neutron/quota.py:241
+#, python-format
+msgid "%s is already registered."
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:134
@@ -56,7 +61,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3/agent.py:1710
+#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3/agent.py:1724
 #: neutron/agent/metadata/agent.py:411
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:273
@@ -107,7 +112,7 @@ msgstr ""
 msgid "Info for router %s were not found. Skipping router removal"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:824
+#: neutron/agent/l3/agent.py:838
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
@@ -249,7 +254,7 @@ msgid ""
 " not report to the server in the last %(dead_time)s seconds."
 msgstr ""
 
-#: neutron/db/l3_dvrscheduler_db.py:297
+#: neutron/db/l3_dvrscheduler_db.py:298
 msgid "No active L3 agents found for SNAT"
 msgstr ""
 
@@ -258,7 +263,7 @@ msgstr ""
 msgid "The router %(router_id)s is bound multiple times on the agent %(host)s"
 msgstr ""
 
-#: neutron/db/securitygroups_rpc_base.py:359
+#: neutron/db/securitygroups_rpc_base.py:362
 #, python-format
 msgid "No valid gateway port on subnet %s is found for IPv6 RA"
 msgstr ""

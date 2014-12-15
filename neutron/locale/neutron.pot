@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev675.g21da71f\n"
+"Project-Id-Version: neutron 2015.1.dev699.g6a985c8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-12 06:07+0000\n"
+"POT-Creation-Date: 2014-12-14 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,82 +17,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: neutron/auth.py:35
-msgid "X_USER_ID is not found in request"
-msgstr ""
-
-#: neutron/context.py:83
-#, python-format
-msgid "Arguments dropped when creating context: %s"
-msgstr ""
-
-#: neutron/context.py:111
+#: neutron/context.py:110
 #, python-format
 msgid "read_deleted can only be one of 'no', 'yes' or 'only', not %r"
 msgstr ""
 
-#: neutron/manager.py:71
+#: neutron/manager.py:72
 #, python-format
 msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."
 msgstr ""
 
-#: neutron/manager.py:83
+#: neutron/manager.py:84
 msgid "Neutron core_plugin not configured!"
 msgstr ""
 
-#: neutron/manager.py:112
-#, python-format
-msgid "Loading core plugin: %s"
-msgstr ""
-
-#: neutron/manager.py:137
-#, python-format
-msgid "Error loading plugin by name, %s"
-msgstr ""
-
-#: neutron/manager.py:138
-#, python-format
-msgid "Error loading plugin by class, %s"
-msgstr ""
-
-#: neutron/manager.py:139
+#: neutron/manager.py:140
 msgid "Plugin not found."
 msgstr ""
 
-#: neutron/manager.py:144
-msgid "Loading services supported by the core plugin"
-msgstr ""
-
-#: neutron/manager.py:152
-#, python-format
-msgid "Service %s is supported by the core plugin"
-msgstr ""
-
-#: neutron/manager.py:165
-#, python-format
-msgid "Loading service plugins: %s"
-msgstr ""
-
-#: neutron/manager.py:170
-#, python-format
-msgid "Loading Plugin: %s"
-msgstr ""
-
-#: neutron/manager.py:178
+#: neutron/manager.py:179
 #, python-format
 msgid "Multiple plugins for service %s were configured"
-msgstr ""
-
-#: neutron/manager.py:190
-#, python-format
-msgid "Successfully loaded %(type)s plugin. Description: %(desc)s"
-msgstr ""
-
-#: neutron/policy.py:171
-#, python-format
-msgid ""
-"Attribute type descriptor is not a dict. Unable to generate any sub-attr "
-"policy rule for %s."
 msgstr ""
 
 #: neutron/policy.py:252
@@ -100,11 +45,6 @@ msgstr ""
 msgid ""
 "Unable to identify a target field from:%s.match should be in the form "
 "%%(<field_name>)s"
-msgstr ""
-
-#: neutron/policy.py:278
-#, python-format
-msgid "Unable to find ':' as separator in %s."
 msgstr ""
 
 #: neutron/policy.py:282
@@ -119,247 +59,137 @@ msgid ""
 "found"
 msgstr ""
 
-#: neutron/policy.py:349
-#, python-format
-msgid "Unable to find requested field: %(field)s in target: %(target_dict)s"
-msgstr ""
-
-#: neutron/quota.py:34
+#: neutron/quota.py:35
 msgid "Resource name(s) that are supported in quota features"
 msgstr ""
 
-#: neutron/quota.py:38
+#: neutron/quota.py:39
 msgid ""
 "Default number of resource allowed per tenant. A negative value means "
 "unlimited."
 msgstr ""
 
-#: neutron/quota.py:42
+#: neutron/quota.py:43
 msgid "Number of networks allowed per tenant.A negative value means unlimited."
 msgstr ""
 
-#: neutron/quota.py:46
+#: neutron/quota.py:47
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr ""
 
-#: neutron/quota.py:50
+#: neutron/quota.py:51
 msgid "Number of ports allowed per tenant. A negative value means unlimited."
 msgstr ""
 
-#: neutron/quota.py:54
+#: neutron/quota.py:55
 msgid "Default driver to use for quota checks"
 msgstr ""
 
-#: neutron/quota.py:148 neutron/quota.py:153
+#: neutron/quota.py:149 neutron/quota.py:154
 msgid "Access to this resource was denied."
 msgstr ""
 
-#: neutron/quota.py:226
-msgid ""
-"ConfDriver is used as quota_driver because the loaded plugin does not "
-"support 'quotas' table."
-msgstr ""
-
-#: neutron/quota.py:231
-#, python-format
-msgid "Loaded quota_driver: %s."
-msgstr ""
-
-#: neutron/quota.py:240
-#, python-format
-msgid "%s is already registered."
-msgstr ""
-
-#: neutron/service.py:40
+#: neutron/service.py:41
 msgid "Seconds between running periodic tasks"
 msgstr ""
 
-#: neutron/service.py:43
+#: neutron/service.py:44
 msgid "Number of separate API worker processes for service"
 msgstr ""
 
-#: neutron/service.py:46
+#: neutron/service.py:47
 msgid "Number of RPC worker processes for service"
 msgstr ""
 
-#: neutron/service.py:49
+#: neutron/service.py:50
 msgid ""
 "Range of seconds to randomly delay when starting the periodic task "
 "scheduler to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
 
-#: neutron/service.py:105 neutron/service.py:163
-msgid "Unrecoverable error: please check log for details."
-msgstr ""
-
-#: neutron/service.py:144
-msgid "Active plugin doesn't implement start_rpc_listeners"
-msgstr ""
-
-#: neutron/service.py:146
-#, python-format
-msgid "'rpc_workers = %d' ignored because start_rpc_listeners is not implemented."
-msgstr ""
-
-#: neutron/service.py:170
-msgid "No known API applications configured."
-msgstr ""
-
-#: neutron/service.py:177
-#, python-format
-msgid "Neutron service started, listening on %(host)s:%(port)s"
-msgstr ""
-
-#: neutron/service.py:278
-msgid "Exception occurs when timer stops"
-msgstr ""
-
-#: neutron/service.py:288
-msgid "Exception occurs when waiting for timer"
-msgstr ""
-
-#: neutron/wsgi.py:48
+#: neutron/wsgi.py:49
 msgid "Number of backlog requests to configure the socket with"
 msgstr ""
 
-#: neutron/wsgi.py:52
+#: neutron/wsgi.py:53
 msgid ""
 "Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
 "supported on OS X."
 msgstr ""
 
-#: neutron/wsgi.py:56
+#: neutron/wsgi.py:57
 msgid "Number of seconds to keep retrying to listen"
 msgstr ""
 
-#: neutron/wsgi.py:59
+#: neutron/wsgi.py:60
 msgid "Max header line to accommodate large tokens"
 msgstr ""
 
-#: neutron/wsgi.py:62
+#: neutron/wsgi.py:63
 msgid "Enable SSL on the API server"
 msgstr ""
 
-#: neutron/wsgi.py:64
+#: neutron/wsgi.py:65
 msgid "CA certificate file to use to verify connecting clients"
 msgstr ""
 
-#: neutron/wsgi.py:67
+#: neutron/wsgi.py:68
 msgid "Certificate file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:70
+#: neutron/wsgi.py:71
 msgid "Private key file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:129
-#, python-format
-msgid "Unable to listen on %(host)s:%(port)s"
-msgstr ""
-
-#: neutron/wsgi.py:135
+#: neutron/wsgi.py:136
 #, python-format
 msgid "Unable to find ssl_cert_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:141
+#: neutron/wsgi.py:142
 #, python-format
 msgid "Unable to find ssl_key_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:146
+#: neutron/wsgi.py:147
 #, python-format
 msgid "Unable to find ssl_ca_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:179
+#: neutron/wsgi.py:180
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:337
-msgid "Missing Content-Type"
-msgstr ""
-
-#: neutron/wsgi.py:460
+#: neutron/wsgi.py:461
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: neutron/wsgi.py:515
-msgid "Unrecognized Content-Type provided in request"
-msgstr ""
-
-#: neutron/wsgi.py:519
-msgid "No Content-Type provided in request"
-msgstr ""
-
-#: neutron/wsgi.py:523
-msgid "Empty body provided in request"
-msgstr ""
-
-#: neutron/wsgi.py:530
-msgid "Unable to deserialize body as provided Content-Type"
-msgstr ""
-
-#: neutron/wsgi.py:626
+#: neutron/wsgi.py:627
 msgid "You must implement __call__"
 msgstr ""
 
-#: neutron/wsgi.py:719 neutron/api/v2/base.py:194 neutron/api/v2/base.py:335
+#: neutron/wsgi.py:720 neutron/api/v2/base.py:194 neutron/api/v2/base.py:335
 #: neutron/api/v2/base.py:475 neutron/api/v2/base.py:534
 #: neutron/extensions/l3agentscheduler.py:51
 #: neutron/extensions/l3agentscheduler.py:94
 msgid "The resource could not be found."
 msgstr ""
 
-#: neutron/wsgi.py:762
-#, python-format
-msgid "%(method)s %(url)s"
-msgstr ""
-
-#: neutron/wsgi.py:768
+#: neutron/wsgi.py:769
 msgid "Unsupported Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:769
-#, python-format
-msgid "InvalidContentType: %s"
-msgstr ""
-
-#: neutron/wsgi.py:772
+#: neutron/wsgi.py:773
 msgid "Malformed request body"
 msgstr ""
 
-#: neutron/wsgi.py:773
-#, python-format
-msgid "MalformedRequestBody: %s"
-msgstr ""
-
-#: neutron/wsgi.py:779
-#, python-format
-msgid "HTTP exception thrown: %s"
-msgstr ""
-
-#: neutron/wsgi.py:782
-msgid "Internal error"
-msgstr ""
-
-#: neutron/wsgi.py:796 neutron/wsgi.py:893
-#, python-format
-msgid "%(url)s returned with HTTP %(status)d"
-msgstr ""
-
-#: neutron/wsgi.py:799
-#, python-format
-msgid "%(url)s returned a fault: %(exception)s"
-msgstr ""
-
-#: neutron/wsgi.py:912
+#: neutron/wsgi.py:910
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr ""
 
-#: neutron/wsgi.py:965
+#: neutron/wsgi.py:963
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -1983,7 +1813,7 @@ msgstr ""
 msgid "Default security group"
 msgstr ""
 
-#: neutron/db/securitygroups_rpc_base.py:58
+#: neutron/db/securitygroups_rpc_base.py:59
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
 msgstr ""
@@ -7269,13 +7099,6 @@ msgid ""
 "%s"
 msgstr ""
 
-#: neutron/tests/unit/bigswitch/fake_server.py:70
-#, python-format
-msgid ""
-"Request: action=%(action)s, uri=%(uri)r, body=%(body)s, "
-"headers=%(headers)s"
-msgstr ""
-
 #: neutron/tests/unit/bigswitch/fake_server.py:122
 #, python-format
 msgid "No floating IPs in requesturi=%(uri)s, body=%(body)s"
@@ -7343,10 +7166,6 @@ msgstr ""
 msgid "(delete_tenant) OFC tenant %s not found"
 msgstr ""
 
-#: neutron/tests/unit/nec/stub_ofc_driver.py:78
-msgid "delete_tenant: SUCCEED"
-msgstr ""
-
 #: neutron/tests/unit/nec/stub_ofc_driver.py:85
 #, python-format
 msgid "(create_network) OFC tenant %s not found"
@@ -7362,17 +7181,9 @@ msgstr ""
 msgid "(update_network) OFC network %s not found"
 msgstr ""
 
-#: neutron/tests/unit/nec/stub_ofc_driver.py:103
-msgid "update_network: SUCCEED"
-msgstr ""
-
 #: neutron/tests/unit/nec/stub_ofc_driver.py:111
 #, python-format
 msgid "(delete_network) OFC network %s not found"
-msgstr ""
-
-#: neutron/tests/unit/nec/stub_ofc_driver.py:113
-msgid "delete_network: SUCCEED"
 msgstr ""
 
 #: neutron/tests/unit/nec/stub_ofc_driver.py:120
@@ -7388,10 +7199,6 @@ msgstr ""
 #: neutron/tests/unit/nec/stub_ofc_driver.py:137
 #, python-format
 msgid "(delete_port) OFC port %s not found"
-msgstr ""
-
-#: neutron/tests/unit/nec/stub_ofc_driver.py:139
-msgid "delete_port: SUCCEED"
 msgstr ""
 
 #: neutron/tests/unit/nec/stub_ofc_driver.py:171
@@ -7414,10 +7221,6 @@ msgstr ""
 msgid "(delete_router) OFC router %s not found"
 msgstr ""
 
-#: neutron/tests/unit/nec/stub_ofc_driver.py:193
-msgid "delete_router: SUCCEED"
-msgstr ""
-
 #: neutron/tests/unit/nec/stub_ofc_driver.py:201
 #, python-format
 msgid "(add_router_interface) ip_address %s is not a valid format (a.b.c.d/N)."
@@ -7433,23 +7236,10 @@ msgstr ""
 msgid "(add_router_interface) OFC network %s not found"
 msgstr ""
 
-#: neutron/tests/unit/nec/stub_ofc_driver.py:216
-#, python-format
-msgid "add_router_interface: SUCCEED (if_id=%s)"
-msgstr ""
-
 #: neutron/tests/unit/nec/stub_ofc_driver.py:224
 #: neutron/tests/unit/nec/stub_ofc_driver.py:241
 #, python-format
 msgid "(delete_router_interface) OFC router interface %s not found"
-msgstr ""
-
-#: neutron/tests/unit/nec/stub_ofc_driver.py:233
-msgid "update_router_route: SUCCEED"
-msgstr ""
-
-#: neutron/tests/unit/nec/stub_ofc_driver.py:244
-msgid "delete_router_interface: SUCCEED"
 msgstr ""
 
 #: neutron/tests/unit/nec/stub_ofc_driver.py:254
@@ -7462,23 +7252,9 @@ msgstr ""
 msgid "(add_router_route) route to \"%s\" already exists"
 msgstr ""
 
-#: neutron/tests/unit/nec/stub_ofc_driver.py:264
-#, python-format
-msgid "add_router_route: SUCCEED (route_id=%s)"
-msgstr ""
-
 #: neutron/tests/unit/nec/stub_ofc_driver.py:273
 #, python-format
 msgid "(delete_router_route) OFC router route %s not found"
-msgstr ""
-
-#: neutron/tests/unit/nec/stub_ofc_driver.py:275
-msgid "delete_router_route: SUCCEED"
-msgstr ""
-
-#: neutron/tests/unit/nec/stub_ofc_driver.py:288
-#, python-format
-msgid "list_router_routes: routes=%s"
 msgstr ""
 
 #: neutron/tests/unit/nec/test_ofc_client.py:84

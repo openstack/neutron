@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-12 06:07+0000\n"
-"PO-Revision-Date: 2014-12-10 22:16+0000\n"
+"POT-Creation-Date: 2014-12-14 06:05+0000\n"
+"PO-Revision-Date: 2014-12-14 03:11+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
 "language/ko_KR/)\n"
@@ -19,11 +19,62 @@ msgstr ""
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: neutron/manager.py:113
+#, python-format
+msgid "Loading core plugin: %s"
+msgstr ""
+
+#: neutron/manager.py:153
+#, python-format
+msgid "Service %s is supported by the core plugin"
+msgstr ""
+
+#: neutron/manager.py:171
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "로딩 플러그인: %s"
+
 #: neutron/policy.py:120
 #, python-format
 msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
 msgstr ""
+
+#: neutron/quota.py:227
+msgid ""
+"ConfDriver is used as quota_driver because the loaded plugin does not "
+"support 'quotas' table."
+msgstr ""
+
+#: neutron/quota.py:232
+#, python-format
+msgid "Loaded quota_driver: %s."
+msgstr ""
+
+#: neutron/service.py:178
+#, python-format
+msgid "Neutron service started, listening on %(host)s:%(port)s"
+msgstr ""
+
+#: neutron/wsgi.py:763
+#, python-format
+msgid "%(method)s %(url)s"
+msgstr "%(method)s %(url)s"
+
+#: neutron/wsgi.py:780
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "HTTP 예외 처리: %s"
+
+#: neutron/wsgi.py:796
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s이(가) HTTP %(status)d(으)로 리턴되었음"
+
+#: neutron/wsgi.py:799
+#, python-format
+msgid "%(url)s returned a fault: %(exception)s"
+msgstr "%(url)s이(가) 결함을 리턴함: %(exception)s"
 
 #: neutron/agent/dhcp_agent.py:109 neutron/agent/dhcp_agent.py:605
 msgid "DHCP agent started"
@@ -37,7 +88,7 @@ msgstr "상태 동기화 중"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1720
+#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1734
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -104,7 +155,7 @@ msgstr "방화벽 규칙 새로 고치기"
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1622
+#: neutron/agent/l3/agent.py:1636
 msgid "L3 agent started"
 msgstr "L3 에이전트가 시작됨"
 
@@ -230,6 +281,10 @@ msgstr ""
 #: neutron/db/l3_dvr_db.py:541
 #, python-format
 msgid "SNAT interface port list does not exist, so create one: %s"
+msgstr ""
+
+#: neutron/db/l3_dvrscheduler_db.py:307
+msgid "SNAT already bound to a service node."
 msgstr ""
 
 #: neutron/db/l3_hamode_db.py:175

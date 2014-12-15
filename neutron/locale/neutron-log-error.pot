@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev675.g21da71f\n"
+"Project-Id-Version: neutron 2015.1.dev699.g6a985c8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-12 06:08+0000\n"
+"POT-Creation-Date: 2014-12-14 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,16 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
+
+#: neutron/manager.py:138
+#, python-format
+msgid "Error loading plugin by name, %s"
+msgstr ""
+
+#: neutron/manager.py:139
+#, python-format
+msgid "Error loading plugin by class, %s"
+msgstr ""
 
 #: neutron/policy.py:129
 #, python-format
@@ -27,6 +37,46 @@ msgstr ""
 #: neutron/policy.py:317
 #, python-format
 msgid "Policy check error while calling %s!"
+msgstr ""
+
+#: neutron/service.py:106 neutron/service.py:164
+msgid "Unrecoverable error: please check log for details."
+msgstr ""
+
+#: neutron/service.py:147
+#, python-format
+msgid "'rpc_workers = %d' ignored because start_rpc_listeners is not implemented."
+msgstr ""
+
+#: neutron/service.py:171
+msgid "No known API applications configured."
+msgstr ""
+
+#: neutron/service.py:278
+msgid "Exception occurs when timer stops"
+msgstr ""
+
+#: neutron/service.py:287
+msgid "Exception occurs when waiting for timer"
+msgstr ""
+
+#: neutron/wsgi.py:130
+#, python-format
+msgid "Unable to listen on %(host)s:%(port)s"
+msgstr ""
+
+#: neutron/wsgi.py:770
+#, python-format
+msgid "InvalidContentType: %s"
+msgstr ""
+
+#: neutron/wsgi.py:774
+#, python-format
+msgid "MalformedRequestBody: %s"
+msgstr ""
+
+#: neutron/wsgi.py:783
+msgid "Internal error"
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:146
@@ -48,7 +98,7 @@ msgstr ""
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:593 neutron/agent/l3/agent.py:1715
+#: neutron/agent/dhcp_agent.py:593 neutron/agent/l3/agent.py:1729
 #: neutron/agent/metadata/agent.py:416
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:148
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:110
@@ -67,7 +117,7 @@ msgstr ""
 msgid "Error unable to destroy namespace: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:222 neutron/tests/unit/test_l3_agent.py:1785
+#: neutron/agent/l3/agent.py:222 neutron/tests/unit/test_l3_agent.py:1786
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
@@ -100,51 +150,51 @@ msgstr ""
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:907
+#: neutron/agent/l3/agent.py:921
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:982
+#: neutron/agent/l3/agent.py:996
 msgid "DVR: no map match_port found!"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1187
+#: neutron/agent/l3/agent.py:1201
 msgid "DVR: error adding redirection logic"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1199
+#: neutron/agent/l3/agent.py:1213
 msgid "DVR: removed snat failed"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1295
+#: neutron/agent/l3/agent.py:1309
 msgid "Missing subnet/agent_gateway_port"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1440
+#: neutron/agent/l3/agent.py:1454
 msgid "DVR: Failed updating arp entry"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1491
+#: neutron/agent/l3/agent.py:1505
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1531
+#: neutron/agent/l3/agent.py:1545
 #, python-format
 msgid "Failed to fetch router information for '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1549
+#: neutron/agent/l3/agent.py:1563
 #, python-format
 msgid "Removing incompatible router '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1586
+#: neutron/agent/l3/agent.py:1600
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1589
+#: neutron/agent/l3/agent.py:1603
 #: neutron/services/metering/agents/metering_agent.py:62
 msgid "Failed synchronizing routers"
 msgstr ""
@@ -197,19 +247,19 @@ msgstr ""
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
-#: neutron/agent/linux/external_process.py:227
+#: neutron/agent/linux/external_process.py:230
 #, python-format
 msgid ""
 "%(service)s for %(resource_type)s with uuid %(uuid)s not found. The "
 "process should not have died"
 msgstr ""
 
-#: neutron/agent/linux/external_process.py:247
+#: neutron/agent/linux/external_process.py:250
 #, python-format
 msgid "respawning %(service)s for uuid %(uuid)s"
 msgstr ""
 
-#: neutron/agent/linux/external_process.py:253
+#: neutron/agent/linux/external_process.py:256
 msgid "Exiting agent as programmed in check_child_processes_actions"
 msgstr ""
 
