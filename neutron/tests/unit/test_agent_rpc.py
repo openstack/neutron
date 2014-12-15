@@ -14,18 +14,19 @@
 #    under the License.
 
 import contextlib
+
 import mock
 from oslo import messaging
+from oslo_context import context as oslo_context
 
 from neutron.agent import rpc
-from neutron.openstack.common import context
 from neutron.tests import base
 
 
 class AgentRPCPluginApi(base.BaseTestCase):
     def _test_rpc_call(self, method):
         agent = rpc.PluginApi('fake_topic')
-        ctxt = context.RequestContext('fake_user', 'fake_project')
+        ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
         expect_val = 'foo'
         with contextlib.nested(
             mock.patch.object(agent.client, 'call'),
@@ -50,7 +51,7 @@ class AgentRPCPluginApi(base.BaseTestCase):
 
     def test_devices_details_list_unsupported(self):
         agent = rpc.PluginApi('fake_topic')
-        ctxt = context.RequestContext('fake_user', 'fake_project')
+        ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
         expect_val_get_device_details = 'foo'
         expect_val = [expect_val_get_device_details]
         with contextlib.nested(
@@ -86,7 +87,7 @@ class AgentPluginReportState(base.BaseTestCase):
             mock_call, mock_cast, mock_prepare
         ):
             mock_prepare.return_value = reportStateAPI.client
-            ctxt = context.RequestContext('fake_user', 'fake_project')
+            ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
             reportStateAPI.report_state(ctxt, expected_agent_state,
                                         use_call=True)
             self.assertEqual(mock_call.call_args[0][0], ctxt)
@@ -107,7 +108,7 @@ class AgentPluginReportState(base.BaseTestCase):
             mock_call, mock_cast, mock_prepare
         ):
             mock_prepare.return_value = reportStateAPI.client
-            ctxt = context.RequestContext('fake_user', 'fake_project')
+            ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
             reportStateAPI.report_state(ctxt, expected_agent_state)
             self.assertEqual(mock_cast.call_args[0][0], ctxt)
             self.assertEqual(mock_cast.call_args[0][1], 'report_state')

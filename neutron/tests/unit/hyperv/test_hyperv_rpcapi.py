@@ -19,11 +19,12 @@ Unit Tests for hyperv neutron rpc
 """
 
 import contextlib
+
 import mock
+from oslo_context import context as oslo_context
 
 from neutron.agent import rpc as agent_rpc
 from neutron.common import topics
-from neutron.openstack.common import context
 from neutron.plugins.hyperv import agent_notifier_api as ana
 from neutron.plugins.hyperv.common import constants
 from neutron.tests import base
@@ -33,7 +34,7 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
 
     def _test_hyperv_neutron_api(
             self, rpcapi, topic, method, rpc_method, **kwargs):
-        ctxt = context.RequestContext('fake_user', 'fake_project')
+        ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if rpc_method == 'call' else None
         expected_version = kwargs.pop('version', None)
         fanout = kwargs.pop('fanout', False)
