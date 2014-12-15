@@ -1237,13 +1237,16 @@ class TestDnsmasq(TestBase):
             with mock.patch('__builtin__.open') as mock_open:
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()
-                lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1"]
+                lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1",
+                         "00:00:80:aa:bb:cc,inst-name,[fdca:3ba5:a17a::1]"]
                 mock_open.return_value.readlines.return_value = lines
 
                 dnsmasq = dhcp.Dnsmasq(self.conf, FakeDualNetwork())
                 leases = dnsmasq._read_hosts_file_leases(filename)
 
-        self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc")]), leases)
+        self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc"),
+                              ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc")]),
+                         leases)
         mock_exists.assert_called_once_with(filename)
         mock_open.assert_called_once_with(filename)
 
