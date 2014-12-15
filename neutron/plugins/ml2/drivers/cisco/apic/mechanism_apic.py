@@ -14,7 +14,6 @@
 #    under the License.
 
 from apicapi import apic_manager
-from apicapi import exceptions as exc
 from keystoneclient.v2_0 import client as keyclient
 import netaddr
 from oslo.config import cfg
@@ -143,12 +142,10 @@ class APICMechanismDriver(api.MechanismDriver):
         # Get port
         port = context.current
         # Check if a compute port
-        if port.get('device_owner', '').startswith('compute'):
+        if context.host:
             self._perform_path_port_operations(context, port)
-        elif port.get('device_owner') == n_constants.DEVICE_OWNER_ROUTER_GW:
+        if port.get('device_owner') == n_constants.DEVICE_OWNER_ROUTER_GW:
             self._perform_gw_port_operations(context, port)
-        elif port.get('device_owner') == n_constants.DEVICE_OWNER_DHCP:
-            self._perform_path_port_operations(context, port)
 
     def _delete_contract(self, context):
         port = context.current
@@ -180,31 +177,24 @@ class APICMechanismDriver(api.MechanismDriver):
             self._delete_port_path(context, atenant_id, anetwork_id)
 
     def _get_subnet_info(self, context, subnet):
-        tenant_id = subnet['tenant_id']
-        network_id = subnet['network_id']
-        network = context._plugin.get_network(context._plugin_context,
-                                              network_id)
-        if not network.get('router:external'):
-            cidr = netaddr.IPNetwork(subnet['cidr'])
-            gateway_ip = '%s/%s' % (subnet['gateway_ip'], str(cidr.prefixlen))
+        if subnet['gateway_ip']:
+            tenant_id = subnet['tenant_id']
+            network_id = subnet['network_id']
+            network = context._plugin.get_network(context._plugin_context,
+                                                  network_id)
+            if not network.get('router:external'):
+                cidr = netaddr.IPNetwork(subnet['cidr'])
+                gateway_ip = '%s/%s' % (subnet['gateway_ip'],
+                                        str(cidr.prefixlen))
 
-            # Convert to APIC IDs
-            tenant_id = self.name_mapper.tenant(context, tenant_id)
-            network_id = self.name_mapper.network(context, network_id)
-            return tenant_id, network_id, gateway_ip
+                # Convert to APIC IDs
+                tenant_id = self.name_mapper.tenant(context, tenant_id)
+                network_id = self.name_mapper.network(context, network_id)
+                return tenant_id, network_id, gateway_ip
 
     @sync_init
     def create_port_postcommit(self, context):
         self._perform_port_operations(context)
-
-    def update_port_precommit(self, context):
-        orig = context.original
-        curr = context.current
-        if (orig['device_owner'] != curr['device_owner']
-                or orig['device_id'] != curr['device_id']):
-            raise exc.ApicOperationNotSupported(
-                resource='Port', msg='Port device owner and id cannot be '
-                                     'changed.')
 
     @sync_init
     def update_port_postcommit(self, context):
@@ -213,12 +203,10 @@ class APICMechanismDriver(api.MechanismDriver):
     def delete_port_postcommit(self, context):
         port = context.current
         # Check if a compute port
-        if port.get('device_owner', '').startswith('compute'):
+        if context.host:
             self._delete_path_if_last(context)
-        elif port.get('device_owner') == n_constants.DEVICE_OWNER_ROUTER_GW:
+        if port.get('device_owner') == n_constants.DEVICE_OWNER_ROUTER_GW:
             self._delete_contract(context)
-        elif port.get('device_owner') == n_constants.DEVICE_OWNER_DHCP:
-            self._delete_path_if_last(context)
 
     @sync_init
     def create_network_postcommit(self, context):
