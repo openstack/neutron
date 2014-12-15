@@ -1581,6 +1581,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if not self.fullsync:
             return
 
+        # self.fullsync is True at this point. If an exception -- caught or
+        # uncaught -- prevents setting it to False below then the next call
+        # to periodic_sync_routers_task will re-enter this code and try again.
+
         # Capture a picture of namespaces *before* fetching the full list from
         # the database.  This is important to correctly identify stale ones.
         namespaces = set()
@@ -1598,10 +1602,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         except messaging.MessagingException:
             LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
-            self.fullsync = True
-        except Exception:
-            LOG.exception(_LE("Failed synchronizing routers"))
-            self.fullsync = True
         else:
             LOG.debug('Processing :%r', routers)
             for r in routers:
