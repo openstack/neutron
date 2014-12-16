@@ -64,7 +64,6 @@ from neutron.plugins.ml2.drivers import type_gre  # noqa
 from neutron.plugins.ml2.drivers import type_vlan  # noqa
 from neutron.plugins.ml2.drivers import type_vxlan  # noqa
 from neutron.plugins.ml2 import models  # noqa
-from neutron.plugins.mlnx.db import mlnx_models_v2  # noqa
 from neutron.plugins.nec.db import models as nec_models  # noqa
 from neutron.plugins.nec.db import packetfilter as nec_packetfilter  # noqa
 from neutron.plugins.nec.db import router  # noqa

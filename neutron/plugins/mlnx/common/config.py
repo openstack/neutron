@@ -18,26 +18,7 @@ from oslo.config import cfg
 from neutron.agent.common import config
 from neutron.plugins.mlnx.common import constants
 
-DEFAULT_VLAN_RANGES = ['default:1:1000']
 DEFAULT_INTERFACE_MAPPINGS = []
-
-vlan_opts = [
-    cfg.StrOpt('tenant_network_type', default='vlan',
-               help=_("Network type for tenant networks "
-                      "(local, vlan, or none)")),
-    cfg.ListOpt('network_vlan_ranges',
-                default=DEFAULT_VLAN_RANGES,
-                help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
-                       "or <physical_network>")),
-    cfg.ListOpt('physical_network_type_mappings',
-                default=[],
-                help=_("List of <physical_network>:<physical_network_type> "
-                       " with physical_network_type is either eth or ib")),
-    cfg.StrOpt('physical_network_type', default='eth',
-               help=_("Physical network type for provider network "
-                      "(eth or ib)"))
-]
-
 
 eswitch_opts = [
     cfg.ListOpt('physical_interface_mappings',
@@ -66,12 +47,9 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
-    cfg.BoolOpt('rpc_support_old_agents', default=False,
-                help=_("Enable server RPC compatibility with old agents")),
 ]
 
 
-cfg.CONF.register_opts(vlan_opts, "MLNX")
 cfg.CONF.register_opts(eswitch_opts, "ESWITCH")
 cfg.CONF.register_opts(agent_opts, "AGENT")
 config.register_agent_state_opts_helper(cfg.CONF)
