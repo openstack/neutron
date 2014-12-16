@@ -13,3 +13,6 @@ kill_tox_python: KillFilter, root, $BASE_PATH/bin/python, -9
 
 # enable ping from namespace
 ping_filter: CommandFilter, ping, root
+
+# enable curl from namespace
+curl_filter: CommandFilter, curl, root
