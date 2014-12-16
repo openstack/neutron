@@ -184,7 +184,6 @@ class AgentDBTestCase(AgentDBTestMixIn,
     fmt = 'json'
 
     def setUp(self):
-        self.adminContext = context.get_admin_context()
         plugin = 'neutron.tests.unit.test_agent_ext_plugin.TestAgentPlugin'
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
@@ -195,6 +194,7 @@ class AgentDBTestCase(AgentDBTestMixIn,
         ext_mgr = AgentTestExtensionManager()
         self.addCleanup(self.restore_resource_attribute_map)
         super(AgentDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        self.adminContext = context.get_admin_context()
 
     def restore_resource_attribute_map(self):
         # Restore the originak RESOURCE_ATTRIBUTE_MAP

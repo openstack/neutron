@@ -51,7 +51,6 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     fmt = 'json'
 
     def setUp(self):
-        self.adminContext = context.get_admin_context()
         test_lib.test_config['config_files'] = [
             vmware.get_fake_conf('nsx.ini.full.test')]
         cfg.CONF.set_override('api_extensions_path', vmware.NSXEXT_PATH)
@@ -76,6 +75,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         self.addCleanup(self.restore_resource_attribute_map)
         super(MacLearningDBTestCase, self).setUp(plugin=vmware.PLUGIN_NAME,
                                                  ext_mgr=ext_mgr)
+        self.adminContext = context.get_admin_context()
 
     def restore_resource_attribute_map(self):
         # Restore the original RESOURCE_ATTRIBUTE_MAP

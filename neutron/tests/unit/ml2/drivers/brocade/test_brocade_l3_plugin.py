@@ -44,12 +44,12 @@ class BrocadeSVIPlugin_TestCases(test_l3_plugin.TestL3NatBasePlugin):
             LOG.info(_("rbridge id %s"), self._switch['rbridge_id'])
             self._driver = mock.MagicMock()
 
-        self.context = oslo_context.get_admin_context()
-        self.context.session = db.get_session()
         self.l3_plugin = importutils.import_object(L3_SVC_PLUGIN)
         with mock.patch.object(self.l3_plugin,
                                'brocade_init', new=mocked_brocade_init):
             super(BrocadeSVIPlugin_TestCases, self).setUp()
+        self.context = oslo_context.get_admin_context()
+        self.context.session = db.get_session()
 
 
 class TestBrocadeSVINatBase(test_l3_plugin.L3NatExtensionTestCase,
