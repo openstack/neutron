@@ -30,6 +30,8 @@ from stevedore import driver
 
 LOG = logging.getLogger(__name__)
 
+CORE_PLUGINS_NAMESPACE = 'neutron.core_plugins'
+
 
 class Manager(periodic_task.PeriodicTasks):
 
@@ -111,7 +113,7 @@ class NeutronManager(object):
         #                for performance metrics.
         plugin_provider = cfg.CONF.core_plugin
         LOG.info(_LI("Loading core plugin: %s"), plugin_provider)
-        self.plugin = self._get_plugin_instance('neutron.core_plugins',
+        self.plugin = self._get_plugin_instance(CORE_PLUGINS_NAMESPACE,
                                                 plugin_provider)
         msg = validate_post_plugin_load()
         if msg:

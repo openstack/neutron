@@ -14,13 +14,16 @@
 #    under the License.
 
 from oslo.config import cfg
+import stevedore
 
 from neutron.common import exceptions as n_exc
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
 
+SERVICE_PROVIDERS = 'neutron.service_providers'
 
 serviceprovider_opts = [
     cfg.MultiStrOpt('service_provider', default=[],
@@ -35,6 +38,28 @@ cfg.CONF.register_opts(serviceprovider_opts, 'service_providers')
 #global scope function that should be used in service APIs
 def normalize_provider_name(name):
     return name.lower()
+
+
+def get_provider_driver_class(driver, namespace=SERVICE_PROVIDERS):
+    """Return path to provider driver class
+
+    In order to keep backward compatibility with configs < Kilo, we need to
+    translate driver class paths after advanced services split. This is done by
+    defining old class path as entry point in neutron package.
+    """
+    try:
+        driver_manager = stevedore.driver.DriverManager(
+            namespace, driver).driver
+    except RuntimeError:
+        return driver
+    new_driver = "%s.%s" % (driver_manager.__module__,
+                            driver_manager.__name__)
+    LOG.warning(_LW(
+        "The configured driver %(driver)s has been moved, automatically "
+        "using %(new_driver)s instead. Please update your config files, "
+        "as this automatic fixup will be removed in a future release."),
+        {'driver': driver, 'new_driver': new_driver})
+    return new_driver
 
 
 def parse_service_provider_opt():
@@ -71,6 +96,7 @@ def parse_service_provider_opt():
                     'allowed': constants.ALLOWED_SERVICES})
             LOG.error(msg)
             raise n_exc.Invalid(msg)
+        driver = get_provider_driver_class(driver)
         res.append({'service_type': svc_type,
                     'name': name,
                     'driver': driver,
