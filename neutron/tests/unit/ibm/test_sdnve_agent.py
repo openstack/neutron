@@ -96,13 +96,11 @@ class TestSdnveNeutronAgent(base.BaseTestCase):
 
     def test_get_info_set_controller(self):
         with mock.patch.object(self.agent.int_br,
-                               'run_vsctl') as run_vsctl_func:
+                               'set_controller') as set_controller_func:
             kwargs = {}
             kwargs['info'] = {'new_controller': '10.10.10.1'}
             self.agent.info_update('dummy', **kwargs)
-        run_vsctl_func.assert_called_once_with(['set-controller',
-                                                'br_int',
-                                                'tcp:10.10.10.1'])
+        set_controller_func.assert_called_once_with(['tcp:10.10.10.1'])
 
     def test_get_info(self):
         with mock.patch.object(self.agent.int_br,
