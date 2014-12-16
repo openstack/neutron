@@ -155,7 +155,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         # If test_config specifies some config-file, use it, as well
         for config_file in test_lib.test_config.get('config_files', []):
             args.extend(['--config-file', config_file])
-        self.config_parse(args=args)
+        super(NeutronDbPluginV2TestCase, self).setup_config(args=args)
 
     def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
              action=None, subresource=None, sub_id=None, context=None):

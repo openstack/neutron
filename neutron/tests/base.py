@@ -118,9 +118,9 @@ class BaseTestCase(sub_base.SubBaseTestCase):
         self.addCleanup(n_rpc.cleanup)
         n_rpc.init(CONF)
 
-    def setup_config(self):
+    def setup_config(self, args=None):
         """Tests that need a non-default config can override this method."""
-        self.config_parse()
+        self.config_parse(args=args)
 
     def config(self, **kw):
         """Override some configuration values.
