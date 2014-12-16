@@ -411,9 +411,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def _add_ingress_ra_rule(self, port, ips):
         ra_ips = ips.get(port['network_id'])
         for ra_ip in ra_ips:
-            if not netaddr.IPAddress(ra_ip).version == 6:
-                return
-
             ra_rule = {'direction': 'ingress',
                        'ethertype': q_const.IPv6,
                        'protocol': q_const.PROTO_NAME_ICMP_V6,
