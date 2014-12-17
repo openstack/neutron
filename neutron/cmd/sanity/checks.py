@@ -68,7 +68,7 @@ def ofctl_arg_supported(root_helper, cmd, **kwargs):
             agent_utils.execute(full_args, root_helper=root_helper)
         except RuntimeError as e:
             LOG.debug("Exception while checking supported feature via "
-                      "command %s. Exception: %s", (full_args, e))
+                      "command %s. Exception: %s", full_args, e)
             return False
         except Exception:
             LOG.exception(_LE("Unexpected exception while checking supported"
