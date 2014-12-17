@@ -14,6 +14,9 @@
 #    under the License.
 
 import eventlet
+from keystoneclient import auth as ks_auth
+from keystoneclient.auth.identity import v2 as v2_auth
+from keystoneclient import session as ks_session
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -38,16 +41,57 @@ NEUTRON_NOVA_EVENT_STATUS_MAP = {constants.PORT_STATUS_ACTIVE: 'completed',
 NOVA_API_VERSION = "2"
 
 
+class DefaultAuthPlugin(v2_auth.Password):
+    """A wrapper around standard v2 user/pass to handle bypass url.
+
+    This is only necessary because novaclient doesn't support endpoint_override
+    yet - bug #1403329.
+
+    When this bug is fixed we can pass the endpoint_override to the client
+    instead and remove this class.
+    """
+
+    def __init__(self, **kwargs):
+        self._endpoint_override = kwargs.pop('endpoint_override', None)
+        super(DefaultAuthPlugin, self).__init__(**kwargs)
+
+    def get_endpoint(self, session, **kwargs):
+        if self._endpoint_override:
+            return self._endpoint_override
+
+        return super(DefaultAuthPlugin, self).get_endpoint(session, **kwargs)
+
+
 class Notifier(object):
 
     def __init__(self):
-        # TODO(arosen): we need to cache the endpoints and figure out
-        # how to deal with different regions here....
-        if cfg.CONF.nova_admin_tenant_id:
-            bypass_url = "%s/%s" % (cfg.CONF.nova_url,
-                                    cfg.CONF.nova_admin_tenant_id)
-        else:
-            bypass_url = None
+        # FIXME(jamielennox): A notifier is being created for each Controller
+        # and each Notifier is handling it's own auth. That means that we are
+        # authenticating the exact same thing len(controllers) times. This
+        # should be an easy thing to optimize.
+        auth = ks_auth.load_from_conf_options(cfg.CONF, 'nova')
+        endpoint_override = None
+
+        if not auth:
+            LOG.warning(_LW('Authenticating to nova using nova_admin_* options'
+                            ' is deprecated. This should be done using'
+                            ' an auth plugin, like password'))
+
+            if cfg.CONF.nova_admin_tenant_id:
+                endpoint_override = "%s/%s" % (cfg.CONF.nova_url,
+                                               cfg.CONF.nova_admin_tenant_id)
+
+            auth = DefaultAuthPlugin(
+                auth_url=cfg.CONF.nova_admin_auth_url,
+                username=cfg.CONF.nova_admin_username,
+                password=cfg.CONF.nova_admin_password,
+                tenant_id=cfg.CONF.nova_admin_tenant_id,
+                tenant_name=cfg.CONF.nova_admin_tenant_name,
+                endpoint_override=endpoint_override)
+
+        session = ks_session.Session.load_from_conf_options(cfg.CONF,
+                                                            'nova',
+                                                            auth=auth)
 
         # NOTE(andreykurilin): novaclient.v1_1 was renamed to v2 and there is
         # no way to import the contrib module directly without referencing v2,
@@ -58,15 +102,8 @@ class Notifier(object):
                 ".client", ".contrib.server_external_events"))
 
         self.nclient = novaclient_cls(
-            username=cfg.CONF.nova_admin_username,
-            api_key=cfg.CONF.nova_admin_password,
-            project_id=cfg.CONF.nova_admin_tenant_name,
-            tenant_id=cfg.CONF.nova_admin_tenant_id,
-            auth_url=cfg.CONF.nova_admin_auth_url,
-            cacert=cfg.CONF.nova_ca_certificates_file,
-            insecure=cfg.CONF.nova_api_insecure,
-            bypass_url=bypass_url,
-            region_name=cfg.CONF.nova_region_name,
+            session=session,
+            region_name=cfg.CONF.nova.region_name,
             extensions=[server_external_events])
         self.pending_events = []
         self._waiting_to_send = False
