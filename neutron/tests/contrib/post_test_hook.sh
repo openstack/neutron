@@ -4,7 +4,8 @@ set -xe
 
 NEUTRON_DIR="$BASE/new/neutron"
 SCRIPTS_DIR="/usr/local/jenkins/slave_scripts"
-venv=dsvm-functional
+
+venv=${1:-"dsvm-functional"}
 
 function generate_testr_results {
     # Give job user rights to access tox logs
@@ -18,15 +19,42 @@ function generate_testr_results {
     fi
 }
 
-# Run tests as the stack user to allow sudo+rootwrap.
-sudo chown -R stack:stack $NEUTRON_DIR
-cd $NEUTRON_DIR
 
-echo "Running neutron functional test suite"
+function dsvm_functional_prep_func {
+    :
+}
+
+
+function api_prep_func {
+    TEMPEST_DIR="$BASE/new/tempest"
+    sudo -H -u $owner tox -e $venv --notest
+    sudo -H -u $owner .tox/$venv/bin/pip install -e $TEMPEST_DIR
+}
+
+
+if [ "$venv" == "dsvm-functional" ]
+then
+    owner=stack
+    prep_func="dsvm_functional_prep_func"
+elif [ "$venv" == "api" ]
+then
+    owner=tempest
+    prep_func="api_prep_func"
+fi
+
+# Set owner permissions according to job's requirements.
+sudo chown -R $owner:stack $NEUTRON_DIR
+# Prep the environment according to job's requirements.
+$prep_func
+
+# Run tests
+cd $NEUTRON_DIR
+echo "Running neutron $venv test suite"
 set +e
-sudo -H -u stack tox -e $venv
+sudo -H -u $owner tox -e $venv
 testr_exit_code=$?
 set -e
 
+# Collect and parse results
 generate_testr_results
 exit $testr_exit_code
