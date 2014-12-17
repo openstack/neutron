@@ -28,7 +28,12 @@ LOG = logging.getLogger(__name__)
 
 
 class DhcpAgentNotifyAPI(object):
-    """API for plugin to notify DHCP agent."""
+    """API for plugin to notify DHCP agent.
+
+    This class implements the client side of an rpc interface.  The server side
+    is neutron.agent.dhcp_agent.DhcpAgent.  For more information about changing
+    rpc interfaces, please see doc/source/devref/rpc_api.rst.
+    """
     # It seems dhcp agent does not support bulk operation
     VALID_RESOURCES = ['network', 'subnet', 'port']
     VALID_METHOD_NAMES = ['network.create.end',

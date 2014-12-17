@@ -48,6 +48,16 @@ LOG = logging.getLogger(__name__)
 
 
 class DhcpAgent(manager.Manager):
+    """DHCP agent service manager.
+
+    Note that the public methods of this class are exposed as the server side
+    of an rpc interface.  The neutron server uses
+    neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.DhcpAgentNotifyApi as the
+    client side to execute the methods here.  For more information about
+    changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    """
+    target = messaging.Target(version='1.0')
+
     OPTS = [
         cfg.IntOpt('resync_interval', default=5,
                    help=_("Interval to resync.")),
