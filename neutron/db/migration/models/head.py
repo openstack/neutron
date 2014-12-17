@@ -40,8 +40,6 @@ from neutron.db import models_v2  # noqa
 from neutron.db import portbindings_db  # noqa
 from neutron.db import portsecurity_db  # noqa
 from neutron.db import quota_db  # noqa
-from neutron.db import routedserviceinsertion_db  # noqa
-from neutron.db import routerservicetype_db  # noqa
 from neutron.db import securitygroups_db  # noqa
 from neutron.db import servicetype_db  # noqa
 from neutron.plugins.bigswitch.db import consistency_db  # noqa
