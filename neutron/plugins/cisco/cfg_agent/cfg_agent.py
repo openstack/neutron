@@ -228,7 +228,7 @@ class CiscoCfgAgent(manager.Manager):
                     self.process_services(removed_devices_info=payload)
         except KeyError as e:
             LOG.error(_LE("Invalid payload format for received RPC message "
-                        "`hosting_devices_removed`. Error is %{error}s. "
+                        "`hosting_devices_removed`. Error is %(error)s. "
                         "Payload is %(payload)s"),
                       {'error': e, 'payload': payload})
 
