@@ -200,7 +200,7 @@ class L3Scheduler(object):
             if router.get('ha'):
                 if not self._router_has_binding(context, router['id'],
                                                 l3_agent.id):
-                    self._create_ha_router_binding(
+                    self.create_ha_port_and_bind(
                         plugin, context, router['id'],
                         router['tenant_id'], l3_agent)
             else:
@@ -289,8 +289,8 @@ class L3Scheduler(object):
             return False
         return True
 
-    def _create_ha_router_binding(self, plugin, context, router_id, tenant_id,
-                                  agent):
+    def create_ha_port_and_bind(self, plugin, context, router_id,
+                                tenant_id, agent):
         """Creates and binds a new HA port for this agent."""
         ha_network = plugin.get_ha_network(context, tenant_id)
         port_binding = plugin.add_ha_port(context.elevated(), router_id,
@@ -316,9 +316,9 @@ class L3Scheduler(object):
             if max_agents_not_reached:
                 if not self._router_has_binding(admin_ctx, router_id,
                                                 agent.id):
-                    self._create_ha_router_binding(plugin, admin_ctx,
-                                                   router_id, tenant_id,
-                                                   agent)
+                    self.create_ha_port_and_bind(plugin, admin_ctx,
+                                                 router_id, tenant_id,
+                                                 agent)
                     scheduled = True
 
         return scheduled

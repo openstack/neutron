@@ -336,6 +336,15 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
             self._core_plugin.delete_port(admin_ctx, port['id'],
                                           l3_port_check=False)
 
+    def delete_ha_interfaces_on_host(self, context, router_id, host):
+        admin_ctx = context.elevated()
+        port_ids = (binding.port_id for binding
+                    in self.get_ha_router_port_bindings(admin_ctx,
+                                                        [router_id], host))
+        for port_id in port_ids:
+            self._core_plugin.delete_port(admin_ctx, port_id,
+                                          l3_port_check=False)
+
     def _notify_ha_interfaces_updated(self, context, router_id):
         self.l3_rpc_notifier.routers_updated(
             context, [router_id], shuffle_agents=True)
