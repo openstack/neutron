@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev699.g6a985c8\n"
+"Project-Id-Version: neutron 2015.1.dev737\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-14 06:05+0000\n"
+"POT-Creation-Date: 2014-12-17 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -215,7 +215,7 @@ msgstr ""
 msgid "Number of threads to use during sync process."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:67 neutron/agent/l3/agent.py:202
+#: neutron/agent/dhcp_agent.py:67 neutron/agent/l3/agent.py:201
 #: neutron/agent/metadata/namespace_proxy.py:166
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
@@ -282,7 +282,7 @@ msgstr ""
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:163
+#: neutron/agent/l3/agent.py:162
 msgid ""
 "The working mode for the agent. Allowed modes are: 'legacy' - this "
 "preserves the existing behavior where the L3 agent is deployed on a "
@@ -294,49 +294,49 @@ msgid ""
 "centralized node (or in single-host deployments, e.g. devstack)"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:176 neutron/debug/debug_agent.py:42
+#: neutron/agent/l3/agent.py:175 neutron/debug/debug_agent.py:42
 msgid "Name of bridge used for external network traffic."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:180
+#: neutron/agent/l3/agent.py:179
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:184
+#: neutron/agent/l3/agent.py:183
 msgid ""
 "Send this many gratuitous ARPs for HA setup, if less than or equal to 0, "
 "the feature is disabled"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:187
+#: neutron/agent/l3/agent.py:186
 msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:192
+#: neutron/agent/l3/agent.py:191
 msgid "Agent should implement routers with no gateway"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:194
+#: neutron/agent/l3/agent.py:193
 msgid "UUID of external network for routers implemented by the agents."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:197
+#: neutron/agent/l3/agent.py:196
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:199
+#: neutron/agent/l3/agent.py:198
 msgid "Delete namespace after removing a router."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:449
+#: neutron/agent/l3/agent.py:448
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:558
+#: neutron/agent/l3/agent.py:557
 #: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:630
 #, python-format
 msgid "Router port %s has no IP address"
@@ -1682,34 +1682,34 @@ msgid ""
 "agents."
 msgstr ""
 
-#: neutron/db/l3_db.py:263
+#: neutron/db/l3_db.py:262
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr ""
 
-#: neutron/db/l3_db.py:284
+#: neutron/db/l3_db.py:283
 #, python-format
 msgid "No IPs available for external network %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:304
+#: neutron/db/l3_db.py:303
 #, python-format
 msgid "Network %s is not an external network"
 msgstr ""
 
-#: neutron/db/l3_db.py:411
+#: neutron/db/l3_db.py:410
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:425
+#: neutron/db/l3_db.py:424
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:441 neutron/db/l3_db.py:593 neutron/db/l3_dvr_db.py:254
+#: neutron/db/l3_db.py:440 neutron/db/l3_db.py:588 neutron/db/l3_dvr_db.py:254
 #: neutron/plugins/bigswitch/l3_router_plugin.py:176
 #: neutron/plugins/bigswitch/l3_router_plugin.py:185
 #: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:182
@@ -1717,59 +1717,59 @@ msgstr ""
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
-#: neutron/db/l3_db.py:444 neutron/plugins/opencontrail/contrail_plugin.py:509
+#: neutron/db/l3_db.py:443 neutron/plugins/opencontrail/contrail_plugin.py:509
 msgid "Cannot specify both subnet-id and port-id"
 msgstr ""
 
-#: neutron/db/l3_db.py:457
+#: neutron/db/l3_db.py:456
 msgid "Router port must have exactly one fixed IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:472
+#: neutron/db/l3_db.py:470
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:641 neutron/plugins/nec/nec_router.py:197
+#: neutron/db/l3_db.py:636 neutron/plugins/nec/nec_router.py:197
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: neutron/db/l3_db.py:677
+#: neutron/db/l3_db.py:672
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: neutron/db/l3_db.py:681
+#: neutron/db/l3_db.py:676
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: neutron/db/l3_db.py:693
+#: neutron/db/l3_db.py:688
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:700
+#: neutron/db/l3_db.py:695
 #, python-format
 msgid "Cannot add floating IP to port %s that hasno fixed IP addresses"
 msgstr ""
 
-#: neutron/db/l3_db.py:704
+#: neutron/db/l3_db.py:699
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:734 neutron/plugins/vmware/plugins/base.py:1825
+#: neutron/db/l3_db.py:729 neutron/plugins/vmware/plugins/base.py:1825
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: neutron/db/l3_db.py:774
+#: neutron/db/l3_db.py:769
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
@@ -2862,47 +2862,6 @@ msgstr ""
 msgid "Rules must be an instance of dict or Rules, got %s instead"
 msgstr ""
 
-#: neutron/openstack/common/processutils.py:59
-msgid "Unexpected error while running command."
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:62
-#, python-format
-msgid ""
-"%(description)s\n"
-"Command: %(cmd)s\n"
-"Exit code: %(exit_code)s\n"
-"Stdout: %(stdout)r\n"
-"Stderr: %(stderr)r"
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:143
-#, python-format
-msgid "Got unknown keyword args: %r"
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:148
-msgid "Command requested root, but did not specify a root helper."
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:158
-#, python-format
-msgid "Running cmd (subprocess): %s"
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:206
-#, python-format
-msgid "%r failed. Retrying."
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:248
-msgid "Environment not supported over SSH"
-msgstr ""
-
-#: neutron/openstack/common/processutils.py:252
-msgid "process_input not supported over SSH"
-msgstr ""
-
 #: neutron/openstack/common/versionutils.py:90
 #, python-format
 msgid ""
@@ -3863,7 +3822,7 @@ msgid "Invalid input for CIDR"
 msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:210
-#: neutron/plugins/mlnx/mlnx_plugin.py:227 neutron/plugins/nuage/plugin.py:419
+#: neutron/plugins/nuage/plugin.py:419
 msgid "provider:network_type required"
 msgstr ""
 
@@ -4087,7 +4046,6 @@ msgstr ""
 
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:51
 #: neutron/plugins/linuxbridge/common/config.py:30
-#: neutron/plugins/mlnx/common/config.py:30
 msgid "List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network>"
 msgstr ""
 
@@ -4128,7 +4086,7 @@ msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:57
 #: neutron/plugins/linuxbridge/common/config.py:61
-#: neutron/plugins/mlnx/common/config.py:67
+#: neutron/plugins/mlnx/common/config.py:48
 #: neutron/plugins/nec/common/config.py:28
 #: neutron/plugins/oneconvergence/lib/config.py:47
 #: neutron/plugins/openvswitch/common/config.py:53
@@ -4416,7 +4374,6 @@ msgid "The input does not contain nececessary info: %(msg)s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/common/config.py:26
-#: neutron/plugins/mlnx/common/config.py:26
 msgid "Network type for tenant networks (local, vlan, or none)"
 msgstr ""
 
@@ -4449,13 +4406,12 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/linuxbridge/common/config.py:56
-#: neutron/plugins/mlnx/common/config.py:45
+#: neutron/plugins/mlnx/common/config.py:26
 #: neutron/plugins/ofagent/common/config.py:29
 msgid "List of <physical_network>:<physical_interface>"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/common/config.py:64
-#: neutron/plugins/mlnx/common/config.py:70
 msgid "Enable server RPC compatibility with old agents"
 msgstr ""
 
@@ -5144,37 +5100,27 @@ msgid "Missing product_id in: '%s'"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mlnx/config.py:24
-#: neutron/plugins/mlnx/common/config.py:48
+#: neutron/plugins/mlnx/common/config.py:29
 msgid "Type of VM network interface: mlnx_direct or hostdev"
 msgstr ""
 
-#: neutron/plugins/mlnx/common/config.py:34
-msgid ""
-"List of <physical_network>:<physical_network_type>  with "
-"physical_network_type is either eth or ib"
-msgstr ""
-
-#: neutron/plugins/mlnx/common/config.py:37
-msgid "Physical network type for provider network (eth or ib)"
-msgstr ""
-
-#: neutron/plugins/mlnx/common/config.py:52
+#: neutron/plugins/mlnx/common/config.py:33
 msgid "eswitch daemon end point"
 msgstr ""
 
-#: neutron/plugins/mlnx/common/config.py:54
+#: neutron/plugins/mlnx/common/config.py:35
 msgid ""
 "The number of milliseconds the agent will wait for response on request to"
 " daemon."
 msgstr ""
 
-#: neutron/plugins/mlnx/common/config.py:57
+#: neutron/plugins/mlnx/common/config.py:38
 msgid ""
 "The number of retries the agent will send request to daemon before giving"
 " up"
 msgstr ""
 
-#: neutron/plugins/mlnx/common/config.py:60
+#: neutron/plugins/mlnx/common/config.py:41
 msgid ""
 "backoff rate multiplier for waiting period between retries for request to"
 " daemon, i.e. value of 2 will  double the request timeout each retry"

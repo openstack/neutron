@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev699.g6a985c8\n"
+"Project-Id-Version: neutron 2015.1.dev737\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-14 06:05+0000\n"
+"POT-Creation-Date: 2014-12-17 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,7 +61,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3/agent.py:1724
+#: neutron/agent/dhcp_agent.py:587 neutron/agent/l3/agent.py:1722
 #: neutron/agent/metadata/agent.py:411
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:273
@@ -91,7 +91,7 @@ msgid ""
 "falling back to old security_group_rules_for_devices which scales worse."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:243
+#: neutron/agent/l3/agent.py:242
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled at the neutron server when "
@@ -100,19 +100,19 @@ msgid ""
 "warning. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:255
+#: neutron/agent/l3/agent.py:254
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled on the neutron server. "
 "Retrying. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:485
+#: neutron/agent/l3/agent.py:484
 #, python-format
 msgid "Info for router %s were not found. Skipping router removal"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:838
+#: neutron/agent/l3/agent.py:836
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
@@ -663,11 +663,6 @@ msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:165
 msgid "Invalid Network ID, cannot remove Network"
-msgstr ""
-
-#: neutron/plugins/mlnx/db/mlnx_db_v2.py:182
-#, python-format
-msgid "vlan_id %(seg_id)s on physical network %(phy_net)s not found"
 msgstr ""
 
 #: neutron/plugins/nec/nec_plugin.py:212
