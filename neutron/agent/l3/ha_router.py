@@ -20,6 +20,7 @@ from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.common import utils as common_utils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -164,6 +165,9 @@ class HaRouter(router.RouterInfo):
         instance = self._get_keepalived_instance()
         return instance.get_existing_vip_ip_addresses(interface_name)
 
+    def get_router_cidrs(self, device):
+        return set(self._ha_get_existing_cidrs(device.name))
+
     def _ha_external_gateway_removed(self, interface_name):
         self._clear_vips(interface_name)
 
@@ -238,3 +242,13 @@ class HaRouter(router.RouterInfo):
         old_gateway_cidr = self.ex_gw_port['ip_cidr']
         self._remove_vip(old_gateway_cidr)
         self._ha_external_gateway_added(ex_gw_port, interface_name)
+
+    def add_floating_ip(self, fip, interface_name, device):
+        fip_ip = fip['floating_ip_address']
+        ip_cidr = common_utils.ip_to_cidr(fip_ip)
+        self._add_vip(ip_cidr, interface_name)
+        # TODO(Carl) Should this return status?
+        # return l3_constants.FLOATINGIP_STATUS_ACTIVE
+
+    def remove_floating_ip(self, device, ip_cidr):
+        self._remove_vip(ip_cidr)

@@ -17,7 +17,9 @@ import netaddr
 
 from neutron.agent.l3 import dvr_router
 from neutron.agent.l3 import link_local_allocator as lla
+from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
+from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
@@ -33,11 +35,22 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
     def _create_router(self, router, **kwargs):
         agent_conf = mock.Mock()
-        return dvr_router.DvrRouter(mock.sentinel.router_id,
+        return dvr_router.DvrRouter(mock.sentinel.myhost,
+                                    mock.sentinel.router_id,
                                     router,
                                     agent_conf,
                                     mock.sentinel.interface_driver,
                                     **kwargs)
+
+    def test_get_floating_ips_dvr(self):
+        router = mock.MagicMock()
+        router.get.return_value = [{'host': mock.sentinel.myhost},
+                                   {'host': mock.sentinel.otherhost}]
+        ri = self._create_router(router)
+
+        fips = ri.get_floating_ips()
+
+        self.assertEqual([{'host': mock.sentinel.myhost}], fips)
 
     @mock.patch.object(ip_lib, 'send_garp_for_proxyarp')
     @mock.patch.object(ip_lib, 'IPDevice')
@@ -115,3 +128,41 @@ class TestDvrRouterOperations(base.BaseTestCase):
         mIPDevice().route.delete_gateway.assert_called_once_with(
             str(fip_to_rtr.ip), table=16)
         fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
+
+    def _test_add_floating_ip(self, ri, fip, is_failure):
+        ri._add_fip_addr_to_device = mock.Mock(return_value=is_failure)
+        ri.floating_ip_added_dist = mock.Mock()
+
+        result = ri.add_floating_ip(fip,
+                                    mock.sentinel.interface_name,
+                                    mock.sentinel.device)
+        ri._add_fip_addr_to_device.assert_called_once_with(
+            fip, mock.sentinel.device)
+        return result
+
+    def test_add_floating_ip(self):
+        ri = self._create_router(mock.MagicMock())
+        ip = '15.1.2.3'
+        fip = {'floating_ip_address': ip}
+        result = self._test_add_floating_ip(ri, fip, True)
+        ri.floating_ip_added_dist.assert_called_once_with(fip, ip + '/32')
+        self.assertEqual(l3_constants.FLOATINGIP_STATUS_ACTIVE, result)
+
+    def test_add_floating_ip_error(self):
+        ri = self._create_router(mock.MagicMock())
+        result = self._test_add_floating_ip(
+            ri, {'floating_ip_address': '15.1.2.3'}, False)
+        self.assertFalse(ri.floating_ip_added_dist.called)
+        self.assertEqual(l3_constants.FLOATINGIP_STATUS_ERROR, result)
+
+    @mock.patch.object(router_info.RouterInfo, 'remove_floating_ip')
+    def test_remove_floating_ip(self, super_remove_floating_ip):
+        ri = self._create_router(mock.MagicMock())
+        ri.floating_ip_removed_dist = mock.Mock()
+
+        ri.remove_floating_ip(mock.sentinel.device, mock.sentinel.ip_cidr)
+
+        super_remove_floating_ip.assert_called_once_with(
+            mock.sentinel.device, mock.sentinel.ip_cidr)
+        ri.floating_ip_removed_dist.assert_called_once_with(
+            mock.sentinel.ip_cidr)

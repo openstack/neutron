@@ -12,9 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.common import constants as l3_constants
+from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
+from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -103,3 +108,121 @@ class RouterInfo(object):
             LOG.debug("Removed route entry is '%s'", route)
             self._update_routing_table('delete', route)
         self.routes = new_routes
+
+    def get_ex_gw_port(self):
+        return self.router.get('gw_port')
+
+    def get_floating_ips(self):
+        """Filter Floating IPs to be hosted on this agent."""
+        return self.router.get(l3_constants.FLOATINGIP_KEY, [])
+
+    def floating_forward_rules(self, floating_ip, fixed_ip):
+        return [('PREROUTING', '-d %s -j DNAT --to %s' %
+                 (floating_ip, fixed_ip)),
+                ('OUTPUT', '-d %s -j DNAT --to %s' %
+                 (floating_ip, fixed_ip)),
+                ('float-snat', '-s %s -j SNAT --to %s' %
+                 (fixed_ip, floating_ip))]
+
+    def process_floating_ip_nat_rules(self):
+        """Configure NAT rules for the router's floating IPs.
+
+        Configures iptables rules for the floating ips of the given router
+        """
+        # Clear out all iptables rules for floating ips
+        self.iptables_manager.ipv4['nat'].clear_rules_by_tag('floating_ip')
+
+        floating_ips = self.get_floating_ips()
+        # Loop once to ensure that floating ips are configured.
+        for fip in floating_ips:
+            # Rebuild iptables rules for the floating ip.
+            fixed = fip['fixed_ip_address']
+            fip_ip = fip['floating_ip_address']
+            for chain, rule in self.floating_forward_rules(fip_ip, fixed):
+                self.iptables_manager.ipv4['nat'].add_rule(chain, rule,
+                                                           tag='floating_ip')
+
+        self.iptables_manager.apply()
+
+    def process_snat_dnat_for_fip(self):
+        try:
+            self.process_floating_ip_nat_rules()
+        except Exception:
+            # TODO(salv-orlando): Less broad catching
+            raise n_exc.FloatingIpSetupException(
+                'L3 agent failure to setup NAT for floating IPs')
+
+    def _add_fip_addr_to_device(self, fip, device):
+        """Configures the floating ip address on the device.
+        """
+        try:
+            ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
+            net = netaddr.IPNetwork(ip_cidr)
+            device.addr.add(net.version, ip_cidr, str(net.broadcast))
+            return True
+        except RuntimeError:
+            # any exception occurred here should cause the floating IP
+            # to be set in error state
+            LOG.warn(_LW("Unable to configure IP address for "
+                         "floating IP: %s"), fip['id'])
+
+    def add_floating_ip(self, fip, interface_name, device):
+        raise NotImplementedError()
+
+    def remove_floating_ip(self, device, ip_cidr):
+        net = netaddr.IPNetwork(ip_cidr)
+        device.addr.delete(net.version, ip_cidr)
+        self.driver.delete_conntrack_state(namespace=self.ns_name, ip=ip_cidr)
+
+    def get_router_cidrs(self, device):
+        return set([addr['cidr'] for addr in device.addr.list()])
+
+    def process_floating_ip_addresses(self, interface_name):
+        """Configure IP addresses on router's external gateway interface.
+
+        Ensures addresses for existing floating IPs and cleans up
+        those that should not longer be configured.
+        """
+
+        fip_statuses = {}
+        if interface_name is None:
+            LOG.debug('No Interface for floating IPs router: %s',
+                      self.router['id'])
+            return fip_statuses
+
+        device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
+        existing_cidrs = self.get_router_cidrs(device)
+        new_cidrs = set()
+
+        floating_ips = self.get_floating_ips()
+        # Loop once to ensure that floating ips are configured.
+        for fip in floating_ips:
+            fip_ip = fip['floating_ip_address']
+            ip_cidr = common_utils.ip_to_cidr(fip_ip)
+            new_cidrs.add(ip_cidr)
+            fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ACTIVE
+            if ip_cidr not in existing_cidrs:
+                fip_statuses[fip['id']] = self.add_floating_ip(
+                    fip, interface_name, device)
+
+        fips_to_remove = (
+            ip_cidr for ip_cidr in existing_cidrs - new_cidrs
+            if common_utils.is_cidr_host(ip_cidr))
+        for ip_cidr in fips_to_remove:
+            self.remove_floating_ip(device, ip_cidr)
+
+        return fip_statuses
+
+    def configure_fip_addresses(self, interface_name):
+        try:
+            return self.process_floating_ip_addresses(interface_name)
+        except Exception:
+            # TODO(salv-orlando): Less broad catching
+            raise n_exc.FloatingIpSetupException('L3 agent failure to setup '
+                'floating IPs')
+
+    def put_fips_in_error_state(self):
+        fip_statuses = {}
+        for fip in self.router.get(l3_constants.FLOATINGIP_KEY, []):
+            fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ERROR
+        return fip_statuses

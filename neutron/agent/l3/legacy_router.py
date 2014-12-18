@@ -13,7 +13,19 @@
 #    under the License.
 
 from neutron.agent.l3 import router_info as router
+from neutron.agent.linux import ip_lib
+from neutron.common import constants as l3_constants
 
 
 class LegacyRouter(router.RouterInfo):
-    pass
+    def add_floating_ip(self, fip, interface_name, device):
+        if not self._add_fip_addr_to_device(fip, device):
+            return l3_constants.FLOATINGIP_STATUS_ERROR
+
+        # As GARP is processed in a distinct thread the call below
+        # won't raise an exception to be handled.
+        ip_lib.send_gratuitous_arp(self.ns_name,
+                                   interface_name,
+                                   fip['floating_ip_address'],
+                                   self.agent_conf.send_arp_for_ha)
+        return l3_constants.FLOATINGIP_STATUS_ACTIVE
