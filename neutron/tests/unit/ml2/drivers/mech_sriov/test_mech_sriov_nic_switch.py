@@ -15,12 +15,14 @@
 
 import mock
 from oslo.config import cfg
+import testtools
 
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers.mech_sriov import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov import mech_driver
 from neutron.tests.unit.ml2 import _test_mech_agent as base
 
@@ -93,6 +95,11 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
         # Validate a network type not currently supported
         segment[api.NETWORK_TYPE] = p_const.TYPE_GRE
         self.assertFalse(self.driver.check_segment(segment))
+
+    def test_check_segment_allows_supported_network_types(self):
+        for network_type in self.driver.supported_network_types:
+            segment = {api.NETWORK_TYPE: network_type}
+            self.assertTrue(self.driver.check_segment(segment))
 
 
 class SriovMechVlanTestCase(SriovNicSwitchMechanismBaseTestCase,
@@ -205,6 +212,17 @@ class SriovSwitchMechVifDetailsTestCase(SriovNicSwitchMechanismBaseTestCase):
         self.assertIsNotNone(vif_details)
         vlan_id = int(vif_details.get(portbindings.VIF_DETAILS_VLAN))
         self.assertEqual(1234, vlan_id)
+
+    def test_get_vif_details_for_flat_network(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT}
+        vif_details = self.driver._get_vif_details(segment)
+        vlan_id = vif_details[portbindings.VIF_DETAILS_VLAN]
+        self.assertEqual('0', vlan_id)
+
+    def test_get_vif_details_unsupported_net(self):
+        segment = {api.NETWORK_TYPE: 'foo'}
+        with testtools.ExpectedException(exc.SriovUnsupportedNetworkType):
+            self.driver._get_vif_details(segment)
 
 
 class SriovSwitchMechConfigTestCase(SriovNicSwitchMechanismBaseTestCase):
