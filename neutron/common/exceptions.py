@@ -344,3 +344,15 @@ class RouterNotCompatibleWithAgent(NeutronException):
 class FailToDropPrivilegesExit(SystemExit):
     """Exit exception raised when a drop privileges action fails."""
     code = 99
+
+
+class FloatingIpSetupException(NeutronException):
+    def __init__(self, message=None):
+        self.message = message
+        super(FloatingIpSetupException, self).__init__()
+
+
+class IpTablesApplyException(NeutronException):
+    def __init__(self, message=None):
+        self.message = message
+        super(IpTablesApplyException, self).__init__()

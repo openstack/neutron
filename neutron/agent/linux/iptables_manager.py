@@ -18,6 +18,7 @@
 
 """Implements iptables rules using linux utilities."""
 
+import contextlib
 import os
 import re
 import sys
@@ -28,6 +29,7 @@ from oslo.utils import excutils
 from neutron.agent.common import config
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
+from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.i18n import _LE, _LW
 from neutron.openstack.common import lockutils
@@ -373,6 +375,19 @@ class IptablesManager(object):
 
     def is_chain_empty(self, table, chain, ip_version=4, wrap=True):
         return not self.get_chain(table, chain, ip_version, wrap)
+
+    @contextlib.contextmanager
+    def defer_apply(self):
+        """Defer apply context."""
+        self.defer_apply_on()
+        try:
+            yield
+        finally:
+            try:
+                self.defer_apply_off()
+            except Exception:
+                raise n_exc.IpTablesApplyException('Failure applying ip '
+                                                   'tables rules')
 
     def defer_apply_on(self):
         self.iptables_apply_deferred = True
