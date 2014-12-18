@@ -33,6 +33,7 @@ from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
+from neutron.services import advanced_service as adv_svc
 from neutron.tests.common.agents import l3_agent as l3_test_agent
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
@@ -102,11 +103,8 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         return ri
 
     def _create_router(self, agent, router):
-        agent._router_added(router['id'], router)
-        ri = agent.router_info[router['id']]
-        ri.router = router
-        agent.process_router(ri)
-        return ri
+        agent._process_added_router(router)
+        return agent.router_info[router['id']]
 
     def _delete_router(self, agent, router_id):
         agent._router_removed(router_id)
@@ -199,6 +197,31 @@ vrrp_instance VR_1 {
 
 
 class L3AgentTestCase(L3AgentTestFramework):
+    def test_observer_notifications_legacy_router(self):
+        self._test_observer_notifications(enable_ha=False)
+
+    def test_observer_notifications_ha_router(self):
+        self._test_observer_notifications(enable_ha=True)
+
+    def _test_observer_notifications(self, enable_ha):
+        """Test create, update, delete of router and notifications."""
+        with mock.patch.object(
+                self.agent.event_observers, 'notify') as notify:
+            router_info = self.generate_router_info(enable_ha)
+            router = self.manage_router(self.agent, router_info)
+            self.agent._process_updated_router(router.router)
+            self._delete_router(self.agent, router.router_id)
+
+            calls = notify.call_args_list
+            self.assertEqual(
+                [((adv_svc.AdvancedService.before_router_added, router),),
+                 ((adv_svc.AdvancedService.after_router_added, router),),
+                 ((adv_svc.AdvancedService.before_router_updated, router),),
+                 ((adv_svc.AdvancedService.after_router_updated, router),),
+                 ((adv_svc.AdvancedService.before_router_removed, router),),
+                 ((adv_svc.AdvancedService.after_router_removed, router),)],
+                calls)
+
     def test_legacy_router_lifecycle(self):
         self._router_lifecycle(enable_ha=False)
 

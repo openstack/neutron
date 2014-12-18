@@ -27,6 +27,7 @@ from oslo.utils import importutils
 from oslo.utils import timeutils
 
 from neutron.agent.common import config
+from neutron.agent.l3 import event_observers
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
@@ -52,6 +53,7 @@ from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.openstack.common import service
 from neutron import service as neutron_service
+from neutron.services import advanced_service as adv_svc
 try:
     from neutron_fwaas.services.firewall.agents.l3reference \
         import firewall_l3_agent
@@ -269,6 +271,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.fip_priorities = set(range(FIP_PR_START, FIP_PR_END))
 
         self._queue = queue.RouterProcessingQueue()
+        self.event_observers = event_observers.L3EventObservers()
         super(L3NATAgent, self).__init__(conf=self.conf)
 
         self.target_ex_net_id = None
@@ -459,6 +462,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                     router=router,
                                     use_ipv6=self.use_ipv6,
                                     ns_name=ns_name)
+        self.event_observers.notify(
+            adv_svc.AdvancedService.before_router_added, ri)
+
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
             self._create_router_namespace(ri)
@@ -485,6 +491,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                          "Skipping router removal"), router_id)
             return
 
+        self.event_observers.notify(
+            adv_svc.AdvancedService.before_router_removed, ri)
+
         if ri.is_ha:
             self.process_ha_router_removed(ri)
 
@@ -499,6 +508,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.iptables_manager.apply()
         del self.router_info[router_id]
         self._destroy_router_namespace(ri.ns_name)
+
+        self.event_observers.notify(
+            adv_svc.AdvancedService.after_router_removed, ri)
 
     def _get_metadata_proxy_callback(self, router_id):
 
@@ -1525,10 +1537,28 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     router_id=router['id'])
 
         if router['id'] not in self.router_info:
-            self._router_added(router['id'], router)
+            self._process_added_router(router)
+        else:
+            self._process_updated_router(router)
+
+    def _process_added_router(self, router):
+        # TODO(pcm): Next refactoring will rework this logic
+        self._router_added(router['id'], router)
         ri = self.router_info[router['id']]
         ri.router = router
         self.process_router(ri)
+        self.event_observers.notify(
+            adv_svc.AdvancedService.after_router_added, ri)
+
+    def _process_updated_router(self, router):
+        # TODO(pcm): Next refactoring will rework this logic
+        ri = self.router_info[router['id']]
+        ri.router = router
+        self.event_observers.notify(
+            adv_svc.AdvancedService.before_router_updated, ri)
+        self.process_router(ri)
+        self.event_observers.notify(
+            adv_svc.AdvancedService.after_router_updated, ri)
 
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():
