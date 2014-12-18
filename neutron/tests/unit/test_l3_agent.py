@@ -224,6 +224,8 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
         [netaddr.IPNetwork(p['subnet']['cidr']).version == ip_version
          for p in interfaces])
 
+    mac_address = netaddr.EUI('ca:fe:de:ad:be:ef')
+    mac_address.dialect = netaddr.mac_unix
     for i in range(current, current + count):
         interfaces.append(
             {'id': _uuid(),
@@ -231,11 +233,12 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
              'admin_state_up': True,
              'fixed_ips': [{'ip_address': ip_pool % i,
                             'subnet_id': _uuid()}],
-             'mac_address': 'ca:fe:de:ad:be:ef',
+             'mac_address': str(mac_address),
              'subnet': {'cidr': cidr_pool % i,
                         'gateway_ip': gw_pool % i,
                         'ipv6_ra_mode': ra_mode,
                         'ipv6_address_mode': addr_mode}})
+        mac_address.value += 1
 
 
 def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
@@ -253,7 +256,7 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
 
     router_id = _uuid()
     ex_gw_port = {'id': _uuid(),
-                  'mac_address': 'ca:fe:de:ad:be:ef',
+                  'mac_address': 'ca:fe:de:ad:be:ee',
                   'network_id': _uuid(),
                   'fixed_ips': [{'ip_address': ip_addr,
                                  'subnet_id': _uuid()}],

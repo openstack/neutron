@@ -113,10 +113,14 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         ha_device_name = self.agent.get_ha_device_name(router.ha_port['id'])
         ha_device_cidr = router.ha_port['ip_cidr']
         external_port = self.agent._get_ex_gw_port(router)
+        ex_port_ipv6 = self.agent._get_ipv6_lladdr(
+            external_port['mac_address'])
         external_device_name = self.agent.get_external_device_name(
             external_port['id'])
         external_device_cidr = external_port['ip_cidr']
         internal_port = router.router[l3_constants.INTERFACE_KEY][0]
+        int_port_ipv6 = self.agent._get_ipv6_lladdr(
+            internal_port['mac_address'])
         internal_device_name = self.agent.get_internal_device_name(
             internal_port['id'])
         internal_device_cidr = internal_port['ip_cidr']
@@ -150,6 +154,8 @@ vrrp_instance VR_1 {
         %(floating_ip_cidr)s dev %(external_device_name)s
         %(external_device_cidr)s dev %(external_device_name)s
         %(internal_device_cidr)s dev %(internal_device_name)s
+        %(ex_port_ipv6)s dev %(external_device_name)s scope link
+        %(int_port_ipv6)s dev %(internal_device_name)s scope link
     }
     virtual_routes {
         0.0.0.0/0 via %(default_gateway_ip)s dev %(external_device_name)s
@@ -164,7 +170,9 @@ vrrp_instance VR_1 {
             'internal_device_name': internal_device_name,
             'internal_device_cidr': internal_device_cidr,
             'floating_ip_cidr': floating_ip_cidr,
-            'default_gateway_ip': default_gateway_ip
+            'default_gateway_ip': default_gateway_ip,
+            'int_port_ipv6': int_port_ipv6,
+            'ex_port_ipv6': ex_port_ipv6
         }
 
 
@@ -210,6 +218,9 @@ class L3AgentTestCase(L3AgentTestFramework):
         router = self.manage_router(enable_ha)
 
         if enable_ha:
+            port = self.agent._get_ex_gw_port(router)
+            interface_name = self.agent.get_external_device_name(port['id'])
+            self._assert_no_ip_addresses_on_interface(router, interface_name)
             self.wait_until(lambda: router.ha_state == 'master')
 
             # Keepalived notifies of a state transition when it starts,
@@ -297,3 +308,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertTrue(self.device_exists_with_ip_mac(
             router.router[l3_constants.HA_INTERFACE_KEY],
             self.agent.get_ha_device_name, router.ns_name))
+
+    def _assert_no_ip_addresses_on_interface(self, router, interface):
+        device = ip_lib.IPDevice(interface, self.root_helper, router.ns_name)
+        self.assertEqual([], device.addr.list())

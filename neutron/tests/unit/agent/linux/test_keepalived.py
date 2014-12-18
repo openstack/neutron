@@ -300,6 +300,15 @@ vrrp_instance VR_2 {
         self.assertEqual(expected, '\n'.join(instance.build_config()))
 
 
+class KeepalivedVipAddressTestCase(base.BaseTestCase):
+    def test_vip_with_scope(self):
+        vip = keepalived.KeepalivedVipAddress('fe80::3e97:eff:fe26:3bfa/64',
+                                              'eth1',
+                                              'link')
+        self.assertEqual('fe80::3e97:eff:fe26:3bfa/64 dev eth1 scope link',
+                         vip.build_config())
+
+
 class KeepalivedVirtualRouteTestCase(base.BaseTestCase):
     def test_virtual_route_with_dev(self):
         route = keepalived.KeepalivedVirtualRoute('0.0.0.0/0', '1.2.3.4',
