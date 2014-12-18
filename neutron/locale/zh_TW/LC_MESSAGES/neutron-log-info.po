@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-14 06:05+0000\n"
-"PO-Revision-Date: 2014-12-14 03:11+0000\n"
+"POT-Creation-Date: 2014-12-17 06:05+0000\n"
+"PO-Revision-Date: 2014-12-16 21:20+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (Taiwan) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_TW/)\n"
@@ -88,7 +88,7 @@ msgstr "正在同步化狀態"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1734
+#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1732
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -155,7 +155,7 @@ msgstr "重新整理防火牆規則"
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1636
+#: neutron/agent/l3/agent.py:1634
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
@@ -255,12 +255,12 @@ msgid ""
 "is disabled."
 msgstr ""
 
-#: neutron/db/l3_db.py:1022
+#: neutron/db/l3_db.py:1017
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
 
-#: neutron/db/l3_db.py:1028
+#: neutron/db/l3_db.py:1023
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "正在跳過埠 %s，因為其上沒有配置 IP"
@@ -576,7 +576,6 @@ msgstr ""
 
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:206
 #: neutron/plugins/ml2/drivers/type_vlan.py:95
-#: neutron/plugins/mlnx/mlnx_plugin.py:188
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "網路 VLAN 範圍：%s"
@@ -632,7 +631,7 @@ msgid "Agent out of sync with plugin!"
 msgstr "代理程式與外掛程式不同步！"
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:469
-#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:267
+#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:264
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1035
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1564
@@ -737,19 +736,19 @@ msgstr ""
 msgid "Set the controller to a new controller: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:194
+#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:191
 #, python-format
 msgid ""
 "Mapping physical network %(physical_network)s to interface %(interface)s"
 msgstr ""
 
-#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:225
+#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:222
 #, python-format
 msgid ""
 "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
 msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s）！"
 
-#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:239
+#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:236
 #, python-format
 msgid "Controller IPs: %s"
 msgstr ""
@@ -1056,11 +1055,6 @@ msgstr ""
 
 #: neutron/plugins/ml2/drivers/freescale/mechanism_fslsdn.py:39
 msgid "Initializing CRD client... "
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:178
-#, python-format
-msgid "Physical Network type mappings: %s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:85

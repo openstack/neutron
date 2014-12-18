@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev699.g6a985c8\n"
+"Project-Id-Version: neutron 2015.1.dev737\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-14 06:05+0000\n"
+"POT-Creation-Date: 2014-12-17 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -98,7 +98,7 @@ msgstr ""
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:593 neutron/agent/l3/agent.py:1729
+#: neutron/agent/dhcp_agent.py:593 neutron/agent/l3/agent.py:1727
 #: neutron/agent/metadata/agent.py:416
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:148
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:110
@@ -117,86 +117,81 @@ msgstr ""
 msgid "Error unable to destroy namespace: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:222 neutron/tests/unit/test_l3_agent.py:1786
+#: neutron/agent/l3/agent.py:221 neutron/tests/unit/test_l3_agent.py:1787
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:294 neutron/agent/linux/dhcp.py:809
+#: neutron/agent/l3/agent.py:293 neutron/agent/linux/dhcp.py:809
 msgid "An interface driver must be specified"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:299
+#: neutron/agent/l3/agent.py:298
 msgid "Router id is required if not using namespaces."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:317
+#: neutron/agent/l3/agent.py:316
 msgid "RuntimeError in obtaining router list for namespace cleanup."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:342
+#: neutron/agent/l3/agent.py:341
 #, python-format
 msgid "Failed to destroy stale router namespace %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:358 neutron/agent/linux/dhcp.py:238
+#: neutron/agent/l3/agent.py:357 neutron/agent/linux/dhcp.py:238
 #, python-format
 msgid "Failed trying to delete namespace: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:560
+#: neutron/agent/l3/agent.py:559
 #: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:632
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:921
+#: neutron/agent/l3/agent.py:919
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:996
+#: neutron/agent/l3/agent.py:994
 msgid "DVR: no map match_port found!"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1201
+#: neutron/agent/l3/agent.py:1199
 msgid "DVR: error adding redirection logic"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1213
+#: neutron/agent/l3/agent.py:1211
 msgid "DVR: removed snat failed"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1309
+#: neutron/agent/l3/agent.py:1307
 msgid "Missing subnet/agent_gateway_port"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1454
+#: neutron/agent/l3/agent.py:1452
 msgid "DVR: Failed updating arp entry"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1505
+#: neutron/agent/l3/agent.py:1503
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1545
+#: neutron/agent/l3/agent.py:1543
 #, python-format
 msgid "Failed to fetch router information for '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1563
+#: neutron/agent/l3/agent.py:1561
 #, python-format
 msgid "Removing incompatible router '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1600
+#: neutron/agent/l3/agent.py:1602
 msgid "Failed synchronizing routers due to RPC error"
-msgstr ""
-
-#: neutron/agent/l3/agent.py:1603
-#: neutron/services/metering/agents/metering_agent.py:62
-msgid "Failed synchronizing routers"
 msgstr ""
 
 #: neutron/agent/l3/ha.py:136
@@ -895,14 +890,14 @@ msgstr ""
 msgid "Delete floatingip failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:200
+#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:197
 #, python-format
 msgid ""
 "Interface %(interface)s for physical network %(physical_network)s does "
 "not exist. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:261
+#: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:258
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1551
 #, python-format
 msgid "%s Agent terminated!"
@@ -1241,81 +1236,6 @@ msgstr ""
 
 #: neutron/plugins/ml2/drivers/mech_sriov/mech_driver.py:87
 msgid "Failed to parse supported PCI vendor devices"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:161
-#, python-format
-msgid "Invalid physical network type %(type)s. Server terminated!"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:169
-#, python-format
-msgid "Parsing physical_network_type failed: %s. Server terminated!"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:174
-#, python-format
-msgid ""
-"Invalid physical network type %(type)s for network %(net)s. Server "
-"terminated!"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:186
-#, python-format
-msgid "%s. Server terminated!"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:208
-#, python-format
-msgid "Invalid tenant_network_type: %s. Service terminated!"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:243
-#, python-format
-msgid "provider:network_type %s not supported"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:252
-msgid "provider:segmentation_id specified for flat network"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:257
-msgid "provider:segmentation_id required"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:260
-#, python-format
-msgid "provider:segmentation_id out of range (%(min_id)s through %(max_id)s)"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:268
-msgid "provider:physical_network specified for local network"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:272
-msgid "provider:segmentation_id specified for local network"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:283
-#, python-format
-msgid "Unknown provider:physical_network %s"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:289
-msgid "provider:physical_network required"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:324
-#, python-format
-msgid "Unsupported vnic type %(vnic_type)s for physical network type %(net_type)s"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:328
-msgid "Invalid vnic_type on port_create"
-msgstr ""
-
-#: neutron/plugins/mlnx/mlnx_plugin.py:330
-msgid "vnic_type is not defined in port profile"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:57
@@ -2298,6 +2218,10 @@ msgstr ""
 
 #: neutron/services/loadbalancer/plugin.py:24
 msgid "Loadbalancer service plugin requires neutron-lbaas module"
+msgstr ""
+
+#: neutron/services/metering/agents/metering_agent.py:62
+msgid "Failed synchronizing routers"
 msgstr ""
 
 #: neutron/services/metering/agents/metering_agent.py:180
