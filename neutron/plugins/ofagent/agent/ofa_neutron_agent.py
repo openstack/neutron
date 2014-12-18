@@ -929,10 +929,6 @@ def create_agent_config_map(config):
         tunnel_types=config.AGENT.tunnel_types,
     )
 
-    # If enable_tunneling is TRUE, set tunnel_type to default to GRE
-    if config.OVS.enable_tunneling and not kwargs['tunnel_types']:
-        kwargs['tunnel_types'] = [p_const.TYPE_GRE]
-
     # Verify the tunnel_types specified are valid
     for tun in kwargs['tunnel_types']:
         if tun not in constants.TUNNEL_NETWORK_TYPES:
