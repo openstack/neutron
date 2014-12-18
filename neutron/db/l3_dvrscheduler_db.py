@@ -308,3 +308,4 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 return
             self.bind_dvr_router_servicenode(
                 context, router_id, chosen_agent)
+            return chosen_agent
