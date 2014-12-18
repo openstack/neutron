@@ -125,7 +125,7 @@ class RequestTestCase(base.BaseTestCase):
 class ResourceTestCase(base.BaseTestCase):
 
     @staticmethod
-    def _get_deserializer(req_format):
+    def _get_deserializer():
         return wsgi.JSONDeserializer()
 
     def test_unmapped_neutron_error_with_json(self):
@@ -219,15 +219,13 @@ class ResourceTestCase(base.BaseTestCase):
                       str(wsgi.JSONDeserializer().deserialize(res.body)))
 
     @staticmethod
-    def _make_request_with_side_effect(side_effect, req_format=None):
+    def _make_request_with_side_effect(side_effect):
         controller = mock.MagicMock()
         controller.test.side_effect = side_effect
 
         resource = webtest.TestApp(wsgi_resource.Resource(controller))
 
         routing_args = {'action': 'test'}
-        if req_format:
-            routing_args.update({'format': req_format})
         environ = {'wsgiorg.routing_args': (None, routing_args)}
         res = resource.get('', extra_environ=environ, expect_errors=True)
         return res
@@ -244,25 +242,20 @@ class ResourceTestCase(base.BaseTestCase):
         self.assertEqual('', res.json['NeutronError']['detail'])
         self.assertEqual(exc.HTTPGatewayTimeout.code, res.status_int)
 
-    def _test_unhandled_error(self, req_format='json'):
+    def test_unhandled_error(self):
         expected_res = {'body': {'NeutronError':
                                 {'detail': '',
                                  'message': _(
                                      'Request Failed: internal server '
                                      'error while processing your request.'),
                                  'type': 'HTTPInternalServerError'}}}
-        res = self._make_request_with_side_effect(side_effect=Exception(),
-                                 req_format=req_format)
+        res = self._make_request_with_side_effect(side_effect=Exception())
         self.assertEqual(exc.HTTPInternalServerError.code,
                          res.status_int)
         self.assertEqual(expected_res,
-                         self._get_deserializer(
-                             req_format).deserialize(res.body))
+                         self._get_deserializer().deserialize(res.body))
 
-    def test_unhandled_error_with_json(self):
-        self._test_unhandled_error()
-
-    def _test_not_implemented_error(self, req_format='json'):
+    def test_not_implemented_error(self):
         expected_res = {'body': {'NeutronError':
                                 {'detail': '',
                                  'message': _(
@@ -271,15 +264,10 @@ class ResourceTestCase(base.BaseTestCase):
                                      'operation.'),
                                  'type': 'HTTPNotImplemented'}}}
 
-        res = self._make_request_with_side_effect(exc.HTTPNotImplemented(),
-                                 req_format=req_format)
+        res = self._make_request_with_side_effect(exc.HTTPNotImplemented())
         self.assertEqual(exc.HTTPNotImplemented.code, res.status_int)
         self.assertEqual(expected_res,
-                         self._get_deserializer(
-                             req_format).deserialize(res.body))
-
-    def test_not_implemented_error_with_json(self):
-        self._test_not_implemented_error()
+                         self._get_deserializer().deserialize(res.body))
 
     def test_status_200(self):
         controller = mock.MagicMock()
