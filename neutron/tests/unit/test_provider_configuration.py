@@ -15,7 +15,7 @@
 from oslo.config import cfg
 
 from neutron.common import exceptions as n_exc
-
+from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services import provider_configuration as provconf
 from neutron.tests import base
@@ -197,3 +197,17 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
                 fields=['name']
             )
             self.assertEqual(p, [{'name': prov['name']}])
+
+
+class GetProviderDriverClassTestCase(base.BaseTestCase):
+    def test_get_provider_driver_class_hit(self):
+        driver = 'ml2'
+        expected = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+        actual = provconf.get_provider_driver_class(
+            driver,
+            namespace=manager.CORE_PLUGINS_NAMESPACE)
+        self.assertEqual(expected, actual)
+
+    def test_get_provider_driver_class_miss(self):
+        retval = provconf.get_provider_driver_class('foo')
+        self.assertEqual('foo', retval)
