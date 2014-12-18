@@ -24,6 +24,7 @@ from testtools import matchers
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import dvr
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info as l3router
@@ -364,7 +365,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 sn_port['ip_cidr'],
                 sn_port['mac_address'],
                 agent.get_snat_int_device_name(sn_port['id']),
-                l3_agent.SNAT_INT_DEV_PREFIX)
+                dvr.SNAT_INT_DEV_PREFIX)
 
     def test_agent_add_internal_network(self):
         self._test_internal_network_action('add')
@@ -1807,7 +1808,7 @@ vrrp_instance VR_1 {
 
         good_namespace_list = [l3_agent.NS_PREFIX + r['id']
                                for r in router_list]
-        good_namespace_list += [l3_agent.SNAT_NS_PREFIX + r['id']
+        good_namespace_list += [dvr.SNAT_NS_PREFIX + r['id']
                                 for r in router_list]
         self.mock_ip.get_namespaces.return_value = (stale_namespace_list +
                                                     good_namespace_list +
@@ -1842,7 +1843,7 @@ vrrp_instance VR_1 {
         self.conf.set_override('router_id', None)
         stale_namespaces = [l3_agent.NS_PREFIX + 'foo',
                             l3_agent.NS_PREFIX + 'bar',
-                            l3_agent.SNAT_NS_PREFIX + 'foo']
+                            dvr.SNAT_NS_PREFIX + 'foo']
         other_namespaces = ['unknown']
 
         self._cleanup_namespace_test(stale_namespaces,
@@ -1853,7 +1854,7 @@ vrrp_instance VR_1 {
         self.conf.set_override('router_id', None)
         stale_namespaces = [l3_agent.NS_PREFIX + 'cccc',
                             l3_agent.NS_PREFIX + 'eeeee',
-                            l3_agent.SNAT_NS_PREFIX + 'fffff']
+                            dvr.SNAT_NS_PREFIX + 'fffff']
         router_list = [{'id': 'foo', 'distributed': False},
                        {'id': 'aaaa', 'distributed': False}]
         other_namespaces = ['qdhcp-aabbcc', 'unknown']
@@ -1989,7 +1990,9 @@ vrrp_instance VR_1 {
                'port_id': _uuid()}
         agent.agent_gateway_port = agent_gw_port
         ri.rtr_fip_subnet = lla.LinkLocalAddressPair('169.254.30.42/31')
-        agent.floating_ip_added_dist(ri, fip)
+        ip_cidr = str(fip['floating_ip_address']) + (
+            l3_agent.FLOATING_IP_CIDR_SUFFIX)
+        agent.floating_ip_added_dist(ri, fip, ip_cidr)
         self.mock_rule.add_rule_from.assert_called_with('192.168.0.1',
                                                         16, FIP_PRI)
         # TODO(mrsmith): add more asserts
@@ -2152,7 +2155,7 @@ vrrp_instance VR_1 {
         self.mock_ip.del_veth.assert_called_once_with(
             agent.get_fip_int_device_name(ri.router['id']))
         self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
-            str(fip_to_rtr.ip), table=l3_agent.FIP_RT_TBL)
+            str(fip_to_rtr.ip), table=dvr.FIP_RT_TBL)
 
         self.assertEqual(ri.dist_fip_count, 0)
         self.assertEqual(len(agent.fip_ns_subscribers), 0)
