@@ -15,6 +15,7 @@
 import netaddr
 
 from oslo.config import cfg
+from oslo.utils import excutils
 
 from neutron.i18n import _LE
 from neutron import manager
@@ -64,10 +65,10 @@ class CSR1kvHostingDeviceDriver(hosting_device_drivers.HostingDeviceDriver):
                     vm_cfg_data += line
             return {'iosxe_config.txt': vm_cfg_data}
         except IOError:
-            LOG.exception(_LE('Failed to create config file. Trying to '
-                              'clean up.'))
-            self.delete_configdrive_files(context, mgmtport)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_LE('Failed to create config file. Trying to '
+                                  'clean up.'))
+                self.delete_configdrive_files(context, mgmtport)
 
     @property
     def _core_plugin(self):
