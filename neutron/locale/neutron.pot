@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev737\n"
+"Project-Id-Version: neutron 2015.1.dev18\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-17 06:05+0000\n"
+"POT-Creation-Date: 2014-12-19 06:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,20 +22,20 @@ msgstr ""
 msgid "read_deleted can only be one of 'no', 'yes' or 'only', not %r"
 msgstr ""
 
-#: neutron/manager.py:72
+#: neutron/manager.py:74
 #, python-format
 msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."
 msgstr ""
 
-#: neutron/manager.py:84
+#: neutron/manager.py:86
 msgid "Neutron core_plugin not configured!"
 msgstr ""
 
-#: neutron/manager.py:140
+#: neutron/manager.py:142
 msgid "Plugin not found."
 msgstr ""
 
-#: neutron/manager.py:179
+#: neutron/manager.py:181
 #, python-format
 msgid "Multiple plugins for service %s were configured"
 msgstr ""
@@ -215,7 +215,7 @@ msgstr ""
 msgid "Number of threads to use during sync process."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:67 neutron/agent/l3/agent.py:201
+#: neutron/agent/dhcp_agent.py:67 neutron/agent/l3/agent.py:203
 #: neutron/agent/metadata/namespace_proxy.py:166
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
@@ -282,7 +282,7 @@ msgstr ""
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:162
+#: neutron/agent/l3/agent.py:164
 msgid ""
 "The working mode for the agent. Allowed modes are: 'legacy' - this "
 "preserves the existing behavior where the L3 agent is deployed on a "
@@ -294,49 +294,49 @@ msgid ""
 "centralized node (or in single-host deployments, e.g. devstack)"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:175 neutron/debug/debug_agent.py:42
+#: neutron/agent/l3/agent.py:177 neutron/debug/debug_agent.py:42
 msgid "Name of bridge used for external network traffic."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:179
+#: neutron/agent/l3/agent.py:181
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:183
+#: neutron/agent/l3/agent.py:185
 msgid ""
 "Send this many gratuitous ARPs for HA setup, if less than or equal to 0, "
 "the feature is disabled"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:186
+#: neutron/agent/l3/agent.py:188
 msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:191
+#: neutron/agent/l3/agent.py:193
 msgid "Agent should implement routers with no gateway"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:193
+#: neutron/agent/l3/agent.py:195
 msgid "UUID of external network for routers implemented by the agents."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:196
+#: neutron/agent/l3/agent.py:198
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:198
+#: neutron/agent/l3/agent.py:200
 msgid "Delete namespace after removing a router."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:448
+#: neutron/agent/l3/agent.py:451
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:557
+#: neutron/agent/l3/agent.py:569
 #: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:630
 #, python-format
 msgid "Router port %s has no IP address"
@@ -707,7 +707,7 @@ msgstr ""
 msgid "Unknown API version specified"
 msgstr ""
 
-#: neutron/api/rpc/handlers/dhcp_rpc.py:66
+#: neutron/api/rpc/handlers/dhcp_rpc.py:69
 msgid "Unrecognized action"
 msgstr ""
 
@@ -983,7 +983,7 @@ msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 
 #: neutron/api/v2/resource.py:127
-#: neutron/tests/unit/test_api_v2_resource.py:250
+#: neutron/tests/unit/test_api_v2_resource.py:248
 msgid "Request Failed: internal server error while processing your request."
 msgstr ""
 
@@ -1027,7 +1027,7 @@ msgstr ""
 msgid "The core plugin Neutron will use"
 msgstr ""
 
-#: neutron/common/config.py:51 neutron/db/migration/cli.py:33
+#: neutron/common/config.py:51 neutron/db/migration/cli.py:39
 msgid "The service plugins Neutron will use"
 msgstr ""
 
@@ -1835,36 +1835,46 @@ msgstr ""
 msgid "%s cannot be called while in offline mode"
 msgstr ""
 
-#: neutron/db/migration/cli.py:30
+#: neutron/db/migration/cli.py:36
 msgid "Neutron plugin provider module"
 msgstr ""
 
-#: neutron/db/migration/cli.py:39
+#: neutron/db/migration/cli.py:42
+#, python-format
+msgid "The advanced service to execute the command against. Can be one of '%s'."
+msgstr ""
+
+#: neutron/db/migration/cli.py:49
 msgid "Neutron quota driver class"
 msgstr ""
 
-#: neutron/db/migration/cli.py:47
+#: neutron/db/migration/cli.py:57
 msgid "URL to database"
 msgstr ""
 
-#: neutron/db/migration/cli.py:50
+#: neutron/db/migration/cli.py:60
 msgid "Database engine"
 msgstr ""
 
-#: neutron/db/migration/cli.py:73
+#: neutron/db/migration/cli.py:83
 msgid "You must provide a revision or relative delta"
 msgstr ""
 
-#: neutron/db/migration/cli.py:103 neutron/db/migration/cli.py:116
+#: neutron/db/migration/cli.py:113 neutron/db/migration/cli.py:126
 msgid "Timeline branches unable to generate timeline"
 msgstr ""
 
-#: neutron/db/migration/cli.py:110
+#: neutron/db/migration/cli.py:120
 msgid "HEAD file does not match migration timeline head"
 msgstr ""
 
-#: neutron/db/migration/cli.py:156
+#: neutron/db/migration/cli.py:166
 msgid "Available commands"
+msgstr ""
+
+#: neutron/db/migration/cli.py:174
+#, python-format
+msgid "Package neutron-%s not installed"
 msgstr ""
 
 #: neutron/db/migration/migrate_to_ml2.py:90
@@ -1902,7 +1912,7 @@ msgid "The %s tunnel type to migrate from"
 msgstr ""
 
 #: neutron/db/migration/migrate_to_ml2.py:462
-#: neutron/plugins/openvswitch/common/config.py:67
+#: neutron/plugins/openvswitch/common/config.py:65
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr ""
 
@@ -4089,7 +4099,7 @@ msgstr ""
 #: neutron/plugins/mlnx/common/config.py:48
 #: neutron/plugins/nec/common/config.py:28
 #: neutron/plugins/oneconvergence/lib/config.py:47
-#: neutron/plugins/openvswitch/common/config.py:53
+#: neutron/plugins/openvswitch/common/config.py:51
 #: neutron/plugins/sriovnicagent/common/config.py:58
 msgid ""
 "The number of seconds the agent will wait between polling for local "
@@ -5523,7 +5533,7 @@ msgid "Bad request: %(msg)s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:914
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1508
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1532
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
@@ -5533,13 +5543,13 @@ msgstr ""
 msgid "Parsing physical_interface_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:939
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:935
 #, python-format
 msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:942
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1536
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:938
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1556
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -5645,66 +5655,62 @@ msgid ""
 "error: %(error)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1533
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1553
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
 
 #: neutron/plugins/openvswitch/common/config.py:31
-msgid "Enable tunneling support."
-msgstr ""
-
-#: neutron/plugins/openvswitch/common/config.py:33
 msgid "Tunnel bridge to use."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:35
+#: neutron/plugins/openvswitch/common/config.py:33
 msgid "Peer patch port in integration bridge for tunnel bridge."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:38
+#: neutron/plugins/openvswitch/common/config.py:36
 msgid "Peer patch port in tunnel bridge for integration bridge."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:41
+#: neutron/plugins/openvswitch/common/config.py:39
 msgid "Local IP address of tunnel endpoint."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:44
+#: neutron/plugins/openvswitch/common/config.py:42
 msgid "List of <physical_network>:<bridge>. Deprecated for ofagent."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:47
+#: neutron/plugins/openvswitch/common/config.py:45
 msgid ""
 "Use veths instead of patch ports to interconnect the integration bridge "
 "to physical bridges."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:57
+#: neutron/plugins/openvswitch/common/config.py:55
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:61
+#: neutron/plugins/openvswitch/common/config.py:59
 msgid ""
 "The number of seconds to wait before respawning the ovsdb monitor after "
 "losing communication with it."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:64
+#: neutron/plugins/openvswitch/common/config.py:62
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:69
+#: neutron/plugins/openvswitch/common/config.py:67
 msgid "MTU size of veth interfaces"
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:71
+#: neutron/plugins/openvswitch/common/config.py:69
 msgid ""
 "Use ML2 l2population mechanism driver to learn remote MAC and IPs and "
 "improve tunnel scalability."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:74
+#: neutron/plugins/openvswitch/common/config.py:72
 msgid ""
 "Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
 "l2population driver. Allows the switch (when supporting an overlay) to "
@@ -5712,13 +5718,13 @@ msgid ""
 "broadcast into the overlay."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:80
+#: neutron/plugins/openvswitch/common/config.py:78
 msgid ""
 "Set or un-set the don't fragment (DF) bit on outgoing IP packet carrying "
 "GRE/VXLAN tunnel."
 msgstr ""
 
-#: neutron/plugins/openvswitch/common/config.py:83
+#: neutron/plugins/openvswitch/common/config.py:81
 msgid "Make the l2 agent run in DVR mode."
 msgstr ""
 
@@ -6904,61 +6910,61 @@ msgstr ""
 msgid "ERROR: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:27
+#: neutron/services/provider_configuration.py:30
 msgid ""
 "Defines providers for advanced services using the format: "
 "<service_type>:<name>:<driver>[:default]"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:45
+#: neutron/services/provider_configuration.py:70
 #, python-format
 msgid "Provider name is limited by 255 characters: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:54
+#: neutron/services/provider_configuration.py:79
 msgid "Invalid service provider format"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:62
+#: neutron/services/provider_configuration.py:87
 #, python-format
 msgid "Invalid provider format. Last part should be 'default' or empty: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:68
+#: neutron/services/provider_configuration.py:93
 #, python-format
 msgid "Service type '%(svc_type)s' is not allowed, allowed types: %(allowed)s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:82
+#: neutron/services/provider_configuration.py:108
 #, python-format
 msgid ""
 "Service provider '%(provider)s' could not be found for service type "
 "%(service_type)s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:87
+#: neutron/services/provider_configuration.py:113
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:92
+#: neutron/services/provider_configuration.py:118
 #, python-format
 msgid ""
 "Resource '%(resource_id)s' is already associated with provider "
 "'%(provider)s' for service type '%(service_type)s'"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:105
+#: neutron/services/provider_configuration.py:131
 #, python-format
 msgid "Driver %s is not unique across providers"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:115
+#: neutron/services/provider_configuration.py:141
 #, python-format
 msgid "Multiple default providers for service %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:126
+#: neutron/services/provider_configuration.py:152
 #, python-format
 msgid "Multiple providers specified for service %s"
 msgstr ""
@@ -6976,13 +6982,13 @@ msgstr ""
 msgid "Enable FWaaS"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:67
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:69
 msgid ""
 "FWaaS plugin is configured in the server side, but FWaaS is disabled in "
 "L3-agent."
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:79
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:81
 #, python-format
 msgid "Error importing FWaaS device driver: %s"
 msgstr ""
@@ -7030,7 +7036,7 @@ msgstr ""
 msgid "Unmapped error"
 msgstr ""
 
-#: neutron/tests/unit/test_api_v2_resource.py:268
+#: neutron/tests/unit/test_api_v2_resource.py:261
 msgid ""
 "The server has either erred or is incapable of performing the requested "
 "operation."
@@ -7217,17 +7223,17 @@ msgstr ""
 msgid "An OFC exception has occurred: Failed to connect OFC : "
 msgstr ""
 
-#: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:754
-#: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:774
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1337
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1357
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1374
+#: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:747
+#: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:767
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1331
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1351
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1368
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
 
-#: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:771
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1354
+#: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:764
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:1348
 msgid "ofport should have a value that can be interpreted as an integer"
 msgstr ""
 

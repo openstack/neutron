@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-12-17 06:05+0000\n"
-"PO-Revision-Date: 2014-12-16 21:20+0000\n"
+"POT-Creation-Date: 2014-12-19 06:09+0000\n"
+"PO-Revision-Date: 2014-12-19 03:26+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
 "language/ko_KR/)\n"
@@ -19,17 +19,17 @@ msgstr ""
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: neutron/manager.py:113
+#: neutron/manager.py:115
 #, python-format
 msgid "Loading core plugin: %s"
 msgstr ""
 
-#: neutron/manager.py:153
+#: neutron/manager.py:155
 #, python-format
 msgid "Service %s is supported by the core plugin"
 msgstr ""
 
-#: neutron/manager.py:171
+#: neutron/manager.py:173
 #, python-format
 msgid "Loading Plugin: %s"
 msgstr "로딩 플러그인: %s"
@@ -88,7 +88,7 @@ msgstr "상태 동기화 중"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1732
+#: neutron/agent/dhcp_agent.py:602 neutron/agent/l3/agent.py:1762
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -155,7 +155,7 @@ msgstr "방화벽 규칙 새로 고치기"
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1634
+#: neutron/agent/l3/agent.py:1664
 msgid "L3 agent started"
 msgstr "L3 에이전트가 시작됨"
 
@@ -301,17 +301,7 @@ msgid ""
 "available: %s"
 msgstr ""
 
-#: neutron/db/migration/alembic_migrations/heal_script.py:230
-#, python-format
-msgid "Detected removed foreign key %(fk)r on table %(table)r"
-msgstr ""
-
-#: neutron/db/migration/alembic_migrations/heal_script.py:235
-#, python-format
-msgid "Detected added foreign key for column %(fk)r on table %(table)r"
-msgstr ""
-
-#: neutron/db/migration/alembic_migrations/heal_script.py:257
+#: neutron/db/migration/alembic_migrations/heal_script.py:221
 #, python-format
 msgid "Table %(old_t)r was renamed to %(new_t)r"
 msgstr ""
@@ -628,7 +618,7 @@ msgstr "%s 포트 제거 중"
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:994
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:376
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:833
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1369
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1401
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:255
 msgid "Agent out of sync with plugin!"
 msgstr "에이전트가 플러그인과 동기화되지 않았습니다!"
@@ -637,7 +627,7 @@ msgstr "에이전트가 플러그인과 동기화되지 않았습니다!"
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:264
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1035
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1564
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1584
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:351
 msgid "Agent initialized successfully, now running... "
 msgstr "에이전트가 초기화되었으며, 지금 실행 중... "
@@ -767,7 +757,7 @@ msgstr "RPC agent_id: %s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:879
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:725
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1119
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1123
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:213
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
@@ -780,15 +770,15 @@ msgstr "%s 디바이스가 플러그인에서 정의되지 않음"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:919
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:755
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1174
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1191
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1178
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1195
 #, python-format
 msgid "Attachment %s removed"
 msgstr "첨부 %s이(가) 제거됨"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:931
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:349
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1203
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1207
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:239
 #, python-format
 msgid "Port %s updated."
@@ -904,7 +894,7 @@ msgstr "모듈러 L2 플러그인 초기화를 완료했습니다"
 msgid "Attempt %(count)s to bind port %(port)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:954 neutron/plugins/ml2/plugin.py:1090
+#: neutron/plugins/ml2/plugin.py:961 neutron/plugins/ml2/plugin.py:1097
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -1157,13 +1147,13 @@ msgid "unknown network %s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:448
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:480
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:484
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr "%(vlan_id)s을(를) net-id=%(net_uuid)s에 대한 로컬 vlan으로 지정 중"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:498
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:574
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:578
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "net-id = %(net_uuid)s에서 vlan = %(vlan_id)s 재확보 중"
@@ -1174,7 +1164,7 @@ msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr "port_unbound() net_uuid %s이(가) local_vlan_map에 있지 않음"
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:711
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1113
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1117
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be "
@@ -1182,13 +1172,13 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:744
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1143
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1147
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:838
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1391
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1429
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "에이전트 터널이 플러그인과 동기화되지 않았습니다!"
 
@@ -1201,27 +1191,27 @@ msgstr ""
 msgid "L2 Agent operating in DVR Mode with MAC %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:669
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:673
 #, python-format
 msgid "port_unbound(): net_uuid %s not in local_vlan_map"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:742
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:746
 #, python-format
 msgid "Adding %s to list of bridges."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:883
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:887
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr "실제 네트워크 %(physical_network)s을(를) 브릿지 %(bridge)s에 맵핑 중"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:993
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:997
 #, python-format
 msgid "Port '%(port_name)s' has lost its vlan tag '%(vlan_tag)d'!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1162
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1166
 #, python-format
 msgid "Ancillary Port %s added"
 msgstr ""
