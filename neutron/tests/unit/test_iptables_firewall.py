@@ -19,6 +19,7 @@ import mock
 from oslo.config import cfg
 
 from neutron.agent.common import config as a_cfg
+from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
@@ -32,10 +33,6 @@ FAKE_PREFIX = {'IPv4': '10.0.0.0/24',
                'IPv6': 'fe80::/48'}
 FAKE_IP = {'IPv4': '10.0.0.1',
            'IPv6': 'fe80::1'}
-
-TEST_IP_RANGE = ['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4',
-                 '10.0.0.5', '10.0.0.6', '10.0.0.7', '10.0.0.8',
-                 '10.0.0.9', '10.0.0.10']
 
 
 class BaseIptablesFirewallTestCase(base.BaseTestCase):
@@ -1408,6 +1405,9 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
     def setUp(self):
         super(IptablesFirewallEnhancedIpsetTestCase, self).setUp()
         self.firewall.ipset = mock.Mock()
+        self.firewall.ipset.get_name.side_effect = (
+            ipset_manager.IpsetManager.get_name)
+        self.firewall.ipset.set_exists.return_value = True
 
     def _fake_port(self):
         return {'device': 'tapfake_dev',
@@ -1424,64 +1424,23 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
             {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
              'ethertype': 'IPv6'}]}
 
-    def test_prepare_port_filter_with_default_sg(self):
+    def test_prepare_port_filter_with_new_members(self):
         self.firewall.sg_rules = self._fake_sg_rule()
         self.firewall.sg_members = {'fake_sgid': {
             'IPv4': ['10.0.0.1', '10.0.0.2'], 'IPv6': ['fe80::1']}}
         self.firewall.pre_sg_members = {}
         port = self._fake_port()
         self.firewall.prepare_port_filter(port)
-        calls = [mock.call.create_ipset_chain('IPv4fake_sgid', 'IPv4'),
-                 mock.call.refresh_ipset_chain_by_name(
-                     'IPv4fake_sgid', ['10.0.0.1', '10.0.0.2'], 'IPv4'),
-                 mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
-                 mock.call.refresh_ipset_chain_by_name(
-                     'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
-
-        self.firewall.ipset.assert_has_calls(calls)
-
-    def test_prepare_port_filter_with_add_members_beyond_4(self):
-        self.firewall.sg_rules = self._fake_sg_rule()
-        self.firewall.sg_members = {'fake_sgid': {
-            'IPv4': TEST_IP_RANGE[:5],
-            'IPv6': ['fe80::1']}}
-        self.firewall.pre_sg_members = {}
-        port = self._fake_port()
-        self.firewall.prepare_port_filter(port)
-        calls = [mock.call.create_ipset_chain('IPv4fake_sgid', 'IPv4'),
-                 mock.call.refresh_ipset_chain_by_name(
-                     'IPv4fake_sgid', TEST_IP_RANGE[:5], 'IPv4'),
-                 mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
-                 mock.call.refresh_ipset_chain_by_name(
-                     'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
-
-        self.firewall.ipset.assert_has_calls(calls)
-
-    def test_prepare_port_filter_with_ipset_chain_exist(self):
-        self.firewall.sg_rules = self._fake_sg_rule()
-        self.firewall.ipset_chains = {'IPv4fake_sgid': ['10.0.0.2']}
-        self.firewall.sg_members = {'fake_sgid': {
-            'IPv4': TEST_IP_RANGE[:5],
-            'IPv6': ['fe80::1']}}
-        self.firewall.pre_sg_members = {'fake_sgid': {
-            'IPv4': ['10.0.0.2'],
-            'IPv6': ['fe80::1']}}
-        port = self._fake_port()
-        self.firewall.prepare_port_filter(port)
         calls = [
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.1'),
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.3'),
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.4'),
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.5'),
-            mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
-            mock.call.refresh_ipset_chain_by_name(
-                'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+            mock.call.set_members('fake_sgid', 'IPv4',
+                                  ['10.0.0.1', '10.0.0.2']),
+            mock.call.set_members('fake_sgid', 'IPv6',
+                                  ['fe80::1'])
+        ]
+        self.firewall.ipset.assert_has_calls(calls)
 
-        self.firewall.ipset.assert_has_calls(calls, True)
-
-    def test_prepare_port_filter_with_del_member(self):
+    def test_prepare_port_filter_with_deleted_member(self):
         self.firewall.sg_rules = self._fake_sg_rule()
-        self.firewall.ipset_chains = {'IPv4fake_sgid': ['10.0.0.2']}
         self.firewall.sg_members = {'fake_sgid': {
             'IPv4': [
                 '10.0.0.1', '10.0.0.3', '10.0.0.4', '10.0.0.5'],
@@ -1492,34 +1451,41 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         port = self._fake_port()
         self.firewall.prepare_port_filter(port)
         calls = [
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.1'),
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.3'),
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.4'),
-            mock.call.add_member_to_ipset_chain('IPv4fake_sgid', '10.0.0.5'),
-            mock.call.del_ipset_chain_member('IPv4fake_sgid', '10.0.0.2'),
-            mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
-            mock.call.refresh_ipset_chain_by_name(
-                'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+            mock.call.set_members('fake_sgid', 'IPv4',
+                                  ['10.0.0.1', '10.0.0.3', '10.0.0.4',
+                                   '10.0.0.5']),
+            mock.call.set_members('fake_sgid', 'IPv6', ['fe80::1'])]
 
         self.firewall.ipset.assert_has_calls(calls, True)
 
-    def test_prepare_port_filter_change_beyond_9(self):
+    def test_remove_port_filter_with_destroy_ipset_chain(self):
         self.firewall.sg_rules = self._fake_sg_rule()
-        self.firewall.ipset_chains = {'IPv4fake_sgid': TEST_IP_RANGE[5:]}
+        port = self._fake_port()
         self.firewall.sg_members = {'fake_sgid': {
-            'IPv4': TEST_IP_RANGE[:5],
+            'IPv4': ['10.0.0.1'],
             'IPv6': ['fe80::1']}}
         self.firewall.pre_sg_members = {'fake_sgid': {
-            'IPv4': TEST_IP_RANGE[5:],
-            'IPv6': ['fe80::1']}}
-        port = self._fake_port()
+            'IPv4': [],
+            'IPv6': []}}
         self.firewall.prepare_port_filter(port)
+        self.firewall.filter_defer_apply_on()
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': [],
+            'IPv6': []}}
+        self.firewall.pre_sg_members = {'fake_sgid': {
+            'IPv4': ['10.0.0.1'],
+            'IPv6': ['fe80::1']}}
+        self.firewall.remove_port_filter(port)
+        self.firewall.filter_defer_apply_off()
         calls = [
-            mock.call.refresh_ipset_chain_by_name('IPv4fake_sgid',
-                                                  TEST_IP_RANGE[:5], 'IPv4'),
-            mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
-            mock.call.refresh_ipset_chain_by_name(
-                'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+            mock.call.set_members('fake_sgid', 'IPv4', ['10.0.0.1']),
+            mock.call.set_members('fake_sgid', 'IPv6', ['fe80::1']),
+            mock.call.set_exists('fake_sgid', 'IPv4'),
+            mock.call.get_name('fake_sgid', 'IPv4'),
+            mock.call.set_exists('fake_sgid', 'IPv6'),
+            mock.call.get_name('fake_sgid', 'IPv6'),
+            mock.call.destroy('fake_sgid', 'IPv4'),
+            mock.call.destroy('fake_sgid', 'IPv6')]
 
         self.firewall.ipset.assert_has_calls(calls)
 
@@ -1535,12 +1501,9 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         port = self._fake_port()
         port['security_group_source_groups'].append('fake_sgid2')
         self.firewall.prepare_port_filter(port)
-        calls = [mock.call.create_ipset_chain('IPv4fake_sgid', 'IPv4'),
-                 mock.call.refresh_ipset_chain_by_name(
-                     'IPv4fake_sgid', ['10.0.0.1', '10.0.0.2'], 'IPv4'),
-                 mock.call.create_ipset_chain('IPv6fake_sgid', 'IPv6'),
-                 mock.call.refresh_ipset_chain_by_name(
-                     'IPv6fake_sgid', ['fe80::1'], 'IPv6')]
+        calls = [mock.call.set_members('fake_sgid', 'IPv4',
+                                       ['10.0.0.1', '10.0.0.2']),
+                 mock.call.set_members('fake_sgid', 'IPv6', ['fe80::1'])]
 
         self.firewall.ipset.assert_has_calls(calls)
 
@@ -1564,6 +1527,6 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall.filtered_ports['tapfake_dev'] = port
         self.firewall._pre_defer_filtered_ports = {}
         self.firewall.filter_defer_apply_off()
-        calls = [mock.call.destroy_ipset_chain_by_name('IPv4fake_sgid')]
+        calls = [mock.call.destroy('fake_sgid', 'IPv4')]
 
         self.firewall.ipset.assert_has_calls(calls, True)
