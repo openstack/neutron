@@ -26,7 +26,7 @@ from neutron.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-def create_consumers(endpoints, prefix, topic_details):
+def create_consumers(endpoints, prefix, topic_details, start_listening=True):
     """Create agent RPC consumers.
 
     :param endpoints: The list of endpoints to process the incoming messages.
@@ -34,6 +34,7 @@ def create_consumers(endpoints, prefix, topic_details):
     :param topic_details: A list of topics. Each topic has a name, an
                           operation, and an optional host param keying the
                           subscription to topic.host for plugin calls.
+    :param start_listening: if True, it starts the processing loop
 
     :returns: A common Connection.
     """
@@ -50,7 +51,8 @@ def create_consumers(endpoints, prefix, topic_details):
             connection.create_consumer(node_topic_name,
                                        endpoints,
                                        fanout=False)
-    connection.consume_in_threads()
+    if start_listening:
+        connection.consume_in_threads()
     return connection
 
 

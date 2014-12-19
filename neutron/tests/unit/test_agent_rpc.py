@@ -118,7 +118,16 @@ class AgentPluginReportState(base.BaseTestCase):
 
 
 class AgentRPCMethods(base.BaseTestCase):
-    def test_create_consumers(self):
+
+    def _test_create_consumers(
+        self, endpoints, method, expected, topics, listen):
+        call_to_patch = 'neutron.common.rpc.create_connection'
+        with mock.patch(call_to_patch) as create_connection:
+            rpc.create_consumers(
+                endpoints, method, topics, start_listening=listen)
+            create_connection.assert_has_calls(expected)
+
+    def test_create_consumers_start_listening(self):
         endpoints = [mock.Mock()]
         expected = [
             mock.call(new=True),
@@ -126,11 +135,22 @@ class AgentRPCMethods(base.BaseTestCase):
                                         fanout=True),
             mock.call().consume_in_threads()
         ]
+        method = 'foo'
+        topics = [('topic', 'op')]
+        self._test_create_consumers(
+            endpoints, method, expected, topics, True)
 
-        call_to_patch = 'neutron.common.rpc.create_connection'
-        with mock.patch(call_to_patch) as create_connection:
-            rpc.create_consumers(endpoints, 'foo', [('topic', 'op')])
-            create_connection.assert_has_calls(expected)
+    def test_create_consumers_do_not_listen(self):
+        endpoints = [mock.Mock()]
+        expected = [
+            mock.call(new=True),
+            mock.call().create_consumer('foo-topic-op', endpoints,
+                                        fanout=True),
+        ]
+        method = 'foo'
+        topics = [('topic', 'op')]
+        self._test_create_consumers(
+            endpoints, method, expected, topics, False)
 
     def test_create_consumers_with_node_name(self):
         endpoints = [mock.Mock()]
