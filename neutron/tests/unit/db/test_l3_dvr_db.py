@@ -185,7 +185,6 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             'fixed_port_id': _uuid(),
             'floating_network_id': _uuid()
         }
-        fip_id = floatingip['id']
         with contextlib.nested(
             mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
                               '_get_floatingip'),
@@ -200,7 +199,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             gvm.return_value = 'my-host'
             cfips.return_value = True
             self.mixin.clear_unused_fip_agent_gw_port(
-                self.ctx, floatingip, fip_id)
+                self.ctx, floatingip)
             self.assertTrue(dfips.called)
             self.assertTrue(cfips.called)
             self.assertTrue(gvm.called)

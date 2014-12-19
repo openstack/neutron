@@ -168,11 +168,11 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                             res_fip.get('fixed_port_id'))
         if unused_agent_port:
             self.clear_unused_fip_agent_gw_port(
-                admin_ctx, floatingip, fip['id'])
+                admin_ctx, floatingip)
         return res_fip
 
     def clear_unused_fip_agent_gw_port(
-            self, context, floatingip_db, fip_id):
+            self, context, floatingip_db):
         """Helper function to check for fip agent gw port and delete.
 
         This function checks on compute nodes to make sure if there
@@ -184,7 +184,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         fip_hostid = self.get_vm_port_hostid(
             context, floatingip_db['fixed_port_id'])
         if fip_hostid and self.check_fips_availability_on_host(
-            context, fip_id, fip_hostid):
+            context, fip_hostid):
             LOG.debug('Deleting the Agent GW Port on host: %s', fip_hostid)
             self.delete_floatingip_agent_gateway_port(context, fip_hostid)
 
@@ -193,7 +193,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if floatingip['fixed_port_id']:
             admin_ctx = context.elevated()
             self.clear_unused_fip_agent_gw_port(
-                admin_ctx, floatingip, id)
+                admin_ctx, floatingip)
         super(L3_NAT_with_dvr_db_mixin,
               self).delete_floatingip(context, id)
 
@@ -211,7 +211,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             if fip:
                 admin_ctx = context.elevated()
                 self.clear_unused_fip_agent_gw_port(
-                    admin_ctx, fip, id)
+                    admin_ctx, fip)
         return super(L3_NAT_with_dvr_db_mixin,
                      self).disassociate_floatingips(context,
                                                     port_id,
@@ -409,7 +409,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if ports:
             return ports[0]
 
-    def check_fips_availability_on_host(self, context, fip_id, host_id):
+    def check_fips_availability_on_host(self, context, host_id):
         """Query all floating_ips and filter by particular host."""
         fip_count_on_host = 0
         with context.session.begin(subtransactions=True):
