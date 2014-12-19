@@ -43,7 +43,7 @@ def config_helper(config_entity, cluster):
                                  cluster=cluster).get('results', [])
     except Exception as e:
         msg = (_("Error '%(err)s' when connecting to controller(s): %(ctl)s.")
-               % {'err': str(e),
+               % {'err': e,
                   'ctl': ', '.join(get_nsx_controllers(cluster))})
         raise Exception(msg)
 
@@ -78,7 +78,7 @@ def is_transport_node_connected(cluster, node_uuid):
                                  cluster=cluster)['connection']['connected']
     except Exception as e:
         msg = (_("Error '%(err)s' when connecting to controller(s): %(ctl)s.")
-               % {'err': str(e),
+               % {'err': e,
                   'ctl': ', '.join(get_nsx_controllers(cluster))})
         raise Exception(msg)
 

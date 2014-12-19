@@ -395,7 +395,7 @@ class ServerPool(object):
             raise cfg.Error(_('Could not retrieve initial '
                               'certificate from controller %(server)s. '
                               'Error details: %(error)s') %
-                            {'server': server, 'error': str(e)})
+                            {'server': server, 'error': e})
 
         LOG.warning(_LW("Storing to certificate for host %(server)s "
                         "at %(path)s"), {'server': server,

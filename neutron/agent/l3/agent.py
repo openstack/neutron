@@ -927,8 +927,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                           namespace=ns_name)
             ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
-        except Exception as e:
-            LOG.error(_LE("Failed sending gratuitous ARP: %s"), str(e))
+        except Exception:
+            LOG.exception(_LE("Failed sending gratuitous ARP."))
         if distributed:
             device.addr.delete(net.version, ip_cidr)
 
