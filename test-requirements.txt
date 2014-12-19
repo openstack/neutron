@@ -17,6 +17,4 @@ testtools>=0.9.36,!=1.2.0
 testscenarios>=0.4
 WebTest>=2.0
 oslotest>=1.2.0  # Apache-2.0
-psycopg2
-MySQL-python
 tempest-lib
