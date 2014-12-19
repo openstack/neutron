@@ -47,6 +47,28 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
         self.assertEqual(len(self.log.mock_calls), 1)
 
+    def test_group_by_network_id(self):
+        port1 = {'network_id': 'a'}
+        port2 = {'network_id': 'b'}
+        port3 = {'network_id': 'a'}
+        grouped_ports = self.callbacks._group_by_network_id(
+                                                        [port1, port2, port3])
+        expected = {'a': [port1, port3], 'b': [port2]}
+        self.assertEqual(expected, grouped_ports)
+
+    def test_get_active_networks_info(self):
+        plugin_retval = [{'id': 'a'}, {'id': 'b'}]
+        self.plugin.get_networks.return_value = plugin_retval
+        port = {'network_id': 'a'}
+        subnet = {'network_id': 'b'}
+        self.plugin.get_ports.return_value = [port]
+        self.plugin.get_subnets.return_value = [subnet]
+        networks = self.callbacks.get_active_networks_info(mock.Mock(),
+                                                           host='host')
+        expected = [{'id': 'a', 'subnets': [], 'ports': [port]},
+                    {'id': 'b', 'subnets': [subnet], 'ports': []}]
+        self.assertEqual(expected, networks)
+
     def _test__port_action_with_failures(self, exc=None, action=None):
         port = {
             'network_id': 'foo_network_id',
