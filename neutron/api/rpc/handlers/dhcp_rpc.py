@@ -35,13 +35,20 @@ LOG = logging.getLogger(__name__)
 
 
 class DhcpRpcCallback(object):
-    """DHCP agent RPC callback in plugin implementations."""
+    """DHCP agent RPC callback in plugin implementations.
+
+    This class implements the server side of an rpc interface.  The client
+    side of this interface can be found in
+    neutron.agent.dhcp_agent.DhcpPluginApi.  For more information about
+    changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    """
 
     # API version history:
     #     1.0 - Initial version.
     #     1.1 - Added get_active_networks_info, create_dhcp_port,
     #           and update_dhcp_port methods.
-    target = messaging.Target(version='1.1')
+    target = messaging.Target(namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
+                              version='1.1')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""

@@ -404,6 +404,11 @@ class DhcpAgent(manager.Manager):
 class DhcpPluginApi(object):
     """Agent side of the dhcp rpc API.
 
+    This class implements the client side of an rpc interface.  The server side
+    of this interface can be found in
+    neutron.api.rpc.handlers.dhcp_rpc.DhcpRpcCallback.  For more information
+    about changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+
     API version history:
         1.0 - Initial version.
         1.1 - Added get_active_networks_info, create_dhcp_port,
@@ -415,7 +420,10 @@ class DhcpPluginApi(object):
         self.context = context
         self.host = cfg.CONF.host
         self.use_namespaces = use_namespaces
-        target = messaging.Target(topic=topic, version='1.0')
+        target = messaging.Target(
+                topic=topic,
+                namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
+                version='1.0')
         self.client = n_rpc.get_client(target)
 
     def get_active_networks_info(self):
