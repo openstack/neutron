@@ -55,11 +55,6 @@ EXTERNAL_FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
 EXTERNAL_TABLES = (EXTERNAL_FWAAS_TABLES + EXTERNAL_LBAAS_TABLES +
                    EXTERNAL_VPNAAS_TABLES)
 
-# TODO(akamyshnikova): Temporarily skip checking FKs on these tables.
-TABLES_WITH_EXTERNAL_FK = ['vcns_edge_monitor_bindings',
-                           'vcns_edge_pool_bindings', 'vcns_edge_vip_bindings',
-                           'vcns_firewall_rule_bindings']
-
 
 class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     '''Test for checking of equality models state and migrations.
@@ -221,14 +216,6 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
                     if col in insp.get_pk_constraint(
                             table_name)['constrained_columns']:
                         return False
-            # TODO(akamyshnikova): Remove this skip once the logic for
-            # vcns_*_bindings is fixed. (Part of advanced services split.)
-            elif ((element[0] == 'remove_fk'
-                  and element[1].parent.name in TABLES_WITH_EXTERNAL_FK)
-                  or (element[0] == 'drop_key'
-                      and element[2] in TABLES_WITH_EXTERNAL_FK)):
-                return False
-
         else:
             for modified, _, table, column, _, _, new in element:
                 if modified == 'modify_default' and dialect == 'mysql':

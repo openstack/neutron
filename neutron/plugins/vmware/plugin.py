@@ -16,7 +16,5 @@
 #
 
 from neutron.plugins.vmware.plugins import base
-from neutron.plugins.vmware.plugins import service
 
 NsxPlugin = base.NsxPluginV2
-NsxServicePlugin = service.NsxAdvancedPlugin
