@@ -20,7 +20,6 @@ import signal
 from oslo.config import cfg
 
 from neutron.agent.linux import keepalived
-from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
@@ -144,7 +143,6 @@ class AgentMixin(object):
         ri.ha_port = ha_port
 
         self._init_keepalived_manager(ri)
-        self._add_keepalived_notifiers(ri)
 
     def process_ha_router_removed(self, ri):
         self.ha_network_removed(ri)
@@ -180,14 +178,8 @@ class AgentMixin(object):
         instance.remove_vips_vroutes_by_interface(interface)
 
     def _add_keepalived_notifiers(self, ri):
-        callback = (
-            metadata_driver.MetadataDriver._get_metadata_proxy_callback(
-                ri.router_id, self.conf))
-        pm = (
-            metadata_driver.MetadataDriver.
-            _get_metadata_proxy_process_manager(ri.router_id,
-                                                ri.ns_name,
-                                                self.conf))
+        callback = self._get_metadata_proxy_callback(ri.router_id)
+        pm = self._get_metadata_proxy_process_manager(ri.router_id, ri.ns_name)
         pid = pm.get_pid_file_name(ensure_pids_dir=True)
         ri.keepalived_manager.add_notifier(
             callback(pid), 'master', ri.ha_vr_id)
