@@ -83,27 +83,29 @@ class IptablesManagerTestCase(base.BaseIPVethTestCase):
         self.assertTrue(netcat.test_connectivity(True))
 
     def test_icmp(self):
-        self.pinger.assert_ping_from_ns(self.client_ns, self.DST_ADDRESS)
+        pinger = helpers.Pinger(self.client_ns)
+        pinger.assert_ping(self.DST_ADDRESS)
         self.server_fw.ipv4['filter'].add_rule('INPUT', base.ICMP_BLOCK_RULE)
         self.server_fw.apply()
-        self.pinger.assert_no_ping_from_ns(self.client_ns, self.DST_ADDRESS)
+        pinger.assert_no_ping(self.DST_ADDRESS)
         self.server_fw.ipv4['filter'].remove_rule('INPUT',
                                                  base.ICMP_BLOCK_RULE)
         self.server_fw.apply()
-        self.pinger.assert_ping_from_ns(self.client_ns, self.DST_ADDRESS)
+        pinger.assert_ping(self.DST_ADDRESS)
 
     def test_mangle_icmp(self):
-        self.pinger.assert_ping_from_ns(self.client_ns, self.DST_ADDRESS)
+        pinger = helpers.Pinger(self.client_ns)
+        pinger.assert_ping(self.DST_ADDRESS)
         self.server_fw.ipv4['mangle'].add_rule('INPUT', base.ICMP_MARK_RULE)
         self.server_fw.ipv4['filter'].add_rule('INPUT', base.MARKED_BLOCK_RULE)
         self.server_fw.apply()
-        self.pinger.assert_no_ping_from_ns(self.client_ns, self.DST_ADDRESS)
+        pinger.assert_no_ping(self.DST_ADDRESS)
         self.server_fw.ipv4['mangle'].remove_rule('INPUT',
                                                   base.ICMP_MARK_RULE)
         self.server_fw.ipv4['filter'].remove_rule('INPUT',
                                                   base.MARKED_BLOCK_RULE)
         self.server_fw.apply()
-        self.pinger.assert_ping_from_ns(self.client_ns, self.DST_ADDRESS)
+        pinger.assert_ping(self.DST_ADDRESS)
 
     def test_tcp_input_port(self):
         self._test_with_nc(self.server_fw, 'ingress', self.port, udp=False)
