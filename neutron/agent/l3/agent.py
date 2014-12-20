@@ -37,6 +37,7 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ra
+from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
@@ -277,6 +278,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.target_ex_net_id = None
         self.use_ipv6 = ipv6_utils.is_enabled()
 
+        if self.conf.enable_metadata_proxy:
+            driver = metadata_driver.MetadataDriver.instance(self)
+            self.event_observers.add(driver)
+
     def _fip_ns_subscribe(self, router_id):
         is_first = (len(self.fip_ns_subscribers) == 0)
         self.fip_ns_subscribers.add(router_id)
@@ -396,8 +401,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _destroy_router_namespace(self, ns):
         router_id = self.get_router_id(ns)
         ra.disable_ipv6_ra(router_id, ns, self.root_helper)
-        if self.conf.enable_metadata_proxy:
-            self._destroy_metadata_proxy(router_id, ns)
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
@@ -468,21 +471,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
             self._create_router_namespace(ri)
-        for c, r in self.metadata_filter_rules():
-            ri.iptables_manager.ipv4['filter'].add_rule(c, r)
-        for c, r in self.metadata_nat_rules():
-            ri.iptables_manager.ipv4['nat'].add_rule(c, r)
-        ri.iptables_manager.apply()
         self.process_router_add(ri)
 
         if ri.is_ha:
             self.process_ha_router_added(ri)
-
-        if self.conf.enable_metadata_proxy:
-            if ri.is_ha:
-                self._add_keepalived_notifiers(ri)
-            else:
-                self._spawn_metadata_proxy(ri.router_id, ri.ns_name)
 
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
@@ -501,49 +493,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.router[l3_constants.INTERFACE_KEY] = []
         ri.router[l3_constants.FLOATINGIP_KEY] = []
         self.process_router(ri)
-        for c, r in self.metadata_filter_rules():
-            ri.iptables_manager.ipv4['filter'].remove_rule(c, r)
-        for c, r in self.metadata_nat_rules():
-            ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
-        ri.iptables_manager.apply()
         del self.router_info[router_id]
         self._destroy_router_namespace(ri.ns_name)
 
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_removed, ri)
-
-    def _get_metadata_proxy_callback(self, router_id):
-
-        def callback(pid_file):
-            metadata_proxy_socket = self.conf.metadata_proxy_socket
-            proxy_cmd = ['neutron-ns-metadata-proxy',
-                         '--pid_file=%s' % pid_file,
-                         '--metadata_proxy_socket=%s' % metadata_proxy_socket,
-                         '--router_id=%s' % router_id,
-                         '--state_path=%s' % self.conf.state_path,
-                         '--metadata_port=%s' % self.conf.metadata_port]
-            proxy_cmd.extend(config.get_log_args(
-                self.conf, 'neutron-ns-metadata-proxy-%s.log' %
-                router_id))
-            return proxy_cmd
-
-        return callback
-
-    def _get_metadata_proxy_process_manager(self, router_id, ns_name):
-        return external_process.ProcessManager(
-            self.conf,
-            router_id,
-            self.root_helper,
-            ns_name)
-
-    def _spawn_metadata_proxy(self, router_id, ns_name):
-        callback = self._get_metadata_proxy_callback(router_id)
-        pm = self._get_metadata_proxy_process_manager(router_id, ns_name)
-        pm.enable(callback)
-
-    def _destroy_metadata_proxy(self, router_id, ns_name):
-        pm = self._get_metadata_proxy_process_manager(router_id, ns_name)
-        pm.disable()
 
     def _set_subnet_arp_info(self, ri, port):
         """Set ARP info retrieved from Plugin for existing ports."""
@@ -1170,22 +1124,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                            prefix=EXTERNAL_DEV_PREFIX)
         if ri.router['distributed']:
             self._destroy_snat_namespace(ns_name)
-
-    def metadata_filter_rules(self):
-        rules = []
-        if self.conf.enable_metadata_proxy:
-            rules.append(('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
-                          '-p tcp -m tcp --dport %s '
-                          '-j ACCEPT' % self.conf.metadata_port))
-        return rules
-
-    def metadata_nat_rules(self):
-        rules = []
-        if self.conf.enable_metadata_proxy:
-            rules.append(('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
-                          '-p tcp -m tcp --dport 80 -j REDIRECT '
-                          '--to-port %s' % self.conf.metadata_port))
-        return rules
 
     def external_gateway_nat_rules(self, ex_gw_ip, interface_name):
         rules = [('POSTROUTING', '! -i %(interface_name)s '
