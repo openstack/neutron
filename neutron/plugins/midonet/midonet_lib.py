@@ -518,7 +518,7 @@ class MidoClient:
                   "port_id=%(port_id)s, nat_type=%(nat_type)s",
                   {'tenant_id': tenant_id, 'chain_name': chain_name,
                    'from_ip': from_ip, 'to_ip': to_ip,
-                   'portid': port_id, 'nat_type': nat_type})
+                   'port_id': port_id, 'nat_type': nat_type})
         if nat_type not in ['dnat', 'snat']:
             raise ValueError(_("Invalid NAT type passed in %s") % nat_type)
 
