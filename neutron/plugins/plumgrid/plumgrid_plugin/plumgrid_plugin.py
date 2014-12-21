@@ -356,9 +356,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("Neutron PLUMgrid Director: delete_subnet() called")
         # Collecting subnet info
         sub_db = self._get_subnet(context, subnet_id)
-        tenant_id = self._get_tenant_id_for_create(context, subnet_id)
         net_id = sub_db["network_id"]
         net_db = self.get_network(context, net_id)
+        tenant_id = net_db["tenant_id"]
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Delete
