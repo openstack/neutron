@@ -142,10 +142,10 @@ class BrocadeSVIPlugin(router.L3RouterPlugin):
             LOG.debug("Allocated cidr %(cidr)s from the pool, "
                       "network_id %(net_id)s "
                       "bnet %(bnet)s "
-                      "vlan %(vlan_id)d " % ({'cidr': gateway_ip_cidr,
-                                              'net_id': network_id,
-                                              'bnet': bnet,
-                                              'vlan_id': int(vlan_id)}))
+                      "vlan %(vlan_id)d ", {'cidr': gateway_ip_cidr,
+                                            'net_id': network_id,
+                                            'bnet': bnet,
+                                            'vlan_id': int(vlan_id)})
             port_filters = {'network_id': [network_id],
                             'device_owner': [DEVICE_OWNER_ROUTER_INTF]}
             port_count = self._core_plugin.get_ports_count(context,
@@ -206,10 +206,11 @@ class BrocadeSVIPlugin(router.L3RouterPlugin):
                 LOG.debug("remove_router_interface removed cidr %(cidr)s"
                           " from the pool,"
                           " network_id %(net_id)s bnet %(bnet)s"
-                          " vlan %(vlan_id)d" %
-                          ({'cidr': gateway_ip_cidr,
-                            'net_id': network_id,
-                            'bnet': bnet, 'vlan_id': int(vlan_id)}))
+                          " vlan %(vlan_id)d",
+                          {'cidr': gateway_ip_cidr,
+                           'net_id': network_id,
+                           'bnet': bnet,
+                           'vlan_id': int(vlan_id)})
                 switch = self._switch
                 self._driver.delete_svi(switch['address'],
                                         switch['username'],
