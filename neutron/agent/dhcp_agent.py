@@ -143,8 +143,8 @@ class DhcpAgent(manager.Manager):
                 or isinstance(e, exceptions.NetworkNotFound)):
                 LOG.warning(_LW("Network %s has been deleted."), network.id)
             else:
-                LOG.exception(_LE('Unable to %(action)s dhcp for %(net_id)s.')
-                              % {'net_id': network.id, 'action': action})
+                LOG.exception(_LE('Unable to %(action)s dhcp for %(net_id)s.'),
+                              {'net_id': network.id, 'action': action})
 
     def schedule_resync(self, reason, network=None):
         """Schedule a resync for a given network and reason. If no network is

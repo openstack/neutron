@@ -93,7 +93,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
             agent = query.one()
         except exc.NoResultFound:
             LOG.debug('No enabled %(agent_type)s agent on host '
-                      '%(host)s' % {'agent_type': agent_type, 'host': host})
+                      '%(host)s', {'agent_type': agent_type, 'host': host})
             return
         if self.is_agent_down(agent.heartbeat_timestamp):
             LOG.warn(_LW('%(agent_type)s agent %(agent_id)s is not active'),

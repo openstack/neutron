@@ -125,8 +125,8 @@ class L3RpcCallback(object):
                                         {'port': {portbindings.HOST_ID: host}})
             except exceptions.PortNotFound:
                 LOG.debug("Port %(port)s not found while updating "
-                          "agent binding for router %(router)s."
-                          % {"port": port['id'], "router": router_id})
+                          "agent binding for router %(router)s.",
+                          {"port": port['id'], "router": router_id})
         elif (port and
               port.get('device_owner') ==
               constants.DEVICE_OWNER_DVR_INTERFACE):
