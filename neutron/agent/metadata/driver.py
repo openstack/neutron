@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import config
+from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.common import exceptions
 from neutron.services import advanced_service
@@ -104,8 +105,11 @@ class MetadataDriver(advanced_service.AdvancedService):
     @classmethod
     def metadata_nat_rules(cls, port):
         return [('PREROUTING', '-d 169.254.169.254/32 '
+                 '-i %(interface_name)s '
                  '-p tcp -m tcp --dport 80 -j REDIRECT '
-                 '--to-port %s' % port)]
+                 '--to-port %(port)s' %
+                 {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
+                  'port': port})]
 
     @classmethod
     def _get_metadata_proxy_user_group(cls, conf):
