@@ -337,8 +337,9 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
                 LOG.error(_LE("DVR: Unable to retrieve subnet information "
                               "for subnet_id %s"), subnet_uuid)
                 return
-            LOG.debug("get_subnet_for_dvr for subnet %s returned with %s" %
-                      (subnet_uuid, subnet_info))
+            LOG.debug("get_subnet_for_dvr for subnet %(uuid)s "
+                      "returned with %(info)s",
+                      {"uuid": subnet_uuid, "info": subnet_info})
             ldm = LocalDVRSubnetMapping(subnet_info)
             self.local_dvr_map[subnet_uuid] = ldm
 
