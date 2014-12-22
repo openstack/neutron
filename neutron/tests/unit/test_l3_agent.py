@@ -2195,6 +2195,24 @@ vrrp_instance VR_1 {
         self.assertIn(_join('-p', pidfile), cmd)
         self.assertIn(_join('-m', 'syslog'), cmd)
 
+    def test_generate_radvd_conf_other_flag(self):
+        # we don't check other flag for stateful since it's redundant
+        # for this mode and can be ignored by clients, as per RFC4861
+        expected = {l3_constants.IPV6_SLAAC: False,
+                    l3_constants.DHCPV6_STATELESS: True}
+
+        for ra_mode, flag_set in expected.iteritems():
+            router = prepare_router_data()
+            ri = self._process_router_ipv6_interface_added(router,
+                                                           ra_mode=ra_mode)
+
+            ra._generate_radvd_conf(ri.router['id'],
+                                    router[l3_constants.INTERFACE_KEY],
+                                    mock.Mock())
+            asserter = self.assertIn if flag_set else self.assertNotIn
+            asserter('AdvOtherConfigFlag on;',
+                     self.utils_replace_file.call_args[0][1])
+
 
 class TestL3AgentEventHandler(base.BaseTestCase):
 
