@@ -518,7 +518,7 @@ class LinuxBridgeManager:
         if not ip_lib.iproute_arg_supported(
                 ['bridge', 'fdb'], 'append', self.root_helper):
             LOG.warning(_LW('Option "%(option)s" must be supported by command '
-                            '"%(command)s" to enable %(mode)s mode') %
+                            '"%(command)s" to enable %(mode)s mode'),
                         {'option': 'append',
                          'command': 'bridge fdb',
                          'mode': 'VXLAN UCAST'})
@@ -554,7 +554,7 @@ class LinuxBridgeManager:
                 ['ip', 'link', 'add', 'type', 'vxlan'],
                 'proxy', self.root_helper):
             LOG.warning(_LW('Option "%(option)s" must be supported by command '
-                            '"%(command)s" to enable %(mode)s mode') %
+                            '"%(command)s" to enable %(mode)s mode'),
                         {'option': 'proxy',
                          'command': 'ip link add type vxlan',
                          'mode': 'VXLAN MCAST'})
