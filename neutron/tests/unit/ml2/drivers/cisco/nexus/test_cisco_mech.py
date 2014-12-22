@@ -465,9 +465,9 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         # The code we are exercising calls connect() twice, if there is a
         # TypeError on the first call (if the old ncclient is installed).
         # The second call should succeed. That's what we are simulating here.
-        connect = self.mock_ncclient.connect
+        orig_connect_return_val = self.mock_ncclient.connect.return_value
         with self._patch_ncclient('connect.side_effect',
-                                  [TypeError, connect]):
+                                  [TypeError, orig_connect_return_val]):
             with self._create_resources() as result:
                 self.assertEqual(result.status_int,
                                  wexc.HTTPOk.code)
