@@ -103,7 +103,7 @@ def get_dynamic_segment(session, network_id, physical_network=None,
         if record:
             return _make_segment_dict(record)
         else:
-            LOG.debug("No dynamic segment %s found for "
+            LOG.debug("No dynamic segment found for "
                       "Network:%(network_id)s, "
                       "Physical network:%(physnet)s, "
                       "segmentation_id:%(segmentation_id)s",
