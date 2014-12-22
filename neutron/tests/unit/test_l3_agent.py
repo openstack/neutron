@@ -27,6 +27,7 @@ from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import dvr
+from neutron.agent.l3 import dvr_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info as l3router
@@ -900,7 +901,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ex_gw_port = {'id': _uuid()}
 
         with mock.patch.object(lla.LinkLocalAllocator, '_write'):
-            agent.create_dvr_fip_interfaces(ri, ex_gw_port)
+            if ri.router['distributed']:
+                agent.create_dvr_fip_interfaces(ri, ex_gw_port)
             fip_statuses = agent.process_router_floating_ip_addresses(
                 ri, ex_gw_port)
         self.assertEqual({fip_id: l3_constants.FLOATINGIP_STATUS_ACTIVE},
@@ -963,8 +965,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         router = prepare_router_data(enable_snat=True)
         router[l3_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
         router['distributed'] = True
-        ri = l3router.RouterInfo(router['id'], self.conf.root_helper,
-                                 router=router)
+        ri = dvr_router.DvrRouter(router['id'], self.conf.root_helper,
+                                  router=router)
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.host = HOSTNAME
@@ -1392,7 +1394,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 {fip_id: l3_constants.FLOATINGIP_STATUS_ERROR})
 
     def test_handle_router_snat_rules_distributed_without_snat_manager(self):
-        ri = l3router.RouterInfo(
+        ri = dvr_router.DvrRouter(
             'foo_router_id', mock.ANY, {'distributed': True})
         ri.iptables_manager = mock.Mock()
 
@@ -1871,8 +1873,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                'floating_network_id': _uuid(),
                'port_id': _uuid()}
 
-        ri = l3router.RouterInfo(router['id'], self.conf.root_helper,
-                                 router=router)
+        ri = dvr_router.DvrRouter(router['id'], self.conf.root_helper,
+                                  router=router)
 
         rtr_2_fip_name = agent.get_rtr_int_device_name(ri.router_id)
         fip_2_rtr_name = agent.get_fip_int_device_name(ri.router_id)
@@ -1893,8 +1895,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data()
 
-        ri = l3router.RouterInfo(router['id'], self.conf.root_helper,
-                                 router=router)
+        ri = dvr_router.DvrRouter(router['id'], self.conf.root_helper,
+                                  router=router)
         self.device_exists.return_value = True
         with mock.patch.object(lla.LinkLocalAllocator, '_write'):
             agent.create_rtr_2_fip_link(ri, {})
@@ -1903,8 +1905,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def test_floating_ip_added_dist(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data()
-        ri = l3router.RouterInfo(router['id'], self.conf.root_helper,
-                                 router=router)
+        ri = dvr_router.DvrRouter(router['id'], self.conf.root_helper,
+                                  router=router)
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                         'subnet_id': _uuid()}],
                          'subnet': {'gateway_ip': '20.0.0.1'},
@@ -1942,8 +1944,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                          'ip_cidr': '20.0.0.30/24'}
         fip_cidr = '11.22.33.44/24'
 
-        ri = l3router.RouterInfo(router['id'], self.conf.root_helper,
-                                 router=router)
+        ri = dvr_router.DvrRouter(router['id'], self.conf.root_helper,
+                                  router=router)
         ri.dist_fip_count = 2
         agent.fip_ns_subscribers.add(ri.router_id)
         ri.floating_ips_dict['11.22.33.44'] = FIP_PRI
@@ -2060,7 +2062,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         router['distributed'] = True
         router['gw_port_host'] = HOSTNAME
 
-        ri = l3router.RouterInfo(router['id'], self.conf.root_helper, router)
+        ri = dvr_router.DvrRouter(router['id'], self.conf.root_helper, router)
         vm_floating_ip = '19.4.4.2'
         ri.floating_ips_dict[vm_floating_ip] = FIP_PRI
         ri.dist_fip_count = 1
