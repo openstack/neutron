@@ -155,7 +155,7 @@ class HashHandler(object):
                     # for new lock ID to be removed
                     LOG.debug(
                         "Failed to acquire lock. Restarting lock wait. "
-                        "Previous hash: %(prev)s. Attempted update: %(new)s" %
+                        "Previous hash: %(prev)s. Attempted update: %(new)s",
                         {'prev': res.hash, 'new': new})
                     time.sleep(0.25)
                     continue
@@ -163,7 +163,7 @@ class HashHandler(object):
                 return res.hash
 
             LOG.debug("This request's lock ID is %(this)s. "
-                      "DB lock held by %(that)s" %
+                      "DB lock held by %(that)s",
                       {'this': self.random_lock_id,
                        'that': current_lock_owner})
 
@@ -197,7 +197,7 @@ class HashHandler(object):
                              "the DB first."))
 
     def clear_lock(self):
-        LOG.debug("Clearing hash record lock of id %s" % self.random_lock_id)
+        LOG.debug("Clearing hash record lock of id %s", self.random_lock_id)
         with self.session.begin(subtransactions=True):
             res = (self.session.query(ConsistencyHash).
                    filter_by(hash_id=self.hash_id).first())
