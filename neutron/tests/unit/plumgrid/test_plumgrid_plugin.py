@@ -19,6 +19,7 @@ Test cases for  Neutron PLUMgrid Plug-in
 import mock
 from oslo.utils import importutils
 
+from neutron import context
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
@@ -90,6 +91,43 @@ class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
         if self._testMethodName in self._unsupported:
             self.skipTest("Plugin does not support Neutron allocation process")
         super(TestPlumgridPluginSubnetsV2, self).setUp()
+
+    def test_subnet_admin_delete(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        tenant_context = context.Context('', 'not_admin')
+
+        network1 = self._fake_network('network1')
+        network1_ret = plugin.create_network(tenant_context, network1)
+
+        subnet1 = self._fake_subnet(network1_ret['id'])
+        plugin.create_subnet(tenant_context, subnet1)
+        net_db = plugin.get_network(admin_context, network1_ret['id'])
+
+        self.assertEqual(network1_ret['tenant_id'], net_db["tenant_id"])
+
+    def _fake_network(self, name):
+        data = {'network': {'name': name,
+                            'admin_state_up': False,
+                            'shared': False,
+                            'router:external': [],
+                            'provider:network_type': None,
+                            'provider:segmentation_id': None,
+                            'provider:physical_network': None}}
+        return data
+
+    def _fake_subnet(self, net_id):
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.254'}]
+        return {'subnet': {'name': net_id,
+                           'network_id': net_id,
+                           'gateway_ip': '10.0.0.1',
+                           'dns_nameservers': ['10.0.0.2'],
+                           'host_routes': [],
+                           'cidr': '10.0.0.0/24',
+                           'allocation_pools': allocation_pools,
+                           'enable_dhcp': True,
+                           'ip_version': 4}}
 
 
 class TestPlumgridPluginPortBinding(PLUMgridPluginV2TestCase,
