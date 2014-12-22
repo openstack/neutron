@@ -15,12 +15,14 @@
 import mock
 from oslo.config import cfg
 
+from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
+from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron import manager
 from neutron.openstack.common import uuidutils
@@ -417,6 +419,48 @@ class L3HATestCase(L3HATestFramework):
         num_ha_candidates = self.plugin.get_number_of_agents_for_scheduling(
             self.admin_ctx)
         self.assertEqual(2, num_ha_candidates)
+
+
+class L3HAModeDbTestCase(L3HATestFramework):
+
+    def _create_network(self, plugin, ctx, name='net',
+                        tenant_id='tenant1'):
+        network = {'network': {'name': name,
+                               'shared': False,
+                               'admin_state_up': True,
+                               'tenant_id': tenant_id}}
+        return plugin.create_network(ctx, network)['id']
+
+    def _create_subnet(self, plugin, ctx, network_id, cidr='10.0.0.0/8',
+                       name='subnet', tenant_id='tenant1'):
+        subnet = {'subnet': {'name': name,
+                  'ip_version': 4,
+                  'network_id': network_id,
+                  'cidr': cidr,
+                  'gateway_ip': attributes.ATTR_NOT_SPECIFIED,
+                  'allocation_pools': attributes.ATTR_NOT_SPECIFIED,
+                  'dns_nameservers': attributes.ATTR_NOT_SPECIFIED,
+                  'host_routes': attributes.ATTR_NOT_SPECIFIED,
+                  'tenant_id': tenant_id,
+                  'enable_dhcp': True,
+                  'ipv6_ra_mode': attributes.ATTR_NOT_SPECIFIED}}
+        created_subnet = plugin.create_subnet(ctx, subnet)
+        return created_subnet
+
+    def test_remove_ha_in_use(self):
+        router = self._create_router(ctx=self.admin_ctx)
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+        self.assertRaises(l3.RouterInUse, self.plugin.delete_router,
+                          self.admin_ctx, router['id'])
+        bindings = self.plugin.get_ha_router_port_bindings(
+            self.admin_ctx, [router['id']])
+        self.assertEqual(2, len(bindings))
 
 
 class L3HAUserTestCase(L3HATestFramework):

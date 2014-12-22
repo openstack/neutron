@@ -417,6 +417,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
 
     def delete_router(self, context, id):
         router_db = self._get_router(context, id)
+        super(L3_HA_NAT_db_mixin, self).delete_router(context, id)
+
         if router_db.extra_attributes.ha:
             ha_network = self.get_ha_network(context,
                                              router_db.tenant_id)
@@ -424,8 +426,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
                 self._delete_ha_interfaces(context, router_db.id)
-
-        return super(L3_HA_NAT_db_mixin, self).delete_router(context, id)
 
     def get_ha_router_port_bindings(self, context, router_ids, host=None):
         query = context.session.query(L3HARouterAgentPortBinding)
