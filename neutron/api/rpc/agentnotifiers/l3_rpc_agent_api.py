@@ -39,7 +39,7 @@ class L3AgentNotifyAPI(object):
 
     def _notification_host(self, context, method, payload, host):
         """Notify the agent that is hosting the router."""
-        LOG.debug('Nofity agent at %(host)s the message '
+        LOG.debug('Notify agent at %(host)s the message '
                   '%(method)s', {'host': host,
                                  'method': method})
         cctxt = self.client.prepare(server=host)
