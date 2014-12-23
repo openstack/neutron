@@ -114,10 +114,17 @@ class L3HATestCase(L3HATestFramework):
             l3_ext_ha_mode.HANetworkCIDRNotValid,
             self.plugin._verify_configuration)
 
-    def test_verify_conifguration_min_l3_agents_per_router_below_minimum(self):
+    def test_verify_configuration_min_l3_agents_per_router_below_minimum(self):
         cfg.CONF.set_override('min_l3_agents_per_router', 0)
         self.assertRaises(
             l3_ext_ha_mode.HAMinimumAgentsNumberNotValid,
+            self.plugin._verify_configuration)
+
+    def test_verify_configuration_max_l3_agents_below_min_l3_agents(self):
+        cfg.CONF.set_override('max_l3_agents_per_router', 3)
+        cfg.CONF.set_override('min_l3_agents_per_router', 4)
+        self.assertRaises(
+            l3_ext_ha_mode.HAMaximumAgentsNumberNotValid,
             self.plugin._verify_configuration)
 
     def test_ha_router_create(self):
