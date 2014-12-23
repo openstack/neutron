@@ -139,21 +139,52 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
             return
 
         for rule in rules:
-            remote_ip = rule['remote_ip_prefix']
+            self._add_rule_to_chain(ext_dev, rule, im,
+                                    label_chain, rules_chain)
 
-            if rule['direction'] == 'egress':
-                dir_opt = '-o %s -s %s' % (ext_dev, remote_ip)
-            else:
-                dir_opt = '-i %s -d %s' % (ext_dev, remote_ip)
+    def _process_metering_label_rule_add(self, rm, rule, ext_dev,
+                                         label_chain, rules_chain):
+        im = rm.iptables_manager
+        self._add_rule_to_chain(ext_dev, rule, im, label_chain, rules_chain)
 
-            if rule['excluded']:
-                ipt_rule = '%s -j RETURN' % dir_opt
-                im.ipv4['filter'].add_rule(rules_chain, ipt_rule,
-                                           wrap=False, top=True)
-            else:
-                ipt_rule = '%s -j %s' % (dir_opt, label_chain)
-                im.ipv4['filter'].add_rule(rules_chain, ipt_rule,
-                                           wrap=False, top=False)
+    def _process_metering_label_rule_delete(self, rm, rule, ext_dev,
+                                            label_chain, rules_chain):
+        im = rm.iptables_manager
+        self._remove_rule_from_chain(ext_dev, rule, im,
+                                     label_chain, rules_chain)
+
+    def _add_rule_to_chain(self, ext_dev, rule, im,
+                           label_chain, rules_chain):
+        ipt_rule = self._prepare_rule(ext_dev, rule, label_chain)
+        if rule['excluded']:
+            im.ipv4['filter'].add_rule(rules_chain, ipt_rule,
+                                       wrap=False, top=True)
+        else:
+            im.ipv4['filter'].add_rule(rules_chain, ipt_rule,
+                                       wrap=False, top=False)
+
+    def _remove_rule_from_chain(self, ext_dev, rule, im,
+                                label_chain, rules_chain):
+        ipt_rule = self._prepare_rule(ext_dev, rule, label_chain)
+        if rule['excluded']:
+            im.ipv4['filter'].remove_rule(rules_chain, ipt_rule,
+                                          wrap=False, top=True)
+        else:
+            im.ipv4['filter'].remove_rule(rules_chain, ipt_rule,
+                                          wrap=False, top=False)
+
+    def _prepare_rule(self, ext_dev, rule, label_chain):
+        remote_ip = rule['remote_ip_prefix']
+        if rule['direction'] == 'egress':
+            dir_opt = '-o %s -s %s' % (ext_dev, remote_ip)
+        else:
+            dir_opt = '-i %s -d %s' % (ext_dev, remote_ip)
+
+        if rule['excluded']:
+            ipt_rule = '%s -j RETURN' % dir_opt
+        else:
+            ipt_rule = '%s -j %s' % (dir_opt, label_chain)
+        return ipt_rule
 
     def _process_associate_metering_label(self, router):
         self._update_router(router)
@@ -223,9 +254,56 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
             self._process_associate_metering_label(router)
 
     @log.log
+    def add_metering_label_rule(self, context, routers):
+        for router in routers:
+            self._add_metering_label_rule(router)
+
+    @log.log
+    def remove_metering_label_rule(self, context, routers):
+        for router in routers:
+            self._remove_metering_label_rule(router)
+
+    @log.log
     def update_metering_label_rules(self, context, routers):
         for router in routers:
             self._update_metering_label_rules(router)
+
+    def _add_metering_label_rule(self, router):
+        self._process_metering_rule_action(router, 'create')
+
+    def _remove_metering_label_rule(self, router):
+        self._process_metering_rule_action(router, 'delete')
+
+    def _process_metering_rule_action(self, router, action):
+        rm = self.routers.get(router['id'])
+        if not rm:
+            return
+        ext_dev = self.get_external_device_name(rm.router['gw_port_id'])
+        if not ext_dev:
+            return
+        with IptablesManagerTransaction(rm.iptables_manager):
+            labels = router.get(constants.METERING_LABEL_KEY, [])
+            for label in labels:
+                label_id = label['id']
+                label_chain = iptables_manager.get_chain_name(WRAP_NAME +
+                                                              LABEL + label_id,
+                                                              wrap=False)
+
+                rules_chain = iptables_manager.get_chain_name(WRAP_NAME +
+                                                              RULE + label_id,
+                                                              wrap=False)
+                rule = label.get('rule')
+                if rule:
+                    if action == 'create':
+                        self._process_metering_label_rule_add(rm, rule,
+                                                              ext_dev,
+                                                              label_chain,
+                                                              rules_chain)
+                    elif action == 'delete':
+                        self._process_metering_label_rule_delete(rm, rule,
+                                                                 ext_dev,
+                                                                 label_chain,
+                                                                 rules_chain)
 
     def _update_metering_label_rules(self, router):
         rm = self.routers.get(router['id'])

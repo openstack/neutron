@@ -107,6 +107,18 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
         self.update_patch = mock.patch(update)
         self.mock_update = self.update_patch.start()
 
+        add_rule = ('neutron.api.rpc.agentnotifiers.' +
+                    'metering_rpc_agent_api.MeteringAgentNotifyAPI' +
+                    '.add_metering_label_rule')
+        self.add_rule_patch = mock.patch(add_rule)
+        self.mock_add_rule = self.add_rule_patch.start()
+
+        remove_rule = ('neutron.api.rpc.agentnotifiers.' +
+                       'metering_rpc_agent_api.MeteringAgentNotifyAPI' +
+                       '.remove_metering_label_rule')
+        self.remove_rule_patch = mock.patch(remove_rule)
+        self.mock_remove_rule = self.remove_rule_patch.start()
+
     def test_add_metering_label_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
         expected = [{'status': 'ACTIVE',
@@ -207,7 +219,7 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                                  label['metering_label']['id'])
                 self.mock_remove.assert_called_with(self.ctx, expected_remove)
 
-    def test_update_metering_label_rules_rpc_call(self):
+    def test_add_and_remove_metering_label_rule_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
         expected_add = [{'status': 'ACTIVE',
                          'name': 'router1',
@@ -215,17 +227,12 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                          'admin_state_up': True,
                          'tenant_id': self.tenant_id,
                          '_metering_labels': [
-                             {'rules': [
-                                 {'remote_ip_prefix': '10.0.0.0/24',
-                                  'direction': 'ingress',
-                                  'metering_label_id': self.uuid,
-                                  'excluded': False,
-                                  'id': self.uuid},
-                                 {'remote_ip_prefix': '10.0.0.0/24',
-                                  'direction': 'egress',
-                                  'metering_label_id': self.uuid,
-                                  'excluded': False,
-                                  'id': second_uuid}],
+                             {'rule': {
+                                 'remote_ip_prefix': '10.0.0.0/24',
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
                              'id': self.uuid}],
                          'id': self.uuid}]
 
@@ -235,12 +242,12 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                          'admin_state_up': True,
                          'tenant_id': self.tenant_id,
                          '_metering_labels': [
-                             {'rules': [
-                                 {'remote_ip_prefix': '10.0.0.0/24',
+                             {'rule': {
+                                  'remote_ip_prefix': '10.0.0.0/24',
                                   'direction': 'ingress',
                                   'metering_label_id': self.uuid,
                                   'excluded': False,
-                                  'id': self.uuid}],
+                                   'id': second_uuid},
                              'id': self.uuid}],
                          'id': self.uuid}]
 
@@ -248,16 +255,13 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
             with self.metering_label(tenant_id=self.tenant_id,
                                      set_context=True) as label:
                 l = label['metering_label']
+                self.mock_uuid.return_value = second_uuid
                 with self.metering_label_rule(l['id']):
-                    self.mock_uuid.return_value = second_uuid
-                    with self.metering_label_rule(l['id'],
-                                                  direction='egress') as rule:
-                        self.mock_update.assert_called_with(self.ctx,
-                                                            expected_add)
-                        self._delete('metering-label-rules',
-                                     rule['metering_label_rule']['id'])
-                    self.mock_update.assert_called_with(self.ctx,
-                                                        expected_del)
+                    self.mock_add_rule.assert_called_with(self.ctx,
+                                                          expected_add)
+                    self._delete('metering-label-rules', second_uuid)
+                self.mock_remove_rule.assert_called_with(self.ctx,
+                                                         expected_del)
 
     def test_delete_metering_label_does_not_clear_router_tenant_id(self):
         tenant_id = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'

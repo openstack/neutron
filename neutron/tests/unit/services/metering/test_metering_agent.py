@@ -35,6 +35,15 @@ ROUTERS = [{'status': 'ACTIVE',
                                   'id': LABEL_ID}],
             'id': _uuid()}]
 
+ROUTERS_WITH_RULE = [{'status': 'ACTIVE',
+                      'name': 'router1',
+                      'gw_port_id': None,
+                      'admin_state_up': True,
+                      'tenant_id': TENANT_ID,
+                      '_metering_labels': [{'rule': {},
+                                            'id': LABEL_ID}],
+                      'id': _uuid()}]
+
 
 class TestMeteringOperations(base.BaseTestCase,
                              testlib_plugin.NotificationSetupHelper):
@@ -77,6 +86,14 @@ class TestMeteringOperations(base.BaseTestCase,
     def test_update_metering_label_rule(self):
         self.agent.update_metering_label_rules(None, ROUTERS)
         self.assertEqual(self.driver.update_metering_label_rules.call_count, 1)
+
+    def test_add_metering_label_rule(self):
+        self.agent.add_metering_label_rule(None, ROUTERS_WITH_RULE)
+        self.assertEqual(self.driver.add_metering_label_rule.call_count, 1)
+
+    def test_remove_metering_label_rule(self):
+        self.agent.remove_metering_label_rule(None, ROUTERS_WITH_RULE)
+        self.assertEqual(self.driver.remove_metering_label_rule.call_count, 1)
 
     def test_routers_updated(self):
         self.agent.routers_updated(None, ROUTERS)

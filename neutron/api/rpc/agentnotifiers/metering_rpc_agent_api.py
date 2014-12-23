@@ -90,6 +90,12 @@ class MeteringAgentNotifyAPI(object):
     def update_metering_label_rules(self, context, routers):
         self._notification(context, 'update_metering_label_rules', routers)
 
+    def add_metering_label_rule(self, context, routers):
+        self._notification(context, 'add_metering_label_rule', routers)
+
+    def remove_metering_label_rule(self, context, routers):
+        self._notification(context, 'remove_metering_label_rule', routers)
+
     def add_metering_label(self, context, routers):
         self._notification(context, 'add_metering_label', routers)
 

@@ -186,8 +186,9 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                 rule = self._get_by_id(context, MeteringLabelRule, rule_id)
             except orm.exc.NoResultFound:
                 raise metering.MeteringLabelRuleNotFound(rule_id=rule_id)
-
             context.session.delete(rule)
+
+        return self._make_metering_label_rule_dict(rule)
 
     def _get_metering_rules_dict(self, metering_label):
         rules = []
@@ -232,6 +233,25 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                 router_dict[constants.METERING_LABEL_KEY].append(data)
 
                 routers_dict[router['id']] = router_dict
+
+        return routers_dict.values()
+
+    def get_sync_data_for_rule(self, context, rule):
+        label = context.session.query(MeteringLabel).get(
+            rule['metering_label_id'])
+
+        if label.shared:
+            routers = self._get_collection_query(context, l3_db.Router)
+        else:
+            routers = label.routers
+
+        routers_dict = {}
+        for router in routers:
+            router_dict = routers_dict.get(router['id'],
+                                           self._make_router_dict(router))
+            data = {'id': label['id'], 'rule': rule}
+            router_dict[constants.METERING_LABEL_KEY].append(data)
+            routers_dict[router['id']] = router_dict
 
         return routers_dict.values()
 
