@@ -564,6 +564,31 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return [self._fields(net, fields) for net in nets]
 
+    def _delete_ports(self, context, ports):
+        for port in ports:
+            try:
+                self.delete_port(context, port.id)
+            except exc.PortNotFound:
+                # concurrent port deletion can be performed by
+                # release_dhcp_port caused by concurrent subnet_delete
+                LOG.info(_LI("Port %s was deleted concurrently"), port.id)
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.exception(_LE("Exception auto-deleting port %s"),
+                                  port.id)
+
+    def _delete_subnets(self, context, subnets):
+        for subnet in subnets:
+            try:
+                self.delete_subnet(context, subnet.id)
+            except exc.SubnetNotFound:
+                LOG.info(_LI("Subnet %s was deleted concurrently"),
+                         subnet.id)
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.exception(_LE("Exception auto-deleting subnet %s"),
+                                  subnet.id)
+
     def delete_network(self, context, id):
         # REVISIT(rkukura) The super(Ml2Plugin, self).delete_network()
         # function is not used because it auto-deletes ports and
@@ -634,22 +659,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         LOG.warning(_LW("A concurrent port creation has "
                                         "occurred"))
                         continue
-
-            for port in ports:
-                try:
-                    self.delete_port(context, port.id)
-                except Exception:
-                    with excutils.save_and_reraise_exception():
-                        LOG.exception(_LE("Exception auto-deleting port %s"),
-                                      port.id)
-
-            for subnet in subnets:
-                try:
-                    self.delete_subnet(context, subnet.id)
-                except Exception:
-                    with excutils.save_and_reraise_exception():
-                        LOG.exception(_LE("Exception auto-deleting subnet %s"),
-                                      subnet.id)
+            self._delete_ports(context, ports)
+            self._delete_subnets(context, subnets)
 
         try:
             self.mechanism_manager.delete_network_postcommit(mech_context)
