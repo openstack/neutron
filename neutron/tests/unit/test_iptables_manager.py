@@ -84,6 +84,15 @@ COMMENTED_NAT_DUMP = (
     '# Completed by iptables_manager\n' % IPTABLES_ARG)
 
 
+class IptablesTestCase(base.BaseTestCase):
+
+    def test_get_binary_name_in_unittest(self):
+        # Corresponds to sys.argv content when running python -m unittest class
+        with mock.patch('sys.argv', ['python -m unittest', 'class']):
+            binary_name = iptables_manager.get_binary_name()
+            self.assertEqual('python_-m_unitte', binary_name)
+
+
 class IptablesCommentsTestCase(base.BaseTestCase):
 
     def setUp(self):
