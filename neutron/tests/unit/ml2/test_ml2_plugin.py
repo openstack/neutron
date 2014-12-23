@@ -117,7 +117,17 @@ class TestMl2V2HTTPResponse(test_plugin.TestV2HTTPResponse,
 
 class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                         Ml2PluginV2TestCase):
-    pass
+    def test_port_delete_helper_tolerates_failure(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.object(plugin, "delete_port",
+                               side_effect=exc.PortNotFound(port_id="123")):
+            plugin._delete_ports(None, [mock.MagicMock()])
+
+    def test_subnet_delete_helper_tolerates_failure(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.object(plugin, "delete_subnet",
+                               side_effect=exc.SubnetNotFound(subnet_id="1")):
+            plugin._delete_subnets(None, [mock.MagicMock()])
 
 
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
