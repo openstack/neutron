@@ -24,7 +24,6 @@ disable=
  no-member,
  no-method-argument,
  no-self-argument,
- not-callable,
  no-value-for-parameter,
  super-on-old-class,
  too-few-format-args,
