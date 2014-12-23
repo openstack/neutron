@@ -53,8 +53,6 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         self.assertTrue(int(self.br.get_port_ofport(port_name)))
         self.assertTrue(self.br.port_exists(port_name))
         self.assertEqual(self.br.br_name,
-                         self.br.get_bridge_name_for_port_name(port_name))
-        self.assertEqual(self.br.br_name,
                          self.br.get_bridge_for_iface(port_name))
         self.br.delete_port(port_name)
         self.assertFalse(self.br.port_exists(port_name))
@@ -68,22 +66,17 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         self.br.replace_port(port_name, ('type', 'internal'),
                                         ('external_ids:test', 'test'))
         self.assertTrue(self.br.port_exists(port_name))
-        self.assertEqual('test', self.br._db_get_map('Interface', port_name,
-                                                     'external_ids')['test'])
+        self.assertEqual('test', self.br.db_get_val('Interface', port_name,
+                                                    'external_ids')['test'])
 
     def test_attribute_lifecycle(self):
         (port_name, ofport) = self.create_ovs_port()
-        # TODO(twilson) The existing set/get/clear functions are horribly
-        # limited by not understanding what types should actually be returned
-        # In the OVSDB Abstract Interface, they should understand/deal with
-        # real python types
-        tag = '42'
+        tag = 42
         self.ovs.set_db_attribute('Port', port_name, 'tag', tag)
         self.assertEqual(tag, self.ovs.db_get_val('Port', port_name, 'tag'))
-        self.assertEqual(int(tag), self.br.get_port_tag_dict()[port_name])
+        self.assertEqual(tag, self.br.get_port_tag_dict()[port_name])
         self.ovs.clear_db_attribute('Port', port_name, 'tag')
-        # ick, ick, ick
-        self.assertEqual(self.ovs.db_get_val('Port', port_name, 'tag'), '[]')
+        self.assertEqual(self.ovs.db_get_val('Port', port_name, 'tag'), [])
         self.assertEqual(self.br.get_port_tag_dict()[port_name], [])
 
     def test_get_bridge_external_bridge_id(self):
@@ -98,10 +91,7 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         self.br.set_controller(controllers)
         self.assertSetEqual(controllers, set(self.br.get_controller()))
         self.br.del_controller()
-        # TODO(twilson) I would prefer this test against [], but currently
-        # get_controller returns '' when there are no controllers. This will
-        # change with the OVSDB Abstract Interface work.
-        self.assertEqual(0, len(self.br.get_controller()))
+        self.assertEqual([], self.br.get_controller())
 
     def test_set_fail_mode(self):
         self.br.set_secure_mode()
@@ -110,13 +100,10 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
             'secure')
 
     def test_set_protocols(self):
-        # TODO(twilson) set_protocols is technically broken as it should
-        # allow one to set an array of allowed protocols
         self.br.set_protocols('OpenFlow10')
-        # and again, ick, this has to change
         self.assertEqual(
             self.br.db_get_val('Bridge', self.br.br_name, 'protocols'),
-            '["OpenFlow10"]')
+            "OpenFlow10")
 
     def test_get_datapath_id(self):
         brdev = self.ip.device(self.br.br_name)
@@ -135,7 +122,7 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
                                 attrs['local_ip'])
         self.assertEqual(self.ovs.db_get_val('Interface', port_name, 'type'),
                          'gre')
-        options = self.ovs._db_get_map('Interface', port_name, 'options')
+        options = self.ovs.db_get_val('Interface', port_name, 'options')
         for attr, val in attrs.items():
             self.assertEqual(val, options[attr])
 
@@ -145,7 +132,7 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         self.br.add_patch_port(local, peer)
         self.assertEqual(self.ovs.db_get_val('Interface', local, 'type'),
                          'patch')
-        options = self.ovs._db_get_map('Interface', local, 'options')
+        options = self.ovs.db_get_val('Interface', local, 'options')
         self.assertEqual(peer, options['peer'])
 
     def test_get_port_name_list(self):

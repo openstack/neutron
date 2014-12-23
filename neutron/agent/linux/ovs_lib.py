@@ -13,18 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import itertools
-import numbers
 import operator
 
 from oslo.config import cfg
-from oslo.serialization import jsonutils
 from oslo.utils import excutils
 import retrying
 import six
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.agent import ovsdb
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
@@ -34,7 +34,8 @@ from neutron.plugins.common import constants
 DEFAULT_OVS_VSCTL_TIMEOUT = 10
 
 # Special return value for an invalid OVS ofport
-INVALID_OFPORT = '-1'
+INVALID_OFPORT = -1
+UNASSIGNED_OFPORT = []
 
 OPTS = [
     cfg.IntOpt('ovs_vsctl_timeout',
@@ -95,90 +96,42 @@ class BaseOVS(object):
     def __init__(self, root_helper):
         self.root_helper = root_helper
         self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
-
-    def run_vsctl(self, args, check_error=False):
-        full_args = ["ovs-vsctl", "--timeout=%d" % self.vsctl_timeout] + args
-        try:
-            return utils.execute(full_args, root_helper=self.root_helper)
-        except Exception as e:
-            with excutils.save_and_reraise_exception() as ctxt:
-                LOG.error(_LE("Unable to execute %(cmd)s. "
-                              "Exception: %(exception)s"),
-                          {'cmd': full_args, 'exception': e})
-                if not check_error:
-                    ctxt.reraise = False
+        self.ovsdb = ovsdb.API.get(self)
 
     def add_bridge(self, bridge_name):
-        self.run_vsctl(["--", "--may-exist", "add-br", bridge_name])
+        self.ovsdb.add_br(bridge_name).execute()
         return OVSBridge(bridge_name, self.root_helper)
 
     def delete_bridge(self, bridge_name):
-        self.run_vsctl(["--", "--if-exists", "del-br", bridge_name])
+        self.ovsdb.del_br(bridge_name).execute()
 
     def bridge_exists(self, bridge_name):
-        try:
-            self.run_vsctl(['br-exists', bridge_name], check_error=True)
-        except RuntimeError as e:
-            with excutils.save_and_reraise_exception() as ctxt:
-                if 'Exit code: 2\n' in str(e):
-                    ctxt.reraise = False
-                    return False
-        return True
-
-    def get_bridge_name_for_port_name(self, port_name):
-        try:
-            return self.run_vsctl(
-                ['port-to-br', port_name], check_error=True).strip()
-        except RuntimeError as e:
-            with excutils.save_and_reraise_exception() as ctxt:
-                if 'Exit code: 1\n' in str(e):
-                    ctxt.reraise = False
+        return self.ovsdb.br_exists(bridge_name).execute()
 
     def port_exists(self, port_name):
-        return bool(self.get_bridge_name_for_port_name(port_name))
+        cmd = self.ovsdb.db_get('Port', port_name, 'name')
+        return bool(cmd.execute(check_error=False, log_errors=False))
 
     def get_bridge_for_iface(self, iface):
-        res = self.run_vsctl(['iface-to-br', iface])
-        if res:
-            return res.strip()
+        return self.ovsdb.iface_to_br(iface).execute()
 
     def get_bridges(self):
-        res = self.run_vsctl(['list-br'], check_error=True)
-        return res.strip().split('\n') if res else []
+        return self.ovsdb.list_br().execute(check_error=True)
 
     def get_bridge_external_bridge_id(self, bridge):
-        res = self.run_vsctl(['br-get-external-id', bridge, 'bridge-id'])
-        if res:
-            return res.strip()
+        return self.ovsdb.br_get_external_id(bridge, 'bridge-id').execute()
 
-    def set_db_attribute(self, table_name, record, column, value):
-        args = ["set", table_name, record, "%s=%s" % (column, value)]
-        self.run_vsctl(args)
+    def set_db_attribute(self, table_name, record, column, value,
+                         check_error=False):
+        self.ovsdb.db_set(table_name, record, (column, value)).execute(
+            check_error=check_error)
 
     def clear_db_attribute(self, table_name, record, column):
-        args = ["clear", table_name, record, column]
-        self.run_vsctl(args)
-
-    def _db_get_map(self, table, record, column, check_error=False):
-        def db_str_to_map(full_str):
-            entries = full_str.strip("{}").split(", ")
-            ret = {}
-            for e in entries:
-                key, sep, value = e.partition('=')
-                if sep != "":
-                    ret[key] = value.strip('"')
-            return ret
-
-        output = self.db_get_val(table, record, column,
-                                 check_error=check_error)
-        if output:
-            return db_str_to_map(output)
-        return {}
+        self.ovsdb.db_clear(table_name, record, column).execute()
 
     def db_get_val(self, table, record, column, check_error=False):
-        output = self.run_vsctl(["get", table, record, column], check_error)
-        if output:
-            return output.rstrip("\n\r")
+        return self.ovsdb.db_get(table, record, column).execute(
+            check_error=check_error)
 
 
 class OVSBridge(BaseOVS):
@@ -186,64 +139,56 @@ class OVSBridge(BaseOVS):
         super(OVSBridge, self).__init__(root_helper)
         self.br_name = br_name
 
-    def set_controller(self, controller_names):
-        vsctl_command = ['--', 'set-controller', self.br_name]
-        vsctl_command.extend(controller_names)
-        self.run_vsctl(vsctl_command, check_error=True)
+    def set_controller(self, controllers):
+        self.ovsdb.set_controller(self.br_name,
+                                  controllers).execute(check_error=True)
 
     def del_controller(self):
-        self.run_vsctl(['--', 'del-controller', self.br_name],
-                       check_error=True)
+        self.ovsdb.del_controller(self.br_name).execute(check_error=True)
 
     def get_controller(self):
-        res = self.run_vsctl(['--', 'get-controller', self.br_name],
-                             check_error=True)
-        if res:
-            return res.strip().split('\n')
-        return res
+        return self.ovsdb.get_controller(self.br_name).execute(
+            check_error=True)
 
     def set_secure_mode(self):
-        self.run_vsctl(['--', 'set-fail-mode', self.br_name, 'secure'],
-                       check_error=True)
+        self.ovsdb.set_fail_mode(self.br_name, 'secure').execute(
+            check_error=True)
 
     def set_protocols(self, protocols):
-        self.run_vsctl(['--', 'set', 'bridge', self.br_name,
-                        "protocols=%s" % protocols],
-                       check_error=True)
+        self.set_db_attribute('bridge', self.br_name, 'protocols', protocols,
+                              check_error=True)
 
     def create(self):
-        self.add_bridge(self.br_name)
+        self.ovsdb.add_br(self.br_name).execute()
 
     def destroy(self):
         self.delete_bridge(self.br_name)
 
     def reset_bridge(self):
-        self.destroy()
-        self.create()
+        with self.ovsdb.transaction() as txn:
+            txn.add(self.ovsdb.del_br(self.br_name))
+            txn.add(self.ovsdb.add_br(self.br_name))
 
-    def add_port(self, port_name, *interface_options):
-        args = ["--", "--may-exist", "add-port", self.br_name, port_name]
-        if interface_options:
-            args += ['--', 'set', 'Interface', port_name]
-            args += ['%s=%s' % kv for kv in interface_options]
-        self.run_vsctl(args)
-        ofport = self.get_port_ofport(port_name)
-        if ofport == INVALID_OFPORT:
-            self.delete_port(port_name)
-        return ofport
+    def add_port(self, port_name, *interface_attr_tuples):
+        with self.ovsdb.transaction() as txn:
+            txn.add(self.ovsdb.add_port(self.br_name, port_name))
+            if interface_attr_tuples:
+                txn.add(self.ovsdb.db_set('Interface', port_name,
+                                          *interface_attr_tuples))
+        return self.get_port_ofport(port_name)
 
     def replace_port(self, port_name, *interface_attr_tuples):
         """Replace existing port or create it, and configure port interface."""
-        cmd = ['--', '--if-exists', 'del-port', port_name,
-               '--', 'add-port', self.br_name, port_name]
-        if interface_attr_tuples:
-            cmd += ['--', 'set', 'Interface', port_name]
-            cmd += ['%s=%s' % kv for kv in interface_attr_tuples]
-        self.run_vsctl(cmd)
+        with self.ovsdb.transaction() as txn:
+            txn.add(self.ovsdb.del_port(port_name))
+            txn.add(self.ovsdb.add_port(self.br_name, port_name,
+                                        may_exist=False))
+            if interface_attr_tuples:
+                txn.add(self.ovsdb.db_set('Interface', port_name,
+                                          *interface_attr_tuples))
 
     def delete_port(self, port_name):
-        self.run_vsctl(["--", "--if-exists", "del-port", self.br_name,
-                        port_name])
+        self.ovsdb.del_port(port_name, self.br_name).execute()
 
     def run_ofctl(self, cmd, args, process_input=None):
         full_args = ["ovs-ofctl", cmd, self.br_name] + args
@@ -279,7 +224,7 @@ class OVSBridge(BaseOVS):
 
     def get_datapath_id(self):
         return self.db_get_val('Bridge',
-                               self.br_name, 'datapath_id').strip('"')
+                               self.br_name, 'datapath_id')
 
     def do_action_flows(self, action, kwargs_list):
         flow_strs = [_build_flow_expr_str(kw, action) for kw in kwargs_list]
@@ -310,34 +255,34 @@ class OVSBridge(BaseOVS):
                         tunnel_type=constants.TYPE_GRE,
                         vxlan_udp_port=constants.VXLAN_UDP_PORT,
                         dont_fragment=True):
-        options = [('type', tunnel_type)]
-        if (tunnel_type == constants.TYPE_VXLAN and
-                vxlan_udp_port != constants.VXLAN_UDP_PORT):
-            # Only set the VXLAN UDP port if it's not the default
-            options.append(("options:dst_port", vxlan_udp_port))
-        options.extend([
-            ("options:df_default", str(bool(dont_fragment)).lower()),
-            ("options:remote_ip", remote_ip),
-            ("options:local_ip", local_ip),
-            ("options:in_key", "flow"),
-            ("options:out_key", "flow")])
-        return self.add_port(port_name, *options)
+        attrs = [('type', tunnel_type)]
+        # TODO(twilson) This is an OrderedDict solely to make a test happy
+        options = collections.OrderedDict()
+        vxlan_uses_custom_udp_port = (
+            tunnel_type == constants.TYPE_VXLAN and
+            vxlan_udp_port != constants.VXLAN_UDP_PORT
+        )
+        if vxlan_uses_custom_udp_port:
+            options['dst_port'] = vxlan_udp_port
+        options['df_default'] = str(dont_fragment).lower()
+        options['remote_ip'] = remote_ip
+        options['local_ip'] = local_ip
+        options['in_key'] = 'flow'
+        options['out_key'] = 'flow'
+        attrs.append(('options', options))
+
+        return self.add_port(port_name, *attrs)
 
     def add_patch_port(self, local_name, remote_name):
-        options = [
-            ('type', 'patch'),
-            ('options:peer', remote_name)
-        ]
-        return self.add_port(local_name, *options)
+        attrs = [('type', 'patch'),
+                 ('options', {'peer': remote_name})]
+        return self.add_port(local_name, *attrs)
 
     def get_port_name_list(self):
-        res = self.run_vsctl(["list-ports", self.br_name], check_error=True)
-        if res:
-            return res.strip().split("\n")
-        return []
+        return self.ovsdb.list_ports(self.br_name).execute(check_error=True)
 
     def get_port_stats(self, port_name):
-        return self._db_get_map("Interface", port_name, "statistics")
+        return self.db_get_val("Interface", port_name, "statistics")
 
     def get_xapi_iface_id(self, xs_vif_uuid):
         args = ["xe", "vif-param-get", "param-name=other-config",
@@ -355,8 +300,8 @@ class OVSBridge(BaseOVS):
         edge_ports = []
         port_names = self.get_port_name_list()
         for name in port_names:
-            external_ids = self._db_get_map("Interface", name, "external_ids",
-                                            check_error=True)
+            external_ids = self.db_get_val("Interface", name, "external_ids",
+                                           check_error=True)
             ofport = self.db_get_val("Interface", name, "ofport",
                                      check_error=True)
             if "iface-id" in external_ids and "attached-mac" in external_ids:
@@ -376,31 +321,25 @@ class OVSBridge(BaseOVS):
 
     def get_vif_port_set(self):
         edge_ports = set()
-        args = ['--format=json', '--', '--columns=external_ids,ofport',
-                '--if-exists', 'list', 'Interface']
-        args += self.get_port_name_list()
-        result = self.run_vsctl(args, check_error=True)
-        if not result:
-            return edge_ports
-        for row in jsonutils.loads(result)['data']:
-            external_ids = dict(row[0][1])
-            # Do not consider VIFs which aren't yet ready
-            # This can happen when ofport values are either [] or ["set", []]
-            # We will therefore consider only integer values for ofport
-            ofport = row[1]
-            if not isinstance(ofport, numbers.Integral):
-                LOG.warn(_LW("Found not yet ready openvswitch port: %s"), row)
-            elif ofport < 1:
-                LOG.warn(_LW("Found failed openvswitch port: %s"), row)
-            elif 'attached-mac' in external_ids:
-                if "iface-id" in external_ids:
+        port_names = self.get_port_name_list()
+        cmd = self.ovsdb.db_list(
+            'Interface', port_names,
+            columns=['name', 'external_ids', 'ofport'], if_exists=True)
+        results = cmd.execute(check_error=True)
+        for result in results:
+            if result['ofport'] == UNASSIGNED_OFPORT:
+                LOG.warn(_LW("Found not yet ready openvswitch port: %s"),
+                         result['name'])
+            elif result['ofport'] == INVALID_OFPORT:
+                LOG.warn(_LW("Found failed openvswitch port: %s"),
+                         result['name'])
+            elif 'attached-mac' in result['external_ids']:
+                external_ids = result['external_ids']
+                if 'iface-id' in external_ids:
                     edge_ports.add(external_ids['iface-id'])
-                elif "xs-vif-uuid" in external_ids:
-                    # if this is a xenserver and iface-id is not
-                    # automatically synced to OVS from XAPI, we grab it
-                    # from XAPI directly
+                elif 'xs-vif-uuid' in external_ids:
                     iface_id = self.get_xapi_iface_id(
-                        external_ids["xs-vif-uuid"])
+                        external_ids['xs-vif-uuid'])
                     edge_ports.add(iface_id)
         return edge_ports
 
@@ -419,61 +358,28 @@ class OVSBridge(BaseOVS):
         in the "Interface" table queried by the get_vif_port_set() method.
 
         """
-        args = ['--format=json', '--', '--columns=name,tag', '--if-exists',
-                'list', 'Port']
-        args += self.get_port_name_list()
-        result = self.run_vsctl(args, check_error=True)
-        port_tag_dict = {}
-        if not result:
-            return port_tag_dict
-        for name, tag in jsonutils.loads(result)['data']:
-            # 'tag' can be [u'set', []] or an integer
-            if isinstance(tag, list):
-                tag = tag[1]
-            port_tag_dict[name] = tag
-        return port_tag_dict
+        port_names = self.get_port_name_list()
+        cmd = self.ovsdb.db_list('Port', port_names, columns=['name', 'tag'])
+        results = cmd.execute(check_error=True)
+        return {p['name']: p['tag'] for p in results}
 
     def get_vif_port_by_id(self, port_id):
-        args = ['--format=json', '--', '--columns=external_ids,name,ofport',
-                'find', 'Interface',
-                'external_ids:iface-id="%s"' % port_id]
-        result = self.run_vsctl(args)
-        if not result:
-            return
-        json_result = jsonutils.loads(result)
-        try:
-            # Retrieve the indexes of the columns we're looking for
-            headings = json_result['headings']
-            ext_ids_idx = headings.index('external_ids')
-            name_idx = headings.index('name')
-            ofport_idx = headings.index('ofport')
-            # If data attribute is missing or empty the line below will raise
-            # an exeception which will be captured in this block.
-            # We won't deal with the possibility of ovs-vsctl return multiple
-            # rows since the interface identifier is unique
-            for data in json_result['data']:
-                port_name = data[name_idx]
-                switch = self.get_bridge_for_iface(port_name)
-                if switch != self.br_name:
-                    continue
-                ofport = data[ofport_idx]
-                # ofport must be integer otherwise return None
-                if not isinstance(ofport, int) or ofport == -1:
-                    LOG.warn(_LW("ofport: %(ofport)s for VIF: %(vif)s is not a"
-                                 " positive integer"), {'ofport': ofport,
-                                                        'vif': port_id})
-                    return
-                # Find VIF's mac address in external ids
-                ext_id_dict = dict((item[0], item[1]) for item in
-                                   data[ext_ids_idx][1])
-                vif_mac = ext_id_dict['attached-mac']
-                return VifPort(port_name, ofport, port_id, vif_mac, self)
-            LOG.info(_LI("Port %(port_id)s not present in bridge %(br_name)s"),
-                     {'port_id': port_id, 'br_name': self.br_name})
-        except Exception as error:
-            LOG.warn(_LW("Unable to parse interface details. Exception: %s"),
-                     error)
-            return
+        ports = self.ovsdb.db_find(
+            'Interface', ('external_ids', '=', {'iface-id': port_id}),
+            ('external_ids', '!=', {'attached-mac': ''}),
+            columns=['external_ids', 'name', 'ofport']).execute()
+        for port in ports:
+            if self.br_name != self.get_bridge_for_iface(port['name']):
+                continue
+            if port['ofport'] in [UNASSIGNED_OFPORT, INVALID_OFPORT]:
+                LOG.warn(_LW("ofport: %(ofport)s for VIF: %(vif)s is not a"
+                             " positive integer"),
+                         {'ofport': port['ofport'], 'vif': port_id})
+                continue
+            mac = port['external_ids'].get('attached-mac')
+            return VifPort(port['name'], port['ofport'], port_id, mac, self)
+        LOG.info(_LI("Port %(port_id)s not present in bridge %(br_name)s"),
+                 {'port_id': port_id, 'br_name': self.br_name})
 
     def delete_ports(self, all_ports=False):
         if all_ports:
