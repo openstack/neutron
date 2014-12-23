@@ -16,6 +16,7 @@ import itertools
 import os
 import stat
 
+import netaddr
 from oslo.config import cfg
 
 from neutron.agent.linux import external_process
@@ -28,8 +29,33 @@ VALID_STATES = ['MASTER', 'BACKUP']
 VALID_NOTIFY_STATES = ['master', 'backup', 'fault']
 VALID_AUTH_TYPES = ['AH', 'PASS']
 HA_DEFAULT_PRIORITY = 50
+PRIMARY_VIP_RANGE_SIZE = 24
+# TODO(amuller): Use L3 agent constant when new constants module is introduced.
+FIP_LL_SUBNET = '169.254.30.0/23'
+
 
 LOG = logging.getLogger(__name__)
+
+
+def get_free_range(parent_range, excluded_ranges, size=PRIMARY_VIP_RANGE_SIZE):
+    """Get a free IP range, from parent_range, of the specified size.
+
+    :param parent_range: String representing an IP range. E.g: '169.254.0.0/16'
+    :param excluded_ranges: A list of strings to be excluded from parent_range
+    :param size: What should be the size of the range returned?
+    :return: A string representing an IP range
+    """
+    free_cidrs = netaddr.IPSet([parent_range]) - netaddr.IPSet(excluded_ranges)
+    for cidr in free_cidrs.iter_cidrs():
+        if cidr.prefixlen <= size:
+            return '%s/%s' % (cidr.network, size)
+
+    raise ValueError(_('Network of size %(size)s, from IP range '
+                       '%(parent_range)s excluding IP ranges '
+                       '%(excluded_ranges)s was not found.') %
+                     {'size': size,
+                      'parent_range': parent_range,
+                      'excluded_ranges': excluded_ranges})
 
 
 class InvalidInstanceStateException(exceptions.NeutronException):
@@ -106,7 +132,7 @@ class KeepalivedGroup(object):
 class KeepalivedInstance(object):
     """Instance section of a keepalived configuration."""
 
-    def __init__(self, state, interface, vrouter_id,
+    def __init__(self, state, interface, vrouter_id, ha_cidr,
                  priority=HA_DEFAULT_PRIORITY, advert_int=None,
                  mcast_src_ip=None, nopreempt=False):
         self.name = 'VR_%s' % vrouter_id
@@ -125,6 +151,13 @@ class KeepalivedInstance(object):
         self.vips = []
         self.virtual_routes = []
         self.authentication = tuple()
+        metadata_cidr = '169.254.169.254/32'
+        self.primary_vip_range = get_free_range(
+            parent_range='169.254.0.0/16',
+            excluded_ranges=[metadata_cidr,
+                             FIP_LL_SUBNET,
+                             ha_cidr],
+            size=PRIMARY_VIP_RANGE_SIZE)
 
     def set_authentication(self, auth_type, password):
         if auth_type not in VALID_AUTH_TYPES:
@@ -152,18 +185,46 @@ class KeepalivedInstance(object):
             ('        %s' % i for i in self.track_interfaces),
             ['    }'])
 
-    def _build_vips_config(self):
-        vips_sorted = sorted(self.vips, key=lambda vip: vip.ip_address)
-        first_address = vips_sorted.pop(0)
+    def _generate_primary_vip(self):
+        """Return an address in the primary_vip_range CIDR, with the router's
+        VRID in the host section.
 
+        For example, if primary_vip_range is 169.254.0.0/24, and this router's
+        VRID is 5, the result is 169.254.0.5. Using the VRID assures that
+        the primary VIP is consistent amongst HA router instances on different
+        nodes.
+        """
+
+        ip = (netaddr.IPNetwork(self.primary_vip_range).network +
+              self.vrouter_id)
+        return netaddr.IPNetwork('%s/%s' % (ip, PRIMARY_VIP_RANGE_SIZE))
+
+    def _build_vips_config(self):
+        # NOTE(amuller): The primary VIP must be consistent in order to avoid
+        # keepalived bugs. Changing the VIP in the 'virtual_ipaddress' and
+        # SIGHUP'ing keepalived can remove virtual routers, including the
+        # router's default gateway.
+        # We solve this by never changing the VIP in the virtual_ipaddress
+        # section, herein known as the primary VIP.
+        # The only interface known to exist for HA routers is the HA interface
+        # (self.interface). We generate an IP on that device and use it as the
+        # primary VIP. The other VIPs (Internal interfaces IPs, the external
+        # interface IP and floating IPs) are placed in the
+        # virtual_ipaddress_excluded section.
+
+        primary = KeepalivedVipAddress(str(self._generate_primary_vip()),
+                                       self.interface)
         vips_result = ['    virtual_ipaddress {',
-                       '        %s' % first_address.build_config(),
+                       '        %s' % primary.build_config(),
                        '    }']
-        if vips_sorted:
+
+        if self.vips:
             vips_result.extend(
                 itertools.chain(['    virtual_ipaddress_excluded {'],
                                 ('        %s' % vip.build_config()
-                                 for vip in vips_sorted),
+                                 for vip in
+                                 sorted(self.vips,
+                                        key=lambda vip: vip.ip_address)),
                                 ['    }']))
 
         return vips_result
@@ -201,8 +262,7 @@ class KeepalivedInstance(object):
         if self.track_interfaces:
             config.extend(self._build_track_interface_config())
 
-        if self.vips:
-            config.extend(self._build_vips_config())
+        config.extend(self._build_vips_config())
 
         if self.virtual_routes:
             config.extend(self._build_virtual_routes_config())

@@ -12,11 +12,47 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import testtools
+
 from neutron.agent.linux import keepalived
 from neutron.tests import base
 
 # Keepalived user guide:
 # http://www.keepalived.org/pdf/UserGuide.pdf
+
+
+class KeepalivedGetFreeRangeTestCase(base.BaseTestCase):
+    def test_get_free_range(self):
+        free_range = keepalived.get_free_range(
+            parent_range='169.254.0.0/16',
+            excluded_ranges=['169.254.0.0/24',
+                             '169.254.1.0/24',
+                             '169.254.2.0/24'],
+            size=24)
+        self.assertEqual('169.254.3.0/24', free_range)
+
+    def test_get_free_range_without_excluded(self):
+        free_range = keepalived.get_free_range(
+            parent_range='169.254.0.0/16',
+            excluded_ranges=[],
+            size=20)
+        self.assertEqual('169.254.0.0/20', free_range)
+
+    def test_get_free_range_excluded_out_of_parent(self):
+        free_range = keepalived.get_free_range(
+            parent_range='169.254.0.0/16',
+            excluded_ranges=['255.255.255.0/24'],
+            size=24)
+        self.assertEqual('169.254.0.0/24', free_range)
+
+    def test_get_free_range_not_found(self):
+        tiny_parent_range = '192.168.1.0/24'
+        huge_size = 8
+        with testtools.ExpectedException(ValueError):
+            keepalived.get_free_range(
+                parent_range=tiny_parent_range,
+                excluded_ranges=[],
+                size=huge_size)
 
 
 class KeepalivedConfBaseMixin(object):
@@ -30,6 +66,7 @@ class KeepalivedConfBaseMixin(object):
         group1.set_notify('master', '/tmp/script.sh')
 
         instance1 = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
+                                                  '169.254.192.0/18',
                                                   advert_int=5)
         instance1.set_authentication('AH', 'pass123')
         instance1.track_interfaces.append("eth0")
@@ -59,6 +96,7 @@ class KeepalivedConfBaseMixin(object):
         group1.add_instance(instance1)
 
         instance2 = keepalived.KeepalivedInstance('MASTER', 'eth4', 2,
+                                                  '169.254.192.0/18',
                                                   mcast_src_ip='224.0.0.1')
         instance2.track_interfaces.append("eth4")
 
@@ -107,9 +145,10 @@ vrrp_instance VR_1 {
         eth0
     }
     virtual_ipaddress {
-        192.168.1.0/24 dev eth1
+        169.254.0.1/24 dev eth0
     }
     virtual_ipaddress_excluded {
+        192.168.1.0/24 dev eth1
         192.168.2.0/24 dev eth2
         192.168.3.0/24 dev eth2
         192.168.55.0/24 dev eth10
@@ -128,9 +167,10 @@ vrrp_instance VR_2 {
         eth4
     }
     virtual_ipaddress {
-        192.168.2.0/24 dev eth2
+        169.254.0.2/24 dev eth4
     }
     virtual_ipaddress_excluded {
+        192.168.2.0/24 dev eth2
         192.168.3.0/24 dev eth6
         192.168.55.0/24 dev eth10
     }
@@ -160,10 +200,11 @@ class KeepalivedStateExceptionTestCase(base.BaseTestCase):
         invalid_vrrp_state = 'into a club'
         self.assertRaises(keepalived.InvalidInstanceStateException,
                           keepalived.KeepalivedInstance,
-                          invalid_vrrp_state, 'eth0', 33)
+                          invalid_vrrp_state, 'eth0', 33, '169.254.192.0/18')
 
         invalid_auth_type = '[hip, hip]'
-        instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1)
+        instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
+                                                 '169.254.192.0/18')
         self.assertRaises(keepalived.InvalidAuthenticationTypeExecption,
                           instance.set_authentication,
                           invalid_auth_type, 'some_password')
@@ -171,6 +212,12 @@ class KeepalivedStateExceptionTestCase(base.BaseTestCase):
 
 class KeepalivedInstanceTestCase(base.BaseTestCase,
                                  KeepalivedConfBaseMixin):
+    def test_generate_primary_vip(self):
+        instance = keepalived.KeepalivedInstance('MASTER', 'ha0', 42,
+                                                 '169.254.192.0/18')
+        self.assertEqual('169.254.0.42/24',
+                         str(instance._generate_primary_vip()))
+
     def test_remove_adresses_by_interface(self):
         config = self._get_config()
         instance = config.get_instance(1)
@@ -202,6 +249,9 @@ vrrp_instance VR_1 {
         eth0
     }
     virtual_ipaddress {
+        169.254.0.1/24 dev eth0
+    }
+    virtual_ipaddress_excluded {
         192.168.1.0/24 dev eth1
     }
     virtual_routes {
@@ -218,15 +268,30 @@ vrrp_instance VR_2 {
         eth4
     }
     virtual_ipaddress {
-        192.168.2.0/24 dev eth2
+        169.254.0.2/24 dev eth4
     }
     virtual_ipaddress_excluded {
+        192.168.2.0/24 dev eth2
         192.168.3.0/24 dev eth6
         192.168.55.0/24 dev eth10
     }
 }"""
 
         self.assertEqual(expected, config.get_config_str())
+
+    def test_build_config_no_vips(self):
+        expected = """vrrp_instance VR_1 {
+    state MASTER
+    interface eth0
+    virtual_router_id 1
+    priority 50
+    virtual_ipaddress {
+        169.254.0.1/24 dev eth0
+    }
+}"""
+        instance = keepalived.KeepalivedInstance(
+            'MASTER', 'eth0', 1, '169.254.192.0/18')
+        self.assertEqual(expected, '\n'.join(instance.build_config()))
 
 
 class KeepalivedVirtualRouteTestCase(base.BaseTestCase):

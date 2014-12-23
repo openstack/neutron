@@ -144,9 +144,10 @@ vrrp_instance VR_1 {
         %(ha_device_name)s
     }
     virtual_ipaddress {
-        %(floating_ip_cidr)s dev %(external_device_name)s
+        169.254.0.1/24 dev %(ha_device_name)s
     }
     virtual_ipaddress_excluded {
+        %(floating_ip_cidr)s dev %(external_device_name)s
         %(external_device_cidr)s dev %(external_device_name)s
         %(internal_device_cidr)s dev %(internal_device_name)s
     }
