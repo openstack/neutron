@@ -16,21 +16,23 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# The purpose of this script is to avoid casual introduction of more
-# bash dependency.  Please consider alternatives before commiting code
-# which uses bash specific features.
-
-export TMPDIR=`/bin/mktemp -d`
+TMPDIR=`mktemp -d /tmp/${0##*/}.XXXXXX` || exit 1
+export TMPDIR
 trap "rm -rf $TMPDIR" EXIT
 
 FAILURES=$TMPDIR/failures
 
 
 check_opinionated_shell () {
+    # The purpose of this function is to avoid casual introduction of more
+    # bash dependency.  Please consider alternatives before commiting code
+    # which uses bash specific features.
+
     # Check that shell scripts are not bash opinionated (ignore comments though)
     # If you cannot avoid the use of bash, please change the EXPECTED var below.
-    OBSERVED=$(grep -E '^([^#]|#!).*bash' tox.ini tools/* | wc -l)
-    EXPECTED=5
+    OBSERVED=$(grep -E '^([[:space:]]*[^#[:space:]]|#!).*bash' \
+               tox.ini tools/* | wc -l)
+    EXPECTED=3
     if [ ${EXPECTED} -ne ${OBSERVED} ]; then
         echo "Bash usage has been detected!" >>$FAILURES
     fi
@@ -40,7 +42,7 @@ check_opinionated_shell () {
 check_no_symlinks_allowed () {
     # Symlinks break the package build process, so ensure that they
     # do not slip in, except hidden symlinks.
-    if [ $(find . -type l ! -path '*/\.*' | wc -l) -ge 1 ]; then
+    if [ $(find . -type l ! -path '*/.*' | wc -l) -ge 1 ]; then
         echo "Symlinks are not allowed!" >>$FAILURES
     fi
 }
