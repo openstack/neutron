@@ -35,6 +35,7 @@ from neutron.db import l3_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
+from neutron.extensions import l3agentscheduler as l3agent
 from neutron import manager
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
@@ -293,7 +294,7 @@ class L3SchedulerBaseMixin(object):
         agent_db = self.plugin.get_agents_db(self.adminContext,
                                              filters={'host': [HOST_DVR]})
         self.l3_dvr_agent = agent_db[0]
-
+        self.l3_dvr_agent_id = agent_db[0].id
         callback.report_state(self.adminContext,
                               agent_state={'agent_state': DVR_SNAT_L3_AGENT},
                               time=timeutils.strtime())
@@ -337,7 +338,8 @@ class L3SchedulerTestBaseMixin(object):
 
     def _test_add_router_to_l3_agent(self,
                                      distributed=False,
-                                     already_scheduled=False):
+                                     already_scheduled=False,
+                                     external_gw=None):
         agent_id = self.agent_id1
         agent = self.agent1
         if distributed:
@@ -348,7 +350,7 @@ class L3SchedulerTestBaseMixin(object):
                                    tenant_id=str(uuid.uuid4()),
                                    name='r1')
         router['router']['distributed'] = distributed
-        router['router']['external_gateway_info'] = None
+        router['router']['external_gateway_info'] = external_gw
         if already_scheduled:
             self._test_schedule_bind_router(agent, router)
         with contextlib.nested(
@@ -361,21 +363,97 @@ class L3SchedulerTestBaseMixin(object):
                                         router['router']['id'])
             self.assertNotEqual(already_scheduled, auto_s.called)
 
+    def _create_router_for_l3_agent_dvr_test(self,
+                                             distributed=False,
+                                             external_gw=None):
+        router = self._make_router(self.fmt,
+                                   tenant_id=str(uuid.uuid4()),
+                                   name='r1')
+        router['router']['distributed'] = distributed
+        router['router']['external_gateway_info'] = external_gw
+        return router
+
+    def _prepare_l3_agent_dvr_move_exceptions(self,
+                                              distributed=False,
+                                              external_gw=None,
+                                              agent_id=None,
+                                              expected_exception=None):
+        router = self._create_router_for_l3_agent_dvr_test(
+            distributed=distributed, external_gw=external_gw)
+        with contextlib.nested(
+            mock.patch.object(self, "create_router_to_agent_binding"),
+            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                       return_value=router['router'])):
+            self.assertRaises(expected_exception,
+                              self.add_router_to_l3_agent,
+                              self.adminContext, agent_id,
+                              router['router']['id'])
+
+    def test_add_router_to_l3_agent_mismatch_error_dvr_to_legacy(self):
+        self._register_l3_agents()
+        self._prepare_l3_agent_dvr_move_exceptions(
+            distributed=True,
+            agent_id=self.agent_id1,
+            expected_exception=l3agent.RouterL3AgentMismatch)
+
+    def test_add_router_to_l3_agent_mismatch_error_legacy_to_dvr(self):
+        self._register_l3_dvr_agents()
+        self._prepare_l3_agent_dvr_move_exceptions(
+            agent_id=self.l3_dvr_agent_id,
+            expected_exception=l3agent.RouterL3AgentMismatch)
+
+    def test_add_router_to_l3_agent_mismatch_error_dvr_to_dvr(self):
+        self._register_l3_dvr_agents()
+        self._prepare_l3_agent_dvr_move_exceptions(
+            distributed=True,
+            agent_id=self.l3_dvr_agent_id,
+            expected_exception=l3agent.DVRL3CannotAssignToDvrAgent)
+
+    def test_add_router_to_l3_agent_dvr_to_snat(self):
+        external_gw_info = {
+            "network_id": str(uuid.uuid4()),
+            "enable_snat": True
+        }
+        self._register_l3_dvr_agents()
+        agent_id = self.l3_dvr_snat_id
+        agent = self.l3_dvr_snat_agent
+        router = self._create_router_for_l3_agent_dvr_test(
+            distributed=True,
+            external_gw=external_gw_info)
+        with contextlib.nested(
+            mock.patch.object(self, "validate_agent_router_combination"),
+            mock.patch.object(self, "create_router_to_agent_binding"),
+            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                       return_value=router['router'])
+        ) as (valid_agent_rtr, rtr_agent_binding, get_rtr):
+
+            self.add_router_to_l3_agent(self.adminContext, agent_id,
+                                        router['router']['id'])
+            rtr_agent_binding.assert_called_once_with(
+                self.adminContext, agent, router['router'])
+
     def test_add_router_to_l3_agent(self):
-        self._test_add_router_to_l3_agent(distributed=False,
-                                          already_scheduled=False)
+        self._test_add_router_to_l3_agent()
 
     def test_add_distributed_router_to_l3_agent(self):
+        external_gw_info = {
+            "network_id": str(uuid.uuid4()),
+            "enable_snat": True
+        }
         self._test_add_router_to_l3_agent(distributed=True,
-                                          already_scheduled=False)
+                                          external_gw=external_gw_info)
 
     def test_add_router_to_l3_agent_already_scheduled(self):
-        self._test_add_router_to_l3_agent(distributed=False,
-                                          already_scheduled=True)
+        self._test_add_router_to_l3_agent(already_scheduled=True)
 
     def test_add_distributed_router_to_l3_agent_already_scheduled(self):
+        external_gw_info = {
+            "network_id": str(uuid.uuid4()),
+            "enable_snat": True
+        }
         self._test_add_router_to_l3_agent(distributed=True,
-                                          already_scheduled=True)
+                                          already_scheduled=True,
+                                          external_gw=external_gw_info)
 
     def _prepare_schedule_dvr_tests(self):
         scheduler = l3_agent_scheduler.ChanceScheduler()
