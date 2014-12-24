@@ -1122,9 +1122,12 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 port_data[addr_pair.ADDRESS_PAIRS] = []
 
             # security group extension checks
+            # NOTE: check_update_has_security_groups works fine for
+            # create operations as well
             if port_security and has_ip:
                 self._ensure_default_security_group_on_port(context, port)
-            elif attr.is_attr_set(port_data.get(ext_sg.SECURITYGROUPS)):
+            elif self._check_update_has_security_groups(
+                 {'port': port_data}):
                 raise psec.PortSecurityAndIPRequiredForSecurityGroups()
             port_data[ext_sg.SECURITYGROUPS] = (
                 self._get_security_groups_on_port(context, port))
