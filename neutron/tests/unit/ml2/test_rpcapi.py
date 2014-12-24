@@ -20,6 +20,7 @@ Unit Tests for ml2 rpc
 import collections
 
 import mock
+from sqlalchemy.orm import exc
 
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants
@@ -161,6 +162,12 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.plugin.update_port_status.assert_called_once_with(
             'fake_context', 'fake_port_id', constants.PORT_STATUS_DOWN,
             'fake_host')
+
+    def test_update_device_down_call_update_port_status_failed(self):
+        self.plugin.update_port_status.side_effect = exc.StaleDataError
+        self.assertEqual({'device': 'fake_device', 'exists': False},
+                         self.callbacks.update_device_down(
+                             'fake_context', device='fake_device'))
 
 
 class RpcApiTestCase(base.BaseTestCase):
