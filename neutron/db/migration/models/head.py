@@ -71,6 +71,7 @@ from neutron.plugins.vmware.dbexts import lsn_db  # noqa
 from neutron.plugins.vmware.dbexts import maclearning  # noqa
 from neutron.plugins.vmware.dbexts import models as vmware_models  # noqa
 from neutron.plugins.vmware.dbexts import networkgw_db  # noqa
+from neutron.plugins.vmware.dbexts import nsxv_models  # noqa
 from neutron.plugins.vmware.dbexts import qos_db  # noqa
 from neutron.plugins.vmware.dbexts import vcns_models  # noqa
 
