@@ -267,7 +267,7 @@ class DhcpLocalProcess(DhcpBase):
         except IOError:
             msg = _('Unable to access %s')
 
-        LOG.debug(msg % file_name)
+        LOG.debug(msg, file_name)
         return None
 
     @property

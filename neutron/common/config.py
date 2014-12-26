@@ -167,7 +167,7 @@ def setup_logging():
     LOG.info(_LI("%(prog)s version %(version)s"),
              {'prog': sys.argv[0],
               'version': version.version_info.release_string()})
-    LOG.debug("command line: %s" % " ".join(sys.argv))
+    LOG.debug("command line: %s", " ".join(sys.argv))
 
 
 def load_paste_app(app_name):

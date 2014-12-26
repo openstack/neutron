@@ -2113,7 +2113,7 @@ class L3RpcCallbackTestCase(base.BaseTestCase):
         self.assertTrue(mock_log.call_count)
         expected_message = ('Port foo_port_id not found while updating '
                             'agent binding for router foo_router_id.')
-        actual_message = mock_log.call_args[0][0]
+        actual_message = mock_log.call_args[0][0] % mock_log.call_args[0][1]
         self.assertEqual(expected_message, actual_message)
 
 

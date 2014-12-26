@@ -153,7 +153,7 @@ class Service(service.Service):
         super(Service, self).start()
 
         self.conn = create_connection(new=True)
-        LOG.debug("Creating Consumer connection for Service %s" %
+        LOG.debug("Creating Consumer connection for Service %s",
                   self.topic)
 
         endpoints = [self.manager]
