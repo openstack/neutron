@@ -1058,6 +1058,28 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                        router)
         self.assertEqual(self.send_adv_notif.call_count, 1)
 
+    def test_update_routing_table(self):
+        # Just verify the correct namespace was used in the call
+        router = l3_test_common.prepare_router_data()
+        uuid = router['id']
+        netns = 'snat-' + uuid
+        fake_route1 = {'destination': '135.207.0.0/16',
+                       'nexthop': '1.2.3.4'}
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = dvr_router.DvrEdgeRouter(
+            agent,
+            HOSTNAME,
+            uuid,
+            router,
+            **self.ri_kwargs)
+        ri._update_routing_table = mock.Mock()
+
+        ri.update_routing_table('replace', fake_route1)
+        ri._update_routing_table.assert_called_once_with('replace',
+                                                         fake_route1,
+                                                         netns)
+
     def test_process_router_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = l3_test_common.prepare_router_data()

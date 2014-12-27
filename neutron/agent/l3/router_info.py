@@ -110,11 +110,16 @@ class RouterInfo(object):
     def get_external_device_interface_name(self, ex_gw_port):
         return self.get_external_device_name(ex_gw_port['id'])
 
-    def _update_routing_table(self, operation, route):
+    def _update_routing_table(self, operation, route, namespace):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop']]
-        ip_wrapper = ip_lib.IPWrapper(namespace=self.ns_name)
+        ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
+
+    def update_routing_table(self, operation, route, namespace=None):
+        if namespace is None:
+            namespace = self.ns_name
+        self._update_routing_table(operation, route, namespace)
 
     def routes_updated(self):
         new_routes = self.router['routes']
@@ -129,10 +134,10 @@ class RouterInfo(object):
                 if route['destination'] == del_route['destination']:
                     removes.remove(del_route)
             #replace success even if there is no existing route
-            self._update_routing_table('replace', route)
+            self.update_routing_table('replace', route)
         for route in removes:
             LOG.debug("Removed route entry is '%s'", route)
-            self._update_routing_table('delete', route)
+            self.update_routing_table('delete', route)
         self.routes = new_routes
 
     def get_ex_gw_port(self):
