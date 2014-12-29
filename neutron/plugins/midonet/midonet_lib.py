@@ -72,7 +72,7 @@ class MidoClient:
     def create_bridge(self, **kwargs):
         """Create a new bridge
 
-        :param \**kwargs: configuration of the new bridge
+        :param kwargs: configuration of the new bridge
         :returns: newly created bridge
         """
         LOG.debug("MidoClient.create_bridge called: "
@@ -106,7 +106,7 @@ class MidoClient:
         """Update a bridge of the given id with the new fields
 
         :param id: id of the bridge
-        :param \**kwargs: the fields to update and their values
+        :param kwargs: the fields to update and their values
         :returns: bridge object
         """
         LOG.debug("MidoClient.update_bridge called: "
@@ -250,7 +250,7 @@ class MidoClient:
         """Add a port on a bridge
 
         :param bridge: bridge to add a new port to
-        :param \**kwargs: configuration of the new port
+        :param kwargs: configuration of the new port
         :returns: newly created port
         """
         LOG.debug("MidoClient.add_bridge_port called: "
@@ -263,7 +263,7 @@ class MidoClient:
         """Update a port of the given id with the new fields
 
         :param id: id of the port
-        :param \**kwargs: the fields to update and their values
+        :param kwargs: the fields to update and their values
         """
         LOG.debug("MidoClient.update_port called: "
                   "id=%(id)s, kwargs=%(kwargs)s",
@@ -278,7 +278,7 @@ class MidoClient:
         """Add a new port to an existing router.
 
         :param router: router to add a new port to
-        :param \**kwargs: configuration of the new port
+        :param kwargs: configuration of the new port
         :returns: newly created port
         """
         return self._create_dto(self.mido_api.add_router_port(router), kwargs)
@@ -287,7 +287,7 @@ class MidoClient:
     def create_router(self, **kwargs):
         """Create a new router
 
-        :param \**kwargs: configuration of the new router
+        :param kwargs: configuration of the new router
         :returns: newly created router
         """
         LOG.debug("MidoClient.create_router called: "
@@ -321,7 +321,7 @@ class MidoClient:
         """Update a router of the given id with the new name
 
         :param id: id of the router
-        :param \**kwargs: the fields to update and their values
+        :param kwargs: the fields to update and their values
         :returns: router object
         """
         LOG.debug("MidoClient.update_router called: "

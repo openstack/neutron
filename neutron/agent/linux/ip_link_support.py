@@ -45,10 +45,10 @@ class IpLinkConstants(object):
 
 
 class IpLinkSupport(object):
-    VF_BLOCK_REGEX = "\[ vf NUM(?P<vf_block>.*) \] \]"
+    VF_BLOCK_REGEX = r"\[ vf NUM(?P<vf_block>.*) \] \]"
 
-    CAPABILITY_REGEX = "\[ %s (.*)"
-    SUB_CAPABILITY_REGEX = "\[ %(cap)s (.*) \[ %(subcap)s (.*)"
+    CAPABILITY_REGEX = r"\[ %s (.*)"
+    SUB_CAPABILITY_REGEX = r"\[ %(cap)s (.*) \[ %(subcap)s (.*)"
 
     @classmethod
     def get_vf_mgmt_section(cls, root_helper=None):

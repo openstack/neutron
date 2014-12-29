@@ -280,7 +280,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True,
             'allow_put': True,
             'validate': {
-                'type:regex': '^(\d{3}(\s*,\s*\d{3})*)$|^(\d{3}-\d{3})$'
+                'type:regex': r'^(\d{3}(\s*,\s*\d{3})*)$|^(\d{3}-\d{3})$'
             },
             'default': '200',
             'is_visible': True
