@@ -28,10 +28,10 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
 
     wrapper for getting/setting pci device details using ip link...
     """
-    VF_PATTERN = "^vf(\s+)(?P<vf_index>\d+)(\s+)"
-    MAC_PATTERN = "MAC(\s+)(?P<mac>[a-fA-F0-9:]+),"
-    STATE_PATTERN = "(\s+)link-state(\s+)(?P<state>\w+)"
-    ANY_PATTERN = "(.*),"
+    VF_PATTERN = r"^vf\s+(?P<vf_index>\d+)\s+"
+    MAC_PATTERN = r"MAC\s+(?P<mac>[a-fA-F0-9:]+),"
+    STATE_PATTERN = r"\s+link-state\s+(?P<state>\w+)"
+    ANY_PATTERN = ".*,"
 
     VF_LINE_FORMAT = VF_PATTERN + MAC_PATTERN + ANY_PATTERN + STATE_PATTERN
     VF_DETAILS_REG_EX = re.compile(VF_LINE_FORMAT)
