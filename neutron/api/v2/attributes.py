@@ -536,6 +536,12 @@ def convert_to_int(data):
         raise n_exc.InvalidInput(error_message=msg)
 
 
+def convert_to_int_if_not_none(data):
+    if data is not None:
+        return convert_to_int(data)
+    return data
+
+
 def convert_kvp_str_to_list(data):
     """Convert a value of the form 'key=value' to ['key', 'value'].
 
