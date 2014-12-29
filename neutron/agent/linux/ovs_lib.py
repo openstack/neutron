@@ -14,6 +14,7 @@
 #    under the License.
 
 import itertools
+import numbers
 import operator
 
 from oslo.config import cfg
@@ -327,41 +328,32 @@ class OVSBridge(BaseOVS):
         return edge_ports
 
     def get_vif_port_set(self):
-        port_names = self.get_port_name_list()
         edge_ports = set()
-        args = ['--format=json', '--', '--columns=name,external_ids,ofport',
-                'list', 'Interface']
+        args = ['--format=json', '--', '--columns=external_ids,ofport',
+                'list', 'Interface'] + self.get_port_name_list()
         result = self.run_vsctl(args, check_error=True)
         if not result:
             return edge_ports
         for row in jsonutils.loads(result)['data']:
-            name = row[0]
-            if name not in port_names:
-                continue
-            external_ids = dict(row[1][1])
+            external_ids = dict(row[0][1])
             # Do not consider VIFs which aren't yet ready
             # This can happen when ofport values are either [] or ["set", []]
             # We will therefore consider only integer values for ofport
-            ofport = row[2]
-            try:
-                int_ofport = int(ofport)
-            except (ValueError, TypeError):
+            ofport = row[1]
+            if not isinstance(ofport, numbers.Integral):
                 LOG.warn(_LW("Found not yet ready openvswitch port: %s"), row)
-            else:
-                if int_ofport > 0:
-                    if ("iface-id" in external_ids and
-                        "attached-mac" in external_ids):
-                        edge_ports.add(external_ids['iface-id'])
-                    elif ("xs-vif-uuid" in external_ids and
-                          "attached-mac" in external_ids):
-                        # if this is a xenserver and iface-id is not
-                        # automatically synced to OVS from XAPI, we grab it
-                        # from XAPI directly
-                        iface_id = self.get_xapi_iface_id(
-                            external_ids["xs-vif-uuid"])
-                        edge_ports.add(iface_id)
-                else:
-                    LOG.warn(_LW("Found failed openvswitch port: %s"), row)
+            elif ofport < 1:
+                LOG.warn(_LW("Found failed openvswitch port: %s"), row)
+            elif 'attached-mac' in external_ids:
+                if "iface-id" in external_ids:
+                    edge_ports.add(external_ids['iface-id'])
+                elif "xs-vif-uuid" in external_ids:
+                    # if this is a xenserver and iface-id is not
+                    # automatically synced to OVS from XAPI, we grab it
+                    # from XAPI directly
+                    iface_id = self.get_xapi_iface_id(
+                        external_ids["xs-vif-uuid"])
+                    edge_ports.add(iface_id)
         return edge_ports
 
     def get_port_tag_dict(self):
@@ -379,15 +371,13 @@ class OVSBridge(BaseOVS):
         in the "Interface" table queried by the get_vif_port_set() method.
 
         """
-        port_names = self.get_port_name_list()
         args = ['--format=json', '--', '--columns=name,tag', 'list', 'Port']
+        args += self.get_port_name_list()
         result = self.run_vsctl(args, check_error=True)
         port_tag_dict = {}
         if not result:
             return port_tag_dict
         for name, tag in jsonutils.loads(result)['data']:
-            if name not in port_names:
-                continue
             # 'tag' can be [u'set', []] or an integer
             if isinstance(tag, list):
                 tag = tag[1]

@@ -625,20 +625,18 @@ class OVS_Lib_Test(base.BaseTestCase):
         else:
             id_key = 'iface-id'
 
-        headings = ['name', 'external_ids']
+        headings = ['external_ids', 'ofport']
         data = [
             # A vif port on this bridge:
-            ['tap99', {id_key: 'tap99id', 'attached-mac': 'tap99mac'}, 1],
+            [{id_key: 'tap99id', 'attached-mac': 'tap99mac'}, 1],
             # A vif port on this bridge not yet configured
-            ['tap98', {id_key: 'tap98id', 'attached-mac': 'tap98mac'}, []],
+            [{id_key: 'tap98id', 'attached-mac': 'tap98mac'}, []],
             # Another vif port on this bridge not yet configured
-            ['tap97', {id_key: 'tap97id', 'attached-mac': 'tap97mac'},
+            [{id_key: 'tap97id', 'attached-mac': 'tap97mac'},
              ['set', []]],
 
-            # A vif port on another bridge:
-            ['tap88', {id_key: 'tap88id', 'attached-mac': 'tap88id'}, 1],
             # Non-vif port on this bridge:
-            ['tun22', {}, 2],
+            [{}, 2],
         ]
 
         # Each element is a tuple of (expected mock call, return_value)
@@ -647,8 +645,8 @@ class OVS_Lib_Test(base.BaseTestCase):
                        root_helper=self.root_helper),
              'tap99\ntun22'),
             (mock.call(["ovs-vsctl", self.TO, "--format=json",
-                        "--", "--columns=name,external_ids,ofport",
-                        "list", "Interface"],
+                        "--", "--columns=external_ids,ofport",
+                        "list", "Interface", 'tap99', 'tun22'],
                        root_helper=self.root_helper),
              self._encode_ovs_json(headings, data)),
         ]
@@ -703,8 +701,8 @@ class OVS_Lib_Test(base.BaseTestCase):
                        root_helper=self.root_helper),
              'tap99\n'),
             (mock.call(["ovs-vsctl", self.TO, "--format=json",
-                        "--", "--columns=name,external_ids,ofport",
-                        "list", "Interface"],
+                        "--", "--columns=external_ids,ofport",
+                        "list", "Interface", "tap99"],
                        root_helper=self.root_helper),
              RuntimeError()),
         ]
