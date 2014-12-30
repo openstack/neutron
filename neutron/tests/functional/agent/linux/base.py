@@ -117,9 +117,8 @@ class BaseOVSLinuxTestCase(BaseLinuxTestCase):
 
     def create_ovs_port_in_ns(self, br, ns):
         def create_port(name):
-            br.add_port(name)
+            br.replace_port(name, ('type', 'internal'))
             self.addCleanup(br.delete_port, name)
-            br.set_db_attribute('Interface', name, 'type', 'internal')
             return name
         port_name = self.create_resource(PORT_PREFIX, create_port)
         port_dev = self.ip.device(port_name)
