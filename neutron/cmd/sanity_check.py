@@ -17,7 +17,7 @@ import sys
 
 from neutron.cmd.sanity import checks
 from neutron.common import config
-from neutron.i18n import _LE
+from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log as logging
 from oslo.config import cfg
 
@@ -31,6 +31,8 @@ cfg.CONF.import_group('ml2_sriov',
 
 class BoolOptCallback(cfg.BoolOpt):
     def __init__(self, name, callback, **kwargs):
+        if 'default' not in kwargs:
+            kwargs['default'] = False
         self.callback = callback
         super(BoolOptCallback, self).__init__(name, **kwargs)
 
@@ -51,6 +53,27 @@ def check_ovs_patch():
                       'Please ensure that the version of openvswitch '
                       'being used has patch port support or disable features '
                       'requiring patch ports (gre/vxlan, etc.).'))
+    return result
+
+
+def check_read_netns():
+    required = checks.netns_read_requires_helper(
+        root_helper=cfg.CONF.AGENT.root_helper)
+    if not required and cfg.CONF.AGENT.use_helper_for_ns_read:
+        LOG.warning(_LW("The user that is executing neutron can read the "
+                        "namespaces without using the root_helper. Disable "
+                        "the use_helper_for_ns_read option to avoid a "
+                        "performance impact."))
+        # Don't fail because nothing is actually broken. Just not optimal.
+        result = True
+    elif required and not cfg.CONF.AGENT.use_helper_for_ns_read:
+        LOG.error(_LE("The user that is executing neutron does not have "
+                      "permissions to read the namespaces. Enable the "
+                      "use_helper_for_ns_read configuration option."))
+        result = False
+    else:
+        # everything is configured appropriately
+        result = True
     return result
 
 
@@ -85,17 +108,18 @@ def check_vf_management():
 
 # Define CLI opts to test specific features, with a calback for the test
 OPTS = [
-    BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
+    BoolOptCallback('ovs_vxlan', check_ovs_vxlan,
                     help=_('Check for vxlan support')),
-    BoolOptCallback('ovs_patch', check_ovs_patch, default=False,
+    BoolOptCallback('ovs_patch', check_ovs_patch,
                     help=_('Check for patch port support')),
-    BoolOptCallback('nova_notify', check_nova_notify, default=False,
+    BoolOptCallback('nova_notify', check_nova_notify,
                     help=_('Check for nova notification support')),
-    BoolOptCallback('arp_responder', check_arp_responder, default=False,
+    BoolOptCallback('arp_responder', check_arp_responder,
                     help=_('Check for ARP responder support')),
-    BoolOptCallback('vf_management', check_vf_management, default=False,
+    BoolOptCallback('vf_management', check_vf_management,
                     help=_('Check for VF management support')),
-
+    BoolOptCallback('read_netns', check_read_netns,
+                    help=_('Check netns permission settings')),
 ]
 
 
@@ -118,6 +142,8 @@ def enable_tests_from_config():
         cfg.CONF.set_override('arp_responder', True)
     if cfg.CONF.ml2_sriov.agent_required:
         cfg.CONF.set_override('vf_management', True)
+    if not cfg.CONF.AGENT.use_helper_for_ns_read:
+        cfg.CONF.set_override('read_netns', True)
 
 
 def all_tests_passed():

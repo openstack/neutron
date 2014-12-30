@@ -27,6 +27,10 @@ LOG = logging.getLogger(__name__)
 ROOT_HELPER_OPTS = [
     cfg.StrOpt('root_helper', default='sudo',
                help=_('Root helper application.')),
+    cfg.BoolOpt('use_helper_for_ns_read',
+                default=True,
+                help=_('Use the root helper to read the namespaces from '
+                       'the operating system.')),
 ]
 
 AGENT_STATE_OPTS = [
