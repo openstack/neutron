@@ -3192,7 +3192,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         ctx = context.get_admin_context(load_admin_roles=False)
         new_subnet = {'ip_version': 6,
                       'cidr': 'fe80::/64',
-                      'enable_dhcp': True}
+                      'enable_dhcp': True,
+                      'ipv6_address_mode': None,
+                      'ipv6_ra_mode': None}
         for mode, value in modes.items():
             new_subnet[mode] = value
         if expect_success:
