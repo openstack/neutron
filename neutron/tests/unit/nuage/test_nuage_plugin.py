@@ -262,6 +262,12 @@ class NuagePluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                     r['router']['id'],
                     public_sub['subnet']['network_id'])
 
+    def test_router_update_gateway_with_different_external_subnet(self):
+        self.skipTest("Plugin doesn't support multiple external networks")
+
+    def test_router_create_with_gwinfo_ext_ip_subnet(self):
+        self.skipTest("Plugin doesn't support multiple external networks")
+
 
 class TestNuageBasicGet(NuagePluginV2TestCase,
                         test_db_plugin.TestBasicGet):
@@ -383,6 +389,14 @@ class TestNuagePluginPortBinding(NuagePluginV2TestCase,
 
 class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
                                   extraroute_test.ExtraRouteDBIntTestCase):
+
+    def test_router_create_with_gwinfo_ext_ip_subnet(self):
+        self.skipTest("Nuage plugin does not support multiple subnets per "
+                      "external network.")
+
+    def test_router_update_gateway_with_different_external_subnet(self):
+        self.skipTest("Nuage plugin does not support multiple subnets per "
+                      "external networks.")
 
     def test_router_update_with_dup_destination_address(self):
         with self.router() as r:

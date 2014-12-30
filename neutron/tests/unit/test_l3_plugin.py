@@ -361,10 +361,13 @@ class L3NatTestCaseMixin(object):
 
     def _add_external_gateway_to_router(self, router_id, network_id,
                                         expected_code=exc.HTTPOk.code,
-                                        neutron_context=None):
-        return self._update('routers', router_id,
-                            {'router': {'external_gateway_info':
-                                        {'network_id': network_id}}},
+                                        neutron_context=None, ext_ips=[]):
+        body = {'router':
+                {'external_gateway_info': {'network_id': network_id}}}
+        if ext_ips:
+            body['router']['external_gateway_info'][
+                'external_fixed_ips'] = ext_ips
+        return self._update('routers', router_id, body,
                             expected_code=expected_code,
                             neutron_context=neutron_context)
 
@@ -622,6 +625,64 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 router['router']['external_gateway_info']['network_id'])
             self._delete('routers', router['router']['id'])
 
+    def test_router_create_with_gwinfo_ext_ip(self):
+        with self.subnet() as s:
+            self._set_net_external(s['subnet']['network_id'])
+            ext_info = {
+                'network_id': s['subnet']['network_id'],
+                'external_fixed_ips': [{'ip_address': '10.0.0.99'}]
+            }
+            res = self._create_router(
+                self.fmt, _uuid(), arg_list=('external_gateway_info',),
+                external_gateway_info=ext_info
+            )
+            router = self.deserialize(self.fmt, res)
+            self._delete('routers', router['router']['id'])
+            self.assertEqual(
+                [{'ip_address': '10.0.0.99', 'subnet_id': s['subnet']['id']}],
+                router['router']['external_gateway_info'][
+                    'external_fixed_ips'])
+
+    def test_router_create_with_gwinfo_ext_ip_subnet(self):
+        with self.network() as n:
+            with contextlib.nested(
+                self.subnet(network=n),
+                self.subnet(network=n, cidr='1.0.0.0/24'),
+                self.subnet(network=n, cidr='2.0.0.0/24'),
+            ) as subnets:
+                self._set_net_external(n['network']['id'])
+                for s in subnets:
+                    ext_info = {
+                        'network_id': n['network']['id'],
+                        'external_fixed_ips': [
+                            {'subnet_id': s['subnet']['id']}]
+                    }
+                    res = self._create_router(
+                        self.fmt, _uuid(), arg_list=('external_gateway_info',),
+                        external_gateway_info=ext_info
+                    )
+                    router = self.deserialize(self.fmt, res)
+                    ext_ips = router['router']['external_gateway_info'][
+                        'external_fixed_ips']
+
+                    self._delete('routers', router['router']['id'])
+                    self.assertEqual(
+                        [{'subnet_id': s['subnet']['id'],
+                          'ip_address': mock.ANY}], ext_ips)
+
+    def test_router_create_with_gwinfo_ext_ip_non_admin(self):
+        with self.subnet() as s:
+            self._set_net_external(s['subnet']['network_id'])
+            ext_info = {
+                'network_id': s['subnet']['network_id'],
+                'external_fixed_ips': [{'ip_address': '10.0.0.99'}]
+            }
+            res = self._create_router(
+                self.fmt, _uuid(), arg_list=('external_gateway_info',),
+                set_context=True, external_gateway_info=ext_info
+            )
+            self.assertEqual(res.status_int, exc.HTTPForbidden.code)
+
     def test_router_list(self):
         with contextlib.nested(self.router(),
                                self.router(),
@@ -710,6 +771,63 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         r['router']['id'],
                         s2['subnet']['network_id'],
                         external_gw_info={})
+
+    def test_router_update_gateway_with_external_ip_used_by_gw(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'],
+                    ext_ips=[{'ip_address': s['subnet']['gateway_ip']}],
+                    expected_code=exc.HTTPBadRequest.code)
+
+    def test_router_update_gateway_with_invalid_external_ip(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'],
+                    ext_ips=[{'ip_address': '99.99.99.99'}],
+                    expected_code=exc.HTTPBadRequest.code)
+
+    def test_router_update_gateway_with_invalid_external_subnet(self):
+        with contextlib.nested(
+            self.subnet(),
+            self.subnet(cidr='1.0.0.0/24'),
+            self.router()
+        ) as (s1, s2, r):
+            self._set_net_external(s1['subnet']['network_id'])
+            self._add_external_gateway_to_router(
+                r['router']['id'],
+                s1['subnet']['network_id'],
+                # this subnet is not on the same network so this should fail
+                ext_ips=[{'subnet_id': s2['subnet']['id']}],
+                expected_code=exc.HTTPBadRequest.code)
+
+    def test_router_update_gateway_with_different_external_subnet(self):
+        with self.network() as n:
+            with contextlib.nested(
+                self.subnet(network=n),
+                self.subnet(network=n, cidr='1.0.0.0/24'),
+                self.router()
+            ) as (s1, s2, r):
+                self._set_net_external(n['network']['id'])
+                res1 = self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    n['network']['id'],
+                    ext_ips=[{'subnet_id': s1['subnet']['id']}])
+                res2 = self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    n['network']['id'],
+                    ext_ips=[{'subnet_id': s2['subnet']['id']}])
+        fip1 = res1['router']['external_gateway_info']['external_fixed_ips'][0]
+        fip2 = res2['router']['external_gateway_info']['external_fixed_ips'][0]
+        self.assertEqual(s1['subnet']['id'], fip1['subnet_id'])
+        self.assertEqual(s2['subnet']['id'], fip2['subnet_id'])
+        self.assertNotEqual(fip1['subnet_id'], fip2['subnet_id'])
+        self.assertNotEqual(fip1['ip_address'], fip2['ip_address'])
 
     def test_router_update_gateway_with_existed_floatingip(self):
         with self.subnet() as subnet:
