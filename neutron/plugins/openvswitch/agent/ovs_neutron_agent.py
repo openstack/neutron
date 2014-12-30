@@ -763,11 +763,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             cfg.CONF.OVS.int_peer_patch_port, cfg.CONF.OVS.tun_peer_patch_port)
         self.patch_int_ofport = self.tun_br.add_patch_port(
             cfg.CONF.OVS.tun_peer_patch_port, cfg.CONF.OVS.int_peer_patch_port)
-        if int(self.patch_tun_ofport) < 0 or int(self.patch_int_ofport) < 0:
+        if ovs_lib.INVALID_OFPORT in (self.patch_tun_ofport,
+                                      self.patch_int_ofport):
             LOG.error(_LE("Failed to create OVS patch port. Cannot have "
                           "tunneling enabled on this agent, since this "
-                          "version of OVS does not support tunnels or "
-                          "patch ports. Agent terminated!"))
+                          "version of OVS does not support tunnels or patch "
+                          "ports. Agent terminated!"))
             exit(1)
         self.tun_br.remove_all_flows()
 
@@ -1042,13 +1043,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                     tunnel_type,
                                     self.vxlan_udp_port,
                                     self.dont_fragment)
-        ofport_int = -1
-        try:
-            ofport_int = int(ofport)
-        except (TypeError, ValueError):
-            LOG.exception(_LE("ofport should have a value that can be "
-                              "interpreted as an integer"))
-        if ofport_int < 0:
+        if ofport == ovs_lib.INVALID_OFPORT:
             LOG.error(_LE("Failed to set-up %(type)s tunnel port to %(ip)s"),
                       {'type': tunnel_type, 'ip': remote_ip})
             return 0

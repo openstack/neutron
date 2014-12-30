@@ -648,23 +648,17 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             LOG.debug("No VIF port for port %s defined on agent.", port_id)
 
     def _setup_tunnel_port(self, br, port_name, remote_ip, tunnel_type):
-        ofport_str = br.add_tunnel_port(port_name,
-                                        remote_ip,
-                                        self.local_ip,
-                                        tunnel_type,
-                                        self.vxlan_udp_port,
-                                        self.dont_fragment)
-        ofport = -1
-        try:
-            ofport = int(ofport_str)
-        except (TypeError, ValueError):
-            LOG.exception(_LE("ofport should have a value that can be "
-                              "interpreted as an integer"))
-        if ofport < 0:
+        ofport = br.add_tunnel_port(port_name,
+                                    remote_ip,
+                                    self.local_ip,
+                                    tunnel_type,
+                                    self.vxlan_udp_port,
+                                    self.dont_fragment)
+        if ofport == ovs_lib.INVALID_OFPORT:
             LOG.error(_LE("Failed to set-up %(type)s tunnel port to %(ip)s"),
                       {'type': tunnel_type, 'ip': remote_ip})
             return 0
-
+        ofport = int(ofport)
         self.tun_ofports[tunnel_type][remote_ip] = ofport
         br.check_in_port_add_tunnel_port(tunnel_type, ofport)
         return ofport
