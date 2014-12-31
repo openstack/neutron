@@ -2345,13 +2345,17 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertIn(_join('-p', pidfile), cmd)
         self.assertIn(_join('-m', 'syslog'), cmd)
 
-    def test_generate_radvd_conf_other_flag(self):
+    def test_generate_radvd_conf_other_and_managed_flag(self):
+        _skip_check = object()
+        skip = lambda flag: True if flag is _skip_check else False
+
+        expected = {l3_constants.IPV6_SLAAC: (False, False),
+                    l3_constants.DHCPV6_STATELESS: (True, False),
         # we don't check other flag for stateful since it's redundant
         # for this mode and can be ignored by clients, as per RFC4861
-        expected = {l3_constants.IPV6_SLAAC: False,
-                    l3_constants.DHCPV6_STATELESS: True}
+                    l3_constants.DHCPV6_STATEFUL: (_skip_check, True)}
 
-        for ra_mode, flag_set in expected.iteritems():
+        for ra_mode, flags_set in expected.iteritems():
             router = prepare_router_data()
             ri = self._process_router_ipv6_interface_added(router,
                                                            ra_mode=ra_mode)
@@ -2359,9 +2363,18 @@ class TestBasicRouterOperations(base.BaseTestCase):
             ra._generate_radvd_conf(ri.router['id'],
                                     router[l3_constants.INTERFACE_KEY],
                                     mock.Mock())
-            asserter = self.assertIn if flag_set else self.assertNotIn
-            asserter('AdvOtherConfigFlag on;',
-                     self.utils_replace_file.call_args[0][1])
+
+            def assertFlag(flag):
+                return (self.assertIn if flag else self.assertNotIn)
+
+            other_flag, managed_flag = flags_set
+            if not skip(other_flag):
+                assertFlag(other_flag)('AdvOtherConfigFlag on;',
+                    self.utils_replace_file.call_args[0][1])
+
+            if not skip(managed_flag):
+                assertFlag(managed_flag)('AdvManagedFlag on',
+                    self.utils_replace_file.call_args[0][1])
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):
