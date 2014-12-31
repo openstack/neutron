@@ -156,9 +156,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         return router_intf_qry.filter(
             models_v2.Port.network_id == network_id,
-            l3_db.RouterPort.port_type.in_(
-                [l3_const.DEVICE_OWNER_ROUTER_INTF, DEVICE_OWNER_DVR_INTERFACE]
-            )
+            l3_db.RouterPort.port_type.in_(l3_const.ROUTER_INTERFACE_OWNERS)
         )
 
     def update_floatingip(self, context, id, floatingip):
@@ -377,8 +375,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
     def get_sync_data(self, context, router_ids=None, active=None):
         routers, interfaces, floating_ips = self._get_router_info_list(
             context, router_ids=router_ids, active=active,
-            device_owners=[l3_const.DEVICE_OWNER_ROUTER_INTF,
-                           DEVICE_OWNER_DVR_INTERFACE])
+            device_owners=l3_const.ROUTER_INTERFACE_OWNERS)
         # Add the port binding host to the floatingip dictionary
         for fip in floating_ips:
             fip['host'] = self.get_vm_port_hostid(context, fip['port_id'])
