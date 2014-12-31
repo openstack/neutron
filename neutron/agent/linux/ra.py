@@ -44,6 +44,10 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
    AdvOtherConfigFlag on;
    {% endif %}
 
+   {% if ra_mode == constants.DHCPV6_STATEFUL %}
+   AdvManagedFlag on;
+   {% endif %}
+
    {% if ra_mode in (constants.IPV6_SLAAC, constants.DHCPV6_STATELESS) %}
    prefix {{ prefix }}
    {
