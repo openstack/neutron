@@ -22,9 +22,11 @@ from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers.mech_sriov import exceptions as exc
 
 
 LOG = log.getLogger(__name__)
+FLAT_VLAN = 0
 
 sriov_opts = [
     cfg.ListOpt('supported_pci_vendor_devs',
@@ -77,6 +79,7 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
         self.supported_vnic_types = supported_vnic_types
         self.vif_type = vif_type
         self.vif_details = vif_details
+        self.supported_network_types = (p_const.TYPE_VLAN, p_const.TYPE_FLAT)
 
     def initialize(self):
         try:
@@ -120,7 +123,7 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             if self.check_segment(segment, agent):
                 context.set_binding(segment[api.ID],
                                     self.vif_type,
-                                    self.get_vif_details(context, segment),
+                                    self._get_vif_details(segment),
                                     constants.PORT_STATUS_ACTIVE)
                 LOG.debug("Bound using segment: %s", segment)
                 return True
@@ -134,7 +137,7 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
         :returns: True if segment can be bound for agent
         """
         network_type = segment[api.NETWORK_TYPE]
-        if network_type == p_const.TYPE_VLAN:
+        if network_type in self.supported_network_types:
             if agent:
                 mappings = agent['configurations'].get('device_mappings', {})
                 LOG.debug("Checking segment: %(segment)s "
@@ -160,11 +163,17 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             return True
         return False
 
-    def get_vif_details(self, context, segment):
-        if segment[api.NETWORK_TYPE] == p_const.TYPE_VLAN:
-            vlan_id = str(segment[api.SEGMENTATION_ID])
-            self.vif_details[portbindings.VIF_DETAILS_VLAN] = vlan_id
-        return self.vif_details
+    def _get_vif_details(self, segment):
+        network_type = segment[api.NETWORK_TYPE]
+        if network_type == p_const.TYPE_FLAT:
+            vlan_id = FLAT_VLAN
+        elif network_type == p_const.TYPE_VLAN:
+            vlan_id = segment[api.SEGMENTATION_ID]
+        else:
+            raise exc.SriovUnsupportedNetworkType(net_type=network_type)
+        vif_details = self.vif_details.copy()
+        vif_details[portbindings.VIF_DETAILS_VLAN] = str(vlan_id)
+        return vif_details
 
     def _parse_pci_vendor_config(self, pci_vendor_list):
         parsed_list = []
