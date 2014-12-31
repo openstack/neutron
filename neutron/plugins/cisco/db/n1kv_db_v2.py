@@ -593,7 +593,7 @@ def sync_vxlan_allocations(db_session, net_p):
     """
     seg_min, seg_max = get_segment_range(net_p)
     if seg_max + 1 - seg_min > c_const.MAX_VXLAN_RANGE:
-        msg = (_("Unreasonable vxlan ID range %(vxlan_min)s - %(vxlan_max)s"),
+        msg = (_("Unreasonable vxlan ID range %(vxlan_min)s - %(vxlan_max)s") %
                {"vxlan_min": seg_min, "vxlan_max": seg_max})
         raise n_exc.InvalidInput(error_message=msg)
     with db_session.begin(subtransactions=True):
@@ -1418,7 +1418,7 @@ class NetworkProfile_db_mixin(object):
                 name = profile.name
                 segment_range = profile.segment_range
                 if net_p["name"] == name:
-                    msg = (_("NetworkProfile name %s already exists"),
+                    msg = (_("NetworkProfile name %s already exists") %
                            net_p["name"])
                     LOG.error(msg)
                     raise n_exc.InvalidInput(error_message=msg)
