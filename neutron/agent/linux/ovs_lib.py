@@ -363,7 +363,8 @@ class OVSBridge(BaseOVS):
     def get_vif_port_set(self):
         edge_ports = set()
         args = ['--format=json', '--', '--columns=external_ids,ofport',
-                'list', 'Interface'] + self.get_port_name_list()
+                '--if-exists', 'list', 'Interface']
+        args += self.get_port_name_list()
         result = self.run_vsctl(args, check_error=True)
         if not result:
             return edge_ports
@@ -404,7 +405,8 @@ class OVSBridge(BaseOVS):
         in the "Interface" table queried by the get_vif_port_set() method.
 
         """
-        args = ['--format=json', '--', '--columns=name,tag', 'list', 'Port']
+        args = ['--format=json', '--', '--columns=name,tag', '--if-exists',
+                'list', 'Port']
         args += self.get_port_name_list()
         result = self.run_vsctl(args, check_error=True)
         port_tag_dict = {}
