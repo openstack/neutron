@@ -128,14 +128,17 @@ class NetworkMetadataProxyHandler(object):
 
 
 class ProxyDaemon(daemon.Daemon):
-    def __init__(self, pidfile, port, network_id=None, router_id=None):
+    def __init__(self, pidfile, port, network_id=None, router_id=None,
+                 user=None, group=None):
         uuid = network_id or router_id
-        super(ProxyDaemon, self).__init__(pidfile, uuid=uuid)
+        super(ProxyDaemon, self).__init__(pidfile, uuid=uuid, user=user,
+                                         group=group)
         self.network_id = network_id
         self.router_id = router_id
         self.port = port
 
     def run(self):
+        super(ProxyDaemon, self).run()
         handler = NetworkMetadataProxyHandler(
             self.network_id,
             self.router_id)
@@ -164,7 +167,15 @@ def main():
         cfg.StrOpt('metadata_proxy_socket',
                    default='$state_path/metadata_proxy',
                    help=_('Location of Metadata Proxy UNIX domain '
-                          'socket'))
+                          'socket')),
+        cfg.StrOpt('metadata_proxy_user',
+                   default=None,
+                   help=_("User (uid or name) running metadata proxy after "
+                          "its initialization")),
+        cfg.StrOpt('metadata_proxy_group',
+                   default=None,
+                   help=_("Group (gid or name) running metadata proxy after "
+                          "its initialization")),
     ]
 
     cfg.CONF.register_cli_opts(opts)
@@ -172,10 +183,13 @@ def main():
     cfg.CONF(project='neutron', default_config_files=[])
     config.setup_logging()
     utils.log_opt_values(LOG)
+
     proxy = ProxyDaemon(cfg.CONF.pid_file,
                         cfg.CONF.metadata_port,
                         network_id=cfg.CONF.network_id,
-                        router_id=cfg.CONF.router_id)
+                        router_id=cfg.CONF.router_id,
+                        user=cfg.CONF.metadata_proxy_user,
+                        group=cfg.CONF.metadata_proxy_group)
 
     if cfg.CONF.daemonize:
         proxy.start()

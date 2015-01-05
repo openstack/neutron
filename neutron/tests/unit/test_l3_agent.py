@@ -2216,6 +2216,9 @@ vrrp_instance VR_1 {
 
 class TestL3AgentEventHandler(base.BaseTestCase):
 
+    EUID = '123'
+    EGID = '456'
+
     def setUp(self):
         super(TestL3AgentEventHandler, self).setUp()
         cfg.CONF.register_opts(l3_agent.L3NATAgent.OPTS)
@@ -2258,7 +2261,8 @@ class TestL3AgentEventHandler(base.BaseTestCase):
         looping_call_p.start()
         self.agent = l3_agent.L3NATAgent(HOSTNAME)
 
-    def test_spawn_metadata_proxy(self):
+    def _test_spawn_metadata_proxy(self, expected_user, expected_group,
+                                   user='', group=''):
         router_id = _uuid()
         metadata_port = 8080
         ip_class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
@@ -2266,10 +2270,15 @@ class TestL3AgentEventHandler(base.BaseTestCase):
         cfg.CONF.set_override('metadata_port', metadata_port)
         cfg.CONF.set_override('log_file', 'test.log')
         cfg.CONF.set_override('debug', True)
+        cfg.CONF.set_override('metadata_proxy_user', user)
+        cfg.CONF.set_override('metadata_proxy_group', group)
 
         self.external_process_p.stop()
         ri = l3router.RouterInfo(router_id, None, None)
-        with mock.patch(ip_class_path) as ip_mock:
+        with contextlib.nested(
+                mock.patch('os.geteuid', return_value=self.EUID),
+                mock.patch('os.getegid', return_value=self.EGID),
+                mock.patch(ip_class_path)) as (geteuid, getegid, ip_mock):
             self.agent._spawn_metadata_proxy(ri.router_id, ri.ns_name)
             ip_mock.assert_has_calls([
                 mock.call('sudo', ri.ns_name),
@@ -2280,8 +2289,25 @@ class TestL3AgentEventHandler(base.BaseTestCase):
                     '--router_id=%s' % router_id,
                     mock.ANY,
                     '--metadata_port=%s' % metadata_port,
+                    '--metadata_proxy_user=%s' % expected_user,
+                    '--metadata_proxy_group=%s' % expected_group,
                     '--debug',
                     '--log-file=neutron-ns-metadata-proxy-%s.log' %
                     router_id
                 ], addl_env=None)
             ])
+
+    def test_spawn_metadata_proxy_with_user(self):
+        self._test_spawn_metadata_proxy('user', self.EGID, user='user')
+
+    def test_spawn_metadata_proxy_with_uid(self):
+        self._test_spawn_metadata_proxy('321', self.EGID, user='321')
+
+    def test_spawn_metadata_proxy_with_group(self):
+        self._test_spawn_metadata_proxy(self.EUID, 'group', group='group')
+
+    def test_spawn_metadata_proxy_with_gid(self):
+        self._test_spawn_metadata_proxy(self.EUID, '654', group='654')
+
+    def test_spawn_metadata_proxy(self):
+        self._test_spawn_metadata_proxy(self.EUID, self.EGID)

@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+import contextlib
 import os
 import sys
 
@@ -20,9 +22,100 @@ import mock
 import testtools
 
 from neutron.agent.linux import daemon
+from neutron.common import exceptions
 from neutron.tests import base
 
 FAKE_FD = 8
+
+
+class FakeEntry(object):
+    def __init__(self, name, value):
+        setattr(self, name, value)
+
+
+class TestPrivileges(base.BaseTestCase):
+    def test_setuid_with_name(self):
+        with mock.patch('pwd.getpwnam', return_value=FakeEntry('pw_uid', 123)):
+            with mock.patch('os.setuid') as setuid_mock:
+                daemon.setuid('user')
+                setuid_mock.assert_called_once_with(123)
+
+    def test_setuid_with_id(self):
+        with mock.patch('os.setuid') as setuid_mock:
+            daemon.setuid('321')
+            setuid_mock.assert_called_once_with(321)
+
+    def test_setuid_fails(self):
+        with mock.patch('os.setuid', side_effect=OSError()):
+            with mock.patch.object(daemon.LOG, 'critical') as log_critical:
+                self.assertRaises(exceptions.FailToDropPrivilegesExit,
+                                  daemon.setuid, '321')
+                log_critical.assert_once_with(mock.ANY)
+
+    def test_setgid_with_name(self):
+        with mock.patch('grp.getgrnam', return_value=FakeEntry('gr_gid', 123)):
+            with mock.patch('os.setgid') as setgid_mock:
+                daemon.setgid('group')
+                setgid_mock.assert_called_once_with(123)
+
+    def test_setgid_with_id(self):
+        with mock.patch('os.setgid') as setgid_mock:
+            daemon.setgid('321')
+            setgid_mock.assert_called_once_with(321)
+
+    def test_setgid_fails(self):
+        with mock.patch('os.setgid', side_effect=OSError()):
+            with mock.patch.object(daemon.LOG, 'critical') as log_critical:
+                self.assertRaises(exceptions.FailToDropPrivilegesExit,
+                                  daemon.setgid, '321')
+                log_critical.assert_once_with(mock.ANY)
+
+    def test_drop_no_privileges(self):
+        with contextlib.nested(
+                mock.patch.object(os, 'setgroups'),
+                mock.patch.object(daemon, 'setgid'),
+                mock.patch.object(daemon, 'setuid')) as mocks:
+            daemon.drop_privileges()
+            for cursor in mocks:
+                self.assertFalse(cursor.called)
+
+    def _test_drop_privileges(self, user=None, group=None):
+        with contextlib.nested(
+                mock.patch.object(os, 'geteuid', return_value=0),
+                mock.patch.object(os, 'setgroups'),
+                mock.patch.object(daemon, 'setgid'),
+                mock.patch.object(daemon, 'setuid')) as (
+                    geteuid, setgroups, setgid, setuid):
+            daemon.drop_privileges(user=user, group=group)
+            if user:
+                setuid.assert_called_once_with(user)
+            else:
+                self.assertFalse(setuid.called)
+            if group:
+                setgroups.assert_called_once_with([])
+                setgid.assert_called_once_with(group)
+            else:
+                self.assertFalse(setgroups.called)
+                self.assertFalse(setgid.called)
+
+    def test_drop_user_privileges(self):
+        self._test_drop_privileges(user='user')
+
+    def test_drop_uid_privileges(self):
+        self._test_drop_privileges(user='321')
+
+    def test_drop_group_privileges(self):
+        self._test_drop_privileges(group='group')
+
+    def test_drop_gid_privileges(self):
+        self._test_drop_privileges(group='654')
+
+    def test_drop_privileges_without_root_permissions(self):
+        with mock.patch('os.geteuid', return_value=1):
+            with mock.patch.object(daemon.LOG, 'critical') as log_critical:
+                self.assertRaises(exceptions.FailToDropPrivilegesExit,
+                                  daemon.drop_privileges, 'user')
+                log_critical.assert_once_with(mock.ANY)
 
 
 class TestPidfile(base.BaseTestCase):
