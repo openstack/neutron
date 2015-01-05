@@ -509,6 +509,10 @@ class TestBase(base.BaseTestCase):
         self.safe = self.replace_p.start()
         self.execute = self.execute_p.start()
 
+        self.makedirs = mock.patch('os.makedirs').start()
+        self.isdir = mock.patch('os.path.isdir').start()
+        self.isdir.return_value = False
+
 
 class TestDhcpBase(TestBase):
 
@@ -587,21 +591,18 @@ class TestDhcpLocalProcess(TestBase):
 
     def test_get_conf_file_name(self):
         tpl = '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/dev'
-        with mock.patch('os.path.isdir') as isdir:
-            isdir.return_value = False
-            with mock.patch('os.makedirs') as makedirs:
-                lp = LocalChild(self.conf, FakeV4Network())
-                self.assertEqual(lp.get_conf_file_name('dev'), tpl)
-                self.assertFalse(makedirs.called)
+        lp = LocalChild(self.conf, FakeV4Network())
+        self.assertEqual(lp.get_conf_file_name('dev'), tpl)
 
-    def test_get_conf_file_name_ensure_dir(self):
-        tpl = '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/dev'
-        with mock.patch('os.path.isdir') as isdir:
-            isdir.return_value = False
-            with mock.patch('os.makedirs') as makedirs:
-                lp = LocalChild(self.conf, FakeV4Network())
-                self.assertEqual(lp.get_conf_file_name('dev', True), tpl)
-                self.assertTrue(makedirs.called)
+    def test_ensure_network_conf_dir(self):
+        LocalChild(self.conf, FakeV4Network())
+        self.makedirs.assert_called_once_with(
+            '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', mock.ANY)
+
+    def test_ensure_network_conf_existing_dir(self):
+        self.isdir.return_value = True
+        LocalChild(self.conf, FakeV4Network())
+        self.assertFalse(self.makedirs.called)
 
     def test_enable_already_active(self):
         with mock.patch.object(LocalChild, 'active') as patched:
@@ -744,8 +745,7 @@ class TestDhcpLocalProcess(TestBase):
             with mock.patch.object(lp, 'get_conf_file_name') as conf_file:
                 conf_file.return_value = '/interface'
                 lp.interface_name = 'tap0'
-                conf_file.assert_called_once_with('interface',
-                                                  ensure_conf_dir=True)
+                conf_file.assert_called_once_with('interface')
                 replace.assert_called_once_with(mock.ANY, 'tap0')
 
 
@@ -753,7 +753,7 @@ class TestDnsmasq(TestBase):
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
                     max_leases=16777216, lease_duration=86400,
                     has_static=True):
-        def mock_get_conf_file_name(kind, ensure_conf_dir=False):
+        def mock_get_conf_file_name(kind):
             return '/dhcp/%s/%s' % (network.id, kind)
 
         def fake_argv(index):
@@ -1140,13 +1140,12 @@ class TestDnsmasq(TestBase):
                           version=dhcp.Dnsmasq.MINIMUM_VERSION)
 
         with contextlib.nested(
-            mock.patch('os.path.isdir', return_value=True),
             mock.patch.object(dhcp.Dnsmasq, 'active'),
             mock.patch.object(dhcp.Dnsmasq, 'pid'),
             mock.patch.object(dhcp.Dnsmasq, 'interface_name'),
             mock.patch.object(dhcp.Dnsmasq, '_make_subnet_interface_ip_map'),
             mock.patch.object(dm, 'device_manager')
-        ) as (isdir, active, pid, interface_name, ip_map, device_manager):
+        ) as (active, pid, interface_name, ip_map, device_manager):
             active.__get__ = mock.Mock(return_value=True)
             pid.__get__ = mock.Mock(return_value=5)
             interface_name.__get__ = mock.Mock(return_value='tap12345678-12')
@@ -1170,19 +1169,17 @@ class TestDnsmasq(TestBase):
             mock_open.return_value.__exit__ = mock.Mock()
             mock_open.return_value.readline.return_value = None
 
-            with mock.patch('os.path.isdir') as isdir:
-                isdir.return_value = True
-                with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
-                    pid.__get__ = mock.Mock(return_value=5)
-                    dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
-                                      version=dhcp.Dnsmasq.MINIMUM_VERSION)
+            with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
+                pid.__get__ = mock.Mock(return_value=5)
+                dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
+                                  version=dhcp.Dnsmasq.MINIMUM_VERSION)
 
-                    method_name = '_make_subnet_interface_ip_map'
-                    with mock.patch.object(dhcp.Dnsmasq, method_name) as ipmap:
-                        ipmap.return_value = {}
-                        with mock.patch.object(dhcp.Dnsmasq, 'interface_name'):
-                            dm.reload_allocations()
-                            self.assertTrue(ipmap.called)
+                method_name = '_make_subnet_interface_ip_map'
+                with mock.patch.object(dhcp.Dnsmasq, method_name) as ipmap:
+                    ipmap.return_value = {}
+                    with mock.patch.object(dhcp.Dnsmasq, 'interface_name'):
+                        dm.reload_allocations()
+                        self.assertTrue(ipmap.called)
 
             self.safe.assert_has_calls([
                 mock.call(exp_host_name, exp_host_data),
