@@ -15,6 +15,7 @@
 
 import contextlib
 import copy
+import eventlet
 
 import mock
 import netaddr
@@ -282,6 +283,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
                               agent.context)
             self.assertTrue(agent.fullsync)
         self.assertFalse(f.called)
+
+    def test_l3_initial_full_sync_done(self):
+        with mock.patch.object(l3_agent.L3NATAgent,
+                               'periodic_sync_routers_task') as router_sync:
+            with mock.patch.object(eventlet, 'spawn_n'):
+                agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+                agent.after_start()
+                router_sync.assert_called_once_with(agent.context)
 
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
