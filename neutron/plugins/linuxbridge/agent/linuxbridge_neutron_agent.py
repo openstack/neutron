@@ -562,19 +562,8 @@ class LinuxBridgeManager:
             return False
         return True
 
-    def vxlan_module_supported(self):
-        try:
-            utils.execute(cmd=['modinfo', 'vxlan'], log_fail_as_error=False)
-            return True
-        except RuntimeError:
-            return False
-
     def check_vxlan_support(self):
         self.vxlan_mode = lconst.VXLAN_NONE
-        if not self.vxlan_module_supported():
-            LOG.error(_LE('Linux kernel vxlan module and iproute2 3.8 or '
-                          'above are required to enable VXLAN.'))
-            raise exceptions.VxlanNetworkUnsupported()
 
         if self.vxlan_ucast_supported():
             self.vxlan_mode = lconst.VXLAN_UCAST

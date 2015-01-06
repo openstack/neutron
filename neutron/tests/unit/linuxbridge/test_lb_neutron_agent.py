@@ -829,11 +829,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.lbm.delete_vlan("eth1.1")
             self.assertTrue(exec_fn.called)
 
-    def _check_vxlan_support(self, expected, vxlan_module_supported,
-                             vxlan_ucast_supported, vxlan_mcast_supported):
+    def _check_vxlan_support(self, expected, vxlan_ucast_supported,
+                             vxlan_mcast_supported):
         with contextlib.nested(
-            mock.patch.object(self.lbm, 'vxlan_module_supported',
-                              return_value=vxlan_module_supported),
             mock.patch.object(self.lbm, 'vxlan_ucast_supported',
                               return_value=vxlan_ucast_supported),
             mock.patch.object(self.lbm, 'vxlan_mcast_supported',
@@ -848,36 +846,18 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_check_vxlan_support(self):
         self._check_vxlan_support(expected=lconst.VXLAN_UCAST,
-                                  vxlan_module_supported=True,
                                   vxlan_ucast_supported=True,
                                   vxlan_mcast_supported=True)
         self._check_vxlan_support(expected=lconst.VXLAN_MCAST,
-                                  vxlan_module_supported=True,
                                   vxlan_ucast_supported=False,
                                   vxlan_mcast_supported=True)
 
         self._check_vxlan_support(expected=lconst.VXLAN_NONE,
-                                  vxlan_module_supported=False,
                                   vxlan_ucast_supported=False,
                                   vxlan_mcast_supported=False)
         self._check_vxlan_support(expected=lconst.VXLAN_NONE,
-                                  vxlan_module_supported=True,
                                   vxlan_ucast_supported=False,
                                   vxlan_mcast_supported=False)
-
-    def _check_vxlan_module_supported(self, expected, execute_side_effect):
-        with mock.patch.object(
-                utils, 'execute',
-                side_effect=execute_side_effect):
-            self.assertEqual(expected, self.lbm.vxlan_module_supported())
-
-    def test_vxlan_module_supported(self):
-        self._check_vxlan_module_supported(
-            expected=True,
-            execute_side_effect=None)
-        self._check_vxlan_module_supported(
-            expected=False,
-            execute_side_effect=RuntimeError())
 
     def _check_vxlan_ucast_supported(
             self, expected, l2_population, iproute_arg_supported, fdb_append):
