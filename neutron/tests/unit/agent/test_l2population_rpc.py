@@ -26,10 +26,8 @@ class TestL2populationRpcCallBackTunnelMixin(
     l2population_rpc_base.TestL2populationRpcCallBackTunnelMixinBase):
 
     def test_get_agent_ports_no_data(self):
-        for lvm, agent_ports in self.fakeagent.get_agent_ports(
-            self.fdb_entries1, {}):
-            self.assertIsNone(lvm)
-            self.assertEqual({}, agent_ports)
+        self.assertFalse(
+            list(self.fakeagent.get_agent_ports(self.fdb_entries1, {})))
 
     def test_get_agent_ports_non_existence_key_in_lvm(self):
         results = {}
