@@ -242,9 +242,6 @@ class IptablesTable(object):
         return [rule for rule in self.rules
                 if rule.chain == chain and rule.wrap == wrap]
 
-    def is_chain_empty(self, chain, wrap=True):
-        return not self._get_chain_rules(chain, wrap)
-
     def empty_chain(self, chain, wrap=True):
         """Remove all rules from a chain."""
         chained_rules = self._get_chain_rules(chain, wrap)
@@ -362,12 +359,15 @@ class IptablesManager(object):
             self.ipv4['nat'].add_chain('float-snat')
             self.ipv4['nat'].add_rule('snat', '-j $float-snat')
 
-    def is_chain_empty(self, table, chain, ip_version=4, wrap=True):
+    def get_chain(self, table, chain, ip_version=4, wrap=True):
         try:
             requested_table = {4: self.ipv4, 6: self.ipv6}[ip_version][table]
         except KeyError:
-            return True
-        return requested_table.is_chain_empty(chain, wrap)
+            return []
+        return requested_table._get_chain_rules(chain, wrap)
+
+    def is_chain_empty(self, table, chain, ip_version=4, wrap=True):
+        return not self.get_chain(table, chain, ip_version, wrap)
 
     def defer_apply_on(self):
         self.iptables_apply_deferred = True

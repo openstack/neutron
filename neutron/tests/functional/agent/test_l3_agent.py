@@ -287,6 +287,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._assert_floating_ips(router)
         self._assert_snat_chains(router)
         self._assert_floating_ip_chains(router)
+        self._assert_metadata_chains(router)
 
         if enable_ha:
             self._assert_ha_device(router)
@@ -343,6 +344,23 @@ class L3AgentTestCase(L3AgentTestFramework):
     def _assert_floating_ip_chains(self, router):
         self.assertFalse(router.iptables_manager.is_chain_empty(
             'nat', 'float-snat'))
+
+    def _get_rule(self, iptables_manager, table, chain, predicate):
+        rules = iptables_manager.get_chain(table, chain)
+        result = next(rule for rule in rules if predicate(rule))
+        return result
+
+    def _assert_metadata_chains(self, router):
+        metadata_port_filter = lambda rule: (
+            str(self.agent.conf.metadata_port) in rule.rule)
+        self.assertTrue(self._get_rule(router.iptables_manager,
+                                       'nat',
+                                       'PREROUTING',
+                                       metadata_port_filter))
+        self.assertTrue(self._get_rule(router.iptables_manager,
+                                       'filter',
+                                       'INPUT',
+                                       metadata_port_filter))
 
     def _assert_router_does_not_exist(self, router):
         # If the namespace assertion succeeds
