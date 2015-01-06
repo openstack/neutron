@@ -183,17 +183,29 @@ class DefaultPolicyTestCase(base.BaseTestCase):
         policy.enforce(self.context, "example:noexist", {})
 
 
-FAKE_RESOURCE_NAME = 'something'
-FAKE_RESOURCE = {"%ss" % FAKE_RESOURCE_NAME:
-                 {'attr': {'allow_post': True,
-                           'allow_put': True,
-                           'is_visible': True,
-                           'default': None,
-                           'enforce_policy': True,
-                           'validate': {'type:dict':
-                                        {'sub_attr_1': {'type:string': None},
-                                         'sub_attr_2': {'type:string': None}}}
-                           }}}
+FAKE_RESOURCE_NAME = 'fake_resource'
+FAKE_SPECIAL_RESOURCE_NAME = 'fake_policy'
+FAKE_RESOURCES = {"%ss" % FAKE_RESOURCE_NAME:
+                  {'attr': {'allow_post': True,
+                            'allow_put': True,
+                            'is_visible': True,
+                            'default': None,
+                            'enforce_policy': True,
+                            'validate': {'type:dict':
+                                         {'sub_attr_1': {'type:string': None},
+                                          'sub_attr_2': {'type:string': None}}}
+                            }},
+                  # special plural name
+                  "%s" % FAKE_SPECIAL_RESOURCE_NAME.replace('y', 'ies'):
+                  {'attr': {'allow_post': True,
+                            'allow_put': True,
+                            'is_visible': True,
+                            'default': None,
+                            'enforce_policy': True,
+                            'validate': {'type:dict':
+                                         {'sub_attr_1': {'type:string': None},
+                                          'sub_attr_2': {'type:string': None}}}
+                            }}}
 
 
 class NeutronPolicyTestCase(base.BaseTestCase):
@@ -207,8 +219,8 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         policy.refresh()
         self.admin_only_legacy = "role:admin"
         self.admin_or_owner_legacy = "role:admin or tenant_id:%(tenant_id)s"
-        # Add a Fake 'something' resource to RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCE)
+        # Add Fake resources to RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCES)
         self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
             "context_is_admin": "role:admin",
             "context_is_advsvc": "role:advsvc",
@@ -234,11 +246,12 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "update_port": "rule:admin_or_owner or rule:context_is_advsvc",
             "get_port": "rule:admin_or_owner or rule:context_is_advsvc",
             "delete_port": "rule:admin_or_owner or rule:context_is_advsvc",
-            "create_something": "rule:admin_or_owner",
-            "create_something:attr": "rule:admin_or_owner",
-            "create_something:attr:sub_attr_1": "rule:admin_or_owner",
-            "create_something:attr:sub_attr_2": "rule:admin_only",
+            "create_fake_resource": "rule:admin_or_owner",
+            "create_fake_resource:attr": "rule:admin_or_owner",
+            "create_fake_resource:attr:sub_attr_1": "rule:admin_or_owner",
+            "create_fake_resource:attr:sub_attr_2": "rule:admin_only",
 
+            "create_fake_policy:": "rule:admin_or_owner",
             "get_firewall_policy": "rule:admin_or_owner or "
                             "rule:shared",
             "get_firewall_rule": "rule:admin_or_owner or "
@@ -374,17 +387,17 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                           self.context, action, target)
 
     def _test_build_subattribute_match_rule(self, validate_value):
-        bk = FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr']['validate']
-        FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = (
+        bk = FAKE_RESOURCES['%ss' % FAKE_RESOURCE_NAME]['attr']['validate']
+        FAKE_RESOURCES['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = (
             validate_value)
-        action = "create_something"
+        action = "create_" + FAKE_RESOURCE_NAME
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
         self.assertFalse(policy._build_subattr_match_rule(
             'attr',
-            FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr'],
+            FAKE_RESOURCES['%ss' % FAKE_RESOURCE_NAME]['attr'],
             action,
             target))
-        FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = bk
+        FAKE_RESOURCES['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = bk
 
     def test_build_subattribute_match_rule_empty_dict_validator(self):
         self._test_build_subattribute_match_rule({})
@@ -393,14 +406,27 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self._test_build_subattribute_match_rule(
             {'type:dict': 'wrong_stuff'})
 
+    def test_build_match_rule_special_pluralized(self):
+        action = "create_" + FAKE_SPECIAL_RESOURCE_NAME
+        pluralized = "create_fake_policies"
+        target = {}
+        result = policy._build_match_rule(action, target, pluralized)
+        self.assertEqual("rule:" + action, str(result))
+
+    def test_build_match_rule_normal_pluralized_when_create(self):
+        action = "create_" + FAKE_RESOURCE_NAME
+        target = {}
+        result = policy._build_match_rule(action, target, None)
+        self.assertEqual("rule:" + action, str(result))
+
     def test_enforce_subattribute(self):
-        action = "create_something"
+        action = "create_" + FAKE_RESOURCE_NAME
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
         result = policy.enforce(self.context, action, target, None)
         self.assertEqual(result, True)
 
     def test_enforce_admin_only_subattribute(self):
-        action = "create_something"
+        action = "create_" + FAKE_RESOURCE_NAME
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
                                                 'sub_attr_2': 'y'}}
         result = policy.enforce(context.get_admin_context(),
@@ -408,7 +434,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self.assertEqual(result, True)
 
     def test_enforce_admin_only_subattribute_nonadminctx_returns_403(self):
-        action = "create_something"
+        action = "create_" + FAKE_RESOURCE_NAME
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
                                                 'sub_attr_2': 'y'}}
         self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
@@ -576,11 +602,12 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                  expected_policies))
 
     def test_process_rules(self):
-        action = "create_something"
+        action = "create_" + FAKE_RESOURCE_NAME
         # Construct RuleChecks for an action, attribute and subattribute
         match_rule = common_policy.RuleCheck('rule', action)
-        attr_rule = common_policy.RuleCheck('rule', '%s:%s' %
-                                                    (action, 'somethings'))
+        attr_rule = common_policy.RuleCheck('rule', '%s:%ss' %
+                                                    (action,
+                                                     FAKE_RESOURCE_NAME))
         sub_attr_rules = [common_policy.RuleCheck('rule', '%s:%s:%s' %
                                                           (action, 'attr',
                                                            'sub_attr_1'))]
@@ -593,8 +620,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         match_rule = common_policy.AndCheck([match_rule, attr_rule])
         # Assert that the rules are correctly extracted from the match_rule
         rules = policy._process_rules_list([], match_rule)
-        self.assertEqual(['create_something', 'create_something:somethings',
-                          'create_something:attr:sub_attr_1'], rules)
+        self.assertEqual(['create_fake_resource',
+                          'create_fake_resource:fake_resources',
+                          'create_fake_resource:attr:sub_attr_1'], rules)
 
     def test_log_rule_list(self):
         with contextlib.nested(

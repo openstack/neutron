@@ -78,10 +78,11 @@ def refresh():
     init()
 
 
-def get_resource_and_action(action):
+def get_resource_and_action(action, pluralized=None):
     """Extract resource and action (write, read) from api operation."""
     data = action.split(':', 1)[0].split('_', 1)
-    return ("%ss" % data[-1], data[0] != 'get')
+    resource = pluralized or ("%ss" % data[-1])
+    return (resource, data[0] != 'get')
 
 
 def set_rules(policies, overwrite=True):
@@ -183,7 +184,7 @@ def _process_rules_list(rules, match_rule):
     return rules
 
 
-def _build_match_rule(action, target):
+def _build_match_rule(action, target, pluralized):
     """Create the rule to match for a given action.
 
     The policy rule to be matched is built in the following way:
@@ -196,7 +197,7 @@ def _build_match_rule(action, target):
        (e.g.: create_router:external_gateway_info:network_id)
     """
     match_rule = policy.RuleCheck('rule', action)
-    resource, is_write = get_resource_and_action(action)
+    resource, is_write = get_resource_and_action(action, pluralized)
     # Attribute-based checks shall not be enforced on GETs
     if is_write:
         # assigning to variable with short name for improving readability
@@ -346,12 +347,12 @@ class FieldCheck(policy.Check):
         return target_value == self.value
 
 
-def _prepare_check(context, action, target):
+def _prepare_check(context, action, target, pluralized):
     """Prepare rule, target, and credentials for the policy engine."""
     # Compare with None to distinguish case in which target is {}
     if target is None:
         target = {}
-    match_rule = _build_match_rule(action, target)
+    match_rule = _build_match_rule(action, target, pluralized)
     credentials = context.to_dict()
     return match_rule, target, credentials
 
@@ -362,7 +363,8 @@ def log_rule_list(match_rule):
         LOG.debug("Enforcing rules: %s", rules)
 
 
-def check(context, action, target, plugin=None, might_not_exist=False):
+def check(context, action, target, plugin=None, might_not_exist=False,
+          pluralized=None):
     """Verifies that the action is valid on the target in this context.
 
     :param context: neutron context
@@ -376,20 +378,28 @@ def check(context, action, target, plugin=None, might_not_exist=False):
     :param might_not_exist: If True the policy check is skipped (and the
         function returns True) if the specified policy does not exist.
         Defaults to false.
+    :param pluralized: pluralized case of resource
+        e.g. firewall_policy -> pluralized = "firewall_policies"
 
     :return: Returns True if access is permitted else False.
     """
     if might_not_exist and not (_ENFORCER.rules and action in _ENFORCER.rules):
         return True
-    match_rule, target, credentials = _prepare_check(context, action, target)
-    result = _ENFORCER.enforce(match_rule, target, credentials)
+    match_rule, target, credentials = _prepare_check(context,
+                                                     action,
+                                                     target,
+                                                     pluralized)
+    result = _ENFORCER.enforce(match_rule,
+                               target,
+                               credentials,
+                               pluralized=pluralized)
     # logging applied rules in case of failure
     if not result:
         log_rule_list(match_rule)
     return result
 
 
-def enforce(context, action, target, plugin=None):
+def enforce(context, action, target, plugin=None, pluralized=None):
     """Verifies that the action is valid on the target in this context.
 
     :param context: neutron context
@@ -400,11 +410,16 @@ def enforce(context, action, target, plugin=None):
         location of the object e.g. ``{'project_id': context.project_id}``
     :param plugin: currently unused and deprecated.
         Kept for backward compatibility.
+    :param pluralized: pluralized case of resource
+        e.g. firewall_policy -> pluralized = "firewall_policies"
 
     :raises neutron.openstack.common.policy.PolicyNotAuthorized:
             if verification fails.
     """
-    rule, target, credentials = _prepare_check(context, action, target)
+    rule, target, credentials = _prepare_check(context,
+                                               action,
+                                               target,
+                                               pluralized)
     try:
         result = _ENFORCER.enforce(rule, target, credentials, action=action,
                                    do_raise=True)
