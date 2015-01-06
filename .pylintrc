@@ -24,7 +24,6 @@ disable=
  no-member,
  no-method-argument,
  no-self-argument,
- not-callable,
  no-value-for-parameter,
  super-on-old-class,
 # "W" Warnings for stylistic problems or minor programming issues

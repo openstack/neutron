@@ -63,6 +63,7 @@ class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     mechanism_apic.APICMechanismDriver.
                     get_router_synchronizer(inst))
                 inst.synchronizer.sync_router()
+            # pylint: disable=not-callable
             return f(inst, *args, **kwargs)
         return inner
 

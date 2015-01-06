@@ -197,7 +197,8 @@ class SecurityGroupAgentRpcMixin(object):
                          "or configured as NoopFirewallDriver."),
                          func.__name__)
             else:
-                return func(self, *args, **kwargs)
+                return func(self,  # pylint: disable=not-callable
+                            *args, **kwargs)
         return decorated_function
 
     @skip_if_noopfirewall_or_firewall_disabled

@@ -79,6 +79,7 @@ class APICMechanismDriver(api.MechanismDriver):
                 inst.synchronizer = (
                     APICMechanismDriver.get_base_synchronizer(inst))
                 inst.synchronizer.sync_base()
+            # pylint: disable=not-callable
             return f(inst, *args, **kwargs)
         return inner
 
