@@ -43,7 +43,7 @@ Running unit tests
 ------------------
 
 There are three mechanisms for running tests: run_tests.sh, tox,
-and nose. Before submitting a patch for review you should always
+and nose2. Before submitting a patch for review you should always
 ensure all test pass; a tox run is triggered by the jenkins gate
 executed on gerrit for each patch pushed for review.
 
@@ -63,24 +63,38 @@ tests in a virtualenv::
     ./run_tests -V
 
 
-With `nose`
+With `nose2`
 ~~~~~~~~~~~
 
-You can use `nose`_ to run individual tests, as well as use for debugging
+You can use `nose2`_ to run individual tests, as well as use for debugging
 portions of your code::
 
     source .venv/bin/activate
-    pip install nose
-    nosetests
+    pip install nose2
+    nose2
 
-There are disadvantages to running Nose - the tests are run sequentially, so
+There are disadvantages to running nose2 - the tests are run sequentially, so
 race condition bugs will not be triggered, and the full test suite will
 take significantly longer than tox & testr. The upside is that testr has
 some rough edges when it comes to diagnosing errors and failures, and there is
 no easy way to set a breakpoint in the Neutron code, and enter an
 interactive debugging session while using testr.
 
+It is also possible to use nose2's predecessor, `nose`_, to run the tests::
+
+    source .venv/bin/activate
+    pip install nose
+    nosetests
+
+nose has one additional disadvantage over nose2 - it does not
+understand the `load_tests protocol`_ introduced in Python 2.7.  This
+limitation will result in errors being reported for modules that
+depend on load_tests (usually due to use of `testscenarios`_).
+
+.. _nose2: http://nose2.readthedocs.org/en/latest/index.html
 .. _nose: https://nose.readthedocs.org/en/latest/index.html
+.. _load_tests protocol: https://docs.python.org/2/library/unittest.html#load-tests-protocol
+.. _testscenarios: https://pypi.python.org/pypi/testscenarios/
 
 With `tox`
 ~~~~~~~~~~
