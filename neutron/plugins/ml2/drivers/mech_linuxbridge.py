@@ -15,6 +15,7 @@
 
 from neutron.common import constants
 from neutron.extensions import portbindings
+from neutron.i18n import _LW
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
@@ -52,6 +53,11 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         elif network_type in tunnel_types:
             return True
         elif network_type in ['flat', 'vlan']:
-            return segment[api.PHYSICAL_NETWORK] in mappings
+            is_mapping_present = segment[api.PHYSICAL_NETWORK] in mappings
+            if not is_mapping_present:
+                LOG.warn(_LW("Failed to find %(seg)s in mappings %(map)s"),
+                        {'seg': segment[api.PHYSICAL_NETWORK],
+                         'map': mappings})
+            return is_mapping_present
         else:
             return False
