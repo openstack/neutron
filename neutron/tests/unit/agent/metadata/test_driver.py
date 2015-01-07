@@ -37,6 +37,7 @@ class TestMetadataDriver(base.BaseTestCase):
     def setUp(self):
         super(TestMetadataDriver, self).setUp()
         cfg.CONF.register_opts(l3_config.OPTS)
+        cfg.CONF.register_opts(metadata_driver.MetadataDriver.OPTS)
         agent_config.register_root_helper(cfg.CONF)
 
     def test_metadata_nat_rules(self):
