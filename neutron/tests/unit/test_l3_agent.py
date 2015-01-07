@@ -26,6 +26,7 @@ from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import dvr
+from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import link_local_allocator as lla
@@ -415,19 +416,21 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri = l3router.RouterInfo(router['id'], router,
                                  ns_name=agent.get_ns_name(router['id']),
                                  **self.ri_kwargs)
+        ex_net_id = _uuid()
         # Special setup for dvr routers
         if router.get('distributed'):
             agent.conf.agent_mode = 'dvr_snat'
             agent.host = HOSTNAME
             agent._create_dvr_gateway = mock.Mock()
             agent.get_snat_interfaces = mock.Mock(return_value=self.snat_ports)
+            ri.fip_ns = agent.get_fip_ns(ex_net_id)
 
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'subnet_id': _uuid()}],
                       'subnet': {'gateway_ip': '20.0.0.1'},
                       'extra_subnets': [{'cidr': '172.16.0.0/24'}],
                       'id': _uuid(),
-                      'network_id': _uuid(),
+                      'network_id': ex_net_id,
                       'mac_address': 'ca:fe:de:ad:be:ef',
                       'ip_cidr': '20.0.0.30/24'}
         interface_name = agent.get_external_device_name(ex_gw_port['id'])
@@ -825,39 +828,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
             4, '1.5.25.15', '00:44:33:22:11:55')
         agent.router_deleted(None, router['id'])
 
-    @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
-    def _test_scan_fip_ports(self, ri, ip_list, IPDevice):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.device_exists.return_value = True
-        IPDevice.return_value = device = mock.Mock()
-        device.addr.list.return_value = ip_list
-        agent.scan_fip_ports(ri)
-
-    def test_scan_fip_ports_restart_fips(self):
-        router = prepare_router_data()
-        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-        ri.router['distributed'] = True
-        ip_list = [{'cidr': '111.2.3.4/32'}, {'cidr': '111.2.3.5/32'}]
-        self._test_scan_fip_ports(ri, ip_list)
-        self.assertEqual(ri.dist_fip_count, 2)
-
-    def test_scan_fip_ports_restart_none(self):
-        router = prepare_router_data()
-        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-        ri.router['distributed'] = True
-        ip_list = []
-        self._test_scan_fip_ports(ri, ip_list)
-        self.assertEqual(ri.dist_fip_count, 0)
-
-    def test_scan_fip_ports_restart_zero(self):
-        router = prepare_router_data()
-        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-        ri.router['distributed'] = True
-        ri.dist_fip_count = 0
-        ip_list = None
-        self._test_scan_fip_ports(ri, ip_list)
-        self.assertEqual(ri.dist_fip_count, 0)
-
     def test_process_cent_router(self):
         router = prepare_router_data()
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
@@ -961,10 +931,11 @@ class TestBasicRouterOperations(base.BaseTestCase):
         IPDevice.return_value = device = mock.Mock()
         device.addr.list.return_value = []
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
-        ex_gw_port = {'id': _uuid()}
+        ex_gw_port = {'id': _uuid(), 'network_id': mock.sentinel.ext_net_id}
 
         with mock.patch.object(lla.LinkLocalAllocator, '_write'):
             if ri.router['distributed']:
+                ri.fip_ns = agent.get_fip_ns(ex_gw_port['network_id'])
                 agent.create_dvr_fip_interfaces(ri, ex_gw_port)
             fip_statuses = agent.process_router_floating_ip_addresses(
                 ri, ex_gw_port)
@@ -1015,13 +986,13 @@ class TestBasicRouterOperations(base.BaseTestCase):
              'host': HOSTNAME,
              'floating_ip_address': '15.1.2.3',
              'fixed_ip_address': '192.168.0.1',
-             'floating_network_id': _uuid(),
+             'floating_network_id': mock.sentinel.ext_net_id,
              'port_id': _uuid()},
             {'id': _uuid(),
              'host': 'some-other-host',
              'floating_ip_address': '15.1.2.4',
              'fixed_ip_address': '192.168.0.10',
-             'floating_network_id': _uuid(),
+             'floating_network_id': mock.sentinel.ext_net_id,
              'port_id': _uuid()}]}
 
         router = prepare_router_data(enable_snat=True)
@@ -1032,7 +1003,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri.dist_fip_count = 0
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.host = HOSTNAME
-        agent.agent_gateway_port = (
+        fip_ns = agent.get_fip_ns(mock.sentinel.ext_net_id)
+        fip_ns.agent_gateway_port = (
             {'fixed_ips': [{'ip_address': '20.0.0.30',
              'subnet_id': _uuid()}],
              'subnet': {'gateway_ip': '20.0.0.1'},
@@ -1140,7 +1112,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
         fip_statuses = agent.process_router_floating_ip_addresses(
-            ri, {'id': _uuid()})
+            ri, {'id': _uuid(), 'network_id': mock.sentinel.ext_net_id})
 
         self.assertIsNone(fip_statuses.get(fip_id))
 
@@ -1617,23 +1589,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.router_added_to_agent(None, [FAKE_ID])
         self.assertEqual(1, agent._queue.add.call_count)
 
-    def test_destroy_fip_namespace(self):
-        namespaces = ['qrouter-foo', 'qrouter-bar']
-
-        self.mock_ip.get_namespaces.return_value = namespaces
-        self.mock_ip.get_devices.return_value = [FakeDev('fpr-aaaa'),
-                                                 FakeDev('fg-aaaa')]
-
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-
-        agent._destroy_fip_namespace(namespaces[0])
-        self.mock_driver.unplug.assert_called_once_with('fg-aaaa',
-                                                        bridge='br-ex',
-                                                        prefix='fg-',
-                                                        namespace='qrouter'
-                                                        '-foo')
-        self.mock_ip.del_veth.assert_called_once_with('fpr-aaaa')
-
     def test_destroy_namespace(self):
         namespace = 'qrouter-bar'
 
@@ -1910,81 +1865,16 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertEqual(self.mock_driver.plug.call_count, 3)
         self.assertEqual(self.mock_driver.init_l3.call_count, 3)
 
-    def test_agent_gateway_added(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        network_id = _uuid()
-        port_id = _uuid()
-        agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                        'subnet_id': _uuid()}],
-                         'subnet': {'gateway_ip': '20.0.0.1'},
-                         'id': port_id,
-                         'network_id': network_id,
-                         'mac_address': 'ca:fe:de:ad:be:ef',
-                         'ip_cidr': '20.0.0.30/24'}
-        fip_ns_name = (
-            agent.get_fip_ns_name(str(network_id)))
-        interface_name = (
-            agent.get_fip_ext_device_name(port_id))
-
-        self.device_exists.return_value = False
-        agent.agent_gateway_added(fip_ns_name, agent_gw_port,
-                                  interface_name)
-        self.assertEqual(self.mock_driver.plug.call_count, 1)
-        self.assertEqual(self.mock_driver.init_l3.call_count, 1)
-        if self.conf.use_namespaces:
-            self.send_arp.assert_called_once_with(fip_ns_name, interface_name,
-                                                  '20.0.0.30',
-                                                  mock.ANY, mock.ANY)
-        else:
-            self.utils_exec.assert_any_call(
-                check_exit_code=True, root_helper=self.conf.root_helper)
-
-    def test_create_rtr_2_fip_link(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = prepare_router_data()
-        fip = {'id': _uuid(),
-               'host': HOSTNAME,
-               'floating_ip_address': '15.1.2.3',
-               'fixed_ip_address': '192.168.0.1',
-               'floating_network_id': _uuid(),
-               'port_id': _uuid()}
-
-        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-
-        rtr_2_fip_name = agent.get_rtr_int_device_name(ri.router_id)
-        fip_2_rtr_name = agent.get_fip_int_device_name(ri.router_id)
-        fip_ns_name = agent.get_fip_ns_name(str(fip['floating_network_id']))
-
-        with mock.patch.object(lla.LinkLocalAllocator, '_write'):
-            self.device_exists.return_value = False
-            agent.create_rtr_2_fip_link(ri, fip['floating_network_id'])
-        self.mock_ip.add_veth.assert_called_with(rtr_2_fip_name,
-                                                 fip_2_rtr_name, fip_ns_name)
-        # TODO(mrsmith): add more aasserts -
-        self.mock_ip_dev.route.add_gateway.assert_called_once_with(
-            '169.254.31.29', table=16)
-
-    # TODO(mrsmith): test _create_agent_gateway_port
-
-    def test_create_rtr_2_fip_link_already_exists(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = prepare_router_data()
-
-        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-        self.device_exists.return_value = True
-        with mock.patch.object(lla.LinkLocalAllocator, '_write'):
-            agent.create_rtr_2_fip_link(ri, {})
-        self.assertFalse(self.mock_ip.add_veth.called)
-
     def test_floating_ip_added_dist(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data()
         ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
+        ext_net_id = _uuid()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                         'subnet_id': _uuid()}],
                          'subnet': {'gateway_ip': '20.0.0.1'},
                          'id': _uuid(),
-                         'network_id': _uuid(),
+                         'network_id': ext_net_id,
                          'mac_address': 'ca:fe:de:ad:be:ef',
                          'ip_cidr': '20.0.0.30/24'}
 
@@ -1992,9 +1882,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
                'host': HOSTNAME,
                'floating_ip_address': '15.1.2.3',
                'fixed_ip_address': '192.168.0.1',
-               'floating_network_id': _uuid(),
+               'floating_network_id': ext_net_id,
                'port_id': _uuid()}
-        agent.agent_gateway_port = agent_gw_port
+        ri.fip_ns = agent.get_fip_ns(ext_net_id)
+        ri.fip_ns.agent_gateway_port = agent_gw_port
         ri.rtr_fip_subnet = lla.LinkLocalAddressPair('169.254.30.42/31')
         ri.dist_fip_count = 0
         ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
@@ -2002,9 +1893,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.mock_rule.add.assert_called_with('192.168.0.1', 16, FIP_PRI)
         # TODO(mrsmith): add more asserts
 
-    @mock.patch.object(l3_agent.L3NATAgent, '_fip_ns_unsubscribe')
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
-    def test_floating_ip_removed_dist(self, write, unsubscribe):
+    def test_floating_ip_removed_dist(self, write):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
@@ -2018,7 +1908,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
         ri.dist_fip_count = 2
-        agent.fip_ns_subscribers.add(ri.router_id)
+        ri.fip_ns = agent.get_fip_ns(agent._fetch_external_net_id())
+        ri.fip_ns.unsubscribe = mock.Mock()
         ri.floating_ips_dict['11.22.33.44'] = FIP_PRI
         ri.fip_2_rtr = '11.22.33.42'
         ri.rtr_2_fip = '11.22.33.40'
@@ -2030,21 +1921,20 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.mock_rule.delete.assert_called_with(floating_ip, 16, FIP_PRI)
         self.mock_ip_dev.route.delete_route.assert_called_with(fip_cidr,
                                                                str(s.ip))
-        self.assertFalse(unsubscribe.called, '_fip_ns_unsubscribe called!')
+        self.assertFalse(ri.fip_ns.unsubscribe.called)
 
         with mock.patch.object(agent, '_destroy_fip_namespace') as f:
             ri.dist_fip_count = 1
-            fip_ns_name = agent.get_fip_ns_name(
-                str(agent._fetch_external_net_id()))
-            ri.rtr_fip_subnet = agent.local_subnets.allocate(ri.router_id)
+            fip_ns_name = ri.fip_ns.get_name()
+            ri.rtr_fip_subnet = ri.fip_ns.local_subnets.allocate(ri.router_id)
             _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
             agent.floating_ip_removed_dist(ri, fip_cidr)
             self.mock_ip.del_veth.assert_called_once_with(
-                agent.get_fip_int_device_name(router['id']))
+                ri.fip_ns.get_int_device_name(router['id']))
             self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
                 str(fip_to_rtr.ip), table=16)
             f.assert_called_once_with(fip_ns_name)
-        unsubscribe.assert_called_once_with(ri.router_id)
+        ri.fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
 
     def test_get_service_plugin_list(self):
         service_plugins = [p_const.L3_ROUTER_NAT]
@@ -2080,74 +1970,41 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertRaises(messaging.MessagingTimeout, l3_agent.L3NATAgent,
                           HOSTNAME, self.conf)
 
-    def test__fip_ns_subscribe_is_first_true(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router_id = _uuid()
-        is_first = agent._fip_ns_subscribe(router_id)
-        self.assertTrue(is_first)
-        self.assertEqual(len(agent.fip_ns_subscribers), 1)
-
-    def test__fip_ns_subscribe_is_first_false(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router_id = _uuid()
-        router2_id = _uuid()
-        agent._fip_ns_subscribe(router_id)
-        is_first = agent._fip_ns_subscribe(router2_id)
-        self.assertFalse(is_first)
-        self.assertEqual(len(agent.fip_ns_subscribers), 2)
-
-    def test__fip_ns_unsubscribe_is_last_true(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router_id = _uuid()
-        agent.fip_ns_subscribers.add(router_id)
-        is_last = agent._fip_ns_unsubscribe(router_id)
-        self.assertTrue(is_last)
-        self.assertEqual(len(agent.fip_ns_subscribers), 0)
-
-    def test__fip_ns_unsubscribe_is_last_false(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router_id = _uuid()
-        router2_id = _uuid()
-        agent.fip_ns_subscribers.add(router_id)
-        agent.fip_ns_subscribers.add(router2_id)
-        is_last = agent._fip_ns_unsubscribe(router_id)
-        self.assertFalse(is_last)
-        self.assertEqual(len(agent.fip_ns_subscribers), 1)
-
     def test_external_gateway_removed_ext_gw_port_and_fip(self):
         self.conf.set_override('state_path', '/tmp')
         self.conf.set_override('router_delete_namespaces', True)
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.conf.agent_mode = 'dvr'
-        agent.agent_gateway_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                                   'subnet_id': _uuid()}],
-                                    'subnet': {'gateway_ip': '20.0.0.1'},
-                                    'id': _uuid(),
-                                    'network_id': _uuid(),
-                                    'mac_address': 'ca:fe:de:ad:be:ef',
-                                    'ip_cidr': '20.0.0.30/24'}
-        external_net_id = _uuid()
-        agent._fetch_external_net_id = mock.Mock(return_value=external_net_id)
-
         router = prepare_router_data(num_internal_ports=2)
         router['distributed'] = True
         router['gw_port_host'] = HOSTNAME
 
+        external_net_id = router['gw_port']['network_id']
         ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
+        ri.fip_ns = agent.get_fip_ns(external_net_id)
+        ri.fip_ns.agent_gateway_port = {
+            'fixed_ips': [{'ip_address': '20.0.0.30', 'subnet_id': _uuid()}],
+            'subnet': {'gateway_ip': '20.0.0.1'},
+            'id': _uuid(),
+            'network_id': external_net_id,
+            'mac_address': 'ca:fe:de:ad:be:ef',
+            'ip_cidr': '20.0.0.30/24'}
+        agent._fetch_external_net_id = mock.Mock(return_value=external_net_id)
+
         vm_floating_ip = '19.4.4.2'
         ri.floating_ips_dict[vm_floating_ip] = FIP_PRI
         ri.dist_fip_count = 1
         ri.ex_gw_port = ri.router['gw_port']
         del ri.router['gw_port']
-        ri.rtr_fip_subnet = agent.local_subnets.allocate(ri.router_id)
+        ri.rtr_fip_subnet = ri.fip_ns.local_subnets.allocate(ri.router_id)
         _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
         nat = ri.iptables_manager.ipv4['nat']
         nat.clear_rules_by_tag = mock.Mock()
         nat.add_rule = mock.Mock()
 
         self.mock_ip.get_devices.return_value = [
-            FakeDev(agent.get_fip_ext_device_name(_uuid()))]
+            FakeDev(ri.fip_ns.get_ext_device_name(_uuid()))]
         self.mock_ip_dev.addr.list.return_value = [
             {'cidr': vm_floating_ip + '/32'},
             {'cidr': '19.4.4.1/24'}]
@@ -2158,16 +2015,15 @@ class TestBasicRouterOperations(base.BaseTestCase):
             agent.get_external_device_name(ri.ex_gw_port['id']))
 
         self.mock_ip.del_veth.assert_called_once_with(
-            agent.get_fip_int_device_name(ri.router['id']))
+            ri.fip_ns.get_int_device_name(ri.router['id']))
         self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
-            str(fip_to_rtr.ip), table=dvr.FIP_RT_TBL)
+            str(fip_to_rtr.ip), table=dvr_fip_ns.FIP_RT_TBL)
 
         self.assertEqual(ri.dist_fip_count, 0)
-        self.assertEqual(len(agent.fip_ns_subscribers), 0)
+        self.assertFalse(ri.fip_ns.has_subscribers())
         self.assertEqual(self.mock_driver.unplug.call_count, 1)
-        self.assertIsNone(agent.agent_gateway_port)
-        self.mock_ip.netns.delete.assert_called_once_with(
-            agent.get_fip_ns_name(external_net_id))
+        self.assertIsNone(ri.fip_ns.agent_gateway_port)
+        self.mock_ip.netns.delete.assert_called_once_with(ri.fip_ns.get_name())
         self.assertFalse(nat.add_rule.called)
         nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
 
