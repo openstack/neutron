@@ -201,9 +201,8 @@ class KeyStoneInfo(object):
     """To generate Keystone Authentication information
        Contrail Driver expects Keystone auth info for testing purpose.
     """
-    auth_protocol = 'http'
-    auth_host = 'host'
-    auth_port = 5000
+    auth_uri = 'http://host:35357/v2.0/'
+    identity_uri = 'http://host:5000'
     admin_user = 'neutron'
     admin_password = 'neutron'
     admin_token = 'neutron'

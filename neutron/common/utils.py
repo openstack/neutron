@@ -357,3 +357,15 @@ def is_dvr_serviced(device_owner):
                                   q_const.DEVICE_OWNER_DHCP)
     return (device_owner.startswith('compute:') or
             device_owner in dvr_serviced_device_owners)
+
+
+def get_keystone_url(conf):
+    if conf.auth_uri:
+        auth_uri = conf.auth_uri.rstrip('/')
+    else:
+        auth_uri = ('%(protocol)s://%(host)s:%(port)s' %
+            {'protocol': conf.auth_protocol,
+             'host': conf.auth_host,
+             'port': conf.auth_port})
+    # NOTE(ihrachys): all existing consumers assume version 2.0
+    return '%s/v2.0/' % auth_uri

@@ -23,6 +23,7 @@ from keystoneclient.v2_0 import client as keyclient
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
+from neutron.common import utils
 from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.ibm.common import config  # noqa
@@ -341,15 +342,14 @@ class KeystoneClient(object):
                  auth_url=None):
 
         keystone_conf = cfg.CONF.keystone_authtoken
-        keystone_auth_url = ('%s://%s:%s/v2.0/' %
-                             (keystone_conf.auth_protocol,
-                              keystone_conf.auth_host,
-                              keystone_conf.auth_port))
 
         username = username or keystone_conf.admin_user
         tenant_name = tenant_name or keystone_conf.admin_tenant_name
         password = password or keystone_conf.admin_password
-        auth_url = auth_url or keystone_auth_url
+        # FIXME(ihrachys): plugins should not construct keystone URL
+        # from configuration file and should instead rely on service
+        # catalog contents
+        auth_url = auth_url or utils.get_keystone_url(keystone_conf)
 
         self.overlay_signature = cfg.CONF.SDNVE.overlay_signature
         self.of_signature = cfg.CONF.SDNVE.of_signature

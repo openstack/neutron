@@ -158,9 +158,8 @@ class L3RouterApplianceTestCaseBase(
 
         cfg.CONF.set_override('allow_sorting', True)
         test_opts = [
-            cfg.StrOpt('auth_protocol', default='http'),
-            cfg.StrOpt('auth_host', default='localhost'),
-            cfg.IntOpt('auth_port', default=35357),
+            cfg.StrOpt('auth_uri', default='http://localhost:35357/v2.0/'),
+            cfg.StrOpt('identity_uri', default='http://localhost:5000'),
             cfg.StrOpt('admin_user', default='neutron'),
             cfg.StrOpt('admin_password', default='secrete')]
         cfg.CONF.register_opts(test_opts, 'keystone_authtoken')
