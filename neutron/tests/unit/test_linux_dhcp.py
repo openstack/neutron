@@ -1311,16 +1311,16 @@ class TestDnsmasq(TestBase):
     def test_check_find_version(self):
         # Dnsmasq output currently gives the version number before the
         # copyright year, but just in case ...
-        self._check_version('Copyright 2000-2014. Dnsmasq version 2.65 ...',
-                            float(2.65))
+        self._check_version('Copyright 2000-2014. Dnsmasq version 3.33 ...',
+                            float(3.33))
 
     def test_check_minimum_version(self):
-        self._check_version('Dnsmasq version 2.63 Copyright (c)...',
+        self._check_version('Dnsmasq version 2.67 Copyright (c)...',
                             dhcp.Dnsmasq.MINIMUM_VERSION)
 
     def test_check_future_version(self):
-        self._check_version('Dnsmasq version 2.65 Copyright (c)...',
-                            float(2.65))
+        self._check_version('Dnsmasq version 2.99 Copyright (c)...',
+                            float(2.99))
 
     def test_check_fail_version(self):
         with testtools.ExpectedException(SystemExit):
