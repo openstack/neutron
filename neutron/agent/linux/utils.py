@@ -120,12 +120,13 @@ def find_child_pids(pid):
     """Retrieve a list of the pids of child processes of the given pid."""
 
     try:
-        raw_pids = execute(['ps', '--ppid', pid, '-o', 'pid='])
+        raw_pids = execute(['ps', '--ppid', pid, '-o', 'pid='],
+                           log_fail_as_error=False)
     except RuntimeError as e:
         # Unexpected errors are the responsibility of the caller
         with excutils.save_and_reraise_exception() as ctxt:
             # Exception has already been logged by execute
-            no_children_found = 'Exit code: 1' in str(e)
+            no_children_found = 'Exit code: 1' in e.message
             if no_children_found:
                 ctxt.reraise = False
                 return []
@@ -176,3 +177,35 @@ def remove_conf_file(cfg_root, uuid, cfg_file):
     conf_file = get_conf_file_name(cfg_root, uuid, cfg_file)
     if os.path.exists(conf_file):
         os.unlink(conf_file)
+
+
+def get_root_helper_child_pid(pid, root_helper=None):
+    """
+    Get the lowest child pid in the process hierarchy
+
+    If root helper was used, two or more processes would be created:
+
+     - a root helper process (e.g. sudo myscript)
+     - possibly a rootwrap script (e.g. neutron-rootwrap)
+     - a child process (e.g. myscript)
+
+    Killing the root helper process will leave the child process
+    running, re-parented to init, so the only way to ensure that both
+    die is to target the child process directly.
+    """
+    pid = str(pid)
+    if root_helper:
+        try:
+            pid = find_child_pids(pid)[0]
+        except IndexError:
+            # Process is already dead
+            return None
+        while True:
+            try:
+                # We shouldn't have more than one child per process
+                # so keep getting the children of the first one
+                pid = find_child_pids(pid)[0]
+            except IndexError:
+                # Last process in the tree, return it
+                break
+    return pid

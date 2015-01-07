@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+
 import eventlet.event
 import eventlet.queue
 import eventlet.timeout
@@ -21,9 +23,6 @@ import testtools
 from neutron.agent.linux import async_process
 from neutron.agent.linux import utils
 from neutron.tests import base
-
-
-_marker = ()
 
 
 class TestAsyncProcess(base.BaseTestCase):
@@ -156,12 +155,17 @@ class TestAsyncProcess(base.BaseTestCase):
         self._test_iter_output_calls_iter_queue_on_output_queue('stderr')
 
     def _test__kill(self, respawning, pid=None):
-        with mock.patch.object(self.proc, '_kill_event') as mock_kill_event:
-            with mock.patch.object(self.proc, '_get_pid_to_kill',
-                                   return_value=pid):
-                with mock.patch.object(self.proc,
-                                       '_kill_process') as mock_kill_process:
-                    self.proc._kill(respawning)
+        with contextlib.nested(
+                mock.patch.object(self.proc, '_kill_event'),
+                mock.patch.object(utils, 'get_root_helper_child_pid',
+                                  return_value=pid),
+                mock.patch.object(self.proc, '_kill_process'),
+                mock.patch.object(self.proc, '_process')) as (
+                    mock_kill_event,
+                    mock_get_child_pid,
+                    mock_kill_process,
+                    mock_process):
+            self.proc._kill(respawning)
 
             if respawning:
                 self.assertIsNotNone(self.proc._kill_event)
@@ -180,40 +184,6 @@ class TestAsyncProcess(base.BaseTestCase):
 
     def test__kill_targets_process_for_pid(self):
         self._test__kill(False, pid='1')
-
-    def _test__get_pid_to_kill(self, expected=_marker,
-                               root_helper=None, pids=None):
-        def _find_child_pids(x):
-            if not pids:
-                return []
-            pids.pop(0)
-            return pids
-
-        if root_helper:
-            self.proc.root_helper = root_helper
-
-        with mock.patch.object(self.proc, '_process') as mock_process:
-            with mock.patch.object(mock_process, 'pid') as mock_pid:
-                with mock.patch.object(utils, 'find_child_pids',
-                                       side_effect=_find_child_pids):
-                    actual = self.proc._get_pid_to_kill()
-        if expected is _marker:
-            expected = mock_pid
-        self.assertEqual(expected, actual)
-
-    def test__get_pid_to_kill_returns_process_pid_without_root_helper(self):
-        self._test__get_pid_to_kill()
-
-    def test__get_pid_to_kill_returns_child_pid_with_root_helper(self):
-        self._test__get_pid_to_kill(expected='2', pids=['1', '2'],
-                                    root_helper='a')
-
-    def test__get_pid_to_kill_returns_last_child_pid_with_root_Helper(self):
-        self._test__get_pid_to_kill(expected='3', pids=['1', '2', '3'],
-                                    root_helper='a')
-
-    def test__get_pid_to_kill_returns_none_with_root_helper(self):
-        self._test__get_pid_to_kill(expected=None, root_helper='a')
 
     def _test__kill_process(self, pid, expected, exception_message=None):
         self.proc.root_helper = 'foo'
