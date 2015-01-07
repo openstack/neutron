@@ -369,6 +369,10 @@ class IpTablesApplyException(NeutronException):
         super(IpTablesApplyException, self).__init__()
 
 
+class NetworkIdOrRouterIdRequiredError(NeutronException):
+    message = _('network_id and router_id are None. One must be provided.')
+
+
 # Shared *aas exceptions, pending them being refactored out of Neutron
 # proper.
 

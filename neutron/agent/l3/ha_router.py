@@ -110,7 +110,8 @@ class HaRouter(router.RouterInfo):
     def _add_keepalived_notifiers(self):
         callback = (
             metadata_driver.MetadataDriver._get_metadata_proxy_callback(
-                self.router_id, self.agent_conf))
+                self.agent_conf.metadata_port, self.agent_conf,
+                router_id=self.router_id))
         # TODO(mangelajo): use the process monitor in keepalived when
         #                  keepalived stops killing/starting metadata
         #                  proxy on its own

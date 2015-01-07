@@ -68,7 +68,6 @@ class TestMetadataDriver(base.BaseTestCase):
         metadata_port = 8080
         ip_class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
 
-        cfg.CONF.set_override('metadata_port', metadata_port)
         cfg.CONF.set_override('metadata_proxy_user', user)
         cfg.CONF.set_override('metadata_proxy_group', group)
         cfg.CONF.set_override('log_file', 'test.log')
@@ -79,7 +78,8 @@ class TestMetadataDriver(base.BaseTestCase):
                 mock.patch('os.geteuid', return_value=self.EUID),
                 mock.patch('os.getegid', return_value=self.EGID),
                 mock.patch(ip_class_path)) as (geteuid, getegid, ip_mock):
-            driver._spawn_metadata_proxy(router_id, router_ns, cfg.CONF)
+            driver.spawn_metadata_proxy(router_id, router_ns, metadata_port,
+                                        cfg.CONF)
             ip_mock.assert_has_calls([
                 mock.call(namespace=router_ns),
                 mock.call().netns.execute([

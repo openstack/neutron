@@ -22,6 +22,7 @@ import webob
 
 from neutron.agent.linux import daemon
 from neutron.common import config
+from neutron.common import exceptions
 from neutron.common import utils
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
@@ -56,8 +57,7 @@ class NetworkMetadataProxyHandler(object):
         self.router_id = router_id
 
         if network_id is None and router_id is None:
-            msg = _('network_id and router_id are None. One must be provided.')
-            raise ValueError(msg)
+            raise exceptions.NetworkIdOrRouterIdRequiredError()
 
     @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):
@@ -135,12 +135,15 @@ class ProxyDaemon(daemon.Daemon):
         self.port = port
 
     def run(self):
-        super(ProxyDaemon, self).run()
         handler = NetworkMetadataProxyHandler(
             self.network_id,
             self.router_id)
         proxy = wsgi.Server('neutron-network-metadata-proxy')
         proxy.start(handler, self.port)
+
+        # Drop privileges after port bind
+        super(ProxyDaemon, self).run()
+
         proxy.wait()
 
 

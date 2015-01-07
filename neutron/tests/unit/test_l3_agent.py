@@ -1608,18 +1608,24 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'distributed': False}
         driver = metadata_driver.MetadataDriver
         with mock.patch.object(
-            driver, '_destroy_monitored_metadata_proxy') as destroy_proxy:
+            driver, 'destroy_monitored_metadata_proxy') as destroy_proxy:
             with mock.patch.object(
-                driver, '_spawn_monitored_metadata_proxy') as spawn_proxy:
+                driver, 'spawn_monitored_metadata_proxy') as spawn_proxy:
                 agent._process_added_router(router)
                 if enableflag:
-                    spawn_proxy.assert_called_with(router_id,
-                                                   mock.ANY)
+                    spawn_proxy.assert_called_with(
+                        mock.ANY,
+                        mock.ANY,
+                        self.conf.metadata_port,
+                        mock.ANY,
+                        router_id=router_id
+                    )
                 else:
                     self.assertFalse(spawn_proxy.call_count)
                 agent._router_removed(router_id)
                 if enableflag:
-                    destroy_proxy.assert_called_with(router_id,
+                    destroy_proxy.assert_called_with(mock.ANY,
+                                                     router_id,
                                                      mock.ANY)
                 else:
                     self.assertFalse(destroy_proxy.call_count)
