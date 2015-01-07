@@ -27,6 +27,7 @@ import contextlib
 import logging as std_logging
 import os
 import os.path
+import random
 import traceback
 
 import eventlet.timeout
@@ -39,6 +40,11 @@ from neutron.tests import post_mortem_debug
 
 
 LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
+
+
+def get_rand_name(max_length=None, prefix='test'):
+    name = prefix + str(random.randint(1, 0x7fffffff))
+    return name[:max_length] if max_length is not None else name
 
 
 def bool_from_env(key, strict=False, default=False):
