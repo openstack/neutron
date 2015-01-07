@@ -44,7 +44,7 @@ class CentralizedSnatL3AgentBinding(model_base.BASEV2):
                           primary_key=True)
     l3_agent_id = sa.Column(sa.String(36),
                             sa.ForeignKey("agents.id", ondelete='CASCADE'),
-                            nullable=False)
+                            primary_key=True)
     host_id = sa.Column(sa.String(255))
     csnat_gw_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
 
