@@ -232,10 +232,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         """
         fip_hostid = self.get_vm_port_hostid(
             context, floatingip_db['fixed_port_id'])
-        if fip_hostid and self.check_fips_availability_on_host(
-            context, fip_hostid):
-            LOG.debug('Deleting the Agent GW Port on host: %s', fip_hostid)
-            self.delete_floatingip_agent_gateway_port(context, fip_hostid)
+        if fip_hostid and self.check_fips_availability_on_host_ext_net(
+            context, fip_hostid, floatingip_db['floating_network_id']):
+            LOG.debug('Deleting the Agent GW Port for ext-net: '
+                      '%s', floatingip_db['floating_network_id'])
+            self.delete_floatingip_agent_gateway_port(
+                context, fip_hostid, floatingip_db['floating_network_id'])
 
     def delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
@@ -457,8 +459,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if ports:
             return ports[0]
 
-    def check_fips_availability_on_host(self, context, host_id):
-        """Query all floating_ips and filter by particular host."""
+    def check_fips_availability_on_host_ext_net(
+        self, context, host_id, fip_ext_net_id):
+        """Query all floating_ips and filter on host and external net."""
         fip_count_on_host = 0
         with context.session.begin(subtransactions=True):
             routers = self._get_sync_routers(context, router_ids=None)
@@ -467,7 +470,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             # Check for the active floatingip in the host
             for fip in floating_ips:
                 f_host = self.get_vm_port_hostid(context, fip['port_id'])
-                if f_host == host_id:
+                if (f_host == host_id and
+                    (fip['floating_network_id'] == fip_ext_net_id)):
                     fip_count_on_host += 1
             # If fip_count greater than 1 or equal to zero no action taken
             # if the fip_count is equal to 1, then this would be last active
@@ -476,10 +480,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 return True
             return False
 
-    def delete_floatingip_agent_gateway_port(self, context, host_id):
-        """Function to delete the FIP agent gateway port on host."""
+    def delete_floatingip_agent_gateway_port(
+        self, context, host_id, ext_net_id):
+        """Function to delete FIP gateway port with given ext_net_id."""
         # delete any fip agent gw port
-        device_filter = {'device_owner': [DEVICE_OWNER_AGENT_GW]}
+        device_filter = {'device_owner': [DEVICE_OWNER_AGENT_GW],
+                         'network_id': [ext_net_id]}
         ports = self._core_plugin.get_ports(context,
                                             filters=device_filter)
         for p in ports:
