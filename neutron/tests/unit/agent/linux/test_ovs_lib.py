@@ -14,7 +14,7 @@
 
 import collections
 import mock
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 import testtools
 
 from neutron.agent.linux import ovs_lib

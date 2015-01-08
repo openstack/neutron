@@ -16,8 +16,8 @@
 import datetime
 import mock
 
-from oslo.db import exception as exc
-from oslo.utils import timeutils
+from oslo_db import exception as exc
+from oslo_utils import timeutils
 import testscenarios
 
 from neutron.common import constants

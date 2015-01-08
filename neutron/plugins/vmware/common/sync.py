@@ -15,8 +15,8 @@
 
 import random
 
-from oslo.serialization import jsonutils
-from oslo.utils import timeutils
+from oslo_serialization import jsonutils
+from oslo_utils import timeutils
 
 from neutron.common import constants
 from neutron.common import exceptions

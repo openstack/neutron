@@ -15,7 +15,7 @@
 
 import random
 
-from oslo.db import exception as db_exc
+from oslo_db import exception as db_exc
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc

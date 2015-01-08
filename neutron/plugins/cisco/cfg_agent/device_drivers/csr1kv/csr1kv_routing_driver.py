@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 import ciscoconfparse
 from ncclient import manager
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.cisco.cfg_agent import cfg_exceptions as cfg_exc

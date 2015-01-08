@@ -163,7 +163,7 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
                  'not_used': [1, 2, 3]}
         expected_networks = ('network_id1',)
         with mock.patch(
-            'oslo.utils.timeutils.utcnow_ts', return_value=0):
+            'oslo_utils.timeutils.utcnow_ts', return_value=0):
             mock_list_ports = self.qclient.return_value.list_ports
             mock_list_ports.return_value = ports
             networks = self.handler._get_router_networks(router_id)

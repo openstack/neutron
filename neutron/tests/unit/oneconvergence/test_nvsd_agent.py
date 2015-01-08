@@ -16,7 +16,7 @@ import contextlib
 import time
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 import testtools
 
 from neutron.agent.linux import ovs_lib

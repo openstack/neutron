@@ -14,8 +14,8 @@
 
 import copy
 
-from oslo.config import cfg
 from oslo_concurrency import lockutils
+from oslo_config import cfg
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import expression as expr

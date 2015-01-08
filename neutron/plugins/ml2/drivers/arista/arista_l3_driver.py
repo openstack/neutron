@@ -17,7 +17,7 @@ import socket
 import struct
 
 import jsonrpclib
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron import context as nctx
 from neutron.db import db_base_plugin_v2

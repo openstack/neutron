@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.utils import excutils
+from oslo_utils import excutils
 
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging

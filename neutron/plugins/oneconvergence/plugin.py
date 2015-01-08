@@ -14,10 +14,10 @@
 
 """Implementation of OneConvergence Neutron Plugin."""
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import excutils
-from oslo.utils import importutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import excutils
+from oslo_utils import importutils
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -69,7 +69,7 @@ class NVSDPluginV2AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
         self.topic = topic
         self.topic_port_update = topics.get_topic_name(topic, topics.PORT,
                                                        topics.UPDATE)
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def port_update(self, context, port):

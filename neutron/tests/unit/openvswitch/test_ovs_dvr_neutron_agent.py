@@ -15,8 +15,8 @@
 import contextlib
 
 import mock
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
@@ -703,7 +703,7 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
         with contextlib.nested(
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                'get_dvr_mac_address_by_host',
-                               side_effect=messaging.RemoteError),
+                               side_effect=oslo_messaging.RemoteError),
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'add_flow')) as (gd_mac, add_int_flow_fn):
 
@@ -714,7 +714,7 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
 
     def test_get_dvr_mac_address_retried(self):
         valid_entry = {'host': 'cn1', 'mac_address': 'aa:22:33:44:55:66'}
-        raise_timeout = messaging.MessagingTimeout()
+        raise_timeout = oslo_messaging.MessagingTimeout()
         # Raise a timeout the first 2 times it calls get_dvr_mac_address()
         self._setup_for_dvr_test()
         self.agent.dvr_agent.dvr_mac_address = None
@@ -730,7 +730,7 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
                              get_dvr_mac_address_by_host.call_count, 3)
 
     def test_get_dvr_mac_address_retried_max(self):
-        raise_timeout = messaging.MessagingTimeout()
+        raise_timeout = oslo_messaging.MessagingTimeout()
         # Raise a timeout every time until we give up, currently 5 tries
         self._setup_for_dvr_test()
         self.agent.dvr_agent.dvr_mac_address = None

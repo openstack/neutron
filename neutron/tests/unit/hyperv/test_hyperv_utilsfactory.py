@@ -19,7 +19,7 @@ Unit tests for the Hyper-V utils factory.
 
 import mock
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.plugins.hyperv.agent import utils
 from neutron.plugins.hyperv.agent import utilsfactory

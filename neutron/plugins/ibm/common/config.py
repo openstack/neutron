@@ -15,7 +15,7 @@
 #    under the License.
 
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 DEFAULT_INTERFACE_MAPPINGS = []

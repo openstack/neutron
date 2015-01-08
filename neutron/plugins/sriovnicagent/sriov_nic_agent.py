@@ -21,8 +21,8 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -47,7 +47,7 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     # Set RPC API version to 1.0 by default.
     # history
     #   1.1 Support Security Group RPC
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     def __init__(self, context, agent, sg_agent):
         super(SriovNicSwitchRpcCallbacks, self).__init__()

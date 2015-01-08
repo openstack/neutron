@@ -14,8 +14,8 @@
 #    under the License.
 
 import mock
-from oslo.config import cfg
-from oslo.messaging import conffixture as messaging_conffixture
+from oslo_config import cfg
+from oslo_messaging import conffixture as messaging_conffixture
 
 from neutron.common import rpc
 from neutron.tests import sub_base
@@ -33,7 +33,7 @@ class ServiceTestCase(sub_base.SubBaseTestCase):
         self.host = 'foo'
         self.topic = 'neutron-agent'
 
-        self.target_mock = mock.patch('oslo.messaging.Target')
+        self.target_mock = mock.patch('oslo_messaging.Target')
         self.target_mock.start()
 
         self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
@@ -45,7 +45,7 @@ class ServiceTestCase(sub_base.SubBaseTestCase):
         rpc.init(CONF)
 
     def test_operations(self):
-        with mock.patch('oslo.messaging.get_rpc_server') as get_rpc_server:
+        with mock.patch('oslo_messaging.get_rpc_server') as get_rpc_server:
             rpc_server = get_rpc_server.return_value
 
             service = rpc.Service(self.host, self.topic)

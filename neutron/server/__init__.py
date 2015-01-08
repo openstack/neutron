@@ -23,7 +23,7 @@ import sys
 import eventlet
 eventlet.monkey_patch()
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import config
 from neutron.i18n import _LI

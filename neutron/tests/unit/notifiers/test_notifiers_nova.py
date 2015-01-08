@@ -18,7 +18,7 @@ import mock
 from novaclient import exceptions as nova_exceptions
 from sqlalchemy.orm import attributes as sql_attr
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import constants
 from neutron.db import models_v2

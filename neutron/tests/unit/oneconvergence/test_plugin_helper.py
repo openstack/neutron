@@ -13,7 +13,7 @@
 #    under the License.
 
 import mock
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 import requests
 
 from neutron.plugins.oneconvergence.lib import config  # noqa

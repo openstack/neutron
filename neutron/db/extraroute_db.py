@@ -14,7 +14,7 @@
 #    under the License.
 
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 import sqlalchemy as sa
 from sqlalchemy import orm
 

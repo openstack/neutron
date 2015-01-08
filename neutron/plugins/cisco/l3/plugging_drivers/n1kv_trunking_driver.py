@@ -14,7 +14,7 @@
 
 import eventlet
 
-from oslo.config import cfg
+from oslo_config import cfg
 from sqlalchemy.orm import exc
 from sqlalchemy.sql import expression as expr
 

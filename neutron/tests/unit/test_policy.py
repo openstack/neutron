@@ -20,9 +20,9 @@ import StringIO
 import urllib2
 
 import mock
-from oslo.config import cfg
-from oslo.serialization import jsonutils
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_serialization import jsonutils
+from oslo_utils import importutils
 import six
 import six.moves.urllib.request as urlrequest
 

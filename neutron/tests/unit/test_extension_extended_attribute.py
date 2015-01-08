@@ -17,7 +17,7 @@
 Unit tests for extension extended attribute
 """
 
-from oslo.config import cfg
+from oslo_config import cfg
 import webob.exc as webexc
 
 import neutron

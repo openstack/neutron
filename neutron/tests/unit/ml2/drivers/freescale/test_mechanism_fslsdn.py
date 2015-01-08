@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.freescale import mechanism_fslsdn

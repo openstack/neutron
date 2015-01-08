@@ -23,7 +23,7 @@ import tempfile
 
 from eventlet.green import subprocess
 from eventlet import greenthread
-from oslo.utils import excutils
+from oslo_utils import excutils
 
 from neutron.common import constants
 from neutron.common import utils

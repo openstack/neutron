@@ -20,9 +20,9 @@ Routines for configuring Neutron
 import os
 import sys
 
-from oslo.config import cfg
-from oslo.db import options as db_options
-from oslo import messaging
+from oslo_config import cfg
+from oslo_db import options as db_options
+import oslo_messaging
 from paste import deploy
 
 from neutron.api.v2 import attributes
@@ -134,7 +134,7 @@ cfg.CONF.register_opts(core_opts)
 cfg.CONF.register_cli_opts(core_cli_opts)
 
 # Ensure that the control exchange is set correctly
-messaging.set_transport_defaults(control_exchange='neutron')
+oslo_messaging.set_transport_defaults(control_exchange='neutron')
 _SQL_CONNECTION_DEFAULT = 'sqlite://'
 # Update the default QueuePool parameters. These can be tweaked by the
 # configuration variables - max_pool_size, max_overflow and pool_timeout

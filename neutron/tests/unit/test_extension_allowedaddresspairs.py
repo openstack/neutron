@@ -23,7 +23,7 @@ from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as secgroup
 from neutron import manager
 from neutron.tests.unit import test_db_plugin
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_allowedaddresspairs.'

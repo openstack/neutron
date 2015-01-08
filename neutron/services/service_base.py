@@ -15,8 +15,8 @@
 
 import abc
 
-from oslo.utils import excutils
-from oslo.utils import importutils
+from oslo_utils import excutils
+from oslo_utils import importutils
 import six
 
 from neutron.api import extensions

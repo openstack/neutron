@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import mock
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron.common import exceptions
 from neutron.plugins.vmware.api_client import exception as api_exc

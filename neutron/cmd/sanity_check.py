@@ -20,7 +20,7 @@ from neutron.cmd.sanity import checks
 from neutron.common import config
 from neutron.i18n import _LE, _LW
 from neutron.openstack.common import log as logging
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 LOG = logging.getLogger(__name__)

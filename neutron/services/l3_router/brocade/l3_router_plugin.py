@@ -17,8 +17,8 @@
 
 """Implentation of Brocade SVI service Plugin."""
 
-from oslo.config import cfg
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_utils import excutils
 
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE, _LI

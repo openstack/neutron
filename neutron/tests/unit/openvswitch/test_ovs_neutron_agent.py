@@ -18,7 +18,7 @@ import time
 
 import mock
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 import testtools
 
 from neutron.agent.linux import async_process

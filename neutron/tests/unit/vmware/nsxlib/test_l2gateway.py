@@ -15,7 +15,7 @@
 #
 
 import mock
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron.plugins.vmware.api_client import exception
 from neutron.plugins.vmware.common import utils as nsx_utils

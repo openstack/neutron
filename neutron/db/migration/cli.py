@@ -20,8 +20,8 @@ from alembic import config as alembic_config
 from alembic import environment
 from alembic import script as alembic_script
 from alembic import util as alembic_util
-from oslo.config import cfg
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_utils import importutils
 
 from neutron.common import repos
 

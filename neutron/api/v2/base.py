@@ -17,8 +17,8 @@ import copy
 import netaddr
 import webob.exc
 
-from oslo.config import cfg
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_utils import excutils
 
 from neutron.api import api_common
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api

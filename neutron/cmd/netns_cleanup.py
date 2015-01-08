@@ -18,8 +18,8 @@ import re
 import eventlet
 eventlet.monkey_patch()
 
-from oslo.config import cfg
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_utils import importutils
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.dhcp import config as dhcp_config

@@ -20,10 +20,10 @@ import uuid
 import mock
 import testscenarios
 
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo.utils import importutils
-from oslo.utils import timeutils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_utils import importutils
+from oslo_utils import timeutils
 from sqlalchemy.orm import query
 
 from neutron.common import constants

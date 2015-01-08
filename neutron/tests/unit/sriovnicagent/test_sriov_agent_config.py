@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import utils as q_utils
 from neutron.plugins.sriovnicagent.common import config

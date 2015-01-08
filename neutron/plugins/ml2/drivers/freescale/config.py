@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from neutronclient.v2_0 import client
-from oslo.config import cfg
+from oslo_config import cfg
 
 # Freescale CRD Server Configuration used by ML2 Mechanism Driver.
 #

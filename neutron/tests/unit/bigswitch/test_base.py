@@ -17,7 +17,7 @@
 import os
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 import neutron.common.test_lib as test_lib
 from neutron.plugins.bigswitch import config

@@ -18,7 +18,7 @@ import functools
 
 import mock
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 import webob
 import webob.dec
 import webob.exc

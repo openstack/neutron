@@ -46,9 +46,9 @@ import httplib
 import re
 
 import eventlet
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import importutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import importutils
 from sqlalchemy.orm import exc as sqlexc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -98,7 +98,7 @@ class AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     def __init__(self, topic):
         self.topic = topic
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def port_update(self, context, port):

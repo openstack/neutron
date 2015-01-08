@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db

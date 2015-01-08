@@ -12,9 +12,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo import messaging
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+import oslo_messaging
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy import or_
@@ -111,7 +111,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 try:
                     self.reschedule_router(context, binding.router_id)
                 except (l3agentscheduler.RouterReschedulingFailed,
-                        messaging.RemoteError):
+                        oslo_messaging.RemoteError):
                     # Catch individual router rescheduling errors here
                     # so one broken one doesn't stop the iteration.
                     LOG.exception(_LE("Failed to reschedule router %s"),

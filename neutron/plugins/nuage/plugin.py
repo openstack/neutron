@@ -16,10 +16,10 @@ import copy
 import re
 
 import netaddr
-from oslo.config import cfg
-from oslo.utils import excutils
-from oslo.utils import importutils
 from oslo_concurrency import lockutils
+from oslo_config import cfg
+from oslo_utils import excutils
+from oslo_utils import importutils
 from sqlalchemy.orm import exc
 
 from neutron.api import extensions as neutron_extensions

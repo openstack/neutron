@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
@@ -48,7 +48,7 @@ class DhcpAgentNotifyAPI(object):
 
     def __init__(self, topic=topics.DHCP_AGENT, plugin=None):
         self._plugin = plugin
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     @property

@@ -20,9 +20,9 @@ import socket
 import eventlet
 import httplib2
 from neutronclient.v2_0 import client
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import excutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import excutils
 import six.moves.urllib.parse as urlparse
 import webob
 
@@ -56,9 +56,10 @@ class MetadataPluginAPI(object):
     """
 
     def __init__(self, topic):
-        target = messaging.Target(topic=topic,
-                                  namespace=n_const.RPC_NAMESPACE_METADATA,
-                                  version='1.0')
+        target = oslo_messaging.Target(
+            topic=topic,
+            namespace=n_const.RPC_NAMESPACE_METADATA,
+            version='1.0')
         self.client = n_rpc.get_client(target)
 
     def get_ports(self, context, filters):
@@ -121,7 +122,7 @@ class MetadataProxyHandler(object):
         if self.use_rpc:
             try:
                 return self.plugin_rpc.get_ports(self.context, filters)
-            except (messaging.MessagingException, AttributeError):
+            except (oslo_messaging.MessagingException, AttributeError):
                 # TODO(obondarev): remove fallback once RPC is proven
                 # to work fine with metadata agent (K or L release at most)
                 LOG.warning(_LW('Server does not support metadata RPC, '

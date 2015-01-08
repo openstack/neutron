@@ -17,7 +17,7 @@ import shlex
 import socket
 
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp

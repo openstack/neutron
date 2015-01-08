@@ -53,6 +53,10 @@ log_translation_hint = re.compile(
              for level, hint in _all_log_levels.iteritems()))
 
 
+oslo_namespace_imports_dot = re.compile(r"from[\s]*oslo[.]")
+oslo_namespace_imports_root = re.compile(r"from[\s]*oslo[\s]*import[\s]*")
+
+
 def validate_log_translations(logical_line, physical_line, filename):
     # Translations are not required in the test directory
     if "neutron/tests" in filename:
@@ -114,8 +118,22 @@ def check_assert_called_once_with(logical_line, filename):
             yield (0, msg)
 
 
+def check_oslo_namespace_imports(logical_line, blank_before, filename):
+    if re.match(oslo_namespace_imports_dot, logical_line):
+        msg = ("N323: '%s' must be used instead of '%s'.") % (
+               logical_line.replace('oslo.', 'oslo_'),
+               logical_line)
+        yield(0, msg)
+    elif re.match(oslo_namespace_imports_root, logical_line):
+        msg = ("N323: '%s' must be used instead of '%s'.") % (
+               logical_line.replace('from oslo import ', 'import oslo_'),
+               logical_line)
+        yield(0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
     register(check_assert_called_once_with)
     register(no_translate_debug_logs)
+    register(check_oslo_namespace_imports)

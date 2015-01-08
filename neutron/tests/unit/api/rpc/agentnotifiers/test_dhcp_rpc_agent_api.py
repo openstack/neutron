@@ -16,7 +16,7 @@
 import datetime
 import mock
 
-from oslo.utils import timeutils
+from oslo_utils import timeutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import utils

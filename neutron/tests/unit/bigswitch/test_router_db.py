@@ -18,7 +18,7 @@ import contextlib
 import copy
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 from six import moves
 from webob import exc
 

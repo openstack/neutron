@@ -14,8 +14,8 @@
 #    under the License.
 
 
-from oslo import messaging
-from oslo.utils import excutils
+import oslo_messaging
+from oslo_utils import excutils
 
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as n_const
@@ -155,12 +155,12 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
     def get_dvr_mac_address(self):
         try:
             self.get_dvr_mac_address_with_retry()
-        except messaging.RemoteError as e:
+        except oslo_messaging.RemoteError as e:
             LOG.warning(_LW('L2 agent could not get DVR MAC address at '
                             'startup due to RPC error.  It happens when the '
                             'server does not support this RPC API.  Detailed '
                             'message: %s'), e)
-        except messaging.MessagingTimeout:
+        except oslo_messaging.MessagingTimeout:
             LOG.error(_LE('DVR: Failed to obtain a valid local '
                           'DVR MAC address - L2 Agent operating '
                           'in Non-DVR Mode'))
@@ -178,7 +178,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
             try:
                 details = self.plugin_rpc.get_dvr_mac_address_by_host(
                     self.context, self.host)
-            except messaging.MessagingTimeout as e:
+            except oslo_messaging.MessagingTimeout as e:
                 with excutils.save_and_reraise_exception() as ctx:
                     if retry_count > 0:
                         ctx.reraise = False

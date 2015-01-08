@@ -17,7 +17,7 @@
 import sys
 
 from networking_mlnx.plugins.mlnx.agent import mlnx_eswitch_neutron_agent
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.i18n import _LE, _LI
 from neutron.common import config as common_config

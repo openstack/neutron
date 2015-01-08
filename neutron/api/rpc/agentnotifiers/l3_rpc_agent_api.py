@@ -15,7 +15,7 @@
 
 import random
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
@@ -34,7 +34,7 @@ class L3AgentNotifyAPI(object):
     """API for plugin to notify L3 agent."""
 
     def __init__(self, topic=topics.L3_AGENT):
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def _notification_host(self, context, method, payload, host):

@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import re
 
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 from six import moves
 from wsgiref import simple_server
 

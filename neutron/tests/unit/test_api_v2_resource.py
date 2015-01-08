@@ -14,7 +14,7 @@
 #    under the License.
 
 import mock
-from oslo import i18n
+import oslo_i18n
 from webob import exc
 import webtest
 
@@ -102,9 +102,9 @@ class RequestTestCase(base.BaseTestCase):
     def test_best_match_language(self):
         # Test that we are actually invoking language negotiation by webop
         request = wsgi.Request.blank('/')
-        i18n.get_available_languages = mock.MagicMock()
-        i18n.get_available_languages.return_value = ['known-language',
-                                                     'es', 'zh']
+        oslo_i18n.get_available_languages = mock.MagicMock()
+        oslo_i18n.get_available_languages.return_value = ['known-language',
+                                                          'es', 'zh']
         request.headers['Accept-Language'] = 'known-language'
         language = request.best_match_language()
         self.assertEqual(language, 'known-language')
@@ -150,7 +150,7 @@ class ResourceTestCase(base.BaseTestCase):
         self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
                          expected_res)
 
-    @mock.patch('oslo.i18n.translate')
+    @mock.patch('oslo_i18n.translate')
     def test_unmapped_neutron_error_localized(self, mock_translation):
         msg_translation = 'Translated error'
         mock_translation.return_value = msg_translation
@@ -195,7 +195,7 @@ class ResourceTestCase(base.BaseTestCase):
         self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
                          expected_res)
 
-    @mock.patch('oslo.i18n.translate')
+    @mock.patch('oslo_i18n.translate')
     def test_mapped_neutron_error_localized(self, mock_translation):
         msg_translation = 'Translated error'
         mock_translation.return_value = msg_translation

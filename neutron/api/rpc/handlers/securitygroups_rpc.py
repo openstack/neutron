@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import constants
 from neutron import manager
@@ -37,8 +37,8 @@ class SecurityGroupServerRpcCallback(object):
 
     # NOTE: target must not be overridden in subclasses
     # to keep RPC API version consistent across plugins.
-    target = messaging.Target(version='1.2',
-                              namespace=constants.RPC_NAMESPACE_SECGROUP)
+    target = oslo_messaging.Target(version='1.2',
+                                   namespace=constants.RPC_NAMESPACE_SECGROUP)
 
     @property
     def plugin(self):

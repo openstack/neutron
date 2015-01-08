@@ -15,11 +15,11 @@
 
 import eventlet
 import netaddr
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import excutils
-from oslo.utils import importutils
-from oslo.utils import timeutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import excutils
+from oslo_utils import importutils
+from oslo_utils import timeutils
 
 from neutron.agent.common import config
 from neutron.agent.l3 import dvr
@@ -77,7 +77,7 @@ class L3PluginApi(object):
 
     def __init__(self, topic, host):
         self.host = host
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def get_routers(self, context, router_ids=None):
@@ -89,9 +89,9 @@ class L3PluginApi(object):
     def get_external_network_id(self, context):
         """Make a remote process call to retrieve the external network id.
 
-        @raise messaging.RemoteError: with TooManyExternalNetworks as
-                                      exc_type if there are more than one
-                                      external network
+        @raise oslo_messaging.RemoteError: with TooManyExternalNetworks as
+                                           exc_type if there are more than one
+                                           external network
         """
         cctxt = self.client.prepare()
         return cctxt.call(context, 'get_external_network_id', host=self.host)
@@ -138,7 +138,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
               - del_arp_entry
               Needed by the L3 service when dealing with DVR
     """
-    target = messaging.Target(version='1.2')
+    target = oslo_messaging.Target(version='1.2')
 
     def __init__(self, host, conf=None):
         if conf:
@@ -178,7 +178,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             try:
                 self.neutron_service_plugins = (
                     self.plugin_rpc.get_service_plugin_list(self.context))
-            except messaging.RemoteError as e:
+            except oslo_messaging.RemoteError as e:
                 with excutils.save_and_reraise_exception() as ctx:
                     ctx.reraise = False
                     LOG.warning(_LW('l3-agent cannot check service plugins '
@@ -189,7 +189,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                     'UnsupportedVersion you can ignore this '
                                     'warning. Detail message: %s'), e)
                 self.neutron_service_plugins = None
-            except messaging.MessagingTimeout as e:
+            except oslo_messaging.MessagingTimeout as e:
                 with excutils.save_and_reraise_exception() as ctx:
                     if retry_count > 0:
                         ctx.reraise = False
@@ -335,7 +335,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self.target_ex_net_id = self.plugin_rpc.get_external_network_id(
                 self.context)
             return self.target_ex_net_id
-        except messaging.RemoteError as e:
+        except oslo_messaging.RemoteError as e:
             with excutils.save_and_reraise_exception() as ctx:
                 if e.exc_type == 'TooManyExternalNetworks':
                     ctx.reraise = False
@@ -1172,7 +1172,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 routers = self.plugin_rpc.get_routers(context,
                                                       [self.conf.router_id])
 
-        except messaging.MessagingException:
+        except oslo_messaging.MessagingException:
             LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
         else:
             LOG.debug('Processing :%r', routers)

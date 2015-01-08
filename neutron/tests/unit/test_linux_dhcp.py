@@ -17,7 +17,7 @@ import os
 
 import mock
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.dhcp import config as dhcp_config

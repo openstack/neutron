@@ -17,7 +17,7 @@ import os
 import sys
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.common import config as a_cfg
 from neutron.agent.linux import iptables_comments as ic

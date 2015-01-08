@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo.db import exception as d_exc
+from oslo_db import exception as d_exc
 
 from neutron import context
 from neutron.db import models_v2

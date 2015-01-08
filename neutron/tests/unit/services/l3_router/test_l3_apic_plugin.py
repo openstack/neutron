@@ -105,7 +105,7 @@ class TestCiscoApicL3Plugin(testlib_api.SqlTestCase,
                    'add_router_interface').start()
         mock.patch('neutron.db.l3_dvr_db.L3_NAT_with_dvr_db_mixin.'
                    'remove_router_interface').start()
-        mock.patch('oslo.utils.excutils.save_and_reraise_exception').start()
+        mock.patch('oslo_utils.excutils.save_and_reraise_exception').start()
 
     def _test_add_router_interface(self, interface_info):
         mgr = self.plugin.manager

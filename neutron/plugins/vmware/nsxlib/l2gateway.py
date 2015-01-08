@@ -14,7 +14,7 @@
 #    under the License.
 #
 
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc

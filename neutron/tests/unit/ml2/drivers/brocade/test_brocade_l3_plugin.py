@@ -16,9 +16,9 @@
 #
 
 import mock
-from oslo.config import cfg
-from oslo.utils import importutils
+from oslo_config import cfg
 from oslo_context import context as oslo_context
+from oslo_utils import importutils
 
 from neutron.db import api as db
 from neutron.openstack.common import log as logging

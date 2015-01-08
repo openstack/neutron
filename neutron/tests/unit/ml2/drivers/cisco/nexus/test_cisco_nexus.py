@@ -15,7 +15,7 @@
 
 import collections
 import mock
-from oslo.utils import importutils
+from oslo_utils import importutils
 import testtools
 
 from neutron.common import constants as n_const

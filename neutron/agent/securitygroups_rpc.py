@@ -16,9 +16,9 @@
 
 import functools
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import importutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import importutils
 
 from neutron.agent import firewall
 from neutron.common import constants
@@ -96,8 +96,9 @@ class SecurityGroupServerRpcApi(object):
     doc/source/devref/rpc_api.rst.
     """
     def __init__(self, topic):
-        target = messaging.Target(topic=topic, version='1.0',
-                                  namespace=constants.RPC_NAMESPACE_SECGROUP)
+        target = oslo_messaging.Target(
+            topic=topic, version='1.0',
+            namespace=constants.RPC_NAMESPACE_SECGROUP)
         self.client = n_rpc.get_client(target)
 
     def security_group_rules_for_devices(self, context, devices):
@@ -199,7 +200,7 @@ class SecurityGroupAgentRpc(object):
         try:
             self.plugin_rpc.security_group_info_for_devices(
                 self.context, devices=[])
-        except messaging.UnsupportedVersion:
+        except oslo_messaging.UnsupportedVersion:
             LOG.warning(_LW('security_group_info_for_devices rpc call not '
                             'supported by the server, falling back to old '
                             'security_group_rules_for_devices which scales '

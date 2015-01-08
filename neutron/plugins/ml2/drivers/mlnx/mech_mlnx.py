@@ -15,7 +15,7 @@
 # limitations under the License.
 
 from networking_mlnx.plugins.ml2.drivers.mlnx import constants
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import constants as n_const
 from neutron.extensions import portbindings

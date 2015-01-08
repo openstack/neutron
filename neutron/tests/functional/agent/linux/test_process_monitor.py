@@ -13,7 +13,7 @@
 #    under the License.
 
 import eventlet
-from oslo.config import cfg
+from oslo_config import cfg
 from six import moves
 
 from neutron.agent.linux import external_process

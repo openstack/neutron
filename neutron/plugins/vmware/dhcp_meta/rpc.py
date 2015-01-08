@@ -16,7 +16,7 @@
 
 from eventlet import greenthread
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes

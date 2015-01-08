@@ -20,8 +20,8 @@ import uuid
 
 import eventlet
 import mock
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 import testtools
 
 from neutron.agent.common import config
@@ -306,7 +306,7 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_call_driver_remote_error_net_not_found(self):
         self._test_call_driver_failure(
-            exc=messaging.RemoteError(exc_type='NetworkNotFound'),
+            exc=oslo_messaging.RemoteError(exc_type='NetworkNotFound'),
             trace_level='warning')
 
     def test_call_driver_network_not_found(self):

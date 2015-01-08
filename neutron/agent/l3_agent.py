@@ -19,7 +19,7 @@ import sys
 import eventlet
 eventlet.monkey_patch()
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.l3 import config as l3_config

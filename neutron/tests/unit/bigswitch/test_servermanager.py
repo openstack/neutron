@@ -17,10 +17,10 @@ import socket
 import ssl
 
 import mock
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo.serialization import jsonutils
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_serialization import jsonutils
+from oslo_utils import importutils
 
 from neutron import context
 from neutron import manager

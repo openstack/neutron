@@ -17,7 +17,7 @@
 import sys
 import time
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import exceptions as n_exc
 from neutron.openstack.common import log as logging

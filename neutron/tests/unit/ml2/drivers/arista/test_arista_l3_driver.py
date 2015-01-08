@@ -15,7 +15,7 @@
 
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.plugins.ml2.drivers.arista import arista_l3_driver as arista
 from neutron.tests import base

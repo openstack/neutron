@@ -18,7 +18,7 @@ import itertools
 import time
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 from six import moves
 import testtools
 

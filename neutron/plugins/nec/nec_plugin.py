@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo import messaging
-from oslo.utils import excutils
-from oslo.utils import importutils
+import oslo_messaging
+from oslo_utils import excutils
+from oslo_utils import importutils
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api import extensions as neutron_extensions
@@ -679,7 +679,7 @@ class NECPluginV2AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
         self.topic = topic
         self.topic_port_update = topics.get_topic_name(
             topic, topics.PORT, topics.UPDATE)
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def port_update(self, context, port):
@@ -689,7 +689,7 @@ class NECPluginV2AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
 
 class NECPluginV2RPCCallbacks(object):
 
-    target = messaging.Target(version='1.0')
+    target = oslo_messaging.Target(version='1.0')
 
     def __init__(self, plugin):
         super(NECPluginV2RPCCallbacks, self).__init__()

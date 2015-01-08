@@ -14,9 +14,9 @@
 
 import eventlet
 
-from oslo.config import cfg as q_conf
-from oslo.utils import excutils
-from oslo.utils import importutils
+from oslo_config import cfg as q_conf
+from oslo_utils import excutils
+from oslo_utils import importutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc

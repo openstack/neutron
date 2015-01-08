@@ -20,10 +20,10 @@ import alembic.autogenerate
 import alembic.migration
 from alembic import script as alembic_script
 import mock
-from oslo.config import cfg
-from oslo.config import fixture as config_fixture
-from oslo.db.sqlalchemy import test_base
-from oslo.db.sqlalchemy import test_migrations
+from oslo_config import cfg
+from oslo_config import fixture as config_fixture
+from oslo_db.sqlalchemy import test_base
+from oslo_db.sqlalchemy import test_migrations
 import sqlalchemy
 
 from neutron.db.migration import cli as migration

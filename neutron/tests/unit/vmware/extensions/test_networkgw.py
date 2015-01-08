@@ -15,7 +15,7 @@
 import contextlib
 import mock
 
-from oslo.config import cfg
+from oslo_config import cfg
 from webob import exc
 import webtest
 

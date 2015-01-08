@@ -20,7 +20,7 @@ hub.patch()
 
 import sys
 
-from oslo.config import cfg
+from oslo_config import cfg
 from ryu.base.app_manager import AppManager
 from ryu import cfg as ryu_cfg
 

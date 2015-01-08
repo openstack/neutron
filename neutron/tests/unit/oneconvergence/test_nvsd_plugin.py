@@ -19,7 +19,7 @@ import contextlib
 import uuid
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron import context
 from neutron.extensions import portbindings

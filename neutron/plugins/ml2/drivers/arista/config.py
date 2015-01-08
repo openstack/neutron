@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 # Arista ML2 Mechanism driver specific configuration knobs.

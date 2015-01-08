@@ -16,9 +16,9 @@ import random
 
 from keystoneclient import exceptions as k_exceptions
 from keystoneclient.v2_0 import client as k_client
-from oslo.config import cfg
-from oslo.utils import importutils
-from oslo.utils import timeutils
+from oslo_config import cfg
+from oslo_utils import importutils
+from oslo_utils import timeutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
 

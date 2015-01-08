@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import log
 from neutron.common import rpc as n_rpc
@@ -28,7 +28,7 @@ class DVRServerRpcApi(object):
     """Agent-side RPC (stub) for agent-to-plugin interaction."""
 
     def __init__(self, topic):
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     @log.log
@@ -59,7 +59,7 @@ class DVRServerRpcCallback(object):
     # History
     #   1.0 Initial version
 
-    target = messaging.Target(version='1.0')
+    target = oslo_messaging.Target(version='1.0')
 
     @property
     def plugin(self):

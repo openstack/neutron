@@ -14,8 +14,8 @@
 #    under the License.
 
 import itertools
-from oslo import messaging
-from oslo.utils import timeutils
+import oslo_messaging
+from oslo_utils import timeutils
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -58,7 +58,7 @@ def create_consumers(endpoints, prefix, topic_details, start_listening=True):
 
 class PluginReportStateAPI(object):
     def __init__(self, topic):
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def report_state(self, context, agent_state, use_call=False):
@@ -82,7 +82,7 @@ class PluginApi(object):
     '''
 
     def __init__(self, topic):
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def get_device_details(self, context, device, agent_id, host=None):
@@ -95,7 +95,7 @@ class PluginApi(object):
             cctxt = self.client.prepare(version='1.3')
             res = cctxt.call(context, 'get_devices_details_list',
                              devices=devices, agent_id=agent_id, host=host)
-        except messaging.UnsupportedVersion:
+        except oslo_messaging.UnsupportedVersion:
             # If the server has not been upgraded yet, a DVR-enabled agent
             # may not work correctly, however it can function in 'degraded'
             # mode, in that DVR routers may not be in the system yet, and

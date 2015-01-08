@@ -18,7 +18,7 @@ import uuid
 
 import mock
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import constants
 from neutron.openstack.common import uuidutils

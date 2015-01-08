@@ -19,10 +19,10 @@
 
 """Implentation of Brocade Neutron Plugin."""
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import importutils
+from oslo_config import cfg
 from oslo_context import context as oslo_context
+import oslo_messaging
+from oslo_utils import importutils
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -80,7 +80,7 @@ cfg.CONF.register_opts(PHYSICAL_INTERFACE_OPTS, "PHYSICAL_INTERFACE")
 class BridgeRpcCallbacks(object):
     """Agent callback."""
 
-    target = messaging.Target(version='1.2')
+    target = oslo_messaging.Target(version='1.2')
     # Device names start with "tap"
     # history
     #   1.1 Support Security Group RPC
@@ -177,7 +177,7 @@ class AgentNotifierApi(sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     def __init__(self, topic):
         self.topic = topic
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
         self.topic_network_delete = topics.get_topic_name(topic,
                                                           topics.NETWORK,

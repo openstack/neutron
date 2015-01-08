@@ -16,7 +16,7 @@
 import contextlib
 
 import mock
-from oslo.utils import importutils
+from oslo_utils import importutils
 
 from neutron.tests import base
 

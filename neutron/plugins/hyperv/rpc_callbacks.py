@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import constants as q_const
 from neutron.openstack.common import log as logging
@@ -28,7 +28,7 @@ class HyperVRpcCallbacks(object):
     # history
     # 1.1 Support Security Group RPC
     # 1.2 Support get_devices_details_list
-    target = messaging.Target(version='1.2')
+    target = oslo_messaging.Target(version='1.2')
 
     def __init__(self, notifier):
         super(HyperVRpcCallbacks, self).__init__()

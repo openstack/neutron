@@ -15,9 +15,9 @@
 #    under the License.
 #
 
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_utils import excutils
 
 from neutron.common import exceptions as n_exc
 from neutron.i18n import _LE, _LW

@@ -16,8 +16,8 @@ import collections
 
 import eventlet
 import netaddr
-from oslo import messaging
-from oslo.utils import excutils
+import oslo_messaging
+from oslo_utils import excutils
 
 from neutron.common import constants as l3_constants
 from neutron.common import rpc as n_rpc
@@ -90,7 +90,7 @@ class CiscoRoutingPluginApi(object):
 
     def __init__(self, topic, host):
         self.host = host
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def get_routers(self, context, router_ids=None, hd_ids=None):
@@ -281,7 +281,7 @@ class RoutingServiceHelper(object):
             if device_ids:
                 return self.plugin_rpc.get_routers(self.context,
                                                    hd_ids=device_ids)
-        except messaging.MessagingException:
+        except oslo_messaging.MessagingException:
             LOG.exception(_LE("RPC Error in fetching routers from plugin"))
             self.fullsync = True
 

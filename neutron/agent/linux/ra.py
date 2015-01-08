@@ -15,7 +15,7 @@
 
 import jinja2
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 import six
 
 from neutron.agent.linux import utils

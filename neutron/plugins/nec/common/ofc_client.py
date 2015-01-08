@@ -14,8 +14,8 @@
 
 import time
 
-from oslo.serialization import jsonutils
-from oslo.utils import excutils
+from oslo_serialization import jsonutils
+from oslo_utils import excutils
 import requests
 
 from neutron.i18n import _LI, _LW

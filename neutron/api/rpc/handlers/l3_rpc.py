@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.serialization import jsonutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_serialization import jsonutils
 
 from neutron.common import constants
 from neutron.common import exceptions
@@ -40,7 +40,7 @@ class L3RpcCallback(object):
     # 1.2 Added methods for DVR support
     # 1.3 Added a method that returns the list of activated services
     # 1.4 Added L3 HA update_router_state
-    target = messaging.Target(version='1.4')
+    target = oslo_messaging.Target(version='1.4')
 
     @property
     def plugin(self):

@@ -36,9 +36,9 @@ import weakref
 
 import eventlet
 import eventlet.corolocal
-from oslo.config import cfg
-from oslo.serialization import jsonutils
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_serialization import jsonutils
+from oslo_utils import excutils
 
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI, _LW

@@ -14,8 +14,8 @@
 #    under the License.
 #
 
-from oslo.config import cfg
-from oslo.serialization import jsonutils
+from oslo_config import cfg
+from oslo_serialization import jsonutils
 
 from neutron.common import constants
 from neutron.common import exceptions as exception

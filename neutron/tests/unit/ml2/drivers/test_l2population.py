@@ -16,7 +16,7 @@
 import contextlib
 
 import mock
-from oslo.utils import timeutils
+from oslo_utils import timeutils
 
 from neutron.agent import l2population_rpc
 from neutron.common import constants

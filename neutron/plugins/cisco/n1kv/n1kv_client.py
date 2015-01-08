@@ -16,7 +16,7 @@ import base64
 
 import eventlet
 import netaddr
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 import requests
 
 from neutron.common import exceptions as n_exc

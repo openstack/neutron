@@ -27,10 +27,10 @@ import time
 
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True, thread=True)
-from oslo.config import cfg
-from oslo import i18n
-from oslo.serialization import jsonutils
-from oslo.utils import excutils
+from oslo_config import cfg
+import oslo_i18n
+from oslo_serialization import jsonutils
+from oslo_utils import excutils
 import routes.middleware
 import webob.dec
 import webob.exc
@@ -367,7 +367,7 @@ class Request(webob.Request):
         """
         if not self.accept_language:
             return None
-        all_languages = i18n.get_available_languages('neutron')
+        all_languages = oslo_i18n.get_available_languages('neutron')
         return self.accept_language.best_match(all_languages)
 
     @property
@@ -735,7 +735,7 @@ class Router(object):
         if not match:
             language = req.best_match_language()
             msg = _('The resource could not be found.')
-            msg = i18n.translate(msg, language)
+            msg = oslo_i18n.translate(msg, language)
             return webob.exc.HTTPNotFound(explanation=msg)
         app = match['controller']
         return app

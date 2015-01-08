@@ -16,7 +16,7 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
-from oslo.db import exception as db_exc
+from oslo_db import exception as db_exc
 
 from neutron.common import constants as n_const
 from neutron.db import api as db_api

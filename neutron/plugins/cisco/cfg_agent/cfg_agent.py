@@ -18,11 +18,11 @@ import pprint
 import sys
 import time
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import importutils
-from oslo.utils import timeutils
 from oslo_concurrency import lockutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import importutils
+from oslo_utils import timeutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import external_process
@@ -54,7 +54,7 @@ class CiscoDeviceManagementApi(object):
 
     def __init__(self, topic, host):
         self.host = host
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def report_dead_hosting_devices(self, context, hd_ids=None):
@@ -94,7 +94,7 @@ class CiscoCfgAgent(manager.Manager):
     The main entry points in this class are the `process_services()` and
     `_backlog_task()` .
     """
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     OPTS = [
         cfg.IntOpt('rpc_loop_interval', default=10,

@@ -16,8 +16,8 @@
 import contextlib
 
 import mock
-from oslo import messaging
 from oslo_context import context as oslo_context
+import oslo_messaging
 
 from neutron.agent import rpc
 from neutron.tests import base
@@ -61,7 +61,7 @@ class AgentRPCPluginApi(base.BaseTestCase):
             mock_call, mock_prepare
         ):
             mock_prepare.return_value = agent.client
-            mock_call.side_effect = [messaging.UnsupportedVersion('1.2'),
+            mock_call.side_effect = [oslo_messaging.UnsupportedVersion('1.2'),
                                     expect_val_get_device_details]
             func_obj = getattr(agent, 'get_devices_details_list')
             actual_val = func_obj(ctxt, ['fake_device'], 'fake_agent_id')

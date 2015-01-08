@@ -22,8 +22,8 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
@@ -53,7 +53,7 @@ class SdnvePluginApi(agent_rpc.PluginApi):
 
 class SdnveNeutronAgent(object):
 
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     def __init__(self, integ_br, interface_mappings,
                  info, root_helper, polling_interval,
