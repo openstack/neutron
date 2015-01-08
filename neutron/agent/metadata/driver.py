@@ -53,8 +53,7 @@ class MetadataDriver(advanced_service.AdvancedService):
 
     @classmethod
     def metadata_filter_rules(cls, port):
-        return [('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
-                 '-p tcp -m tcp --dport %s '
+        return [('INPUT', '-s 0.0.0.0/0 -p tcp -m tcp --dport %s '
                  '-j ACCEPT' % port)]
 
     @classmethod
