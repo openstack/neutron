@@ -26,10 +26,10 @@ from neutron.plugins.ml2 import models as ml2_models
 from neutron.tests.unit import testlib_api
 
 
-class Ml2DBTestCase(testlib_api.SqlTestCase):
+class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(Ml2DBTestCase, self).setUp()
+        super(Ml2DvrDBTestCase, self).setUp()
         self.ctx = context.get_admin_context()
 
     def _setup_neutron_network(self, network_id, port_ids):
