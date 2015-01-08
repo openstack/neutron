@@ -844,6 +844,16 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                             'status': "ACTIVE"}}
         self._test_create_failure_bad_request('networks', data)
 
+    def test_create_with_too_long_name(self):
+        data = {'network': {'name': "12345678" * 32,
+                            'admin_state_up': True,
+                            'tenant_id': _uuid()}}
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
     def test_create_bulk(self):
         data = {'networks': [{'name': 'net1',
                               'admin_state_up': True,

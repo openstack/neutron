@@ -112,7 +112,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                     'convert_to': attr.convert_to_boolean,
                     'is_visible': True, 'default': False},
         'name': {'allow_post': True, 'allow_put': False,
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': attr.NAME_MAX_LEN},
                  'is_visible': True, 'default': ''},
         'min': {'allow_post': True, 'allow_put': False,
                 'is_visible': True, 'default': '0',
@@ -128,7 +128,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'convert_to': convert_to_unsigned_int_or_none_max_63},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True},
     },
 }

@@ -31,6 +31,15 @@ SHARED = 'shared'
 # Used by range check to indicate no limit for a bound.
 UNLIMITED = None
 
+# TODO(watanabe.isao): A fix like in neutron/db/models_v2.py needs to be
+# done in other db modules, to reuse the following constants.
+# Common definitions for maximum string field length
+NAME_MAX_LEN = 255
+TENANT_ID_MAX_LEN = 255
+DESCRIPTION_MAX_LEN = 255
+DEVICE_ID_MAX_LEN = 255
+DEVICE_OWNER_MAX_LEN = 255
+
 
 def _verify_dict_keys(expected_keys, target_dict, strict=True):
     """Allows to verify keys in a dictionary.
@@ -680,7 +689,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': NAME_MAX_LEN},
                  'default': '', 'is_visible': True},
         'subnets': {'allow_post': False, 'allow_put': False,
                     'default': [],
@@ -692,7 +701,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         SHARED: {'allow_post': True,
@@ -709,7 +718,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': NAME_MAX_LEN},
                  'is_visible': True},
         'network_id': {'allow_post': True, 'allow_put': False,
                        'required_by_policy': True,
@@ -731,15 +740,15 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'enforce_policy': True,
                       'is_visible': True},
         'device_id': {'allow_post': True, 'allow_put': True,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': DEVICE_ID_MAX_LEN},
                       'default': '',
                       'is_visible': True},
         'device_owner': {'allow_post': True, 'allow_put': True,
-                         'validate': {'type:string': None},
+                         'validate': {'type:string': DEVICE_OWNER_MAX_LEN},
                          'default': '',
                          'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
@@ -751,7 +760,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': NAME_MAX_LEN},
                  'is_visible': True},
         'ip_version': {'allow_post': True, 'allow_put': False,
                        'convert_to': convert_to_int,
@@ -783,7 +792,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'validate': {'type:hostroutes': None},
                         'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         'enable_dhcp': {'allow_post': True, 'allow_put': True,

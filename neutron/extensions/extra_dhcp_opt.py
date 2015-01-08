@@ -42,6 +42,10 @@ attr.validators['type:list_of_dict_or_none'] = _validate_list_of_dict_or_none
 # Attribute Map
 EXTRADHCPOPTS = 'extra_dhcp_opts'
 
+# Common definitions for maximum string field length
+DHCP_OPT_NAME_MAX_LEN = 64
+DHCP_OPT_VALUE_MAX_LEN = 255
+
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         EXTRADHCPOPTS:
@@ -52,9 +56,10 @@ EXTENDED_ATTRIBUTES_2_0 = {
          'validate': {
              'type:list_of_dict_or_none': {
                  'id': {'type:uuid': None, 'required': False},
-                 'opt_name': {'type:not_empty_string': None,
+                 'opt_name': {'type:not_empty_string': DHCP_OPT_NAME_MAX_LEN,
                               'required': True},
-                 'opt_value': {'type:not_empty_string_or_none': None,
+                 'opt_value': {'type:not_empty_string_or_none':
+                               DHCP_OPT_VALUE_MAX_LEN,
                                'required': True},
                  'ip_version': {'convert_to': attr.convert_to_int,
                                 'type:values': [4, 6],

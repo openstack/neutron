@@ -37,7 +37,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'id': {'allow_post': False, 'allow_put': False,
                'is_visible': True},
         'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': attributes.NAME_MAX_LEN},
                  'is_visible': True, 'default': ''},
         'default': {'allow_post': False, 'allow_put': False,
                     'is_visible': True},
@@ -48,7 +48,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                   'default': [],
                   'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string':
+                                   attributes.TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True}
     },
@@ -56,7 +57,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'id': {'allow_post': False, 'allow_put': False,
                'is_visible': True},
         'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': attributes.NAME_MAX_LEN},
                  'is_visible': True, 'default': ''},
         'client_certificate': {'allow_post': True, 'allow_put': True,
                                'validate': {'type:string': None},
@@ -68,7 +69,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                          'validate': {'type:ip_address': None},
                          'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string':
+                                   attributes.TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
