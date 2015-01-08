@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
@@ -75,9 +76,11 @@ class DhcpAgentNotifyAPI(object):
         return new_agents + existing_agents
 
     def _get_enabled_agents(self, context, network, agents, method, payload):
-        """Get the list of agents whose admin_state is UP."""
+        """Get the list of agents who can provide services."""
         network_id = network['id']
-        enabled_agents = [x for x in agents if x.admin_state_up]
+        enabled_agents = agents
+        if not cfg.CONF.enable_services_on_agents_with_admin_state_down:
+            enabled_agents = [x for x in agents if x.admin_state_up]
         active_agents = [x for x in agents if x.is_active]
         len_enabled_agents = len(enabled_agents)
         len_active_agents = len(active_agents)
