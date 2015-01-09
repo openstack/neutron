@@ -502,7 +502,13 @@ class Dnsmasq(DhcpLocalProcess):
         filename = self.get_conf_file_name('host')
 
         LOG.debug('Building host file: %s', filename)
+        dhcp_enabled_subnet_ids = [s.id for s in self.network.subnets
+                                   if s.enable_dhcp]
         for (port, alloc, hostname, name) in self._iter_hosts():
+            # don't write ip address which belongs to a dhcp disabled subnet.
+            if alloc.subnet_id not in dhcp_enabled_subnet_ids:
+                continue
+
             # (dzyu) Check if it is legal ipv6 address, if so, need wrap
             # it with '[]' to let dnsmasq to distinguish MAC address from
             # IPv6 address.
