@@ -154,7 +154,7 @@ that indicates where the corresponding server or client code is located.
 Example: DHCP
 -------------
 
-The DHCP agent includes a client API, neutron.agent.dhcp_agent.DhcpPluginAPI.
+The DHCP agent includes a client API, neutron.agent.dhcp.agent.DhcpPluginAPI.
 The DHCP agent uses this class to call remote methods back in the Neutron
 server.  The server side is defined in
 neutron.api.rpc.handlers.dhcp_rpc.DhcpRpcCallback.  It is up to the Neutron
@@ -165,7 +165,7 @@ Similarly, there is an RPC interface defined that allows the Neutron plugin to
 remotely invoke methods in the DHCP agent.  The client side is defined in
 neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.DhcpAgentNotifyApi.  The
 server side of this interface that runs in the DHCP agent is
-neutron.agent.dhcp_agent.DhcpAgent.
+neutron.agent.dhcp.agent.DhcpAgent.
 
 More Info
 =========

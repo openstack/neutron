@@ -22,7 +22,6 @@ import socket
 import sys
 
 import netaddr
-from oslo.config import cfg
 from oslo.serialization import jsonutils
 from oslo.utils import importutils
 import six
@@ -37,30 +36,6 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
-
-OPTS = [
-    cfg.StrOpt('dhcp_confs',
-               default='$state_path/dhcp',
-               help=_('Location to store DHCP server config files')),
-    cfg.StrOpt('dhcp_domain',
-               default='openstacklocal',
-               help=_('Domain to use for building the hostnames')),
-    cfg.StrOpt('dnsmasq_config_file',
-               default='',
-               help=_('Override the default dnsmasq settings with this file')),
-    cfg.ListOpt('dnsmasq_dns_servers',
-                help=_('Comma-separated list of the DNS servers which will be '
-                       'used as forwarders.'),
-                deprecated_name='dnsmasq_dns_server'),
-    cfg.BoolOpt('dhcp_delete_namespaces', default=False,
-                help=_("Delete namespace after removing a dhcp server.")),
-    cfg.IntOpt(
-        'dnsmasq_lease_max',
-        default=(2 ** 24),
-        help=_('Limit number of leases to prevent a denial-of-service.')),
-    cfg.BoolOpt('dhcp_broadcast_reply', default=False,
-                help=_("Use broadcast in DHCP replies")),
-]
 
 IPV4 = 4
 IPV6 = 6
