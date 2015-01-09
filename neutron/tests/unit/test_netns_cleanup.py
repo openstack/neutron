@@ -16,7 +16,7 @@
 import mock
 
 from neutron.agent.linux import interface
-from neutron.agent import netns_cleanup_util as util
+from neutron.cmd import netns_cleanup as util
 from neutron.tests import base
 
 
