@@ -9,7 +9,8 @@ venv=${1:-"dsvm-functional"}
 
 function generate_testr_results {
     # Give job user rights to access tox logs
-    sudo -H -u stack chmod o+rw -R .
+    sudo -H -u stack chmod o+rw .
+    sudo -H -u stack chmod o+rw -R .testrepository
     if [ -f ".testrepository/0" ] ; then
         .tox/$venv/bin/subunit-1to2 < .testrepository/0 > ./testrepository.subunit
         .tox/$venv/bin/python $SCRIPTS_DIR/subunit2html.py ./testrepository.subunit testr_results.html
