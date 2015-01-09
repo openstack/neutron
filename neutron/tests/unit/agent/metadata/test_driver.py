@@ -20,7 +20,7 @@ import mock
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
-from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import config as l3_config
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
@@ -36,7 +36,7 @@ class TestMetadataDriver(base.BaseTestCase):
 
     def setUp(self):
         super(TestMetadataDriver, self).setUp()
-        cfg.CONF.register_opts(l3_agent.L3NATAgent.OPTS)
+        cfg.CONF.register_opts(l3_config.OPTS)
         agent_config.register_root_helper(cfg.CONF)
 
     def test_metadata_nat_rules(self):

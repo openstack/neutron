@@ -24,6 +24,7 @@ from testtools import matchers
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import dvr
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import link_local_allocator as lla
@@ -168,7 +169,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_cli_opts(log.common_cli_opts)
         self.conf.register_cli_opts(log.logging_cli_opts)
-        self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
+        self.conf.register_opts(l3_config.OPTS)
         self.conf.register_opts(ha.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_use_namespaces_opts_helper(self.conf)
