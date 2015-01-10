@@ -395,6 +395,14 @@ class NeutronNets(db_base_plugin_v2.NeutronDbPluginV2):
         return super(NeutronNets,
                      self).get_ports(self.admin_ctx, filters=filters) or []
 
+    def get_shared_network_owner_id(self, network_id):
+        filters = {'id': [network_id]}
+        nets = self.get_networks(self.admin_ctx, filters=filters) or []
+        if not nets:
+            return
+        if nets[0]['shared']:
+            return nets[0]['tenant_id']
+
     def _get_network(self, tenant_id, network_id):
         filters = {'tenant_id': [tenant_id],
                    'id': [network_id]}
