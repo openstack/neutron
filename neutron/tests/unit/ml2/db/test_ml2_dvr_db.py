@@ -18,6 +18,7 @@ import mock
 from sqlalchemy.orm import query
 
 from neutron import context
+from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import portbindings
@@ -37,9 +38,11 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx.session.add(models_v2.Network(id=network_id))
             ports = []
             for port_id in port_ids:
+                mac_address = (db_base_plugin_v2.NeutronDbPluginV2.
+                               _generate_mac())
                 port = models_v2.Port(id=port_id,
                                       network_id=network_id,
-                                      mac_address='foo_mac_address',
+                                      mac_address=mac_address,
                                       admin_state_up=True,
                                       status='ACTIVE',
                                       device_id='',

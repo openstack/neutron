@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from neutron import context
+from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron.extensions import portbindings
 from neutron.openstack.common import uuidutils
@@ -34,15 +35,17 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
             self.ctx.session.add(models_v2.Network(id=network_id))
 
     def _setup_neutron_port(self, network_id, port_id):
+        mac_address = db_base_plugin_v2.NeutronDbPluginV2._generate_mac()
         with self.ctx.session.begin(subtransactions=True):
             port = models_v2.Port(id=port_id,
                                   network_id=network_id,
-                                  mac_address='foo_mac_address',
+                                  mac_address=mac_address,
                                   admin_state_up=True,
                                   status='DOWN',
                                   device_id='',
                                   device_owner='')
             self.ctx.session.add(port)
+        return port
 
     def _setup_neutron_portbinding(self, port_id, vif_type, host):
         with self.ctx.session.begin(subtransactions=True):
@@ -190,12 +193,11 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
     def test_get_port_from_device_mac(self):
         network_id = 'foo-network-id'
         port_id = 'foo-port-id'
-        mac_address = 'foo_mac_address'
         self._setup_neutron_network(network_id)
-        self._setup_neutron_port(network_id, port_id)
+        port = self._setup_neutron_port(network_id, port_id)
 
-        port = ml2_db.get_port_from_device_mac(mac_address)
-        self.assertEqual(port_id, port.id)
+        observed_port = ml2_db.get_port_from_device_mac(port['mac_address'])
+        self.assertEqual(port_id, observed_port.id)
 
     def test_get_locked_port_and_binding(self):
         network_id = 'foo-network-id'
