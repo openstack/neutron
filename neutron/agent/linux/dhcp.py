@@ -327,7 +327,6 @@ class Dnsmasq(DhcpLocalProcess):
             ver = float(m.group(1)) if m else 0
             if ver < cls.MINIMUM_VERSION:
                 LOG.error(_LE('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
-                              'DHCP AGENT MAY NOT RUN CORRECTLY! '
                               'Please ensure that its version is %s '
                               'or above!'), cls.MINIMUM_VERSION)
                 raise SystemExit(1)
