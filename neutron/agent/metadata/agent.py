@@ -47,14 +47,23 @@ LOG = logging.getLogger(__name__)
 
 
 class MetadataPluginAPI(object):
-    """Agent-side RPC (stub) for agent-to-plugin interaction.
+    """Agent-side RPC for metadata agent-to-plugin interaction.
+
+    This class implements the client side of an rpc interface used by the
+    metadata service to make calls back into the Neutron plugin.  The server
+    side is defined in
+    neutron.api.rpc.handlers.metadata_rpc.MetadataRpcCallback.  For more
+    information about changing rpc interfaces, see
+    doc/source/devref/rpc_api.rst.
 
     API version history:
         1.0 - Initial version.
     """
 
     def __init__(self, topic):
-        target = messaging.Target(topic=topic, version='1.0')
+        target = messaging.Target(topic=topic,
+                                  namespace=n_const.RPC_NAMESPACE_METADATA,
+                                  version='1.0')
         self.client = n_rpc.get_client(target)
 
     def get_ports(self, context, filters):
