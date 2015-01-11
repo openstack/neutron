@@ -151,7 +151,7 @@ def downgrade():
     op.drop_table('nsxv_port_index_mappings')
     op.drop_table('nsxv_port_vnic_mappings')
     op.drop_table('nsxv_tz_network_bindings')
-    op.drop_table('nsxv_section_mappings')
+    op.drop_table('nsxv_security_group_section_mappings')
     op.drop_table('nsxv_spoofguard_policy_network_mappings')
     op.drop_table('nsxv_edge_vnic_bindings')
     op.drop_table('nsxv_edge_dhcp_static_bindings')
