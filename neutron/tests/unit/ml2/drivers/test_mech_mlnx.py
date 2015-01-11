@@ -12,13 +12,24 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import sys
 
-
+import mock
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.ml2.drivers.mlnx import mech_mlnx
 from neutron.tests.unit.ml2 import _test_mech_agent as base
+
+m_const_mock = mock.Mock()
+
+with mock.patch.dict(sys.modules,
+                    {'networking_mlnx': mock.Mock(),
+                     'networking_mlnx.plugins': mock.Mock(),
+                     'networking_mlnx.plugins.ml2': mock.Mock(),
+                     'networking_mlnx.plugins.ml2.drivers': mock.Mock(),
+                     'networking_mlnx.plugins.ml2.drivers.mlnx':
+                        m_const_mock}):
+    from neutron.plugins.ml2.drivers.mlnx import mech_mlnx
 
 
 class MlnxMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
@@ -49,6 +60,8 @@ class MlnxMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
         super(MlnxMechanismBaseTestCase, self).setUp()
         self.driver = mech_mlnx.MlnxMechanismDriver()
         self.driver.initialize()
+        m_const_mock.constants.VNIC_TO_VIF_MAPPING.get.return_value = (
+            self.driver.vif_type)
 
 
 class MlnxMechanismGenericTestCase(MlnxMechanismBaseTestCase,
@@ -68,6 +81,7 @@ class MlnxMechanismFlatTestCase(MlnxMechanismBaseTestCase,
 
 class MlnxMechanismVnicTypeTestCase(MlnxMechanismBaseTestCase,
                                     base.AgentMechanismVlanTestCase):
+
     def _check_vif_type_for_vnic_type(self, vnic_type,
                                       expected_vif_type):
         context = base.FakePortContext(self.AGENT_TYPE,
@@ -78,10 +92,15 @@ class MlnxMechanismVnicTypeTestCase(MlnxMechanismBaseTestCase,
         self.assertEqual(expected_vif_type, context._bound_vif_type)
 
     def test_vnic_type_direct(self):
+        m_const_mock.constants.VNIC_TO_VIF_MAPPING.get.return_value = (
+            portbindings.VIF_TYPE_MLNX_HOSTDEV)
         self._check_vif_type_for_vnic_type(portbindings.VNIC_DIRECT,
                                            portbindings.VIF_TYPE_MLNX_HOSTDEV)
 
     def test_vnic_type_macvtap(self):
+        m_const_mock.constants.VNIC_TO_VIF_MAPPING.get.return_value = (
+            portbindings.VIF_TYPE_MLNX_DIRECT)
+
         self._check_vif_type_for_vnic_type(portbindings.VNIC_MACVTAP,
                                            portbindings.VIF_TYPE_MLNX_DIRECT)
 

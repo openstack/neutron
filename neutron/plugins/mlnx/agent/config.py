@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from networking_mlnx.plugins.mlnx.agent import constants
 from oslo.config import cfg
 
 from neutron.agent.common import config
-from neutron.plugins.mlnx.common import constants
 
 DEFAULT_INTERFACE_MAPPINGS = []
 
