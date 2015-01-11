@@ -20,6 +20,7 @@ import testtools
 import webob
 
 from neutron.agent.metadata import agent
+from neutron.agent import metadata_agent
 from neutron.common import constants
 from neutron.common import utils
 from neutron.tests import base
@@ -634,10 +635,10 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
 
     def test_main(self):
         with mock.patch.object(agent, 'UnixDomainMetadataProxy') as proxy:
-            with mock.patch.object(agent, 'config') as config:
-                with mock.patch.object(agent, 'cfg') as cfg:
+            with mock.patch.object(metadata_agent, 'config') as config:
+                with mock.patch.object(metadata_agent, 'cfg') as cfg:
                     with mock.patch.object(utils, 'cfg'):
-                        agent.main()
+                        metadata_agent.main()
 
                         self.assertTrue(config.setup_logging.called)
                         proxy.assert_has_calls([
