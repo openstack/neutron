@@ -13,8 +13,6 @@
 #    under the License.
 #
 
-import sys
-
 import eventlet
 eventlet.monkey_patch()
 
@@ -31,13 +29,10 @@ from neutron.agent.l3 import event_observers
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import router_info
 from neutron.agent.l3 import router_processing_queue as queue
-from neutron.agent.linux import external_process
-from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -50,8 +45,6 @@ from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
-from neutron.openstack.common import service
-from neutron import service as neutron_service
 from neutron.services import advanced_service as adv_svc
 try:
     from neutron_fwaas.services.firewall.agents.l3reference \
@@ -146,61 +139,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
               Needed by the L3 service when dealing with DVR
     """
     target = messaging.Target(version='1.2')
-
-    OPTS = [
-        cfg.StrOpt('agent_mode', default='legacy',
-                   help=_("The working mode for the agent. Allowed modes are: "
-                          "'legacy' - this preserves the existing behavior "
-                          "where the L3 agent is deployed on a centralized "
-                          "networking node to provide L3 services like DNAT, "
-                          "and SNAT. Use this mode if you do not want to "
-                          "adopt DVR. 'dvr' - this mode enables DVR "
-                          "functionality and must be used for an L3 agent "
-                          "that runs on a compute host. 'dvr_snat' - this "
-                          "enables centralized SNAT support in conjunction "
-                          "with DVR.  This mode must be used for an L3 agent "
-                          "running on a centralized node (or in single-host "
-                          "deployments, e.g. devstack)")),
-        cfg.StrOpt('external_network_bridge', default='br-ex',
-                   help=_("Name of bridge used for external network "
-                          "traffic.")),
-        cfg.IntOpt('metadata_port',
-                   default=9697,
-                   help=_("TCP Port used by Neutron metadata namespace "
-                          "proxy.")),
-        cfg.IntOpt('send_arp_for_ha',
-                   default=3,
-                   help=_("Send this many gratuitous ARPs for HA setup, if "
-                          "less than or equal to 0, the feature is disabled")),
-        cfg.StrOpt('router_id', default='',
-                   help=_("If namespaces is disabled, the l3 agent can only"
-                          " configure a router that has the matching router "
-                          "ID.")),
-        cfg.BoolOpt('handle_internal_only_routers',
-                    default=True,
-                    help=_("Agent should implement routers with no gateway")),
-        cfg.StrOpt('gateway_external_network_id', default='',
-                   help=_("UUID of external network for routers implemented "
-                          "by the agents.")),
-        cfg.BoolOpt('enable_metadata_proxy', default=True,
-                    help=_("Allow running metadata proxy.")),
-        cfg.BoolOpt('router_delete_namespaces', default=False,
-                    help=_("Delete namespace after removing a router.")),
-        cfg.StrOpt('metadata_proxy_socket',
-                   default='$state_path/metadata_proxy',
-                   help=_('Location of Metadata Proxy UNIX domain '
-                          'socket')),
-        cfg.StrOpt('metadata_proxy_user',
-                   default='',
-                   help=_("User (uid or name) running metadata proxy after "
-                          "its initialization (if empty: L3 agent effective "
-                          "user)")),
-        cfg.StrOpt('metadata_proxy_group',
-                   default='',
-                   help=_("Group (gid or name) running metadata proxy after "
-                          "its initialization (if empty: L3 agent effective "
-                          "group)"))
-    ]
 
     def __init__(self, host, conf=None):
         if conf:
@@ -1310,24 +1248,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
         LOG.info(_LI("agent_updated by server side %s!"), payload)
 
 
-def _register_opts(conf):
-    conf.register_opts(L3NATAgent.OPTS)
-    conf.register_opts(ha.OPTS)
-    config.register_interface_driver_opts_helper(conf)
-    config.register_use_namespaces_opts_helper(conf)
-    config.register_agent_state_opts_helper(conf)
-    config.register_root_helper(conf)
-    conf.register_opts(interface.OPTS)
-    conf.register_opts(external_process.OPTS)
-
-
-def main(manager='neutron.agent.l3.agent.L3NATAgentWithStateReport'):
-    _register_opts(cfg.CONF)
-    common_config.init(sys.argv[1:])
-    config.setup_logging()
-    server = neutron_service.Service.create(
-        binary='neutron-l3-agent',
-        topic=topics.L3_AGENT,
-        report_interval=cfg.CONF.AGENT.report_interval,
-        manager=manager)
-    service.launch(server).wait()
+# TODO(armax): drop as soon as dependent services are updated
+from neutron.agent import l3_agent
+main = l3_agent.main

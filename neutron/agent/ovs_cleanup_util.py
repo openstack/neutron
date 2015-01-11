@@ -16,7 +16,7 @@
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
-from neutron.agent.l3 import agent
+from neutron.agent.l3 import config as l3_config
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
@@ -45,7 +45,7 @@ def setup_conf():
 
     conf = cfg.CONF
     conf.register_cli_opts(opts)
-    conf.register_opts(agent.L3NATAgent.OPTS)
+    conf.register_opts(l3_config.OPTS)
     conf.register_opts(interface.OPTS)
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_use_namespaces_opts_helper(conf)

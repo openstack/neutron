@@ -25,6 +25,7 @@ import webob.exc
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -64,7 +65,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def _configure_agent(self, host):
         conf = self._get_config_opts()
-        l3_agent._register_opts(conf)
+        l3_agent_main.register_opts(conf)
         cfg.CONF.set_override('debug', False)
         agent_config.setup_logging()
         conf.set_override(
