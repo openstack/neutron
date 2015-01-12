@@ -1,0 +1,8 @@
+---
+prelude: >
+    OFAgent is decomposed and deprecated in the Mitaka cycle.
+other:
+  - The Openflow Agent(OFAgent) mechanism driver is decomposed completely
+    from neutron tree in the Mitaka. The OFAgent driver and its agent also
+    are deprecated in favor of OpenvSwitch mechanism driver with "native"
+    of_interface in the Mitaka and will be removed in the next release.
