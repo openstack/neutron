@@ -203,8 +203,12 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.external_process = self.external_process_p.start()
 
         self.send_arp_p = mock.patch(
-            'neutron.agent.l3.agent.L3NATAgent._send_gratuitous_arp_packet')
+            'neutron.agent.linux.ip_lib.send_gratuitous_arp')
         self.send_arp = self.send_arp_p.start()
+
+        self.send_arp_proxyarp_p = mock.patch(
+            'neutron.agent.linux.ip_lib.send_garp_for_proxyarp')
+        self.send_arp_proxyarp = self.send_arp_proxyarp_p.start()
 
         self.dvr_cls_p = mock.patch('neutron.agent.linux.interface.NullDriver')
         driver_cls = self.dvr_cls_p.start()
@@ -328,7 +332,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
             self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
-                                                  '99.0.1.9')
+                                                  '99.0.1.9',
+                                                  mock.ANY, mock.ANY)
         elif action == 'remove':
             self.device_exists.return_value = True
             agent.internal_network_removed(ri, port)
@@ -415,7 +420,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 self.assertEqual(self.mock_driver.init_l3.call_count, 1)
                 self.send_arp.assert_called_once_with(ri.ns_name,
                                                       interface_name,
-                                                      '20.0.0.30')
+                                                      '20.0.0.30',
+                                                      mock.ANY, mock.ANY)
                 kwargs = {'preserve_ips': ['192.168.1.34/32'],
                           'namespace': 'qrouter-' + router['id'],
                           'gateway': '20.0.0.1',
@@ -468,7 +474,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertEqual(self.mock_driver.plug.call_count, 0)
         self.assertEqual(self.mock_driver.init_l3.call_count, 1)
         self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
-                                              '20.0.0.30')
+                                              '20.0.0.30', mock.ANY, mock.ANY)
         kwargs = {'preserve_ips': ['192.168.1.34/32'],
                   'namespace': 'qrouter-' + router['id'],
                   'gateway': '20.0.0.1',
@@ -519,30 +525,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         router['distributed'] = True
         router['gw_port_host'] = HOSTNAME
         self._test_external_gateway_action('add', router)
-
-    def _test_arping(self, namespace):
-        if not namespace:
-            self.conf.set_override('use_namespaces', False)
-
-        router_id = _uuid()
-        ri = l3router.RouterInfo(router_id, self.conf.root_helper, {})
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        floating_ip = '20.0.0.101'
-        interface_name = agent.get_external_device_name(router_id)
-        agent._arping(ri, interface_name, floating_ip)
-
-        arping_cmd = ['arping', '-A',
-                      '-I', interface_name,
-                      '-c', self.conf.send_arp_for_ha,
-                      floating_ip]
-        self.mock_ip.netns.execute.assert_any_call(
-            arping_cmd, check_exit_code=True)
-
-    def test_arping_namespace(self):
-        self._test_arping(namespace=True)
-
-    def test_arping_no_namespace(self):
-        self._test_arping(namespace=False)
 
     def test_agent_remove_external_gateway(self):
         router = prepare_router_data(num_internal_ports=2)
@@ -1856,7 +1838,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertEqual(self.mock_driver.init_l3.call_count, 1)
         if self.conf.use_namespaces:
             self.send_arp.assert_called_once_with(fip_ns_name, interface_name,
-                                                  '20.0.0.30')
+                                                  '20.0.0.30',
+                                                  mock.ANY, mock.ANY)
         else:
             self.utils_exec.assert_any_call(
                 check_exit_code=True, root_helper=self.conf.root_helper)

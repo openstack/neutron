@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import eventlet
 import os
 
 import netaddr
@@ -20,7 +21,10 @@ from oslo.config import cfg
 
 from neutron.agent.linux import utils
 from neutron.common import exceptions
+from neutron.i18n import _LE
+from neutron.openstack.common import log as logging
 
+LOG = logging.getLogger(__name__)
 
 OPTS = [
     cfg.BoolOpt('ip_lib_force_root',
@@ -610,3 +614,50 @@ def iproute_arg_supported(command, arg, root_helper=None):
     stdout, stderr = utils.execute(command, root_helper=root_helper,
                                    check_exit_code=False, return_stderr=True)
     return any(arg in line for line in stderr.split('\n'))
+
+
+def _arping(ns_name, iface_name, address, count, root_helper):
+    arping_cmd = ['arping', '-A', '-I', iface_name, '-c', count, address]
+    try:
+        ip_wrapper = IPWrapper(root_helper, namespace=ns_name)
+        ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
+    except Exception:
+        msg = _LE("Failed sending gratuitous ARP "
+                  "to %(addr)s on %(iface)s in namespace %(ns)s")
+        LOG.exception(msg, {'addr': address,
+                            'iface': iface_name,
+                            'ns': ns_name})
+
+
+def send_gratuitous_arp(ns_name, iface_name, address, count, root_helper):
+    """Send a gratuitous arp using given namespace, interface, and address"""
+
+    def arping():
+        _arping(ns_name, iface_name, address, count, root_helper)
+
+    if count > 0:
+        eventlet.spawn_n(arping)
+
+
+def send_garp_for_proxyarp(ns_name, iface_name, address, count, root_helper):
+    """
+    Send a gratuitous arp using given namespace, interface, and address
+
+    This version should be used when proxy arp is in use since the interface
+    won't actually have the address configured.  We actually need to configure
+    the address on the interface and then remove it when the proxy arp has been
+    sent.
+    """
+    def arping_with_temporary_address():
+        # Configure the address on the interface
+        device = IPDevice(iface_name, root_helper, namespace=ns_name)
+        net = netaddr.IPNetwork(str(address))
+        device.addr.add(net.version, str(net), str(net.broadcast))
+
+        _arping(ns_name, iface_name, address, count, root_helper)
+
+        # Delete the address from the interface
+        device.addr.delete(net.version, str(net))
+
+    if count > 0:
+        eventlet.spawn_n(arping_with_temporary_address)

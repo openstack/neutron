@@ -242,7 +242,11 @@ class AgentMixin(object):
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
                             namespace=ns_name)
         ip_address = ex_gw_port['ip_cidr'].split('/')[0]
-        self._send_gratuitous_arp_packet(ns_name, interface_name, ip_address)
+        ip_lib.send_gratuitous_arp(ns_name,
+                                   interface_name,
+                                   ip_address,
+                                   self.conf.send_arp_for_ha,
+                                   self.root_helper)
 
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if gw_ip:
@@ -332,9 +336,11 @@ class AgentMixin(object):
         device.route.add_route(fip_cidr, str(rtr_2_fip.ip))
         interface_name = (
             self.get_fip_ext_device_name(self.agent_gateway_port['id']))
-        self._send_gratuitous_arp_packet(fip_ns_name,
-                                         interface_name, floating_ip,
-                                         distributed=True)
+        ip_lib.send_garp_for_proxyarp(fip_ns_name,
+                                      interface_name,
+                                      floating_ip,
+                                      self.conf.send_arp_for_ha,
+                                      self.root_helper)
         # update internal structures
         ri.dist_fip_count = ri.dist_fip_count + 1
 
