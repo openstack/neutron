@@ -46,6 +46,11 @@ def get_rand_veth_name():
                          prefix=VETH_PREFIX)
 
 
+def get_rand_port_name():
+    return get_rand_name(prefix=PORT_PREFIX,
+                         max_length=n_const.DEVICE_NAME_MAX_LEN)
+
+
 class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
