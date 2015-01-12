@@ -21,7 +21,7 @@ import six
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services import service_base
@@ -31,28 +31,28 @@ LOG = logging.getLogger(__name__)
 
 
 # Firewall Exceptions
-class FirewallNotFound(qexception.NotFound):
+class FirewallNotFound(nexception.NotFound):
     message = _("Firewall %(firewall_id)s could not be found.")
 
 
-class FirewallInUse(qexception.InUse):
+class FirewallInUse(nexception.InUse):
     message = _("Firewall %(firewall_id)s is still active.")
 
 
-class FirewallInPendingState(qexception.Conflict):
+class FirewallInPendingState(nexception.Conflict):
     message = _("Operation cannot be performed since associated Firewall "
                 "%(firewall_id)s is in %(pending_state)s.")
 
 
-class FirewallPolicyNotFound(qexception.NotFound):
+class FirewallPolicyNotFound(nexception.NotFound):
     message = _("Firewall Policy %(firewall_policy_id)s could not be found.")
 
 
-class FirewallPolicyInUse(qexception.InUse):
+class FirewallPolicyInUse(nexception.InUse):
     message = _("Firewall Policy %(firewall_policy_id)s is being used.")
 
 
-class FirewallRuleSharingConflict(qexception.Conflict):
+class FirewallRuleSharingConflict(nexception.Conflict):
 
     """FWaaS exception for firewall rules
 
@@ -64,7 +64,7 @@ class FirewallRuleSharingConflict(qexception.Conflict):
                 "%(firewall_rule_id)s is not shared")
 
 
-class FirewallPolicySharingConflict(qexception.Conflict):
+class FirewallPolicySharingConflict(nexception.Conflict):
 
     """FWaaS exception for firewall policy
 
@@ -76,49 +76,49 @@ class FirewallPolicySharingConflict(qexception.Conflict):
                 "Rule %(firewall_rule_id)s")
 
 
-class FirewallRuleNotFound(qexception.NotFound):
+class FirewallRuleNotFound(nexception.NotFound):
     message = _("Firewall Rule %(firewall_rule_id)s could not be found.")
 
 
-class FirewallRuleInUse(qexception.InUse):
+class FirewallRuleInUse(nexception.InUse):
     message = _("Firewall Rule %(firewall_rule_id)s is being used.")
 
 
-class FirewallRuleNotAssociatedWithPolicy(qexception.InvalidInput):
+class FirewallRuleNotAssociatedWithPolicy(nexception.InvalidInput):
     message = _("Firewall Rule %(firewall_rule_id)s is not associated "
                 " with Firewall Policy %(firewall_policy_id)s.")
 
 
-class FirewallRuleInvalidProtocol(qexception.InvalidInput):
+class FirewallRuleInvalidProtocol(nexception.InvalidInput):
     message = _("Firewall Rule protocol %(protocol)s is not supported. "
                 "Only protocol values %(values)s and their integer "
                 "representation (0 to 255) are supported.")
 
 
-class FirewallRuleInvalidAction(qexception.InvalidInput):
+class FirewallRuleInvalidAction(nexception.InvalidInput):
     message = _("Firewall rule action %(action)s is not supported. "
                 "Only action values %(values)s are supported.")
 
 
-class FirewallRuleInvalidICMPParameter(qexception.InvalidInput):
+class FirewallRuleInvalidICMPParameter(nexception.InvalidInput):
     message = _("%(param)s are not allowed when protocol "
                 "is set to ICMP.")
 
 
-class FirewallRuleWithPortWithoutProtocolInvalid(qexception.InvalidInput):
+class FirewallRuleWithPortWithoutProtocolInvalid(nexception.InvalidInput):
     message = _("Source/destination port requires a protocol")
 
 
-class FirewallInvalidPortValue(qexception.InvalidInput):
+class FirewallInvalidPortValue(nexception.InvalidInput):
     message = _("Invalid value for port %(port)s.")
 
 
-class FirewallRuleInfoMissing(qexception.InvalidInput):
+class FirewallRuleInfoMissing(nexception.InvalidInput):
     message = _("Missing rule info argument for insert/remove "
                 "rule operation.")
 
 
-class FirewallInternalDriverError(qexception.NeutronException):
+class FirewallInternalDriverError(nexception.NeutronException):
     """Fwaas exception for all driver errors.
 
     On any failure or exception in the driver, driver should log it and
@@ -127,7 +127,7 @@ class FirewallInternalDriverError(qexception.NeutronException):
     message = _("%(driver)s: Internal driver error.")
 
 
-class FirewallRuleConflict(qexception.Conflict):
+class FirewallRuleConflict(nexception.Conflict):
 
     """Firewall rule conflict exception.
 

@@ -19,7 +19,7 @@ import abc
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron import manager
 
 
@@ -30,42 +30,42 @@ qos_queue_get = "get_qos_queue"
 qos_queue_list = "get_qos_queues"
 
 
-class DefaultQueueCreateNotAdmin(qexception.InUse):
+class DefaultQueueCreateNotAdmin(nexception.InUse):
     message = _("Need to be admin in order to create queue called default")
 
 
-class DefaultQueueAlreadyExists(qexception.InUse):
+class DefaultQueueAlreadyExists(nexception.InUse):
     message = _("Default queue already exists.")
 
 
-class QueueInvalidDscp(qexception.InvalidInput):
+class QueueInvalidDscp(nexception.InvalidInput):
     message = _("Invalid value for dscp %(data)s must be integer value"
                 " between 0 and 63.")
 
 
-class QueueInvalidMarking(qexception.InvalidInput):
+class QueueInvalidMarking(nexception.InvalidInput):
     message = _("The qos marking cannot be set to 'trusted' "
                 "when the DSCP field is set")
 
 
-class QueueMinGreaterMax(qexception.InvalidInput):
+class QueueMinGreaterMax(nexception.InvalidInput):
     message = _("Invalid bandwidth rate, min greater than max.")
 
 
-class QueueInvalidBandwidth(qexception.InvalidInput):
+class QueueInvalidBandwidth(nexception.InvalidInput):
     message = _("Invalid bandwidth rate, %(data)s must be a non negative"
                 " integer.")
 
 
-class QueueNotFound(qexception.NotFound):
+class QueueNotFound(nexception.NotFound):
     message = _("Queue %(id)s does not exist")
 
 
-class QueueInUseByPort(qexception.InUse):
+class QueueInUseByPort(nexception.InUse):
     message = _("Unable to delete queue attached to port.")
 
 
-class QueuePortBindingNotFound(qexception.NotFound):
+class QueuePortBindingNotFound(nexception.NotFound):
     message = _("Port is not associated with lqueue")
 
 
@@ -78,7 +78,7 @@ def convert_to_unsigned_int_or_none(val):
             raise ValueError()
     except (ValueError, TypeError):
         msg = _("'%s' must be a non negative integer.") % val
-        raise qexception.InvalidInput(error_message=msg)
+        raise nexception.InvalidInput(error_message=msg)
     return val
 
 

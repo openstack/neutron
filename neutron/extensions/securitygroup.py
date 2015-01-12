@@ -23,90 +23,90 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import constants as const
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron import quota
 
 
 # Security group Exceptions
-class SecurityGroupInvalidPortRange(qexception.InvalidInput):
+class SecurityGroupInvalidPortRange(nexception.InvalidInput):
     message = _("For TCP/UDP protocols, port_range_min must be "
                 "<= port_range_max")
 
 
-class SecurityGroupInvalidPortValue(qexception.InvalidInput):
+class SecurityGroupInvalidPortValue(nexception.InvalidInput):
     message = _("Invalid value for port %(port)s")
 
 
-class SecurityGroupInvalidIcmpValue(qexception.InvalidInput):
+class SecurityGroupInvalidIcmpValue(nexception.InvalidInput):
     message = _("Invalid value for ICMP %(field)s (%(attr)s) "
                 "%(value)s. It must be 0 to 255.")
 
 
-class SecurityGroupMissingIcmpType(qexception.InvalidInput):
+class SecurityGroupMissingIcmpType(nexception.InvalidInput):
     message = _("ICMP code (port-range-max) %(value)s is provided"
                 " but ICMP type (port-range-min) is missing.")
 
 
-class SecurityGroupInUse(qexception.InUse):
+class SecurityGroupInUse(nexception.InUse):
     message = _("Security Group %(id)s in use.")
 
 
-class SecurityGroupCannotRemoveDefault(qexception.InUse):
+class SecurityGroupCannotRemoveDefault(nexception.InUse):
     message = _("Insufficient rights for removing default security group.")
 
 
-class SecurityGroupCannotUpdateDefault(qexception.InUse):
+class SecurityGroupCannotUpdateDefault(nexception.InUse):
     message = _("Updating default security group not allowed.")
 
 
-class SecurityGroupDefaultAlreadyExists(qexception.InUse):
+class SecurityGroupDefaultAlreadyExists(nexception.InUse):
     message = _("Default security group already exists.")
 
 
-class SecurityGroupRuleInvalidProtocol(qexception.InvalidInput):
+class SecurityGroupRuleInvalidProtocol(nexception.InvalidInput):
     message = _("Security group rule protocol %(protocol)s not supported. "
                 "Only protocol values %(values)s and their integer "
                 "representation (0 to 255) are supported.")
 
 
-class SecurityGroupRulesNotSingleTenant(qexception.InvalidInput):
+class SecurityGroupRulesNotSingleTenant(nexception.InvalidInput):
     message = _("Multiple tenant_ids in bulk security group rule create"
                 " not allowed")
 
 
-class SecurityGroupRemoteGroupAndRemoteIpPrefix(qexception.InvalidInput):
+class SecurityGroupRemoteGroupAndRemoteIpPrefix(nexception.InvalidInput):
     message = _("Only remote_ip_prefix or remote_group_id may "
                 "be provided.")
 
 
-class SecurityGroupProtocolRequiredWithPorts(qexception.InvalidInput):
+class SecurityGroupProtocolRequiredWithPorts(nexception.InvalidInput):
     message = _("Must also specifiy protocol if port range is given.")
 
 
-class SecurityGroupNotSingleGroupRules(qexception.InvalidInput):
+class SecurityGroupNotSingleGroupRules(nexception.InvalidInput):
     message = _("Only allowed to update rules for "
                 "one security profile at a time")
 
 
-class SecurityGroupNotFound(qexception.NotFound):
+class SecurityGroupNotFound(nexception.NotFound):
     message = _("Security group %(id)s does not exist")
 
 
-class SecurityGroupRuleNotFound(qexception.NotFound):
+class SecurityGroupRuleNotFound(nexception.NotFound):
     message = _("Security group rule %(id)s does not exist")
 
 
-class DuplicateSecurityGroupRuleInPost(qexception.InUse):
+class DuplicateSecurityGroupRuleInPost(nexception.InUse):
     message = _("Duplicate Security Group Rule in POST.")
 
 
-class SecurityGroupRuleExists(qexception.InUse):
+class SecurityGroupRuleExists(nexception.InUse):
     message = _("Security group rule already exists. Rule id is %(id)s.")
 
 
-class SecurityGroupRuleParameterConflict(qexception.InvalidInput):
+class SecurityGroupRuleParameterConflict(nexception.InvalidInput):
     message = _("Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s")
 
 
@@ -159,7 +159,7 @@ def convert_to_uuid_list_or_none(value_list):
     for sg_id in value_list:
         if not uuidutils.is_uuid_like(sg_id):
             msg = _("'%s' is not an integer or uuid") % sg_id
-            raise qexception.InvalidInput(error_message=msg)
+            raise nexception.InvalidInput(error_message=msg)
     return value_list
 
 
@@ -170,7 +170,7 @@ def convert_ip_prefix_to_cidr(ip_prefix):
         cidr = netaddr.IPNetwork(ip_prefix)
         return str(cidr)
     except (ValueError, TypeError, netaddr.AddrFormatError):
-        raise qexception.InvalidCIDR(input=ip_prefix)
+        raise nexception.InvalidCIDR(input=ip_prefix)
 
 
 def _validate_name_not_default(data, valid_values=None):

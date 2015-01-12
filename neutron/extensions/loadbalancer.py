@@ -22,74 +22,74 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services import service_base
 
 
 # Loadbalancer Exceptions
-class DelayOrTimeoutInvalid(qexception.BadRequest):
+class DelayOrTimeoutInvalid(nexception.BadRequest):
     message = _("Delay must be greater than or equal to timeout")
 
 
-class NoEligibleBackend(qexception.NotFound):
+class NoEligibleBackend(nexception.NotFound):
     message = _("No eligible backend for pool %(pool_id)s")
 
 
-class VipNotFound(qexception.NotFound):
+class VipNotFound(nexception.NotFound):
     message = _("Vip %(vip_id)s could not be found")
 
 
-class VipExists(qexception.NeutronException):
+class VipExists(nexception.NeutronException):
     message = _("Another Vip already exists for pool %(pool_id)s")
 
 
-class PoolNotFound(qexception.NotFound):
+class PoolNotFound(nexception.NotFound):
     message = _("Pool %(pool_id)s could not be found")
 
 
-class MemberNotFound(qexception.NotFound):
+class MemberNotFound(nexception.NotFound):
     message = _("Member %(member_id)s could not be found")
 
 
-class HealthMonitorNotFound(qexception.NotFound):
+class HealthMonitorNotFound(nexception.NotFound):
     message = _("Health_monitor %(monitor_id)s could not be found")
 
 
-class PoolMonitorAssociationNotFound(qexception.NotFound):
+class PoolMonitorAssociationNotFound(nexception.NotFound):
     message = _("Monitor %(monitor_id)s is not associated "
                 "with Pool %(pool_id)s")
 
 
-class PoolMonitorAssociationExists(qexception.Conflict):
+class PoolMonitorAssociationExists(nexception.Conflict):
     message = _('health_monitor %(monitor_id)s is already associated '
                 'with pool %(pool_id)s')
 
 
-class StateInvalid(qexception.NeutronException):
+class StateInvalid(nexception.NeutronException):
     message = _("Invalid state %(state)s of Loadbalancer resource %(id)s")
 
 
-class PoolInUse(qexception.InUse):
+class PoolInUse(nexception.InUse):
     message = _("Pool %(pool_id)s is still in use")
 
 
-class HealthMonitorInUse(qexception.InUse):
+class HealthMonitorInUse(nexception.InUse):
     message = _("Health monitor %(monitor_id)s still has associations with "
                 "pools")
 
 
-class PoolStatsNotFound(qexception.NotFound):
+class PoolStatsNotFound(nexception.NotFound):
     message = _("Statistics of Pool %(pool_id)s could not be found")
 
 
-class ProtocolMismatch(qexception.BadRequest):
+class ProtocolMismatch(nexception.BadRequest):
     message = _("Protocol %(vip_proto)s does not match "
                 "pool protocol %(pool_proto)s")
 
 
-class MemberExists(qexception.NeutronException):
+class MemberExists(nexception.NeutronException):
     message = _("Member with address %(address)s and port %(port)s "
                 "already present in pool %(pool)s")
 

@@ -23,7 +23,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services import service_base
@@ -63,59 +63,59 @@ SUPPORTED_SP_TYPES = (SESSION_PERSISTENCE_SOURCE_IP,
 # Loadbalancer Exceptions
 # This exception is only for a workaround when having v1 and v2 lbaas extension
 # and plugins enabled
-class RequiredAttributeNotSpecified(qexception.BadRequest):
+class RequiredAttributeNotSpecified(nexception.BadRequest):
     message = _("Required attribute %(attr_name)s not specified")
 
 
-class EntityNotFound(qexception.NotFound):
+class EntityNotFound(nexception.NotFound):
     message = _("%(name)s %(id)s could not be found")
 
 
-class DelayOrTimeoutInvalid(qexception.BadRequest):
+class DelayOrTimeoutInvalid(nexception.BadRequest):
     message = _("Delay must be greater than or equal to timeout")
 
 
-class EntityInUse(qexception.InUse):
+class EntityInUse(nexception.InUse):
     message = _("%(entity_using)s %(id)s is using this %(entity_in_use)s")
 
 
-class LoadBalancerListenerProtocolPortExists(qexception.Conflict):
+class LoadBalancerListenerProtocolPortExists(nexception.Conflict):
     message = _("Load Balancer %(lb_id)s already has a listener with "
                 "protocol_port of %(protocol_port)s")
 
 
-class ListenerPoolProtocolMismatch(qexception.Conflict):
+class ListenerPoolProtocolMismatch(nexception.Conflict):
     message = _("Listener protocol %(listener_proto)s and pool protocol "
                 "%(pool_proto)s are not compatible.")
 
 
-class AttributeIDImmutable(qexception.NeutronException):
+class AttributeIDImmutable(nexception.NeutronException):
     message = _("Cannot change %(attribute)s if one already exists")
 
 
-class StateInvalid(qexception.NeutronException):
+class StateInvalid(nexception.NeutronException):
     message = _("Invalid state %(state)s of loadbalancer resource %(id)s")
 
 
-class MemberNotFoundForPool(qexception.NotFound):
+class MemberNotFoundForPool(nexception.NotFound):
     message = _("Member %(member_id)s could not be found in pool %(pool_id)s")
 
 
-class MemberExists(qexception.Conflict):
+class MemberExists(nexception.Conflict):
     message = _("Member with address %(address)s and protocol_port %(port)s "
                 "already present in pool %(pool)s")
 
 
-class MemberAddressTypeSubnetTypeMismatch(qexception.NeutronException):
+class MemberAddressTypeSubnetTypeMismatch(nexception.NeutronException):
     message = _("Member with address %(address)s and subnet %(subnet_id) "
                 " have mismatched IP versions")
 
 
-class DriverError(qexception.NeutronException):
+class DriverError(nexception.NeutronException):
     message = _("An error happened in the driver")
 
 
-class LBConfigurationUnsupported(qexception.NeutronException):
+class LBConfigurationUnsupported(nexception.NeutronException):
     message = _("Load balancer %(load_balancer_id)s configuration is not"
                 "supported by driver %(driver_name)s")
 

@@ -20,74 +20,74 @@ import six
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.plugins.common import constants
 from neutron.services import service_base
 
 
-class VPNServiceNotFound(qexception.NotFound):
+class VPNServiceNotFound(nexception.NotFound):
     message = _("VPNService %(vpnservice_id)s could not be found")
 
 
-class IPsecSiteConnectionNotFound(qexception.NotFound):
+class IPsecSiteConnectionNotFound(nexception.NotFound):
     message = _("ipsec_site_connection %(ipsec_site_conn_id)s not found")
 
 
-class IPsecSiteConnectionDpdIntervalValueError(qexception.InvalidInput):
+class IPsecSiteConnectionDpdIntervalValueError(nexception.InvalidInput):
     message = _("ipsec_site_connection %(attr)s is "
                 "equal to or less than dpd_interval")
 
 
-class IPsecSiteConnectionMtuError(qexception.InvalidInput):
+class IPsecSiteConnectionMtuError(nexception.InvalidInput):
     message = _("ipsec_site_connection MTU %(mtu)d is too small "
                 "for ipv%(version)s")
 
 
-class IKEPolicyNotFound(qexception.NotFound):
+class IKEPolicyNotFound(nexception.NotFound):
     message = _("IKEPolicy %(ikepolicy_id)s could not be found")
 
 
-class IPsecPolicyNotFound(qexception.NotFound):
+class IPsecPolicyNotFound(nexception.NotFound):
     message = _("IPsecPolicy %(ipsecpolicy_id)s could not be found")
 
 
-class IKEPolicyInUse(qexception.InUse):
+class IKEPolicyInUse(nexception.InUse):
     message = _("IKEPolicy %(ikepolicy_id)s is in use by existing "
                 "IPsecSiteConnection and can't be updated or deleted")
 
 
-class VPNServiceInUse(qexception.InUse):
+class VPNServiceInUse(nexception.InUse):
     message = _("VPNService %(vpnservice_id)s is still in use")
 
 
-class RouterInUseByVPNService(qexception.InUse):
+class RouterInUseByVPNService(nexception.InUse):
     message = _("Router %(router_id)s is used by VPNService %(vpnservice_id)s")
 
 
-class SubnetInUseByVPNService(qexception.InUse):
+class SubnetInUseByVPNService(nexception.InUse):
     message = _("Subnet %(subnet_id)s is used by VPNService %(vpnservice_id)s")
 
 
-class VPNStateInvalidToUpdate(qexception.BadRequest):
+class VPNStateInvalidToUpdate(nexception.BadRequest):
     message = _("Invalid state %(state)s of vpnaas resource %(id)s"
                 " for updating")
 
 
-class IPsecPolicyInUse(qexception.InUse):
+class IPsecPolicyInUse(nexception.InUse):
     message = _("IPsecPolicy %(ipsecpolicy_id)s is in use by existing "
                 "IPsecSiteConnection and can't be updated or deleted")
 
 
-class DeviceDriverImportError(qexception.NeutronException):
+class DeviceDriverImportError(nexception.NeutronException):
     message = _("Can not load driver :%(device_driver)s")
 
 
-class SubnetIsNotConnectedToRouter(qexception.BadRequest):
+class SubnetIsNotConnectedToRouter(nexception.BadRequest):
     message = _("Subnet %(subnet_id)s is not "
                 "connected to Router %(router_id)s")
 
 
-class RouterIsNotExternal(qexception.BadRequest):
+class RouterIsNotExternal(nexception.BadRequest):
     message = _("Router %(router_id)s has no external network gateway set")
 
 

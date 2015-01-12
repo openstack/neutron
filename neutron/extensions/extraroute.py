@@ -15,21 +15,21 @@
 
 
 from neutron.api.v2 import attributes as attr
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 
 
 # Extra Routes Exceptions
-class InvalidRoutes(qexception.InvalidInput):
+class InvalidRoutes(nexception.InvalidInput):
     message = _("Invalid format for routes: %(routes)s, %(reason)s")
 
 
-class RouterInterfaceInUseByRoute(qexception.InUse):
+class RouterInterfaceInUseByRoute(nexception.InUse):
     message = _("Router interface for subnet %(subnet_id)s on router "
                 "%(router_id)s cannot be deleted, as it is required "
                 "by one or more routes.")
 
 
-class RoutesExhausted(qexception.BadRequest):
+class RoutesExhausted(nexception.BadRequest):
     message = _("Unable to complete operation for %(router_id)s. "
                 "The number of routes exceeds the maximum %(quota)s.")
 

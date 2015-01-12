@@ -15,11 +15,11 @@
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.extensions import l3
 
 
-class ExternalNetworkInUse(qexception.InUse):
+class ExternalNetworkInUse(nexception.InUse):
     message = _("External network %(net_id)s cannot be updated to be made "
                 "non-external, since it has existing gateway ports")
 
