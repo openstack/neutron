@@ -1246,8 +1246,3 @@ class L3NATAgentWithStateReport(L3NATAgent):
         """Handle the agent_updated notification event."""
         self.fullsync = True
         LOG.info(_LI("agent_updated by server side %s!"), payload)
-
-
-# TODO(armax): drop as soon as dependent services are updated
-from neutron.agent import l3_agent
-main = l3_agent.main
