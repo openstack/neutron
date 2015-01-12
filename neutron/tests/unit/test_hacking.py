@@ -80,18 +80,6 @@ class HackingTestCase(base.BaseTestCase):
                     "./neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/"
                     "plugins/netwrap"))))
 
-    def test_no_author_tags(self):
-        self.assertIsInstance(checks.no_author_tags("# author: pele"), tuple)
-        self.assertIsInstance(checks.no_author_tags("# @author: pele"), tuple)
-        self.assertIsInstance(checks.no_author_tags("# @Author: pele"), tuple)
-        self.assertIsInstance(checks.no_author_tags("# Author: pele"), tuple)
-        self.assertIsInstance(checks.no_author_tags("# Author pele"), tuple)
-        self.assertIsInstance(checks.no_author_tags(".. moduleauthor:: pele"),
-                              tuple)
-        self.assertEqual(2, checks.no_author_tags("# author: pele")[0])
-        self.assertEqual(2, checks.no_author_tags("# Author: pele")[0])
-        self.assertEqual(3, checks.no_author_tags(".. moduleauthor:: pele")[0])
-
     def test_assert_called_once_with(self):
         fail_code1 = """
                mock = Mock()

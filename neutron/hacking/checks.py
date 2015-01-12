@@ -28,8 +28,6 @@ import pep8
 #  - Add test cases for each new rule to
 #    neutron/tests/unit/test_hacking.py
 
-author_tag_re = re.compile(r"^\s*#\s*@?[aA]uthor|^\.\.\s+moduleauthor::")
-
 _all_log_levels = {
     # NOTE(yamamoto): Following nova which uses _() for audit.
     'audit': '_',
@@ -88,15 +86,6 @@ def use_jsonutils(logical_line, filename):
                 yield (pos, msg % {'fun': f[:-1]})
 
 
-def no_author_tags(physical_line):
-    if author_tag_re.match(physical_line):
-        physical_line = physical_line.lower()
-        pos = physical_line.find('moduleauthor')
-        if pos < 0:
-            pos = physical_line.find('author')
-        return pos, "N322: Don't use author tags"
-
-
 def no_translate_debug_logs(logical_line, filename):
     """Check for 'LOG.debug(_(' and 'LOG.debug(_Lx('
 
@@ -120,7 +109,7 @@ def check_assert_called_once_with(logical_line, filename):
         if '.assert_called_once_with(' in logical_line:
             return
         if '.assertcalledonce' in logical_line.lower().replace('_', ''):
-            msg = ("N323: Possible use of no-op mock method. "
+            msg = ("N322: Possible use of no-op mock method. "
                    "please use assert_called_once_with.")
             yield (0, msg)
 
@@ -128,6 +117,5 @@ def check_assert_called_once_with(logical_line, filename):
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
-    register(no_author_tags)
     register(check_assert_called_once_with)
     register(no_translate_debug_logs)
