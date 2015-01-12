@@ -23,7 +23,7 @@ UTIF_LIMIT = 7
 QUEUE_TIMEOUT = 300
 
 
-class Status:
+class Status(object):
     # Transient
     CREATING = constants.PENDING_CREATE
     UPDATING = constants.PENDING_UPDATE
@@ -35,7 +35,7 @@ class Status:
     DELETED = "DELETED"  # not visible
 
 
-class Events:
+class Events(object):
     CREATE_ROUTER = "create_router"
     UPDATE_ROUTER = "update_router"
     DELETE_ROUTER = "delete_router"

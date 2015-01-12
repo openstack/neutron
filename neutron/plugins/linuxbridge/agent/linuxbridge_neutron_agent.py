@@ -60,14 +60,14 @@ BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + DEVICE_NAME_PLACEHOLDER + "/brport"
 VXLAN_INTERFACE_PREFIX = "vxlan-"
 
 
-class NetworkSegment:
+class NetworkSegment(object):
     def __init__(self, network_type, physical_network, segmentation_id):
         self.network_type = network_type
         self.physical_network = physical_network
         self.segmentation_id = segmentation_id
 
 
-class LinuxBridgeManager:
+class LinuxBridgeManager(object):
     def __init__(self, interface_mappings, root_helper):
         self.interface_mappings = interface_mappings
         self.root_helper = root_helper

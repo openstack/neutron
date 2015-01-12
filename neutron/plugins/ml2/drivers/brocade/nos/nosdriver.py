@@ -41,7 +41,7 @@ def nos_unknown_host_cb(host, fingerprint):
     return True
 
 
-class NOSdriver():
+class NOSdriver(object):
     """NOS NETCONF interface driver for Neutron network.
 
     Handles life-cycle management of Neutron network (leverages AMPP on NOS)

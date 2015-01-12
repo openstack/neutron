@@ -21,7 +21,7 @@ Neutron network life-cycle management.
 """
 
 
-class NOSdriver():
+class NOSdriver(object):
     """NOS NETCONF interface driver for Neutron network.
 
     Fake: Handles life-cycle management of Neutron network,

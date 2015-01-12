@@ -44,7 +44,7 @@ class MidonetApiException(n_exc.NeutronException):
     message = _("MidoNet API error: %(msg)s")
 
 
-class MidoClient:
+class MidoClient(object):
 
     def __init__(self, mido_api):
         self.mido_api = mido_api

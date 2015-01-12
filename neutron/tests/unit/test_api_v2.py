@@ -1437,7 +1437,7 @@ class ExtensionTestCase(base.BaseTestCase, testlib_plugin.PluginSetupHelper):
         self.assertNotIn('v2attrs:something_else', net)
 
 
-class TestSubresourcePlugin():
+class TestSubresourcePlugin(object):
     def get_network_dummies(self, context, network_id,
                             filters=None, fields=None):
         return []

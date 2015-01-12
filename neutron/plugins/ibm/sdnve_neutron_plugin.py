@@ -43,7 +43,7 @@ from neutron.plugins.ibm import sdnve_api_fake as sdnve_fake
 LOG = logging.getLogger(__name__)
 
 
-class SdnveRpcCallbacks():
+class SdnveRpcCallbacks(object):
 
     def __init__(self, notifier):
         self.notifier = notifier  # used to notify the agent

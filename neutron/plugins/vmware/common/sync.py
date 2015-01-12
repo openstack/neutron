@@ -165,7 +165,7 @@ class NsxCache(object):
                 self._get_resource_ids(self._lswitchports, changed_only=True))
 
 
-class SyncParameters():
+class SyncParameters(object):
     """Defines attributes used by the synchronization procedure.
 
     chunk_size: Actual chunk size
@@ -203,7 +203,7 @@ def _start_loopingcall(min_chunk_size, state_sync_interval, func):
     return state_synchronizer
 
 
-class NsxSynchronizer():
+class NsxSynchronizer(object):
 
     LS_URI = nsxlib._build_uri_path(
         switchlib.LSWITCH_RESOURCE, fields='uuid,tags,fabric_status',

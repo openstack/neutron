@@ -23,7 +23,7 @@ import neutron.plugins.midonet.agent.midonet_driver as driver
 from neutron.tests import base
 
 
-class FakeNetwork:
+class FakeNetwork(object):
     id = 'aaaabbbb-cccc-dddd-eeee-ffff00001111'
     namespace = 'qdhcp-ns'
 

@@ -31,7 +31,7 @@ from neutron.tests import base
 LOG = logging.getLogger(__name__)
 
 
-class FakeIPAllocation:
+class FakeIPAllocation(object):
     def __init__(self, address, subnet_id=None):
         self.ip_address = address
         self.subnet_id = subnet_id
@@ -45,7 +45,7 @@ class DhcpOpt(object):
         return str(self.__dict__)
 
 
-class FakePort1:
+class FakePort1(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     admin_state_up = True
     device_owner = 'foo1'
@@ -57,7 +57,7 @@ class FakePort1:
         self.extra_dhcp_opts = []
 
 
-class FakePort2:
+class FakePort2(object):
     id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     admin_state_up = False
     device_owner = 'foo2'
@@ -69,7 +69,7 @@ class FakePort2:
         self.extra_dhcp_opts = []
 
 
-class FakePort3:
+class FakePort3(object):
     id = '44444444-4444-4444-4444-444444444444'
     admin_state_up = True
     device_owner = 'foo3'
@@ -83,7 +83,7 @@ class FakePort3:
         self.extra_dhcp_opts = []
 
 
-class FakePort4:
+class FakePort4(object):
 
     id = 'gggggggg-gggg-gggg-gggg-gggggggggggg'
     admin_state_up = False
@@ -98,7 +98,7 @@ class FakePort4:
         self.extra_dhcp_opts = []
 
 
-class FakeV6Port:
+class FakeV6Port(object):
     id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
     admin_state_up = True
     device_owner = 'foo3'
@@ -110,7 +110,7 @@ class FakeV6Port:
         self.extra_dhcp_opts = []
 
 
-class FakeDualPort:
+class FakeDualPort(object):
     id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
     admin_state_up = True
     device_owner = 'foo3'
@@ -124,7 +124,7 @@ class FakeDualPort:
         self.extra_dhcp_opts = []
 
 
-class FakeRouterPort:
+class FakeRouterPort(object):
     id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
     admin_state_up = True
     device_owner = constants.DEVICE_OWNER_ROUTER_INTF
@@ -138,7 +138,7 @@ class FakeRouterPort:
             ip_address, 'dddddddd-dddd-dddd-dddd-dddddddddddd')]
 
 
-class FakePortMultipleAgents1:
+class FakePortMultipleAgents1(object):
     id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
     admin_state_up = True
     device_owner = constants.DEVICE_OWNER_DHCP
@@ -150,7 +150,7 @@ class FakePortMultipleAgents1:
         self.extra_dhcp_opts = []
 
 
-class FakePortMultipleAgents2:
+class FakePortMultipleAgents2(object):
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     admin_state_up = True
     device_owner = constants.DEVICE_OWNER_DHCP
@@ -162,22 +162,22 @@ class FakePortMultipleAgents2:
         self.extra_dhcp_opts = []
 
 
-class FakeV4HostRoute:
+class FakeV4HostRoute(object):
     destination = '20.0.0.1/24'
     nexthop = '20.0.0.1'
 
 
-class FakeV4HostRouteGateway:
+class FakeV4HostRouteGateway(object):
     destination = '0.0.0.0/0'
     nexthop = '10.0.0.1'
 
 
-class FakeV6HostRoute:
+class FakeV6HostRoute(object):
     destination = '2001:0200:feed:7ac0::/64'
     nexthop = '2001:0200:feed:7ac0::1'
 
 
-class FakeV4Subnet:
+class FakeV4Subnet(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '192.168.0.0/24'
@@ -187,7 +187,7 @@ class FakeV4Subnet:
     dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4MetadataSubnet:
+class FakeV4MetadataSubnet(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '169.254.169.254/30'
@@ -197,7 +197,7 @@ class FakeV4MetadataSubnet:
     dns_nameservers = []
 
 
-class FakeV4SubnetGatewayRoute:
+class FakeV4SubnetGatewayRoute(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '192.168.0.0/24'
@@ -207,7 +207,7 @@ class FakeV4SubnetGatewayRoute:
     dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4SubnetMultipleAgentsWithoutDnsProvided:
+class FakeV4SubnetMultipleAgentsWithoutDnsProvided(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '192.168.0.0/24'
@@ -217,7 +217,7 @@ class FakeV4SubnetMultipleAgentsWithoutDnsProvided:
     host_routes = []
 
 
-class FakeV4MultipleAgentsWithoutDnsProvided:
+class FakeV4MultipleAgentsWithoutDnsProvided(object):
     id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
@@ -225,7 +225,7 @@ class FakeV4MultipleAgentsWithoutDnsProvided:
     namespace = 'qdhcp-ns'
 
 
-class FakeV4SubnetMultipleAgentsWithDnsProvided:
+class FakeV4SubnetMultipleAgentsWithDnsProvided(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '192.168.0.0/24'
@@ -235,7 +235,7 @@ class FakeV4SubnetMultipleAgentsWithDnsProvided:
     host_routes = []
 
 
-class FakeV4MultipleAgentsWithDnsProvided:
+class FakeV4MultipleAgentsWithDnsProvided(object):
     id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     subnets = [FakeV4SubnetMultipleAgentsWithDnsProvided()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
@@ -243,7 +243,7 @@ class FakeV4MultipleAgentsWithDnsProvided:
     namespace = 'qdhcp-ns'
 
 
-class FakeV6Subnet:
+class FakeV6Subnet(object):
     id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     ip_version = 6
     cidr = 'fdca:3ba5:a17a:4ba3::/64'
@@ -255,7 +255,7 @@ class FakeV6Subnet:
     ipv6_address_mode = None
 
 
-class FakeV4SubnetNoDHCP:
+class FakeV4SubnetNoDHCP(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     ip_version = 4
     cidr = '192.168.1.0/24'
@@ -265,7 +265,7 @@ class FakeV4SubnetNoDHCP:
     dns_nameservers = []
 
 
-class FakeV6SubnetDHCPStateful:
+class FakeV6SubnetDHCPStateful(object):
     id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     ip_version = 6
     cidr = 'fdca:3ba5:a17a:4ba3::/64'
@@ -277,7 +277,7 @@ class FakeV6SubnetDHCPStateful:
     ipv6_address_mode = constants.DHCPV6_STATEFUL
 
 
-class FakeV6SubnetSlaac:
+class FakeV6SubnetSlaac(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     ip_version = 6
     cidr = 'ffda:3ba5:a17a:4ba3::/64'
@@ -288,7 +288,7 @@ class FakeV6SubnetSlaac:
     ipv6_ra_mode = None
 
 
-class FakeV4SubnetNoGateway:
+class FakeV4SubnetNoGateway(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     ip_version = 4
     cidr = '192.168.1.0/24'
@@ -298,7 +298,7 @@ class FakeV4SubnetNoGateway:
     dns_nameservers = []
 
 
-class FakeV4SubnetNoRouter:
+class FakeV4SubnetNoRouter(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     ip_version = 4
     cidr = '192.168.1.0/24'
@@ -308,67 +308,67 @@ class FakeV4SubnetNoRouter:
     dns_nameservers = []
 
 
-class FakeV4Network:
+class FakeV4Network(object):
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     subnets = [FakeV4Subnet()]
     ports = [FakePort1()]
     namespace = 'qdhcp-ns'
 
 
-class FakeV6Network:
+class FakeV6Network(object):
     id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
     subnets = [FakeV6Subnet()]
     ports = [FakePort2()]
     namespace = 'qdhcp-ns'
 
 
-class FakeDualNetwork:
+class FakeDualNetwork(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
     ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort()]
     namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkGatewayRoute:
+class FakeDualNetworkGatewayRoute(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4SubnetGatewayRoute(), FakeV6SubnetDHCPStateful()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
     namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkSingleDHCP:
+class FakeDualNetworkSingleDHCP(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
     namespace = 'qdhcp-ns'
 
 
-class FakeV4NoGatewayNetwork:
+class FakeV4NoGatewayNetwork(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4SubnetNoGateway()]
     ports = [FakePort1()]
 
 
-class FakeV4NetworkNoRouter:
+class FakeV4NetworkNoRouter(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4SubnetNoRouter()]
     ports = [FakePort1()]
 
 
-class FakeV4MetadataNetwork:
+class FakeV4MetadataNetwork(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4MetadataSubnet()]
     ports = [FakeRouterPort(ip_address='169.254.169.253')]
 
 
-class FakeV4NetworkDistRouter:
+class FakeV4NetworkDistRouter(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet()]
     ports = [FakePort1(),
              FakeRouterPort(dev_owner=constants.DEVICE_OWNER_DVR_INTERFACE)]
 
 
-class FakeDualV4Pxe3Ports:
+class FakeDualV4Pxe3Ports(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
@@ -403,7 +403,7 @@ class FakeDualV4Pxe3Ports:
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux3.0')]
 
 
-class FakeV4NetworkPxe2Ports:
+class FakeV4NetworkPxe2Ports(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     subnets = [FakeV4Subnet()]
     ports = [FakePort1(), FakePort2(), FakeRouterPort()]
@@ -430,7 +430,7 @@ class FakeV4NetworkPxe2Ports:
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0')]
 
 
-class FakeV4NetworkPxe3Ports:
+class FakeV4NetworkPxe3Ports(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     subnets = [FakeV4Subnet()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
@@ -465,7 +465,7 @@ class FakeV4NetworkPxe3Ports:
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux3.0')]
 
 
-class FakeDualStackNetworkSingleDHCP:
+class FakeDualStackNetworkSingleDHCP(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
 
     subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]

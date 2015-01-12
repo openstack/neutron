@@ -106,7 +106,7 @@ device_dictionary = {}
 first_device_ip = None
 
 
-class CiscoConfigOptions():
+class CiscoConfigOptions(object):
     """Cisco Configuration Options Class."""
 
     def __init__(self):

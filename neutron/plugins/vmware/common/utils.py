@@ -26,7 +26,7 @@ NEUTRON_VERSION = version.version_info.release_string()
 
 
 # Allowed network types for the NSX Plugin
-class NetworkTypes:
+class NetworkTypes(object):
     """Allowed provider network types for the NSX Plugin."""
     L3_EXT = 'l3_ext'
     STT = 'stt'

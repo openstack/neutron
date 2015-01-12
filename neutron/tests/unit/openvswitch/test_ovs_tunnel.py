@@ -55,12 +55,12 @@ BCAST_MAC = "01:00:00:00:00:00/01:00:00:00:00:00"
 UCAST_MAC = "00:00:00:00:00:00/01:00:00:00:00:00"
 
 
-class DummyPort:
+class DummyPort(object):
     def __init__(self, interface_id):
         self.interface_id = interface_id
 
 
-class DummyVlanBinding:
+class DummyVlanBinding(object):
     def __init__(self, network_id, vlan_id):
         self.network_id = network_id
         self.vlan_id = vlan_id

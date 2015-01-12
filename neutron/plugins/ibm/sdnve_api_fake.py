@@ -23,7 +23,7 @@ LOG = logging.getLogger(__name__)
 HTTP_OK = 200
 
 
-class FakeClient():
+class FakeClient(object):
 
     '''Fake Client for SDNVE controller.'''
 
