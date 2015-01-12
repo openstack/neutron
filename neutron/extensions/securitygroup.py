@@ -54,7 +54,7 @@ class SecurityGroupInUse(qexception.InUse):
 
 
 class SecurityGroupCannotRemoveDefault(qexception.InUse):
-    message = _("Removing default security group not allowed.")
+    message = _("Insufficient rights for removing default security group.")
 
 
 class SecurityGroupCannotUpdateDefault(qexception.InUse):
