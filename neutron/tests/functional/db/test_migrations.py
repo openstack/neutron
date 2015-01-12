@@ -170,16 +170,14 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
             mc = alembic.migration.MigrationContext.configure(conn, opts=opts)
 
             # compare schemas and fail with diff, if it's not empty
-            diff1 = alembic.autogenerate.compare_metadata(mc,
-                                                          self.get_metadata())
+            diff = alembic.autogenerate.compare_metadata(mc,
+                                                         self.get_metadata())
             insp = sqlalchemy.engine.reflection.Inspector.from_engine(
                 self.get_engine())
             dialect = self.get_engine().dialect.name
             self.check_mysql_engine(dialect, insp)
-            diff2 = self.check_foreign_keys(self.get_metadata(),
-                                            self.get_engine())
 
-        result = filter(self.remove_unrelated_errors, diff1 + diff2)
+        result = filter(self.remove_unrelated_errors, diff)
         if result:
             msg = pprint.pformat(result, indent=2, width=20)
 
