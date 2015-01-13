@@ -192,6 +192,30 @@ class DhcpBase(object):
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
 
+    def __init__(self, conf, network, root_helper='sudo',
+                 version=None, plugin=None):
+        super(DhcpLocalProcess, self).__init__(conf, network, root_helper,
+                                               version, plugin)
+        self.confs_dir = self.get_confs_dir(conf)
+        self.network_conf_dir = os.path.join(self.confs_dir, network.id)
+        self._ensure_network_conf_dir()
+
+    @staticmethod
+    def get_confs_dir(conf):
+        return os.path.abspath(os.path.normpath(conf.dhcp_confs))
+
+    def get_conf_file_name(self, kind):
+        """Returns the file name for a given kind of config file."""
+        return os.path.join(self.network_conf_dir, kind)
+
+    def _ensure_network_conf_dir(self):
+        """Ensures the directory for configuration files is created."""
+        if not os.path.isdir(self.network_conf_dir):
+            os.makedirs(self.network_conf_dir, 0o755)
+
+    def _remove_config_files(self):
+        shutil.rmtree(self.network_conf_dir, ignore_errors=True)
+
     def _enable_dhcp(self):
         """check if there is a subnet within the network with dhcp enabled."""
         for subnet in self.network.subnets:
@@ -238,21 +262,6 @@ class DhcpLocalProcess(DhcpBase):
                     LOG.exception(_LE('Failed trying to delete namespace: %s'),
                                   self.network.namespace)
 
-    def _remove_config_files(self):
-        confs_dir = os.path.abspath(os.path.normpath(self.conf.dhcp_confs))
-        conf_dir = os.path.join(confs_dir, self.network.id)
-        shutil.rmtree(conf_dir, ignore_errors=True)
-
-    def get_conf_file_name(self, kind, ensure_conf_dir=False):
-        """Returns the file name for a given kind of config file."""
-        confs_dir = os.path.abspath(os.path.normpath(self.conf.dhcp_confs))
-        conf_dir = os.path.join(confs_dir, self.network.id)
-        if ensure_conf_dir:
-            if not os.path.isdir(conf_dir):
-                os.makedirs(conf_dir, 0o755)
-
-        return os.path.join(conf_dir, kind)
-
     def _get_value_from_conf_file(self, kind, converter=None):
         """A helper function to read a value from one of the state files."""
         file_name = self.get_conf_file_name(kind)
@@ -294,8 +303,7 @@ class DhcpLocalProcess(DhcpBase):
 
     @interface_name.setter
     def interface_name(self, value):
-        interface_file_path = self.get_conf_file_name('interface',
-                                                      ensure_conf_dir=True)
+        interface_file_path = self.get_conf_file_name('interface')
         utils.replace_file(interface_file_path, value)
 
     @abc.abstractmethod
@@ -340,13 +348,14 @@ class Dnsmasq(DhcpLocalProcess):
     @classmethod
     def existing_dhcp_networks(cls, conf, root_helper):
         """Return a list of existing networks ids that we have configs for."""
-
-        confs_dir = os.path.abspath(os.path.normpath(conf.dhcp_confs))
-
-        return [
-            c for c in os.listdir(confs_dir)
-            if uuidutils.is_uuid_like(c)
-        ]
+        confs_dir = cls.get_confs_dir(conf)
+        try:
+            return [
+                c for c in os.listdir(confs_dir)
+                if uuidutils.is_uuid_like(c)
+            ]
+        except OSError:
+            return []
 
     def spawn_process(self):
         """Spawns a Dnsmasq process for the network."""
@@ -362,8 +371,7 @@ class Dnsmasq(DhcpLocalProcess):
             '--bind-interfaces',
             '--interface=%s' % self.interface_name,
             '--except-interface=lo',
-            '--pid-file=%s' % self.get_conf_file_name(
-                'pid', ensure_conf_dir=True),
+            '--pid-file=%s' % self.get_conf_file_name('pid'),
             '--dhcp-hostsfile=%s' % self._output_hosts_file(),
             '--addn-hosts=%s' % self._output_addn_hosts_file(),
             '--dhcp-optsfile=%s' % self._output_opts_file(),
