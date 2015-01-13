@@ -1372,6 +1372,18 @@ tag:tag0,option:router""".lstrip()
         with testtools.ExpectedException(SystemExit):
             self._check_version('Error while executing command', 0)
 
+    def test_check_version_ipv6_succeed(self):
+        with mock.patch('neutron.agent.linux.dhcp.LOG.warning') as warning:
+            self._check_version('Dnsmasq version 2.69 Copyright (c)...',
+                                float(2.69))
+            self.assertFalse(warning.called)
+
+    def test_check_version_ipv6_fail(self):
+        with mock.patch('neutron.agent.linux.dhcp.LOG.warning') as warning:
+            self._check_version('Dnsmasq version 2.66 Copyright (c)...',
+                                float(2.66))
+            self.assertTrue(warning.called)
+
     def test_only_populates_dhcp_enabled_subnets(self):
         exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'
         exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'

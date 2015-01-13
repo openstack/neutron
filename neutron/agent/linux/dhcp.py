@@ -313,6 +313,7 @@ class Dnsmasq(DhcpLocalProcess):
     NEUTRON_NETWORK_ID_KEY = 'NEUTRON_NETWORK_ID'
     NEUTRON_RELAY_SOCKET_PATH_KEY = 'NEUTRON_RELAY_SOCKET_PATH'
     MINIMUM_VERSION = 2.63
+    MINIMUM_IPV6_VERSION = 2.67
 
     @classmethod
     def check_version(cls):
@@ -328,6 +329,13 @@ class Dnsmasq(DhcpLocalProcess):
                             'Please ensure that its version is %s '
                             'or above!'), cls.MINIMUM_VERSION)
                 raise SystemExit(1)
+            is_valid_version = float(ver) >= cls.MINIMUM_IPV6_VERSION
+            if not is_valid_version:
+                LOG.warning(_('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
+                              'DHCP AGENT MAY NOT RUN CORRECTLY WHEN '
+                              'SERVING IPV6 STATEFUL SUBNETS! '
+                              'Please ensure that its version is %s '
+                              'or above!'), cls.MINIMUM_IPV6_VERSION)
         except (OSError, RuntimeError, IndexError, ValueError):
             LOG.error(_('Unable to determine dnsmasq version. '
                         'Please ensure that its version is %s '
