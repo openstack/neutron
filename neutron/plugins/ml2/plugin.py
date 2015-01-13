@@ -731,11 +731,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 qry_allocated = (session.query(models_v2.IPAllocation).
                                  filter_by(subnet_id=id).
                                  join(models_v2.Port))
-                is_ipv6_slaac_subnet = ipv6_utils.is_slaac_subnet(subnet)
+                is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
                 # Remove network owned ports, and delete IP allocations
                 # for IPv6 addresses which were automatically generated
                 # via SLAAC
-                if not is_ipv6_slaac_subnet:
+                if not is_auto_addr_subnet:
                     qry_allocated = (
                         qry_allocated.filter(models_v2.Port.device_owner.
                         in_(db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS)))
