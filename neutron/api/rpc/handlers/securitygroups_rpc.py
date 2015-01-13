@@ -22,7 +22,13 @@ from neutron import manager
 
 
 class SecurityGroupServerRpcCallback(object):
-    """Callback for SecurityGroup agent RPC in plugin implementations."""
+    """Callback for SecurityGroup agent RPC in plugin implementations.
+
+    This class implements the server side of an rpc interface.  The client side
+    can be found in neutron.agent.securitygroups_rpc.SecurityGroupServerRpcApi.
+    For more information on changing rpc interfaces, see
+    doc/source/devref/rpc_api.rst.
+    """
 
     # API version history:
     #   1.1 - Initial version

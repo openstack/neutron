@@ -21,6 +21,7 @@ from oslo import messaging
 from oslo.utils import importutils
 
 from neutron.agent import firewall
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
@@ -99,6 +100,28 @@ class SecurityGroupServerRpcApiMixin(object):
         cctxt = self.client.prepare(version='1.2')
         return cctxt.call(context, 'security_group_info_for_devices',
                           devices=devices)
+
+
+# NOTE(russellb) This class currently serves as a transition point as the code
+# base is migrated away from using the Mixin class.  Once the mixin usage is
+# removed, the body of the mixin will be folded into this class.  This class
+# must become standalone before we can move this API into a messaging
+# namespace.  For more info on why this should be put in a namespace, see
+# http://specs.openstack.org/openstack/neutron-specs/
+#           specs/kilo/rpc-docs-and-namespaces.html
+class SecurityGroupServerRpcApi(SecurityGroupServerRpcApiMixin):
+    """RPC client for security group methods in the plugin.
+
+    This class implements the client side of an rpc interface.  This interface
+    is used by agents to call security group related methods implemented on the
+    plugin side.  The other side of this interface can be found in
+    neutron.api.rpc.handlers.SecurityGroupServerRpcCallback.  For more
+    information about changing rpc interfaces, see
+    doc/source/devref/rpc_api.rst.
+    """
+    def __init__(self, topic):
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
 
 class SecurityGroupAgentRpcCallbackMixin(object):
