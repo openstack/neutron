@@ -2839,7 +2839,7 @@ class TestSecurityGroupAgentEnhancedIpsetWithIptables(
         self._verify_mock_calls()
 
 
-class SGNotificationTestMixin():
+class SGNotificationTestMixin(object):
     def test_security_group_rule_updated(self):
         name = 'webservers'
         description = 'my webservers'

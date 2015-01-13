@@ -75,7 +75,7 @@ def _ofport_retry(fn):
     return wrapped
 
 
-class VifPort:
+class VifPort(object):
     def __init__(self, port_name, ofport, vif_id, vif_mac, switch):
         self.port_name = port_name
         self.ofport = ofport

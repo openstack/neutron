@@ -34,7 +34,7 @@ DEVICE_OWNER_NETWORK_PROBE = 'network:probe'
 DEVICE_OWNER_COMPUTE_PROBE = 'compute:probe'
 
 
-class NeutronDebugAgent():
+class NeutronDebugAgent(object):
 
     OPTS = [
         # Needed for drivers

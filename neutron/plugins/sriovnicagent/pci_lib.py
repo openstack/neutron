@@ -36,7 +36,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
     VF_LINE_FORMAT = VF_PATTERN + MAC_PATTERN + ANY_PATTERN + STATE_PATTERN
     VF_DETAILS_REG_EX = re.compile(VF_LINE_FORMAT)
 
-    class LinkState:
+    class LinkState(object):
         ENABLE = "enable"
         DISABLE = "disable"
 

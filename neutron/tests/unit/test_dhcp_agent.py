@@ -339,7 +339,7 @@ class TestDhcpAgent(base.BaseTestCase):
         self._test_sync_state_helper(['b'], ['a'])
 
     def test_sync_state_waitall(self):
-        class mockNetwork():
+        class mockNetwork(object):
             id = '0'
             admin_state_up = True
             subnets = []
@@ -1121,11 +1121,11 @@ class TestNetworkCache(base.BaseTestCase):
         self.assertEqual(nc.get_port_by_id(fake_port1.id), fake_port1)
 
 
-class FakePort1:
+class FakePort1(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
 
 
-class FakeV4Subnet:
+class FakeV4Subnet(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '192.168.0.0/24'
@@ -1133,7 +1133,7 @@ class FakeV4Subnet:
     enable_dhcp = True
 
 
-class FakeV4SubnetNoGateway:
+class FakeV4SubnetNoGateway(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     ip_version = 4
     cidr = '192.168.1.0/24'
@@ -1141,20 +1141,20 @@ class FakeV4SubnetNoGateway:
     enable_dhcp = True
 
 
-class FakeV4Network:
+class FakeV4Network(object):
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     subnets = [FakeV4Subnet()]
     ports = [FakePort1()]
     namespace = 'qdhcp-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 
 
-class FakeV4NetworkNoSubnet:
+class FakeV4NetworkNoSubnet(object):
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     subnets = []
     ports = []
 
 
-class FakeV4NetworkNoGateway:
+class FakeV4NetworkNoGateway(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4SubnetNoGateway()]
     ports = [FakePort1()]

@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 
 # A class to represent a DVR-hosted subnet including vif_ports resident on
 # that subnet
-class LocalDVRSubnetMapping:
+class LocalDVRSubnetMapping(object):
     def __init__(self, subnet, csnat_ofport=constants.OFPORT_INVALID):
         # set of commpute ports on on this dvr subnet
         self.compute_ports = {}
@@ -72,7 +72,7 @@ class LocalDVRSubnetMapping:
         return self.csnat_ofport
 
 
-class OVSPort:
+class OVSPort(object):
     def __init__(self, id, ofport, mac, device_owner):
         self.id = id
         self.mac = mac

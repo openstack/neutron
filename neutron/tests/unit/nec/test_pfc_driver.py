@@ -364,7 +364,7 @@ class PFCV5DriverTest(PFCDriverTestBase):
         self.assertEqual(data['routes'], expected)
 
 
-class PFCFilterDriverTestMixin:
+class PFCFilterDriverTestMixin(object):
     def _test_create_filter(self, filter_dict=None, filter_post=None,
                             apply_ports=None):
         t, n, p = self.get_ofc_item_random_params()

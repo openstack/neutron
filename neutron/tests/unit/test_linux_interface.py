@@ -34,21 +34,21 @@ class BaseChild(interface.LinuxInterfaceDriver):
         pass
 
 
-class FakeNetwork:
+class FakeNetwork(object):
     id = '12345678-1234-5678-90ab-ba0987654321'
 
 
-class FakeSubnet:
+class FakeSubnet(object):
     cidr = '192.168.1.1/24'
 
 
-class FakeAllocation:
+class FakeAllocation(object):
     subnet = FakeSubnet()
     ip_address = '192.168.1.2'
     ip_version = 4
 
 
-class FakePort:
+class FakePort(object):
     id = 'abcdef01-1234-5678-90ab-ba0987654321'
     fixed_ips = [FakeAllocation]
     device_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'

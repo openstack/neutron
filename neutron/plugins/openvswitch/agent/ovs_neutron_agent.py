@@ -63,7 +63,7 @@ class DeviceListRetrievalError(exceptions.NeutronException):
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
 # attributes set).
-class LocalVLANMapping:
+class LocalVLANMapping(object):
     def __init__(self, vlan, network_type, physical_network, segmentation_id,
                  vif_ports=None):
         if vif_ports is None:

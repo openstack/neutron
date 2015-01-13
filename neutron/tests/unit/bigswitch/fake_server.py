@@ -20,7 +20,7 @@ from neutron.plugins.bigswitch import servermanager
 LOG = logging.getLogger(__name__)
 
 
-class HTTPResponseMock():
+class HTTPResponseMock(object):
     status = 200
     reason = 'OK'
 

@@ -44,7 +44,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Extraroute():
+class Extraroute(object):
 
     @classmethod
     def get_name(cls):

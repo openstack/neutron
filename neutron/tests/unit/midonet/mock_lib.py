@@ -119,7 +119,7 @@ def get_subnet_mock(bridge_id=None, gateway_ip='10.0.0.1',
     return subnet
 
 
-class MidonetLibMockConfig():
+class MidonetLibMockConfig(object):
 
     def __init__(self, inst):
         self.inst = inst
@@ -169,7 +169,7 @@ class MidonetLibMockConfig():
         self.inst.get_router.side_effect = self._get_router
 
 
-class MidoClientMockConfig():
+class MidoClientMockConfig(object):
 
     def __init__(self, inst):
         self.inst = inst

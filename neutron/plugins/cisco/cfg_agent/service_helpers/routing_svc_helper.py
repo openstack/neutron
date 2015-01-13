@@ -106,7 +106,7 @@ class CiscoRoutingPluginApi(object):
                           router_ids=router_ids, hosting_device_ids=hd_ids)
 
 
-class RoutingServiceHelper():
+class RoutingServiceHelper(object):
 
     def __init__(self, host, conf, cfg_agent):
         self.conf = conf
