@@ -730,7 +730,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
         internal_subnet_id = None
-        if 'fixed_ip_address' in fip and fip['fixed_ip_address']:
+        if fip.get('fixed_ip_address'):
             internal_ip_address = fip['fixed_ip_address']
             for ip in internal_port['fixed_ips']:
                 if ip['ip_address'] == internal_ip_address:
@@ -775,11 +775,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
     def _check_and_get_fip_assoc(self, context, fip, floatingip_db):
         port_id = internal_ip_address = router_id = None
-        if (('fixed_ip_address' in fip and fip['fixed_ip_address']) and
-            not ('port_id' in fip and fip['port_id'])):
+        if fip.get('fixed_ip_address') and not fip.get('port_id'):
             msg = _("fixed_ip_address cannot be specified without a port_id")
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
-        if 'port_id' in fip and fip['port_id']:
+        if fip.get('port_id'):
             port_id, internal_ip_address, router_id = self.get_assoc_data(
                 context,
                 fip,
