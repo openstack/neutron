@@ -174,9 +174,10 @@ vrrp_instance VR_1 {
         %(ha_device_name)s
     }
     virtual_ipaddress {
-        %(floating_ip_cidr)s dev %(external_device_name)s
+        169.254.0.1/24 dev %(ha_device_name)s
     }
     virtual_ipaddress_excluded {
+        %(floating_ip_cidr)s dev %(external_device_name)s
         %(external_device_cidr)s dev %(external_device_name)s
         %(internal_device_cidr)s dev %(internal_device_name)s
     }
@@ -396,7 +397,7 @@ class L3HATestFramework(L3AgentTestFramework):
 
         router_info_2 = copy.deepcopy(router_info)
         router_info_2[l3_constants.HA_INTERFACE_KEY] = (
-            test_l3_agent.get_ha_interface(ip='169.254.0.3',
+            test_l3_agent.get_ha_interface(ip='169.254.192.2',
                                            mac='22:22:22:22:22:22'))
 
         router2 = self.manage_router(self.failover_agent, router_info_2)
