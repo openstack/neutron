@@ -389,4 +389,4 @@ class SecurityGroupAgentRpcApiMixin(object):
         cctxt = self.client.prepare(version=SG_RPC_VERSION,
                                     topic=self._get_security_group_topic(),
                                     fanout=True)
-        cctxt.cast(context, 'security_groups_member_updated')
+        cctxt.cast(context, 'security_groups_provider_updated')

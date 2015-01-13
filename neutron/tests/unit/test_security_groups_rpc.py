@@ -1644,6 +1644,11 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
         self.mock_cast = mock.patch.object(self.notifier.client,
                 'cast').start()
 
+    def test_security_groups_provider_updated(self):
+        self.notifier.security_groups_provider_updated(None)
+        self.mock_cast.assert_has_calls(
+            [mock.call(None, 'security_groups_provider_updated')])
+
     def test_security_groups_rule_updated(self):
         self.notifier.security_groups_rule_updated(
             None, security_groups=['fake_sgid'])
