@@ -1519,20 +1519,6 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
             self.assertEqual(ofport, 0)
 
-    def test_tunnel_sync_with_ovs_plugin(self):
-        fake_tunnel_details = {'tunnels': [{'id': '42',
-                                            'ip_address': '100.101.102.103'}]}
-        with contextlib.nested(
-            mock.patch.object(self.agent.plugin_rpc, 'tunnel_sync',
-                              return_value=fake_tunnel_details),
-            mock.patch.object(self.agent, '_setup_tunnel_port')
-        ) as (tunnel_sync_rpc_fn, _setup_tunnel_port_fn):
-            self.agent.tunnel_types = ['gre']
-            self.agent.tunnel_sync()
-            expected_calls = [mock.call(self.agent.tun_br, 'gre-42',
-                                        '100.101.102.103', 'gre')]
-            _setup_tunnel_port_fn.assert_has_calls(expected_calls)
-
     def test_tunnel_sync_with_ml2_plugin(self):
         fake_tunnel_details = {'tunnels': [{'ip_address': '100.101.31.15'}]}
         with contextlib.nested(

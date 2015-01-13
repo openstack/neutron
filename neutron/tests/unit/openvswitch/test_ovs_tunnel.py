@@ -481,7 +481,7 @@ class TunnelTest(base.BaseTestCase):
         tunnel_port = '9999'
         self.mock_tun_bridge.add_tunnel_port.return_value = tunnel_port
         self.mock_tun_bridge_expected += [
-            mock.call.add_tunnel_port('gre-1', '10.0.10.1', '10.0.0.1',
+            mock.call.add_tunnel_port('gre-0a000a01', '10.0.10.1', '10.0.0.1',
                                       'gre', 4789, True),
             mock.call.add_flow(priority=1, in_port=tunnel_port,
                                actions='resubmit(,3)')
@@ -489,14 +489,14 @@ class TunnelTest(base.BaseTestCase):
 
         a = self._build_agent()
         a.tunnel_update(
-            mock.sentinel.ctx, tunnel_id='1', tunnel_ip='10.0.10.1',
+            mock.sentinel.ctx, tunnel_ip='10.0.10.1',
             tunnel_type=p_const.TYPE_GRE)
         self._verify_mock_calls()
 
     def test_tunnel_update_self(self):
         a = self._build_agent()
         a.tunnel_update(
-            mock.sentinel.ctx, tunnel_id='1', tunnel_ip='10.0.0.1')
+            mock.sentinel.ctx, tunnel_ip='10.0.0.1')
         self._verify_mock_calls()
 
     def test_daemon_loop(self):

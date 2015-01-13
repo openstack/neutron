@@ -332,8 +332,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if not self.enable_tunneling:
             return
         tunnel_ip = kwargs.get('tunnel_ip')
-        tunnel_id = kwargs.get('tunnel_id', self.get_ip_in_hex(tunnel_ip))
-        if not tunnel_id:
+        tunnel_ip_hex = self.get_ip_in_hex(tunnel_ip)
+        if not tunnel_ip_hex:
             return
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
@@ -345,7 +345,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             return
         if tunnel_ip == self.local_ip:
             return
-        tun_name = '%s-%s' % (tunnel_type, tunnel_id)
+        tun_name = '%s-%s' % (tunnel_type, tunnel_ip_hex)
         if not self.l2_pop:
             self._setup_tunnel_port(self.tun_br, tun_name, tunnel_ip,
                                     tunnel_type)
@@ -1310,16 +1310,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     tunnels = details['tunnels']
                     for tunnel in tunnels:
                         if self.local_ip != tunnel['ip_address']:
-                            tunnel_id = tunnel.get('id')
-                            # Unlike the OVS plugin, ML2 doesn't return an id
-                            # key. So use ip_address to form port name instead.
-                            # Port name must be <=15 chars, so use shorter hex.
                             remote_ip = tunnel['ip_address']
                             remote_ip_hex = self.get_ip_in_hex(remote_ip)
-                            if not tunnel_id and not remote_ip_hex:
+                            if not remote_ip_hex:
                                 continue
-                            tun_name = '%s-%s' % (tunnel_type,
-                                                  tunnel_id or remote_ip_hex)
+                            tun_name = '%s-%s' % (tunnel_type, remote_ip_hex)
                             self._setup_tunnel_port(self.tun_br,
                                                     tun_name,
                                                     tunnel['ip_address'],
