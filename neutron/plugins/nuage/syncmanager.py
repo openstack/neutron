@@ -22,6 +22,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
 from neutron.db import securitygroups_db
 from neutron.i18n import _LE, _LI, _LW
+from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.plugins.nuage.common import config
 from neutron.plugins.nuage import nuagedb
@@ -42,6 +43,7 @@ class SyncManager(db_base_plugin_v2.NeutronDbPluginV2,
         self.context = ncontext.get_admin_context()
         self.nuageclient = nuageclient
 
+    @lockutils.synchronized('synchronize', 'nuage-sync', external=True)
     def synchronize(self, fipquota):
         LOG.info(_LI("Starting the sync between Neutron and VSD"))
         try:
