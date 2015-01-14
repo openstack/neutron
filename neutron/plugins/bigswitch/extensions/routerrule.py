@@ -14,7 +14,7 @@
 #    under the License.
 
 from neutron.api.v2 import attributes as attr
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.openstack.common import log as logging
 
 
@@ -22,11 +22,11 @@ LOG = logging.getLogger(__name__)
 
 
 # Router Rules Exceptions
-class InvalidRouterRules(qexception.InvalidInput):
+class InvalidRouterRules(nexception.InvalidInput):
     message = _("Invalid format for router rules: %(rule)s, %(reason)s")
 
 
-class RulesExhausted(qexception.BadRequest):
+class RulesExhausted(nexception.BadRequest):
     message = _("Unable to complete rules update for %(router_id)s. "
                 "The number of rules exceeds the maximum %(quota)s.")
 
@@ -46,7 +46,7 @@ def convert_to_valid_router_rules(data):
     if not isinstance(data, list):
         emsg = _("Invalid data format for router rule: '%s'") % data
         LOG.debug(emsg)
-        raise qexception.InvalidInput(error_message=emsg)
+        raise nexception.InvalidInput(error_message=emsg)
     _validate_uniquerules(data)
     rules = []
     expected_keys = ['source', 'destination', 'action']
@@ -66,7 +66,7 @@ def convert_to_valid_router_rules(data):
         errors = [m for m in errors if m]
         if errors:
             LOG.debug(errors)
-            raise qexception.InvalidInput(error_message=errors)
+            raise nexception.InvalidInput(error_message=errors)
         rules.append(rule)
     return rules
 
@@ -98,7 +98,7 @@ def _validate_uniquerules(rules):
     if len(set(pairs)) != len(pairs):
         error = _("Duplicate router rules (src,dst)  found '%s'") % pairs
         LOG.debug(error)
-        raise qexception.InvalidInput(error_message=error)
+        raise nexception.InvalidInput(error_message=error)
 
 
 class Routerrule(object):

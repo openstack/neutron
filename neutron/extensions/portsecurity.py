@@ -13,20 +13,20 @@
 #    under the License.
 
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 
 
-class PortSecurityPortHasSecurityGroup(qexception.InUse):
+class PortSecurityPortHasSecurityGroup(nexception.InUse):
     message = _("Port has security group associated. Cannot disable port "
                 "security or ip address until security group is removed")
 
 
-class PortSecurityAndIPRequiredForSecurityGroups(qexception.InvalidInput):
+class PortSecurityAndIPRequiredForSecurityGroups(nexception.InvalidInput):
     message = _("Port security must be enabled and port must have an IP"
                 " address in order to use security groups.")
 
 
-class PortSecurityBindingNotFound(qexception.InvalidExtensionEnv):
+class PortSecurityBindingNotFound(nexception.InvalidExtensionEnv):
     message = _("Port does not have port security binding.")
 
 PORTSECURITY = 'port_security_enabled'

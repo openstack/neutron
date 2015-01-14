@@ -19,7 +19,7 @@ import six
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services import service_base
@@ -27,19 +27,19 @@ from neutron.services import service_base
 LOG = logging.getLogger(__name__)
 
 
-class MeteringLabelNotFound(qexception.NotFound):
+class MeteringLabelNotFound(nexception.NotFound):
     message = _("Metering label %(label_id)s does not exist")
 
 
-class DuplicateMeteringRuleInPost(qexception.InUse):
+class DuplicateMeteringRuleInPost(nexception.InUse):
     message = _("Duplicate Metering Rule in POST.")
 
 
-class MeteringLabelRuleNotFound(qexception.NotFound):
+class MeteringLabelRuleNotFound(nexception.NotFound):
     message = _("Metering label rule %(rule_id)s does not exist")
 
 
-class MeteringLabelRuleOverlaps(qexception.Conflict):
+class MeteringLabelRuleOverlaps(nexception.Conflict):
     message = _("Metering label rule with remote_ip_prefix "
                 "%(remote_ip_prefix)s overlaps another")
 

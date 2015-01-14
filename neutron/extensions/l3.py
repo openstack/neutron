@@ -20,58 +20,58 @@ from oslo.config import cfg
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.plugins.common import constants
 
 
 # L3 Exceptions
-class RouterNotFound(qexception.NotFound):
+class RouterNotFound(nexception.NotFound):
     message = _("Router %(router_id)s could not be found")
 
 
-class RouterInUse(qexception.InUse):
+class RouterInUse(nexception.InUse):
     message = _("Router %(router_id)s still has ports")
 
 
-class RouterInterfaceNotFound(qexception.NotFound):
+class RouterInterfaceNotFound(nexception.NotFound):
     message = _("Router %(router_id)s does not have "
                 "an interface with id %(port_id)s")
 
 
-class RouterInterfaceNotFoundForSubnet(qexception.NotFound):
+class RouterInterfaceNotFoundForSubnet(nexception.NotFound):
     message = _("Router %(router_id)s has no interface "
                 "on subnet %(subnet_id)s")
 
 
-class RouterInterfaceInUseByFloatingIP(qexception.InUse):
+class RouterInterfaceInUseByFloatingIP(nexception.InUse):
     message = _("Router interface for subnet %(subnet_id)s on router "
                 "%(router_id)s cannot be deleted, as it is required "
                 "by one or more floating IPs.")
 
 
-class FloatingIPNotFound(qexception.NotFound):
+class FloatingIPNotFound(nexception.NotFound):
     message = _("Floating IP %(floatingip_id)s could not be found")
 
 
-class ExternalGatewayForFloatingIPNotFound(qexception.NotFound):
+class ExternalGatewayForFloatingIPNotFound(nexception.NotFound):
     message = _("External network %(external_network_id)s is not reachable "
                 "from subnet %(subnet_id)s.  Therefore, cannot associate "
                 "Port %(port_id)s with a Floating IP.")
 
 
-class FloatingIPPortAlreadyAssociated(qexception.InUse):
+class FloatingIPPortAlreadyAssociated(nexception.InUse):
     message = _("Cannot associate floating IP %(floating_ip_address)s "
                 "(%(fip_id)s) with port %(port_id)s "
                 "using fixed IP %(fixed_ip)s, as that fixed IP already "
                 "has a floating IP on external network %(net_id)s.")
 
 
-class L3PortInUse(qexception.InUse):
+class L3PortInUse(nexception.InUse):
     message = _("Port %(port_id)s has owner %(device_owner)s and therefore"
                 " cannot be deleted directly via the port API.")
 
 
-class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
+class RouterExternalGatewayInUseByFloatingIp(nexception.InUse):
     message = _("Gateway cannot be updated for router %(router_id)s, since a "
                 "gateway to external network %(net_id)s is required by one or "
                 "more floating IPs.")
