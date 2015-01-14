@@ -22,6 +22,7 @@ import collections
 import mock
 from oslo_config import cfg
 from oslo_context import context as oslo_context
+import oslo_messaging
 from sqlalchemy.orm import exc
 
 from neutron.agent import rpc as agent_rpc
@@ -134,26 +135,52 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.callbacks.get_device_details(mock.Mock())
         self.assertTrue(self.plugin.update_port_status.called)
 
-    def test_get_devices_details_list(self):
+    def _test_get_devices_list(self, callback, side_effect, expected):
         devices = [1, 2, 3, 4, 5]
         kwargs = {'host': 'fake_host', 'agent_id': 'fake_agent_id'}
         with mock.patch.object(self.callbacks, 'get_device_details',
-                               side_effect=devices) as f:
-            res = self.callbacks.get_devices_details_list('fake_context',
-                                                          devices=devices,
-                                                          **kwargs)
-            self.assertEqual(devices, res)
+                               side_effect=side_effect) as f:
+            res = callback('fake_context', devices=devices, **kwargs)
+            self.assertEqual(expected, res)
             self.assertEqual(len(devices), f.call_count)
             calls = [mock.call('fake_context', device=i,
                                cached_networks={}, **kwargs)
                      for i in devices]
             f.assert_has_calls(calls)
 
+    def test_get_devices_details_list(self):
+        devices = [1, 2, 3, 4, 5]
+        expected = devices
+        callback = self.callbacks.get_devices_details_list
+        self._test_get_devices_list(callback, devices, expected)
+
     def test_get_devices_details_list_with_empty_devices(self):
         with mock.patch.object(self.callbacks, 'get_device_details') as f:
             res = self.callbacks.get_devices_details_list('fake_context')
             self.assertFalse(f.called)
             self.assertEqual([], res)
+
+    def test_get_devices_details_list_and_failed_devices(self):
+        devices = [1, 2, 3, 4, 5]
+        expected = {'devices': devices, 'failed_devices': []}
+        callback = (
+            self.callbacks.get_devices_details_list_and_failed_devices)
+        self._test_get_devices_list(callback, devices, expected)
+
+    def test_get_devices_details_list_and_failed_devices_failures(self):
+        devices = [1, Exception('testdevice'), 3,
+                   Exception('testdevice'), 5]
+        expected = {'devices': [1, 3, 5], 'failed_devices': [2, 4]}
+        callback = (
+            self.callbacks.get_devices_details_list_and_failed_devices)
+        self._test_get_devices_list(callback, devices, expected)
+
+    def test_get_devices_details_list_and_failed_devices_empty_dev(self):
+        with mock.patch.object(self.callbacks, 'get_device_details') as f:
+            res = self.callbacks.get_devices_details_list_and_failed_devices(
+                'fake_context')
+            self.assertFalse(f.called)
+            self.assertEqual({'devices': [], 'failed_devices': []}, res)
 
     def _test_update_device_not_bound_to_host(self, func):
         self.plugin.port_bound_to_host.return_value = False
@@ -191,6 +218,64 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.assertEqual({'device': 'fake_device', 'exists': False},
                          self.callbacks.update_device_down(
                              mock.Mock(), device='fake_device'))
+
+    def _test_update_device_list(self, devices_up_side_effect,
+                                 devices_down_side_effect, expected):
+        devices_up = [1, 2, 3]
+        devices_down = [4, 5]
+        kwargs = {'host': 'fake_host', 'agent_id': 'fake_agent_id'}
+        with mock.patch.object(self.callbacks, 'update_device_up',
+                               side_effect=devices_up_side_effect) as f_up, \
+            mock.patch.object(self.callbacks, 'update_device_down',
+                              side_effect=devices_down_side_effect) as f_down:
+            res = self.callbacks.update_device_list(
+                'fake_context', devices_up=devices_up,
+                devices_down=devices_down, **kwargs)
+            self.assertEqual(expected, res)
+            self.assertEqual(len(devices_up), f_up.call_count)
+            self.assertEqual(len(devices_down), f_down.call_count)
+
+    def test_update_device_list_no_failure(self):
+        devices_up_side_effect = [1, 2, 3]
+        devices_down_side_effect = [
+             {'device': 4, 'exists': True},
+             {'device': 5, 'exists': True}]
+        expected = {'devices_up': devices_up_side_effect,
+                    'failed_devices_up': [],
+                    'devices_down':
+                        [{'device': 4, 'exists': True},
+                         {'device': 5, 'exists': True}],
+                    'failed_devices_down': []}
+        self._test_update_device_list(devices_up_side_effect,
+                                      devices_down_side_effect,
+                                      expected)
+
+    def test_update_device_list_failed_devices(self):
+
+        devices_up_side_effect = [1, Exception('testdevice'), 3]
+        devices_down_side_effect = [{'device': 4, 'exists': True},
+                        Exception('testdevice')]
+        expected = {'devices_up': [1, 3],
+                    'failed_devices_up': [2],
+                    'devices_down':
+                        [{'device': 4, 'exists': True}],
+                    'failed_devices_down': [5]}
+
+        self._test_update_device_list(devices_up_side_effect,
+                                      devices_down_side_effect,
+                                      expected)
+
+    def test_update_device_list_empty_devices(self):
+
+        expected = {'devices_up': [],
+                    'failed_devices_up': [],
+                    'devices_down': [],
+                    'failed_devices_down': []}
+
+        kwargs = {'host': 'fake_host', 'agent_id': 'fake_agent_id'}
+        res = self.callbacks.update_device_list(
+            'fake_context', devices_up=[], devices_down=[], **kwargs)
+        self.assertEqual(expected, res)
 
 
 class RpcApiTestCase(base.BaseTestCase):
@@ -314,3 +399,73 @@ class RpcApiTestCase(base.BaseTestCase):
                            device='fake_device',
                            agent_id='fake_agent_id',
                            host='fake_host')
+
+    def test_update_device_list(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        self._test_rpc_api(rpcapi, None,
+                           'update_device_list', rpc_method='call',
+                           devices_up=['fake_device1', 'fake_device2'],
+                           devices_down=['fake_device3', 'fake_device4'],
+                           agent_id='fake_agent_id',
+                           host='fake_host',
+                           version='1.5')
+
+    def test_update_device_list_unsupported(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
+        devices_up = ['fake_device1', 'fake_device2']
+        devices_down = ['fake_device3', 'fake_device4']
+        expected_ret_val = {'devices_up': ['fake_device2'],
+                            'failed_devices_up': ['fake_device1'],
+                            'devices_down': [
+                                {'device': 'fake_device3', 'exists': True}],
+                            'failed_devices_down': ['fake_device4']}
+        rpcapi.update_device_up = mock.Mock(
+            side_effect=[Exception('fake_device1 fails'), None])
+        rpcapi.update_device_down = mock.Mock(
+            side_effect=[{'device': 'fake_device3', 'exists': True},
+                         Exception('fake_device4 fails')])
+        with mock.patch.object(rpcapi.client, 'call'),\
+                mock.patch.object(rpcapi.client, 'prepare') as prepare_mock:
+            prepare_mock.side_effect = oslo_messaging.UnsupportedVersion(
+                'test')
+            res = rpcapi.update_device_list(ctxt, devices_up, devices_down,
+                                            'fake_agent_id', 'fake_host')
+            self.assertEqual(expected_ret_val, res)
+
+    def test_get_devices_details_list_and_failed_devices(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        self._test_rpc_api(rpcapi, None,
+                           'get_devices_details_list_and_failed_devices',
+                           rpc_method='call',
+                           devices=['fake_device1', 'fake_device2'],
+                           agent_id='fake_agent_id',
+                           host='fake_host',
+                           version='1.5')
+
+    def test_devices_details_list_and_failed_devices(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        self._test_rpc_api(rpcapi, None,
+                           'get_devices_details_list_and_failed_devices',
+                           rpc_method='call',
+                           devices=['fake_device1', 'fake_device2'],
+                           agent_id='fake_agent_id', host='fake_host',
+                           version='1.5')
+
+    def test_get_devices_details_list_and_failed_devices_unsupported(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
+        devices = ['fake_device1', 'fake_device2']
+        dev2_details = {'device': 'fake_device2', 'network_id': 'net_id',
+                        'port_id': 'port_id', 'admin_state_up': True}
+        expected_ret_val = {'devices': [dev2_details],
+                            'failed_devices': ['fake_device1']}
+        rpcapi.get_device_details = mock.Mock(
+            side_effect=[Exception('fake_device1 fails'), dev2_details])
+        with mock.patch.object(rpcapi.client, 'call'),\
+                mock.patch.object(rpcapi.client, 'prepare') as prepare_mock:
+            prepare_mock.side_effect = oslo_messaging.UnsupportedVersion(
+                'test')
+            res = rpcapi.get_devices_details_list_and_failed_devices(
+                ctxt, devices, 'fake_agent_id', 'fake_host')
+            self.assertEqual(expected_ret_val, res)
