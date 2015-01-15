@@ -40,7 +40,7 @@ quota_opts = [
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_network',
                default=10,
-               help=_('Number of networks allowed per tenant.'
+               help=_('Number of networks allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_subnet',
                default=10,

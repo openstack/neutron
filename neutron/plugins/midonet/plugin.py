@@ -28,7 +28,7 @@ midonet_opts = [
                help=_('MidoNet admin password.')),
     cfg.StrOpt('project_id',
                default='77777777-7777-7777-7777-777777777777',
-               help=_('ID of the project that MidoNet admin user'
+               help=_('ID of the project that MidoNet admin user '
                       'belongs to.'))
 ]
 

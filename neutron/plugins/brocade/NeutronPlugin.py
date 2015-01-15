@@ -69,7 +69,7 @@ SWITCH_OPTS = [cfg.StrOpt('address', default='',
                ]
 
 PHYSICAL_INTERFACE_OPTS = [cfg.StrOpt('physical_interface', default='eth0',
-                           help=_('The network interface to use when creating'
+                           help=_('The network interface to use when creating '
                                   'a port'))
                            ]
 
