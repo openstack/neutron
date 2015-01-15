@@ -8,6 +8,7 @@
     "shared": "field:networks:shared=True",
     "shared_firewalls": "field:firewalls:shared=True",
     "shared_firewall_policies": "field:firewall_policies:shared=True",
+    "shared_subnetpools": "field:subnetpools:shared=True",
     "external": "field:networks:router:external=True",
     "default": "rule:admin_or_owner",
 
@@ -15,6 +16,12 @@
     "get_subnet": "rule:admin_or_owner or rule:shared",
     "update_subnet": "rule:admin_or_network_owner",
     "delete_subnet": "rule:admin_or_network_owner",
+
+    "create_subnetpool": "",
+    "create_subnetpool:shared": "rule:admin_only",
+    "get_subnetpool": "rule:admin_or_owner or rule:shared_subnetpools",
+    "update_subnetpool": "rule:admin_or_owner",
+    "delete_subnetpool": "rule:admin_or_owner",
 
     "create_network": "",
     "get_network": "rule:admin_or_owner or rule:shared or rule:external or rule:context_is_advsvc",
