@@ -28,7 +28,6 @@ from oslo.utils import excutils
 from neutron.api import extensions as neutron_extensions
 from neutron.common import exceptions
 from neutron.common import log
-from neutron.common import utils
 from neutron.db import l3_db
 from neutron.extensions import l3
 from neutron.i18n import _LE
@@ -108,9 +107,6 @@ class L3RestProxy(cplugin.NeutronRestProxyV2Base,
             # return updated router
             return new_router
 
-    # NOTE(kevinbenton): workaround for eventlet/mysql deadlock.
-    # delete_router ends up calling _delete_port instead of delete_port.
-    @utils.synchronized('bsn-port-barrier')
     @put_context_in_serverpool
     @log.log
     def delete_router(self, context, router_id):

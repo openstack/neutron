@@ -412,7 +412,7 @@ class FakeClient:
             def _lrouter_match(res_uuid):
                 # verify that the router exist
                 if parent_uuid and parent_uuid not in self._fake_lrouter_dict:
-                    raise Exception(_("lrouter:%s not found") % parent_uuid)
+                    raise api_exc.ResourceNotFound()
                 if (not parent_uuid or
                     res_dict[res_uuid].get('lr_uuid') == parent_uuid):
                     return True

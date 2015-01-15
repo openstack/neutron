@@ -395,11 +395,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         return ip_address_change
 
     def _ensure_router_not_in_use(self, context, router_id):
-        admin_ctx = context.elevated()
+        """Ensure that no internal network interface is attached
+        to the router.
+        """
         router = self._get_router(context, router_id)
-        if self.get_floatingips_count(
-            admin_ctx, filters={'router_id': [router_id]}):
-            raise l3.RouterInUse(router_id=router_id)
         device_owner = self._get_device_owner(context, router)
         if any(rp.port_type == device_owner
                for rp in router.attached_ports.all()):
@@ -407,20 +406,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         return router
 
     def delete_router(self, context, id):
+
+        #TODO(nati) Refactor here when we have router insertion model
+        router = self._ensure_router_not_in_use(context, id)
+        self._delete_current_gw_port(context, id, router, None, False)
+
+        router_ports = router.attached_ports.all()
+        for rp in router_ports:
+            self._core_plugin.delete_port(context.elevated(),
+                                          rp.port.id,
+                                          l3_port_check=False)
         with context.session.begin(subtransactions=True):
-            router = self._ensure_router_not_in_use(context, id)
-
-            #TODO(nati) Refactor here when we have router insertion model
-            vpnservice = manager.NeutronManager.get_service_plugins().get(
-                constants.VPN)
-            if vpnservice:
-                vpnservice.check_router_in_use(context, id)
-
-            router_ports = router.attached_ports.all()
-            # Set the router's gw_port to None to avoid a constraint violation.
-            router.gw_port = None
-            for rp in router_ports:
-                self._core_plugin._delete_port(context.elevated(), rp.port.id)
             context.session.delete(router)
 
     def get_router(self, context, id, fields=None):
