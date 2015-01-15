@@ -1130,6 +1130,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def after_start(self):
         eventlet.spawn_n(self._process_routers_loop)
         LOG.info(_LI("L3 agent started"))
+        # When L3 agent is ready, we immediately do a full sync
+        self.periodic_sync_routers_task(self.context)
 
     def _update_routing_table(self, ri, operation, route):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
