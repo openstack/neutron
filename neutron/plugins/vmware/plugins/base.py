@@ -1952,6 +1952,17 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
              'router_id': router_id,
              'status': self._floatingip_status(floatingip_db, router_id)})
 
+    @lockutils.synchronized('vmware', 'neutron-')
+    def create_floatingip(self, context, floatingip):
+        return super(NsxPluginV2, self).create_floatingip(context, floatingip)
+
+    @lockutils.synchronized('vmware', 'neutron-')
+    def update_floatingip(self, context, floatingip_id, floatingip):
+        return super(NsxPluginV2, self).update_floatingip(context,
+                                                          floatingip_id,
+                                                          floatingip)
+
+    @lockutils.synchronized('vmware', 'neutron-')
     def delete_floatingip(self, context, id):
         fip_db = self._get_floatingip(context, id)
         # Check whether the floating ip is associated or not
