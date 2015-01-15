@@ -351,25 +351,26 @@ class Controller(object):
             return objs
         # Note(salvatore-orlando): broad catch as in theory a plugin
         # could raise any kind of exception
-        except Exception as ex:
-            for obj in objs:
-                obj_deleter = getattr(self._plugin,
-                                      self._plugin_handlers[self.DELETE])
-                try:
-                    kwargs = ({self._parent_id_name: parent_id} if parent_id
-                              else {})
-                    obj_deleter(request.context, obj['id'], **kwargs)
-                except Exception:
-                    # broad catch as our only purpose is to log the exception
-                    LOG.exception(_LE("Unable to undo add for "
-                                      "%(resource)s %(id)s"),
-                                  {'resource': self._resource,
-                                   'id': obj['id']})
-            # TODO(salvatore-orlando): The object being processed when the
-            # plugin raised might have been created or not in the db.
-            # We need a way for ensuring that if it has been created,
-            # it is then deleted
-            raise ex
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                for obj in objs:
+                    obj_deleter = getattr(self._plugin,
+                                          self._plugin_handlers[self.DELETE])
+                    try:
+                        kwargs = ({self._parent_id_name: parent_id}
+                                  if parent_id else {})
+                        obj_deleter(request.context, obj['id'], **kwargs)
+                    except Exception:
+                        # broad catch as our only purpose is to log the
+                        # exception
+                        LOG.exception(_LE("Unable to undo add for "
+                                          "%(resource)s %(id)s"),
+                                      {'resource': self._resource,
+                                       'id': obj['id']})
+                # TODO(salvatore-orlando): The object being processed when the
+                # plugin raised might have been created or not in the db.
+                # We need a way for ensuring that if it has been created,
+                # it is then deleted
 
     def create(self, request, body=None, **kwargs):
         """Creates a new instance of the requested entity."""
