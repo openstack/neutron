@@ -652,8 +652,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             else:
                 # As GARP is processed in a distinct thread the call below
                 # won't raise an exception to be handled.
-                self._send_gratuitous_arp_packet(
-                    ri.ns_name, interface_name, fip_ip)
+                ip_lib.send_gratuitous_arp(ri.ns_name,
+                                           interface_name,
+                                           fip_ip,
+                                           self.conf.send_arp_for_ha,
+                                           self.root_helper)
             return l3_constants.FLOATINGIP_STATUS_ACTIVE
 
     def _remove_floating_ip(self, ri, device, ip_cidr):
@@ -707,33 +710,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _get_ex_gw_port(self, ri):
         return ri.router.get('gw_port')
-
-    def _arping(self, ns_name, interface_name, ip_address, distributed=False):
-        if distributed:
-            device = ip_lib.IPDevice(interface_name, self.root_helper,
-                                     namespace=ns_name)
-            ip_cidr = str(ip_address) + FLOATING_IP_CIDR_SUFFIX
-            net = netaddr.IPNetwork(ip_cidr)
-            device.addr.add(net.version, ip_cidr, str(net.broadcast))
-
-        arping_cmd = ['arping', '-A',
-                      '-I', interface_name,
-                      '-c', self.conf.send_arp_for_ha,
-                      ip_address]
-        try:
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=ns_name)
-            ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
-        except Exception:
-            LOG.exception(_LE("Failed sending gratuitous ARP."))
-        if distributed:
-            device.addr.delete(net.version, ip_cidr)
-
-    def _send_gratuitous_arp_packet(self, ns_name, interface_name, ip_address,
-                                    distributed=False):
-        if self.conf.send_arp_for_ha > 0:
-            eventlet.spawn_n(self._arping, ns_name, interface_name, ip_address,
-                             distributed)
 
     def get_internal_device_name(self, port_id):
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
@@ -832,8 +808,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 extra_subnets=ex_gw_port.get('extra_subnets', []),
                 preserve_ips=preserve_ips)
             ip_address = ex_gw_port['ip_cidr'].split('/')[0]
-            self._send_gratuitous_arp_packet(ns_name,
-                                             interface_name, ip_address)
+            ip_lib.send_gratuitous_arp(ns_name,
+                                       interface_name,
+                                       ip_address,
+                                       self.conf.send_arp_for_ha,
+                                       self.root_helper)
 
     def external_gateway_removed(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
@@ -886,8 +865,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self.driver.init_l3(interface_name, [internal_cidr],
                                 namespace=ns_name)
             ip_address = internal_cidr.split('/')[0]
-            self._send_gratuitous_arp_packet(ns_name, interface_name,
-                                             ip_address)
+            ip_lib.send_gratuitous_arp(ns_name,
+                                       interface_name,
+                                       ip_address,
+                                       self.conf.send_arp_for_ha,
+                                       self.root_helper)
 
     def internal_network_added(self, ri, port):
         network_id = port['network_id']

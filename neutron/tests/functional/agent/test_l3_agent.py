@@ -89,7 +89,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
                           '%s/external/pids' % temp_dir)
         conf.set_override('host', host)
         agent = l3_test_agent.TestL3NATAgent(host, conf)
-        mock.patch.object(agent, '_arping').start()
+        mock.patch.object(ip_lib, 'send_gratuitous_arp').start()
 
         return agent
 
