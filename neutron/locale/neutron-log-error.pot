@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev175\n"
+"Project-Id-Version: neutron 2015.1.dev231\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-01-11 06:11+0000\n"
+"POT-Creation-Date: 2015-01-15 06:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -79,27 +79,27 @@ msgstr ""
 msgid "Internal error"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:146
+#: neutron/agent/dhcp_agent.py:156
 #, python-format
 msgid "Unable to %(action)s dhcp for %(net_id)s."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:173
+#: neutron/agent/dhcp_agent.py:183
 #, python-format
 msgid "Unable to sync network state on deleted network %s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:186
+#: neutron/agent/dhcp_agent.py:196
 msgid "Unable to sync network state."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:217
+#: neutron/agent/dhcp_agent.py:227
 #, python-format
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:601 neutron/agent/l3/agent.py:1305
-#: neutron/agent/metadata/agent.py:414
+#: neutron/agent/dhcp_agent.py:611 neutron/agent/l3/agent.py:1243
+#: neutron/agent/metadata/agent.py:359
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:148
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:110
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:783
@@ -112,64 +112,59 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/netns_cleanup_util.py:141
-#, python-format
-msgid "Error unable to destroy namespace: %s"
-msgstr ""
-
-#: neutron/agent/l3/agent.py:221 neutron/tests/unit/test_l3_agent.py:1731
+#: neutron/agent/l3/agent.py:159 neutron/tests/unit/test_l3_agent.py:1732
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:281 neutron/agent/linux/dhcp.py:814
+#: neutron/agent/l3/agent.py:219 neutron/agent/linux/dhcp.py:821
 msgid "An interface driver must be specified"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:286
+#: neutron/agent/l3/agent.py:224
 msgid "Router id is required if not using namespaces."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:304
+#: neutron/agent/l3/agent.py:242
 msgid "RuntimeError in obtaining router list for namespace cleanup."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:329
+#: neutron/agent/l3/agent.py:267
 #, python-format
 msgid "Failed to destroy stale router namespace %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:345 neutron/agent/linux/dhcp.py:238
+#: neutron/agent/l3/agent.py:283 neutron/agent/linux/dhcp.py:262
 #, python-format
 msgid "Failed trying to delete namespace: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:453
+#: neutron/agent/l3/agent.py:391
 #: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:632
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:790
+#: neutron/agent/l3/agent.py:728
 msgid "Failed sending gratuitous ARP."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1063
+#: neutron/agent/l3/agent.py:1001
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1121
+#: neutron/agent/l3/agent.py:1059
 #, python-format
 msgid "Failed to fetch router information for '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1139
+#: neutron/agent/l3/agent.py:1077
 #, python-format
 msgid "Removing incompatible router '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1180
+#: neutron/agent/l3/agent.py:1118
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
@@ -193,7 +188,7 @@ msgstr ""
 msgid "DVR: Failed updating arp entry"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:137
+#: neutron/agent/l3/ha.py:139
 #, python-format
 msgid "Unable to process HA router %s without ha port"
 msgstr ""
@@ -222,21 +217,21 @@ msgstr ""
 msgid "Pidfile %s already exist. Daemon already running?"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:329
+#: neutron/agent/linux/dhcp.py:337
 #, python-format
 msgid ""
-"FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
-" Please ensure that its version is %s or above!"
+"FAILED VERSION REQUIREMENT FOR DNSMASQ. Please ensure that its version is"
+" %s or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:335
+#: neutron/agent/linux/dhcp.py:342
 #, python-format
 msgid ""
 "Unable to determine dnsmasq version. Please ensure that its version is %s"
 " or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:820
+#: neutron/agent/linux/dhcp.py:827
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
@@ -280,7 +275,7 @@ msgstr ""
 msgid "Failed executing ip command"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:446
+#: neutron/agent/linux/iptables_manager.py:451
 #, python-format
 msgid ""
 "IPTablesManager.apply failed to apply the following set of iptables "
@@ -325,34 +320,34 @@ msgstr ""
 msgid "Error received from ovsdb monitor: %s"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:156
+#: neutron/agent/metadata/agent.py:114
 #: neutron/agent/metadata/namespace_proxy.py:75
 msgid "Unexpected error."
 msgstr ""
 
-#: neutron/api/extensions.py:483
+#: neutron/api/extensions.py:481
 #, python-format
 msgid "Error fetching extended attributes for extension '%s'"
 msgstr ""
 
-#: neutron/api/extensions.py:492
+#: neutron/api/extensions.py:490
 #, python-format
 msgid ""
 "It was impossible to process the following extensions: %s because of "
 "missing requirements."
 msgstr ""
 
-#: neutron/api/extensions.py:509
+#: neutron/api/extensions.py:507
 #, python-format
 msgid "Exception loading extension: %s"
 msgstr ""
 
-#: neutron/api/extensions.py:527
+#: neutron/api/extensions.py:525
 #, python-format
 msgid "Extension path '%s' doesn't exist!"
 msgstr ""
 
-#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:92
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:97
 #, python-format
 msgid ""
 "Will not send event %(method)s for network %(net_id)s: no agent "
@@ -381,6 +376,11 @@ msgstr ""
 #: neutron/api/v2/resource.py:125
 #, python-format
 msgid "%s failed"
+msgstr ""
+
+#: neutron/cmd/netns_cleanup.py:141
+#, python-format
+msgid "Error unable to destroy namespace: %s"
 msgstr ""
 
 #: neutron/cmd/sanity_check.py:45
@@ -907,7 +907,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:258
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1566
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1561
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
@@ -1348,7 +1348,7 @@ msgstr ""
 msgid "delete_router_interface() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nuage/syncmanager.py:55
+#: neutron/plugins/nuage/syncmanager.py:57
 msgid "Cannot complete the sync between Neutron and VSD because of error."
 msgstr ""
 
@@ -1408,12 +1408,12 @@ msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:836
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1428
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1423
 msgid "Error while synchronizing tunnels"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:876
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1498
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1493
 msgid "Error while processing VIF ports"
 msgstr ""
 
@@ -1752,41 +1752,41 @@ msgid ""
 "floating ip:%s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1946
+#: neutron/plugins/vmware/plugins/base.py:1945
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NSX platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2058
+#: neutron/plugins/vmware/plugins/base.py:2057
 msgid ""
 "Unable to remove gateway service from NSX plaform - the resource was not "
 "found"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2114
+#: neutron/plugins/vmware/plugins/base.py:2113
 #, python-format
 msgid ""
 "Rolling back database changes for gateway device %s because of an error "
 "in the NSX backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2301
+#: neutron/plugins/vmware/plugins/base.py:2300
 #, python-format
 msgid ""
 "Removal of gateway device: %(neutron_id)s failed on NSX backend (NSX "
 "id:%(nsx_id)s). Neutron and NSX states have diverged."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2349
+#: neutron/plugins/vmware/plugins/base.py:2348
 #, python-format
 msgid ""
 "Error while updating security profile %(uuid)s with name %(name)s: "
 "%(error)s."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2390
+#: neutron/plugins/vmware/plugins/base.py:2389
 #, python-format
 msgid ""
 "An exception occurred while removing the NSX security profile "
