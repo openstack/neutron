@@ -49,7 +49,7 @@ class TestOVSCleanup(base.BaseTestCase):
             mock.patch('neutron.common.config.setup_logging'),
             mock.patch('neutron.cmd.ovs_cleanup.setup_conf',
                        return_value=conf),
-            mock.patch('neutron.agent.linux.ovs_lib.get_bridges',
+            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.get_bridges',
                        return_value=bridges),
             mock.patch('neutron.agent.linux.ovs_lib.OVSBridge'),
             mock.patch.object(util, 'collect_neutron_ports',

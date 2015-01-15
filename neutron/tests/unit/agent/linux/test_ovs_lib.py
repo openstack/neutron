@@ -764,9 +764,11 @@ class OVS_Lib_Test(base.BaseTestCase):
         iface = 'tap0'
         br = 'br-int'
         root_helper = 'sudo'
+        if exp_timeout:
+            self.br.vsctl_timeout = exp_timeout
         self.execute.return_value = 'br-int'
         exp_timeout_str = self._build_timeout_opt(exp_timeout)
-        self.assertEqual(ovs_lib.get_bridge_for_iface(root_helper, iface), br)
+        self.assertEqual(self.br.get_bridge_for_iface(iface), br)
         self.execute.assert_called_once_with(
             ["ovs-vsctl", exp_timeout_str, "iface-to-br", iface],
             root_helper=root_helper)
@@ -784,7 +786,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         root_helper = 'sudo'
         self.execute.side_effect = Exception
 
-        self.assertIsNone(ovs_lib.get_bridge_for_iface(root_helper, iface))
+        self.assertIsNone(self.br.get_bridge_for_iface(iface))
         self.execute.assert_called_once_with(
             ["ovs-vsctl", self.TO, "iface-to-br", iface],
             root_helper=root_helper)
@@ -825,9 +827,11 @@ class OVS_Lib_Test(base.BaseTestCase):
     def _test_get_bridges(self, exp_timeout=None):
         bridges = ['br-int', 'br-ex']
         root_helper = 'sudo'
+        if exp_timeout:
+            self.br.vsctl_timeout = exp_timeout
         self.execute.return_value = 'br-int\nbr-ex\n'
         timeout_str = self._build_timeout_opt(exp_timeout)
-        self.assertEqual(ovs_lib.get_bridges(root_helper), bridges)
+        self.assertEqual(self.br.get_bridges(), bridges)
         self.execute.assert_called_once_with(
             ["ovs-vsctl", timeout_str, "list-br"],
             root_helper=root_helper)

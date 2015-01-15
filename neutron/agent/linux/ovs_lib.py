@@ -127,7 +127,8 @@ class BaseOVS(object):
 
     def get_bridge_name_for_port_name(self, port_name):
         try:
-            return self.run_vsctl(['port-to-br', port_name], check_error=True)
+            return self.run_vsctl(
+                ['port-to-br', port_name], check_error=True).strip()
         except RuntimeError as e:
             with excutils.save_and_reraise_exception() as ctxt:
                 if 'Exit code: 1\n' in str(e):
@@ -135,6 +136,49 @@ class BaseOVS(object):
 
     def port_exists(self, port_name):
         return bool(self.get_bridge_name_for_port_name(port_name))
+
+    def get_bridge_for_iface(self, iface):
+        res = self.run_vsctl(['iface-to-br', iface])
+        if res:
+            return res.strip()
+
+    def get_bridges(self):
+        res = self.run_vsctl(['list-br'], check_error=True)
+        return res.strip().split('\n') if res else []
+
+    def get_bridge_external_bridge_id(self, bridge):
+        res = self.run_vsctl(['br-get-external-id', bridge, 'bridge-id'])
+        if res:
+            return res.strip()
+
+    def set_db_attribute(self, table_name, record, column, value):
+        args = ["set", table_name, record, "%s=%s" % (column, value)]
+        self.run_vsctl(args)
+
+    def clear_db_attribute(self, table_name, record, column):
+        args = ["clear", table_name, record, column]
+        self.run_vsctl(args)
+
+    def _db_get_map(self, table, record, column, check_error=False):
+        def db_str_to_map(full_str):
+            entries = full_str.strip("{}").split(", ")
+            ret = {}
+            for e in entries:
+                key, sep, value = e.partition('=')
+                if sep != "":
+                    ret[key] = value.strip('"')
+            return ret
+
+        output = self.db_get_val(table, record, column,
+                                 check_error=check_error)
+        if output:
+            return db_str_to_map(output)
+        return {}
+
+    def db_get_val(self, table, record, column, check_error=False):
+        output = self.run_vsctl(["get", table, record, column], check_error)
+        if output:
+            return output.rstrip("\n\r")
 
 
 class OVSBridge(BaseOVS):
@@ -200,14 +244,6 @@ class OVSBridge(BaseOVS):
     def delete_port(self, port_name):
         self.run_vsctl(["--", "--if-exists", "del-port", self.br_name,
                         port_name])
-
-    def set_db_attribute(self, table_name, record, column, value):
-        args = ["set", table_name, record, "%s=%s" % (column, value)]
-        self.run_vsctl(args)
-
-    def clear_db_attribute(self, table_name, record, column):
-        args = ["clear", table_name, record, column]
-        self.run_vsctl(args)
 
     def run_ofctl(self, cmd, args, process_input=None):
         full_args = ["ovs-ofctl", cmd, self.br_name] + args
@@ -294,28 +330,6 @@ class OVSBridge(BaseOVS):
         ]
         return self.add_port(local_name, *options)
 
-    def db_get_map(self, table, record, column, check_error=False):
-        output = self.run_vsctl(["get", table, record, column], check_error)
-        if output:
-            output_str = output.rstrip("\n\r")
-            return self.db_str_to_map(output_str)
-        return {}
-
-    def db_get_val(self, table, record, column, check_error=False):
-        output = self.run_vsctl(["get", table, record, column], check_error)
-        if output:
-            return output.rstrip("\n\r")
-
-    def db_str_to_map(self, full_str):
-        list = full_str.strip("{}").split(", ")
-        ret = {}
-        for e in list:
-            if e.find("=") == -1:
-                continue
-            arr = e.split("=")
-            ret[arr[0]] = arr[1].strip("\"")
-        return ret
-
     def get_port_name_list(self):
         res = self.run_vsctl(["list-ports", self.br_name], check_error=True)
         if res:
@@ -323,7 +337,7 @@ class OVSBridge(BaseOVS):
         return []
 
     def get_port_stats(self, port_name):
-        return self.db_get_map("Interface", port_name, "statistics")
+        return self._db_get_map("Interface", port_name, "statistics")
 
     def get_xapi_iface_id(self, xs_vif_uuid):
         args = ["xe", "vif-param-get", "param-name=other-config",
@@ -341,8 +355,8 @@ class OVSBridge(BaseOVS):
         edge_ports = []
         port_names = self.get_port_name_list()
         for name in port_names:
-            external_ids = self.db_get_map("Interface", name, "external_ids",
-                                           check_error=True)
+            external_ids = self._db_get_map("Interface", name, "external_ids",
+                                            check_error=True)
             ofport = self.db_get_val("Interface", name, "ofport",
                                      check_error=True)
             if "iface-id" in external_ids and "attached-mac" in external_ids:
@@ -439,7 +453,7 @@ class OVSBridge(BaseOVS):
             # rows since the interface identifier is unique
             for data in json_result['data']:
                 port_name = data[name_idx]
-                switch = get_bridge_for_iface(self.root_helper, port_name)
+                switch = self.get_bridge_for_iface(port_name)
                 if switch != self.br_name:
                     continue
                 ofport = data[ofport_idx]
@@ -556,36 +570,6 @@ class DeferredOVSBridge(object):
         else:
             LOG.exception(_LE("OVS flows could not be applied on bridge %s"),
                           self.br.br_name)
-
-
-def get_bridge_for_iface(root_helper, iface):
-    args = ["ovs-vsctl", "--timeout=%d" % cfg.CONF.ovs_vsctl_timeout,
-            "iface-to-br", iface]
-    try:
-        return utils.execute(args, root_helper=root_helper).strip()
-    except Exception:
-        LOG.exception(_LE("Interface %s not found."), iface)
-        return None
-
-
-def get_bridges(root_helper):
-    args = ["ovs-vsctl", "--timeout=%d" % cfg.CONF.ovs_vsctl_timeout,
-            "list-br"]
-    try:
-        return utils.execute(args, root_helper=root_helper).strip().split("\n")
-    except Exception as e:
-        with excutils.save_and_reraise_exception():
-            LOG.exception(_LE("Unable to retrieve bridges. Exception: %s"), e)
-
-
-def get_bridge_external_bridge_id(root_helper, bridge):
-    args = ["ovs-vsctl", "--timeout=2", "br-get-external-id",
-            bridge, "bridge-id"]
-    try:
-        return utils.execute(args, root_helper=root_helper).strip()
-    except Exception:
-        LOG.exception(_LE("Bridge %s not found."), bridge)
-        return None
 
 
 def _build_flow_expr_str(flow_dict, cmd):

@@ -125,8 +125,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
                        return_value='00:00:00:00:00:01'),
-            mock.patch('neutron.agent.linux.ovs_lib.'
-                       'get_bridges'),
+            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.get_bridges'),
             mock.patch('neutron.openstack.common.loopingcall.'
                        'FixedIntervalLoopingCall',
                        new=MockFixedIntervalLoopingCall)):
@@ -1130,7 +1129,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ip_lib.IpLinkCommand, "delete"),
             mock.patch.object(ip_lib.IpLinkCommand, "set_up"),
             mock.patch.object(ip_lib.IpLinkCommand, "set_mtu"),
-            mock.patch.object(ovs_lib, "get_bridges")
+            mock.patch.object(ovs_lib.BaseOVS, "get_bridges")
         ) as (devex_fn, sysexit_fn, utilsexec_fn, remflows_fn, ovs_addfl_fn,
               ovs_addport_fn, ovs_delport_fn, br_addport_fn, br_delport_fn,
               addveth_fn, linkdel_fn, linkset_fn, linkmtu_fn, get_br_fn):
@@ -1635,7 +1634,7 @@ class AncillaryBridgesTest(base.BaseTestCase):
     def _test_ancillary_bridges(self, bridges, ancillary):
         device_ids = ancillary[:]
 
-        def pullup_side_effect(self, *args):
+        def pullup_side_effect(*args):
             # Check that the device_id exists, if it does return it
             # if it does not return None
             try:
@@ -1655,11 +1654,11 @@ class AncillaryBridgesTest(base.BaseTestCase):
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                        'set_secure_mode'),
-            mock.patch('neutron.agent.linux.ovs_lib.get_bridges',
+            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.get_bridges',
                        return_value=bridges),
-            mock.patch(
-                'neutron.agent.linux.ovs_lib.get_bridge_external_bridge_id',
-                side_effect=pullup_side_effect)):
+            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.'
+                       'get_bridge_external_bridge_id',
+                       side_effect=pullup_side_effect)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**self.kwargs)
             self.assertEqual(len(ancillary), len(self.agent.ancillary_brs))
             if ancillary:

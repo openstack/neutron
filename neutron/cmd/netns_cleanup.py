@@ -109,7 +109,8 @@ def unplug_device(conf, device):
     except RuntimeError:
         root_helper = agent_config.get_root_helper(conf)
         # Maybe the device is OVS port, so try to delete
-        bridge_name = ovs_lib.get_bridge_for_iface(root_helper, device.name)
+        ovs = ovs_lib.BaseOVS(root_helper)
+        bridge_name = ovs.get_bridge_for_iface(device.name)
         if bridge_name:
             bridge = ovs_lib.OVSBridge(bridge_name, root_helper)
             bridge.delete_port(device.name)

@@ -103,7 +103,7 @@ class TestNetnsCleanup(base.BaseTestCase):
 
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br_cls:
             br_patch = mock.patch(
-                'neutron.agent.linux.ovs_lib.get_bridge_for_iface')
+                'neutron.agent.linux.ovs_lib.BaseOVS.get_bridge_for_iface')
             with br_patch as mock_get_bridge_for_iface:
                 mock_get_bridge_for_iface.return_value = 'br-int'
                 ovs_bridge = mock.Mock()
@@ -111,8 +111,7 @@ class TestNetnsCleanup(base.BaseTestCase):
 
                 util.unplug_device(conf, device)
 
-                mock_get_bridge_for_iface.assert_called_once_with(
-                    conf.AGENT.root_helper, 'tap1')
+                mock_get_bridge_for_iface.assert_called_once_with('tap1')
                 ovs_br_cls.assert_called_once_with('br-int',
                                                    conf.AGENT.root_helper)
                 ovs_bridge.assert_has_calls(
@@ -128,7 +127,7 @@ class TestNetnsCleanup(base.BaseTestCase):
 
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br_cls:
             br_patch = mock.patch(
-                'neutron.agent.linux.ovs_lib.get_bridge_for_iface')
+                'neutron.agent.linux.ovs_lib.BaseOVS.get_bridge_for_iface')
             with br_patch as mock_get_bridge_for_iface:
                 with mock.patch.object(util.LOG, 'debug') as debug:
                     mock_get_bridge_for_iface.return_value = None
@@ -137,8 +136,7 @@ class TestNetnsCleanup(base.BaseTestCase):
 
                     util.unplug_device(conf, device)
 
-                    mock_get_bridge_for_iface.assert_called_once_with(
-                        conf.AGENT.root_helper, 'tap1')
+                    mock_get_bridge_for_iface.assert_called_once_with('tap1')
                     self.assertEqual(ovs_br_cls.mock_calls, [])
                     self.assertTrue(debug.called)
 

@@ -86,7 +86,8 @@ def main():
 
     configuration_bridges = set([conf.ovs_integration_bridge,
                                  conf.external_network_bridge])
-    ovs_bridges = set(ovs_lib.get_bridges(conf.AGENT.root_helper))
+    ovs = ovs_lib.BaseOVS(conf.AGENT.root_helper)
+    ovs_bridges = set(ovs.get_bridges())
     available_configuration_bridges = configuration_bridges & ovs_bridges
 
     if conf.ovs_all_ports:
