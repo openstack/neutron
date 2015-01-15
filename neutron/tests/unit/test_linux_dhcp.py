@@ -618,7 +618,8 @@ class TestDhcpLocalProcess(TestBase):
     def test_enable(self):
         attrs_to_mock = dict(
             [(a, mock.DEFAULT) for a in
-                ['active', 'get_conf_file_name', 'interface_name']]
+                ['active', 'get_conf_file_name', 'interface_name',
+                 '_ensure_network_conf_dir']]
         )
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
@@ -634,6 +635,7 @@ class TestDhcpLocalProcess(TestBase):
                  mock.call().setup(mock.ANY)])
             self.assertEqual(lp.called, ['spawn'])
             self.assertTrue(mocks['interface_name'].__set__.called)
+            self.assertTrue(mocks['_ensure_network_conf_dir'].called)
 
     def test_disable_not_active(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
