@@ -763,6 +763,12 @@ class TestConvertToInt(base.BaseTestCase):
         self.assertEqual(attributes.convert_to_int(0), 0)
         self.assertEqual(attributes.convert_to_int(1), 1)
 
+    def test_convert_to_int_if_not_none(self):
+        self.assertEqual(attributes.convert_to_int_if_not_none(-1), -1)
+        self.assertEqual(attributes.convert_to_int_if_not_none(0), 0)
+        self.assertEqual(attributes.convert_to_int_if_not_none(1), 1)
+        self.assertIsNone(attributes.convert_to_int_if_not_none(None))
+
     def test_convert_to_int_str(self):
         self.assertEqual(attributes.convert_to_int('4'), 4)
         self.assertEqual(attributes.convert_to_int('6'), 6)
