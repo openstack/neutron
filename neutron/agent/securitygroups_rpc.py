@@ -198,22 +198,25 @@ class SecurityGroupAgentRpc(object):
                  "rule updated %r"), security_groups)
         self._security_group_updated(
             security_groups,
-            'security_groups')
+            'security_groups',
+            'sg_rule')
 
     def security_groups_member_updated(self, security_groups):
         LOG.info(_LI("Security group "
                  "member updated %r"), security_groups)
         self._security_group_updated(
             security_groups,
-            'security_group_source_groups')
+            'security_group_source_groups',
+            'sg_member')
 
-    def _security_group_updated(self, security_groups, attribute):
+    def _security_group_updated(self, security_groups, attribute, action_type):
         devices = []
         sec_grp_set = set(security_groups)
         for device in self.firewall.ports.values():
             if sec_grp_set & set(device.get(attribute, [])):
                 devices.append(device['device'])
         if devices:
+            self.firewall.security_group_updated(action_type, sec_grp_set)
             if self.defer_refresh_firewall:
                 LOG.debug("Adding %s devices to the list of devices "
                           "for which firewall needs to be refreshed",
@@ -307,6 +310,8 @@ class SecurityGroupAgentRpc(object):
             LOG.debug("Refreshing firewall for all filtered devices")
             self.refresh_firewall()
         else:
+            self.firewall.security_group_updated('sg_member', [],
+                                                 updated_devices)
             # If a device is both in new and updated devices
             # avoid reprocessing it
             updated_devices = ((updated_devices | devices_to_refilter) -
