@@ -130,9 +130,9 @@ class TestPortsV2(NsxPluginV2TestCase,
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = True
 
-    def test_exhaust_ports_overlay_network(self):
-        cfg.CONF.set_override('max_lp_per_overlay_ls', 1, group='NSX')
+    def _test_exhaust_ports(self, providernet_args=None):
         with self.network(name='testnet',
+                          providernet_args=providernet_args,
                           arg_list=(pnet.NETWORK_TYPE,
                                     pnet.PHYSICAL_NETWORK,
                                     pnet.SEGMENTATION_ID)) as net:
@@ -141,22 +141,15 @@ class TestPortsV2(NsxPluginV2TestCase,
                     # creating another port should see an exception
                     self._create_port('json', net['network']['id'], 400)
 
+    def test_exhaust_ports_overlay_network(self):
+        cfg.CONF.set_override('max_lp_per_overlay_ls', 1, group='NSX')
+        self._test_exhaust_ports()
+
     def test_exhaust_ports_bridged_network(self):
         cfg.CONF.set_override('max_lp_per_bridged_ls', 1, group="NSX")
         providernet_args = {pnet.NETWORK_TYPE: 'flat',
                             pnet.PHYSICAL_NETWORK: 'tzuuid'}
-        with self.network(name='testnet',
-                          providernet_args=providernet_args,
-                          arg_list=(pnet.NETWORK_TYPE,
-                                    pnet.PHYSICAL_NETWORK,
-                                    pnet.SEGMENTATION_ID)) as net:
-            with self.subnet(network=net) as sub:
-                with self.port(subnet=sub):
-                    with self.port(subnet=sub):
-                        plugin = manager.NeutronManager.get_plugin()
-                        ls = nsxlib.switch.get_lswitches(plugin.cluster,
-                                                         net['network']['id'])
-                        self.assertEqual(len(ls), 2)
+        self._test_exhaust_ports(providernet_args=providernet_args)
 
     def test_update_port_delete_ip(self):
         # This test case overrides the default because the nsx plugin

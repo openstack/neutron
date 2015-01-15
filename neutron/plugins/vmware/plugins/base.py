@@ -372,25 +372,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def _nsx_find_lswitch_for_port(self, context, port_data):
         network = self._get_network(context, port_data['network_id'])
-        network_bindings = nsx_db.get_network_bindings(
-            context.session, port_data['network_id'])
-        max_ports = self.nsx_opts.max_lp_per_overlay_ls
-        allow_extra_lswitches = False
-        for network_binding in network_bindings:
-            if network_binding.binding_type in (c_utils.NetworkTypes.FLAT,
-                                                c_utils.NetworkTypes.VLAN):
-                max_ports = self.nsx_opts.max_lp_per_bridged_ls
-                allow_extra_lswitches = True
-                break
-        try:
-            return self._handle_lswitch_selection(
-                context, self.cluster, network, network_bindings,
-                max_ports, allow_extra_lswitches)
-        except api_exc.NsxApiException:
-            err_desc = _("An exception occurred while selecting logical "
-                         "switch for the port")
-            LOG.exception(err_desc)
-            raise nsx_exc.NsxPluginException(err_msg=err_desc)
+        return self._handle_lswitch_selection(
+            context, self.cluster, network)
 
     def _nsx_create_port_helper(self, session, ls_uuid, port_data,
                                 do_port_security=True):
@@ -843,11 +826,24 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         super(NsxPluginV2, self).extend_port_dict_binding(port_res, port_db)
         port_res[pbin.VNIC_TYPE] = pbin.VNIC_NORMAL
 
-    def _handle_lswitch_selection(self, context, cluster, network,
-                                  network_bindings, max_ports,
-                                  allow_extra_lswitches):
+    def _handle_lswitch_selection(self, context, cluster, network):
+        # NOTE(salv-orlando): This method used to select a NSX logical switch
+        # with an available port, and create a new logical switch if
+        # necessary. As there is no more need to perform switch chaining in
+        # NSX, this method now just returns the first logical switch mapped
+        # to a Neutron network.
+        max_ports = self.nsx_opts.max_lp_per_overlay_ls
+        network_bindings = nsx_db.get_network_bindings(
+            context.session, network['id'])
+        for network_binding in network_bindings:
+            if network_binding.binding_type in (c_utils.NetworkTypes.FLAT,
+                                                c_utils.NetworkTypes.VLAN):
+                max_ports = self.nsx_opts.max_lp_per_bridged_ls
+        # This is still necessary as there could be chained switches in
+        # the deployment and the code needs to find the first one with
+        # an avaialble slot for a port
         lswitches = nsx_utils.fetch_nsx_switches(
-            context.session, cluster, network.id)
+            context.session, cluster, network['id'])
         try:
             return [ls for ls in lswitches
                     if (ls['_relations']['LogicalSwitchStatus']
@@ -856,40 +852,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Too bad, no switch available
             LOG.debug("No switch has available ports (%d checked)",
                       len(lswitches))
-        if allow_extra_lswitches:
-            # The 'main' logical switch is either the only one available
-            # or the one where the 'multi_lswitch' tag was set
-            while lswitches:
-                main_ls = lswitches.pop(0)
-                tag_dict = dict((x['scope'], x['tag'])
-                                for x in main_ls['tags'])
-                if 'multi_lswitch' in tag_dict:
-                    break
-            else:
-                # by construction this statement is hit if there is only one
-                # logical switch and the multi_lswitch tag has not been set.
-                # The tag must therefore be added.
-                tags = main_ls['tags']
-                tags.append({'tag': 'True', 'scope': 'multi_lswitch'})
-                switchlib.update_lswitch(cluster,
-                                         main_ls['uuid'],
-                                         main_ls['display_name'],
-                                         network['tenant_id'],
-                                         tags=tags)
-            transport_zone_config = self._convert_to_nsx_transport_zones(
-                cluster, network, bindings=network_bindings)
-            selected_lswitch = switchlib.create_lswitch(
-                cluster, network.id, network.tenant_id,
-                "%s-ext-%s" % (network.name, len(lswitches)),
-                transport_zone_config)
-            # add a mapping between the neutron network and the newly
-            # created logical switch
-            nsx_db.add_neutron_nsx_network_mapping(
-                context.session, network.id, selected_lswitch['uuid'])
-            return selected_lswitch
-        else:
-            LOG.error(_("Maximum number of logical ports reached for "
-                        "logical network %s"), network.id)
+
             raise nsx_exc.NoMorePortsException(network=network.id)
 
     def _convert_to_nsx_transport_zones(self, cluster, network=None,
