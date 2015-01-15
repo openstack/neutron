@@ -462,15 +462,19 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         res = req.get_response(self._api_for_resource(collection))
         self.assertEqual(res.status_int, expected_code)
 
-    def _show(self, resource, id,
-              expected_code=webob.exc.HTTPOk.code,
-              neutron_context=None):
+    def _show_response(self, resource, id, neutron_context=None):
         req = self.new_show_request(resource, id)
         if neutron_context:
             # create a specific auth context for this request
             req.environ['neutron.context'] = neutron_context
-        res = req.get_response(self._api_for_resource(resource))
-        self.assertEqual(res.status_int, expected_code)
+        return req.get_response(self._api_for_resource(resource))
+
+    def _show(self, resource, id,
+              expected_code=webob.exc.HTTPOk.code,
+              neutron_context=None):
+        res = self._show_response(resource, id,
+                                  neutron_context=neutron_context)
+        self.assertEqual(expected_code, res.status_int)
         return self.deserialize(self.fmt, res)
 
     def _update(self, resource, id, new_data,
@@ -1794,10 +1798,11 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self.assertRaises(n_exc.NeutronException,
                                       plugin.delete_ports_by_device_id,
                                       ctx, 'owner1', network_id)
-                self._show('ports', p1['port']['id'],
-                           expected_code=webob.exc.HTTPNotFound.code)
-                self._show('ports', p2['port']['id'],
-                           expected_code=webob.exc.HTTPOk.code)
+                statuses = {
+                    self._show_response('ports', p['port']['id']).status_int
+                    for p in [p1, p2]}
+                expected = {webob.exc.HTTPNotFound.code, webob.exc.HTTPOk.code}
+                self.assertEqual(expected, statuses)
                 self._show('ports', p3['port']['id'],
                            expected_code=webob.exc.HTTPOk.code)
 
