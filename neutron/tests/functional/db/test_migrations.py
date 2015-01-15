@@ -20,13 +20,13 @@ import alembic.autogenerate
 import alembic.migration
 import mock
 from oslo.config import cfg
+from oslo.config import fixture as config_fixture
 from oslo.db.sqlalchemy import test_base
 from oslo.db.sqlalchemy import test_migrations
 import sqlalchemy
 
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
-from neutron.openstack.common.fixture import config
 
 LOG = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         patch.start()
         self.addCleanup(patch.stop)
         super(_TestModelsMigrations, self).setUp()
-        self.cfg = self.useFixture(config.Config())
+        self.cfg = self.useFixture(config_fixture.Config())
         self.cfg.config(core_plugin=CORE_PLUGIN)
         self.alembic_config = migration.get_alembic_config()
         self.alembic_config.neutron_config = cfg.CONF
