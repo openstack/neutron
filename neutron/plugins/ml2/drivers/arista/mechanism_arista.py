@@ -237,6 +237,10 @@ class AristaRPCWrapper(object):
                 network['segmentation_id'] = DEFAULT_VLAN
             append_cmd('segment 1 type vlan id %d' %
                        network['segmentation_id'])
+            if network['shared']:
+                append_cmd('shared')
+            else:
+                append_cmd('no shared')
         cmds.extend(self._get_exit_mode_cmds(['segment', 'network', 'tenant']))
         self._run_openstack_cmds(cmds)
 
@@ -636,6 +640,11 @@ class SyncService(object):
         # operations fail, then force_sync is set to true
         self._force_sync = False
 
+        # To support shared networks, split the sync loop in two parts:
+        # In first loop, delete unwanted VM and networks and update networks
+        # In second loop, update VMs. This is done to ensure that networks for
+        # all tenats are updated before VMs are updated
+        vms_to_update = {}
         for tenant in db_tenants:
             db_nets = db.get_networks(tenant)
             db_vms = db.get_vms(tenant)
@@ -657,7 +666,7 @@ class SyncService(object):
             nets_to_update = db_nets_key_set.difference(eos_nets_key_set)
 
             # Find the VMs that are present in Neutron DB, but not on EOS
-            vms_to_update = db_vms_key_set.difference(eos_vms_key_set)
+            vms_to_update[tenant] = db_vms_key_set.difference(eos_vms_key_set)
 
             try:
                 if vms_to_delete:
@@ -676,18 +685,29 @@ class SyncService(object):
                          'segmentation_id':
                             db_nets[net_id]['segmentationTypeId'],
                          'network_name':
-                            neutron_nets.get(net_id, {'name': ''})['name'], }
+                            neutron_nets.get(net_id, {'name': ''})['name'],
+                         'shared':
+                            neutron_nets.get(net_id,
+                                             {'shared': False})['shared']}
                         for net_id in nets_to_update
                     ]
                     self._rpc.create_network_bulk(tenant, networks)
-                if vms_to_update:
-                    # Filter the ports to only the vms that we are interested
-                    # in.
-                    vm_ports = [
-                        port for port in self._ndb.get_all_ports_for_tenant(
-                            tenant) if port['device_id'] in vms_to_update
-                    ]
-                    self._rpc.create_vm_port_bulk(tenant, vm_ports, db_vms)
+            except arista_exc.AristaRpcError:
+                LOG.warning(EOS_UNREACHABLE_MSG)
+                self._force_sync = True
+
+        # Now update the VMs
+        for tenant in vms_to_update:
+            try:
+                # Filter the ports to only the vms that we are interested
+                # in.
+                vm_ports = [
+                    port for port in self._ndb.get_all_ports_for_tenant(
+                        tenant) if port['device_id'] in vms_to_update[tenant]
+                ]
+                if vm_ports:
+                    db_vms = db.get_vms(tenant)
+                self._rpc.create_vm_port_bulk(tenant, vm_ports, db_vms)
             except arista_exc.AristaRpcError:
                 LOG.warning(EOS_UNREACHABLE_MSG)
                 self._force_sync = True
@@ -759,13 +779,15 @@ class AristaDriver(driver_api.MechanismDriver):
         tenant_id = network['tenant_id']
         segments = context.network_segments
         vlan_id = segments[0]['segmentation_id']
+        shared_net = network['shared']
         with self.eos_sync_lock:
             if db.is_network_provisioned(tenant_id, network_id):
                 try:
                     network_dict = {
                         'network_id': network_id,
                         'segmentation_id': vlan_id,
-                        'network_name': network_name}
+                        'network_name': network_name,
+                        'shared': shared_net}
                     self.rpc.create_network(tenant_id, network_dict)
                 except arista_exc.AristaRpcError:
                     LOG.info(EOS_UNREACHABLE_MSG)
@@ -794,18 +816,21 @@ class AristaDriver(driver_api.MechanismDriver):
         """
         new_network = context.current
         orig_network = context.original
-        if new_network['name'] != orig_network['name']:
+        if ((new_network['name'] != orig_network['name']) or
+           (new_network['shared'] != orig_network['shared'])):
             network_id = new_network['id']
             network_name = new_network['name']
             tenant_id = new_network['tenant_id']
             vlan_id = new_network['provider:segmentation_id']
+            shared_net = new_network['shared']
             with self.eos_sync_lock:
                 if db.is_network_provisioned(tenant_id, network_id):
                     try:
                         network_dict = {
                             'network_id': network_id,
                             'segmentation_id': vlan_id,
-                            'network_name': network_name}
+                            'network_name': network_name,
+                            'shared': shared_net}
                         self.rpc.create_network(tenant_id, network_dict)
                     except arista_exc.AristaRpcError:
                         LOG.info(EOS_UNREACHABLE_MSG)
@@ -859,6 +884,7 @@ class AristaDriver(driver_api.MechanismDriver):
             network_id = port['network_id']
             tenant_id = port['tenant_id']
             with self.eos_sync_lock:
+                db.remember_tenant(tenant_id)
                 db.remember_vm(device_id, host, port_id,
                                network_id, tenant_id)
 
@@ -887,8 +913,12 @@ class AristaDriver(driver_api.MechanismDriver):
                                                       port_id,
                                                       network_id,
                                                       tenant_id)
-                net_provisioned = db.is_network_provisioned(tenant_id,
-                                                            network_id)
+                # If network does not exist under this tenant,
+                # it may be a shared network. Get shared network owner Id
+                net_provisioned = (
+                    db.is_network_provisioned(tenant_id, network_id) or
+                    self.ndb.get_shared_network_owner_id(network_id)
+                )
                 if vm_provisioned and net_provisioned:
                     try:
                         self.rpc.plug_port_into_network(device_id,
@@ -949,9 +979,13 @@ class AristaDriver(driver_api.MechanismDriver):
                                                       port_id,
                                                       network_id,
                                                       tenant_id)
-                net_provisioned = db.is_network_provisioned(tenant_id,
-                                                            network_id,
-                                                            segmentation_id)
+                # If network does not exist under this tenant,
+                # it may be a shared network. Get shared network owner Id
+                net_provisioned = (
+                    db.is_network_provisioned(tenant_id, network_id,
+                                              segmentation_id) or
+                    self.ndb.get_shared_network_owner_id(network_id)
+                )
                 if vm_provisioned and net_provisioned:
                     try:
                         self.rpc.plug_port_into_network(device_id,
