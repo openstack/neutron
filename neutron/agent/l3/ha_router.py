@@ -257,13 +257,12 @@ class HaRouter(router.RouterInfo):
         port_id = port['id']
         interface_name = self.get_internal_device_name(port_id)
 
-        if not ip_lib.device_exists(interface_name, namespace=self.ns_name):
-            self.driver.plug(port['network_id'],
-                             port_id,
-                             interface_name,
-                             port['mac_address'],
-                             namespace=self.ns_name,
-                             prefix=router.INTERNAL_DEV_PREFIX)
+        self.driver.plug(port['network_id'],
+                         port_id,
+                         interface_name,
+                         port['mac_address'],
+                         namespace=self.ns_name,
+                         prefix=router.INTERNAL_DEV_PREFIX)
 
         self._disable_ipv6_addressing_on_interface(interface_name)
         for ip_cidr in common_utils.fixed_ip_cidrs(port['fixed_ips']):

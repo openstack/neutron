@@ -764,7 +764,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                      'port_id': _uuid()}]}
         router[l3_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
         ri.external_gateway_updated(ex_gw_port, interface_name)
-        self.assertEqual(self.mock_driver.plug.call_count, 0)
+        self.assertEqual(1, self.mock_driver.plug.call_count)
         self.assertEqual(self.mock_driver.init_l3.call_count, 1)
         exp_arp_calls = [mock.call(ri.ns_name, interface_name,
                                    '20.0.0.30', mock.ANY)]

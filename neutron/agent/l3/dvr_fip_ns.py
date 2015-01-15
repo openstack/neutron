@@ -94,14 +94,13 @@ class FipNamespace(namespaces.Namespace):
     def _gateway_added(self, ex_gw_port, interface_name):
         """Add Floating IP gateway port."""
         ns_name = self.get_name()
-        if not ip_lib.device_exists(interface_name, namespace=ns_name):
-            self.driver.plug(ex_gw_port['network_id'],
-                             ex_gw_port['id'],
-                             interface_name,
-                             ex_gw_port['mac_address'],
-                             bridge=self.agent_conf.external_network_bridge,
-                             namespace=ns_name,
-                             prefix=FIP_EXT_DEV_PREFIX)
+        self.driver.plug(ex_gw_port['network_id'],
+                         ex_gw_port['id'],
+                         interface_name,
+                         ex_gw_port['mac_address'],
+                         bridge=self.agent_conf.external_network_bridge,
+                         namespace=ns_name,
+                         prefix=FIP_EXT_DEV_PREFIX)
 
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name)
