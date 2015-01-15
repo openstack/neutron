@@ -358,7 +358,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         # Need to call this explicitly to delete vport to vporttag binding
         if ext_sg.SECURITYGROUPS in port:
-            self._delete_port_security_group_bindings(context, id)
+            self.nuageclient.delete_port_security_group_bindings(id)
 
         netpart_id = subnet_mapping['net_partition_id']
         net_partition = nuagedb.get_net_partition_by_id(context.session,
