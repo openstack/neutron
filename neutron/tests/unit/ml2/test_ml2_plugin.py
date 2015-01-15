@@ -114,14 +114,6 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.context = context.get_admin_context()
 
 
-class TestMl2BulkToggleWithBulkless(Ml2PluginV2TestCase):
-
-    _mechanism_drivers = ['logger', 'test', 'bulkless']
-
-    def test_bulk_disable_with_bulkless_driver(self):
-        self.assertTrue(self._skip_native_bulk)
-
-
 class TestMl2BulkToggleWithoutBulkless(Ml2PluginV2TestCase):
 
     _mechanism_drivers = ['logger', 'test']
@@ -199,6 +191,23 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self._delete('networks', n['network']['id'])
         flips = l3plugin.get_floatingips(context.get_admin_context())
         self.assertFalse(flips)
+
+    def test_create_ports_bulk_port_binding_failure(self):
+        ctx = context.get_admin_context()
+        with self.network() as net:
+            plugin = manager.NeutronManager.get_plugin()
+
+            with mock.patch.object(plugin, '_bind_port_if_needed',
+                side_effect=ml2_exc.MechanismDriverError(
+                    method='create_port_bulk')) as _bind_port_if_needed:
+
+                res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
+                                             'test', True, context=ctx)
+
+                self.assertTrue(_bind_port_if_needed.called)
+                # We expect a 500 as we injected a fault in the plugin
+                self._validate_behavior_on_bulk_failure(
+                    res, 'ports', webob.exc.HTTPServerError.code)
 
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
