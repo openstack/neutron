@@ -773,26 +773,22 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         cfg.CONF.set_override('log_file', 'test.log')
         class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
         self.external_process_p.stop()
-        # Ensure the mock is restored if this test fail
-        try:
-            with mock.patch(class_path) as ip_wrapper:
-                self.dhcp.enable_isolated_metadata_proxy(network)
-                ip_wrapper.assert_has_calls([mock.call(
-                    'sudo',
-                    'qdhcp-12345678-1234-5678-1234567890ab'),
-                    mock.call().netns.execute([
-                        'neutron-ns-metadata-proxy',
-                        mock.ANY,
-                        mock.ANY,
-                        '--router_id=forzanapoli',
-                        mock.ANY,
-                        mock.ANY,
-                        '--debug',
-                        ('--log-file=neutron-ns-metadata-proxy-%s.log' %
-                         network.id)], addl_env=None)
-                ])
-        finally:
-            self.external_process_p.start()
+        with mock.patch(class_path) as ip_wrapper:
+            self.dhcp.enable_isolated_metadata_proxy(network)
+            ip_wrapper.assert_has_calls([mock.call(
+                'sudo',
+                'qdhcp-12345678-1234-5678-1234567890ab'),
+                mock.call().netns.execute([
+                    'neutron-ns-metadata-proxy',
+                    mock.ANY,
+                    mock.ANY,
+                    '--router_id=forzanapoli',
+                    mock.ANY,
+                    mock.ANY,
+                    '--debug',
+                    ('--log-file=neutron-ns-metadata-proxy-%s.log' %
+                     network.id)], addl_env=None)
+            ])
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
         self._test_metadata_network(fake_meta_network)
