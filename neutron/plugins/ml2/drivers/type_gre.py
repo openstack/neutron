@@ -128,18 +128,14 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
     def get_endpoint_by_host(self, host):
         LOG.debug("get_endpoint_by_host() called for host %s", host)
         session = db_api.get_session()
-
-        host_endpoint = (session.query(GreEndpoints).
-                         filter_by(host=host).first())
-        return host_endpoint
+        return (session.query(GreEndpoints).
+                filter_by(host=host).first())
 
     def get_endpoint_by_ip(self, ip):
         LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
         session = db_api.get_session()
-
-        ip_endpoint = (session.query(GreEndpoints).
-                       filter_by(ip_address=ip).first())
-        return ip_endpoint
+        return (session.query(GreEndpoints).
+                filter_by(ip_address=ip).first())
 
     def add_endpoint(self, ip, host):
         LOG.debug("add_gre_endpoint() called for ip %s", ip)
