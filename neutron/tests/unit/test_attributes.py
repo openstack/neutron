@@ -59,18 +59,18 @@ class TestAttributes(base.BaseTestCase):
         self.assertIsNone(msg)
 
         msg = attributes._validate_values(7, [4, 6])
-        self.assertEqual(msg, "'7' is not in [4, 6]")
+        self.assertEqual("'7' is not in [4, 6]", msg)
 
         msg = attributes._validate_values(7, (4, 6))
-        self.assertEqual(msg, "'7' is not in (4, 6)")
+        self.assertEqual("'7' is not in (4, 6)", msg)
 
     def test_validate_not_empty_string(self):
         msg = attributes._validate_not_empty_string('    ', None)
-        self.assertEqual(msg, u"'    ' Blank strings are not permitted")
+        self.assertEqual(u"'    ' Blank strings are not permitted", msg)
 
     def test_validate_not_empty_string_or_none(self):
         msg = attributes._validate_not_empty_string_or_none('    ', None)
-        self.assertEqual(msg, u"'    ' Blank strings are not permitted")
+        self.assertEqual(u"'    ' Blank strings are not permitted", msg)
 
         msg = attributes._validate_not_empty_string_or_none(None, None)
         self.assertIsNone(msg)
@@ -84,7 +84,7 @@ class TestAttributes(base.BaseTestCase):
 
     def test_validate_string(self):
         msg = attributes._validate_string(None, None)
-        self.assertEqual(msg, "'None' is not a valid string")
+        self.assertEqual("'None' is not a valid string", msg)
 
         # 0 == len(data) == max_len
         msg = attributes._validate_string("", 0)
@@ -104,7 +104,7 @@ class TestAttributes(base.BaseTestCase):
 
         # 0 < max_len < len(data)
         msg = attributes._validate_string("1234567890", 9)
-        self.assertEqual(msg, "'1234567890' exceeds maximum length of 9")
+        self.assertEqual("'1234567890' exceeds maximum length of 9", msg)
 
         msg = attributes._validate_string("123456789", None)
         self.assertIsNone(msg)
@@ -112,7 +112,7 @@ class TestAttributes(base.BaseTestCase):
     def test_validate_no_whitespace(self):
         data = 'no_white_space'
         result = attributes._validate_no_whitespace(data)
-        self.assertEqual(result, data)
+        self.assertEqual(data, result)
 
         self.assertRaises(n_exc.InvalidInput,
                           attributes._validate_no_whitespace,
@@ -150,14 +150,13 @@ class TestAttributes(base.BaseTestCase):
         self.assertIsNone(msg)
 
         msg = attributes._validate_range(0, [1, 9])
-        self.assertEqual(msg, "'0' is too small - must be at least '1'")
+        self.assertEqual("'0' is too small - must be at least '1'", msg)
 
         msg = attributes._validate_range(10, (1, 9))
-        self.assertEqual(msg,
-                         "'10' is too large - must be no larger than '9'")
+        self.assertEqual("'10' is too large - must be no larger than '9'", msg)
 
         msg = attributes._validate_range("bogus", (1, 9))
-        self.assertEqual(msg, "'bogus' is not an integer")
+        self.assertEqual("'bogus' is not an integer", msg)
 
         msg = attributes._validate_range(10, (attributes.UNLIMITED,
                                               attributes.UNLIMITED))
@@ -170,11 +169,10 @@ class TestAttributes(base.BaseTestCase):
         self.assertIsNone(msg)
 
         msg = attributes._validate_range(-1, (0, attributes.UNLIMITED))
-        self.assertEqual(msg, "'-1' is too small - must be at least '0'")
+        self.assertEqual("'-1' is too small - must be at least '0'", msg)
 
         msg = attributes._validate_range(10, (attributes.UNLIMITED, 9))
-        self.assertEqual(msg,
-                         "'10' is too large - must be no larger than '9'")
+        self.assertEqual("'10' is too large - must be no larger than '9'", msg)
 
     def _test_validate_mac_address(self, validator, allow_none=False):
         mac_addr = "ff:16:3e:4f:00:00"
@@ -184,22 +182,22 @@ class TestAttributes(base.BaseTestCase):
         mac_addr = "ffa:16:3e:4f:00:00"
         msg = validator(mac_addr)
         err_msg = "'%s' is not a valid MAC address"
-        self.assertEqual(msg, err_msg % mac_addr)
+        self.assertEqual(err_msg % mac_addr, msg)
 
         mac_addr = "123"
         msg = validator(mac_addr)
-        self.assertEqual(msg, err_msg % mac_addr)
+        self.assertEqual(err_msg % mac_addr, msg)
 
         mac_addr = None
         msg = validator(mac_addr)
         if allow_none:
             self.assertIsNone(msg)
         else:
-            self.assertEqual(msg, err_msg % mac_addr)
+            self.assertEqual(err_msg % mac_addr, msg)
 
         mac_addr = "ff:16:3e:4f:00:00\r"
         msg = validator(mac_addr)
-        self.assertEqual(msg, err_msg % mac_addr)
+        self.assertEqual(err_msg % mac_addr, msg)
 
     def test_validate_mac_address(self):
         self._test_validate_mac_address(attributes._validate_mac_address)
@@ -215,29 +213,29 @@ class TestAttributes(base.BaseTestCase):
 
         ip_addr = '1111.1.1.1'
         msg = attributes._validate_ip_address(ip_addr)
-        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+        self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
         ip_addr = '1.1.1.1 has whitespace'
         msg = attributes._validate_ip_address(ip_addr)
-        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+        self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
         ip_addr = '111.1.1.1\twhitespace'
         msg = attributes._validate_ip_address(ip_addr)
-        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+        self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
         ip_addr = '111.1.1.1\nwhitespace'
         msg = attributes._validate_ip_address(ip_addr)
-        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+        self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
         for ws in string.whitespace:
             ip_addr = '%s111.1.1.1' % ws
             msg = attributes._validate_ip_address(ip_addr)
-            self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+            self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
         for ws in string.whitespace:
             ip_addr = '111.1.1.1%s' % ws
             msg = attributes._validate_ip_address(ip_addr)
-            self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+            self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
     def test_validate_ip_pools(self):
         pools = [[{'end': '10.0.0.254'}],
@@ -265,8 +263,8 @@ class TestAttributes(base.BaseTestCase):
         pools = [[{'end': '10.0.0.254', 'start': invalid_ip}]]
         for pool in pools:
             msg = attributes._validate_ip_pools(pool)
-            self.assertEqual(msg,
-                             "'%s' is not a valid IP address" % invalid_ip)
+            self.assertEqual("'%s' is not a valid IP address" % invalid_ip,
+                             msg)
 
     def test_validate_fixed_ips(self):
         fixed_ips = [
@@ -294,7 +292,7 @@ class TestAttributes(base.BaseTestCase):
              'error_msg': "Duplicate IP address '1.1.1.1'"}]
         for fixed in fixed_ips:
             msg = attributes._validate_fixed_ips(fixed['data'])
-            self.assertEqual(msg, fixed['error_msg'])
+            self.assertEqual(fixed['error_msg'], msg)
 
         fixed_ips = [[{'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
                        'ip_address': '1.1.1.1'}],
@@ -369,7 +367,7 @@ class TestAttributes(base.BaseTestCase):
 
         ip_addr = '1111.1.1.1'
         msg = attributes._validate_ip_address_or_none(ip_addr)
-        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+        self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
     def test_hostname_pattern(self):
         bad_values = ['@openstack', 'ffff.abcdefg' * 26, 'f' * 80, '-hello',
@@ -497,7 +495,7 @@ class TestAttributes(base.BaseTestCase):
         error = _("'%(data)s' isn't a recognized IP subnet cidr,"
                   " '%(cidr)s' is recommended") % {"data": cidr,
                                                    "cidr": "10.0.2.0/32"}
-        self.assertEqual(msg, error)
+        self.assertEqual(error, msg)
 
         # Valid - IPv4 with non-zero masked bits is ok
         for i in range(1, 255):
@@ -511,7 +509,7 @@ class TestAttributes(base.BaseTestCase):
         error = _("'%(data)s' isn't a recognized IP subnet cidr,"
                   " '%(cidr)s' is recommended") % {"data": cidr,
                                                    "cidr": "fe80::/128"}
-        self.assertEqual(msg, error)
+        self.assertEqual(error, msg)
 
         # Invalid - IPv6 with final octets, missing mask
         cidr = "fe80::0"
@@ -519,13 +517,13 @@ class TestAttributes(base.BaseTestCase):
         error = _("'%(data)s' isn't a recognized IP subnet cidr,"
                   " '%(cidr)s' is recommended") % {"data": cidr,
                                                    "cidr": "fe80::/128"}
-        self.assertEqual(msg, error)
+        self.assertEqual(error, msg)
 
         # Invalid - Address format error
         cidr = 'invalid'
         msg = validator(cidr, None)
         error = "'%s' is not a valid IP subnet" % cidr
-        self.assertEqual(msg, error)
+        self.assertEqual(error, msg)
 
         cidr = None
         msg = validator(cidr, None)
@@ -533,13 +531,13 @@ class TestAttributes(base.BaseTestCase):
             self.assertIsNone(msg)
         else:
             error = "'%s' is not a valid IP subnet" % cidr
-            self.assertEqual(msg, error)
+            self.assertEqual(error, msg)
 
         # Invalid - IPv4 with trailing CR
         cidr = "10.0.2.0/24\r"
         msg = validator(cidr, None)
         error = "'%s' is not a valid IP subnet" % cidr
-        self.assertEqual(msg, error)
+        self.assertEqual(error, msg)
 
     def test_validate_subnet(self):
         self._test_validate_subnet(attributes._validate_subnet)
@@ -556,11 +554,11 @@ class TestAttributes(base.BaseTestCase):
         if allow_none:
             self.assertIsNone(msg)
         else:
-            self.assertEqual(msg, "'None' is not a valid input")
+            self.assertEqual("'None' is not a valid input", msg)
 
         data = 'bat'
         msg = validator(data, pattern)
-        self.assertEqual(msg, "'%s' is not a valid input" % data)
+        self.assertEqual("'%s' is not a valid input" % data, msg)
 
         data = 'hat'
         msg = validator(data, pattern)
@@ -579,7 +577,7 @@ class TestAttributes(base.BaseTestCase):
 
     def test_validate_uuid(self):
         msg = attributes._validate_uuid('garbage')
-        self.assertEqual(msg, "'garbage' is not a valid UUID")
+        self.assertEqual("'garbage' is not a valid UUID", msg)
 
         msg = attributes._validate_uuid('00000000-ffff-ffff-ffff-000000000000')
         self.assertIsNone(msg)
@@ -594,7 +592,7 @@ class TestAttributes(base.BaseTestCase):
         for uuid in uuids:
             msg = attributes._validate_uuid_list(uuid)
             error = "'%s' is not a list" % uuid
-            self.assertEqual(msg, error)
+            self.assertEqual(error, msg)
 
         # check invalid uuid in a list
         invalid_uuid_lists = [[None],
@@ -608,7 +606,7 @@ class TestAttributes(base.BaseTestCase):
         for uuid_list in invalid_uuid_lists:
             msg = attributes._validate_uuid_list(uuid_list)
             error = "'%s' is not a valid UUID" % uuid_list[0]
-            self.assertEqual(msg, error)
+            self.assertEqual(error, msg)
 
         # check duplicate items in a list
         duplicate_uuids = ['e5069610-744b-42a7-8bd8-ceac1a229cd4',
@@ -617,7 +615,7 @@ class TestAttributes(base.BaseTestCase):
         msg = attributes._validate_uuid_list(duplicate_uuids)
         error = ("Duplicate items in the list: "
                  "'%s'" % ', '.join(duplicate_uuids))
-        self.assertEqual(msg, error)
+        self.assertEqual(error, msg)
 
         # check valid uuid lists
         valid_uuid_lists = [['e5069610-744b-42a7-8bd8-ceac1a229cd4'],
@@ -630,8 +628,8 @@ class TestAttributes(base.BaseTestCase):
 
     def test_validate_dict_type(self):
         for value in (None, True, '1', []):
-            self.assertEqual(attributes._validate_dict(value),
-                             "'%s' is not a dictionary" % value)
+            self.assertEqual("'%s' is not a dictionary" % value,
+                             attributes._validate_dict(value))
 
     def test_validate_dict_without_constraints(self):
         msg = attributes._validate_dict({})
@@ -652,7 +650,7 @@ class TestAttributes(base.BaseTestCase):
 
         constraints['key1'] = {'type:unsupported': None, 'required': True}
         msg = attributes._validate_dict(dictionary, constraints)
-        self.assertEqual(msg, "Validator 'type:unsupported' does not exist.")
+        self.assertEqual("Validator 'type:unsupported' does not exist.", msg)
 
     def test_validate_dict_not_required_keys(self):
         dictionary, constraints = self._construct_dict_and_constraints()
@@ -723,8 +721,8 @@ class TestAttributes(base.BaseTestCase):
 
     def test_validate_non_negative(self):
         for value in (-1, '-2'):
-            self.assertEqual(attributes._validate_non_negative(value),
-                             "'%s' should be non-negative" % value)
+            self.assertEqual("'%s' should be non-negative" % value,
+                             attributes._validate_non_negative(value))
 
         for value in (0, 1, '2', True, False):
             msg = attributes._validate_non_negative(value)
@@ -759,19 +757,19 @@ class TestConvertToBoolean(base.BaseTestCase):
 class TestConvertToInt(base.BaseTestCase):
 
     def test_convert_to_int_int(self):
-        self.assertEqual(attributes.convert_to_int(-1), -1)
-        self.assertEqual(attributes.convert_to_int(0), 0)
-        self.assertEqual(attributes.convert_to_int(1), 1)
+        self.assertEqual(-1, attributes.convert_to_int(-1))
+        self.assertEqual(0, attributes.convert_to_int(0))
+        self.assertEqual(1, attributes.convert_to_int(1))
 
     def test_convert_to_int_if_not_none(self):
-        self.assertEqual(attributes.convert_to_int_if_not_none(-1), -1)
-        self.assertEqual(attributes.convert_to_int_if_not_none(0), 0)
-        self.assertEqual(attributes.convert_to_int_if_not_none(1), 1)
+        self.assertEqual(-1, attributes.convert_to_int_if_not_none(-1))
+        self.assertEqual(0, attributes.convert_to_int_if_not_none(0))
+        self.assertEqual(1, attributes.convert_to_int_if_not_none(1))
         self.assertIsNone(attributes.convert_to_int_if_not_none(None))
 
     def test_convert_to_int_str(self):
-        self.assertEqual(attributes.convert_to_int('4'), 4)
-        self.assertEqual(attributes.convert_to_int('6'), 6)
+        self.assertEqual(4, attributes.convert_to_int('4'))
+        self.assertEqual(6, attributes.convert_to_int('6'))
         self.assertRaises(n_exc.InvalidInput,
                           attributes.convert_to_int,
                           'garbage')
@@ -782,12 +780,10 @@ class TestConvertToInt(base.BaseTestCase):
                           None)
 
     def test_convert_none_to_empty_list_none(self):
-        self.assertEqual(
-            [], attributes.convert_none_to_empty_list(None))
+        self.assertEqual([], attributes.convert_none_to_empty_list(None))
 
     def test_convert_none_to_empty_dict(self):
-        self.assertEqual(
-            {}, attributes.convert_none_to_empty_dict(None))
+        self.assertEqual({}, attributes.convert_none_to_empty_dict(None))
 
     def test_convert_none_to_empty_list_value(self):
         values = ['1', 3, [], [1], {}, {'a': 3}]
@@ -832,16 +828,16 @@ class TestConvertToList(base.BaseTestCase):
 
     def test_convert_to_empty_list(self):
         for item in (None, [], (), {}):
-            self.assertEqual(attributes.convert_to_list(item), [])
+            self.assertEqual([], attributes.convert_to_list(item))
 
     def test_convert_to_list_string(self):
         for item in ('', 'foo'):
-            self.assertEqual(attributes.convert_to_list(item), [item])
+            self.assertEqual([item], attributes.convert_to_list(item))
 
     def test_convert_to_list_iterable(self):
         for item in ([None], [1, 2, 3], (1, 2, 3), set([1, 2, 3]), ['foo']):
-            self.assertEqual(attributes.convert_to_list(item), list(item))
+            self.assertEqual(list(item), attributes.convert_to_list(item))
 
     def test_convert_to_list_non_iterable(self):
         for item in (True, False, 1, 1.2, object()):
-            self.assertEqual(attributes.convert_to_list(item), [item])
+            self.assertEqual([item], attributes.convert_to_list(item))
