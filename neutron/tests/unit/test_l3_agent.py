@@ -2139,3 +2139,40 @@ class TestBasicRouterOperations(base.BaseTestCase):
             asserter = self.assertIn if flag_set else self.assertNotIn
             asserter('AdvOtherConfigFlag on;',
                      self.utils_replace_file.call_args[0][1])
+
+    def test__put_fips_in_error_state(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = mock.Mock()
+        ri.router.get.return_value = [{'id': mock.sentinel.id1},
+                                      {'id': mock.sentinel.id2}]
+
+        statuses = agent._put_fips_in_error_state(ri)
+
+        expected = [{mock.sentinel.id1: l3_constants.FLOATINGIP_STATUS_ERROR,
+                     mock.sentinel.id2: l3_constants.FLOATINGIP_STATUS_ERROR}]
+        self.assertNotEqual(expected, statuses)
+
+    def test__process_snat_dnat_for_fip(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.process_router_floating_ip_nat_rules = mock.Mock(
+            side_effect=Exception)
+
+        self.assertRaises(n_exc.FloatingIpSetupException,
+                          agent._process_snat_dnat_for_fip,
+                          mock.sentinel.ri)
+
+        agent.process_router_floating_ip_nat_rules.assert_called_with(
+            mock.sentinel.ri)
+
+    def test__configure_fip_addresses(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.process_router_floating_ip_addresses = mock.Mock(
+            side_effect=Exception)
+
+        self.assertRaises(n_exc.FloatingIpSetupException,
+                          agent._configure_fip_addresses,
+                          mock.sentinel.ri,
+                          mock.sentinel.ex_gw_port)
+
+        agent.process_router_floating_ip_addresses.assert_called_with(
+            mock.sentinel.ri, mock.sentinel.ex_gw_port)
