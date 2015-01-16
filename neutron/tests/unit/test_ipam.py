@@ -13,7 +13,9 @@
 import netaddr
 
 from neutron.common import constants
+from neutron.common import ipv6_utils
 from neutron import ipam
+from neutron.ipam import exceptions as ipam_exc
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
@@ -161,7 +163,7 @@ class TestIpamSpecificSubnetRequest(IpamSubnetRequestTestCase):
                                              gateway_ip='1.2.3.1')
         self.assertEqual(24, request.prefixlen)
         self.assertEqual(netaddr.IPAddress('1.2.3.1'), request.gateway_ip)
-        self.assertEqual(netaddr.IPNetwork('1.2.3.0/24'), request.subnet)
+        self.assertEqual(netaddr.IPNetwork('1.2.3.0/24'), request.subnet_cidr)
 
     def test_subnet_request_bad_gateway(self):
         self.assertRaises(ValueError,
@@ -176,6 +178,12 @@ class TestAddressRequest(base.BaseTestCase):
 
     # This class doesn't test much.  At least running through all of the
     # constructors may shake out some trivial bugs.
+
+    EUI64 = ipam.AutomaticAddressRequest.EUI64
+
+    def setUp(self):
+        super(TestAddressRequest, self).setUp()
+
     def test_specific_address_ipv6(self):
         request = ipam.SpecificAddressRequest('2000::45')
         self.assertEqual(netaddr.IPAddress('2000::45'), request.address)
@@ -186,3 +194,33 @@ class TestAddressRequest(base.BaseTestCase):
 
     def test_any_address(self):
         ipam.AnyAddressRequest()
+
+    def test_automatic_address_request_eui64(self):
+        subnet_cidr = '2607:f0d0:1002:51::/64'
+        port_mac = 'aa:bb:cc:dd:ee:ff'
+        eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                         port_mac))
+        request = ipam.AutomaticAddressRequest(
+            address_type=self.EUI64,
+            prefix=subnet_cidr,
+            mac=port_mac)
+        self.assertEqual(request.address, netaddr.IPAddress(eui_addr))
+
+    def test_automatic_address_request_invalid_address_type_raises(self):
+        self.assertRaises(ipam_exc.InvalidAddressType,
+                          ipam.AutomaticAddressRequest,
+                          address_type='kaboom')
+
+    def test_automatic_address_request_eui64_no_mac_raises(self):
+        self.assertRaises(ipam_exc.AddressCalculationFailure,
+                          ipam.AutomaticAddressRequest,
+                          address_type=self.EUI64,
+                          prefix='meh')
+
+    def test_automatic_address_request_eui64_alien_param_raises(self):
+        self.assertRaises(ipam_exc.AddressCalculationFailure,
+                          ipam.AutomaticAddressRequest,
+                          address_type=self.EUI64,
+                          mac='meh',
+                          alien='et',
+                          prefix='meh')

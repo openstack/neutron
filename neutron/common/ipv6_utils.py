@@ -69,3 +69,11 @@ def is_auto_address_subnet(subnet):
     modes = [constants.IPV6_SLAAC, constants.DHCPV6_STATELESS]
     return (subnet['ipv6_address_mode'] in modes
             or subnet['ipv6_ra_mode'] in modes)
+
+
+def is_eui64_address(ip_address):
+    """Check if ip address is EUI64."""
+    ip = netaddr.IPAddress(ip_address)
+    # '0xfffe' addition is used to build EUI-64 from MAC (RFC4291)
+    # Look for it in the middle of the EUI-64 part of address
+    return ip.version == 6 and not ((ip & 0xffff000000) ^ 0xfffe000000)
