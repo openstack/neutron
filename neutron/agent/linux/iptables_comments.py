@@ -28,7 +28,8 @@ PAIR_DROP = 'Drop traffic without an IP/MAC allow rule.'
 DHCP_CLIENT = 'Allow DHCP client traffic.'
 DHCP_SPOOF = 'Prevent DHCP Spoofing by VM.'
 UNMATCHED = 'Send unmatched traffic to the fallback chain.'
-STATELESS_DROP = 'Drop packets that are not associated with a state.'
+INVALID_DROP = ("Drop packets that appear related to an existing connection "
+                "(e.g. TCP ACK/FIN) but do not have an entry in conntrack.")
 ALLOW_ASSOC = ('Direct packets associated with a known session to the RETURN '
                'chain.')
 IPV6_RA_ALLOW = 'Allow IPv6 ICMP traffic to allow RA packets.'

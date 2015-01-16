@@ -429,7 +429,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _drop_invalid_packets(self, iptables_rules):
         # Always drop invalid packets
         iptables_rules += [comment_rule('-m state --state ' 'INVALID -j DROP',
-                                        comment=ic.STATELESS_DROP)]
+                                        comment=ic.INVALID_DROP)]
         return iptables_rules
 
     def _allow_established(self, iptables_rules):
