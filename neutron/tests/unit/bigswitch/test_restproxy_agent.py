@@ -21,7 +21,7 @@ from oslo.utils import importutils
 from neutron.tests import base
 
 OVSBRIDGE = 'neutron.agent.linux.ovs_lib.OVSBridge'
-PLUGINAPI = 'neutron.plugins.bigswitch.agent.restproxy_agent.PluginApi'
+PLUGINAPI = 'neutron.agent.rpc.PluginApi'
 CONTEXT = 'neutron.context'
 CONSUMERCREATE = 'neutron.agent.rpc.create_consumers'
 SGRPC = 'neutron.agent.securitygroups_rpc'

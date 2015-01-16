@@ -71,11 +71,6 @@ class IVSBridge(ovs_lib.OVSBridge):
         return False
 
 
-class PluginApi(agent_rpc.PluginApi,
-                sg_rpc.SecurityGroupServerRpcApiMixin):
-    pass
-
-
 class SecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
     def __init__(self, context, plugin_rpc, root_helper):
         self.context = context
@@ -93,7 +88,7 @@ class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.polling_interval = polling_interval
         self._setup_rpc()
         self.sg_agent = SecurityGroupAgent(self.context,
-                                           self.plugin_rpc,
+                                           self.sg_plugin_rpc,
                                            root_helper)
         if vs == 'ivs':
             self.int_br = IVSBridge(integ_br, root_helper)
@@ -102,7 +97,8 @@ class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     def _setup_rpc(self):
         self.topic = topics.AGENT
-        self.plugin_rpc = PluginApi(topics.PLUGIN)
+        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.context = q_context.get_admin_context_without_session()
         self.endpoints = [self]
         consumers = [[topics.PORT, topics.UPDATE],
