@@ -50,6 +50,7 @@ disable=
  signature-differs,
  star-args,
  super-init-not-called,
+ unbalanced-tuple-unpacking,
  unnecessary-lambda,
  unnecessary-pass,
  unpacking-non-sequence,
