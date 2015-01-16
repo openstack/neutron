@@ -111,6 +111,21 @@ class FakeV6Port(object):
         self.extra_dhcp_opts = []
 
 
+class FakeV6PortExtraOpt(object):
+    id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
+    admin_state_up = True
+    device_owner = 'foo3'
+    fixed_ips = [FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
+                                  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+    mac_address = '00:16:3e:c2:77:1d'
+
+    def __init__(self):
+        self.extra_dhcp_opts = [
+            DhcpOpt(opt_name='dns-server',
+                    opt_value='ffea:3ba5:a17a:4ba3::100',
+                    ip_version=6)]
+
+
 class FakeDualPort(object):
     id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
     admin_state_up = True
@@ -286,6 +301,18 @@ class FakeV6SubnetSlaac(object):
     enable_dhcp = True
     host_routes = [FakeV6HostRoute]
     ipv6_address_mode = constants.IPV6_SLAAC
+    ipv6_ra_mode = None
+
+
+class FakeV6SubnetStateless(object):
+    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+    ip_version = 6
+    cidr = 'ffea:3ba5:a17a:4ba3::/64'
+    gateway_ip = 'ffea:3ba5:a17a:4ba3::1'
+    enable_dhcp = True
+    dns_nameservers = []
+    host_routes = []
+    ipv6_address_mode = constants.DHCPV6_STATELESS
     ipv6_ra_mode = None
 
 
@@ -510,6 +537,14 @@ class FakeV4NetworkMultipleTags(object):
     def __init__(self):
         self.ports[0].extra_dhcp_opts = [
             DhcpOpt(opt_name='tag:ipxe,bootfile-name', opt_value='pxelinux.0')]
+
+
+class FakeV6NetworkStatelessDHCP(object):
+    id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+
+    subnets = [FakeV6SubnetStateless()]
+    ports = [FakeV6PortExtraOpt()]
+    namespace = 'qdhcp-ns'
 
 
 class LocalChild(dhcp.DhcpLocalProcess):
@@ -1339,6 +1374,20 @@ class TestDnsmasq(TestBase):
         dm._output_hosts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name,
                                               exp_host_data)])
+
+    def test_host_and_opts_file_on_stateless_dhcpv6_network(self):
+        exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
+        exp_host_data = ('00:16:3e:c2:77:1d,'
+                         'set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n').lstrip()
+        exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
+        exp_opt_data = ('tag:tag0,option6:domain-search,openstacklocal\n'
+                        'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+                        'option6:dns-server,ffea:3ba5:a17a:4ba3::100').lstrip()
+        dm = self._get_dnsmasq(FakeV6NetworkStatelessDHCP())
+        dm._output_hosts_file()
+        dm._output_opts_file()
+        self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
+                                    mock.call(exp_opt_name, exp_opt_data)])
 
     def test_should_enable_metadata_namespaces_disabled_returns_false(self):
         self.conf.set_override('use_namespaces', False)
