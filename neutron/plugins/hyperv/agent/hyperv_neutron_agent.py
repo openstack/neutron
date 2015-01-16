@@ -110,11 +110,6 @@ class HyperVSecurityCallbackMixin(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.sg_agent = sg_agent
 
 
-class HyperVPluginApi(agent_rpc.PluginApi,
-                      sg_rpc.SecurityGroupServerRpcApiMixin):
-    pass
-
-
 class HyperVNeutronAgent(object):
     # Set RPC API version to 1.1 by default.
     target = messaging.Target(version='1.1')
@@ -150,7 +145,8 @@ class HyperVNeutronAgent(object):
     def _setup_rpc(self):
         self.agent_id = 'hyperv_%s' % platform.node()
         self.topic = topics.AGENT
-        self.plugin_rpc = HyperVPluginApi(topics.PLUGIN)
+        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
 
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
 
@@ -168,7 +164,7 @@ class HyperVNeutronAgent(object):
                                                      consumers)
 
         self.sec_groups_agent = HyperVSecurityAgent(
-            self.context, self.plugin_rpc)
+            self.context, self.sg_plugin_rpc)
         report_interval = CONF.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
