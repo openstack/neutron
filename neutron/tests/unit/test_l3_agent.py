@@ -25,11 +25,12 @@ from testtools import matchers
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import config as l3_config
-from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_router
+from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import link_local_allocator as lla
+from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3router
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
@@ -282,8 +283,9 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         network_id = _uuid()
         router = prepare_router_data(num_internal_ports=2)
         router_id = router['id']
-        ri = l3router.RouterInfo(router_id, router, **self.ri_kwargs)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3router.RouterInfo(router_id, router,
+                                 **self.ri_kwargs)
         cidr = '99.0.1.9/24'
         mac = 'ca:fe:de:ad:be:ef'
         port = {'network_id': network_id,
@@ -305,12 +307,11 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_routers.side_effect = ValueError()
-        with mock.patch.object(agent, '_cleanup_namespaces') as f:
-            self.assertRaises(ValueError, agent.periodic_sync_routers_task,
-                              agent.context)
-            self.assertTrue(agent.fullsync)
-        self.assertFalse(f.called)
+        self.plugin_api.get_routers.side_effect = ValueError
+        self.assertRaises(ValueError,
+                          agent.periodic_sync_routers_task,
+                          agent.context)
+        self.assertTrue(agent.fullsync)
 
     def test_l3_initial_full_sync_done(self):
         with mock.patch.object(l3_agent.L3NATAgent,
@@ -323,14 +324,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.return_value = []
-        with mock.patch.object(agent, '_cleanup_namespaces') as f:
-            agent.periodic_sync_routers_task(agent.context)
-        self.assertTrue(f.called)
+        agent.periodic_sync_routers_task(agent.context)
+        self.assertFalse(agent.namespaces_manager._clean_stale)
 
     def test_router_info_create(self):
         id = _uuid()
-        ns = "ns-" + id
-        ri = l3router.RouterInfo(id, {}, ns_name=ns, **self.ri_kwargs)
+        ri = l3router.RouterInfo(id, {}, **self.ri_kwargs)
 
         self.assertTrue(ri.ns_name.endswith(id))
 
@@ -347,8 +346,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             'enable_snat': True,
             'routes': [],
             'gw_port': ex_gw_port}
-        ns = "ns-" + id
-        ri = l3router.RouterInfo(id, router, ns_name=ns, **self.ri_kwargs)
+        ri = l3router.RouterInfo(id, router, **self.ri_kwargs)
         self.assertTrue(ri.ns_name.endswith(id))
         self.assertEqual(ri.router, router)
 
@@ -400,13 +398,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(agent._set_subnet_info.call_count, 1)
             self.assertEqual(agent._internal_network_added.call_count, 2)
             agent._internal_network_added.assert_called_with(
-                agent.get_snat_ns_name(ri.router['id']),
+                dvr_snat_ns.SnatNamespace.get_snat_ns_name(ri.router['id']),
                 sn_port['network_id'],
                 sn_port['id'],
                 sn_port['ip_cidr'],
                 sn_port['mac_address'],
                 agent.get_snat_int_device_name(sn_port['id']),
-                dvr.SNAT_INT_DEV_PREFIX)
+                dvr_snat_ns.SNAT_INT_DEV_PREFIX)
 
     def test_agent_add_internal_network(self):
         self._test_internal_network_action('add')
@@ -419,9 +417,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_external_gateway_action(self, action, router):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        ri = l3router.RouterInfo(router['id'], router,
-                                 ns_name=agent.get_ns_name(router['id']),
-                                 **self.ri_kwargs)
         ex_net_id = _uuid()
         # Special setup for dvr routers
         if router.get('distributed'):
@@ -429,7 +424,16 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent.host = HOSTNAME
             agent._create_dvr_gateway = mock.Mock()
             agent.get_snat_interfaces = mock.Mock(return_value=self.snat_ports)
+            ri = dvr_router.DvrRouter(HOSTNAME,
+                                      router['id'],
+                                      router,
+                                      **self.ri_kwargs)
+            ri.create_snat_namespace()
             ri.fip_ns = agent.get_fip_ns(ex_net_id)
+        else:
+            ri = l3router.RouterInfo(
+                router['id'], router,
+                **self.ri_kwargs)
 
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'subnet_id': _uuid()}],
@@ -496,9 +500,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_external_gateway_updated(self):
         router = prepare_router_data(num_internal_ports=2)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        ri = l3router.RouterInfo(router['id'], router,
-                                 ns_name=agent.get_ns_name(router['id']),
-                                 **self.ri_kwargs)
+        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         interface_name, ex_gw_port = self._prepare_ext_gw_test(agent)
 
         fake_fip = {'floatingips': [{'id': _uuid(),
@@ -523,8 +525,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test_ext_gw_updated_dvr_agent_mode(self, host,
                                             agent_mode, expected_call_count):
         router = prepare_router_data(num_internal_ports=2)
-        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = dvr_router.DvrRouter(HOSTNAME,
+                                  router['id'],
+                                  router,
+                                  **self.ri_kwargs)
+        ri.create_snat_namespace()
         interface_name, ex_gw_port = self._prepare_ext_gw_test(agent)
         agent._external_gateway_added = mock.Mock()
 
@@ -722,7 +728,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = l3router.RouterInfo(
             'foo_router_id',
-            {'distributed': True, 'gw_port_host': HOSTNAME}, **self.ri_kwargs)
+            {'distributed': True, 'gw_port_host': HOSTNAME},
+            **self.ri_kwargs)
         with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as f:
             agent._update_arp_entry(ri, mock.ANY, mock.ANY,
                                     'foo_subnet_id', 'add')
@@ -748,11 +755,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_cent_router(self):
         router = prepare_router_data()
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
-        self._test_process_router(ri)
+        self._test_process_router(ri, agent)
 
     def test_process_dist_router(self):
         router = prepare_router_data()
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = dvr_router.DvrRouter(HOSTNAME,
                                   router['id'],
                                   router,
@@ -763,11 +772,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             'fixed_ips': [{'subnet_id': subnet_id,
                            'ip_address': '1.2.3.4'}]}]
         ri.router['gw_port_host'] = None
-        self._test_process_router(ri)
+        self._test_process_router(ri, agent)
 
-    def _test_process_router(self, ri):
+    def _test_process_router(self, ri, agent):
         router = ri.router
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.host = HOSTNAME
         fake_fip_id = 'fake_fip_id'
         agent.create_dvr_fip_interfaces = mock.Mock()
@@ -944,9 +952,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         router = prepare_router_data(enable_snat=True)
         router[l3_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
-        ri = legacy_router.LegacyRouter(router['id'], router, **self.ri_kwargs)
-        ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
+        ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         agent.get_external_device_name = mock.Mock(return_value='exgw')
         self._test_process_floating_ip_addresses_add(ri, agent)
 
@@ -1443,7 +1451,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
-        agent._destroy_namespace(namespace)
+        ns = namespaces.RouterNamespace(
+            'bar', self.conf, agent.driver, agent.use_ipv6)
+        ns.create()
+
+        ns.delete()
         self.mock_driver.unplug.assert_called_once_with('qr-aaaa',
                                                         prefix='qr-',
                                                         namespace='qrouter'
@@ -1452,14 +1464,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_destroy_router_namespace_skips_ns_removal(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        agent._destroy_router_namespace("fakens")
+        ns = namespaces.Namespace(
+            'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
+        ns.create()
+        ns.delete()
         self.assertEqual(self.mock_ip.netns.delete.call_count, 0)
 
     def test_destroy_router_namespace_removes_ns(self):
         self.conf.set_override('router_delete_namespaces', True)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        agent._destroy_router_namespace("fakens")
-        self.mock_ip.netns.delete.assert_called_once_with("fakens")
+        ns = namespaces.Namespace(
+            'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
+        ns.create()
+        ns.delete()
+        self.mock_ip.netns.delete.assert_called_once_with("qrouter-bar")
 
     def _configure_metadata_proxy(self, enableflag=True):
         if not enableflag:
@@ -1509,7 +1527,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.conf.set_override('router_id', '1234')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertEqual('1234', agent.conf.router_id)
-        self.assertFalse(agent._clean_stale_namespaces)
+        self.assertFalse(agent.namespaces_manager._clean_stale)
 
     def test_process_routers_update_rpc_timeout_on_get_routers(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1644,15 +1662,19 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             msg = _LE("Error importing interface driver '%s'")
             log.error.assert_called_once_with(msg, 'wrong_driver')
 
+    @mock.patch.object(namespaces.RouterNamespace, 'delete')
+    @mock.patch.object(dvr_snat_ns.SnatNamespace, 'delete')
     def _cleanup_namespace_test(self,
                                 stale_namespace_list,
                                 router_list,
-                                other_namespaces):
+                                other_namespaces,
+                                mock_snat_ns,
+                                mock_router_ns):
         self.conf.set_override('router_delete_namespaces', True)
 
-        good_namespace_list = [l3_agent.NS_PREFIX + r['id']
+        good_namespace_list = [namespaces.NS_PREFIX + r['id']
                                for r in router_list]
-        good_namespace_list += [dvr.SNAT_NS_PREFIX + r['id']
+        good_namespace_list += [dvr_snat_ns.SNAT_NS_PREFIX + r['id']
                                 for r in router_list]
         self.mock_ip.get_namespaces.return_value = (stale_namespace_list +
                                                     good_namespace_list +
@@ -1660,34 +1682,27 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
-        self.assertTrue(agent._clean_stale_namespaces)
+        self.assertTrue(agent.namespaces_manager._clean_stale)
 
         pm = self.external_process.return_value
         pm.reset_mock()
 
-        agent._destroy_router_namespace = mock.MagicMock()
-        agent._destroy_snat_namespace = mock.MagicMock()
-        ns_list = agent._list_namespaces()
-        agent._cleanup_namespaces(ns_list, [r['id'] for r in router_list])
-
-        # Expect process manager to disable metadata proxy per qrouter ns
+        with agent.namespaces_manager as ns_manager:
+            for r in router_list:
+                ns_manager.keep_router(r['id'])
         qrouters = [n for n in stale_namespace_list
-                    if n.startswith(l3_agent.NS_PREFIX)]
+                    if n.startswith(namespaces.NS_PREFIX)]
+        self.assertEqual(mock_router_ns.call_count, len(qrouters))
+        self.assertEqual(mock_snat_ns.call_count,
+            len(stale_namespace_list) - len(qrouters))
 
-        self.assertEqual(agent._destroy_router_namespace.call_count,
-                         len(qrouters))
-        self.assertEqual(agent._destroy_snat_namespace.call_count,
-                         len(stale_namespace_list) - len(qrouters))
-        expected_args = [mock.call(ns) for ns in qrouters]
-        agent._destroy_router_namespace.assert_has_calls(expected_args,
-                                                         any_order=True)
-        self.assertFalse(agent._clean_stale_namespaces)
+        self.assertFalse(agent.namespaces_manager._clean_stale)
 
     def test_cleanup_namespace(self):
         self.conf.set_override('router_id', None)
-        stale_namespaces = [l3_agent.NS_PREFIX + 'foo',
-                            l3_agent.NS_PREFIX + 'bar',
-                            dvr.SNAT_NS_PREFIX + 'foo']
+        stale_namespaces = [namespaces.NS_PREFIX + 'foo',
+                            namespaces.NS_PREFIX + 'bar',
+                            dvr_snat_ns.SNAT_NS_PREFIX + 'foo']
         other_namespaces = ['unknown']
 
         self._cleanup_namespace_test(stale_namespaces,
@@ -1696,9 +1711,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_cleanup_namespace_with_registered_router_ids(self):
         self.conf.set_override('router_id', None)
-        stale_namespaces = [l3_agent.NS_PREFIX + 'cccc',
-                            l3_agent.NS_PREFIX + 'eeeee',
-                            dvr.SNAT_NS_PREFIX + 'fffff']
+        stale_namespaces = [namespaces.NS_PREFIX + 'cccc',
+                            namespaces.NS_PREFIX + 'eeeee',
+                            dvr_snat_ns.SNAT_NS_PREFIX + 'fffff']
         router_list = [{'id': 'foo', 'distributed': False},
                        {'id': 'aaaa', 'distributed': False}]
         other_namespaces = ['qdhcp-aabbcc', 'unknown']
@@ -1709,9 +1724,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_cleanup_namespace_with_conf_router_id(self):
         self.conf.set_override('router_id', 'bbbbb')
-        stale_namespaces = [l3_agent.NS_PREFIX + 'cccc',
-                            l3_agent.NS_PREFIX + 'eeeee',
-                            l3_agent.NS_PREFIX + self.conf.router_id]
+        stale_namespaces = [namespaces.NS_PREFIX + 'cccc',
+                            namespaces.NS_PREFIX + 'eeeee',
+                            namespaces.NS_PREFIX + self.conf.router_id]
         router_list = [{'id': 'foo', 'distributed': False},
                        {'id': 'aaaa', 'distributed': False}]
         other_namespaces = ['qdhcp-aabbcc', 'unknown']
@@ -1723,7 +1738,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_create_dvr_gateway(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data()
-        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
+        ri = dvr_router.DvrRouter(HOSTNAME,
+                                  router['id'],
+                                  router,
+                                  **self.ri_kwargs)
 
         port_id = _uuid()
         dvr_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
@@ -1865,10 +1883,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         mock.patch(ensure_dir).start()
         execute = mock.patch(utils_execute).start()
 
-        radvd = ra.DaemonMonitor(router['id'],
-                                 agent.get_ns_name(router['id']),
-                                 agent.process_monitor,
-                                 FakeDev)
+        radvd = ra.DaemonMonitor(
+            router['id'],
+            namespaces.RouterNamespace._get_ns_name(router['id']),
+            agent.process_monitor,
+            FakeDev)
         radvd.enable(router['_interfaces'])
 
         cmd = execute.call_args[0][0]

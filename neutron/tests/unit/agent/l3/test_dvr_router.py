@@ -35,8 +35,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
     def _create_router(self, router, **kwargs):
         agent_conf = mock.Mock()
+        self.router_id = _uuid()
         return dvr_router.DvrRouter(mock.sentinel.myhost,
-                                    mock.sentinel.router_id,
+                                    self.router_id,
                                     router,
                                     agent_conf,
                                     mock.sentinel.interface_driver,

@@ -17,6 +17,7 @@ import netaddr
 import weakref
 
 from neutron.agent.l3 import dvr_fip_ns
+from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as l3_constants
@@ -25,8 +26,9 @@ from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
-SNAT_INT_DEV_PREFIX = 'sg-'
-SNAT_NS_PREFIX = 'snat-'
+# TODO(Carl) Following constants retained to increase SNR during refactoring
+SNAT_INT_DEV_PREFIX = dvr_snat_ns.SNAT_INT_DEV_PREFIX
+SNAT_NS_PREFIX = dvr_snat_ns.SNAT_NS_PREFIX
 # xor-folding mask used for IPv6 rule index
 MASK_30 = 0x3fffffff
 
@@ -54,24 +56,10 @@ class AgentMixin(object):
 
         return fip_ns
 
-    def _destroy_snat_namespace(self, ns):
-        ns_ip = ip_lib.IPWrapper(namespace=ns)
-        # delete internal interfaces
-        for d in ns_ip.get_devices(exclude_loopback=True):
-            if d.name.startswith(SNAT_INT_DEV_PREFIX):
-                LOG.debug('Unplugging DVR device %s', d.name)
-                self.driver.unplug(d.name, namespace=ns,
-                                   prefix=SNAT_INT_DEV_PREFIX)
-
-        # TODO(mrsmith): delete ext-gw-port
-        LOG.debug('DVR: destroy snat ns: %s', ns)
-        if self.conf.router_delete_namespaces:
-            self._delete_namespace(ns_ip, ns)
-
     def _destroy_fip_namespace(self, ns):
         ex_net_id = ns[len(dvr_fip_ns.FIP_NS_PREFIX):]
         fip_ns = self.get_fip_ns(ex_net_id)
-        fip_ns.destroy()
+        fip_ns.delete()
 
     def _set_subnet_arp_info(self, ri, port):
         """Set ARP info retrieved from Plugin for existing ports."""
@@ -102,6 +90,7 @@ class AgentMixin(object):
         return (SNAT_INT_DEV_PREFIX +
                 port_id)[:self.driver.DEV_NAME_LEN]
 
+    # TODO(Carl) Remove this method when vpnaas no longer needs it.
     def get_snat_ns_name(self, router_id):
         return (SNAT_NS_PREFIX + router_id)
 
@@ -150,21 +139,20 @@ class AgentMixin(object):
     def _create_dvr_gateway(self, ri, ex_gw_port, gw_interface_name,
                             snat_ports):
         """Create SNAT namespace."""
-        snat_ns_name = self.get_snat_ns_name(ri.router['id'])
-        self._create_namespace(snat_ns_name)
+        snat_ns = ri.create_snat_namespace()
         # connect snat_ports to br_int from SNAT namespace
         for port in snat_ports:
             # create interface_name
             self._set_subnet_info(port)
             interface_name = self.get_snat_int_device_name(port['id'])
-            self._internal_network_added(snat_ns_name, port['network_id'],
+            self._internal_network_added(snat_ns.name, port['network_id'],
                                          port['id'], port['ip_cidr'],
                                          port['mac_address'], interface_name,
                                          SNAT_INT_DEV_PREFIX)
         self._external_gateway_added(ri, ex_gw_port, gw_interface_name,
-                                     snat_ns_name, preserve_ips=[])
+                                     snat_ns.name, preserve_ips=[])
         ri.snat_iptables_manager = iptables_manager.IptablesManager(
-            namespace=snat_ns_name,
+            namespace=snat_ns.name,
             use_ipv6=self.use_ipv6)
         # kicks the FW Agent to add rules for the snat namespace
         self.process_router_add(ri)

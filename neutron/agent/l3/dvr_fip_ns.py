@@ -16,10 +16,10 @@ import netaddr
 import os
 
 from neutron.agent.l3 import link_local_allocator as lla
+from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
-from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 FIP_NS_PREFIX = 'fip-'
 FIP_EXT_DEV_PREFIX = 'fg-'
 FIP_2_ROUTER_DEV_PREFIX = 'fpr-'
-ROUTER_2_FIP_DEV_PREFIX = 'rfp-'
+ROUTER_2_FIP_DEV_PREFIX = namespaces.ROUTER_2_FIP_DEV_PREFIX
 # Route Table index for FIPs
 FIP_RT_TBL = 16
 FIP_LL_SUBNET = '169.254.30.0/23'
@@ -36,8 +36,13 @@ FIP_PR_START = 32768
 FIP_PR_END = FIP_PR_START + 40000
 
 
-class FipNamespace(object):
+class FipNamespace(namespaces.Namespace):
+
     def __init__(self, ext_net_id, agent_conf, driver, use_ipv6):
+        name = FIP_NS_PREFIX + ext_net_id
+        super(FipNamespace, self).__init__(
+            name, agent_conf, driver, use_ipv6)
+
         self._ext_net_id = ext_net_id
         self.agent_conf = agent_conf
         self.driver = driver
@@ -128,12 +133,9 @@ class FipNamespace(object):
                                                     '-j CT --notrack')
         self._iptables_manager.apply()
 
-    def destroy(self):
+    def delete(self):
         self.destroyed = True
-        ns = self.get_name()
-        # TODO(carl) Reconcile this with mlavelle's namespace work
-        # TODO(carl) mlavelle's work has self.ip_wrapper
-        ip_wrapper = ip_lib.IPWrapper(namespace=ns)
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.name)
         for d in ip_wrapper.get_devices(exclude_loopback=True):
             if d.name.startswith(FIP_2_ROUTER_DEV_PREFIX):
                 # internal link between IRs and FIP NS
@@ -145,17 +147,13 @@ class FipNamespace(object):
                 ext_net_bridge = self.agent_conf.external_network_bridge
                 self.driver.unplug(d.name,
                                    bridge=ext_net_bridge,
-                                   namespace=ns,
+                                   namespace=self.name,
                                    prefix=FIP_EXT_DEV_PREFIX)
-        LOG.debug('DVR: destroy fip ns: %s', ns)
-        # TODO(mrsmith): add LOG warn if fip count != 0
-        if self.agent_conf.router_delete_namespaces:
-            try:
-                ip_wrapper.netns.delete(ns)
-            except RuntimeError:
-                LOG.exception(_LE('Failed trying to delete namespace: %s'), ns)
-
         self.agent_gateway_port = None
+
+        # TODO(mrsmith): add LOG warn if fip count != 0
+        LOG.debug('DVR: destroy fip ns: %s', self.name)
+        super(FipNamespace, self).delete()
 
     def create_gateway_port(self, agent_gateway_port):
         """Create Floating IP gateway port.

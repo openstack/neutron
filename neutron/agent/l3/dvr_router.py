@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron.agent.l3 import dvr_fip_ns
+from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
@@ -30,6 +31,7 @@ class DvrRouter(router.RouterInfo):
         # Linklocal subnet for router and floating IP namespace link
         self.rtr_fip_subnet = None
         self.dist_fip_count = None
+        self.snat_namespace = None
 
     def get_floating_ips(self):
         """Filter Floating IPs to be hosted on this agent."""
@@ -121,7 +123,7 @@ class DvrRouter(router.RouterInfo):
                 # destroying it.  The two could end up conflicting on
                 # creating/destroying interfaces and such.  I think I'd like a
                 # semaphore to sync creation/deletion of this namespace.
-                self.fip_ns.destroy()
+                self.fip_ns.delete()
                 self.fip_ns = None
 
     def add_floating_ip(self, fip, interface_name, device):
@@ -137,3 +139,21 @@ class DvrRouter(router.RouterInfo):
     def remove_floating_ip(self, device, ip_cidr):
         super(DvrRouter, self).remove_floating_ip(device, ip_cidr)
         self.floating_ip_removed_dist(ip_cidr)
+
+    def create_snat_namespace(self):
+        # TODO(mlavalle): in the near future, this method should contain the
+        # code in the L3 agent that creates a gateway for a dvr. The first step
+        # is to move the creation of the snat namespace here
+        self.snat_namespace = dvr_snat_ns.SnatNamespace(self.router['id'],
+                                                        self.agent_conf,
+                                                        self.driver,
+                                                        self.use_ipv6)
+        self.snat_namespace.create()
+        return self.snat_namespace
+
+    def delete_snat_namespace(self):
+        # TODO(mlavalle): in the near future, this method should contain the
+        # code in the L3 agent that removes an external gateway for a dvr. The
+        # first step is to move the deletion of the snat namespace here
+        self.snat_namespace.delete()
+        self.snat_namespace = None

@@ -28,9 +28,13 @@ class BasicRouterTestCaseFramework(base.BaseTestCase):
     def _create_router(self, router=None, **kwargs):
         if not router:
             router = mock.MagicMock()
-        return router_info.RouterInfo(mock.sentinel.router_id,
+        self.agent_conf = mock.Mock()
+        # NOTE The use_namespaces config will soon be deprecated
+        self.agent_conf.use_namespaces = True
+        self.router_id = _uuid()
+        return router_info.RouterInfo(self.router_id,
                                       router,
-                                      mock.sentinel.agent_conf,
+                                      self.agent_conf,
                                       mock.sentinel.interface_driver,
                                       **kwargs)
 
