@@ -273,7 +273,7 @@ class AristaL3Driver(object):
                     if self.mlag_configured and not mlag_peer_failed:
                         mlag_peer_failed = True
                     else:
-                        msg = (_('Failed to create router %s on EOS') %
+                        msg = (_LE('Failed to delete router %s from EOS') %
                                router_name)
                         LOG.exception(msg)
                         raise arista_exc.AristaServicePluginRpcError(msg=msg)
@@ -347,8 +347,8 @@ class AristaL3Driver(object):
                     if self.mlag_configured and not mlag_peer_failed:
                         mlag_peer_failed = True
                     else:
-                        msg = (_('Failed to add interface to router '
-                                 '%s on EOS') % router_name)
+                        msg = (_LE('Failed to remove interface from router '
+                               '%s on EOS') % router_name)
                         LOG.exception(msg)
                         raise arista_exc.AristaServicePluginRpcError(msg=msg)
 
