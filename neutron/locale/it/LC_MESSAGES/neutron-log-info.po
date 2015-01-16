@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-01-11 06:11+0000\n"
-"PO-Revision-Date: 2015-01-08 20:03+0000\n"
+"POT-Creation-Date: 2015-01-15 06:10+0000\n"
+"PO-Revision-Date: 2015-01-13 09:25+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
 "it/)\n"
@@ -77,37 +77,23 @@ msgstr "%(url)s restituito con HTTP %(status)d"
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s ha restituito un errore: %(exception)s"
 
-#: neutron/agent/dhcp_agent.py:109 neutron/agent/dhcp_agent.py:613
+#: neutron/agent/dhcp_agent.py:119 neutron/agent/dhcp_agent.py:623
 msgid "DHCP agent started"
 msgstr "Agent DHCP avviato"
 
-#: neutron/agent/dhcp_agent.py:161
+#: neutron/agent/dhcp_agent.py:171
 msgid "Synchronizing state"
 msgstr "Stato sincronizzazione"
 
-#: neutron/agent/dhcp_agent.py:182
+#: neutron/agent/dhcp_agent.py:192
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:610 neutron/agent/l3/agent.py:1310
+#: neutron/agent/dhcp_agent.py:620 neutron/agent/l3/agent.py:1248
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "agent_updated dal lato server %s!"
-
-#: neutron/agent/ovs_cleanup_util.py:74
-#, python-format
-msgid "Deleting port: %s"
-msgstr ""
-
-#: neutron/agent/ovs_cleanup_util.py:104
-#, python-format
-msgid "Cleaning bridge: %s"
-msgstr ""
-
-#: neutron/agent/ovs_cleanup_util.py:111
-msgid "OVS cleanup completed successfully"
-msgstr "Ripulitura di OVS completata correttamente"
 
 #: neutron/agent/securitygroups_rpc.py:80
 msgid "Disabled security-group extension."
@@ -156,7 +142,7 @@ msgstr "Aggiorna regole firewall"
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1212
+#: neutron/agent/l3/agent.py:1150
 msgid "L3 agent started"
 msgstr "Agent L3 avviato"
 
@@ -186,11 +172,11 @@ msgstr "Tentativo di rimuovere il filtro della porta che non è filtrata %r"
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
 msgstr ""
 
-#: neutron/api/extensions.py:403
+#: neutron/api/extensions.py:402
 msgid "Initializing extension manager."
 msgstr "Inizializzazione gestore estensioni."
 
-#: neutron/api/extensions.py:561
+#: neutron/api/extensions.py:559
 #, python-format
 msgid "Loaded extension: %s"
 msgstr "Estensione caricata: %s"
@@ -206,6 +192,20 @@ msgstr ""
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
 msgstr ""
+
+#: neutron/cmd/ovs_cleanup.py:74
+#, python-format
+msgid "Deleting port: %s"
+msgstr ""
+
+#: neutron/cmd/ovs_cleanup.py:104
+#, python-format
+msgid "Cleaning bridge: %s"
+msgstr ""
+
+#: neutron/cmd/ovs_cleanup.py:111
+msgid "OVS cleanup completed successfully"
+msgstr "Ripulitura di OVS completata correttamente"
 
 #: neutron/common/config.py:169
 msgid "Logging enabled!"
@@ -266,27 +266,32 @@ msgid ""
 "is disabled."
 msgstr ""
 
-#: neutron/db/l3_db.py:1075
+#: neutron/db/l3_db.py:1074
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "Ignora IP multipli sulla porta del router %s"
 
-#: neutron/db/l3_db.py:1081
+#: neutron/db/l3_db.py:1080
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "La porta %s viene ignorata in quanto non ha nessun IP configurato"
 
-#: neutron/db/l3_dvr_db.py:77
+#: neutron/db/l3_dvr_db.py:79
 #, python-format
 msgid "Centralizing distributed router %s is not supported"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:457
+#: neutron/db/l3_dvr_db.py:90
+#, python-format
+msgid "No Service associated, so safe to migrate: %s listed"
+msgstr ""
+
+#: neutron/db/l3_dvr_db.py:488
 #, python-format
 msgid "Agent Gateway port does not exist, so create one: %s"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:540
+#: neutron/db/l3_dvr_db.py:571
 #, python-format
 msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
@@ -627,7 +632,7 @@ msgstr "Rimozione porta %s"
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:983
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:376
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:827
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1396
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1391
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:255
 msgid "Agent out of sync with plugin!"
 msgstr "Agent non sincronizzato con il plugin!"
@@ -636,7 +641,7 @@ msgstr "Agent non sincronizzato con il plugin!"
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:264
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1024
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1579
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1574
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:351
 msgid "Agent initialized successfully, now running... "
 msgstr "Agent inizializzato correttamente, ora in esecuzione... "
@@ -1140,11 +1145,11 @@ msgstr ""
 msgid "Loading OFC driver: %s"
 msgstr "Caricamento driver OFC: %s"
 
-#: neutron/plugins/nuage/syncmanager.py:46
+#: neutron/plugins/nuage/syncmanager.py:48
 msgid "Starting the sync between Neutron and VSD"
 msgstr ""
 
-#: neutron/plugins/nuage/syncmanager.py:59
+#: neutron/plugins/nuage/syncmanager.py:61
 msgid "Sync between Neutron and VSD completed successfully"
 msgstr ""
 
@@ -1198,7 +1203,7 @@ msgid "Configuration for device %s completed."
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:832
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1424
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1419
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "Il tunnel agent non è sincronizzato con il plugin!"
 
