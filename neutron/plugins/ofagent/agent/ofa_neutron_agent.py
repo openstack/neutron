@@ -123,11 +123,6 @@ class Bridge(flows.OFAgentIntegrationBridge, ovs_lib.OVSBridge):
         self.get_datapath(retry_max)
 
 
-class OFAPluginApi(agent_rpc.PluginApi,
-                   sg_rpc.SecurityGroupServerRpcApiMixin):
-    pass
-
-
 class OFASecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
     def __init__(self, context, plugin_rpc, root_helper):
         self.context = context
@@ -259,7 +254,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         # Security group agent support
         self.sg_agent = OFASecurityGroupAgent(self.context,
-                                              self.plugin_rpc,
+                                              self.sg_plugin_rpc,
                                               self.root_helper)
         # Initialize iteration counter
         self.iter_num = 0
@@ -287,7 +282,8 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         mac = self.int_br.get_local_port_mac()
         self.agent_id = '%s%s' % ('ovs', (mac.replace(":", "")))
         self.topic = topics.AGENT
-        self.plugin_rpc = OFAPluginApi(topics.PLUGIN)
+        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
 
         # RPC network init
