@@ -14,6 +14,7 @@
 
 import eventlet
 import mock
+import netaddr
 import testtools
 
 from neutron.common import constants
@@ -559,3 +560,60 @@ class TestDvrServices(base.BaseTestCase):
 
     def test_is_dvr_serviced_with_vm_port(self):
         self._test_is_dvr_serviced('compute:', True)
+
+
+class TestIpToCidr(base.BaseTestCase):
+    def test_ip_to_cidr_ipv4_default(self):
+        self.assertEqual('15.1.2.3/32', utils.ip_to_cidr('15.1.2.3'))
+
+    def test_ip_to_cidr_ipv4_prefix(self):
+        self.assertEqual('15.1.2.3/24', utils.ip_to_cidr('15.1.2.3', 24))
+
+    def test_ip_to_cidr_ipv4_netaddr(self):
+        ip_address = netaddr.IPAddress('15.1.2.3')
+        self.assertEqual('15.1.2.3/32', utils.ip_to_cidr(ip_address))
+
+    def test_ip_to_cidr_ipv4_bad_prefix(self):
+        self.assertRaises(netaddr.core.AddrFormatError,
+                          utils.ip_to_cidr, '15.1.2.3', 33)
+
+    def test_ip_to_cidr_ipv6_default(self):
+        self.assertEqual('::1/128', utils.ip_to_cidr('::1'))
+
+    def test_ip_to_cidr_ipv6_prefix(self):
+        self.assertEqual('::1/64', utils.ip_to_cidr('::1', 64))
+
+    def test_ip_to_cidr_ipv6_bad_prefix(self):
+        self.assertRaises(netaddr.core.AddrFormatError,
+                          utils.ip_to_cidr, '2000::1', 129)
+
+
+class TestCidrIsHost(base.BaseTestCase):
+    def test_is_cidr_host_ipv4(self):
+        self.assertTrue(utils.is_cidr_host('15.1.2.3/32'))
+
+    def test_is_cidr_host_ipv4_not_cidr(self):
+        self.assertRaises(ValueError,
+                          utils.is_cidr_host,
+                          '15.1.2.3')
+
+    def test_is_cidr_host_ipv6(self):
+        self.assertTrue(utils.is_cidr_host('2000::1/128'))
+
+    def test_is_cidr_host_ipv6_netaddr(self):
+        net = netaddr.IPNetwork("2000::1")
+        self.assertTrue(utils.is_cidr_host(net))
+
+    def test_is_cidr_host_ipv6_32(self):
+        self.assertFalse(utils.is_cidr_host('2000::1/32'))
+
+    def test_is_cidr_host_ipv6_not_cidr(self):
+        self.assertRaises(ValueError,
+                          utils.is_cidr_host,
+                          '2000::1')
+
+    def test_is_cidr_host_ipv6_not_cidr_netaddr(self):
+        ip_address = netaddr.IPAddress("2000::3")
+        self.assertRaises(ValueError,
+                          utils.is_cidr_host,
+                          ip_address)

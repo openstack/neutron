@@ -24,7 +24,6 @@ import webob.dec
 import webob.exc
 
 from neutron.agent.common import config as agent_config
-from neutron.agent.l3 import agent as l3_agent
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
@@ -32,6 +31,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.metadata import agent as metadata_agent
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
+from neutron.common import utils as common_utils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.services import advanced_service as adv_svc
@@ -150,9 +150,8 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         internal_device_name = self.agent.get_internal_device_name(
             internal_port['id'])
         internal_device_cidr = internal_port['ip_cidr']
-        floating_ip_cidr = (
-            self.agent.get_floating_ips(router)[0]
-            ['floating_ip_address'] + l3_agent.FLOATING_IP_CIDR_SUFFIX)
+        floating_ip_cidr = common_utils.ip_to_cidr(
+            self.agent.get_floating_ips(router)[0]['floating_ip_address'])
         default_gateway_ip = external_port['subnet'].get('gateway_ip')
 
         return """vrrp_sync_group VG_1 {
