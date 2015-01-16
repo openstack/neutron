@@ -25,7 +25,6 @@ import webob.exc
 from neutron.agent.common import config
 from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
-from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as const
@@ -1604,14 +1603,9 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.assertFalse(self.agent.prepare_devices_filter.called)
 
 
-class FakeSGRpcApi(agent_rpc.PluginApi,
-                   sg_rpc.SecurityGroupServerRpcApiMixin):
-    pass
-
-
 class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
     def test_security_group_rules_for_devices(self):
-        rpcapi = FakeSGRpcApi('fake_topic')
+        rpcapi = sg_rpc.SecurityGroupServerRpcApi('fake_topic')
 
         with contextlib.nested(
             mock.patch.object(rpcapi.client, 'call'),
