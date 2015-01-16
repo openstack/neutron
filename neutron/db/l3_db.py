@@ -743,7 +743,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         else:
             ips = [ip['ip_address'] for ip in internal_port['fixed_ips']]
             if not ips:
-                msg = (_('Cannot add floating IP to port %s that has'
+                msg = (_('Cannot add floating IP to port %s that has '
                          'no fixed IP addresses') % internal_port['id'])
                 raise n_exc.BadRequest(resource='floatingip', msg=msg)
             if len(ips) > 1:
