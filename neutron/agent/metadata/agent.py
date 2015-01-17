@@ -18,8 +18,6 @@ import os
 import socket
 
 import eventlet
-eventlet.monkey_patch()
-
 import httplib2
 from neutronclient.v2_0 import client
 from oslo.config import cfg
