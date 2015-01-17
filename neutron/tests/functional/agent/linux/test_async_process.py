@@ -13,7 +13,6 @@
 #    under the License.
 
 import eventlet
-import fixtures
 
 from six import moves
 
@@ -26,8 +25,7 @@ class TestAsyncProcess(base.BaseTestCase):
 
     def setUp(self):
         super(TestAsyncProcess, self).setUp()
-        self.test_file_path = self.useFixture(
-            fixtures.TempDir()).join("test_async_process.tmp")
+        self.test_file_path = self.get_temp_file_path('test_async_process.tmp')
         self.data = [str(x) for x in moves.xrange(4)]
         with file(self.test_file_path, 'w') as f:
             f.writelines('%s\n' % item for item in self.data)

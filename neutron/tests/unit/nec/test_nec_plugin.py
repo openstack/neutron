@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
-import fixtures
 import mock
 import webob.exc
 
@@ -49,7 +46,7 @@ class NecPluginV2TestCaseBase(object):
     _nec_ini = NEC_PLUGIN_INI
 
     def _set_nec_ini(self):
-        self.nec_ini_file = self.useFixture(fixtures.TempDir()).join("nec.ini")
+        self.nec_ini_file = self.get_temp_file_path('nec.ini')
         with open(self.nec_ini_file, 'w') as f:
             f.write(self._nec_ini)
         if 'config_files' in test_lib.test_config.keys():
@@ -59,10 +56,10 @@ class NecPluginV2TestCaseBase(object):
             test_lib.test_config['config_files'].append(self.nec_ini_file)
         else:
             test_lib.test_config['config_files'] = [self.nec_ini_file]
+        self.addCleanup(self._clean_nec_ini)
 
     def _clean_nec_ini(self):
         test_lib.test_config['config_files'].remove(self.nec_ini_file)
-        os.remove(self.nec_ini_file)
         self.nec_ini_file = None
 
     def patch_remote_calls(self):
@@ -73,7 +70,6 @@ class NecPluginV2TestCaseBase(object):
 
     def setup_nec_plugin_base(self):
         self._set_nec_ini()
-        self.addCleanup(self._clean_nec_ini)
         self.patch_remote_calls()
 
 
@@ -93,7 +89,6 @@ class NecPluginV2TestCase(NecPluginV2TestCaseBase,
     def setUp(self, plugin=None, ext_mgr=None):
 
         self._set_nec_ini()
-        self.addCleanup(self._clean_nec_ini)
         plugin = plugin or self._plugin_name
         super(NecPluginV2TestCase, self).setUp(plugin, ext_mgr=ext_mgr)
 
