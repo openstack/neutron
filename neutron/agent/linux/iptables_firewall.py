@@ -366,15 +366,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                             ipv6_iptables_rules)
         self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
 
-    def _get_cur_sg_member_ips(self, sg_id, ethertype):
+    def _get_current_sg_member_ips(self, sg_id, ethertype):
         return self.sg_members.get(sg_id, {}).get(ethertype, [])
 
     def _update_ipset_members(self, security_group_ids):
         for ethertype, sg_ids in security_group_ids.items():
             for sg_id in sg_ids:
-                cur_member_ips = self._get_cur_sg_member_ips(sg_id, ethertype)
-                if cur_member_ips:
-                    self.ipset.set_members(sg_id, ethertype, cur_member_ips)
+                current_ips = self._get_current_sg_member_ips(sg_id, ethertype)
+                if current_ips:
+                    self.ipset.set_members(sg_id, ethertype, current_ips)
 
     def _generate_ipset_chain(self, sg_rule, remote_gid):
         iptables_rules = []
@@ -502,21 +502,21 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         need_removed_security_groups = set()
         remote_group_ids = {constants.IPv4: set(),
                             constants.IPv6: set()}
-        cur_group_ids = set()
+        current_group_ids = set()
         for port in self.filtered_ports.values():
             for direction in INGRESS_DIRECTION, EGRESS_DIRECTION:
                 for ethertype, sg_ids in self._get_remote_sg_ids(
                         port, direction).items():
                     remote_group_ids[ethertype].update(sg_ids)
             groups = port.get('security_groups', [])
-            cur_group_ids.update(groups)
+            current_group_ids.update(groups)
 
         for ethertype in [constants.IPv4, constants.IPv6]:
             need_removed_ipsets[ethertype].update(
                 [x for x in self.pre_sg_members if x not in remote_group_ids[
                     ethertype]])
             need_removed_security_groups.update(
-                [x for x in self.pre_sg_rules if x not in cur_group_ids])
+                [x for x in self.pre_sg_rules if x not in current_group_ids])
 
         # Remove unused ip sets (sg_members and kernel ipset if we
         # are using ipset)
