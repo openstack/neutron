@@ -137,7 +137,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _setup_chain(self, port, DIRECTION):
         self._add_chain(port, DIRECTION)
-        self._add_rule_by_security_group(port, DIRECTION)
+        self._add_rules_by_security_group(port, DIRECTION)
 
     def _remove_chain(self, port, DIRECTION):
         chain_name = self._port_chain_name(port, DIRECTION)
@@ -327,14 +327,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                         remote_sg_ids[ether_type].append(remote_sg_id)
         return remote_sg_ids
 
-    def _add_rule_by_security_group(self, port, direction):
-        chain_name = self._port_chain_name(port, direction)
-        # select rules for current direction
+    def _add_rules_by_security_group(self, port, direction):
+        # select rules for current port and direction
         security_group_rules = self._select_sgr_by_direction(port, direction)
         security_group_rules += self._select_sg_rules_for_port(port, direction)
+        # make sure ipset members are updated for remote security groups
         if self.enable_ipset:
             remote_sg_ids = self._get_remote_sg_ids(port, direction)
-            # update the corresponding ipset members
             self._update_ipset_members(remote_sg_ids)
         # split groups by ip version
         # for ipv4, iptables command is used
@@ -343,20 +342,29 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             security_group_rules)
         ipv4_iptables_rules = []
         ipv6_iptables_rules = []
+        # include fixed egress/ingress rules
         if direction == EGRESS_DIRECTION:
-            self._spoofing_rule(port,
-                                ipv4_iptables_rules,
-                                ipv6_iptables_rules)
-            self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
-        if direction == INGRESS_DIRECTION:
+            self._add_fixed_egress_rules(port,
+                                         ipv4_iptables_rules,
+                                         ipv6_iptables_rules)
+        elif direction == INGRESS_DIRECTION:
             ipv6_iptables_rules += self._accept_inbound_icmpv6()
+        # include IPv4 and IPv6 iptable rules from security group
         ipv4_iptables_rules += self._convert_sgr_to_iptables_rules(
             ipv4_sg_rules)
         ipv6_iptables_rules += self._convert_sgr_to_iptables_rules(
             ipv6_sg_rules)
-        self._add_rules_to_chain_v4v6(chain_name,
+        # finally add the rules to the port chain for a given direction
+        self._add_rules_to_chain_v4v6(self._port_chain_name(port, direction),
                                       ipv4_iptables_rules,
                                       ipv6_iptables_rules)
+
+    def _add_fixed_egress_rules(self, port, ipv4_iptables_rules,
+                                ipv6_iptables_rules):
+        self._spoofing_rule(port,
+                            ipv4_iptables_rules,
+                            ipv6_iptables_rules)
+        self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
 
     def _get_cur_sg_member_ips(self, sg_id, ethertype):
         return self.sg_members.get(sg_id, {}).get(ethertype, [])
