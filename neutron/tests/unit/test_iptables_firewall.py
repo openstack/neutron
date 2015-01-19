@@ -1417,12 +1417,13 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
                 'security_groups': ['fake_sgid'],
                 'security_group_source_groups': ['fake_sgid']}
 
+    def _fake_sg_rule_for_ethertype(self, ethertype):
+        return {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
+                'ethertype': ethertype}
+
     def _fake_sg_rule(self):
-        return {'fake_sgid': [
-            {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
-             'ethertype': 'IPv4'},
-            {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
-             'ethertype': 'IPv6'}]}
+        return {'fake_sgid': [self._fake_sg_rule_for_ethertype('IPv4'),
+                              self._fake_sg_rule_for_ethertype('IPv6')]}
 
     def test_prepare_port_filter_with_new_members(self):
         self.firewall.sg_rules = self._fake_sg_rule()
@@ -1530,3 +1531,18 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         calls = [mock.call.destroy('fake_sgid', 'IPv4')]
 
         self.firewall.ipset.assert_has_calls(calls, True)
+
+    def test_sg_rule_expansion_with_remote_ips(self):
+        other_ips = ['10.0.0.2', '10.0.0.3', '10.0.0.4']
+        self.firewall.sg_members = {'fake_sgid': {
+            'IPv4': [FAKE_IP['IPv4']] + other_ips,
+            'IPv6': [FAKE_IP['IPv6']]}}
+
+        port = self._fake_port()
+        rule = self._fake_sg_rule_for_ethertype('IPv4')
+        rules = self.firewall._expand_sg_rule_with_remote_ips(
+            rule, port, 'ingress')
+        self.assertEqual(list(rules),
+                         [dict(rule.items() +
+                               [('source_ip_prefix', '%s/32' % ip)])
+                          for ip in other_ips])

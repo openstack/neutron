@@ -291,29 +291,37 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return icmpv6_rules
 
     def _select_sg_rules_for_port(self, port, direction):
-        sg_ids = port.get('security_groups', [])
+        """Select rules from the security groups the port is member of."""
+        port_sg_ids = port.get('security_groups', [])
         port_rules = []
-        fixed_ips = port.get('fixed_ips', [])
-        for sg_id in sg_ids:
+
+        for sg_id in port_sg_ids:
             for rule in self.sg_rules.get(sg_id, []):
                 if rule['direction'] == direction:
                     if self.enable_ipset:
                         port_rules.append(rule)
-                        continue
-                    remote_group_id = rule.get('remote_group_id')
-                    if not remote_group_id:
-                        port_rules.append(rule)
-                        continue
-                    ethertype = rule['ethertype']
-                    for ip in self.sg_members[remote_group_id][ethertype]:
-                        if ip in fixed_ips:
-                            continue
-                        ip_rule = rule.copy()
-                        direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
-                        ip_rule[direction_ip_prefix] = str(
-                            netaddr.IPNetwork(ip).cidr)
-                        port_rules.append(ip_rule)
+                    else:
+                        port_rules.extend(
+                            self._expand_sg_rule_with_remote_ips(
+                                rule, port, direction))
         return port_rules
+
+    def _expand_sg_rule_with_remote_ips(self, rule, port, direction):
+        """Expand a remote group rule to rule per remote group IP."""
+        remote_group_id = rule.get('remote_group_id')
+        if remote_group_id:
+            ethertype = rule['ethertype']
+            port_ips = port.get('fixed_ips', [])
+
+            for ip in self.sg_members[remote_group_id][ethertype]:
+                if ip not in port_ips:
+                    ip_rule = rule.copy()
+                    direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
+                    ip_prefix = str(netaddr.IPNetwork(ip).cidr)
+                    ip_rule[direction_ip_prefix] = ip_prefix
+                    yield ip_rule
+        else:
+            yield rule
 
     def _get_remote_sg_ids(self, port, direction):
         sg_ids = port.get('security_groups', [])
