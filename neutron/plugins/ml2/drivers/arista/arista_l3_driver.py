@@ -21,7 +21,7 @@ from oslo.config import cfg
 
 from neutron import context as nctx
 from neutron.db import db_base_plugin_v2
-from neutron.i18n import _LI
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 
@@ -133,11 +133,6 @@ class AristaL3Driver(object):
             LOG.error(msg)
             raise arista_exc.AristaSevicePluginConfigError(msg=msg)
         if cfg.CONF.l3_arista.get('mlag_config'):
-            if cfg.CONF.l3_arista.get('use_vrf'):
-                #This is invalid/unsupported configuration
-                msg = _('VRFs are not supported MLAG config mode')
-                LOG.error(msg)
-                raise arista_exc.AristaSevicePluginConfigError(msg=msg)
             if cfg.CONF.l3_arista.get('secondary_l3_host') == '':
                 msg = _('Required option secondary_l3_host is not set')
                 LOG.error(msg)
@@ -379,8 +374,8 @@ class AristaL3Driver(object):
             LOG.info(_LI('Results of execution on Arista EOS: %s'), ret)
 
         except Exception:
-            msg = (_('Error occured while trying to execute '
-                     'commands %(cmd)s on EOS %(host)s') %
+            msg = (_LE("Error occured while trying to execute "
+                     "commands %(cmd)s on EOS %(host)s"),
                    {'cmd': full_command, 'host': server})
             LOG.exception(msg)
             raise arista_exc.AristaServicePluginRpcError(msg=msg)
