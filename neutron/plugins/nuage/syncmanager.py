@@ -15,6 +15,7 @@
 
 from oslo.config import cfg
 from oslo.utils import importutils
+from oslo_concurrency import lockutils
 import sqlalchemy.orm.exc as db_exc
 
 from neutron import context as ncontext
@@ -22,7 +23,6 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
 from neutron.db import securitygroups_db
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.plugins.nuage.common import config
 from neutron.plugins.nuage import nuagedb

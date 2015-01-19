@@ -22,6 +22,7 @@ eventlet.monkey_patch()
 
 from oslo.config import cfg
 from oslo import messaging
+from oslo_concurrency import lockutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
@@ -32,7 +33,6 @@ from neutron.common import utils as neutron_utils
 from neutron.db import agents_db
 from neutron.i18n import _LE, _LI
 from neutron import manager
-from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import periodic_task
 from neutron.openstack.common import service as svc

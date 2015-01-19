@@ -22,6 +22,7 @@ from oslo.config import cfg
 from oslo import messaging
 from oslo.utils import importutils
 from oslo.utils import timeutils
+from oslo_concurrency import lockutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import external_process
@@ -33,7 +34,6 @@ from neutron.common import topics
 from neutron import context as n_context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task

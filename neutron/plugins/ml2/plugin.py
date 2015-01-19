@@ -21,6 +21,7 @@ from oslo.db import exception as os_db_exception
 from oslo.serialization import jsonutils
 from oslo.utils import excutils
 from oslo.utils import importutils
+from oslo_concurrency import lockutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 
@@ -55,7 +56,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
