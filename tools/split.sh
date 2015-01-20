@@ -97,6 +97,6 @@ port=29418
 project=stackforge/${project_name}.git
 EOF
 
-git add . && git commit -m "Generated new .gitreview file for ${project_name}."
+git add . && git commit -m "Generated new .gitreview file for ${project_name}"
 
 echo "Done."
