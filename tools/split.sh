@@ -21,7 +21,14 @@
 #
 # find $path -type f  # path is the base dir you want to list files for
 
-set -ex
+set -e
+
+if [ $# -lt 2 ]; then
+  echo "Usage $0 <path to file containing list of files to export> <project name>"
+  exit 1
+fi
+
+set -x
 
 file_list_path="$1"
 project_name="$2"

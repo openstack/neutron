@@ -36,6 +36,7 @@ Below, the following strategies will be documented:
 * Design and Development;
 * Testing and Continuous Integration;
 * Defect Management;
+* Backport Management for plugin specific code;
 * Documentation;
 
 This document will then provide a working example on how to contribute
@@ -159,6 +160,42 @@ precisely:
   code in the tree. However, the maintainer has flexibility to choose who
   can approve/merge changes in this repo.
 
+Backport Management Strategies
+------------------------------
+
+As outlined in the `Spec proposal http://specs.openstack.org/openstack/neutron-specs/specs/kilo/core-vendor-decomposition.html`
+all new plugins and drivers will have to follow the contribution model
+described here. As for existing plugins and drivers, no in-tree features can
+be merged until some progress has been done to make the solution adhere to
+this model. That said, there is the question of critical fixes and/or backports
+to `stable branches https://wiki.openstack.org/wiki/StableBranch`. The possible
+scenarios are:
+
+* The decomposition just completed, we are in the cycle (X) where the decomposition
+  initiated: in this case, the Neutron master branch no longer have the vendor
+  library code, but the stable branch still does. Backports via straight
+  cherry-picks may not be possible, or as easy, therefore a custom backport to
+  stable could be deemed acceptable to Neutron's stable branches (e.g. stable/X-1
+  and/or stable/X-2), as required.
+* The decomposition is complete, we are in the next cycle where the
+  decomposition work completed (X+1): backports will be done to the stable branch
+  available of the vendor library (stable/X), and Neutron's stable branch
+  (stable/X-1), as outlined in the previous step.
+* The decomposition is complete, we are in two or more cycles after the
+  decomposition work completed (X+2, or later). Backports will be done to the
+  stable branch(s) available of the vendor library (stable/X, stable/X+1).
+* The decomposition is in progress: as long as the vendor code is still in
+  master, patches will need to go to master before a backport to stable.
+  Acceptance will be determined on the scope of changes (based on both the
+  amount of work and severity of the issue). In this case, the plugin or
+  driver maintainer will need to ensure that the fix gets applied to the
+  external repo, if necessary (to avoid missing it during the migration process).
+* The decomposition has not started: in this case, depending on the issue,
+  review attention from core members is best effort, and although there is no
+  explicit rule to prevent them from merging to master, it is in the best interest
+  of the maintainer to avoid introducing or modifying existing code that will
+  ultimately be deprecated.
+
 Documentation Strategies
 ------------------------
 
@@ -205,12 +242,19 @@ be the bare minimum you have to complete in order to get you off the ground.
     At this point you will have the project pruned of everything else but
     the files you want to export, with their history. The next steps are:
 
+  * Check out stable branches for the project: even though stable branches
+    are not strictly necessary during the creation of the StackForge repository
+    (as outlined in the next step below), they do not hurt, and it is
+    recommended to keep them during the import process.
   * Add a remote that points to the repository created before.
   * (Optional) If the repository has already being initialized with
     cookiecutter, you need to pull first; if not, you can either push
     the existing commits/tags or apply and commit further changes to fix
     up the structure of repo the way you see fit.
-  * Finally, push commits and tags to the public repository.
+  * Finally, push commits and tags to the public repository. If you followed
+    theses instructions step-by-step, you will have a source repository
+    that contains both a master and stable branches, as well as tags. Some
+    of these steps are outlined below:
 
     ::
 
