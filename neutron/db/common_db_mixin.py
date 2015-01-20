@@ -52,13 +52,13 @@ class CommonDbMixin(object):
         Filter hooks take as input the filter expression being built and return
         a transformed filter expression
         """
-        model_hooks = cls._model_query_hooks.get(model)
-        if not model_hooks:
-            # add key to dict
-            model_hooks = {}
-            cls._model_query_hooks[model] = model_hooks
-        model_hooks[name] = {'query': query_hook, 'filter': filter_hook,
-                             'result_filters': result_filters}
+        cls._model_query_hooks.setdefault(model, {})[name] = {
+            'query': query_hook, 'filter': filter_hook,
+            'result_filters': result_filters}
+
+    @classmethod
+    def register_dict_extend_funcs(cls, resource, funcs):
+        cls._dict_extend_functions.setdefault(resource, []).extend(funcs)
 
     @property
     def safe_reference(self):
