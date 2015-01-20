@@ -47,6 +47,9 @@ Examples of use include:
 Reference: https://pypi.python.org/pypi/testscenarios/
 """
 
+import abc
+
+import six
 import testtools
 
 from neutron.tests import sub_base
@@ -65,6 +68,7 @@ class AttributeDict(dict):
         raise AttributeError(_("Unknown attribute '%s'.") % name)
 
 
+@six.add_metaclass(abc.ABCMeta)
 class BaseNeutronClient(object):
     """
     Base class for a client that can interact the neutron api in some
@@ -80,30 +84,34 @@ class BaseNeutronClient(object):
         """
         self.test_case = test_case
 
-    @property
+    @abc.abstractproperty
     def NotFound(self):
         """The exception that indicates a resource could not be found.
 
         Tests can use this property to assert for a missing resource
         in a client-agnostic way.
         """
-        raise NotImplementedError()
 
+    @abc.abstractmethod
     def create_network(self, **kwargs):
-        raise NotImplementedError()
+        pass
 
+    @abc.abstractmethod
     def update_network(self, id_, **kwargs):
-        raise NotImplementedError()
+        pass
 
+    @abc.abstractmethod
     def get_network(self, id_, fields=None):
-        raise NotImplementedError()
+        pass
 
+    @abc.abstractmethod
     def get_networks(self, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
-        raise NotImplementedError()
+        pass
 
+    @abc.abstractmethod
     def delete_network(self, id_):
-        raise NotImplementedError()
+        pass
 
 
 class BaseTestApi(sub_base.SubBaseTestCase):
