@@ -645,10 +645,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     @lockutils.synchronized('vmware', 'neutron-')
     def _nsx_delete_ext_gw_port(self, context, port_data):
-        lr_port = self._find_router_gw_port(context, port_data)
         # TODO(salvatore-orlando): Handle NSX resource
         # rollback when something goes not quite as expected
         try:
+            lr_port = self._find_router_gw_port(context, port_data)
             # Delete is actually never a real delete, otherwise the NSX
             # logical router will stop working
             router_id = port_data['device_id']
@@ -668,19 +668,19 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 lr_port['uuid'],
                 "L3GatewayAttachment",
                 self.cluster.default_l3_gw_service_uuid)
-
-        except api_exc.ResourceNotFound:
-            raise nsx_exc.NsxPluginException(
-                err_msg=_("Logical router resource %s not found "
-                          "on NSX platform") % router_id)
+            LOG.debug("_nsx_delete_ext_gw_port completed on external network "
+                      "%(ext_net_id)s, attached to NSX router:%(router_id)s",
+                      {'ext_net_id': port_data['network_id'],
+                       'router_id': nsx_router_id})
+        except n_exc.NotFound:
+            LOG.debug("Logical router resource %s not found "
+                      "on NSX platform : the router may have "
+                      "already been deleted",
+                      port_data['device_id'])
         except api_exc.NsxApiException:
             raise nsx_exc.NsxPluginException(
                 err_msg=_("Unable to update logical router"
                           "on NSX Platform"))
-        LOG.debug("_nsx_delete_ext_gw_port completed on external network "
-                  "%(ext_net_id)s, attached to NSX router:%(router_id)s",
-                  {'ext_net_id': port_data['network_id'],
-                   'router_id': nsx_router_id})
 
     def _nsx_create_l2_gw_port(self, context, port_data):
         """Create a switch port, and attach it to a L2 gateway attachment."""
