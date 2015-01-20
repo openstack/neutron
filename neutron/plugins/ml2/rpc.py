@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo import messaging
+from sqlalchemy.orm import exc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dvr_rpc
@@ -135,9 +136,13 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             return {'device': device,
                     'exists': port_exists}
 
-        port_exists = bool(plugin.update_port_status(rpc_context, port_id,
-                                                     q_const.PORT_STATUS_DOWN,
-                                                     host))
+        try:
+            port_exists = bool(plugin.update_port_status(
+                rpc_context, port_id, q_const.PORT_STATUS_DOWN, host))
+        except exc.StaleDataError:
+            port_exists = False
+            LOG.debug("delete_port and update_device_down are being executed "
+                      "concurrently. Ignoring StaleDataError.")
 
         return {'device': device,
                 'exists': port_exists}
