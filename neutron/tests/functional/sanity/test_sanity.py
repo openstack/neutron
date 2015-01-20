@@ -32,6 +32,9 @@ class SanityTestCase(base.BaseTestCase):
     def test_nova_notify_runs(self):
         checks.nova_notify_supported()
 
+    def test_dnsmasq_version(self):
+        checks.dnsmasq_version_supported()
+
 
 class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
     """Sanity checks that require root access.

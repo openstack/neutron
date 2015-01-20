@@ -539,10 +539,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.mock_init_p = mock.patch('neutron.agent.dhcp.agent.'
                                       'DhcpAgent._populate_networks_cache')
         self.mock_init = self.mock_init_p.start()
-        with mock.patch.object(dhcp.Dnsmasq,
-                               'check_version') as check_v:
-            check_v.return_value = dhcp.Dnsmasq.MINIMUM_VERSION
-            self.dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        self.dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         self.call_driver_p = mock.patch.object(self.dhcp, 'call_driver')
         self.call_driver = self.call_driver_p.start()
         self.schedule_resync_p = mock.patch.object(self.dhcp,

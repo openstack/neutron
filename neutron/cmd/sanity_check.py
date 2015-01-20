@@ -15,6 +15,7 @@
 
 import sys
 
+from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
 from neutron.i18n import _LE, _LW
@@ -29,6 +30,7 @@ cfg.CONF.import_group('VXLAN', 'neutron.plugins.linuxbridge.common.config')
 cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
 cfg.CONF.import_group('ml2_sriov',
                       'neutron.plugins.ml2.drivers.mech_sriov.mech_driver')
+dhcp_agent.register_options()
 
 
 class BoolOptCallback(cfg.BoolOpt):
@@ -88,6 +90,19 @@ def check_read_netns():
     return result
 
 
+# NOTE(ihrachyshka): since the minimal version is currently capped due to
+# missing hwaddr matching in dnsmasq < 2.67, a better version of the check
+# would actually start dnsmasq server and issue a DHCP request using a IPv6
+# DHCP client.
+def check_dnsmasq_version():
+    result = checks.dnsmasq_version_supported()
+    if not result:
+        LOG.error(_LE('The installed version of dnsmasq is too old. '
+                      'Please update to at least version %s.'),
+                  checks.get_minimal_dnsmasq_version_supported())
+    return result
+
+
 def check_nova_notify():
     result = checks.nova_notify_supported()
     if not result:
@@ -133,6 +148,8 @@ OPTS = [
                     help=_('Check for VF management support')),
     BoolOptCallback('read_netns', check_read_netns,
                     help=_('Check netns permission settings')),
+    BoolOptCallback('dnsmasq_version', check_dnsmasq_version,
+                    help=_('Check minimal dnsmasq version')),
 ]
 
 
@@ -160,6 +177,8 @@ def enable_tests_from_config():
         cfg.CONF.set_override('vf_management', True)
     if not cfg.CONF.AGENT.use_helper_for_ns_read:
         cfg.CONF.set_override('read_netns', True)
+    if cfg.CONF.dhcp_driver == 'neutron.agent.linux.dhcp.Dnsmasq':
+        cfg.CONF.set_override('dnsmasq_version', True)
 
 
 def all_tests_passed():
