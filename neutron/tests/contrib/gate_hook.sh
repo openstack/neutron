@@ -4,6 +4,8 @@ set -ex
 
 venv=${1:-"dsvm-functional"}
 
+CONTRIB_DIR="$BASE/new/neutron/neutron/tests/contrib"
+
 if [ "$venv" == "dsvm-functional" ]
 then
     $BASE/new/devstack-gate/devstack-vm-gate.sh
@@ -11,7 +13,7 @@ then
     # Add a rootwrap filter to support test-only
     # configuration (e.g. a KillFilter for processes that
     # use the python installed in a tox env).
-    FUNC_FILTER=$BASE/new/neutron/neutron/tests/contrib/filters.template
+    FUNC_FILTER=$CONTRIB_DIR/filters.template
     sed -e "s+\$BASE_PATH+$BASE/new/neutron/.tox/dsvm-functional+" \
         $FUNC_FILTER | sudo tee /etc/neutron/rootwrap.d/functional.filters > /dev/null
 
@@ -53,4 +55,11 @@ EOF
     # User/group postgres needs to be given access to tmp_dir
     setfacl -m g:postgres:rwx $tmp_dir
     sudo -u postgres /usr/bin/psql --file=$tmp_dir/postgresql.sql
+elif [ "$venv" == "api" ]
+then
+    # TODO(armax): call devstack-vm-gate and set variables the proper way
+    export DEVSTACK_GATE_TEMPEST="1"
+    export DEVSTACK_GATE_TEMPEST_INSTALL_ONLY="1"
+
+    $CONTRIB_DIR/devstack-vm-gate.sh
 fi
