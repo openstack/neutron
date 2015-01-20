@@ -61,6 +61,10 @@ class VlanAllocation(model_base.BASEV2):
     """
 
     __tablename__ = 'ml2_vlan_allocations'
+    __table_args__ = (
+        sa.Index('ix_ml2_vlan_allocations_physical_network_allocated',
+                 'physical_network', 'allocated'),
+        model_base.BASEV2.__table_args__,)
 
     physical_network = sa.Column(sa.String(64), nullable=False,
                                  primary_key=True)
