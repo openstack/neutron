@@ -14,8 +14,6 @@
 #
 
 import eventlet
-eventlet.monkey_patch()
-
 import netaddr
 from oslo.config import cfg
 from oslo import messaging
