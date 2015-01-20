@@ -150,7 +150,7 @@ class KeepalivedInstance(object):
         self.track_interfaces = []
         self.vips = []
         self.virtual_routes = []
-        self.authentication = tuple()
+        self.authentication = None
         metadata_cidr = '169.254.169.254/32'
         self.primary_vip_range = get_free_range(
             parent_range='169.254.0.0/16',
