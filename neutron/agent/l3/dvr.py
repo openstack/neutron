@@ -168,67 +168,12 @@ class AgentMixin(object):
         # kicks the FW Agent to add rules for the snat namespace
         self.process_router_add(ri)
 
-    def floating_ip_added_dist(self, ri, fip, fip_cidr):
-        """Add floating IP to FIP namespace."""
-        floating_ip = fip['floating_ip_address']
-        fixed_ip = fip['fixed_ip_address']
-        rule_pr = ri.fip_ns.allocate_rule_priority()
-        ri.floating_ips_dict[floating_ip] = rule_pr
-        fip_2_rtr_name = ri.fip_ns.get_int_device_name(ri.router_id)
-        ip_rule = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
-        ip_rule.add(fixed_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
-        #Add routing rule in fip namespace
-        fip_ns_name = ri.fip_ns.get_name()
-        rtr_2_fip, _ = ri.rtr_fip_subnet.get_pair()
-        device = ip_lib.IPDevice(fip_2_rtr_name, self.root_helper,
-                                 namespace=fip_ns_name)
-        device.route.add_route(fip_cidr, str(rtr_2_fip.ip))
-        interface_name = (
-            ri.fip_ns.get_ext_device_name(ri.fip_ns.agent_gateway_port['id']))
-        ip_lib.send_garp_for_proxyarp(fip_ns_name,
-                                      interface_name,
-                                      floating_ip,
-                                      self.conf.send_arp_for_ha,
-                                      self.root_helper)
-        # update internal structures
-        ri.dist_fip_count = ri.dist_fip_count + 1
-
     def floating_ip_removed_dist(self, ri, fip_cidr):
         """Remove floating IP from FIP namespace."""
-        floating_ip = fip_cidr.split('/')[0]
-        rtr_2_fip_name = ri.fip_ns.get_rtr_ext_device_name(ri.router_id)
-        fip_2_rtr_name = ri.fip_ns.get_int_device_name(ri.router_id)
-        if ri.rtr_fip_subnet is None:
-            ri.rtr_fip_subnet = self.local_subnets.allocate(ri.router_id)
-        rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
-        fip_ns_name = ri.fip_ns.get_name()
-        if floating_ip in ri.floating_ips_dict:
-            rule_pr = ri.floating_ips_dict[floating_ip]
-            ip_rule = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
-            ip_rule.delete(floating_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
-            ri.fip_ns.deallocate_rule_priority(rule_pr)
-            #TODO(rajeev): Handle else case - exception/log?
-
-        device = ip_lib.IPDevice(fip_2_rtr_name, self.root_helper,
-                                 namespace=fip_ns_name)
-
-        device.route.delete_route(fip_cidr, str(rtr_2_fip.ip))
-        # check if this is the last FIP for this router
-        ri.dist_fip_count = ri.dist_fip_count - 1
-        if ri.dist_fip_count == 0:
-            #remove default route entry
-            device = ip_lib.IPDevice(rtr_2_fip_name, self.root_helper,
-                                     namespace=ri.ns_name)
-            ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=fip_ns_name)
-            device.route.delete_gateway(str(fip_2_rtr.ip),
-                                        table=dvr_fip_ns.FIP_RT_TBL)
-            ri.fip_ns.local_subnets.release(ri.router_id)
-            ri.rtr_fip_subnet = None
-            ns_ip.del_veth(fip_2_rtr_name)
-            is_last = ri.fip_ns.unsubscribe(ri.router_id)
-            # clean up fip-namespace if this is the last FIP
-            if is_last:
-                self._destroy_fip_namespace(fip_ns_name)
+        is_last = ri.floating_ip_removed_dist(fip_cidr)
+        # clean up fip-namespace if this is the last FIP
+        if is_last:
+            self._destroy_fip_namespace(ri.fip_ns.get_name())
 
     def _snat_redirect_add(self, ri, gateway, sn_port, sn_int):
         """Adds rules and routes for SNAT redirection."""

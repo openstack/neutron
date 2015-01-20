@@ -714,7 +714,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             if ri.router['distributed']:
                 # Special Handling for DVR - update FIP namespace
                 # and ri.namespace to handle DVR based FIP
-                self.floating_ip_added_dist(ri, fip, ip_cidr)
+                ri.floating_ip_added_dist(fip, ip_cidr)
             else:
                 # As GARP is processed in a distinct thread the call below
                 # won't raise an exception to be handled.
@@ -735,6 +735,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                                namespace=ri.ns_name,
                                                ip=ip_cidr)
             if ri.router['distributed']:
+                #TODO(Carl) Call this method on ri.  Needs namespace work.
                 self.floating_ip_removed_dist(ri, ip_cidr)
 
     def _get_router_cidrs(self, ri, device):
