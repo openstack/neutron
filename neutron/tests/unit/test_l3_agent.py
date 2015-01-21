@@ -37,6 +37,7 @@ from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.common import utils as common_utils
 from neutron.i18n import _LE
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
@@ -1923,8 +1924,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                'port_id': _uuid()}
         agent.agent_gateway_port = agent_gw_port
         ri.rtr_fip_subnet = lla.LinkLocalAddressPair('169.254.30.42/31')
-        ip_cidr = str(fip['floating_ip_address']) + (
-            l3_agent.FLOATING_IP_CIDR_SUFFIX)
+        ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
         agent.floating_ip_added_dist(ri, fip, ip_cidr)
         self.mock_rule.add_rule_from.assert_called_with('192.168.0.1',
                                                         16, FIP_PRI)

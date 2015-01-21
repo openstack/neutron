@@ -58,7 +58,6 @@ NS_PREFIX = 'qrouter-'
 INTERNAL_DEV_PREFIX = 'qr-'
 EXTERNAL_DEV_PREFIX = 'qg-'
 RPC_LOOP_INTERVAL = 1
-FLOATING_IP_CIDR_SUFFIX = '/32'
 
 
 class L3PluginApi(object):
@@ -672,7 +671,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _add_floating_ip(self, ri, fip, interface_name, device):
         fip_ip = fip['floating_ip_address']
-        ip_cidr = str(fip_ip) + FLOATING_IP_CIDR_SUFFIX
+        ip_cidr = common_utils.ip_to_cidr(fip_ip)
 
         if ri.is_ha:
             self._add_vip(ri, ip_cidr, interface_name)
@@ -734,7 +733,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # Loop once to ensure that floating ips are configured.
         for fip in floating_ips:
             fip_ip = fip['floating_ip_address']
-            ip_cidr = str(fip_ip) + FLOATING_IP_CIDR_SUFFIX
+            ip_cidr = common_utils.ip_to_cidr(fip_ip)
             new_cidrs.add(ip_cidr)
             fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ACTIVE
             if ip_cidr not in existing_cidrs:
@@ -742,8 +741,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     ri, fip, interface_name, device)
 
         fips_to_remove = (
-            ip_cidr for ip_cidr in existing_cidrs - new_cidrs if
-            ip_cidr.endswith(FLOATING_IP_CIDR_SUFFIX))
+            ip_cidr for ip_cidr in existing_cidrs - new_cidrs
+            if common_utils.is_cidr_host(ip_cidr))
         for ip_cidr in fips_to_remove:
             self._remove_floating_ip(ri, device, ip_cidr)
 
@@ -799,7 +798,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # This avoids unnecessarily removing those addresses and
         # causing a momentarily network outage.
         floating_ips = self.get_floating_ips(ri)
-        preserve_ips = [ip['floating_ip_address'] + FLOATING_IP_CIDR_SUFFIX
+        preserve_ips = [common_utils.ip_to_cidr(ip['floating_ip_address'])
                         for ip in floating_ips]
 
         self._external_gateway_added(ri, ex_gw_port, interface_name,
@@ -821,7 +820,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         else:
             ns_name = ri.ns_name
             floating_ips = self.get_floating_ips(ri)
-            preserve_ips = [ip['floating_ip_address'] + FLOATING_IP_CIDR_SUFFIX
+            preserve_ips = [common_utils.ip_to_cidr(ip['floating_ip_address'])
                             for ip in floating_ips]
 
         self._external_gateway_added(ri, ex_gw_port, interface_name,
