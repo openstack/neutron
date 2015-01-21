@@ -640,11 +640,11 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     #   1.1 Support Security Group RPC
     target = messaging.Target(version='1.1')
 
-    def __init__(self, context, agent):
+    def __init__(self, context, agent, sg_agent):
         super(LinuxBridgeRpcCallbacks, self).__init__()
         self.context = context
         self.agent = agent
-        self.sg_agent = agent
+        self.sg_agent = sg_agent
 
     def network_delete(self, context, **kwargs):
         LOG.debug("network_delete received")
@@ -747,7 +747,15 @@ class LinuxBridgePluginApi(agent_rpc.PluginApi,
     pass
 
 
-class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
+class LinuxBridgeSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
+    def __init__(self, context, plugin_rpc, root_helper):
+        self.context = context
+        self.plugin_rpc = plugin_rpc
+        self.root_helper = root_helper
+        self.init_firewall()
+
+
+class LinuxBridgeNeutronAgentRPC(object):
 
     def __init__(self, interface_mappings, polling_interval,
                  root_helper):
@@ -769,8 +777,11 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 
         # stores received port_updates for processing by the main loop
         self.updated_devices = set()
+        self.context = context.get_admin_context_without_session()
+        self.plugin_rpc = LinuxBridgePluginApi(topics.PLUGIN)
+        self.sg_agent = LinuxBridgeSecurityGroupAgent(self.context,
+                self.plugin_rpc, self.root_helper)
         self.setup_rpc(interface_mappings.values())
-        self.init_firewall()
 
     def _report_state(self):
         try:
@@ -797,12 +808,11 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
-        self.plugin_rpc = LinuxBridgePluginApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         # RPC network init
-        self.context = context.get_admin_context_without_session()
         # Handle updates from service
-        self.endpoints = [LinuxBridgeRpcCallbacks(self.context, self)]
+        self.endpoints = [LinuxBridgeRpcCallbacks(self.context, self,
+                                                  self.sg_agent)]
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
@@ -831,10 +841,10 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         resync_a = False
         resync_b = False
 
-        self.prepare_devices_filter(device_info.get('added'))
+        self.sg_agent.prepare_devices_filter(device_info.get('added'))
 
         if device_info.get('updated'):
-            self.refresh_firewall()
+            self.sg_agent.refresh_firewall()
 
         # Updated devices are processed the same as new ones, as their
         # admin_state_up may have changed. The set union prevents duplicating
@@ -903,7 +913,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 
     def treat_devices_removed(self, devices):
         resync = False
-        self.remove_devices_filter(devices)
+        self.sg_agent.remove_devices_filter(devices)
         for device in devices:
             LOG.info(_LI("Attachment %s removed"), device)
             details = None
