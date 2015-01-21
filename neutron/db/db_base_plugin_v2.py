@@ -546,32 +546,30 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             subnets = self.get_subnets(context, filters=filter)
             # Split into v4 and v6 subnets
             v4 = []
-            v6 = []
+            v6_stateful = []
+            v6_stateless = []
             for subnet in subnets:
                 if subnet['ip_version'] == 4:
                     v4.append(subnet)
                 else:
-                    v6.append(subnet)
-            for subnet in v6:
-                if ipv6_utils.is_auto_address_subnet(subnet):
-                    #(dzyu) If true, calculate an IPv6 address
-                    # by mac address and prefix, then remove this
-                    # subnet from the array of subnets that will be passed
-                    # to the _generate_ip() function call, since we just
-                    # generated an IP.
-                    prefix = subnet['cidr']
-                    ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
-                        prefix, p['mac_address'])
-                    if not self._check_unique_ip(
-                        context, p['network_id'],
-                        subnet['id'], ip_address.format()):
-                        raise n_exc.IpAddressInUse(
-                            net_id=p['network_id'],
-                            ip_address=ip_address.format())
-                    ips.append({'ip_address': ip_address.format(),
-                                'subnet_id': subnet['id']})
-                    v6.remove(subnet)
-            version_subnets = [v4, v6]
+                    if ipv6_utils.is_auto_address_subnet(subnet):
+                        v6_stateless.append(subnet)
+                    else:
+                        v6_stateful.append(subnet)
+
+            for subnet in v6_stateless:
+                prefix = subnet['cidr']
+                ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
+                    prefix, p['mac_address'])
+                if not self._check_unique_ip(
+                    context, p['network_id'],
+                    subnet['id'], ip_address.format()):
+                    raise n_exc.IpAddressInUse(
+                        net_id=p['network_id'],
+                        ip_address=ip_address.format())
+                ips.append({'ip_address': ip_address.format(),
+                            'subnet_id': subnet['id']})
+            version_subnets = [v4, v6_stateful]
             for subnets in version_subnets:
                 if subnets:
                     result = NeutronDbPluginV2._generate_ip(context, subnets)
