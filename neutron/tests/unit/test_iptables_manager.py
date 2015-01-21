@@ -18,10 +18,12 @@ import sys
 
 import mock
 from oslo_config import cfg
+import testtools
 
 from neutron.agent.common import config as a_cfg
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
+from neutron.common import exceptions as n_exc
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -246,6 +248,12 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         # if binary_name is prepended.
         self.assertEqual(iptables_manager.get_chain_name(name, wrap=True),
                          name[:11])
+
+    def test_defer_apply_with_exception(self):
+        self.iptables._apply = mock.Mock(side_effect=Exception)
+        with testtools.ExpectedException(n_exc.IpTablesApplyException):
+            with self.iptables.defer_apply():
+                pass
 
     def _extend_with_ip6tables_filter(self, expected_calls, filter_dump):
         expected_calls.insert(2, (
