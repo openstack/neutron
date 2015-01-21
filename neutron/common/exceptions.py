@@ -240,10 +240,6 @@ class PreexistingDeviceFailure(NeutronException):
     message = _("Creation failed. %(dev_name)s already exists.")
 
 
-class SudoRequired(NeutronException):
-    message = _("Sudo privilege is required to run this command.")
-
-
 class QuotaResourceUnknown(NotFound):
     message = _("Unknown quota resources %(unknown)s.")
 
