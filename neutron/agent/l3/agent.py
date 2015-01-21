@@ -161,7 +161,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.context = n_context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, host)
         self.fullsync = True
-        self.sync_progress = False
 
         # Get the list of service plugins from Neutron Server
         # This is the first place where we contact neutron-server on startup
