@@ -38,18 +38,6 @@ FIP_PR_END = FIP_PR_START + 40000
 FIP_RT_TBL = 16
 
 
-class RouterMixin(object):
-    def __init__(self):
-        self.snat_ports = []
-        self.floating_ips_dict = {}
-
-        self.snat_iptables_manager = None
-        # DVR Data
-        # Linklocal subnet for router and floating IP namespace link
-        self.rtr_fip_subnet = None
-        self.dist_fip_count = 0
-
-
 class AgentMixin(object):
     def __init__(self, host):
         # dvr data

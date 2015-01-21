@@ -341,6 +341,10 @@ class RouterNotCompatibleWithAgent(NeutronException):
     message = _("Router '%(router_id)s' is not compatible with this agent")
 
 
+class DvrHaRouterNotSupported(NeutronException):
+    message = _("Router '%(router_id)s' cannot be both DVR and HA")
+
+
 class FailToDropPrivilegesExit(SystemExit):
     """Exit exception raised when a drop privileges action fails."""
     code = 99

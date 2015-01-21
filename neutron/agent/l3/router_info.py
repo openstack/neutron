@@ -12,12 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.l3 import dvr
-from neutron.agent.l3 import ha
 from neutron.agent.linux import iptables_manager
 
 
-class RouterInfo(dvr.RouterMixin, ha.RouterMixin):
+class RouterInfo(object):
 
     def __init__(self, router_id, root_helper, router,
                  use_ipv6=False, ns_name=None):
@@ -37,8 +35,6 @@ class RouterInfo(dvr.RouterMixin, ha.RouterMixin):
             namespace=self.ns_name)
         self.routes = []
 
-        super(RouterInfo, self).__init__()
-
     @property
     def router(self):
         return self._router
@@ -57,6 +53,11 @@ class RouterInfo(dvr.RouterMixin, ha.RouterMixin):
         elif self.ex_gw_port:
             # Gateway port was removed, remove rules
             self._snat_action = 'remove_rules'
+
+    @property
+    def is_ha(self):
+        # TODO(Carl) Refactoring should render this obsolete.  Remove it.
+        return False
 
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets

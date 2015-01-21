@@ -23,9 +23,11 @@ from oslo.utils import timeutils
 
 from neutron.agent.common import config
 from neutron.agent.l3 import dvr
+from neutron.agent.l3 import dvr_router
 from neutron.agent.l3 import event_observers
 from neutron.agent.l3 import ha
-from neutron.agent.l3 import router_info
+from neutron.agent.l3 import ha_router
+from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import router_processing_queue as queue
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ra
@@ -338,14 +340,33 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                         "one external network.")
                     raise Exception(msg)
 
-    def _router_added(self, router_id, router):
+    def _create_router(self, router_id, router):
+        # TODO(Carl) We need to support a router that is both HA and DVR.  The
+        # patch that enables it will replace these lines.  See bug #1365473.
+        if router.get('distributed') and router.get('ha'):
+            raise n_exc.DvrHaRouterNotSupported(router_id=router_id)
+
         ns_name = (self.get_ns_name(router_id)
                    if self.conf.use_namespaces else None)
-        ri = router_info.RouterInfo(router_id=router_id,
-                                    root_helper=self.root_helper,
-                                    router=router,
-                                    use_ipv6=self.use_ipv6,
-                                    ns_name=ns_name)
+        args = []
+        kwargs = {
+            'router_id': router_id,
+            'root_helper': self.root_helper,
+            'router': router,
+            'use_ipv6': self.use_ipv6,
+            'ns_name': ns_name,
+        }
+
+        if router.get('distributed'):
+            return dvr_router.DvrRouter(*args, **kwargs)
+
+        if router.get('ha'):
+            return ha_router.HaRouter(*args, **kwargs)
+
+        return legacy_router.LegacyRouter(*args, **kwargs)
+
+    def _router_added(self, router_id, router):
+        ri = self._create_router(router_id, router)
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_added, ri)
 
