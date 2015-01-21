@@ -225,13 +225,7 @@ class Service(service.Service):
 
         endpoints = [self.manager]
 
-        # Share this same connection for these Consumers
-        self.conn.create_consumer(self.topic, endpoints, fanout=False)
-
-        node_topic = '%s.%s' % (self.topic, self.host)
-        self.conn.create_consumer(node_topic, endpoints, fanout=False)
-
-        self.conn.create_consumer(self.topic, endpoints, fanout=True)
+        self.conn.create_consumer(self.topic, endpoints)
 
         # Hook to allow the manager to do other initializations after
         # the rpc connection is created.
