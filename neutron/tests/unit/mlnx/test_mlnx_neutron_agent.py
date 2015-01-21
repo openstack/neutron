@@ -52,6 +52,7 @@ class TestMlnxEswitchRpcCallbacks(base.BaseTestCase):
         agent = mock.Mock()
         self.rpc_callbacks = eswitch_neutron_agent.MlnxEswitchRpcCallbacks(
             'context',
+            agent,
             agent
         )
 
@@ -82,7 +83,7 @@ class TestEswitchAgent(base.BaseTestCase):
                    new=MockFixedIntervalLoopingCall)
 
         with mock.patch.object(utils, 'zmq'):
-            self.agent = eswitch_neutron_agent.MlnxEswitchNeutronAgent({})
+            self.agent = eswitch_neutron_agent.MlnxEswitchNeutronAgent({}, {})
         self.agent.plugin_rpc = mock.Mock()
         self.agent.context = mock.Mock()
         self.agent.agent_id = mock.Mock()
