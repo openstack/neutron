@@ -154,15 +154,16 @@ class TestSriovAgent(base.BaseTestCase):
                        'added': set(['mac3', 'mac4']),
                        'updated': set(['mac2', 'mac3']),
                        'removed': set(['mac1'])}
-        agent.prepare_devices_filter = mock.Mock()
-        agent.refresh_firewall = mock.Mock()
+        agent.sg_agent.prepare_devices_filter = mock.Mock()
+        agent.sg_agent.refresh_firewall = mock.Mock()
         agent.treat_devices_added_updated = mock.Mock(return_value=False)
         agent.treat_devices_removed = mock.Mock(return_value=False)
 
         agent.process_network_devices(device_info)
 
-        agent.prepare_devices_filter.assert_called_with(set(['mac3', 'mac4']))
-        self.assertTrue(agent.refresh_firewall.called)
+        agent.sg_agent.prepare_devices_filter.assert_called_with(
+                set(['mac3', 'mac4']))
+        self.assertTrue(agent.sg_agent.refresh_firewall.called)
         agent.treat_devices_added_updated.assert_called_with(set(['mac2',
                                                                   'mac3',
                                                                   'mac4']))

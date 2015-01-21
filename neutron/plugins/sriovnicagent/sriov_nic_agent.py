@@ -49,11 +49,11 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     #   1.1 Support Security Group RPC
     target = messaging.Target(version='1.1')
 
-    def __init__(self, context, agent):
+    def __init__(self, context, agent, sg_agent):
         super(SriovNicSwitchRpcCallbacks, self).__init__()
         self.context = context
         self.agent = agent
-        self.sg_agent = agent
+        self.sg_agent = sg_agent
 
     def port_update(self, context, **kwargs):
         LOG.debug("port_update received")
@@ -71,7 +71,15 @@ class SriovNicSwitchPluginApi(agent_rpc.PluginApi,
     pass
 
 
-class SriovNicSwitchAgent(sg_rpc.SecurityGroupAgentRpcMixin):
+class SriovNicSwitchSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
+    def __init__(self, context, plugin_rpc, root_helper):
+        self.context = context
+        self.plugin_rpc = plugin_rpc
+        self.root_helper = root_helper
+        self.init_firewall()
+
+
+class SriovNicSwitchAgent(object):
     def __init__(self, physical_devices_mappings, exclude_devices,
                  polling_interval, root_helper):
 
@@ -90,8 +98,12 @@ class SriovNicSwitchAgent(sg_rpc.SecurityGroupAgentRpcMixin):
 
         # Stores port update notifications for processing in the main loop
         self.updated_devices = set()
+
+        self.context = context.get_admin_context_without_session()
+        self.plugin_rpc = SriovNicSwitchPluginApi(topics.PLUGIN)
+        self.sg_agent = SriovNicSwitchSecurityGroupAgent(self.context,
+                self.plugin_rpc, self.root_helper)
         self._setup_rpc()
-        self.init_firewall()
         # Initialize iteration counter
         self.iter_num = 0
 
@@ -100,12 +112,11 @@ class SriovNicSwitchAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
-        self.plugin_rpc = SriovNicSwitchPluginApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         # RPC network init
-        self.context = context.get_admin_context_without_session()
         # Handle updates from service
-        self.endpoints = [SriovNicSwitchRpcCallbacks(self.context, self)]
+        self.endpoints = [SriovNicSwitchRpcCallbacks(self.context, self,
+                                                     self.sg_agent)]
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
@@ -155,10 +166,10 @@ class SriovNicSwitchAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         resync_a = False
         resync_b = False
 
-        self.prepare_devices_filter(device_info.get('added'))
+        self.sg_agent.prepare_devices_filter(device_info.get('added'))
 
         if device_info.get('updated'):
-            self.refresh_firewall()
+            self.sg_agent.refresh_firewall()
         # Updated devices are processed the same as new ones, as their
         # admin_state_up may have changed. The set union prevents duplicating
         # work when a device is new and updated in the same polling iteration.
