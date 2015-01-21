@@ -72,11 +72,9 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         LOG.info(_LI("Tenant network_types: %s"), self.tenant_network_types)
 
     def _process_provider_segment(self, segment):
-        network_type = self._get_attribute(segment, provider.NETWORK_TYPE)
-        physical_network = self._get_attribute(segment,
-                                               provider.PHYSICAL_NETWORK)
-        segmentation_id = self._get_attribute(segment,
-                                              provider.SEGMENTATION_ID)
+        (network_type, physical_network,
+         segmentation_id) = (self._get_attribute(segment, attr)
+                             for attr in provider.ATTRIBUTES)
 
         if attributes.is_attr_set(network_type):
             segment = {api.NETWORK_TYPE: network_type,
@@ -88,23 +86,19 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         msg = _("network_type required")
         raise exc.InvalidInput(error_message=msg)
 
+    def _get_segment_attributes(self, network):
+        return {attr: self._get_attribute(network, attr)
+                for attr in provider.ATTRIBUTES}
+
     def _process_provider_create(self, network):
-        if any(attributes.is_attr_set(network.get(f))
-               for f in (provider.NETWORK_TYPE, provider.PHYSICAL_NETWORK,
-                         provider.SEGMENTATION_ID)):
+        if any(attributes.is_attr_set(network.get(attr))
+               for attr in provider.ATTRIBUTES):
             # Verify that multiprovider and provider attributes are not set
             # at the same time.
             if attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
                 raise mpnet.SegmentsSetInConjunctionWithProviders()
 
-            network_type = self._get_attribute(network, provider.NETWORK_TYPE)
-            physical_network = self._get_attribute(network,
-                                                   provider.PHYSICAL_NETWORK)
-            segmentation_id = self._get_attribute(network,
-                                                  provider.SEGMENTATION_ID)
-            segments = [{provider.NETWORK_TYPE: network_type,
-                         provider.PHYSICAL_NETWORK: physical_network,
-                         provider.SEGMENTATION_ID: segmentation_id}]
+            segments = [self._get_segment_attributes(network)]
             return [self._process_provider_segment(s) for s in segments]
         elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
             segments = [self._process_provider_segment(s)
@@ -125,9 +119,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         segments = db.get_network_segments(context.session, id)
         if not segments:
             LOG.error(_LE("Network %s has no segments"), id)
-            network[provider.NETWORK_TYPE] = None
-            network[provider.PHYSICAL_NETWORK] = None
-            network[provider.SEGMENTATION_ID] = None
+            for attr in provider.ATTRIBUTES:
+                network[attr] = None
         elif len(segments) > 1:
             network[mpnet.SEGMENTS] = [
                 {provider.NETWORK_TYPE: segment[api.NETWORK_TYPE],
