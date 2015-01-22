@@ -965,7 +965,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.routes_updated(ri)
         # Process SNAT rules for external gateway
         if (not ri.router['distributed'] or
-            ex_gw_port and ri.router['gw_port_host'] == self.host):
+            ex_gw_port and self.get_gw_port_host(ri.router) == self.host):
             # Get IPv4 only internal CIDRs
             internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports
                               if netaddr.IPNetwork(p['ip_cidr']).version == 4]
@@ -1253,6 +1253,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def get_snat_interfaces(self, ri):
         return ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
 
+    def get_gw_port_host(self, router):
+        host = router.get('gw_port_host')
+        if not host:
+            LOG.debug("gw_port_host missing from router: %s",
+                      router['id'])
+        return host
+
     def get_floating_ips(self, ri):
         """Filter Floating IPs to be hosted on this agent."""
         floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
@@ -1308,7 +1315,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                             ['ip_address'], p, id_name)
 
             if (self.conf.agent_mode == 'dvr_snat' and
-                ri.router['gw_port_host'] == self.host):
+                self.get_gw_port_host(ri.router) == self.host):
                 self._create_dvr_gateway(ri, ex_gw_port, interface_name,
                                          snat_ports)
             for port in snat_ports:
@@ -1335,7 +1342,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         preserve_ips = []
         if ri.router['distributed']:
             if (self.conf.agent_mode == 'dvr_snat' and
-                ri.router['gw_port_host'] == self.host):
+                self.get_gw_port_host(ri.router) == self.host):
                 ns_name = self.get_snat_ns_name(ri.router['id'])
             else:
                 # no centralized SNAT gateway for this node/agent
@@ -1418,7 +1425,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._snat_redirect_remove(ri, p, internal_interface)
 
             if self.conf.agent_mode == 'dvr_snat' and (
-                ri.router['gw_port_host'] == self.host):
+                self.get_gw_port_host(ri.router) == self.host):
                 ns_name = self.get_snat_ns_name(ri.router['id'])
             else:
                 # not hosting agent - no work to do
@@ -1530,7 +1537,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._snat_redirect_add(ri, sn_port['fixed_ips'][0]
                                         ['ip_address'], port, interface_name)
                 if (self.conf.agent_mode == 'dvr_snat' and
-                    ri.router['gw_port_host'] == self.host):
+                    self.get_gw_port_host(ri.router) == self.host):
                     ns_name = self.get_snat_ns_name(ri.router['id'])
                     self._set_subnet_info(sn_port)
                     interface_name = (
