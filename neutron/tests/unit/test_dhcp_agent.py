@@ -25,7 +25,9 @@ from oslo import messaging
 import testtools
 
 from neutron.agent.common import config
-from neutron.agent import dhcp_agent
+from neutron.agent.dhcp import agent as dhcp_agent
+from neutron.agent.dhcp import config as dhcp_config
+from neutron.agent import dhcp_agent as entry
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import config as common_config
@@ -183,14 +185,14 @@ fake_down_network = dhcp.NetModel(
 class TestDhcpAgent(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgent, self).setUp()
-        dhcp_agent.register_options()
+        entry.register_options()
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
         # disable setting up periodic state reporting
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
 
         self.driver_cls_p = mock.patch(
-            'neutron.agent.dhcp_agent.importutils.import_class')
+            'neutron.agent.dhcp.agent.importutils.import_class')
         self.driver = mock.Mock(name='driver')
         self.driver.existing_dhcp_networks.return_value = []
         self.driver_cls = self.driver_cls_p.start()
@@ -213,11 +215,10 @@ class TestDhcpAgent(base.BaseTestCase):
                         sys_argv.return_value = [
                             'dhcp', '--config-file',
                             base.etcdir('neutron.conf.test')]
-                        cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
+                        cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
                         config.register_interface_driver_opts_helper(cfg.CONF)
                         config.register_agent_state_opts_helper(cfg.CONF)
                         config.register_root_helper(cfg.CONF)
-                        cfg.CONF.register_opts(dhcp.OPTS)
                         cfg.CONF.register_opts(interface.OPTS)
                         common_config.init(sys.argv[1:])
                         agent_mgr = dhcp_agent.DhcpAgentWithStateReport(
@@ -239,7 +240,7 @@ class TestDhcpAgent(base.BaseTestCase):
                 with mock.patch(launcher_str) as launcher:
                     sys_argv.return_value = ['dhcp', '--config-file',
                                              base.etcdir('neutron.conf.test')]
-                    dhcp_agent.main()
+                    entry.main()
                     launcher.assert_has_calls(
                         [mock.call(), mock.call().launch_service(mock.ANY),
                          mock.call().wait()])
@@ -514,24 +515,23 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgentEventHandler, self).setUp()
         config.register_interface_driver_opts_helper(cfg.CONF)
-        cfg.CONF.register_opts(dhcp.OPTS)
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
         config.register_root_helper(cfg.CONF)
-        cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
+        cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
 
         self.plugin_p = mock.patch(DHCP_PLUGIN)
         plugin_cls = self.plugin_p.start()
         self.plugin = mock.Mock()
         plugin_cls.return_value = self.plugin
 
-        self.cache_p = mock.patch('neutron.agent.dhcp_agent.NetworkCache')
+        self.cache_p = mock.patch('neutron.agent.dhcp.agent.NetworkCache')
         cache_cls = self.cache_p.start()
         self.cache = mock.Mock()
         cache_cls.return_value = self.cache
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
-        self.mock_init_p = mock.patch('neutron.agent.dhcp_agent.'
+        self.mock_init_p = mock.patch('neutron.agent.dhcp.agent.'
                                       'DhcpAgent._populate_networks_cache')
         self.mock_init = self.mock_init_p.start()
         with mock.patch.object(dhcp.Dnsmasq,
@@ -1161,8 +1161,7 @@ class TestDeviceManager(base.BaseTestCase):
         super(TestDeviceManager, self).setUp()
         config.register_interface_driver_opts_helper(cfg.CONF)
         config.register_use_namespaces_opts_helper(cfg.CONF)
-        cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
-        cfg.CONF.register_opts(dhcp.OPTS)
+        cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
         config.register_root_helper(cfg.CONF)

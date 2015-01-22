@@ -39,7 +39,7 @@ class DhcpRpcCallback(object):
 
     This class implements the server side of an rpc interface.  The client
     side of this interface can be found in
-    neutron.agent.dhcp_agent.DhcpPluginApi.  For more information about
+    neutron.agent.dhcp.agent.DhcpPluginApi.  For more information about
     changing rpc interfaces, see doc/source/devref/rpc_api.rst.
     """
 

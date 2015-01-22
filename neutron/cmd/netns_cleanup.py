@@ -22,7 +22,7 @@ from oslo.config import cfg
 from oslo.utils import importutils
 
 from neutron.agent.common import config as agent_config
-from neutron.agent import dhcp_agent
+from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
@@ -65,8 +65,9 @@ def setup_conf():
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_use_namespaces_opts_helper(conf)
     agent_config.register_root_helper(conf)
-    conf.register_opts(dhcp.OPTS)
-    conf.register_opts(dhcp_agent.DhcpAgent.OPTS)
+    conf.register_opts(dhcp_config.DHCP_AGENT_OPTS)
+    conf.register_opts(dhcp_config.DHCP_OPTS)
+    conf.register_opts(dhcp_config.DNSMASQ_OPTS)
     conf.register_opts(interface.OPTS)
     return conf
 

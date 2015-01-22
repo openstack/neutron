@@ -16,7 +16,6 @@
 import mock
 
 from neutron.agent.common import config
-from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
@@ -418,7 +417,6 @@ class TestMetaInterfaceDriver(TestBase):
     def setUp(self):
         super(TestMetaInterfaceDriver, self).setUp()
         config.register_interface_driver_opts_helper(self.conf)
-        self.conf.register_opts(dhcp.OPTS)
         self.client_cls_p = mock.patch('neutronclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
         self.client_inst = mock.Mock()

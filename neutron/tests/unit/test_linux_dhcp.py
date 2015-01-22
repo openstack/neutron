@@ -22,6 +22,7 @@ from oslo.config import cfg
 import testtools
 
 from neutron.agent.common import config
+from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.linux import dhcp
 from neutron.common import config as base_config
 from neutron.common import constants
@@ -505,7 +506,8 @@ class TestBase(base.BaseTestCase):
         super(TestBase, self).setUp()
         self.conf = config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
-        self.conf.register_opts(dhcp.OPTS)
+        self.conf.register_opts(dhcp_config.DHCP_OPTS)
+        self.conf.register_opts(dhcp_config.DNSMASQ_OPTS)
         config.register_interface_driver_opts_helper(self.conf)
         config.register_use_namespaces_opts_helper(self.conf)
         instance = mock.patch("neutron.agent.linux.dhcp.DeviceManager")
