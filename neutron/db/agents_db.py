@@ -19,7 +19,6 @@ from oslo.config import cfg
 from oslo.db import exception as db_exc
 from oslo import messaging
 from oslo.serialization import jsonutils
-from oslo.utils import excutils
 from oslo.utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
@@ -203,23 +202,20 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
 
         try:
             return self._create_or_update_agent(context, agent)
-        except db_exc.DBDuplicateEntry as e:
-            with excutils.save_and_reraise_exception() as ctxt:
-                if e.columns == ['agent_type', 'host']:
-                    # It might happen that two or more concurrent transactions
-                    # are trying to insert new rows having the same value of
-                    # (agent_type, host) pair at the same time (if there has
-                    # been no such entry in the table and multiple agent status
-                    # updates are being processed at the moment). In this case
-                    # having a unique constraint on (agent_type, host) columns
-                    # guarantees that only one transaction will succeed and
-                    # insert a new agent entry, others will fail and be rolled
-                    # back. That means we must retry them one more time: no
-                    # INSERTs will be issued, because
-                    # _get_agent_by_type_and_host() will return the existing
-                    # agent entry, which will be updated multiple times
-                    ctxt.reraise = False
-                    return self._create_or_update_agent(context, agent)
+        except db_exc.DBDuplicateEntry:
+            # It might happen that two or more concurrent transactions
+            # are trying to insert new rows having the same value of
+            # (agent_type, host) pair at the same time (if there has
+            # been no such entry in the table and multiple agent status
+            # updates are being processed at the moment). In this case
+            # having a unique constraint on (agent_type, host) columns
+            # guarantees that only one transaction will succeed and
+            # insert a new agent entry, others will fail and be rolled
+            # back. That means we must retry them one more time: no
+            # INSERTs will be issued, because
+            # _get_agent_by_type_and_host() will return the existing
+            # agent entry, which will be updated multiple times
+            return self._create_or_update_agent(context, agent)
 
 
 class AgentExtRpcCallback(object):
