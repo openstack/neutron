@@ -44,8 +44,8 @@ class BaseTestProcessMonitor(base.BaseTestCase):
     def create_child_process_monitor(self, action):
         self.exit_handler = mock.Mock()
         conf = mock.Mock()
-        conf.check_child_processes_action = action
-        conf.check_child_processes = True
+        conf.AGENT.check_child_processes_action = action
+        conf.AGENT.check_child_processes = True
         self.pmonitor = external_process.ProcessMonitor(
             config=conf,
             root_helper=None,

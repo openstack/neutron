@@ -18,6 +18,7 @@ import eventlet
 from oslo.config import cfg
 from oslo_concurrency import lockutils
 
+from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.i18n import _LE
@@ -30,16 +31,11 @@ OPTS = [
     cfg.StrOpt('external_pids',
                default='$state_path/external/pids',
                help=_('Location to store child pid files')),
-    cfg.StrOpt('check_child_processes_action', default='respawn',
-               choices=['respawn', 'exit'],
-               help=_('Action to be executed when a child process dies')),
-    cfg.IntOpt('check_child_processes_interval', default=0,
-               help=_('Interval between checks of child process liveness '
-                      '(seconds), use 0 to disable')),
 ]
 
 
 cfg.CONF.register_opts(OPTS)
+agent_cfg.register_process_monitor_opts(cfg.CONF)
 
 
 class ProcessManager(object):
@@ -154,7 +150,7 @@ class ProcessMonitor(object):
 
         self._process_managers = {}
 
-        if self._config.check_child_processes_interval:
+        if self._config.AGENT.check_child_processes_interval:
             self._spawn_checking_thread()
 
     def enable(self, uuid, cmd_callback, namespace=None, service=None,
@@ -238,12 +234,12 @@ class ProcessMonitor(object):
 
     def _periodic_checking_thread(self):
         while True:
-            eventlet.sleep(self._config.check_child_processes_interval)
+            eventlet.sleep(self._config.AGENT.check_child_processes_interval)
             eventlet.spawn(self._check_child_processes)
 
     def _execute_action(self, service_id):
-        action_function = getattr(
-            self, "_%s_action" % self._config.check_child_processes_action)
+        action = self._config.AGENT.check_child_processes_action
+        action_function = getattr(self, "_%s_action" % action)
         action_function(service_id)
 
     def _respawn_action(self, service_id):

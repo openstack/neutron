@@ -29,13 +29,13 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
     def setUp(self):
         super(BaseTestProcessMonitor, self).setUp()
         self._exit_handler_called = False
-        cfg.CONF.set_override('check_child_processes_interval', 1)
+        cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
         self._child_processes = []
         self._ext_processes = None
         self.addCleanup(self.cleanup_spawned_children)
 
     def create_child_processes_manager(self, action):
-        cfg.CONF.set_override('check_child_processes_action', action)
+        cfg.CONF.set_override('check_child_processes_action', action, 'AGENT')
         self._ext_processes = external_process.ProcessMonitor(
             config=cfg.CONF,
             root_helper=None,
@@ -88,7 +88,8 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
         # we need to allow extra_time for the check process to happen
         # and properly execute action over the gone processes under
         # high load conditions
-        max_wait_time = cfg.CONF.check_child_processes_interval + extra_time
+        max_wait_time = (
+            cfg.CONF.AGENT.check_child_processes_interval + extra_time)
         with self.assert_max_execution_time(max_wait_time):
             while not exit_condition():
                 eventlet.sleep(0.01)
