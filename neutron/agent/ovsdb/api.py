@@ -19,7 +19,7 @@ from oslo_utils import importutils
 import six
 
 interface_map = {
-    'vsctl': 'neutron.agent.linux.ovsdb_vsctl.OvsdbVsctl',
+    'vsctl': 'neutron.agent.ovsdb.impl_vsctl.OvsdbVsctl',
 }
 
 OPTS = [
