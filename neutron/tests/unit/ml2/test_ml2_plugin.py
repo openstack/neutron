@@ -23,6 +23,7 @@ from neutron.common import constants
 from neutron.common import exceptions as exc
 from neutron.common import utils
 from neutron import context
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.extensions import external_net as external_net
 from neutron.extensions import l3agentscheduler
@@ -128,6 +129,19 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         with mock.patch.object(plugin, "delete_subnet",
                                side_effect=exc.SubnetNotFound(subnet_id="1")):
             plugin._delete_subnets(None, [mock.MagicMock()])
+
+    def test_create_network_segment_allocation_fails(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.object(plugin.type_manager, 'create_network_segments',
+            side_effect=exc.RetryRequest(ValueError())) as f:
+            self.assertRaises(ValueError,
+                              plugin.create_network,
+                              context.get_admin_context(),
+                              {'network': {'tenant_id': 'sometenant',
+                                           'name': 'dummy',
+                                           'admin_state_up': True,
+                                           'shared': False}})
+            self.assertEqual(db_api.MAX_RETRIES + 1, f.call_count)
 
 
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,

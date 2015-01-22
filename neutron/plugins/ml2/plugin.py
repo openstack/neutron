@@ -484,7 +484,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     # TODO(apech): Need to override bulk operations
 
-    def create_network(self, context, network):
+    def _create_network_db(self, context, network):
         net_data = network['network']
         tenant_id = self._get_tenant_id_for_create(context, net_data)
         session = context.session
@@ -501,7 +501,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.NetworkContext(self, context,
                                                          result)
             self.mechanism_manager.create_network_precommit(mech_context)
+        return result, mech_context
 
+    @db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                          retry_on_request=True)
+    def _create_network_with_retries(self, context, network):
+        return self._create_network_db(context, network)
+
+    def create_network(self, context, network):
+        result, mech_context = self._create_network_with_retries(context,
+                                                                 network)
         try:
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
