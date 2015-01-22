@@ -301,8 +301,8 @@ def get_ha_interface():
             'name': u'L3 HA Admin port 0',
             'network_id': _uuid(),
             'status': u'ACTIVE',
-            'subnet': {'cidr': '169.254.0.0/24',
-                       'gateway_ip': '169.254.0.1',
+            'subnet': {'cidr': '169.254.192.0/18',
+                       'gateway_ip': '169.254.255.254',
                        'id': _uuid()},
             'tenant_id': '',
             'agent_id': _uuid(),
@@ -1057,60 +1057,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
                          distributed)
         self.assertEqual(agent.process_router_floating_ip_nat_rules.called,
                          distributed)
-
-    def test_ha_router_keepalived_config(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = prepare_router_data(enable_ha=True)
-        router['routes'] = [
-            {'destination': '8.8.8.8/32', 'nexthop': '35.4.0.10'},
-            {'destination': '8.8.4.4/32', 'nexthop': '35.4.0.11'}]
-        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
-                                 self.conf.use_namespaces, router=router)
-        ri.router = router
-        with contextlib.nested(mock.patch.object(agent,
-                                                 '_spawn_metadata_proxy'),
-                               mock.patch('neutron.agent.linux.'
-                                          'utils.replace_file'),
-                               mock.patch('neutron.agent.linux.'
-                                          'utils.execute'),
-                               mock.patch('os.makedirs')):
-            agent.process_ha_router_added(ri)
-            agent.process_router(ri)
-            config = ri.keepalived_manager.config
-            ha_iface = agent.get_ha_device_name(ri.ha_port['id'])
-            ex_iface = agent.get_external_device_name(ri.ex_gw_port['id'])
-            int_iface = agent.get_internal_device_name(
-                ri.internal_ports[0]['id'])
-
-            expected = """vrrp_sync_group VG_1 {
-    group {
-        VR_1
-    }
-}
-vrrp_instance VR_1 {
-    state BACKUP
-    interface %(ha_iface)s
-    virtual_router_id 1
-    priority 50
-    nopreempt
-    advert_int 2
-    track_interface {
-        %(ha_iface)s
-    }
-    virtual_ipaddress {
-        19.4.4.4/24 dev %(ex_iface)s
-    }
-    virtual_ipaddress_excluded {
-        35.4.0.4/24 dev %(int_iface)s
-    }
-    virtual_routes {
-        0.0.0.0/0 via 19.4.4.1 dev %(ex_iface)s
-        8.8.8.8/32 via 35.4.0.10
-        8.8.4.4/32 via 35.4.0.11
-    }
-}""" % {'ha_iface': ha_iface, 'ex_iface': ex_iface, 'int_iface': int_iface}
-
-            self.assertEqual(expected, config.get_config_str())
 
     @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
     def _test_process_router_floating_ip_addresses_add(self, ri,
