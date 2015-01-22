@@ -18,6 +18,8 @@ from oslo_db.sqlalchemy import session
 
 _FACADE = None
 
+MAX_RETRIES = 10
+
 
 def _create_facade_lazily():
     global _FACADE
