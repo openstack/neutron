@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from networking_odl.common import constants as odl_const
 from networking_odl.ml2 import mech_driver
 from oslo.config import cfg
 
@@ -23,10 +24,6 @@ from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
-
-ODL_NETWORKS = 'networks'
-ODL_SUBNETS = 'subnets'
-ODL_PORTS = 'ports'
 
 odl_opts = [
     cfg.StrOpt('url',
@@ -69,31 +66,31 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
     # Postcommit hooks are used to trigger synchronization.
 
     def create_network_postcommit(self, context):
-        self.odl_drv.synchronize('create', ODL_NETWORKS, context)
+        self.odl_drv.synchronize('create', odl_const.ODL_NETWORKS, context)
 
     def update_network_postcommit(self, context):
-        self.odl_drv.synchronize('update', ODL_NETWORKS, context)
+        self.odl_drv.synchronize('update', odl_const.ODL_NETWORKS, context)
 
     def delete_network_postcommit(self, context):
-        self.odl_drv.synchronize('delete', ODL_NETWORKS, context)
+        self.odl_drv.synchronize('delete', odl_const.ODL_NETWORKS, context)
 
     def create_subnet_postcommit(self, context):
-        self.odl_drv.synchronize('create', ODL_SUBNETS, context)
+        self.odl_drv.synchronize('create', odl_const.ODL_SUBNETS, context)
 
     def update_subnet_postcommit(self, context):
-        self.odl_drv.synchronize('update', ODL_SUBNETS, context)
+        self.odl_drv.synchronize('update', odl_const.ODL_SUBNETS, context)
 
     def delete_subnet_postcommit(self, context):
-        self.odl_drv.synchronize('delete', ODL_SUBNETS, context)
+        self.odl_drv.synchronize('delete', odl_const.ODL_SUBNETS, context)
 
     def create_port_postcommit(self, context):
-        self.odl_drv.synchronize('create', ODL_PORTS, context)
+        self.odl_drv.synchronize('create', odl_const.ODL_PORTS, context)
 
     def update_port_postcommit(self, context):
-        self.odl_drv.synchronize('update', ODL_PORTS, context)
+        self.odl_drv.synchronize('update', odl_const.ODL_PORTS, context)
 
     def delete_port_postcommit(self, context):
-        self.odl_drv.synchronize('delete', ODL_PORTS, context)
+        self.odl_drv.synchronize('delete', odl_const.ODL_PORTS, context)
 
     def bind_port(self, context):
         LOG.debug("Attempting to bind port %(port)s on "
