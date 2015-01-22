@@ -102,7 +102,10 @@ class BaseOVS(object):
 
     def add_bridge(self, bridge_name):
         self.ovsdb.add_br(bridge_name).execute()
-        return OVSBridge(bridge_name)
+        br = OVSBridge(bridge_name)
+        # Don't return until vswitchd sets up the internal port
+        br.get_port_ofport(bridge_name)
+        return br
 
     def delete_bridge(self, bridge_name):
         self.ovsdb.del_br(bridge_name).execute()
@@ -162,6 +165,8 @@ class OVSBridge(BaseOVS):
 
     def create(self):
         self.ovsdb.add_br(self.br_name).execute()
+        # Don't return until vswitchd sets up the internal port
+        self.get_port_ofport(self.br_name)
 
     def destroy(self):
         self.delete_bridge(self.br_name)
@@ -191,6 +196,8 @@ class OVSBridge(BaseOVS):
             if interface_attr_tuples:
                 txn.add(self.ovsdb.db_set('Interface', port_name,
                                           *interface_attr_tuples))
+        # Don't return until the port has been assigned by vswitchd
+        self.get_port_ofport(port_name)
 
     def delete_port(self, port_name):
         self.ovsdb.del_port(port_name, self.br_name).execute()

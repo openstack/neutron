@@ -54,6 +54,16 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         self.br.delete_port(port_name)
         self.assertFalse(self.br.port_exists(port_name))
 
+    def test_duplicate_port_may_exist_false(self):
+        port_name, ofport = self.create_ovs_port(('type', 'internal'))
+        cmd = self.br.ovsdb.add_port(self.br.br_name,
+                                     port_name, may_exist=False)
+        self.assertRaises(RuntimeError, cmd.execute, check_error=True)
+
+    def test_delete_port_if_exists_false(self):
+        cmd = self.br.ovsdb.del_port('nonexistantport', if_exists=False)
+        self.assertRaises(RuntimeError, cmd.execute, check_error=True)
+
     def test_replace_port(self):
         port_name = base.get_rand_port_name()
         self.br.replace_port(port_name, ('type', 'internal'))
