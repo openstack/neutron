@@ -82,9 +82,7 @@ class LocalVLANMapping(object):
                  self.segmentation_id))
 
 
-class OVSPluginApi(agent_rpc.PluginApi,
-                   dvr_rpc.DVRServerRpcApiMixin,
-                   sg_rpc.SecurityGroupServerRpcApiMixin):
+class OVSPluginApi(agent_rpc.PluginApi, dvr_rpc.DVRServerRpcApiMixin):
     pass
 
 
@@ -253,7 +251,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         # Security group agent support
         self.sg_agent = OVSSecurityGroupAgent(self.context,
-                                              self.plugin_rpc,
+                                              self.sg_plugin_rpc,
                                               root_helper)
         # Initialize iteration counter
         self.iter_num = 0
@@ -282,6 +280,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.agent_id = 'ovs-agent-%s' % cfg.CONF.host
         self.topic = topics.AGENT
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
+        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
 
         # RPC network init
