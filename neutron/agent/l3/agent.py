@@ -57,7 +57,6 @@ LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qrouter-'
 INTERNAL_DEV_PREFIX = 'qr-'
 EXTERNAL_DEV_PREFIX = 'qg-'
-RPC_LOOP_INTERVAL = 1
 
 
 class L3PluginApi(object):
