@@ -154,8 +154,8 @@ class IptablesTable(object):
         chain_set = self._select_chain_set(wrap)
 
         if name not in chain_set:
-            LOG.warn(_LW('Attempted to remove chain %s which does not exist'),
-                     name)
+            LOG.debug('Attempted to remove chain %s which does not exist',
+                      name)
             return
 
         chain_set.remove(name)

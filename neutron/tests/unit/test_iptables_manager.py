@@ -803,7 +803,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
     def test_remove_nonexistent_chain(self):
         with mock.patch.object(iptables_manager, "LOG") as log:
             self.iptables.ipv4['filter'].remove_chain('nonexistent')
-        log.warn.assert_called_once_with(
+        log.debug.assert_called_once_with(
             'Attempted to remove chain %s which does not exist',
             'nonexistent')
 
