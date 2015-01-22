@@ -126,7 +126,7 @@ class OVS_Lib_Test(base.BaseTestCase):
     def test_set_protocols(self):
         protocols = 'OpenFlow13'
         self.br.set_protocols(protocols)
-        self._verify_vsctl_mock('set', 'bridge', self.BR_NAME,
+        self._verify_vsctl_mock('set', 'Bridge', self.BR_NAME,
                                 "protocols=%s" % protocols)
 
     def test_create(self):
