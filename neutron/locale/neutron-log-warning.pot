@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev299\n"
+"Project-Id-Version: neutron 2015.1.dev335\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-01-20 06:08+0000\n"
+"POT-Creation-Date: 2015-01-22 06:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,7 +34,28 @@ msgstr ""
 msgid "%s is already registered."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:144
+#: neutron/agent/rpc.py:103
+msgid "DVR functionality requires a server upgrade."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:68
+#: neutron/agent/securitygroups_rpc.py:180
+msgid "Driver configuration doesn't match with enable_security_group"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:135
+msgid ""
+"Security group agent binding currently not set. This should be set by the"
+" end of the init process."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:207
+msgid ""
+"security_group_info_for_devices rpc call not supported by the server, "
+"falling back to old security_group_rules_for_devices which scales worse."
+msgstr ""
+
+#: neutron/agent/dhcp/agent.py:117
 #, python-format
 msgid ""
 "Unable to %(action)s dhcp for %(net_id)s: there is a conflict with its "
@@ -42,53 +63,32 @@ msgid ""
 "exist."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:154 neutron/agent/dhcp_agent.py:223
+#: neutron/agent/dhcp/agent.py:127 neutron/agent/dhcp/agent.py:196
 #, python-format
 msgid "Network %s has been deleted."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:240
+#: neutron/agent/dhcp/agent.py:213
 #, python-format
 msgid ""
 "Network %s may have been deleted and its resources may have already been "
 "disposed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:376
+#: neutron/agent/dhcp/agent.py:349
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:605 neutron/agent/l3/agent.py:1243
+#: neutron/agent/dhcp/agent.py:578 neutron/agent/l3/agent.py:1262
 #: neutron/agent/metadata/agent.py:352
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:273
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
-msgstr ""
-
-#: neutron/agent/rpc.py:103
-msgid "DVR functionality requires a server upgrade."
-msgstr ""
-
-#: neutron/agent/securitygroups_rpc.py:67
-#: neutron/agent/securitygroups_rpc.py:157
-msgid "Driver configuration doesn't match with enable_security_group"
-msgstr ""
-
-#: neutron/agent/securitygroups_rpc.py:112
-msgid ""
-"Security group agent binding currently not set. This should be set by the"
-" end of the init process."
-msgstr ""
-
-#: neutron/agent/securitygroups_rpc.py:184
-msgid ""
-"security_group_info_for_devices rpc call not supported by the server, "
-"falling back to old security_group_rules_for_devices which scales worse."
 msgstr ""
 
 #: neutron/agent/l3/agent.py:178
@@ -107,12 +107,12 @@ msgid ""
 "Retrying. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:364
+#: neutron/agent/l3/agent.py:383
 #, python-format
 msgid "Info for router %s were not found. Skipping router removal"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:666
+#: neutron/agent/l3/agent.py:685
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
@@ -530,11 +530,6 @@ msgstr ""
 msgid "Port in remote have already deleted"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:597
-#, python-format
-msgid "Failed to bind port %(port)s on host %(host)s"
-msgstr ""
-
 #: neutron/plugins/ml2/plugin.py:476
 #, python-format
 msgid ""
@@ -556,12 +551,12 @@ msgstr ""
 msgid "Port %s not found during update"
 msgstr ""
 
-#: neutron/plugins/ml2/rpc.py:68
+#: neutron/plugins/ml2/rpc.py:69
 #, python-format
 msgid "Device %(device)s requested by agent %(agent_id)s not found in database"
 msgstr ""
 
-#: neutron/plugins/ml2/rpc.py:77
+#: neutron/plugins/ml2/rpc.py:78
 #, python-format
 msgid ""
 "Device %(device)s requested by agent %(agent_id)s on network "
@@ -575,16 +570,10 @@ msgid ""
 "attempts"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_agent.py:74
+#: neutron/plugins/ml2/drivers/mech_agent.py:75
 #: neutron/plugins/ml2/drivers/mech_sriov/mech_driver.py:116
 #, python-format
 msgid "Attempting to bind with dead agent: %s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/mech_linuxbridge.py:60
-#: neutron/plugins/ml2/drivers/mech_openvswitch.py:62
-#, python-format
-msgid "Failed to find %(seg)s in mappings %(map)s"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_flat.py:131

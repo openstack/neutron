@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev299\n"
+"Project-Id-Version: neutron 2015.1.dev335\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-01-20 06:08+0000\n"
+"POT-Creation-Date: 2015-01-22 06:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -75,72 +75,72 @@ msgstr ""
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:119 neutron/agent/dhcp_agent.py:623
-msgid "DHCP agent started"
-msgstr ""
-
-#: neutron/agent/dhcp_agent.py:171
-msgid "Synchronizing state"
-msgstr ""
-
-#: neutron/agent/dhcp_agent.py:192
-msgid "Synchronizing state complete"
-msgstr ""
-
-#: neutron/agent/dhcp_agent.py:620 neutron/agent/l3/agent.py:1253
-#: neutron/services/metering/agents/metering_agent.py:281
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr ""
-
-#: neutron/agent/securitygroups_rpc.py:80
+#: neutron/agent/securitygroups_rpc.py:81
 msgid "Disabled security-group extension."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:82
+#: neutron/agent/securitygroups_rpc.py:83
 msgid "Disabled allowed-address-pairs extension."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:196
+#: neutron/agent/securitygroups_rpc.py:219
 #, python-format
 msgid ""
 "Skipping method %s as firewall is disabled or configured as "
 "NoopFirewallDriver."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:208
+#: neutron/agent/securitygroups_rpc.py:231
 #, python-format
 msgid "Preparing filters for devices %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:238
+#: neutron/agent/securitygroups_rpc.py:261
 #, python-format
 msgid "Security group rule updated %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:245
+#: neutron/agent/securitygroups_rpc.py:268
 #, python-format
 msgid "Security group member updated %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:267
+#: neutron/agent/securitygroups_rpc.py:290
 msgid "Provider rule updated"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:279
+#: neutron/agent/securitygroups_rpc.py:302
 #, python-format
 msgid "Remove device filter for %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:289
+#: neutron/agent/securitygroups_rpc.py:312
 msgid "Refresh firewall rules"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:293
+#: neutron/agent/securitygroups_rpc.py:316
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:1153
+#: neutron/agent/dhcp/agent.py:92 neutron/agent/dhcp/agent.py:596
+msgid "DHCP agent started"
+msgstr ""
+
+#: neutron/agent/dhcp/agent.py:144
+msgid "Synchronizing state"
+msgstr ""
+
+#: neutron/agent/dhcp/agent.py:165
+msgid "Synchronizing state complete"
+msgstr ""
+
+#: neutron/agent/dhcp/agent.py:593 neutron/agent/l3/agent.py:1272
+#: neutron/services/metering/agents/metering_agent.py:281
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr ""
+
+#: neutron/agent/l3/agent.py:1172
 msgid "L3 agent started"
 msgstr ""
 
@@ -220,33 +220,33 @@ msgstr ""
 msgid "IPv6 is not enabled on this system."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:618
+#: neutron/db/db_base_plugin_v2.py:610
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:645
+#: neutron/db/db_base_plugin_v2.py:637
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:652
+#: neutron/db/db_base_plugin_v2.py:644
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:656
+#: neutron/db/db_base_plugin_v2.py:648
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:661
+#: neutron/db/db_base_plugin_v2.py:653
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:685
+#: neutron/db/db_base_plugin_v2.py:677
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr ""
@@ -257,12 +257,12 @@ msgid ""
 "rescheduling is disabled."
 msgstr ""
 
-#: neutron/db/l3_db.py:1074
+#: neutron/db/l3_db.py:1070
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:1080
+#: neutron/db/l3_db.py:1076
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
@@ -565,48 +565,48 @@ msgstr ""
 msgid "Network VLAN ranges: %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:240
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:236
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:130
 #, python-format
 msgid "Provisioning network %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:265
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:261
 #, python-format
 msgid "Reclaiming local network %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:286
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:282
 #, python-format
 msgid "Binding VLAN ID %(segmentation_id)s to switch port %(port_id)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:308
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:304
 #, python-format
 msgid "Network %s is not avalailable on this agent"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:325
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:321
 #, python-format
 msgid "Port metrics enabled for port: %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:372
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:368
 #, python-format
 msgid "Adding port %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:374
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:370
 #, python-format
 msgid "Port %(device)s updated. Details: %(device_details)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:401
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:397
 #, python-format
 msgid "Removing port %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:433
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:429
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:983
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:376
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:827
@@ -615,7 +615,7 @@ msgstr ""
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:469
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:465
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:264
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1024
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:164
