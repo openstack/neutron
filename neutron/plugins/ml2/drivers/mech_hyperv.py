@@ -18,7 +18,7 @@ import re
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
-from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
 
 LOG = log.getLogger(__name__)
@@ -39,16 +39,12 @@ class HypervMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             portbindings.VIF_TYPE_HYPERV,
             {portbindings.CAP_PORT_FILTER: False})
 
-    def check_segment_for_agent(self, segment, agent):
-        mappings = agent['configurations'].get('vswitch_mappings', {})
-        LOG.debug("Checking segment: %(segment)s "
-                  "for mappings: %(mappings)s",
-                  {'segment': segment, 'mappings': mappings})
-        network_type = segment[api.NETWORK_TYPE]
-        if network_type == 'local':
-            return True
-        elif network_type in ['flat', 'vlan']:
-            for pattern in mappings:
-                if re.match(pattern, segment[api.PHYSICAL_NETWORK]):
-                    return True
-        return False
+    def get_allowed_network_types(self, agent=None):
+        return [p_constants.TYPE_LOCAL, p_constants.TYPE_FLAT,
+                p_constants.TYPE_VLAN]
+
+    def get_mappings(self, agent):
+        return agent['configurations'].get('vswitch_mappings', {})
+
+    def physnet_in_mappings(self, physnet, mappings):
+        return any(re.match(pattern, physnet) for pattern in mappings)

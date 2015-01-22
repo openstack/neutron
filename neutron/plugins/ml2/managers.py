@@ -21,7 +21,7 @@ from neutron.common import exceptions as exc
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
-from neutron.i18n import _LE, _LI, _LW
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
@@ -594,9 +594,9 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                                   "bind_port"),
                               driver.name)
         binding.vif_type = portbindings.VIF_TYPE_BINDING_FAILED
-        LOG.warning(_LW("Failed to bind port %(port)s on host %(host)s"),
-                    {'port': context._port['id'],
-                     'host': binding.host})
+        LOG.error(_LE("Failed to bind port %(port)s on host %(host)s"),
+                  {'port': context._port['id'],
+                   'host': binding.host})
 
 
 class ExtensionManager(stevedore.named.NamedExtensionManager):

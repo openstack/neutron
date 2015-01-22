@@ -31,13 +31,17 @@ class HypervMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     BAD_CONFIGS = {'vswitch_mappings': BAD_MAPPINGS}
 
     AGENTS = [{'alive': True,
-               'configurations': GOOD_CONFIGS}]
+               'configurations': GOOD_CONFIGS,
+               'host': 'host'}]
     AGENTS_DEAD = [{'alive': False,
-                    'configurations': GOOD_CONFIGS}]
+                    'configurations': GOOD_CONFIGS,
+                    'host': 'dead_host'}]
     AGENTS_BAD = [{'alive': False,
-                   'configurations': GOOD_CONFIGS},
+                   'configurations': GOOD_CONFIGS,
+                   'host': 'bad_host_1'},
                   {'alive': True,
-                   'configurations': BAD_CONFIGS}]
+                   'configurations': BAD_CONFIGS,
+                   'host': 'bad_host_2'}]
 
     def setUp(self):
         super(HypervMechanismBaseTestCase, self).setUp()

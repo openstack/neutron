@@ -19,6 +19,7 @@ import six
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
 from neutron.openstack.common import log
+from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
@@ -136,6 +137,26 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
             return False
 
     @abc.abstractmethod
+    def get_allowed_network_types(self, agent=None):
+        """Return the agent's or driver's allowed network types.
+
+        For example: return ('flat', ...). You can also refer to the
+        configuration the given agent exposes.
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_mappings(self, agent):
+        """Return the agent's bridge or interface mappings.
+
+        For example: agent['configurations'].get('bridge_mappings', {}).
+        """
+        pass
+
+    def physnet_in_mappings(self, physnet, mappings):
+        """Is the physical network part of the given mappings?"""
+        return physnet in mappings
+
     def check_segment_for_agent(self, segment, agent):
         """Check if segment can be bound for agent.
 
@@ -149,3 +170,41 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
         determine whether or not the specified network segment can be
         bound for the agent.
         """
+
+        mappings = self.get_mappings(agent)
+        allowed_network_types = self.get_allowed_network_types(agent)
+
+        LOG.debug("Checking segment: %(segment)s "
+                  "for mappings: %(mappings)s "
+                  "with network types: %(network_types)s",
+                  {'segment': segment, 'mappings': mappings,
+                   'network_types': allowed_network_types})
+
+        network_type = segment[api.NETWORK_TYPE]
+        if network_type not in allowed_network_types:
+            LOG.debug(
+                'Network %(network_id)s is of type %(network_type)s '
+                'but agent %(agent)s or mechanism driver only '
+                'support %(allowed_network_types)s.',
+                {'network_id': segment['id'],
+                 'network_type': network_type,
+                 'agent': agent['host'],
+                 'allowed_network_types': allowed_network_types})
+            return False
+
+        if network_type in [p_constants.TYPE_FLAT, p_constants.TYPE_VLAN]:
+            physnet = segment[api.PHYSICAL_NETWORK]
+            if not self.physnet_in_mappings(physnet, mappings):
+                LOG.debug(
+                    'Network %(network_id)s is connected to physical '
+                    'network %(physnet)s, but agent %(agent)s reported '
+                    'physical networks %(mappings)s. '
+                    'The physical network must be configured on the '
+                    'agent if binding is to succeed.',
+                    {'network_id': segment['id'],
+                     'physnet': physnet,
+                     'agent': agent['host'],
+                     'mappings': mappings})
+                return False
+
+        return True

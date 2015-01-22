@@ -19,6 +19,7 @@ from oslo.config import cfg
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
+from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.mlnx import config  # noqa
@@ -49,19 +50,12 @@ class MlnxMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             {portbindings.CAP_PORT_FILTER: False},
             portbindings.VNIC_TYPES)
 
-    def check_segment_for_agent(self, segment, agent):
-        mappings = agent['configurations'].get('interface_mappings', {})
-        LOG.debug("Checking segment: %(segment)s "
-                  "for mappings: %(mappings)s ",
-                  {'segment': segment, 'mappings': mappings})
+    def get_allowed_network_types(self, agent=None):
+        return [p_constants.TYPE_LOCAL, p_constants.TYPE_FLAT,
+                p_constants.TYPE_VLAN]
 
-        network_type = segment[api.NETWORK_TYPE]
-        if network_type == 'local':
-            return True
-        elif network_type in ['flat', 'vlan']:
-            return segment[api.PHYSICAL_NETWORK] in mappings
-        else:
-            return False
+    def get_mappings(self, agent):
+        return agent['configurations'].get('interface_mappings', {})
 
     def try_to_bind_segment_for_agent(self, context, segment, agent):
         if self.check_segment_for_agent(segment, agent):

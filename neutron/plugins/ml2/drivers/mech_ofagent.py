@@ -23,8 +23,7 @@ from neutron.agent import securitygroups_rpc
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
-from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
 
 LOG = log.getLogger(__name__)
@@ -49,20 +48,10 @@ class OfagentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             portbindings.VIF_TYPE_OVS,
             vif_details)
 
-    def check_segment_for_agent(self, segment, agent):
-        interface_mappings = agent['configurations'].get('interface_mappings',
-                                                         {})
-        tunnel_types = agent['configurations'].get('tunnel_types', [])
-        LOG.debug("Checking segment: %(segment)s "
-                  "for interface_mappings: %(interface_mappings)s "
-                  "with tunnel_types: %(tunnel_types)s",
-                  {'segment': segment,
-                   'interface_mappings': interface_mappings,
-                   'tunnel_types': tunnel_types})
-        network_type = segment[api.NETWORK_TYPE]
-        return (
-            network_type == p_const.TYPE_LOCAL or
-            network_type in tunnel_types or
-            (network_type in [p_const.TYPE_FLAT, p_const.TYPE_VLAN] and
-                segment[api.PHYSICAL_NETWORK] in interface_mappings)
-        )
+    def get_allowed_network_types(self, agent):
+        return (agent['configurations'].get('tunnel_types', []) +
+                [p_constants.TYPE_LOCAL, p_constants.TYPE_FLAT,
+                 p_constants.TYPE_VLAN])
+
+    def get_mappings(self, agent):
+        return dict(agent['configurations'].get('interface_mappings', {}))
