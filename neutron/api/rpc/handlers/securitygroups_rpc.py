@@ -14,6 +14,7 @@
 
 from oslo import messaging
 
+from neutron.common import constants
 from neutron import manager
 
 
@@ -36,7 +37,8 @@ class SecurityGroupServerRpcCallback(object):
 
     # NOTE: target must not be overridden in subclasses
     # to keep RPC API version consistent across plugins.
-    target = messaging.Target(version='1.2')
+    target = messaging.Target(version='1.2',
+                              namespace=constants.RPC_NAMESPACE_SECGROUP)
 
     @property
     def plugin(self):
