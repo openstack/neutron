@@ -6,10 +6,15 @@ contains more information on the capabilities OpenDaylight provides:
 
     http://www.opendaylight.org
 
+The networking-odl project provides a thin layer sitting between this
+driver and OpenDaylight. The code can be downloaded from:
+
+    https://git.openstack.org/cgit/stackforge/networking-odl
+
 Theory of operation
 ===================
 The OpenStack Neutron integration with OpenDaylight consists of the ML2
-MechanismDriver which acts as a REST proxy and passess all Neutron API
+MechanismDriver which acts as a REST proxy and passes all Neutron API
 calls into OpenDaylight. OpenDaylight contains a NB REST service (called
 the NeutronAPIService) which caches data from these proxied API calls and
 makes it available to other services inside of OpenDaylight. One current
