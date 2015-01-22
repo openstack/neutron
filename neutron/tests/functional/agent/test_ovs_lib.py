@@ -39,11 +39,8 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
             iface_id = base.get_rand_name()
         if mac is None:
             mac = base.get_rand_name()
-        attrs = {
-            'external_ids:%s' % iface_field: iface_id,
-            'external_ids:attached-mac': mac
-        }
-        port_name, ofport = self.create_ovs_port(*attrs.items())
+        attrs = ('external_ids', {iface_field: iface_id, 'attached-mac': mac})
+        port_name, ofport = self.create_ovs_port(attrs)
         return ovs_lib.VifPort(port_name, ofport, iface_id, mac, self.br)
 
     def test_port_lifecycle(self):
@@ -64,7 +61,7 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         self.assertEqual('internal',
                          self.br.db_get_val('Interface', port_name, 'type'))
         self.br.replace_port(port_name, ('type', 'internal'),
-                                        ('external_ids:test', 'test'))
+                             ('external_ids', {'test': 'test'}))
         self.assertTrue(self.br.port_exists(port_name))
         self.assertEqual('test', self.br.db_get_val('Interface', port_name,
                                                     'external_ids')['test'])
@@ -81,7 +78,8 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
 
     def test_get_bridge_external_bridge_id(self):
         self.ovs.set_db_attribute('Bridge', self.br.br_name,
-                                  'external_ids:bridge-id', self.br.br_name)
+                                  'external_ids',
+                                  {'bridge-id': self.br.br_name})
         self.assertEqual(
             self.br.br_name,
             self.ovs.get_bridge_external_bridge_id(self.br.br_name))
