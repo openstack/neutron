@@ -71,14 +71,6 @@ class IVSBridge(ovs_lib.OVSBridge):
         return False
 
 
-class SecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
-    def __init__(self, context, plugin_rpc, root_helper):
-        self.context = context
-        self.plugin_rpc = plugin_rpc
-        self.root_helper = root_helper
-        self.init_firewall()
-
-
 class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     target = messaging.Target(version='1.1')
@@ -87,9 +79,9 @@ class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         super(RestProxyAgent, self).__init__()
         self.polling_interval = polling_interval
         self._setup_rpc()
-        self.sg_agent = SecurityGroupAgent(self.context,
-                                           self.sg_plugin_rpc,
-                                           root_helper)
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
+                                                     self.sg_plugin_rpc,
+                                                     root_helper)
         if vs == 'ivs':
             self.int_br = IVSBridge(integ_br, root_helper)
         else:

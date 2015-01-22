@@ -174,14 +174,6 @@ class MlnxEswitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                   port['mac_address'])
 
 
-class MlnxEswitchSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
-    def __init__(self, context, plugin_rpc, root_helper):
-        self.context = context
-        self.plugin_rpc = plugin_rpc
-        self.root_helper = root_helper
-        self.init_firewall()
-
-
 class MlnxEswitchNeutronAgent(object):
 
     def __init__(self, interface_mapping, root_helper):
@@ -200,7 +192,7 @@ class MlnxEswitchNeutronAgent(object):
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.sg_agent = MlnxEswitchSecurityGroupAgent(self.context,
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
                 self.sg_plugin_rpc, root_helper)
         self._setup_rpc()
 

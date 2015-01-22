@@ -86,14 +86,6 @@ class OVSPluginApi(agent_rpc.PluginApi, dvr_rpc.DVRServerRpcApiMixin):
     pass
 
 
-class OVSSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
-    def __init__(self, context, plugin_rpc, root_helper):
-        self.context = context
-        self.plugin_rpc = plugin_rpc
-        self.root_helper = root_helper
-        self.init_firewall(defer_refresh_firewall=True)
-
-
 class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                       l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       dvr_rpc.DVRAgentRpcCallbackMixin):
@@ -250,9 +242,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
 
         # Security group agent support
-        self.sg_agent = OVSSecurityGroupAgent(self.context,
-                                              self.sg_plugin_rpc,
-                                              root_helper)
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
+                self.sg_plugin_rpc, root_helper, defer_refresh_firewall=True)
+
         # Initialize iteration counter
         self.iter_num = 0
         self.run_daemon_loop = True

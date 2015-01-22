@@ -742,14 +742,6 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             getattr(self, method)(context, values)
 
 
-class LinuxBridgeSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
-    def __init__(self, context, plugin_rpc, root_helper):
-        self.context = context
-        self.plugin_rpc = plugin_rpc
-        self.root_helper = root_helper
-        self.init_firewall()
-
-
 class LinuxBridgeNeutronAgentRPC(object):
 
     def __init__(self, interface_mappings, polling_interval,
@@ -775,7 +767,7 @@ class LinuxBridgeNeutronAgentRPC(object):
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.sg_agent = LinuxBridgeSecurityGroupAgent(self.context,
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
                 self.sg_plugin_rpc, self.root_helper)
         self.setup_rpc(interface_mappings.values())
 

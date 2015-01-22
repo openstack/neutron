@@ -1112,10 +1112,8 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
 class SecurityGroupAgentRpcTestCaseForNoneDriver(base.BaseTestCase):
     def test_init_firewall_with_none_driver(self):
         set_enable_security_groups(False)
-        agent = sg_rpc.SecurityGroupAgentRpcMixin()
-        agent.plugin_rpc = mock.Mock()
-        agent.context = None
-        agent.init_firewall()
+        agent = sg_rpc.SecurityGroupAgentRpc(
+                context=None, plugin_rpc=mock.Mock(), root_helper=None)
         self.assertEqual(agent.firewall.__class__.__name__,
                          'NoopFirewallDriver')
 
@@ -1124,12 +1122,10 @@ class BaseSecurityGroupAgentRpcTestCase(base.BaseTestCase):
     def setUp(self, defer_refresh_firewall=False):
         super(BaseSecurityGroupAgentRpcTestCase, self).setUp()
         set_firewall_driver(FIREWALL_NOOP_DRIVER)
-        self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
-        self.agent.context = None
+        self.agent = sg_rpc.SecurityGroupAgentRpc(
+                context=None, plugin_rpc=mock.Mock(), root_helper='sudo',
+                defer_refresh_firewall=defer_refresh_firewall)
         mock.patch('neutron.agent.linux.iptables_manager').start()
-        self.agent.root_helper = 'sudo'
-        self.agent.plugin_rpc = mock.Mock()
-        self.agent.init_firewall(defer_refresh_firewall=defer_refresh_firewall)
         self.default_firewall = self.agent.firewall
         self.firewall = mock.Mock()
         firewall_object = firewall_base.FirewallDriver()
@@ -2513,20 +2509,16 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
         cfg.CONF.set_override('comment_iptables_rules', False, group='AGENT')
 
-        self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
-        self.agent.context = None
-
-        self.root_helper = 'sudo'
-        self.agent.root_helper = 'sudo'
         self.rpc = mock.Mock()
-        self.agent.plugin_rpc = self.rpc
+        self.agent = sg_rpc.SecurityGroupAgentRpc(
+                context=None, plugin_rpc=self.rpc, root_helper='sudo',
+                defer_refresh_firewall=defer_refresh_firewall)
+        self.root_helper = 'sudo'
 
         if test_rpc_v1_1:
             self.rpc.security_group_info_for_devices.side_effect = (
                 messaging.UnsupportedVersion('1.2'))
 
-        self.agent.init_firewall(
-            defer_refresh_firewall=defer_refresh_firewall)
         self.iptables = self.agent.firewall.iptables
         # TODO(jlibosva) Get rid of mocking iptables execute and mock out
         # firewall instead
