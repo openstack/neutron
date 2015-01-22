@@ -80,8 +80,6 @@ config.register_agent_state_opts_helper(cfg.CONF)
 
 class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpcMixin):
 
-    target = messaging.Target(version='1.1')
-
     def __init__(self, context, plugin_rpc):
         super(HyperVSecurityAgent, self).__init__()
         self.context = context
