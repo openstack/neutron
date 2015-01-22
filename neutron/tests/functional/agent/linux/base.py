@@ -14,6 +14,7 @@
 
 import netaddr
 from oslo_config import cfg
+import testscenarios
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
@@ -114,9 +115,17 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
         return str(net)
 
 
-class BaseOVSLinuxTestCase(BaseLinuxTestCase):
+# Regarding MRO, it goes BaseOVSLinuxTestCase, WithScenarios,
+# BaseLinuxTestCase, ..., UnitTest, object. setUp is not dfined in
+# WithScenarios, so it will correctly be found in BaseLinuxTestCase.
+class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
+    scenarios = [
+        ('vsctl', dict(ovsdb_interface='vsctl')),
+    ]
+
     def setUp(self):
         super(BaseOVSLinuxTestCase, self).setUp()
+        self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
         self.ovs = ovs_lib.BaseOVS(self.root_helper)
         self.ip = ip_lib.IPWrapper(self.root_helper)
 
