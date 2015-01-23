@@ -315,6 +315,15 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 context, router_id, chosen_agent)
             return chosen_agent
 
+    def _get_active_l3_agent_routers_sync_data(self, context, host, agent,
+                                               router_ids):
+        if n_utils.is_extension_supported(self, q_const.L3_HA_MODE_EXT_ALIAS):
+            return self.get_ha_sync_data_for_host(context, host,
+                                                  router_ids=router_ids,
+                                                  active=True)
+        return self.get_dvr_sync_data(context, host, agent,
+                                      router_ids=router_ids, active=True)
+
 
 def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
     LOG.debug('Received %s %s' % (resource, event))

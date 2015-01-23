@@ -317,8 +317,11 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
         floatingip = {
             'id': _uuid(),
             'port_id': _uuid(),
-            'router_id': 'foo_router_id'
+            'router_id': 'foo_router_id',
+            'host': hostid
         }
+        if not hostid:
+            hostid = 'not_my_host_id'
         routers = {
             'foo_router_id': router
         }
@@ -334,16 +337,15 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             return_value=fipagent)
         self.mixin.get_fip_sync_interfaces = mock.Mock(
             return_value='fip_interface')
+        agent = mock.Mock()
+        agent.id = fipagent['id']
 
-        self.mixin._process_floating_ips(self.ctx, routers, [floatingip])
+        self.mixin._process_floating_ips_dvr(self.ctx, routers, [floatingip],
+                                             hostid, agent)
         return (router, floatingip)
 
-    def test_floatingip_on_port_no_host(self):
+    def test_floatingip_on_port_not_host(self):
         router, fip = self._floatingip_on_port_test_setup(None)
-
-        self.assertTrue(self.mixin.get_vm_port_hostid.called)
-        self.assertFalse(self.mixin._get_agent_by_type_and_host.called)
-        self.assertFalse(self.mixin.get_fip_sync_interfaces.called)
 
         self.assertNotIn(l3_const.FLOATINGIP_KEY, router)
         self.assertNotIn(l3_const.FLOATINGIP_AGENT_INTF_KEY, router)
@@ -351,8 +353,6 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
     def test_floatingip_on_port_with_host(self):
         router, fip = self._floatingip_on_port_test_setup(_uuid())
 
-        self.assertTrue(self.mixin.get_vm_port_hostid.called)
-        self.assertTrue(self.mixin._get_agent_by_type_and_host.called)
         self.assertTrue(self.mixin.get_fip_sync_interfaces.called)
 
         self.assertIn(l3_const.FLOATINGIP_KEY, router)
