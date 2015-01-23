@@ -106,7 +106,8 @@ class NetworkConnection(model_base.BASEV2, models_v2.HasTenant):
     segmentation_id = sa.Column(sa.Integer)
     __table_args__ = (sa.UniqueConstraint(network_gateway_id,
                                           segmentation_type,
-                                          segmentation_id),)
+                                          segmentation_id),
+                      model_base.BASEV2.__table_args__)
     # Also, storing port id comes back useful when disconnecting a network
     # from a gateway
     port_id = sa.Column(sa.String(36),

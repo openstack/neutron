@@ -203,7 +203,8 @@ class NsxvPortIndexMapping(model_base.BASEV2):
                         primary_key=True)
     device_id = sa.Column(sa.String(255), nullable=False)
     index = sa.Column(sa.Integer, nullable=False)
-    __table_args__ = (sa.UniqueConstraint(device_id, index),)
+    __table_args__ = (sa.UniqueConstraint(device_id, index),
+                      model_base.BASEV2.__table_args__)
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
     # eagerly read port vnic-index

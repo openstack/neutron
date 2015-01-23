@@ -63,6 +63,7 @@ class VxlanEndpoints(model_base.BASEV2):
     __table_args__ = (
         sa.UniqueConstraint('host',
                             name='unique_ml2_vxlan_endpoints0host'),
+        model_base.BASEV2.__table_args__
     )
     ip_address = sa.Column(sa.String(64), primary_key=True)
     udp_port = sa.Column(sa.Integer, nullable=False)

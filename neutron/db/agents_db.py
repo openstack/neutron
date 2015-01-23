@@ -46,6 +46,7 @@ class Agent(model_base.BASEV2, models_v2.HasId):
     __table_args__ = (
         sa.UniqueConstraint('agent_type', 'host',
                             name='uniq_agents0agent_type0host'),
+        model_base.BASEV2.__table_args__
     )
 
     # L3 agent, DHCP agent, OVS agent, LinuxBridge
