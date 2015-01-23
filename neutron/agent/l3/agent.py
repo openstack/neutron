@@ -710,6 +710,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             if ri.router['distributed']:
                 self.floating_ip_removed_dist(ri, ip_cidr)
 
+    def _get_router_cidrs(self, ri, device):
+        if ri.is_ha:
+            return set(self._ha_get_existing_cidrs(ri, device.name))
+        else:
+            return set([addr['cidr'] for addr in device.addr.list()])
+
     def process_router_floating_ip_addresses(self, ri, ex_gw_port):
         """Configure IP addresses on router's external gateway interface.
 
@@ -725,7 +731,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         device = ip_lib.IPDevice(interface_name, self.root_helper,
                                  namespace=ri.ns_name)
-        existing_cidrs = set([addr['cidr'] for addr in device.addr.list()])
+        existing_cidrs = self._get_router_cidrs(ri, device)
         new_cidrs = set()
 
         floating_ips = self.get_floating_ips(ri)

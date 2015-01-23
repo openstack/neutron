@@ -187,6 +187,12 @@ vrrp_instance VR_2 {
         config.reset()
         self.assertEqual('', config.get_config_str())
 
+    def test_get_existing_vip_ip_addresses_returns_list(self):
+        config = self._get_config()
+        instance = config.get_instance(1)
+        current_vips = sorted(instance.get_existing_vip_ip_addresses('eth2'))
+        self.assertEqual(['192.168.2.0/24', '192.168.3.0/24'], current_vips)
+
 
 class KeepalivedStateExceptionTestCase(base.BaseTestCase):
     def test_state_exception(self):

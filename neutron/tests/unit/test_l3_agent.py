@@ -1007,6 +1007,27 @@ class TestBasicRouterOperations(base.BaseTestCase):
         )
         self._test_process_router_floating_ip_addresses_add(ri, agent)
 
+    def test_get_router_cidrs_returns_cidrs(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = mock.MagicMock()
+        ri.is_ha = False
+        addresses = ['15.1.2.2/24', '15.1.2.3/32']
+        device = mock.MagicMock()
+        device.addr.list.return_value = [{'cidr': addresses[0]},
+                                         {'cidr': addresses[1]}]
+        self.assertEqual(set(addresses), agent._get_router_cidrs(ri, device))
+
+    def test_get_router_cidrs_returns_ha_cidrs(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = mock.MagicMock()
+        ri.is_ha = True
+        device = mock.MagicMock()
+        device.name.return_value = 'eth2'
+        addresses = ['15.1.2.2/24', '15.1.2.3/32']
+        agent._ha_get_existing_cidrs = mock.MagicMock()
+        agent._ha_get_existing_cidrs.return_value = addresses
+        self.assertEqual(set(addresses), agent._get_router_cidrs(ri, device))
+
     # TODO(mrsmith): refactor for DVR cases
     @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
     def test_process_router_floating_ip_addresses_remove(self, IPDevice):

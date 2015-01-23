@@ -139,6 +139,10 @@ class AgentMixin(object):
         instance = ri.keepalived_manager.config.get_instance(ri.ha_vr_id)
         instance.remove_vips_vroutes_by_interface(interface)
 
+    def _ha_get_existing_cidrs(self, ri, interface_name):
+        instance = ri.keepalived_manager.config.get_instance(ri.ha_vr_id)
+        return instance.get_existing_vip_ip_addresses(interface_name)
+
     def _add_keepalived_notifiers(self, ri):
         callback = (
             metadata_driver.MetadataDriver._get_metadata_proxy_callback(
