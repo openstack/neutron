@@ -47,7 +47,8 @@ class TestNetnsCleanup(base.BaseTestCase):
 
             expected_params = {'conf': conf, 'network': mock.ANY,
                                'root_helper': conf.AGENT.root_helper,
-                               'plugin': mock.ANY}
+                               'plugin': mock.ANY,
+                               'process_monitor': mock.ANY}
             import_object.assert_called_once_with('driver', **expected_params)
 
             if dhcp_active:

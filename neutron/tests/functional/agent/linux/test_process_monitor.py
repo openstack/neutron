@@ -32,11 +32,15 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
         cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
         self._child_processes = []
         self._ext_processes = None
+        self.create_child_processes_manager('respawn')
         self.addCleanup(self.cleanup_spawned_children)
 
     def create_child_processes_manager(self, action):
         cfg.CONF.set_override('check_child_processes_action', action, 'AGENT')
-        self._ext_processes = external_process.ProcessMonitor(
+        self._ext_processes = self.build_process_monitor()
+
+    def build_process_monitor(self):
+        return external_process.ProcessMonitor(
             config=cfg.CONF,
             root_helper=None,
             resource_type='test',
@@ -54,7 +58,7 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
             return cmdline
         return _cmdline_callback
 
-    def _spawn_n_children(self, n, service=None):
+    def spawn_n_children(self, n, service=None):
         self._child_processes = []
         for child_number in moves.xrange(n):
             uuid = self._child_uuid(child_number)
@@ -74,7 +78,7 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
         self._child_processes[-1].disable()
 
     def spawn_child_processes_and_kill_last(self, service=None, number=2):
-        self._spawn_n_children(number, service)
+        self.spawn_n_children(number, service)
         self._kill_last_child()
         self.assertFalse(self._child_processes[-1].active)
 
@@ -102,6 +106,17 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
 class TestProcessMonitor(BaseTestProcessMonitor):
 
     def test_respawn_handler(self):
-        self.create_child_processes_manager('respawn')
         self.spawn_child_processes_and_kill_last()
         self.wait_for_all_childs_respawned()
+
+    def test_new_process_monitor_finds_old_process(self):
+        self.spawn_n_children(1)
+        spawn_process = self._child_processes[-1]
+        uuid = spawn_process.uuid
+
+        another_pm = self.build_process_monitor()
+        self.assertTrue(another_pm.is_active(uuid))
+        self.assertEqual(another_pm.get_pid(uuid), spawn_process.pid)
+
+    def test_tries_to_get_pid_for_unknown_uuid(self):
+        self.assertIsNone(self._ext_processes.get_pid('bad-uuid'))

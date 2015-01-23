@@ -117,7 +117,10 @@ fake_dist_port = dhcp.DictModel(dict(id='12345678-1234-aaaa-1234567890ab',
                                 device_id='forzanapoli',
                                 fixed_ips=[fake_meta_fixed_ip]))
 
-fake_network = dhcp.NetModel(True, dict(id='12345678-1234-5678-1234567890ab',
+FAKE_NETWORK_UUID = '12345678-1234-5678-1234567890ab'
+FAKE_NETWORK_DHCP_NS = "qdhcp-%s" % FAKE_NETWORK_UUID
+
+fake_network = dhcp.NetModel(True, dict(id=FAKE_NETWORK_UUID,
                              tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
                              admin_state_up=True,
                              subnets=[fake_subnet1, fake_subnet2],
@@ -263,6 +266,7 @@ class TestDhcpAgent(base.BaseTestCase):
         self.assertTrue(dhcp.call_driver('foo', network))
         self.driver.assert_called_once_with(cfg.CONF,
                                             mock.ANY,
+                                            mock.ANY,
                                             'sudo',
                                             mock.ANY,
                                             mock.ANY)
@@ -278,6 +282,7 @@ class TestDhcpAgent(base.BaseTestCase):
                                    'schedule_resync') as schedule_resync:
                 self.assertIsNone(dhcp.call_driver('foo', network))
                 self.driver.assert_called_once_with(cfg.CONF,
+                                                    mock.ANY,
                                                     mock.ANY,
                                                     'sudo',
                                                     mock.ANY,
@@ -548,24 +553,30 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         )
         self.external_process = self.external_process_p.start()
 
+    def _process_manager_constructor_call(self):
+        return mock.call(conf=cfg.CONF,
+                        uuid=FAKE_NETWORK_UUID,
+                        root_helper='sudo',
+                        namespace=FAKE_NETWORK_DHCP_NS,
+                        service=None,
+                        default_cmd_callback=mock.ANY,
+                        pid_file=None,
+                        cmd_addl_env=None)
+
     def _enable_dhcp_helper(self, network, enable_isolated_metadata=False,
                             is_isolated_network=False):
         if enable_isolated_metadata:
             cfg.CONF.set_override('enable_isolated_metadata', True)
         self.plugin.get_network_info.return_value = network
         self.dhcp.enable_dhcp_helper(network.id)
-        self.plugin.assert_has_calls(
-            [mock.call.get_network_info(network.id)])
+        self.plugin.assert_has_calls([
+            mock.call.get_network_info(network.id)])
         self.call_driver.assert_called_once_with('enable', network)
         self.cache.assert_has_calls([mock.call.put(network)])
         if is_isolated_network:
             self.external_process.assert_has_calls([
-                mock.call(
-                    cfg.CONF,
-                    '12345678-1234-5678-1234567890ab',
-                    'sudo',
-                    'qdhcp-12345678-1234-5678-1234567890ab'),
-                mock.call().enable(mock.ANY)
+                self._process_manager_constructor_call(),
+                mock.call().enable(reload_cfg=False)
             ])
         else:
             self.assertFalse(self.external_process.call_count)
@@ -687,13 +698,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_called_once_with('disable', fake_network)
         if isolated_metadata:
             self.external_process.assert_has_calls([
-                mock.call(
-                    cfg.CONF,
-                    '12345678-1234-5678-1234567890ab',
-                    'sudo',
-                    'qdhcp-12345678-1234-5678-1234567890ab'),
-                mock.call().disable()
-            ])
+                self._process_manager_constructor_call(),
+                mock.call().disable()])
         else:
             self.assertFalse(self.external_process.call_count)
 
@@ -724,11 +730,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             [mock.call.get_network_by_id(fake_network.id)])
         if isolated_metadata:
             self.external_process.assert_has_calls([
-                mock.call(
-                    cfg.CONF,
-                    '12345678-1234-5678-1234567890ab',
-                    'sudo',
-                    'qdhcp-12345678-1234-5678-1234567890ab'),
+                self._process_manager_constructor_call(),
                 mock.call().disable()
             ])
         else:
@@ -741,54 +743,41 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self._disable_dhcp_helper_driver_failure()
 
     def test_enable_isolated_metadata_proxy(self):
-        class_path = 'neutron.agent.linux.external_process.ProcessManager'
-        with mock.patch(class_path) as ext_process:
-            self.dhcp.enable_isolated_metadata_proxy(fake_network)
-            ext_process.assert_has_calls([
-                mock.call(
-                    cfg.CONF,
-                    '12345678-1234-5678-1234567890ab',
-                    'sudo',
-                    'qdhcp-12345678-1234-5678-1234567890ab'),
-                mock.call().enable(mock.ANY)
-            ])
+        self.dhcp.enable_isolated_metadata_proxy(fake_network)
+        self.external_process.assert_has_calls([
+            self._process_manager_constructor_call(),
+            mock.call().enable(reload_cfg=False)
+        ])
 
     def test_disable_isolated_metadata_proxy(self):
-        class_path = 'neutron.agent.linux.external_process.ProcessManager'
-        with mock.patch(class_path) as ext_process:
-            self.dhcp.disable_isolated_metadata_proxy(fake_network)
-            ext_process.assert_has_calls([
-                mock.call(
-                    cfg.CONF,
-                    '12345678-1234-5678-1234567890ab',
-                    'sudo',
-                    'qdhcp-12345678-1234-5678-1234567890ab'),
-                mock.call().disable()
-            ])
+        self.dhcp.disable_isolated_metadata_proxy(fake_network)
+        self.external_process.assert_has_calls([
+            self._process_manager_constructor_call(),
+            mock.call().disable()
+        ])
 
     def _test_metadata_network(self, network):
         cfg.CONF.set_override('enable_metadata_network', True)
         cfg.CONF.set_override('debug', True)
         cfg.CONF.set_override('verbose', False)
         cfg.CONF.set_override('log_file', 'test.log')
-        class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
-        self.external_process_p.stop()
-        with mock.patch(class_path) as ip_wrapper:
-            self.dhcp.enable_isolated_metadata_proxy(network)
-            ip_wrapper.assert_has_calls([mock.call(
-                'sudo',
-                'qdhcp-12345678-1234-5678-1234567890ab'),
-                mock.call().netns.execute([
-                    'neutron-ns-metadata-proxy',
-                    mock.ANY,
-                    mock.ANY,
-                    '--router_id=forzanapoli',
-                    mock.ANY,
-                    mock.ANY,
-                    '--debug',
-                    ('--log-file=neutron-ns-metadata-proxy-%s.log' %
-                     network.id)], addl_env=None)
-            ])
+        self.dhcp.enable_isolated_metadata_proxy(network)
+
+        self.external_process.assert_has_calls([
+            self._process_manager_constructor_call()])
+
+        callback = self.external_process.call_args[1]['default_cmd_callback']
+        result_cmd = callback('pidfile')
+        self.assertEqual(
+            result_cmd,
+            ['neutron-ns-metadata-proxy',
+             '--pid_file=pidfile',
+             '--metadata_proxy_socket=%s' % cfg.CONF.metadata_proxy_socket,
+             '--router_id=forzanapoli',
+             '--state_path=%s' % cfg.CONF.state_path,
+             '--metadata_port=%d' % dhcp.METADATA_PORT,
+             '--debug',
+             '--log-file=neutron-ns-metadata-proxy-%s.log' % network.id])
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
         self._test_metadata_network(fake_meta_network)
@@ -1297,7 +1286,7 @@ class TestDeviceManager(base.BaseTestCase):
 
     def test_destroy(self):
         fake_net = dhcp.NetModel(
-            True, dict(id='12345678-1234-5678-1234567890ab',
+            True, dict(id=FAKE_NETWORK_UUID,
                        tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'))
 
         fake_port = dhcp.DictModel(

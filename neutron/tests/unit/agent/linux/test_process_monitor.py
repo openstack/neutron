@@ -94,6 +94,3 @@ class TestProcessMonitor(BaseTestProcessMonitor):
 
     def test_pid_method_with_service(self):
         self.test_pid_method(TEST_PID)
-
-    def test_pid_method_unknown_uuid(self):
-        self.assertFalse(self.pmonitor.get_pid('bad-uuid'))

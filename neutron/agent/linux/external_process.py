@@ -13,6 +13,7 @@
 #    under the License.
 
 import collections
+import os.path
 
 import eventlet
 from oslo.config import cfg
@@ -22,6 +23,7 @@ from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.i18n import _LE
+from neutron.openstack.common import fileutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -46,7 +48,7 @@ class ProcessManager(object):
     def __init__(self, conf, uuid, root_helper='sudo',
                  namespace=None, service=None, pids_path=None,
                  default_cmd_callback=None,
-                 cmd_addl_env=None):
+                 cmd_addl_env=None, pid_file=None):
 
         self.conf = conf
         self.uuid = uuid
@@ -55,6 +57,7 @@ class ProcessManager(object):
         self.default_cmd_callback = default_cmd_callback
         self.cmd_addl_env = cmd_addl_env
         self.pids_path = pids_path or self.conf.external_pids
+        self.pid_file = pid_file
 
         if service:
             self.service_pid_fname = 'pid.' + service
@@ -85,9 +88,7 @@ class ProcessManager(object):
             utils.execute(cmd, self.root_helper)
             # In the case of shutting down, remove the pid file
             if sig == '9':
-                utils.remove_conf_file(self.pids_path,
-                                       self.uuid,
-                                       self.service_pid_fname)
+                fileutils.delete_if_exists(self.get_pid_file_name())
         elif pid:
             LOG.debug('Process for %(uuid)s pid %(pid)d is stale, ignoring '
                       'signal %(signal)s', {'uuid': self.uuid, 'pid': pid,
@@ -97,18 +98,20 @@ class ProcessManager(object):
 
     def get_pid_file_name(self, ensure_pids_dir=False):
         """Returns the file name for a given kind of config file."""
-        return utils.get_conf_file_name(self.pids_path,
-                                        self.uuid,
-                                        self.service_pid_fname,
-                                        ensure_pids_dir)
+        if self.pid_file:
+            if ensure_pids_dir:
+                utils.ensure_dir(os.path.dirname(self.pid_file))
+            return self.pid_file
+        else:
+            return utils.get_conf_file_name(self.pids_path,
+                                            self.uuid,
+                                            self.service_pid_fname,
+                                            ensure_pids_dir)
 
     @property
     def pid(self):
         """Last known pid for this external process spawned for this uuid."""
-        return utils.get_value_from_conf_file(self.pids_path,
-                                              self.uuid,
-                                              self.service_pid_fname,
-                                              int)
+        return utils.get_value_from_file(self.get_pid_file_name(), int)
 
     @property
     def active(self):
@@ -154,38 +157,53 @@ class ProcessMonitor(object):
             self._spawn_checking_thread()
 
     def enable(self, uuid, cmd_callback, namespace=None, service=None,
-               reload_cfg=False, cmd_addl_env=None):
-        """Creates a process and ensures that it is monitored.
+               reload_cfg=False, cmd_addl_env=None, pid_file=None):
+        """Creates a process manager and ensures that it is monitored.
 
-        It will create a new ProcessManager and tie it to the uuid/service.
+        It will create a new ProcessManager and tie it to the uuid/service
+        with the new settings, replacing the old one if it existed already.
+
+        :param uuid: UUID of the resource this process will serve for.
+        :param cmd_callback: Callback function that receives a pid_file
+                             location and returns a list with the command
+                             and arguments.
+        :param namespace: network namespace to run the process in, if
+                          necessary.
+        :param service: a logical name for the service this process provides,
+                        it will extend the pid file like pid.%(service)s.
+        :param reload_cfg: if the process is active send a HUP signal
+                           for configuration reload, otherwise spawn it
+                           normally.
+        :param cmd_addl_env: additional environment variables for the
+                             spawned process.
+        :param pid_file: the pid file to store the pid of the external
+                         process. If not provided, a default will be used.
         """
-        process_manager = ProcessManager(conf=self._config,
-                                         uuid=uuid,
-                                         root_helper=self._root_helper,
-                                         namespace=namespace,
-                                         service=service,
-                                         default_cmd_callback=cmd_callback,
-                                         cmd_addl_env=cmd_addl_env)
+        process_manager = self._create_process_manager(
+            uuid=uuid,
+            cmd_callback=cmd_callback,
+            namespace=namespace,
+            service=service,
+            cmd_addl_env=cmd_addl_env,
+            pid_file=pid_file)
 
         process_manager.enable(reload_cfg=reload_cfg)
         service_id = ServiceId(uuid, service)
+
+        # replace the old process manager with the new one
         self._process_managers[service_id] = process_manager
 
-    def disable(self, uuid, namespace=None, service=None):
+    def disable(self, uuid, namespace=None, service=None,
+                pid_file=None):
         """Disables the process and stops monitoring it."""
         service_id = ServiceId(uuid, service)
-        process_manager = self._process_managers.pop(service_id, None)
 
-        # we could be trying to disable a process_manager which was
-        # started on a separate run of this agent, or during netns-cleanup
-        # therefore we won't know about such uuid and we need to
-        # build the process_manager to kill it
-        if not process_manager:
-            process_manager = ProcessManager(conf=self._config,
-                                             uuid=uuid,
-                                             root_helper=self._root_helper,
-                                             namespace=namespace,
-                                             service=service)
+        process_manager = self._ensure_process_manager(
+            uuid=uuid,
+            service=service,
+            pid_file=pid_file,
+            namespace=namespace)
+        self._process_managers.pop(service_id, None)
 
         process_manager.disable()
 
@@ -198,18 +216,47 @@ class ProcessMonitor(object):
         service_id = ServiceId(uuid, service)
         return self._process_managers.get(service_id)
 
-    def _get_process_manager_attribute(self, attribute, uuid, service=None):
+    def is_active(self, uuid, service=None, pid_file=None):
+        return self._ensure_process_manager(
+            uuid=uuid,
+            service=service,
+            pid_file=pid_file).active
+
+    def get_pid(self, uuid, service=None, pid_file=None):
+        return self._ensure_process_manager(
+            uuid=uuid,
+            service=service,
+            pid_file=pid_file).pid
+
+    def _ensure_process_manager(self, uuid, cmd_callback=None,
+                                namespace=None, service=None,
+                                cmd_addl_env=None,
+                                pid_file=None,
+                                ):
+
         process_manager = self.get_process_manager(uuid, service)
-        if process_manager:
-            return getattr(process_manager, attribute)
-        else:
-            return False
+        if not process_manager:
+            # if the process existed in a different run of the agent
+            # provide one, generally for pid / active evaluation
+            process_manager = self._create_process_manager(
+                uuid=uuid,
+                cmd_callback=cmd_callback,
+                namespace=namespace,
+                service=service,
+                cmd_addl_env=cmd_addl_env,
+                pid_file=pid_file)
+        return process_manager
 
-    def is_active(self, uuid, service=None):
-        return self._get_process_manager_attribute('active', uuid, service)
-
-    def get_pid(self, uuid, service=None):
-        return self._get_process_manager_attribute('pid', uuid, service)
+    def _create_process_manager(self, uuid, cmd_callback, namespace, service,
+                                cmd_addl_env, pid_file):
+        return ProcessManager(conf=self._config,
+                              uuid=uuid,
+                              root_helper=self._root_helper,
+                              namespace=namespace,
+                              service=service,
+                              default_cmd_callback=cmd_callback,
+                              cmd_addl_env=cmd_addl_env,
+                              pid_file=pid_file)
 
     def _spawn_checking_thread(self):
         eventlet.spawn(self._periodic_checking_thread)

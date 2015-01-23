@@ -27,6 +27,7 @@ from oslo.utils import excutils
 
 from neutron.common import constants
 from neutron.common import utils
+from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 
 
@@ -133,12 +134,17 @@ def find_child_pids(pid):
     return [x.strip() for x in raw_pids.split('\n') if x.strip()]
 
 
+def ensure_dir(dir_path):
+    """Ensure a directory with 755 permissions mode."""
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path, 0o755)
+
+
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
     conf_dir = os.path.abspath(os.path.normpath(cfg_root))
     conf_base = os.path.join(conf_dir, uuid)
     if ensure_conf_dir:
-        if not os.path.isdir(conf_dir):
-            os.makedirs(conf_dir, 0o755)
+        ensure_dir(conf_dir)
     return conf_base
 
 
@@ -148,35 +154,28 @@ def get_conf_file_name(cfg_root, uuid, cfg_file, ensure_conf_dir=False):
     return "%s.%s" % (conf_base, cfg_file)
 
 
-def get_value_from_conf_file(cfg_root, uuid, cfg_file, converter=None):
-    """A helper function to read a value from one of a config file."""
-    file_name = get_conf_file_name(cfg_root, uuid, cfg_file)
-    msg = _('Error while reading %s')
+def get_value_from_file(filename, converter=None):
 
     try:
-        with open(file_name, 'r') as f:
+        with open(filename, 'r') as f:
             try:
                 return converter(f.read()) if converter else f.read()
             except ValueError:
-                msg = _('Unable to convert value in %s')
+                LOG.error(_LE('Unable to convert value in %s'), filename)
     except IOError:
-        msg = _('Unable to access %s')
+        LOG.debug('Unable to access %s', filename)
 
-    LOG.debug(msg, file_name)
-    return None
+
+def get_value_from_conf_file(cfg_root, uuid, cfg_file, converter=None):
+    """A helper function to read a value from one of a config file."""
+    file_name = get_conf_file_name(cfg_root, uuid, cfg_file)
+    return get_value_from_file(file_name, converter)
 
 
 def remove_conf_files(cfg_root, uuid):
     conf_base = _get_conf_base(cfg_root, uuid, False)
     for file_path in glob.iglob("%s.*" % conf_base):
         os.unlink(file_path)
-
-
-def remove_conf_file(cfg_root, uuid, cfg_file):
-    """Remove a config file."""
-    conf_file = get_conf_file_name(cfg_root, uuid, cfg_file)
-    if os.path.exists(conf_file):
-        os.unlink(conf_file)
 
 
 def get_root_helper_child_pid(pid, root_helper=None):
