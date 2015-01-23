@@ -742,11 +742,6 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             getattr(self, method)(context, values)
 
 
-class LinuxBridgePluginApi(agent_rpc.PluginApi,
-                           sg_rpc.SecurityGroupServerRpcApiMixin):
-    pass
-
-
 class LinuxBridgeSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
     def __init__(self, context, plugin_rpc, root_helper):
         self.context = context
@@ -778,9 +773,10 @@ class LinuxBridgeNeutronAgentRPC(object):
         # stores received port_updates for processing by the main loop
         self.updated_devices = set()
         self.context = context.get_admin_context_without_session()
-        self.plugin_rpc = LinuxBridgePluginApi(topics.PLUGIN)
+        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = LinuxBridgeSecurityGroupAgent(self.context,
-                self.plugin_rpc, self.root_helper)
+                self.sg_plugin_rpc, self.root_helper)
         self.setup_rpc(interface_mappings.values())
 
     def _report_state(self):
