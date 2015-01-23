@@ -125,8 +125,7 @@ class MetaNeutronPluginV2Test(testlib_api.SqlTestCase,
                          'admin_state_up': True,
                          'host_routes': [],
                          'fixed_ips': [],
-                         'mac_address':
-                         self.plugin._generate_mac(self.context, net_id),
+                         'mac_address': self.plugin._generate_mac(),
                          'tenant_id': self.fake_tenant_id}}
 
     def _fake_subnet(self, net_id):

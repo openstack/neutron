@@ -1311,20 +1311,22 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
     def test_mac_exhaustion(self):
         # rather than actually consuming all MAC (would take a LONG time)
-        # we just raise the exception that would result.
-        @staticmethod
-        def fake_gen_mac(context, net_id):
-            raise n_exc.MacAddressGenerationFailure(net_id=net_id)
+        # we try to allocate an already allocated mac address
+        cfg.CONF.set_override('mac_generation_retries', 3)
 
-        with mock.patch.object(neutron.db.db_base_plugin_v2.NeutronDbPluginV2,
-                               '_generate_mac', new=fake_gen_mac):
-            res = self._create_network(fmt=self.fmt, name='net1',
-                                       admin_state_up=True)
-            network = self.deserialize(self.fmt, res)
-            net_id = network['network']['id']
+        res = self._create_network(fmt=self.fmt, name='net1',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        net_id = network['network']['id']
+
+        error = n_exc.MacAddressInUse(net_id=net_id, mac='00:11:22:33:44:55')
+        with mock.patch.object(
+                neutron.db.db_base_plugin_v2.NeutronDbPluginV2,
+                '_create_port_with_mac', side_effect=error) as create_mock:
             res = self._create_port(self.fmt, net_id=net_id)
             self.assertEqual(res.status_int,
                              webob.exc.HTTPServiceUnavailable.code)
+            self.assertEqual(3, create_mock.call_count)
 
     def test_requested_duplicate_ip(self):
         with self.subnet() as subnet:
