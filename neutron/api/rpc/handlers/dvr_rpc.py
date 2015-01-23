@@ -16,6 +16,7 @@
 from oslo import messaging
 
 from neutron.common import log
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -23,10 +24,12 @@ from neutron.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class DVRServerRpcApiMixin(object):
+class DVRServerRpcApi(object):
     """Agent-side RPC (stub) for agent-to-plugin interaction."""
 
-    DVR_RPC_VERSION = "1.0"
+    def __init__(self, topic):
+        target = messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
     @log.log
     def get_dvr_mac_address_by_host(self, context, host):
