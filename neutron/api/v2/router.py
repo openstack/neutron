@@ -25,6 +25,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron import manager
 from neutron.openstack.common import log as logging
+from neutron import policy
 from neutron import wsgi
 
 
@@ -112,4 +113,12 @@ class APIRouter(wsgi.Router):
                               dict()),
                           SUB_RESOURCES[resource]['parent'])
 
+        # Certain policy checks require that the extensions are loaded
+        # and the RESOURCE_ATTRIBUTE_MAP populated before they can be
+        # properly initialized. This can only be claimed with certainty
+        # once this point in the code has been reached. In the event
+        # that the policies have been initialized before this point,
+        # calling reset will cause the next policy check to
+        # re-initialize with all of the required data in place.
+        policy.reset()
         super(APIRouter, self).__init__(mapper)
