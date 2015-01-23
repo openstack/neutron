@@ -519,10 +519,6 @@ class Dnsmasq(DhcpLocalProcess):
             if netaddr.valid_ipv6(ip_address):
                 ip_address = '[%s]' % ip_address
 
-            LOG.debug(_('Adding %(mac)s : %(name)s : %(ip)s'),
-                      {"mac": port.mac_address, "name": name,
-                       "ip": ip_address})
-
             if getattr(port, 'extra_dhcp_opts', False):
                 buf.write('%s,%s,%s,%s%s\n' %
                           (port.mac_address, name, ip_address,
@@ -532,7 +528,8 @@ class Dnsmasq(DhcpLocalProcess):
                           (port.mac_address, name, ip_address))
 
         utils.replace_file(filename, buf.getvalue())
-        LOG.debug(_('Done building host file %s'), filename)
+        LOG.debug('Done building host file %s with contents:\n%s', filename,
+                  buf.getvalue())
         return filename
 
     def _read_hosts_file_leases(self, filename):
