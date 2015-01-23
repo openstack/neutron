@@ -159,8 +159,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.ipv4['filter'].remove_chain(chain_name)
         self.iptables.ipv6['filter'].remove_chain(chain_name)
 
-    def _add_rule_to_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules,
-                                comment=None):
+    def _add_rules_to_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules,
+                                 comment=None):
         for rule in ipv4_rules:
             self.iptables.ipv4['filter'].add_rule(chain_name, rule,
                                                   comment=comment)
@@ -187,20 +187,20 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                      '-j $%s' % (self.IPTABLES_DIRECTION[direction],
                                  device,
                                  SG_CHAIN)]
-        self._add_rule_to_chain_v4v6('FORWARD', jump_rule, jump_rule,
-                                     comment=ic.VM_INT_SG)
+        self._add_rules_to_chain_v4v6('FORWARD', jump_rule, jump_rule,
+                                      comment=ic.VM_INT_SG)
 
         # jump to the chain based on the device
         jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
                      '-j $%s' % (self.IPTABLES_DIRECTION[direction],
                                  device,
                                  chain_name)]
-        self._add_rule_to_chain_v4v6(SG_CHAIN, jump_rule, jump_rule,
-                                     comment=ic.SG_TO_VM_SG)
+        self._add_rules_to_chain_v4v6(SG_CHAIN, jump_rule, jump_rule,
+                                      comment=ic.SG_TO_VM_SG)
 
         if direction == EGRESS_DIRECTION:
-            self._add_rule_to_chain_v4v6('INPUT', jump_rule, jump_rule,
-                                         comment=ic.INPUT_TO_SG)
+            self._add_rules_to_chain_v4v6('INPUT', jump_rule, jump_rule,
+                                          comment=ic.INPUT_TO_SG)
 
     def _split_sgr_by_ethertype(self, security_group_rules):
         ipv4_sg_rules = []
@@ -341,22 +341,22 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # for ipv6, iptables6 command is used
         ipv4_sg_rules, ipv6_sg_rules = self._split_sgr_by_ethertype(
             security_group_rules)
-        ipv4_iptables_rule = []
-        ipv6_iptables_rule = []
+        ipv4_iptables_rules = []
+        ipv6_iptables_rules = []
         if direction == EGRESS_DIRECTION:
             self._spoofing_rule(port,
-                                ipv4_iptables_rule,
-                                ipv6_iptables_rule)
-            self._drop_dhcp_rule(ipv4_iptables_rule, ipv6_iptables_rule)
+                                ipv4_iptables_rules,
+                                ipv6_iptables_rules)
+            self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
         if direction == INGRESS_DIRECTION:
-            ipv6_iptables_rule += self._accept_inbound_icmpv6()
-        ipv4_iptables_rule += self._convert_sgr_to_iptables_rules(
+            ipv6_iptables_rules += self._accept_inbound_icmpv6()
+        ipv4_iptables_rules += self._convert_sgr_to_iptables_rules(
             ipv4_sg_rules)
-        ipv6_iptables_rule += self._convert_sgr_to_iptables_rules(
+        ipv6_iptables_rules += self._convert_sgr_to_iptables_rules(
             ipv6_sg_rules)
-        self._add_rule_to_chain_v4v6(chain_name,
-                                     ipv4_iptables_rule,
-                                     ipv6_iptables_rule)
+        self._add_rules_to_chain_v4v6(chain_name,
+                                      ipv4_iptables_rules,
+                                      ipv6_iptables_rules)
 
     def _get_cur_sg_member_ips(self, sg_id, ethertype):
         return self.sg_members.get(sg_id, {}).get(ethertype, [])
