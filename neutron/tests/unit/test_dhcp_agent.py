@@ -53,6 +53,7 @@ fake_subnet1 = dhcp.DictModel(dict(id='bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb',
                               tenant_id=fake_tenant_id,
                               gateway_ip='172.9.9.1', host_routes=[],
                               dns_nameservers=[], ip_version=4,
+                              ipv6_ra_mode=None, ipv6_address_mode=None,
                               allocation_pools=fake_subnet1_allocation_pools))
 
 fake_subnet2_allocation_pools = dhcp.DictModel(dict(id='', start='172.9.8.2',
@@ -70,9 +71,10 @@ fake_subnet3 = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
 
 fake_ipv6_subnet = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                               network_id='12345678-1234-5678-1234567890ab',
-                              cidr='2001:0db8::1:0:0:1/128', enable_dhcp=True,
+                              cidr='2001:0db8::0/64', enable_dhcp=True,
                               tenant_id=fake_tenant_id,
-                              gateway_ip='2001:0db8::1:0:0:1', ip_version=6))
+                              gateway_ip='2001:0db8::1', ip_version=6,
+                              ipv6_ra_mode='slaac', ipv6_address_mode=None))
 
 fake_meta_subnet = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                                   network_id='12345678-1234-5678-1234567890ab',
@@ -84,6 +86,8 @@ fake_fixed_ip1 = dhcp.DictModel(dict(id='', subnet_id=fake_subnet1.id,
                                 ip_address='172.9.9.9'))
 fake_fixed_ip2 = dhcp.DictModel(dict(id='', subnet_id=fake_subnet1.id,
                                 ip_address='172.9.9.10'))
+fake_fixed_ipv6 = dhcp.DictModel(dict(id='', subnet_id=fake_ipv6_subnet.id,
+                                 ip_address='2001:db8::a8bb:ccff:fedd:ee99'))
 fake_meta_fixed_ip = dhcp.DictModel(dict(id='', subnet=fake_meta_subnet,
                                     ip_address='169.254.169.254'))
 fake_allocation_pool_subnet1 = dhcp.DictModel(dict(id='', start='172.9.9.2',
@@ -102,6 +106,12 @@ fake_port2 = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789000',
                             mac_address='aa:bb:cc:dd:ee:99',
                             network_id='12345678-1234-5678-1234567890ab',
                             fixed_ips=[fake_fixed_ip2]))
+
+fake_ipv6_port = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789000',
+                                device_owner='',
+                                mac_address='aa:bb:cc:dd:ee:99',
+                                network_id='12345678-1234-5678-1234567890ab',
+                                fixed_ips=[fake_fixed_ipv6]))
 
 fake_meta_port = dhcp.DictModel(dict(id='12345678-1234-aaaa-1234567890ab',
                                 mac_address='aa:bb:cc:dd:ee:ff',
@@ -127,7 +137,8 @@ fake_network_ipv6 = dhcp.NetModel(True, dict(
                              id='12345678-1234-5678-1234567890ab',
                              tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
                              admin_state_up=True,
-                             subnets=[fake_ipv6_subnet]))
+                             subnets=[fake_ipv6_subnet],
+                             ports=[fake_ipv6_port]))
 
 fake_network_ipv6_ipv4 = dhcp.NetModel(True, dict(
                              id='12345678-1234-5678-1234567890ab',
@@ -1204,10 +1215,13 @@ class TestDeviceManager(base.BaseTestCase):
                 {'port': {'name': '', 'admin_state_up': True,
                           'network_id': net.id, 'tenant_id': net.tenant_id,
                           'fixed_ips':
-                          [{'subnet_id': fake_fixed_ip1.subnet_id}],
+                          [{'subnet_id': port.fixed_ips[0].subnet_id}],
                           'device_id': mock.ANY}})])
 
-        expected_ips = ['172.9.9.9/24', '169.254.169.254/16']
+        if port == fake_ipv6_port:
+            expected_ips = ['169.254.169.254/16']
+        else:
+            expected_ips = ['172.9.9.9/24', '169.254.169.254/16']
         expected = [
             mock.call.get_device_name(port),
             mock.call.init_l3(
@@ -1231,6 +1245,10 @@ class TestDeviceManager(base.BaseTestCase):
         self._test_setup_helper(False)
         cfg.CONF.set_override('enable_metadata_network', True)
         self._test_setup_helper(False)
+
+    def test_setup_ipv6(self):
+        self._test_setup_helper(True, net=fake_network_ipv6,
+                                port=fake_ipv6_port)
 
     def test_setup_device_is_ready(self):
         self._test_setup_helper(True)

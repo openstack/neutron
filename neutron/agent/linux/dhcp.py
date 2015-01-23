@@ -30,6 +30,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
@@ -966,9 +967,10 @@ class DeviceManager(object):
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
             subnet = fixed_ip.subnet
-            net = netaddr.IPNetwork(subnet.cidr)
-            ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
-            ip_cidrs.append(ip_cidr)
+            if not ipv6_utils.is_auto_address_subnet(subnet):
+                net = netaddr.IPNetwork(subnet.cidr)
+                ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
+                ip_cidrs.append(ip_cidr)
 
         if (self.conf.enable_isolated_metadata and
             self.conf.use_namespaces):
