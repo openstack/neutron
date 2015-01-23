@@ -116,7 +116,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         devices = [DEVICE_1]
         with contextlib.nested(
             mock.patch.object(agent.plugin_rpc, "update_device_down"),
-            mock.patch.object(agent, "remove_devices_filter")
+            mock.patch.object(agent.sg_agent, "remove_devices_filter")
         ) as (fn_udd, fn_rdf):
             fn_udd.return_value = {'device': DEVICE_1,
                                    'exists': True}
@@ -135,7 +135,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         devices = [DEVICE_1]
         with contextlib.nested(
             mock.patch.object(agent.plugin_rpc, "update_device_down"),
-            mock.patch.object(agent, "remove_devices_filter")
+            mock.patch.object(agent.sg_agent, "remove_devices_filter")
         ) as (fn_udd, fn_rdf):
             fn_udd.return_value = {'device': DEVICE_1,
                                    'exists': False}
@@ -154,7 +154,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         devices = [DEVICE_1]
         with contextlib.nested(
             mock.patch.object(agent.plugin_rpc, "update_device_down"),
-            mock.patch.object(agent, "remove_devices_filter")
+            mock.patch.object(agent.sg_agent, "remove_devices_filter")
         ) as (fn_udd, fn_rdf):
             fn_udd.side_effect = Exception()
             with mock.patch.object(linuxbridge_neutron_agent.LOG,
@@ -287,15 +287,16 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                        'added': set(['tap3', 'tap4']),
                        'updated': set(['tap2', 'tap3']),
                        'removed': set(['tap1'])}
-        agent.prepare_devices_filter = mock.Mock()
-        agent.refresh_firewall = mock.Mock()
+        agent.sg_agent.prepare_devices_filter = mock.Mock()
+        agent.sg_agent.refresh_firewall = mock.Mock()
         agent.treat_devices_added_updated = mock.Mock(return_value=False)
         agent.treat_devices_removed = mock.Mock(return_value=False)
 
         agent.process_network_devices(device_info)
 
-        agent.prepare_devices_filter.assert_called_with(set(['tap3', 'tap4']))
-        self.assertTrue(agent.refresh_firewall.called)
+        agent.sg_agent.prepare_devices_filter.assert_called_with(
+                set(['tap3', 'tap4']))
+        self.assertTrue(agent.sg_agent.refresh_firewall.called)
         agent.treat_devices_added_updated.assert_called_with(set(['tap2',
                                                                   'tap3',
                                                                   'tap4']))
@@ -935,7 +936,8 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
 
         self.lb_rpc = linuxbridge_neutron_agent.LinuxBridgeRpcCallbacks(
             object(),
-            FakeLBAgent()
+            FakeLBAgent(),
+            object()
         )
 
         self.root_helper = cfg.CONF.AGENT.root_helper
