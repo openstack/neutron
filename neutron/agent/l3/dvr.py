@@ -20,6 +20,7 @@ from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as l3_constants
+from neutron.common import utils as common_utils
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 
@@ -121,6 +122,24 @@ class AgentMixin(object):
             for f in fips:
                 if f['subnet_id'] == subnet_id:
                     return port
+
+    def scan_fip_ports(self, ri):
+        # don't scan if not dvr or count is not None
+        if not ri.router.get('distributed') or ri.dist_fip_count is not None:
+            return
+
+        # scan system for any existing fip ports
+        ri.dist_fip_count = 0
+        rtr_2_fip_interface = self.get_rtr_int_device_name(ri.router_id)
+        if ip_lib.device_exists(rtr_2_fip_interface,
+                                root_helper=self.root_helper,
+                                namespace=ri.ns_name):
+            device = ip_lib.IPDevice(rtr_2_fip_interface, self.root_helper,
+                                     namespace=ri.ns_name)
+            existing_cidrs = [addr['cidr'] for addr in device.addr.list()]
+            fip_cidrs = [c for c in existing_cidrs if
+                         common_utils.is_cidr_host(c)]
+            ri.dist_fip_count = len(fip_cidrs)
 
     def get_fip_ext_device_name(self, port_id):
         return (FIP_EXT_DEV_PREFIX +
@@ -361,17 +380,17 @@ class AgentMixin(object):
         floating_ip = fip_cidr.split('/')[0]
         rtr_2_fip_name = self.get_rtr_int_device_name(ri.router_id)
         fip_2_rtr_name = self.get_fip_int_device_name(ri.router_id)
+        if ri.rtr_fip_subnet is None:
+            ri.rtr_fip_subnet = self.local_subnets.allocate(ri.router_id)
         rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
         fip_ns_name = self.get_fip_ns_name(str(self._fetch_external_net_id()))
         ip_rule_rtr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
         if floating_ip in ri.floating_ips_dict:
             rule_pr = ri.floating_ips_dict[floating_ip]
+            ip_rule_rtr.delete_rule_priority(rule_pr)
+            self.fip_priorities.add(rule_pr)
             #TODO(rajeev): Handle else case - exception/log?
-        else:
-            rule_pr = None
 
-        ip_rule_rtr.delete_rule_priority(rule_pr)
-        self.fip_priorities.add(rule_pr)
         device = ip_lib.IPDevice(fip_2_rtr_name, self.root_helper,
                                  namespace=fip_ns_name)
 

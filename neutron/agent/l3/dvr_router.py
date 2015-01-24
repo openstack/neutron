@@ -23,4 +23,4 @@ class DvrRouter(router.RouterInfo):
         self.snat_iptables_manager = None
         # Linklocal subnet for router and floating IP namespace link
         self.rtr_fip_subnet = None
-        self.dist_fip_count = 0
+        self.dist_fip_count = None
