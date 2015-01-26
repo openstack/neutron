@@ -71,7 +71,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                         {'device': device, 'agent_id': agent_id})
             return {'device': device}
 
-        segment = port_context.bound_segment
+        segment = port_context.bottom_bound_segment
         port = port_context.current
 
         if not segment:

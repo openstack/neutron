@@ -72,15 +72,37 @@ class FakePortContext(api.PortContext):
         return self._network_context
 
     @property
-    def bound_segment(self):
-        if self._bound_segment_id:
-            for segment in self._network_context.network_segments:
-                if segment[api.ID] == self._bound_segment_id:
-                    return segment
+    def binding_levels(self):
+        if self._bound_segment:
+            return [{
+                api.BOUND_DRIVER: 'fake_driver',
+                api.BOUND_SEGMENT: self._expand_segment(self._bound_segment)
+            }]
 
     @property
-    def original_bound_segment(self):
+    def original_binding_levels(self):
         return None
+
+    @property
+    def top_bound_segment(self):
+        return self._expand_segment(self._bound_segment)
+
+    @property
+    def original_top_bound_segment(self):
+        return None
+
+    @property
+    def bottom_bound_segment(self):
+        return self._expand_segment(self._bound_segment)
+
+    @property
+    def original_bottom_bound_segment(self):
+        return None
+
+    def _expand_segment(self, segment_id):
+        for segment in self._network_context.network_segments:
+            if segment[api.ID] == self._bound_segment_id:
+                return segment
 
     @property
     def host(self):
@@ -91,12 +113,8 @@ class FakePortContext(api.PortContext):
         return None
 
     @property
-    def bound_driver(self):
-        return None
-
-    @property
-    def original_bound_driver(self):
-        return None
+    def segments_to_bind(self):
+        return self._network_context.network_segments
 
     def host_agents(self, agent_type):
         if agent_type == self._agent_type:
@@ -108,6 +126,9 @@ class FakePortContext(api.PortContext):
         self._bound_segment_id = segment_id
         self._bound_vif_type = vif_type
         self._bound_vif_details = vif_details
+
+    def continue_binding(self, segment_id, next_segments_to_bind):
+        pass
 
     def allocate_dynamic_segment(self, segment):
         pass

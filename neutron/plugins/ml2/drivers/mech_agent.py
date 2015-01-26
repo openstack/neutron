@@ -66,7 +66,7 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         for agent in context.host_agents(self.agent_type):
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
-                for segment in context.network.network_segments:
+                for segment in context.segments_to_bind:
                     if self.try_to_bind_segment_for_agent(context, segment,
                                                           agent):
                         LOG.debug("Bound using segment: %s", segment)

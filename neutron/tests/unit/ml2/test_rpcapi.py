@@ -88,7 +88,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
                                               device='fake_device'))
 
     def test_get_device_details_port_context_without_bounded_segment(self):
-        self.plugin.get_bound_port_context().bound_segment = None
+        self.plugin.get_bound_port_context().bottom_bound_segment = None
         self.assertEqual(
             {'device': 'fake_device'},
             self.callbacks.get_device_details('fake_context',

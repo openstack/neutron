@@ -177,7 +177,8 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
                         vlan_already_removed.append(switch_ip)
 
     def _is_vm_migration(self, context):
-        if not context.bound_segment and context.original_bound_segment:
+        if (not context.bottom_bound_segment and
+            context.original_bottom_bound_segment):
             return context.host != context.original_host
 
     def _port_action(self, port, segment, func):
@@ -201,13 +202,13 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         # else process update event.
         if self._is_vm_migration(context):
             self._port_action(context.original,
-                              context.original_bound_segment,
+                              context.original_bottom_bound_segment,
                               self._delete_nxos_db)
         else:
             if (self._is_deviceowner_compute(context.current) and
                 self._is_status_active(context.current)):
                 self._port_action(context.current,
-                                  context.bound_segment,
+                                  context.bottom_bound_segment,
                                   self._configure_nxos_db)
 
     def update_port_postcommit(self, context):
@@ -217,25 +218,25 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         # else process update event.
         if self._is_vm_migration(context):
             self._port_action(context.original,
-                              context.original_bound_segment,
+                              context.original_bottom_bound_segment,
                               self._delete_switch_entry)
         else:
             if (self._is_deviceowner_compute(context.current) and
                 self._is_status_active(context.current)):
                 self._port_action(context.current,
-                                  context.bound_segment,
+                                  context.bottom_bound_segment,
                                   self._configure_switch_entry)
 
     def delete_port_precommit(self, context):
         """Delete port pre-database commit event."""
         if self._is_deviceowner_compute(context.current):
             self._port_action(context.current,
-                              context.bound_segment,
+                              context.bottom_bound_segment,
                               self._delete_nxos_db)
 
     def delete_port_postcommit(self, context):
         """Delete port non-database commit event."""
         if self._is_deviceowner_compute(context.current):
             self._port_action(context.current,
-                              context.bound_segment,
+                              context.bottom_bound_segment,
                               self._delete_switch_entry)

@@ -62,8 +62,8 @@ class NuageMechanismDriver(plugin.NuagePlugin,
         # talking to backend.
         # 1) binding has happened successfully.
         # 2) Its a VM port.
-        if ((not context.original_bound_segment and
-            context.bound_segment) and
+        if ((not context.original_top_bound_segment and
+             context.top_bound_segment) and
             port['device_owner'].startswith(port_prefix)):
                 np_name = cfg.CONF.RESTPROXY.default_net_partition_name
                 self._create_update_port(context._plugin_context,
@@ -80,7 +80,7 @@ class NuageMechanismDriver(plugin.NuagePlugin,
                   "network %(network)s",
                   {'port': context.current['id'],
                    'network': context.network.current['id']})
-        for segment in context.network.network_segments:
+        for segment in context.segments_to_bind:
             if self._check_segment(segment):
                 context.set_binding(segment[api.ID],
                                     self.vif_type,

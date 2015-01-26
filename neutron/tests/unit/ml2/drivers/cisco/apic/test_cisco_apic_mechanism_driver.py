@@ -321,7 +321,7 @@ class FakePortContext(object):
         return self._network
 
     @property
-    def bound_segment(self):
+    def top_bound_segment(self):
         return self._bound_segment
 
     def set_binding(self, segment_id, vif_type, cap_port_filter):

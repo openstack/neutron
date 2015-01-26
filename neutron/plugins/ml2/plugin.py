@@ -469,7 +469,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _notify_port_updated(self, mech_context):
         port = mech_context._port
-        segment = mech_context.bound_segment
+        segment = mech_context.bottom_bound_segment
         if not segment:
             # REVISIT(rkukura): This should notify agent to unplug port
             network = mech_context.network.current

@@ -92,13 +92,13 @@ class APICMechanismDriver(api.MechanismDriver):
         tenant_id = self.name_mapper.tenant(context, tenant_id)
 
         # Get segmentation id
-        if not context.bound_segment:
+        segment = context.top_bound_segment
+        if not segment:
             LOG.debug("Port %s is not bound to a segment", port)
             return
         seg = None
-        if (context.bound_segment.get(api.NETWORK_TYPE)
-                in [constants.TYPE_VLAN]):
-            seg = context.bound_segment.get(api.SEGMENTATION_ID)
+        if (segment.get(api.NETWORK_TYPE) in [constants.TYPE_VLAN]):
+            seg = segment.get(api.SEGMENTATION_ID)
         # hosts on which this vlan is provisioned
         host = context.host
         # Create a static path attachment for the host/epg/switchport combo

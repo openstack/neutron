@@ -16,9 +16,14 @@
 from oslo.serialization import jsonutils
 
 from neutron.common import constants
+from neutron.common import exceptions as exc
 from neutron.extensions import portbindings
+from neutron.i18n import _LW
+from neutron.openstack.common import log
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
+
+LOG = log.getLogger(__name__)
 
 
 class MechanismDriverContext(object):
@@ -109,19 +114,54 @@ class PortContext(MechanismDriverContext, api.PortContext):
         return self._network_context
 
     @property
-    def bound_segment(self):
-        id = self._binding.segment
-        if id:
-            for segment in self._network_context.network_segments:
-                if segment[api.ID] == id:
-                    return segment
+    def binding_levels(self):
+        # TODO(rkukura): Implement for hierarchical port binding.
+        if self._binding.segment:
+            return [{
+                api.BOUND_DRIVER: self._binding.driver,
+                api.BOUND_SEGMENT: self._expand_segment(self._binding.segment)
+            }]
 
     @property
-    def original_bound_segment(self):
+    def original_binding_levels(self):
+        # TODO(rkukura): Implement for hierarchical port binding.
         if self._original_bound_segment_id:
-            for segment in self._network_context.network_segments:
-                if segment[api.ID] == self._original_bound_segment_id:
-                    return segment
+            return [{
+                api.BOUND_DRIVER: self._original_bound_driver,
+                api.BOUND_SEGMENT:
+                self._expand_segment(self._original_bound_segment_id)
+            }]
+
+    @property
+    def top_bound_segment(self):
+        # TODO(rkukura): Implement for hierarchical port binding.
+        if self._binding.segment:
+            return self._expand_segment(self._binding.segment)
+
+    @property
+    def original_top_bound_segment(self):
+        # TODO(rkukura): Implement for hierarchical port binding.
+        if self._original_bound_segment_id:
+            return self._expand_segment(self._original_bound_segment_id)
+
+    @property
+    def bottom_bound_segment(self):
+        # TODO(rkukura): Implement for hierarchical port binding.
+        if self._binding.segment:
+            return self._expand_segment(self._binding.segment)
+
+    @property
+    def original_bottom_bound_segment(self):
+        # TODO(rkukura): Implement for hierarchical port binding.
+        if self._original_bound_segment_id:
+            return self._expand_segment(self._original_bound_segment_id)
+
+    def _expand_segment(self, segment_id):
+        segment = db.get_segment_by_id(self._plugin_context.session,
+                                       segment_id)
+        if not segment:
+            LOG.warning(_LW("Could not expand segment %s"), segment_id)
+        return segment
 
     @property
     def host(self):
@@ -132,12 +172,9 @@ class PortContext(MechanismDriverContext, api.PortContext):
         return self._original_port.get(portbindings.HOST_ID)
 
     @property
-    def bound_driver(self):
-        return self._binding.driver
-
-    @property
-    def original_bound_driver(self):
-        return self._original_bound_driver
+    def segments_to_bind(self):
+        # TODO(rkukura): Implement for hierarchical port binding.
+        return self._network_context.network_segments
 
     def host_agents(self, agent_type):
         return self._plugin.get_agents(self._plugin_context,
@@ -151,6 +188,11 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._binding.vif_type = vif_type
         self._binding.vif_details = jsonutils.dumps(vif_details)
         self._new_port_status = status
+
+    def continue_binding(self, segment_id, next_segments_to_bind):
+        # TODO(rkukura): Implement for hierarchical port binding.
+        msg = _("Hierarchical port binding not yet implemented")
+        raise exc.Invalid(message=msg)
 
     def allocate_dynamic_segment(self, segment):
         network_id = self._network_context.current['id']
