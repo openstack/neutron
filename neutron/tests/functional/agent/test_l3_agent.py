@@ -98,7 +98,8 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def generate_router_info(self, enable_ha):
         return test_l3_agent.prepare_router_data(enable_snat=True,
                                                  enable_floating_ip=True,
-                                                 enable_ha=enable_ha)
+                                                 enable_ha=enable_ha,
+                                                 extra_routes=True)
 
     def manage_router(self, agent, router):
         self.addCleanup(self._delete_router, agent, router['id'])
@@ -190,6 +191,7 @@ vrrp_instance VR_1 {
     }
     virtual_routes {
         0.0.0.0/0 via %(default_gateway_ip)s dev %(external_device_name)s
+        8.8.8.0/24 via 19.4.4.4
     }
 }""" % {
             'ha_confs_path': ha_confs_path,
@@ -246,6 +248,14 @@ vrrp_instance VR_1 {
         for device in internal_devices:
             self.assertTrue(self.device_exists_with_ip_mac(
                 device, self.agent.get_internal_device_name, router.ns_name))
+
+    def _assert_extra_routes(self, router):
+        routes = ip_lib.get_routing_table(self.root_helper, router.ns_name)
+        routes = [{'nexthop': route['nexthop'],
+                   'destination': route['destination']} for route in routes]
+
+        for extra_route in router.router['routes']:
+            self.assertIn(extra_route, routes)
 
 
 class L3AgentTestCase(L3AgentTestFramework):
@@ -309,8 +319,15 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertIn(new_fip, new_config)
         self.assertNotIn(old_gw, new_config)
         self.assertIn(new_gw, new_config)
-        self.assertNotIn(old_external_device_ip, new_config)
-        self.assertIn(new_external_device_ip, new_config)
+        external_port = self.agent._get_ex_gw_port(router)
+        external_device_name = self.agent.get_external_device_name(
+            external_port['id'])
+        self.assertNotIn('%s/24 dev %s' %
+                         (old_external_device_ip, external_device_name),
+                         new_config)
+        self.assertIn('%s/24 dev %s' %
+                      (new_external_device_ip, external_device_name),
+                      new_config)
 
     def _router_lifecycle(self, enable_ha):
         router_info = self.generate_router_info(enable_ha)
@@ -343,6 +360,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._assert_snat_chains(router)
         self._assert_floating_ip_chains(router)
         self._assert_metadata_chains(router)
+        self._assert_extra_routes(router)
 
         if enable_ha:
             self._assert_ha_device(router)
@@ -546,6 +564,7 @@ class TestDvrRouter(L3AgentTestFramework):
         self._assert_snat_chains(router)
         self._assert_floating_ip_chains(router)
         self._assert_metadata_chains(router)
+        self._assert_extra_routes(router)
 
         self._delete_router(self.agent, router.router_id)
         self._assert_router_does_not_exist(router)
