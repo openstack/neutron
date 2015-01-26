@@ -120,14 +120,19 @@ class L3HATestCase(L3HATestFramework):
         cfg.CONF.set_override('min_l3_agents_per_router', 0)
         self.assertRaises(
             l3_ext_ha_mode.HAMinimumAgentsNumberNotValid,
-            self.plugin._verify_configuration)
+            self.plugin._check_num_agents_per_router)
 
     def test_verify_configuration_max_l3_agents_below_min_l3_agents(self):
         cfg.CONF.set_override('max_l3_agents_per_router', 3)
         cfg.CONF.set_override('min_l3_agents_per_router', 4)
         self.assertRaises(
             l3_ext_ha_mode.HAMaximumAgentsNumberNotValid,
-            self.plugin._verify_configuration)
+            self.plugin._check_num_agents_per_router)
+
+    def test_verify_configuration_max_l3_agents_unlimited(self):
+        cfg.CONF.set_override('max_l3_agents_per_router',
+                              l3_hamode_db.UNLIMITED_AGENTS_PER_ROUTER)
+        self.plugin._check_num_agents_per_router()
 
     def test_ha_router_create(self):
         router = self._create_router()
