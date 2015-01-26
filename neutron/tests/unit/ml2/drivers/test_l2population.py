@@ -26,10 +26,12 @@ from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
+from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
+from neutron.tests import base
 from neutron.tests.unit.ml2 import test_ml2_plugin as test_plugin
 
 HOST = 'my_l2_host'
@@ -788,3 +790,104 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                                              rem_fdb_entries):
             l2pop_mech.delete_port_postcommit(mock.Mock())
             self.assertTrue(upd_port_down.called)
+
+
+class TestL2PopulationMechDriver(base.BaseTestCase):
+
+    def _test_get_tunnels(self, agent_ip, exclude_host=True):
+        mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
+        agent = mock.Mock()
+        agent.host = HOST
+        network_ports = ((None, agent),)
+        with mock.patch.object(l2pop_db.L2populationDbMixin,
+                               'get_agent_ip',
+                               return_value=agent_ip):
+            excluded_host = HOST + '-EXCLUDE' if exclude_host else HOST
+            return mech_driver._get_tunnels(network_ports, excluded_host)
+
+    def test_get_tunnels(self):
+        tunnels = self._test_get_tunnels('20.0.0.1')
+        self.assertTrue('20.0.0.1' in tunnels)
+
+    def test_get_tunnels_no_ip(self):
+        tunnels = self._test_get_tunnels(None)
+        self.assertEqual(0, len(tunnels))
+
+    def test_get_tunnels_dont_exclude_host(self):
+        tunnels = self._test_get_tunnels(None, exclude_host=False)
+        self.assertEqual(0, len(tunnels))
+
+    def _test_create_agent_fdb(self, fdb_network_ports_query, agent_ips):
+        mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
+        tunnel_network_ports_query, tunnel_agent = (
+            self._mock_network_ports_query(HOST + '1', None))
+        agent_ips[tunnel_agent] = '10.0.0.1'
+
+        def agent_ip_side_effect(agent):
+            return agent_ips[agent]
+
+        with contextlib.nested(
+                mock.patch.object(l2pop_db.L2populationDbMixin,
+                                  'get_agent_ip',
+                                  side_effect=agent_ip_side_effect),
+                mock.patch.object(l2pop_db.L2populationDbMixin,
+                                  'get_nondvr_network_ports',
+                                  new=fdb_network_ports_query),
+                mock.patch.object(l2pop_db.L2populationDbMixin,
+                                  'get_dvr_network_ports',
+                                  new=tunnel_network_ports_query)):
+            session = mock.Mock()
+            agent = mock.Mock()
+            agent.host = HOST
+            segment = {'segmentation_id': 1, 'network_type': 'vxlan'}
+            return mech_driver._create_agent_fdb(session,
+                                                 agent,
+                                                 segment,
+                                                 'network_id')
+
+    def _mock_network_ports_query(self, host_name, binding):
+        agent = mock.Mock()
+        agent.host = host_name
+        result = [(binding, agent)]
+        all_mock = mock.Mock()
+        all_mock.all = mock.Mock(return_value=result)
+        mock_query = mock.Mock(return_value=all_mock)
+        return mock_query, agent
+
+    def test_create_agent_fdb(self):
+        binding = mock.Mock()
+        binding.port = {'mac_address': '00:00:DE:AD:BE:EF',
+                        'fixed_ips': [{'ip_address': '1.1.1.1'}]}
+        fdb_network_ports_query, fdb_agent = (
+            self._mock_network_ports_query(HOST + '2', binding))
+        agent_ips = {fdb_agent: '20.0.0.1'}
+
+        agent_fdb = self._test_create_agent_fdb(fdb_network_ports_query,
+                                                agent_ips)
+        result = agent_fdb['network_id']
+
+        expected_result = {'segment_id': 1,
+                           'network_type': 'vxlan',
+                           'ports':
+                           {'10.0.0.1':
+                            [constants.FLOODING_ENTRY],
+                            '20.0.0.1':
+                            [constants.FLOODING_ENTRY,
+                             l2pop_rpc.PortInfo(
+                                 mac_address='00:00:DE:AD:BE:EF',
+                                 ip_address='1.1.1.1')]}}
+        self.assertEqual(expected_result, result)
+
+    def test_create_agent_fdb_only_tunnels(self):
+        all_mock = mock.Mock()
+        all_mock.all = mock.Mock(return_value=[])
+        fdb_network_ports_query = mock.Mock(return_value=all_mock)
+        agent_fdb = self._test_create_agent_fdb(fdb_network_ports_query, {})
+        result = agent_fdb['network_id']
+
+        expected_result = {'segment_id': 1,
+                           'network_type': 'vxlan',
+                           'ports':
+                           {'10.0.0.1':
+                            [constants.FLOODING_ENTRY]}}
+        self.assertEqual(expected_result, result)
