@@ -21,6 +21,7 @@ from oslo import messaging
 from oslo.utils import importutils
 
 from neutron.agent import firewall
+from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.i18n import _LI, _LW
@@ -95,7 +96,8 @@ class SecurityGroupServerRpcApi(object):
     doc/source/devref/rpc_api.rst.
     """
     def __init__(self, topic):
-        target = messaging.Target(topic=topic, version='1.0')
+        target = messaging.Target(topic=topic, version='1.0',
+                                  namespace=constants.RPC_NAMESPACE_SECGROUP)
         self.client = n_rpc.get_client(target)
 
     def security_group_rules_for_devices(self, context, devices):

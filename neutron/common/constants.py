@@ -149,3 +149,5 @@ DB_INTEGER_MAX_VALUE = 2 ** 31 - 1
 RPC_NAMESPACE_DHCP_PLUGIN = 'dhcp'
 # RPC interface for the metadata service to get info from the plugin side
 RPC_NAMESPACE_METADATA = 'metadata'
+# RPC interface for plugin to agent security group API
+RPC_NAMESPACE_SECGROUP = 'secgroup'
