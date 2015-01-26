@@ -78,15 +78,12 @@ CONF.register_opts(agent_opts, "AGENT")
 config.register_agent_state_opts_helper(cfg.CONF)
 
 
-class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpcMixin):
+class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpc):
 
-    def __init__(self, context, plugin_rpc):
-        super(HyperVSecurityAgent, self).__init__()
-        self.context = context
-        self.plugin_rpc = plugin_rpc
-
+    def __init__(self, context, plugin_rpc, root_helper):
+        super(HyperVSecurityAgent, self).__init__(context, plugin_rpc,
+                root_helper)
         if sg_rpc.is_firewall_enabled():
-            self.init_firewall()
             self._setup_rpc()
 
     def _setup_rpc(self):
@@ -112,7 +109,7 @@ class HyperVNeutronAgent(object):
     # Set RPC API version to 1.1 by default.
     target = messaging.Target(version='1.1')
 
-    def __init__(self):
+    def __init__(self, root_helper):
         super(HyperVNeutronAgent, self).__init__()
         self._utils = utilsfactory.get_hypervutils()
         self._polling_interval = CONF.AGENT.polling_interval
@@ -120,7 +117,7 @@ class HyperVNeutronAgent(object):
         self._network_vswitch_map = {}
         self._port_metric_retries = {}
         self._set_agent_state()
-        self._setup_rpc()
+        self._setup_rpc(root_helper)
 
     def _set_agent_state(self):
         self.agent_state = {
@@ -140,7 +137,7 @@ class HyperVNeutronAgent(object):
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
 
-    def _setup_rpc(self):
+    def _setup_rpc(self, root_helper):
         self.agent_id = 'hyperv_%s' % platform.node()
         self.topic = topics.AGENT
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
@@ -162,7 +159,7 @@ class HyperVNeutronAgent(object):
                                                      consumers)
 
         self.sec_groups_agent = HyperVSecurityAgent(
-            self.context, self.sg_plugin_rpc)
+            self.context, self.sg_plugin_rpc, root_helper)
         report_interval = CONF.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
@@ -457,7 +454,8 @@ def main():
     common_config.init(sys.argv[1:])
     common_config.setup_logging()
 
-    plugin = HyperVNeutronAgent()
+    root_helper = cfg.CONF.AGENT.root_helper
+    plugin = HyperVNeutronAgent(root_helper)
 
     # Start everything.
     LOG.info(_LI("Agent initialized successfully, now running... "))

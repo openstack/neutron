@@ -66,14 +66,6 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         LOG.debug("port_update RPC received for port: %s", port['id'])
 
 
-class SriovNicSwitchSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
-    def __init__(self, context, plugin_rpc, root_helper):
-        self.context = context
-        self.plugin_rpc = plugin_rpc
-        self.root_helper = root_helper
-        self.init_firewall()
-
-
 class SriovNicSwitchAgent(object):
     def __init__(self, physical_devices_mappings, exclude_devices,
                  polling_interval, root_helper):
@@ -97,7 +89,7 @@ class SriovNicSwitchAgent(object):
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.sg_agent = SriovNicSwitchSecurityGroupAgent(self.context,
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
                 self.sg_plugin_rpc, self.root_helper)
         self._setup_rpc()
         # Initialize iteration counter

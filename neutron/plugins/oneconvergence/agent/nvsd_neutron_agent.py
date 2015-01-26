@@ -69,16 +69,6 @@ class SecurityGroupAgentRpcCallback(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.sg_agent = sg_agent
 
 
-class SecurityGroupAgentRpc(sg_rpc.SecurityGroupAgentRpcMixin):
-
-    def __init__(self, context, root_helper):
-        self.context = context
-
-        self.plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.root_helper = root_helper
-        self.init_firewall()
-
-
 class NVSDNeutronAgent(object):
     # history
     #   1.0 Initial version
@@ -101,8 +91,10 @@ class NVSDNeutronAgent(object):
 
         self.topic = topics.AGENT
         self.context = n_context.get_admin_context_without_session()
-        self.sg_agent = SecurityGroupAgentRpc(self.context,
-                                              self.root_helper)
+        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
+                                                     self.sg_plugin_rpc,
+                                                     self.root_helper)
 
         # RPC network init
         # Handle updates from service

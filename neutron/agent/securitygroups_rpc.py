@@ -157,10 +157,15 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         self.sg_agent.security_groups_provider_updated()
 
 
-class SecurityGroupAgentRpcMixin(object):
-    """A mix-in that enable SecurityGroup agent
-    support in agent implementations.
-    """
+class SecurityGroupAgentRpc(object):
+    """Enables SecurityGroup agent support in agent implementations."""
+
+    def __init__(self, context, plugin_rpc, root_helper,
+                 defer_refresh_firewall=False):
+        self.context = context
+        self.plugin_rpc = plugin_rpc
+        self.root_helper = root_helper
+        self.init_firewall(defer_refresh_firewall)
 
     def init_firewall(self, defer_refresh_firewall=False):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver

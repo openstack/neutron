@@ -20,6 +20,8 @@ from oslo.config import cfg
 import testtools
 
 from neutron.agent.linux import ovs_lib
+from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.common import topics
 from neutron.extensions import securitygroup as ext_sg
 from neutron.plugins.oneconvergence.agent import nvsd_neutron_agent
 from neutron.tests import base
@@ -43,8 +45,9 @@ class TestOneConvergenceAgentBase(base.BaseTestCase):
                       'polling_interval': 5}
             context = mock.Mock()
             self.agent = nvsd_neutron_agent.NVSDNeutronAgent(**kwargs)
-            self.sg_agent = nvsd_neutron_agent.SecurityGroupAgentRpc(
-                context, 'dummy_wrapper')
+            sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
+            self.sg_agent = sg_rpc.SecurityGroupAgentRpc(context,
+                    sg_plugin_rpc, 'dummy_wrapper')
             self.callback_nvsd = nvsd_neutron_agent.NVSDAgentRpcCallback(
                 context, self.agent, self.sg_agent)
             self.loopingcall = loopingcall

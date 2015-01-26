@@ -25,7 +25,7 @@ PLUGINAPI = 'neutron.agent.rpc.PluginApi'
 CONTEXT = 'neutron.context'
 CONSUMERCREATE = 'neutron.agent.rpc.create_consumers'
 SGRPC = 'neutron.agent.securitygroups_rpc'
-SGAGENT = 'neutron.plugins.bigswitch.agent.restproxy_agent.SecurityGroupAgent'
+SGAGENT = 'neutron.agent.securitygroups_rpc.SecurityGroupAgentRpc'
 AGENTMOD = 'neutron.plugins.bigswitch.agent.restproxy_agent'
 NEUTRONCFG = 'neutron.common.config'
 PLCONFIG = 'neutron.plugins.bigswitch.config'
@@ -45,8 +45,8 @@ class TestRestProxyAgentOVS(BaseAgentTestCase):
         self.ovsbridge = mock.patch(OVSBRIDGE).start()
         self.context = mock.patch(CONTEXT).start()
         self.rpc = mock.patch(CONSUMERCREATE).start()
-        self.sg_rpc = mock.patch(SGRPC).start()
         self.sg_agent = mock.patch(SGAGENT).start()
+        self.sg_rpc = mock.patch(SGRPC).start()
 
     def mock_agent(self):
         mock_context = mock.Mock(return_value='abc')

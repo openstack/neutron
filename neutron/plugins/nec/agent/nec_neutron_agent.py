@@ -92,14 +92,6 @@ class SecurityGroupAgentRpcCallback(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.sg_agent = sg_agent
 
 
-class SecurityGroupAgentRpc(sg_rpc.SecurityGroupAgentRpcMixin):
-
-    def __init__(self, context):
-        self.context = context
-        self.plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.init_firewall()
-
-
 class NECNeutronAgent(object):
 
     def __init__(self, integ_br, root_helper, polling_interval):
@@ -124,9 +116,9 @@ class NECNeutronAgent(object):
             'agent_type': q_const.AGENT_TYPE_NEC,
             'start_flag': True}
 
-        self.setup_rpc()
+        self.setup_rpc(root_helper)
 
-    def setup_rpc(self):
+    def setup_rpc(self, root_helper):
         self.host = socket.gethostname()
         self.agent_id = 'nec-q-agent.%s' % self.host
         LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
@@ -136,7 +128,9 @@ class NECNeutronAgent(object):
 
         self.plugin_rpc = NECPluginApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
-        self.sg_agent = SecurityGroupAgentRpc(self.context)
+        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
+                self.sg_plugin_rpc, root_helper)
 
         # RPC network init
         # Handle updates from service
