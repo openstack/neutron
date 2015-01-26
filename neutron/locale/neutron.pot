@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev335\n"
+"Project-Id-Version: neutron 2015.1.dev397\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-01-22 06:10+0000\n"
+"POT-Creation-Date: 2015-01-26 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -249,17 +249,27 @@ msgstr ""
 msgid "Add comments to iptables rules."
 msgstr ""
 
-#: neutron/agent/common/config.py:115
+#: neutron/agent/common/config.py:61
+msgid "Action to be executed when a child process dies"
+msgstr ""
+
+#: neutron/agent/common/config.py:63
+msgid ""
+"Interval between checks of child process liveness (seconds), use 0 to "
+"disable"
+msgstr ""
+
+#: neutron/agent/common/config.py:128
 msgid ""
 "DEFAULT.root_helper is deprecated! Please move root_helper configuration "
 "to [AGENT] section."
 msgstr ""
 
-#: neutron/agent/common/config.py:126
+#: neutron/agent/common/config.py:139
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:591
+#: neutron/agent/dhcp/agent.py:602
 #, python-format
 msgid "Agent updated: %(payload)s"
 msgstr ""
@@ -319,13 +329,13 @@ msgstr ""
 msgid "Use broadcast in DHCP replies"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:336
+#: neutron/agent/l3/agent.py:335
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:406
+#: neutron/agent/l3/agent.py:405
 #: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:630
 #, python-format
 msgid "Router port %s has no IP address"
@@ -391,19 +401,19 @@ msgid ""
 "empty: L3 agent effective group)"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:35
+#: neutron/agent/l3/ha.py:37
 msgid "Location to store keepalived/conntrackd config files"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:39
+#: neutron/agent/l3/ha.py:41
 msgid "VRRP authentication type AH/PASS"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:41
+#: neutron/agent/l3/ha.py:43
 msgid "VRRP authentication password"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:45
+#: neutron/agent/l3/ha.py:47
 msgid "The advertisement interval in seconds"
 msgstr ""
 
@@ -450,33 +460,23 @@ msgstr ""
 msgid "Unable to unlock pid file"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:244 neutron/agent/linux/utils.py:154
+#: neutron/agent/linux/dhcp.py:243
 #, python-format
 msgid "Error while reading %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:251 neutron/agent/linux/utils.py:161
+#: neutron/agent/linux/dhcp.py:250
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:253 neutron/agent/linux/utils.py:163
+#: neutron/agent/linux/dhcp.py:252
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
 
-#: neutron/agent/linux/external_process.py:32
-msgid "Location to store child pid files"
-msgstr ""
-
 #: neutron/agent/linux/external_process.py:35
-msgid "Action to be executed when a child process dies"
-msgstr ""
-
-#: neutron/agent/linux/external_process.py:37
-msgid ""
-"Interval between checks of child process liveness (seconds), use 0 to "
-"disable"
+msgid "Location to store child pid files"
 msgstr ""
 
 #: neutron/agent/linux/interface.py:39
@@ -551,26 +551,26 @@ msgstr ""
 msgid "Unknown chain: %r"
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:53
+#: neutron/agent/linux/keepalived.py:54
 #, python-format
 msgid ""
 "Network of size %(size)s, from IP range %(parent_range)s excluding IP "
 "ranges %(excluded_ranges)s was not found."
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:62
+#: neutron/agent/linux/keepalived.py:63
 #, python-format
 msgid "Invalid instance state: %%(state)s, valid states are: %(valid_states)s"
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:68
+#: neutron/agent/linux/keepalived.py:69
 #, python-format
 msgid ""
 "Invalid notify state: %%(state)s, valid states are: "
 "%(valid_notify_states)s"
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:74
+#: neutron/agent/linux/keepalived.py:75
 #, python-format
 msgid ""
 "Invalid authentication type: %%(auth_type)s, valid types are: "
@@ -598,7 +598,7 @@ msgstr ""
 msgid "Location to store IPv6 RA config files"
 msgstr ""
 
-#: neutron/agent/linux/utils.py:68
+#: neutron/agent/linux/utils.py:69
 #, python-format
 msgid ""
 "\n"
@@ -1041,7 +1041,7 @@ msgstr ""
 msgid "Request Failed: internal server error while processing your request."
 msgstr ""
 
-#: neutron/cmd/netns_cleanup.py:60
+#: neutron/cmd/netns_cleanup.py:61
 msgid "Delete the namespace by removing all devices."
 msgstr ""
 
@@ -1609,7 +1609,7 @@ msgstr ""
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
-#: neutron/db/agents_db.py:39
+#: neutron/db/agents_db.py:38
 msgid ""
 "Seconds to regard the agent is down; should be at least twice "
 "report_interval, to be sure the agent is down for good."
@@ -1631,63 +1631,63 @@ msgstr ""
 msgid "Cannot create resource for another tenant"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:401
+#: neutron/db/db_base_plugin_v2.py:368
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:413
+#: neutron/db/db_base_plugin_v2.py:380
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:419
+#: neutron/db/db_base_plugin_v2.py:386
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:439
+#: neutron/db/db_base_plugin_v2.py:406
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:445
+#: neutron/db/db_base_plugin_v2.py:412
 #, python-format
 msgid ""
 "IPv6 address %(address)s can not be directly assigned to a port on subnet"
 " %(id)s since the subnet is configured for automatic addresses"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:456 neutron/db/db_base_plugin_v2.py:498
+#: neutron/db/db_base_plugin_v2.py:423 neutron/db/db_base_plugin_v2.py:465
 #: neutron/plugins/opencontrail/contrail_plugin.py:388
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:595
+#: neutron/db/db_base_plugin_v2.py:562
 msgid "0 is not allowed as CIDR prefix length"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:605
+#: neutron/db/db_base_plugin_v2.py:572
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:690 neutron/db/db_base_plugin_v2.py:694
+#: neutron/db/db_base_plugin_v2.py:657 neutron/db/db_base_plugin_v2.py:661
 #, python-format
 msgid "Invalid route: %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:772
+#: neutron/db/db_base_plugin_v2.py:739
 #, python-format
 msgid ""
 "Invalid CIDR %s for IPv6 address mode. OpenStack uses the EUI-64 address "
 "format, which requires the prefix to be /64."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:780
+#: neutron/db/db_base_plugin_v2.py:747
 #, python-format
 msgid ""
 "ipv6_ra_mode set to '%(ra_mode)s' with ipv6_address_mode set to "
@@ -1695,40 +1695,40 @@ msgid ""
 "the same value"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:788
+#: neutron/db/db_base_plugin_v2.py:755
 msgid ""
 "ipv6_ra_mode or ipv6_address_mode cannot be set when enable_dhcp is set "
 "to False."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:794
+#: neutron/db/db_base_plugin_v2.py:761
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:978
+#: neutron/db/db_base_plugin_v2.py:945
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1002
+#: neutron/db/db_base_plugin_v2.py:969
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1022 neutron/db/db_base_plugin_v2.py:1036
+#: neutron/db/db_base_plugin_v2.py:989 neutron/db/db_base_plugin_v2.py:1003
 #: neutron/plugins/opencontrail/contrail_plugin.py:312
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1029
+#: neutron/db/db_base_plugin_v2.py:996
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1045
+#: neutron/db/db_base_plugin_v2.py:1012
 msgid "ipv6_ra_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1049
+#: neutron/db/db_base_plugin_v2.py:1016
 msgid "ipv6_address_mode is not valid when ip_version is 4"
 msgstr ""
 
@@ -4651,25 +4651,25 @@ msgid "HTTP URL of Tail-f NCS REST interface."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mechanism_ncs.py:31
-#: neutron/plugins/ml2/drivers/mechanism_odl.py:35
+#: neutron/plugins/ml2/drivers/mechanism_odl.py:32
 msgid "HTTP username for authentication"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mechanism_ncs.py:33
-#: neutron/plugins/ml2/drivers/mechanism_odl.py:37
+#: neutron/plugins/ml2/drivers/mechanism_odl.py:34
 msgid "HTTP password for authentication"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mechanism_ncs.py:35
-#: neutron/plugins/ml2/drivers/mechanism_odl.py:39
+#: neutron/plugins/ml2/drivers/mechanism_odl.py:36
 msgid "HTTP timeout in seconds."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mechanism_odl.py:33
+#: neutron/plugins/ml2/drivers/mechanism_odl.py:30
 msgid "HTTP URL of OpenDaylight REST interface."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mechanism_odl.py:41
+#: neutron/plugins/ml2/drivers/mechanism_odl.py:38
 msgid "Tomcat session timeout in minutes."
 msgstr ""
 
@@ -5128,12 +5128,12 @@ msgid ""
 "restarts"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:205
+#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:201
 #, python-format
 msgid "No cache entry for host %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:210
+#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:206
 #, python-format
 msgid "Expired cache entry for host %s"
 msgstr ""
@@ -5596,24 +5596,24 @@ msgstr ""
 msgid "Bad request: %(msg)s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:908
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1523
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:904
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1522
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:913
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:909
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:929
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:925
 #, python-format
 msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:932
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1547
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:928
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1546
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -5719,7 +5719,7 @@ msgid ""
 "error: %(error)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1544
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1543
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
@@ -5834,7 +5834,7 @@ msgstr ""
 msgid "Device has no virtual functions"
 msgstr ""
 
-#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:318
+#: neutron/plugins/sriovnicagent/sriov_nic_agent.py:325
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
 msgstr ""
