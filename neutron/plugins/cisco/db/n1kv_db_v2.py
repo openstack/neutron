@@ -1004,7 +1004,9 @@ class NetworkProfile_db_mixin(object):
         net_profile_ids = (db_session.query(n1kv_models_v2.ProfileBinding.
                                             profile_id).
                            filter_by(tenant_id=tenant_id).
-                           filter_by(profile_type=c_const.NETWORK))
+                           filter_by(profile_type=c_const.NETWORK).all())
+        if not net_profile_ids:
+            return []
         network_profiles = (db_session.query(model).filter(model.id.in_(
             pid[0] for pid in net_profile_ids)))
         return [self._make_network_profile_dict(p) for p in network_profiles]
@@ -1464,6 +1466,8 @@ class PolicyProfile_db_mixin(object):
                        ProfileBinding.profile_id)
                        .filter_by(tenant_id=tenant_id).
                        filter_by(profile_type=c_const.POLICY).all())
+        if not profile_ids:
+            return []
         profiles = db_session.query(model).filter(model.id.in_(
             pid[0] for pid in profile_ids))
         return [self._make_policy_profile_dict(p) for p in profiles]
@@ -1637,12 +1641,13 @@ class PolicyProfile_db_mixin(object):
                                        n1kv_models_v2.ProfileBinding.
                                        profile_type == c_const.POLICY)))
             b_set = set(i.profile_id for i in b_set_q)
-            (db_session.query(n1kv_models_v2.ProfileBinding).
-             filter(sql.and_(n1kv_models_v2.ProfileBinding.profile_id.
-                             in_(a_set & b_set),
-                             n1kv_models_v2.ProfileBinding.tenant_id ==
-                             c_const.TENANT_ID_NOT_SET)).
-             delete(synchronize_session="fetch"))
+            if a_set & b_set:
+                (db_session.query(n1kv_models_v2.ProfileBinding).
+                 filter(sql.and_(n1kv_models_v2.ProfileBinding.profile_id.
+                                 in_(a_set & b_set),
+                                 n1kv_models_v2.ProfileBinding.tenant_id ==
+                                 c_const.TENANT_ID_NOT_SET)).
+                 delete(synchronize_session="fetch"))
 
     def _add_policy_profile(self,
                             policy_profile_name,

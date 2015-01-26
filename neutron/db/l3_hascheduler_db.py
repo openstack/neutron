@@ -49,6 +49,8 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.L3AgentSchedulerDbMixin):
         return query
 
     def get_l3_agents_ordered_by_num_routers(self, context, agent_ids):
+        if not agent_ids:
+            return []
         query = (context.session.query(agents_db.Agent, func.count(
             l3_sch_db.RouterL3AgentBinding.router_id).label('count')).
             outerjoin(l3_sch_db.RouterL3AgentBinding).

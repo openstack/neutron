@@ -134,6 +134,9 @@ class CommonDbMixin(object):
             for key, value in filters.iteritems():
                 column = getattr(model, key, None)
                 if column:
+                    if not value:
+                        query = query.filter(sql.false())
+                        return query
                     query = query.filter(column.in_(value))
             for _name, hooks in self._model_query_hooks.get(model,
                                                             {}).iteritems():
