@@ -53,7 +53,7 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('AGENT', 'neutron.plugins.openvswitch.common.config')
 
 # A placeholder for dead vlans.
-DEAD_VLAN_TAG = str(q_const.MAX_VLAN_TAG + 1)
+DEAD_VLAN_TAG = q_const.MAX_VLAN_TAG + 1
 
 
 class DeviceListRetrievalError(exceptions.NeutronException):
@@ -643,9 +643,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         # Do not bind a port if it's already bound
         cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
-        if cur_tag != str(lvm.vlan):
+        if cur_tag != lvm.vlan:
             self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                         str(lvm.vlan))
+                                         lvm.vlan)
             if port.ofport != -1:
                 self.int_br.delete_flows(in_port=port.ofport)
 

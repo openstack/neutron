@@ -104,7 +104,7 @@ class TestSdnveNeutronAgent(base.BaseTestCase):
 
     def test_get_info(self):
         with mock.patch.object(self.agent.int_br,
-                               'run_vsctl') as run_vsctl_func:
+                               'set_controller') as set_controller_func:
             kwargs = {}
             self.agent.info_update('dummy', **kwargs)
-        self.assertFalse(run_vsctl_func.called)
+        self.assertFalse(set_controller_func.called)

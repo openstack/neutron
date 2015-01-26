@@ -224,9 +224,10 @@ class TestOVSInterfaceDriver(TestBase):
             replace.assert_called_once_with(
                 'tap0',
                 ('type', 'internal'),
-                ('external-ids:iface-id', 'port-1234'),
-                ('external-ids:iface-status', 'active'),
-                ('external-ids:attached-mac', 'aa:bb:cc:dd:ee:ff'))
+                ('external_ids', {
+                    'iface-id': 'port-1234',
+                    'iface-status': 'active',
+                    'attached-mac': 'aa:bb:cc:dd:ee:ff'}))
 
         expected = [mock.call('sudo'),
                     mock.call().device('tap0'),
@@ -305,9 +306,10 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
                      prefix=prefix)
             replace.assert_called_once_with(
                 'tap0',
-                ('external-ids:iface-id', 'port-1234'),
-                ('external-ids:iface-status', 'active'),
-                ('external-ids:attached-mac', 'aa:bb:cc:dd:ee:ff'))
+                ('external_ids', {
+                    'iface-id': 'port-1234',
+                    'iface-status': 'active',
+                    'attached-mac': 'aa:bb:cc:dd:ee:ff'}))
 
         ns_dev.assert_has_calls(
             [mock.call.link.set_address('aa:bb:cc:dd:ee:ff')])
