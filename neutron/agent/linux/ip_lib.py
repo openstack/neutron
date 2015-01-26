@@ -597,6 +597,36 @@ def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None,
         return True
 
 
+def get_routing_table(root_helper=None, namespace=None):
+    """Return a list of dictionaries, each representing a route.
+
+    The dictionary format is: {'destination': cidr,
+                               'nexthop': ip,
+                               'device': device_name}
+    """
+
+    ip_wrapper = IPWrapper(root_helper, namespace=namespace)
+    table = ip_wrapper.netns.execute(['ip', 'route'], check_exit_code=True)
+
+    routes = []
+    # Example for route_lines:
+    # default via 192.168.3.120 dev wlp3s0  proto static  metric 1024
+    # 10.0.0.0/8 dev tun0  proto static  scope link  metric 1024
+    # The first column is the destination, followed by key/value pairs.
+    # The generator splits the routing table by newline, then strips and splits
+    # each individual line.
+    route_lines = (line.split() for line in table.split('\n') if line.strip())
+    for route in route_lines:
+        network = route[0]
+        # Create a dict of key/value pairs (For example - 'dev': 'tun0')
+        # excluding the first column.
+        data = dict(route[i:i + 2] for i in range(1, len(route), 2))
+        routes.append({'destination': network,
+                       'nexthop': data.get('via'),
+                       'device': data.get('dev')})
+    return routes
+
+
 def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
     dev = IPDevice(device_name, root_helper, namespace)
     dev.set_log_fail_as_error(False)

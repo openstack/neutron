@@ -93,7 +93,8 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
 
 
 def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
-                        enable_floating_ip=False, enable_ha=False):
+                        enable_floating_ip=False, enable_ha=False,
+                        extra_routes=False):
     if ip_version == 4:
         ip_addr = '19.4.4.4'
         cidr = '19.4.4.0/24'
@@ -114,11 +115,15 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
                   'subnet': {'cidr': cidr,
                              'gateway_ip': gateway_ip}}
 
+    routes = []
+    if extra_routes:
+        routes = [{'destination': '8.8.8.0/24', 'nexthop': ip_addr}]
+
     router = {
         'id': router_id,
         'distributed': False,
         l3_constants.INTERFACE_KEY: [],
-        'routes': [],
+        'routes': routes,
         'gw_port': ex_gw_port}
 
     if enable_floating_ip:

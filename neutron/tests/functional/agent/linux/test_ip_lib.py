@@ -15,6 +15,7 @@
 
 import collections
 
+import netaddr
 from oslo.config import cfg
 from oslo.utils import importutils
 
@@ -130,3 +131,21 @@ class IpLibTestCase(IpLibTestFramework):
                 *attr, root_helper=self.root_helper))
 
         device.link.delete()
+
+    def test_get_routing_table(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+        device_ip = attr.ip_cidr.split('/')[0]
+        destination = '8.8.8.0/24'
+        device.route.add_route(destination, device_ip)
+
+        expected_routes = [{'nexthop': device_ip,
+                            'device': attr.name,
+                            'destination': destination},
+                           {'nexthop': None,
+                            'device': attr.name,
+                            'destination': str(
+                                netaddr.IPNetwork(attr.ip_cidr).cidr)}]
+
+        routes = ip_lib.get_routing_table(self.root_helper, attr.namespace)
+        self.assertEqual(expected_routes, routes)
