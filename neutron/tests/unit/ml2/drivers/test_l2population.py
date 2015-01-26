@@ -97,8 +97,7 @@ DEVICE_OWNER_COMPUTE = 'compute:None'
 
 
 class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
-    _mechanism_drivers = ['openvswitch', 'linuxbridge',
-                          'ofagent', 'l2population']
+    _mechanism_drivers = ['openvswitch', 'ofagent', 'l2population']
 
     def setUp(self):
         super(TestL2PopulationRpcTestCase, self).setUp()
