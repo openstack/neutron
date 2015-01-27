@@ -287,27 +287,10 @@ class Dnsmasq(DhcpLocalProcess):
 
     NEUTRON_NETWORK_ID_KEY = 'NEUTRON_NETWORK_ID'
     NEUTRON_RELAY_SOCKET_PATH_KEY = 'NEUTRON_RELAY_SOCKET_PATH'
-    MINIMUM_VERSION = 2.67
 
     @classmethod
     def check_version(cls):
-        ver = 0
-        try:
-            cmd = ['dnsmasq', '--version']
-            out = utils.execute(cmd)
-            m = re.search(r"version (\d+\.\d+)", out)
-            ver = float(m.group(1)) if m else 0
-            if ver < cls.MINIMUM_VERSION:
-                LOG.error(_LE('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
-                              'Please ensure that its version is %s '
-                              'or above!'), cls.MINIMUM_VERSION)
-                raise SystemExit(1)
-        except (OSError, RuntimeError, IndexError, ValueError):
-            LOG.error(_LE('Unable to determine dnsmasq version. '
-                          'Please ensure that its version is %s '
-                          'or above!'), cls.MINIMUM_VERSION)
-            raise SystemExit(1)
-        return ver
+        pass
 
     @classmethod
     def existing_dhcp_networks(cls, conf, root_helper):

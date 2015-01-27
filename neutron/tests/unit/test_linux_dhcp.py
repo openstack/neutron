@@ -18,7 +18,6 @@ import os
 import mock
 import netaddr
 from oslo.config import cfg
-import testtools
 
 from neutron.agent.common import config
 from neutron.agent.dhcp import config as dhcp_config
@@ -697,7 +696,6 @@ class TestDnsmasq(TestBase):
     def _get_dnsmasq(self, network, process_monitor=None):
         process_monitor = process_monitor or mock.Mock()
         return dhcp.Dnsmasq(self.conf, network,
-                            version=dhcp.Dnsmasq.MINIMUM_VERSION,
                             process_monitor=process_monitor)
 
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
@@ -1250,34 +1248,6 @@ class TestDnsmasq(TestBase):
                 self.assertEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
                                   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'],
                                  sorted(result))
-
-    def _check_version(self, cmd_out, expected_value):
-        with mock.patch('neutron.agent.linux.utils.execute') as cmd:
-            cmd.return_value = cmd_out
-            result = dhcp.Dnsmasq.check_version()
-            self.assertEqual(result, expected_value)
-
-    def test_check_find_version(self):
-        # Dnsmasq output currently gives the version number before the
-        # copyright year, but just in case ...
-        self._check_version('Copyright 2000-2014. Dnsmasq version 3.33 ...',
-                            float(3.33))
-
-    def test_check_minimum_version(self):
-        self._check_version('Dnsmasq version 2.67 Copyright (c)...',
-                            dhcp.Dnsmasq.MINIMUM_VERSION)
-
-    def test_check_future_version(self):
-        self._check_version('Dnsmasq version 2.99 Copyright (c)...',
-                            float(2.99))
-
-    def test_check_fail_version(self):
-        with testtools.ExpectedException(SystemExit):
-            self._check_version('Dnsmasq version 2.62 Copyright (c)...', 0)
-
-    def test_check_version_failed_cmd_execution(self):
-        with testtools.ExpectedException(SystemExit):
-            self._check_version('Error while executing command', 0)
 
     def test_only_populates_dhcp_enabled_subnets(self):
         exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'
