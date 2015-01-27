@@ -23,7 +23,6 @@ from oslo_utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
-from sqlalchemy.orm import joinedload
 
 from neutron.common import constants
 from neutron.common import utils
@@ -288,19 +287,22 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                     context, saved_binding['net'], dhcp_notifier)
 
     def get_dhcp_agents_hosting_networks(
-            self, context, network_ids, active=None):
+            self, context, network_ids, active=None, admin_state_up=None):
         if not network_ids:
             return []
         query = context.session.query(NetworkDhcpAgentBinding)
-        query = query.options(joinedload('dhcp_agent'))
+        query = query.options(orm.contains_eager(
+                              NetworkDhcpAgentBinding.dhcp_agent))
+        query = query.join(NetworkDhcpAgentBinding.dhcp_agent)
         if len(network_ids) == 1:
             query = query.filter(
                 NetworkDhcpAgentBinding.network_id == network_ids[0])
         elif network_ids:
             query = query.filter(
                 NetworkDhcpAgentBinding.network_id in network_ids)
-        if active is not None:
-            query = (query.filter(agents_db.Agent.admin_state_up == active))
+        if admin_state_up is not None:
+            query = query.filter(agents_db.Agent.admin_state_up ==
+                                 admin_state_up)
 
         return [binding.dhcp_agent
                 for binding in query
