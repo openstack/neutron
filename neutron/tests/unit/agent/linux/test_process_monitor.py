@@ -42,15 +42,13 @@ class BaseTestProcessMonitor(base.BaseTestCase):
         self.create_child_process_monitor('respawn')
 
     def create_child_process_monitor(self, action):
-        self.exit_handler = mock.Mock()
         conf = mock.Mock()
         conf.AGENT.check_child_processes_action = action
         conf.AGENT.check_child_processes = True
         self.pmonitor = external_process.ProcessMonitor(
             config=conf,
             root_helper=None,
-            resource_type='test',
-            exit_handler=self.exit_handler)
+            resource_type='test')
 
     def get_monitored_process_manager(self, uuid, service=None):
         self.pmonitor.enable(uuid=uuid, service=service, cmd_callback=None)
@@ -69,8 +67,10 @@ class TestProcessMonitor(BaseTestProcessMonitor):
         self.create_child_process_monitor('exit')
         pm = self.get_monitored_process_manager(TEST_UUID)
         pm.active = False
-        self.pmonitor._check_child_processes()
-        self.exit_handler.assert_called_once_with(TEST_UUID, None)
+        with mock.patch.object(external_process.ProcessMonitor,
+                               '_exit_handler') as exit_handler:
+            self.pmonitor._check_child_processes()
+            exit_handler.assert_called_once_with(TEST_UUID, None)
 
     def test_different_service_types(self):
         pm_none = self.get_monitored_process_manager(TEST_UUID)

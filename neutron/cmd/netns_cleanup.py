@@ -77,8 +77,7 @@ def _get_dhcp_process_monitor(config, root_helper):
     return external_process.ProcessMonitor(
         config=config,
         root_helper=root_helper,
-        resource_type='dhcp',
-        exit_handler=lambda: None)
+        resource_type='dhcp')
 
 
 def kill_dhcp(conf, namespace):
