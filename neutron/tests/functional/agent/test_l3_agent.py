@@ -145,16 +145,16 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def get_expected_keepalive_configuration(self, router):
         ha_confs_path = self.agent.conf.ha_confs_path
         router_id = router.router_id
-        ha_device_name = self.agent.get_ha_device_name(router.ha_port['id'])
+        ha_device_name = router.get_ha_device_name(router.ha_port['id'])
         ha_device_cidr = router.ha_port['ip_cidr']
         external_port = self.agent._get_ex_gw_port(router)
-        ex_port_ipv6 = self.agent._get_ipv6_lladdr(
+        ex_port_ipv6 = router._get_ipv6_lladdr(
             external_port['mac_address'])
         external_device_name = self.agent.get_external_device_name(
             external_port['id'])
         external_device_cidr = external_port['ip_cidr']
         internal_port = router.router[l3_constants.INTERFACE_KEY][0]
-        int_port_ipv6 = self.agent._get_ipv6_lladdr(
+        int_port_ipv6 = router._get_ipv6_lladdr(
             internal_port['mac_address'])
         internal_device_name = self.agent.get_internal_device_name(
             internal_port['id'])
@@ -406,7 +406,7 @@ class L3AgentTestCase(L3AgentTestFramework):
     def _assert_ha_device(self, router):
         self.assertTrue(self.device_exists_with_ip_mac(
             router.router[l3_constants.HA_INTERFACE_KEY],
-            self.agent.get_ha_device_name, router.ns_name))
+            router.get_ha_device_name, router.ns_name))
 
     def _assert_no_ip_addresses_on_interface(self, router, interface):
         device = ip_lib.IPDevice(interface, self.root_helper, router.ns_name)
@@ -441,7 +441,7 @@ class L3HATestFramework(L3AgentTestFramework):
         helpers.wait_until_true(lambda: router1.ha_state == 'master')
         helpers.wait_until_true(lambda: router2.ha_state == 'backup')
 
-        device_name = self.agent.get_ha_device_name(
+        device_name = router1.get_ha_device_name(
             router1.router[l3_constants.HA_INTERFACE_KEY]['id'])
         ha_device = ip_lib.IPDevice(device_name, self.root_helper,
                                     router1.ns_name)
