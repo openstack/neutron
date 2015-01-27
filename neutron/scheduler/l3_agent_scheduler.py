@@ -65,7 +65,7 @@ class L3Scheduler(object):
         unscheduled_routers = []
         for router in routers:
             l3_agents = plugin.get_l3_agents_hosting_routers(
-                context, [router['id']], admin_state_up=True)
+                context, [router['id']])
             if l3_agents:
                 LOG.debug('Router %(router_id)s has already been '
                           'hosted by L3 agent %(agent_id)s',
