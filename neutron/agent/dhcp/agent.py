@@ -70,21 +70,7 @@ class DhcpAgent(manager.Manager):
         self._process_monitor = external_process.ProcessMonitor(
             config=self.conf,
             root_helper=self.root_helper,
-            resource_type='dhcp',
-            exit_handler=self._exit_handler)
-
-    def _exit_handler(self, uuid, service):
-        """This is an exit handler for the ProcessMonitor.
-
-        It will be called if the administrator configured the exit action in
-        check_child_processes_actions, and one of our external processes die
-        unexpectedly.
-        """
-        LOG.error(_LE("Exiting neutron-dhcp-agent because of a malfunction "
-                      "with the %(service)s process identified by uuid "
-                      "%(uuid)s"),
-                  {'service': service, 'uuid': uuid})
-        raise SystemExit(1)
+            resource_type='dhcp')
 
     def _populate_networks_cache(self):
         """Populate the networks cache when the DHCP-agent starts."""

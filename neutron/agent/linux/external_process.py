@@ -132,7 +132,7 @@ ServiceId = collections.namedtuple('ServiceId', ['uuid', 'service'])
 
 class ProcessMonitor(object):
 
-    def __init__(self, config, root_helper, resource_type, exit_handler):
+    def __init__(self, config, root_helper, resource_type):
         """Handle multiple process managers and watch over all of them.
 
         :param config: oslo config object with the agent configuration.
@@ -141,15 +141,10 @@ class ProcessMonitor(object):
         :type root_helper: str
         :param resource_type: can be dhcp, router, load_balancer, etc.
         :type resource_type: str
-        :param exit_handler: function to execute when agent exit has to
-                             be executed, it should take care of actual
-                             exit
-        :type exit_hanlder: function
         """
         self._config = config
         self._root_helper = root_helper
         self._resource_type = resource_type
-        self._exit_handler = exit_handler
 
         self._process_managers = {}
 
@@ -299,3 +294,15 @@ class ProcessMonitor(object):
         LOG.error(_LE("Exiting agent as programmed in check_child_processes_"
                       "actions"))
         self._exit_handler(service_id.uuid, service_id.service)
+
+    def _exit_handler(self, uuid, service):
+        """This is an exit handler for the ProcessMonitor.
+
+        It will be called if the administrator configured the exit action in
+        check_child_processes_actions, and one of our external processes die
+        unexpectedly.
+        """
+        LOG.error(_LE("Exiting agent because of a malfunction with the "
+                      "%(service)s process identified by uuid %(uuid)s"),
+                  {'service': service, 'uuid': uuid})
+        raise SystemExit(1)

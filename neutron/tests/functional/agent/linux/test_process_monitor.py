@@ -28,7 +28,6 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
 
     def setUp(self):
         super(BaseTestProcessMonitor, self).setUp()
-        self._exit_handler_called = False
         cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
         self._child_processes = []
         self._ext_processes = None
@@ -43,12 +42,7 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
         return external_process.ProcessMonitor(
             config=cfg.CONF,
             root_helper=None,
-            resource_type='test',
-            exit_handler=self._exit_handler)
-
-    def _exit_handler(self, uuid, service):
-        self._exit_handler_called = True
-        self._exit_handler_params = (uuid, service)
+            resource_type='test')
 
     def _make_cmdline_callback(self, uuid):
         def _cmdline_callback(pidfile):
