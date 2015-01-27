@@ -55,19 +55,5 @@ OPTS = [
     cfg.BoolOpt('enable_metadata_proxy', default=True,
                 help=_("Allow running metadata proxy.")),
     cfg.BoolOpt('router_delete_namespaces', default=False,
-                help=_("Delete namespace after removing a router.")),
-    cfg.StrOpt('metadata_proxy_socket',
-               default='$state_path/metadata_proxy',
-               help=_('Location of Metadata Proxy UNIX domain '
-                      'socket')),
-    cfg.StrOpt('metadata_proxy_user',
-               default='',
-               help=_("User (uid or name) running metadata proxy after "
-                      "its initialization (if empty: L3 agent effective "
-                      "user)")),
-    cfg.StrOpt('metadata_proxy_group',
-               default='',
-               help=_("Group (gid or name) running metadata proxy after "
-                      "its initialization (if empty: L3 agent effective "
-                      "group)"))
+                help=_("Delete namespace after removing a router."))
 ]

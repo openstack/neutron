@@ -15,6 +15,8 @@
 
 import os
 
+from oslo.config import cfg
+
 from neutron.agent.common import config
 from neutron.agent.linux import external_process
 from neutron.openstack.common import log as logging
@@ -24,6 +26,24 @@ LOG = logging.getLogger(__name__)
 
 
 class MetadataDriver(advanced_service.AdvancedService):
+
+    OPTS = [
+        cfg.StrOpt('metadata_proxy_socket',
+                   default='$state_path/metadata_proxy',
+                   help=_('Location of Metadata Proxy UNIX domain '
+                          'socket')),
+        cfg.StrOpt('metadata_proxy_user',
+                   default='',
+                   help=_("User (uid or name) running metadata proxy after "
+                          "its initialization (if empty: L3 agent effective "
+                          "user)")),
+        cfg.StrOpt('metadata_proxy_group',
+                   default='',
+                   help=_("Group (gid or name) running metadata proxy after "
+                          "its initialization (if empty: L3 agent effective "
+                          "group)"))
+    ]
+
     def __init__(self, l3_agent):
         super(MetadataDriver, self).__init__(l3_agent)
         self.metadata_port = l3_agent.conf.metadata_port
