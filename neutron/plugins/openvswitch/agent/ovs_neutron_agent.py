@@ -373,7 +373,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         if port_info == q_const.FLOODING_ENTRY:
             lvm.tun_ofports.add(ofport)
-            ofports = ','.join(lvm.tun_ofports)
+            ofports = _ofport_set_to_str(lvm.tun_ofports)
             br.mod_flow(table=constants.FLOOD_TO_TUN,
                         dl_vlan=lvm.vlan,
                         actions="strip_vlan,set_tunnel:%s,output:%s" %
@@ -393,7 +393,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if port_info == q_const.FLOODING_ENTRY:
             lvm.tun_ofports.remove(ofport)
             if len(lvm.tun_ofports) > 0:
-                ofports = ','.join(lvm.tun_ofports)
+                ofports = _ofport_set_to_str(lvm.tun_ofports)
                 br.mod_flow(table=constants.FLOOD_TO_TUN,
                             dl_vlan=lvm.vlan,
                             actions="strip_vlan,set_tunnel:%s,output:%s" %
@@ -480,7 +480,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if network_type in constants.TUNNEL_NETWORK_TYPES:
             if self.enable_tunneling:
                 # outbound broadcast/multicast
-                ofports = ','.join(self.tun_br_ofports[network_type].values())
+                ofports = _ofport_set_to_str(
+                    self.tun_br_ofports[network_type].values())
                 if ofports:
                     self.tun_br.mod_flow(table=constants.FLOOD_TO_TUN,
                                          dl_vlan=lvid,
@@ -1049,7 +1050,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     actions="resubmit(,%s)" %
                     constants.TUN_TABLE[tunnel_type])
 
-        ofports = ','.join(self.tun_br_ofports[tunnel_type].values())
+        ofports = _ofport_set_to_str(self.tun_br_ofports[tunnel_type].values())
         if ofports and not self.l2_pop:
             # Update flooding flows to include the new tunnel
             for network_id, vlan_mapping in self.local_vlan_map.iteritems():
@@ -1501,6 +1502,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def _handle_sigterm(self, signum, frame):
         LOG.debug("Agent caught SIGTERM, quitting daemon loop.")
         self.run_daemon_loop = False
+
+
+def _ofport_set_to_str(ofport_set):
+    return ",".join(map(str, ofport_set))
 
 
 def create_agent_config_map(config):
