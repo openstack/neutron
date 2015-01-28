@@ -32,7 +32,7 @@ check_opinionated_shell () {
     # If you cannot avoid the use of bash, please change the EXPECTED var below.
     OBSERVED=$(grep -E '^([[:space:]]*[^#[:space:]]|#!).*bash' \
                tox.ini tools/* | wc -l)
-    EXPECTED=3
+    EXPECTED=4
     if [ ${EXPECTED} -ne ${OBSERVED} ]; then
         echo "Bash usage has been detected!" >>$FAILURES
     fi
