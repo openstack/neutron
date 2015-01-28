@@ -1481,10 +1481,10 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         calls = [
             mock.call.set_members('fake_sgid', 'IPv4', ['10.0.0.1']),
             mock.call.set_members('fake_sgid', 'IPv6', ['fe80::1']),
-            mock.call.set_exists('fake_sgid', 'IPv4'),
             mock.call.get_name('fake_sgid', 'IPv4'),
-            mock.call.set_exists('fake_sgid', 'IPv6'),
+            mock.call.set_exists('fake_sgid', 'IPv4'),
             mock.call.get_name('fake_sgid', 'IPv6'),
+            mock.call.set_exists('fake_sgid', 'IPv6'),
             mock.call.destroy('fake_sgid', 'IPv4'),
             mock.call.destroy('fake_sgid', 'IPv6')]
 

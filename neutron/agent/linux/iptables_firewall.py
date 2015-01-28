@@ -22,7 +22,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
-from neutron.i18n import _LI
+from neutron.i18n import _LI, _LE
 from neutron.openstack.common import log as logging
 
 
@@ -384,8 +384,22 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 if current_ips:
                     self.ipset.set_members(sg_id, ethertype, current_ips)
 
-    def _generate_ipset_chain(self, sg_rule, remote_gid):
-        iptables_rules = []
+    def _generate_ipset_rule_args(self, sg_rule, remote_gid):
+        ethertype = sg_rule.get('ethertype')
+        ipset_name = self.ipset.get_name(remote_gid, ethertype)
+        if not self.ipset.set_exists(remote_gid, ethertype):
+            LOG.error(_LE("Tried to generate an ipset iptable rule "
+                          "for a security group rule (%(rule)r) referencing "
+                          "an ipset (%(ipset)s) which doesn't exist yet."),
+                      {'rule': sg_rule, 'ipset': ipset_name})
+            return None
+        ipset_direction = IPSET_DIRECTION[sg_rule.get('direction')]
+        args = self._generate_protocol_and_port_args(sg_rule)
+        args += ['-m set', '--match-set', ipset_name, ipset_direction]
+        args += ['-j RETURN']
+        return args
+
+    def _generate_protocol_and_port_args(self, sg_rule):
         args = self._protocol_arg(sg_rule.get('protocol'))
         args += self._port_arg('sport',
                                sg_rule.get('protocol'),
@@ -395,51 +409,37 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                sg_rule.get('protocol'),
                                sg_rule.get('port_range_min'),
                                sg_rule.get('port_range_max'))
-        direction = sg_rule.get('direction')
-        ethertype = sg_rule.get('ethertype')
+        return args
 
-        if self.ipset.set_exists(remote_gid, ethertype):
-            args += ['-m set', '--match-set',
-                     self.ipset.get_name(remote_gid, ethertype),
-                     IPSET_DIRECTION[direction]]
-            args += ['-j RETURN']
-            iptables_rules += [' '.join(args)]
-        return iptables_rules
+    def _generate_plain_rule_args(self, sg_rule):
+        # These arguments MUST be in the format iptables-save will
+        # display them: source/dest, protocol, sport, dport, target
+        # Otherwise the iptables_manager code won't be able to find
+        # them to preserve their [packet:byte] counts.
+        args = self._ip_prefix_arg('s', sg_rule.get('source_ip_prefix'))
+        args += self._ip_prefix_arg('d', sg_rule.get('dest_ip_prefix'))
+        args += self._generate_protocol_and_port_args(sg_rule)
+        args += ['-j RETURN']
+        return args
+
+    def _convert_sg_rule_to_iptables_args(self, sg_rule):
+        remote_gid = sg_rule.get('remote_group_id')
+        if self.enable_ipset and remote_gid:
+            return self._generate_ipset_rule_args(sg_rule, remote_gid)
+        else:
+            return self._generate_plain_rule_args(sg_rule)
 
     def _convert_sgr_to_iptables_rules(self, security_group_rules):
         iptables_rules = []
         self._drop_invalid_packets(iptables_rules)
         self._allow_established(iptables_rules)
         for rule in security_group_rules:
-            if self.enable_ipset:
-                remote_gid = rule.get('remote_group_id')
-                if remote_gid:
-                    iptables_rules.extend(
-                        self._generate_ipset_chain(rule, remote_gid))
-                    continue
-            # These arguments MUST be in the format iptables-save will
-            # display them: source/dest, protocol, sport, dport, target
-            # Otherwise the iptables_manager code won't be able to find
-            # them to preserve their [packet:byte] counts.
-            args = self._ip_prefix_arg('s',
-                                       rule.get('source_ip_prefix'))
-            args += self._ip_prefix_arg('d',
-                                        rule.get('dest_ip_prefix'))
-            args += self._protocol_arg(rule.get('protocol'))
-            args += self._port_arg('sport',
-                                   rule.get('protocol'),
-                                   rule.get('source_port_range_min'),
-                                   rule.get('source_port_range_max'))
-            args += self._port_arg('dport',
-                                   rule.get('protocol'),
-                                   rule.get('port_range_min'),
-                                   rule.get('port_range_max'))
-            args += ['-j RETURN']
-            iptables_rules += [' '.join(args)]
+            args = self._convert_sg_rule_to_iptables_args(rule)
+            if args:
+                iptables_rules += [' '.join(args)]
 
         iptables_rules += [comment_rule('-j $sg-fallback',
                                         comment=ic.UNMATCHED)]
-
         return iptables_rules
 
     def _drop_invalid_packets(self, iptables_rules):
