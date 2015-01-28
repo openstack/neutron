@@ -354,6 +354,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             'use_ipv6': self.use_ipv6,
             'ns_name': ns_name,
             'agent_conf': self.conf,
+            'interface_driver': self.driver,
         }
 
         if router.get('distributed'):

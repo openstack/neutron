@@ -274,7 +274,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                            'id': _uuid(), 'device_id': _uuid()}]
 
         self.ri_kwargs = {'root_helper': self.conf.root_helper,
-                          'agent_conf': self.conf}
+                          'agent_conf': self.conf,
+                          'interface_driver': mock.sentinel.interface_driver}
 
     def _prepare_internal_network_data(self):
         port_id = _uuid()
