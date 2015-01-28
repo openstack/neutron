@@ -80,9 +80,11 @@ config.register_agent_state_opts_helper(cfg.CONF)
 
 class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpc):
 
-    def __init__(self, context, plugin_rpc, root_helper):
+    def __init__(self, context, plugin_rpc):
+        # Note: as rootwrap is not supported on HyperV, root_helper is
+        # passed in as None.
         super(HyperVSecurityAgent, self).__init__(context, plugin_rpc,
-                root_helper)
+                                                  root_helper=None)
         if sg_rpc.is_firewall_enabled():
             self._setup_rpc()
 
@@ -109,7 +111,7 @@ class HyperVNeutronAgent(object):
     # Set RPC API version to 1.1 by default.
     target = messaging.Target(version='1.1')
 
-    def __init__(self, root_helper):
+    def __init__(self):
         super(HyperVNeutronAgent, self).__init__()
         self._utils = utilsfactory.get_hypervutils()
         self._polling_interval = CONF.AGENT.polling_interval
@@ -117,7 +119,7 @@ class HyperVNeutronAgent(object):
         self._network_vswitch_map = {}
         self._port_metric_retries = {}
         self._set_agent_state()
-        self._setup_rpc(root_helper)
+        self._setup_rpc()
 
     def _set_agent_state(self):
         self.agent_state = {
@@ -137,7 +139,7 @@ class HyperVNeutronAgent(object):
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
 
-    def _setup_rpc(self, root_helper):
+    def _setup_rpc(self):
         self.agent_id = 'hyperv_%s' % platform.node()
         self.topic = topics.AGENT
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
@@ -159,7 +161,7 @@ class HyperVNeutronAgent(object):
                                                      consumers)
 
         self.sec_groups_agent = HyperVSecurityAgent(
-            self.context, self.sg_plugin_rpc, root_helper)
+            self.context, self.sg_plugin_rpc)
         report_interval = CONF.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
@@ -454,8 +456,7 @@ def main():
     common_config.init(sys.argv[1:])
     common_config.setup_logging()
 
-    root_helper = cfg.CONF.AGENT.root_helper
-    plugin = HyperVNeutronAgent(root_helper)
+    plugin = HyperVNeutronAgent()
 
     # Start everything.
     LOG.info(_LI("Agent initialized successfully, now running... "))
