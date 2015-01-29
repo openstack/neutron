@@ -444,15 +444,15 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     msg = _('IP address %s is not a valid IP for the defined '
                             'subnet') % fixed['ip_address']
                     raise n_exc.InvalidInput(error_message=msg)
-                if (ipv6_utils.is_slaac_subnet(subnet) and device_owner not in
+                if (ipv6_utils.is_auto_address_subnet(subnet) and
+                    device_owner not in
                     (constants.DEVICE_OWNER_ROUTER_INTF,
                      constants.DEVICE_OWNER_DVR_INTERFACE)):
                     msg = (_("IPv6 address %(address)s can not be directly "
-                            "assigned to a port on subnet %(id)s with "
-                            "%(mode)s address mode") %
+                            "assigned to a port on subnet %(id)s since the "
+                            "subnet is configured for automatic addresses") %
                            {'address': fixed['ip_address'],
-                            'id': subnet_id,
-                            'mode': subnet['ipv6_address_mode']})
+                            'id': subnet_id})
                     raise n_exc.InvalidInput(error_message=msg)
                 fixed_ip_set.append({'subnet_id': subnet_id,
                                      'ip_address': fixed['ip_address']})
@@ -478,7 +478,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             else:
                 subnet = self._get_subnet(context, fixed['subnet_id'])
                 if (subnet['ip_version'] == 6 and
-                        ipv6_utils.is_slaac_subnet(subnet)):
+                        ipv6_utils.is_auto_address_subnet(subnet)):
                     prefix = subnet['cidr']
                     ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
                         prefix, mac_address)
@@ -559,7 +559,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 else:
                     v6.append(subnet)
             for subnet in v6:
-                if ipv6_utils.is_slaac_subnet(subnet):
+                if ipv6_utils.is_auto_address_subnet(subnet):
                     #(dzyu) If true, calculate an IPv6 address
                     # by mac address and prefix, then remove this
                     # subnet from the array of subnets that will be passed
@@ -767,7 +767,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         if ra_mode_set and address_mode_set:
             self._validate_ipv6_combination(subnet['ipv6_ra_mode'],
                                             subnet['ipv6_address_mode'])
-        if address_mode_set:
+        if address_mode_set or ra_mode_set:
             self._validate_eui64_applicable(subnet)
 
     def _validate_eui64_applicable(self, subnet):
@@ -775,7 +775,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         # id together should be equal to 128. Currently neutron supports
         # EUI64 interface id only, thus limiting the prefix
         # length to be 64 only.
-        if ipv6_utils.is_slaac_subnet(subnet):
+        if ipv6_utils.is_auto_address_subnet(subnet):
             if netaddr.IPNetwork(subnet['cidr']).prefixlen != 64:
                 msg = _('Invalid CIDR %s for IPv6 address mode. '
                         'OpenStack uses the EUI-64 address format, '
@@ -1276,9 +1276,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             # Remove network owned ports, and delete IP allocations
             # for IPv6 addresses which were automatically generated
             # via SLAAC
-            is_ipv6_slaac_subnet = ipv6_utils.is_slaac_subnet(subnet)
+            is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
             for a in allocated:
-                if (is_ipv6_slaac_subnet or
+                if (is_auto_addr_subnet or
                     a.ports.device_owner in AUTO_DELETE_PORT_OWNERS):
                     NeutronDbPluginV2._delete_ip_allocation(
                         context, subnet.network_id, id, a.ip_address)

@@ -64,7 +64,8 @@ def is_enabled():
     return _IS_IPV6_ENABLED
 
 
-def is_slaac_subnet(subnet):
-    """Check if subnet uses SLAAC addressing."""
-    return (subnet['ipv6_address_mode'] == constants.IPV6_SLAAC
-            or subnet['ipv6_address_mode'] == constants.DHCPV6_STATELESS)
+def is_auto_address_subnet(subnet):
+    """Check if subnet is an auto address subnet."""
+    modes = [constants.IPV6_SLAAC, constants.DHCPV6_STATELESS]
+    return (subnet['ipv6_address_mode'] in modes
+            or subnet['ipv6_ra_mode'] in modes)
