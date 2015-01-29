@@ -22,6 +22,7 @@ class RouterInfo(object):
                  router,
                  root_helper,
                  agent_conf,
+                 interface_driver,
                  use_ipv6=False,
                  ns_name=None):
         self.router_id = router_id
@@ -40,6 +41,7 @@ class RouterInfo(object):
             namespace=self.ns_name)
         self.routes = []
         self.agent_conf = agent_conf
+        self.driver = interface_driver
 
     @property
     def router(self):
