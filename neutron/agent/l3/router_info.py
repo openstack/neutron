@@ -17,8 +17,13 @@ from neutron.agent.linux import iptables_manager
 
 class RouterInfo(object):
 
-    def __init__(self, router_id, root_helper, router,
-                 use_ipv6=False, ns_name=None):
+    def __init__(self,
+                 router_id,
+                 router,
+                 root_helper,
+                 agent_conf,
+                 use_ipv6=False,
+                 ns_name=None):
         self.router_id = router_id
         self.ex_gw_port = None
         self._snat_enabled = None
@@ -34,6 +39,7 @@ class RouterInfo(object):
             use_ipv6=use_ipv6,
             namespace=self.ns_name)
         self.routes = []
+        self.agent_conf = agent_conf
 
     @property
     def router(self):
