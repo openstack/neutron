@@ -1247,19 +1247,19 @@ class TestN1kvSubnets(test_plugin.TestSubnetsV2,
             port3 = self.deserialize(self.fmt, res)
             ips = port3['port']['fixed_ips']
             self.assertEqual(len(ips), 2)
-            self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
-            self.assertEqual(ips[0]['subnet_id'], subnet1['subnet']['id'])
-            self.assertEqual(ips[1]['ip_address'], '2607:f0d0:1002:51::2')
-            self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
+            self.assertIn({'ip_address': '10.0.0.2',
+                           'subnet_id': subnet1['subnet']['id']}, ips)
+            self.assertIn({'ip_address': '2607:f0d0:1002:51::2',
+                           'subnet_id': subnet2['subnet']['id']}, ips)
             res = self._create_port(self.fmt, net_id=net_id)
             port4 = self.deserialize(self.fmt, res)
             # Check that a v4 and a v6 address are allocated
             ips = port4['port']['fixed_ips']
             self.assertEqual(len(ips), 2)
-            self.assertEqual(ips[0]['ip_address'], '10.0.0.3')
-            self.assertEqual(ips[0]['subnet_id'], subnet1['subnet']['id'])
-            self.assertEqual(ips[1]['ip_address'], '2607:f0d0:1002:51::3')
-            self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
+            self.assertIn({'ip_address': '10.0.0.3',
+                           'subnet_id': subnet1['subnet']['id']}, ips)
+            self.assertIn({'ip_address': '2607:f0d0:1002:51::3',
+                           'subnet_id': subnet2['subnet']['id']}, ips)
             self._delete('ports', port3['port']['id'])
             self._delete('ports', port4['port']['id'])
             req = self.new_delete_request('subnets', subnet1['subnet']['id'])

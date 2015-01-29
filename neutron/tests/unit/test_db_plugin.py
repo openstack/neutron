@@ -1202,10 +1202,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 ips = res['port']['fixed_ips']
                 self.assertEqual(len(ips), 2)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
-                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
-                self.assertEqual(ips[1]['ip_address'], '10.0.0.10')
-                self.assertEqual(ips[1]['subnet_id'], subnet['subnet']['id'])
+                self.assertIn({'ip_address': '10.0.0.2',
+                               'subnet_id': subnet['subnet']['id']}, ips)
+                self.assertIn({'ip_address': '10.0.0.10',
+                               'subnet_id': subnet['subnet']['id']}, ips)
 
     def test_update_port_update_ips(self):
         """Update IP and associate new IP on port.
@@ -1245,10 +1245,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  data['port']['admin_state_up'])
                 ips = res['port']['fixed_ips']
                 self.assertEqual(len(ips), 2)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.3')
-                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
-                self.assertEqual(ips[1]['ip_address'], '10.0.0.4')
-                self.assertEqual(ips[1]['subnet_id'], subnet['subnet']['id'])
+                self.assertIn({'ip_address': '10.0.0.3',
+                           'subnet_id': subnet['subnet']['id']}, ips)
+                self.assertIn({'ip_address': '10.0.0.4',
+                           'subnet_id': subnet['subnet']['id']}, ips)
 
     def test_update_port_invalid_fixed_ip_address_v6_slaac(self):
         with self.subnet(
@@ -1410,19 +1410,19 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 port3 = self.deserialize(self.fmt, res)
                 ips = port3['port']['fixed_ips']
                 self.assertEqual(len(ips), 2)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
-                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
-                self.assertEqual(ips[1]['ip_address'], '2607:f0d0:1002:51::2')
-                self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
+                self.assertIn({'ip_address': '10.0.0.2',
+                               'subnet_id': subnet['subnet']['id']}, ips)
+                self.assertIn({'ip_address': '2607:f0d0:1002:51::2',
+                               'subnet_id': subnet2['subnet']['id']}, ips)
                 res = self._create_port(self.fmt, net_id=net_id)
                 port4 = self.deserialize(self.fmt, res)
                 # Check that a v4 and a v6 address are allocated
                 ips = port4['port']['fixed_ips']
                 self.assertEqual(len(ips), 2)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.3')
-                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
-                self.assertEqual(ips[1]['ip_address'], '2607:f0d0:1002:51::3')
-                self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
+                self.assertIn({'ip_address': '10.0.0.3',
+                               'subnet_id': subnet['subnet']['id']}, ips)
+                self.assertIn({'ip_address': '2607:f0d0:1002:51::3',
+                               'subnet_id': subnet2['subnet']['id']}, ips)
                 self._delete('ports', port3['port']['id'])
                 self._delete('ports', port4['port']['id'])
 
@@ -1486,12 +1486,14 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 ) as port:
                     ips = port['port']['fixed_ips']
                     self.assertEqual(len(ips), 2)
-                    self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+                    self.assertIn({'ip_address': '10.0.0.2',
+                                   'subnet_id': subnet['subnet']['id']}, ips)
                     port_mac = port['port']['mac_address']
                     subnet_cidr = subnet2['subnet']['cidr']
                     eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
                             subnet_cidr, port_mac))
-                    self.assertEqual(ips[1]['ip_address'], eui_addr)
+                    self.assertIn({'ip_address': eui_addr,
+                                   'subnet_id': subnet2['subnet']['id']}, ips)
 
     def test_ip_allocation_for_ipv6_subnet_slaac_address_mode(self):
         res = self._create_network(fmt=self.fmt, name='net',
