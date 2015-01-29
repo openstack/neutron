@@ -18,6 +18,7 @@ import pprint
 import alembic
 import alembic.autogenerate
 import alembic.migration
+from alembic import script as alembic_script
 import mock
 from oslo.config import cfg
 from oslo.config import fixture as config_fixture
@@ -231,3 +232,31 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
 class TestModelsMigrationsPsql(_TestModelsMigrations,
                                test_base.PostgreSQLOpportunisticTestCase):
     pass
+
+
+class TestSanityCheck(test_base.DbTestCase):
+
+    def setUp(self):
+        super(TestSanityCheck, self).setUp()
+        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config.neutron_config = cfg.CONF
+
+    def test_check_sanity_14be42f3d0a5(self):
+        SecurityGroup = sqlalchemy.Table(
+            'securitygroups', sqlalchemy.MetaData(),
+            sqlalchemy.Column('id', sqlalchemy.String(length=36),
+                              nullable=False),
+            sqlalchemy.Column('name', sqlalchemy.String(255)),
+            sqlalchemy.Column('tenant_id', sqlalchemy.String(255)))
+
+        with self.engine.connect() as conn:
+            SecurityGroup.create(conn)
+            conn.execute(SecurityGroup.insert(), [
+                {'id': '123d4s', 'tenant_id': 'sssda1', 'name': 'default'},
+                {'id': '123d4', 'tenant_id': 'sssda1', 'name': 'default'}
+            ])
+            script_dir = alembic_script.ScriptDirectory.from_config(
+                self.alembic_config)
+            script = script_dir.get_revision("14be42f3d0a5").module
+            self.assertRaises(script.DuplicateSecurityGroupsNamedDefault,
+                              script.check_sanity, conn)
