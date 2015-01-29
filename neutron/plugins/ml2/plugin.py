@@ -807,14 +807,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 if allocated:
                     map(session.delete, allocated)
                 LOG.debug("Ports to auto-deallocate: %s", allocated)
-                # Check if there are tenant owned ports
-                tenant_port = (session.query(models_v2.IPAllocation).
-                               filter_by(subnet_id=id).
-                               join(models_v2.Port).
-                               first())
-                if tenant_port:
-                    LOG.debug("Tenant-owned ports exist")
-                    raise exc.SubnetInUse(subnet_id=id)
+                # Check if there are more IP allocations, unless
+                # is_auto_address_subnet is True. In that case the check is
+                # unnecessary. This additional check not only would be wasteful
+                # for this class of subnet, but is also error-prone since when
+                # the isolation level is set to READ COMMITTED allocations made
+                # concurrently will be returned by this query
+                if not is_auto_addr_subnet:
+                    if self._subnet_check_ip_allocations(context, id):
+                        LOG.debug("Found IP allocations on subnet %s, "
+                                  "cannot delete", id)
+                        raise exc.SubnetInUse(subnet_id=id)
 
                 # If allocated is None, then all the IPAllocation were
                 # correctly deleted during the previous pass.

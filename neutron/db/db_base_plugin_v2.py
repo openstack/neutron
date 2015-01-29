@@ -1217,6 +1217,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             result['allocation_pools'] = new_pools
         return result
 
+    def _subnet_check_ip_allocations(self, context, subnet_id):
+        return context.session.query(
+            models_v2.IPAllocation).filter_by(
+                subnet_id=subnet_id).join(models_v2.Port).first()
+
     def delete_subnet(self, context, id):
         with context.session.begin(subtransactions=True):
             subnet = self._get_subnet(context, id)
@@ -1236,13 +1241,17 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             network_ports = qry_network_ports.all()
             if network_ports:
                 map(context.session.delete, network_ports)
-            # Check if there are tenant owned ports
-            tenant_ports = (context.session.query(models_v2.IPAllocation).
-                            filter_by(subnet_id=subnet['id']).
-                            join(models_v2.Port).
-                            filter_by(network_id=subnet['network_id']).first())
-            if tenant_ports:
-                raise n_exc.SubnetInUse(subnet_id=id)
+            # Check if there are more IP allocations, unless
+            # is_auto_address_subnet is True. In that case the check is
+            # unnecessary. This additional check not only would be wasteful
+            # for this class of subnet, but is also error-prone since when
+            # the isolation level is set to READ COMMITTED allocations made
+            # concurrently will be returned by this query
+            if not is_auto_addr_subnet:
+                if self._subnet_check_ip_allocations(context, id):
+                    LOG.debug("Found IP allocations on subnet %s, "
+                              "cannot delete", id)
+                    raise n_exc.SubnetInUse(subnet_id=id)
 
             context.session.delete(subnet)
 
