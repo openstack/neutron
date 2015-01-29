@@ -16,7 +16,6 @@
 import copy
 import functools
 
-import fixtures
 import mock
 import netaddr
 from oslo.config import cfg
@@ -81,14 +80,16 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         conf.set_override('ovs_integration_bridge', br_int.br_name)
         conf.set_override('external_network_bridge', br_ex.br_name)
 
-        temp_dir = self.useFixture(fixtures.TempDir()).path
-        conf.set_override('state_path', temp_dir)
+        temp_dir = self.get_new_temp_dir()
+        get_temp_file_path = functools.partial(self.get_temp_file_path,
+                                               root=temp_dir)
+        conf.set_override('state_path', temp_dir.path)
         conf.set_override('metadata_proxy_socket',
-                          '%s/metadata_proxy' % temp_dir)
+                          get_temp_file_path('metadata_proxy'))
         conf.set_override('ha_confs_path',
-                          '%s/ha_confs' % temp_dir)
+                          get_temp_file_path('ha_confs'))
         conf.set_override('external_pids',
-                          '%s/external/pids' % temp_dir)
+                          get_temp_file_path('external/pids'))
         conf.set_override('host', host)
         agent = l3_test_agent.TestL3NATAgent(host, conf)
         mock.patch.object(ip_lib, 'send_gratuitous_arp').start()

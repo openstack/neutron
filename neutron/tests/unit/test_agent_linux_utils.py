@@ -11,8 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
-import fixtures
 import mock
 import testtools
 
@@ -40,8 +38,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
     def setUp(self):
         super(AgentUtilsExecuteTest, self).setUp()
         self.root_helper = "echo"
-        self.test_file = self.useFixture(
-            fixtures.TempDir()).join("test_execute.tmp")
+        self.test_file = self.get_temp_file_path('test_execute.tmp')
         open(self.test_file, 'w').close()
         self.mock_popen_p = mock.patch("subprocess.Popen.communicate")
         self.mock_popen = self.mock_popen_p.start()
