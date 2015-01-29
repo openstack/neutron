@@ -33,23 +33,23 @@ class DVRServerRpcApi(object):
 
     @log.log
     def get_dvr_mac_address_by_host(self, context, host):
-        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare()
         return cctxt.call(context, 'get_dvr_mac_address_by_host', host=host)
 
     @log.log
     def get_dvr_mac_address_list(self, context):
-        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare()
         return cctxt.call(context, 'get_dvr_mac_address_list')
 
     @log.log
     def get_ports_on_host_by_subnet(self, context, host, subnet):
-        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare()
         return cctxt.call(context, 'get_ports_on_host_by_subnet',
                           host=host, subnet=subnet)
 
     @log.log
     def get_subnet_for_dvr(self, context, subnet):
-        cctxt = self.client.prepare(version=self.DVR_RPC_VERSION)
+        cctxt = self.client.prepare()
         return cctxt.call(context, 'get_subnet_for_dvr', subnet=subnet)
 
 
