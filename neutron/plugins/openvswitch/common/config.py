@@ -94,6 +94,10 @@ agent_opts = [
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
     cfg.BoolOpt('enable_distributed_routing', default=False,
                 help=_("Make the l2 agent run in DVR mode.")),
+    cfg.IntOpt('quitting_rpc_timeout', default=10,
+               help=_("Set new timeout in seconds for new rpc calls after "
+                      "agent receives SIGTERM. If value is set to 0, rpc "
+                      "timeout won't be changed"))
 ]
 
 

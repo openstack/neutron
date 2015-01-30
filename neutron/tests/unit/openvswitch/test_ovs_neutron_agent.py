@@ -104,6 +104,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
+        cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         kwargs = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
 
         class MockFixedIntervalLoopingCall(object):
@@ -1402,6 +1403,18 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         # OVS restart and re-setup the bridges
         setup_int_br.assert_has_calls([mock.call()])
         setup_phys_br.assert_has_calls([mock.call({})])
+
+    def test_set_rpc_timeout(self):
+        self.agent._handle_sigterm(None, None)
+        for rpc_client in (self.agent.plugin_rpc._client,
+                           self.agent.state_rpc._client):
+            self.assertEqual(10, rpc_client.timeout)
+
+    def test_set_rpc_timeout_no_value(self):
+        self.agent.quitting_rpc_timeout = None
+        with mock.patch.object(self.agent, 'set_rpc_timeout') as mock_set_rpc:
+            self.agent._handle_sigterm(None, None)
+        self.assertFalse(mock_set_rpc.called)
 
 
 class AncillaryBridgesTest(base.BaseTestCase):
