@@ -198,9 +198,6 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
 class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
                            sched_db.DhcpAgentSchedulerDbMixin):
     def test_reschedule_network_from_down_agent(self):
-        plugin = mock.MagicMock()
-        plugin.get_subnets.return_value = [{"network_id": self.network_id,
-                                            "enable_dhcp": True}]
         agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)
         self._test_schedule_bind_network([agents[0]], self.network_id)
         self._save_networks(["foo-network-2"])
@@ -221,9 +218,6 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
                 mock.ANY, self.network_id, agents[1].host)
 
     def test_reschedule_network_from_down_agent_failed(self):
-        plugin = mock.MagicMock()
-        plugin.get_subnets.return_value = [{"network_id": self.network_id,
-                                            "enable_dhcp": True}]
         agents = self._create_and_set_agents_down(['host-a'], 1)
         self._test_schedule_bind_network([agents[0]], self.network_id)
         with contextlib.nested(
