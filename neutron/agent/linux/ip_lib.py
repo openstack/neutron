@@ -206,14 +206,16 @@ class IPWrapper(SubProcessBase):
 
 
 class IpRule(IPWrapper):
-    def add_rule_from(self, ip, table, rule_pr):
-        args = ['add', 'from', ip, 'lookup', table, 'priority', rule_pr]
-        ip = self._as_root('', 'rule', tuple(args))
+    def add(self, ip, table, rule_pr):
+        ip_version = netaddr.IPNetwork(ip).version
+        args = ['add', 'from', ip, 'table', table, 'priority', rule_pr]
+        ip = self._as_root([ip_version], 'rule', tuple(args))
         return ip
 
-    def delete_rule_priority(self, rule_pr):
-        args = ['del', 'priority', rule_pr]
-        ip = self._as_root('', 'rule', tuple(args))
+    def delete(self, ip, table, rule_pr):
+        ip_version = netaddr.IPNetwork(ip).version
+        args = ['del', 'table', table, 'priority', rule_pr]
+        ip = self._as_root([ip_version], 'rule', tuple(args))
         return ip
 
 

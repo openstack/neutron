@@ -16,6 +16,7 @@
 import os
 
 import mock
+import netaddr
 
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
@@ -449,20 +450,36 @@ class TestIpRule(base.BaseTestCase):
         self.execute_p = mock.patch.object(ip_lib.IpRule, '_execute')
         self.execute = self.execute_p.start()
 
-    def test_add_rule_from(self):
-        ip_lib.IpRule('sudo').add_rule_from('192.168.45.100', 2, 100)
-        self.execute.assert_called_once_with('', 'rule',
-                                             ('add', 'from', '192.168.45.100',
-                                              'lookup', 2, 'priority', 100),
+    def _test_add_rule(self, ip, table, priority):
+        ip_version = netaddr.IPNetwork(ip).version
+        ip_lib.IpRule('sudo').add(ip, table, priority)
+        self.execute.assert_called_once_with([ip_version], 'rule',
+                                             ('add', 'from', ip,
+                                              'table', table,
+                                              'priority', priority),
                                              'sudo', None,
                                              log_fail_as_error=True)
 
-    def test_delete_rule_priority(self):
-        ip_lib.IpRule('sudo').delete_rule_priority(100)
-        self.execute.assert_called_once_with('', 'rule',
-                                             ('del', 'priority', 100),
+    def _test_delete_rule(self, ip, table, priority):
+        ip_version = netaddr.IPNetwork(ip).version
+        ip_lib.IpRule('sudo').delete(ip, table, priority)
+        self.execute.assert_called_once_with([ip_version], 'rule',
+                                             ('del', 'table', table,
+                                              'priority', priority),
                                              'sudo', None,
                                              log_fail_as_error=True)
+
+    def test_add_rule_v4(self):
+        self._test_add_rule('192.168.45.100', 2, 100)
+
+    def test_add_rule_v6(self):
+        self._test_add_rule('2001:db8::1', 3, 200)
+
+    def test_delete_rule_v4(self):
+        self._test_delete_rule('192.168.45.100', 2, 100)
+
+    def test_delete_rule_v6(self):
+        self._test_delete_rule('2001:db8::1', 3, 200)
 
 
 class TestIPDevice(base.BaseTestCase):

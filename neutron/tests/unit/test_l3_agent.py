@@ -1988,8 +1988,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri.dist_fip_count = 0
         ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
         agent.floating_ip_added_dist(ri, fip, ip_cidr)
-        self.mock_rule.add_rule_from.assert_called_with('192.168.0.1',
-                                                        16, FIP_PRI)
+        self.mock_rule.add.assert_called_with('192.168.0.1', 16, FIP_PRI)
         # TODO(mrsmith): add more asserts
 
     @mock.patch.object(l3_agent.L3NATAgent, '_fip_ns_unsubscribe')
@@ -2016,7 +2015,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         s = lla.LinkLocalAddressPair('169.254.30.42/31')
         ri.rtr_fip_subnet = s
         agent.floating_ip_removed_dist(ri, fip_cidr)
-        self.mock_rule.delete_rule_priority.assert_called_with(FIP_PRI)
+        floating_ip = fip_cidr.split('/')[0]
+        self.mock_rule.delete.assert_called_with(floating_ip, 16, FIP_PRI)
         self.mock_ip_dev.route.delete_route.assert_called_with(fip_cidr,
                                                                str(s.ip))
         self.assertFalse(unsubscribe.called, '_fip_ns_unsubscribe called!')
