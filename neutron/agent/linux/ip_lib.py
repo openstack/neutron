@@ -191,17 +191,30 @@ class IPWrapper(SubProcessBase):
 
 
 class IpRule(IPWrapper):
+    def _exists(self, ip, ip_version, table, rule_pr):
+        # Typical rule from 'ip rule show':
+        # 4030201:  from 1.2.3.4/24 lookup 10203040
+
+        rule_pr = str(rule_pr) + ":"
+        for line in self._as_root([ip_version], 'rule', ['show']).splitlines():
+            parts = line.split()
+            if parts and (parts[0] == rule_pr and
+                          parts[2] == str(ip) and
+                          parts[-1] == str(table)):
+                return True
+
+        return False
+
     def add(self, ip, table, rule_pr):
         ip_version = netaddr.IPNetwork(ip).version
-        args = ['add', 'from', ip, 'table', table, 'priority', rule_pr]
-        ip = self._as_root([ip_version], 'rule', tuple(args))
-        return ip
+        if not self._exists(ip, ip_version, table, rule_pr):
+            args = ['add', 'from', ip, 'table', table, 'priority', rule_pr]
+            self._as_root([ip_version], 'rule', tuple(args))
 
     def delete(self, ip, table, rule_pr):
         ip_version = netaddr.IPNetwork(ip).version
         args = ['del', 'table', table, 'priority', rule_pr]
-        ip = self._as_root([ip_version], 'rule', tuple(args))
-        return ip
+        self._as_root([ip_version], 'rule', tuple(args))
 
 
 class IPDevice(SubProcessBase):
