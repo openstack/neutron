@@ -57,6 +57,7 @@ class GreEndpoints(model_base.BASEV2):
     __table_args__ = (
         sa.UniqueConstraint('host',
                             name='unique_ml2_gre_endpoints0host'),
+        model_base.BASEV2.__table_args__
     )
     ip_address = sa.Column(sa.String(64), primary_key=True)
     host = sa.Column(sa.String(255), nullable=True)
