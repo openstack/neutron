@@ -1111,8 +1111,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                session.begin(subtransactions=True)):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
-                # the port existed when l3plugin.prevent_l3_port_deletion
-                # was called but now is already gone
                 LOG.debug("The port '%s' was deleted", id)
                 return
             port = self._make_port_dict(port_db)
