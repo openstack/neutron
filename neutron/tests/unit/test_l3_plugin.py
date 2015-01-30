@@ -2154,7 +2154,12 @@ class L3NatDBIntTestCase(L3BaseForIntTests, L3NatTestCaseBase):
 class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase):
 
     """Unit tests for a separate L3 routing service plugin."""
-    pass
+    def test_port_deletion_prevention_handles_missing_port(self):
+        pl = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        self.assertIsNone(
+            pl.prevent_l3_port_deletion(context.get_admin_context(), 'fakeid')
+        )
 
 
 class L3NatDBIntTestCaseXML(L3NatDBIntTestCase):

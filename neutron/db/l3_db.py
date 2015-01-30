@@ -881,7 +881,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         to /ports, but rather via other API calls that perform the proper
         deletion checks.
         """
-        port_db = self._core_plugin._get_port(context, port_id)
+        try:
+            port_db = self._core_plugin._get_port(context, port_id)
+        except n_exc.PortNotFound:
+            # non-existent ports don't need to be protected from deletion
+            return
         if port_db['device_owner'] in self.router_device_owners:
             # Raise port in use only if the port has IP addresses
             # Otherwise it's a stale port that can be removed
