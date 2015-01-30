@@ -79,23 +79,7 @@ def parse_service_provider_opt():
     # Add in entries from the *aas conf files
     neutron_mods = repos.NeutronModules()
     for x in neutron_mods.installed_list():
-        ini = neutron_mods.ini(x)
-        if ini is None:
-            continue
-
-        try:
-            sp = ini.items('service_providers')
-            for name, value in sp:
-                if name == 'service_provider':
-                    svc_providers_opt.append(value)
-        except Exception:
-            continue
-
-    # TODO(dougwig) - remove this next bit after we've migrated all entries
-    # to the service repo config files. Some tests require a default driver
-    # to be present, but not two, which leads to a cross-repo breakage
-    # issue.  uniq the list as a short-term workaround.
-    svc_providers_opt = list(set(svc_providers_opt))
+        svc_providers_opt += neutron_mods.service_providers(x)
 
     LOG.debug("Service providers = %s", svc_providers_opt)
 

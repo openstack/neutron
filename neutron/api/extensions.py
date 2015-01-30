@@ -520,18 +520,13 @@ class ExtensionManager(object):
         implementation.
         """
 
-        # TODO(dougwig) - remove this after the service extensions move out
-        # While moving the extensions out of neutron into the service repos,
-        # don't double-load the same thing.
-        loaded = []
-
         for path in self.path.split(':'):
             if os.path.exists(path):
-                self._load_all_extensions_from_path(path, loaded)
+                self._load_all_extensions_from_path(path)
             else:
                 LOG.error(_LE("Extension path '%s' doesn't exist!"), path)
 
-    def _load_all_extensions_from_path(self, path, loaded):
+    def _load_all_extensions_from_path(self, path):
         # Sorting the extension list makes the order in which they
         # are loaded predictable across a cluster of load-balanced
         # Neutron Servers
@@ -541,12 +536,7 @@ class ExtensionManager(object):
                 mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
                 ext_path = os.path.join(path, f)
                 if file_ext.lower() == '.py' and not mod_name.startswith('_'):
-                    if mod_name in loaded:
-                        LOG.warn(_LW("Extension already loaded, skipping: %s"),
-                                 mod_name)
-                        continue
                     mod = imp.load_source(mod_name, ext_path)
-                    loaded.append(mod_name)
                     ext_name = mod_name[0].upper() + mod_name[1:]
                     new_ext_class = getattr(mod, ext_name, None)
                     if not new_ext_class:
