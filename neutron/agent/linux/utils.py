@@ -141,6 +141,8 @@ def ensure_dir(dir_path):
 
 
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
+    #TODO(mangelajo): separate responsibilities here, ensure_conf_dir
+    #                 should be a separate function
     conf_dir = os.path.abspath(os.path.normpath(cfg_root))
     conf_base = os.path.join(conf_dir, uuid)
     if ensure_conf_dir:

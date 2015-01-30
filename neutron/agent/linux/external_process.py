@@ -66,11 +66,13 @@ class ProcessManager(object):
             self.service_pid_fname = 'pid'
             self.service = 'default-service'
 
+        utils.ensure_dir(os.path.dirname(self.get_pid_file_name()))
+
     def enable(self, cmd_callback=None, reload_cfg=False):
         if not self.active:
             if not cmd_callback:
                 cmd_callback = self.default_cmd_callback
-            cmd = cmd_callback(self.get_pid_file_name(ensure_pids_dir=True))
+            cmd = cmd_callback(self.get_pid_file_name())
 
             ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
             ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env)
@@ -96,17 +98,14 @@ class ProcessManager(object):
         else:
             LOG.debug('No process started for %s', self.uuid)
 
-    def get_pid_file_name(self, ensure_pids_dir=False):
+    def get_pid_file_name(self):
         """Returns the file name for a given kind of config file."""
         if self.pid_file:
-            if ensure_pids_dir:
-                utils.ensure_dir(os.path.dirname(self.pid_file))
             return self.pid_file
         else:
             return utils.get_conf_file_name(self.pids_path,
                                             self.uuid,
-                                            self.service_pid_fname,
-                                            ensure_pids_dir)
+                                            self.service_pid_fname)
 
     @property
     def pid(self):
@@ -222,6 +221,11 @@ class ProcessMonitor(object):
             uuid=uuid,
             service=service,
             pid_file=pid_file).pid
+
+    def get_pid_file_name(self, uuid, service=None):
+        return self._ensure_process_manager(
+            uuid=uuid,
+            service=service).get_pid_file_name()
 
     def _ensure_process_manager(self, uuid, cmd_callback=None,
                                 namespace=None, service=None,

@@ -19,7 +19,6 @@ import eventlet
 
 import mock
 import netaddr
-from oslo.config import cfg
 from oslo import messaging
 from testtools import matchers
 
@@ -31,6 +30,7 @@ from neutron.agent.l3 import dvr_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info as l3router
+from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
@@ -185,7 +185,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_root_helper(self.conf)
+        agent_config.register_process_monitor_opts(self.conf)
         self.conf.register_opts(interface.OPTS)
+        self.conf.register_opts(external_process.OPTS)
         self.conf.set_override('router_id', 'fake_id')
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
@@ -1267,23 +1269,34 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertFalse(nat_rules_delta)
         return ri
 
-    def _expected_call_lookup_ri_process(self, ri, process):
+    def _expected_call_lookup_ri_process_enabled(self, ri, process):
         """Expected call if a process is looked up in a router instance."""
-        return [mock.call(cfg.CONF,
-                          ri.router['id'],
-                          self.conf.root_helper,
-                          ri.ns_name,
-                          process)]
+        return [mock.call(uuid=ri.router['id'],
+                          service=process,
+                          default_cmd_callback=mock.ANY,
+                          namespace=ri.ns_name,
+                          root_helper=self.conf.root_helper,
+                          conf=self.conf,
+                          pid_file=None,
+                          cmd_addl_env=None)]
+
+    def _expected_call_lookup_ri_process_disabled(self, ri, process):
+        """Expected call if a process is looked up in a router instance."""
+        # The ProcessManager does already exist, and it's found via
+        # ProcessMonitor lookup _ensure_process_manager
+        return [mock.call().__nonzero__()]
 
     def _assert_ri_process_enabled(self, ri, process):
         """Verify that process was enabled for a router instance."""
-        expected_calls = self._expected_call_lookup_ri_process(ri, process)
-        expected_calls.append(mock.call().enable(mock.ANY, True))
+        expected_calls = self._expected_call_lookup_ri_process_enabled(
+            ri, process)
+        expected_calls.append(mock.call().enable(reload_cfg=True))
         self.assertEqual(expected_calls, self.external_process.mock_calls)
 
     def _assert_ri_process_disabled(self, ri, process):
         """Verify that process was disabled for a router instance."""
-        expected_calls = self._expected_call_lookup_ri_process(ri, process)
+        expected_calls = self._expected_call_lookup_ri_process_disabled(
+            ri, process)
         expected_calls.append(mock.call().disable())
         self.assertEqual(expected_calls, self.external_process.mock_calls)
 
@@ -1659,20 +1672,18 @@ class TestBasicRouterOperations(base.BaseTestCase):
                   'distributed': False}
         driver = metadata_driver.MetadataDriver
         with mock.patch.object(
-            driver, '_destroy_metadata_proxy') as destroy_proxy:
+            driver, '_destroy_monitored_metadata_proxy') as destroy_proxy:
             with mock.patch.object(
-                driver, '_spawn_metadata_proxy') as spawn_proxy:
+                driver, '_spawn_monitored_metadata_proxy') as spawn_proxy:
                 agent._process_added_router(router)
                 if enableflag:
                     spawn_proxy.assert_called_with(router_id,
-                                                   mock.ANY,
                                                    mock.ANY)
                 else:
                     self.assertFalse(spawn_proxy.call_count)
                 agent._router_removed(router_id)
                 if enableflag:
                     destroy_proxy.assert_called_with(router_id,
-                                                     mock.ANY,
                                                      mock.ANY)
                 else:
                     self.assertFalse(destroy_proxy.call_count)
@@ -2172,15 +2183,17 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.external_process_p.stop()
         self.ip_cls_p.stop()
 
+        ensure_dir = 'neutron.agent.linux.utils.ensure_dir'
         get_pid_file_name = ('neutron.agent.linux.external_process.'
                              'ProcessManager.get_pid_file_name')
         with mock.patch('neutron.agent.linux.utils.execute') as execute:
             with mock.patch(get_pid_file_name) as get_pid:
-                get_pid.return_value = pidfile
-                ra._spawn_radvd(router['id'],
-                                conffile,
-                                agent.get_ns_name(router['id']),
-                                self.conf.root_helper)
+                with mock.patch(ensure_dir) as ensure_dir:
+                    get_pid.return_value = pidfile
+                    ra._spawn_radvd(router['id'],
+                                    conffile,
+                                    agent.get_ns_name(router['id']),
+                                    agent.process_monitor)
             cmd = execute.call_args[0][0]
 
         self.assertIn('radvd', cmd)
