@@ -490,15 +490,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         # NOTE(armando-migliaccio): in the base case this is invariant
         return DEVICE_OWNER_ROUTER_INTF
 
-    def _validate_interface_info(self, interface_info):
+    def _validate_interface_info(self, interface_info, for_removal=False):
         port_id_specified = interface_info and 'port_id' in interface_info
         subnet_id_specified = interface_info and 'subnet_id' in interface_info
         if not (port_id_specified or subnet_id_specified):
             msg = _("Either subnet_id or port_id must be specified")
             raise n_exc.BadRequest(resource='router', msg=msg)
-        if port_id_specified and subnet_id_specified:
-            msg = _("Cannot specify both subnet-id and port-id")
-            raise n_exc.BadRequest(resource='router', msg=msg)
+        if not for_removal:
+            if port_id_specified and subnet_id_specified:
+                msg = _("Cannot specify both subnet-id and port-id")
+                raise n_exc.BadRequest(resource='router', msg=msg)
         return port_id_specified, subnet_id_specified
 
     def _add_interface_by_port(self, context, router, port_id, owner):
@@ -568,7 +569,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         if add_by_port:
             port = self._add_interface_by_port(
                 context, router, interface_info['port_id'], device_owner)
-        elif add_by_sub:
+        # add_by_subnet is not used here, because the validation logic of
+        # _validate_interface_info ensures that either of add_by_* is True.
+        else:
             port = self._add_interface_by_subnet(
                 context, router, interface_info['subnet_id'], device_owner)
 
@@ -654,17 +657,20 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                                                   subnet_id=subnet_id)
 
     def remove_router_interface(self, context, router_id, interface_info):
-        if not interface_info:
-            msg = _("Either subnet_id or port_id must be specified")
-            raise n_exc.BadRequest(resource='router', msg=msg)
+        remove_by_port, remove_by_subnet = (
+            self._validate_interface_info(interface_info, for_removal=True)
+        )
         port_id = interface_info.get('port_id')
         subnet_id = interface_info.get('subnet_id')
         device_owner = self._get_device_owner(context, router_id)
-        if port_id:
+        if remove_by_port:
             port, subnet = self._remove_interface_by_port(context, router_id,
                                                           port_id, subnet_id,
                                                           device_owner)
-        elif subnet_id:
+        # remove_by_subnet is not used here, because the validation logic of
+        # _validate_interface_info ensures that at least one of remote_by_*
+        # is True.
+        else:
             port, subnet = self._remove_interface_by_subnet(
                 context, router_id, subnet_id, device_owner)
 
