@@ -80,6 +80,10 @@ class ConfigurationTest(base.BaseTestCase):
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
         patch_sync.start()
+        dhcp_periodic_p = mock.patch('neutron.db.agentschedulers_db.'
+                                     'DhcpAgentSchedulerDbMixin.'
+                                     'start_periodic_dhcp_agent_status_check')
+        dhcp_periodic_p.start()
 
     def _assert_required_options(self, cluster):
         self.assertEqual(cluster.nsx_controllers, ['fake_1:443', 'fake_2:443'])
@@ -230,6 +234,10 @@ class OldNVPConfigurationTest(base.BaseTestCase):
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
         patch_sync.start()
+        dhcp_periodic_p = mock.patch('neutron.db.agentschedulers_db.'
+                                     'DhcpAgentSchedulerDbMixin.'
+                                     'start_periodic_dhcp_agent_status_check')
+        dhcp_periodic_p.start()
 
     def _assert_required_options(self, cluster):
         self.assertEqual(cluster.nsx_controllers, ['fake_1:443', 'fake_2:443'])

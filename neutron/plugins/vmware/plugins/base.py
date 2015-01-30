@@ -180,6 +180,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self.nsx_sync_opts.min_sync_req_delay,
             self.nsx_sync_opts.min_chunk_size,
             self.nsx_sync_opts.max_random_sync_delay)
+        self.start_periodic_dhcp_agent_status_check()
 
     def _ensure_default_network_gateway(self):
         if self._is_default_net_gw_in_sync:

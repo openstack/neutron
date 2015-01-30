@@ -134,6 +134,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             cfg.CONF.network_scheduler_driver
         )
 
+        self.start_periodic_dhcp_agent_status_check()
         LOG.info(_LI("Modular L2 Plugin initialization complete"))
 
     def _setup_rpc(self):

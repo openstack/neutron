@@ -500,6 +500,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         if cfg.CONF.RESTPROXY.sync_data:
             self._send_all_data()
 
+        self.start_periodic_dhcp_agent_status_check()
         LOG.debug("NeutronRestProxyV2: initialization done")
 
     def _setup_rpc(self):

@@ -12,14 +12,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import datetime
-import random
-import time
-
 from oslo.config import cfg
 from oslo.db import exception as db_exc
 from oslo import messaging
-from oslo.utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy import or_
@@ -39,7 +34,6 @@ from neutron.extensions import l3agentscheduler
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import loopingcall
 
 
 LOG = logging.getLogger(__name__)
@@ -79,41 +73,22 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     router_scheduler = None
 
-    def start_periodic_agent_status_check(self):
+    def start_periodic_l3_agent_status_check(self):
         if not cfg.CONF.allow_automatic_l3agent_failover:
             LOG.info(_LI("Skipping period L3 agent status check because "
                          "automatic router rescheduling is disabled."))
             return
 
-        self.periodic_agent_loop = loopingcall.FixedIntervalLoopingCall(
+        self.setup_agent_status_check(
             self.reschedule_routers_from_down_agents)
-        interval = max(cfg.CONF.agent_down_time / 2, 1)
-        # add random initial delay to allow agents to check in after the
-        # neutron server first starts. random to offset multiple servers
-        self.periodic_agent_loop.start(interval=interval,
-            initial_delay=random.randint(interval, interval * 2))
 
     def reschedule_routers_from_down_agents(self):
         """Reschedule routers from down l3 agents if admin state is up."""
-
-        # give agents extra time to handle transient failures
-        agent_dead_limit = cfg.CONF.agent_down_time * 2
-
-        # check for an abrupt clock change since last check. if a change is
-        # detected, sleep for a while to let the agents check in.
-        tdelta = timeutils.utcnow() - getattr(self, '_clock_jump_canary',
-                                              timeutils.utcnow())
-        if timeutils.total_seconds(tdelta) > cfg.CONF.agent_down_time:
-            LOG.warn(_LW("Time since last L3 agent reschedule check has "
-                         "exceeded the interval between checks. Waiting "
-                         "before check to allow agents to send a heartbeat "
-                         "in case there was a clock adjustment."))
-            time.sleep(agent_dead_limit)
-        self._clock_jump_canary = timeutils.utcnow()
+        agent_dead_limit = self.agent_dead_limit_seconds()
+        self.wait_down_agents('L3', agent_dead_limit)
+        cutoff = self.get_cutoff_time(agent_dead_limit)
 
         context = n_ctx.get_admin_context()
-        cutoff = timeutils.utcnow() - datetime.timedelta(
-            seconds=agent_dead_limit)
         down_bindings = (
             context.session.query(RouterL3AgentBinding).
             join(agents_db.Agent).

@@ -13,7 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+import random
+import time
+
 from oslo.config import cfg
+from oslo.utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -21,11 +26,14 @@ from sqlalchemy.orm import joinedload
 
 from neutron.common import constants
 from neutron.common import utils
+from neutron import context as ncontext
 from neutron.db import agents_db
 from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import dhcpagentscheduler
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import loopingcall
 
 
 LOG = logging.getLogger(__name__)
@@ -37,6 +45,9 @@ AGENTS_SCHEDULER_OPTS = [
                help=_('Driver to use for scheduling network to DHCP agent')),
     cfg.BoolOpt('network_auto_schedule', default=True,
                 help=_('Allow auto scheduling networks to DHCP agent.')),
+    cfg.BoolOpt('allow_automatic_dhcp_failover', default=True,
+                help=_('Automatically remove networks from offline DHCP '
+                       'agents.')),
     cfg.IntOpt('dhcp_agents_per_network', default=1,
                help=_('Number of DHCP agents scheduled to host a network.')),
 ]
@@ -95,6 +106,39 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
                                          original_agent['host'])
         return result
 
+    def setup_agent_status_check(self, function):
+        self.periodic_agent_loop = loopingcall.FixedIntervalLoopingCall(
+            function)
+        # TODO(enikanorov): make interval configurable rather than computed
+        interval = max(cfg.CONF.agent_down_time / 2, 1)
+        # add random initial delay to allow agents to check in after the
+        # neutron server first starts. random to offset multiple servers
+        initial_delay = random.randint(interval, interval * 2)
+        self.periodic_agent_loop.start(interval=interval,
+            initial_delay=initial_delay)
+
+    def agent_dead_limit_seconds(self):
+        return cfg.CONF.agent_down_time * 2
+
+    def wait_down_agents(self, agent_type, agent_dead_limit):
+        """Gives chance for agents to send a heartbeat."""
+        # check for an abrupt clock change since last check. if a change is
+        # detected, sleep for a while to let the agents check in.
+        tdelta = timeutils.utcnow() - getattr(self, '_clock_jump_canary',
+                                              timeutils.utcnow())
+        if timeutils.total_seconds(tdelta) > cfg.CONF.agent_down_time:
+            LOG.warn(_LW("Time since last %s agent reschedule check has "
+                         "exceeded the interval between checks. Waiting "
+                         "before check to allow agents to send a heartbeat "
+                         "in case there was a clock adjustment."), agent_type)
+            time.sleep(agent_dead_limit)
+        self._clock_jump_canary = timeutils.utcnow()
+
+    def get_cutoff_time(self, agent_dead_limit):
+        cutoff = timeutils.utcnow() - datetime.timedelta(
+            seconds=agent_dead_limit)
+        return cutoff
+
 
 class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                                 .DhcpAgentSchedulerPluginBase,
@@ -103,6 +147,128 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
     """
 
     network_scheduler = None
+
+    def start_periodic_dhcp_agent_status_check(self):
+        if not cfg.CONF.allow_automatic_dhcp_failover:
+            LOG.info(_LI("Skipping periodic DHCP agent status check because "
+                         "automatic network rescheduling is disabled."))
+            return
+
+        self.setup_agent_status_check(self.remove_networks_from_down_agents)
+
+    def _agent_starting_up(self, context, agent):
+        """Check if agent was just started.
+
+        Method returns True if agent is in its 'starting up' period.
+        Return value depends on amount of networks assigned to the agent.
+        It doesn't look at latest heartbeat timestamp as it is assumed
+        that this method is called for agents that are considered dead.
+        """
+        agent_dead_limit = datetime.timedelta(
+            seconds=self.agent_dead_limit_seconds())
+        network_count = (context.session.query(NetworkDhcpAgentBinding).
+                         filter_by(dhcp_agent_id=agent['id']).count())
+        # amount of networks assigned to agent affect amount of time we give
+        # it so startup. Tests show that it's more or less sage to assume
+        # that DHCP agent processes each network in less than 2 seconds.
+        # So, give it this additional time for each of the networks.
+        additional_time = datetime.timedelta(seconds=2 * network_count)
+        LOG.debug("Checking if agent starts up and giving it additional %s",
+                  additional_time)
+        agent_expected_up = (agent['started_at'] + agent_dead_limit +
+                             additional_time)
+        return agent_expected_up > timeutils.utcnow()
+
+    def _schedule_network(self, context, network_id, dhcp_notifier):
+        LOG.info(_LI("Scheduling unhosted network %s"), network_id)
+        try:
+            # TODO(enikanorov): have to issue redundant db query
+            # to satisfy scheduling interface
+            network = self.get_network(context, network_id)
+            agents = self.schedule_network(context, network)
+            if not agents:
+                LOG.info(_LI("Failed to schedule network %s, "
+                             "no eligible agents or it might be "
+                             "already scheduled by another server"),
+                         network_id)
+                return
+            if not dhcp_notifier:
+                return
+            for agent in agents:
+                LOG.info(_LI("Adding network %(net)s to agent "
+                             "%(agent)%s on host %(host)s"),
+                         {'net': network_id,
+                          'agent': agent.id,
+                          'host': agent.host})
+                dhcp_notifier.network_added_to_agent(
+                    context, network_id, agent.host)
+        except Exception:
+            # catching any exception during scheduling
+            # so if _schedule_network is invoked in the loop it could
+            # continue in any case
+            LOG.exception(_LE("Failed to schedule network %s"), network_id)
+
+    def _filter_bindings(self, context, bindings):
+        """Skip bindings for which the agent is dead, but starting up."""
+
+        # to save few db calls: store already checked agents in dict
+        # id -> is_agent_starting_up
+        checked_agents = {}
+        for binding in bindings:
+            agent_id = binding.dhcp_agent['id']
+            if agent_id not in checked_agents:
+                if self._agent_starting_up(context, binding.dhcp_agent):
+                    # When agent starts and it has many networks to process
+                    # it may fail to send state reports in defined interval.
+                    # The server will consider it dead and try to remove
+                    # networks from it.
+                    checked_agents[agent_id] = True
+                    LOG.debug("Agent %s is starting up, skipping", agent_id)
+                else:
+                    checked_agents[agent_id] = False
+            if not checked_agents[agent_id]:
+                yield binding
+
+    def remove_networks_from_down_agents(self):
+        """Remove networks from down DHCP agents if admin state is up.
+
+        Reschedule them if configured so.
+        """
+
+        agent_dead_limit = self.agent_dead_limit_seconds()
+        self.wait_down_agents('DHCP', agent_dead_limit)
+        cutoff = self.get_cutoff_time(agent_dead_limit)
+
+        context = ncontext.get_admin_context()
+        down_bindings = (
+            context.session.query(NetworkDhcpAgentBinding).
+            join(agents_db.Agent).
+            filter(agents_db.Agent.heartbeat_timestamp < cutoff,
+                   agents_db.Agent.admin_state_up))
+        dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
+
+        for binding in self._filter_bindings(context, down_bindings):
+            LOG.warn(_LW("Removing network %(network)s from agent %(agent)s "
+                         "because the agent did not report to the server in "
+                         "the last %(dead_time)s seconds."),
+                     {'network': binding.network_id,
+                      'agent': binding.dhcp_agent_id,
+                      'dead_time': agent_dead_limit})
+            try:
+                self.remove_network_from_dhcp_agent(context,
+                                                    binding.dhcp_agent_id,
+                                                    binding.network_id)
+            except dhcpagentscheduler.NetworkNotHostedByDhcpAgent:
+                # measures against concurrent operation
+                LOG.debug("Network %(net)s already removed from DHCP agent "
+                          "%s(agent)",
+                          {'net': binding.network_id,
+                           'agent': binding.dhcp_agent_id})
+                # still continue and allow concurrent scheduling attempt
+
+            if cfg.CONF.network_auto_schedule:
+                self._schedule_network(
+                    context, binding.network_id, dhcp_notifier)
 
     def get_dhcp_agents_hosting_networks(
             self, context, network_ids, active=None):

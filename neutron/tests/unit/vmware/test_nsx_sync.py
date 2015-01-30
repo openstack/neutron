@@ -292,6 +292,10 @@ class SyncTestCase(testlib_api.SqlTestCase):
                 '--config-file', vmware.get_fake_conf('nsx.ini.test')]
         self.config_parse(args=args)
         cfg.CONF.set_override('allow_overlapping_ips', True)
+        dhcp_periodic_p = mock.patch('neutron.db.agentschedulers_db.'
+                                     'DhcpAgentSchedulerDbMixin.'
+                                     'start_periodic_dhcp_agent_status_check')
+        dhcp_periodic_p.start()
         self._plugin = plugin.NsxPlugin()
         # Mock neutron manager plugin load functions to speed up tests
         mock_nm_get_plugin = mock.patch('neutron.manager.NeutronManager.'

@@ -145,6 +145,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 'default': self.deactivate_port,
             }
         }
+        self.start_periodic_dhcp_agent_status_check()
 
     def setup_rpc(self):
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
