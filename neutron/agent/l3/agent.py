@@ -687,7 +687,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ip_cidr = common_utils.ip_to_cidr(fip_ip)
 
         if ri.is_ha:
-            self._add_vip(ri, ip_cidr, interface_name)
+            ri._add_vip(ip_cidr, interface_name)
         else:
             net = netaddr.IPNetwork(ip_cidr)
             try:
@@ -714,7 +714,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _remove_floating_ip(self, ri, device, ip_cidr):
         if ri.is_ha:
-            self._remove_vip(ri, ip_cidr)
+            ri._remove_vip(ip_cidr)
         else:
             net = netaddr.IPNetwork(ip_cidr)
             device.addr.delete(net.version, ip_cidr)
@@ -726,7 +726,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _get_router_cidrs(self, ri, device):
         if ri.is_ha:
-            return set(self._ha_get_existing_cidrs(ri, device.name))
+            return set(ri._ha_get_existing_cidrs(device.name))
         else:
             return set([addr['cidr'] for addr in device.addr.list()])
 
@@ -824,8 +824,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                      ri.ns_name, preserve_ips)
 
         if ri.is_ha:
-            self._ha_external_gateway_added(ri, ex_gw_port, interface_name)
-            self._ha_disable_addressing_on_interface(ri, interface_name)
+            ri._ha_external_gateway_added(ex_gw_port, interface_name)
+            ri._ha_disable_addressing_on_interface(interface_name)
 
     def external_gateway_updated(self, ri, ex_gw_port, interface_name):
         preserve_ips = []
@@ -847,7 +847,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                      ns_name, preserve_ips)
 
         if ri.is_ha:
-            self._ha_external_gateway_updated(ri, ex_gw_port, interface_name)
+            ri._ha_external_gateway_updated(ex_gw_port, interface_name)
 
     def _external_gateway_added(self, ri, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
@@ -893,7 +893,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             ns_name = ri.ns_name
 
         if ri.is_ha:
-            self._ha_external_gateway_removed(ri, interface_name)
+            ri._ha_external_gateway_removed(interface_name)
 
         self.driver.unplug(interface_name,
                            bridge=self.conf.external_network_bridge,
@@ -945,8 +945,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                      ri.is_ha)
 
         if ri.is_ha:
-            self._ha_disable_addressing_on_interface(ri, interface_name)
-            self._add_vip(ri, internal_cidr, interface_name)
+            ri._ha_disable_addressing_on_interface(interface_name)
+            ri._add_vip(internal_cidr, interface_name)
 
         ex_gw_port = self._get_ex_gw_port(ri)
         if ri.router['distributed'] and ex_gw_port:
@@ -995,7 +995,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                 root_helper=self.root_helper,
                                 namespace=ri.ns_name):
             if ri.is_ha:
-                self._clear_vips(ri, interface_name)
+                ri._clear_vips(interface_name)
             self.driver.unplug(interface_name, namespace=ri.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
 
@@ -1204,7 +1204,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def routes_updated(self, ri):
         new_routes = ri.router['routes']
         if ri.is_ha:
-            self._process_virtual_routes(ri, new_routes)
+            ri._process_virtual_routes(new_routes)
             return
 
         old_routes = ri.routes

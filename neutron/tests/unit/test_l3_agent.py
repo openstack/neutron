@@ -1060,8 +1060,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         device = mock.MagicMock()
         device.name.return_value = 'eth2'
         addresses = ['15.1.2.2/24', '15.1.2.3/32']
-        agent._ha_get_existing_cidrs = mock.MagicMock()
-        agent._ha_get_existing_cidrs.return_value = addresses
+        ri._ha_get_existing_cidrs = mock.MagicMock()
+        ri._ha_get_existing_cidrs.return_value = addresses
         self.assertEqual(set(addresses), agent._get_router_cidrs(ri, device))
 
     # TODO(mrsmith): refactor for DVR cases
