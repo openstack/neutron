@@ -96,8 +96,7 @@ class L3AgentsHostingRouterController(wsgi.Controller):
         return plugin
 
     def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        plugin = self.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % L3_AGENTS,
                        {})
