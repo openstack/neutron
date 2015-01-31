@@ -25,7 +25,7 @@ with mock.patch.dict(sys.modules,
                       'networking_odl.common': mock.Mock(),
                       'networking_odl.ml2': mock.Mock()}):
     from networking_odl.common import constants as const
-    from neutron.plugins.ml2.drivers import mechanism_odl
+    from neutron.plugins.ml2.drivers.opendaylight import driver
 
 
 class TestODLShim(test_plugin.Ml2PluginV2TestCase):
@@ -34,7 +34,7 @@ class TestODLShim(test_plugin.Ml2PluginV2TestCase):
         super(TestODLShim, self).setUp()
         self.context = context.get_admin_context()
         self.plugin = mock.Mock()
-        self.driver = mechanism_odl.OpenDaylightMechanismDriver()
+        self.driver = driver.OpenDaylightMechanismDriver()
         self.driver.odl_drv = mock.Mock()
 
     def test_create_network_postcommit(self):
