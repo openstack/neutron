@@ -26,6 +26,7 @@ import webob.dec
 import webob.exc
 
 from neutron.common import exceptions
+from neutron.common import repos
 import neutron.extensions
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
@@ -518,13 +519,19 @@ class ExtensionManager(object):
         See tests/unit/extensions/foxinsocks.py for an example extension
         implementation.
         """
+
+        # TODO(dougwig) - remove this after the service extensions move out
+        # While moving the extensions out of neutron into the service repos,
+        # don't double-load the same thing.
+        loaded = []
+
         for path in self.path.split(':'):
             if os.path.exists(path):
-                self._load_all_extensions_from_path(path)
+                self._load_all_extensions_from_path(path, loaded)
             else:
                 LOG.error(_LE("Extension path '%s' doesn't exist!"), path)
 
-    def _load_all_extensions_from_path(self, path):
+    def _load_all_extensions_from_path(self, path, loaded):
         # Sorting the extension list makes the order in which they
         # are loaded predictable across a cluster of load-balanced
         # Neutron Servers
@@ -534,7 +541,12 @@ class ExtensionManager(object):
                 mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
                 ext_path = os.path.join(path, f)
                 if file_ext.lower() == '.py' and not mod_name.startswith('_'):
+                    if mod_name in loaded:
+                        LOG.warn(_LW("Extension already loaded, skipping: %s"),
+                                 mod_name)
+                        continue
                     mod = imp.load_source(mod_name, ext_path)
+                    loaded.append(mod_name)
                     ext_name = mod_name[0].upper() + mod_name[1:]
                     new_ext_class = getattr(mod, ext_name, None)
                     if not new_ext_class:
@@ -661,11 +673,19 @@ class ResourceExtension(object):
 # Returns the extension paths from a config entry and the __path__
 # of neutron.extensions
 def get_extensions_path():
-    paths = ':'.join(neutron.extensions.__path__)
-    if cfg.CONF.api_extensions_path:
-        paths = ':'.join([cfg.CONF.api_extensions_path, paths])
+    paths = neutron.extensions.__path__
 
-    return paths
+    neutron_mods = repos.NeutronModules()
+    for x in neutron_mods.installed_list():
+        paths += neutron_mods.module(x).__path__
+
+    if cfg.CONF.api_extensions_path:
+        paths.append(cfg.CONF.api_extensions_path)
+
+    LOG.debug("get_extension_paths = %s", paths)
+
+    path = ':'.join(paths)
+    return path
 
 
 def append_api_extensions_path(paths):

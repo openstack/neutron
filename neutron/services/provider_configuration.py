@@ -17,6 +17,7 @@ from oslo.config import cfg
 import stevedore
 
 from neutron.common import exceptions as n_exc
+from neutron.common import repos
 from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -69,7 +70,35 @@ def parse_service_provider_opt():
             raise n_exc.Invalid(
                 _("Provider name is limited by 255 characters: %s") % name)
 
-    svc_providers_opt = cfg.CONF.service_providers.service_provider
+    # Main neutron config file
+    try:
+        svc_providers_opt = cfg.CONF.service_providers.service_provider
+    except cfg.NoSuchOptError:
+        svc_providers_opt = []
+
+    # Add in entries from the *aas conf files
+    neutron_mods = repos.NeutronModules()
+    for x in neutron_mods.installed_list():
+        ini = neutron_mods.ini(x)
+        if ini is None:
+            continue
+
+        try:
+            sp = ini.items('service_providers')
+            for name, value in sp:
+                if name == 'service_provider':
+                    svc_providers_opt.append(value)
+        except Exception:
+            continue
+
+    # TODO(dougwig) - remove this next bit after we've migrated all entries
+    # to the service repo config files. Some tests require a default driver
+    # to be present, but not two, which leads to a cross-repo breakage
+    # issue.  uniq the list as a short-term workaround.
+    svc_providers_opt = list(set(svc_providers_opt))
+
+    LOG.debug("Service providers = %s", svc_providers_opt)
+
     res = []
     for prov_def in svc_providers_opt:
         split = prov_def.split(':')
