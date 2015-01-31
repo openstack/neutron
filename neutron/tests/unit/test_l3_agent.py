@@ -193,7 +193,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('send_arp_for_ha', 1)
         self.conf.set_override('state_path', '')
-        self.conf.root_helper = 'sudo'
+        self.conf.AGENT.root_helper = 'sudo'
 
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
@@ -275,7 +275,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                          'ip_address': '152.10.0.13'}],
                            'id': _uuid(), 'device_id': _uuid()}]
 
-        self.ri_kwargs = {'root_helper': self.conf.root_helper,
+        self.ri_kwargs = {'root_helper': self.conf.AGENT.root_helper,
                           'agent_conf': self.conf,
                           'interface_driver': mock.sentinel.interface_driver}
 
@@ -969,7 +969,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual({}, fip_statuses)
         device.addr.delete.assert_called_once_with(4, '15.1.2.3/32')
         self.mock_driver.delete_conntrack_state.assert_called_once_with(
-            root_helper=self.conf.root_helper,
+            root_helper=self.conf.AGENT.root_helper,
             namespace=ri.ns_name,
             ip='15.1.2.3/32')
 
@@ -1161,7 +1161,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           service=process,
                           default_cmd_callback=mock.ANY,
                           namespace=ri.ns_name,
-                          root_helper=self.conf.root_helper,
+                          root_helper=self.conf.AGENT.root_helper,
                           conf=self.conf,
                           pid_file=None,
                           cmd_addl_env=None)]

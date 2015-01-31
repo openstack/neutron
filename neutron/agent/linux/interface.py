@@ -473,11 +473,13 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
 
     def _set_device_plugin_tag(self, network_id, device_name, namespace=None):
         plugin_tag = self._get_flavor_by_network_id(network_id)
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
+        device = ip_lib.IPDevice(device_name, self.conf.AGENT.root_helper,
+                                 namespace)
         device.link.set_alias(plugin_tag)
 
     def _get_device_plugin_tag(self, device_name, namespace=None):
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
+        device = ip_lib.IPDevice(device_name, self.conf.AGENT.root_helper,
+                                 namespace)
         return device.link.alias
 
     def get_device_name(self, port):

@@ -93,8 +93,6 @@ def get_log_args(conf, log_file_name):
 
 
 def register_root_helper(conf):
-    # The first call is to ensure backward compatibility
-    conf.register_opts(ROOT_HELPER_OPTS)
     conf.register_opts(ROOT_HELPER_OPTS, 'AGENT')
 
 
@@ -119,17 +117,7 @@ def register_process_monitor_opts(conf):
 
 
 def get_root_helper(conf):
-    root_helper = conf.AGENT.root_helper
-    if root_helper != 'sudo':
-        return root_helper
-
-    root_helper = conf.root_helper
-    if root_helper != 'sudo':
-        LOG.deprecated(_('DEFAULT.root_helper is deprecated! Please move '
-                         'root_helper configuration to [AGENT] section.'))
-        return root_helper
-
-    return 'sudo'
+    return conf.AGENT.root_helper
 
 
 def setup_conf():
