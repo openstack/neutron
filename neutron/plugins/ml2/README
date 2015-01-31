@@ -44,8 +44,8 @@ also called as part of the port binding process, to determine whether
 the associated mechanism can provide connectivity for the network, and
 if so, the network segment and VIF driver to be used. The havana
 release includes mechanism drivers for the Open vSwitch, Linux bridge,
-and Hyper-V L2 agents, for Arista and Cisco switches, and for the
-Tail-f NCS. It also includes an L2 Population mechanism driver that
+and Hyper-V L2 agents, and for vendor switches/controllers/etc.
+It also includes an L2 Population mechanism driver that
 can help optimize tunneled virtual network traffic.
 
 For additional information regarding the ML2 plugin and its collection

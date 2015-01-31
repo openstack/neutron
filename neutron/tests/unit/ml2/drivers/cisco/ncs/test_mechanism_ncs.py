@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.plugins.ml2.drivers import mechanism_ncs
+from neutron.plugins.ml2.drivers.cisco.ncs import driver
 from neutron.tests.unit.ml2 import test_ml2_plugin as test_plugin
 
 
@@ -26,7 +26,7 @@ class NCSTestCase(test_plugin.Ml2PluginV2TestCase):
         # driver apis.
         super(NCSTestCase, self).setUp()
         self.port_create_status = 'DOWN'
-        mechanism_ncs.NCSMechanismDriver.sendjson = self.check_sendjson
+        driver.NCSMechanismDriver.sendjson = self.check_sendjson
 
     def check_sendjson(self, method, urlpath, obj):
         # Confirm fix for bug #1224981

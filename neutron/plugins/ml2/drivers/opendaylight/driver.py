@@ -45,7 +45,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
 
     """Mechanism Driver for OpenDaylight.
 
-    This driver was a port from the Tail-F NCS MechanismDriver.  The API
+    This driver was a port from the NCS MechanismDriver.  The API
     exposed by ODL is slightly different from the API exposed by NCS,
     but the general concepts are the same.
     """
