@@ -863,9 +863,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
              'port_id': _uuid(),
              'host': HOSTNAME}]}
         agent.process_router(ri)
-        ex_gw_port = agent._get_ex_gw_port(ri)
         agent.process_router_floating_ip_addresses.assert_called_with(
-            ri, ex_gw_port)
+            ri, mock.ANY)
         agent.process_router_floating_ip_addresses.reset_mock()
         agent.process_router_floating_ip_nat_rules.assert_called_with(ri)
         agent.process_router_floating_ip_nat_rules.reset_mock()
@@ -877,9 +876,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         router[l3_constants.FLOATINGIP_KEY] = fake_floatingips2['floatingips']
         agent.process_router(ri)
-        ex_gw_port = agent._get_ex_gw_port(ri)
         agent.process_router_floating_ip_addresses.assert_called_with(
-            ri, ex_gw_port)
+            ri, mock.ANY)
         agent.process_router_floating_ip_addresses.reset_mock()
         agent.process_router_floating_ip_nat_rules.assert_called_with(ri)
         agent.process_router_floating_ip_nat_rules.reset_mock()
@@ -896,7 +894,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri.router['gw_port']['fixed_ips'][0]['ip_address'] = str(old_ip + 1)
 
         agent.process_router(ri)
-        ex_gw_port = agent._get_ex_gw_port(ri)
         agent.process_router_floating_ip_addresses.reset_mock()
         agent.process_router_floating_ip_nat_rules.reset_mock()
         self.assertEqual(agent.external_gateway_added.call_count, 0)
@@ -905,9 +902,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         # remove just the floating ips
         del router[l3_constants.FLOATINGIP_KEY]
         agent.process_router(ri)
-        ex_gw_port = agent._get_ex_gw_port(ri)
         agent.process_router_floating_ip_addresses.assert_called_with(
-            ri, ex_gw_port)
+            ri, mock.ANY)
         agent.process_router_floating_ip_addresses.reset_mock()
         agent.process_router_floating_ip_nat_rules.assert_called_with(ri)
         agent.process_router_floating_ip_nat_rules.reset_mock()
