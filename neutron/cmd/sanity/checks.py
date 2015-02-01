@@ -144,7 +144,8 @@ def get_minimal_dnsmasq_version_supported():
 def dnsmasq_version_supported():
     try:
         cmd = ['dnsmasq', '--version']
-        out = agent_utils.execute(cmd)
+        env = {'LC_ALL': 'C'}
+        out = agent_utils.execute(cmd, addl_env=env)
         m = re.search(r"version (\d+\.\d+)", out)
         ver = float(m.group(1)) if m else 0
         if ver < MINIMUM_DNSMASQ_VERSION:
