@@ -34,7 +34,7 @@ def _validate_resource(body):
     _validate_name(body.get('display_name'))
 
 
-class FakeClient:
+class FakeClient(object):
 
     LSWITCH_RESOURCE = 'lswitch'
     LPORT_RESOURCE = 'lport'
