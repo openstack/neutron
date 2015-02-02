@@ -13,33 +13,15 @@
 #    under the License.
 #
 
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
-from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.openstack.common import log as logging
+from neutron.plugins.vmware.dbexts import nsx_models
 from neutron.plugins.vmware.extensions import maclearning as mac
 
 LOG = logging.getLogger(__name__)
-
-
-class MacLearningState(model_base.BASEV2):
-
-    port_id = sa.Column(sa.String(36),
-                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
-                        primary_key=True)
-    mac_learning_enabled = sa.Column(sa.Boolean(), nullable=False)
-
-    # Add a relationship to the Port model using the backref attribute.
-    # This will instruct SQLAlchemy to eagerly load this association.
-    port = orm.relationship(
-        models_v2.Port,
-        backref=orm.backref("mac_learning_state", lazy='joined',
-                            uselist=False, cascade='delete'))
 
 
 class MacLearningDbMixin(object):
@@ -61,8 +43,9 @@ class MacLearningDbMixin(object):
 
     def _update_mac_learning_state(self, context, port_id, enabled):
         try:
-            query = self._model_query(context, MacLearningState)
-            state = query.filter(MacLearningState.port_id == port_id).one()
+            query = self._model_query(context, nsx_models.MacLearningState)
+            state = query.filter(
+                nsx_models.MacLearningState.port_id == port_id).one()
             state.update({mac.MAC_LEARNING: enabled})
         except exc.NoResultFound:
             self._create_mac_learning_state(context,
@@ -72,7 +55,8 @@ class MacLearningDbMixin(object):
     def _create_mac_learning_state(self, context, port):
         with context.session.begin(subtransactions=True):
             enabled = port[mac.MAC_LEARNING]
-            state = MacLearningState(port_id=port['id'],
-                                     mac_learning_enabled=enabled)
+            state = nsx_models.MacLearningState(
+                port_id=port['id'],
+                mac_learning_enabled=enabled)
             context.session.add(state)
         return self._make_mac_learning_state_dict(state)

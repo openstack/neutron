@@ -86,3 +86,48 @@ class NetworkGateway(model_base.BASEV2, models_v2.HasId,
                                backref='networkgateways',
                                cascade='all,delete')
     network_connections = orm.relationship(NetworkConnection, lazy='joined')
+
+
+class MacLearningState(model_base.BASEV2):
+
+    port_id = sa.Column(sa.String(36),
+                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
+                        primary_key=True)
+    mac_learning_enabled = sa.Column(sa.Boolean(), nullable=False)
+
+    # Add a relationship to the Port model using the backref attribute.
+    # This will instruct SQLAlchemy to eagerly load this association.
+    port = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref("mac_learning_state", lazy='joined',
+                            uselist=False, cascade='delete'))
+
+
+class LsnPort(models_v2.model_base.BASEV2):
+
+    __tablename__ = 'lsn_port'
+
+    lsn_port_id = sa.Column(sa.String(36), primary_key=True)
+
+    lsn_id = sa.Column(sa.String(36),
+                       sa.ForeignKey('lsn.lsn_id', ondelete="CASCADE"),
+                       nullable=False)
+    sub_id = sa.Column(sa.String(36), nullable=False, unique=True)
+    mac_addr = sa.Column(sa.String(32), nullable=False, unique=True)
+
+    def __init__(self, lsn_port_id, subnet_id, mac_address, lsn_id):
+        self.lsn_port_id = lsn_port_id
+        self.lsn_id = lsn_id
+        self.sub_id = subnet_id
+        self.mac_addr = mac_address
+
+
+class Lsn(models_v2.model_base.BASEV2):
+    __tablename__ = 'lsn'
+
+    lsn_id = sa.Column(sa.String(36), primary_key=True)
+    net_id = sa.Column(sa.String(36), nullable=False)
+
+    def __init__(self, net_id, lsn_id):
+        self.net_id = net_id
+        self.lsn_id = lsn_id
