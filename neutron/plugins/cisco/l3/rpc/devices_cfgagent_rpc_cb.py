@@ -37,7 +37,7 @@ class DeviceCfgRpcCallbackMixin(object):
 
         @param: context - contains user information
         @param: host - originator of callback
-        @return: True if succesfully registered, False if not successfully
+        @return: True if successfully registered, False if not successfully
                  registered, None if no handler found
                  If unsuccessful the agent should retry registration a few
                  seconds later
