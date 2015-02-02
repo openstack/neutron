@@ -546,7 +546,6 @@ class ExtensionManager(object):
                                  mod_name)
                         continue
                     mod = imp.load_source(mod_name, ext_path)
-                    loaded.append(mod_name)
                     ext_name = mod_name[0].upper() + mod_name[1:]
                     new_ext_class = getattr(mod, ext_name, None)
                     if not new_ext_class:
@@ -557,6 +556,7 @@ class ExtensionManager(object):
                         continue
                     new_ext = new_ext_class()
                     self.add_extension(new_ext)
+                    loaded.append(new_ext_class.get_alias())
             except Exception as exception:
                 LOG.warn(_LW("Extension file %(f)s wasn't loaded due to "
                              "%(exception)s"),
