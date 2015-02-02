@@ -28,6 +28,7 @@ from neutron import manager
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.dbexts import networkgw_db
+from neutron.plugins.vmware.dbexts import nsx_models
 from neutron.plugins.vmware.extensions import networkgw
 from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware.nsxlib import l2gateway as l2gwlib
@@ -579,11 +580,11 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         # Verify nothing left on db
         session = db_api.get_session()
         dev_query = session.query(
-            networkgw_db.NetworkGatewayDevice).filter(
-                networkgw_db.NetworkGatewayDevice.id == device_id)
+            nsx_models.NetworkGatewayDevice).filter(
+                nsx_models.NetworkGatewayDevice.id == device_id)
         self.assertIsNone(dev_query.first())
-        gw_query = session.query(networkgw_db.NetworkGateway).filter(
-            networkgw_db.NetworkGateway.id == gw_id)
+        gw_query = session.query(nsx_models.NetworkGateway).filter(
+            nsx_models.NetworkGateway.id == gw_id)
         self.assertIsNone(gw_query.first())
 
     def test_update_network_gateway(self):
@@ -905,8 +906,8 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             dev_id = dev[self.dev_resource]['id']
         # Verify nothing left on db
         session = db_api.get_session()
-        dev_query = session.query(networkgw_db.NetworkGatewayDevice)
-        dev_query.filter(networkgw_db.NetworkGatewayDevice.id == dev_id)
+        dev_query = session.query(nsx_models.NetworkGatewayDevice)
+        dev_query.filter(nsx_models.NetworkGatewayDevice.id == dev_id)
         self.assertIsNone(dev_query.first())
 
 
