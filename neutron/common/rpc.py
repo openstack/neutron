@@ -195,6 +195,12 @@ class Connection(object):
             server.start()
         return self.servers
 
+    def close(self):
+        for server in self.servers:
+            server.stop()
+        for server in self.servers:
+            server.wait()
+
 
 # functions
 def create_connection(new=True):
