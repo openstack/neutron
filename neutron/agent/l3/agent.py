@@ -533,10 +533,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             raise n_exc.FloatingIpSetupException('L3 agent failure to setup '
                 'NAT for floating IPs')
 
-    def _configure_fip_addresses(self, ri, ex_gw_port):
+    def _configure_fip_addresses(self, ri, interface_name):
         try:
             return self.process_router_floating_ip_addresses(
-                ri, ex_gw_port)
+                ri, interface_name)
         except Exception:
             # TODO(salv-orlando): Less broad catching
             raise n_exc.FloatingIpSetupException('L3 agent failure to setup '
@@ -576,7 +576,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
             # Once NAT rules for floating IPs are safely in place
             # configure their addresses on the external gateway port
-            fip_statuses = self._configure_fip_addresses(ri, ex_gw_port)
+            interface_name = self._get_external_device_interface_name(
+                ri, ex_gw_port)
+            fip_statuses = self._configure_fip_addresses(ri, interface_name)
 
         except (n_exc.FloatingIpSetupException, n_exc.IpTablesApplyException):
                 # All floating IPs must be put in error state
@@ -741,7 +743,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         else:
             return set([addr['cidr'] for addr in device.addr.list()])
 
-    def process_router_floating_ip_addresses(self, ri, ex_gw_port):
+    def process_router_floating_ip_addresses(self, ri, interface_name):
         """Configure IP addresses on router's external gateway interface.
 
         Ensures addresses for existing floating IPs and cleans up
@@ -749,8 +751,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         """
 
         fip_statuses = {}
-        interface_name = self._get_external_device_interface_name(
-            ri, ex_gw_port)
         if interface_name is None:
             return fip_statuses
 
@@ -888,7 +888,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def external_gateway_removed(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
             self.process_router_floating_ip_nat_rules(ri)
-            self.process_router_floating_ip_addresses(ri, ex_gw_port)
+            interface_name = self._get_external_device_interface_name(
+                ri, ex_gw_port)
+            self.process_router_floating_ip_addresses(ri, interface_name)
             for p in ri.internal_ports:
                 internal_interface = self.get_internal_device_name(p['id'])
                 self._snat_redirect_remove(ri, p, internal_interface)
