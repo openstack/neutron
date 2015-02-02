@@ -681,17 +681,16 @@ class TestDvrRouter(L3AgentTestFramework):
         self.assertTrue(floating_ips)
 
         external_port = self.agent._get_ex_gw_port(router)
-        fip_ns_name = (
-            self.agent.get_fip_ns_name(floating_ips[0]['floating_network_id'])
-        )
+        fip_ns = self.agent.get_fip_ns(floating_ips[0]['floating_network_id'])
+        fip_ns_name = fip_ns.get_name()
         fg_port_created_succesfully = ip_lib.device_exists_with_ip_mac(
-            self.agent.get_fip_ext_device_name(external_port['id']),
+            fip_ns.get_ext_device_name(external_port['id']),
             external_port['ip_cidr'],
             external_port['mac_address'],
             fip_ns_name, self.root_helper)
         self.assertTrue(fg_port_created_succesfully)
         # Check fpr-router device has been created
-        device_name = self.agent.get_fip_int_device_name(router.router_id)
+        device_name = fip_ns.get_int_device_name(router.router_id)
         fpr_router_device_created_succesfully = ip_lib.device_exists(
             device_name, self.root_helper, fip_ns_name)
         self.assertTrue(fpr_router_device_created_succesfully)
@@ -699,6 +698,6 @@ class TestDvrRouter(L3AgentTestFramework):
         # In the router namespace
         # Check rfp-<router-id> is created correctly
         for fip in floating_ips:
-            device_name = self.agent.get_rtr_int_device_name(router.router_id)
+            device_name = fip_ns.get_rtr_ext_device_name(router.router_id)
             self.assertTrue(ip_lib.device_exists(
                 device_name, self.root_helper, router.ns_name))

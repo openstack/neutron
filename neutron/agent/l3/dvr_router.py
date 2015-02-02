@@ -24,3 +24,26 @@ class DvrRouter(router.RouterInfo):
         # Linklocal subnet for router and floating IP namespace link
         self.rtr_fip_subnet = None
         self.dist_fip_count = None
+
+    def _handle_fip_nat_rules(self, interface_name, action):
+        """Configures NAT rules for Floating IPs for DVR.
+
+           Remove all the rules. This is safe because if
+           use_namespaces is set as False then the agent can
+           only configure one router, otherwise each router's
+           NAT rules will be in their own namespace.
+        """
+        self.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
+        self.iptables_manager.ipv4['nat'].empty_chain('snat')
+
+        # Add back the jump to float-snat
+        self.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
+
+        # And add them back if the action is add_rules
+        if action == 'add_rules' and interface_name:
+            rule = ('POSTROUTING', '! -i %(interface_name)s '
+                    '! -o %(interface_name)s -m conntrack ! '
+                    '--ctstate DNAT -j ACCEPT' %
+                    {'interface_name': interface_name})
+            self.iptables_manager.ipv4['nat'].add_rule(*rule)
+        self.iptables_manager.apply()
