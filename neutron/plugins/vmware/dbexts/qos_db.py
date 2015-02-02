@@ -13,64 +13,19 @@
 #    under the License.
 #
 
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import exc
-from sqlalchemy import sql
 
 from neutron.api.v2 import attributes as attr
 from neutron.db import db_base_plugin_v2
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.i18n import _LI
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
+from neutron.plugins.vmware.dbexts import nsx_models
 from neutron.plugins.vmware.extensions import qos
 
 
 LOG = log.getLogger(__name__)
-
-
-class QoSQueue(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    name = sa.Column(sa.String(255))
-    default = sa.Column(sa.Boolean, default=False, server_default=sql.false())
-    min = sa.Column(sa.Integer, nullable=False)
-    max = sa.Column(sa.Integer, nullable=True)
-    qos_marking = sa.Column(sa.Enum('untrusted', 'trusted',
-                                    name='qosqueues_qos_marking'))
-    dscp = sa.Column(sa.Integer)
-
-
-class PortQueueMapping(model_base.BASEV2):
-    port_id = sa.Column(sa.String(36),
-                        sa.ForeignKey("ports.id", ondelete="CASCADE"),
-                        primary_key=True)
-
-    queue_id = sa.Column(sa.String(36), sa.ForeignKey("qosqueues.id"),
-                         primary_key=True)
-
-    # Add a relationship to the Port model adding a backref which will
-    # allow SQLAlchemy for eagerly load the queue binding
-    port = orm.relationship(
-        models_v2.Port,
-        backref=orm.backref("qos_queue", uselist=False,
-                            cascade='delete', lazy='joined'))
-
-
-class NetworkQueueMapping(model_base.BASEV2):
-    network_id = sa.Column(sa.String(36),
-                           sa.ForeignKey("networks.id", ondelete="CASCADE"),
-                           primary_key=True)
-
-    queue_id = sa.Column(sa.String(36), sa.ForeignKey("qosqueues.id",
-                                                      ondelete="CASCADE"))
-
-    # Add a relationship to the Network model adding a backref which will
-    # allow SQLAlcremy for eagerly load the queue binding
-    network = orm.relationship(
-        models_v2.Network,
-        backref=orm.backref("qos_queue", uselist=False,
-                            cascade='delete', lazy='joined'))
 
 
 class QoSDbMixin(qos.QueuePluginBase):
@@ -79,14 +34,15 @@ class QoSDbMixin(qos.QueuePluginBase):
     def create_qos_queue(self, context, qos_queue):
         q = qos_queue['qos_queue']
         with context.session.begin(subtransactions=True):
-            qos_queue = QoSQueue(id=q.get('id', uuidutils.generate_uuid()),
-                                 name=q.get('name'),
-                                 tenant_id=q['tenant_id'],
-                                 default=q.get('default'),
-                                 min=q.get('min'),
-                                 max=q.get('max'),
-                                 qos_marking=q.get('qos_marking'),
-                                 dscp=q.get('dscp'))
+            qos_queue = nsx_models.QoSQueue(
+                id=q.get('id', uuidutils.generate_uuid()),
+                name=q.get('name'),
+                tenant_id=q['tenant_id'],
+                default=q.get('default'),
+                min=q.get('min'),
+                max=q.get('max'),
+                qos_marking=q.get('qos_marking'),
+                dscp=q.get('dscp'))
             context.session.add(qos_queue)
         return self._make_qos_queue_dict(qos_queue)
 
@@ -96,14 +52,14 @@ class QoSDbMixin(qos.QueuePluginBase):
 
     def _get_qos_queue(self, context, queue_id):
         try:
-            return self._get_by_id(context, QoSQueue, queue_id)
+            return self._get_by_id(context, nsx_models.QoSQueue, queue_id)
         except exc.NoResultFound:
             raise qos.QueueNotFound(id=queue_id)
 
     def get_qos_queues(self, context, filters=None, fields=None, sorts=None,
                        limit=None, marker=None, page_reverse=False):
         marker_obj = self._get_marker_obj(context, 'qos_queue', limit, marker)
-        return self._get_collection(context, QoSQueue,
+        return self._get_collection(context, nsx_models.QoSQueue,
                                     self._make_qos_queue_dict,
                                     filters=filters, fields=fields,
                                     sorts=sorts, limit=limit,
@@ -120,18 +76,20 @@ class QoSDbMixin(qos.QueuePluginBase):
         if not queue_id:
             return
         with context.session.begin(subtransactions=True):
-            context.session.add(PortQueueMapping(port_id=port_data['id'],
+            context.session.add(nsx_models.PortQueueMapping(
+                port_id=port_data['id'],
                                 queue_id=queue_id))
 
     def _get_port_queue_bindings(self, context, filters=None, fields=None):
-        return self._get_collection(context, PortQueueMapping,
+        return self._get_collection(context, nsx_models.PortQueueMapping,
                                     self._make_port_queue_binding_dict,
                                     filters=filters, fields=fields)
 
     def _delete_port_queue_mapping(self, context, port_id):
-        query = self._model_query(context, PortQueueMapping)
+        query = self._model_query(context, nsx_models.PortQueueMapping)
         try:
-            binding = query.filter(PortQueueMapping.port_id == port_id).one()
+            binding = query.filter(
+                nsx_models.PortQueueMapping.port_id == port_id).one()
         except exc.NoResultFound:
             # return since this can happen if we are updating a port that
             # did not already have a queue on it. There is no need to check
@@ -146,16 +104,16 @@ class QoSDbMixin(qos.QueuePluginBase):
             return
         with context.session.begin(subtransactions=True):
             context.session.add(
-                NetworkQueueMapping(network_id=net_data['id'],
-                                    queue_id=queue_id))
+                nsx_models.NetworkQueueMapping(network_id=net_data['id'],
+                                               queue_id=queue_id))
 
     def _get_network_queue_bindings(self, context, filters=None, fields=None):
-        return self._get_collection(context, NetworkQueueMapping,
+        return self._get_collection(context, nsx_models.NetworkQueueMapping,
                                     self._make_network_queue_binding_dict,
                                     filters=filters, fields=fields)
 
     def _delete_network_queue_mapping(self, context, network_id):
-        query = self._model_query(context, NetworkQueueMapping)
+        query = self._model_query(context, nsx_models.NetworkQueueMapping)
         with context.session.begin(subtransactions=True):
             binding = query.filter_by(network_id=network_id).first()
             if binding:
