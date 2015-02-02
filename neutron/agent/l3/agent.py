@@ -735,8 +735,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                                namespace=ri.ns_name,
                                                ip=ip_cidr)
             if ri.router['distributed']:
-                #TODO(Carl) Call this method on ri.  Needs namespace work.
-                self.floating_ip_removed_dist(ri, ip_cidr)
+                ri.floating_ip_removed_dist(ip_cidr)
 
     def _get_router_cidrs(self, ri, device):
         if ri.is_ha:

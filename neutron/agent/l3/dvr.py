@@ -14,6 +14,7 @@
 
 import binascii
 import netaddr
+import weakref
 
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.linux import ip_lib
@@ -33,7 +34,7 @@ MASK_30 = 0x3fffffff
 class AgentMixin(object):
     def __init__(self, host):
         # dvr data
-        self._fip_namespaces = {}
+        self._fip_namespaces = weakref.WeakValueDictionary()
         super(AgentMixin, self).__init__(host)
 
     def get_fip_ns(self, ext_net_id):
@@ -41,15 +42,18 @@ class AgentMixin(object):
         # convert these to string like this so I preserved that.
         ext_net_id = str(ext_net_id)
 
-        if ext_net_id not in self._fip_namespaces:
-            fip_ns = dvr_fip_ns.FipNamespace(ext_net_id,
-                                             self.conf,
-                                             self.driver,
-                                             self.root_helper,
-                                             self.use_ipv6)
-            self._fip_namespaces[ext_net_id] = fip_ns
+        fip_ns = self._fip_namespaces.get(ext_net_id)
+        if fip_ns and not fip_ns.destroyed:
+            return fip_ns
 
-        return self._fip_namespaces[ext_net_id]
+        fip_ns = dvr_fip_ns.FipNamespace(ext_net_id,
+                                         self.conf,
+                                         self.driver,
+                                         self.root_helper,
+                                         self.use_ipv6)
+        self._fip_namespaces[ext_net_id] = fip_ns
+
+        return fip_ns
 
     def _destroy_snat_namespace(self, ns):
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
@@ -68,7 +72,6 @@ class AgentMixin(object):
     def _destroy_fip_namespace(self, ns):
         ex_net_id = ns[len(dvr_fip_ns.FIP_NS_PREFIX):]
         fip_ns = self.get_fip_ns(ex_net_id)
-        del self._fip_namespaces[ex_net_id]
         fip_ns.destroy()
 
     def _set_subnet_arp_info(self, ri, port):
@@ -167,13 +170,6 @@ class AgentMixin(object):
             use_ipv6=self.use_ipv6)
         # kicks the FW Agent to add rules for the snat namespace
         self.process_router_add(ri)
-
-    def floating_ip_removed_dist(self, ri, fip_cidr):
-        """Remove floating IP from FIP namespace."""
-        is_last = ri.floating_ip_removed_dist(fip_cidr)
-        # clean up fip-namespace if this is the last FIP
-        if is_last:
-            self._destroy_fip_namespace(ri.fip_ns.get_name())
 
     def _snat_redirect_add(self, ri, gateway, sn_port, sn_int):
         """Adds rules and routes for SNAT redirection."""

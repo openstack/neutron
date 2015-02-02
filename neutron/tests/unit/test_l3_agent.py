@@ -1845,20 +1845,22 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             {'cidr': '19.4.4.1/24'}]
         self.device_exists.return_value = True
 
+        fip_ns = ri.fip_ns
         agent.external_gateway_removed(
             ri, ri.ex_gw_port,
             agent.get_external_device_name(ri.ex_gw_port['id']))
 
         self.mock_ip.del_veth.assert_called_once_with(
-            ri.fip_ns.get_int_device_name(ri.router['id']))
+            fip_ns.get_int_device_name(ri.router['id']))
         self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
             str(fip_to_rtr.ip), table=dvr_fip_ns.FIP_RT_TBL)
 
         self.assertEqual(ri.dist_fip_count, 0)
-        self.assertFalse(ri.fip_ns.has_subscribers())
+        self.assertFalse(fip_ns.has_subscribers())
         self.assertEqual(self.mock_driver.unplug.call_count, 1)
-        self.assertIsNone(ri.fip_ns.agent_gateway_port)
-        self.mock_ip.netns.delete.assert_called_once_with(ri.fip_ns.get_name())
+        self.assertIsNone(fip_ns.agent_gateway_port)
+        self.assertTrue(fip_ns.destroyed)
+        self.mock_ip.netns.delete.assert_called_once_with(fip_ns.get_name())
         self.assertFalse(nat.add_rule.called)
         nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
 
