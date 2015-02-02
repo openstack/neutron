@@ -1183,7 +1183,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug("No ports have port_id starting with %s",
                           port_id)
                 return
-            except exc.MultipleResultsFound:
+            except sa_exc.MultipleResultsFound:
                 LOG.error(_LE("Multiple ports have port_id starting with %s"),
                           port_id)
                 return
