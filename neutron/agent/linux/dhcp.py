@@ -31,7 +31,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import utils as commonutils
-from neutron.i18n import _LE
+from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
@@ -549,15 +549,19 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _output_opts_file(self):
         """Write a dnsmasq compatible options file."""
+        options, subnet_index_map = self._generate_opts_per_subnet()
+        options += self._generate_opts_per_port(subnet_index_map)
 
+        name = self.get_conf_file_name('opts')
+        utils.replace_file(name, '\n'.join(options))
+        return name
+
+    def _generate_opts_per_subnet(self):
+        options = []
+        subnet_index_map = {}
         if self.conf.enable_isolated_metadata:
             subnet_to_interface_ip = self._make_subnet_interface_ip_map()
-
-        options = []
-
         isolated_subnets = self.get_isolated_subnets(self.network)
-        dhcp_ips = collections.defaultdict(list)
-        subnet_idx_map = {}
         for i, subnet in enumerate(self.network.subnets):
             if (not subnet.enable_dhcp or
                 (subnet.ip_version == 6 and
@@ -574,7 +578,7 @@ class Dnsmasq(DhcpLocalProcess):
             else:
                 # use the dnsmasq ip as nameservers only if there is no
                 # dns-server submitted by the server
-                subnet_idx_map[subnet.id] = i
+                subnet_index_map[subnet.id] = i
 
             if self.conf.dhcp_domain and subnet.ip_version == 6:
                 options.append('tag:tag%s,option6:domain-search,%s' %
@@ -619,29 +623,35 @@ class Dnsmasq(DhcpLocalProcess):
                 else:
                     options.append(self._format_option(subnet.ip_version,
                                                        i, 'router'))
+        return options, subnet_index_map
 
+    def _generate_opts_per_port(self, subnet_index_map):
+        options = []
+        dhcp_ips = collections.defaultdict(list)
         for port in self.network.ports:
             if getattr(port, 'extra_dhcp_opts', False):
-                for ip_version in (4, 6):
-                    if any(
-                        netaddr.IPAddress(ip.ip_address).version == ip_version
-                            for ip in port.fixed_ips):
-                        options.extend(
-                            # TODO(xuhanp):Instead of applying extra_dhcp_opts
-                            # to both DHCPv4 and DHCPv6, we need to find a new
-                            # way to specify options for v4 and v6
-                            # respectively. We also need to validate the option
-                            # before applying it.
-                            self._format_option(ip_version, port.id,
-                                                opt.opt_name, opt.opt_value)
-                            for opt in port.extra_dhcp_opts)
+                port_ip_versions = set(
+                    [netaddr.IPAddress(ip.ip_address).version
+                     for ip in port.fixed_ips])
+                for opt in port.extra_dhcp_opts:
+                    opt_ip_version = opt.ip_version
+                    if opt_ip_version in port_ip_versions:
+                        options.append(
+                            self._format_option(opt_ip_version, port.id,
+                                                opt.opt_name, opt.opt_value))
+                    else:
+                        LOG.info(_LI("Cannot apply dhcp option %(opt)s "
+                                     "because it's ip_version %(version)d "
+                                     "is not in port's address IP versions"),
+                                 {'opt': opt.opt_name,
+                                  'version': opt_ip_version})
 
             # provides all dnsmasq ip as dns-server if there is more than
             # one dnsmasq for a subnet and there is no dns-server submitted
             # by the server
             if port.device_owner == constants.DEVICE_OWNER_DHCP:
                 for ip in port.fixed_ips:
-                    i = subnet_idx_map.get(ip.subnet_id)
+                    i = subnet_index_map.get(ip.subnet_id)
                     if i is None:
                         continue
                     dhcp_ips[i].append(ip.ip_address)
@@ -657,10 +667,7 @@ class Dnsmasq(DhcpLocalProcess):
                             ','.join(
                                 Dnsmasq._convert_to_literal_addrs(ip_version,
                                                                   vx_ips))))
-
-        name = self.get_conf_file_name('opts')
-        utils.replace_file(name, '\n'.join(options))
-        return name
+        return options
 
     def _make_subnet_interface_ip_map(self):
         ip_dev = ip_lib.IPDevice(

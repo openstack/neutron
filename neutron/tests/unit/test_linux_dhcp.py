@@ -39,6 +39,7 @@ class FakeIPAllocation(object):
 
 class DhcpOpt(object):
     def __init__(self, **kwargs):
+        self.__dict__.update(ip_version=4)
         self.__dict__.update(kwargs)
 
     def __str__(self):
@@ -463,6 +464,34 @@ class FakeV4NetworkPxe3Ports(object):
                 DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.7'),
                 DhcpOpt(opt_name='server-ip-address', opt_value='192.168.0.7'),
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux3.0')]
+
+
+class FakeV6NetworkPxePort(object):
+    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    subnets = [FakeV6SubnetDHCPStateful()]
+    ports = [FakeV6Port()]
+    namespace = 'qdhcp-ns'
+
+    def __init__(self):
+        self.ports[0].extra_dhcp_opts = [
+            DhcpOpt(opt_name='tftp-server', opt_value='2001:192:168::1',
+                    ip_version=6),
+            DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0',
+                    ip_version=6)]
+
+
+class FakeV6NetworkPxePortWrongOptVersion(object):
+    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    subnets = [FakeV6SubnetDHCPStateful()]
+    ports = [FakeV6Port()]
+    namespace = 'qdhcp-ns'
+
+    def __init__(self):
+        self.ports[0].extra_dhcp_opts = [
+            DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.7',
+                    ip_version=4),
+            DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0',
+                    ip_version=6)]
 
 
 class FakeDualStackNetworkSingleDHCP(object):
@@ -1033,6 +1062,40 @@ class TestDnsmasq(TestBase):
             conf_fn.return_value = '/foo/opts'
             dm = self._get_dnsmasq(FakeV4NetworkMultipleTags())
             dm._output_opts_file()
+
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    @mock.patch('neutron.agent.linux.dhcp.Dnsmasq.get_conf_file_name',
+                return_value='/foo/opts')
+    def test_output_opts_file_pxe_ipv6_port_with_ipv6_opt(self,
+                                                          mock_get_conf_fn):
+        expected = (
+            'tag:tag0,option6:dns-server,[2001:0200:feed:7ac0::1]\n'
+            'tag:tag0,option6:domain-search,openstacklocal\n'
+            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'option6:tftp-server,2001:192:168::1\n'
+            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'option6:bootfile-name,pxelinux.0')
+        expected = expected.lstrip()
+
+        dm = self._get_dnsmasq(FakeV6NetworkPxePort())
+        dm._output_opts_file()
+
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    @mock.patch('neutron.agent.linux.dhcp.Dnsmasq.get_conf_file_name',
+                return_value='/foo/opts')
+    def test_output_opts_file_pxe_ipv6_port_with_ipv4_opt(self,
+                                                          mock_get_conf_fn):
+        expected = (
+            'tag:tag0,option6:dns-server,[2001:0200:feed:7ac0::1]\n'
+            'tag:tag0,option6:domain-search,openstacklocal\n'
+            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'option6:bootfile-name,pxelinux.0')
+        expected = expected.lstrip()
+
+        dm = self._get_dnsmasq(FakeV6NetworkPxePortWrongOptVersion())
+        dm._output_opts_file()
 
         self.safe.assert_called_once_with('/foo/opts', expected)
 
