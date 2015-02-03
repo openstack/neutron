@@ -124,6 +124,13 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                                       pnet.SEGMENTATION_ID,),
                                             **net_arg)
 
+        net_arg = {pnet.NETWORK_TYPE: 'flat',
+                   pnet.PHYSICAL_NETWORK: 'noagent'}
+        self._network3 = self._make_network(self.fmt, 'net3', True,
+                                            arg_list=(pnet.NETWORK_TYPE,
+                                                      pnet.PHYSICAL_NETWORK,),
+                                            **net_arg)
+
         notifier_patch = mock.patch(NOTIFIER)
         notifier_patch.start()
 
@@ -569,6 +576,55 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
 
                 self.mock_fanout.assert_any_call(
                     mock.ANY, 'remove_fdb_entries', expected)
+
+    def test_mac_addr_changed(self):
+        self._register_ml2_agents()
+
+        with self.subnet(network=self._network) as subnet:
+            host_arg = {portbindings.HOST_ID: HOST + '_5'}
+            with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                p1 = port1['port']
+
+                self.mock_fanout.reset_mock()
+                device = 'tap' + p1['id']
+
+                old_mac = p1['mac_address']
+                mac = old_mac.split(':')
+                mac[5] = '01' if mac[5] != '01' else '00'
+                new_mac = ':'.join(mac)
+                data = {'port': {'mac_address': new_mac,
+                                 portbindings.HOST_ID: HOST}}
+                req = self.new_update_request('ports', data, p1['id'])
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                self.assertIn('port', res)
+                self.assertEqual(new_mac, res['port']['mac_address'])
+
+                # port was not bound before, so no fdb call expected yet
+                self.assertFalse(self.mock_fanout.called)
+
+                self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST,
+                                                device=device)
+
+                self.assertEqual(1, self.mock_fanout.call_count)
+                add_expected = {
+                    p1['network_id']: {
+                        'segment_id': 1,
+                        'network_type': 'vxlan',
+                        'ports': {
+                            '20.0.0.1': [
+                                l2pop_rpc.PortInfo('00:00:00:00:00:00',
+                                                   '0.0.0.0'),
+                                l2pop_rpc.PortInfo(new_mac, '10.0.0.2')
+                            ]
+                        }
+                    }
+                }
+                self.mock_fanout.assert_called_with(
+                    mock.ANY, 'add_fdb_entries', add_expected)
 
     def test_fixed_ips_changed(self):
         self._register_ml2_agents()

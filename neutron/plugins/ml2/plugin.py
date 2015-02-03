@@ -180,6 +180,19 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if (attributes.is_attr_set(host) and binding.host != host):
             return mech_context.current
 
+    def _check_mac_update_allowed(self, orig_port, port, binding):
+        unplugged_types = (portbindings.VIF_TYPE_BINDING_FAILED,
+                           portbindings.VIF_TYPE_UNBOUND)
+        new_mac = port.get('mac_address')
+        mac_change = (new_mac is not None and
+                      orig_port['mac_address'] != new_mac)
+        if (mac_change and binding.vif_type not in unplugged_types):
+            raise exc.PortBound(port_id=orig_port['id'],
+                                vif_type=binding.vif_type,
+                                old_mac=orig_port['mac_address'],
+                                new_mac=port['mac_address'])
+        return mac_change
+
     def _process_port_binding(self, mech_context, attrs):
         binding = mech_context._binding
         port = mech_context.current
@@ -946,6 +959,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def update_port(self, context, id, port):
         attrs = port['port']
         need_port_update_notify = False
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        is_dvr_enabled = utils.is_extension_supported(
+            l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)
 
         session = context.session
 
@@ -958,6 +975,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 raise exc.PortNotFound(port_id=id)
+            mac_address_updated = self._check_mac_update_allowed(
+                port_db, port, binding)
+            need_port_update_notify |= mac_address_updated
             original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
                                                               port)
@@ -981,7 +1001,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 mech_context, attrs)
             self.mechanism_manager.update_port_precommit(mech_context)
 
-        # Notification must be sent after the above transaction is complete
+        # Notifications must be sent after the above transaction is complete
+        if mac_address_updated and l3plugin and is_dvr_enabled:
+            # NOTE: "add" actually does a 'replace' operation
+            l3plugin.dvr_vmarp_table_update(context, updated_port, "add")
         self._notify_l3_agent_new_port(context, new_host_port)
 
         # TODO(apech) - handle errors raised by update_port, potentially

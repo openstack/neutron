@@ -17,6 +17,7 @@
 """Implentation of Brocade ML2 Mechanism driver for ML2 Plugin."""
 
 from oslo.config import cfg
+from oslo.utils import excutils
 from oslo.utils import importutils
 
 from neutron.i18n import _LE, _LI
@@ -296,25 +297,8 @@ class BrocadeMechanism(driver_api.MechanismDriver):
 
         context = mech_context._plugin_context
 
-        network = brocade_db.get_network(context, network_id)
-        vlan_id = network['vlan']
-
-        interface_mac = port['mac_address']
-
-        # convert mac format: xx:xx:xx:xx:xx:xx -> xxxx.xxxx.xxxx
-        mac = self.mac_reformat_62to34(interface_mac)
-        try:
-            self._driver.associate_mac_to_network(self._switch['address'],
-                                                  self._switch['username'],
-                                                  self._switch['password'],
-                                                  vlan_id,
-                                                  mac)
-        except Exception:
-            LOG.exception(
-                _LE("Brocade NOS driver: failed to associate mac %s"),
-                interface_mac)
-            raise Exception(
-                _("Brocade switch exception: create_port_postcommit failed"))
+        self._associate_mac_to_net(context, network_id, port['mac_address'],
+                                   "create_port_postcommit")
 
         LOG.info(
             _LI("created port (postcommit): port_id=%(port_id)s"
@@ -350,26 +334,8 @@ class BrocadeMechanism(driver_api.MechanismDriver):
 
         context = mech_context._plugin_context
 
-        network = brocade_db.get_network(context, network_id)
-        vlan_id = network['vlan']
-
-        interface_mac = port['mac_address']
-
-        # convert mac format: xx:xx:xx:xx:xx:xx -> xxxx.xxxx.xxxx
-        mac = self.mac_reformat_62to34(interface_mac)
-        try:
-            self._driver.dissociate_mac_from_network(
-                self._switch['address'],
-                self._switch['username'],
-                self._switch['password'],
-                vlan_id,
-                mac)
-        except Exception:
-            LOG.exception(
-                _LE("Brocade NOS driver: failed to dissociate MAC %s"),
-                interface_mac)
-            raise Exception(
-                _("Brocade switch exception, delete_port_postcommit failed"))
+        self._dissociate_mac_from_net(context, network_id, port['mac_address'],
+                                      "delete_port_postcommit")
 
         LOG.info(
             _LI("delete port (postcommit): port_id=%(port_id)s"
@@ -382,8 +348,30 @@ class BrocadeMechanism(driver_api.MechanismDriver):
         LOG.debug("update_port_precommit(self: called")
 
     def update_port_postcommit(self, mech_context):
-        """Noop now, it is left here for future."""
+        """If mac changes, update association to network."""
+
         LOG.debug("update_port_postcommit: called")
+        port = mech_context.current
+        old_port = mech_context.original
+        if port['mac_address'] == old_port['mac_address']:
+            return
+        port_id = port['id']
+        network_id = port['network_id']
+        tenant_id = port['tenant_id']
+
+        context = mech_context._plugin_context
+
+        self._dissociate_mac_from_net(context, network_id,
+                                      old_port['mac_address'],
+                                      "update_port_postcommit")
+        self._associate_mac_to_net(context, network_id, port['mac_address'],
+                                   "update_port_postcommit")
+
+        LOG.info(
+            _LI("update port (postcommit): port_id=%(port_id)s"
+                " network_id=%(network_id)s tenant_id=%(tenant_id)s."),
+            {'port_id': port_id,
+             'network_id': network_id, 'tenant_id': tenant_id})
 
     def create_subnet_precommit(self, mech_context):
         """Noop now, it is left here for future."""
@@ -408,6 +396,44 @@ class BrocadeMechanism(driver_api.MechanismDriver):
     def update_subnet_postcommit(self, mech_context):
         """Noop now, it is left here for future."""
         LOG.debug("update_subnet_postcommit: called")
+
+    def _associate_mac_to_net(self, context, network_id, interface_mac, op):
+        network = brocade_db.get_network(context, network_id)
+        vlan_id = network['vlan']
+
+        # convert mac format: xx:xx:xx:xx:xx:xx -> xxxx.xxxx.xxxx
+        mac = self.mac_reformat_62to34(interface_mac)
+        try:
+            self._driver.associate_mac_to_network(self._switch['address'],
+                                                  self._switch['username'],
+                                                  self._switch['password'],
+                                                  vlan_id,
+                                                  mac)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(
+                    _LE("Brocade NOS driver: failed to associate mac %s"),
+                    interface_mac)
+
+    def _dissociate_mac_from_net(self, context, network_id, interface_mac, op):
+
+        network = brocade_db.get_network(context, network_id)
+        vlan_id = network['vlan']
+
+        # convert mac format: xx:xx:xx:xx:xx:xx -> xxxx.xxxx.xxxx
+        mac = self.mac_reformat_62to34(interface_mac)
+        try:
+            self._driver.dissociate_mac_from_network(
+                self._switch['address'],
+                self._switch['username'],
+                self._switch['password'],
+                vlan_id,
+                mac)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(
+                    _LE("Brocade NOS driver: failed to dissociate MAC %s"),
+                    interface_mac)
 
     @staticmethod
     def mac_reformat_62to34(interface_mac):

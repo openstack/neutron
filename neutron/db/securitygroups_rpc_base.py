@@ -129,6 +129,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         """
         need_notify = False
         if (original_port['fixed_ips'] != updated_port['fixed_ips'] or
+            original_port['mac_address'] != updated_port['mac_address'] or
             not utils.compare_elements(
                 original_port.get(ext_sg.SECURITYGROUPS),
                 updated_port.get(ext_sg.SECURITYGROUPS))):

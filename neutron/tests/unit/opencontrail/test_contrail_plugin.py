@@ -272,6 +272,15 @@ class TestContrailPortsV2(test_plugin.TestPortsV2,
         self.skipTest("This method tests private method of "
                       "which contrail isn't using")
 
+    def test_update_port_mac_bad_owner(self):
+        self.check_update_port_mac(
+            device_owner='network:router',
+            expected_status=webob.exc.HTTPConflict.code,
+            expected_error='ContrailConflictError')
+
+    def test_update_port_mac_used(self):
+        self.check_update_port_mac_used(expected_error='ContrailConflictError')
+
 
 class TestContrailSecurityGroups(test_sg.TestSecurityGroups,
                                  ContrailPluginTestCase):

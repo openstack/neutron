@@ -20,6 +20,7 @@ from neutron import context as n_context
 from neutron.db import api as db_api
 from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.l2pop import config  # noqa
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
@@ -102,6 +103,11 @@ class L2populationMechanismDriver(api.MechanismDriver,
         port = context.current
         orig = context.original
 
+        if (orig['mac_address'] != port['mac_address'] and
+            context.status == const.PORT_STATUS_ACTIVE):
+            LOG.warning(_LW("unable to modify mac_address of ACTIVE port "
+                            "%s"), port['id'])
+            raise ml2_exc.MechansimDriverError(method='update_port_postcommit')
         diff_ips = self._get_diff_ips(orig, port)
         if diff_ips:
             self._fixed_ips_changed(context, orig, port, diff_ips)

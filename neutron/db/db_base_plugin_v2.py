@@ -1275,6 +1275,12 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         return self._get_collection_count(context, models_v2.Subnet,
                                           filters=filters)
 
+    def _check_mac_addr_update(self, context, port, new_mac, device_owner):
+        if (device_owner and device_owner.startswith('network:')):
+            raise n_exc.UnsupportedPortDeviceOwner(
+                op=_("mac address update"), port_id=id,
+                device_owner=device_owner)
+
     def create_port_bulk(self, context, ports):
         return self._create_bulk('port', context, ports)
 
@@ -1375,23 +1381,33 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 self._enforce_device_owner_not_router_intf_or_device_id(
                     context, p, port['tenant_id'], port)
 
+            new_mac = p.get('mac_address')
+            if new_mac and new_mac != port['mac_address']:
+                self._check_mac_addr_update(
+                    context, port, new_mac, current_device_owner)
+
             # Check if the IPs need to be updated
+            network_id = port['network_id']
             if 'fixed_ips' in p:
                 changed_ips = True
                 original = self._make_port_dict(port, process_extensions=False)
                 added_ips, prev_ips = self._update_ips_for_port(
-                    context, port["network_id"], id,
+                    context, network_id, id,
                     original["fixed_ips"], p['fixed_ips'],
                     original['mac_address'], port['device_owner'])
 
                 # Update ips if necessary
                 for ip in added_ips:
                     NeutronDbPluginV2._store_ip_allocation(
-                        context, ip['ip_address'], port['network_id'],
+                        context, ip['ip_address'], network_id,
                         ip['subnet_id'], port.id)
-            # Remove all attributes in p which are not in the port DB model
-            # and then update the port
-            port.update(self._filter_non_model_columns(p, models_v2.Port))
+                # Remove all attributes in p which are not in the port DB model
+                # and then update the port
+            try:
+                port.update(self._filter_non_model_columns(p, models_v2.Port))
+                context.session.flush()
+            except db_exc.DBDuplicateEntry:
+                raise n_exc.MacAddressInUse(net_id=network_id, mac=new_mac)
 
         result = self._make_port_dict(port)
         # Keep up with fields that changed

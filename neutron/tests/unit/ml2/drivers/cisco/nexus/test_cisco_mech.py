@@ -700,6 +700,15 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
             self._assertExpectedHTTP(result.status_int,
                                      c_exc.NexusMissingRequiredFields)
 
+    def test_update_port_mac(self):
+        # REVISIT: test passes, but is back-end OK?
+        host_arg = {
+            portbindings.HOST_ID: COMP_HOST_NAME,
+            'device_id': DEVICE_ID_1,
+        }
+        arg_list = (portbindings.HOST_ID, 'device_id',)
+        self.check_update_port_mac(host_arg=host_arg, arg_list=arg_list)
+
 
 class TestCiscoNetworksV2(CiscoML2MechanismTestCase,
                           test_ml2_plugin.TestMl2NetworksV2):
