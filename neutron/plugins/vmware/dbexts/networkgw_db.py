@@ -12,18 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sa
-
-from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_orm_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import exceptions
 from neutron.common import utils
-from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
+from neutron.plugins.vmware.dbexts import nsx_models
 from neutron.plugins.vmware.extensions import networkgw
 
 
@@ -90,67 +86,6 @@ class NetworkGatewayUnchangeable(exceptions.InUse):
                 "cannot be updated or deleted")
 
 
-class NetworkConnection(model_base.BASEV2, models_v2.HasTenant):
-    """Defines a connection between a network gateway and a network."""
-    # We use port_id as the primary key as one can connect a gateway
-    # to a network in multiple ways (and we cannot use the same port form
-    # more than a single gateway)
-    network_gateway_id = sa.Column(sa.String(36),
-                                   sa.ForeignKey('networkgateways.id',
-                                                 ondelete='CASCADE'))
-    network_id = sa.Column(sa.String(36),
-                           sa.ForeignKey('networks.id', ondelete='CASCADE'))
-    segmentation_type = sa.Column(
-        sa.Enum('flat', 'vlan',
-                name='networkconnections_segmentation_type'))
-    segmentation_id = sa.Column(sa.Integer)
-    __table_args__ = (sa.UniqueConstraint(network_gateway_id,
-                                          segmentation_type,
-                                          segmentation_id),
-                      model_base.BASEV2.__table_args__)
-    # Also, storing port id comes back useful when disconnecting a network
-    # from a gateway
-    port_id = sa.Column(sa.String(36),
-                        sa.ForeignKey('ports.id', ondelete='CASCADE'),
-                        primary_key=True)
-
-
-class NetworkGatewayDeviceReference(model_base.BASEV2):
-    id = sa.Column(sa.String(36), primary_key=True)
-    network_gateway_id = sa.Column(sa.String(36),
-                                   sa.ForeignKey('networkgateways.id',
-                                                 ondelete='CASCADE'),
-                                   primary_key=True)
-    interface_name = sa.Column(sa.String(64), primary_key=True)
-
-
-class NetworkGatewayDevice(model_base.BASEV2, models_v2.HasId,
-                           models_v2.HasTenant):
-    nsx_id = sa.Column(sa.String(36))
-    # Optional name for the gateway device
-    name = sa.Column(sa.String(255))
-    # Transport connector type. Not using enum as range of
-    # connector types might vary with backend version
-    connector_type = sa.Column(sa.String(10))
-    # Transport connector IP Address
-    connector_ip = sa.Column(sa.String(64))
-    # operational status
-    status = sa.Column(sa.String(16))
-
-
-class NetworkGateway(model_base.BASEV2, models_v2.HasId,
-                     models_v2.HasTenant):
-    """Defines the data model for a network gateway."""
-    name = sa.Column(sa.String(255))
-    # Tenant id is nullable for this resource
-    tenant_id = sa.Column(sa.String(36))
-    default = sa.Column(sa.Boolean())
-    devices = orm.relationship(NetworkGatewayDeviceReference,
-                               backref='networkgateways',
-                               cascade='all,delete')
-    network_connections = orm.relationship(NetworkConnection, lazy='joined')
-
-
 class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
 
     gateway_resource = networkgw.GATEWAY_RESOURCE_NAME
@@ -158,7 +93,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
 
     def _get_network_gateway(self, context, gw_id):
         try:
-            gw = self._get_by_id(context, NetworkGateway, gw_id)
+            gw = self._get_by_id(context, nsx_models.NetworkGateway, gw_id)
         except sa_orm_exc.NoResultFound:
             raise GatewayNotFound(gateway_id=gw_id)
         return gw
@@ -225,18 +160,18 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             if v and k != NETWORK_ID:
                 filters[k] = [v]
         query = self._get_collection_query(context,
-                                           NetworkConnection,
+                                           nsx_models.NetworkConnection,
                                            filters)
         return query.one() if only_one else query.all()
 
     def _unset_default_network_gateways(self, context):
         with context.session.begin(subtransactions=True):
-            context.session.query(NetworkGateway).update(
-                {NetworkGateway.default: False})
+            context.session.query(nsx_models.NetworkGateway).update(
+                {nsx_models.NetworkGateway.default: False})
 
     def _set_default_network_gateway(self, context, gw_id):
         with context.session.begin(subtransactions=True):
-            gw = (context.session.query(NetworkGateway).
+            gw = (context.session.query(nsx_models.NetworkGateway).
                   filter_by(id=gw_id).one())
             gw['default'] = True
 
@@ -271,7 +206,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
         gw_data = network_gateway[self.gateway_resource]
         tenant_id = self._get_tenant_id_for_create(context, gw_data)
         with context.session.begin(subtransactions=True):
-            gw_db = NetworkGateway(
+            gw_db = nsx_models.NetworkGateway(
                 id=gw_data.get('id', uuidutils.generate_uuid()),
                 tenant_id=tenant_id,
                 name=gw_data.get('name'))
@@ -279,8 +214,9 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             # might still either not exist or belong to a different tenant
             if validate_device_list:
                 self._validate_device_list(context, tenant_id, gw_data)
-            gw_db.devices.extend([NetworkGatewayDeviceReference(**device)
-                                  for device in gw_data['devices']])
+            gw_db.devices.extend(
+                [nsx_models.NetworkGatewayDeviceReference(**device)
+                 for device in gw_data['devices']])
             context.session.add(gw_db)
         LOG.debug("Created network gateway with id:%s", gw_db['id'])
         return self._make_network_gateway_dict(gw_db)
@@ -316,7 +252,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                              page_reverse=False):
         marker_obj = self._get_marker_obj(
             context, 'network_gateway', limit, marker)
-        return self._get_collection(context, NetworkGateway,
+        return self._get_collection(context, nsx_models.NetworkGateway,
                                     self._make_network_gateway_dict,
                                     filters=filters, fields=fields,
                                     sorts=sorts, limit=limit,
@@ -384,7 +320,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             network_mapping_info['port_id'] = port_id
             network_mapping_info['tenant_id'] = tenant_id
             gw_db.network_connections.append(
-                NetworkConnection(**network_mapping_info))
+                nsx_models.NetworkConnection(**network_mapping_info))
             port_id = port['id']
             # now deallocate and recycle ip from the port
             for fixed_ip in port.get('fixed_ips', []):
@@ -445,13 +381,16 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
 
     def _get_gateway_device(self, context, device_id):
         try:
-            return self._get_by_id(context, NetworkGatewayDevice, device_id)
+            return self._get_by_id(context,
+                                   nsx_models.NetworkGatewayDevice,
+                                   device_id)
         except sa_orm_exc.NoResultFound:
             raise GatewayDeviceNotFound(device_id=device_id)
 
     def _is_device_in_use(self, context, device_id):
         query = self._get_collection_query(
-            context, NetworkGatewayDeviceReference, {'id': [device_id]})
+            context, nsx_models.NetworkGatewayDeviceReference,
+            {'id': [device_id]})
         return query.first()
 
     def get_gateway_device(self, context, device_id, fields=None,
@@ -467,7 +406,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
         marker_obj = self._get_marker_obj(
             context, 'gateway_device', limit, marker)
         return self._get_collection_query(context,
-                                          NetworkGatewayDevice,
+                                          nsx_models.NetworkGatewayDevice,
                                           filters=filters,
                                           sorts=sorts,
                                           limit=limit,
@@ -487,7 +426,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
         device_data = gateway_device[self.device_resource]
         tenant_id = self._get_tenant_id_for_create(context, device_data)
         with context.session.begin(subtransactions=True):
-            device_db = NetworkGatewayDevice(
+            device_db = nsx_models.NetworkGatewayDevice(
                 id=device_data.get('id', uuidutils.generate_uuid()),
                 tenant_id=tenant_id,
                 name=device_data.get('name'),
