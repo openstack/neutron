@@ -122,12 +122,15 @@ Testing Strategy
 
 The testing process will be as follow:
 
-* There will be no unit tests for plugins and drivers in the tree; The
-  expectation is that contributors would run unit test in their own external
-  library (e.g. in stackforge where Jenkins setup is for free). For unit tests
-  that validate the vendor library, it is the responsibility of the vendor to
-  choose what CI system they see fit to run them. There is no need or
-  requirement to use OpenStack CI resources if they do not want to.
+* No unit tests for the vendor integration of plugins and drivers are deemed
+  necessary. The expectation is that contributors would run unit test in their
+  own external library (e.g. in stackforge where Jenkins setup is for free).
+  For unit tests that validate the vendor library, it is the responsibility of
+  the vendor to choose what CI system they see fit to run them. There is no
+  need or requirement to use OpenStack CI resources if they do not want to.
+  Having said that, it may be useful to provide coverage for the shim layer in
+  the form of basic validation as done in `ODL <https://github.com/openstack/neutron/blob/master/neutron/tests/unit/ml2/test_mechanism_odl.py>`_ and `LBaaS A10 driver <https://github.com/openstack/neutron-lbaas/blob/master/neutron_lbaas/tests/unit/services/loadbalancer/drivers/a10networks/test_driver_v1.py>`_.
+
 * 3rd Party CI will continue to validate vendor integration with Neutron via
   functional testing. 3rd Party CI is a communication mechanism. This objective
   of this mechanism is as follows:
@@ -144,6 +147,16 @@ The testing process will be as follow:
     is being actively maintained.
   * A maintainer that is perceived to be responsive to failures in their
     3rd party CI jobs is likely to generate community goodwill.
+
+  It is worth noting that if the vendor library is hosted on StackForge, due to
+  current openstack-infra limitations, it is not possible to have 3rd party CI systems
+  participating in the gate pipeline for the StackForge repo. This means that the only
+  validation provided during the merge process to the StackForge repo is through unit
+  tests. Post-merge hooks can still be exploited to provide 3rd party CI feedback, and
+  alert the contributor/reviewer of potential issues. As mentioned above, 3rd party CI
+  systems will continue to validate Neutron core commits. This will allow them to
+  detect when incompatible changes occur, whether they are in Neutron or in the vendor
+  library repo.
 
 Review and Defect Management Strategies
 ---------------------------------------
