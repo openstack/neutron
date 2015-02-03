@@ -1173,6 +1173,14 @@ class TestDeviceManager(base.BaseTestCase):
         driver_cls.return_value = self.mock_driver
         iproute_cls.return_value = self.mock_iproute
 
+        iptables_cls_p = mock.patch(
+            'neutron.agent.linux.iptables_manager.IptablesManager')
+        iptables_cls = iptables_cls_p.start()
+        self.iptables_inst = mock.Mock()
+        iptables_cls.return_value = self.iptables_inst
+        self.mangle_inst = mock.Mock()
+        self.iptables_inst.ipv4 = {'mangle': self.mangle_inst}
+
     def _test_setup_helper(self, device_is_ready, net=None, port=None):
         net = net or fake_network
         port = port or fake_port1
@@ -1223,6 +1231,13 @@ class TestDeviceManager(base.BaseTestCase):
         self._test_setup_helper(False)
         cfg.CONF.set_override('enable_metadata_network', True)
         self._test_setup_helper(False)
+
+    def test_setup_calls_fill_dhcp_udp_checksums(self):
+        self._test_setup_helper(False)
+        rule = ('-p udp --dport %d -j CHECKSUM --checksum-fill'
+                % const.DHCP_RESPONSE_PORT)
+        expected = [mock.call.add_rule('POSTROUTING', rule)]
+        self.mangle_inst.assert_has_calls(expected)
 
     def test_setup_ipv6(self):
         self._test_setup_helper(True, net=fake_network_ipv6,
