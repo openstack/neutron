@@ -1,10 +1,16 @@
 Brocade ML2 Mechanism driver from ML2 plugin
 ============================================
 
+* The real code now resides in stackforge:
+  http://github.com/stackforge/networking-brocade
+
 * up-to-date version of these instructions are located at:
   http://50.56.236.34/docs/brocade-ml2-mechanism.txt
+
 * N.B.: Please see Prerequisites section  regarding ncclient (netconf client library)
+
 * Supports VCS (Virtual Cluster of Switches)
+
 * Issues/Questions/Bugs: sharis@brocade.com
 
 
