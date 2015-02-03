@@ -428,14 +428,14 @@ class L3AgentTestCase(L3AgentTestFramework):
 
         if enable_ha:
             self._assert_ha_device(router)
-            self.assertTrue(router.keepalived_manager.process.active)
+            self.assertTrue(router.keepalived_manager.get_process().active)
 
         self._delete_router(self.agent, router.router_id)
 
         self._assert_interfaces_deleted_from_ovs()
         self._assert_router_does_not_exist(router)
         if enable_ha:
-            self.assertFalse(router.keepalived_manager.process.active)
+            self.assertFalse(router.keepalived_manager.get_process().active)
 
     def _assert_external_device(self, router):
         external_port = router.get_ex_gw_port()

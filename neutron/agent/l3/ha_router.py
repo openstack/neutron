@@ -68,16 +68,13 @@ class HaRouter(router.RouterInfo):
             LOG.debug('Error while reading HA state for %s', self.router_id)
             return None
 
-    def get_keepalived_manager(self):
-        return keepalived.KeepalivedManager(
+    def _init_keepalived_manager(self, process_monitor):
+        self.keepalived_manager = keepalived.KeepalivedManager(
             self.router['id'],
             keepalived.KeepalivedConf(),
             conf_path=self.agent_conf.ha_confs_path,
-            namespace=self.ns_name)
-
-    def _init_keepalived_manager(self):
-        # TODO(Carl) This looks a bit funny, doesn't it?
-        self.keepalived_manager = self.get_keepalived_manager()
+            namespace=self.ns_name,
+            process_monitor=process_monitor)
 
         config = self.keepalived_manager.config
 
@@ -102,7 +99,7 @@ class HaRouter(router.RouterInfo):
         config.add_instance(instance)
 
     def spawn_keepalived(self):
-        self.keepalived_manager.spawn_or_restart()
+        self.keepalived_manager.spawn()
 
     def disable_keepalived(self):
         self.keepalived_manager.disable()
@@ -213,13 +210,8 @@ class HaRouter(router.RouterInfo):
         it manage IPv4 addresses. In order to do that, we must delete
         the address first as it is autoconfigured by the kernel.
         """
-        process = keepalived.KeepalivedManager.get_process(
-            self.agent_conf,
-            self.router_id,
-            self.ns_name,
-            self.agent_conf.ha_confs_path)
-        if process.active:
-            manager = self.get_keepalived_manager()
+        manager = self.keepalived_manager
+        if manager.get_process().active:
             conf = manager.get_conf_on_disk()
             managed_by_keepalived = conf and ipv6_lladdr in conf
             if managed_by_keepalived:
