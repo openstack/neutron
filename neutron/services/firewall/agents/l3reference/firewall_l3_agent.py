@@ -18,9 +18,9 @@ from oslo.utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
+from neutron.common import exceptions as nexception
 from neutron.common import topics
 from neutron import context
-from neutron.extensions import firewall as fw_ext
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -142,7 +142,7 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                     status = constants.ACTIVE
                 else:
                     status = constants.DOWN
-            except fw_ext.FirewallInternalDriverError:
+            except nexception.FirewallInternalDriverError:
                 LOG.error(_LE("Firewall Driver Error for %(func_name)s "
                               "for fw: %(fwid)s"),
                           {'func_name': func_name, 'fwid': fw['id']})
@@ -177,7 +177,7 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                 self.fwplugin_rpc.firewall_deleted(
                     ctx,
                     fw['id'])
-            except fw_ext.FirewallInternalDriverError:
+            except nexception.FirewallInternalDriverError:
                 LOG.error(_LE("Firewall Driver Error on fw state %(fwmsg)s "
                               "for fw: %(fwid)s"),
                           {'fwmsg': fw['status'], 'fwid': fw['id']})
@@ -196,7 +196,7 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                     status = constants.ACTIVE
                 else:
                     status = constants.DOWN
-            except fw_ext.FirewallInternalDriverError:
+            except nexception.FirewallInternalDriverError:
                 LOG.error(_LE("Firewall Driver Error on fw state %(fwmsg)s "
                               "for fw: %(fwid)s"),
                           {'fwmsg': fw['status'], 'fwid': fw['id']})

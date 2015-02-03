@@ -17,10 +17,10 @@ import contextlib
 import mock
 
 from neutron.common import constants as l3_const
+from neutron.common import exceptions as nexception
 from neutron import context
 from neutron.db import l3_dvr_db
 from neutron.extensions import l3
-from neutron.extensions import vpnaas
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit import testlib_api
@@ -358,7 +358,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
                 return router_db, fw_mock, vpn_mock
             if not no_vpn and test_side_effect_vpn:
                 self.assertRaises(
-                    vpnaas.RouterInUseByVPNService,
+                    nexception.RouterInUseByVPNService,
                     self.mixin._validate_router_migration,
                     self.ctx,
                     router_db,
@@ -378,7 +378,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
         router_db, mock_firewall, mock_vpnaas = (
             self._router_migration_with_services_setup(
                 test_side_effect_vpn=(
-                    vpnaas.RouterInUseByVPNService(
+                    nexception.RouterInUseByVPNService(
                         router_id='fake_id',
                         vpnservice_id='fake_vpnaas_id')
                 ),

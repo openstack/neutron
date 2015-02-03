@@ -360,3 +360,19 @@ class IpTablesApplyException(NeutronException):
     def __init__(self, message=None):
         self.message = message
         super(IpTablesApplyException, self).__init__()
+
+
+# Shared *aas exceptions, pending them being refactored out of Neutron
+# proper.
+
+class FirewallInternalDriverError(NeutronException):
+    """Fwaas exception for all driver errors.
+
+    On any failure or exception in the driver, driver should log it and
+    raise this exception to the agent
+    """
+    message = _("%(driver)s: Internal driver error.")
+
+
+class RouterInUseByVPNService(InUse):
+    message = _("Router %(router_id)s is used by VPNService %(vpnservice_id)s")

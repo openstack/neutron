@@ -677,7 +677,11 @@ def get_extensions_path():
 
     neutron_mods = repos.NeutronModules()
     for x in neutron_mods.installed_list():
-        paths += neutron_mods.module(x).__path__
+        try:
+            paths += neutron_mods.module(x).extensions.__path__
+        except AttributeError:
+            # Occurs normally if module has no extensions sub-module
+            pass
 
     if cfg.CONF.api_extensions_path:
         paths.append(cfg.CONF.api_extensions_path)
