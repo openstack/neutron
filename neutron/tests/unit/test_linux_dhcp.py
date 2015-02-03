@@ -768,18 +768,11 @@ class TestDnsmasq(TestBase):
         def mock_get_conf_file_name(kind):
             return '/dhcp/%s/%s' % (network.id, kind)
 
-        def fake_argv(index):
-            if index == 0:
-                return '/usr/local/bin/neutron-dhcp-agent'
-            else:
-                raise IndexError()
-
         # if you need to change this path here, think twice,
         # that means pid files will move around, breaking upgrades
         # or backwards-compatibility
         expected_pid_file = '/dhcp/%s/pid' % network.id
 
-        expected_env = {'NEUTRON_NETWORK_ID': network.id}
         expected = [
             'dnsmasq',
             '--no-hosts',
@@ -839,26 +832,23 @@ class TestDnsmasq(TestBase):
             )
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
 
-            with mock.patch.object(dhcp.sys, 'argv') as argv:
-                argv.__getitem__.side_effect = fake_argv
-                dm = self._get_dnsmasq(network, test_pm)
-                dm.spawn_process()
-                self.assertTrue(mocks['_output_opts_file'].called)
+            dm = self._get_dnsmasq(network, test_pm)
+            dm.spawn_process()
+            self.assertTrue(mocks['_output_opts_file'].called)
 
-                test_pm.enable.assert_called_once_with(
-                    cmd_addl_env=expected_env,
-                    uuid=network.id,
-                    service='dnsmasq',
-                    namespace='qdhcp-ns',
-                    cmd_callback=mock.ANY,
-                    reload_cfg=False,
-                    pid_file=expected_pid_file)
-                call_kwargs = test_pm.method_calls[0][2]
-                cmd_callback = call_kwargs['cmd_callback']
+            test_pm.enable.assert_called_once_with(
+                uuid=network.id,
+                service='dnsmasq',
+                namespace='qdhcp-ns',
+                cmd_callback=mock.ANY,
+                reload_cfg=False,
+                pid_file=expected_pid_file)
+            call_kwargs = test_pm.method_calls[0][2]
+            cmd_callback = call_kwargs['cmd_callback']
 
-                result_cmd = cmd_callback(expected_pid_file)
+            result_cmd = cmd_callback(expected_pid_file)
 
-                self.assertEqual(expected, result_cmd)
+            self.assertEqual(expected, result_cmd)
 
     def test_spawn(self):
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'])
@@ -1228,7 +1218,6 @@ class TestDnsmasq(TestBase):
                                              cmd_callback=mock.ANY,
                                              namespace=mock.ANY,
                                              service=mock.ANY,
-                                             cmd_addl_env=mock.ANY,
                                              reload_cfg=True,
                                              pid_file=mock.ANY)])
 
