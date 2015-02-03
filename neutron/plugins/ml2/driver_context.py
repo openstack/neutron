@@ -103,6 +103,11 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     @property
     def status(self):
+        # REVISIT(rkukura): Eliminate special DVR case as part of
+        # resolving bug 1367391?
+        if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
+            return self._binding.status
+
         return self._port['status']
 
     @property
@@ -165,6 +170,11 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     @property
     def host(self):
+        # REVISIT(rkukura): Eliminate special DVR case as part of
+        # resolving bug 1367391?
+        if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
+            return self._binding.host
+
         return self._port.get(portbindings.HOST_ID)
 
     @property
@@ -203,26 +213,3 @@ class PortContext(MechanismDriverContext, api.PortContext):
     def release_dynamic_segment(self, segment_id):
         return self._plugin.type_manager.release_dynamic_segment(
                 self._plugin_context.session, segment_id)
-
-
-class DvrPortContext(PortContext):
-
-    def __init__(self, plugin, plugin_context, port, network, binding,
-                 original_port=None):
-        super(DvrPortContext, self).__init__(
-            plugin, plugin_context, port, network, binding,
-            original_port=original_port)
-
-    @property
-    def host(self):
-        if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
-            return self._binding.host
-
-        return super(DvrPortContext, self).host
-
-    @property
-    def status(self):
-        if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
-            return self._binding.status
-
-        return super(DvrPortContext, self).status

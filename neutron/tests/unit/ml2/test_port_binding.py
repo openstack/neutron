@@ -108,20 +108,6 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.assertIsNone(
                 self.plugin.get_bound_port_context(ctx, port['port']['id']))
 
-    def test_commit_dvr_port_binding(self):
-        ctx = context.get_admin_context()
-
-        class MechContext(object):
-            pass
-
-        mctx = MechContext()
-        mctx._binding = None
-        # making a shortcut: calling private method directly to
-        # avoid bothering with "concurrent" port binding deletion
-        res = self.plugin._commit_dvr_port_binding(ctx, 'anyUUID',
-                                                   'HostA', mctx)
-        self.assertIsNone(res)
-
     def _test_update_port_binding(self, host, new_host=None):
         with mock.patch.object(self.plugin,
                                '_notify_port_updated') as notify_mock:

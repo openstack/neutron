@@ -21,7 +21,12 @@ from neutron.plugins.ml2 import driver_context
 from neutron.tests import base
 
 
-class TestDvrPortContext(base.BaseTestCase):
+class TestPortContext(base.BaseTestCase):
+
+    # REVISIT(rkukura): These was originally for DvrPortContext tests,
+    # but DvrPortContext functionality has been folded into the
+    # regular PortContext class. Tests for non-DVR-specific
+    # functionality are needed here as well.
 
     def test_host(self):
         plugin = mock.Mock()
@@ -33,11 +38,11 @@ class TestDvrPortContext(base.BaseTestCase):
         binding.host = 'foohost'
 
         with mock.patch.object(driver_context.db, 'get_network_segments'):
-            ctx = driver_context.DvrPortContext(plugin,
-                                                plugin_context,
-                                                port,
-                                                network,
-                                                binding)
+            ctx = driver_context.PortContext(plugin,
+                                             plugin_context,
+                                             port,
+                                             network,
+                                             binding)
         self.assertEqual('foohost', ctx.host)
 
     def test_host_super(self):
@@ -51,11 +56,11 @@ class TestDvrPortContext(base.BaseTestCase):
         binding.host = 'foohost'
 
         with mock.patch.object(driver_context.db, 'get_network_segments'):
-            ctx = driver_context.DvrPortContext(plugin,
-                                                plugin_context,
-                                                port,
-                                                network,
-                                                binding)
+            ctx = driver_context.PortContext(plugin,
+                                             plugin_context,
+                                             port,
+                                             network,
+                                             binding)
         self.assertEqual('host', ctx.host)
 
     def test_status(self):
@@ -68,11 +73,11 @@ class TestDvrPortContext(base.BaseTestCase):
         binding.status = 'foostatus'
 
         with mock.patch.object(driver_context.db, 'get_network_segments'):
-            ctx = driver_context.DvrPortContext(plugin,
-                                                plugin_context,
-                                                port,
-                                                network,
-                                                binding)
+            ctx = driver_context.PortContext(plugin,
+                                             plugin_context,
+                                             port,
+                                             network,
+                                             binding)
         self.assertEqual('foostatus', ctx.status)
 
     def test_status_super(self):
@@ -86,9 +91,9 @@ class TestDvrPortContext(base.BaseTestCase):
         binding.status = 'foostatus'
 
         with mock.patch.object(driver_context.db, 'get_network_segments'):
-            ctx = driver_context.DvrPortContext(plugin,
-                                                plugin_context,
-                                                port,
-                                                network,
-                                                binding)
+            ctx = driver_context.PortContext(plugin,
+                                             plugin_context,
+                                             port,
+                                             network,
+                                             binding)
         self.assertEqual('status', ctx.status)

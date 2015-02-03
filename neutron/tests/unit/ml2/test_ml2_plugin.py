@@ -489,7 +489,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         with mock.patch.object(plugin, '_update_port_dict_binding'):
             with mock.patch.object(ml2_db, 'get_network_segments',
                                    return_value=[]):
-                mech_context = driver_context.DvrPortContext(
+                mech_context = driver_context.PortContext(
                     self, context, 'port', mock_network, binding)
                 plugin._process_dvr_port_binding(mech_context, context, attrs)
                 self.assertEqual(new_router_id,
