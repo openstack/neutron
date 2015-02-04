@@ -18,7 +18,7 @@ from oslo.db import exception as d_exc
 from neutron import context
 from neutron.db import models_v2
 from neutron.plugins.vmware.dbexts import db as nsx_db
-from neutron.plugins.vmware.dbexts import models
+from neutron.plugins.vmware.dbexts import nsx_models
 from neutron.tests.unit import testlib_api
 
 
@@ -52,7 +52,7 @@ class NsxDBTestCase(testlib_api.SqlTestCase):
         # Call the method twice to trigger a db duplicate constraint error
         nsx_db.add_neutron_nsx_port_mapping(
             self.ctx.session, neutron_port_id, nsx_switch_id, nsx_port_id)
-        result = (self.ctx.session.query(models.NeutronNsxPortMapping).
+        result = (self.ctx.session.query(nsx_models.NeutronNsxPortMapping).
                   filter_by(neutron_id=neutron_port_id).one())
         self.assertEqual(nsx_port_id, result.nsx_port_id)
         self.assertEqual(neutron_port_id, result.neutron_id)

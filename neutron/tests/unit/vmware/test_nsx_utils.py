@@ -23,7 +23,7 @@ from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import nsx_utils
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware.dbexts import models
+from neutron.plugins.vmware.dbexts import nsx_models
 from neutron.plugins.vmware import nsxlib
 from neutron.tests import base
 from neutron.tests.unit import vmware
@@ -334,12 +334,12 @@ class NsxUtilsTestCase(base.BaseTestCase):
         self.assertEqual('whatever_tz_2', result_2['zone_uuid'])
 
     def test_convert_to_nsx_transport_zones_with_bindings(self):
-        binding_1 = models.TzNetworkBinding(
+        binding_1 = nsx_models.TzNetworkBinding(
             'whatever',
             utils.NetworkTypes.VLAN,
             'whatever_tz_1',
             66)
-        binding_2 = models.TzNetworkBinding(
+        binding_2 = nsx_models.TzNetworkBinding(
             'whatever',
             utils.NetworkTypes.STT,
             'whatever_tz_2',

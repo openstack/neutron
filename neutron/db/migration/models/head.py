@@ -67,12 +67,8 @@ from neutron.plugins.nec.db import packetfilter as nec_packetfilter  # noqa
 from neutron.plugins.nec.db import router  # noqa
 from neutron.plugins.nuage import nuage_models  # noqa
 from neutron.plugins.openvswitch import ovs_models_v2  # noqa
-from neutron.plugins.vmware.dbexts import lsn_db  # noqa
-from neutron.plugins.vmware.dbexts import maclearning  # noqa
-from neutron.plugins.vmware.dbexts import models as vmware_models  # noqa
-from neutron.plugins.vmware.dbexts import networkgw_db  # noqa
+from neutron.plugins.vmware.dbexts import nsx_models  # noqa
 from neutron.plugins.vmware.dbexts import nsxv_models  # noqa
-from neutron.plugins.vmware.dbexts import qos_db  # noqa
 from neutron.plugins.vmware.dbexts import vcns_models  # noqa
 
 
