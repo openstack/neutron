@@ -98,10 +98,6 @@ class HaRouter(router.RouterInfo):
             instance.set_authentication(self.agent_conf.ha_vrrp_auth_type,
                                         self.agent_conf.ha_vrrp_auth_password)
 
-        group = keepalived.KeepalivedGroup(self.ha_vr_id)
-        group.add_instance(instance)
-
-        config.add_group(group)
         config.add_instance(instance)
 
     def spawn_keepalived(self):
