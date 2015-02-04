@@ -28,7 +28,7 @@ from neutron.common import repos
 HEAD_FILENAME = 'HEAD'
 
 mods = repos.NeutronModules()
-VALID_SERVICES = map(lambda x: mods.alembic_name(x), mods.installed_list())
+VALID_SERVICES = map(mods.alembic_name, mods.installed_list())
 
 
 _core_opts = [

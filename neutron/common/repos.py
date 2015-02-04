@@ -40,7 +40,7 @@ class NeutronModules(object):
 
     def __init__(self):
         self.repos = {}
-        for repo in self.MODULES.iterkeys():
+        for repo in self.MODULES:
             self.repos[repo] = {}
             self.repos[repo]['mod'] = self._import_or_none(repo)
             self.repos[repo]['ini'] = None
