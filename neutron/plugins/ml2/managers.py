@@ -685,62 +685,64 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
                      {'alias': alias, 'drv': driver.name})
         return exts
 
-    def _call_on_ext_drivers(self, method_name, session, data, result):
+    def _call_on_ext_drivers(self, method_name, plugin_context, data, result):
         """Helper method for calling a method across all extension drivers."""
         for driver in self.ordered_ext_drivers:
             try:
-                getattr(driver.obj, method_name)(session, data, result)
+                getattr(driver.obj, method_name)(plugin_context, data, result)
             except Exception:
                 LOG.exception(
                     _LE("Extension driver '%(name)s' failed in %(method)s"),
                     {'name': driver.name, 'method': method_name}
                 )
 
-    def process_create_network(self, session, data, result):
+    def process_create_network(self, plugin_context, data, result):
         """Notify all extension drivers during network creation."""
-        self._call_on_ext_drivers("process_create_network", session, data,
-                                  result)
+        self._call_on_ext_drivers("process_create_network", plugin_context,
+                                  data, result)
 
-    def process_update_network(self, session, data, result):
+    def process_update_network(self, plugin_context, data, result):
         """Notify all extension drivers during network update."""
-        self._call_on_ext_drivers("process_update_network", session, data,
-                                  result)
+        self._call_on_ext_drivers("process_update_network", plugin_context,
+                                  data, result)
 
-    def process_create_subnet(self, session, data, result):
+    def process_create_subnet(self, plugin_context, data, result):
         """Notify all extension drivers during subnet creation."""
-        self._call_on_ext_drivers("process_create_subnet", session, data,
-                                  result)
+        self._call_on_ext_drivers("process_create_subnet", plugin_context,
+                                  data, result)
 
-    def process_update_subnet(self, session, data, result):
+    def process_update_subnet(self, plugin_context, data, result):
         """Notify all extension drivers during subnet update."""
-        self._call_on_ext_drivers("process_update_subnet", session, data,
-                                  result)
+        self._call_on_ext_drivers("process_update_subnet", plugin_context,
+                                  data, result)
 
-    def process_create_port(self, session, data, result):
+    def process_create_port(self, plugin_context, data, result):
         """Notify all extension drivers during port creation."""
-        self._call_on_ext_drivers("process_create_port", session, data, result)
+        self._call_on_ext_drivers("process_create_port", plugin_context,
+                                  data, result)
 
-    def process_update_port(self, session, data, result):
+    def process_update_port(self, plugin_context, data, result):
         """Notify all extension drivers during port update."""
-        self._call_on_ext_drivers("process_update_port", session, data, result)
+        self._call_on_ext_drivers("process_update_port", plugin_context,
+                                  data, result)
 
-    def extend_network_dict(self, session, result):
+    def extend_network_dict(self, session, base_model, result):
         """Notify all extension drivers to extend network dictionary."""
         for driver in self.ordered_ext_drivers:
-            driver.obj.extend_network_dict(session, result)
+            driver.obj.extend_network_dict(session, base_model, result)
             LOG.info(_LI("Extended network dict for driver '%(drv)s'"),
                      {'drv': driver.name})
 
-    def extend_subnet_dict(self, session, result):
+    def extend_subnet_dict(self, session, base_model, result):
         """Notify all extension drivers to extend subnet dictionary."""
         for driver in self.ordered_ext_drivers:
-            driver.obj.extend_subnet_dict(session, result)
+            driver.obj.extend_subnet_dict(session, base_model, result)
             LOG.info(_LI("Extended subnet dict for driver '%(drv)s'"),
                      {'drv': driver.name})
 
-    def extend_port_dict(self, session, result):
+    def extend_port_dict(self, session, base_model, result):
         """Notify all extension drivers to extend port dictionary."""
         for driver in self.ordered_ext_drivers:
-            driver.obj.extend_port_dict(session, result)
+            driver.obj.extend_port_dict(session, base_model, result)
             LOG.info(_LI("Extended port dict for driver '%(drv)s'"),
                      {'drv': driver.name})
