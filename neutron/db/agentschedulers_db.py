@@ -156,7 +156,12 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
 
         self.setup_agent_status_check(self.remove_networks_from_down_agents)
 
-    def _agent_starting_up(self, context, agent):
+    def is_eligible_agent(self, context, active, agent):
+        # eligible agent is active or starting up
+        return (AgentSchedulerDbMixin.is_eligible_agent(active, agent) or
+                self.agent_starting_up(context, agent))
+
+    def agent_starting_up(self, context, agent):
         """Check if agent was just started.
 
         Method returns True if agent is in its 'starting up' period.
@@ -217,7 +222,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         for binding in bindings:
             agent_id = binding.dhcp_agent['id']
             if agent_id not in checked_agents:
-                if self._agent_starting_up(context, binding.dhcp_agent):
+                if self.agent_starting_up(context, binding.dhcp_agent):
                     # When agent starts and it has many networks to process
                     # it may fail to send state reports in defined interval.
                     # The server will consider it dead and try to remove
@@ -287,8 +292,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
 
         return [binding.dhcp_agent
                 for binding in query
-                if AgentSchedulerDbMixin.is_eligible_agent(active,
-                                                           binding.dhcp_agent)]
+                if self.is_eligible_agent(context, active,
+                                          binding.dhcp_agent)]
 
     def add_network_to_dhcp_agent(self, context, id, network_id):
         self._get_network(context, network_id)

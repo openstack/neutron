@@ -243,7 +243,7 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
                                              dhcp_agent={'id': 'id2'}),
             sched_db.NetworkDhcpAgentBinding(network_id='foo4',
                                              dhcp_agent={'id': 'id2'})]
-        with mock.patch.object(self, '_agent_starting_up',
+        with mock.patch.object(self, 'agent_starting_up',
                                side_effect=[True, False]):
             res = [b for b in self._filter_bindings(None, bindings)]
             # once per each agent id1 and id2

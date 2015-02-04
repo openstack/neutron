@@ -81,9 +81,8 @@ class ChanceScheduler(object):
                 return
             active_dhcp_agents = [
                 agent for agent in set(enabled_dhcp_agents)
-                if not agents_db.AgentDbMixin.is_agent_down(
-                    agent['heartbeat_timestamp'])
-                and agent not in dhcp_agents
+                if agent not in dhcp_agents and plugin.is_eligible_agent(
+                    context, True, agent)
             ]
             if not active_dhcp_agents:
                 LOG.warn(_LW('No more DHCP agents'))
