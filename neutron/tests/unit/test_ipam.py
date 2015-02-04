@@ -314,6 +314,8 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
                   'prefixlen': prefixlen,
                   'ip_version': ip_version,
                   'tenant_id': self.tenant_id,
+                  'gateway_ip': None,
+                  'allocation_pools': None,
                   'id': id or self.subnet_id}
         subnetpool = {'ip_version': ip_version,
                       'default_prefixlen': prefixlen}

@@ -228,7 +228,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return self._fields(res, fields)
 
     def _make_subnet_args(self, shared, detail,
-                          subnet, subnetpool_id=None):
+                          subnet, subnetpool_id):
         gateway_ip = str(detail.gateway_ip) if detail.gateway_ip else None
         args = {'tenant_id': detail.tenant_id,
                 'id': detail.subnet_id,

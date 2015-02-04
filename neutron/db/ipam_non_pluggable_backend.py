@@ -186,7 +186,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             return True
         return False
 
-    def _save_allocation_pools(self, context, subnet, allocation_pools):
+    def save_allocation_pools(self, context, subnet, allocation_pools):
         for pool in allocation_pools:
             first_ip = str(netaddr.IPAddress(pool.first, pool.version))
             last_ip = str(netaddr.IPAddress(pool.last, pool.version))
@@ -200,7 +200,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 last_ip=last_ip)
             context.session.add(ip_range)
 
-    def _allocate_ips_for_port_and_store(self, context, port, port_id):
+    def allocate_ips_for_port_and_store(self, context, port, port_id):
         network_id = port['port']['network_id']
         ips = self._allocate_ips_for_port(context, port)
         if ips:
@@ -210,7 +210,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 self._store_ip_allocation(context, ip_address, network_id,
                                           subnet_id, port_id)
 
-    def _update_port_with_ips(self, context, db_port, new_port, new_mac):
+    def update_port_with_ips(self, context, db_port, new_port, new_mac):
         changes = self.Changes(add=[], original=[], remove=[])
         # Check if the IPs need to be updated
         network_id = db_port['network_id']
@@ -431,7 +431,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
         return ips
 
-    def _add_auto_addrs_on_network_ports(self, context, subnet):
+    def add_auto_addrs_on_network_ports(self, context, subnet):
         """For an auto-address subnet, add addrs for ports on the net."""
         with context.session.begin(subtransactions=True):
             network_id = subnet['network_id']
@@ -470,7 +470,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                        ip_address=ip_address)
         return ip_address
 
-    def _allocate_subnet(self, context, network, subnet, subnetpool_id):
+    def allocate_subnet(self, context, network, subnet, subnetpool_id):
         subnetpool = None
         if subnetpool_id:
             subnetpool = self._get_subnetpool(context, subnetpool_id)

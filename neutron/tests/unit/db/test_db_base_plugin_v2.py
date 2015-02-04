@@ -40,6 +40,7 @@ from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
+from neutron.db import db_base_plugin_common
 from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_non_pluggable_backend as non_ipam
 from neutron.db import models_v2
@@ -1626,7 +1627,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(res.status_int,
                              webob.exc.HTTPClientError.code)
 
-    @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+    @mock.patch.object(non_ipam.IpamNonPluggableBackend,
                        '_allocate_specific_ip')
     def test_requested_fixed_ip_address_v6_slaac_router_iface(
             self, alloc_specific_ip):
@@ -3812,6 +3813,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                             'dummy_key', 'dummy_key_table')
                 mock.patch.object(orm.Session, 'add',
                                   side_effect=db_ref_err_for_ipalloc).start()
+                mock.patch.object(non_ipam.IpamNonPluggableBackend,
+                                  '_get_subnet',
+                                  return_value=mock.Mock()).start()
             # Add an IPv6 auto-address subnet to the network
             v6_subnet = self._make_subnet(self.fmt, network, 'fe80::1',
                                           'fe80::/64', ip_version=6,
@@ -5374,7 +5378,7 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
         context.session.query.side_effect = return_queries_side_effect
         subnets = [mock.MagicMock()]
 
-        db_base_plugin_v2.NeutronDbPluginV2._rebuild_availability_ranges(
+        non_ipam.IpamNonPluggableBackend._rebuild_availability_ranges(
             context, subnets)
 
         actual = [[args[0].allocation_pool_id,
@@ -5437,15 +5441,18 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
                                                    expected)
 
     def _test__allocate_ips_for_port(self, subnets, port, expected):
+        # this test is incompatible with pluggable ipam, because subnets
+        # were not actually created, so no ipam_subnet exists
+        cfg.CONF.set_override("ipam_driver", None)
         plugin = db_base_plugin_v2.NeutronDbPluginV2()
-        with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+        with mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
                                '_get_subnets') as get_subnets:
-            with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+            with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                    '_check_unique_ip') as check_unique:
                 context = mock.Mock()
                 get_subnets.return_value = subnets
                 check_unique.return_value = True
-                actual = plugin._allocate_ips_for_port(context, port)
+                actual = plugin.ipam._allocate_ips_for_port(context, port)
                 self.assertEqual(expected, actual)
 
     def test__allocate_ips_for_port_2_slaac_subnets(self):
@@ -5537,7 +5544,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
                                             ip_version=4)]
         new_subnetpool_id = None
         self.assertRaises(n_exc.NetworkSubnetPoolAffinityError,
-                          self.plugin._validate_network_subnetpools,
+                          self.plugin.ipam._validate_network_subnetpools,
                           network, new_subnetpool_id, 4)
 
 

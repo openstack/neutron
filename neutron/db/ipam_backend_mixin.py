@@ -52,7 +52,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             return str(netaddr.IPNetwork(cidr_net).network + 1)
         return subnet.get('gateway_ip')
 
-    def _validate_pools_with_subnetpool(self, subnet):
+    def validate_pools_with_subnetpool(self, subnet):
         """Verifies that allocation pools are set correctly
 
         Allocation pools can be set for specific subnet request only
@@ -155,7 +155,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         del s['allocation_pools']
         return result_pools
 
-    def _update_db_subnet(self, context, subnet_id, s):
+    def update_db_subnet(self, context, subnet_id, s):
         changes = {}
         if "dns_nameservers" in s:
             changes['dns_nameservers'] = (
@@ -298,12 +298,11 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         self._validate_allocation_pools(allocation_pools, cidr)
         if gateway_ip:
-            self._validate_gw_out_of_pools(gateway_ip,
-                                           allocation_pools)
+            self.validate_gw_out_of_pools(gateway_ip, allocation_pools)
         return [netaddr.IPRange(p['start'], p['end'])
                 for p in allocation_pools]
 
-    def _validate_gw_out_of_pools(self, gateway_ip, pools):
+    def validate_gw_out_of_pools(self, gateway_ip, pools):
         for allocation_pool in pools:
             pool_range = netaddr.IPRange(
                 allocation_pool['start'],
@@ -369,7 +368,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                             original=prev_ips,
                             remove=remove_ips)
 
-    def _delete_port(self, context, port_id):
+    def delete_port(self, context, port_id):
         query = (context.session.query(models_v2.Port).
                  enable_eagerloads(False).filter_by(id=port_id))
         if not context.is_admin:
@@ -403,7 +402,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     nexthop=rt['nexthop'])
                 context.session.add(route)
 
-        self._save_allocation_pools(context, subnet,
-                                    subnet_request.allocation_pools)
+        self.save_allocation_pools(context, subnet,
+                                   subnet_request.allocation_pools)
 
         return subnet
