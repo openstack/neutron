@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-02-02 06:13+0000\n"
-"PO-Revision-Date: 2015-01-31 03:20+0000\n"
+"POT-Creation-Date: 2015-02-04 06:15+0000\n"
+"PO-Revision-Date: 2015-02-03 17:39+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: German (http://www.transifex.com/projects/p/neutron/language/"
 "de/)\n"
@@ -136,19 +136,26 @@ msgstr "Synchronisation von Status"
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:590 neutron/agent/l3/agent.py:1293
+#: neutron/agent/dhcp/agent.py:590 neutron/agent/l3/agent.py:1306
 #: neutron/services/metering/agents/metering_agent.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "'agent_updated' (Agent aktualisiert) durch Serverseite %s!"
 
-#: neutron/agent/l3/agent.py:1193
+#: neutron/agent/l3/agent.py:1206
 msgid "L3 agent started"
 msgstr "Agent der Ebene 3 gestartet"
 
 #: neutron/agent/linux/daemon.py:80
 #, python-format
 msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
+msgstr ""
+
+#: neutron/agent/linux/dhcp.py:643
+#, python-format
+msgid ""
+"Cannot apply dhcp option %(opt)s because it's ip_version %(version)d is not "
+"in port's address IP versions"
 msgstr ""
 
 #: neutron/agent/linux/interface.py:262 neutron/agent/linux/interface.py:317
@@ -289,12 +296,12 @@ msgid ""
 "is disabled."
 msgstr ""
 
-#: neutron/db/l3_db.py:1070
+#: neutron/db/l3_db.py:1074
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "Ignorieren mehrerer IP-Adressen auf Routerport %s"
 
-#: neutron/db/l3_db.py:1076
+#: neutron/db/l3_db.py:1080
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
@@ -854,67 +861,67 @@ msgstr ""
 msgid "Tenant network_types: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:145
+#: neutron/plugins/ml2/managers.py:138
 #, python-format
 msgid "Initializing driver for type '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:248
+#: neutron/plugins/ml2/managers.py:241
 #, python-format
 msgid "Configured mechanism driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:254
+#: neutron/plugins/ml2/managers.py:247
 #, python-format
 msgid "Loaded mechanism driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:266
+#: neutron/plugins/ml2/managers.py:259
 #, python-format
 msgid "Registered mechanism drivers: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:271
+#: neutron/plugins/ml2/managers.py:264
 #, python-format
 msgid "Initializing mechanism driver '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:610
+#: neutron/plugins/ml2/managers.py:603
 #, python-format
 msgid "Configured extension driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:616
+#: neutron/plugins/ml2/managers.py:609
 #, python-format
 msgid "Loaded extension driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:627
+#: neutron/plugins/ml2/managers.py:620
 #, python-format
 msgid "Registered extension drivers: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:633
+#: neutron/plugins/ml2/managers.py:626
 #, python-format
 msgid "Initializing extension driver '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:641
+#: neutron/plugins/ml2/managers.py:634
 #, python-format
 msgid "Got %(alias)s extension from driver '%(drv)s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:688
+#: neutron/plugins/ml2/managers.py:681
 #, python-format
 msgid "Extended network dict for driver '%(drv)s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:695
+#: neutron/plugins/ml2/managers.py:688
 #, python-format
 msgid "Extended subnet dict for driver '%(drv)s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:702
+#: neutron/plugins/ml2/managers.py:695
 #, python-format
 msgid "Extended port dict for driver '%(drv)s'"
 msgstr ""
@@ -923,22 +930,22 @@ msgstr ""
 msgid "Modular L2 Plugin initialization complete"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:271
+#: neutron/plugins/ml2/plugin.py:284
 #, python-format
 msgid "Attempt %(count)s to bind port %(port)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:630
+#: neutron/plugins/ml2/plugin.py:666
 #, python-format
 msgid "Port %s was deleted concurrently"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:641
+#: neutron/plugins/ml2/plugin.py:677
 #, python-format
 msgid "Subnet %s was deleted concurrently"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1073 neutron/plugins/ml2/plugin.py:1208
+#: neutron/plugins/ml2/plugin.py:1211
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -1010,46 +1017,53 @@ msgstr ""
 msgid "VM %s is not updated as it is not found in Arista DB"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:151
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:152
 #, python-format
 msgid ""
 "create network (precommit): %(network_id)s of network type = "
 "%(network_type)s with vlan = %(vlan_id)s for tenant %(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:188
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:189
 #, python-format
 msgid ""
 "created network (postcommit): %(network_id)s of network type = "
 "%(network_type)s with vlan = %(vlan_id)s for tenant %(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:217
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:218
 #, python-format
 msgid ""
 "delete network (precommit): %(network_id)s with vlan = %(vlan_id)s for "
 "tenant %(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:246
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:247
 #, python-format
 msgid ""
 "delete network (postcommit): %(network_id)s with vlan = %(vlan_id)s for "
 "tenant %(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:320
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:304
 #, python-format
 msgid ""
 "created port (postcommit): port_id=%(port_id)s network_id=%(network_id)s "
 "tenant_id=%(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:375
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:341
 #, python-format
 msgid ""
 "delete port (postcommit): port_id=%(port_id)s network_id=%(network_id)s "
 "tenant_id=%(tenant_id)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:371
+#, python-format
+msgid ""
+"update port (postcommit): port_id=%(port_id)s network_id=%(network_id)s "
+"tenant_id=%(tenant_id)s."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:79
@@ -1303,7 +1317,7 @@ msgstr ""
 msgid "Synchronization for chunk %(chunk_num)d of %(total_chunks)d performed"
 msgstr ""
 
-#: neutron/plugins/vmware/dbexts/qos_db.py:296
+#: neutron/plugins/vmware/dbexts/qos_db.py:254
 #, python-format
 msgid "DSCP value (%s) will be ignored with 'trusted' marking"
 msgstr ""
@@ -1382,16 +1396,16 @@ msgstr ""
 msgid "get_port() %(network)s %(port)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:443
-#: neutron/plugins/vmware/plugins/base.py:495
-#: neutron/plugins/vmware/plugins/base.py:694
+#: neutron/plugins/vmware/plugins/base.py:444
+#: neutron/plugins/vmware/plugins/base.py:496
+#: neutron/plugins/vmware/plugins/base.py:695
 #, python-format
 msgid ""
 "NSX plugin does not support regular VIF ports on external networks. Port %s "
 "will be down."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1491
+#: neutron/plugins/vmware/plugins/base.py:1492
 #, python-format
 msgid ""
 "Create router failed while setting external gateway. Router:%s has been "
