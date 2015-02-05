@@ -1,6 +1,6 @@
-# Copyright (C) 2014 VA Linux Systems Japan K.K.
+# Copyright (C) 2014,2015 VA Linux Systems Japan K.K.
 # Copyright (C) 2014 Fumihiko Kakuma <kakuma at valinux co jp>
-# Copyright (C) 2014 YAMAMOTO Takashi <yamamoto at valinux co jp>
+# Copyright (C) 2014,2015 YAMAMOTO Takashi <yamamoto at valinux co jp>
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -55,6 +55,14 @@ class OFAAgentTestBase(OFATestBase):
 
     def setUp(self):
         super(OFAAgentTestBase, self).setUp()
+        ryu_cfg = importutils.import_module('ryu.cfg')
+        ryu_cfg.CONF = cfg.ConfigOpts()
+        ryu_cfg.CONF.register_cli_opts([
+            cfg.StrOpt('ofp-listen-host', default='',
+                       help='openflow listen host'),
+            cfg.IntOpt('ofp-tcp-listen-port', default=6633,
+                       help='openflow tcp listen port')
+        ])
         self.mod_agent = importutils.import_module(self._AGENT_NAME)
         self.ryuapp = mock.Mock()
 

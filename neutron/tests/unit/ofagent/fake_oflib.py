@@ -1,6 +1,6 @@
-# Copyright (C) 2014 VA Linux Systems Japan K.K.
+# Copyright (C) 2014,2015 VA Linux Systems Japan K.K.
 # Copyright (C) 2014 Fumihiko Kakuma <kakuma at valinux co jp>
-# Copyright (C) 2014 YAMAMOTO Takashi <yamamoto at valinux co jp>
+# Copyright (C) 2014,2015 YAMAMOTO Takashi <yamamoto at valinux co jp>
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -98,6 +98,7 @@ class _Mod(object):
 def patch_fake_oflib_of():
     ryu_mod = mock.Mock()
     ryu_base_mod = ryu_mod.base
+    ryu_cfg_mod = ryu_mod.cfg
     ryu_ctrl_mod = ryu_mod.controller
     handler = _Mod('ryu.controller.handler')
     handler.set_ev_cls = mock.Mock()
@@ -128,6 +129,7 @@ def patch_fake_oflib_of():
     ryu_ofctl_api = ryu_app_ofctl_mod.api
     modules = {'ryu': ryu_mod,
                'ryu.base': ryu_base_mod,
+               'ryu.cfg': ryu_cfg_mod,
                'ryu.controller': ryu_ctrl_mod,
                'ryu.controller.handler': handler,
                'ryu.controller.handler.set_ev_cls': handler.set_ev_cls,

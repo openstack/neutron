@@ -1,5 +1,5 @@
-# Copyright (C) 2014 VA Linux Systems Japan K.K.
-# Copyright (C) 2014 YAMAMOTO Takashi <yamamoto at valinux co jp>
+# Copyright (C) 2014,2015 VA Linux Systems Japan K.K.
+# Copyright (C) 2014,2015 YAMAMOTO Takashi <yamamoto at valinux co jp>
 # Copyright (C) 2014 Fumihiko Kakuma <kakuma at valinux co jp>
 # All Rights Reserved.
 #
@@ -26,6 +26,7 @@ import netaddr
 from oslo.config import cfg
 from ryu.app.ofctl import api as ryu_api
 from ryu.base import app_manager
+import ryu.cfg as ryu_cfg
 from ryu.controller import handler
 from ryu.controller import ofp_event
 from ryu.lib import hub
@@ -108,12 +109,12 @@ class Bridge(flows.OFAgentIntegrationBridge, ovs_lib.OVSBridge):
                   protocols='OpenFlow13',
                   retry_max=cfg.CONF.AGENT.get_datapath_retry_times):
         if not controller_names:
-            host = cfg.CONF.ofp_listen_host
+            host = ryu_cfg.CONF.ofp_listen_host
             if not host:
                 # 127.0.0.1 is a default for agent style of controller
                 host = '127.0.0.1'
-            controller_names = ["tcp:%s:%d" % (host,
-                                               cfg.CONF.ofp_tcp_listen_port)]
+            controller_names = ["tcp:%s:%d" %
+                                (host, ryu_cfg.CONF.ofp_tcp_listen_port)]
         try:
             self.set_protocols(protocols)
             self.set_controller(controller_names)
