@@ -48,7 +48,6 @@ from neutron.plugins.brocade.db import models as brocade_models  # noqa
 from neutron.plugins.cisco.db.l3 import l3_models  # noqa
 from neutron.plugins.cisco.db import n1kv_models_v2  # noqa
 from neutron.plugins.cisco.db import network_models_v2  # noqa
-from neutron.plugins.hyperv import model  # noqa
 from neutron.plugins.linuxbridge.db import l2network_models_v2  # noqa
 from neutron.plugins.metaplugin import meta_models_v2  # noqa
 from neutron.plugins.ml2.drivers.arista import db  # noqa
