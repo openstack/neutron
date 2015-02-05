@@ -56,6 +56,8 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
             cfg.CONF.router_scheduler_driver)
         self.start_periodic_l3_agent_status_check()
         super(L3RouterPlugin, self).__init__()
+        if 'dvr' in self.supported_extension_aliases:
+            l3_dvrscheduler_db.subscribe()
 
     def setup_rpc(self):
         # RPC support

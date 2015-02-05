@@ -44,45 +44,32 @@ class RpcCallbacksTestCase(base.BaseTestCase):
                                                  self.type_manager)
         self.manager = mock.patch.object(
             plugin_rpc.manager, 'NeutronManager').start()
-        self.l3plugin = mock.Mock()
-        self.manager.get_service_plugins.return_value = {
-            'L3_ROUTER_NAT': self.l3plugin
-        }
         self.plugin = self.manager.get_plugin()
 
-    def _test_update_device_up(self, extensions, kwargs):
+    def _test_update_device_up(self):
+        kwargs = {
+            'agent_id': 'foo_agent',
+            'device': 'foo_device'
+        }
         with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin'
                         '._device_to_port_id'):
-            type(self.l3plugin).supported_extension_aliases = (
-                mock.PropertyMock(return_value=extensions))
-            self.callbacks.update_device_up(mock.ANY, **kwargs)
+            with mock.patch('neutron.callbacks.registry.notify') as notify:
+                self.callbacks.update_device_up(mock.Mock(), **kwargs)
+                return notify
 
-    def test_update_device_up_without_dvr(self):
+    def test_update_device_up_notify(self):
+        notify = self._test_update_device_up()
         kwargs = {
-            'agent_id': 'foo_agent',
-            'device': 'foo_device'
+            'context': mock.ANY, 'port': mock.ANY, 'update_device_up': True
         }
-        self._test_update_device_up(['router'], kwargs)
-        self.assertFalse(self.l3plugin.dvr_vmarp_table_update.call_count)
+        notify.assert_called_once_with(
+            'port', 'after_update', self.plugin, **kwargs)
 
-    def test_update_device_up_with_dvr(self):
-        kwargs = {
-            'agent_id': 'foo_agent',
-            'device': 'foo_device'
-        }
-        self._test_update_device_up(['router', 'dvr'], kwargs)
-        self.l3plugin.dvr_vmarp_table_update.assert_called_once_with(
-            mock.ANY, mock.ANY, 'add')
-
-    def test_update_device_up_with_dvr_when_port_not_found(self):
-        kwargs = {
-            'agent_id': 'foo_agent',
-            'device': 'foo_device'
-        }
-        self.l3plugin.dvr_vmarp_table_update.side_effect = (
+    def test_update_device_up_notify_not_sent_with_port_not_found(self):
+        self.plugin._get_port.side_effect = (
             exceptions.PortNotFound(port_id='foo_port_id'))
-        self._test_update_device_up(['router', 'dvr'], kwargs)
-        self.assertTrue(self.l3plugin.dvr_vmarp_table_update.call_count)
+        notify = self._test_update_device_up()
+        self.assertFalse(notify.call_count)
 
     def test_get_device_details_without_port_context(self):
         self.plugin.get_bound_port_context.return_value = None

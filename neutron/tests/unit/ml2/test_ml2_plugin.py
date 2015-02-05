@@ -1251,6 +1251,8 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
     def setUp(self):
         super(TestMl2PluginCreateUpdateDeletePort, self).setUp()
         self.context = mock.MagicMock()
+        self.notify_p = mock.patch('neutron.callbacks.registry.notify')
+        self.notify = self.notify_p.start()
 
     def _ensure_transaction_is_closed(self):
         transaction = self.context.session.begin(subtransactions=True)
@@ -1268,9 +1270,8 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
             return_value=new_host_port)
         plugin._check_mac_update_allowed = mock.Mock(return_value=True)
 
-        plugin._notify_l3_agent_new_port = mock.Mock()
-        plugin._notify_l3_agent_new_port.side_effect = (
-            lambda c, p: self._ensure_transaction_is_closed())
+        self.notify.side_effect = (
+            lambda r, e, t, **kwargs: self._ensure_transaction_is_closed())
 
         return plugin
 
@@ -1286,33 +1287,28 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
 
             plugin.create_port(self.context, mock.MagicMock())
 
-            plugin._notify_l3_agent_new_port.assert_called_once_with(
-                self.context, new_host_port)
+            kwargs = {'context': self.context, 'port': new_host_port}
+            self.notify.assert_called_once_with('port', 'after_create',
+                plugin, **kwargs)
 
     def test_update_port_rpc_outside_transaction(self):
         with contextlib.nested(
             mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
             mock.patch.object(base_plugin.NeutronDbPluginV2, 'update_port'),
-            mock.patch.object(manager.NeutronManager, 'get_service_plugins'),
-        ) as (init, super_update_port, get_service_plugins):
+        ) as (init, super_update_port):
             init.return_value = None
-            l3plugin = mock.Mock()
-            l3plugin.supported_extension_aliases = [
-                constants.L3_DISTRIBUTED_EXT_ALIAS,
-            ]
-            get_service_plugins.return_value = {
-                service_constants.L3_ROUTER_NAT: l3plugin,
-            }
-
             new_host_port = mock.Mock()
             plugin = self._create_plugin_for_create_update_port(new_host_port)
 
             plugin.update_port(self.context, 'fake_id', mock.MagicMock())
 
-            plugin._notify_l3_agent_new_port.assert_called_once_with(
-                self.context, new_host_port)
-            l3plugin.dvr_vmarp_table_update.assert_called_once_with(
-                self.context, mock.ANY, "add")
+            kwargs = {
+                'context': self.context,
+                'port': new_host_port,
+                'mac_address_updated': True,
+            }
+            self.notify.assert_called_once_with('port', 'after_update',
+                plugin, **kwargs)
 
     def test_vmarp_table_update_outside_of_delete_transaction(self):
         l3plugin = mock.Mock()
