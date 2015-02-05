@@ -37,6 +37,7 @@ Below, the following strategies will be documented:
 * Testing and Continuous Integration;
 * Defect Management;
 * Backport Management for plugin specific code;
+* DevStack Integration;
 * Documentation;
 
 This document will then provide a working example on how to contribute
@@ -163,12 +164,12 @@ precisely:
 Backport Management Strategies
 ------------------------------
 
-As outlined in the `Spec proposal http://specs.openstack.org/openstack/neutron-specs/specs/kilo/core-vendor-decomposition.html`
+As outlined in the `Spec proposal <http://specs.openstack.org/openstack/neutron-specs/specs/kilo/core-vendor-decomposition.html>`_
 all new plugins and drivers will have to follow the contribution model
 described here. As for existing plugins and drivers, no in-tree features can
 be merged until some progress has been done to make the solution adhere to
 this model. That said, there is the question of critical fixes and/or backports
-to `stable branches https://wiki.openstack.org/wiki/StableBranch`. The possible
+to `stable branches <https://wiki.openstack.org/wiki/StableBranch>`_. The possible
 scenarios are:
 
 * The decomposition just completed, we are in the cycle (X) where the decomposition
@@ -195,6 +196,70 @@ scenarios are:
   explicit rule to prevent them from merging to master, it is in the best interest
   of the maintainer to avoid introducing or modifying existing code that will
   ultimately be deprecated.
+
+DevStack Integration Strategies
+-------------------------------
+
+When developing and testing a new or existing plugin or driver, the aid provided
+by DevStack is incredibly valuable: DevStack can help get all the software bits
+installed, and configured correctly, and more importantly in a predictable way.
+For DevStack integration there are a few options available, and they may or may not
+make sense depending on whether you are contributing a new or existing plugin or
+driver.
+
+If you are contributing a new plugin, the approach to choose should be based on
+`Extras.d Hooks <http://docs.openstack.org/developer/devstack/plugins.html#extras-d-hooks>`_.
+With the extra.d hooks, the DevStack integration is colocated with the vendor integration
+library, and it leads to the greatest level of flexibility when dealing with DevStack based
+dev/test deployments.
+
+Having said that, most Neutron Plugins developed in the past likely already have
+integration with DevStack in the form of `neutron_plugins <https://github.com/openstack-dev/devstack/tree/master/lib/neutron_plugins>`_.
+If the plugin is being decomposed in vendor integration plus vendor library, it would
+be necessary to adjust the instructions provided in the neutron_plugin file to pull the
+vendor library code as a new dependency. For instance, the instructions below:
+
+  ::
+
+      INSTALL_FROM_REQUIREMENTS=$(trueorfalse True INSTALL_FROM_REQUIREMENTS)
+
+      if [[ "$INSTALL_FROM_REQUIREMENTS" == "False" ]]; then
+          git_clone $NEUTRON_LIB_REPO $NEUTRON_LIB_DIR $NEUTRON_LIB_BRANCH
+          setup_package $NEUTRON_LIB_DIR
+      else
+          # Retrieve the package from the vendor library's requirements.txt
+          plugin_package=$(cat $NEUTRON_LIB_REQUIREMENTS_FILE)
+          pip_install "$plugin_package"
+      fi
+
+could be placed in 'neutron_plugin_configure_service', ahead of the service
+configuration. An alternative could be under the `third_party section
+<https://github.com/openstack-dev/devstack/tree/master/lib/neutron_thirdparty>`_,
+if available. This solution can be similarly exploited for both monolithic
+plugins or ML2 mechanism drivers. The configuration of the plugin or driver itself can be
+done by leveraging the extensibility mechanisms provided by `local.conf <http://docs.openstack.org/developer/devstack/configuration.html>`_. In fact, since the .ini file for the vendor plugin or driver lives
+in the Neutron tree, it is possible to do add the section below to local.conf:
+
+  ::
+
+     [[post-config|$THE_FILE_YOU_NEED_TO_CUSTOMIZE]]
+
+     # Override your section config as you see fit
+     [DEFAULT]
+     verbose=True
+
+Which in turn it is going to edit the file with the options outlined in the post-config
+section.
+
+The above mentioned approach, albeit valid, has the shortcoming of depending on DevStack's
+explicit support for the plugin installation and configuration, and the plugin maintainer
+is strongly encouraged to revise the existing DevStack integration, in order to evolve it
+in an extras.d hooks based approach.
+
+One final consideration is worth making for 3rd party CI setups: if `Devstack Gate
+<https://github.com/openstack-infra/devstack-gate>`_ is used, it does provide hook
+functions that can be executed at specific times of the devstack-gate-wrap script run.
+For example, the `Neutron Functional job <https://github.com/openstack-infra/project-config/blob/master/jenkins/jobs/neutron-functional.yaml>`_ uses them. For more details see `devstack-vm-gate-wrap.sh <https://github.com/openstack-infra/devstack-gate/blob/master/devstack-vm-gate-wrap.sh>`_.
 
 Documentation Strategies
 ------------------------
@@ -269,21 +334,21 @@ be the bare minimum you have to complete in order to get you off the ground.
   the previous step. In the latter case, you can do so by specifying the
   upstream section for your project in project-config/gerrit/project.yaml.
   Steps are documented on the
-  `Project Creators Manual http://docs.openstack.org/infra/manual/creators.html`.
+  `Project Creators Manual <http://docs.openstack.org/infra/manual/creators.html>`_.
 * Ask for a Launchpad user to be assigned to the core team created. Steps are
   documented in
-  `this section http://docs.openstack.org/infra/manual/creators.html#update-the-gerrit-group-members`.
+  `this section <http://docs.openstack.org/infra/manual/creators.html#update-the-gerrit-group-members>`_.
 * Fix, fix, fix: at this point you have an external base to work on. You
   can develop against the new stackforge project, the same way you work
   with any other OpenStack project: you have pep8, docs, and python27 CI
   jobs that validate your patches when posted to Gerrit. For instance, one
   thing you would need to do is to define an entry point for your plugin
   or driver in your own setup.cfg similarly as to how it is done
-  `here https://github.com/stackforge/networking-odl/blob/master/setup.cfg#L31`.
+  `here <https://github.com/stackforge/networking-odl/blob/master/setup.cfg#L31>`_.
 * Define an entry point for your plugin or driver in setup.cfg
 * Create 3rd Party CI account: if you do not already have one, follow
   instructions for
-  `3rd Party CI http://ci.openstack.org/third_party.html` to get one.
+  `3rd Party CI <http://ci.openstack.org/third_party.html>`_ to get one.
 * TODO(armax): ...
 
 The 'ODL ML2 Mechanism Driver' - example 1
