@@ -752,6 +752,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         fip_statuses = {}
         if interface_name is None:
+            LOG.debug('No Interface for floating IPs router: %s',
+                      ri.router['id'])
             return fip_statuses
 
         device = ip_lib.IPDevice(interface_name, self.root_helper,
