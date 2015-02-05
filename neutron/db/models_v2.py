@@ -220,3 +220,4 @@ class Network(model_base.BASEV2, HasId, HasTenant):
     admin_state_up = sa.Column(sa.Boolean)
     shared = sa.Column(sa.Boolean)
     mtu = sa.Column(sa.Integer, nullable=True)
+    vlan_transparent = sa.Column(sa.Boolean, nullable=True)
