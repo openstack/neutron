@@ -179,6 +179,10 @@ class KeepalivedInstance(object):
         self.vips = [vip for vip in self.vips
                      if vip.ip_address != ip_address]
 
+    def get_existing_vip_ip_addresses(self, interface_name):
+        return [vip.ip_address for vip in self.vips
+                if vip.interface_name == interface_name]
+
     def _build_track_interface_config(self):
         return itertools.chain(
             ['    track_interface {'],
