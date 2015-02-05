@@ -15,6 +15,7 @@
 #    under the License.
 
 import abc
+import collections
 import imp
 import itertools
 import os
@@ -675,6 +676,15 @@ def get_extensions_path():
 
     if cfg.CONF.api_extensions_path:
         paths.append(cfg.CONF.api_extensions_path)
+
+    # If the path has dups in it, from discovery + conf file, the duplicate
+    # import of the same module and super() do not play nicely, so weed
+    # out the duplicates, preserving search order.
+
+    z = collections.OrderedDict()
+    for x in paths:
+        z[x] = 1
+    paths = z.keys()
 
     LOG.debug("get_extension_paths = %s", paths)
 
