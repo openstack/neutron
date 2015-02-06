@@ -35,6 +35,22 @@ ml2_opts = [
                 help=_("An ordered list of extension driver "
                        "entrypoints to be loaded from the "
                        "neutron.ml2.extension_drivers namespace.")),
+    cfg.IntOpt('path_mtu', default=0,
+               help=_('The maximum permissible size of an unfragmented '
+                      'packet travelling from and to addresses where '
+                      'encapsulated Neutron traffic is sent.  If <= 0, '
+                      'the path MTU is indeterminate.')),
+    cfg.IntOpt('segment_mtu', default=0,
+               help=_('The maximum permissible size of an unfragmented '
+                      'packet travelling a L2 network segment.  If <= 0, the '
+                      'segment MTU is indeterminate.')),
+    cfg.ListOpt('physical_network_mtus',
+                default=[],
+                help=_("A list of mappings of physical networks to MTU "
+                       "values. The format of the mapping is "
+                       "<physnet>:<mtu val>. This mapping allows "
+                       "specifying a physical network MTU value that "
+                       "differs from the default segment_mtu value.")),
 ]
 
 

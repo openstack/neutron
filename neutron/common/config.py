@@ -121,6 +121,10 @@ core_opts = [
     cfg.IntOpt('send_events_interval', default=2,
                help=_('Number of seconds between sending events to nova if '
                       'there are any events to send.')),
+    cfg.BoolOpt('advertise_mtu', default=False,
+                help=_('If True, effort is made to advertise MTU settings '
+                       'to VMs via network methods (DHCP and RA MTU options) '
+                       'when the network\'s preferred MTU is known.')),
 ]
 
 core_cli_opts = [
