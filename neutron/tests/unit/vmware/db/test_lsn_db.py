@@ -18,6 +18,7 @@ from sqlalchemy import orm
 from neutron import context
 from neutron.plugins.vmware.common import exceptions as p_exc
 from neutron.plugins.vmware.dbexts import lsn_db
+from neutron.plugins.vmware.dbexts import nsx_models
 from neutron.tests.unit import testlib_api
 
 
@@ -34,20 +35,22 @@ class LSNTestCase(testlib_api.SqlTestCase):
 
     def test_lsn_add(self):
         lsn_db.lsn_add(self.ctx, self.net_id, self.lsn_id)
-        lsn = (self.ctx.session.query(lsn_db.Lsn).
+        lsn = (self.ctx.session.query(nsx_models.Lsn).
                filter_by(lsn_id=self.lsn_id).one())
         self.assertEqual(self.lsn_id, lsn.lsn_id)
 
     def test_lsn_remove(self):
         lsn_db.lsn_add(self.ctx, self.net_id, self.lsn_id)
         lsn_db.lsn_remove(self.ctx, self.lsn_id)
-        q = self.ctx.session.query(lsn_db.Lsn).filter_by(lsn_id=self.lsn_id)
+        q = self.ctx.session.query(nsx_models.Lsn).filter_by(
+            lsn_id=self.lsn_id)
         self.assertRaises(orm.exc.NoResultFound, q.one)
 
     def test_lsn_remove_for_network(self):
         lsn_db.lsn_add(self.ctx, self.net_id, self.lsn_id)
         lsn_db.lsn_remove_for_network(self.ctx, self.net_id)
-        q = self.ctx.session.query(lsn_db.Lsn).filter_by(lsn_id=self.lsn_id)
+        q = self.ctx.session.query(nsx_models.Lsn).filter_by(
+            lsn_id=self.lsn_id)
         self.assertRaises(orm.exc.NoResultFound, q.one)
 
     def test_lsn_get_for_network(self):
@@ -64,7 +67,7 @@ class LSNTestCase(testlib_api.SqlTestCase):
         lsn_db.lsn_add(self.ctx, self.net_id, self.lsn_id)
         lsn_db.lsn_port_add_for_lsn(self.ctx, self.lsn_port_id,
                                     self.subnet_id, self.mac_addr, self.lsn_id)
-        result = (self.ctx.session.query(lsn_db.LsnPort).
+        result = (self.ctx.session.query(nsx_models.LsnPort).
                   filter_by(lsn_port_id=self.lsn_port_id).one())
         self.assertEqual(self.lsn_port_id, result.lsn_port_id)
 
@@ -95,6 +98,6 @@ class LSNTestCase(testlib_api.SqlTestCase):
     def test_lsn_port_remove(self):
         lsn_db.lsn_add(self.ctx, self.net_id, self.lsn_id)
         lsn_db.lsn_port_remove(self.ctx, self.lsn_port_id)
-        q = (self.ctx.session.query(lsn_db.LsnPort).
+        q = (self.ctx.session.query(nsx_models.LsnPort).
              filter_by(lsn_port_id=self.lsn_port_id))
         self.assertRaises(orm.exc.NoResultFound, q.one)
