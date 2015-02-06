@@ -219,3 +219,4 @@ class Network(model_base.BASEV2, HasId, HasTenant):
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
     shared = sa.Column(sa.Boolean)
+    mtu = sa.Column(sa.Integer, nullable=True)
