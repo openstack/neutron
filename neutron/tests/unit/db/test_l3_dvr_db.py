@@ -331,6 +331,35 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
                 self.ctx, fip, floatingip, mock.ANY)
             self.assertTrue(vf.called)
 
+    def test_create_floatingip_agent_gw_port(self):
+        fip = {
+            'id': _uuid(),
+            'port_id': _uuid(),
+        }
+        floatingip = {
+            'id': _uuid(),
+            'fixed_port_id': 1234,
+        }
+        port = {
+            'id': _uuid(),
+            'binding:host_id': 'myhost',
+            'network_id': 'external_net'
+        }
+        with contextlib.nested(
+            mock.patch.object(self.mixin,
+                              'get_vm_port_hostid'),
+            mock.patch.object(self.mixin,
+                              'clear_unused_fip_agent_gw_port'),
+            mock.patch.object(self.mixin,
+                              'create_fip_agent_gw_port_if_not_exists'),
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              '_update_fip_assoc'),
+                 ) as (vmp, vf, c_fip, cf):
+            vmp.return_value = 'my-host'
+            self.mixin._update_fip_assoc(
+                self.ctx, fip, floatingip, port)
+            self.assertTrue(c_fip.called)
+
     def test__validate_router_migration_prevent_check_advanced_svc(self):
         router = {'name': 'foo_router', 'admin_state_up': True}
         router_db = self._create_router(router)

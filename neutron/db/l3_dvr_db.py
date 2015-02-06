@@ -191,8 +191,26 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         )
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
-        """Override to delete the fip agent gw port on disassociate."""
+        """Override to create and delete floating agent gw port for DVR.
+
+        Floating IP Agent gateway port will be created when a
+        floatingIP association happens.
+        Floating IP Agent gateway port will be deleted when a
+        floatingIP disassociation happens.
+        """
         fip_port = fip.get('port_id')
+        if fip_port and floatingip_db['id']:
+            vm_hostid = self.get_vm_port_hostid(
+                context, fip_port)
+            if vm_hostid:
+                # FIXME (Swami): This FIP Agent Gateway port should be
+                # created only once and there should not be a duplicate
+                # for the same host. Until we find a good solution for
+                # augmenting multiple server requests we should use the
+                # existing flow.
+                fip_agent_port = self.create_fip_agent_gw_port_if_not_exists(
+                    context.elevated(), external_port['network_id'], vm_hostid)
+                LOG.debug("FIP Agent gateway port: %s", fip_agent_port)
         unused_fip_agent_gw_port = (
             fip_port is None and floatingip_db['fixed_port_id'])
         if unused_fip_agent_gw_port:
@@ -495,6 +513,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                               'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
                               'device_id': l3_agent_db['id'],
                               'device_owner': DEVICE_OWNER_AGENT_GW,
+                              'binding:host_id': host,
                               'admin_state_up': True,
                               'name': ''}})
                 if agent_port:
