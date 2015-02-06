@@ -333,8 +333,22 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
         l3plugin.dvr_update_router_addvm(context, port)
 
 
+def _notify_port_delete(event, resource, trigger, **kwargs):
+    context = kwargs['context']
+    port = kwargs['port']
+    removed_routers = kwargs['removed_routers']
+    l3plugin = manager.NeutronManager.get_service_plugins().get(
+        service_constants.L3_ROUTER_NAT)
+    l3plugin.dvr_vmarp_table_update(context, port, "del")
+    for router in removed_routers:
+        l3plugin.remove_router_from_l3_agent(
+            context, router['agent_id'], router['router_id'])
+
+
 def subscribe():
     registry.subscribe(
         _notify_l3_agent_new_port, resources.PORT, events.AFTER_UPDATE)
     registry.subscribe(
         _notify_l3_agent_new_port, resources.PORT, events.AFTER_CREATE)
+    registry.subscribe(
+        _notify_port_delete, resources.PORT, events.AFTER_DELETE)

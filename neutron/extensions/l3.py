@@ -71,11 +71,6 @@ class FloatingIPPortAlreadyAssociated(nexception.InUse):
                 "has a floating IP on external network %(net_id)s.")
 
 
-class L3PortInUse(nexception.InUse):
-    message = _("Port %(port_id)s has owner %(device_owner)s and therefore"
-                " cannot be deleted directly via the port API.")
-
-
 class RouterExternalGatewayInUseByFloatingIp(nexception.InUse):
     message = _("Gateway cannot be updated for router %(router_id)s, since a "
                 "gateway to external network %(net_id)s is required by one or "

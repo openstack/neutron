@@ -978,8 +978,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             # Otherwise it's a stale port that can be removed
             fixed_ips = port_db['fixed_ips']
             if fixed_ips:
-                raise l3.L3PortInUse(port_id=port_id,
-                                     device_owner=port_db['device_owner'])
+                reason = _('has device owner %s') % port_db['device_owner']
+                raise n_exc.ServicePortInUse(port_id=port_db['id'],
+                                             reason=reason)
             else:
                 LOG.debug("Port %(port_id)s has owner %(port_owner)s, but "
                           "no IP address, so it can be deleted",
@@ -1282,3 +1283,37 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
     def notify_routers_updated(self, context, router_ids):
         super(L3_NAT_db_mixin, self).notify_routers_updated(
             context, list(router_ids), 'disassociate_floatingips', {})
+
+
+def _prevent_l3_port_delete_callback(resource, event, trigger, **kwargs):
+    context = kwargs['context']
+    port_id = kwargs['port_id']
+    port_check = kwargs['port_check']
+    l3plugin = manager.NeutronManager.get_service_plugins().get(
+        constants.L3_ROUTER_NAT)
+    if l3plugin and port_check:
+        l3plugin.prevent_l3_port_deletion(context, port_id)
+
+
+def _notify_routers_callback(resource, event, trigger, **kwargs):
+    context = kwargs['context']
+    router_ids = kwargs['router_ids']
+    l3plugin = manager.NeutronManager.get_service_plugins().get(
+        constants.L3_ROUTER_NAT)
+    l3plugin.notify_routers_updated(context, router_ids)
+
+
+def subscribe():
+    registry.subscribe(
+        _prevent_l3_port_delete_callback, resources.PORT, events.BEFORE_DELETE)
+    registry.subscribe(
+        _notify_routers_callback, resources.PORT, events.AFTER_DELETE)
+
+# NOTE(armax): multiple l3 service plugins (potentially out of tree) inherit
+# from l3_db and may need the callbacks to be processed. Having an implicit
+# subscription (through the module import) preserves the existing behavior,
+# and at the same time it avoids fixing it manually in each and every l3 plugin
+# out there. That said, The subscription is also made explicit in the
+# reference l3 plugin. The subscription operation is idempotent so there is no
+# harm in registering the same callback multiple times.
+subscribe()
