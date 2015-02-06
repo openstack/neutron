@@ -580,8 +580,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 ri, ex_gw_port)
             fip_statuses = self._configure_fip_addresses(ri, interface_name)
 
-        except (n_exc.FloatingIpSetupException, n_exc.IpTablesApplyException):
+        except (n_exc.FloatingIpSetupException,
+                n_exc.IpTablesApplyException) as e:
                 # All floating IPs must be put in error state
+                LOG.exception(e)
                 fip_statuses = self._put_fips_in_error_state(ri)
 
         self._update_fip_statuses(ri, existing_floating_ips, fip_statuses)
@@ -665,17 +667,18 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def create_dvr_fip_interfaces(self, ri, ex_gw_port):
         floating_ips = self.get_floating_ips(ri)
+        fip_agent_port = self.get_floating_agent_gw_interface(
+            ri, ex_gw_port['network_id'])
+        LOG.debug("FloatingIP agent gateway port received from the plugin: "
+                  "%s", fip_agent_port)
         if floating_ips:
             is_first = ri.fip_ns.subscribe(ri.router_id)
-            if is_first:
-                agent_gateway_port = (
-                    self.plugin_rpc.get_agent_gateway_port(
-                        self.context, ex_gw_port['network_id']))
-                if 'subnet' not in agent_gateway_port:
+            if is_first and fip_agent_port:
+                if 'subnet' not in fip_agent_port:
                     LOG.error(_LE('Missing subnet/agent_gateway_port'))
                 else:
-                    self._set_subnet_info(agent_gateway_port)
-                    ri.fip_ns.create_gateway_port(agent_gateway_port)
+                    self._set_subnet_info(fip_agent_port)
+                    ri.fip_ns.create_gateway_port(fip_agent_port)
 
         if ri.fip_ns.agent_gateway_port and floating_ips:
             if ri.dist_fip_count == 0:
@@ -801,6 +804,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if ri.router['distributed']:
             floating_ips = [i for i in floating_ips if i['host'] == self.host]
         return floating_ips
+
+    def get_floating_agent_gw_interface(self, ri, ext_net_id):
+        """Filter Floating Agent GW port for the external network."""
+        fip_ports = ri.router.get(l3_constants.FLOATINGIP_AGENT_INTF_KEY, [])
+        return next(
+            (p for p in fip_ports if p['network_id'] == ext_net_id), None)
 
     def external_gateway_added(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
