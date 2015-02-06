@@ -598,7 +598,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self._process_internal_ports(ri)
         self._process_external(ri)
         # Process static routes for router
-        self.routes_updated(ri)
+        ri.routes_updated()
 
         # Enable or disable keepalived for ha routers
         self._process_ha_router(ri)
@@ -1208,35 +1208,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         LOG.info(_LI("L3 agent started"))
         # When L3 agent is ready, we immediately do a full sync
         self.periodic_sync_routers_task(self.context)
-
-    def _update_routing_table(self, ri, operation, route):
-        cmd = ['ip', 'route', operation, 'to', route['destination'],
-               'via', route['nexthop']]
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                      namespace=ri.ns_name)
-        ip_wrapper.netns.execute(cmd, check_exit_code=False)
-
-    def routes_updated(self, ri):
-        new_routes = ri.router['routes']
-        if ri.is_ha:
-            ri._process_virtual_routes(new_routes)
-            return
-
-        old_routes = ri.routes
-        adds, removes = common_utils.diff_list_of_dict(old_routes,
-                                                       new_routes)
-        for route in adds:
-            LOG.debug("Added route entry is '%s'", route)
-            # remove replaced route from deleted route
-            for del_route in removes:
-                if route['destination'] == del_route['destination']:
-                    removes.remove(del_route)
-            #replace success even if there is no existing route
-            self._update_routing_table(ri, 'replace', route)
-        for route in removes:
-            LOG.debug("Removed route entry is '%s'", route)
-            self._update_routing_table(ri, 'delete', route)
-        ri.routes = new_routes
 
 
 class L3NATAgentWithStateReport(L3NATAgent):

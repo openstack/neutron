@@ -173,10 +173,10 @@ def get_ha_interface(ip='169.254.192.1', mac='12:34:56:78:2b:5d'):
             'priority': 1}
 
 
-class TestBasicRouterOperations(base.BaseTestCase):
+class BasicRouterOperationsFramework(base.BaseTestCase):
 
     def setUp(self):
-        super(TestBasicRouterOperations, self).setUp()
+        super(BasicRouterOperationsFramework, self).setUp()
         self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_cli_opts(log.common_cli_opts)
@@ -296,6 +296,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         return agent, ri, port
 
+
+class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.side_effect = ValueError()
@@ -562,97 +564,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         router['distributed'] = True
         router['gw_port_host'] = HOSTNAME
         self._test_external_gateway_action('remove', router)
-
-    def _check_agent_method_called(self, agent, calls, namespace):
-        self.mock_ip.netns.execute.assert_has_calls(
-            [mock.call(call, check_exit_code=False) for call in calls],
-            any_order=True)
-
-    def _test_routing_table_update(self, namespace):
-        if not namespace:
-            self.conf.set_override('use_namespaces', False)
-
-        router_id = _uuid()
-        ri = l3router.RouterInfo(router_id, {}, **self.ri_kwargs)
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-
-        fake_route1 = {'destination': '135.207.0.0/16',
-                       'nexthop': '1.2.3.4'}
-        fake_route2 = {'destination': '135.207.111.111/32',
-                       'nexthop': '1.2.3.4'}
-
-        agent._update_routing_table(ri, 'replace', fake_route1)
-        expected = [['ip', 'route', 'replace', 'to', '135.207.0.0/16',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(agent, expected, namespace)
-
-        agent._update_routing_table(ri, 'delete', fake_route1)
-        expected = [['ip', 'route', 'delete', 'to', '135.207.0.0/16',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(agent, expected, namespace)
-
-        agent._update_routing_table(ri, 'replace', fake_route2)
-        expected = [['ip', 'route', 'replace', 'to', '135.207.111.111/32',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(agent, expected, namespace)
-
-        agent._update_routing_table(ri, 'delete', fake_route2)
-        expected = [['ip', 'route', 'delete', 'to', '135.207.111.111/32',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(agent, expected, namespace)
-
-    def test_agent_routing_table_updated(self):
-        self._test_routing_table_update(namespace=True)
-
-    def test_agent_routing_table_updated_no_namespace(self):
-        self._test_routing_table_update(namespace=False)
-
-    def test_routes_updated(self):
-        self._test_routes_updated(namespace=True)
-
-    def test_routes_updated_no_namespace(self):
-        self._test_routes_updated(namespace=False)
-
-    def _test_routes_updated(self, namespace=True):
-        if not namespace:
-            self.conf.set_override('use_namespaces', False)
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router_id = _uuid()
-
-        ri = l3router.RouterInfo(router_id, {}, **self.ri_kwargs)
-        ri.router = {}
-
-        fake_old_routes = []
-        fake_new_routes = [{'destination': "110.100.31.0/24",
-                            'nexthop': "10.100.10.30"},
-                           {'destination': "110.100.30.0/24",
-                            'nexthop': "10.100.10.30"}]
-        ri.routes = fake_old_routes
-        ri.router['routes'] = fake_new_routes
-        agent.routes_updated(ri)
-
-        expected = [['ip', 'route', 'replace', 'to', '110.100.30.0/24',
-                    'via', '10.100.10.30'],
-                    ['ip', 'route', 'replace', 'to', '110.100.31.0/24',
-                     'via', '10.100.10.30']]
-
-        self._check_agent_method_called(agent, expected, namespace)
-
-        fake_new_routes = [{'destination': "110.100.30.0/24",
-                            'nexthop': "10.100.10.30"}]
-        ri.router['routes'] = fake_new_routes
-        agent.routes_updated(ri)
-        expected = [['ip', 'route', 'delete', 'to', '110.100.31.0/24',
-                    'via', '10.100.10.30']]
-
-        self._check_agent_method_called(agent, expected, namespace)
-        fake_new_routes = []
-        ri.router['routes'] = fake_new_routes
-        agent.routes_updated(ri)
-
-        expected = [['ip', 'route', 'delete', 'to', '110.100.30.0/24',
-                    'via', '10.100.10.30']]
-        self._check_agent_method_called(agent, expected, namespace)
 
     def _verify_snat_rules(self, rules, router, negate=False):
         interfaces = router[l3_constants.INTERFACE_KEY]

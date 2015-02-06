@@ -172,7 +172,9 @@ class HaRouter(router.RouterInfo):
     def _ha_external_gateway_removed(self, interface_name):
         self._clear_vips(interface_name)
 
-    def _process_virtual_routes(self, new_routes):
+    def routes_updated(self):
+        new_routes = self.router['routes']
+
         instance = self._get_keepalived_instance()
 
         # Filter out all of the old routes while keeping only the default route
@@ -182,6 +184,8 @@ class HaRouter(router.RouterInfo):
             instance.virtual_routes.append(keepalived.KeepalivedVirtualRoute(
                 route['destination'],
                 route['nexthop']))
+
+        self.routes = new_routes
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
         gw_ip = ex_gw_port['subnet']['gateway_ip']

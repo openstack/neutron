@@ -12,7 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.common import utils as common_utils
+from neutron.openstack.common import log as logging
+
+LOG = logging.getLogger(__name__)
 
 
 class RouterInfo(object):
@@ -73,3 +78,29 @@ class RouterInfo(object):
             snat_callback(self, self._router.get('gw_port'),
                           *args, action=self._snat_action)
         self._snat_action = None
+
+    def _update_routing_table(self, operation, route):
+        cmd = ['ip', 'route', operation, 'to', route['destination'],
+               'via', route['nexthop']]
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                      namespace=self.ns_name)
+        ip_wrapper.netns.execute(cmd, check_exit_code=False)
+
+    def routes_updated(self):
+        new_routes = self.router['routes']
+
+        old_routes = self.routes
+        adds, removes = common_utils.diff_list_of_dict(old_routes,
+                                                       new_routes)
+        for route in adds:
+            LOG.debug("Added route entry is '%s'", route)
+            # remove replaced route from deleted route
+            for del_route in removes:
+                if route['destination'] == del_route['destination']:
+                    removes.remove(del_route)
+            #replace success even if there is no existing route
+            self._update_routing_table('replace', route)
+        for route in removes:
+            LOG.debug("Removed route entry is '%s'", route)
+            self._update_routing_table('delete', route)
+        self.routes = new_routes
