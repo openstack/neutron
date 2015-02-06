@@ -18,7 +18,7 @@ import contextlib
 import functools
 
 import mock
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron import context as neutron_context
 from neutron.extensions import portbindings

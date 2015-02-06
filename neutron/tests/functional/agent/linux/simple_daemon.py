@@ -13,7 +13,7 @@
 #    under the License.
 
 import eventlet
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.linux import daemon
 

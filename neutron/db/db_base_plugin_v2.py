@@ -14,9 +14,9 @@
 #    under the License.
 
 import netaddr
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_utils import excutils
 from sqlalchemy import and_
 from sqlalchemy import event
 from sqlalchemy import orm

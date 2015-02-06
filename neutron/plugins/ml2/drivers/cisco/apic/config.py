@@ -13,14 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 DEFAULT_ROOT_HELPER = ('sudo /usr/local/bin/neutron-rootwrap '
                        '/etc/neutron/rootwrap.conf')
 
 
-# oslo.config limits ${var} expansion to global variables
+# oslo_config limits ${var} expansion to global variables
 # That is why apic_system_id as a global variable
 global_opts = [
     cfg.StrOpt('apic_system_id',

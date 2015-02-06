@@ -15,8 +15,8 @@
 
 import re
 
-from oslo.config import cfg
-from oslo.serialization import jsonutils
+from oslo_config import cfg
+from oslo_serialization import jsonutils
 import requests
 
 from neutron.openstack.common import log

@@ -19,7 +19,7 @@ import eventlet
 
 import mock
 import netaddr
-from oslo import messaging
+import oslo_messaging
 from testtools import matchers
 
 from neutron.agent.common import config as agent_config
@@ -1851,14 +1851,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertTrue(self.plugin_api.get_service_plugin_list.called)
 
     def test_get_service_plugin_list_failed(self):
-        raise_rpc = messaging.RemoteError()
+        raise_rpc = oslo_messaging.RemoteError()
         self.plugin_api.get_service_plugin_list.side_effect = raise_rpc
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertIsNone(agent.neutron_service_plugins)
         self.assertTrue(self.plugin_api.get_service_plugin_list.called)
 
     def test_get_service_plugin_list_retried(self):
-        raise_timeout = messaging.MessagingTimeout()
+        raise_timeout = oslo_messaging.MessagingTimeout()
         # Raise a timeout the first 2 times it calls
         # get_service_plugin_list then return a empty tuple
         self.plugin_api.get_service_plugin_list.side_effect = (
@@ -1869,12 +1869,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(agent.neutron_service_plugins, tuple())
 
     def test_get_service_plugin_list_retried_max(self):
-        raise_timeout = messaging.MessagingTimeout()
+        raise_timeout = oslo_messaging.MessagingTimeout()
         # Raise a timeout 5 times
         self.plugin_api.get_service_plugin_list.side_effect = (
             (raise_timeout, ) * 5
         )
-        self.assertRaises(messaging.MessagingTimeout, l3_agent.L3NATAgent,
+        self.assertRaises(oslo_messaging.MessagingTimeout, l3_agent.L3NATAgent,
                           HOSTNAME, self.conf)
 
     def test_external_gateway_removed_ext_gw_port_and_fip(self):

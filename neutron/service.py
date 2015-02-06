@@ -18,10 +18,10 @@ import logging as std_logging
 import os
 import random
 
-from oslo.config import cfg
-from oslo.messaging import server as rpc_server
-from oslo.utils import excutils
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_messaging import server as rpc_server
+from oslo_utils import excutils
+from oslo_utils import importutils
 
 from neutron.common import config
 from neutron.common import rpc as n_rpc

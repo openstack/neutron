@@ -19,7 +19,7 @@ Unit tests for Windows Hyper-V virtual switch neutron driver
 """
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.plugins.hyperv.agent import hyperv_neutron_agent
 from neutron.plugins.hyperv.agent import utilsfactory

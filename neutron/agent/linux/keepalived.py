@@ -18,7 +18,7 @@ import os
 import stat
 
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils

@@ -13,7 +13,7 @@
 # under the License.
 
 import mock
-from oslo.utils import timeutils
+from oslo_utils import timeutils
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants as n_constants

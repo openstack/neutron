@@ -23,7 +23,7 @@ from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
-from oslo.config import cfg
+from oslo_config import cfg
 
 PROVIDER_NET = 'phys_net1'
 TENANT_NET = 'phys_net2'

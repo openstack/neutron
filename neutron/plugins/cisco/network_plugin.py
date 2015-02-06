@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.utils import importutils
+from oslo_utils import importutils
 import webob.exc as wexc
 
 from neutron.api import extensions as neutron_extensions

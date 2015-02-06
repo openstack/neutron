@@ -15,9 +15,9 @@
 
 import weakref
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import importutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import importutils
 
 from neutron.common import utils
 from neutron.i18n import _LE, _LI
@@ -36,7 +36,7 @@ CORE_PLUGINS_NAMESPACE = 'neutron.core_plugins'
 class Manager(periodic_task.PeriodicTasks):
 
     # Set RPC API version to 1.0 by default.
-    target = messaging.Target(version='1.0')
+    target = oslo_messaging.Target(version='1.0')
 
     def __init__(self, host=None):
         if not host:

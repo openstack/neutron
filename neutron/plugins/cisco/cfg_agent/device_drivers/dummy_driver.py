@@ -14,7 +14,7 @@
 
 import logging
 
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron.plugins.cisco.cfg_agent.device_drivers import devicedriver_api
 

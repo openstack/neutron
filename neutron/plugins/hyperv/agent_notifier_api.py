@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -42,7 +42,7 @@ class AgentNotifierApi(object):
         self.topic_tunnel_update = topics.get_topic_name(topic,
                                                          constants.TUNNEL,
                                                          topics.UPDATE)
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def network_delete(self, context, network_id):

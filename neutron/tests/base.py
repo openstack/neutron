@@ -27,9 +27,9 @@ import logging as std_logging
 import os.path
 
 import fixtures
-from oslo.config import cfg
-from oslo.messaging import conffixture as messaging_conffixture
 from oslo_concurrency.fixture import lockutils
+from oslo_config import cfg
+from oslo_messaging import conffixture as messaging_conffixture
 
 from neutron.common import config
 from neutron.common import rpc as n_rpc
@@ -142,7 +142,7 @@ class BaseTestCase(sub_base.SubBaseTestCase):
             fake_consume_in_threads))
 
         self.useFixture(fixtures.MonkeyPatch(
-            'oslo.messaging.Notifier', fake_notifier.FakeNotifier))
+            'oslo_messaging.Notifier', fake_notifier.FakeNotifier))
 
         self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
         self.messaging_conf.transport_driver = 'fake'

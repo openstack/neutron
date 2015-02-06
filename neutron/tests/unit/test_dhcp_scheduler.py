@@ -17,9 +17,8 @@ import contextlib
 import datetime
 
 import mock
-from oslo.utils import timeutils
+from oslo_utils import timeutils
 import testscenarios
-
 
 from neutron.common import constants
 from neutron.common import topics

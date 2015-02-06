@@ -16,7 +16,7 @@
 import abc
 
 import mock
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 import routes
 import webob
 import webtest

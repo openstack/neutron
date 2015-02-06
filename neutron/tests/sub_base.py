@@ -33,7 +33,7 @@ import traceback
 import eventlet.timeout
 import fixtures
 import mock
-from oslo.utils import strutils
+from oslo_utils import strutils
 import testtools
 
 from neutron.tests import post_mortem_debug

@@ -17,7 +17,7 @@ from __future__ import print_function
 
 import sys
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import config
 from neutron.plugins.vmware.common import config as nsx_config  # noqa

@@ -20,7 +20,7 @@ Utility methods for working with WSGI servers redux
 import sys
 
 import netaddr
-from oslo import i18n
+import oslo_i18n
 import six
 import webob.dec
 import webob.exc
@@ -173,7 +173,7 @@ def translate(translatable, locale):
     :returns: the translated object, or the object as-is if it
               was not translated
     """
-    localize = i18n.translate
+    localize = oslo_i18n.translate
     if isinstance(translatable, exceptions.NeutronException):
         translatable.msg = localize(translatable.msg, locale)
     elif isinstance(translatable, webob.exc.HTTPError):

@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.middleware import request_id
+from oslo_middleware import request_id
 import webob
 
 from neutron import auth

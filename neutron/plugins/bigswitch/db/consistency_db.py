@@ -17,9 +17,9 @@ import re
 import string
 import time
 
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo.db.sqlalchemy import session
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_db.sqlalchemy import session
 import sqlalchemy as sa
 
 from neutron.db import model_base

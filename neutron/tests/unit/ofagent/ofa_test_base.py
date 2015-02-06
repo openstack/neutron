@@ -16,8 +16,8 @@
 #    under the License.
 
 import mock
-from oslo.config import cfg
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_utils import importutils
 
 from neutron.tests import base
 from neutron.tests.unit.ofagent import fake_oflib

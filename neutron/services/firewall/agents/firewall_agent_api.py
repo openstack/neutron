@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
@@ -39,7 +39,7 @@ class FWaaSPluginApiMixin(object):
 
     def __init__(self, topic, host):
         self.host = host
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def set_firewall_status(self, context, firewall_id, status):

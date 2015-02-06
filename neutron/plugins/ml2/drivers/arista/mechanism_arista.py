@@ -17,7 +17,7 @@ import threading
 
 from networking_arista.common import db_lib
 from networking_arista.ml2 import arista_ml2
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import constants as n_const
 from neutron.i18n import _LI

@@ -16,7 +16,7 @@ import os
 import ssl
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 import webob.exc
 
 from neutron.openstack.common import log as logging

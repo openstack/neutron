@@ -14,7 +14,7 @@
 
 import copy
 
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.vshield.common import exceptions

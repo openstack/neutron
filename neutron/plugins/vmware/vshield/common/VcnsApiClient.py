@@ -15,7 +15,7 @@
 import base64
 
 import eventlet
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron.plugins.vmware.vshield.common import exceptions
 

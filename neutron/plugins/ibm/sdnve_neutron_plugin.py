@@ -17,9 +17,9 @@
 
 import functools
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import excutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import excutils
 
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
@@ -60,7 +60,7 @@ class AgentNotifierApi(object):
     '''Agent side of the SDN-VE rpc API.'''
 
     def __init__(self, topic):
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
         self.topic_info_update = topics.get_topic_name(topic,
                                                        constants.INFO,

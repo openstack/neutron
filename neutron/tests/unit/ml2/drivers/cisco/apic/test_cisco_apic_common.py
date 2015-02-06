@@ -17,7 +17,7 @@ import contextlib
 import requests
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.tests import base
 

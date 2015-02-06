@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 DHCP_AGENT_OPTS = [
     cfg.IntOpt('resync_interval', default=5,

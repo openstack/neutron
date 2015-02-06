@@ -22,8 +22,8 @@ It is intended to be used in conjunction with the Big Switch ML2 driver or the
 Big Switch core plugin.
 """
 
-from oslo.config import cfg
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_utils import excutils
 
 from neutron.api import extensions as neutron_extensions
 from neutron.common import exceptions

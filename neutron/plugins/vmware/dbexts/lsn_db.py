@@ -15,7 +15,7 @@
 #    under the License.
 #
 
-from oslo.db import exception as d_exc
+from oslo_db import exception as d_exc
 from sqlalchemy import orm
 
 from neutron.openstack.common import log as logging

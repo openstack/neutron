@@ -22,9 +22,9 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import excutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import excutils
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
@@ -73,7 +73,7 @@ class IVSBridge(ovs_lib.OVSBridge):
 
 class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     def __init__(self, integ_br, polling_interval, root_helper, vs='ovs'):
         super(RestProxyAgent, self).__init__()

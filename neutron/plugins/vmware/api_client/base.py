@@ -19,7 +19,7 @@ import httplib
 import six
 import time
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging

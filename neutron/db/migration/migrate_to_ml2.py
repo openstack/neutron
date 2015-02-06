@@ -60,7 +60,7 @@ To manually test migration from ovs to ml2 with devstack:
 
 import argparse
 
-from oslo.db.sqlalchemy import session
+from oslo_db.sqlalchemy import session
 import sqlalchemy as sa
 
 from neutron.extensions import portbindings

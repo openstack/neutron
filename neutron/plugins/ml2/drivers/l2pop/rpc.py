@@ -16,7 +16,7 @@
 import collections
 import copy
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -36,7 +36,7 @@ class L2populationAgentNotifyAPI(object):
         self.topic_l2pop_update = topics.get_topic_name(topic,
                                                         topics.L2POPULATION,
                                                         topics.UPDATE)
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def _notification_fanout(self, context, method, fdb_entries):

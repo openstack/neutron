@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch import servermanager

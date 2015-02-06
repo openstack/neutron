@@ -17,9 +17,9 @@ import datetime
 import httplib
 
 import eventlet
-from oslo.config import cfg
-from oslo.utils import excutils
-from oslo.utils import timeutils
+from oslo_config import cfg
+from oslo_utils import excutils
+from oslo_utils import timeutils
 
 from neutron import context as ctx
 from neutron.extensions import portbindings

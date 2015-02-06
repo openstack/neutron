@@ -18,10 +18,10 @@ import copy
 import datetime
 
 import mock
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo import messaging
-from oslo.utils import timeutils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+import oslo_messaging
+from oslo_utils import timeutils
 from webob import exc
 
 from neutron.api import extensions
@@ -663,7 +663,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             mock.patch.object(
                 plugin, 'reschedule_router',
                 side_effect=[
-                    db_exc.DBError(), messaging.RemoteError(),
+                    db_exc.DBError(), oslo_messaging.RemoteError(),
                     l3agentscheduler.RouterReschedulingFailed(router_id='f',
                                                               agent_id='f'),
                     ValueError('this raises')

@@ -18,8 +18,8 @@ import uuid
 
 import mock
 import netaddr
-from oslo.config import cfg
-from oslo.db import exception as db_exc
+from oslo_config import cfg
+from oslo_db import exception as db_exc
 from sqlalchemy import exc as sql_exc
 import webob.exc
 

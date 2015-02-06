@@ -17,8 +17,8 @@ import contextlib
 
 import collections
 import mock
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 from testtools import matchers
 import webob.exc
 
@@ -1147,7 +1147,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
             defer_refresh_firewall)
         rpc = self.agent.plugin_rpc
         rpc.security_group_info_for_devices.side_effect = (
-                messaging.UnsupportedVersion('1.2'))
+                oslo_messaging.UnsupportedVersion('1.2'))
         rpc.security_group_rules_for_devices.return_value = (
             self.firewall.ports)
 
@@ -1621,7 +1621,7 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
 class FakeSGNotifierAPI(sg_rpc.SecurityGroupAgentRpcApiMixin):
     def __init__(self):
         self.topic = 'fake'
-        target = messaging.Target(topic=self.topic, version='1.0')
+        target = oslo_messaging.Target(topic=self.topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
 
@@ -2517,7 +2517,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
         if test_rpc_v1_1:
             self.rpc.security_group_info_for_devices.side_effect = (
-                messaging.UnsupportedVersion('1.2'))
+                oslo_messaging.UnsupportedVersion('1.2'))
 
         self.iptables = self.agent.firewall.iptables
         # TODO(jlibosva) Get rid of mocking iptables execute and mock out

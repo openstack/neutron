@@ -15,7 +15,7 @@
 
 """ Register the configuration options"""
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.common import config
 

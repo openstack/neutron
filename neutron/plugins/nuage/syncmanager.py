@@ -13,9 +13,9 @@
 #    under the License.
 #
 
-from oslo.config import cfg
-from oslo.utils import importutils
 from oslo_concurrency import lockutils
+from oslo_config import cfg
+from oslo_utils import importutils
 import sqlalchemy.orm.exc as db_exc
 
 from neutron import context as ncontext

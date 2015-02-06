@@ -18,8 +18,8 @@ import contextlib
 import time
 
 import mock
-from oslo.config import cfg
-from oslo.serialization import jsonutils
+from oslo_config import cfg
+from oslo_serialization import jsonutils
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants

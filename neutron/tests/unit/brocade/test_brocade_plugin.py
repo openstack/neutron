@@ -15,7 +15,7 @@
 
 
 import mock
-from oslo.utils import importutils
+from oslo_utils import importutils
 
 from neutron.extensions import portbindings
 from neutron.plugins.brocade import NeutronPlugin as brocade_plugin

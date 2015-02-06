@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import constants
 from neutron import manager
@@ -30,8 +30,8 @@ class MetadataRpcCallback(object):
     """
 
     # 1.0  MetadataPluginAPI BASE_RPC_API_VERSION
-    target = messaging.Target(version='1.0',
-                              namespace=constants.RPC_NAMESPACE_METADATA)
+    target = oslo_messaging.Target(version='1.0',
+                                   namespace=constants.RPC_NAMESPACE_METADATA)
 
     @property
     def plugin(self):

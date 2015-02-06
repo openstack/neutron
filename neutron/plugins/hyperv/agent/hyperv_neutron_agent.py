@@ -22,8 +22,8 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 
 from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
@@ -100,7 +100,7 @@ class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpc):
 
 class HyperVSecurityCallbackMixin(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     def __init__(self, sg_agent):
         super(HyperVSecurityCallbackMixin, self).__init__()
@@ -109,7 +109,7 @@ class HyperVSecurityCallbackMixin(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
 class HyperVNeutronAgent(object):
     # Set RPC API version to 1.1 by default.
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     def __init__(self):
         super(HyperVNeutronAgent, self).__init__()

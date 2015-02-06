@@ -14,8 +14,8 @@
 
 import mock
 from novaclient import exceptions as nova_exc
-from oslo.config import cfg
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_utils import excutils
 
 from neutron import context as n_context
 from neutron.i18n import _LE

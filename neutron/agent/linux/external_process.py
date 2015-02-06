@@ -16,8 +16,8 @@ import collections
 import os.path
 
 import eventlet
-from oslo.config import cfg
 from oslo_concurrency import lockutils
+from oslo_config import cfg
 
 from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
@@ -135,7 +135,7 @@ class ProcessMonitor(object):
         """Handle multiple process managers and watch over all of them.
 
         :param config: oslo config object with the agent configuration.
-        :type config: oslo.config.ConfigOpts
+        :type config: oslo_config.ConfigOpts
         :param root_helper: root helper to be used with new ProcessManagers
         :type root_helper: str
         :param resource_type: can be dhcp, router, load_balancer, etc.

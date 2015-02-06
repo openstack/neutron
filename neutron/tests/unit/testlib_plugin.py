@@ -17,7 +17,7 @@ import gc
 import weakref
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.db import agentschedulers_db
 from neutron import manager

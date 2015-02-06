@@ -15,8 +15,8 @@
 
 import inspect
 
-from oslo.utils import excutils
-from oslo.utils import importutils
+from oslo_utils import excutils
+from oslo_utils import importutils
 
 from neutron.api.v2 import attributes
 from neutron.extensions import portbindings

@@ -15,7 +15,7 @@
 import sys
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.plugins.embrane.common import config  # noqa
 from neutron.tests.unit import test_db_plugin as test_plugin

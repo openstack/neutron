@@ -18,7 +18,7 @@ Unit tests for the Hyper-V Security Groups Driver.
 """
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.plugins.hyperv.agent import security_groups_driver as sg_driver
 from neutron.plugins.hyperv.agent import utilsfactory

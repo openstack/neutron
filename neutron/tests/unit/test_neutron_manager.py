@@ -17,7 +17,7 @@ import types
 
 import fixtures
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron import manager
 from neutron.openstack.common import log as logging

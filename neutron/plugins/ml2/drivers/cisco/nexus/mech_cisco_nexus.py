@@ -17,7 +17,7 @@
 ML2 Mechanism Driver for Cisco Nexus platforms.
 """
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import constants as n_const
 from neutron.extensions import portbindings

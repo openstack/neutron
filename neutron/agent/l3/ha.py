@@ -15,7 +15,7 @@
 
 import os
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE

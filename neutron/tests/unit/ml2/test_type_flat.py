@@ -19,7 +19,7 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_flat
 from neutron.tests.unit import testlib_api
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 FLAT_NETWORKS = ['flat_net1', 'flat_net2']

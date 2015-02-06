@@ -15,7 +15,7 @@
 
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.plugins.sriovnicagent.common import config  # noqa
 from neutron.plugins.sriovnicagent import sriov_nic_agent

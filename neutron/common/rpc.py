@@ -14,9 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.messaging import serializer as om_serializer
+from oslo_config import cfg
+import oslo_messaging
+from oslo_messaging import serializer as om_serializer
 
 from neutron.common import exceptions
 from neutron import context
@@ -51,11 +51,11 @@ TRANSPORT_ALIASES = {
 def init(conf):
     global TRANSPORT, NOTIFIER
     exmods = get_allowed_exmods()
-    TRANSPORT = messaging.get_transport(conf,
-                                        allowed_remote_exmods=exmods,
-                                        aliases=TRANSPORT_ALIASES)
+    TRANSPORT = oslo_messaging.get_transport(conf,
+                                             allowed_remote_exmods=exmods,
+                                             aliases=TRANSPORT_ALIASES)
     serializer = RequestContextSerializer()
-    NOTIFIER = messaging.Notifier(TRANSPORT, serializer=serializer)
+    NOTIFIER = oslo_messaging.Notifier(TRANSPORT, serializer=serializer)
 
 
 def cleanup():
@@ -81,17 +81,17 @@ def get_allowed_exmods():
 def get_client(target, version_cap=None, serializer=None):
     assert TRANSPORT is not None
     serializer = RequestContextSerializer(serializer)
-    return messaging.RPCClient(TRANSPORT,
-                               target,
-                               version_cap=version_cap,
-                               serializer=serializer)
+    return oslo_messaging.RPCClient(TRANSPORT,
+                                    target,
+                                    version_cap=version_cap,
+                                    serializer=serializer)
 
 
 def get_server(target, endpoints, serializer=None):
     assert TRANSPORT is not None
     serializer = RequestContextSerializer(serializer)
-    return messaging.get_rpc_server(TRANSPORT, target, endpoints,
-                                    'eventlet', serializer)
+    return oslo_messaging.get_rpc_server(TRANSPORT, target, endpoints,
+                                         'eventlet', serializer)
 
 
 def get_notifier(service=None, host=None, publisher_id=None):
@@ -185,7 +185,7 @@ class Connection(object):
         self.servers = []
 
     def create_consumer(self, topic, endpoints, fanout=False):
-        target = messaging.Target(
+        target = oslo_messaging.Target(
             topic=topic, server=cfg.CONF.host, fanout=fanout)
         server = get_server(target, endpoints)
         self.servers.append(server)

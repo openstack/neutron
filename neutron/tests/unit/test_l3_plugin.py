@@ -19,8 +19,8 @@ import copy
 
 import mock
 import netaddr
-from oslo.config import cfg
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_utils import importutils
 from webob import exc
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api

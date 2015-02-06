@@ -15,7 +15,7 @@
 
 import mock
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.common import constants as n_consts
 from neutron.common import exceptions as n_exc

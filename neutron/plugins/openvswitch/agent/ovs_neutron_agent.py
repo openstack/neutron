@@ -24,8 +24,8 @@ eventlet.monkey_patch()
 
 import netaddr
 from neutron.plugins.openvswitch.agent import ovs_dvr_neutron_agent
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 from six import moves
 
 from neutron.agent import l2population_rpc
@@ -119,7 +119,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
     #   1.2 Support DVR (Distributed Virtual Router) RPC
-    target = messaging.Target(version='1.2')
+    target = oslo_messaging.Target(version='1.2')
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,

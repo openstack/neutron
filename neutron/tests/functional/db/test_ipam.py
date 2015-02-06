@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
-from oslo.db.sqlalchemy import session
-from oslo.db.sqlalchemy import test_base
+from oslo_config import cfg
+from oslo_db.sqlalchemy import session
+from oslo_db.sqlalchemy import test_base
 import testtools
 
 from neutron.api.v2 import attributes

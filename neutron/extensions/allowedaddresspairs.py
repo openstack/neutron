@@ -16,7 +16,7 @@ import webob.exc
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as nexception
-from oslo.config import cfg
+from oslo_config import cfg
 
 allowed_address_pair_opts = [
     #TODO(limao): use quota framework when it support quota for attributes

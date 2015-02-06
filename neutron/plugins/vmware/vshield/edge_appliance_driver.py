@@ -12,8 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.serialization import jsonutils
-from oslo.utils import excutils
+from oslo_serialization import jsonutils
+from oslo_utils import excutils
 
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging

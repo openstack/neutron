@@ -16,9 +16,9 @@
 
 """Implentation of Brocade ML2 Mechanism driver for ML2 Plugin."""
 
-from oslo.config import cfg
-from oslo.utils import excutils
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_utils import excutils
+from oslo_utils import importutils
 
 from neutron.i18n import _LE, _LI
 from neutron.openstack.common import log as logging

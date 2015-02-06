@@ -19,8 +19,8 @@ import uuid
 
 import mock
 import netaddr
-from oslo.config import cfg
-from oslo.serialization import jsonutils
+from oslo_config import cfg
+from oslo_serialization import jsonutils
 from testtools import matchers
 import webob.exc
 

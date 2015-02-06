@@ -17,7 +17,7 @@
 import contextlib
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.agent.linux import ip_lib
 from neutron.plugins.ibm.agent import sdnve_neutron_agent

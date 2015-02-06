@@ -15,7 +15,7 @@
 import abc
 import httplib
 
-from oslo.utils import excutils
+from oslo_utils import excutils
 import six
 
 from neutron.common import log as call_log

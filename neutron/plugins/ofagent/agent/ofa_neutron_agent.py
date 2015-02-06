@@ -23,8 +23,8 @@
 import time
 
 import netaddr
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging
 from ryu.app.ofctl import api as ryu_api
 from ryu.base import app_manager
 from ryu.controller import handler
@@ -177,7 +177,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     # history
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     def __init__(self, ryuapp, integ_br, local_ip,
                  bridge_mappings, interface_mappings, root_helper,

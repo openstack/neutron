@@ -23,9 +23,9 @@ import os
 import re
 import sys
 
-from oslo.config import cfg
-from oslo.utils import excutils
 from oslo_concurrency import lockutils
+from oslo_config import cfg
+from oslo_utils import excutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import iptables_comments as ic

@@ -15,7 +15,7 @@
 
 import abc
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr

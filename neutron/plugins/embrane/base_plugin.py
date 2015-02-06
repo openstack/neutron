@@ -16,7 +16,7 @@
 from heleosapi import backend_operations as h_op
 from heleosapi import constants as h_con
 from heleosapi import exceptions as h_exc
-from oslo.config import cfg
+from oslo_config import cfg
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as l3_constants

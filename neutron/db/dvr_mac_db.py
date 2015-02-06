@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.db import exception as db_exc
+from oslo_db import exception as db_exc
 
 import sqlalchemy as sa
 
@@ -26,7 +26,7 @@ from neutron.extensions import portbindings
 from neutron.i18n import _LE
 from neutron import manager
 from neutron.openstack.common import log as logging
-from oslo.config import cfg
+from oslo_config import cfg
 from sqlalchemy.orm import exc
 
 LOG = logging.getLogger(__name__)

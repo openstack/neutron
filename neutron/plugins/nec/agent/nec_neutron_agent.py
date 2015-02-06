@@ -25,7 +25,7 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
@@ -62,7 +62,7 @@ class NECPluginApi(agent_rpc.PluginApi):
 
 class NECAgentRpcCallback(object):
 
-    target = messaging.Target(version='1.0')
+    target = oslo_messaging.Target(version='1.0')
 
     def __init__(self, context, agent, sg_agent):
         super(NECAgentRpcCallback, self).__init__()
@@ -84,7 +84,7 @@ class NECAgentRpcCallback(object):
 
 class SecurityGroupAgentRpcCallback(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
-    target = messaging.Target(version=sg_rpc.SG_RPC_VERSION)
+    target = oslo_messaging.Target(version=sg_rpc.SG_RPC_VERSION)
 
     def __init__(self, context, sg_agent):
         super(SecurityGroupAgentRpcCallback, self).__init__()

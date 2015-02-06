@@ -15,10 +15,10 @@
 
 import uuid
 
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo.utils import excutils
 from oslo_concurrency import lockutils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_utils import excutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 import webob.exc

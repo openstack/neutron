@@ -16,8 +16,8 @@ import collections
 import itertools
 import uuid
 
-from oslo.serialization import jsonutils
-from oslo.utils import excutils
+from oslo_serialization import jsonutils
+from oslo_utils import excutils
 
 from neutron.agent.linux import utils
 from neutron.agent import ovsdb

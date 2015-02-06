@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import mock
-from oslo.db import exception as db_exc
+from oslo_db import exception as db_exc
 
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.common import constants

@@ -14,7 +14,7 @@
 #    under the License.
 
 import contextlib
-from oslo.config import cfg
+from oslo_config import cfg
 from webob import exc
 
 from neutron.common import constants

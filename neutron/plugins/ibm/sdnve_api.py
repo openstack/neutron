@@ -20,7 +20,7 @@ import urllib
 
 import httplib2
 from keystoneclient.v2_0 import client as keyclient
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.common import utils

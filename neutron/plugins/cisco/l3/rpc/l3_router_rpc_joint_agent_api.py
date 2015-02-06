@@ -13,7 +13,7 @@
 #    under the License.
 #
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
@@ -28,7 +28,7 @@ class L3RouterJointAgentNotifyAPI(object):
     def __init__(self, l3plugin):
         self._l3plugin = l3plugin
         self.topic = c_constants.CFG_AGENT_L3_ROUTING
-        target = messaging.Target(topic=self.topic, version='1.0')
+        target = oslo_messaging.Target(topic=self.topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def _agent_notification(self, context, method, routers, operation, data):

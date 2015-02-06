@@ -15,7 +15,7 @@
 
 import sys
 
-from oslo.config import cfg
+from oslo_config import cfg
 from six import moves
 import sqlalchemy as sa
 

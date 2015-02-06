@@ -17,7 +17,7 @@ import eventlet
 from novaclient import exceptions as nova_exceptions
 import novaclient.v1_1.client as nclient
 from novaclient.v1_1.contrib import server_external_events
-from oslo.config import cfg
+from oslo_config import cfg
 from sqlalchemy.orm import attributes as sql_attr
 
 from neutron.common import constants

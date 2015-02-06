@@ -14,7 +14,7 @@
 #    under the License.
 
 from apicapi import apic_mapper
-from oslo.utils import excutils
+from oslo_utils import excutils
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db

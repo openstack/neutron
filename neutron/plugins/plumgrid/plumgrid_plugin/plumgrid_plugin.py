@@ -19,8 +19,8 @@ to the PLUMgrid Network Management System called Director
 """
 
 import netaddr
-from oslo.config import cfg
-from oslo.utils import importutils
+from oslo_config import cfg
+from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron.api.v2 import attributes

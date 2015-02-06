@@ -14,8 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.db import exception as db_exc
-from oslo.utils import excutils
+from oslo_db import exception as db_exc
+from oslo_utils import excutils
 from sqlalchemy.orm import exc
 
 import neutron.db.api as db

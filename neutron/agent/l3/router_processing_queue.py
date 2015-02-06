@@ -16,7 +16,7 @@
 import datetime
 import Queue
 
-from oslo.utils import timeutils
+from oslo_utils import timeutils
 
 # Lower value is higher priority
 PRIORITY_RPC = 0

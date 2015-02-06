@@ -18,9 +18,9 @@ import os
 
 import eventlet
 
-from oslo.config import cfg
-from oslo import messaging
-from oslo.utils import importutils
+from oslo_config import cfg
+import oslo_messaging
+from oslo_utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
@@ -49,7 +49,7 @@ class DhcpAgent(manager.Manager):
     client side to execute the methods here.  For more information about
     changing rpc interfaces, see doc/source/devref/rpc_api.rst.
     """
-    target = messaging.Target(version='1.0')
+    target = oslo_messaging.Target(version='1.0')
 
     def __init__(self, host=None):
         super(DhcpAgent, self).__init__(host=host)
@@ -125,7 +125,7 @@ class DhcpAgent(manager.Manager):
                         {'net_id': network.id, 'action': action})
         except Exception as e:
             self.schedule_resync(e, network.id)
-            if (isinstance(e, messaging.RemoteError)
+            if (isinstance(e, oslo_messaging.RemoteError)
                 and e.exc_type == 'NetworkNotFound'
                 or isinstance(e, exceptions.NetworkNotFound)):
                 LOG.warning(_LW("Network %s has been deleted."), network.id)
@@ -400,7 +400,7 @@ class DhcpPluginApi(object):
         self.context = context
         self.host = cfg.CONF.host
         self.use_namespaces = use_namespaces
-        target = messaging.Target(
+        target = oslo_messaging.Target(
                 topic=topic,
                 namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
                 version='1.0')

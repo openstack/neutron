@@ -19,7 +19,7 @@ import os
 
 import mock
 import netaddr
-from oslo.config import cfg
+from oslo_config import cfg
 from webob import exc
 
 from neutron.common import constants

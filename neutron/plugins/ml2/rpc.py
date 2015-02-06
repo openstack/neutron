@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo import messaging
+import oslo_messaging
 from sqlalchemy.orm import exc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -45,7 +45,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     #   1.3 get_device_details rpc signature upgrade to obtain 'host' and
     #       return value to include fixed_ips and device_owner for
     #       the device port
-    target = messaging.Target(version='1.3')
+    target = oslo_messaging.Target(version='1.3')
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
@@ -198,7 +198,7 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         self.topic_port_update = topics.get_topic_name(topic,
                                                        topics.PORT,
                                                        topics.UPDATE)
-        target = messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
     def network_delete(self, context, network_id):

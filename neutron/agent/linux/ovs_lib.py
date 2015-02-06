@@ -17,8 +17,8 @@ import collections
 import itertools
 import operator
 
-from oslo.config import cfg
-from oslo.utils import excutils
+from oslo_config import cfg
+from oslo_utils import excutils
 import retrying
 import six
 

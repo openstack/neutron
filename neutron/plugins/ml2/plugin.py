@@ -16,12 +16,12 @@
 import contextlib
 from eventlet import greenthread
 
-from oslo.config import cfg
-from oslo.db import exception as os_db_exception
-from oslo.serialization import jsonutils
-from oslo.utils import excutils
-from oslo.utils import importutils
 from oslo_concurrency import lockutils
+from oslo_config import cfg
+from oslo_db import exception as os_db_exception
+from oslo_serialization import jsonutils
+from oslo_utils import excutils
+from oslo_utils import importutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 

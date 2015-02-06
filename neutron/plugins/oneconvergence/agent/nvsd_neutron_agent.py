@@ -21,7 +21,7 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
-from oslo import messaging
+import oslo_messaging
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
@@ -39,7 +39,7 @@ LOG = logging.getLogger(__name__)
 
 class NVSDAgentRpcCallback(object):
 
-    target = messaging.Target(version='1.0')
+    target = oslo_messaging.Target(version='1.0')
 
     def __init__(self, context, agent, sg_agent):
         super(NVSDAgentRpcCallback, self).__init__()
@@ -61,7 +61,7 @@ class NVSDAgentRpcCallback(object):
 
 class SecurityGroupAgentRpcCallback(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
-    target = messaging.Target(version=sg_rpc.SG_RPC_VERSION)
+    target = oslo_messaging.Target(version=sg_rpc.SG_RPC_VERSION)
 
     def __init__(self, context, sg_agent):
         super(SecurityGroupAgentRpcCallback, self).__init__()
@@ -73,7 +73,7 @@ class NVSDNeutronAgent(object):
     # history
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
-    target = messaging.Target(version='1.1')
+    target = oslo_messaging.Target(version='1.1')
 
     def __init__(self, integ_br, root_helper, polling_interval):
         super(NVSDNeutronAgent, self).__init__()

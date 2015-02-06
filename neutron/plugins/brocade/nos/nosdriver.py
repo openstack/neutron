@@ -19,7 +19,7 @@ Neutron network life-cycle management.
 """
 
 from ncclient import manager
-from oslo.utils import excutils
+from oslo_utils import excutils
 
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
