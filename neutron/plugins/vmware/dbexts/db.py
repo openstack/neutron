@@ -20,15 +20,14 @@ from sqlalchemy.orm import exc
 
 import neutron.db.api as db
 from neutron.openstack.common import log as logging
-from neutron.plugins.vmware.dbexts import models
-from neutron.plugins.vmware.dbexts import networkgw_db
+from neutron.plugins.vmware.dbexts import nsx_models
 
 LOG = logging.getLogger(__name__)
 
 
 def get_network_bindings(session, network_id):
     session = session or db.get_session()
-    return (session.query(models.TzNetworkBinding).
+    return (session.query(nsx_models.TzNetworkBinding).
             filter_by(network_id=network_id).
             all())
 
@@ -36,19 +35,19 @@ def get_network_bindings(session, network_id):
 def get_network_bindings_by_vlanid_and_physical_net(session, vlan_id,
                                                     phy_uuid):
     session = session or db.get_session()
-    return (session.query(models.TzNetworkBinding).
+    return (session.query(nsx_models.TzNetworkBinding).
             filter_by(vlan_id=vlan_id, phy_uuid=phy_uuid).
             all())
 
 
 def delete_network_bindings(session, network_id):
-    return (session.query(models.TzNetworkBinding).
+    return (session.query(nsx_models.TzNetworkBinding).
             filter_by(network_id=network_id).delete())
 
 
 def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
     with session.begin(subtransactions=True):
-        binding = models.TzNetworkBinding(network_id, binding_type,
+        binding = nsx_models.TzNetworkBinding(network_id, binding_type,
                                           phy_uuid, vlan_id)
         session.add(binding)
     return binding
@@ -56,7 +55,7 @@ def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
 
 def add_neutron_nsx_network_mapping(session, neutron_id, nsx_switch_id):
     with session.begin(subtransactions=True):
-        mapping = models.NeutronNsxNetworkMapping(
+        mapping = nsx_models.NeutronNsxNetworkMapping(
             neutron_id=neutron_id, nsx_id=nsx_switch_id)
         session.add(mapping)
         return mapping
@@ -66,7 +65,7 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
                                  nsx_switch_id, nsx_port_id):
     session.begin(subtransactions=True)
     try:
-        mapping = models.NeutronNsxPortMapping(
+        mapping = nsx_models.NeutronNsxPortMapping(
             neutron_id, nsx_switch_id, nsx_port_id)
         session.add(mapping)
         session.commit()
@@ -91,7 +90,7 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
 
 def add_neutron_nsx_router_mapping(session, neutron_id, nsx_router_id):
     with session.begin(subtransactions=True):
-        mapping = models.NeutronNsxRouterMapping(
+        mapping = nsx_models.NeutronNsxRouterMapping(
             neutron_id=neutron_id, nsx_id=nsx_router_id)
         session.add(mapping)
         return mapping
@@ -105,7 +104,7 @@ def add_neutron_nsx_security_group_mapping(session, neutron_id, nsx_id):
     :param nsx_id: a nsx security profile identifier
     """
     with session.begin(subtransactions=True):
-        mapping = models.NeutronNsxSecurityGroupMapping(
+        mapping = nsx_models.NeutronNsxSecurityGroupMapping(
             neutron_id=neutron_id, nsx_id=nsx_id)
         session.add(mapping)
         return mapping
@@ -115,13 +114,13 @@ def get_nsx_switch_ids(session, neutron_id):
     # This function returns a list of NSX switch identifiers because of
     # the possibility of chained logical switches
     return [mapping['nsx_id'] for mapping in
-            session.query(models.NeutronNsxNetworkMapping).filter_by(
+            session.query(nsx_models.NeutronNsxNetworkMapping).filter_by(
                 neutron_id=neutron_id)]
 
 
 def get_nsx_switch_and_port_id(session, neutron_id):
     try:
-        mapping = (session.query(models.NeutronNsxPortMapping).
+        mapping = (session.query(nsx_models.NeutronNsxPortMapping).
                    filter_by(neutron_id=neutron_id).
                    one())
         return mapping['nsx_switch_id'], mapping['nsx_port_id']
@@ -133,7 +132,7 @@ def get_nsx_switch_and_port_id(session, neutron_id):
 
 def get_nsx_router_id(session, neutron_id):
     try:
-        mapping = (session.query(models.NeutronNsxRouterMapping).
+        mapping = (session.query(nsx_models.NeutronNsxRouterMapping).
                    filter_by(neutron_id=neutron_id).one())
         return mapping['nsx_id']
     except exc.NoResultFound:
@@ -147,7 +146,7 @@ def get_nsx_security_group_id(session, neutron_id):
     Note: security groups are called 'security profiles' in NSX
     """
     try:
-        mapping = (session.query(models.NeutronNsxSecurityGroupMapping).
+        mapping = (session.query(nsx_models.NeutronNsxSecurityGroupMapping).
                    filter_by(neutron_id=neutron_id).
                    one())
         return mapping['nsx_id']
@@ -163,30 +162,30 @@ def _delete_by_neutron_id(session, model, neutron_id):
 
 def delete_neutron_nsx_port_mapping(session, neutron_id):
     return _delete_by_neutron_id(
-        session, models.NeutronNsxPortMapping, neutron_id)
+        session, nsx_models.NeutronNsxPortMapping, neutron_id)
 
 
 def delete_neutron_nsx_router_mapping(session, neutron_id):
     return _delete_by_neutron_id(
-        session, models.NeutronNsxRouterMapping, neutron_id)
+        session, nsx_models.NeutronNsxRouterMapping, neutron_id)
 
 
 def unset_default_network_gateways(session):
     with session.begin(subtransactions=True):
-        session.query(networkgw_db.NetworkGateway).update(
-            {networkgw_db.NetworkGateway.default: False})
+        session.query(nsx_models.NetworkGateway).update(
+            {nsx_models.NetworkGateway.default: False})
 
 
 def set_default_network_gateway(session, gw_id):
     with session.begin(subtransactions=True):
-        gw = (session.query(networkgw_db.NetworkGateway).
+        gw = (session.query(nsx_models.NetworkGateway).
               filter_by(id=gw_id).one())
         gw['default'] = True
 
 
 def set_multiprovider_network(session, network_id):
     with session.begin(subtransactions=True):
-        multiprovider_network = models.MultiProviderNetworks(
+        multiprovider_network = nsx_models.MultiProviderNetworks(
             network_id)
         session.add(multiprovider_network)
         return multiprovider_network
@@ -195,5 +194,5 @@ def set_multiprovider_network(session, network_id):
 def is_multiprovider_network(session, network_id):
     with session.begin(subtransactions=True):
         return bool(
-            session.query(models.MultiProviderNetworks).filter_by(
+            session.query(nsx_models.MultiProviderNetworks).filter_by(
                 network_id=network_id).first())
