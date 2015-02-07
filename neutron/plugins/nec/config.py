@@ -15,7 +15,6 @@
 from oslo_config import cfg
 
 from neutron.agent.common import config
-from neutron.plugins.nec.common import constants as nconst
 
 
 ovs_opts = [
@@ -60,23 +59,20 @@ ofc_opts = [
 
 provider_opts = [
     cfg.StrOpt('default_router_provider',
-               default=nconst.DEFAULT_ROUTER_PROVIDER,
+               default='l3-agent',
                help=_('Default router provider to use.')),
     cfg.ListOpt('router_providers',
-                default=nconst.DEFAULT_ROUTER_PROVIDERS,
+                default=['l3-agent', 'openflow'],
                 help=_('List of enabled router providers.'))
 ]
 
 
-cfg.CONF.register_opts(ovs_opts, "OVS")
-cfg.CONF.register_opts(agent_opts, "AGENT")
-cfg.CONF.register_opts(ofc_opts, "OFC")
-cfg.CONF.register_opts(provider_opts, "PROVIDER")
-config.register_agent_state_opts_helper(cfg.CONF)
+def register_plugin_opts():
+    cfg.CONF.register_opts(ofc_opts, "OFC")
+    cfg.CONF.register_opts(provider_opts, "PROVIDER")
 
-# shortcuts
-CONF = cfg.CONF
-OVS = cfg.CONF.OVS
-AGENT = cfg.CONF.AGENT
-OFC = cfg.CONF.OFC
-PROVIDER = cfg.CONF.PROVIDER
+
+def register_agent_opts():
+    cfg.CONF.register_opts(agent_opts, "AGENT")
+    cfg.CONF.register_opts(ovs_opts, "OVS")
+    config.register_agent_state_opts_helper(cfg.CONF)

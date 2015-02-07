@@ -1,4 +1,5 @@
-# Copyright 2014 NEC Corporation.  All rights reserved.
+# Copyright 2012 NEC Corporation.
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,13 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
 
-def cmp_dpid(dpid_a, dpid_b):
-    """Compare two datapath IDs as hexadecimal int.
+from networking_nec.plugins.openflow.agent import l2_agent
 
-    It returns True if equal, otherwise False.
-    """
-    try:
-        return (int(dpid_a, 16) == int(dpid_b, 16))
-    except Exception:
-        return False
+from neutron.common import config as common_config
+from neutron.plugins.nec import config as nec_config
+
+
+def main():
+    nec_config.register_agent_opts()
+    common_config.init(sys.argv[1:])
+    common_config.setup_logging()
+    l2_agent.run()
