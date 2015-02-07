@@ -18,11 +18,8 @@ import collections
 import os
 import re
 import shutil
-import socket
-import sys
 
 import netaddr
-from oslo_serialization import jsonutils
 from oslo_utils import importutils
 import six
 
@@ -286,9 +283,6 @@ class Dnsmasq(DhcpLocalProcess):
 
     _TAG_PREFIX = 'tag%d'
 
-    NEUTRON_NETWORK_ID_KEY = 'NEUTRON_NETWORK_ID'
-    NEUTRON_RELAY_SOCKET_PATH_KEY = 'NEUTRON_RELAY_SOCKET_PATH'
-
     @classmethod
     def check_version(cls):
         pass
@@ -399,7 +393,6 @@ class Dnsmasq(DhcpLocalProcess):
             cmd_callback=self._build_cmdline_callback,
             namespace=self.network.namespace,
             service=DNSMASQ_SERVICE_NAME,
-            cmd_addl_env={self.NEUTRON_NETWORK_ID_KEY: self.network.id},
             reload_cfg=reload_with_HUP,
             pid_file=pid_filename)
 
@@ -786,32 +779,6 @@ class Dnsmasq(DhcpLocalProcess):
 
         isolated_subnets = cls.get_isolated_subnets(network)
         return any(isolated_subnets[subnet.id] for subnet in network.subnets)
-
-    @classmethod
-    def lease_update(cls):
-        network_id = os.environ.get(cls.NEUTRON_NETWORK_ID_KEY)
-        dhcp_relay_socket = os.environ.get(cls.NEUTRON_RELAY_SOCKET_PATH_KEY)
-
-        action = sys.argv[1]
-        if action not in ('add', 'del', 'old'):
-            sys.exit()
-
-        mac_address = sys.argv[2]
-        ip_address = sys.argv[3]
-
-        if action == 'del':
-            lease_remaining = 0
-        else:
-            lease_remaining = int(os.environ.get('DNSMASQ_TIME_REMAINING', 0))
-
-        data = dict(network_id=network_id, mac_address=mac_address,
-                    ip_address=ip_address, lease_remaining=lease_remaining)
-
-        if os.path.exists(dhcp_relay_socket):
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.connect(dhcp_relay_socket)
-            sock.send(jsonutils.dumps(data))
-            sock.close()
 
 
 class DeviceManager(object):
