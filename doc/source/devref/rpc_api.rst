@@ -16,7 +16,7 @@ Here is an example of an rpc client definition:
 
 ::
 
-  from oslo import messaging
+  import oslo_messaging
 
   from neutron.common import rpc as n_rpc
 
@@ -30,7 +30,7 @@ Here is an example of an rpc client definition:
       """
 
       def __init__(self, topic):
-          target = messaging.Target(topic=topic, version='1.0')
+          target = oslo_messaging.Target(topic=topic, version='1.0')
           self.client = n_rpc.get_client(target)
 
       def my_remote_method(self, context, arg1, arg2):
@@ -55,12 +55,12 @@ The server side of an rpc interface looks like this:
 
 ::
 
-  from oslo import messaging
+  import oslo_messaging
 
 
   class ServerAPI(object):
 
-      target = messaging.Target(version='1.1')
+      target = oslo_messaging.Target(version='1.1')
 
       def my_remote_method(self, context, arg1, arg2):
           return 'foo'
@@ -69,8 +69,9 @@ The server side of an rpc interface looks like this:
           return 'bar'
 
 
-This class implements the server side of the interface.  The messaging.Target()
-defined says that this class currently implements version 1.1 of the interface.
+This class implements the server side of the interface.  The
+oslo_messaging.Target() defined says that this class currently implements
+version 1.1 of the interface.
 
 Versioning
 ==========
@@ -95,12 +96,12 @@ code would look like this:
 
 ::
 
-  from oslo import messaging
+  import oslo_messaging
 
 
   class ServerAPI(object):
 
-      target = messaging.Target(version='1.2')
+      target = oslo_messaging.Target(version='1.2')
 
       def my_remote_method(self, context, arg1, arg2):
           return 'foo'
@@ -116,7 +117,7 @@ successful.  The updated client side would look like this:
 
 ::
 
-  from oslo import messaging
+  import oslo_messaging
 
   from neutron.common import rpc as n_rpc
 
@@ -131,7 +132,7 @@ successful.  The updated client side would look like this:
       """
 
       def __init__(self, topic):
-          target = messaging.Target(topic=topic, version='1.0')
+          target = oslo_messaging.Target(topic=topic, version='1.0')
           self.client = n_rpc.get_client(target)
 
       def my_remote_method(self, context, arg1, arg2):
