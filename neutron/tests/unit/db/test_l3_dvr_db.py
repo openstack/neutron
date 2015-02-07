@@ -17,7 +17,6 @@ import contextlib
 import mock
 
 from neutron.common import constants as l3_const
-from neutron.common import exceptions as nexception
 from neutron import context
 from neutron.db import l3_dvr_db
 from neutron.extensions import l3
@@ -332,77 +331,43 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
                 self.ctx, fip, floatingip, mock.ANY)
             self.assertTrue(vf.called)
 
-    def _router_migration_with_services_setup(
-        self, test_side_effect_vpn=None, test_side_effect_fw=None,
-        no_vpn=None, no_fw=None):
-        '''Helper function to test router migration with services.'''
-        router = {'name': 'foo_router',
-                  'admin_state_up': True}
+    def test__validate_router_migration_prevent_check_advanced_svc(self):
+        router = {'name': 'foo_router', 'admin_state_up': True}
         router_db = self._create_router(router)
-        self.assertFalse(router_db.extra_attributes.distributed)
+        # make sure the check are invoked, whether they pass or
+        # raise, it does not matter in the context of this test
         with contextlib.nested(
-            mock.patch.object(
-                self.mixin, 'check_router_has_no_vpnaas',
-                side_effect=test_side_effect_vpn, return_value=no_vpn),
-            mock.patch.object(
-                self.mixin, 'check_router_has_no_firewall',
-                side_effect=test_side_effect_fw, return_value=no_fw),
-            mock.patch.object(self.mixin, '_get_router',
-                              return_value=router_db)
-                              ) as (vpn_mock, fw_mock, r_mock):
-            router_db['status'] = 'ACTIVE'
-            if no_vpn and no_fw and (
-                test_side_effect_vpn and test_side_effect_fw) is None:
-                self.mixin._validate_router_migration(
-                    self.ctx, router_db, {'distributed': True})
-                return router_db, fw_mock, vpn_mock
-            if not no_vpn and test_side_effect_vpn:
-                self.assertRaises(
-                    nexception.RouterInUseByVPNService,
-                    self.mixin._validate_router_migration,
-                    self.ctx,
-                    router_db,
-                    {'distributed': True})
-                return router_db, fw_mock, vpn_mock
-            if not no_fw and test_side_effect_fw:
-                self.assertRaises(
-                    l3.RouterInUse,
-                    self.mixin._validate_router_migration,
-                    self.ctx,
-                    router_db,
-                    {'distributed': True})
-                return router_db, fw_mock, vpn_mock
+            mock.patch.object(self.mixin, 'check_router_has_no_firewall'),
+            mock.patch.object(self.mixin, 'check_router_has_no_vpnaas')
+        ) as (check_fw, check_vpn):
+            self.mixin._validate_router_migration(
+                self.ctx, router_db, {'distributed': True})
+            check_fw.assert_called_once_with(self.ctx, router_db)
+            check_vpn.assert_called_once_with(self.ctx, router_db)
 
-    def test__validate_router_migration_fail_with_vpnservice(self):
-        '''Test to check router migration fail with vpn.'''
-        router_db, mock_firewall, mock_vpnaas = (
-            self._router_migration_with_services_setup(
-                test_side_effect_vpn=(
-                    nexception.RouterInUseByVPNService(
-                        router_id='fake_id',
-                        vpnservice_id='fake_vpnaas_id')
-                ),
-                no_vpn=False,
-                no_fw=True))
-        mock_vpnaas.assert_called_once_with(self.ctx, router_db)
+    def test_check_router_has_no_firewall_raises(self):
+        with mock.patch.object(
+            manager.NeutronManager, 'get_service_plugins') as sp:
+            fw_plugin = mock.Mock()
+            sp.return_value = {'FIREWALL': fw_plugin}
+            fw_plugin.get_firewalls.return_value = [mock.ANY]
+            self.assertRaises(
+                l3.RouterInUse,
+                self.mixin.check_router_has_no_firewall,
+                self.ctx, {'id': 'foo_id', 'tenant_id': 'foo_tenant'})
 
-    def test__validate_router_migration_fail_with_fwservice(self):
-        '''Test to check router migration with firewall.'''
-        router_db, mock_firewall, mock_vpnaas = (
-            self._router_migration_with_services_setup(
-                test_side_effect_vpn=None,
-                test_side_effect_fw=l3.RouterInUse(
-                    router_id='fake_id'
-                ),
-                no_vpn=True,
-                no_fw=False))
-        mock_firewall.assert_called_once_with(self.ctx, router_db)
+    def test_check_router_has_no_firewall_passes(self):
+        with mock.patch.object(manager.NeutronManager,
+                               'get_service_plugins',
+                               return_value={}):
+            self.assertTrue(
+                self.mixin.check_router_has_no_firewall(mock.ANY, mock.ANY))
 
-    def test__validate_router_migration_with_no_services(self):
-        '''Test to check router migration with no services.'''
-        router_db, mock_firewall, mock_vpnaas = (
-            self._router_migration_with_services_setup(
-                no_vpn=True,
-                no_fw=True))
-        mock_vpnaas.assert_called_once_with(self.ctx, router_db)
-        mock_firewall.assert_called_once_with(self.ctx, router_db)
+    def test_check_router_has_no_vpn(self):
+        with mock.patch.object(
+            manager.NeutronManager, 'get_service_plugins') as sp:
+            vpn_plugin = mock.Mock()
+            sp.return_value = {'VPN': vpn_plugin}
+            self.mixin.check_router_has_no_vpnaas(mock.ANY, {'id': 'foo_id'})
+            vpn_plugin.check_router_in_use.assert_called_once_with(
+                mock.ANY, 'foo_id')

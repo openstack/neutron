@@ -383,7 +383,3 @@ class FirewallInternalDriverError(NeutronException):
     raise this exception to the agent
     """
     message = _("%(driver)s: Internal driver error.")
-
-
-class RouterInUseByVPNService(InUse):
-    message = _("Router %(router_id)s is used by VPNService %(vpnservice_id)s")

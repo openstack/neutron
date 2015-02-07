@@ -30,7 +30,12 @@ class RouterNotFound(nexception.NotFound):
 
 
 class RouterInUse(nexception.InUse):
-    message = _("Router %(router_id)s still has ports")
+    message = _("Router %(router_id)s %(reason)s")
+
+    def __init__(self, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs['reason'] = "still has ports"
+        super(RouterInUse, self).__init__(**kwargs)
 
 
 class RouterInterfaceNotFound(nexception.NotFound):
