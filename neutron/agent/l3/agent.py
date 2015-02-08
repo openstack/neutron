@@ -288,7 +288,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _destroy_router_namespace(self, ns):
         router_id = self.get_router_id(ns)
-        ra.disable_ipv6_ra(router_id, self.process_monitor)
+        if router_id in self.router_info:
+            self.router_info[router_id].radvd.disable()
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
@@ -374,6 +375,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _router_added(self, router_id, router):
         ri = self._create_router(router_id, router)
+        ri.radvd = ra.DaemonMonitor(router['id'],
+                                    ri.ns_name,
+                                    self.process_monitor,
+                                    self.get_internal_device_name)
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_added, ri)
 
@@ -455,11 +460,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         # Enable RA
         if new_ipv6_port or old_ipv6_port:
-            ra.enable_ipv6_ra(ri.router_id,
-                              ri.ns_name,
-                              internal_ports,
-                              self.get_internal_device_name,
-                              self.process_monitor)
+            ri.radvd.enable(internal_ports)
 
         existing_devices = self._get_existing_devices(ri)
         current_internal_devs = set([n for n in existing_devices
