@@ -69,7 +69,7 @@ class LinkLocalAllocator(object):
         So, if a new allocation is needed, the code first checks to see if
         there are any remembered allocations for the key.  If not, it checks
         the free pool.  If the free pool is empty then it dumps the remembered
-        allocations to free the pool.  This final desparate step will not
+        allocations to free the pool.  This final desperate step will not
         happen often in practice.
         """
         if key in self.remembered:
@@ -77,7 +77,7 @@ class LinkLocalAllocator(object):
             return self.allocations[key]
 
         if not self.pool:
-            # Desparate times.  Try to get more in the pool.
+            # Desperate times.  Try to get more in the pool.
             self.pool.update(self.remembered.values())
             self.remembered.clear()
             if not self.pool:
