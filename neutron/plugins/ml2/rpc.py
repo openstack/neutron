@@ -57,6 +57,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         host = kwargs.get('host')
+        # cached networks used for reducing number of network db calls
+        # for server internal usage only
+        cached_networks = kwargs.get('cached_networks')
         LOG.debug("Device %(device)s details requested by agent "
                   "%(agent_id)s with host %(host)s",
                   {'device': device, 'agent_id': agent_id, 'host': host})
@@ -65,7 +68,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         port_id = plugin._device_to_port_id(device)
         port_context = plugin.get_bound_port_context(rpc_context,
                                                      port_id,
-                                                     host)
+                                                     host,
+                                                     cached_networks)
         if not port_context:
             LOG.warning(_LW("Device %(device)s requested by agent "
                             "%(agent_id)s not found in database"),
@@ -74,6 +78,11 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
         segment = port_context.bottom_bound_segment
         port = port_context.current
+        # caching information about networks for future use
+        if cached_networks is not None:
+            if port['network_id'] not in cached_networks:
+                cached_networks[port['network_id']] = (
+                    port_context.network.current)
 
         if not segment:
             LOG.warning(_LW("Device %(device)s requested by agent "
@@ -108,10 +117,13 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         return entry
 
     def get_devices_details_list(self, rpc_context, **kwargs):
+        # cached networks used for reducing number of network db calls
+        cached_networks = {}
         return [
             self.get_device_details(
                 rpc_context,
                 device=device,
+                cached_networks=cached_networks,
                 **kwargs
             )
             for device in kwargs.pop('devices', [])

@@ -116,6 +116,16 @@ class RpcCallbacksTestCase(base.BaseTestCase):
                 self.assertEqual(status == new_status,
                                  not self.plugin.update_port_status.called)
 
+    def test_get_device_details_caching(self):
+        port = collections.defaultdict(lambda: 'fake_port')
+        cached_networks = {}
+        self.plugin.get_bound_port_context().current = port
+        self.plugin.get_bound_port_context().network.current = (
+            {"id": "fake_network"})
+        self.callbacks.get_device_details('fake_context', host='fake_host',
+                                          cached_networks=cached_networks)
+        self.assertTrue('fake_port' in cached_networks)
+
     def test_get_devices_details_list(self):
         devices = [1, 2, 3, 4, 5]
         kwargs = {'host': 'fake_host', 'agent_id': 'fake_agent_id'}
@@ -126,7 +136,8 @@ class RpcCallbacksTestCase(base.BaseTestCase):
                                                           **kwargs)
             self.assertEqual(devices, res)
             self.assertEqual(len(devices), f.call_count)
-            calls = [mock.call('fake_context', device=i, **kwargs)
+            calls = [mock.call('fake_context', device=i,
+                               cached_networks={}, **kwargs)
                      for i in devices]
             f.assert_has_calls(calls)
 
