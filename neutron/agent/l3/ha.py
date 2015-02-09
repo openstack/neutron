@@ -18,6 +18,7 @@ import os
 from oslo_config import cfg
 
 from neutron.agent.linux import keepalived
+from neutron.agent.linux import utils
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
@@ -51,8 +52,7 @@ class AgentMixin(object):
 
     def _init_ha_conf_path(self):
         ha_full_path = os.path.dirname("/%s/" % self.conf.ha_confs_path)
-        if not os.path.isdir(ha_full_path):
-            os.makedirs(ha_full_path, 0o755)
+        utils.ensure_dir(ha_full_path)
 
     def process_ha_router_added(self, ri):
         ha_port = ri.router.get(l3_constants.HA_INTERFACE_KEY)

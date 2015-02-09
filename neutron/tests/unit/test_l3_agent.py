@@ -198,8 +198,9 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
             'neutron.agent.linux.ip_lib.device_exists')
         self.device_exists = self.device_exists_p.start()
 
-        mock.patch('neutron.agent.l3.ha.AgentMixin'
-                   '._init_ha_conf_path').start()
+        self.ensure_dir = mock.patch('neutron.agent.linux.utils'
+                                     '.ensure_dir').start()
+
         mock.patch('neutron.agent.linux.keepalived.KeepalivedNotifierMixin'
                    '._get_full_config_file_path').start()
 
@@ -307,6 +308,11 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
 
 
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
+    def test_init_ha_conf(self):
+        with mock.patch('os.path.dirname', return_value='/etc/ha/'):
+            l3_agent.L3NATAgent(HOSTNAME, self.conf)
+            self.ensure_dir.assert_called_once_with('/etc/ha/')
+
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.side_effect = ValueError

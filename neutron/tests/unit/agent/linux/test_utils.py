@@ -11,6 +11,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import os
+
 import mock
 import testtools
 
@@ -203,3 +205,19 @@ class TestPathUtilities(base.BaseTestCase):
         self.assertFalse(utils.cmdlines_are_equal(
             ['ping', '8.8.8.8'],
             ['/usr/bin/ping6', '8.8.8.8']))
+
+
+class TestBaseOSUtils(base.BaseTestCase):
+    @mock.patch.object(os.path, 'isdir', return_value=False)
+    @mock.patch.object(os, 'makedirs')
+    def test_ensure_dir_not_exist(self, makedirs, isdir):
+        utils.ensure_dir('/the')
+        isdir.assert_called_once_with('/the')
+        makedirs.assert_called_once_with('/the', 0o755)
+
+    @mock.patch.object(os.path, 'isdir', return_value=True)
+    @mock.patch.object(os, 'makedirs')
+    def test_ensure_dir_exist(self, makedirs, isdir):
+        utils.ensure_dir('/the')
+        isdir.assert_called_once_with('/the')
+        self.assertFalse(makedirs.called)

@@ -23,6 +23,7 @@ from neutron.agent.common import config
 from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
+from neutron.agent.linux import utils
 from neutron.common import config as base_config
 from neutron.common import constants
 from neutron.openstack.common import log as logging
@@ -674,15 +675,11 @@ class TestDhcpLocalProcess(TestBase):
         lp = LocalChild(self.conf, FakeV4Network())
         self.assertEqual(lp.get_conf_file_name('dev'), tpl)
 
-    def test_ensure_network_conf_dir(self):
+    @mock.patch.object(utils, 'ensure_dir')
+    def test_ensure_dir_called(self, ensure_dir):
         LocalChild(self.conf, FakeV4Network())
-        self.makedirs.assert_called_once_with(
-            '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', mock.ANY)
-
-    def test_ensure_network_conf_existing_dir(self):
-        self.isdir.return_value = True
-        LocalChild(self.conf, FakeV4Network())
-        self.assertFalse(self.makedirs.called)
+        ensure_dir.assert_called_once_with(
+            '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
     def test_enable_already_active(self):
         with mock.patch.object(LocalChild, 'active') as patched:
@@ -693,16 +690,15 @@ class TestDhcpLocalProcess(TestBase):
             self.assertEqual(lp.called, ['restart'])
             self.assertFalse(self.mock_mgr.return_value.setup.called)
 
-    def test_enable(self):
+    @mock.patch.object(utils, 'ensure_dir')
+    def test_enable(self, ensure_dir):
         attrs_to_mock = dict(
             [(a, mock.DEFAULT) for a in
-                ['active', 'get_conf_file_name', 'interface_name',
-                 '_ensure_network_conf_dir']]
+                ['active', 'interface_name']]
         )
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=False)
-            mocks['get_conf_file_name'].return_value = '/dir'
             mocks['interface_name'].__set__ = mock.Mock()
             lp = LocalChild(self.conf,
                             FakeDualNetwork())
@@ -713,7 +709,8 @@ class TestDhcpLocalProcess(TestBase):
                  mock.call().setup(mock.ANY)])
             self.assertEqual(lp.called, ['spawn'])
             self.assertTrue(mocks['interface_name'].__set__.called)
-            self.assertTrue(mocks['_ensure_network_conf_dir'].called)
+            ensure_dir.assert_called_with(
+                '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc')
 
     def _assert_disabled(self, lp):
         self.assertTrue(lp.process_monitor.unregister.called)

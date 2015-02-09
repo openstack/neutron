@@ -26,6 +26,7 @@ from oslo_utils import excutils
 import six.moves.urllib.parse as urlparse
 import webob
 
+from neutron.agent.linux import utils as linux_utils
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
@@ -311,7 +312,7 @@ class UnixDomainMetadataProxy(object):
                     if not os.path.exists(cfg.CONF.metadata_proxy_socket):
                         ctxt.reraise = False
         else:
-            os.makedirs(dirname, 0o755)
+            linux_utils.ensure_dir(dirname)
 
         self._init_state_reporting()
 
