@@ -221,12 +221,12 @@ make sense depending on whether you are contributing a new or existing plugin or
 driver.
 
 If you are contributing a new plugin, the approach to choose should be based on
-`Extras.d Hooks <http://docs.openstack.org/developer/devstack/plugins.html#extras-d-hooks>`_.
+`Extras.d Hooks' externally hosted plugins <http://docs.openstack.org/developer/devstack/plugins.html#extras-d-hooks>`_.
 With the extra.d hooks, the DevStack integration is colocated with the vendor integration
 library, and it leads to the greatest level of flexibility when dealing with DevStack based
 dev/test deployments.
 
-Having said that, most Neutron Plugins developed in the past likely already have
+Having said that, most Neutron plugins developed in the past likely already have
 integration with DevStack in the form of `neutron_plugins <https://github.com/openstack-dev/devstack/tree/master/lib/neutron_plugins>`_.
 If the plugin is being decomposed in vendor integration plus vendor library, it would
 be necessary to adjust the instructions provided in the neutron_plugin file to pull the
