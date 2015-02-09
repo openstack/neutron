@@ -146,7 +146,7 @@ class SdnveNeutronAgent(object):
             if out_of_band:
                 LOG.debug("info_update received. New controller"
                           "is set to be out of band")
-                self.int_br.set_db_attribute("controller",
+                self.int_br.set_db_attribute("Controller",
                                              self.int_bridge_name,
                                              "connection-mode",
                                              "out-of-band")
@@ -175,7 +175,7 @@ class SdnveNeutronAgent(object):
         if controller_ip:
             int_br.set_controller(["tcp:" + controller_ip])
         if out_of_band:
-            int_br.set_db_attribute("controller", bridge_name,
+            int_br.set_db_attribute("Controller", bridge_name,
                                     "connection-mode", "out-of-band")
 
         return int_br

@@ -155,7 +155,7 @@ class OVSBridge(BaseOVS):
             check_error=True)
 
     def set_protocols(self, protocols):
-        self.set_db_attribute('bridge', self.br_name, 'protocols', protocols,
+        self.set_db_attribute('Bridge', self.br_name, 'protocols', protocols,
                               check_error=True)
 
     def create(self):
