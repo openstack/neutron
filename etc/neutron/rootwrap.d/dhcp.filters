@@ -32,4 +32,5 @@ kill_metadata7: KillFilter, root, python2.7, -9
 
 # ip_lib
 ip: IpFilter, ip, root
+find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -printf, %.*
 ip_exec: IpNetnsExecFilter, ip, root
