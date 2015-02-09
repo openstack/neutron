@@ -57,7 +57,9 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import portbindings
+from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as provider
+from neutron.extensions import securitygroup as ext_sg
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 from neutron.openstack.common import uuidutils
@@ -900,17 +902,39 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # the fact that an error occurred.
             LOG.error(_LE("mechanism_manager.delete_subnet_postcommit failed"))
 
+    # TODO(yalei) - will be simplified after security group and address pair be
+    # converted to ext driver too.
+    def _portsec_ext_port_create_processing(self, context, port_data, port):
+        attrs = port[attributes.PORT]
+        port_security = ((port_data.get(psec.PORTSECURITY) is None) or
+                         port_data[psec.PORTSECURITY])
+
+        # allowed address pair checks
+        if attributes.is_attr_set(attrs.get(addr_pair.ADDRESS_PAIRS)):
+            if not port_security:
+                raise addr_pair.AddressPairAndPortSecurityRequired()
+        else:
+            # remove ATTR_NOT_SPECIFIED
+            attrs[addr_pair.ADDRESS_PAIRS] = []
+
+        if port_security:
+            self._ensure_default_security_group_on_port(context, port)
+        elif attributes.is_attr_set(attrs.get(ext_sg.SECURITYGROUPS)):
+            raise psec.PortSecurityAndIPRequiredForSecurityGroups()
+
     def _create_port_db(self, context, port):
         attrs = port[attributes.PORT]
         attrs['status'] = const.PORT_STATUS_DOWN
 
         session = context.session
         with session.begin(subtransactions=True):
-            self._ensure_default_security_group_on_port(context, port)
-            sgids = self._get_security_groups_on_port(context, port)
             dhcp_opts = attrs.get(edo_ext.EXTRADHCPOPTS, [])
             result = super(Ml2Plugin, self).create_port(context, port)
             self.extension_manager.process_create_port(context, attrs, result)
+            self._portsec_ext_port_create_processing(context, result, port)
+
+            # sgids must be got after portsec checked with security group
+            sgids = self._get_security_groups_on_port(context, port)
             self._process_port_create_security_group(context, result, sgids)
             network = self.get_network(context, result['network_id'])
             binding = db.add_port_binding(session, result['id'])
@@ -987,6 +1011,47 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                           resource_ids)
                 self._delete_objects(context, attributes.PORT, objects)
 
+    # TODO(yalei) - will be simplified after security group and address pair be
+    # converted to ext driver too.
+    def _portsec_ext_port_update_processing(self, updated_port, context, port,
+                                            id):
+        port_security = ((updated_port.get(psec.PORTSECURITY) is None) or
+                         updated_port[psec.PORTSECURITY])
+
+        if port_security:
+            return
+
+        # check the address-pairs
+        if self._check_update_has_allowed_address_pairs(port):
+            #  has address pairs in request
+            raise addr_pair.AddressPairAndPortSecurityRequired()
+        elif (not
+         self._check_update_deletes_allowed_address_pairs(port)):
+            # not a request for deleting the address-pairs
+            updated_port[addr_pair.ADDRESS_PAIRS] = (
+                    self.get_allowed_address_pairs(context, id))
+
+            # check if address pairs has been in db, if address pairs could
+            # be put in extension driver, we can refine here.
+            if updated_port[addr_pair.ADDRESS_PAIRS]:
+                raise addr_pair.AddressPairAndPortSecurityRequired()
+
+        # checks if security groups were updated adding/modifying
+        # security groups, port security is set
+        if self._check_update_has_security_groups(port):
+            raise psec.PortSecurityAndIPRequiredForSecurityGroups()
+        elif (not
+          self._check_update_deletes_security_groups(port)):
+            # Update did not have security groups passed in. Check
+            # that port does not have any security groups already on it.
+            filters = {'port_id': [id]}
+            security_groups = (
+                super(Ml2Plugin, self)._get_port_security_group_bindings(
+                        context, filters)
+                     )
+            if security_groups:
+                raise psec.PortSecurityPortHasSecurityGroup()
+
     def update_port(self, context, id, port):
         attrs = port[attributes.PORT]
         need_port_update_notify = False
@@ -1009,6 +1074,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                               port)
             self.extension_manager.process_update_port(context, attrs,
                                                        updated_port)
+            self._portsec_ext_port_update_processing(updated_port, context,
+                                                     port, id)
+
+            if (psec.PORTSECURITY in attrs) and (
+                        original_port[psec.PORTSECURITY] !=
+                        updated_port[psec.PORTSECURITY]):
+                need_port_update_notify = True
+
             if addr_pair.ADDRESS_PAIRS in attrs:
                 need_port_update_notify |= (
                     self.update_address_pairs_on_port(context, id, port,

@@ -1213,12 +1213,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         self.firewall.prepare_port_filter(port_prepare)
         self.firewall.update_port_filter(port_update)
         self.firewall.remove_port_filter(port_update)
-        chain_applies.assert_has_calls([mock.call.remove({}),
-                                        mock.call.setup({'d1': port_prepare}),
-                                        mock.call.remove({'d1': port_prepare}),
-                                        mock.call.setup({'d1': port_update}),
-                                        mock.call.remove({'d1': port_update}),
-                                        mock.call.setup({})])
+        chain_applies.assert_has_calls([mock.call.remove({}, {}),
+                                mock.call.setup({'d1': port_prepare}, {}),
+                                mock.call.remove({'d1': port_prepare}, {}),
+                                mock.call.setup({'d1': port_update}, {}),
+                                mock.call.remove({'d1': port_update}, {}),
+                                mock.call.setup({}, {})])
 
     def test_defer_chain_apply_need_pre_defer_copy(self):
         chain_applies = self._mock_chain_applies()
@@ -1227,10 +1227,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         self.firewall.prepare_port_filter(port)
         with self.firewall.defer_apply():
             self.firewall.remove_port_filter(port)
-        chain_applies.assert_has_calls([mock.call.remove({}),
-                                        mock.call.setup(device2port),
-                                        mock.call.remove(device2port),
-                                        mock.call.setup({})])
+        chain_applies.assert_has_calls([mock.call.remove({}, {}),
+                                        mock.call.setup(device2port, {}),
+                                        mock.call.remove(device2port, {}),
+                                        mock.call.setup({}, {})])
 
     def test_defer_chain_apply_coalesce_simple(self):
         chain_applies = self._mock_chain_applies()
@@ -1239,8 +1239,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             self.firewall.prepare_port_filter(port)
             self.firewall.update_port_filter(port)
             self.firewall.remove_port_filter(port)
-        chain_applies.assert_has_calls([mock.call.remove({}),
-                                        mock.call.setup({})])
+        chain_applies.assert_has_calls([mock.call.remove({}, {}),
+                                        mock.call.setup({}, {})])
 
     def test_defer_chain_apply_coalesce_multiple_ports(self):
         chain_applies = self._mock_chain_applies()
@@ -1250,8 +1250,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         with self.firewall.defer_apply():
             self.firewall.prepare_port_filter(port1)
             self.firewall.prepare_port_filter(port2)
-        chain_applies.assert_has_calls([mock.call.remove({}),
-                                        mock.call.setup(device2port)])
+        chain_applies.assert_has_calls([mock.call.remove({}, {}),
+                                        mock.call.setup(device2port, {})])
 
     def test_ip_spoofing_filter_with_multiple_ips(self):
         port = {'device': 'tapfake_dev',
@@ -1642,6 +1642,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         port = self._fake_port()
         self.firewall.filtered_ports['tapfake_dev'] = port
         self.firewall._pre_defer_filtered_ports = {}
+        self.firewall._pre_defer_unfiltered_ports = {}
         self.firewall.filter_defer_apply_off()
         calls = [mock.call.destroy('fake_sgid', 'IPv4')]
 
