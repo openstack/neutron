@@ -262,7 +262,7 @@ class TestOVSInterfaceDriver(TestBase):
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br:
             ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('tap0')
-            ovs_br.assert_has_calls([mock.call(bridge, 'sudo'),
+            ovs_br.assert_has_calls([mock.call(bridge),
                                      mock.call().delete_port('tap0')])
 
 
@@ -336,7 +336,7 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br:
             ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('ns-0', bridge=bridge)
-            ovs_br.assert_has_calls([mock.call(bridge, 'sudo'),
+            ovs_br.assert_has_calls([mock.call(bridge),
                                      mock.call().delete_port('tap0')])
         self.ip_dev.assert_has_calls([mock.call('ns-0', 'sudo', None),
                                       mock.call().link.delete()])

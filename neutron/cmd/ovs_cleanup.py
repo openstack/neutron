@@ -49,27 +49,26 @@ def setup_conf():
     conf.register_opts(interface.OPTS)
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_use_namespaces_opts_helper(conf)
-    agent_config.register_root_helper(conf)
     return conf
 
 
-def collect_neutron_ports(bridges, root_helper):
+def collect_neutron_ports(bridges):
     """Collect ports created by Neutron from OVS."""
     ports = []
     for bridge in bridges:
-        ovs = ovs_lib.OVSBridge(bridge, root_helper)
+        ovs = ovs_lib.OVSBridge(bridge)
         ports += [port.port_name for port in ovs.get_vif_ports()]
     return ports
 
 
-def delete_neutron_ports(ports, root_helper):
+def delete_neutron_ports(ports):
     """Delete non-internal ports created by Neutron
 
     Non-internal OVS ports need to be removed manually.
     """
     for port in ports:
         if ip_lib.device_exists(port):
-            device = ip_lib.IPDevice(port, root_helper)
+            device = ip_lib.IPDevice(port)
             device.link.delete()
             LOG.info(_LI("Deleting port: %s"), port)
 
@@ -86,7 +85,7 @@ def main():
 
     configuration_bridges = set([conf.ovs_integration_bridge,
                                  conf.external_network_bridge])
-    ovs = ovs_lib.BaseOVS(conf.AGENT.root_helper)
+    ovs = ovs_lib.BaseOVS()
     ovs_bridges = set(ovs.get_bridges())
     available_configuration_bridges = configuration_bridges & ovs_bridges
 
@@ -98,15 +97,14 @@ def main():
     # Collect existing ports created by Neutron on configuration bridges.
     # After deleting ports from OVS bridges, we cannot determine which
     # ports were created by Neutron, so port information is collected now.
-    ports = collect_neutron_ports(available_configuration_bridges,
-                                  conf.AGENT.root_helper)
+    ports = collect_neutron_ports(available_configuration_bridges)
 
     for bridge in bridges:
         LOG.info(_LI("Cleaning bridge: %s"), bridge)
-        ovs = ovs_lib.OVSBridge(bridge, conf.AGENT.root_helper)
+        ovs = ovs_lib.OVSBridge(bridge)
         ovs.delete_ports(all_ports=conf.ovs_all_ports)
 
     # Remove remaining ports created by Neutron (usually veth pair)
-    delete_neutron_ports(ports, conf.AGENT.root_helper)
+    delete_neutron_ports(ports)
 
     LOG.info(_LI("OVS cleanup completed successfully"))

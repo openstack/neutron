@@ -59,8 +59,7 @@ class Transaction(ovsdb.Transaction):
         full_args = ["ovs-vsctl"] + self.opts + args
         try:
             # We log our own errors, so never have utils.execute do it
-            return utils.execute(full_args,
-                                 root_helper=self.context.root_helper,
+            return utils.execute(full_args, run_as_root=True,
                                  log_fail_as_error=False).rstrip()
         except Exception:
             with excutils.save_and_reraise_exception() as ctxt:

@@ -126,7 +126,7 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
     def setUp(self):
         super(BaseOVSLinuxTestCase, self).setUp()
         self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
-        self.ovs = ovs_lib.BaseOVS(self.root_helper)
+        self.ovs = ovs_lib.BaseOVS()
         self.ip = ip_lib.IPWrapper(self.root_helper)
 
     def create_ovs_bridge(self, br_prefix=BR_PREFIX):
@@ -135,7 +135,7 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
         return br
 
     def get_ovs_bridge(self, br_name):
-        return ovs_lib.OVSBridge(br_name, self.root_helper)
+        return ovs_lib.OVSBridge(br_name)
 
     def create_ovs_port_in_ns(self, br, ns):
         def create_port(name):

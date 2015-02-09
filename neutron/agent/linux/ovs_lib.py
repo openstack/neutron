@@ -96,14 +96,13 @@ class VifPort(object):
 
 class BaseOVS(object):
 
-    def __init__(self, root_helper):
-        self.root_helper = root_helper
+    def __init__(self):
         self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
         self.ovsdb = ovsdb.API.get(self)
 
     def add_bridge(self, bridge_name):
         self.ovsdb.add_br(bridge_name).execute()
-        return OVSBridge(bridge_name, self.root_helper)
+        return OVSBridge(bridge_name)
 
     def delete_bridge(self, bridge_name):
         self.ovsdb.del_br(bridge_name).execute()
@@ -138,8 +137,8 @@ class BaseOVS(object):
 
 
 class OVSBridge(BaseOVS):
-    def __init__(self, br_name, root_helper):
-        super(OVSBridge, self).__init__(root_helper)
+    def __init__(self, br_name):
+        super(OVSBridge, self).__init__()
         self.br_name = br_name
 
     def set_controller(self, controllers):
@@ -199,7 +198,7 @@ class OVSBridge(BaseOVS):
     def run_ofctl(self, cmd, args, process_input=None):
         full_args = ["ovs-ofctl", cmd, self.br_name] + args
         try:
-            return utils.execute(full_args, root_helper=self.root_helper,
+            return utils.execute(full_args, run_as_root=True,
                                  process_input=process_input)
         except Exception as e:
             LOG.error(_LE("Unable to execute %(cmd)s. Exception: "
@@ -294,7 +293,7 @@ class OVSBridge(BaseOVS):
         args = ["xe", "vif-param-get", "param-name=other-config",
                 "param-key=nicira-iface-id", "uuid=%s" % xs_vif_uuid]
         try:
-            return utils.execute(args, root_helper=self.root_helper).strip()
+            return utils.execute(args, run_as_root=True).strip()
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 LOG.error(_LE("Unable to execute %(cmd)s. "
@@ -398,7 +397,7 @@ class OVSBridge(BaseOVS):
 
     def get_local_port_mac(self):
         """Retrieve the mac of the bridge's local port."""
-        address = ip_lib.IPDevice(self.br_name, self.root_helper).link.address
+        address = ip_lib.IPDevice(self.br_name).link.address
         if address:
             return address
         else:
