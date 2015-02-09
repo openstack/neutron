@@ -15,7 +15,6 @@
 
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
-from sqlalchemy import sql
 
 from neutron.common import constants as const
 from neutron.db import agents_db
@@ -56,7 +55,7 @@ class L2populationDbMixin(base_db.CommonDbMixin):
                                      l2_const.SUPPORTED_AGENT_TYPES))
             return query.first()
 
-    def get_network_ports(self, session, network_id):
+    def _get_active_network_ports(self, session, network_id):
         with session.begin(subtransactions=True):
             query = session.query(ml2_models.PortBinding,
                                   agents_db.Agent)
@@ -65,17 +64,18 @@ class L2populationDbMixin(base_db.CommonDbMixin):
                                ml2_models.PortBinding.host)
             query = query.join(models_v2.Port)
             query = query.filter(models_v2.Port.network_id == network_id,
-                                 models_v2.Port.admin_state_up == sql.true(),
+                                 models_v2.Port.status ==
+                                 const.PORT_STATUS_ACTIVE,
                                  agents_db.Agent.agent_type.in_(
                                      l2_const.SUPPORTED_AGENT_TYPES))
             return query
 
-    def get_nondvr_network_ports(self, session, network_id):
-        query = self.get_network_ports(session, network_id)
+    def get_nondvr_active_network_ports(self, session, network_id):
+        query = self._get_active_network_ports(session, network_id)
         return query.filter(models_v2.Port.device_owner !=
                             const.DEVICE_OWNER_DVR_INTERFACE)
 
-    def get_dvr_network_ports(self, session, network_id):
+    def get_dvr_active_network_ports(self, session, network_id):
         with session.begin(subtransactions=True):
             query = session.query(ml2_models.DVRPortBinding,
                                   agents_db.Agent)
@@ -84,7 +84,8 @@ class L2populationDbMixin(base_db.CommonDbMixin):
                                ml2_models.DVRPortBinding.host)
             query = query.join(models_v2.Port)
             query = query.filter(models_v2.Port.network_id == network_id,
-                                 models_v2.Port.admin_state_up == sql.true(),
+                                 models_v2.Port.status ==
+                                 const.PORT_STATUS_ACTIVE,
                                  models_v2.Port.device_owner ==
                                  const.DEVICE_OWNER_DVR_INTERFACE,
                                  agents_db.Agent.agent_type.in_(

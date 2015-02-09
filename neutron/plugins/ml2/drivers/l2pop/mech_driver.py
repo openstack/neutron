@@ -185,9 +185,9 @@ class L2populationMechanismDriver(api.MechanismDriver,
                               'network_type': segment['network_type'],
                               'ports': {}}}
         tunnel_network_ports = (
-            self.get_dvr_network_ports(session, network_id).all())
+            self.get_dvr_active_network_ports(session, network_id).all())
         fdb_network_ports = (
-            self.get_nondvr_network_ports(session, network_id).all())
+            self.get_nondvr_active_network_ports(session, network_id).all())
         ports = agent_fdb_entries[network_id]['ports']
         ports.update(self._get_tunnels(
             fdb_network_ports + tunnel_network_ports,
