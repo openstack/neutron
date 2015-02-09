@@ -121,13 +121,6 @@ class OpenDaylightMechanismTestPortsV2(test_plugin.TestPortsV2,
     pass
 
 
-class AuthMatcher(object):
-
-    def __eq__(self, obj):
-        return (obj.username == config.cfg.CONF.ml2_odl.username and
-                obj.password == config.cfg.CONF.ml2_odl.password)
-
-
 class DataMatcher(object):
 
     def __init__(self, operation, object_type, context):
@@ -251,7 +244,9 @@ class OpenDaylightMechanismDriverTestCase(base.BaseTestCase):
             else:
                 method(context)
         mock_method.assert_called_once_with(
-            headers={'Content-Type': 'application/json'}, auth=AuthMatcher(),
+            headers={'Content-Type': 'application/json'},
+            auth=(config.cfg.CONF.ml2_odl.username,
+                  config.cfg.CONF.ml2_odl.password),
             timeout=config.cfg.CONF.ml2_odl.timeout, *args, **kwargs)
 
     def _test_create_resource_postcommit(self, object_type, status_code,

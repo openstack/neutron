@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import time
-
 from oslo.config import cfg
 import requests
 
@@ -63,58 +61,6 @@ class OpendaylightAuthError(n_exc.NeutronException):
     message = '%(msg)s'
 
 
-class JsessionId(requests.auth.AuthBase):
-
-    """Attaches the JSESSIONID and JSESSIONIDSSO cookies to an HTTP Request.
-
-    If the cookies are not available or when the session expires, a new
-    set of cookies are obtained.
-    """
-
-    def __init__(self, url, username, password):
-        """Initialization function for JsessionId."""
-
-        # NOTE(kmestery) The 'limit' paramater is intended to limit how much
-        # data is returned from ODL. This is not implemented in the Hydrogen
-        # release of OpenDaylight, but will be implemented in the Helium
-        # timeframe. Hydrogen will silently ignore this value.
-        self.url = str(url) + '/' + ODL_NETWORKS + '?limit=1'
-        self.username = username
-        self.password = password
-        self.auth_cookies = None
-        self.last_request = None
-        self.expired = None
-        self.session_timeout = cfg.CONF.ml2_odl.session_timeout * 60
-        self.session_deadline = 0
-
-    def obtain_auth_cookies(self):
-        """Make a REST call to obtain cookies for ODL authenticiation."""
-
-        try:
-            r = requests.get(self.url, auth=(self.username, self.password))
-            r.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise OpendaylightAuthError(msg="Failed to authenticate with "
-                                        "OpenDaylight: %s" % e)
-        except requests.exceptions.Timeout as e:
-            raise OpendaylightAuthError(msg="Authentication Timed Out: %s" % e)
-
-        jsessionid = r.cookies.get('JSESSIONID')
-        jsessionidsso = r.cookies.get('JSESSIONIDSSO')
-        if jsessionid and jsessionidsso:
-            self.auth_cookies = dict(JSESSIONID=jsessionid,
-                                     JSESSIONIDSSO=jsessionidsso)
-
-    def __call__(self, r):
-        """Verify timestamp for Tomcat session timeout."""
-
-        if time.time() > self.session_deadline:
-            self.obtain_auth_cookies()
-        self.session_deadline = time.time() + self.session_timeout
-        r.prepare_cookies(self.auth_cookies)
-        return r
-
-
 class OpenDaylightMechanismDriver(api.MechanismDriver):
 
     """Mechanism Driver for OpenDaylight.
@@ -135,7 +81,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         for opt in required_opts:
             if not getattr(self, opt):
                 raise cfg.RequiredOptError(opt, 'ml2_odl')
-        self.auth = JsessionId(self.url, self.username, self.password)
+        self.auth = (self.username, self.password)
         self.vif_type = portbindings.VIF_TYPE_OVS
         self.vif_details = {portbindings.CAP_PORT_FILTER: True}
 
