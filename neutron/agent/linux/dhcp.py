@@ -486,8 +486,6 @@ class Dnsmasq(DhcpLocalProcess):
                 if getattr(port, 'extra_dhcp_opts', False):
                     buf.write('%s,%s%s\n' %
                               (port.mac_address, 'set:', port.id))
-                    LOG.debug('Adding %(mac)s : set:%(tag)s',
-                              {"mac": port.mac_address, "tag": port.id})
                 continue
 
             # don't write ip address which belongs to a dhcp disabled subnet.
@@ -505,19 +503,13 @@ class Dnsmasq(DhcpLocalProcess):
                 buf.write('%s,%s,%s,%s%s\n' %
                           (port.mac_address, name, ip_address,
                            'set:', port.id))
-                LOG.debug('Adding %(mac)s : %(name)s : %(ip)s : '
-                          'set:%(tag)s',
-                          {"mac": port.mac_address, "name": name,
-                           "ip": ip_address, "tag": port.id})
             else:
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
-                LOG.debug('Adding %(mac)s : %(name)s : %(ip)s',
-                          {"mac": port.mac_address, "name": name,
-                           "ip": ip_address})
 
         utils.replace_file(filename, buf.getvalue())
-        LOG.debug('Done building host file %s', filename)
+        LOG.debug('Done building host file %s with contents:\n%s', filename,
+                  buf.getvalue())
         return filename
 
     def _read_hosts_file_leases(self, filename):
