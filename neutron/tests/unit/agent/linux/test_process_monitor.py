@@ -47,7 +47,6 @@ class BaseTestProcessMonitor(base.BaseTestCase):
         conf.AGENT.check_child_processes = True
         self.pmonitor = external_process.ProcessMonitor(
             config=conf,
-            root_helper=None,
             resource_type='test')
 
     def get_monitored_process_manager(self, uuid, service=None):

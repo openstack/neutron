@@ -38,7 +38,6 @@ class KeepalivedManagerTestCase(functional_base.BaseSudoTestCase,
         process = external_process.ProcessManager(
             cfg.CONF,
             'router1',
-            self.root_helper,
             namespace=None,
             pids_path=cfg.CONF.state_path)
         self.assertTrue(process.active)

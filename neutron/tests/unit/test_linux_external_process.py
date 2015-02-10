@@ -66,7 +66,7 @@ class TestProcessManager(base.BaseTestCase):
                     manager.enable(callback)
                     callback.assert_called_once_with('pidfile')
                     ip_lib.assert_has_calls([
-                        mock.call.IPWrapper('sudo', 'ns'),
+                        mock.call.IPWrapper(namespace='ns'),
                         mock.call.IPWrapper().netns.execute(['the', 'cmd'],
                                                             addl_env=None)])
 
@@ -87,10 +87,12 @@ class TestProcessManager(base.BaseTestCase):
             pid.__get__ = mock.Mock(return_value=4)
             with mock.patch.object(ep.ProcessManager, 'active') as active:
                 active.__get__ = mock.Mock(return_value=True)
-
                 manager = ep.ProcessManager(self.conf, 'uuid')
-                manager.disable()
-                self.execute(['kill', '-9', 4], 'sudo')
+
+                with mock.patch.object(ep, 'utils') as utils:
+                    manager.disable()
+                    utils.assert_has_calls(
+                        mock.call.execute(['kill', '-9', 4], run_as_root=True))
 
     def test_disable_namespace(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -103,7 +105,7 @@ class TestProcessManager(base.BaseTestCase):
                 with mock.patch.object(ep, 'utils') as utils:
                     manager.disable()
                     utils.assert_has_calls(
-                        mock.call.execute(['kill', '-9', 4], 'sudo'))
+                        mock.call.execute(['kill', '-9', 4], run_as_root=True))
 
     def test_disable_not_active(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:

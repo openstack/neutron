@@ -152,7 +152,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         self.process_monitor = external_process.ProcessMonitor(
             config=self.conf,
-            root_helper=self.root_helper,
             resource_type='router')
 
         try:

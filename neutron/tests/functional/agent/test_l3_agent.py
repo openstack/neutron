@@ -132,7 +132,6 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         pm = external_process.ProcessManager(
             conf,
             router.router_id,
-            self.root_helper,
             router.ns_name)
         return pm.active
 

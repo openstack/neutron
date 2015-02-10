@@ -1165,7 +1165,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           service=process,
                           default_cmd_callback=mock.ANY,
                           namespace=ri.ns_name,
-                          root_helper=self.conf.AGENT.root_helper,
                           conf=self.conf,
                           pid_file=None,
                           cmd_addl_env=None)]

@@ -564,7 +564,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def _process_manager_constructor_call(self):
         return mock.call(conf=cfg.CONF,
                         uuid=FAKE_NETWORK_UUID,
-                        root_helper='sudo',
                         namespace=FAKE_NETWORK_DHCP_NS,
                         service=None,
                         default_cmd_callback=mock.ANY,
