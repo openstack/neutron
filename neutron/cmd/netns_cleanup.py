@@ -81,7 +81,6 @@ def _get_dhcp_process_monitor(config):
 
 def kill_dhcp(conf, namespace):
     """Disable DHCP for a network if DHCP is still active."""
-    root_helper = agent_config.get_root_helper(conf)
     network_id = namespace.replace(dhcp.NS_PREFIX, '')
 
     dhcp_driver = importutils.import_object(
@@ -89,7 +88,6 @@ def kill_dhcp(conf, namespace):
         conf=conf,
         process_monitor=_get_dhcp_process_monitor(conf),
         network=dhcp.NetModel(conf.use_namespaces, {'id': network_id}),
-        root_helper=root_helper,
         plugin=FakeDhcpPlugin())
 
     if dhcp_driver.active:

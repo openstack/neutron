@@ -600,7 +600,7 @@ class TestDhcpBase(TestBase):
     def test_existing_dhcp_networks_abstract_error(self):
         self.assertRaises(NotImplementedError,
                           dhcp.DhcpBase.existing_dhcp_networks,
-                          None, None)
+                          None)
 
     def test_check_version_abstract_error(self):
         self.assertRaises(NotImplementedError,
@@ -676,7 +676,7 @@ class TestDhcpLocalProcess(TestBase):
             lp.enable()
 
             self.mock_mgr.assert_has_calls(
-                [mock.call(self.conf, 'sudo', None),
+                [mock.call(self.conf, None),
                  mock.call().setup(mock.ANY)])
             self.assertEqual(lp.called, ['spawn'])
             self.assertTrue(mocks['interface_name'].__set__.called)
@@ -719,7 +719,7 @@ class TestDhcpLocalProcess(TestBase):
                 lp.process_monitor.pid.return_value = 5
                 lp.disable()
 
-        self.mock_mgr.assert_has_calls([mock.call(self.conf, 'sudo', None),
+        self.mock_mgr.assert_has_calls([mock.call(self.conf, None),
                                         mock.call().destroy(network, 'tap0')])
 
         self.assertEqual(ip.return_value.netns.delete.call_count, 0)
@@ -1330,7 +1330,7 @@ class TestDnsmasq(TestBase):
                 mock_active.__get__ = active_fake
                 mock_listdir.return_value = cases.keys()
 
-                result = dhcp.Dnsmasq.existing_dhcp_networks(self.conf, 'sudo')
+                result = dhcp.Dnsmasq.existing_dhcp_networks(self.conf)
 
                 mock_listdir.assert_called_once_with(path)
                 self.assertEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',

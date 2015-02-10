@@ -33,7 +33,6 @@ class TestNetnsCleanup(base.BaseTestCase):
 
     def test_kill_dhcp(self, dhcp_active=True):
         conf = mock.Mock()
-        conf.AGENT.root_helper = 'sudo',
         conf.dhcp_driver = 'driver'
 
         method_to_patch = 'oslo_utils.importutils.import_object'
@@ -46,7 +45,6 @@ class TestNetnsCleanup(base.BaseTestCase):
             util.kill_dhcp(conf, 'ns')
 
             expected_params = {'conf': conf, 'network': mock.ANY,
-                               'root_helper': conf.AGENT.root_helper,
                                'plugin': mock.ANY,
                                'process_monitor': mock.ANY}
             import_object.assert_called_once_with('driver', **expected_params)
