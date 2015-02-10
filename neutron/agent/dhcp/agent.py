@@ -361,7 +361,7 @@ class DhcpAgent(manager.Manager):
 
     def disable_isolated_metadata_proxy(self, network):
         metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
-            self._process_monitor, network.id, network.namespace)
+            self._process_monitor, network.id, network.namespace, self.conf)
 
 
 class DhcpPluginApi(object):

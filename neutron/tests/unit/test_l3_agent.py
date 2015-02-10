@@ -214,6 +214,8 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.external_process_p = mock.patch(
             'neutron.agent.linux.external_process.ProcessManager')
         self.external_process = self.external_process_p.start()
+        self.process_monitor = mock.patch(
+            'neutron.agent.linux.external_process.ProcessMonitor').start()
 
         self.send_arp_p = mock.patch(
             'neutron.agent.linux.ip_lib.send_gratuitous_arp')
@@ -1070,32 +1072,24 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertFalse(nat_rules_delta)
         return ri
 
-    def _expected_call_lookup_ri_process_enabled(self, ri, process):
+    def _expected_call_lookup_ri_process(self, ri, process):
         """Expected call if a process is looked up in a router instance."""
         return [mock.call(uuid=ri.router['id'],
                           service=process,
                           default_cmd_callback=mock.ANY,
                           namespace=ri.ns_name,
-                          conf=self.conf,
-                          pid_file=None,
-                          cmd_addl_env=None)]
-
-    def _expected_call_lookup_ri_process_disabled(self, ri, process):
-        """Expected call if a process is looked up in a router instance."""
-        # The ProcessManager does already exist, and it's found via
-        # ProcessMonitor lookup _ensure_process_manager
-        return [mock.call().__nonzero__()]
+                          conf=mock.ANY)]
 
     def _assert_ri_process_enabled(self, ri, process):
         """Verify that process was enabled for a router instance."""
-        expected_calls = self._expected_call_lookup_ri_process_enabled(
+        expected_calls = self._expected_call_lookup_ri_process(
             ri, process)
         expected_calls.append(mock.call().enable(reload_cfg=True))
         self.assertEqual(expected_calls, self.external_process.mock_calls)
 
     def _assert_ri_process_disabled(self, ri, process):
         """Verify that process was disabled for a router instance."""
-        expected_calls = self._expected_call_lookup_ri_process_disabled(
+        expected_calls = self._expected_call_lookup_ri_process(
             ri, process)
         expected_calls.append(mock.call().disable())
         self.assertEqual(expected_calls, self.external_process.mock_calls)
@@ -1158,6 +1152,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._assert_ri_process_enabled(ri, 'radvd')
         # Reset the calls so we can check for disable radvd
         self.external_process.reset_mock()
+        self.process_monitor.reset_mock()
         # Remove the IPv6 interface and reprocess
         del router[l3_constants.INTERFACE_KEY][1]
         self._process_router_instance_for_agent(agent, ri, router)
@@ -1485,6 +1480,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 if enableflag:
                     destroy_proxy.assert_called_with(mock.ANY,
                                                      router_id,
+                                                     mock.ANY,
                                                      mock.ANY)
                 else:
                     self.assertFalse(destroy_proxy.call_count)

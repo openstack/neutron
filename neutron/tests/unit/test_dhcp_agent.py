@@ -557,15 +557,13 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def _process_manager_constructor_call(self):
         return mock.call(conf=cfg.CONF,
-                        uuid=FAKE_NETWORK_UUID,
-                        namespace=FAKE_NETWORK_DHCP_NS,
-                        service=None,
-                        default_cmd_callback=mock.ANY,
-                        pid_file=None,
-                        cmd_addl_env=None)
+                         uuid=FAKE_NETWORK_UUID,
+                         namespace=FAKE_NETWORK_DHCP_NS,
+                         default_cmd_callback=mock.ANY)
 
     def _enable_dhcp_helper(self, network, enable_isolated_metadata=False,
                             is_isolated_network=False):
+        self.dhcp._process_monitor = mock.Mock()
         if enable_isolated_metadata:
             cfg.CONF.set_override('enable_isolated_metadata', True)
         self.plugin.get_network_info.return_value = network
@@ -577,7 +575,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         if is_isolated_network:
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(),
-                mock.call().enable(reload_cfg=False)
+                mock.call().enable()
             ])
         else:
             self.assertFalse(self.external_process.call_count)
@@ -744,10 +742,11 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self._disable_dhcp_helper_driver_failure()
 
     def test_enable_isolated_metadata_proxy(self):
+        self.dhcp._process_monitor = mock.Mock()
         self.dhcp.enable_isolated_metadata_proxy(fake_network)
         self.external_process.assert_has_calls([
             self._process_manager_constructor_call(),
-            mock.call().enable(reload_cfg=False)
+            mock.call().enable()
         ])
 
     def test_disable_isolated_metadata_proxy(self):
@@ -757,7 +756,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp.disable_isolated_metadata_proxy(fake_network)
             destroy.assert_called_once_with(self.dhcp._process_monitor,
                                             fake_network.id,
-                                            fake_network.namespace)
+                                            fake_network.namespace,
+                                            cfg.CONF)
 
     def _test_metadata_network(self, network):
         cfg.CONF.set_override('enable_metadata_network', True)

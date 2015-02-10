@@ -23,13 +23,14 @@ import netaddr
 from oslo_utils import importutils
 import six
 
+from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
-from neutron.i18n import _LE, _LI
+from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
@@ -206,31 +207,37 @@ class DhcpLocalProcess(DhcpBase):
             self.interface_name = interface_name
             self.spawn_process()
 
+    def _get_process_manager(self, cmd_callback=None):
+        return external_process.ProcessManager(
+            conf=self.conf,
+            uuid=self.network.id,
+            namespace=self.network.namespace,
+            default_cmd_callback=cmd_callback,
+            pid_file=self.get_conf_file_name('pid'))
+
     def disable(self, retain_port=False):
         """Disable DHCP for this network by killing the local process."""
-        pid_filename = self.get_conf_file_name('pid')
-
-        pid = self.process_monitor.get_pid(uuid=self.network.id,
-                                           service=DNSMASQ_SERVICE_NAME,
-                                           pid_file=pid_filename)
-
-        self.process_monitor.disable(uuid=self.network.id,
-                                     namespace=self.network.namespace,
-                                     service=DNSMASQ_SERVICE_NAME,
-                                     pid_file=pid_filename)
-        if pid and not retain_port:
-            self.device_manager.destroy(self.network, self.interface_name)
+        self.process_monitor.unregister(self.network.id, DNSMASQ_SERVICE_NAME)
+        self._get_process_manager().disable()
 
         self._remove_config_files()
-
         if not retain_port:
-            if self.conf.dhcp_delete_namespaces and self.network.namespace:
-                ns_ip = ip_lib.IPWrapper(namespace=self.network.namespace)
-                try:
-                    ns_ip.netns.delete(self.network.namespace)
-                except RuntimeError:
-                    LOG.exception(_LE('Failed trying to delete namespace: %s'),
-                                  self.network.namespace)
+            self._destroy_namespace_and_port()
+
+    def _destroy_namespace_and_port(self):
+        try:
+            self.device_manager.destroy(self.network, self.interface_name)
+        except RuntimeError:
+            LOG.warning(_LW('Failed trying to delete interface: %s'),
+                        self.interface_name)
+
+        if self.conf.dhcp_delete_namespaces and self.network.namespace:
+            ns_ip = ip_lib.IPWrapper(namespace=self.network.namespace)
+            try:
+                ns_ip.netns.delete(self.network.namespace)
+            except RuntimeError:
+                LOG.warning(_LW('Failed trying to delete namespace: %s'),
+                            self.network.namespace)
 
     def _get_value_from_conf_file(self, kind, converter=None):
         """A helper function to read a value from one of the state files."""
@@ -260,10 +267,7 @@ class DhcpLocalProcess(DhcpBase):
 
     @property
     def active(self):
-        pid_filename = self.get_conf_file_name('pid')
-        return self.process_monitor.is_active(self.network.id,
-                                              DNSMASQ_SERVICE_NAME,
-                                              pid_file=pid_filename)
+        return self._get_process_manager().active
 
     @abc.abstractmethod
     def spawn_process(self):
@@ -383,15 +387,14 @@ class Dnsmasq(DhcpLocalProcess):
 
         self._output_config_files()
 
-        pid_filename = self.get_conf_file_name('pid')
+        pm = self._get_process_manager(
+            cmd_callback=self._build_cmdline_callback)
 
-        self.process_monitor.enable(
-            uuid=self.network.id,
-            cmd_callback=self._build_cmdline_callback,
-            namespace=self.network.namespace,
-            service=DNSMASQ_SERVICE_NAME,
-            reload_cfg=reload_with_HUP,
-            pid_file=pid_filename)
+        pm.enable(reload_cfg=reload_with_HUP)
+
+        self.process_monitor.register(uuid=self.network.id,
+                                      service_name=DNSMASQ_SERVICE_NAME,
+                                      monitored_process=pm)
 
     def _release_lease(self, mac_address, ip):
         """Release a DHCP lease."""

@@ -18,6 +18,7 @@ import netaddr
 from oslo_config import cfg
 import six
 
+from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.openstack.common import log as logging
@@ -90,6 +91,14 @@ class DaemonMonitor(object):
         utils.replace_file(radvd_conf, buf.getvalue())
         return radvd_conf
 
+    def _get_radvd_process_manager(self, callback=None):
+        return external_process.ProcessManager(
+            uuid=self._router_id,
+            default_cmd_callback=callback,
+            namespace=self._router_ns,
+            service=RADVD_SERVICE_NAME,
+            conf=cfg.CONF)
+
     def _spawn_radvd(self, radvd_conf):
         def callback(pid_file):
             # we need to use -m syslog and f.e. not -m stderr (the default)
@@ -103,11 +112,11 @@ class DaemonMonitor(object):
                          '-m', 'syslog']
             return radvd_cmd
 
-        self._process_monitor.enable(uuid=self._router_id,
-                                     cmd_callback=callback,
-                                     namespace=self._router_ns,
-                                     service=RADVD_SERVICE_NAME,
-                                     reload_cfg=True)
+        pm = self._get_radvd_process_manager(callback)
+        pm.enable(reload_cfg=True)
+        self._process_monitor.register(uuid=self._router_id,
+                                       service_name=RADVD_SERVICE_NAME,
+                                       monitored_process=pm)
         LOG.debug("radvd enabled for router %s", self._router_id)
 
     def enable(self, router_ports):
@@ -124,12 +133,13 @@ class DaemonMonitor(object):
         self._spawn_radvd(radvd_conf)
 
     def disable(self):
-        self._process_monitor.disable(self._router_id,
-                                      service=RADVD_SERVICE_NAME)
+        self._process_monitor.unregister(uuid=self._router_id,
+                                         service_name=RADVD_SERVICE_NAME)
+        pm = self._get_radvd_process_manager()
+        pm.disable()
         utils.remove_conf_files(cfg.CONF.ra_confs, self._router_id)
         LOG.debug("radvd disabled for router %s", self._router_id)
 
     @property
     def enabled(self):
-        return self._process_monitor.is_active(self._router_id,
-                                               RADVD_SERVICE_NAME)
+        return self._get_radvd_process_manager().active

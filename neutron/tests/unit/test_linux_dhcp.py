@@ -623,6 +623,9 @@ class TestBase(base.BaseTestCase):
         self.isdir = mock.patch('os.path.isdir').start()
         self.isdir.return_value = False
 
+        self.external_process = mock.patch(
+            'neutron.agent.linux.external_process.ProcessManager').start()
+
 
 class TestDhcpBase(TestBase):
 
@@ -711,6 +714,10 @@ class TestDhcpLocalProcess(TestBase):
             self.assertTrue(mocks['interface_name'].__set__.called)
             self.assertTrue(mocks['_ensure_network_conf_dir'].called)
 
+    def _assert_disabled(self, lp):
+        self.assertTrue(lp.process_monitor.unregister.called)
+        self.assertTrue(self.external_process().disable.called)
+
     def test_disable_not_active(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
                               ['active', 'interface_name']])
@@ -719,11 +726,11 @@ class TestDhcpLocalProcess(TestBase):
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             network = FakeDualNetwork()
             lp = LocalChild(self.conf, network)
-            lp.process_monitor.pid.return_value = 5
             lp.device_manager = mock.Mock()
             lp.disable()
             lp.device_manager.destroy.assert_called_once_with(
                 network, 'tap0')
+            self._assert_disabled(lp)
 
     def test_disable_retain_port(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
@@ -734,7 +741,7 @@ class TestDhcpLocalProcess(TestBase):
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             lp = LocalChild(self.conf, network)
             lp.disable(retain_port=True)
-            self.assertTrue(lp.process_monitor.disable.called)
+            self._assert_disabled(lp)
 
     def test_disable(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
@@ -745,8 +752,9 @@ class TestDhcpLocalProcess(TestBase):
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             lp = LocalChild(self.conf, network)
             with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip:
-                lp.process_monitor.pid.return_value = 5
                 lp.disable()
+
+            self._assert_disabled(lp)
 
         self.mock_mgr.assert_has_calls([mock.call(self.conf, None),
                                         mock.call().destroy(network, 'tap0')])
@@ -761,8 +769,9 @@ class TestDhcpLocalProcess(TestBase):
             mocks['active'].__get__ = mock.Mock(return_value=False)
             lp = LocalChild(self.conf, FakeDualNetwork())
             with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip:
-                lp.process_monitor.pid.return_value = 5
                 lp.disable()
+
+            self._assert_disabled(lp)
 
         ip.return_value.netns.delete.assert_called_with('qdhcp-ns')
 
@@ -865,15 +874,11 @@ class TestDnsmasq(TestBase):
             dm.spawn_process()
             self.assertTrue(mocks['_output_opts_file'].called)
 
-            test_pm.enable.assert_called_once_with(
-                uuid=network.id,
-                service='dnsmasq',
-                namespace='qdhcp-ns',
-                cmd_callback=mock.ANY,
-                reload_cfg=False,
-                pid_file=expected_pid_file)
-            call_kwargs = test_pm.method_calls[0][2]
-            cmd_callback = call_kwargs['cmd_callback']
+            self.assertTrue(test_pm.register.called)
+            self.external_process().enable.assert_called_once_with(
+                reload_cfg=False)
+            call_kwargs = self.external_process.mock_calls[0][2]
+            cmd_callback = call_kwargs['default_cmd_callback']
 
             result_cmd = cmd_callback(expected_pid_file)
 
@@ -1261,12 +1266,9 @@ class TestDnsmasq(TestBase):
             test_pm = mock.Mock()
             dm = self._get_dnsmasq(FakeDualNetwork(), test_pm)
             dm.reload_allocations()
-            test_pm.enable.assert_has_calls([mock.call(uuid=mock.ANY,
-                                             cmd_callback=mock.ANY,
-                                             namespace=mock.ANY,
-                                             service=mock.ANY,
-                                             reload_cfg=True,
-                                             pid_file=mock.ANY)])
+            self.assertTrue(test_pm.register.called)
+            self.external_process().enable.assert_called_once_with(
+                reload_cfg=True)
 
             self.safe.assert_has_calls([
                 mock.call(exp_host_name, exp_host_data),

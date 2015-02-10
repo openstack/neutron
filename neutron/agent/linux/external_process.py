@@ -12,8 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
 import collections
 import os.path
+import six
 
 import eventlet
 from oslo_concurrency import lockutils
@@ -40,7 +42,18 @@ cfg.CONF.register_opts(OPTS)
 agent_cfg.register_process_monitor_opts(cfg.CONF)
 
 
-class ProcessManager(object):
+@six.add_metaclass(abc.ABCMeta)
+class MonitoredProcess(object):
+    @abc.abstractproperty
+    def active(self):
+        """Boolean representing the running state of the process."""
+
+    @abc.abstractmethod
+    def enable(self):
+        """Enable the service, or respawn the process."""
+
+
+class ProcessManager(MonitoredProcess):
     """An external process manager for Neutron spawned processes.
 
     Note: The manager expects uuid to be in cmdline.
@@ -140,118 +153,57 @@ class ProcessMonitor(object):
         self._config = config
         self._resource_type = resource_type
 
-        self._process_managers = {}
+        self._monitored_processes = {}
 
         if self._config.AGENT.check_child_processes_interval:
             self._spawn_checking_thread()
 
-    def enable(self, uuid, cmd_callback, namespace=None, service=None,
-               reload_cfg=False, cmd_addl_env=None, pid_file=None):
-        """Creates a process manager and ensures that it is monitored.
+    def register(self, uuid, service_name, monitored_process):
+        """Start monitoring a process.
 
-        It will create a new ProcessManager and tie it to the uuid/service
-        with the new settings, replacing the old one if it existed already.
+        The given monitored_process will be tied to it's uuid+service_name
+        replacing the old one if it existed already.
 
-        :param uuid: UUID of the resource this process will serve for.
-        :param cmd_callback: Callback function that receives a pid_file
-                             location and returns a list with the command
-                             and arguments.
-        :param namespace: network namespace to run the process in, if
-                          necessary.
-        :param service: a logical name for the service this process provides,
-                        it will extend the pid file like pid.%(service)s.
-        :param reload_cfg: if the process is active send a HUP signal
-                           for configuration reload, otherwise spawn it
-                           normally.
-        :param cmd_addl_env: additional environment variables for the
-                             spawned process.
-        :param pid_file: the pid file to store the pid of the external
-                         process. If not provided, a default will be used.
+        The monitored_process should be enabled before registration,
+        otherwise ProcessMonitor could try to enable the process itself,
+        which could lead to double enable and if unlucky enough, two processes
+        running, and also errors in the logs.
+
+        :param uuid: An ID of the resource for which the process is running.
+        :param service_name: A logical service name for this process monitor,
+                             so the same uuid provided via process manager
+                             can reference several different services.
+        :param monitored_process: MonitoredProcess we want to monitor.
         """
-        process_manager = self._create_process_manager(
-            uuid=uuid,
-            cmd_callback=cmd_callback,
-            namespace=namespace,
-            service=service,
-            cmd_addl_env=cmd_addl_env,
-            pid_file=pid_file)
 
-        process_manager.enable(reload_cfg=reload_cfg)
-        service_id = ServiceId(uuid, service)
+        service_id = ServiceId(uuid, service_name)
+        self._monitored_processes[service_id] = monitored_process
 
-        # replace the old process manager with the new one
-        self._process_managers[service_id] = process_manager
+    def unregister(self, uuid, service_name):
+        """Stop monitoring a process.
 
-    def disable(self, uuid, namespace=None, service=None,
-                pid_file=None):
-        """Disables the process and stops monitoring it."""
-        service_id = ServiceId(uuid, service)
+        The uuid+service_name will be removed from the monitored processes.
 
-        process_manager = self._ensure_process_manager(
-            uuid=uuid,
-            service=service,
-            pid_file=pid_file,
-            namespace=namespace)
-        self._process_managers.pop(service_id, None)
+        The service must be disabled **after** unregistering, otherwise if
+        process monitor checks after you disable the process, and before
+        you unregister it, the process will be respawned, and left orphaned
+        into the system.
 
-        process_manager.disable()
+        :param uuid: An ID of the resource for which the process is running.
+        :param service_name: A logical service name for this process monitor,
+                             so the same uuid provided via process manager
+                             can reference several different services.
+        """
 
-    def disable_all(self):
-        for service_id in self._process_managers.keys():
-            self.disable(uuid=service_id.uuid, service=service_id.service)
+        service_id = ServiceId(uuid, service_name)
+        self._monitored_processes.pop(service_id, None)
 
-    def get_process_manager(self, uuid, service=None):
-        """Returns a process manager for manipulation"""
-        service_id = ServiceId(uuid, service)
-        return self._process_managers.get(service_id)
-
-    def is_active(self, uuid, service=None, pid_file=None):
-        return self._ensure_process_manager(
-            uuid=uuid,
-            service=service,
-            pid_file=pid_file).active
-
-    def get_pid(self, uuid, service=None, pid_file=None):
-        return self._ensure_process_manager(
-            uuid=uuid,
-            service=service,
-            pid_file=pid_file).pid
-
-    def get_pid_file_name(self, uuid, service=None):
-        return self._ensure_process_manager(
-            uuid=uuid,
-            service=service).get_pid_file_name()
-
-    def _ensure_process_manager(self, uuid, cmd_callback=None,
-                                namespace=None, service=None,
-                                cmd_addl_env=None,
-                                pid_file=None,
-                                ):
-
-        process_manager = self.get_process_manager(uuid, service)
-        if not process_manager:
-            # if the process existed in a different run of the agent
-            # provide one, generally for pid / active evaluation
-            process_manager = self._create_process_manager(
-                uuid=uuid,
-                cmd_callback=cmd_callback,
-                namespace=namespace,
-                service=service,
-                cmd_addl_env=cmd_addl_env,
-                pid_file=pid_file)
-        return process_manager
-
-    def _create_process_manager(self, uuid, cmd_callback, namespace, service,
-                                cmd_addl_env, pid_file):
-        return ProcessManager(conf=self._config,
-                              uuid=uuid,
-                              namespace=namespace,
-                              service=service,
-                              default_cmd_callback=cmd_callback,
-                              cmd_addl_env=cmd_addl_env,
-                              pid_file=pid_file)
+    def stop(self):
+        """Stop the process monitoring. """
+        self._monitor_processes = False
 
     def _spawn_checking_thread(self):
+        self._monitor_processes = True
         eventlet.spawn(self._periodic_checking_thread)
 
     @lockutils.synchronized("_check_child_processes")
@@ -259,8 +211,8 @@ class ProcessMonitor(object):
         # we build the list of keys before iterating in the loop to cover
         # the case where other threads add or remove items from the
         # dictionary which otherwise will cause a RuntimeError
-        for service_id in list(self._process_managers):
-            pm = self._process_managers.get(service_id)
+        for service_id in list(self._monitored_processes):
+            pm = self._monitored_processes.get(service_id)
 
             if pm and not pm.active:
                 LOG.error(_LE("%(service)s for %(resource_type)s "
@@ -273,7 +225,7 @@ class ProcessMonitor(object):
             eventlet.sleep(0)
 
     def _periodic_checking_thread(self):
-        while True:
+        while self._monitor_processes:
             eventlet.sleep(self._config.AGENT.check_child_processes_interval)
             eventlet.spawn(self._check_child_processes)
 
@@ -286,7 +238,7 @@ class ProcessMonitor(object):
         LOG.error(_LE("respawning %(service)s for uuid %(uuid)s"),
                   {'service': service_id.service,
                    'uuid': service_id.uuid})
-        self._process_managers[service_id].enable()
+        self._monitored_processes[service_id].enable()
 
     def _exit_action(self, service_id):
         LOG.error(_LE("Exiting agent as programmed in check_child_processes_"
