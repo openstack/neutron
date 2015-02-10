@@ -106,9 +106,13 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.dist_fip_count = 1
         ri.rtr_fip_subnet = lla.LinkLocalAddressPair('15.1.2.3/32')
         _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
+        fip_ns = ri.fip_ns
+
         ri.floating_ip_removed_dist(fip_cidr)
+
+        self.assertTrue(fip_ns.destroyed)
         mIPWrapper().del_veth.assert_called_once_with(
-            ri.fip_ns.get_int_device_name(router['id']))
+            fip_ns.get_int_device_name(router['id']))
         mIPDevice().route.delete_gateway.assert_called_once_with(
             str(fip_to_rtr.ip), table=16)
-        ri.fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
+        fip_ns.unsubscribe.assert_called_once_with(ri.router_id)

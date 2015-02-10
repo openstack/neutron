@@ -52,6 +52,7 @@ class FipNamespace(object):
             use_ipv6=self.use_ipv6)
         path = os.path.join(agent_conf.state_path, 'fip-linklocal-networks')
         self.local_subnets = lla.LinkLocalAllocator(path, FIP_LL_SUBNET)
+        self.destroyed = False
 
     def get_name(self):
         return (FIP_NS_PREFIX + self._ext_net_id)
@@ -135,6 +136,7 @@ class FipNamespace(object):
         self._iptables_manager.apply()
 
     def destroy(self):
+        self.destroyed = True
         ns = self.get_name()
         # TODO(carl) Reconcile this with mlavelle's namespace work
         # TODO(carl) mlavelle's work has self.ip_wrapper

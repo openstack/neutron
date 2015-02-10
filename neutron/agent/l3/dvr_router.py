@@ -99,7 +99,6 @@ class DvrRouter(router.RouterInfo):
         device.route.delete_route(fip_cidr, str(rtr_2_fip.ip))
         # check if this is the last FIP for this router
         self.dist_fip_count = self.dist_fip_count - 1
-        is_last = False
         if self.dist_fip_count == 0:
             #remove default route entry
             device = ip_lib.IPDevice(rtr_2_fip_name,
@@ -113,4 +112,11 @@ class DvrRouter(router.RouterInfo):
             self.rtr_fip_subnet = None
             ns_ip.del_veth(fip_2_rtr_name)
             is_last = self.fip_ns.unsubscribe(self.router_id)
-        return is_last
+            if is_last:
+                # TODO(Carl) I can't help but think that another router could
+                # come in and want to start using this namespace while this is
+                # destroying it.  The two could end up conflicting on
+                # creating/destroying interfaces and such.  I think I'd like a
+                # semaphore to sync creation/deletion of this namespace.
+                self.fip_ns.destroy()
+                self.fip_ns = None
