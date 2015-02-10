@@ -585,12 +585,21 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             return
         self.int_br.local_out_delete_port(lvm.vlan, port.vif_mac)
 
-    def port_dead(self, port):
-        """Once a port has no binding, put it on the "dead vlan".
+    def port_dead(self, port, net_uuid=None):
+        """Try to stop forwarding on the port.
 
-        :param port: a ovs_lib.VifPort object.
+        :param port: a ports.OFPort object.
+        :param net_uuid: network uuid to which the port belongs to.
+                         None if unknown.
         """
-        pass
+        self.int_br.check_in_port_delete_port(port.ofport)
+        if port.vif_mac is None:
+            return
+        if net_uuid is None:
+            return
+        lvm = self.local_vlan_map.get(net_uuid)
+        if lvm is not None:
+            self.int_br.local_out_delete_port(lvm.vlan, port.vif_mac)
 
     def setup_integration_br(self):
         """Setup the integration bridge.
@@ -721,7 +730,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                 self.port_bound(vif_port, network_id, network_type,
                                 physical_network, segmentation_id)
             else:
-                self.port_dead(vif_port)
+                self.port_dead(vif_port, network_id)
         else:
             LOG.debug("No VIF port for port %s defined on agent.", port_id)
 
