@@ -17,6 +17,7 @@ import itertools
 import oslo_messaging
 from oslo_utils import timeutils
 
+from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.i18n import _LW
@@ -57,8 +58,15 @@ def create_consumers(endpoints, prefix, topic_details, start_listening=True):
 
 
 class PluginReportStateAPI(object):
+    """RPC client used to report state back to plugin.
+
+    This class implements the client side of an rpc interface.  The server side
+    can be found in neutron.db.agents_db.AgentExtRpcCallback.  For more
+    information on changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    """
     def __init__(self, topic):
-        target = oslo_messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0',
+                                       namespace=constants.RPC_NAMESPACE_STATE)
         self.client = n_rpc.get_client(target)
 
     def report_state(self, context, agent_state, use_call=False):
