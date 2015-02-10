@@ -37,14 +37,14 @@ LOG = logging.getLogger(__name__)
 config.register_root_helper(cfg.CONF)
 
 
-def create_process(cmd, root_helper=None, addl_env=None):
+def create_process(cmd, run_as_root=False, addl_env=None):
     """Create a process object for the given command.
 
     The return value will be a tuple of the process object and the
     list of command arguments used to create it.
     """
-    if root_helper:
-        cmd = shlex.split(root_helper) + cmd
+    if run_as_root:
+        cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
     cmd = map(str, cmd)
 
     LOG.debug("Running command: %s", cmd)
@@ -69,10 +69,10 @@ def create_process(cmd, root_helper=None, addl_env=None):
 def execute(cmd, root_helper=None, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
             extra_ok_codes=None, run_as_root=False):
-    if not root_helper and run_as_root:
-        root_helper = config.get_root_helper(cfg.CONF)
+    if root_helper:
+        run_as_root = True
     try:
-        obj, cmd = create_process(cmd, root_helper=root_helper,
+        obj, cmd = create_process(cmd, run_as_root=run_as_root,
                                   addl_env=addl_env)
         _stdout, _stderr = obj.communicate(process_input)
         obj.stdin.close()
@@ -190,7 +190,7 @@ def remove_conf_files(cfg_root, uuid):
         os.unlink(file_path)
 
 
-def get_root_helper_child_pid(pid, root_helper=None):
+def get_root_helper_child_pid(pid, run_as_root=False):
     """
     Get the lowest child pid in the process hierarchy
 
@@ -205,7 +205,7 @@ def get_root_helper_child_pid(pid, root_helper=None):
     die is to target the child process directly.
     """
     pid = str(pid)
-    if root_helper:
+    if run_as_root:
         try:
             pid = find_child_pids(pid)[0]
         except IndexError:

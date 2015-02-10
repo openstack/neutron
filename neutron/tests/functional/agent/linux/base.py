@@ -58,9 +58,9 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
         super(BaseLinuxTestCase, self).setUp()
         config.register_root_helper(cfg.CONF)
 
-    def check_command(self, cmd, error_text, skip_msg, root_helper=None):
+    def check_command(self, cmd, error_text, skip_msg, run_as_root=False):
         try:
-            utils.execute(cmd, root_helper=root_helper)
+            utils.execute(cmd, run_as_root=run_as_root)
         except RuntimeError as e:
             if error_text in str(e) and not self.fail_on_missing_deps:
                 self.skipTest(skip_msg)

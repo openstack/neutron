@@ -254,7 +254,6 @@ class TunnelTest(base.BaseTestCase):
         kwargs.setdefault('tun_br', self.TUN_BRIDGE)
         kwargs.setdefault('local_ip', '10.0.0.1')
         kwargs.setdefault('bridge_mappings', self.NET_MAPPING)
-        kwargs.setdefault('root_helper', 'sudo')
         kwargs.setdefault('polling_interval', 2)
         kwargs.setdefault('tunnel_types', ['gre'])
         kwargs.setdefault('veth_mtu', self.VETH_MTU)
