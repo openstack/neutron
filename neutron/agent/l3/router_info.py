@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+
 from oslo_log import log as logging
 
 from neutron.agent.l3 import namespaces
@@ -20,10 +22,10 @@ from neutron.agent.linux import iptables_manager
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
-from neutron.i18n import _LW
+from neutron.i18n import _LE, _LW
 
 LOG = logging.getLogger(__name__)
-INTERNAL_DEV_PREFIX = 'qr-'
+INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
 
 
 class RouterInfo(object):
@@ -85,6 +87,16 @@ class RouterInfo(object):
 
     def get_internal_device_name(self, port_id):
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+
+    def _set_subnet_info(self, port):
+        ips = port['fixed_ips']
+        if not ips:
+            raise Exception(_("Router port %s has no IP address") % port['id'])
+        if len(ips) > 1:
+            LOG.error(_LE("Ignoring multiple IPs on router port %s"),
+                      port['id'])
+        prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
+        port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
 
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets
@@ -245,3 +257,95 @@ class RouterInfo(object):
         self.radvd.disable()
         if self.router_namespace:
             self.router_namespace.delete()
+
+    def _internal_network_added(self, ns_name, network_id, port_id,
+                                internal_cidr, mac_address,
+                                interface_name, prefix):
+        if not ip_lib.device_exists(interface_name,
+                                    namespace=ns_name):
+            self.driver.plug(network_id, port_id, interface_name, mac_address,
+                             namespace=ns_name,
+                             prefix=prefix)
+
+        self.driver.init_l3(interface_name, [internal_cidr],
+                            namespace=ns_name)
+        ip_address = internal_cidr.split('/')[0]
+        ip_lib.send_gratuitous_arp(ns_name,
+                                   interface_name,
+                                   ip_address,
+                                   self.agent_conf.send_arp_for_ha)
+
+    def internal_network_added(self, port):
+        network_id = port['network_id']
+        port_id = port['id']
+        internal_cidr = port['ip_cidr']
+        mac_address = port['mac_address']
+
+        interface_name = self.get_internal_device_name(port_id)
+
+        self._internal_network_added(self.ns_name,
+                                     network_id,
+                                     port_id,
+                                     internal_cidr,
+                                     mac_address,
+                                     interface_name,
+                                     INTERNAL_DEV_PREFIX)
+
+    def internal_network_removed(self, port):
+        interface_name = self.get_internal_device_name(port['id'])
+
+        if ip_lib.device_exists(interface_name, namespace=self.ns_name):
+            self.driver.unplug(interface_name, namespace=self.ns_name,
+                               prefix=INTERNAL_DEV_PREFIX)
+
+    def _get_existing_devices(self):
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.ns_name)
+        ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
+        return [ip_dev.name for ip_dev in ip_devs]
+
+    def _process_internal_ports(self):
+        existing_port_ids = set(p['id'] for p in self.internal_ports)
+
+        internal_ports = self.router.get(l3_constants.INTERFACE_KEY, [])
+        current_port_ids = set(p['id'] for p in internal_ports
+                               if p['admin_state_up'])
+
+        new_port_ids = current_port_ids - existing_port_ids
+        new_ports = [p for p in internal_ports if p['id'] in new_port_ids]
+        old_ports = [p for p in self.internal_ports
+                     if p['id'] not in current_port_ids]
+
+        new_ipv6_port = False
+        old_ipv6_port = False
+        for p in new_ports:
+            self._set_subnet_info(p)
+            self.internal_network_added(p)
+            self.internal_ports.append(p)
+            if (not new_ipv6_port and
+                    netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
+                new_ipv6_port = True
+
+        for p in old_ports:
+            self.internal_network_removed(p)
+            self.internal_ports.remove(p)
+            if (not old_ipv6_port and
+                    netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
+                old_ipv6_port = True
+
+        # Enable RA
+        if new_ipv6_port or old_ipv6_port:
+            self.radvd.enable(internal_ports)
+
+        existing_devices = self._get_existing_devices()
+        current_internal_devs = set(n for n in existing_devices
+                                    if n.startswith(
+                                        INTERNAL_DEV_PREFIX))
+        current_port_devs = set(self.get_internal_device_name(port_id)
+                                for port_id in current_port_ids)
+        stale_devs = current_internal_devs - current_port_devs
+        for stale_dev in stale_devs:
+            LOG.debug('Deleting stale internal router device: %s',
+                      stale_dev)
+            self.driver.unplug(stale_dev,
+                               namespace=self.ns_name,
+                               prefix=INTERNAL_DEV_PREFIX)

@@ -184,3 +184,25 @@ class TestDvrRouterOperations(base.BaseTestCase):
         router_ports = [port]
         ri.router.get.return_value = router_ports
         self.assertEqual(None, ri._get_internal_port(mock.sentinel.subnet_id2))
+
+    def test__get_snat_idx_ipv4(self):
+        ip_cidr = '101.12.13.00/24'
+        ri = self._create_router(mock.MagicMock())
+        snat_idx = ri._get_snat_idx(ip_cidr)
+        # 0x650C0D00 is numerical value of 101.12.13.00
+        self.assertEqual(0x650C0D00, snat_idx)
+
+    def test__get_snat_idx_ipv6(self):
+        ip_cidr = '2620:0:a03:e100::/64'
+        ri = self._create_router(mock.MagicMock())
+        snat_idx = ri._get_snat_idx(ip_cidr)
+        # 0x3D345705 is 30 bit xor folded crc32 of the ip_cidr
+        self.assertEqual(0x3D345705, snat_idx)
+
+    def test__get_snat_idx_ipv6_below_32768(self):
+        ip_cidr = 'd488::/30'
+        # crc32 of this ip_cidr is 0x1BD7
+        ri = self._create_router(mock.MagicMock())
+        snat_idx = ri._get_snat_idx(ip_cidr)
+        # 0x1BD7 + 0x3FFFFFFF = 0x40001BD6
+        self.assertEqual(0x40001BD6, snat_idx)

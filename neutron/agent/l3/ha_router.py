@@ -251,3 +251,24 @@ class HaRouter(router.RouterInfo):
 
     def remove_floating_ip(self, device, ip_cidr):
         self._remove_vip(ip_cidr)
+
+    def internal_network_added(self, port):
+        port_id = port['id']
+        interface_name = self.get_internal_device_name(port_id)
+
+        if not ip_lib.device_exists(interface_name, namespace=self.ns_name):
+            self.driver.plug(port['network_id'],
+                             port_id,
+                             interface_name,
+                             port['mac_address'],
+                             namespace=self.ns_name,
+                             prefix=router.INTERNAL_DEV_PREFIX)
+
+        self._ha_disable_addressing_on_interface(interface_name)
+        self._add_vip(port['ip_cidr'], interface_name)
+
+    def internal_network_removed(self, port):
+        super(HaRouter, self).internal_network_removed(port)
+
+        interface_name = self.get_internal_device_name(port['id'])
+        self._clear_vips(interface_name)

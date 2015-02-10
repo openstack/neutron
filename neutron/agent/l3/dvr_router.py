@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import binascii
+import netaddr
+
 from oslo_log import log as logging
 from oslo_utils import excutils
 
@@ -24,6 +27,8 @@ from neutron.common import utils as common_utils
 from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
+# xor-folding mask used for IPv6 rule index
+MASK_30 = 0x3fffffff
 
 
 class DvrRouter(router.RouterInfo):
@@ -44,6 +49,13 @@ class DvrRouter(router.RouterInfo):
         """Filter Floating IPs to be hosted on this agent."""
         floating_ips = super(DvrRouter, self).get_floating_ips()
         return [i for i in floating_ips if i['host'] == self.host]
+
+    def get_snat_interfaces(self):
+        return self.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
+
+    def get_snat_int_device_name(self, port_id):
+        long_name = dvr_snat_ns.SNAT_INT_DEV_PREFIX + port_id
+        return long_name[:self.driver.DEV_NAME_LEN]
 
     def _handle_fip_nat_rules(self, interface_name, action):
         """Configures NAT rules for Floating IPs for DVR.
@@ -139,7 +151,6 @@ class DvrRouter(router.RouterInfo):
             return l3_constants.FLOATINGIP_STATUS_ERROR
 
         # Special Handling for DVR - update FIP namespace
-        # and ri.namespace to handle DVR based FIP
         ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
         self.floating_ip_added_dist(fip, ip_cidr)
         return l3_constants.FLOATINGIP_STATUS_ACTIVE
@@ -212,3 +223,144 @@ class DvrRouter(router.RouterInfo):
                                            p['mac_address'],
                                            subnet_id,
                                            'add')
+
+    def _map_internal_interfaces(self, int_port, snat_ports):
+        """Return the SNAT port for the given internal interface port."""
+        fixed_ip = int_port['fixed_ips'][0]
+        subnet_id = fixed_ip['subnet_id']
+        match_port = [p for p in snat_ports if
+                      p['fixed_ips'][0]['subnet_id'] == subnet_id]
+        if match_port:
+            return match_port[0]
+        else:
+            LOG.error(_LE('DVR: no map match_port found!'))
+
+    @staticmethod
+    def _get_snat_idx(ip_cidr):
+        """Generate index for DVR snat rules and route tables.
+
+        The index value has to be 32 bits or less but more than the system
+        generated entries i.e. 32768. For IPv4 use the numeric value of the
+        cidr. For IPv6 generate a crc32 bit hash and xor-fold to 30 bits.
+        Use the freed range to extend smaller values so that they become
+        greater than system generated entries.
+        """
+        net = netaddr.IPNetwork(ip_cidr)
+        if net.version == 6:
+            # the crc32 & 0xffffffff is for Python 2.6 and 3.0 compatibility
+            snat_idx = binascii.crc32(ip_cidr) & 0xffffffff
+            # xor-fold the hash to reserve upper range to extend smaller values
+            snat_idx = (snat_idx >> 30) ^ (snat_idx & MASK_30)
+            if snat_idx < 32768:
+                snat_idx = snat_idx + MASK_30
+        else:
+            snat_idx = net.value
+        return snat_idx
+
+    def _snat_redirect_add(self, gateway, sn_port, sn_int):
+        """Adds rules and routes for SNAT redirection."""
+        try:
+            ip_cidr = sn_port['ip_cidr']
+            snat_idx = self._get_snat_idx(ip_cidr)
+            ns_ipr = ip_lib.IPRule(namespace=self.ns_name)
+            ns_ipd = ip_lib.IPDevice(sn_int, namespace=self.ns_name)
+            ns_ipwrapr = ip_lib.IPWrapper(namespace=self.ns_name)
+            ns_ipd.route.add_gateway(gateway, table=snat_idx)
+            ns_ipr.rule.add(ip_cidr, snat_idx, snat_idx)
+            ns_ipwrapr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
+                                     'send_redirects=0' % sn_int])
+        except Exception:
+            LOG.exception(_LE('DVR: error adding redirection logic'))
+
+    def _snat_redirect_remove(self, gateway, sn_port, sn_int):
+        """Removes rules and routes for SNAT redirection."""
+        try:
+            ip_cidr = sn_port['ip_cidr']
+            snat_idx = self._get_snat_idx(ip_cidr)
+            ns_ipr = ip_lib.IPRule(namespace=self.ns_name)
+            ns_ipd = ip_lib.IPDevice(sn_int, namespace=self.ns_name)
+            ns_ipd.route.delete_gateway(gateway, table=snat_idx)
+            ns_ipr.rule.delete(ip_cidr, snat_idx, snat_idx)
+        except Exception:
+            LOG.exception(_LE('DVR: removed snat failed'))
+
+    def get_gw_port_host(self):
+        host = self.router.get('gw_port_host')
+        if not host:
+            LOG.debug("gw_port_host missing from router: %s",
+                      self.router['id'])
+        return host
+
+    def internal_network_added(self, port):
+        super(DvrRouter, self).internal_network_added(port)
+
+        ex_gw_port = self.get_ex_gw_port()
+        if not ex_gw_port:
+            return
+
+        snat_ports = self.get_snat_interfaces()
+        sn_port = self._map_internal_interfaces(port, snat_ports)
+        if not sn_port:
+            return
+
+        interface_name = self.get_internal_device_name(port['id'])
+        self._snat_redirect_add(sn_port['fixed_ips'][0]['ip_address'],
+                                port,
+                                interface_name)
+
+        # TODO(Carl) This is a sign that dvr needs two router classes.
+        is_this_snat_host = (self.agent_conf.agent_mode == 'dvr_snat' and
+            self.get_gw_port_host() == self.host)
+        if not is_this_snat_host:
+            return
+
+        ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(self.router['id'])
+        self._set_subnet_info(sn_port)
+        interface_name = self.get_snat_int_device_name(sn_port['id'])
+        self._internal_network_added(
+            ns_name,
+            sn_port['network_id'],
+            sn_port['id'],
+            sn_port['ip_cidr'],
+            sn_port['mac_address'],
+            interface_name,
+            dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+
+        self._set_subnet_arp_info(port)
+
+    def _dvr_internal_network_removed(self, port):
+        if not self.ex_gw_port:
+            return
+
+        sn_port = self._map_internal_interfaces(port, self.snat_ports)
+        if not sn_port:
+            return
+
+        # DVR handling code for SNAT
+        interface_name = self.get_internal_device_name(port['id'])
+        self._snat_redirect_remove(sn_port['fixed_ips'][0]['ip_address'],
+                                   port,
+                                   interface_name)
+
+        is_this_snat_host = (self.agent_conf.agent_mode == 'dvr_snat' and
+            self.ex_gw_port['binding:host_id'] == self.host)
+        if not is_this_snat_host:
+            return
+
+        snat_interface = (
+            self.get_snat_int_device_name(sn_port['id']))
+        ns_name = self.snat_namespace.name
+        prefix = dvr_snat_ns.SNAT_INT_DEV_PREFIX
+        if ip_lib.device_exists(snat_interface, namespace=ns_name):
+            self.driver.unplug(snat_interface, namespace=ns_name,
+                               prefix=prefix)
+
+    def internal_network_removed(self, port):
+        self._dvr_internal_network_removed(port)
+        super(DvrRouter, self).internal_network_removed(port)
+
+    def get_floating_agent_gw_interface(self, ext_net_id):
+        """Filter Floating Agent GW port for the external network."""
+        fip_ports = self.router.get(l3_constants.FLOATINGIP_AGENT_INTF_KEY, [])
+        return next(
+            (p for p in fip_ports if p['network_id'] == ext_net_id), None)
