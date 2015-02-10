@@ -70,10 +70,9 @@ class NetworkSegment(object):
 
 
 class LinuxBridgeManager(object):
-    def __init__(self, interface_mappings, root_helper):
+    def __init__(self, interface_mappings):
         self.interface_mappings = interface_mappings
-        self.root_helper = root_helper
-        self.ip = ip_lib.IPWrapper(self.root_helper)
+        self.ip = ip_lib.IPWrapper()
         # VXLAN related parameters:
         self.local_ip = cfg.CONF.VXLAN.local_ip
         self.vxlan_mode = lconst.VXLAN_NONE
@@ -222,10 +221,10 @@ class LinuxBridgeManager(object):
             if utils.execute(['ip', 'link', 'add', 'link',
                               physical_interface,
                               'name', interface, 'type', 'vlan', 'id',
-                              vlan_id], root_helper=self.root_helper):
+                              vlan_id], run_as_root=True):
                 return
             if utils.execute(['ip', 'link', 'set',
-                              interface, 'up'], root_helper=self.root_helper):
+                              interface, 'up'], run_as_root=True):
                 return
             LOG.debug("Done creating subinterface %s", interface)
         return interface
@@ -282,7 +281,7 @@ class LinuxBridgeManager(object):
 
     def _bridge_exists_and_ensure_up(self, bridge_name):
         """Check if the bridge exists and make sure it is up."""
-        br = ip_lib.IPDevice(bridge_name, self.root_helper)
+        br = ip_lib.IPDevice(bridge_name)
         br.set_log_fail_as_error(False)
         try:
             # If the device doesn't exist this will throw a RuntimeError
@@ -307,16 +306,16 @@ class LinuxBridgeManager(object):
                       "%(interface)s",
                       {'bridge_name': bridge_name, 'interface': interface})
             if utils.execute(['brctl', 'addbr', bridge_name],
-                             root_helper=self.root_helper):
+                             run_as_root=True):
                 return
             if utils.execute(['brctl', 'setfd', bridge_name,
-                              str(0)], root_helper=self.root_helper):
+                              str(0)], run_as_root=True):
                 return
             if utils.execute(['brctl', 'stp', bridge_name,
-                              'off'], root_helper=self.root_helper):
+                              'off'], run_as_root=True):
                 return
             if utils.execute(['ip', 'link', 'set', bridge_name,
-                              'up'], root_helper=self.root_helper):
+                              'up'], run_as_root=True):
                 return
             LOG.debug("Done starting bridge %(bridge_name)s for "
                       "subinterface %(interface)s",
@@ -335,10 +334,10 @@ class LinuxBridgeManager(object):
                 if self.is_device_on_bridge(interface):
                     bridge = self.get_bridge_for_tap_device(interface)
                     utils.execute(['brctl', 'delif', bridge, interface],
-                                  root_helper=self.root_helper)
+                                  run_as_root=True)
 
                 utils.execute(['brctl', 'addif', bridge_name, interface],
-                              root_helper=self.root_helper)
+                              run_as_root=True)
             except Exception as e:
                 LOG.error(_LE("Unable to add %(interface)s to %(bridge_name)s"
                               "! Exception: %(e)s"),
@@ -402,7 +401,7 @@ class LinuxBridgeManager(object):
             LOG.debug("Adding device %(tap_device_name)s to bridge "
                       "%(bridge_name)s", data)
             if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
-                             root_helper=self.root_helper):
+                             run_as_root=True):
                 return False
         else:
             data = {'tap_device_name': tap_device_name,
@@ -446,10 +445,10 @@ class LinuxBridgeManager(object):
 
             LOG.debug("Deleting bridge %s", bridge_name)
             if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
-                             root_helper=self.root_helper):
+                             run_as_root=True):
                 return
             if utils.execute(['brctl', 'delbr', bridge_name],
-                             root_helper=self.root_helper):
+                             run_as_root=True):
                 return
             LOG.debug("Done deleting bridge %s", bridge_name)
 
@@ -473,7 +472,7 @@ class LinuxBridgeManager(object):
                       {'interface_name': interface_name,
                        'bridge_name': bridge_name})
             if utils.execute(['brctl', 'delif', bridge_name, interface_name],
-                             root_helper=self.root_helper):
+                             run_as_root=True):
                 return False
             LOG.debug("Done removing device %(interface_name)s from bridge "
                       "%(bridge_name)s",
@@ -491,10 +490,10 @@ class LinuxBridgeManager(object):
         if ip_lib.device_exists(interface):
             LOG.debug("Deleting subinterface %s for vlan", interface)
             if utils.execute(['ip', 'link', 'set', interface, 'down'],
-                             root_helper=self.root_helper):
+                             run_as_root=True):
                 return
             if utils.execute(['ip', 'link', 'delete', interface],
-                             root_helper=self.root_helper):
+                             run_as_root=True):
                 return
             LOG.debug("Done deleting subinterface %s", interface)
 
@@ -518,7 +517,7 @@ class LinuxBridgeManager(object):
         if not cfg.CONF.VXLAN.l2_population:
             return False
         if not ip_lib.iproute_arg_supported(
-                ['bridge', 'fdb'], 'append', self.root_helper):
+                ['bridge', 'fdb'], 'append'):
             LOG.warning(_LW('Option "%(option)s" must be supported by command '
                             '"%(command)s" to enable %(mode)s mode'),
                         {'option': 'append',
@@ -540,7 +539,7 @@ class LinuxBridgeManager(object):
             utils.execute(
                 cmd=['bridge', 'fdb', 'append', constants.FLOODING_ENTRY[0],
                      'dev', test_iface, 'dst', '1.1.1.1'],
-                root_helper=self.root_helper, log_fail_as_error=False)
+                run_as_root=True, log_fail_as_error=False)
             return True
         except RuntimeError:
             return False
@@ -554,7 +553,7 @@ class LinuxBridgeManager(object):
             return False
         if not ip_lib.iproute_arg_supported(
                 ['ip', 'link', 'add', 'type', 'vxlan'],
-                'proxy', self.root_helper):
+                'proxy'):
             LOG.warning(_LW('Option "%(option)s" must be supported by command '
                             '"%(command)s" to enable %(mode)s mode'),
                         {'option': 'proxy',
@@ -578,12 +577,12 @@ class LinuxBridgeManager(object):
     def fdb_ip_entry_exists(self, mac, ip, interface):
         entries = utils.execute(['ip', 'neigh', 'show', 'to', ip,
                                  'dev', interface],
-                                root_helper=self.root_helper)
+                                run_as_root=True)
         return mac in entries
 
     def fdb_bridge_entry_exists(self, mac, interface, agent_ip=None):
         entries = utils.execute(['bridge', 'fdb', 'show', 'dev', interface],
-                                root_helper=self.root_helper)
+                                run_as_root=True)
         if not agent_ip:
             return mac in entries
 
@@ -592,25 +591,25 @@ class LinuxBridgeManager(object):
     def add_fdb_ip_entry(self, mac, ip, interface):
         utils.execute(['ip', 'neigh', 'replace', ip, 'lladdr', mac,
                        'dev', interface, 'nud', 'permanent'],
-                      root_helper=self.root_helper,
+                      run_as_root=True,
                       check_exit_code=False)
 
     def remove_fdb_ip_entry(self, mac, ip, interface):
         utils.execute(['ip', 'neigh', 'del', ip, 'lladdr', mac,
                        'dev', interface],
-                      root_helper=self.root_helper,
+                      run_as_root=True,
                       check_exit_code=False)
 
     def add_fdb_bridge_entry(self, mac, agent_ip, interface, operation="add"):
         utils.execute(['bridge', 'fdb', operation, mac, 'dev', interface,
                        'dst', agent_ip],
-                      root_helper=self.root_helper,
+                      run_as_root=True,
                       check_exit_code=False)
 
     def remove_fdb_bridge_entry(self, mac, agent_ip, interface):
         utils.execute(['bridge', 'fdb', 'del', mac, 'dev', interface,
                        'dst', agent_ip],
-                      root_helper=self.root_helper,
+                      run_as_root=True,
                       check_exit_code=False)
 
     def add_fdb_entries(self, agent_ip, ports, interface):
@@ -746,10 +745,8 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
 class LinuxBridgeNeutronAgentRPC(object):
 
-    def __init__(self, interface_mappings, polling_interval,
-                 root_helper):
+    def __init__(self, interface_mappings, polling_interval):
         self.polling_interval = polling_interval
-        self.root_helper = root_helper
         self.setup_linux_bridge(interface_mappings)
         configurations = {'interface_mappings': interface_mappings}
         if self.br_mgr.vxlan_mode != lconst.VXLAN_NONE:
@@ -770,7 +767,7 @@ class LinuxBridgeNeutronAgentRPC(object):
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc, self.root_helper)
+                self.sg_plugin_rpc)
         self.setup_rpc(interface_mappings.values())
 
     def _report_state(self):
@@ -787,7 +784,7 @@ class LinuxBridgeNeutronAgentRPC(object):
         if physical_interfaces:
             mac = utils.get_interface_mac(physical_interfaces[0])
         else:
-            devices = ip_lib.IPWrapper(self.root_helper).get_devices(True)
+            devices = ip_lib.IPWrapper().get_devices(True)
             if devices:
                 mac = utils.get_interface_mac(devices[0].name)
             else:
@@ -820,7 +817,7 @@ class LinuxBridgeNeutronAgentRPC(object):
             heartbeat.start(interval=report_interval)
 
     def setup_linux_bridge(self, interface_mappings):
-        self.br_mgr = LinuxBridgeManager(interface_mappings, self.root_helper)
+        self.br_mgr = LinuxBridgeManager(interface_mappings)
 
     def remove_port_binding(self, network_id, interface_id):
         bridge_name = self.br_mgr.get_bridge_name(network_id)
@@ -1017,10 +1014,8 @@ def main():
     LOG.info(_LI("Interface mappings: %s"), interface_mappings)
 
     polling_interval = cfg.CONF.AGENT.polling_interval
-    root_helper = cfg.CONF.AGENT.root_helper
     agent = LinuxBridgeNeutronAgentRPC(interface_mappings,
-                                       polling_interval,
-                                       root_helper)
+                                       polling_interval)
     LOG.info(_LI("Agent initialized successfully, now running... "))
     agent.daemon_loop()
     sys.exit(0)
