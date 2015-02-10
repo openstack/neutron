@@ -38,7 +38,6 @@ from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
-from neutron.common import utils as common_utils
 from neutron.i18n import _LE
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
@@ -1771,77 +1770,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # check 1 ext-gw-port is plugged
         self.assertEqual(self.mock_driver.plug.call_count, 3)
         self.assertEqual(self.mock_driver.init_l3.call_count, 3)
-
-    def test_floating_ip_added_dist(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = prepare_router_data()
-        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-        ext_net_id = _uuid()
-        agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                        'subnet_id': _uuid()}],
-                         'subnet': {'gateway_ip': '20.0.0.1'},
-                         'id': _uuid(),
-                         'network_id': ext_net_id,
-                         'mac_address': 'ca:fe:de:ad:be:ef',
-                         'ip_cidr': '20.0.0.30/24'}
-
-        fip = {'id': _uuid(),
-               'host': HOSTNAME,
-               'floating_ip_address': '15.1.2.3',
-               'fixed_ip_address': '192.168.0.1',
-               'floating_network_id': ext_net_id,
-               'port_id': _uuid()}
-        ri.fip_ns = agent.get_fip_ns(ext_net_id)
-        ri.fip_ns.agent_gateway_port = agent_gw_port
-        ri.rtr_fip_subnet = lla.LinkLocalAddressPair('169.254.30.42/31')
-        ri.dist_fip_count = 0
-        ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
-        agent.floating_ip_added_dist(ri, fip, ip_cidr)
-        self.mock_rule.add.assert_called_with('192.168.0.1', 16, FIP_PRI)
-        # TODO(mrsmith): add more asserts
-
-    @mock.patch.object(lla.LinkLocalAllocator, '_write')
-    def test_floating_ip_removed_dist(self, write):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = prepare_router_data()
-        agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                        'subnet_id': _uuid()}],
-                         'subnet': {'gateway_ip': '20.0.0.1'},
-                         'id': _uuid(),
-                         'network_id': _uuid(),
-                         'mac_address': 'ca:fe:de:ad:be:ef',
-                         'ip_cidr': '20.0.0.30/24'}
-        fip_cidr = '11.22.33.44/24'
-
-        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-        ri.dist_fip_count = 2
-        ri.fip_ns = agent.get_fip_ns(agent._fetch_external_net_id())
-        ri.fip_ns.unsubscribe = mock.Mock()
-        ri.floating_ips_dict['11.22.33.44'] = FIP_PRI
-        ri.fip_2_rtr = '11.22.33.42'
-        ri.rtr_2_fip = '11.22.33.40'
-        agent.agent_gateway_port = agent_gw_port
-        s = lla.LinkLocalAddressPair('169.254.30.42/31')
-        ri.rtr_fip_subnet = s
-        agent.floating_ip_removed_dist(ri, fip_cidr)
-        floating_ip = fip_cidr.split('/')[0]
-        self.mock_rule.delete.assert_called_with(floating_ip, 16, FIP_PRI)
-        self.mock_ip_dev.route.delete_route.assert_called_with(fip_cidr,
-                                                               str(s.ip))
-        self.assertFalse(ri.fip_ns.unsubscribe.called)
-
-        with mock.patch.object(agent, '_destroy_fip_namespace') as f:
-            ri.dist_fip_count = 1
-            fip_ns_name = ri.fip_ns.get_name()
-            ri.rtr_fip_subnet = ri.fip_ns.local_subnets.allocate(ri.router_id)
-            _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
-            agent.floating_ip_removed_dist(ri, fip_cidr)
-            self.mock_ip.del_veth.assert_called_once_with(
-                ri.fip_ns.get_int_device_name(router['id']))
-            self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
-                str(fip_to_rtr.ip), table=16)
-            f.assert_called_once_with(fip_ns_name)
-        ri.fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
 
     def test_get_service_plugin_list(self):
         service_plugins = [p_const.L3_ROUTER_NAT]
