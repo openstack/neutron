@@ -25,10 +25,10 @@ class RouterInfo(object):
     def __init__(self,
                  router_id,
                  router,
-                 root_helper,
                  agent_conf,
                  interface_driver,
                  use_ipv6=False,
+                 root_helper=None,
                  ns_name=None):
         self.router_id = router_id
         self.ex_gw_port = None
@@ -36,7 +36,6 @@ class RouterInfo(object):
         self._snat_action = None
         self.internal_ports = []
         self.floating_ips = set()
-        self.root_helper = root_helper
         # Invoke the setter for establishing initial SNAT action
         self.router = router
         self.ns_name = ns_name
@@ -83,8 +82,7 @@ class RouterInfo(object):
     def _update_routing_table(self, operation, route):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop']]
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                      namespace=self.ns_name)
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.ns_name)
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def routes_updated(self):

@@ -16,7 +16,6 @@
 from oslo_config import cfg
 from oslo_utils import importutils
 
-from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as nexception
 from neutron.common import topics
@@ -81,7 +80,6 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                 msg = _('Error importing FWaaS device driver: %s')
                 raise ImportError(msg % fwaas_driver_class_path)
         self.services_sync = False
-        self.root_helper = config.get_root_helper(conf)
         # setup RPC to msg fwaas plugin
         self.fwplugin_rpc = FWaaSL3PluginApi(topics.FIREWALL_PLUGIN,
                                              conf.host)
@@ -89,14 +87,14 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
 
     def _get_router_info_list_for_tenant(self, routers, tenant_id):
         """Returns the list of router info objects on which to apply the fw."""
-        root_ip = ip_lib.IPWrapper(self.root_helper)
+        root_ip = ip_lib.IPWrapper()
         # Get the routers for the tenant
         router_ids = [
             router['id']
             for router in routers
             if router['tenant_id'] == tenant_id]
-        local_ns_list = root_ip.get_namespaces(
-            self.root_helper) if self.conf.use_namespaces else []
+        local_ns_list = (root_ip.get_namespaces()
+                         if self.conf.use_namespaces else [])
 
         router_info_list = []
         # Pick up namespaces for Tenant Routers

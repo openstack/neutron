@@ -49,14 +49,13 @@ class AgentMixin(object):
         fip_ns = dvr_fip_ns.FipNamespace(ext_net_id,
                                          self.conf,
                                          self.driver,
-                                         self.root_helper,
                                          self.use_ipv6)
         self._fip_namespaces[ext_net_id] = fip_ns
 
         return fip_ns
 
     def _destroy_snat_namespace(self, ns):
-        ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
+        ns_ip = ip_lib.IPWrapper(namespace=ns)
         # delete internal interfaces
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(SNAT_INT_DEV_PREFIX):
@@ -175,9 +174,8 @@ class AgentMixin(object):
         try:
             ip_cidr = sn_port['ip_cidr']
             snat_idx = self._get_snat_idx(ip_cidr)
-            ns_ipr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
-            ns_ipd = ip_lib.IPDevice(sn_int, self.root_helper,
-                                     namespace=ri.ns_name)
+            ns_ipr = ip_lib.IpRule(namespace=ri.ns_name)
+            ns_ipd = ip_lib.IPDevice(sn_int, namespace=ri.ns_name)
             ns_ipd.route.add_gateway(gateway, table=snat_idx)
             ns_ipr.add(ip_cidr, snat_idx, snat_idx)
             ns_ipr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
@@ -190,9 +188,8 @@ class AgentMixin(object):
         try:
             ip_cidr = sn_port['ip_cidr']
             snat_idx = self._get_snat_idx(ip_cidr)
-            ns_ipr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
-            ns_ipd = ip_lib.IPDevice(sn_int, self.root_helper,
-                                     namespace=ri.ns_name)
+            ns_ipr = ip_lib.IpRule(namespace=ri.ns_name)
+            ns_ipd = ip_lib.IPDevice(sn_int, namespace=ri.ns_name)
             ns_ipd.route.delete_gateway(table=snat_idx)
             ns_ipr.delete(ip_cidr, snat_idx, snat_idx)
         except Exception:
@@ -208,8 +205,7 @@ class AgentMixin(object):
                 # TODO(mrsmith): optimize the calls below for bulk calls
                 net = netaddr.IPNetwork(ip_cidr)
                 interface_name = self.get_internal_device_name(port['id'])
-                device = ip_lib.IPDevice(interface_name, self.root_helper,
-                                         namespace=ri.ns_name)
+                device = ip_lib.IPDevice(interface_name, namespace=ri.ns_name)
                 if operation == 'add':
                     device.neigh.add(net.version, ip, mac)
                 elif operation == 'delete':

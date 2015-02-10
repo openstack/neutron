@@ -353,11 +353,10 @@ class KeepalivedManager(KeepalivedNotifierMixin):
     """
 
     def __init__(self, resource_id, config, conf_path='/tmp',
-                 namespace=None, root_helper=None):
+                 namespace=None):
         self.resource_id = resource_id
         self.config = config
         self.namespace = namespace
-        self.root_helper = root_helper
         self.conf_path = conf_path
         self.conf = cfg.CONF
         self.process = None
@@ -384,7 +383,6 @@ class KeepalivedManager(KeepalivedNotifierMixin):
 
         self.process = self.get_process(self.conf,
                                         self.resource_id,
-                                        self.root_helper,
                                         self.namespace,
                                         self.conf_path)
 
@@ -427,7 +425,7 @@ class KeepalivedManager(KeepalivedNotifierMixin):
             self.restart()
 
     @classmethod
-    def get_process(cls, conf, resource_id, root_helper, namespace, conf_path):
+    def get_process(cls, conf, resource_id, namespace, conf_path):
         return external_process.ProcessManager(
             conf,
             resource_id,

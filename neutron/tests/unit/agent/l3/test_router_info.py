@@ -26,15 +26,12 @@ class TestRouterInfo(base.BaseTestCase):
         super(TestRouterInfo, self).setUp()
 
         conf = agent_config.setup_conf()
-        agent_config.register_root_helper(conf)
-        conf.root_helper = 'sudo'
 
         self.ip_cls_p = mock.patch('neutron.agent.linux.ip_lib.IPWrapper')
         ip_cls = self.ip_cls_p.start()
         self.mock_ip = mock.MagicMock()
         ip_cls.return_value = self.mock_ip
-        self.ri_kwargs = {'root_helper': conf.root_helper,
-                          'agent_conf': conf,
+        self.ri_kwargs = {'agent_conf': conf,
                           'interface_driver': mock.sentinel.interface_driver}
 
     def _check_agent_method_called(self, calls):
