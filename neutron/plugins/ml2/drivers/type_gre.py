@@ -96,6 +96,16 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
                 gre_ids |= set(moves.xrange(tun_min, tun_max + 1))
 
         session = db_api.get_session()
+        try:
+            self._add_allocation(session, gre_ids)
+        except db_exc.DBDuplicateEntry:
+            # in case multiple neutron-servers start allocations could be
+            # already added by different neutron-server. because this function
+            # is called only when initializing this type driver, it's safe to
+            # assume allocations were added.
+            LOG.warning(_LW("Gre allocations were already created."))
+
+    def _add_allocation(self, session, gre_ids):
         with session.begin(subtransactions=True):
             # remove from table unallocated tunnels not currently allocatable
             allocs = (session.query(GreAllocation).all())
