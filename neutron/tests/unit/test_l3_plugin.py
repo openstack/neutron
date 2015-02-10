@@ -1255,13 +1255,14 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with self.network(tenant_id='tenant_a',
                               set_context=True) as n:
                 with self.subnet(network=n):
-                    self._create_port(
-                        self.fmt, n['network']['id'],
-                        tenant_id='tenant_a',
-                        device_id=admin_router['router']['id'],
-                        device_owner='network:router_interface',
-                        set_context=True,
-                        expected_res_status=exc.HTTPConflict.code)
+                    for device_owner in l3_constants.ROUTER_INTERFACE_OWNERS:
+                        self._create_port(
+                            self.fmt, n['network']['id'],
+                            tenant_id='tenant_a',
+                            device_id=admin_router['router']['id'],
+                            device_owner=device_owner,
+                            set_context=True,
+                            expected_res_status=exc.HTTPConflict.code)
 
     def test_create_non_router_port_device_id_of_other_teants_router_update(
         self):
@@ -1272,19 +1273,19 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with self.network(tenant_id='tenant_a',
                               set_context=True) as n:
                 with self.subnet(network=n):
-                    port_res = self._create_port(
-                        self.fmt, n['network']['id'],
-                        tenant_id='tenant_a',
-                        device_id=admin_router['router']['id'],
-                        set_context=True)
-                    port = self.deserialize(self.fmt, port_res)
-                    neutron_context = context.Context('', 'tenant_a')
-                    data = {'port': {'device_owner':
-                                     'network:router_interface'}}
-                    self._update('ports', port['port']['id'], data,
-                                 neutron_context=neutron_context,
-                                 expected_code=exc.HTTPConflict.code)
-                    self._delete('ports', port['port']['id'])
+                    for device_owner in l3_constants.ROUTER_INTERFACE_OWNERS:
+                        port_res = self._create_port(
+                            self.fmt, n['network']['id'],
+                            tenant_id='tenant_a',
+                            device_id=admin_router['router']['id'],
+                            set_context=True)
+                        port = self.deserialize(self.fmt, port_res)
+                        neutron_context = context.Context('', 'tenant_a')
+                        data = {'port': {'device_owner': device_owner}}
+                        self._update('ports', port['port']['id'], data,
+                                     neutron_context=neutron_context,
+                                     expected_code=exc.HTTPConflict.code)
+                        self._delete('ports', port['port']['id'])
 
     def test_update_port_device_id_to_different_tenants_router(self):
         with self.router() as admin_router:
