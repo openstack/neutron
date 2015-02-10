@@ -1016,7 +1016,7 @@ class TestL3NatTestCase(L3NatTest,
 
     def test_router_add_interface_port_removes_security_group(self):
         with self.router() as r:
-            with self.port(do_delete=False) as p:
+            with self.port() as p:
                 body = self._router_interface_action('add',
                                                      r['router']['id'],
                                                      None,

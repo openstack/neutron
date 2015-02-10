@@ -92,20 +92,17 @@ class TestNecPluginPacketFilterBase(test_nec_plugin.NecPluginV2TestCase):
         return self.deserialize(fmt, res)
 
     @contextlib.contextmanager
-    def packet_filter_on_network(self, network=None, fmt=None, do_delete=True,
-                                 **kwargs):
+    def packet_filter_on_network(self, network=None, fmt=None, **kwargs):
         with test_plugin.optional_ctx(network, self.network) as network_to_use:
             net_id = network_to_use['network']['id']
             pf = self._make_packet_filter(fmt or self.fmt, net_id, **kwargs)
             yield pf
-            if do_delete:
-                self._delete('packet_filters', pf['packet_filter']['id'])
             if not network:
                 self._delete('networks', network_to_use['network']['id'])
 
     @contextlib.contextmanager
-    def packet_filter_on_port(self, port=None, fmt=None, do_delete=True,
-                              set_portinfo=True, **kwargs):
+    def packet_filter_on_port(self, port=None, fmt=None, set_portinfo=True,
+                              **kwargs):
         with test_plugin.optional_ctx(port, self.port) as port_to_use:
             net_id = port_to_use['port']['network_id']
             port_id = port_to_use['port']['id']
@@ -122,8 +119,6 @@ class TestNecPluginPacketFilterBase(test_nec_plugin.NecPluginV2TestCase):
             pf = self._make_packet_filter(fmt or self.fmt, net_id, **kwargs)
             self.assertEqual(port_id, pf['packet_filter']['in_port'])
             yield pf
-            if do_delete:
-                self._delete('packet_filters', pf['packet_filter']['id'])
 
 
 class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
@@ -175,6 +170,7 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
         with self.packet_filter_on_port() as pf:
             pf_id = pf['packet_filter']['id']
             self.assertEqual(pf['packet_filter']['status'], 'ACTIVE')
+            self._delete('packet_filters', pf_id)
 
         ctx = mock.ANY
         pf_dict = mock.ANY
@@ -554,8 +550,7 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
         self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 2)
 
     def test_auto_delete_pf_in_network_deletion(self):
-        with self.packet_filter_on_network(admin_state_up=False,
-                                           do_delete=False) as pf:
+        with self.packet_filter_on_network(admin_state_up=False) as pf:
             pf_id = pf['packet_filter']['id']
 
         self._show('packet_filters', pf_id,
@@ -566,7 +561,7 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
             network = self._show('networks', port['port']['network_id'])
 
             with self.packet_filter_on_network(network=network) as pfn:
-                with self.packet_filter_on_port(port=port, do_delete=False,
+                with self.packet_filter_on_port(port=port,
                                                 set_portinfo=False) as pf:
                     pf_id = pf['packet_filter']['id']
                     in_port_id = pf['packet_filter']['in_port']
