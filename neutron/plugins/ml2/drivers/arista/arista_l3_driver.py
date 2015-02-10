@@ -374,7 +374,7 @@ class AristaL3Driver(object):
             LOG.info(_LI('Results of execution on Arista EOS: %s'), ret)
 
         except Exception:
-            msg = (_LE("Error occured while trying to execute "
+            msg = (_LE("Error occurred while trying to execute "
                      "commands %(cmd)s on EOS %(host)s"),
                    {'cmd': full_command, 'host': server})
             LOG.exception(msg)
