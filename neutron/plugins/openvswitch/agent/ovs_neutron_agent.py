@@ -253,7 +253,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         # Security group agent support
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc, root_helper, defer_refresh_firewall=True)
+                self.sg_plugin_rpc, defer_refresh_firewall=True)
 
         # Initialize iteration counter
         self.iter_num = 0
@@ -894,7 +894,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.phys_brs = {}
         self.int_ofports = {}
         self.phys_ofports = {}
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper)
+        ip_wrapper = ip_lib.IPWrapper()
         ovs = ovs_lib.BaseOVS()
         ovs_bridges = ovs.get_bridges()
         for physical_network, bridge in bridge_mappings.iteritems():
@@ -923,9 +923,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.int_br.delete_port(int_if_name)
             br.delete_port(phys_if_name)
             if self.use_veth_interconnection:
-                if ip_lib.device_exists(int_if_name, self.root_helper):
-                    ip_lib.IPDevice(int_if_name,
-                                    self.root_helper).link.delete()
+                if ip_lib.device_exists(int_if_name):
+                    ip_lib.IPDevice(int_if_name).link.delete()
                     # Give udev a chance to process its rules here, to avoid
                     # race conditions between commands launched by udev rules
                     # and the subsequent call to ip_wrapper.add_veth

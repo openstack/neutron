@@ -49,9 +49,7 @@ class TestNecAgentBase(base.BaseTestCase):
             mock.patch('neutron.agent.rpc.PluginReportStateAPI')
         ) as (get_datapath_id, gethostname,
               loopingcall, state_rpc_api):
-            kwargs = {'integ_br': 'integ_br',
-                      'root_helper': 'dummy_wrapper',
-                      'polling_interval': 1}
+            kwargs = {'integ_br': 'integ_br', 'polling_interval': 1}
             self.agent = nec_neutron_agent.NECNeutronAgent(**kwargs)
             self.loopingcall = loopingcall
             self.state_rpc_api = state_rpc_api
@@ -336,13 +334,12 @@ class TestNecAgentMain(base.BaseTestCase):
             mock.patch.object(nec_neutron_agent, 'config')
         ) as (agent, common_config, cfg):
             cfg.OVS.integration_bridge = 'br-int-x'
-            cfg.AGENT.root_helper = 'dummy-helper'
             cfg.AGENT.polling_interval = 10
 
             nec_neutron_agent.main()
 
             self.assertTrue(common_config.setup_logging.called)
             agent.assert_has_calls([
-                mock.call('br-int-x', 'dummy-helper', 10),
+                mock.call('br-int-x', 10),
                 mock.call().daemon_loop()
             ])

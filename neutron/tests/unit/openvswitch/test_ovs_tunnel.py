@@ -241,7 +241,7 @@ class TunnelTest(base.BaseTestCase):
         self.device_exists_expected = []
 
         self.ipdevice_expected = []
-        self.ipwrapper_expected = [mock.call('sudo')]
+        self.ipwrapper_expected = [mock.call()]
 
         self.get_bridges_expected = [mock.call(), mock.call()]
 
@@ -657,15 +657,15 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
 
         self.device_exists_expected = [
-            mock.call('int-%s' % self.MAP_TUN_BRIDGE, 'sudo'),
+            mock.call('int-%s' % self.MAP_TUN_BRIDGE),
         ]
 
         self.ipdevice_expected = [
-            mock.call('int-%s' % self.MAP_TUN_BRIDGE, 'sudo'),
+            mock.call('int-%s' % self.MAP_TUN_BRIDGE),
             mock.call().link.delete()
         ]
         self.ipwrapper_expected = [
-            mock.call('sudo'),
+            mock.call(),
             mock.call().add_veth('int-%s' % self.MAP_TUN_BRIDGE,
                                  'phy-%s' % self.MAP_TUN_BRIDGE)
         ]

@@ -51,7 +51,7 @@ class TestRestProxyAgentOVS(BaseAgentTestCase):
     def mock_agent(self):
         mock_context = mock.Mock(return_value='abc')
         self.context.get_admin_context_without_session = mock_context
-        return self.mod_agent.RestProxyAgent('int-br', 2, 'helper')
+        return self.mod_agent.RestProxyAgent('int-br', 2)
 
     def mock_port_update(self, **kwargs):
         agent = self.mock_agent()
@@ -160,8 +160,7 @@ class TestRestProxyAgent(BaseAgentTestCase):
     def mock_main(self):
         cfg_attrs = {'CONF.RESTPROXYAGENT.integration_bridge': 'integ_br',
                      'CONF.RESTPROXYAGENT.polling_interval': 5,
-                     'CONF.RESTPROXYAGENT.virtual_switch_type': 'ovs',
-                     'CONF.AGENT.root_helper': 'helper'}
+                     'CONF.RESTPROXYAGENT.virtual_switch_type': 'ovs'}
         with contextlib.nested(
             mock.patch(AGENTMOD + '.cfg', **cfg_attrs),
             mock.patch(AGENTMOD + '.config.init'),
@@ -181,6 +180,6 @@ class TestRestProxyAgent(BaseAgentTestCase):
             self.assertRaises(SystemExit, self.mock_main)
 
         mock_agent.assert_has_calls([
-            mock.call('integ_br', 5, 'helper', 'ovs'),
+            mock.call('integ_br', 5, 'ovs'),
             mock.call().daemon_loop()
         ])

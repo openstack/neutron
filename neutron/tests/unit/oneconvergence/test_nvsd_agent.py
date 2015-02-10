@@ -41,13 +41,12 @@ class TestOneConvergenceAgentBase(base.BaseTestCase):
                        'FixedIntervalLoopingCall'),
         ) as (loopingcall):
             kwargs = {'integ_br': 'integration_bridge',
-                      'root_helper': 'dummy_wrapper',
                       'polling_interval': 5}
             context = mock.Mock()
             self.agent = nvsd_neutron_agent.NVSDNeutronAgent(**kwargs)
             sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
             self.sg_agent = sg_rpc.SecurityGroupAgentRpc(context,
-                    sg_plugin_rpc, 'dummy_wrapper')
+                    sg_plugin_rpc)
             self.callback_nvsd = nvsd_neutron_agent.NVSDAgentRpcCallback(
                 context, self.agent, self.sg_agent)
             self.loopingcall = loopingcall
@@ -164,13 +163,12 @@ class TestOneConvergenceAgentMain(base.BaseTestCase):
             mock.patch.object(nvsd_neutron_agent, 'config')
         ) as (agent, common_config, config):
             config.AGENT.integration_bridge = 'br-int-dummy'
-            config.AGENT.root_helper = 'root-helper'
             config.AGENT.polling_interval = 5
 
             nvsd_neutron_agent.main()
 
             self.assertTrue(common_config.setup_logging.called)
             agent.assert_has_calls([
-                mock.call('br-int-dummy', 'root-helper', 5),
+                mock.call('br-int-dummy', 5),
                 mock.call().daemon_loop()
             ])

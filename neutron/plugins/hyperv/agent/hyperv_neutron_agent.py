@@ -81,10 +81,7 @@ config.register_agent_state_opts_helper(cfg.CONF)
 class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpc):
 
     def __init__(self, context, plugin_rpc):
-        # Note: as rootwrap is not supported on HyperV, root_helper is
-        # passed in as None.
-        super(HyperVSecurityAgent, self).__init__(context, plugin_rpc,
-                                                  root_helper=None)
+        super(HyperVSecurityAgent, self).__init__(context, plugin_rpc)
         if sg_rpc.is_firewall_enabled():
             self._setup_rpc()
 

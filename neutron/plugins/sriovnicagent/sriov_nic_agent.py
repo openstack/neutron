@@ -90,7 +90,7 @@ class SriovNicSwitchAgent(object):
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc, self.root_helper)
+                self.sg_plugin_rpc)
         self._setup_rpc()
         # Initialize iteration counter
         self.iter_num = 0
