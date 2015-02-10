@@ -781,6 +781,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                'name': network['name'],
                'tenant_id': network['tenant_id'],
                'admin_state_up': network['admin_state_up'],
+               'mtu': network.get('mtu', constants.DEFAULT_NETWORK_MTU),
                'status': network['status'],
                'shared': network['shared'],
                'subnets': [subnet['id']
@@ -869,6 +870,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
                     'admin_state_up': n['admin_state_up'],
+                    'mtu': n.get('mtu', constants.DEFAULT_NETWORK_MTU),
                     'shared': n['shared'],
                     'status': n.get('status', constants.NET_STATUS_ACTIVE)}
             network = models_v2.Network(**args)

@@ -2026,6 +2026,12 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         self.assertEqual(ctx_manager.exception.code,
                          webob.exc.HTTPForbidden.code)
 
+    def test_create_network_default_mtu(self):
+        name = 'net1'
+        with self.network(name=name) as net:
+            self.assertEqual(net['network']['mtu'],
+                             constants.DEFAULT_NETWORK_MTU)
+
     def test_update_network(self):
         with self.network() as network:
             data = {'network': {'name': 'a_brand_new_name'}}
