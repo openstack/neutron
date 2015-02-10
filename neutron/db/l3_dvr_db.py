@@ -14,8 +14,13 @@
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import excutils
 
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import exceptions
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as l3_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
@@ -83,34 +88,19 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             raise NotImplementedError()
         elif (not router_db.extra_attributes.distributed and
               router_res.get('distributed')):
-            # Add a check for Services FWaaS and VPNaaS
-            # This check below ensures that the legacy routers with
-            # associated VPNaaS or FWaaS services are not allowed to
-            # migrate.
-            if (self.check_router_has_no_vpnaas(context, router_db) and
-                self.check_router_has_no_firewall(context, router_db)):
-                LOG.info(_LI("No Service associated, so safe to migrate: %s "
-                             "listed"), router_db['id'])
-
-    def check_router_has_no_firewall(self, context, router_db):
-        """Check if FWaaS is associated with the legacy router."""
-        fwaas_service = manager.NeutronManager.get_service_plugins().get(
-                constants.FIREWALL)
-        if fwaas_service:
-            tenant_firewalls = fwaas_service.get_firewalls(
-                context,
-                filters={'tenant_id': [router_db['tenant_id']]})
-            if tenant_firewalls:
-                raise l3.RouterInUse(router_id=router_db['id'])
-        return True
-
-    def check_router_has_no_vpnaas(self, context, router_db):
-        """Check if VPNaaS is associated with the legacy router."""
-        vpn_plugin = manager.NeutronManager.get_service_plugins().get(
-            constants.VPN)
-        if vpn_plugin:
-            vpn_plugin.check_router_in_use(context, router_db['id'])
-        return True
+            # Notify advanced services of the imminent state transition
+            # for the router.
+            try:
+                kwargs = {'context': context, 'router': router_db}
+                registry.notify(
+                    resources.ROUTER, events.BEFORE_UPDATE, self, **kwargs)
+            except exceptions.CallbackFailure as e:
+                with excutils.save_and_reraise_exception():
+                    # NOTE(armax): preserve old check's behavior
+                    if len(e.errors) == 1:
+                        raise e.errors[0].error
+                    raise l3.RouterInUse(router_id=router_db['id'],
+                                         reason=e)
 
     def _update_distributed_attr(
         self, context, router_id, router_db, data, gw_info):
