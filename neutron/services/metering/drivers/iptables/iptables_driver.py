@@ -73,7 +73,6 @@ class RouterWithMetering(object):
         self.root_helper = config.get_root_helper(self.conf)
         self.ns_name = NS_PREFIX + self.id if conf.use_namespaces else None
         self.iptables_manager = iptables_manager.IptablesManager(
-            root_helper=self.root_helper,
             namespace=self.ns_name,
             binary_name=WRAP_NAME,
             use_ipv6=ipv6_utils.is_enabled())

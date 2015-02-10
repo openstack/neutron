@@ -81,14 +81,6 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.metering = iptables_driver.IptablesMeteringDriver('metering',
                                                                cfg.CONF)
 
-    def test_root_helper(self):
-        self.metering.add_metering_label(None, TEST_ROUTERS)
-
-        self.iptables_cls.assert_called_with(root_helper='fake_sudo',
-                                             namespace=mock.ANY,
-                                             binary_name=mock.ANY,
-                                             use_ipv6=mock.ANY)
-
     def test_add_metering_label(self):
         routers = TEST_ROUTERS[:1]
 

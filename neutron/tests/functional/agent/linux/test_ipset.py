@@ -33,7 +33,6 @@ class IpsetBase(base.BaseIPVethTestCase):
                                                         IPSET_SET)
 
         self.dst_iptables = iptables_manager.IptablesManager(
-            root_helper=self.root_helper,
             namespace=self.dst_ns.namespace)
 
         self._add_iptables_ipset_rules(self.dst_iptables)
