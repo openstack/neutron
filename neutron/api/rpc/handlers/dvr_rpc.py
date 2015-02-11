@@ -15,6 +15,7 @@
 
 import oslo_messaging
 
+from neutron.common import constants
 from neutron.common import log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -25,10 +26,16 @@ LOG = logging.getLogger(__name__)
 
 
 class DVRServerRpcApi(object):
-    """Agent-side RPC (stub) for agent-to-plugin interaction."""
+    """Agent-side RPC (stub) for agent-to-plugin interaction.
+
+    This class implements the client side of an rpc interface.  The server side
+    can be found below: DVRServerRpcCallback.  For more information on changing
+    rpc interfaces, see doc/source/devref/rpc_api.rst.
+    """
 
     def __init__(self, topic):
-        target = oslo_messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.0',
+                                       namespace=constants.RPC_NAMESPACE_DVR)
         self.client = n_rpc.get_client(target)
 
     @log.log
@@ -54,12 +61,18 @@ class DVRServerRpcApi(object):
 
 
 class DVRServerRpcCallback(object):
-    """Plugin-side RPC (implementation) for agent-to-plugin interaction."""
+    """Plugin-side RPC (implementation) for agent-to-plugin interaction.
+
+    This class implements the server side of an rpc interface.  The client side
+    can be found above: DVRServerRpcApi.  For more information on changing rpc
+    interfaces, see doc/source/devref/rpc_api.rst.
+    """
 
     # History
     #   1.0 Initial version
 
-    target = oslo_messaging.Target(version='1.0')
+    target = oslo_messaging.Target(version='1.0',
+                                   namespace=constants.RPC_NAMESPACE_DVR)
 
     @property
     def plugin(self):
