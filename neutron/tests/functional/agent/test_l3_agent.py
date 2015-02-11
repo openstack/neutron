@@ -298,7 +298,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         expected = self.get_expected_keepalive_configuration(router)
 
         self.assertEqual(expected,
-                         router.keepalived_manager.config.get_config_str())
+                         router.keepalived_manager.get_conf_on_disk())
 
         # Add a new FIP and change the GW IP address
         router.router = copy.deepcopy(router.router)
