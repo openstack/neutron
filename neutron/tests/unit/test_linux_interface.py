@@ -127,15 +127,20 @@ class TestABCDriver(TestBase):
                           dynamic=False,
                           cidr='2001:db8:a::123/64')]
         self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        self.ip_dev().route.list_onlink_routes.return_value = []
+
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'
-        bc.init_l3('tap0', ['2001:db8:a::124/64'], namespace=ns)
+        bc.init_l3('tap0', ['2001:db8:a::124/64'], namespace=ns,
+                   extra_subnets=[{'cidr': '2001:db8:b::/64'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', 'sudo', namespace=ns),
              mock.call().addr.list(scope='global', filters=['permanent']),
              mock.call().addr.add(6, '2001:db8:a::124/64',
                                   '2001:db8:a:0:ffff:ffff:ffff:ffff'),
-             mock.call().addr.delete(6, '2001:db8:a::123/64')])
+             mock.call().addr.delete(6, '2001:db8:a::123/64'),
+             mock.call().route.list_onlink_routes(),
+             mock.call().route.add_onlink_route('2001:db8:b::/64')])
 
     def test_l3_init_with_duplicated_ipv6(self):
         addresses = [dict(ip_version=6,

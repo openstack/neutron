@@ -106,7 +106,13 @@ class LinuxInterfaceDriver(object):
                 del previous[ip_cidr]
                 continue
 
-            device.addr.add(net.version, ip_cidr, str(net.broadcast))
+            # Make sure the format of this network, if IPv6, is zero-filled.
+            # The Linux netaddr library seems to do this by default (bug?),
+            # and the test verifies it, but we should force it just in case
+            # the behavior changes.  It also makes sure that non-Linux-based
+            # libraries also work correctly (e.g. OSX).
+            device.addr.add(net.version, ip_cidr,
+                            str(net.broadcast.format(netaddr.ipv6_full)))
 
         # clean up any old addresses
         for ip_cidr, ip_version in previous.items():
