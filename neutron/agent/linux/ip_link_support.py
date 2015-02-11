@@ -51,13 +51,10 @@ class IpLinkSupport(object):
     SUB_CAPABILITY_REGEX = r"\[ %(cap)s (.*) \[ %(subcap)s (.*)"
 
     @classmethod
-    def get_vf_mgmt_section(cls, root_helper=None):
-        """Parses ip link help output, and gets vf block
+    def get_vf_mgmt_section(cls):
+        """Parses ip link help output, and gets vf block"""
 
-        :param root_helper: root permission helper
-
-        """
-        output = cls._get_ip_link_output(root_helper)
+        output = cls._get_ip_link_output()
         vf_block_pattern = re.search(cls.VF_BLOCK_REGEX,
                                      output,
                                      re.DOTALL | re.MULTILINE)
@@ -87,7 +84,7 @@ class IpLinkSupport(object):
         return pattern_match is not None
 
     @classmethod
-    def _get_ip_link_output(cls, root_helper):
+    def _get_ip_link_output(cls):
         """Gets the output of the ip link help command
 
         Runs ip link help command and stores its output
@@ -99,7 +96,7 @@ class IpLinkSupport(object):
         try:
             ip_cmd = ['ip', 'link', 'help']
             _stdout, _stderr = utils.execute(
-                ip_cmd, root_helper,
+                ip_cmd,
                 check_exit_code=False,
                 return_stderr=True,
                 log_fail_as_error=False)

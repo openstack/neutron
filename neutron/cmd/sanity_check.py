@@ -42,7 +42,7 @@ class BoolOptCallback(cfg.BoolOpt):
 
 
 def check_ovs_vxlan():
-    result = checks.ovs_vxlan_supported(root_helper=cfg.CONF.AGENT.root_helper)
+    result = checks.ovs_vxlan_supported()
     if not result:
         LOG.error(_LE('Check for Open vSwitch VXLAN support failed. '
                       'Please ensure that the version of openvswitch '
@@ -51,8 +51,7 @@ def check_ovs_vxlan():
 
 
 def check_iproute2_vxlan():
-    result = checks.iproute2_vxlan_supported(
-                root_helper=cfg.CONF.AGENT.root_helper)
+    result = checks.iproute2_vxlan_supported()
     if not result:
         LOG.error(_LE('Check for iproute2 VXLAN support failed. Please ensure '
                       'that the iproute2 has VXLAN support.'))
@@ -60,7 +59,7 @@ def check_iproute2_vxlan():
 
 
 def check_ovs_patch():
-    result = checks.patch_supported(root_helper=cfg.CONF.AGENT.root_helper)
+    result = checks.patch_supported()
     if not result:
         LOG.error(_LE('Check for Open vSwitch patch port support failed. '
                       'Please ensure that the version of openvswitch '
@@ -70,8 +69,7 @@ def check_ovs_patch():
 
 
 def check_read_netns():
-    required = checks.netns_read_requires_helper(
-        root_helper=cfg.CONF.AGENT.root_helper)
+    required = checks.netns_read_requires_helper()
     if not required and cfg.CONF.AGENT.use_helper_for_ns_read:
         LOG.warning(_LW("The user that is executing neutron can read the "
                         "namespaces without using the root_helper. Disable "
@@ -113,8 +111,7 @@ def check_nova_notify():
 
 
 def check_arp_responder():
-    result = checks.arp_responder_supported(
-        root_helper=cfg.CONF.AGENT.root_helper)
+    result = checks.arp_responder_supported()
     if not result:
         LOG.error(_LE('Check for Open vSwitch ARP responder support failed. '
                       'Please ensure that the version of openvswitch '
@@ -123,8 +120,7 @@ def check_arp_responder():
 
 
 def check_vf_management():
-    result = checks.vf_management_supported(
-        root_helper=cfg.CONF.AGENT.root_helper)
+    result = checks.vf_management_supported()
     if not result:
         LOG.error(_LE('Check for VF management support failed. '
                       'Please ensure that the version of ip link '

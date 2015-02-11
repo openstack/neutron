@@ -114,7 +114,6 @@ TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can }
                 vf_section, capability, subcapability)
             self.assertEqual(expected, capable)
             mock_exec.assert_called_once_with(['ip', 'link', 'help'],
-                                              None,
                                               check_exit_code=False,
                                               return_stderr=True,
                                               log_fail_as_error=False)

@@ -48,19 +48,19 @@ class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
         self.check_sudo_enabled()
 
     def test_ovs_vxlan_support_runs(self):
-        checks.ovs_vxlan_supported(self.root_helper)
+        checks.ovs_vxlan_supported()
 
     def test_iproute2_vxlan_support_runs(self):
-        checks.iproute2_vxlan_supported(self.root_helper)
+        checks.iproute2_vxlan_supported()
 
     def test_ovs_patch_support_runs(self):
-        checks.patch_supported(self.root_helper)
+        checks.patch_supported()
 
     def test_arp_responder_runs(self):
-        checks.arp_responder_supported(self.root_helper)
+        checks.arp_responder_supported()
 
     def test_vf_management_runs(self):
-        checks.vf_management_supported(self.root_helper)
+        checks.vf_management_supported()
 
     def test_namespace_root_read_detection_runs(self):
-        checks.netns_read_requires_helper(self.root_helper)
+        checks.netns_read_requires_helper()
