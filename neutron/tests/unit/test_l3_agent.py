@@ -295,6 +295,15 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
 
         return agent, ri, port
 
+    def _process_router_instance_for_agent(self, agent, ri, router):
+        ri.router = router
+        if not ri.radvd:
+            ri.radvd = ra.DaemonMonitor(router['id'],
+                                        ri.ns_name,
+                                        agent.process_monitor,
+                                        agent.get_internal_device_name)
+        agent.process_router(ri)
+
 
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_periodic_sync_routers_task_raise_exception(self):
@@ -1111,7 +1120,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router['gw_port'] = None
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         agent.external_gateway_added = mock.Mock()
-        agent.process_router(ri)
+        self._process_router_instance_for_agent(agent, ri, router)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
 
         # Get NAT rules with the gw_port
@@ -1120,7 +1129,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         with mock.patch.object(
                 agent,
                 'external_gateway_nat_rules') as external_gateway_nat_rules:
-            agent.process_router(ri)
+            self._process_router_instance_for_agent(agent, ri, router)
             new_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
 
             # There should be no change with the NAT rules
@@ -1139,8 +1148,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router_append_interface(router, count=1, ip_version=6, ra_mode=ra_mode,
                                 addr_mode=addr_mode)
         # Reassign the router object to RouterInfo
-        ri.router = router
-        agent.process_router(ri)
+        self._process_router_instance_for_agent(agent, ri, router)
         # IPv4 NAT rules should not be changed by adding an IPv6 interface
         nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
                            if r not in orig_nat_rules]
@@ -1206,8 +1214,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router_append_interface(router, count=1, ip_version=4)
         router_append_interface(router, count=1, ip_version=6)
         # Reassign the router object to RouterInfo
-        ri.router = router
-        agent.process_router(ri)
+        self._process_router_instance_for_agent(agent, ri, router)
         self._assert_ri_process_enabled(ri, 'radvd')
 
     def test_process_router_interface_removed(self):
@@ -1230,17 +1237,16 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = prepare_router_data()
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         agent.external_gateway_added = mock.Mock()
-        ri.router = router
-        agent.process_router(ri)
+        self._process_router_instance_for_agent(agent, ri, router)
         # Add an IPv6 interface and reprocess
         router_append_interface(router, count=1, ip_version=6)
-        agent.process_router(ri)
+        self._process_router_instance_for_agent(agent, ri, router)
         self._assert_ri_process_enabled(ri, 'radvd')
         # Reset the calls so we can check for disable radvd
         self.external_process.reset_mock()
         # Remove the IPv6 interface and reprocess
         del router[l3_constants.INTERFACE_KEY][1]
-        agent.process_router(ri)
+        self._process_router_instance_for_agent(agent, ri, router)
         self._assert_ri_process_disabled(ri, 'radvd')
 
     def test_process_router_internal_network_added_unexpected_error(self):
@@ -1865,7 +1871,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
 
     def test_spawn_radvd(self):
-        router = prepare_router_data()
+        router = prepare_router_data(ip_version=6)
 
         conffile = '/fake/radvd.conf'
         pidfile = '/fake/radvd.pid'
@@ -1877,17 +1883,23 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.ip_cls_p.stop()
 
         ensure_dir = 'neutron.agent.linux.utils.ensure_dir'
+        get_conf_file_name = 'neutron.agent.linux.utils.get_conf_file_name'
         get_pid_file_name = ('neutron.agent.linux.external_process.'
                              'ProcessManager.get_pid_file_name')
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
-            with mock.patch(get_pid_file_name) as get_pid:
-                with mock.patch(ensure_dir) as ensure_dir:
-                    get_pid.return_value = pidfile
-                    ra._spawn_radvd(router['id'],
-                                    conffile,
-                                    agent.get_ns_name(router['id']),
-                                    agent.process_monitor)
-            cmd = execute.call_args[0][0]
+        utils_execute = 'neutron.agent.linux.utils.execute'
+
+        mock.patch(get_conf_file_name).start().return_value = conffile
+        mock.patch(get_pid_file_name).start().return_value = pidfile
+        mock.patch(ensure_dir).start()
+        execute = mock.patch(utils_execute).start()
+
+        radvd = ra.DaemonMonitor(router['id'],
+                                 agent.get_ns_name(router['id']),
+                                 agent.process_monitor,
+                                 FakeDev)
+        radvd.enable(router['_interfaces'])
+
+        cmd = execute.call_args[0][0]
 
         self.assertIn('radvd', cmd)
 
@@ -1913,9 +1925,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri = self._process_router_ipv6_interface_added(router,
                                                            ra_mode=ra_mode)
 
-            ra._generate_radvd_conf(ri.router['id'],
-                                    router[l3_constants.INTERFACE_KEY],
-                                    mock.Mock())
+            ri.radvd._generate_radvd_conf(router[l3_constants.INTERFACE_KEY])
 
             def assertFlag(flag):
                 return (self.assertIn if flag else self.assertNotIn)
