@@ -160,15 +160,3 @@ class MetadataDriver(advanced_service.AdvancedService):
             conf,
             router_id,
             ns_name)
-
-    @classmethod
-    def spawn_metadata_proxy(cls, router_id, ns_name, port, conf):
-        callback = cls._get_metadata_proxy_callback(port, conf,
-                                                    router_id=router_id)
-        pm = cls._get_metadata_proxy_process_manager(router_id, ns_name, conf)
-        pm.enable(callback)
-
-    @classmethod
-    def destroy_metadata_proxy(cls, router_id, ns_name, conf):
-        pm = cls._get_metadata_proxy_process_manager(router_id, ns_name, conf)
-        pm.disable()
