@@ -30,7 +30,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 
 
 class DistributedHARouterNotSupported(NotImplementedError):
-    message = _("Currenly distributed HA routers are "
+    message = _("Currently distributed HA routers are "
                 "not supported.")
 
 
