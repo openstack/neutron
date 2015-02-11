@@ -209,28 +209,6 @@ class L3RpcCallback(object):
                   'host': host})
         return agent_port
 
-    def get_snat_router_interface_ports(self, context, **kwargs):
-        """Get SNAT serviced Router Port List.
-
-        The Service Node that hosts the SNAT service requires
-        the ports to service the router interfaces.
-        This function will check if any available ports, if not
-        it will create ports on the routers interfaces and
-        will send a list to the L3 agent.
-        """
-        router_id = kwargs.get('router_id')
-        host = kwargs.get('host')
-        admin_ctx = neutron_context.get_admin_context()
-        snat_port_list = (
-            self.l3plugin.create_snat_intf_port_list_if_not_exists(
-                admin_ctx, router_id))
-        for p in snat_port_list:
-            self._ensure_host_set_on_port(admin_ctx, host, p)
-        LOG.debug('SNAT interface ports returned : %(snat_port_list)s '
-                  'and on host %(host)s', {'snat_port_list': snat_port_list,
-                  'host': host})
-        return snat_port_list
-
     def update_router_state(self, context, **kwargs):
         router_id = kwargs.get('router_id')
         state = kwargs.get('state')
