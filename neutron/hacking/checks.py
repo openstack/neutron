@@ -26,7 +26,7 @@ import pep8
 #    on the N3xx value.
 #  - List the new rule in the top level HACKING.rst file
 #  - Add test cases for each new rule to
-#    neutron/tests/unit/test_hacking.py
+#    neutron/tests/unit/hacking/test_checks.py
 
 _all_log_levels = {
     # NOTE(yamamoto): Following nova which uses _() for audit.
