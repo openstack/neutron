@@ -217,6 +217,90 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 self._validate_behavior_on_bulk_failure(
                     res, 'ports', webob.exc.HTTPServerError.code)
 
+    def test_create_ports_bulk_with_sec_grp(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        with contextlib.nested(
+            self.network(),
+            mock.patch.object(plugin.notifier,
+                              'security_groups_member_updated'),
+            mock.patch.object(plugin.notifier,
+                              'security_groups_provider_updated')
+        ) as (net, m_upd, p_upd):
+
+            res = self._create_port_bulk(self.fmt, 3, net['network']['id'],
+                                         'test', True, context=ctx)
+            ports = self.deserialize(self.fmt, res)
+            used_sg = ports['ports'][0]['security_groups']
+            m_upd.assert_called_once_with(ctx, used_sg)
+            self.assertFalse(p_upd.called)
+
+    def test_create_ports_bulk_with_sec_grp_member_provider_update(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        with contextlib.nested(
+            self.network(),
+            mock.patch.object(plugin.notifier,
+                              'security_groups_member_updated'),
+            mock.patch.object(plugin.notifier,
+                              'security_groups_provider_updated')
+        ) as (net, m_upd, p_upd):
+
+            net_id = net['network']['id']
+            data = [{
+                    'network_id': net_id,
+                    'tenant_id': self._tenant_id
+                    },
+                    {
+                    'network_id': net_id,
+                    'tenant_id': self._tenant_id,
+                    'device_owner': constants.DEVICE_OWNER_DHCP
+                    }
+                    ]
+
+            res = self._create_bulk_from_list(self.fmt, 'port',
+                                              data, context=ctx)
+            ports = self.deserialize(self.fmt, res)
+            used_sg = ports['ports'][0]['security_groups']
+            m_upd.assert_called_once_with(ctx, used_sg)
+            p_upd.assert_called_once_with(ctx)
+
+            m_upd.reset_mock()
+            p_upd.reset_mock()
+            data[0]['device_owner'] = constants.DEVICE_OWNER_DHCP
+            self._create_bulk_from_list(self.fmt, 'port',
+                                        data, context=ctx)
+            self.assertFalse(m_upd.called)
+            p_upd.assert_called_once_with(ctx)
+
+    def test_create_ports_bulk_with_sec_grp_provider_update_ipv6(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        fake_prefix = '2001:db8::/64'
+        fake_gateway = 'fe80::1'
+        with self.network() as net:
+            with contextlib.nested(
+                self.subnet(net, gateway_ip=fake_gateway,
+                            cidr=fake_prefix, ip_version=6),
+                mock.patch.object(
+                    plugin.notifier, 'security_groups_member_updated'),
+                mock.patch.object(
+                    plugin.notifier, 'security_groups_provider_updated')
+            ) as (snet_v6, m_upd, p_upd):
+
+                net_id = net['network']['id']
+                data = [{
+                        'network_id': net_id,
+                        'tenant_id': self._tenant_id,
+                        'fixed_ips': [{'subnet_id': snet_v6['subnet']['id']}],
+                        'device_owner': constants.DEVICE_OWNER_ROUTER_INTF
+                        }
+                        ]
+                self._create_bulk_from_list(self.fmt, 'port',
+                                            data, context=ctx)
+                self.assertFalse(m_upd.called)
+                p_upd.assert_called_once_with(ctx)
+
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()

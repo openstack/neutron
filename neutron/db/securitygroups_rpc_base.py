@@ -136,8 +136,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             need_notify = True
         return need_notify
 
-    def notify_security_groups_member_updated(self, context, port):
-        """Notify update event of security group members.
+    def notify_security_groups_member_updated_bulk(self, context, ports):
+        """Notify update event of security group members for ports.
 
         The agent setups the iptables rule to allow
         ingress packet from the dhcp server (as a part of provider rules),
@@ -147,17 +147,28 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         occurs and the plugin agent fetches the update provider
         rule in the other RPC call (security_group_rules_for_devices).
         """
-        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
+        security_groups_provider_updated = False
+        sec_groups = set()
+        for port in ports:
+            if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
+                security_groups_provider_updated = True
+            # For IPv6, provider rule need to be updated in case router
+            # interface is created or updated after VM port is created.
+            elif port['device_owner'] == q_const.DEVICE_OWNER_ROUTER_INTF:
+                if any(netaddr.IPAddress(fixed_ip['ip_address']).version == 6
+                       for fixed_ip in port['fixed_ips']):
+                    security_groups_provider_updated = True
+            else:
+                sec_groups |= set(port.get(ext_sg.SECURITYGROUPS))
+
+        if security_groups_provider_updated:
             self.notifier.security_groups_provider_updated(context)
-        # For IPv6, provider rule need to be updated in case router
-        # interface is created or updated after VM port is created.
-        elif port['device_owner'] == q_const.DEVICE_OWNER_ROUTER_INTF:
-            if any(netaddr.IPAddress(fixed_ip['ip_address']).version == 6
-                   for fixed_ip in port['fixed_ips']):
-                self.notifier.security_groups_provider_updated(context)
-        else:
+        if sec_groups:
             self.notifier.security_groups_member_updated(
-                context, port.get(ext_sg.SECURITYGROUPS))
+                context, list(sec_groups))
+
+    def notify_security_groups_member_updated(self, context, port):
+        self.notify_security_groups_member_updated_bulk(context, [port])
 
     def security_group_info_for_ports(self, context, ports):
         sg_info = {'devices': ports,
