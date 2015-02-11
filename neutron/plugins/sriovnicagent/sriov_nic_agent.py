@@ -68,10 +68,9 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
 class SriovNicSwitchAgent(object):
     def __init__(self, physical_devices_mappings, exclude_devices,
-                 polling_interval, root_helper):
+                 polling_interval):
 
         self.polling_interval = polling_interval
-        self.root_helper = root_helper
         self.setup_eswitch_mgr(physical_devices_mappings,
                                exclude_devices)
         configurations = {'device_mappings': physical_devices_mappings}
@@ -130,9 +129,7 @@ class SriovNicSwitchAgent(object):
             LOG.exception(_LE("Failed reporting state!"))
 
     def setup_eswitch_mgr(self, device_mappings, exclude_devices={}):
-        self.eswitch_mgr = esm.ESwitchManager(device_mappings,
-                                              exclude_devices,
-                                              self.root_helper)
+        self.eswitch_mgr = esm.ESwitchManager(device_mappings, exclude_devices)
 
     def scan_devices(self, registered_devices, updated_devices):
         curr_devices = self.eswitch_mgr.get_assigned_devices()
@@ -337,12 +334,10 @@ def main():
     LOG.info(_LI("Exclude Devices: %s"), exclude_devices)
 
     polling_interval = cfg.CONF.AGENT.polling_interval
-    root_helper = cfg.CONF.AGENT.root_helper
     try:
         agent = SriovNicSwitchAgent(device_mappings,
                                     exclude_devices,
-                                    polling_interval,
-                                    root_helper)
+                                    polling_interval)
     except exc.SriovNicError:
         LOG.exception(_LE("Agent Initialization Failed"))
         raise SystemExit(1)

@@ -61,8 +61,6 @@ sdnve_opts = [
 sdnve_agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("Agent polling interval if necessary.")),
-    cfg.StrOpt('root_helper', default='sudo',
-               help=_("Using root helper.")),
     cfg.BoolOpt('rpc', default=True,
                 help=_("Whether to use rpc.")),
 

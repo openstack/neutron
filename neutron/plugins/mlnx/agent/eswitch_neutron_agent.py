@@ -41,10 +41,9 @@ def main():
         sys.exit(1)
     LOG.info(_LI("Interface mappings: %s"), interface_mappings)
 
-    root_helper = cfg.CONF.AGENT.root_helper
     try:
         agent = mlnx_eswitch_neutron_agent.MlnxEswitchNeutronAgent(
-            interface_mappings, root_helper)
+            interface_mappings)
     except Exception as e:
         LOG.error(_LE("Failed on Agent initialisation : %s. "
                       "Agent terminated!"), e)

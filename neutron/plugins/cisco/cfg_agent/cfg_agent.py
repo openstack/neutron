@@ -331,7 +331,6 @@ def main(manager='neutron.plugins.cisco.cfg_agent.'
     conf = cfg.CONF
     conf.register_opts(CiscoCfgAgent.OPTS, "cfg_agent")
     config.register_agent_state_opts_helper(conf)
-    config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
     common_config.init(sys.argv[1:])

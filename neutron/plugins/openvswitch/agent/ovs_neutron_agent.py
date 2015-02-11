@@ -28,6 +28,7 @@ from oslo_config import cfg
 import oslo_messaging
 from six import moves
 
+from neutron.agent.common import config
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
@@ -1570,6 +1571,7 @@ def create_agent_config_map(config):
 
 def main():
     cfg.CONF.register_opts(ip_lib.OPTS)
+    config.register_root_helper(cfg.CONF)
     common_config.init(sys.argv[1:])
     common_config.setup_logging()
     q_utils.log_opt_values(LOG)

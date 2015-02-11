@@ -40,8 +40,8 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         ENABLE = "enable"
         DISABLE = "disable"
 
-    def __init__(self, dev_name, root_helper=None):
-        super(ip_lib.IPWrapper, self).__init__(root_helper=root_helper)
+    def __init__(self, dev_name):
+        super(ip_lib.IPWrapper, self).__init__()
         self.dev_name = dev_name
 
     def get_assigned_macs(self, vf_list):

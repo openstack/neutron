@@ -56,7 +56,7 @@ class SdnveNeutronAgent(object):
     target = oslo_messaging.Target(version='1.1')
 
     def __init__(self, integ_br, interface_mappings,
-                 info, root_helper, polling_interval,
+                 info, polling_interval,
                  controller_ip, reset_br, out_of_band):
         '''The agent initialization.
 
@@ -65,13 +65,11 @@ class SdnveNeutronAgent(object):
         :param integ_br: name of the integration bridge.
         :param interface_mappings: interfaces to physical networks.
         :param info: local IP address of this hypervisor.
-        :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
         :param controller_ip: Ip address of SDN-VE controller.
         '''
 
         super(SdnveNeutronAgent, self).__init__()
-        self.root_helper = root_helper
         self.int_bridge_name = integ_br
         self.controller_ip = controller_ip
         self.interface_mappings = interface_mappings
@@ -193,7 +191,7 @@ class SdnveNeutronAgent(object):
                      {'physical_network': physical_network,
                       'interface': interface})
             # Connect the physical interface to the bridge
-            if not ip_lib.device_exists(interface, self.root_helper):
+            if not ip_lib.device_exists(interface):
                 LOG.error(_LE("Interface %(interface)s for physical network "
                               "%(physical_network)s does not exist. Agent "
                               "terminated!"),
@@ -241,7 +239,6 @@ def create_agent_config_map(config):
         'interface_mappings': interface_mappings,
         'controller_ip': controller_ip,
         'info': config.SDNVE.info,
-        'root_helper': config.SDNVE_AGENT.root_helper,
         'polling_interval': config.SDNVE_AGENT.polling_interval,
         'reset_br': config.SDNVE.reset_bridge,
         'out_of_band': config.SDNVE.out_of_band}

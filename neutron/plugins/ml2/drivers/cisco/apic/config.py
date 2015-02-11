@@ -16,10 +16,6 @@
 from oslo_config import cfg
 
 
-DEFAULT_ROOT_HELPER = ('sudo /usr/local/bin/neutron-rootwrap '
-                       '/etc/neutron/rootwrap.conf')
-
-
 # oslo_config limits ${var} expansion to global variables
 # That is why apic_system_id as a global variable
 global_opts = [
@@ -76,9 +72,6 @@ apic_opts = [
     cfg.StrOpt('apic_vlan_range',
                default='2:4093',
                help=_("Range of VLAN's to be used for Openstack")),
-    cfg.StrOpt('root_helper',
-               default=DEFAULT_ROOT_HELPER,
-               help=_("Setup root helper as rootwrap or sudo")),
     cfg.IntOpt('apic_sync_interval',
                default=0,
                help=_("Synchronization interval in seconds")),
