@@ -12,14 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_exc
 from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
-from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.db import models as nmodels
 from neutron.plugins.nec.extensions import packetfilter as ext_pf
@@ -30,41 +26,6 @@ PF_STATUS_DOWN = 'DOWN'
 PF_STATUS_ERROR = 'ERROR'
 
 INT_FIELDS = ('eth_type', 'src_port', 'dst_port')
-
-
-class PacketFilter(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    """Represents a packet filter."""
-    name = sa.Column(sa.String(255))
-    network_id = sa.Column(sa.String(36),
-                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
-                           nullable=False)
-    priority = sa.Column(sa.Integer, nullable=False)
-    action = sa.Column(sa.String(16), nullable=False)
-    # condition
-    in_port = sa.Column(sa.String(36),
-                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
-                        nullable=True)
-    src_mac = sa.Column(sa.String(32), nullable=False)
-    dst_mac = sa.Column(sa.String(32), nullable=False)
-    eth_type = sa.Column(sa.Integer, nullable=False)
-    src_cidr = sa.Column(sa.String(64), nullable=False)
-    dst_cidr = sa.Column(sa.String(64), nullable=False)
-    protocol = sa.Column(sa.String(16), nullable=False)
-    src_port = sa.Column(sa.Integer, nullable=False)
-    dst_port = sa.Column(sa.Integer, nullable=False)
-    # status
-    admin_state_up = sa.Column(sa.Boolean(), nullable=False)
-    status = sa.Column(sa.String(16), nullable=False)
-
-    network = orm.relationship(
-        models_v2.Network,
-        backref=orm.backref('packetfilters', lazy='joined', cascade='delete'),
-        uselist=False)
-    in_port_ref = orm.relationship(
-        models_v2.Port,
-        backref=orm.backref('packetfilters', lazy='joined', cascade='delete'),
-        primaryjoin="Port.id==PacketFilter.in_port",
-        uselist=False)
 
 
 class PacketFilterDbMixin(object):
@@ -92,7 +53,7 @@ class PacketFilterDbMixin(object):
 
     def _get_packet_filter(self, context, id):
         try:
-            pf_entry = self._get_by_id(context, PacketFilter, id)
+            pf_entry = self._get_by_id(context, nmodels.PacketFilter, id)
         except sa_exc.NoResultFound:
             raise ext_pf.PacketFilterNotFound(id=id)
         return pf_entry
@@ -103,7 +64,7 @@ class PacketFilterDbMixin(object):
 
     def get_packet_filters(self, context, filters=None, fields=None):
         return self._get_collection(context,
-                                    PacketFilter,
+                                    nmodels.PacketFilter,
                                     self._make_packet_filter_dict,
                                     filters=filters,
                                     fields=fields)
@@ -174,7 +135,7 @@ class PacketFilterDbMixin(object):
         self._set_eth_type_from_protocol(params)
 
         with context.session.begin(subtransactions=True):
-            pf_entry = PacketFilter(**params)
+            pf_entry = nmodels.PacketFilter(**params)
             context.session.add(pf_entry)
 
         return self._make_packet_filter_dict(pf_entry)
@@ -201,16 +162,19 @@ class PacketFilterDbMixin(object):
         It returns a list of tuple (neutron filter_id, OFC id).
         """
         query = (context.session.query(nmodels.OFCFilterMapping)
-                 .join(PacketFilter,
-                       nmodels.OFCFilterMapping.neutron_id == PacketFilter.id)
-                 .filter(PacketFilter.admin_state_up == sql.true()))
+                 .join(nmodels.PacketFilter,
+                       nmodels.OFCFilterMapping.neutron_id
+                       == nmodels.PacketFilter.id)
+                 .filter(nmodels.PacketFilter.admin_state_up == sql.true()))
 
         network_id = port['network_id']
-        net_pf_query = (query.filter(PacketFilter.network_id == network_id)
-                        .filter(PacketFilter.in_port == sql.null()))
+        net_pf_query = (query.filter(nmodels.PacketFilter.network_id
+                                     == network_id)
+                        .filter(nmodels.PacketFilter.in_port == sql.null()))
         net_filters = [(pf['neutron_id'], pf['ofc_id']) for pf in net_pf_query]
 
-        port_pf_query = query.filter(PacketFilter.in_port == port['id'])
+        port_pf_query = query.filter(nmodels.PacketFilter.in_port
+                                     == port['id'])
         port_filters = [(pf['neutron_id'], pf['ofc_id'])
                         for pf in port_pf_query]
 
