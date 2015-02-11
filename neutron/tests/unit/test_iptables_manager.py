@@ -230,7 +230,6 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         super(IptablesManagerStateFulTestCase, self).setUp()
         cfg.CONF.register_opts(a_cfg.IPTABLES_OPTS, 'AGENT')
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
-        self.root_helper = 'sudo'
         self.iptables = iptables_manager.IptablesManager()
         self.execute = mock.patch.object(self.iptables, "execute").start()
 

@@ -21,10 +21,10 @@ expected_calls_and_values is a list of (expected_call, return_value):
 
         expected_calls_and_values = [
             (mock.call(["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
-                        self.BR_NAME, pname], root_helper=self.root_helper),
+                        self.BR_NAME, pname]),
              None),
             (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
-                        pname, "type=gre"], root_helper=self.root_helper),
+                        pname, "type=gre"]),
              None),
             ....
         ]

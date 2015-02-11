@@ -52,9 +52,9 @@ class BaseSudoTestCase(base.BaseTestCase):
         self.fail_on_missing_deps = (
             base.bool_from_env('OS_FAIL_ON_MISSING_DEPS'))
 
-        self.root_helper = os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD)
         config.register_root_helper(cfg.CONF)
-        cfg.CONF.set_override('root_helper', self.root_helper, group='AGENT')
+        self.config(group='AGENT',
+                    root_helper=os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD))
 
     def check_sudo_enabled(self):
         if not self.sudo_enabled:

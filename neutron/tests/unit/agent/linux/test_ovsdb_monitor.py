@@ -23,7 +23,6 @@ class TestOvsdbMonitor(base.BaseTestCase):
 
     def setUp(self):
         super(TestOvsdbMonitor, self).setUp()
-        self.root_helper = 'sudo'
         self.monitor = ovsdb_monitor.OvsdbMonitor('Interface')
 
     def read_output_queues_and_returns_result(self, output_type, output):
@@ -55,7 +54,6 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
 
     def setUp(self):
         super(TestSimpleInterfaceMonitor, self).setUp()
-        self.root_helper = 'sudo'
         self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
 
     def test_is_active_is_false_by_default(self):

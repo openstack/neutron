@@ -37,7 +37,6 @@ LABEL = '-l-'
 
 config.register_interface_driver_opts_helper(cfg.CONF)
 config.register_use_namespaces_opts_helper(cfg.CONF)
-config.register_root_helper(cfg.CONF)
 cfg.CONF.register_opts(interface.OPTS)
 
 
@@ -70,7 +69,6 @@ class RouterWithMetering(object):
         self.conf = conf
         self.id = router['id']
         self.router = router
-        self.root_helper = config.get_root_helper(self.conf)
         self.ns_name = NS_PREFIX + self.id if conf.use_namespaces else None
         self.iptables_manager = iptables_manager.IptablesManager(
             namespace=self.ns_name,

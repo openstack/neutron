@@ -76,7 +76,6 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
         conf.set_override('router_delete_namespaces', True)
-        conf.set_override('root_helper', self.root_helper, group='AGENT')
 
         br_int = self.create_ovs_bridge()
         br_ex = self.create_ovs_bridge()
@@ -125,7 +124,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         router.router[l3_constants.FLOATINGIP_KEY].append(fip)
 
     def _namespace_exists(self, namespace):
-        ip = ip_lib.IPWrapper(self.root_helper, namespace)
+        ip = ip_lib.IPWrapper(namespace=namespace)
         return ip.netns.exists(namespace)
 
     def _metadata_proxy_exists(self, conf, router):
@@ -138,10 +137,8 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def device_exists_with_ip_mac(self, expected_device, name_getter,
                                   namespace):
         return ip_lib.device_exists_with_ip_mac(
-            name_getter(expected_device['id']),
-            expected_device['ip_cidr'],
-            expected_device['mac_address'],
-            namespace, self.root_helper)
+            name_getter(expected_device['id']), expected_device['ip_cidr'],
+            expected_device['mac_address'], namespace)
 
     def get_expected_keepalive_configuration(self, router):
         ha_confs_path = self.agent.conf.ha_confs_path
@@ -248,7 +245,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
                 device, self.agent.get_internal_device_name, router.ns_name))
 
     def _assert_extra_routes(self, router):
-        routes = ip_lib.get_routing_table(self.root_helper, router.ns_name)
+        routes = ip_lib.get_routing_table(namespace=router.ns_name)
         routes = [{'nexthop': route['nexthop'],
                    'destination': route['destination']} for route in routes]
 
@@ -435,8 +432,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         external_device_name = self.agent.get_external_device_name(
             external_port['id'])
         external_device = ip_lib.IPDevice(external_device_name,
-                                          self.root_helper,
-                                          router.ns_name)
+                                          namespace=router.ns_name)
         existing_gateway = (
             external_device.route.get_gateway().get('gateway'))
         expected_gateway = external_port['subnet']['gateway_ip']
@@ -449,7 +445,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             self.agent.get_external_device_name(external_port['id']),
             '%s/32' % fip['floating_ip_address'],
             external_port['mac_address'],
-            router.ns_name, self.root_helper) for fip in floating_ips)
+            namespace=router.ns_name) for fip in floating_ips)
 
     def _assert_ha_device(self, router):
         self.assertTrue(self.device_exists_with_ip_mac(
@@ -457,7 +453,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             router.get_ha_device_name, router.ns_name))
 
     def _assert_no_ip_addresses_on_interface(self, router, interface):
-        device = ip_lib.IPDevice(interface, self.root_helper, router.ns_name)
+        device = ip_lib.IPDevice(interface, namespace=router.ns_name)
         self.assertEqual([], device.addr.list())
 
     def test_ha_router_conf_on_restarted_agent(self):
@@ -500,8 +496,7 @@ class L3HATestFramework(L3AgentTestFramework):
 
         device_name = router1.get_ha_device_name(
             router1.router[l3_constants.HA_INTERFACE_KEY]['id'])
-        ha_device = ip_lib.IPDevice(device_name, self.root_helper,
-                                    router1.ns_name)
+        ha_device = ip_lib.IPDevice(device_name, namespace=router1.ns_name)
         ha_device.link.set_down()
 
         helpers.wait_until_true(lambda: router2.ha_state == 'master')
@@ -750,8 +745,7 @@ class TestDvrRouter(L3AgentTestFramework):
         external_device_name = self.agent.get_external_device_name(
             external_port['id'])
         external_device = ip_lib.IPDevice(external_device_name,
-                                          self.root_helper,
-                                          namespace)
+                                          namespace=namespace)
         existing_gateway = (
             external_device.route.get_gateway().get('gateway'))
         expected_gateway = external_port['subnet']['gateway_ip']
@@ -780,12 +774,12 @@ class TestDvrRouter(L3AgentTestFramework):
             fip_ns.get_ext_device_name(external_gw_port['id']),
             external_gw_port['ip_cidr'],
             external_gw_port['mac_address'],
-            fip_ns_name, self.root_helper)
+            namespace=fip_ns_name)
         self.assertTrue(fg_port_created_succesfully)
         # Check fpr-router device has been created
         device_name = fip_ns.get_int_device_name(router.router_id)
         fpr_router_device_created_succesfully = ip_lib.device_exists(
-            device_name, self.root_helper, fip_ns_name)
+            device_name, namespace=fip_ns_name)
         self.assertTrue(fpr_router_device_created_succesfully)
 
         # In the router namespace
@@ -793,4 +787,4 @@ class TestDvrRouter(L3AgentTestFramework):
         for fip in floating_ips:
             device_name = fip_ns.get_rtr_ext_device_name(router.router_id)
             self.assertTrue(ip_lib.device_exists(
-                device_name, self.root_helper, router.ns_name))
+                device_name, namespace=router.ns_name))

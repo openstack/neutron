@@ -15,7 +15,6 @@
 import mock
 from oslo_config import cfg
 
-from neutron.agent.common import config
 from neutron.openstack.common import uuidutils
 from neutron.services.metering.agents import metering_agent
 from neutron.tests import base
@@ -43,7 +42,6 @@ class TestMeteringOperations(base.BaseTestCase,
     def setUp(self):
         super(TestMeteringOperations, self).setUp()
         cfg.CONF.register_opts(metering_agent.MeteringAgent.Opts)
-        config.register_root_helper(cfg.CONF)
 
         self.noop_driver = ('neutron.services.metering.drivers.noop.'
                             'noop_driver.NoopMeteringDriver')
@@ -130,7 +128,6 @@ class TestMeteringDriver(base.BaseTestCase):
     def setUp(self):
         super(TestMeteringDriver, self).setUp()
         cfg.CONF.register_opts(metering_agent.MeteringAgent.Opts)
-        config.register_root_helper(cfg.CONF)
 
         self.noop_driver = ('neutron.services.metering.drivers.noop.'
                             'noop_driver.NoopMeteringDriver')

@@ -21,7 +21,6 @@ class ConfigurationTest(base.BaseTestCase):
     def test_defaults(self):
         self.assertEqual('br-int', config.CONF.OVS.integration_bridge)
         self.assertEqual(2, config.CONF.AGENT.polling_interval)
-        self.assertEqual('sudo', config.CONF.AGENT.root_helper)
 
         self.assertEqual('127.0.0.1', config.CONF.OFC.host)
         self.assertEqual('8888', config.CONF.OFC.port)

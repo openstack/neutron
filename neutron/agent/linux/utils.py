@@ -61,16 +61,9 @@ def create_process(cmd, run_as_root=False, addl_env=None):
     return obj, cmd
 
 
-# TODO(twilson) Remove root_helper argument in favor of run_as_root
-# root_helper= is only intended to handle old-style code that passes the
-# root_helper option exclusively, the run_as_root option is for new-style code
-# that leaves root_helper handling to the execute() function. The two options
-# should not be used in conjunction.
-def execute(cmd, root_helper=None, process_input=None, addl_env=None,
+def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
             extra_ok_codes=None, run_as_root=False):
-    if root_helper:
-        run_as_root = True
     try:
         obj, cmd = create_process(cmd, run_as_root=run_as_root,
                                   addl_env=addl_env)

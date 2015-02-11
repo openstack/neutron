@@ -19,7 +19,6 @@ import socket
 import netaddr
 from oslo_config import cfg
 
-from neutron.agent.common import config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -45,7 +44,6 @@ class NeutronDebugAgent(object):
 
     def __init__(self, conf, client, driver):
         self.conf = conf
-        self.root_helper = config.get_root_helper(conf)
         self.client = client
         self.driver = driver
 
@@ -64,7 +62,7 @@ class NeutronDebugAgent(object):
         if self.conf.use_namespaces:
             namespace = self._get_namespace(port)
 
-        if ip_lib.device_exists(interface_name, self.root_helper, namespace):
+        if ip_lib.device_exists(interface_name, namespace=namespace):
             LOG.debug('Reusing existing device: %s.', interface_name)
         else:
             self.driver.plug(network.id,
@@ -111,7 +109,7 @@ class NeutronDebugAgent(object):
         bridge = None
         if network.external:
             bridge = self.conf.external_network_bridge
-        ip = ip_lib.IPWrapper(self.root_helper)
+        ip = ip_lib.IPWrapper()
         namespace = self._get_namespace(port)
         if self.conf.use_namespaces and ip.netns.exists(namespace):
             self.driver.unplug(self.driver.get_device_name(port),
@@ -138,7 +136,7 @@ class NeutronDebugAgent(object):
 
     def exec_command(self, port_id, command=None):
         port = dhcp.DictModel(self.client.show_port(port_id)['port'])
-        ip = ip_lib.IPWrapper(self.root_helper)
+        ip = ip_lib.IPWrapper()
         namespace = self._get_namespace(port)
         if self.conf.use_namespaces:
             if not command:

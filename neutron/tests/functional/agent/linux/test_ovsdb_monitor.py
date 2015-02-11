@@ -23,6 +23,7 @@ Tests in this module will be skipped unless:
 """
 
 import eventlet
+from oslo_config import cfg
 
 from neutron.agent.linux import ovsdb_monitor
 from neutron.agent.linux import utils
@@ -35,14 +36,14 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
     def setUp(self):
         super(BaseMonitorTest, self).setUp()
 
-        rootwrap_not_configured = (self.root_helper ==
+        rootwrap_not_configured = (cfg.CONF.AGENT.root_helper ==
                                    functional_base.SUDO_CMD)
         if rootwrap_not_configured:
             # The monitor tests require a nested invocation that has
             # to be emulated by double sudo if rootwrap is not
             # configured.
-            self.root_helper = '%s %s' % (self.root_helper, self.root_helper)
-            self.config(group='AGENT', root_helper=self.root_helper)
+            self.config(group='AGENT',
+                        root_helper=" ".join([functional_base.SUDO_CMD] * 2))
 
         self._check_test_requirements()
         self.bridge = self.create_ovs_bridge()
