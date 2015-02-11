@@ -14,6 +14,11 @@
 #    under the License.
 
 import gettext
+import os
+
+if not os.environ.get('NO_EVENTLET'):
+    import eventlet
+    eventlet.monkey_patch()
 
 
 gettext.install('neutron', unicode=1)
