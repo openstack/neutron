@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import testtools
+
 from neutron.hacking import checks
 from neutron.tests import base
 
@@ -79,3 +81,18 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(2, checks.no_author_tags("# author: pele")[0])
         self.assertEqual(2, checks.no_author_tags("# Author: pele")[0])
         self.assertEqual(3, checks.no_author_tags(".. moduleauthor:: pele")[0])
+
+    def test_check_oslo_namespace_imports(self):
+        def check(s, fail=True):
+            func = checks.check_oslo_namespace_imports
+            if fail:
+                self.assertIsInstance(next(func(s)), tuple)
+            else:
+                with testtools.ExpectedException(StopIteration):
+                    next(func(s))
+
+        check('from oslo_utils import importutils')
+        check('import oslo_messaging')
+        check('from oslo.utils import importutils', fail=False)
+        check('from oslo import messaging', fail=False)
+        check('import oslo.messaging', fail=False)
