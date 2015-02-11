@@ -107,33 +107,6 @@ class KeepalivedVirtualRoute(object):
         return output
 
 
-class KeepalivedGroup(object):
-    """Group section of a keepalived configuration."""
-
-    def __init__(self, ha_vr_id):
-        self.ha_vr_id = ha_vr_id
-        self.name = 'VG_%s' % ha_vr_id
-        self.instance_names = set()
-        self.notifiers = []
-
-    def add_instance(self, instance):
-        self.instance_names.add(instance.name)
-
-    def set_notify(self, state, path):
-        if state not in VALID_NOTIFY_STATES:
-            raise InvalidNotifyStateException(state=state)
-        self.notifiers.append((state, path))
-
-    def build_config(self):
-        return itertools.chain(['vrrp_sync_group %s {' % self.name,
-                                '    group {'],
-                               ('        %s' % i for i in self.instance_names),
-                               ['    }'],
-                               ('    notify_%s "%s"' % (state, path)
-                                for state, path in self.notifiers),
-                               ['}'])
-
-
 class KeepalivedInstance(object):
     """Instance section of a keepalived configuration."""
 
@@ -156,6 +129,7 @@ class KeepalivedInstance(object):
         self.vips = []
         self.virtual_routes = []
         self.authentication = None
+        self.notifiers = []
         metadata_cidr = '169.254.169.254/32'
         self.primary_vip_range = get_free_range(
             parent_range='169.254.0.0/16',
@@ -187,6 +161,11 @@ class KeepalivedInstance(object):
     def get_existing_vip_ip_addresses(self, interface_name):
         return [vip.ip_address for vip in self.vips
                 if vip.interface_name == interface_name]
+
+    def set_notify(self, state, path):
+        if state not in VALID_NOTIFY_STATES:
+            raise InvalidNotifyStateException(state=state)
+        self.notifiers.append((state, path))
 
     def _build_track_interface_config(self):
         return itertools.chain(
@@ -244,6 +223,10 @@ class KeepalivedInstance(object):
                                 for route in self.virtual_routes),
                                ['    }'])
 
+    def _build_notify_scripts(self):
+        return itertools.chain(('    notify_%s "%s"' % (state, path)
+                                for state, path in self.notifiers))
+
     def build_config(self):
         config = ['vrrp_instance %s {' % self.name,
                   '    state %s' % self.state,
@@ -276,6 +259,9 @@ class KeepalivedInstance(object):
         if self.virtual_routes:
             config.extend(self._build_virtual_routes_config())
 
+        if self.notifiers:
+            config.extend(self._build_notify_scripts())
+
         config.append('}')
 
         return config
@@ -288,14 +274,7 @@ class KeepalivedConf(object):
         self.reset()
 
     def reset(self):
-        self.groups = {}
         self.instances = {}
-
-    def add_group(self, group):
-        self.groups[group.ha_vr_id] = group
-
-    def get_group(self, ha_vr_id):
-        return self.groups.get(ha_vr_id)
 
     def add_instance(self, instance):
         self.instances[instance.vrouter_id] = instance
@@ -305,9 +284,6 @@ class KeepalivedConf(object):
 
     def build_config(self):
         config = []
-
-        for group in self.groups.values():
-            config.extend(group.build_config())
 
         for instance in self.instances.values():
             config.extend(instance.build_config())
@@ -341,7 +317,7 @@ class KeepalivedNotifierMixin(object):
         state_path = self._get_full_config_file_path('state')
         return '%s\necho -n %s > %s' % (script, state, state_path)
 
-    def add_notifier(self, script, state, ha_vr_id):
+    def add_notifier(self, script, state, vrouter_id):
         """Add a master, backup or fault notifier.
 
         These notifiers are executed when keepalived invokes a state
@@ -353,8 +329,8 @@ class KeepalivedNotifierMixin(object):
         full_script = self._append_state(script_with_prefix, state)
         self._write_notify_script(state, full_script)
 
-        group = self.config.get_group(ha_vr_id)
-        group.set_notify(state, self._get_notifier_path(state))
+        vr_instance = self.config.get_instance(vrouter_id)
+        vr_instance.set_notify(state, self._get_notifier_path(state))
 
     def get_conf_dir(self):
         confs_dir = os.path.abspath(os.path.normpath(self.conf_path))

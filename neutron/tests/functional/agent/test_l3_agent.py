@@ -163,15 +163,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             self.agent.get_floating_ips(router)[0]['floating_ip_address'])
         default_gateway_ip = external_port['subnet'].get('gateway_ip')
 
-        return """vrrp_sync_group VG_1 {
-    group {
-        VR_1
-    }
-    notify_master "%(ha_confs_path)s/%(router_id)s/notify_master.sh"
-    notify_backup "%(ha_confs_path)s/%(router_id)s/notify_backup.sh"
-    notify_fault "%(ha_confs_path)s/%(router_id)s/notify_fault.sh"
-}
-vrrp_instance VR_1 {
+        return """vrrp_instance VR_1 {
     state BACKUP
     interface %(ha_device_name)s
     virtual_router_id 1
@@ -195,6 +187,9 @@ vrrp_instance VR_1 {
         0.0.0.0/0 via %(default_gateway_ip)s dev %(external_device_name)s
         8.8.8.0/24 via 19.4.4.4
     }
+    notify_master "%(ha_confs_path)s/%(router_id)s/notify_master.sh"
+    notify_backup "%(ha_confs_path)s/%(router_id)s/notify_backup.sh"
+    notify_fault "%(ha_confs_path)s/%(router_id)s/notify_fault.sh"
 }""" % {
             'ha_confs_path': ha_confs_path,
             'router_id': router_id,
