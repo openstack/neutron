@@ -37,6 +37,9 @@ DEFAULT_OVS_VSCTL_TIMEOUT = 10
 INVALID_OFPORT = -1
 UNASSIGNED_OFPORT = []
 
+# OVS bridge fail modes
+FAILMODE_SECURE = 'secure'
+
 OPTS = [
     cfg.IntOpt('ovs_vsctl_timeout',
                default=DEFAULT_OVS_VSCTL_TIMEOUT,
@@ -151,7 +154,7 @@ class OVSBridge(BaseOVS):
             check_error=True)
 
     def set_secure_mode(self):
-        self.ovsdb.set_fail_mode(self.br_name, 'secure').execute(
+        self.ovsdb.set_fail_mode(self.br_name, FAILMODE_SECURE).execute(
             check_error=True)
 
     def set_protocols(self, protocols):
@@ -164,10 +167,13 @@ class OVSBridge(BaseOVS):
     def destroy(self):
         self.delete_bridge(self.br_name)
 
-    def reset_bridge(self):
+    def reset_bridge(self, secure_mode=False):
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.del_br(self.br_name))
             txn.add(self.ovsdb.add_br(self.br_name))
+            if secure_mode:
+                txn.add(self.ovsdb.set_fail_mode(self.br_name,
+                                                 FAILMODE_SECURE))
 
     def add_port(self, port_name, *interface_attr_tuples):
         with self.ovsdb.transaction() as txn:
