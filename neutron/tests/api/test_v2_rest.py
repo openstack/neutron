@@ -18,8 +18,8 @@ This module implements BaseNeutronClient for the Tempest rest client
 and configures the api tests with scenarios targeting the Neutron API.
 """
 
-from tempest import exceptions
 from tempest import test as t_test
+from tempest_lib import exceptions
 import testscenarios
 
 from neutron.tests.api import base_v2
