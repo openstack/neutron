@@ -19,6 +19,7 @@ import functools
 import mock
 import netaddr
 from oslo_config import cfg
+import testtools
 import webob
 import webob.dec
 import webob.exc
@@ -286,6 +287,52 @@ class L3AgentTestCase(L3AgentTestFramework):
 
     def test_ha_router_lifecycle(self):
         self._router_lifecycle(enable_ha=True)
+
+    def test_conntrack_disassociate_fip(self):
+        '''Test that conntrack immediately drops stateful connection
+           that uses floating IP once it's disassociated.
+        '''
+        router_info = self.generate_router_info(enable_ha=False)
+        router = self.manage_router(self.agent, router_info)
+
+        port = helpers.get_free_namespace_port(router.ns_name)
+        client_address = '19.4.4.3'
+        server_address = '35.4.0.4'
+
+        def clean_fips(router):
+            router.router[l3_constants.FLOATINGIP_KEY] = []
+
+        clean_fips(router)
+        self._add_fip(router, client_address, fixed_address=server_address)
+        self.agent.process_router(router)
+
+        router_ns = ip_lib.IPWrapper(self.root_helper,
+                                     namespace=router.ns_name)
+        netcat = helpers.NetcatTester(router_ns, router_ns,
+                                      server_address, port,
+                                      client_address=client_address,
+                                      root_helper=self.root_helper,
+                                      udp=False)
+        self.addCleanup(netcat.stop_processes)
+
+        def assert_num_of_conntrack_rules(n):
+            out = router_ns.netns.execute(["conntrack", "-L",
+                                           "--orig-src", client_address])
+            self.assertEqual(
+                n, len([line for line in out.strip().split('\n') if line]))
+
+        with self.assert_max_execution_time(15):
+            assert_num_of_conntrack_rules(0)
+
+            self.assertTrue(netcat.test_connectivity())
+            assert_num_of_conntrack_rules(1)
+
+            clean_fips(router)
+            self.agent.process_router(router)
+            assert_num_of_conntrack_rules(0)
+
+            with testtools.ExpectedException(RuntimeError):
+                netcat.test_connectivity()
 
     def test_keepalived_configuration(self):
         router_info = self.generate_router_info(enable_ha=True)

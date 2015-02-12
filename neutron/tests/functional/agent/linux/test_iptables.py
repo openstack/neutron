@@ -70,7 +70,8 @@ class IptablesManagerTestCase(base.BaseIPVethTestCase):
     def _test_with_nc(self, fw_manager, direction, port, udp):
         netcat = helpers.NetcatTester(self.client_ns, self.server_ns,
                                       self.DST_ADDRESS, self.port,
-                                      self.root_helper, udp=udp)
+                                      root_helper=self.root_helper,
+                                      udp=udp)
         self.addCleanup(netcat.stop_processes)
         protocol = 'tcp'
         if udp:
