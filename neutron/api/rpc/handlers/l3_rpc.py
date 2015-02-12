@@ -39,7 +39,8 @@ class L3RpcCallback(object):
     # 1.1  Support update_floatingip_statuses
     # 1.2 Added methods for DVR support
     # 1.3 Added a method that returns the list of activated services
-    # 1.4 Added L3 HA update_router_state
+    # 1.4 Added L3 HA update_router_state. This method was later removed,
+    #     since it was unused. The RPC version was not changed.
     target = oslo_messaging.Target(version='1.4')
 
     @property
@@ -208,11 +209,3 @@ class L3RpcCallback(object):
                   'host %(host)s', {'agent_port': agent_port,
                   'host': host})
         return agent_port
-
-    def update_router_state(self, context, **kwargs):
-        router_id = kwargs.get('router_id')
-        state = kwargs.get('state')
-        host = kwargs.get('host')
-
-        return self.l3plugin.update_router_state(context, router_id, state,
-                                                 host=host)
