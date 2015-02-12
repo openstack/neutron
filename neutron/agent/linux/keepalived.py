@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import errno
 import itertools
 import os
 import stat
@@ -79,12 +80,16 @@ class InvalidAuthenticationTypeExecption(exceptions.NeutronException):
 class KeepalivedVipAddress(object):
     """A virtual address entry of a keepalived configuration."""
 
-    def __init__(self, ip_address, interface_name):
+    def __init__(self, ip_address, interface_name, scope=None):
         self.ip_address = ip_address
         self.interface_name = interface_name
+        self.scope = scope
 
     def build_config(self):
-        return '%s dev %s' % (self.ip_address, self.interface_name)
+        result = '%s dev %s' % (self.ip_address, self.interface_name)
+        if self.scope:
+            result += ' scope %s' % self.scope
+        return result
 
 
 class KeepalivedVirtualRoute(object):
@@ -165,8 +170,8 @@ class KeepalivedInstance(object):
 
         self.authentication = (auth_type, password)
 
-    def add_vip(self, ip_cidr, interface_name):
-        self.vips.append(KeepalivedVipAddress(ip_cidr, interface_name))
+    def add_vip(self, ip_cidr, interface_name, scope):
+        self.vips.append(KeepalivedVipAddress(ip_cidr, interface_name, scope))
 
     def remove_vips_vroutes_by_interface(self, interface_name):
         self.vips = [vip for vip in self.vips
@@ -389,15 +394,23 @@ class KeepalivedManager(KeepalivedNotifierMixin):
 
         return config_path
 
+    def get_conf_on_disk(self):
+        config_path = self._get_full_config_file_path('keepalived.conf')
+        try:
+            with open(config_path) as conf:
+                return conf.read()
+        except (OSError, IOError) as e:
+            if e.errno != errno.ENOENT:
+                raise
+
     def spawn(self):
         config_path = self._output_config_file()
 
-        self.process = external_process.ProcessManager(
-            self.conf,
-            self.resource_id,
-            self.root_helper,
-            self.namespace,
-            pids_path=self.conf_path)
+        self.process = self.get_process(self.conf,
+                                        self.resource_id,
+                                        self.root_helper,
+                                        self.namespace,
+                                        self.conf_path)
 
         def callback(pid_file):
             cmd = ['keepalived', '-P',
@@ -436,3 +449,12 @@ class KeepalivedManager(KeepalivedNotifierMixin):
     def revive(self):
         if self.spawned and not self.process.active:
             self.restart()
+
+    @classmethod
+    def get_process(cls, conf, resource_id, root_helper, namespace, conf_path):
+        return external_process.ProcessManager(
+            conf,
+            resource_id,
+            root_helper,
+            namespace,
+            pids_path=conf_path)

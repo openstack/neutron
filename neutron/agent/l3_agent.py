@@ -1343,6 +1343,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         if ri.is_ha:
             self._ha_external_gateway_added(ri, ex_gw_port, interface_name)
+            self._ha_disable_addressing_on_interface(ri, interface_name)
 
     def external_gateway_updated(self, ri, ex_gw_port, interface_name):
         preserve_ips = []
@@ -1533,6 +1534,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                      ri.is_ha)
 
         if ri.is_ha:
+            self._ha_disable_addressing_on_interface(ri, interface_name)
             self._add_vip(ri, internal_cidr, interface_name)
 
         ex_gw_port = self._get_ex_gw_port(ri)
