@@ -419,7 +419,7 @@ class KeepalivedManager(KeepalivedNotifierMixin):
                    '-r', '%s-vrrp' % pid_file]
             return cmd
 
-        self.process.enable(callback)
+        self.process.enable(callback, reload_cfg=True)
 
         self.spawned = True
         LOG.debug('Keepalived spawned with config %s', config_path)
