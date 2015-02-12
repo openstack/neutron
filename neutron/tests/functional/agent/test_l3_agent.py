@@ -321,7 +321,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             self.assertEqual(
                 n, len([line for line in out.strip().split('\n') if line]))
 
-        with self.assert_max_execution_time(15):
+        with self.assert_max_execution_time(100):
             assert_num_of_conntrack_rules(0)
 
             self.assertTrue(netcat.test_connectivity())
