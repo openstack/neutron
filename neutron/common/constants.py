@@ -153,3 +153,5 @@ RPC_NAMESPACE_METADATA = 'metadata'
 RPC_NAMESPACE_SECGROUP = 'secgroup'
 # RPC interface for agent to plugin DVR api
 RPC_NAMESPACE_DVR = 'dvr'
+# RPC interface for reporting state back to the plugin
+RPC_NAMESPACE_STATE = 'report_state'

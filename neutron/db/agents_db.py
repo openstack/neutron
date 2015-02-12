@@ -25,6 +25,7 @@ from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
+from neutron.common import constants
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
@@ -220,9 +221,15 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
 
 
 class AgentExtRpcCallback(object):
-    """Processes the rpc report in plugin implementations."""
+    """Processes the rpc report in plugin implementations.
 
-    target = oslo_messaging.Target(version='1.0')
+    This class implements the server side of an rpc interface.  The client side
+    can be found in neutron.agent.rpc.PluginReportStateAPI.  For more
+    information on changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    """
+
+    target = oslo_messaging.Target(version='1.0',
+                                   namespace=constants.RPC_NAMESPACE_STATE)
     START_TIME = timeutils.utcnow()
 
     def __init__(self, plugin=None):
