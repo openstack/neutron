@@ -30,12 +30,6 @@ class TestRootHelper(base.BaseTestCase):
         conf.set_override('root_helper', 'my_root_helper', 'AGENT')
         self.assertEqual(config.get_root_helper(conf), 'my_root_helper')
 
-    def test_root_helper(self):
-        conf = config.setup_conf()
-        config.register_root_helper(conf)
-        conf.set_override('root_helper', 'my_root_helper')
-        self.assertEqual(config.get_root_helper(conf), 'my_root_helper')
-
     def test_root_default(self):
         conf = config.setup_conf()
         config.register_root_helper(conf)
