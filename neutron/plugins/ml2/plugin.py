@@ -359,7 +359,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 return (None, None)
             oport = self._make_port_dict(port_db)
             port = self._make_port_dict(port_db)
-            network = self.get_network(plugin_context, port['network_id'])
+            network = new_context.network.current
             if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
                 # REVISIT(rkukura): The PortBinding instance from the
                 # ml2_port_bindings table, returned as cur_binding
