@@ -1633,14 +1633,16 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
         ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                       namespace=ri.ns_name)
-        int_dev = ip_wrapper.add_veth(rtr_2_fip_name,
-                                      fip_2_rtr_name, fip_ns_name)
-        self.internal_ns_interface_added(str(rtr_2_fip),
-                                         rtr_2_fip_name, ri.ns_name)
-        self.internal_ns_interface_added(str(fip_2_rtr),
-                                         fip_2_rtr_name, fip_ns_name)
-        int_dev[0].link.set_up()
-        int_dev[1].link.set_up()
+        if not ip_lib.device_exists(rtr_2_fip_name, self.root_helper,
+                                    namespace=ri.ns_name):
+            int_dev = ip_wrapper.add_veth(rtr_2_fip_name,
+                                          fip_2_rtr_name, fip_ns_name)
+            self.internal_ns_interface_added(str(rtr_2_fip),
+                                             rtr_2_fip_name, ri.ns_name)
+            self.internal_ns_interface_added(str(fip_2_rtr),
+                                             fip_2_rtr_name, fip_ns_name)
+            int_dev[0].link.set_up()
+            int_dev[1].link.set_up()
         # add default route for the link local interface
         device = ip_lib.IPDevice(rtr_2_fip_name, self.root_helper,
                                  namespace=ri.ns_name)

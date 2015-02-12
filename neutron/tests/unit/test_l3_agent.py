@@ -2128,6 +2128,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         fip_ns_name = agent.get_fip_ns_name(str(fip['floating_network_id']))
 
         with mock.patch.object(l3_agent.LinkLocalAllocator, '_write'):
+            self.device_exists.return_value = False
             agent.create_rtr_2_fip_link(ri, fip['floating_network_id'])
         self.mock_ip.add_veth.assert_called_with(rtr_2_fip_name,
                                                  fip_2_rtr_name, fip_ns_name)
@@ -2136,6 +2137,18 @@ class TestBasicRouterOperations(base.BaseTestCase):
             '169.254.31.29', table=16)
 
     # TODO(mrsmith): test _create_agent_gateway_port
+
+    def test_create_rtr_2_fip_link_already_exists(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = prepare_router_data()
+
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces,
+                                 router=router)
+        self.device_exists.return_value = True
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_write'):
+            agent.create_rtr_2_fip_link(ri, {})
+        self.assertFalse(self.mock_ip.add_veth.called)
 
     def test_floating_ip_added_dist(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
