@@ -311,7 +311,7 @@ class KeepalivedNotifierMixin(object):
         return name
 
     def _prepend_shebang(self, script):
-        return '#!/usr/bin/env bash\n%s' % script
+        return '#!/bin/sh\n%s' % script
 
     def _append_state(self, script, state):
         state_path = self._get_full_config_file_path('state')
