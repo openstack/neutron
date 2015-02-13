@@ -798,27 +798,6 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
         # release port state
         self.local_ports.pop(port.vif_id, None)
 
-    def _get_flow_args_by_version(self, ip_version, table,
-                                  vlan, subnet, priority, actions):
-        """
-        Get flow args for DVR by IP version.
-        priority and actions are optional to support both add_flows
-        and delete_flows
-        """
-        args = {'table': table,
-                'dl_vlan': vlan}
-        if ip_version == 4:
-            args['proto'] = 'ip'
-            args['nw_dst'] = subnet
-        else:
-            args['proto'] = 'ipv6'
-            args['ipv6_dst'] = subnet
-        if priority:
-            args['priority'] = priority
-        if actions:
-            args['actions'] = actions
-        return args
-
     def unbind_port_from_dvr(self, vif_port, local_vlan_map):
         if not self.in_distributed_mode():
             return
