@@ -15,14 +15,10 @@
 
 from oslo_config import cfg
 
-from neutron.agent.common import config
 from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
-from neutron.openstack.common import log as logging
 from neutron.tests.functional import base as functional_base
 from neutron.tests.unit.agent.linux import test_keepalived
-
-LOG = logging.getLogger(__name__)
 
 
 class KeepalivedManagerTestCase(functional_base.BaseSudoTestCase,
@@ -30,11 +26,6 @@ class KeepalivedManagerTestCase(functional_base.BaseSudoTestCase,
     def setUp(self):
         super(KeepalivedManagerTestCase, self).setUp()
         self.check_sudo_enabled()
-        self._configure()
-
-    def _configure(self):
-        cfg.CONF.set_override('debug', False)
-        config.setup_logging()
 
     def test_keepalived_spawn(self):
         expected_config = self._get_config()
@@ -52,7 +43,5 @@ class KeepalivedManagerTestCase(functional_base.BaseSudoTestCase,
             pids_path=cfg.CONF.state_path)
         self.assertTrue(process.active)
 
-        config_path = manager._get_full_config_file_path('keepalived.conf')
-        with open(config_path, 'r') as config_file:
-            config_contents = config_file.read()
-        self.assertEqual(expected_config.get_config_str(), config_contents)
+        self.assertEqual(expected_config.get_config_str(),
+                         manager.get_conf_on_disk())
