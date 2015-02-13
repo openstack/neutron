@@ -475,7 +475,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         elif action == 'remove':
             self.device_exists.return_value = True
             agent.external_gateway_removed(ri, ex_gw_port, interface_name)
-            self.assertEqual(self.mock_driver.unplug.call_count, 1)
+            self.mock_driver.unplug.assert_called_once_with(
+                interface_name,
+                bridge=agent.conf.external_network_bridge,
+                namespace=mock.ANY,
+                prefix=mock.ANY)
         else:
             raise Exception("Invalid action %s" % action)
 
