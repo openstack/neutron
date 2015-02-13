@@ -25,7 +25,7 @@ FAILURES=$TMPDIR/failures
 
 check_opinionated_shell () {
     # The purpose of this function is to avoid casual introduction of more
-    # bash dependency.  Please consider alternatives before commiting code
+    # bash dependency.  Please consider alternatives before committing code
     # which uses bash specific features.
 
     # Check that shell scripts are not bash opinionated (ignore comments though)
