@@ -260,7 +260,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # First, determine whether it is necessary and possible to
             # bind the port.
             binding = context._binding
-            if (binding.vif_type != portbindings.VIF_TYPE_UNBOUND
+            if (binding.vif_type not in [portbindings.VIF_TYPE_UNBOUND,
+                                         portbindings.VIF_TYPE_BINDING_FAILED]
                 or not binding.host):
                 # We either don't need to bind the port, or can't, so
                 # notify if needed and return.
@@ -298,12 +299,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug("Port %s has been deleted concurrently",
                           port_id)
                 return context
+
+            context = new_context
+
+            if (context._binding.vif_type ==
+                    portbindings.VIF_TYPE_BINDING_FAILED):
+                return context
             # Need to notify if we succeed and our results were
             # committed.
-            if did_commit and (new_context._binding.vif_type !=
-                               portbindings.VIF_TYPE_BINDING_FAILED):
-                need_notify = True
-            context = new_context
+            need_notify |= did_commit
 
     def _bind_port(self, orig_context):
         # Construct a new PortContext from the one from the previous
