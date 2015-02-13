@@ -1885,64 +1885,79 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertRaises(oslo_messaging.MessagingTimeout, l3_agent.L3NATAgent,
                           HOSTNAME, self.conf)
 
-    def test_external_gateway_removed_ext_gw_port_and_fip(self):
+    def _test_external_gateway_removed_ext_gw_port_and_fip(self, fip_ns=False):
         self.conf.set_override('state_path', '/tmp')
         self.conf.set_override('router_delete_namespaces', True)
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        agent.conf.agent_mode = 'dvr'
+        agent.conf.agent_mode = 'dvr_snat'
         router = prepare_router_data(num_internal_ports=2)
         router['distributed'] = True
         router['gw_port_host'] = HOSTNAME
+        self.mock_driver.unplug.reset_mock()
 
         external_net_id = router['gw_port']['network_id']
         ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
-        ri.fip_ns = agent.get_fip_ns(external_net_id)
-        ri.fip_ns.agent_gateway_port = {
-            'fixed_ips': [{'ip_address': '20.0.0.30', 'subnet_id': _uuid()}],
-            'subnet': {'gateway_ip': '20.0.0.1'},
-            'id': _uuid(),
-            'network_id': external_net_id,
-            'mac_address': 'ca:fe:de:ad:be:ef',
-            'ip_cidr': '20.0.0.30/24'}
         agent._fetch_external_net_id = mock.Mock(return_value=external_net_id)
-
-        vm_floating_ip = '19.4.4.2'
-        ri.floating_ips_dict[vm_floating_ip] = FIP_PRI
-        ri.dist_fip_count = 1
         ri.ex_gw_port = ri.router['gw_port']
         del ri.router['gw_port']
-        ri.rtr_fip_subnet = ri.fip_ns.local_subnets.allocate(ri.router_id)
-        _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
+        ri.fip_ns = None
         nat = ri.iptables_manager.ipv4['nat']
         nat.clear_rules_by_tag = mock.Mock()
         nat.add_rule = mock.Mock()
+        if fip_ns:
+            ri.fip_ns = agent.get_fip_ns(external_net_id)
+            ri.fip_ns.agent_gateway_port = {
+                'fixed_ips': [{
+                               'ip_address': '20.0.0.30', 'subnet_id': _uuid()
+                            }],
+                'subnet': {'gateway_ip': '20.0.0.1'},
+                'id': _uuid(),
+                'network_id': external_net_id,
+                'mac_address': 'ca:fe:de:ad:be:ef',
+                'ip_cidr': '20.0.0.30/24'}
 
-        self.mock_ip.get_devices.return_value = [
-            FakeDev(ri.fip_ns.get_ext_device_name(_uuid()))]
-        self.mock_ip_dev.addr.list.return_value = [
-            {'cidr': vm_floating_ip + '/32'},
-            {'cidr': '19.4.4.1/24'}]
-        self.device_exists.return_value = True
+            vm_floating_ip = '19.4.4.2'
+            ri.floating_ips_dict[vm_floating_ip] = FIP_PRI
+            ri.dist_fip_count = 1
+            ri.rtr_fip_subnet = ri.fip_ns.local_subnets.allocate(ri.router_id)
+            _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
+            self.mock_ip.get_devices.return_value = [
+                FakeDev(ri.fip_ns.get_ext_device_name(_uuid()))]
+            self.mock_ip_dev.addr.list.return_value = [
+                {'cidr': vm_floating_ip + '/32'},
+                {'cidr': '19.4.4.1/24'}]
+            self.device_exists.return_value = True
+            fip_ns = ri.fip_ns
 
-        fip_ns = ri.fip_ns
         agent.external_gateway_removed(
             ri, ri.ex_gw_port,
             agent.get_external_device_name(ri.ex_gw_port['id']))
 
-        self.mock_ip.del_veth.assert_called_once_with(
-            fip_ns.get_int_device_name(ri.router['id']))
-        self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
-            str(fip_to_rtr.ip), table=dvr_fip_ns.FIP_RT_TBL)
-
-        self.assertEqual(ri.dist_fip_count, 0)
-        self.assertFalse(fip_ns.has_subscribers())
-        self.assertEqual(self.mock_driver.unplug.call_count, 1)
-        self.assertIsNone(fip_ns.agent_gateway_port)
-        self.assertTrue(fip_ns.destroyed)
-        self.mock_ip.netns.delete.assert_called_once_with(fip_ns.get_name())
         self.assertFalse(nat.add_rule.called)
         nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
+        if fip_ns:
+            self.mock_ip.del_veth.assert_called_once_with(
+                fip_ns.get_int_device_name(ri.router['id']))
+            self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
+                str(fip_to_rtr.ip), table=dvr_fip_ns.FIP_RT_TBL)
+
+            self.assertEqual(ri.dist_fip_count, 0)
+            self.assertFalse(fip_ns.has_subscribers())
+
+            self.assertIsNone(fip_ns.agent_gateway_port)
+            self.assertTrue(fip_ns.destroyed)
+            self.mock_ip.netns.delete.assert_called_once_with(
+                fip_ns.get_name())
+            self.assertEqual(self.mock_driver.unplug.call_count, 1)
+        else:
+            self.assertFalse(self.mock_driver.unplug.called)
+
+    def test_external_gateway_removed_ext_gw_port_and_fip(self):
+        self._test_external_gateway_removed_ext_gw_port_and_fip(fip_ns=True)
+
+    def test_external_gateway_removed_ext_gw_port_no_fip_ns(self):
+        self._test_external_gateway_removed_ext_gw_port_and_fip(fip_ns=False)
 
     def test_spawn_radvd(self):
         router = prepare_router_data(ip_version=6)
