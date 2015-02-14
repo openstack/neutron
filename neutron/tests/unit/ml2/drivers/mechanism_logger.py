@@ -86,13 +86,15 @@ class LoggerMechanismDriver(api.MechanismDriver):
                    "(original settings %(original)s) "
                    "binding levels %(levels)s "
                    "(original binding levels %(original_levels)s) "
-                   "on network %(network)s"),
+                   "on network %(network)s "
+                   "with segments to bind %(segments_to_bind)s"),
                  {'method': method_name,
                   'current': context.current,
                   'original': context.original,
                   'levels': context.binding_levels,
                   'original_levels': context.original_binding_levels,
-                  'network': network_context.current})
+                  'network': network_context.current,
+                  'segments_to_bind': context.segments_to_bind})
 
     def create_port_precommit(self, context):
         self._log_port_call("create_port_precommit", context)
