@@ -26,6 +26,7 @@ from neutron.openstack.common import log
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2 import models
 
 LOG = log.getLogger(__name__)
 
@@ -556,31 +557,39 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         binding.
         """
         binding = context._binding
+        port_id = context._port['id']
         LOG.debug("Attempting to bind port %(port)s on host %(host)s "
                   "for vnic_type %(vnic_type)s with profile %(profile)s",
-                  {'port': context._port['id'],
+                  {'port': port_id,
                    'host': binding.host,
                    'vnic_type': binding.vnic_type,
                    'profile': binding.profile})
         for driver in self.ordered_mech_drivers:
             try:
                 driver.obj.bind_port(context)
-                if binding.segment:
-                    binding.driver = driver.name
-                    LOG.debug("Bound port: %(port)s, host: %(host)s, "
+                segment = context._new_bound_segment
+                if segment:
+                    context._binding_levels = [
+                        models.PortBindingLevel(port_id=port_id,
+                                                host=binding.host,
+                                                level=0,
+                                                driver=driver.name,
+                                                segment_id=segment)
+                    ]
+                    LOG.debug("Bound port: %(port)s, "
+                              "host: %(host)s, "
                               "vnic_type: %(vnic_type)s, "
                               "profile: %(profile)s, "
-                              "driver: %(driver)s, vif_type: %(vif_type)s, "
+                              "vif_type: %(vif_type)s, "
                               "vif_details: %(vif_details)s, "
-                              "segment: %(segment)s",
-                              {'port': context._port['id'],
-                               'host': binding.host,
+                              "binding_levels: %(binding_levels)s",
+                              {'port': port_id,
+                               'host': context.host,
                                'vnic_type': binding.vnic_type,
                                'profile': binding.profile,
-                               'driver': binding.driver,
                                'vif_type': binding.vif_type,
                                'vif_details': binding.vif_details,
-                               'segment': binding.segment})
+                               'binding_levels': context.binding_levels})
                     return
             except Exception:
                 LOG.exception(_LE("Mechanism driver %s failed in "

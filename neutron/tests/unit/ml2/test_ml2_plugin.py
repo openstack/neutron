@@ -444,7 +444,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
-                binding)
+                binding, None)
         with contextlib.nested(
             mock.patch('neutron.plugins.ml2.plugin.'
                        'db.get_locked_port_and_binding',
@@ -469,7 +469,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
-                binding)
+                binding, None)
 
         # test when _commit_port_binding return binding_failed
         self._test_bind_port_if_needed(plugin, mech_context, False)
@@ -527,10 +527,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                             router_id='old_router_id',
                             vif_type=portbindings.VIF_TYPE_OVS,
                             vnic_type=portbindings.VNIC_NORMAL,
-                            cap_port_filter=False,
                             status=constants.PORT_STATUS_DOWN)
         plugin = manager.NeutronManager.get_plugin()
         mock_network = {'id': 'net_id'}
+        mock_port = {'id': 'port_id'}
         context = mock.Mock()
         new_router_id = 'new_router'
         attrs = {'device_id': new_router_id, portbindings.HOST_ID: host_id}
@@ -538,7 +538,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             with mock.patch.object(ml2_db, 'get_network_segments',
                                    return_value=[]):
                 mech_context = driver_context.PortContext(
-                    self, context, 'port', mock_network, binding)
+                    self, context, mock_port, mock_network, binding, None)
                 plugin._process_dvr_port_binding(mech_context, context, attrs)
                 self.assertEqual(new_router_id,
                                  mech_context._binding.router_id)
