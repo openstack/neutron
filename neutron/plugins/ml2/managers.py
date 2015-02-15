@@ -89,10 +89,6 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         msg = _("network_type required")
         raise exc.InvalidInput(error_message=msg)
 
-    def _get_segment_attributes(self, network):
-        return {attr: self._get_attribute(network, attr)
-                for attr in provider.ATTRIBUTES}
-
     def _process_provider_create(self, network):
         if any(attributes.is_attr_set(network.get(attr))
                for attr in provider.ATTRIBUTES):
@@ -100,9 +96,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             # at the same time.
             if attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
                 raise mpnet.SegmentsSetInConjunctionWithProviders()
-
-            segments = [self._get_segment_attributes(network)]
-            return [self._process_provider_segment(s) for s in segments]
+            return [self._process_provider_segment(network)]
         elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
             segments = [self._process_provider_segment(s)
                         for s in network[mpnet.SEGMENTS]]
