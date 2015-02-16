@@ -119,10 +119,24 @@ specific-system dependencies::
 
     tox -e functional
 
-To run all the functional tests in an environment that has been configured
-by devstack to support sudo and system-specific dependencies::
+To run all the functional tests, including those requiring sudo
+privileges and system-specific dependencies, the procedure defined by
+tools/configure_for_func_testing.sh should be followed.
 
+IMPORTANT: configure_for_func_testing.sh relies on devstack to perform
+extensive modification to the underlying host.  Execution of the
+script requires sudo privileges and it is recommended that the
+following commands be invoked only on a clean and disposeable VM.  A
+VM that has had devstack previously installed on it is also fine. ::
+
+    git clone https://git.openstack.org/openstack-dev/devstack ../devstack
+    ./tools/configure_for_func_testing.sh ../devstack -i
     tox -e dsvm-functional
+
+The '-i' option is optional and instructs the script to use devstack
+to install and configure all of Neutron's package dependencies.  It is
+not necessary to provide this option if devstack has already been used
+to deploy Neutron to the target host.
 
 For more information on the standard Tox-based test infrastructure used by
 OpenStack and how to do some common test/debugging procedures with Testr,
