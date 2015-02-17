@@ -31,7 +31,7 @@ from neutron.tests import base
 
 # Useful global dummy variables.
 NET_UUID = '3faeebfe-5d37-11e1-a64b-000c29d5f0a7'
-LS_ID = 42
+LS_ID = 420
 LV_ID = 42
 LV_IDS = [42, 43]
 VIF_ID = '404deaec-5d37-11e1-a64b-000c29d5f0a8'
@@ -367,10 +367,10 @@ class TunnelTest(base.BaseTestCase):
             mock.call.add_flow(priority=4, in_port=self.MAP_TUN_PHY_OFPORT,
                                dl_vlan=LV_ID, actions=action_string))
 
-        action_string = 'mod_vlan_vid:%s,normal' % LS_ID
+        action_string = 'mod_vlan_vid:%s,normal' % LV_ID
         self.mock_int_bridge_expected.append(
             mock.call.add_flow(priority=3, in_port=self.INT_OFPORT,
-                               dl_vlan=LV_ID, actions=action_string))
+                               dl_vlan=LS_ID, actions=action_string))
 
         a = self._build_agent()
         a.available_local_vlans = set([LV_ID])
@@ -424,7 +424,7 @@ class TunnelTest(base.BaseTestCase):
                 in_port=self.MAP_TUN_PHY_OFPORT, dl_vlan=LVM_VLAN.vlan))
         self.mock_int_bridge_expected.append(
             mock.call.delete_flows(
-                dl_vlan=LV_ID, in_port=self.INT_OFPORT))
+                dl_vlan=LS_ID, in_port=self.INT_OFPORT))
 
         a = self._build_agent()
         a.phys_brs['net1'] = self.mock_map_tun_bridge
