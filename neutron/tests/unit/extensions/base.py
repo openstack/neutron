@@ -26,14 +26,13 @@ import webtest
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron import quota
+from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit import testlib_api
 
 
 class ExtensionTestCase(testlib_api.WebTestCase):
-    def _resotre_attr_map(self):
-        attributes.RESOURCE_ATTRIBUTE_MAP = self._saved_attr_map
 
     def _setUpExtension(self, plugin, service_type,
                         resource_attribute_map, extension_class,
@@ -51,10 +50,7 @@ class ExtensionTestCase(testlib_api.WebTestCase):
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
-        # Save the global RESOURCE_ATTRIBUTE_MAP
-        self._saved_attr_map = attributes.RESOURCE_ATTRIBUTE_MAP.copy()
-        # Restore the global RESOURCE_ATTRIBUTE_MAP
-        self.addCleanup(self._resotre_attr_map)
+        self.useFixture(tools.AttributeMapMemento())
 
         # Create the default configurations
         self.config_parse()

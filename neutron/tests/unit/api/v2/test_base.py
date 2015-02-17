@@ -37,6 +37,7 @@ from neutron import policy
 from neutron import quota
 from neutron.tests import base
 from neutron.tests import fake_notifier
+from neutron.tests import tools
 from neutron.tests.unit import testlib_api
 
 
@@ -1106,10 +1107,7 @@ class SubresourceTest(base.BaseTestCase):
         plugin = 'neutron.tests.unit.api.v2.test_base.TestSubresourcePlugin'
         extensions.PluginAwareExtensionManager._instance = None
 
-        # Save the global RESOURCE_ATTRIBUTE_MAP
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+        self.useFixture(tools.AttributeMapMemento())
 
         self.config_parse()
         self.setup_coreplugin(plugin)
@@ -1136,8 +1134,6 @@ class SubresourceTest(base.BaseTestCase):
 
     def tearDown(self):
         router.SUB_RESOURCES = {}
-        # Restore the global RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
         super(SubresourceTest, self).tearDown()
 
     def test_index_sub_resource(self):
@@ -1382,10 +1378,7 @@ class ExtensionTestCase(base.BaseTestCase):
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
-        # Save the global RESOURCE_ATTRIBUTE_MAP
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+        self.useFixture(tools.AttributeMapMemento())
 
         # Create the default configurations
         self.config_parse()
@@ -1412,8 +1405,6 @@ class ExtensionTestCase(base.BaseTestCase):
         super(ExtensionTestCase, self).tearDown()
         self.api = None
         self.plugin = None
-        # Restore the global RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_extended_create(self):
         net_id = _uuid()

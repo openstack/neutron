@@ -19,13 +19,13 @@ from webob import exc as web_exc
 import webtest
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.api.v2 import router
 from neutron import context
 from neutron.extensions import providernet as pnet
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron import quota
+from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit import testlib_api
@@ -57,10 +57,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
-        # Save the global RESOURCE_ATTRIBUTE_MAP
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+        self.useFixture(tools.AttributeMapMemento())
 
         # Update the plugin and extensions path
         self.setup_coreplugin(plugin)
@@ -77,16 +74,11 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         ext_mgr = ProviderExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.addCleanup(self._plugin_patcher.stop)
-        self.addCleanup(self._restore_attribute_map)
         self.api = webtest.TestApp(router.APIRouter())
 
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
                               group='QUOTAS')
-
-    def _restore_attribute_map(self):
-        # Restore the global RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def _prepare_net_data(self):
         return {'name': 'net1',
