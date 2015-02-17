@@ -21,27 +21,15 @@ from neutron.tests import base
 _marker = object()
 
 
-class FakeCreateProcess(object):
-    class FakeStdin(object):
-        def close(self):
-            pass
-
-    def __init__(self, returncode):
-        self.returncode = returncode
-        self.stdin = self.FakeStdin()
-
-    def communicate(self, process_input=None):
-        return '', ''
-
-
 class AgentUtilsExecuteTest(base.BaseTestCase):
     def setUp(self):
         super(AgentUtilsExecuteTest, self).setUp()
         self.root_helper = "echo"
         self.test_file = self.get_temp_file_path('test_execute.tmp')
         open(self.test_file, 'w').close()
-        self.mock_popen_p = mock.patch("subprocess.Popen.communicate")
-        self.mock_popen = self.mock_popen_p.start()
+        self.process = mock.patch('eventlet.green.subprocess.Popen').start()
+        self.process.return_value.returncode = 0
+        self.mock_popen = self.process.return_value.communicate
 
     def test_without_helper(self):
         expected = "%s\n" % self.test_file
@@ -89,34 +77,33 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_return_code_log_error_raise_runtime(self):
-        with mock.patch.object(utils, 'create_process') as create_process:
-            create_process.return_value = FakeCreateProcess(1), 'ls'
-            with mock.patch.object(utils, 'LOG') as log:
-                self.assertRaises(RuntimeError, utils.execute,
-                                  ['ls'])
-                self.assertTrue(log.error.called)
+        self.mock_popen.return_value = ('', '')
+        self.process.return_value.returncode = 1
+        with mock.patch.object(utils, 'LOG') as log:
+            self.assertRaises(RuntimeError, utils.execute,
+                              ['ls'])
+            self.assertTrue(log.error.called)
 
     def test_return_code_log_error_no_raise_runtime(self):
-        with mock.patch.object(utils, 'create_process') as create_process:
-            create_process.return_value = FakeCreateProcess(1), 'ls'
-            with mock.patch.object(utils, 'LOG') as log:
-                utils.execute(['ls'], check_exit_code=False)
-                self.assertTrue(log.error.called)
+        self.mock_popen.return_value = ('', '')
+        self.process.return_value.returncode = 1
+        with mock.patch.object(utils, 'LOG') as log:
+            utils.execute(['ls'], check_exit_code=False)
+            self.assertTrue(log.error.called)
 
     def test_return_code_log_debug(self):
-        with mock.patch.object(utils, 'create_process') as create_process:
-            create_process.return_value = FakeCreateProcess(0), 'ls'
-            with mock.patch.object(utils, 'LOG') as log:
-                utils.execute(['ls'])
-                self.assertTrue(log.debug.called)
+        self.mock_popen.return_value = ('', '')
+        with mock.patch.object(utils, 'LOG') as log:
+            utils.execute(['ls'])
+            self.assertTrue(log.debug.called)
 
     def test_return_code_raise_runtime_do_not_log_fail_as_error(self):
-        with mock.patch.object(utils, 'create_process') as create_process:
-            create_process.return_value = FakeCreateProcess(1), 'ls'
-            with mock.patch.object(utils, 'LOG') as log:
-                self.assertRaises(RuntimeError, utils.execute,
-                                  ['ls'], log_fail_as_error=False)
-                self.assertTrue(log.debug.called)
+        self.mock_popen.return_value = ('', '')
+        self.process.return_value.returncode = 1
+        with mock.patch.object(utils, 'LOG') as log:
+            self.assertRaises(RuntimeError, utils.execute,
+                              ['ls'], log_fail_as_error=False)
+            self.assertFalse(log.error.called)
 
 
 class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
