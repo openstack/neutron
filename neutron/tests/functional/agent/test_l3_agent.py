@@ -30,6 +30,7 @@ from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import ovs_lib
 from neutron.agent.metadata import agent as metadata_agent
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
@@ -255,6 +256,14 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         for extra_route in router.router['routes']:
             self.assertIn(extra_route, routes)
 
+    def _assert_interfaces_deleted_from_ovs(self):
+        def assert_ovs_bridge_empty(bridge_name):
+            bridge = ovs_lib.OVSBridge(bridge_name, self.root_helper)
+            self.assertFalse(bridge.get_port_name_list())
+
+        assert_ovs_bridge_empty(self.agent.conf.ovs_integration_bridge)
+        assert_ovs_bridge_empty(self.agent.conf.external_network_bridge)
+
 
 class L3AgentTestCase(L3AgentTestFramework):
     def test_observer_notifications_legacy_router(self):
@@ -412,6 +421,7 @@ class L3AgentTestCase(L3AgentTestFramework):
 
         self._delete_router(self.agent, router.router_id)
 
+        self._assert_interfaces_deleted_from_ovs()
         self._assert_router_does_not_exist(router)
         if enable_ha:
             self.assertFalse(router.keepalived_manager.process.active)
@@ -611,6 +621,7 @@ class TestDvrRouter(L3AgentTestFramework):
         self._assert_extra_routes(router)
 
         self._delete_router(self.agent, router.router_id)
+        self._assert_interfaces_deleted_from_ovs()
         self._assert_router_does_not_exist(router)
 
     def generate_dvr_router_info(self, enable_ha=False, enable_snat=False):
