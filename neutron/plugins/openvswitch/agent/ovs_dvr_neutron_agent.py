@@ -295,7 +295,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
                 self.phys_brs[physical_network].add_flow(
                     table=constants.DVR_NOT_LEARN_VLAN,
                     priority=2,
-                    dl_src=mac,
+                    dl_src=mac['mac_address'],
                     actions="output:%s" %
                     self.phys_ofports[physical_network])
 
@@ -313,7 +313,7 @@ class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
                 # result in flow explosions
                 self.tun_br.add_flow(table=constants.DVR_NOT_LEARN,
                                  priority=1,
-                                 dl_src=mac,
+                                 dl_src=mac['mac_address'],
                                  actions="output:%s" %
                                  self.patch_int_ofport)
             self.registered_dvr_macs.add(mac['mac_address'])
