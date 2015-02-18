@@ -111,7 +111,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             value = None
         return value
 
-    def _extend_network_dict_provider(self, context, network):
+    def extend_network_dict_provider(self, context, network):
         id = network['id']
         segments = db.get_network_segments(context.session, id)
         if not segments:

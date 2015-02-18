@@ -593,7 +593,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             net_data['id'] = result['id']
             self.type_manager.create_network_segments(context, net_data,
                                                       tenant_id)
-            self.type_manager._extend_network_dict_provider(context, result)
+            self.type_manager.extend_network_dict_provider(context, result)
             mech_context = driver_context.NetworkContext(self, context,
                                                          result)
             self.mechanism_manager.create_network_precommit(mech_context)
@@ -628,8 +628,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                           original_network)
             self._process_l3_update(context, updated_network,
                                     network['network'])
-            self.type_manager._extend_network_dict_provider(context,
-                                                            updated_network)
+            self.type_manager.extend_network_dict_provider(context,
+                                                           updated_network)
             mech_context = driver_context.NetworkContext(
                 self, context, updated_network,
                 original_network=original_network)
@@ -646,7 +646,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).get_network(context, id, None)
-            self.type_manager._extend_network_dict_provider(context, result)
+            self.type_manager.extend_network_dict_provider(context, result)
 
         return self._fields(result, fields)
 
@@ -658,7 +658,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                          self).get_networks(context, filters, None, sorts,
                                             limit, marker, page_reverse)
             for net in nets:
-                self.type_manager._extend_network_dict_provider(context, net)
+                self.type_manager.extend_network_dict_provider(context, net)
 
             nets = self._filter_nets_provider(context, nets, filters)
             nets = self._filter_nets_l3(context, nets, filters)
