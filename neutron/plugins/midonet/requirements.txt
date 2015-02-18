@@ -1,1 +1,1 @@
-neutron-plugin-midonet
+networking-midonet
