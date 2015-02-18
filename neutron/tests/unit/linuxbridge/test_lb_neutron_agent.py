@@ -447,7 +447,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             exists_fn.return_value = True
             self.assertTrue(self.lbm.is_device_on_bridge("tap1"))
             exists_fn.assert_called_with(
-                "/sys/devices/virtual/net/tap1/brport"
+                "/sys/class/net/tap1/brport"
             )
 
     def test_get_interface_details(self):
