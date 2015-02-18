@@ -34,7 +34,7 @@ class TempestRestClient(base_v2.BaseNeutronClient):
     @property
     def client(self):
         if not hasattr(self, '_client'):
-            manager = t_test.BaseTestCase.get_client_manager(interface='json')
+            manager = t_test.BaseTestCase.get_client_manager()
             self._client = manager.network_client
         return self._client
 
