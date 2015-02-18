@@ -93,7 +93,7 @@ class TestOFANeutronAgentBridge(ofa_test_base.OFAAgentTestBase):
         self.br_name = 'bridge1'
         self.root_helper = 'fake_helper'
         self.ovs = self.mod_agent.Bridge(
-            self.br_name, self.root_helper, self.ryuapp)
+            self.br_name, self.ryuapp)
 
     def test_find_datapath_id(self):
         with mock.patch.object(self.ovs, 'get_datapath_id',

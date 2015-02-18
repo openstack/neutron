@@ -267,7 +267,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self.assertEqual(expected, actual)
 
     def test_update_ports_returns_changed_vlan(self):
-        br = ovs_lib.OVSBridge('br-int', 'sudo')
+        br = ovs_lib.OVSBridge('br-int')
         mac = "ca:fe:de:ad:be:ef"
         port = ovs_lib.VifPort(1, 1, 1, mac, br)
         lvm = ovs_neutron_agent.LocalVLANMapping(

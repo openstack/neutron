@@ -258,7 +258,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def _assert_interfaces_deleted_from_ovs(self):
         def assert_ovs_bridge_empty(bridge_name):
-            bridge = ovs_lib.OVSBridge(bridge_name, self.root_helper)
+            bridge = ovs_lib.OVSBridge(bridge_name)
             self.assertFalse(bridge.get_port_name_list())
 
         assert_ovs_bridge_empty(self.agent.conf.ovs_integration_bridge)

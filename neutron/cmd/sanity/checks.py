@@ -36,7 +36,7 @@ MINIMUM_DNSMASQ_VERSION = 2.67
 
 def ovs_vxlan_supported(root_helper, from_ip='192.0.2.1', to_ip='192.0.2.2'):
     name = "vxlantest-" + utils.get_random_string(6)
-    with ovs_lib.OVSBridge(name, root_helper) as br:
+    with ovs_lib.OVSBridge(name) as br:
         port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_VXLAN)
         return port != ovs_lib.INVALID_OFPORT
 
@@ -54,7 +54,7 @@ def patch_supported(root_helper):
     name = "patchtest-" + seed
     peer_name = "peertest0-" + seed
     patch_name = "peertest1-" + seed
-    with ovs_lib.OVSBridge(name, root_helper) as br:
+    with ovs_lib.OVSBridge(name) as br:
         port = br.add_patch_port(patch_name, peer_name)
         return port != ovs_lib.INVALID_OFPORT
 
@@ -76,7 +76,7 @@ def ofctl_arg_supported(root_helper, cmd, **kwargs):
     :returns: a boolean if the supplied arguments are supported.
     """
     br_name = 'br-test-%s' % utils.get_random_string(6)
-    with ovs_lib.OVSBridge(br_name, root_helper) as test_br:
+    with ovs_lib.OVSBridge(br_name) as test_br:
         full_args = ["ovs-ofctl", cmd, test_br.br_name,
                      ovs_lib._build_flow_expr_str(kwargs, cmd.split('-')[0])]
         try:

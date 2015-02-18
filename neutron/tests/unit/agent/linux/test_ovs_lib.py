@@ -58,8 +58,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         super(OVS_Lib_Test, self).setUp()
         self.BR_NAME = "br-int"
 
-        self.root_helper = 'sudo'
-        self.br = ovs_lib.OVSBridge(self.BR_NAME, self.root_helper)
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
         self.execute = mock.patch.object(
             utils, "execute", spec=utils.execute).start()
 
@@ -74,12 +73,11 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def _vsctl_mock(self, *args):
         cmd = self._vsctl_args(*args)
-        return mock.call(cmd, root_helper=self.root_helper,
-                         log_fail_as_error=False)
+        return mock.call(cmd, run_as_root=True, log_fail_as_error=False)
 
     def _verify_vsctl_mock(self, *args):
         cmd = self._vsctl_args(*args)
-        self.execute.assert_called_once_with(cmd, root_helper=self.root_helper,
+        self.execute.assert_called_once_with(cmd, run_as_root=True,
                                              log_fail_as_error=False)
 
     def test_vifport(self):
@@ -223,47 +221,54 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.add_flow(**flow_dict_6)
         self.br.add_flow(**flow_dict_7)
         expected_calls = [
-            mock.call(["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
-                      process_input=OFCTLParamListMatcher(
-                          "hard_timeout=0,idle_timeout=0,"
-                          "priority=2,dl_src=ca:fe:de:ad:be:ef,"
-                          "actions=strip_vlan,output:0"),
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
-                      process_input=OFCTLParamListMatcher(
-                          "hard_timeout=0,idle_timeout=0,"
-                          "priority=1,actions=normal"),
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
-                      process_input=OFCTLParamListMatcher(
-                          "hard_timeout=0,idle_timeout=0,"
-                          "priority=2,actions=drop"),
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
-                      process_input=OFCTLParamListMatcher(
-                          "hard_timeout=0,idle_timeout=0,priority=2,"
-                          "in_port=%s,actions=drop" % ofport),
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
-                      process_input=OFCTLParamListMatcher(
-                          "hard_timeout=0,idle_timeout=0,"
-                          "priority=4,dl_vlan=%s,in_port=%s,"
-                          "actions=strip_vlan,set_tunnel:%s,normal"
-                          % (vid, ofport, lsw_id)),
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
-                      process_input=OFCTLParamListMatcher(
-                          "hard_timeout=0,idle_timeout=0,priority=3,"
-                          "tun_id=%s,actions=mod_vlan_vid:%s,"
-                          "output:%s" % (lsw_id, vid, ofport)),
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
-                      process_input=OFCTLParamListMatcher(
-                          "hard_timeout=0,idle_timeout=0,priority=4,"
-                          "nw_src=%s,arp,actions=drop" % cidr),
-                      root_helper=self.root_helper),
+            self._ofctl_mock("add-flows", self.BR_NAME, '-',
+                             process_input=OFCTLParamListMatcher(
+                                 "hard_timeout=0,idle_timeout=0,"
+                                 "priority=2,dl_src=ca:fe:de:ad:be:ef,"
+                                 "actions=strip_vlan,output:0")),
+            self._ofctl_mock("add-flows", self.BR_NAME, '-',
+                             process_input=OFCTLParamListMatcher(
+                                 "hard_timeout=0,idle_timeout=0,"
+                                 "priority=1,actions=normal")),
+            self._ofctl_mock("add-flows", self.BR_NAME, '-',
+                             process_input=OFCTLParamListMatcher(
+                                 "hard_timeout=0,idle_timeout=0,"
+                                 "priority=2,actions=drop")),
+            self._ofctl_mock("add-flows", self.BR_NAME, '-',
+                             process_input=OFCTLParamListMatcher(
+                                 "hard_timeout=0,idle_timeout=0,priority=2,"
+                                 "in_port=%s,actions=drop" % ofport)),
+            self._ofctl_mock("add-flows", self.BR_NAME, '-',
+                             process_input=OFCTLParamListMatcher(
+                                 "hard_timeout=0,idle_timeout=0,"
+                                 "priority=4,dl_vlan=%s,in_port=%s,"
+                                 "actions=strip_vlan,set_tunnel:%s,normal" %
+                                 (vid, ofport, lsw_id))),
+            self._ofctl_mock("add-flows", self.BR_NAME, '-',
+                             process_input=OFCTLParamListMatcher(
+                                 "hard_timeout=0,idle_timeout=0,priority=3,"
+                                 "tun_id=%s,actions=mod_vlan_vid:%s,"
+                                 "output:%s" % (lsw_id, vid, ofport))),
+            self._ofctl_mock("add-flows", self.BR_NAME, '-',
+                             process_input=OFCTLParamListMatcher(
+                                 "hard_timeout=0,idle_timeout=0,priority=4,"
+                                 "nw_src=%s,arp,actions=drop" % cidr)),
         ]
         self.execute.assert_has_calls(expected_calls)
+
+    def _ofctl_args(self, cmd, *args):
+        cmd = ['ovs-ofctl', cmd]
+        cmd += args
+        return cmd
+
+    def _ofctl_mock(self, cmd, *args, **kwargs):
+        cmd = self._ofctl_args(cmd, *args)
+        return mock.call(cmd, run_as_root=True, **kwargs)
+
+    def _verify_ofctl_mock(self, cmd, *args, **kwargs):
+        cmd = self._ofctl_args(cmd, *args)
+        return self.execute.assert_called_once_with(cmd, run_as_root=True,
+                                                    **kwargs)
 
     def test_add_flow_timeout_set(self):
         flow_dict = collections.OrderedDict([
@@ -273,21 +278,19 @@ class OVS_Lib_Test(base.BaseTestCase):
             ('actions', 'normal')])
 
         self.br.add_flow(**flow_dict)
-        self.execute.assert_called_once_with(
-            ["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
+        self._verify_ofctl_mock(
+            "add-flows", self.BR_NAME, '-',
             process_input="hard_timeout=1000,idle_timeout=2000,priority=1,"
-                          "actions=normal",
-            root_helper=self.root_helper)
+            "actions=normal")
 
     def test_add_flow_default_priority(self):
         flow_dict = collections.OrderedDict([('actions', 'normal')])
 
         self.br.add_flow(**flow_dict)
-        self.execute.assert_called_once_with(
-            ["ovs-ofctl", "add-flows", self.BR_NAME, '-'],
+        self._verify_ofctl_mock(
+            "add-flows", self.BR_NAME, '-',
             process_input="hard_timeout=0,idle_timeout=0,priority=1,"
-                          "actions=normal",
-            root_helper=self.root_helper)
+                          "actions=normal")
 
     def _test_get_port_ofport(self, ofport, expected_result):
         pname = "tap99"
@@ -319,10 +322,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.execute.return_value = 'ignore\nflow-1\n'
         # counts the number of flows as total lines of output - 2
         self.assertEqual(self.br.count_flows(), 1)
-        self.execute.assert_called_once_with(
-            ["ovs-ofctl", "dump-flows", self.BR_NAME],
-            root_helper=self.root_helper,
-            process_input=None)
+        self._verify_ofctl_mock("dump-flows", self.BR_NAME, process_input=None)
 
     def test_delete_flow(self):
         ofport = "5"
@@ -332,15 +332,12 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.delete_flows(tun_id=lsw_id)
         self.br.delete_flows(dl_vlan=vid)
         expected_calls = [
-            mock.call(["ovs-ofctl", "del-flows", self.BR_NAME, '-'],
-                      process_input="in_port=" + ofport,
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "del-flows", self.BR_NAME, '-'],
-                      process_input="tun_id=%s" % lsw_id,
-                      root_helper=self.root_helper),
-            mock.call(["ovs-ofctl", "del-flows", self.BR_NAME, '-'],
-                      process_input="dl_vlan=%s" % vid,
-                      root_helper=self.root_helper),
+            self._ofctl_mock("del-flows", self.BR_NAME, '-',
+                             process_input="in_port=" + ofport),
+            self._ofctl_mock("del-flows", self.BR_NAME, '-',
+                             process_input="tun_id=%s" % lsw_id),
+            self._ofctl_mock("del-flows", self.BR_NAME, '-',
+                             process_input="dl_vlan=%s" % vid),
         ]
         self.execute.assert_has_calls(expected_calls)
 
@@ -498,7 +495,7 @@ class OVS_Lib_Test(base.BaseTestCase):
             expected_calls_and_values.append(
                 (mock.call(["xe", "vif-param-get", "param-name=other-config",
                             "param-key=nicira-iface-id", "uuid=" + vif_id],
-                           root_helper=self.root_helper),
+                           run_as_root=True),
                  vif_id)
             )
         tools.setup_mock_calls(self.execute, expected_calls_and_values)

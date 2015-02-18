@@ -60,8 +60,8 @@ class TestOVSCleanup(base.BaseTestCase):
                 util.main()
                 ovs.assert_has_calls([mock.call().delete_ports(
                     all_ports=False)])
-                collect.assert_called_once_with(set(bridges), 'dummy_sudo')
-                delete.assert_called_once_with(ports, 'dummy_sudo')
+                collect.assert_called_once_with(set(bridges))
+                delete.assert_called_once_with(ports)
 
     def test_collect_neutron_ports(self):
         port1 = ovs_lib.VifPort('tap1234', 1, uuidutils.generate_uuid(),
@@ -75,7 +75,7 @@ class TestOVSCleanup(base.BaseTestCase):
         with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs:
             ovs.return_value.get_vif_ports.side_effect = ports
             bridges = ['br-int', 'br-ex']
-            ret = util.collect_neutron_ports(bridges, 'dummy_sudo')
+            ret = util.collect_neutron_ports(bridges)
             self.assertEqual(ret, portnames)
 
     def test_delete_neutron_ports(self):
@@ -86,10 +86,10 @@ class TestOVSCleanup(base.BaseTestCase):
                               side_effect=port_found),
             mock.patch.object(ip_lib, 'IPDevice')
         ) as (device_exists, ip_dev):
-            util.delete_neutron_ports(ports, 'dummy_sudo')
+            util.delete_neutron_ports(ports)
             device_exists.assert_has_calls([mock.call(p) for p in ports])
             ip_dev.assert_has_calls(
-                [mock.call('tap1234', 'dummy_sudo'),
+                [mock.call('tap1234'),
                  mock.call().link.delete(),
-                 mock.call('tap09ab', 'dummy_sudo'),
+                 mock.call('tap09ab'),
                  mock.call().link.delete()])

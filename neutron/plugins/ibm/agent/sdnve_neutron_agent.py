@@ -164,7 +164,7 @@ class SdnveNeutronAgent(object):
         :returns: the integration bridge
         '''
 
-        int_br = ovs_lib.OVSBridge(bridge_name, self.root_helper)
+        int_br = ovs_lib.OVSBridge(bridge_name)
         if reset_br:
             int_br.reset_bridge()
             int_br.remove_all_flows()

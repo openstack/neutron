@@ -77,7 +77,7 @@ class NVSDNeutronAgent(object):
 
     def __init__(self, integ_br, root_helper, polling_interval):
         super(NVSDNeutronAgent, self).__init__()
-        self.int_br = ovs_lib.OVSBridge(integ_br, root_helper)
+        self.int_br = ovs_lib.OVSBridge(integ_br)
         self.polling_interval = polling_interval
         self.root_helper = root_helper
         self.setup_rpc()

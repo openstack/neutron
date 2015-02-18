@@ -101,7 +101,7 @@ class NECNeutronAgent(object):
         :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to check the bridge.
         '''
-        self.int_br = ovs_lib.OVSBridge(integ_br, root_helper)
+        self.int_br = ovs_lib.OVSBridge(integ_br)
         self.polling_interval = polling_interval
         self.cur_ports = []
         self.need_sync = True

@@ -188,7 +188,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Keep track of int_br's device count for use by _report_state()
         self.int_br_device_count = 0
 
-        self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
+        self.int_br = ovs_lib.OVSBridge(integ_br)
         self.setup_integration_br()
         # Stores port update notifications for processing in main rpc loop
         self.updated_ports = set()
@@ -735,7 +735,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def setup_ancillary_bridges(self, integ_br, tun_br):
         '''Setup ancillary bridges - for example br-ex.'''
-        ovs = ovs_lib.BaseOVS(self.root_helper)
+        ovs = ovs_lib.BaseOVS()
         ovs_bridges = set(ovs.get_bridges())
         # Remove all known bridges
         ovs_bridges.remove(integ_br)
@@ -754,7 +754,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ovs_bridges.difference_update(br_names)
         ancillary_bridges = []
         for bridge in ovs_bridges:
-            br = ovs_lib.OVSBridge(bridge, self.root_helper)
+            br = ovs_lib.OVSBridge(bridge)
             LOG.info(_LI('Adding %s to list of bridges.'), bridge)
             ancillary_bridges.append(br)
         return ancillary_bridges
@@ -768,7 +768,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         :param tun_br_name: the name of the tunnel bridge.
         '''
         if not self.tun_br:
-            self.tun_br = ovs_lib.OVSBridge(tun_br_name, self.root_helper)
+            self.tun_br = ovs_lib.OVSBridge(tun_br_name)
 
         self.tun_br.reset_bridge(secure_mode=True)
         self.patch_tun_ofport = self.int_br.add_patch_port(
@@ -895,7 +895,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.int_ofports = {}
         self.phys_ofports = {}
         ip_wrapper = ip_lib.IPWrapper(self.root_helper)
-        ovs = ovs_lib.BaseOVS(self.root_helper)
+        ovs = ovs_lib.BaseOVS()
         ovs_bridges = ovs.get_bridges()
         for physical_network, bridge in bridge_mappings.iteritems():
             LOG.info(_LI("Mapping physical network %(physical_network)s to "
@@ -910,7 +910,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                           {'physical_network': physical_network,
                            'bridge': bridge})
                 sys.exit(1)
-            br = ovs_lib.OVSBridge(bridge, self.root_helper)
+            br = ovs_lib.OVSBridge(bridge)
             br.remove_all_flows()
             br.add_flow(priority=1, actions="normal")
             self.phys_brs[physical_network] = br

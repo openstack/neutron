@@ -113,8 +113,7 @@ class TestNetnsCleanup(base.BaseTestCase):
                 util.unplug_device(conf, device)
 
                 mock_get_bridge_for_iface.assert_called_once_with('tap1')
-                ovs_br_cls.assert_called_once_with('br-int',
-                                                   conf.AGENT.root_helper)
+                ovs_br_cls.assert_called_once_with('br-int')
                 ovs_bridge.assert_has_calls(
                     [mock.call.delete_port(device.name)])
 

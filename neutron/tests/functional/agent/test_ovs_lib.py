@@ -220,7 +220,7 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
 
     def test_bridge_lifecycle_ovsbridge(self):
         name = base.get_rand_name(prefix=base.BR_PREFIX)
-        br = ovs_lib.OVSBridge(name, self.root_helper)
+        br = ovs_lib.OVSBridge(name)
         self.assertEqual(br.br_name, name)
         # Make sure that instantiating an OVSBridge does not actually create
         self.assertFalse(self.ovs.bridge_exists(name))

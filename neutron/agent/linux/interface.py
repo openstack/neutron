@@ -219,7 +219,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         if internal:
             attrs.insert(0, ('type', 'internal'))
 
-        ovs = ovs_lib.OVSBridge(bridge, self.root_helper)
+        ovs = ovs_lib.OVSBridge(bridge)
         ovs.replace_port(device_name, *attrs)
 
     def plug(self, network_id, port_id, device_name, mac_address,
@@ -274,7 +274,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
         tap_name = self._get_tap_name(device_name, prefix)
         self.check_bridge_exists(bridge)
-        ovs = ovs_lib.OVSBridge(bridge, self.root_helper)
+        ovs = ovs_lib.OVSBridge(bridge)
 
         try:
             ovs.delete_port(tap_name)

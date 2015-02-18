@@ -81,8 +81,8 @@ class LocalVLANMapping(object):
 
 
 class Bridge(flows.OFAgentIntegrationBridge, ovs_lib.OVSBridge):
-    def __init__(self, br_name, root_helper, ryuapp):
-        super(Bridge, self).__init__(br_name, root_helper)
+    def __init__(self, br_name, ryuapp):
+        super(Bridge, self).__init__(br_name)
         self.datapath_id = None
         self.datapath = None
         self.ryuapp = ryuapp
@@ -225,7 +225,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Keep track of int_br's device count for use by _report_state()
         self.int_br_device_count = 0
 
-        self.int_br = Bridge(integ_br, self.root_helper, self.ryuapp)
+        self.int_br = Bridge(integ_br, self.ryuapp)
         # Stores port update notifications for processing in main loop
         self.updated_ports = set()
         self.setup_rpc()
