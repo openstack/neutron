@@ -142,7 +142,6 @@ class MetadataDriver(advanced_service.AdvancedService):
         return external_process.ProcessManager(
             conf,
             router_id,
-            config.get_root_helper(conf),
             ns_name)
 
     @classmethod

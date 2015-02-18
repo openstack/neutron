@@ -69,7 +69,6 @@ class DhcpAgent(manager.Manager):
         self._populate_networks_cache()
         self._process_monitor = external_process.ProcessMonitor(
             config=self.conf,
-            root_helper=self.root_helper,
             resource_type='dhcp')
 
     def _populate_networks_cache(self):

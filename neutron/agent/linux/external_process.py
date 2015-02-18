@@ -45,14 +45,12 @@ class ProcessManager(object):
 
     Note: The manager expects uuid to be in cmdline.
     """
-    def __init__(self, conf, uuid, root_helper='sudo',
-                 namespace=None, service=None, pids_path=None,
-                 default_cmd_callback=None,
+    def __init__(self, conf, uuid, namespace=None, service=None,
+                 pids_path=None, default_cmd_callback=None,
                  cmd_addl_env=None, pid_file=None):
 
         self.conf = conf
         self.uuid = uuid
-        self.root_helper = root_helper
         self.namespace = namespace
         self.default_cmd_callback = default_cmd_callback
         self.cmd_addl_env = cmd_addl_env
@@ -74,7 +72,7 @@ class ProcessManager(object):
                 cmd_callback = self.default_cmd_callback
             cmd = cmd_callback(self.get_pid_file_name())
 
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
+            ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
             ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env)
         elif reload_cfg:
             self.reload_cfg()
@@ -87,7 +85,7 @@ class ProcessManager(object):
 
         if self.active:
             cmd = ['kill', '-%s' % (sig), pid]
-            utils.execute(cmd, self.root_helper)
+            utils.execute(cmd, run_as_root=True)
             # In the case of shutting down, remove the pid file
             if sig == '9':
                 fileutils.delete_if_exists(self.get_pid_file_name())
@@ -131,18 +129,15 @@ ServiceId = collections.namedtuple('ServiceId', ['uuid', 'service'])
 
 class ProcessMonitor(object):
 
-    def __init__(self, config, root_helper, resource_type):
+    def __init__(self, config, resource_type):
         """Handle multiple process managers and watch over all of them.
 
         :param config: oslo config object with the agent configuration.
         :type config: oslo_config.ConfigOpts
-        :param root_helper: root helper to be used with new ProcessManagers
-        :type root_helper: str
         :param resource_type: can be dhcp, router, load_balancer, etc.
         :type resource_type: str
         """
         self._config = config
-        self._root_helper = root_helper
         self._resource_type = resource_type
 
         self._process_managers = {}
@@ -250,7 +245,6 @@ class ProcessMonitor(object):
                                 cmd_addl_env, pid_file):
         return ProcessManager(conf=self._config,
                               uuid=uuid,
-                              root_helper=self._root_helper,
                               namespace=namespace,
                               service=service,
                               default_cmd_callback=cmd_callback,

@@ -19,7 +19,6 @@ import mock
 
 from oslo_config import cfg
 
-from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import config as l3_config
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.openstack.common import uuidutils
@@ -38,7 +37,6 @@ class TestMetadataDriver(base.BaseTestCase):
         super(TestMetadataDriver, self).setUp()
         cfg.CONF.register_opts(l3_config.OPTS)
         cfg.CONF.register_opts(metadata_driver.MetadataDriver.OPTS)
-        agent_config.register_root_helper(cfg.CONF)
 
     def test_metadata_nat_rules(self):
         rules = ('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
@@ -83,7 +81,7 @@ class TestMetadataDriver(base.BaseTestCase):
                 mock.patch(ip_class_path)) as (geteuid, getegid, ip_mock):
             driver._spawn_metadata_proxy(router_id, router_ns, cfg.CONF)
             ip_mock.assert_has_calls([
-                mock.call('sudo', router_ns),
+                mock.call(namespace=router_ns),
                 mock.call().netns.execute([
                     'neutron-ns-metadata-proxy',
                     mock.ANY,

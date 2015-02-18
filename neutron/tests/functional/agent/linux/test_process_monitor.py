@@ -41,7 +41,6 @@ class BaseTestProcessMonitor(base.BaseSudoTestCase):
     def build_process_monitor(self):
         return external_process.ProcessMonitor(
             config=cfg.CONF,
-            root_helper=None,
             resource_type='test')
 
     def _make_cmdline_callback(self, uuid):

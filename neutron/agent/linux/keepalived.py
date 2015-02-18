@@ -431,6 +431,5 @@ class KeepalivedManager(KeepalivedNotifierMixin):
         return external_process.ProcessManager(
             conf,
             resource_id,
-            root_helper,
             namespace,
             pids_path=conf_path)

@@ -73,10 +73,9 @@ def setup_conf():
     return conf
 
 
-def _get_dhcp_process_monitor(config, root_helper):
+def _get_dhcp_process_monitor(config):
     return external_process.ProcessMonitor(
         config=config,
-        root_helper=root_helper,
         resource_type='dhcp')
 
 
@@ -88,7 +87,7 @@ def kill_dhcp(conf, namespace):
     dhcp_driver = importutils.import_object(
         conf.dhcp_driver,
         conf=conf,
-        process_monitor=_get_dhcp_process_monitor(conf, root_helper),
+        process_monitor=_get_dhcp_process_monitor(conf),
         network=dhcp.NetModel(conf.use_namespaces, {'id': network_id}),
         root_helper=root_helper,
         plugin=FakeDhcpPlugin())
