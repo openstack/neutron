@@ -200,7 +200,7 @@ class TestNetnsCleanup(base.BaseTestCase):
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.get_namespaces.return_value = namespaces
 
-            with mock.patch('eventlet.sleep') as eventlet_sleep:
+            with mock.patch('time.sleep') as time_sleep:
                 conf = mock.Mock()
                 conf.force = False
                 methods_to_mock = dict(
@@ -225,14 +225,14 @@ class TestNetnsCleanup(base.BaseTestCase):
                         ip_wrap.assert_has_calls(
                             [mock.call.get_namespaces(conf.AGENT.root_helper)])
 
-                        eventlet_sleep.assert_called_once_with(2)
+                        time_sleep.assert_called_once_with(2)
 
     def test_main_no_candidates(self):
         namespaces = ['ns1', 'ns2']
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.get_namespaces.return_value = namespaces
 
-            with mock.patch('eventlet.sleep') as eventlet_sleep:
+            with mock.patch('time.sleep') as time_sleep:
                 conf = mock.Mock()
                 conf.force = False
                 methods_to_mock = dict(
@@ -255,4 +255,4 @@ class TestNetnsCleanup(base.BaseTestCase):
 
                         self.assertFalse(mocks['destroy_namespace'].called)
 
-                        self.assertFalse(eventlet_sleep.called)
+                        self.assertFalse(time_sleep.called)

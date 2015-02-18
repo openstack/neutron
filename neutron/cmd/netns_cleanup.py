@@ -14,9 +14,7 @@
 #    under the License.
 
 import re
-
-import eventlet
-eventlet.monkey_patch()
+import time
 
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -178,7 +176,7 @@ def main():
                   if eligible_for_deletion(conf, ns, conf.force)]
 
     if candidates:
-        eventlet.sleep(2)
+        time.sleep(2)
 
         for namespace in candidates:
             destroy_namespace(conf, namespace, conf.force)
