@@ -883,6 +883,77 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         for chain, rule in rules:
             nat.add_rule.assert_any_call(chain, rule, tag='floating_ip')
 
+    def test_get_floating_agent_gw_interfaces(self):
+        fake_network_id = _uuid()
+        agent_gateway_port = (
+            [{'fixed_ips': [{'ip_address': '20.0.0.30',
+             'subnet_id': _uuid()}],
+             'subnet': {'gateway_ip': '20.0.0.1'},
+             'id': _uuid(),
+             'binding:host_id': 'myhost',
+             'device_owner': 'network:floatingip_agent_gateway',
+             'network_id': fake_network_id,
+             'mac_address': 'ca:fe:de:ad:be:ef',
+             'ip_cidr': '20.0.0.30/24'}]
+        )
+
+        router = prepare_router_data(enable_snat=True)
+        router[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router['distributed'] = True
+        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertEqual(
+            agent_gateway_port[0],
+            agent.get_floating_agent_gw_interface(ri, fake_network_id))
+
+    def test_create_dvr_fip_interfaces(self):
+        fake_network_id = _uuid()
+        fake_floatingips = {'floatingips': [
+            {'id': _uuid(),
+             'floating_ip_address': '20.0.0.3',
+             'fixed_ip_address': '192.168.0.1',
+             'floating_network_id': _uuid(),
+             'port_id': _uuid(),
+             'host': HOSTNAME}]}
+        agent_gateway_port = (
+            [{'fixed_ips': [{'ip_address': '20.0.0.30',
+             'subnet_id': _uuid()}],
+             'subnet': {'gateway_ip': '20.0.0.1'},
+             'id': _uuid(),
+             'network_id': fake_network_id,
+             'mac_address': 'ca:fe:de:ad:be:ef',
+             'ip_cidr': '20.0.0.30/24'}]
+        )
+
+        router = prepare_router_data(enable_snat=True)
+        router[l3_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
+        router[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router['distributed'] = True
+        ri = dvr_router.DvrRouter(router['id'], router, **self.ri_kwargs)
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ext_gw_port = ri.router.get('gw_port')
+        ri.fip_ns = agent.get_fip_ns(ext_gw_port['network_id'])
+        ri.dist_fip_count = 0
+        ri.fip_ns.subscribe = mock.Mock()
+
+        with contextlib.nested(mock.patch.object(agent,
+                                                 'get_floating_ips'),
+                               mock.patch.object(
+                                   agent, 'get_floating_agent_gw_interface'),
+                               mock.patch.object(
+                                   agent, '_set_subnet_info')
+                               ) as (fips,
+                                     fip_gw_port,
+                                     sub_info):
+            fips.return_value = fake_floatingips
+            fip_gw_port.return_value = agent_gateway_port[0]
+            agent.create_dvr_fip_interfaces(ri, ext_gw_port)
+            self.assertTrue(fip_gw_port.called)
+            self.assertTrue(fips.called)
+            self.assertEqual(ri.fip_ns.agent_gateway_port,
+                             agent_gateway_port[0])
+
     def test_process_router_cent_floating_ip_add(self):
         fake_floatingips = {'floatingips': [
             {'id': _uuid(),
