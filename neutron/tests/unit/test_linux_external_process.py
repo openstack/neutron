@@ -49,7 +49,6 @@ class TestProcessManager(base.BaseTestCase):
                 manager.enable(callback)
                 callback.assert_called_once_with('pidfile')
                 self.execute.assert_called_once_with(['the', 'cmd'],
-                                                     root_helper='sudo',
                                                      check_exit_code=True,
                                                      extra_ok_codes=None)
 

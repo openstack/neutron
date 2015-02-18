@@ -14,7 +14,6 @@
 #    under the License.
 
 import eventlet
-import os
 
 import netaddr
 from oslo_config import cfg
@@ -44,7 +43,6 @@ VLAN_INTERFACE_DETAIL = ['vlan protocol 802.1q',
 class SubProcessBase(object):
     def __init__(self, root_helper=None, namespace=None,
                  log_fail_as_error=True):
-        self.root_helper = root_helper
         self.namespace = namespace
         self.log_fail_as_error = log_fail_as_error
         try:
@@ -60,38 +58,29 @@ class SubProcessBase(object):
         elif self.force_root:
             # Force use of the root helper to ensure that commands
             # will execute in dom0 when running under XenServer/XCP.
-            return self._execute(options, command, args, self.root_helper,
+            return self._execute(options, command, args, run_as_root=True,
                                  log_fail_as_error=self.log_fail_as_error)
         else:
             return self._execute(options, command, args,
                                  log_fail_as_error=self.log_fail_as_error)
 
-    def enforce_root_helper(self):
-        if not self.root_helper and os.geteuid() != 0:
-            raise exceptions.SudoRequired()
-
     def _as_root(self, options, command, args, use_root_namespace=False):
-        self.enforce_root_helper()
-
         namespace = self.namespace if not use_root_namespace else None
 
-        return self._execute(options,
-                             command,
-                             args,
-                             self.root_helper,
-                             namespace,
+        return self._execute(options, command, args, run_as_root=True,
+                             namespace=namespace,
                              log_fail_as_error=self.log_fail_as_error)
 
     @classmethod
-    def _execute(cls, options, command, args, root_helper=None,
+    def _execute(cls, options, command, args, run_as_root=False,
                  namespace=None, log_fail_as_error=True):
         opt_list = ['-%s' % o for o in options]
         if namespace:
             ip_cmd = ['ip', 'netns', 'exec', namespace, 'ip']
         else:
             ip_cmd = ['ip']
-        return utils.execute(ip_cmd + opt_list + [command] + list(args),
-                             root_helper=root_helper,
+        cmd = ip_cmd + opt_list + [command] + list(args)
+        return utils.execute(cmd, run_as_root=run_as_root,
                              log_fail_as_error=log_fail_as_error)
 
     def set_log_fail_as_error(self, fail_with_error):
@@ -100,17 +89,15 @@ class SubProcessBase(object):
 
 class IPWrapper(SubProcessBase):
     def __init__(self, root_helper=None, namespace=None):
-        super(IPWrapper, self).__init__(root_helper=root_helper,
-                                        namespace=namespace)
+        super(IPWrapper, self).__init__(namespace=namespace)
         self.netns = IpNetnsCommand(self)
 
     def device(self, name):
-        return IPDevice(name, self.root_helper, self.namespace)
+        return IPDevice(name, namespace=self.namespace)
 
     def get_devices(self, exclude_loopback=False):
         retval = []
-        output = self._execute(['o', 'd'], 'link', ('list',),
-                               self.root_helper, self.namespace)
+        output = self._run(['o', 'd'], 'link', ('list',))
         for line in output.split('\n'):
             if '<' not in line:
                 continue
@@ -125,14 +112,12 @@ class IPWrapper(SubProcessBase):
                 if exclude_loopback and name == LOOPBACK_DEVNAME:
                     continue
 
-                retval.append(IPDevice(name,
-                                       self.root_helper,
-                                       self.namespace))
+                retval.append(IPDevice(name, namespace=self.namespace))
         return retval
 
     def add_tuntap(self, name, mode='tap'):
         self._as_root('', 'tuntap', ('add', name, 'mode', mode))
-        return IPDevice(name, self.root_helper, self.namespace)
+        return IPDevice(name, namespace=self.namespace)
 
     def add_veth(self, name1, name2, namespace2=None):
         args = ['add', name1, 'type', 'veth', 'peer', 'name', name2]
@@ -145,8 +130,8 @@ class IPWrapper(SubProcessBase):
 
         self._as_root('', 'link', tuple(args))
 
-        return (IPDevice(name1, self.root_helper, self.namespace),
-                IPDevice(name2, self.root_helper, namespace2))
+        return (IPDevice(name1, namespace=self.namespace),
+                IPDevice(name2, namespace=namespace2))
 
     def del_veth(self, name):
         """Delete a virtual interface between two namespaces."""
@@ -158,7 +143,7 @@ class IPWrapper(SubProcessBase):
             lo = ip.device(LOOPBACK_DEVNAME)
             lo.link.set_up()
         else:
-            ip = IPWrapper(self.root_helper, name)
+            ip = IPWrapper(namespace=name)
         return ip
 
     def namespace_is_empty(self):
@@ -197,11 +182,11 @@ class IPWrapper(SubProcessBase):
         elif port:
             raise exceptions.NetworkVxlanPortRangeError(vxlan_range=port)
         self._as_root('', 'link', cmd)
-        return (IPDevice(name, self.root_helper, self.namespace))
+        return (IPDevice(name, namespace=self.namespace))
 
     @classmethod
-    def get_namespaces(cls, root_helper):
-        output = cls._execute('', 'netns', ('list',), root_helper=root_helper)
+    def get_namespaces(cls, root_helper=None):
+        output = cls._execute('', 'netns', ('list',))
         return [l.strip() for l in output.split('\n')]
 
 
@@ -221,8 +206,7 @@ class IpRule(IPWrapper):
 
 class IPDevice(SubProcessBase):
     def __init__(self, name, root_helper=None, namespace=None):
-        super(IPDevice, self).__init__(root_helper=root_helper,
-                                       namespace=namespace)
+        super(IPDevice, self).__init__(namespace=namespace)
         self.name = name
         self.link = IpLinkCommand(self)
         self.addr = IpAddrCommand(self)
@@ -535,7 +519,7 @@ class IpNetnsCommand(IpCommandBase):
 
     def add(self, name):
         self._as_root('add', name, use_root_namespace=True)
-        wrapper = IPWrapper(self._parent.root_helper, name)
+        wrapper = IPWrapper(namespace=name)
         wrapper.netns.execute(['sysctl', '-w',
                                'net.ipv4.conf.all.promote_secondaries=1'])
         return wrapper
@@ -546,25 +530,23 @@ class IpNetnsCommand(IpCommandBase):
     def execute(self, cmds, addl_env=None, check_exit_code=True,
                 extra_ok_codes=None):
         ns_params = []
+        kwargs = {}
         if self._parent.namespace:
-            self._parent.enforce_root_helper()
+            kwargs['run_as_root'] = True
             ns_params = ['ip', 'netns', 'exec', self._parent.namespace]
 
         env_params = []
         if addl_env:
             env_params = (['env'] +
                           ['%s=%s' % pair for pair in addl_env.items()])
-        return utils.execute(
-            ns_params + env_params + list(cmds),
-            root_helper=self._parent.root_helper,
-            check_exit_code=check_exit_code, extra_ok_codes=extra_ok_codes)
+        cmd = ns_params + env_params + list(cmds)
+        return utils.execute(cmd, check_exit_code=check_exit_code,
+                             extra_ok_codes=extra_ok_codes, **kwargs)
 
     def exists(self, name):
-        root_helper = self._parent.root_helper
-        if not cfg.CONF.AGENT.use_helper_for_ns_read:
-            root_helper = None
-        output = self._parent._execute('o', 'netns', ['list'],
-                                       root_helper=root_helper)
+        output = self._parent._execute(
+            'o', 'netns', ['list'],
+            run_as_root=cfg.CONF.AGENT.use_helper_for_ns_read)
         for line in output.split('\n'):
             if name == line.strip():
                 return True
@@ -574,7 +556,7 @@ class IpNetnsCommand(IpCommandBase):
 def device_exists(device_name, root_helper=None, namespace=None):
     """Return True if the device exists in the namespace."""
     try:
-        dev = IPDevice(device_name, root_helper, namespace)
+        dev = IPDevice(device_name, namespace=namespace)
         dev.set_log_fail_as_error(False)
         address = dev.link.address
     except RuntimeError:
@@ -588,7 +570,7 @@ def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None,
     exists in the namespace.
     """
     try:
-        device = IPDevice(device_name, root_helper, namespace)
+        device = IPDevice(device_name, namespace=namespace)
         if mac != device.link.address:
             return False
         if ip_cidr not in (ip['cidr'] for ip in device.addr.list()):
@@ -607,7 +589,7 @@ def get_routing_table(root_helper=None, namespace=None):
                                'device': device_name}
     """
 
-    ip_wrapper = IPWrapper(root_helper, namespace=namespace)
+    ip_wrapper = IPWrapper(namespace=namespace)
     table = ip_wrapper.netns.execute(['ip', 'route'], check_exit_code=True)
 
     routes = []
@@ -630,7 +612,7 @@ def get_routing_table(root_helper=None, namespace=None):
 
 
 def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
-    dev = IPDevice(device_name, root_helper, namespace)
+    dev = IPDevice(device_name, namespace=namespace)
     dev.set_log_fail_as_error(False)
     try:
         # Ensure the device is up, even if it is already up. If the device
@@ -643,15 +625,15 @@ def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
 
 def iproute_arg_supported(command, arg, root_helper=None):
     command += ['help']
-    stdout, stderr = utils.execute(command, root_helper=root_helper,
-                                   check_exit_code=False, return_stderr=True)
+    stdout, stderr = utils.execute(command, check_exit_code=False,
+                                   return_stderr=True)
     return any(arg in line for line in stderr.split('\n'))
 
 
-def _arping(ns_name, iface_name, address, count, root_helper):
+def _arping(ns_name, iface_name, address, count):
     arping_cmd = ['arping', '-A', '-I', iface_name, '-c', count, address]
     try:
-        ip_wrapper = IPWrapper(root_helper, namespace=ns_name)
+        ip_wrapper = IPWrapper(namespace=ns_name)
         ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
     except Exception:
         msg = _LE("Failed sending gratuitous ARP "
@@ -661,17 +643,18 @@ def _arping(ns_name, iface_name, address, count, root_helper):
                             'ns': ns_name})
 
 
-def send_gratuitous_arp(ns_name, iface_name, address, count, root_helper):
+def send_gratuitous_arp(ns_name, iface_name, address, count, root_helper=None):
     """Send a gratuitous arp using given namespace, interface, and address"""
 
     def arping():
-        _arping(ns_name, iface_name, address, count, root_helper)
+        _arping(ns_name, iface_name, address, count)
 
     if count > 0:
         eventlet.spawn_n(arping)
 
 
-def send_garp_for_proxyarp(ns_name, iface_name, address, count, root_helper):
+def send_garp_for_proxyarp(ns_name, iface_name, address, count,
+                           root_helper=None):
     """
     Send a gratuitous arp using given namespace, interface, and address
 
@@ -682,11 +665,11 @@ def send_garp_for_proxyarp(ns_name, iface_name, address, count, root_helper):
     """
     def arping_with_temporary_address():
         # Configure the address on the interface
-        device = IPDevice(iface_name, root_helper, namespace=ns_name)
+        device = IPDevice(iface_name, namespace=ns_name)
         net = netaddr.IPNetwork(str(address))
         device.addr.add(net.version, str(net), str(net.broadcast))
 
-        _arping(ns_name, iface_name, address, count, root_helper)
+        _arping(ns_name, iface_name, address, count)
 
         # Delete the address from the interface
         device.addr.delete(net.version, str(net))
