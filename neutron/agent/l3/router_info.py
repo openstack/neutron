@@ -41,7 +41,6 @@ class RouterInfo(object):
         self.router = router
         self.ns_name = ns_name
         self.iptables_manager = iptables_manager.IptablesManager(
-            root_helper=root_helper,
             use_ipv6=use_ipv6,
             namespace=self.ns_name)
         self.routes = []

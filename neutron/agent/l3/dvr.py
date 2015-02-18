@@ -165,7 +165,6 @@ class AgentMixin(object):
         self._external_gateway_added(ri, ex_gw_port, gw_interface_name,
                                      snat_ns_name, preserve_ips=[])
         ri.snat_iptables_manager = iptables_manager.IptablesManager(
-            root_helper=self.root_helper,
             namespace=snat_ns_name,
             use_ipv6=self.use_ipv6)
         # kicks the FW Agent to add rules for the snat namespace

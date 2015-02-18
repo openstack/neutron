@@ -47,7 +47,6 @@ class FipNamespace(object):
         self._subscribers = set()
         self._rule_priorities = set(range(FIP_PR_START, FIP_PR_END))
         self._iptables_manager = iptables_manager.IptablesManager(
-            root_helper=self.root_helper,
             namespace=self.get_name(),
             use_ipv6=self.use_ipv6)
         path = os.path.join(agent_conf.state_path, 'fip-linklocal-networks')

@@ -2633,22 +2633,22 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
     def _replay_iptables(self, v4_filter, v6_filter):
         self._register_mock_call(
             ['iptables-save', '-c'],
-            root_helper=self.root_helper,
+            run_as_root=True,
             return_value='')
         self._register_mock_call(
             ['iptables-restore', '-c'],
             process_input=self._regex(IPTABLES_RAW + IPTABLES_NAT +
                                       IPTABLES_MANGLE + v4_filter),
-            root_helper=self.root_helper,
+            run_as_root=True,
             return_value='')
         self._register_mock_call(
             ['ip6tables-save', '-c'],
-            root_helper=self.root_helper,
+            run_as_root=True,
             return_value='')
         self._register_mock_call(
             ['ip6tables-restore', '-c'],
             process_input=self._regex(v6_filter),
-            root_helper=self.root_helper,
+            run_as_root=True,
             return_value='')
 
     def test_prepare_remove_port(self):

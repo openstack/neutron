@@ -281,9 +281,8 @@ class IptablesManager(object):
 
     """
 
-    def __init__(self, _execute=None, state_less=False,
-                 root_helper=None, use_ipv6=False, namespace=None,
-                 binary_name=binary_name):
+    def __init__(self, _execute=None, state_less=False, use_ipv6=False,
+                 namespace=None, binary_name=binary_name):
         if _execute:
             self.execute = _execute
         else:
@@ -291,7 +290,6 @@ class IptablesManager(object):
 
         config.register_iptables_opts(cfg.CONF)
         self.use_ipv6 = use_ipv6
-        self.root_helper = root_helper
         self.namespace = namespace
         self.iptables_apply_deferred = False
         self.wrap_name = binary_name[:16]
@@ -430,7 +428,7 @@ class IptablesManager(object):
             args = ['%s-save' % (cmd,), '-c']
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
-            all_tables = self.execute(args, root_helper=self.root_helper)
+            all_tables = self.execute(args, run_as_root=True)
             all_lines = all_tables.split('\n')
             # Traverse tables in sorted order for predictable dump output
             for table_name in sorted(tables):
@@ -444,7 +442,7 @@ class IptablesManager(object):
                 args = ['ip', 'netns', 'exec', self.namespace] + args
             try:
                 self.execute(args, process_input='\n'.join(all_lines),
-                             root_helper=self.root_helper)
+                             run_as_root=True)
             except RuntimeError as r_error:
                 with excutils.save_and_reraise_exception():
                     try:
@@ -693,8 +691,7 @@ class IptablesManager(object):
                 args.append('-Z')
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
-            current_table = (self.execute(args,
-                             root_helper=self.root_helper))
+            current_table = self.execute(args, run_as_root=True)
             current_lines = current_table.split('\n')
 
             for line in current_lines[2:]:
