@@ -16,6 +16,7 @@
 import contextlib
 
 import mock
+import oslo_db.exception as exc
 import webob.exc
 
 from neutron.api.v2 import attributes as attr
@@ -269,6 +270,12 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     'port_range_max': None,
                     'port_range_min': None}
         self._assert_sg_rule_has_kvs(v6_rule, expected)
+
+    def test_skip_duplicate_default_sg_error(self):
+        with mock.patch.object(SecurityGroupTestPlugin,
+                               '_ensure_default_security_group',
+                               side_effect=exc.DBDuplicateEntry()):
+            self._make_security_group(self.fmt, 'test_sg', 'test_desc')
 
     def test_update_security_group(self):
         with self.security_group() as sg:

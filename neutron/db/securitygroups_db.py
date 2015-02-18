@@ -13,6 +13,7 @@
 #    under the License.
 
 import netaddr
+from oslo_db import exception
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -24,8 +25,10 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import securitygroup as ext_sg
+from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
+LOG = logging.getLogger(__name__)
 
 IP_PROTOCOL_MAP = {constants.PROTO_NAME_TCP: constants.PROTO_NUM_TCP,
                    constants.PROTO_NAME_UDP: constants.PROTO_NUM_UDP,
@@ -124,7 +127,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         tenant_id = self._get_tenant_id_for_create(context, s)
 
         if not default_sg:
-            self._ensure_default_security_group(context, tenant_id)
+            try:
+                self._ensure_default_security_group(context, tenant_id)
+            except exception.DBDuplicateEntry as ex:
+                LOG.debug("Duplicate default security group %s was not"
+                          " created", ex.value)
 
         with context.session.begin(subtransactions=True):
             security_group_db = SecurityGroup(id=s.get('id') or (
