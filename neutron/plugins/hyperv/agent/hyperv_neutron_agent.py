@@ -88,6 +88,10 @@ class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpc):
         if sg_rpc.is_firewall_enabled():
             self._setup_rpc()
 
+    @property
+    def use_enhanced_rpc(self):
+        return False
+
     def _setup_rpc(self):
         self.topic = topics.AGENT
         self.endpoints = [HyperVSecurityCallbackMixin(self)]
