@@ -94,11 +94,10 @@ class SecurityGroupAgentRpcCallback(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
 class NECNeutronAgent(object):
 
-    def __init__(self, integ_br, root_helper, polling_interval):
+    def __init__(self, integ_br, polling_interval):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
-        :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to check the bridge.
         '''
         self.int_br = ovs_lib.OVSBridge(integ_br)
@@ -116,9 +115,9 @@ class NECNeutronAgent(object):
             'agent_type': q_const.AGENT_TYPE_NEC,
             'start_flag': True}
 
-        self.setup_rpc(root_helper)
+        self.setup_rpc()
 
-    def setup_rpc(self, root_helper):
+    def setup_rpc(self):
         self.host = socket.gethostname()
         self.agent_id = 'nec-q-agent.%s' % self.host
         LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
@@ -130,7 +129,7 @@ class NECNeutronAgent(object):
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc, root_helper)
+                self.sg_plugin_rpc)
 
         # RPC network init
         # Handle updates from service
@@ -221,10 +220,9 @@ def main():
 
     # Determine which agent type to use.
     integ_br = config.OVS.integration_bridge
-    root_helper = config.AGENT.root_helper
     polling_interval = config.AGENT.polling_interval
 
-    agent = NECNeutronAgent(integ_br, root_helper, polling_interval)
+    agent = NECNeutronAgent(integ_br, polling_interval)
 
     # Start everything.
     agent.daemon_loop()

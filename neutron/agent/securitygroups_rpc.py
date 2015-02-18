@@ -163,11 +163,9 @@ class SecurityGroupAgentRpcCallbackMixin(object):
 class SecurityGroupAgentRpc(object):
     """Enables SecurityGroup agent support in agent implementations."""
 
-    def __init__(self, context, plugin_rpc, root_helper,
-                 defer_refresh_firewall=False):
+    def __init__(self, context, plugin_rpc, defer_refresh_firewall=False):
         self.context = context
         self.plugin_rpc = plugin_rpc
-        self.root_helper = root_helper
         self.init_firewall(defer_refresh_firewall)
 
     def init_firewall(self, defer_refresh_firewall=False):

@@ -1113,7 +1113,7 @@ class SecurityGroupAgentRpcTestCaseForNoneDriver(base.BaseTestCase):
     def test_init_firewall_with_none_driver(self):
         set_enable_security_groups(False)
         agent = sg_rpc.SecurityGroupAgentRpc(
-                context=None, plugin_rpc=mock.Mock(), root_helper=None)
+                context=None, plugin_rpc=mock.Mock())
         self.assertEqual(agent.firewall.__class__.__name__,
                          'NoopFirewallDriver')
 
@@ -1123,7 +1123,7 @@ class BaseSecurityGroupAgentRpcTestCase(base.BaseTestCase):
         super(BaseSecurityGroupAgentRpcTestCase, self).setUp()
         set_firewall_driver(FIREWALL_NOOP_DRIVER)
         self.agent = sg_rpc.SecurityGroupAgentRpc(
-                context=None, plugin_rpc=mock.Mock(), root_helper='sudo',
+                context=None, plugin_rpc=mock.Mock(),
                 defer_refresh_firewall=defer_refresh_firewall)
         mock.patch('neutron.agent.linux.iptables_manager').start()
         self.default_firewall = self.agent.firewall
@@ -2503,7 +2503,6 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
     def setUp(self, defer_refresh_firewall=False, test_rpc_v1_1=True):
         super(TestSecurityGroupAgentWithIptables, self).setUp()
-        config.register_root_helper(cfg.CONF)
         config.register_iptables_opts(cfg.CONF)
         set_firewall_driver(self.FIREWALL_DRIVER)
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
@@ -2511,9 +2510,8 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
         self.rpc = mock.Mock()
         self.agent = sg_rpc.SecurityGroupAgentRpc(
-                context=None, plugin_rpc=self.rpc, root_helper='sudo',
+                context=None, plugin_rpc=self.rpc,
                 defer_refresh_firewall=defer_refresh_firewall)
-        self.root_helper = 'sudo'
 
         if test_rpc_v1_1:
             self.rpc.security_group_info_for_devices.side_effect = (

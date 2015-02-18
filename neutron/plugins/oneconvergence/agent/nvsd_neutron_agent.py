@@ -75,11 +75,10 @@ class NVSDNeutronAgent(object):
     #   1.1 Support Security Group RPC
     target = oslo_messaging.Target(version='1.1')
 
-    def __init__(self, integ_br, root_helper, polling_interval):
+    def __init__(self, integ_br, polling_interval):
         super(NVSDNeutronAgent, self).__init__()
         self.int_br = ovs_lib.OVSBridge(integ_br)
         self.polling_interval = polling_interval
-        self.root_helper = root_helper
         self.setup_rpc()
         self.ports = set()
 
@@ -93,8 +92,7 @@ class NVSDNeutronAgent(object):
         self.context = n_context.get_admin_context_without_session()
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                                                     self.sg_plugin_rpc,
-                                                     self.root_helper)
+                                                     self.sg_plugin_rpc)
 
         # RPC network init
         # Handle updates from service
@@ -150,9 +148,8 @@ def main():
     common_config.setup_logging()
 
     integ_br = config.AGENT.integration_bridge
-    root_helper = config.AGENT.root_helper
     polling_interval = config.AGENT.polling_interval
-    agent = NVSDNeutronAgent(integ_br, root_helper, polling_interval)
+    agent = NVSDNeutronAgent(integ_br, polling_interval)
     LOG.info(_LI("NVSD Agent initialized successfully, now running... "))
 
     # Start everything.
