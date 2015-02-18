@@ -15,9 +15,6 @@
 import httplib
 import socket
 
-import eventlet
-eventlet.monkey_patch()
-
 import httplib2
 from oslo_config import cfg
 import six.moves.urllib.parse as urlparse

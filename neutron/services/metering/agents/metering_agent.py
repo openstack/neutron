@@ -15,9 +15,6 @@
 import sys
 import time
 
-import eventlet
-eventlet.monkey_patch()
-
 from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import importutils
