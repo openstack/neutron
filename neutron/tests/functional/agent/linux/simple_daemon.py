@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
+import time
+
 from oslo_config import cfg
 
 from neutron.agent.linux import daemon
@@ -29,9 +30,8 @@ def main():
 
         def run(self):
             while True:
-                eventlet.sleep(10)
+                time.sleep(10)
 
-    eventlet.monkey_patch()
     opts = [
         cfg.StrOpt('uuid',
                    help=_('uuid provided from the command line '
