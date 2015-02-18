@@ -39,7 +39,6 @@ class IpsetBase(base.BaseIPVethTestCase):
 
     def _create_ipset_manager_and_set(self, dst_ns, set_name):
         ipset = ipset_manager.IpsetManager(
-            root_helper=self.root_helper,
             namespace=dst_ns.namespace)
 
         ipset._create_set(set_name, IPSET_ETHERTYPE)

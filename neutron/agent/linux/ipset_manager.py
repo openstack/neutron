@@ -26,9 +26,8 @@ class IpsetManager(object):
        or single ip add/remove for smaller changes.
     """
 
-    def __init__(self, execute=None, root_helper=None, namespace=None):
+    def __init__(self, execute=None, namespace=None):
         self.execute = execute or linux_utils.execute
-        self.root_helper = root_helper
         self.namespace = namespace
         self.ipset_sets = {}
 
@@ -113,9 +112,7 @@ class IpsetManager(object):
         if self.namespace:
             cmd_ns.extend(['ip', 'netns', 'exec', self.namespace])
         cmd_ns.extend(cmd)
-        self.execute(cmd_ns,
-                     root_helper=self.root_helper,
-                     process_input=input)
+        self.execute(cmd_ns, run_as_root=True, process_input=input)
 
     def _get_new_set_ips(self, set_name, expected_ips):
         new_member_ips = (set(expected_ips) -
