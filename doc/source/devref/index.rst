@@ -38,6 +38,7 @@ Neutron Internals
 .. toctree::
    :maxdepth: 3
 
+   services_and_agents
    api_layer
    api_extensions
    plugin-api
