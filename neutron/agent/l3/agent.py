@@ -1138,8 +1138,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     @periodic_task.periodic_task
     def periodic_sync_routers_task(self, context):
-        if self.services_sync:
-            super(L3NATAgent, self).process_services_sync(context)
+        self.process_services_sync(context)
         LOG.debug("Starting periodic_sync_routers_task - fullsync:%s",
                   self.fullsync)
         if not self.fullsync:
