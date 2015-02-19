@@ -21,8 +21,6 @@
 import sys
 
 import eventlet
-eventlet.monkey_patch()
-
 from oslo_config import cfg
 
 from neutron.common import config
@@ -63,7 +61,3 @@ def main():
         pass
     except RuntimeError as e:
         sys.exit(_("ERROR: %s") % e)
-
-
-if __name__ == "__main__":
-    main()
