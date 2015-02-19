@@ -110,14 +110,12 @@ class NetModel(DictModel):
 @six.add_metaclass(abc.ABCMeta)
 class DhcpBase(object):
 
-    def __init__(self, conf, network, process_monitor, root_helper='sudo',
+    def __init__(self, conf, network, process_monitor,
                  version=None, plugin=None):
         self.conf = conf
         self.network = network
-        self.root_helper = root_helper
         self.process_monitor = process_monitor
-        self.device_manager = DeviceManager(self.conf,
-                                            self.root_helper, plugin)
+        self.device_manager = DeviceManager(self.conf, plugin)
         self.version = version
 
     @abc.abstractmethod
@@ -142,7 +140,7 @@ class DhcpBase(object):
         """Force the DHCP server to reload the assignment database."""
 
     @classmethod
-    def existing_dhcp_networks(cls, conf, root_helper):
+    def existing_dhcp_networks(cls, conf):
         """Return a list of existing networks ids that we have configs for."""
 
         raise NotImplementedError()
@@ -167,10 +165,10 @@ class DhcpBase(object):
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
 
-    def __init__(self, conf, network, process_monitor, root_helper='sudo',
-                 version=None, plugin=None):
+    def __init__(self, conf, network, process_monitor, version=None,
+                 plugin=None):
         super(DhcpLocalProcess, self).__init__(conf, network, process_monitor,
-                                               root_helper, version, plugin)
+                                               version, plugin)
         self.confs_dir = self.get_confs_dir(conf)
         self.network_conf_dir = os.path.join(self.confs_dir, network.id)
         self._ensure_network_conf_dir()
@@ -227,8 +225,7 @@ class DhcpLocalProcess(DhcpBase):
 
         if not retain_port:
             if self.conf.dhcp_delete_namespaces and self.network.namespace:
-                ns_ip = ip_lib.IPWrapper(self.root_helper,
-                                         self.network.namespace)
+                ns_ip = ip_lib.IPWrapper(namespace=self.network.namespace)
                 try:
                     ns_ip.netns.delete(self.network.namespace)
                 except RuntimeError:
@@ -288,7 +285,7 @@ class Dnsmasq(DhcpLocalProcess):
         pass
 
     @classmethod
-    def existing_dhcp_networks(cls, conf, root_helper):
+    def existing_dhcp_networks(cls, conf):
         """Return a list of existing networks ids that we have configs for."""
         confs_dir = cls.get_confs_dir(conf)
         try:
@@ -399,8 +396,7 @@ class Dnsmasq(DhcpLocalProcess):
     def _release_lease(self, mac_address, ip):
         """Release a DHCP lease."""
         cmd = ['dhcp_release', self.interface_name, ip, mac_address]
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                      self.network.namespace)
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.network.namespace)
         ip_wrapper.netns.execute(cmd)
 
     def _output_config_files(self):
@@ -676,11 +672,8 @@ class Dnsmasq(DhcpLocalProcess):
         return options
 
     def _make_subnet_interface_ip_map(self):
-        ip_dev = ip_lib.IPDevice(
-            self.interface_name,
-            self.root_helper,
-            self.network.namespace
-        )
+        ip_dev = ip_lib.IPDevice(self.interface_name,
+                                 namespace=self.network.namespace)
 
         subnet_lookup = dict(
             (netaddr.IPNetwork(subnet.cidr), subnet.id)
@@ -775,9 +768,8 @@ class Dnsmasq(DhcpLocalProcess):
 
 class DeviceManager(object):
 
-    def __init__(self, conf, root_helper, plugin):
+    def __init__(self, conf, plugin):
         self.conf = conf
-        self.root_helper = root_helper
         self.plugin = plugin
         if not conf.interface_driver:
             LOG.error(_LE('An interface driver must be specified'))
@@ -809,9 +801,7 @@ class DeviceManager(object):
         it would change it from what it already is.  This makes it safe to call
         and avoids unnecessary perturbation of the system.
         """
-        device = ip_lib.IPDevice(device_name,
-                                 self.root_helper,
-                                 network.namespace)
+        device = ip_lib.IPDevice(device_name, namespace=network.namespace)
         gateway = device.route.get_gateway()
         if gateway:
             gateway = gateway['gateway']
@@ -927,8 +917,7 @@ class DeviceManager(object):
         interface_name = self.get_interface_name(network, port)
 
         if ip_lib.ensure_device_is_ready(interface_name,
-                                         self.root_helper,
-                                         network.namespace):
+                                         namespace=network.namespace):
             LOG.debug('Reusing existing device: %s.', interface_name)
         else:
             self.driver.plug(network.id,
@@ -953,8 +942,7 @@ class DeviceManager(object):
 
         # ensure that the dhcp interface is first in the list
         if network.namespace is None:
-            device = ip_lib.IPDevice(interface_name,
-                                     self.root_helper)
+            device = ip_lib.IPDevice(interface_name)
             device.route.pullup_route(interface_name)
 
         if self.conf.use_namespaces:

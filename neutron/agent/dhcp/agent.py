@@ -56,7 +56,6 @@ class DhcpAgent(manager.Manager):
         self.needs_resync_reasons = collections.defaultdict(list)
         self.conf = cfg.CONF
         self.cache = NetworkCache()
-        self.root_helper = config.get_root_helper(self.conf)
         self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
         ctx = context.get_admin_context_without_session()
         self.plugin_rpc = DhcpPluginApi(topics.PLUGIN,
@@ -75,8 +74,7 @@ class DhcpAgent(manager.Manager):
         """Populate the networks cache when the DHCP-agent starts."""
         try:
             existing_networks = self.dhcp_driver_cls.existing_dhcp_networks(
-                self.conf,
-                self.root_helper
+                self.conf
             )
             for net_id in existing_networks:
                 net = dhcp.NetModel(self.conf.use_namespaces,
@@ -109,7 +107,6 @@ class DhcpAgent(manager.Manager):
             driver = self.dhcp_driver_cls(self.conf,
                                           network,
                                           self._process_monitor,
-                                          self.root_helper,
                                           self.dhcp_version,
                                           self.plugin_rpc)
             getattr(driver, action)(**action_kwargs)
