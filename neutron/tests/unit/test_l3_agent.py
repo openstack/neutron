@@ -184,7 +184,6 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.conf.register_opts(ha.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_use_namespaces_opts_helper(self.conf)
-        agent_config.register_root_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
         self.conf.register_opts(interface.OPTS)
         self.conf.register_opts(external_process.OPTS)
@@ -193,7 +192,6 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('send_arp_for_ha', 1)
         self.conf.set_override('state_path', '')
-        self.conf.AGENT.root_helper = 'sudo'
 
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
@@ -275,8 +273,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                          'ip_address': '152.10.0.13'}],
                            'id': _uuid(), 'device_id': _uuid()}]
 
-        self.ri_kwargs = {'root_helper': self.conf.AGENT.root_helper,
-                          'agent_conf': self.conf,
+        self.ri_kwargs = {'agent_conf': self.conf,
                           'interface_driver': mock.sentinel.interface_driver}
 
     def _prepare_internal_network_data(self):
@@ -368,8 +365,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
             self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
-                                                  '99.0.1.9',
-                                                  mock.ANY, mock.ANY)
+                                                  '99.0.1.9', mock.ANY)
         elif action == 'remove':
             self.device_exists.return_value = True
             agent.internal_network_removed(ri, port)
@@ -458,8 +454,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 self.assertEqual(self.mock_driver.init_l3.call_count, 1)
                 self.send_arp.assert_called_once_with(ri.ns_name,
                                                       interface_name,
-                                                      '20.0.0.30',
-                                                      mock.ANY, mock.ANY)
+                                                      '20.0.0.30', mock.ANY)
                 kwargs = {'preserve_ips': ['192.168.1.34/32'],
                           'namespace': 'qrouter-' + router['id'],
                           'gateway': '20.0.0.1',
@@ -516,7 +511,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(self.mock_driver.plug.call_count, 0)
         self.assertEqual(self.mock_driver.init_l3.call_count, 1)
         self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
-                                              '20.0.0.30', mock.ANY, mock.ANY)
+                                              '20.0.0.30', mock.ANY)
         kwargs = {'preserve_ips': ['192.168.1.34/32'],
                   'namespace': 'qrouter-' + router['id'],
                   'gateway': '20.0.0.1',
@@ -1044,7 +1039,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual({}, fip_statuses)
         device.addr.delete.assert_called_once_with(4, '15.1.2.3/32')
         self.mock_driver.delete_conntrack_state.assert_called_once_with(
-            root_helper=self.conf.AGENT.root_helper,
             namespace=ri.ns_name,
             ip='15.1.2.3/32')
 

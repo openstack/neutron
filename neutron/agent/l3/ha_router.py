@@ -71,8 +71,7 @@ class HaRouter(router.RouterInfo):
             self.router['id'],
             keepalived.KeepalivedConf(),
             conf_path=self.agent_conf.ha_confs_path,
-            namespace=self.ns_name,
-            root_helper=self.root_helper)
+            namespace=self.ns_name)
 
     def _init_keepalived_manager(self):
         # TODO(Carl) This looks a bit funny, doesn't it?
@@ -207,7 +206,6 @@ class HaRouter(router.RouterInfo):
         process = keepalived.KeepalivedManager.get_process(
             self.agent_conf,
             self.router_id,
-            self.root_helper,
             self.ns_name,
             self.agent_conf.ha_confs_path)
         if process.active:
@@ -223,9 +221,7 @@ class HaRouter(router.RouterInfo):
         a VIP to keepalived. This means that the IPv6 link local address
         will only be present on the master.
         """
-        device = ip_lib.IPDevice(interface_name,
-                                 self.root_helper,
-                                 self.ns_name)
+        device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
         ipv6_lladdr = self._get_ipv6_lladdr(device.link.address)
 
         if self._should_delete_ipv6_lladdr(ipv6_lladdr):

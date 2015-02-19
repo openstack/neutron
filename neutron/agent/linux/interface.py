@@ -118,9 +118,7 @@ class LinuxInterfaceDriver(object):
         for ip_cidr, ip_version in previous.items():
             if ip_cidr not in preserve_ips:
                 device.addr.delete(ip_version, ip_cidr)
-                self.delete_conntrack_state(root_helper=self.root_helper,
-                                            namespace=namespace,
-                                            ip=ip_cidr)
+                self.delete_conntrack_state(namespace=namespace, ip=ip_cidr)
 
         if gateway:
             device.route.add_gateway(gateway)
@@ -132,21 +130,20 @@ class LinuxInterfaceDriver(object):
         for route in existing_onlink_routes - new_onlink_routes:
             device.route.delete_onlink_route(route)
 
-    def delete_conntrack_state(self, root_helper, namespace, ip):
+    def delete_conntrack_state(self, namespace, ip):
         """Delete conntrack state associated with an IP address.
 
         This terminates any active connections through an IP.  Call this soon
         after removing the IP address from an interface so that new connections
         cannot be created before the IP address is gone.
 
-        root_helper: root_helper to gain root access to call conntrack
         namespace: the name of the namespace where the IP has been configured
         ip: the IP address for which state should be removed.  This can be
             passed as a string with or without /NN.  A netaddr.IPAddress or
             netaddr.Network representing the IP address can also be passed.
         """
         ip_str = str(netaddr.IPNetwork(ip).ip)
-        ip_wrapper = ip_lib.IPWrapper(root_helper, namespace=namespace)
+        ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
 
         # Delete conntrack state for ingress traffic
         # If 0 flow entries have been deleted

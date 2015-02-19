@@ -47,7 +47,6 @@ class AdvancedService(object):
         # from device drivers, which are now provided a service instance.
         # TODO(pcm): Address this in future refactorings.
         self.conf = l3_agent.conf
-        self.root_helper = l3_agent.root_helper
 
     @classmethod
     def instance(cls, l3_agent):

@@ -35,7 +35,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
         agent_conf = mock.Mock()
         return dvr_router.DvrRouter(mock.sentinel.router_id,
                                     router,
-                                    mock.sentinel.root_helper,
                                     agent_conf,
                                     mock.sentinel.interface_driver,
                                     **kwargs)

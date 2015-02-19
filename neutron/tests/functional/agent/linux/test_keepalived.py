@@ -30,8 +30,7 @@ class KeepalivedManagerTestCase(functional_base.BaseSudoTestCase,
     def test_keepalived_spawn(self):
         expected_config = self._get_config()
         manager = keepalived.KeepalivedManager('router1', expected_config,
-                                               conf_path=cfg.CONF.state_path,
-                                               root_helper=self.root_helper)
+                                               conf_path=cfg.CONF.state_path)
         self.addCleanup(manager.disable)
 
         manager.spawn()

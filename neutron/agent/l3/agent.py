@@ -21,7 +21,6 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 from oslo_utils import timeutils
 
-from neutron.agent.common import config
 from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router
@@ -145,7 +144,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self.conf = conf
         else:
             self.conf = cfg.CONF
-        self.root_helper = config.get_root_helper(self.conf)
         self.router_info = {}
 
         self._check_config_params()
@@ -235,9 +233,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         the database as being hosted on this node.
         """
         try:
-            root_ip = ip_lib.IPWrapper(self.root_helper)
+            root_ip = ip_lib.IPWrapper()
 
-            host_namespaces = root_ip.get_namespaces(self.root_helper)
+            host_namespaces = root_ip.get_namespaces()
             return set(ns for ns in host_namespaces
                        if (ns.startswith(NS_PREFIX)
                            or ns.startswith(dvr.SNAT_NS_PREFIX)))
@@ -289,7 +287,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         router_id = self.get_router_id(ns)
         if router_id in self.router_info:
             self.router_info[router_id].radvd.disable()
-        ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
+        ns_ip = ip_lib.IPWrapper(namespace=ns)
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
                 # device is on default bridge
@@ -307,7 +305,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self._delete_namespace(ns_ip, ns)
 
     def _create_namespace(self, name):
-        ip_wrapper_root = ip_lib.IPWrapper(self.root_helper)
+        ip_wrapper_root = ip_lib.IPWrapper()
         ip_wrapper = ip_wrapper_root.ensure_namespace(name)
         ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
         if self.use_ipv6:
@@ -356,7 +354,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         args = []
         kwargs = {
             'router_id': router_id,
-            'root_helper': self.root_helper,
             'router': router,
             'use_ipv6': self.use_ipv6,
             'ns_name': ns_name,
@@ -423,8 +420,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
 
     def _get_existing_devices(self, ri):
-        ip_wrapper = ip_lib.IPWrapper(root_helper=self.root_helper,
-                                      namespace=ri.ns_name)
+        ip_wrapper = ip_lib.IPWrapper(namespace=ri.ns_name)
         ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
         return [ip_dev.name for ip_dev in ip_devs]
 
@@ -691,9 +687,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _get_external_device_interface_name(self, ri, ex_gw_port):
         if ri.router['distributed']:
             fip_int = ri.fip_ns.get_int_device_name(ri.router_id)
-            if ip_lib.device_exists(fip_int,
-                                    root_helper=self.root_helper,
-                                    namespace=ri.fip_ns.get_name()):
+            if ip_lib.device_exists(fip_int, namespace=ri.fip_ns.get_name()):
                 return ri.fip_ns.get_rtr_ext_device_name(ri.router_id)
         else:
             return self.get_external_device_name(ex_gw_port['id'])
@@ -724,8 +718,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 ip_lib.send_gratuitous_arp(ri.ns_name,
                                            interface_name,
                                            fip_ip,
-                                           self.conf.send_arp_for_ha,
-                                           self.root_helper)
+                                           self.conf.send_arp_for_ha)
             return l3_constants.FLOATINGIP_STATUS_ACTIVE
 
     def _remove_floating_ip(self, ri, device, ip_cidr):
@@ -734,8 +727,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         else:
             net = netaddr.IPNetwork(ip_cidr)
             device.addr.delete(net.version, ip_cidr)
-            self.driver.delete_conntrack_state(root_helper=self.root_helper,
-                                               namespace=ri.ns_name,
+            self.driver.delete_conntrack_state(namespace=ri.ns_name,
                                                ip=ip_cidr)
             if ri.router['distributed']:
                 ri.floating_ip_removed_dist(ip_cidr)
@@ -759,8 +751,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                       ri.router['id'])
             return fip_statuses
 
-        device = ip_lib.IPDevice(interface_name, self.root_helper,
-                                 namespace=ri.ns_name)
+        device = ip_lib.IPDevice(interface_name, namespace=ri.ns_name)
         existing_cidrs = self._get_router_cidrs(ri, device)
         new_cidrs = set()
 
@@ -813,7 +804,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def external_gateway_added(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
-            ip_wrapr = ip_lib.IPWrapper(self.root_helper, namespace=ri.ns_name)
+            ip_wrapr = ip_lib.IPWrapper(namespace=ri.ns_name)
             ip_wrapr.netns.execute(['sysctl', '-w',
                                    'net.ipv4.conf.all.send_redirects=0'])
             snat_ports = self.get_snat_interfaces(ri)
@@ -873,9 +864,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _external_gateway_added(self, ri, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
-        if not ip_lib.device_exists(interface_name,
-                                    root_helper=self.root_helper,
-                                    namespace=ns_name):
+        if not ip_lib.device_exists(interface_name, namespace=ns_name):
             self.driver.plug(ex_gw_port['network_id'],
                              ex_gw_port['id'], interface_name,
                              ex_gw_port['mac_address'],
@@ -893,8 +882,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             ip_lib.send_gratuitous_arp(ns_name,
                                        interface_name,
                                        ip_address,
-                                       self.conf.send_arp_for_ha,
-                                       self.root_helper)
+                                       self.conf.send_arp_for_ha)
 
     def external_gateway_removed(self, ri, ex_gw_port, interface_name):
         if ri.router['distributed']:
@@ -939,9 +927,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _internal_network_added(self, ns_name, network_id, port_id,
                                 internal_cidr, mac_address,
                                 interface_name, prefix, is_ha=False):
-        if not ip_lib.device_exists(interface_name,
-                                    root_helper=self.root_helper,
-                                    namespace=ns_name):
+        if not ip_lib.device_exists(interface_name, namespace=ns_name):
             self.driver.plug(network_id, port_id, interface_name, mac_address,
                              namespace=ns_name,
                              prefix=prefix)
@@ -953,8 +939,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             ip_lib.send_gratuitous_arp(ns_name,
                                        interface_name,
                                        ip_address,
-                                       self.conf.send_arp_for_ha,
-                                       self.root_helper)
+                                       self.conf.send_arp_for_ha)
 
     def internal_network_added(self, ri, port):
         network_id = port['network_id']
@@ -1011,14 +996,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     ns_name = self.get_snat_ns_name(ri.router['id'])
                     prefix = dvr.SNAT_INT_DEV_PREFIX
                     if ip_lib.device_exists(snat_interface,
-                                            root_helper=self.root_helper,
                                             namespace=ns_name):
                         self.driver.unplug(snat_interface, namespace=ns_name,
                                            prefix=prefix)
 
-        if ip_lib.device_exists(interface_name,
-                                root_helper=self.root_helper,
-                                namespace=ri.ns_name):
+        if ip_lib.device_exists(interface_name, namespace=ri.ns_name):
             if ri.is_ha:
                 ri._clear_vips(interface_name)
             self.driver.unplug(interface_name, namespace=ri.ns_name,
