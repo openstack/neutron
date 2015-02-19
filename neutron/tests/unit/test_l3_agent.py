@@ -906,7 +906,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent_gateway_port[0],
             agent.get_floating_agent_gw_interface(ri, fake_network_id))
 
-    def test_create_dvr_fip_interfaces(self):
+    @mock.patch.object(lla.LinkLocalAllocator, '_write')
+    def test_create_dvr_fip_interfaces(self, lla_write):
         fake_network_id = _uuid()
         fake_floatingips = {'floatingips': [
             {'id': _uuid(),
