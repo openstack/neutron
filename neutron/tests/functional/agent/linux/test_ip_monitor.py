@@ -43,14 +43,14 @@ class TestIPMonitor(test_ip_lib.IpLibTestFramework):
         self.monitor.start()
 
         cidr = '169.254.128.1/24'
-        self.device.addr.add(4, cidr, '169.254.128.255')
+        self.device.addr.add(cidr)
         self._assert_event(expected_name=self.device.name,
                            expected_cidr=cidr,
                            expected_added=True,
                            event=ip_monitor.IPMonitorEvent.from_text(
                                next(self.monitor.iter_stdout(block=True))))
 
-        self.device.addr.delete(4, cidr)
+        self.device.addr.delete(cidr)
         self._assert_event(expected_name=self.device.name,
                            expected_cidr=cidr,
                            expected_added=False,

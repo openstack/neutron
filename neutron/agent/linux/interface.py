@@ -86,9 +86,9 @@ class LinuxInterfaceDriver(object):
         """
         device = ip_lib.IPDevice(device_name, namespace=namespace)
 
-        previous = {}
+        previous = set()
         for address in device.addr.list(scope='global', filters=['permanent']):
-            previous[address['cidr']] = address['ip_version']
+            previous.add(address['cidr'])
 
         # add new addresses
         for ip_cidr in ip_cidrs:
@@ -99,28 +99,24 @@ class LinuxInterfaceDriver(object):
             if net.version == 6:
                 ip_cidr = str(net)
             if ip_cidr in previous:
-                del previous[ip_cidr]
+                previous.remove(ip_cidr)
                 continue
 
-            # Make sure the format of this network, if IPv6, is zero-filled.
-            # The Linux netaddr library seems to do this by default (bug?),
-            # and the test verifies it, but we should force it just in case
-            # the behavior changes.  It also makes sure that non-Linux-based
-            # libraries also work correctly (e.g. OSX).
-            device.addr.add(net.version, ip_cidr,
-                            str(net.broadcast.format(netaddr.ipv6_full)))
+            device.addr.add(ip_cidr)
 
         # clean up any old addresses
-        for ip_cidr, ip_version in previous.items():
+        for ip_cidr in previous:
             if ip_cidr not in preserve_ips:
-                device.addr.delete(ip_version, ip_cidr)
+                device.addr.delete(ip_cidr)
                 self.delete_conntrack_state(namespace=namespace, ip=ip_cidr)
 
         if gateway:
             device.route.add_gateway(gateway)
 
         new_onlink_routes = set(s['cidr'] for s in extra_subnets)
-        existing_onlink_routes = set(device.route.list_onlink_routes())
+        existing_onlink_routes = set(
+            device.route.list_onlink_routes(n_const.IP_VERSION_4) +
+            device.route.list_onlink_routes(n_const.IP_VERSION_6))
         for route in new_onlink_routes - existing_onlink_routes:
             device.route.add_onlink_route(route)
         for route in existing_onlink_routes - new_onlink_routes:

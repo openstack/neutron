@@ -95,7 +95,7 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         result = ri._add_fip_addr_to_device(
             {'id': mock.sentinel.id, 'floating_ip_address': ip}, device)
 
-        device.addr.add.assert_called_with(4, ip + '/32', ip)
+        device.addr.add.assert_called_with(ip + '/32')
         return result
 
     def test__add_fip_addr_to_device(self):

@@ -152,18 +152,17 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
         """
         net = netaddr.IPNetwork(ip_cidr)
         port_dev = self.create_ovs_port_in_ns(br, namespace)
-        port_dev.addr.add(net.version, str(net), net.broadcast)
+        port_dev.addr.add(str(net))
         return port_dev
 
 
 class BaseIPVethTestCase(BaseLinuxTestCase):
     SRC_ADDRESS = '192.168.0.1'
     DST_ADDRESS = '192.168.0.2'
-    BROADCAST_ADDRESS = '192.168.0.255'
 
     @staticmethod
-    def _set_ip_up(device, cidr, broadcast, ip_version=4):
-        device.addr.add(ip_version=ip_version, cidr=cidr, broadcast=broadcast)
+    def _set_ip_up(device, cidr):
+        device.addr.add(cidr)
         device.link.set_up()
 
     def prepare_veth_pairs(self):
@@ -179,7 +178,7 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
                                              dst_veth,
                                              dst_ns.namespace)
 
-        self._set_ip_up(src_veth, '%s/24' % src_addr, self.BROADCAST_ADDRESS)
-        self._set_ip_up(dst_veth, '%s/24' % dst_addr, self.BROADCAST_ADDRESS)
+        self._set_ip_up(src_veth, '%s/24' % src_addr)
+        self._set_ip_up(dst_veth, '%s/24' % dst_addr)
 
         return src_ns, dst_ns

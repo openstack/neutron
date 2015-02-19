@@ -140,24 +140,25 @@ class AgentMixin(object):
         try:
             ip_cidr = sn_port['ip_cidr']
             snat_idx = self._get_snat_idx(ip_cidr)
-            ns_ipr = ip_lib.IpRule(namespace=ri.ns_name)
+            ns_ipr = ip_lib.IPRule(namespace=ri.ns_name)
             ns_ipd = ip_lib.IPDevice(sn_int, namespace=ri.ns_name)
+            ns_ipwrapr = ip_lib.IPWrapper(namespace=ri.ns_name)
             ns_ipd.route.add_gateway(gateway, table=snat_idx)
-            ns_ipr.add(ip_cidr, snat_idx, snat_idx)
-            ns_ipr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
-                                 'send_redirects=0' % sn_int])
+            ns_ipr.rule.add(ip_cidr, snat_idx, snat_idx)
+            ns_ipwrapr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
+                                     'send_redirects=0' % sn_int])
         except Exception:
             LOG.exception(_LE('DVR: error adding redirection logic'))
 
-    def _snat_redirect_remove(self, ri, sn_port, sn_int):
+    def _snat_redirect_remove(self, ri, gateway, sn_port, sn_int):
         """Removes rules and routes for SNAT redirection."""
         try:
             ip_cidr = sn_port['ip_cidr']
             snat_idx = self._get_snat_idx(ip_cidr)
-            ns_ipr = ip_lib.IpRule(namespace=ri.ns_name)
+            ns_ipr = ip_lib.IPRule(namespace=ri.ns_name)
             ns_ipd = ip_lib.IPDevice(sn_int, namespace=ri.ns_name)
-            ns_ipd.route.delete_gateway(table=snat_idx)
-            ns_ipr.delete(ip_cidr, snat_idx, snat_idx)
+            ns_ipd.route.delete_gateway(gateway, table=snat_idx)
+            ns_ipr.rule.delete(ip_cidr, snat_idx, snat_idx)
         except Exception:
             LOG.exception(_LE('DVR: removed snat failed'))
 

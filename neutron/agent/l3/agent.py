@@ -664,9 +664,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 to_fip_interface_name = (
                     self._get_external_device_interface_name(ri, ex_gw_port))
                 ri.process_floating_ip_addresses(to_fip_interface_name)
+            snat_ports = self.get_snat_interfaces(ri)
             for p in ri.internal_ports:
+                gateway = self._map_internal_interfaces(ri, p, snat_ports)
                 internal_interface = ri.get_internal_device_name(p['id'])
-                self._snat_redirect_remove(ri, p, internal_interface)
+                self._snat_redirect_remove(ri, gateway['fixed_ips'][0]
+                                           ['ip_address'],
+                                           p, internal_interface)
 
             if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
                 and self.get_gw_port_host(ri.router) == self.host):
@@ -757,15 +761,15 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         port_id = port['id']
         interface_name = ri.get_internal_device_name(port_id)
         if ri.router['distributed'] and ri.ex_gw_port:
-            # DVR handling code for SNAT
-            self._snat_redirect_remove(ri, port, interface_name)
-            if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
-                and ri.ex_gw_port['binding:host_id'] == self.host):
-                snat_port = self._map_internal_interfaces(ri, port,
-                                                          ri.snat_ports)
-                if snat_port:
+            sn_port = self._map_internal_interfaces(ri, port, ri.snat_ports)
+            if sn_port:
+                self._snat_redirect_remove(ri, sn_port['fixed_ips'][0]
+                                           ['ip_address'], port,
+                                           interface_name)
+                if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
+                    and ri.ex_gw_port['binding:host_id'] == self.host):
                     snat_interface = (
-                        self.get_snat_int_device_name(snat_port['id'])
+                        self.get_snat_int_device_name(sn_port['id'])
                     )
                     ns_name = ri.snat_namespace.name
                     prefix = dvr.SNAT_INT_DEV_PREFIX

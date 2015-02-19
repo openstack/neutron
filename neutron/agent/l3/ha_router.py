@@ -235,7 +235,7 @@ class HaRouter(router.RouterInfo):
         ipv6_lladdr = self._get_ipv6_lladdr(device.link.address)
 
         if self._should_delete_ipv6_lladdr(ipv6_lladdr):
-            device.addr.flush()
+            device.addr.flush(n_consts.IP_VERSION_6)
 
         self._remove_vip(ipv6_lladdr)
         self._add_vip(ipv6_lladdr, interface_name, scope='link')

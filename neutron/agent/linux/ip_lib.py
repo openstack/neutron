@@ -113,7 +113,7 @@ class IPWrapper(SubProcessBase):
         return retval
 
     def add_tuntap(self, name, mode='tap'):
-        self._as_root('', 'tuntap', ('add', name, 'mode', mode))
+        self._as_root([], 'tuntap', ('add', name, 'mode', mode))
         return IPDevice(name, namespace=self.namespace)
 
     def add_veth(self, name1, name2, namespace2=None):
@@ -125,14 +125,14 @@ class IPWrapper(SubProcessBase):
             self.ensure_namespace(namespace2)
             args += ['netns', namespace2]
 
-        self._as_root('', 'link', tuple(args))
+        self._as_root([], 'link', tuple(args))
 
         return (IPDevice(name1, namespace=self.namespace),
                 IPDevice(name2, namespace=namespace2))
 
     def del_veth(self, name):
         """Delete a virtual interface between two namespaces."""
-        self._as_root('', 'link', ('del', name))
+        self._as_root([], 'link', ('del', name))
 
     def ensure_namespace(self, name):
         if not self.netns.exists(name):
@@ -178,40 +178,13 @@ class IPWrapper(SubProcessBase):
                 cmd.extend(['port', port[0], port[1]])
         elif port:
             raise exceptions.NetworkVxlanPortRangeError(vxlan_range=port)
-        self._as_root('', 'link', cmd)
+        self._as_root([], 'link', cmd)
         return (IPDevice(name, namespace=self.namespace))
 
     @classmethod
     def get_namespaces(cls):
-        output = cls._execute('', 'netns', ('list',))
+        output = cls._execute([], 'netns', ('list',))
         return [l.strip() for l in output.split('\n')]
-
-
-class IpRule(IPWrapper):
-    def _exists(self, ip, ip_version, table, rule_pr):
-        # Typical rule from 'ip rule show':
-        # 4030201:  from 1.2.3.4/24 lookup 10203040
-
-        rule_pr = str(rule_pr) + ":"
-        for line in self._as_root([ip_version], 'rule', ['show']).splitlines():
-            parts = line.split()
-            if parts and (parts[0] == rule_pr and
-                          parts[2] == str(ip) and
-                          parts[-1] == str(table)):
-                return True
-
-        return False
-
-    def add(self, ip, table, rule_pr):
-        ip_version = netaddr.IPNetwork(ip).version
-        if not self._exists(ip, ip_version, table, rule_pr):
-            args = ['add', 'from', ip, 'table', table, 'priority', rule_pr]
-            self._as_root([ip_version], 'rule', tuple(args))
-
-    def delete(self, ip, table, rule_pr):
-        ip_version = netaddr.IPNetwork(ip).version
-        args = ['del', 'table', table, 'priority', rule_pr]
-        self._as_root([ip_version], 'rule', tuple(args))
 
 
 class IPDevice(SubProcessBase):
@@ -237,14 +210,49 @@ class IpCommandBase(object):
     def __init__(self, parent):
         self._parent = parent
 
-    def _run(self, *args, **kwargs):
-        return self._parent._run(kwargs.get('options', []), self.COMMAND, args)
+    def _run(self, options, args):
+        return self._parent._run(options, self.COMMAND, args)
 
-    def _as_root(self, *args, **kwargs):
-        return self._parent._as_root(kwargs.get('options', []),
+    def _as_root(self, options, args, use_root_namespace=False):
+        return self._parent._as_root(options,
                                      self.COMMAND,
                                      args,
-                                     kwargs.get('use_root_namespace', False))
+                                     use_root_namespace=use_root_namespace)
+
+
+class IPRule(SubProcessBase):
+    def __init__(self, namespace=None):
+        super(IPRule, self).__init__(namespace=namespace)
+        self.rule = IpRuleCommand(self)
+
+
+class IpRuleCommand(IpCommandBase):
+    COMMAND = 'rule'
+
+    def _exists(self, ip, ip_version, table, rule_pr):
+        # Typical rule from 'ip rule show':
+        # 4030201:  from 1.2.3.4/24 lookup 10203040
+
+        rule_pr = str(rule_pr) + ":"
+        for line in self._as_root([ip_version], ['show']).splitlines():
+            parts = line.split()
+            if parts and (parts[0] == rule_pr and
+                          parts[2] == str(ip) and
+                          parts[-1] == str(table)):
+                return True
+
+        return False
+
+    def add(self, ip, table, rule_pr):
+        ip_version = get_ip_version(ip)
+        if not self._exists(ip, ip_version, table, rule_pr):
+            args = ['add', 'from', ip, 'table', table, 'priority', rule_pr]
+            self._as_root([ip_version], tuple(args))
+
+    def delete(self, ip, table, rule_pr):
+        ip_version = get_ip_version(ip)
+        args = ['del', 'table', table, 'priority', rule_pr]
+        self._as_root([ip_version], tuple(args))
 
 
 class IpDeviceCommandBase(IpCommandBase):
@@ -257,30 +265,30 @@ class IpLinkCommand(IpDeviceCommandBase):
     COMMAND = 'link'
 
     def set_address(self, mac_address):
-        self._as_root('set', self.name, 'address', mac_address)
+        self._as_root([], ('set', self.name, 'address', mac_address))
 
     def set_mtu(self, mtu_size):
-        self._as_root('set', self.name, 'mtu', mtu_size)
+        self._as_root([], ('set', self.name, 'mtu', mtu_size))
 
     def set_up(self):
-        self._as_root('set', self.name, 'up')
+        self._as_root([], ('set', self.name, 'up'))
 
     def set_down(self):
-        self._as_root('set', self.name, 'down')
+        self._as_root([], ('set', self.name, 'down'))
 
     def set_netns(self, namespace):
-        self._as_root('set', self.name, 'netns', namespace)
+        self._as_root([], ('set', self.name, 'netns', namespace))
         self._parent.namespace = namespace
 
     def set_name(self, name):
-        self._as_root('set', self.name, 'name', name)
+        self._as_root([], ('set', self.name, 'name', name))
         self._parent.name = name
 
     def set_alias(self, alias_name):
-        self._as_root('set', self.name, 'alias', alias_name)
+        self._as_root([], ('set', self.name, 'alias', alias_name))
 
     def delete(self):
-        self._as_root('delete', self.name)
+        self._as_root([], ('delete', self.name))
 
     @property
     def address(self):
@@ -308,7 +316,7 @@ class IpLinkCommand(IpDeviceCommandBase):
 
     @property
     def attributes(self):
-        return self._parse_line(self._run('show', self.name, options='o'))
+        return self._parse_line(self._run(['o'], ('show', self.name)))
 
     def _parse_line(self, value):
         if not value:
@@ -326,63 +334,52 @@ class IpLinkCommand(IpDeviceCommandBase):
 class IpAddrCommand(IpDeviceCommandBase):
     COMMAND = 'addr'
 
-    def add(self, ip_version, cidr, broadcast, scope='global'):
-        self._as_root('add',
-                      cidr,
-                      'brd',
-                      broadcast,
-                      'scope',
-                      scope,
-                      'dev',
-                      self.name,
-                      options=[ip_version])
+    def add(self, cidr, scope='global'):
+        net = netaddr.IPNetwork(cidr)
+        args = ['add', cidr,
+                'scope', scope,
+                'dev', self.name]
+        if net.version == 4:
+            args += ['brd', str(net.broadcast)]
+        self._as_root([net.version], tuple(args))
 
-    def delete(self, ip_version, cidr):
-        self._as_root('del',
-                      cidr,
-                      'dev',
-                      self.name,
-                      options=[ip_version])
+    def delete(self, cidr):
+        ip_version = get_ip_version(cidr)
+        self._as_root([ip_version],
+                      ('del', cidr,
+                       'dev', self.name))
 
-    def flush(self):
-        self._as_root('flush', self.name)
+    def flush(self, ip_version):
+        self._as_root([ip_version], ('flush', self.name))
 
-    def list(self, scope=None, to=None, filters=None):
-        if filters is None:
-            filters = []
+    def list(self, scope=None, to=None, filters=None, ip_version=None):
+        options = [ip_version] if ip_version else []
+        args = ['show', self.name]
+        if filters:
+            args += filters
 
         retval = []
 
         if scope:
-            filters += ['scope', scope]
+            args += ['scope', scope]
         if to:
-            filters += ['to', to]
+            args += ['to', to]
 
-        for line in self._run('show', self.name, *filters).split('\n'):
+        for line in self._run(options, tuple(args)).split('\n'):
             line = line.strip()
             if not line.startswith('inet'):
                 continue
             parts = line.split()
             if parts[0] == 'inet6':
-                version = 6
                 scope = parts[3]
-                broadcast = '::'
             else:
-                version = 4
                 if parts[2] == 'brd':
-                    broadcast = parts[3]
                     scope = parts[5]
                 else:
-                    # sometimes output of 'ip a' might look like:
-                    # inet 192.168.100.100/24 scope global eth0
-                    # and broadcast needs to be calculated from CIDR
-                    broadcast = str(netaddr.IPNetwork(parts[1]).broadcast)
                     scope = parts[3]
 
             retval.append(dict(cidr=parts[1],
-                               broadcast=broadcast,
                                scope=scope,
-                               ip_version=version,
                                dynamic=('dynamic' == parts[-1])))
         return retval
 
@@ -391,26 +388,30 @@ class IpRouteCommand(IpDeviceCommandBase):
     COMMAND = 'route'
 
     def add_gateway(self, gateway, metric=None, table=None):
+        ip_version = get_ip_version(gateway)
         args = ['replace', 'default', 'via', gateway]
         if metric:
             args += ['metric', metric]
         args += ['dev', self.name]
         if table:
             args += ['table', table]
-        self._as_root(*args)
+        self._as_root([ip_version], tuple(args))
 
-    def delete_gateway(self, gateway=None, table=None):
-        args = ['del', 'default']
-        if gateway:
-            args += ['via', gateway]
-        args += ['dev', self.name]
+    def delete_gateway(self, gateway, table=None):
+        ip_version = get_ip_version(gateway)
+        args = ['del', 'default',
+                'via', gateway,
+                'dev', self.name]
         if table:
             args += ['table', table]
-        self._as_root(*args)
+        self._as_root([ip_version], tuple(args))
 
-    def list_onlink_routes(self):
+    def list_onlink_routes(self, ip_version):
         def iterate_routes():
-            output = self._run('list', 'dev', self.name, 'scope', 'link')
+            output = self._run([ip_version],
+                               ('list',
+                                'dev', self.name,
+                                'scope', 'link'))
             for line in output.split('\n'):
                 line = line.strip()
                 if line and not line.count('src'):
@@ -419,22 +420,32 @@ class IpRouteCommand(IpDeviceCommandBase):
         return [x for x in iterate_routes()]
 
     def add_onlink_route(self, cidr):
-        self._as_root('replace', cidr, 'dev', self.name, 'scope', 'link')
+        ip_version = get_ip_version(cidr)
+        self._as_root([ip_version],
+                      ('replace', cidr,
+                       'dev', self.name,
+                       'scope', 'link'))
 
     def delete_onlink_route(self, cidr):
-        self._as_root('del', cidr, 'dev', self.name, 'scope', 'link')
+        ip_version = get_ip_version(cidr)
+        self._as_root([ip_version],
+                      ('del', cidr,
+                       'dev', self.name,
+                       'scope', 'link'))
 
-    def get_gateway(self, scope=None, filters=None):
-        if filters is None:
-            filters = []
+    def get_gateway(self, scope=None, filters=None, ip_version=None):
+        options = [ip_version] if ip_version else []
+
+        args = ['list', 'dev', self.name]
+        if filters:
+            args += filters
 
         retval = None
 
         if scope:
-            filters += ['scope', scope]
+            args += ['scope', scope]
 
-        route_list_lines = self._run('list', 'dev', self.name,
-                                     *filters).split('\n')
+        route_list_lines = self._run(options, tuple(args)).split('\n')
         default_route_line = next((x.strip() for x in
                                    route_list_lines if
                                    x.strip().startswith('default')), None)
@@ -453,15 +464,21 @@ class IpRouteCommand(IpDeviceCommandBase):
         others on the same subnet.
         """
         device_list = []
-        device_route_list_lines = self._run('list', 'proto', 'kernel',
-                                            'dev', interface_name).split('\n')
+        device_route_list_lines = self._run([],
+                                            ('list',
+                                             'proto', 'kernel',
+                                             'dev', interface_name)
+                                            ).split('\n')
         for device_route_line in device_route_list_lines:
             try:
                 subnet = device_route_line.split()[0]
             except Exception:
                 continue
-            subnet_route_list_lines = self._run('list', 'proto', 'kernel',
-                                                'match', subnet).split('\n')
+            subnet_route_list_lines = self._run([],
+                                                ('list',
+                                                 'proto', 'kernel',
+                                                 'match', subnet)
+                                                ).split('\n')
             for subnet_route_line in subnet_route_list_lines:
                 i = iter(subnet_route_line.split())
                 while(i.next() != 'dev'):
@@ -479,63 +496,65 @@ class IpRouteCommand(IpDeviceCommandBase):
                     break
 
             for (device, src) in device_list:
-                self._as_root('del', subnet, 'dev', device)
+                self._as_root([], ('del', subnet, 'dev', device))
                 if (src != ''):
-                    self._as_root('append', subnet, 'proto', 'kernel',
-                                  'src', src, 'dev', device)
+                    self._as_root([],
+                                  ('append', subnet,
+                                   'proto', 'kernel',
+                                   'src', src,
+                                   'dev', device))
                 else:
-                    self._as_root('append', subnet, 'proto', 'kernel',
-                                  'dev', device)
+                    self._as_root([],
+                                  ('append', subnet,
+                                   'proto', 'kernel',
+                                   'dev', device))
 
     def add_route(self, cidr, ip, table=None):
+        ip_version = get_ip_version(cidr)
         args = ['replace', cidr, 'via', ip, 'dev', self.name]
         if table:
             args += ['table', table]
-        self._as_root(*args)
+        self._as_root([ip_version], tuple(args))
 
     def delete_route(self, cidr, ip, table=None):
+        ip_version = get_ip_version(cidr)
         args = ['del', cidr, 'via', ip, 'dev', self.name]
         if table:
             args += ['table', table]
-        self._as_root(*args)
+        self._as_root([ip_version], tuple(args))
 
 
 class IpNeighCommand(IpDeviceCommandBase):
     COMMAND = 'neigh'
 
-    def add(self, ip_version, ip_address, mac_address):
-        self._as_root('replace',
-                      ip_address,
-                      'lladdr',
-                      mac_address,
-                      'nud',
-                      'permanent',
-                      'dev',
-                      self.name,
-                      options=[ip_version])
+    def add(self, ip_address, mac_address):
+        ip_version = get_ip_version(ip_address)
+        self._as_root([ip_version],
+                      ('replace', ip_address,
+                       'lladdr', mac_address,
+                       'nud', 'permanent',
+                       'dev', self.name))
 
-    def delete(self, ip_version, ip_address, mac_address):
-        self._as_root('del',
-                      ip_address,
-                      'lladdr',
-                      mac_address,
-                      'dev',
-                      self.name,
-                      options=[ip_version])
+    def delete(self, ip_address, mac_address):
+        ip_version = get_ip_version(ip_address)
+        self._as_root([ip_version],
+                      ('del', ip_address,
+                       'lladdr', mac_address,
+                       'dev', self.name))
 
 
 class IpNetnsCommand(IpCommandBase):
     COMMAND = 'netns'
 
     def add(self, name):
-        self._as_root('add', name, use_root_namespace=True)
+        self._as_root([], ('add', name), use_root_namespace=True)
         wrapper = IPWrapper(namespace=name)
         wrapper.netns.execute(['sysctl', '-w',
                                'net.ipv4.conf.all.promote_secondaries=1'])
         return wrapper
 
     def delete(self, name):
-        self._as_root('delete', name, use_root_namespace=True)
+        self._as_root([], ('delete', name), use_root_namespace=True)
 
     def execute(self, cmds, addl_env=None, check_exit_code=True,
                 extra_ok_codes=None):
@@ -555,7 +574,7 @@ class IpNetnsCommand(IpCommandBase):
 
     def exists(self, name):
         output = self._parent._execute(
-            'o', 'netns', ['list'],
+            ['o'], 'netns', ['list'],
             run_as_root=cfg.CONF.AGENT.use_helper_for_ns_read)
         for line in output.split('\n'):
             if name == line.strip():
@@ -655,7 +674,7 @@ def _arping(ns_name, iface_name, address, count):
 
 
 def send_gratuitous_arp(ns_name, iface_name, address, count):
-    """Send a gratuitous arp using given namespace, interface, and address"""
+    """Send a gratuitous arp using given namespace, interface, and address."""
 
     def arping():
         _arping(ns_name, iface_name, address, count)
@@ -677,12 +696,12 @@ def send_garp_for_proxyarp(ns_name, iface_name, address, count):
         # Configure the address on the interface
         device = IPDevice(iface_name, namespace=ns_name)
         net = netaddr.IPNetwork(str(address))
-        device.addr.add(net.version, str(net), str(net.broadcast))
+        device.addr.add(str(net))
 
         _arping(ns_name, iface_name, address, count)
 
         # Delete the address from the interface
-        device.addr.delete(net.version, str(net))
+        device.addr.delete(str(net))
 
     if count > 0:
         eventlet.spawn_n(arping_with_temporary_address)
@@ -692,3 +711,7 @@ def add_namespace_to_cmd(cmd, namespace=None):
     """Add an optional namespace to the command."""
 
     return ['ip', 'netns', 'exec', namespace] + cmd if namespace else cmd
+
+
+def get_ip_version(ip_or_cidr):
+    return netaddr.IPNetwork(ip_or_cidr).version
