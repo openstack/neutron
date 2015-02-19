@@ -107,7 +107,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
             context.status == const.PORT_STATUS_ACTIVE):
             LOG.warning(_LW("unable to modify mac_address of ACTIVE port "
                             "%s"), port['id'])
-            raise ml2_exc.MechansimDriverError(method='update_port_postcommit')
+            raise ml2_exc.MechanismDriverError(method='update_port_postcommit')
         diff_ips = self._get_diff_ips(orig, port)
         if diff_ips:
             self._fixed_ips_changed(context, orig, port, diff_ips)
