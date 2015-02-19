@@ -134,17 +134,21 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """
         is_distributed = router.get('distributed')
         agent_conf = self.get_configuration_dict(agent)
-        agent_mode = agent_conf.get('agent_mode', 'legacy')
-        router_type = ('distributed' if is_distributed else 'centralized')
+        agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
+                                    constants.L3_AGENT_MODE_LEGACY)
+        router_type = (
+            'distributed' if is_distributed else
+            'centralized')
+
         is_agent_router_types_incompatible = (
-            agent_mode == 'dvr' and not is_distributed
-            or agent_mode == 'legacy' and is_distributed
+            agent_mode == constants.L3_AGENT_MODE_DVR and not is_distributed
+            or agent_mode == constants.L3_AGENT_MODE_LEGACY and is_distributed
         )
         if is_agent_router_types_incompatible:
             raise l3agentscheduler.RouterL3AgentMismatch(
                 router_type=router_type, router_id=router['id'],
                 agent_mode=agent_mode, agent_id=agent['id'])
-        if agent_mode == 'dvr' and is_distributed:
+        if agent_mode == constants.L3_AGENT_MODE_DVR and is_distributed:
             raise l3agentscheduler.DVRL3CannotAssignToDvrAgent(
                 router_type=router_type, router_id=router['id'],
                 agent_id=agent['id'])
@@ -400,8 +404,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 continue
 
             agent_conf = self.get_configuration_dict(l3_agent)
-            agent_mode = agent_conf.get('agent_mode', 'legacy')
-            if agent_mode != 'dvr_snat':
+            agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
+                                        constants.L3_AGENT_MODE_LEGACY)
+            if agent_mode != constants.L3_AGENT_MODE_DVR_SNAT:
                 continue
 
             router_id = agent_conf.get('router_id', None)
@@ -436,7 +441,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 'handle_internal_only_routers', True)
             gateway_external_network_id = agent_conf.get(
                 'gateway_external_network_id', None)
-            agent_mode = agent_conf.get('agent_mode', 'legacy')
+            agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
+                                        constants.L3_AGENT_MODE_LEGACY)
             if not use_namespaces and router_id != sync_router['id']:
                 continue
             ex_net_id = (sync_router['external_gateway_info'] or {}).get(
@@ -446,10 +452,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                  ex_net_id != gateway_external_network_id)):
                 continue
             is_router_distributed = sync_router.get('distributed', False)
-            if agent_mode in ('legacy', 'dvr_snat') and (
+            if agent_mode in (
+                constants.L3_AGENT_MODE_LEGACY,
+                constants.L3_AGENT_MODE_DVR_SNAT) and (
                 not is_router_distributed):
                 candidates.append(l3_agent)
-            elif is_router_distributed and agent_mode.startswith('dvr') and (
+            elif is_router_distributed and agent_mode.startswith(
+                constants.L3_AGENT_MODE_DVR) and (
                 self.check_ports_exist_on_l3agent(
                     context, l3_agent, sync_router['id'])):
                 candidates.append(l3_agent)

@@ -43,6 +43,10 @@ DEVICE_OWNER_LOADBALANCER = "neutron:LOADBALANCER"
 # DEVICE_OWNER_ROUTER_HA_INTF is a special case and so is not included.
 ROUTER_INTERFACE_OWNERS = (DEVICE_OWNER_ROUTER_INTF,
                            DEVICE_OWNER_DVR_INTERFACE)
+L3_AGENT_MODE_DVR = 'dvr'
+L3_AGENT_MODE_DVR_SNAT = 'dvr_snat'
+L3_AGENT_MODE_LEGACY = 'legacy'
+L3_AGENT_MODE = 'agent_mode'
 
 DEVICE_ID_RESERVED_DHCP_PORT = "reserved_dhcp_port"
 
