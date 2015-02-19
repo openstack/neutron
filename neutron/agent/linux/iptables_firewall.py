@@ -22,7 +22,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
-from neutron.i18n import _LI, _LE
+from neutron.i18n import _LI
 from neutron.openstack.common import log as logging
 
 
@@ -386,10 +386,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ethertype = sg_rule.get('ethertype')
         ipset_name = self.ipset.get_name(remote_gid, ethertype)
         if not self.ipset.set_exists(remote_gid, ethertype):
-            LOG.error(_LE("Tried to generate an ipset iptable rule "
-                          "for a security group rule (%(rule)r) referencing "
-                          "an ipset (%(ipset)s) which doesn't exist yet."),
-                      {'rule': sg_rule, 'ipset': ipset_name})
+            #NOTE(mangelajo): ipsets for empty groups are not created
+            #                 thus we can't reference them.
             return None
         ipset_direction = IPSET_DIRECTION[sg_rule.get('direction')]
         args = self._generate_protocol_and_port_args(sg_rule)
