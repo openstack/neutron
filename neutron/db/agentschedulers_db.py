@@ -261,10 +261,16 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             except dhcpagentscheduler.NetworkNotHostedByDhcpAgent:
                 # measures against concurrent operation
                 LOG.debug("Network %(net)s already removed from DHCP agent "
-                          "%s(agent)",
+                          "%(agent)s",
                           {'net': binding.network_id,
                            'agent': binding.dhcp_agent_id})
                 # still continue and allow concurrent scheduling attempt
+            except Exception:
+                LOG.exception(_LE("Unexpected exception occured while "
+                                  "removing network %(net)s from agent "
+                                  "%(agent)s"),
+                              {'net': binding.network_id,
+                               'agent': binding.dhcp_agent_id})
 
             if cfg.CONF.network_auto_schedule:
                 self._schedule_network(
@@ -317,9 +323,11 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         with context.session.begin(subtransactions=True):
             try:
                 query = context.session.query(NetworkDhcpAgentBinding)
-                binding = query.filter(
+                query = query.filter(
                     NetworkDhcpAgentBinding.network_id == network_id,
-                    NetworkDhcpAgentBinding.dhcp_agent_id == id).one()
+                    NetworkDhcpAgentBinding.dhcp_agent_id == id)
+                # just ensure the binding exists
+                query.one()
             except exc.NoResultFound:
                 raise dhcpagentscheduler.NetworkNotHostedByDhcpAgent(
                     network_id=network_id, agent_id=id)
@@ -332,8 +340,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             for port in ports:
                 port['device_id'] = constants.DEVICE_ID_RESERVED_DHCP_PORT
                 self.update_port(context, port['id'], dict(port=port))
+            query.delete()
 
-            context.session.delete(binding)
         dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
         if dhcp_notifier:
             dhcp_notifier.network_removed_from_agent(
