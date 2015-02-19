@@ -961,13 +961,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_port_bulk(self, context, ports):
         objects = self._create_bulk_ml2(attributes.PORT, context, ports)
 
-        for obj in objects:
-            # REVISIT(rkukura): Is there any point in calling this before
-            # a binding has been successfully established?
-            # TODO(banix): Use a single notification for all objects
-            self.notify_security_groups_member_updated(context,
-                                                       obj['result'])
+        # REVISIT(rkukura): Is there any point in calling this before
+        # a binding has been successfully established?
+        results = [obj['result'] for obj in objects]
+        self.notify_security_groups_member_updated_bulk(context, results)
 
+        for obj in objects:
             attrs = obj['attributes']
             if attrs and attrs.get(portbindings.HOST_ID):
                 new_host_port = self._get_host_port_if_changed(
