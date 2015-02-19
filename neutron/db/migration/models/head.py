@@ -54,6 +54,7 @@ from neutron.plugins.ml2.drivers.arista import db  # noqa
 from neutron.plugins.ml2.drivers.brocade.db import (  # noqa
     models as ml2_brocade_models)
 from neutron.plugins.ml2.drivers.cisco.apic import apic_model  # noqa
+from neutron.plugins.ml2.drivers.cisco.n1kv import n1kv_models  # noqa
 from neutron.plugins.ml2.drivers.cisco.nexus import (  # noqa
     nexus_models_v2 as ml2_nexus_models_v2)
 from neutron.plugins.ml2.drivers import type_flat  # noqa
