@@ -410,3 +410,11 @@ def is_cidr_host(cidr):
     if net.version == 4:
         return net.prefixlen == q_const.IPv4_BITS
     return net.prefixlen == q_const.IPv6_BITS
+
+
+def ip_version_from_int(ip_version_int):
+    if ip_version_int == 4:
+        return q_const.IPv4
+    if ip_version_int == 6:
+        return q_const.IPv6
+    raise ValueError(_('Illegal IP version number'))

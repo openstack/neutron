@@ -617,3 +617,18 @@ class TestCidrIsHost(base.BaseTestCase):
         self.assertRaises(ValueError,
                           utils.is_cidr_host,
                           ip_address)
+
+
+class TestIpVersionFromInt(base.BaseTestCase):
+    def test_ip_version_from_int_ipv4(self):
+        self.assertEqual(utils.ip_version_from_int(4),
+                         constants.IPv4)
+
+    def test_ip_version_from_int_ipv6(self):
+        self.assertEqual(utils.ip_version_from_int(6),
+                         constants.IPv6)
+
+    def test_ip_version_from_int_illegal_int(self):
+        self.assertRaises(ValueError,
+                          utils.ip_version_from_int,
+                          8)
