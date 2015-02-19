@@ -26,15 +26,14 @@ class OvsdbMonitor(async_process.AsyncProcess):
     """Manages an invocation of 'ovsdb-client monitor'."""
 
     def __init__(self, table_name, columns=None, format=None,
-                 root_helper=None, respawn_interval=None):
+                 respawn_interval=None):
 
         cmd = ['ovsdb-client', 'monitor', table_name]
         if columns:
             cmd.append(','.join(columns))
         if format:
             cmd.append('--format=%s' % format)
-        super(OvsdbMonitor, self).__init__(cmd,
-                                           root_helper=root_helper,
+        super(OvsdbMonitor, self).__init__(cmd, run_as_root=True,
                                            respawn_interval=respawn_interval)
 
     def _read_stdout(self):
@@ -61,12 +60,11 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
     since the previous access.
     """
 
-    def __init__(self, root_helper=None, respawn_interval=None):
+    def __init__(self, respawn_interval=None):
         super(SimpleInterfaceMonitor, self).__init__(
             'Interface',
             columns=['name', 'ofport'],
             format='json',
-            root_helper=root_helper,
             respawn_interval=respawn_interval,
         )
         self.data_received = False

@@ -61,7 +61,7 @@ class TestAsyncProcess(base.BaseTestCase):
         # Ensure that the same output is read twice
         self._check_stdout(proc)
         pid = utils.get_root_helper_child_pid(proc._process.pid,
-                                              proc.root_helper)
+                                              proc.run_as_root)
         proc._kill_process(pid)
         self._check_stdout(proc)
         proc.stop()

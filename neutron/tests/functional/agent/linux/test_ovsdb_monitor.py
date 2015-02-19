@@ -42,6 +42,7 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
             # to be emulated by double sudo if rootwrap is not
             # configured.
             self.root_helper = '%s %s' % (self.root_helper, self.root_helper)
+            self.config(group='AGENT', root_helper=self.root_helper)
 
         self._check_test_requirements()
         self.bridge = self.create_ovs_bridge()
@@ -51,7 +52,7 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
         self.check_command(['ovsdb-client', 'list-dbs'],
                            'Exit code: 1',
                            'password-less sudo not granted for ovsdb-client',
-                           root_helper=self.root_helper)
+                           run_as_root=True)
 
 
 class TestOvsdbMonitor(BaseMonitorTest):
@@ -59,8 +60,7 @@ class TestOvsdbMonitor(BaseMonitorTest):
     def setUp(self):
         super(TestOvsdbMonitor, self).setUp()
 
-        self.monitor = ovsdb_monitor.OvsdbMonitor('Bridge',
-                                                  root_helper=self.root_helper)
+        self.monitor = ovsdb_monitor.OvsdbMonitor('Bridge')
         self.addCleanup(self.monitor.stop)
         self.monitor.start()
 
@@ -78,7 +78,7 @@ class TestOvsdbMonitor(BaseMonitorTest):
         self.monitor.respawn_interval = 0
         old_pid = self.monitor._process.pid
         output1 = self.collect_initial_output()
-        pid = utils.get_root_helper_child_pid(old_pid, self.root_helper)
+        pid = utils.get_root_helper_child_pid(old_pid, run_as_root=True)
         self.monitor._kill_process(pid)
         self.monitor._reset_queues()
         while (self.monitor._process.pid == old_pid):
@@ -93,8 +93,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
     def setUp(self):
         super(TestSimpleInterfaceMonitor, self).setUp()
 
-        self.monitor = ovsdb_monitor.SimpleInterfaceMonitor(
-            root_helper=self.root_helper)
+        self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
         self.addCleanup(self.monitor.stop)
         self.monitor.start(block=True, timeout=60)
 

@@ -122,8 +122,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     target = oslo_messaging.Target(version='1.2')
 
     def __init__(self, integ_br, tun_br, local_ip,
-                 bridge_mappings, root_helper,
-                 polling_interval, tunnel_types=None,
+                 bridge_mappings, polling_interval, tunnel_types=None,
                  veth_mtu=None, l2_population=False,
                  enable_distributed_routing=False,
                  minimize_polling=False,
@@ -138,7 +137,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         :param tun_br: name of the tunnel bridge.
         :param local_ip: local IP address of this hypervisor.
         :param bridge_mappings: mappings from physical network name to bridge.
-        :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
         :param tunnel_types: A list of tunnel types to enable support for in
                the agent. If set, will automatically set enable_tunneling to
@@ -160,7 +158,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         super(OVSNeutronAgent, self).__init__()
         self.use_veth_interconnection = use_veth_interconnection
         self.veth_mtu = veth_mtu
-        self.root_helper = root_helper
         self.available_local_vlans = set(moves.xrange(q_const.MIN_VLAN_TAG,
                                                       q_const.MAX_VLAN_TAG))
         self.use_call = True
@@ -1512,7 +1509,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def daemon_loop(self):
         with polling.get_polling_manager(
             self.minimize_polling,
-            self.root_helper,
             self.ovsdb_monitor_respawn_interval) as pm:
 
             self.rpc_loop(polling_manager=pm)
@@ -1549,7 +1545,6 @@ def create_agent_config_map(config):
         tun_br=config.OVS.tunnel_bridge,
         local_ip=config.OVS.local_ip,
         bridge_mappings=bridge_mappings,
-        root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,
         minimize_polling=config.AGENT.minimize_polling,
         tunnel_types=config.AGENT.tunnel_types,
@@ -1585,7 +1580,7 @@ def main():
         LOG.error(_LE('%s Agent terminated!'), e)
         sys.exit(1)
 
-    is_xen_compute_host = 'rootwrap-xen-dom0' in agent_config['root_helper']
+    is_xen_compute_host = 'rootwrap-xen-dom0' in cfg.CONF.AGENT.root_helper
     if is_xen_compute_host:
         # Force ip_lib to always use the root helper to ensure that ip
         # commands target xen dom0 rather than domU.

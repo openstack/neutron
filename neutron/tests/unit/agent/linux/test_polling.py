@@ -28,9 +28,7 @@ class TestGetPollingManager(base.BaseTestCase):
         mock_target = 'neutron.agent.linux.polling.InterfacePollingMinimizer'
         with mock.patch('%s.start' % mock_target) as mock_start:
             with mock.patch('%s.stop' % mock_target) as mock_stop:
-                with polling.get_polling_manager(minimize_polling=True,
-                                                 root_helper='test') as pm:
-                    self.assertEqual(pm._monitor.root_helper, 'test')
+                with polling.get_polling_manager(minimize_polling=True) as pm:
                     self.assertEqual(pm.__class__,
                                      polling.InterfacePollingMinimizer)
                 mock_stop.assert_has_calls(mock.call())

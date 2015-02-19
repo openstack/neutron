@@ -52,17 +52,17 @@ class AsyncProcess(object):
     ...     print line
     """
 
-    def __init__(self, cmd, root_helper=None, respawn_interval=None):
+    def __init__(self, cmd, run_as_root=False, respawn_interval=None):
         """Constructor.
 
         :param cmd: The list of command arguments to invoke.
-        :param root_helper: Optional, utility to use when running shell cmds.
+        :param run_as_root: The process should run with elevated privileges.
         :param respawn_interval: Optional, the interval in seconds to wait
                to respawn after unexpected process death. Respawn will
                only be attempted if a value of 0 or greater is provided.
         """
         self.cmd = cmd
-        self.root_helper = root_helper
+        self.run_as_root = run_as_root
         if respawn_interval is not None and respawn_interval < 0:
             raise ValueError(_('respawn_interval must be >= 0 if provided.'))
         self.respawn_interval = respawn_interval
@@ -95,7 +95,7 @@ class AsyncProcess(object):
         """Spawn a process and its watchers."""
         self._kill_event = eventlet.event.Event()
         self._process, cmd = utils.create_process(self.cmd,
-                                                  root_helper=self.root_helper)
+                                                  run_as_root=self.run_as_root)
         self._watchers = []
         for reader in (self._read_stdout, self._read_stderr):
             # Pass the stop event directly to the greenthread to
@@ -116,8 +116,8 @@ class AsyncProcess(object):
         # Halt the greenthreads
         self._kill_event.send()
 
-        pid = utils.get_root_helper_child_pid(
-            self._process.pid, self.root_helper)
+        pid = utils.get_root_helper_child_pid(self._process.pid,
+                                              run_as_root=self.run_as_root)
         if pid:
             self._kill_process(pid)
 
@@ -130,7 +130,7 @@ class AsyncProcess(object):
         try:
             # A process started by a root helper will be running as
             # root and need to be killed via the same helper.
-            utils.execute(['kill', '-9', pid], root_helper=self.root_helper)
+            utils.execute(['kill', '-9', pid], run_as_root=self.run_as_root)
         except Exception as ex:
             stale_pid = (isinstance(ex, RuntimeError) and
                          'No such process' in str(ex))

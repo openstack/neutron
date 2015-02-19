@@ -314,12 +314,11 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._add_fip(router, client_address, fixed_address=server_address)
         self.agent.process_router(router)
 
-        router_ns = ip_lib.IPWrapper(self.root_helper,
-                                     namespace=router.ns_name)
+        router_ns = ip_lib.IPWrapper(namespace=router.ns_name)
         netcat = helpers.NetcatTester(router_ns, router_ns,
                                       server_address, port,
                                       client_address=client_address,
-                                      root_helper=self.root_helper,
+                                      run_as_root=True,
                                       udp=False)
         self.addCleanup(netcat.stop_processes)
 

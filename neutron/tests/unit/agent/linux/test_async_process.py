@@ -186,7 +186,7 @@ class TestAsyncProcess(base.BaseTestCase):
         self._test__kill(False, pid='1')
 
     def _test__kill_process(self, pid, expected, exception_message=None):
-        self.proc.root_helper = 'foo'
+        self.proc.run_as_root = True
         if exception_message:
             exc = RuntimeError(exception_message)
         else:
@@ -197,7 +197,7 @@ class TestAsyncProcess(base.BaseTestCase):
 
         self.assertEqual(expected, actual)
         mock_execute.assert_called_with(['kill', '-9', pid],
-                                        root_helper=self.proc.root_helper)
+                                        run_as_root=self.proc.run_as_root)
 
     def test__kill_process_returns_true_for_valid_pid(self):
         self._test__kill_process('1', True)

@@ -24,8 +24,7 @@ class TestOvsdbMonitor(base.BaseTestCase):
     def setUp(self):
         super(TestOvsdbMonitor, self).setUp()
         self.root_helper = 'sudo'
-        self.monitor = ovsdb_monitor.OvsdbMonitor('Interface',
-                                                  root_helper=self.root_helper)
+        self.monitor = ovsdb_monitor.OvsdbMonitor('Interface')
 
     def read_output_queues_and_returns_result(self, output_type, output):
         with mock.patch.object(self.monitor, '_process') as mock_process:
@@ -57,8 +56,7 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
     def setUp(self):
         super(TestSimpleInterfaceMonitor, self).setUp()
         self.root_helper = 'sudo'
-        self.monitor = ovsdb_monitor.SimpleInterfaceMonitor(
-            root_helper=self.root_helper)
+        self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
 
     def test_is_active_is_false_by_default(self):
         self.assertFalse(self.monitor.is_active)

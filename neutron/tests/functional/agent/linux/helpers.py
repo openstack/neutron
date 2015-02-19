@@ -22,6 +22,7 @@ import subprocess
 
 import eventlet
 
+from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 
@@ -33,7 +34,7 @@ SS_SOURCE_PORT_PATTERN = re.compile(
     r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[0-9:].*')
 
 
-def get_free_namespace_port(tcp=True, root_helper=None, namespace=None):
+def get_free_namespace_port(tcp=True, namespace=None):
     """Return an unused port from given namespace
 
     WARNING: This function returns a port that is free at the execution time of
@@ -49,7 +50,7 @@ def get_free_namespace_port(tcp=True, root_helper=None, namespace=None):
     else:
         param = '-una'
 
-    ip_wrapper = ip_lib.IPWrapper(root_helper, namespace)
+    ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
     output = ip_wrapper.netns.execute(['ss', param])
     used_ports = _get_source_ports_from_ss_output(output)
 
@@ -160,21 +161,21 @@ class RootHelperProcess(subprocess.Popen):
         for arg in ('stdin', 'stdout', 'stderr'):
             kwargs.setdefault(arg, subprocess.PIPE)
         self.namespace = kwargs.pop('namespace', None)
-        self.root_helper = kwargs.pop('root_helper', None)
+        self.run_as_root = kwargs.pop('run_as_root', False)
         self.cmd = cmd
         if self.namespace is not None:
             cmd = ['ip', 'netns', 'exec', self.namespace] + cmd
-        if self.root_helper is not None:
-            cmd = shlex.split(self.root_helper) + cmd
+        if self.run_as_root:
+            root_helper = config.get_root_helper(utils.cfg.CONF)
+            cmd = shlex.split(root_helper) + cmd
         self.child_pid = None
         super(RootHelperProcess, self).__init__(cmd, *args, **kwargs)
-        if self.root_helper:
+        if self.run_as_root:
             self._wait_for_child_process()
 
     def kill(self):
         pid = self.child_pid or str(self.pid)
-        utils.execute(['kill', '-9', pid],
-                      root_helper=self.root_helper)
+        utils.execute(['kill', '-9', pid], run_as_root=self.run_as_root)
 
     def read_stdout(self, timeout=None):
         return self._read_stream(self.stdout, timeout)
@@ -198,7 +199,7 @@ class RootHelperProcess(subprocess.Popen):
                                 sleep=CHILD_PROCESS_SLEEP):
         def child_is_running():
             child_pid = utils.get_root_helper_child_pid(
-                self.pid, root_helper=self.root_helper)
+                self.pid, run_as_root=self.run_as_root)
             if pid_invoked_with_cmdline(child_pid, self.cmd):
                 return True
 
@@ -208,15 +209,14 @@ class RootHelperProcess(subprocess.Popen):
             exception=RuntimeError("Process %s hasn't been spawned "
                                    "in %d seconds" % (self.cmd, timeout)))
         self.child_pid = utils.get_root_helper_child_pid(
-            self.pid, root_helper=self.root_helper)
+            self.pid, run_as_root=self.run_as_root)
 
 
 class NetcatTester(object):
     TESTING_STRING = 'foo'
 
-    def __init__(
-            self, client_namespace, server_namespace, server_address, port,
-            client_address=None, root_helper='', udp=False):
+    def __init__(self, client_namespace, server_namespace, server_address,
+                 port, client_address=None, run_as_root=False, udp=False):
         self.client_namespace = client_namespace
         self.server_namespace = server_namespace
         self._client_process = None
@@ -227,7 +227,7 @@ class NetcatTester(object):
         self.client_address = client_address or server_address
         self.server_address = server_address
         self.port = str(port)
-        self.root_helper = root_helper
+        self.run_as_root = run_as_root
         self.udp = udp
 
     @property
@@ -276,7 +276,7 @@ class NetcatTester(object):
         else:
             cmd.extend(['-w', '20'])
         proc = RootHelperProcess(cmd, namespace=namespace,
-                                 root_helper=self.root_helper)
+                                 run_as_root=self.run_as_root)
         return proc
 
     def stop_processes(self):
