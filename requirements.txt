@@ -20,7 +20,7 @@ SQLAlchemy>=0.9.7,<=0.9.99
 WebOb>=1.2.3
 python-keystoneclient>=1.1.0
 alembic>=0.7.2
-six>=1.7.0
+six>=1.9.0
 stevedore>=1.1.0  # Apache-2.0
 oslo.concurrency>=1.4.1         # Apache-2.0
 oslo.config>=1.6.0  # Apache-2.0
@@ -33,4 +33,4 @@ oslo.rootwrap>=1.5.0  # Apache-2.0
 oslo.serialization>=1.2.0               # Apache-2.0
 oslo.utils>=1.2.0                       # Apache-2.0
 
-python-novaclient>=2.18.0
+python-novaclient>=2.18.0,!=2.21.0
