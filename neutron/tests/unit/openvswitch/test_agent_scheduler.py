@@ -32,6 +32,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
 from neutron.db import agents_db
+from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db
 from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
@@ -478,6 +479,27 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self._delete('ports', port2['port']['id'])
         self.assertEqual(0, len(dhcp_agents['agents']))
 
+    def test_is_eligible_agent(self):
+        agent_startup = ('neutron.db.agentschedulers_db.'
+                         'DhcpAgentSchedulerDbMixin.agent_starting_up')
+        is_eligible_agent = ('neutron.db.agentschedulers_db.'
+                             'AgentSchedulerDbMixin.is_eligible_agent')
+        dhcp_mixin = agentschedulers_db.DhcpAgentSchedulerDbMixin()
+        with contextlib.nested(
+            mock.patch(agent_startup),
+            mock.patch(is_eligible_agent)
+        ) as (startup, elig):
+            tests = [(True, True),
+                     (True, False),
+                     (False, True),
+                     (False, False)]
+            for rv1, rv2 in tests:
+                startup.return_value = rv1
+                elig.return_value = rv2
+                self.assertEqual(rv1 or rv2,
+                                 dhcp_mixin.is_eligible_agent(None,
+                                                              None, None))
+
     def test_network_scheduler_with_down_agent(self):
         dhcp_hosta = {
             'binary': 'neutron-dhcp-agent',
@@ -488,17 +510,19 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                },
             'agent_type': constants.AGENT_TYPE_DHCP}
         self._register_one_agent_state(dhcp_hosta)
-        is_agent_down_str = 'neutron.db.agents_db.AgentDbMixin.is_agent_down'
-        with mock.patch(is_agent_down_str) as mock_is_agent_down:
-            mock_is_agent_down.return_value = False
+        eligible_agent_str = ('neutron.db.agentschedulers_db.'
+                              'DhcpAgentSchedulerDbMixin.is_eligible_agent')
+        with mock.patch(eligible_agent_str) as eligible_agent:
+            eligible_agent.return_value = True
             with self.port() as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
             self._delete('ports', port['port']['id'])
             self._delete('networks', port['port']['network_id'])
             self.assertEqual(1, len(dhcp_agents['agents']))
-        with mock.patch(is_agent_down_str) as mock_is_agent_down:
-            mock_is_agent_down.return_value = True
+
+        with mock.patch(eligible_agent_str) as eligible_agent:
+            eligible_agent.return_value = False
             with self.port() as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
