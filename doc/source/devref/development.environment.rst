@@ -47,5 +47,3 @@ Grab the code::
 
 
 .. include:: ../../../TESTING.rst
-
-.. include:: ./contribute.rst

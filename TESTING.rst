@@ -64,7 +64,7 @@ tests in a virtualenv::
 
 
 With `nose2`
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 You can use `nose2`_ to run individual tests, as well as use for debugging
 portions of your code::

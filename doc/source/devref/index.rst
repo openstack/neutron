@@ -30,6 +30,7 @@ Programming HowTos and Tutorials
     :maxdepth: 3
 
     development.environment
+    contribute
 
 
 Neutron Internals
