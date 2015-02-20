@@ -14,6 +14,7 @@
 #    under the License.
 
 import contextlib
+import testtools
 
 import mock
 from oslo_utils import timeutils
@@ -26,6 +27,8 @@ from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
+from neutron.plugins.ml2.common import exceptions as ml2_exc
+from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
@@ -994,3 +997,25 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                            {'10.0.0.1':
                             [constants.FLOODING_ENTRY]}}
         self.assertEqual(expected_result, result)
+
+    def test_update_port_postcommit_mac_address_changed_raises(self):
+        port = {'status': u'ACTIVE',
+                'device_owner': u'compute:None',
+                'mac_address': u'12:34:56:78:4b:0e',
+                'id': u'1'}
+
+        original_port = port.copy()
+        original_port['mac_address'] = u'12:34:56:78:4b:0f'
+
+        with mock.patch.object(driver_context.db, 'get_network_segments'):
+            ctx = driver_context.PortContext(mock.Mock(),
+                                             mock.Mock(),
+                                             port,
+                                             mock.MagicMock(),
+                                             mock.Mock(),
+                                             None,
+                                             original_port=original_port)
+
+        mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
+        with testtools.ExpectedException(ml2_exc.MechanismDriverError):
+            mech_driver.update_port_postcommit(ctx)
