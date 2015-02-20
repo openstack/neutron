@@ -45,6 +45,7 @@ Neutron Internals
    layer3
    l2_agents
    advanced_services
+   oslo-incubator
 
 
 Module Reference
