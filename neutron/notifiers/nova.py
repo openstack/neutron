@@ -14,10 +14,10 @@
 #    under the License.
 
 import eventlet
+from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
-import novaclient.v1_1.client as nclient
-from novaclient.v1_1.contrib import server_external_events
 from oslo_config import cfg
+from oslo_utils import importutils
 from sqlalchemy.orm import attributes as sql_attr
 
 from neutron.common import constants
@@ -35,6 +35,7 @@ VIF_PLUGGED = 'network-vif-plugged'
 NEUTRON_NOVA_EVENT_STATUS_MAP = {constants.PORT_STATUS_ACTIVE: 'completed',
                                  constants.PORT_STATUS_ERROR: 'failed',
                                  constants.PORT_STATUS_DOWN: 'completed'}
+NOVA_API_VERSION = "2"
 
 
 class Notifier(object):
@@ -48,7 +49,15 @@ class Notifier(object):
         else:
             bypass_url = None
 
-        self.nclient = nclient.Client(
+        # NOTE(andreykurilin): novaclient.v1_1 was renamed to v2 and there is
+        # no way to import the contrib module directly without referencing v2,
+        # which would only work for novaclient >= 2.21.0.
+        novaclient_cls = nova_client.get_client_class(NOVA_API_VERSION)
+        server_external_events = importutils.import_module(
+            novaclient_cls.__module__.replace(
+                ".client", ".contrib.server_external_events"))
+
+        self.nclient = novaclient_cls(
             username=cfg.CONF.nova_admin_username,
             api_key=cfg.CONF.nova_admin_password,
             project_id=cfg.CONF.nova_admin_tenant_name,

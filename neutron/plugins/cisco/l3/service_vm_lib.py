@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from novaclient import client
 from novaclient import exceptions as nova_exc
 from novaclient import utils as n_utils
-from novaclient.v1_1 import client
 from oslo_config import cfg
 
 from neutron.i18n import _LE
@@ -23,6 +23,7 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_constants
 
 LOG = logging.getLogger(__name__)
+NOVA_API_VERSION = "2"
 
 
 SERVICE_VM_LIB_OPTS = [
@@ -41,7 +42,8 @@ class ServiceVMManager(object):
 
     def __init__(self, user=None, passwd=None, l3_admin_tenant=None,
                  auth_url=''):
-        self._nclient = client.Client(user, passwd, l3_admin_tenant, auth_url,
+        self._nclient = client.Client(NOVA_API_VERSION, user, passwd,
+                                      l3_admin_tenant, auth_url,
                                       service_type="compute")
 
     @property
