@@ -682,11 +682,6 @@ class Debug(Middleware):
 class Router(object):
     """WSGI middleware that maps incoming requests to WSGI apps."""
 
-    @classmethod
-    def factory(cls, global_config, **local_config):
-        """Return an instance of the WSGI Router class."""
-        return cls()
-
     def __init__(self, mapper):
         """Create a router for the given routes.Mapper.
 

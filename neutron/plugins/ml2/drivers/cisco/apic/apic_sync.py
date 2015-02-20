@@ -82,7 +82,8 @@ class ApicBaseSynchronizer(SynchronizerBase):
                                                            port['id'])
             network = self.core_plugin.get_network(ctx, port['network_id'])
             mech_context = driver_context.PortContext(self.core_plugin, ctx,
-                                                      port, network, binding)
+                                                      port, network, binding,
+                                                      [])
             try:
                 self.driver.create_port_postcommit(mech_context)
             except Exception:
