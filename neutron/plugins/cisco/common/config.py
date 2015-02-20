@@ -14,8 +14,6 @@
 
 from oslo_config import cfg
 
-from neutron.agent.common import config
-
 
 cisco_opts = [
     cfg.StrOpt('vlan_name_prefix', default='q-',
@@ -78,7 +76,6 @@ cisco_n1k_opts = [
 
 cfg.CONF.register_opts(cisco_opts, "CISCO")
 cfg.CONF.register_opts(cisco_n1k_opts, "CISCO_N1K")
-config.register_root_helper(cfg.CONF)
 
 # shortcuts
 CONF = cfg.CONF

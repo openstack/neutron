@@ -19,7 +19,6 @@ This module manages configuration options
 
 from oslo_config import cfg
 
-from neutron.agent.common import config as agconfig
 from neutron.common import utils
 from neutron.extensions import portbindings
 
@@ -115,4 +114,3 @@ def register_config():
     cfg.CONF.register_opts(router_opts, "ROUTER")
     cfg.CONF.register_opts(nova_opts, "NOVA")
     cfg.CONF.register_opts(agent_opts, "RESTPROXYAGENT")
-    agconfig.register_root_helper(cfg.CONF)

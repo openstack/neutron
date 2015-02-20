@@ -17,8 +17,6 @@
 
 from oslo_config import cfg
 
-from neutron.agent.common import config
-
 
 NVSD_OPT = [
     cfg.StrOpt('nvsd_ip',
@@ -50,8 +48,6 @@ agent_opts = [
 
 cfg.CONF.register_opts(NVSD_OPT, "nvsd")
 cfg.CONF.register_opts(agent_opts, "AGENT")
-
-config.register_root_helper(cfg.CONF)
 
 CONF = cfg.CONF
 AGENT = cfg.CONF.AGENT

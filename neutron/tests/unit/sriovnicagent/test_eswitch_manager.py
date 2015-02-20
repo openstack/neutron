@@ -44,7 +44,7 @@ class TestCreateESwitchManager(base.BaseTestCase):
                        return_value=True)):
 
             with testtools.ExpectedException(exc.InvalidDeviceError):
-                esm.ESwitchManager(device_mappings, None, None)
+                esm.ESwitchManager(device_mappings, None)
 
     def test_create_eswitch_mgr_ok(self):
         device_mappings = {'physnet1': 'p6p1'}
@@ -56,7 +56,7 @@ class TestCreateESwitchManager(base.BaseTestCase):
                        "PciOsWrapper.is_assigned_vf",
                        return_value=True)):
 
-            esm.ESwitchManager(device_mappings, None, None)
+            esm.ESwitchManager(device_mappings, None)
 
 
 class TestESwitchManagerApi(base.BaseTestCase):
@@ -79,7 +79,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
             mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
                        "PciOsWrapper.is_assigned_vf",
                        return_value=True)):
-            self.eswitch_mgr = esm.ESwitchManager(device_mappings, None, None)
+            self.eswitch_mgr = esm.ESwitchManager(device_mappings, None)
 
     def test_get_assigned_devices(self):
         with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
@@ -206,7 +206,7 @@ class TestEmbSwitch(base.BaseTestCase):
                         "PciOsWrapper.scan_vf_devices",
                         return_value=self.SCANNED_DEVICES):
             self.emb_switch = esm.EmbSwitch(self.PHYS_NET, self.DEV_NAME,
-                                            exclude_devices, None)
+                                            exclude_devices)
 
     def test_get_assigned_devices(self):
         with contextlib.nested(

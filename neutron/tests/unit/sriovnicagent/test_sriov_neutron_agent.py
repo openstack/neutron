@@ -47,10 +47,10 @@ class TestSriovAgent(base.BaseTestCase):
                    'FixedIntervalLoopingCall',
                    new=MockFixedIntervalLoopingCall)
 
-        self.agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, None)
+        self.agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
 
     def test_treat_devices_removed_with_existed_device(self):
-        agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, None)
+        agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
         devices = [DEVICE_MAC]
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
@@ -64,7 +64,7 @@ class TestSriovAgent(base.BaseTestCase):
                 self.assertTrue(fn_udd.called)
 
     def test_treat_devices_removed_with_not_existed_device(self):
-        agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, None)
+        agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
         devices = [DEVICE_MAC]
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
@@ -78,7 +78,7 @@ class TestSriovAgent(base.BaseTestCase):
                 self.assertTrue(fn_udd.called)
 
     def test_treat_devices_removed_failed(self):
-        agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, None)
+        agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
         devices = [DEVICE_MAC]
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:

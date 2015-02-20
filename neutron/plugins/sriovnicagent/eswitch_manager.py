@@ -93,19 +93,17 @@ class EmbSwitch(object):
     @ivar pci_dev_wrapper: pci device wrapper
     """
 
-    def __init__(self, phys_net, dev_name, exclude_devices, root_helper):
+    def __init__(self, phys_net, dev_name, exclude_devices):
         """Constructor
 
         @param phys_net: physical network
         @param dev_name: network device name
         @param exclude_devices: list of pci slots to exclude
-        @param root_helper: root permissions helper
         """
         self.phys_net = phys_net
         self.dev_name = dev_name
         self.pci_slot_map = {}
-        self.pci_dev_wrapper = pci_lib.PciDeviceIPWrapper(dev_name,
-                                                          root_helper)
+        self.pci_dev_wrapper = pci_lib.PciDeviceIPWrapper(dev_name)
 
         self._load_devices(exclude_devices)
 
@@ -182,7 +180,7 @@ class EmbSwitch(object):
 class ESwitchManager(object):
     """Manages logical Embedded Switch entities for physical network."""
 
-    def __init__(self, device_mappings, exclude_devices, root_helper):
+    def __init__(self, device_mappings, exclude_devices):
         """Constructor.
 
         Create Embedded Switch logical entities for all given device mappings,
@@ -190,7 +188,6 @@ class ESwitchManager(object):
         """
         self.emb_switches_map = {}
         self.pci_slot_map = {}
-        self.root_helper = root_helper
 
         self._discover_devices(device_mappings, exclude_devices)
 
@@ -266,8 +263,7 @@ class ESwitchManager(object):
                                     exclude_devices.get(dev_name, set()))
 
     def _create_emb_switch(self, phys_net, dev_name, exclude_devices):
-        embedded_switch = EmbSwitch(phys_net, dev_name, exclude_devices,
-                                    self.root_helper)
+        embedded_switch = EmbSwitch(phys_net, dev_name, exclude_devices)
         self.emb_switches_map[phys_net] = embedded_switch
         for pci_slot in embedded_switch.get_pci_slot_list():
             self.pci_slot_map[pci_slot] = embedded_switch
