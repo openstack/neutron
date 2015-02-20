@@ -11,7 +11,7 @@ ovs-neutron-agent can be configured to use two different networking technologies
 VLAN Tags
 ---------
 
-.. image:: http://docs.openstack.org/admin-guide-cloud/content/figures/10/a/common/figures/under-the-hood-scenario-1-ovs-compute.png
+.. image:: images/under-the-hood-scenario-1-ovs-compute.png
 
 .. _OpenVSwitch: http://openvswitch.org
 

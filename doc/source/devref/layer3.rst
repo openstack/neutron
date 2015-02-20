@@ -83,7 +83,7 @@ Neutron logical router setup
 Neutron Routers are realized in OpenVSwitch
 -------------------------------------------
 
-.. image:: http://docs.openstack.org/admin-guide-cloud/content/figures/10/a/common/figures/under-the-hood-scenario-1-ovs-network.png
+.. image:: images/under-the-hood-scenario-1-ovs-network.png
 
 
 "router1" in the Neutron logical network is realized through a port ("qr-0ba8700e-da") in OpenVSwitch - attached to "br-int"::
@@ -158,7 +158,7 @@ Finding the router in ip/ipconfig
         To do either of these things, you must run the command within a particular router's network
         namespace. The namespace will have the name "qrouter-<UUID of the router>.
 
-.. image:: http://docs.openstack.org/admin-guide-cloud/content/figures/10/a/common/figures/under-the-hood-scenario-1-ovs-netns.png
+.. image:: images/under-the-hood-scenario-1-ovs-netns.png
 
 For example::
 
