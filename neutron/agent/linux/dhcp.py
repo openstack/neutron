@@ -861,15 +861,19 @@ class DeviceManager(object):
             port_device_id = getattr(port, 'device_id', None)
             if port_device_id == device_id:
                 port_fixed_ips = []
+                ips_needs_removal = False
                 for fixed_ip in port.fixed_ips:
-                    port_fixed_ips.append({'subnet_id': fixed_ip.subnet_id,
-                                           'ip_address': fixed_ip.ip_address})
                     if fixed_ip.subnet_id in dhcp_enabled_subnet_ids:
+                        port_fixed_ips.append(
+                            {'subnet_id': fixed_ip.subnet_id,
+                             'ip_address': fixed_ip.ip_address})
                         dhcp_enabled_subnet_ids.remove(fixed_ip.subnet_id)
+                    else:
+                        ips_needs_removal = True
 
                 # If there are dhcp_enabled_subnet_ids here that means that
                 # we need to add those to the port and call update.
-                if dhcp_enabled_subnet_ids:
+                if dhcp_enabled_subnet_ids or ips_needs_removal:
                     port_fixed_ips.extend(
                         [dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
                     dhcp_port = self.plugin.update_dhcp_port(
