@@ -99,7 +99,8 @@ class DvrRouter(router.RouterInfo):
         rtr_2_fip_name = self.fip_ns.get_rtr_ext_device_name(self.router_id)
         fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
         if self.rtr_fip_subnet is None:
-            self.rtr_fip_subnet = self.local_subnets.allocate(self.router_id)
+            self.rtr_fip_subnet = self.fip_ns.local_subnets.allocate(
+                self.router_id)
 
         rtr_2_fip, fip_2_rtr = self.rtr_fip_subnet.get_pair()
         fip_ns_name = self.fip_ns.get_name()
