@@ -966,6 +966,18 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.call(self.agent.tun_br, 'gre-0a0a0a0a', '10.10.10.10', 'gre')]
         self.agent._setup_tunnel_port.assert_has_calls(expected_calls)
 
+    def test_tunnel_delete(self):
+        kwargs = {'tunnel_ip': '10.10.10.10',
+                  'tunnel_type': 'gre'}
+        self.agent.enable_tunneling = True
+        self.agent.tunnel_types = ['gre']
+        self.agent.tun_br_ofports = {'gre': {'10.10.10.10': '1'}}
+        with mock.patch.object(
+            self.agent, 'cleanup_tunnel_port'
+        ) as clean_tun_fn:
+            self.agent.tunnel_delete(context=None, **kwargs)
+            self.assertTrue(clean_tun_fn.called)
+
     def test_ovs_status(self):
         reply2 = {'current': set(['tap0']),
                   'added': set(['tap2']),

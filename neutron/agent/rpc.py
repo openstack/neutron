@@ -87,6 +87,7 @@ class PluginApi(object):
         1.3 - get_device_details rpc signature upgrade to obtain 'host' and
               return value to include fixed_ips and device_owner for
               the device port
+        1.4 - tunnel_sync rpc signature upgrade to obtain 'host'
     '''
 
     def __init__(self, topic):
@@ -125,7 +126,14 @@ class PluginApi(object):
         return cctxt.call(context, 'update_device_up', device=device,
                           agent_id=agent_id, host=host)
 
-    def tunnel_sync(self, context, tunnel_ip, tunnel_type=None):
-        cctxt = self.client.prepare()
-        return cctxt.call(context, 'tunnel_sync', tunnel_ip=tunnel_ip,
-                          tunnel_type=tunnel_type)
+    def tunnel_sync(self, context, tunnel_ip, tunnel_type=None, host=None):
+        try:
+            cctxt = self.client.prepare(version='1.4')
+            res = cctxt.call(context, 'tunnel_sync', tunnel_ip=tunnel_ip,
+                             tunnel_type=tunnel_type, host=host)
+        except oslo_messaging.UnsupportedVersion:
+            LOG.warn(_LW('Tunnel synchronization requires a server upgrade.'))
+            cctxt = self.client.prepare()
+            res = cctxt.call(context, 'tunnel_sync', tunnel_ip=tunnel_ip,
+                             tunnel_type=tunnel_type)
+        return res

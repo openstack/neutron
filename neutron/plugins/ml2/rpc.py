@@ -45,7 +45,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     #   1.3 get_device_details rpc signature upgrade to obtain 'host' and
     #       return value to include fixed_ips and device_owner for
     #       the device port
-    target = oslo_messaging.Target(version='1.3')
+    #   1.4 tunnel_sync rpc signature upgrade to obtain 'host'
+    target = oslo_messaging.Target(version='1.4')
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)

@@ -787,7 +787,8 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             for tunnel_type in self.tunnel_types:
                 self.plugin_rpc.tunnel_sync(self.context,
                                             self.local_ip,
-                                            tunnel_type)
+                                            tunnel_type,
+                                            cfg.CONF.host)
         except Exception as e:
             LOG.debug("Unable to sync tunnel IP %(local_ip)s: %(e)s",
                       {'local_ip': self.local_ip, 'e': e})

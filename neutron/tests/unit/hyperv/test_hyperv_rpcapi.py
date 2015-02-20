@@ -142,4 +142,6 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
             rpcapi, None,
             'tunnel_sync', rpc_method='call',
             tunnel_ip='fake_tunnel_ip',
-            tunnel_type=None)
+            tunnel_type=None,
+            host='fake_host',
+            version='1.4')
