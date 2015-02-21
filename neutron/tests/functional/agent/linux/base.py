@@ -13,10 +13,8 @@
 #    under the License.
 
 import netaddr
-from oslo_config import cfg
 import testscenarios
 
-from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
@@ -56,7 +54,6 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
         super(BaseLinuxTestCase, self).setUp()
-        config.register_root_helper(cfg.CONF)
 
     def check_command(self, cmd, error_text, skip_msg, run_as_root=False):
         try:
@@ -67,7 +64,7 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
             raise
 
     def _create_namespace(self):
-        ip_cmd = ip_lib.IPWrapper(self.root_helper)
+        ip_cmd = ip_lib.IPWrapper()
         name = "func-%s" % uuidutils.generate_uuid()
         namespace = ip_cmd.ensure_namespace(name)
         self.addCleanup(namespace.netns.delete, namespace.namespace)
@@ -92,7 +89,7 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
                 continue
 
     def create_veth(self):
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper)
+        ip_wrapper = ip_lib.IPWrapper()
         name1 = get_rand_veth_name()
         name2 = get_rand_veth_name()
         self.addCleanup(ip_wrapper.del_veth, name1)
@@ -127,7 +124,7 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
         super(BaseOVSLinuxTestCase, self).setUp()
         self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
         self.ovs = ovs_lib.BaseOVS()
-        self.ip = ip_lib.IPWrapper(self.root_helper)
+        self.ip = ip_lib.IPWrapper()
 
     def create_ovs_bridge(self, br_prefix=BR_PREFIX):
         br = self.create_resource(br_prefix, self.ovs.add_bridge)

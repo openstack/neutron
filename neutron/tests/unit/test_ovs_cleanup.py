@@ -35,13 +35,11 @@ class TestOVSCleanup(base.BaseTestCase):
         self.assertEqual(conf.external_network_bridge, 'br-ex')
         self.assertEqual(conf.ovs_integration_bridge, 'br-int')
         self.assertFalse(conf.ovs_all_ports)
-        self.assertEqual(conf.AGENT.root_helper, 'sudo')
 
     def test_main(self):
         bridges = ['br-int', 'br-ex']
         ports = ['p1', 'p2', 'p3']
         conf = mock.Mock()
-        conf.AGENT.root_helper = 'dummy_sudo'
         conf.ovs_all_ports = False
         conf.ovs_integration_bridge = 'br-int'
         conf.external_network_bridge = 'br-ex'

@@ -41,7 +41,7 @@ VLAN_INTERFACE_DETAIL = ['vlan protocol 802.1q',
 
 
 class SubProcessBase(object):
-    def __init__(self, root_helper=None, namespace=None,
+    def __init__(self, namespace=None,
                  log_fail_as_error=True):
         self.namespace = namespace
         self.log_fail_as_error = log_fail_as_error
@@ -88,7 +88,7 @@ class SubProcessBase(object):
 
 
 class IPWrapper(SubProcessBase):
-    def __init__(self, root_helper=None, namespace=None):
+    def __init__(self, namespace=None):
         super(IPWrapper, self).__init__(namespace=namespace)
         self.netns = IpNetnsCommand(self)
 
@@ -185,7 +185,7 @@ class IPWrapper(SubProcessBase):
         return (IPDevice(name, namespace=self.namespace))
 
     @classmethod
-    def get_namespaces(cls, root_helper=None):
+    def get_namespaces(cls):
         output = cls._execute('', 'netns', ('list',))
         return [l.strip() for l in output.split('\n')]
 
@@ -218,7 +218,7 @@ class IpRule(IPWrapper):
 
 
 class IPDevice(SubProcessBase):
-    def __init__(self, name, root_helper=None, namespace=None):
+    def __init__(self, name, namespace=None):
         super(IPDevice, self).__init__(namespace=namespace)
         self.name = name
         self.link = IpLinkCommand(self)
@@ -566,7 +566,7 @@ class IpNetnsCommand(IpCommandBase):
         return False
 
 
-def device_exists(device_name, root_helper=None, namespace=None):
+def device_exists(device_name, namespace=None):
     """Return True if the device exists in the namespace."""
     try:
         dev = IPDevice(device_name, namespace=namespace)
@@ -577,8 +577,7 @@ def device_exists(device_name, root_helper=None, namespace=None):
     return bool(address)
 
 
-def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None,
-                              root_helper=None):
+def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None):
     """Return True if the device with the given IP and MAC addresses
     exists in the namespace.
     """
@@ -594,7 +593,7 @@ def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None,
         return True
 
 
-def get_routing_table(root_helper=None, namespace=None):
+def get_routing_table(namespace=None):
     """Return a list of dictionaries, each representing a route.
 
     The dictionary format is: {'destination': cidr,
@@ -624,7 +623,7 @@ def get_routing_table(root_helper=None, namespace=None):
     return routes
 
 
-def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
+def ensure_device_is_ready(device_name, namespace=None):
     dev = IPDevice(device_name, namespace=namespace)
     dev.set_log_fail_as_error(False)
     try:
@@ -636,7 +635,7 @@ def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
     return True
 
 
-def iproute_arg_supported(command, arg, root_helper=None):
+def iproute_arg_supported(command, arg):
     command += ['help']
     stdout, stderr = utils.execute(command, check_exit_code=False,
                                    return_stderr=True)
@@ -656,7 +655,7 @@ def _arping(ns_name, iface_name, address, count):
                             'ns': ns_name})
 
 
-def send_gratuitous_arp(ns_name, iface_name, address, count, root_helper=None):
+def send_gratuitous_arp(ns_name, iface_name, address, count):
     """Send a gratuitous arp using given namespace, interface, and address"""
 
     def arping():
@@ -666,8 +665,7 @@ def send_gratuitous_arp(ns_name, iface_name, address, count, root_helper=None):
         eventlet.spawn_n(arping)
 
 
-def send_garp_for_proxyarp(ns_name, iface_name, address, count,
-                           root_helper=None):
+def send_garp_for_proxyarp(ns_name, iface_name, address, count):
     """
     Send a gratuitous arp using given namespace, interface, and address
 

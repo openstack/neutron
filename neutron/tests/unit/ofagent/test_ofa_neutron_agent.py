@@ -91,7 +91,6 @@ class TestOFANeutronAgentBridge(ofa_test_base.OFAAgentTestBase):
     def setUp(self):
         super(TestOFANeutronAgentBridge, self).setUp()
         self.br_name = 'bridge1'
-        self.root_helper = 'fake_helper'
         self.ovs = self.mod_agent.Bridge(
             self.br_name, self.ryuapp)
 

@@ -76,7 +76,6 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
     def __init__(self, host, conf=None):
         self.conf = conf or cfg.CONF
         self._load_drivers()
-        self.root_helper = config.get_root_helper(self.conf)
         self.context = context.get_admin_context_without_session()
         self.metering_info = {}
         self.metering_loop = loopingcall.FixedIntervalLoopingCall(
@@ -283,7 +282,6 @@ def main():
     conf = cfg.CONF
     conf.register_opts(MeteringAgent.Opts)
     config.register_agent_state_opts_helper(conf)
-    config.register_root_helper(conf)
     common_config.init(sys.argv[1:])
     config.setup_logging()
     server = neutron_service.Service.create(

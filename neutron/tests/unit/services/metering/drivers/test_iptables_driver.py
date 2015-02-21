@@ -75,9 +75,6 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.iptables_cls.return_value = self.iptables_inst
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
-        cfg.CONF.set_override('root_helper',
-                              'fake_sudo',
-                              'AGENT')
         self.metering = iptables_driver.IptablesMeteringDriver('metering',
                                                                cfg.CONF)
 

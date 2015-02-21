@@ -71,7 +71,7 @@ class TestNetnsCleanup(base.BaseTestCase):
             self.assertEqual(util.eligible_for_deletion(conf, ns, force),
                              expected)
 
-            expected_calls = [mock.call(conf.AGENT.root_helper, ns)]
+            expected_calls = [mock.call(namespace=ns)]
             if not force:
                 expected_calls.append(mock.call().namespace_is_empty())
             ip_wrap.assert_has_calls(expected_calls)
@@ -141,7 +141,6 @@ class TestNetnsCleanup(base.BaseTestCase):
     def _test_destroy_namespace_helper(self, force, num_devices):
         ns = 'qrouter-6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
         conf = mock.Mock()
-#        conf.AGENT.root_helper = 'sudo'
 
         lo_device = mock.Mock()
         lo_device.name = 'lo'
@@ -162,7 +161,7 @@ class TestNetnsCleanup(base.BaseTestCase):
 
                 with mock.patch.object(util, 'kill_dhcp') as kill_dhcp:
                     util.destroy_namespace(conf, ns, force)
-                    expected = [mock.call(conf.AGENT.root_helper, ns)]
+                    expected = [mock.call(namespace=ns)]
 
                     if force:
                         expected.extend([
@@ -188,7 +187,6 @@ class TestNetnsCleanup(base.BaseTestCase):
     def test_destroy_namespace_exception(self):
         ns = 'qrouter-6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
         conf = mock.Mock()
-        conf.AGENT.root_helper = 'sudo'
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.side_effect = Exception()
             util.destroy_namespace(conf, ns)
@@ -221,7 +219,7 @@ class TestNetnsCleanup(base.BaseTestCase):
                              mock.call(conf, 'ns2', False)])
 
                         ip_wrap.assert_has_calls(
-                            [mock.call.get_namespaces(conf.AGENT.root_helper)])
+                            [mock.call.get_namespaces()])
 
                         time_sleep.assert_called_once_with(2)
 
@@ -245,7 +243,7 @@ class TestNetnsCleanup(base.BaseTestCase):
                         util.main()
 
                         ip_wrap.assert_has_calls(
-                            [mock.call.get_namespaces(conf.AGENT.root_helper)])
+                            [mock.call.get_namespaces()])
 
                         mocks['eligible_for_deletion'].assert_has_calls(
                             [mock.call(conf, 'ns1', False),

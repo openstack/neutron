@@ -39,7 +39,6 @@ class TestDebugCommands(base.BaseTestCase):
         common_config.init([])
         config.register_interface_driver_opts_helper(cfg.CONF)
         config.register_use_namespaces_opts_helper(cfg.CONF)
-        config.register_root_helper(cfg.CONF)
         cfg.CONF.set_override('use_namespaces', True)
 
         device_exists_p = mock.patch(

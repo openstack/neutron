@@ -24,7 +24,6 @@ _marker = object()
 class AgentUtilsExecuteTest(base.BaseTestCase):
     def setUp(self):
         super(AgentUtilsExecuteTest, self).setUp()
-        self.root_helper = "echo"
         self.test_file = self.get_temp_file_path('test_execute.tmp')
         open(self.test_file, 'w').close()
         self.process = mock.patch('eventlet.green.subprocess.Popen').start()
@@ -40,8 +39,8 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
     def test_with_helper(self):
         expected = "ls %s\n" % self.test_file
         self.mock_popen.return_value = [expected, ""]
-        result = utils.execute(["ls", self.test_file],
-                               self.root_helper)
+        self.config(group='AGENT', root_helper='echo')
+        result = utils.execute(["ls", self.test_file], run_as_root=True)
         self.assertEqual(result, expected)
 
     def test_stderr_true(self):

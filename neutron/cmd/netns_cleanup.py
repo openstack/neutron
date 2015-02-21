@@ -63,7 +63,6 @@ def setup_conf():
     conf.register_cli_opts(cli_opts)
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_use_namespaces_opts_helper(conf)
-    agent_config.register_root_helper(conf)
     conf.register_opts(dhcp_config.DHCP_AGENT_OPTS)
     conf.register_opts(dhcp_config.DHCP_OPTS)
     conf.register_opts(dhcp_config.DNSMASQ_OPTS)
@@ -103,8 +102,7 @@ def eligible_for_deletion(conf, namespace, force=False):
     if not re.match(NS_MANGLING_PATTERN, namespace):
         return False
 
-    root_helper = agent_config.get_root_helper(conf)
-    ip = ip_lib.IPWrapper(root_helper, namespace)
+    ip = ip_lib.IPWrapper(namespace=namespace)
     return force or ip.namespace_is_empty()
 
 
@@ -130,8 +128,7 @@ def destroy_namespace(conf, namespace, force=False):
     """
 
     try:
-        root_helper = agent_config.get_root_helper(conf)
-        ip = ip_lib.IPWrapper(root_helper, namespace)
+        ip = ip_lib.IPWrapper(namespace=namespace)
 
         if force:
             kill_dhcp(conf, namespace)
@@ -167,10 +164,9 @@ def main():
     conf()
     config.setup_logging()
 
-    root_helper = agent_config.get_root_helper(conf)
     # Identify namespaces that are candidates for deletion.
     candidates = [ns for ns in
-                  ip_lib.IPWrapper.get_namespaces(root_helper)
+                  ip_lib.IPWrapper.get_namespaces()
                   if eligible_for_deletion(conf, ns, conf.force)]
 
     if candidates:

@@ -28,7 +28,6 @@ class RouterInfo(object):
                  agent_conf,
                  interface_driver,
                  use_ipv6=False,
-                 root_helper=None,
                  ns_name=None):
         self.router_id = router_id
         self.ex_gw_port = None
