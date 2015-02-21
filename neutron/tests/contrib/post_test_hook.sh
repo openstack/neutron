@@ -21,39 +21,25 @@ function generate_testr_results {
     fi
 }
 
-
-function dsvm_functional_prep_func {
-    :
-}
-
-
-function api_prep_func {
-    sudo chown -R $owner:stack $TEMPEST_DIR
-    sudo -H -u $owner tox -e $venv --notest
-    sudo -H -u $owner .tox/$venv/bin/pip install -e $TEMPEST_DIR
-}
-
-
 if [ "$venv" == "dsvm-functional" ]
 then
     owner=stack
-    prep_func="dsvm_functional_prep_func"
+    sudo_env=
 elif [ "$venv" == "api" ]
 then
     owner=tempest
-    prep_func="api_prep_func"
+    # Configure the api tests to use the tempest.conf set by devstack.
+    sudo_env="TEMPEST_CONFIG_DIR=$TEMPEST_DIR/etc"
 fi
 
 # Set owner permissions according to job's requirements.
 cd $NEUTRON_DIR
 sudo chown -R $owner:stack $NEUTRON_DIR
-# Prep the environment according to job's requirements.
-$prep_func
 
 # Run tests
 echo "Running neutron $venv test suite"
 set +e
-sudo -H -u $owner tox -e $venv
+sudo -H -u $owner $sudo_env tox -e $venv
 testr_exit_code=$?
 set -e
 

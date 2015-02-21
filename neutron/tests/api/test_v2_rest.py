@@ -18,12 +18,11 @@ This module implements BaseNeutronClient for the Tempest rest client
 and configures the api tests with scenarios targeting the Neutron API.
 """
 
-from tempest import test as t_test
 from tempest_lib import exceptions
 import testscenarios
 
 from neutron.tests.api import base_v2
-
+from neutron.tests.tempest import test as t_test
 
 # Required to generate tests from scenarios.  Not compatible with nose.
 load_tests = testscenarios.load_tests_apply_scenarios
