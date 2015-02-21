@@ -1128,6 +1128,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     LOG.error(_LE("Removing incompatible router '%s'"),
                               router['id'])
                     self._router_removed(router['id'])
+            except Exception:
+                msg = _LE("Failed to process compatible router '%s'")
+                LOG.exception(msg, update.id)
+                self.fullsync = True
+                continue
+
             LOG.debug("Finished a router update for %s", update.id)
             rp.fetched_and_processed(update.timestamp)
 
