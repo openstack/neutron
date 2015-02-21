@@ -111,7 +111,7 @@ class BrocadeSVIPlugin(router.L3RouterPlugin):
                                    str(router['id']))
 
     def add_router_interface(self, context, router_id, interface_info):
-        """creates svi on NOS device and assigns ip addres to SVI."""
+        """creates svi on NOS device and assigns ip address to SVI."""
         LOG.debug("BrocadeSVIPlugin.add_router_interface on VDX: "
                   "router_id=%(router_id)s "
                   "interface_info=%(interface_info)r",

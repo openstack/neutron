@@ -138,7 +138,7 @@ class HashHandler(object):
                 # no current entry. try to insert to grab lock
                 if not self._insert_empty_hash_with_lock():
                     # A failed insert after missing current record means
-                    # a concurrent insert occured. Start process over to
+                    # a concurrent insert occurred. Start process over to
                     # find the new record.
                     LOG.debug("Concurrent record inserted. Retrying.")
                     time.sleep(0.25)

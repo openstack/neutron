@@ -785,17 +785,17 @@ class TestDvrRouter(L3AgentTestFramework):
         external_gw_port = floating_agent_gw_port[0]
         fip_ns = self.agent.get_fip_ns(floating_ips[0]['floating_network_id'])
         fip_ns_name = fip_ns.get_name()
-        fg_port_created_succesfully = ip_lib.device_exists_with_ip_mac(
+        fg_port_created_successfully = ip_lib.device_exists_with_ip_mac(
             fip_ns.get_ext_device_name(external_gw_port['id']),
             external_gw_port['ip_cidr'],
             external_gw_port['mac_address'],
             namespace=fip_ns_name)
-        self.assertTrue(fg_port_created_succesfully)
+        self.assertTrue(fg_port_created_successfully)
         # Check fpr-router device has been created
         device_name = fip_ns.get_int_device_name(router.router_id)
-        fpr_router_device_created_succesfully = ip_lib.device_exists(
+        fpr_router_device_created_successfully = ip_lib.device_exists(
             device_name, namespace=fip_ns_name)
-        self.assertTrue(fpr_router_device_created_succesfully)
+        self.assertTrue(fpr_router_device_created_successfully)
 
         # In the router namespace
         # Check rfp-<router-id> is created correctly
