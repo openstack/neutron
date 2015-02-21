@@ -84,7 +84,7 @@ class NsxvInternalNetworks(model_base.BASEV2):
         primary_key=True)
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("networks.id", ondelete="CASCADE"),
-                           nullable=False)
+                           nullable=True)
 
 
 class NsxvInternalEdges(model_base.BASEV2):
@@ -93,7 +93,7 @@ class NsxvInternalEdges(model_base.BASEV2):
     __tablename__ = 'nsxv_internal_edges'
 
     ext_ip_address = sa.Column(sa.String(64), primary_key=True)
-    router_id = sa.Column(sa.String(36), nullable=False)
+    router_id = sa.Column(sa.String(36), nullable=True)
     purpose = sa.Column(
         sa.Enum(nsxv_constants.INTER_EDGE_PURPOSE,
                 name='nsxv_internal_edges_purpose'))

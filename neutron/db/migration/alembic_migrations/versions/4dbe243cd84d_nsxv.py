@@ -57,14 +57,14 @@ def upgrade():
         'nsxv_internal_networks',
         sa.Column('network_purpose', internal_network_purpose_enum,
                   nullable=False),
-        sa.Column('network_id', sa.String(length=36), nullable=False),
+        sa.Column('network_id', sa.String(length=36), nullable=True),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('network_purpose'))
     op.create_table(
         'nsxv_internal_edges',
         sa.Column('ext_ip_address', sa.String(length=64), nullable=False),
-        sa.Column('router_id', sa.String(length=36), nullable=False),
+        sa.Column('router_id', sa.String(length=36), nullable=True),
         sa.Column('purpose', internal_edge_purpose_enum, nullable=True),
         sa.PrimaryKeyConstraint('ext_ip_address'))
     op.create_table(
