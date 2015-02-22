@@ -118,14 +118,11 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
     @contextlib.contextmanager
     def security_group(self, name='webservers', description='webservers',
-                       fmt=None, do_delete=True):
+                       fmt=None):
         if not fmt:
             fmt = self.fmt
         security_group = self._make_security_group(fmt, name, description)
         yield security_group
-        if do_delete:
-            self._delete('security-groups',
-                         security_group['security_group']['id'])
 
     @contextlib.contextmanager
     def security_group_rule(self, security_group_id='4cd70774-cc67-4a87-9b39-7'
@@ -133,7 +130,7 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                             direction='ingress', protocol=const.PROTO_NAME_TCP,
                             port_range_min='22', port_range_max='22',
                             remote_ip_prefix=None, remote_group_id=None,
-                            fmt=None, do_delete=True, ethertype=const.IPv4):
+                            fmt=None, ethertype=const.IPv4):
         if not fmt:
             fmt = self.fmt
         rule = self._build_security_group_rule(security_group_id,
@@ -145,9 +142,6 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                                ethertype=ethertype)
         security_group_rule = self._make_security_group_rule(self.fmt, rule)
         yield security_group_rule
-        if do_delete:
-            self._delete('security-group-rules',
-                         security_group_rule['security_group_rule']['id'])
 
     def _delete_default_security_group_egress_rules(self, security_group_id):
         """Deletes default egress rules given a security group ID."""
@@ -563,7 +557,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_delete_security_group(self):
         name = 'webservers'
         description = 'my webservers'
-        with self.security_group(name, description, do_delete=False) as sg:
+        with self.security_group(name, description) as sg:
             remote_group_id = sg['security_group']['id']
             self._delete('security-groups', remote_group_id,
                          webob.exc.HTTPNoContent.code)

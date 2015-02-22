@@ -2850,19 +2850,18 @@ class SGNotificationTestMixin(object):
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
-            with self.security_group(name, description) as sg2:
+            with self.security_group(name, description):
                 security_group_id = sg['security_group']['id']
-                direction = "ingress"
-                remote_group_id = sg2['security_group']['id']
-                protocol = const.PROTO_NAME_TCP
-                port_range_min = 88
-                port_range_max = 88
-                with self.security_group_rule(security_group_id, direction,
-                                              protocol, port_range_min,
-                                              port_range_max,
-                                              remote_group_id=remote_group_id
-                                              ):
-                    pass
+
+                rule = self._build_security_group_rule(
+                    security_group_id,
+                    direction='ingress',
+                    proto=const.PROTO_NAME_TCP)
+                security_group_rule = self._make_security_group_rule(self.fmt,
+                                                                     rule)
+                self._delete('security-group-rules',
+                             security_group_rule['security_group_rule']['id'])
+
             self.notifier.assert_has_calls(
                 [mock.call.security_groups_rule_updated(mock.ANY,
                                                         [security_group_id]),

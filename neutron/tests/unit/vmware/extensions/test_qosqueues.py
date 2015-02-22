@@ -59,7 +59,7 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
 
     @contextlib.contextmanager
     def qos_queue(self, name='foo', min='0', max='10',
-                  qos_marking=None, dscp='0', default=None, do_delete=True):
+                  qos_marking=None, dscp='0', default=None):
 
         body = {'qos_queue': {'tenant_id': 'tenant',
                               'name': name,
@@ -78,10 +78,6 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
 
         yield qos_queue
-
-        if do_delete:
-            self._delete('qos-queues',
-                         qos_queue['qos_queue']['id'])
 
     def test_create_qos_queue(self):
         with self.qos_queue(name='fake_lqueue', min=34, max=44,
@@ -132,7 +128,7 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
                 self.assertEqual(len(p['port'][ext_qos.QUEUE]), 36)
 
     def test_create_shared_queue_networks(self):
-        with self.qos_queue(default=True, do_delete=False) as q1:
+        with self.qos_queue(default=True) as q1:
             res = self._create_network('json', 'net1', True,
                                        arg_list=(ext_qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
@@ -159,7 +155,7 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
             self._delete('ports', port2['port']['id'])
 
     def test_remove_queue_in_use_fail(self):
-        with self.qos_queue(do_delete=False) as q1:
+        with self.qos_queue() as q1:
             res = self._create_network('json', 'net1', True,
                                        arg_list=(ext_qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
@@ -186,7 +182,7 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
                                  new_q['qos_queue']['id'])
 
     def test_update_port_adding_device_id(self):
-        with self.qos_queue(do_delete=False) as q1:
+        with self.qos_queue() as q1:
             res = self._create_network('json', 'net1', True,
                                        arg_list=(ext_qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])

@@ -57,14 +57,11 @@ class NetPartitionTestCase(test_nuage_plugin.NuagePluginV2TestCase):
 
     @contextlib.contextmanager
     def netpartition(self, name='netpartition1',
-                     do_delete=True,
                      fmt=None,
                      **kwargs):
         netpart = self._make_netpartition(fmt or self.fmt, name)
 
         yield netpart
-        if do_delete:
-            self._del_netpartition(netpart['net_partition']['id'])
 
     def test_create_netpartition(self):
         name = 'netpart1'

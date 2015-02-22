@@ -307,7 +307,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         with contextlib.nested(
-            self.port(do_delete=False),
+            self.port(),
             mock.patch.object(l3plugin, 'disassociate_floatingips'),
             mock.patch.object(l3plugin, 'notify_routers_updated')
         ) as (port, disassociate_floatingips, notify):
@@ -375,8 +375,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             mock.patch.object(manager.NeutronManager,
                               'get_service_plugins',
                               return_value=self.service_plugins),
-            self.port(do_delete=False,
-                      device_owner=device_owner),
+            self.port(device_owner=device_owner),
             mock.patch.object(self.l3plugin, 'notify_routers_updated'),
             mock.patch.object(self.l3plugin, 'disassociate_floatingips',
                               return_value=fip_set),
@@ -413,8 +412,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             mock.patch.object(manager.NeutronManager,
                               'get_service_plugins',
                               return_value=self.service_plugins),
-            self.port(do_delete=False,
-                      device_owner='compute:None'),
+            self.port(device_owner='compute:None'),
             mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_port',
                               return_value=[ns_to_delete]),
             mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent',
