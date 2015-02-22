@@ -187,3 +187,19 @@ class TestGetRoothelperChildPid(base.BaseTestCase):
 
     def test_returns_none_as_root(self):
         self._test_get_root_helper_child_pid(expected=None, run_as_root=True)
+
+
+class TestPathUtilities(base.BaseTestCase):
+    def test_remove_abs_path(self):
+        self.assertEqual(['ping', '8.8.8.8'],
+                         utils.remove_abs_path(['/usr/bin/ping', '8.8.8.8']))
+
+    def test_cmdlines_are_equal(self):
+        self.assertTrue(utils.cmdlines_are_equal(
+            ['ping', '8.8.8.8'],
+            ['/usr/bin/ping', '8.8.8.8']))
+
+    def test_cmdlines_are_equal_different_commands(self):
+        self.assertFalse(utils.cmdlines_are_equal(
+            ['ping', '8.8.8.8'],
+            ['/usr/bin/ping6', '8.8.8.8']))

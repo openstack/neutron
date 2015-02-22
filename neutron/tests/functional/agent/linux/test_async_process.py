@@ -17,14 +17,13 @@ import eventlet
 from six import moves
 
 from neutron.agent.linux import async_process
-from neutron.agent.linux import utils
 from neutron.tests import base
 
 
-class TestAsyncProcess(base.BaseTestCase):
+class AsyncProcessTestFramework(base.BaseTestCase):
 
     def setUp(self):
-        super(TestAsyncProcess, self).setUp()
+        super(AsyncProcessTestFramework, self).setUp()
         self.test_file_path = self.get_temp_file_path('test_async_process.tmp')
         self.data = [str(x) for x in moves.xrange(4)]
         with file(self.test_file_path, 'w') as f:
@@ -39,12 +38,21 @@ class TestAsyncProcess(base.BaseTestCase):
                 output += new_output
             eventlet.sleep(0.01)
 
+
+class TestAsyncProcess(AsyncProcessTestFramework):
+    def _safe_stop(self, proc):
+        try:
+            proc.stop()
+        except async_process.AsyncProcessException:
+            pass
+
     def test_stopping_async_process_lifecycle(self):
         proc = async_process.AsyncProcess(['tail', '-f',
                                            self.test_file_path])
-        proc.start()
+        self.addCleanup(self._safe_stop, proc)
+        proc.start(blocking=True)
         self._check_stdout(proc)
-        proc.stop()
+        proc.stop(blocking=True)
 
         # Ensure that the process and greenthreads have stopped
         proc._process.wait()
@@ -56,12 +64,10 @@ class TestAsyncProcess(base.BaseTestCase):
         proc = async_process.AsyncProcess(['tail', '-f',
                                            self.test_file_path],
                                           respawn_interval=0)
+        self.addCleanup(self._safe_stop, proc)
         proc.start()
 
         # Ensure that the same output is read twice
         self._check_stdout(proc)
-        pid = utils.get_root_helper_child_pid(proc._process.pid,
-                                              proc.run_as_root)
-        proc._kill_process(pid)
+        proc._kill_process(proc.pid)
         self._check_stdout(proc)
-        proc.stop()

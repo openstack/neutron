@@ -1002,3 +1002,14 @@ class TestArpPing(TestIPCmdBase):
 
         # If this was called then check_added_address probably had a assert
         self.assertFalse(device.addr.add.called)
+
+
+class TestAddNamespaceToCmd(base.BaseTestCase):
+    def test_add_namespace_to_cmd_with_namespace(self):
+        cmd = ['ping', '8.8.8.8']
+        self.assertEqual(['ip', 'netns', 'exec', 'tmp'] + cmd,
+                         ip_lib.add_namespace_to_cmd(cmd, 'tmp'))
+
+    def test_add_namespace_to_cmd_without_namespace(self):
+        cmd = ['ping', '8.8.8.8']
+        self.assertEqual(cmd, ip_lib.add_namespace_to_cmd(cmd, None))
