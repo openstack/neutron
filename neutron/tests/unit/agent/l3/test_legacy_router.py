@@ -1,0 +1,77 @@
+# Copyright (c) 2015 Openstack Foundation
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+import mock
+
+from neutron.agent.l3 import legacy_router
+from neutron.agent.linux import ip_lib
+from neutron.common import constants as l3_constants
+from neutron.tests import base
+
+
+class BasicRouterTestCaseFramework(base.BaseTestCase):
+    def _create_router(self, router=None, **kwargs):
+        if not router:
+            router = mock.MagicMock()
+        self.agent_conf = mock.Mock()
+        self.driver = mock.Mock()
+        return legacy_router.LegacyRouter(mock.sentinel.router_id,
+                                          router,
+                                          self.agent_conf,
+                                          self.driver,
+                                          ns_name=mock.sentinel.namespace,
+                                          **kwargs)
+
+
+class TestBasicRouterOperations(BasicRouterTestCaseFramework):
+
+    def test_remove_floating_ip(self):
+        ri = self._create_router(mock.MagicMock())
+        device = mock.Mock()
+        cidr = '15.1.2.3/32'
+
+        ri.remove_floating_ip(device, cidr)
+
+        device.addr.delete.assert_called_once_with(4, cidr)
+        self.driver.delete_conntrack_state.assert_called_once_with(
+            ip=cidr,
+            namespace=mock.sentinel.namespace)
+
+
+@mock.patch.object(ip_lib, 'send_gratuitous_arp')
+class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):
+    def test_add_floating_ip(self, send_gratuitous_arp):
+        ri = self._create_router()
+        ri._add_fip_addr_to_device = mock.Mock(return_value=True)
+        self.agent_conf.send_arp_for_ha = mock.sentinel.arp_count
+        ri.ns_name = mock.sentinel.ns_name
+        ip = '15.1.2.3'
+        result = ri.add_floating_ip({'floating_ip_address': ip},
+                                    mock.sentinel.interface_name,
+                                    mock.sentinel.device)
+        ip_lib.send_gratuitous_arp.assert_called_once_with(
+            mock.sentinel.ns_name,
+            mock.sentinel.interface_name,
+            ip,
+            mock.sentinel.arp_count)
+        self.assertEqual(l3_constants.FLOATINGIP_STATUS_ACTIVE, result)
+
+    def test_add_floating_ip_error(self, send_gratuitous_arp):
+        ri = self._create_router()
+        ri._add_fip_addr_to_device = mock.Mock(return_value=False)
+        result = ri.add_floating_ip({'floating_ip_address': '15.1.2.3'},
+                                    mock.sentinel.interface_name,
+                                    mock.sentinel.device)
+        self.assertFalse(ip_lib.send_gratuitous_arp.called)
+        self.assertEqual(l3_constants.FLOATINGIP_STATUS_ERROR, result)

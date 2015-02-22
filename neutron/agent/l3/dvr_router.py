@@ -15,17 +15,26 @@
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
+from neutron.common import constants as l3_constants
+from neutron.common import utils as common_utils
 
 
 class DvrRouter(router.RouterInfo):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, host, *args, **kwargs):
         super(DvrRouter, self).__init__(*args, **kwargs)
+
+        self.host = host
 
         self.floating_ips_dict = {}
         self.snat_iptables_manager = None
         # Linklocal subnet for router and floating IP namespace link
         self.rtr_fip_subnet = None
         self.dist_fip_count = None
+
+    def get_floating_ips(self):
+        """Filter Floating IPs to be hosted on this agent."""
+        floating_ips = super(DvrRouter, self).get_floating_ips()
+        return [i for i in floating_ips if i['host'] == self.host]
 
     def _handle_fip_nat_rules(self, interface_name, action):
         """Configures NAT rules for Floating IPs for DVR.
@@ -114,3 +123,17 @@ class DvrRouter(router.RouterInfo):
                 # semaphore to sync creation/deletion of this namespace.
                 self.fip_ns.destroy()
                 self.fip_ns = None
+
+    def add_floating_ip(self, fip, interface_name, device):
+        if not self._add_fip_addr_to_device(fip, device):
+            return l3_constants.FLOATINGIP_STATUS_ERROR
+
+        # Special Handling for DVR - update FIP namespace
+        # and ri.namespace to handle DVR based FIP
+        ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
+        self.floating_ip_added_dist(fip, ip_cidr)
+        return l3_constants.FLOATINGIP_STATUS_ACTIVE
+
+    def remove_floating_ip(self, device, ip_cidr):
+        super(DvrRouter, self).remove_floating_ip(device, ip_cidr)
+        self.floating_ip_removed_dist(ip_cidr)
