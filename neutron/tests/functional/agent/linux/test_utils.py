@@ -24,7 +24,7 @@ class TestPIDHelpers(test_async_process.AsyncProcessTestFramework):
     def test_get_cmdline_from_pid_and_pid_invoked_with_cmdline(self):
         cmd = ['tail', '-f', self.test_file_path]
         proc = async_process.AsyncProcess(cmd)
-        proc.start(blocking=True)
+        proc.start(block=True)
         self.addCleanup(proc.stop)
 
         pid = proc.pid

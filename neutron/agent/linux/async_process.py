@@ -87,10 +87,10 @@ class AsyncProcess(object):
         return utils.pid_invoked_with_cmdline(
             self.pid, self.cmd_without_namespace)
 
-    def start(self, blocking=False):
+    def start(self, block=False):
         """Launch a process and monitor it asynchronously.
 
-        :param blocking: Block until the process has started.
+        :param block: Block until the process has started.
         :raises eventlet.timeout.Timeout if blocking is True and the process
                 did not start in time.
         """
@@ -100,13 +100,13 @@ class AsyncProcess(object):
             LOG.debug('Launching async process [%s].', self.cmd)
             self._spawn()
 
-        if blocking:
+        if block:
             utils.wait_until_true(self.is_active)
 
-    def stop(self, blocking=False):
+    def stop(self, block=False):
         """Halt the process and watcher threads.
 
-        :param blocking: Block until the process has stopped.
+        :param block: Block until the process has stopped.
         :raises eventlet.timeout.Timeout if blocking is True and the process
                 did not stop in time.
         """
@@ -116,7 +116,7 @@ class AsyncProcess(object):
         else:
             raise AsyncProcessException(_('Process is not running.'))
 
-        if blocking:
+        if block:
             utils.wait_until_true(lambda: not self.is_active())
 
     def _spawn(self):
@@ -216,15 +216,15 @@ class AsyncProcess(object):
     def _read_stderr(self):
         return self._read(self._process.stderr, self._stderr_lines)
 
-    def _iter_queue(self, queue):
+    def _iter_queue(self, queue, block):
         while True:
             try:
-                yield queue.get_nowait()
+                yield queue.get(block=block)
             except eventlet.queue.Empty:
                 break
 
-    def iter_stdout(self):
-        return self._iter_queue(self._stdout_lines)
+    def iter_stdout(self, block=False):
+        return self._iter_queue(self._stdout_lines, block)
 
-    def iter_stderr(self):
-        return self._iter_queue(self._stderr_lines)
+    def iter_stderr(self, block=False):
+        return self._iter_queue(self._stderr_lines, block)
