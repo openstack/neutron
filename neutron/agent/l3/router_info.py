@@ -24,6 +24,7 @@ from neutron.i18n import _LW
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
+INTERNAL_DEV_PREFIX = 'qr-'
 
 
 class RouterInfo(object):
@@ -82,6 +83,9 @@ class RouterInfo(object):
     def is_ha(self):
         # TODO(Carl) Refactoring should render this obsolete.  Remove it.
         return False
+
+    def get_internal_device_name(self, port_id):
+        return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets

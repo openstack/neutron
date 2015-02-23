@@ -275,7 +275,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                            'id': _uuid(), 'device_id': _uuid()}]
 
         self.ri_kwargs = {'agent_conf': self.conf,
-                          'interface_driver': mock.sentinel.interface_driver}
+                          'interface_driver': self.mock_driver}
 
     def _prepare_internal_network_data(self):
         port_id = _uuid()
@@ -300,7 +300,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
             ri.radvd = ra.DaemonMonitor(router['id'],
                                         ri.ns_name,
                                         agent.process_monitor,
-                                        agent.get_internal_device_name)
+                                        ri.get_internal_device_name)
         agent.process_router(ri)
 
 
@@ -355,7 +355,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_internal_network_action(self, action):
         agent, ri, port = self._prepare_internal_network_data()
-        interface_name = agent.get_internal_device_name(port['id'])
+        interface_name = ri.get_internal_device_name(port['id'])
 
         if action == 'add':
             self.device_exists.return_value = False
@@ -643,40 +643,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertNotEqual(test_port, res_ip)
         self.assertIsNone(res_ip)
 
-    def test_get_internal_port(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = prepare_router_data(num_internal_ports=4)
-        subnet_ids = [_get_subnet_id(port) for port in
-                      router[l3_constants.INTERFACE_KEY]]
-        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
-
-        # Test Basic cases
-        port = agent.get_internal_port(ri, subnet_ids[0])
-        fips = port.get('fixed_ips', [])
-        subnet_id = fips[0]['subnet_id']
-        self.assertEqual(subnet_ids[0], subnet_id)
-        port = agent.get_internal_port(ri, subnet_ids[1])
-        fips = port.get('fixed_ips', [])
-        subnet_id = fips[0]['subnet_id']
-        self.assertEqual(subnet_ids[1], subnet_id)
-        port = agent.get_internal_port(ri, subnet_ids[3])
-        fips = port.get('fixed_ips', [])
-        subnet_id = fips[0]['subnet_id']
-        self.assertEqual(subnet_ids[3], subnet_id)
-
-        # Test miss cases
-        no_port = agent.get_internal_port(ri, FAKE_ID)
-        self.assertIsNone(no_port)
-        port = agent.get_internal_port(ri, subnet_ids[0])
-        fips = port.get('fixed_ips', [])
-        subnet_id = fips[0]['subnet_id']
-        self.assertNotEqual(subnet_ids[3], subnet_id)
-
     def test__set_subnet_arp_info(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data(num_internal_ports=2)
         router['distributed'] = True
-        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
+        ri = dvr_router.DvrRouter(
+            HOSTNAME, router['id'], router, **self.ri_kwargs)
         ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
         test_ports = [{'mac_address': '00:11:22:33:44:55',
                       'device_owner': 'network:dhcp',
@@ -699,6 +671,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_add_arp_entry(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
         subnet_id = _get_subnet_id(router[l3_constants.INTERFACE_KEY][0])
         arp_table = {'ip_address': '1.7.23.11',
                      'mac_address': '00:11:22:33:44:55',
@@ -720,24 +693,22 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                      'subnet_id': subnet_id}
 
         payload = {'arp_table': arp_table, 'router_id': router['id']}
-        agent._update_arp_entry = mock.Mock()
         agent.add_arp_entry(None, payload)
-        self.assertFalse(agent._update_arp_entry.called)
 
     def test__update_arp_entry_with_no_subnet(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        ri = l3router.RouterInfo(
+        ri = dvr_router.DvrRouter(
+            HOSTNAME,
             'foo_router_id',
             {'distributed': True, 'gw_port_host': HOSTNAME},
             **self.ri_kwargs)
         with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as f:
-            agent._update_arp_entry(ri, mock.ANY, mock.ANY,
-                                    'foo_subnet_id', 'add')
+            ri._update_arp_entry(mock.ANY, mock.ANY, 'foo_subnet_id', 'add')
         self.assertFalse(f.call_count)
 
     def test_del_arp_entry(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
         subnet_id = _get_subnet_id(router[l3_constants.INTERFACE_KEY][0])
         arp_table = {'ip_address': '1.5.25.15',
                      'mac_address': '00:44:33:22:11:55',

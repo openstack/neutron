@@ -73,18 +73,10 @@ class AgentMixin(object):
         for p in subnet_ports:
             if p['device_owner'] not in l3_constants.ROUTER_INTERFACE_OWNERS:
                 for fixed_ip in p['fixed_ips']:
-                    self._update_arp_entry(ri, fixed_ip['ip_address'],
-                                           p['mac_address'],
-                                           subnet_id, 'add')
-
-    def get_internal_port(self, ri, subnet_id):
-        """Return internal router port based on subnet_id."""
-        router_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
-        for port in router_ports:
-            fips = port['fixed_ips']
-            for f in fips:
-                if f['subnet_id'] == subnet_id:
-                    return port
+                    ri._update_arp_entry(fixed_ip['ip_address'],
+                                         p['mac_address'],
+                                         subnet_id,
+                                         'add')
 
     def get_snat_int_device_name(self, port_id):
         return (SNAT_INT_DEV_PREFIX +
@@ -183,43 +175,28 @@ class AgentMixin(object):
         except Exception:
             LOG.exception(_LE('DVR: removed snat failed'))
 
-    def _update_arp_entry(self, ri, ip, mac, subnet_id, operation):
-        """Add or delete arp entry into router namespace for the subnet."""
-        port = self.get_internal_port(ri, subnet_id)
-        # update arp entry only if the subnet is attached to the router
-        if port:
-            ip_cidr = str(ip) + '/32'
-            try:
-                # TODO(mrsmith): optimize the calls below for bulk calls
-                net = netaddr.IPNetwork(ip_cidr)
-                interface_name = self.get_internal_device_name(port['id'])
-                device = ip_lib.IPDevice(interface_name, namespace=ri.ns_name)
-                if operation == 'add':
-                    device.neigh.add(net.version, ip, mac)
-                elif operation == 'delete':
-                    device.neigh.delete(net.version, ip, mac)
-            except Exception:
-                LOG.exception(_LE("DVR: Failed updating arp entry"))
-                self.fullsync = True
-
     def add_arp_entry(self, context, payload):
         """Add arp entry into router namespace.  Called from RPC."""
-        arp_table = payload['arp_table']
         router_id = payload['router_id']
+        ri = self.router_info.get(router_id)
+        if not ri:
+            return
+
+        arp_table = payload['arp_table']
         ip = arp_table['ip_address']
         mac = arp_table['mac_address']
         subnet_id = arp_table['subnet_id']
-        ri = self.router_info.get(router_id)
-        if ri:
-            self._update_arp_entry(ri, ip, mac, subnet_id, 'add')
+        ri._update_arp_entry(ip, mac, subnet_id, 'add')
 
     def del_arp_entry(self, context, payload):
         """Delete arp entry from router namespace.  Called from RPC."""
-        arp_table = payload['arp_table']
         router_id = payload['router_id']
+        ri = self.router_info.get(router_id)
+        if not ri:
+            return
+
+        arp_table = payload['arp_table']
         ip = arp_table['ip_address']
         mac = arp_table['mac_address']
         subnet_id = arp_table['subnet_id']
-        ri = self.router_info.get(router_id)
-        if ri:
-            self._update_arp_entry(ri, ip, mac, subnet_id, 'delete')
+        ri._update_arp_entry(ip, mac, subnet_id, 'delete')
