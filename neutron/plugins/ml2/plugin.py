@@ -845,7 +845,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # Remove network owned ports, and delete IP allocations
                 # for IPv6 addresses which were automatically generated
                 # via SLAAC
-                if not is_auto_addr_subnet:
+                if is_auto_addr_subnet:
+                    self._subnet_check_ip_allocations_internal_router_ports(
+                            context, id)
+                else:
                     qry_allocated = (
                         qry_allocated.filter(models_v2.Port.device_owner.
                         in_(db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS)))
