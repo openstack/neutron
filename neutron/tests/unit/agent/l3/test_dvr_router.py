@@ -38,7 +38,8 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.router_id = _uuid()
         if not router:
             router = mock.MagicMock()
-        return dvr_router.DvrRouter(mock.sentinel.myhost,
+        return dvr_router.DvrRouter(mock.sentinel.agent,
+                                    mock.sentinel.myhost,
                                     self.router_id,
                                     router,
                                     agent_conf,

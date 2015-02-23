@@ -61,22 +61,8 @@ class AgentMixin(object):
         fip_ns = self.get_fip_ns(ex_net_id)
         fip_ns.delete()
 
-    def _set_subnet_arp_info(self, ri, port):
-        """Set ARP info retrieved from Plugin for existing ports."""
-        if 'id' not in port['subnet'] or not ri.router['distributed']:
-            return
-        subnet_id = port['subnet']['id']
-        subnet_ports = (
-            self.plugin_rpc.get_ports_by_subnet(self.context,
-                                                subnet_id))
-
-        for p in subnet_ports:
-            if p['device_owner'] not in l3_constants.ROUTER_INTERFACE_OWNERS:
-                for fixed_ip in p['fixed_ips']:
-                    ri._update_arp_entry(fixed_ip['ip_address'],
-                                         p['mac_address'],
-                                         subnet_id,
-                                         'add')
+    def get_ports_by_subnet(self, subnet_id):
+        return self.plugin_rpc.get_ports_by_subnet(self.context, subnet_id)
 
     def get_snat_int_device_name(self, port_id):
         return (SNAT_INT_DEV_PREFIX +

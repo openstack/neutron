@@ -28,9 +28,10 @@ LOG = logging.getLogger(__name__)
 
 
 class DvrRouter(router.RouterInfo):
-    def __init__(self, host, *args, **kwargs):
+    def __init__(self, agent, host, *args, **kwargs):
         super(DvrRouter, self).__init__(*args, **kwargs)
 
+        self.agent = agent
         self.host = host
 
         self.floating_ips_dict = {}
@@ -194,3 +195,22 @@ class DvrRouter(router.RouterInfo):
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.exception(_LE("DVR: Failed updating arp entry"))
+
+    def _set_subnet_arp_info(self, port):
+        """Set ARP info retrieved from Plugin for existing ports."""
+        if 'id' not in port['subnet']:
+            return
+
+        subnet_id = port['subnet']['id']
+
+        # TODO(Carl) Can we eliminate the need to make this RPC while
+        # processing a router.
+        subnet_ports = self.agent.get_ports_by_subnet(subnet_id)
+
+        for p in subnet_ports:
+            if p['device_owner'] not in l3_constants.ROUTER_INTERFACE_OWNERS:
+                for fixed_ip in p['fixed_ips']:
+                    self._update_arp_entry(fixed_ip['ip_address'],
+                                           p['mac_address'],
+                                           subnet_id,
+                                           'add')

@@ -276,6 +276,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         }
 
         if router.get('distributed'):
+            kwargs['agent'] = self
             kwargs['host'] = self.host
             return dvr_router.DvrRouter(*args, **kwargs)
 
@@ -354,7 +355,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self._set_subnet_info(p)
             self.internal_network_added(ri, p)
             ri.internal_ports.append(p)
-            self._set_subnet_arp_info(ri, p)
+            if ri.router['distributed']:
+                ri._set_subnet_arp_info(p)
             if (not new_ipv6_port and
                     netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
                 new_ipv6_port = True
