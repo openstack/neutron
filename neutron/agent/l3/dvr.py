@@ -18,7 +18,6 @@ from oslo_log import log as logging
 
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
-from neutron.agent.linux import iptables_manager
 
 LOG = logging.getLogger(__name__)
 
@@ -57,28 +56,6 @@ class AgentMixin(object):
 
     def get_ports_by_subnet(self, subnet_id):
         return self.plugin_rpc.get_ports_by_subnet(self.context, subnet_id)
-
-    def _create_dvr_gateway(self, ri, ex_gw_port, gw_interface_name,
-                            snat_ports):
-        """Create SNAT namespace."""
-        snat_ns = ri.create_snat_namespace()
-        # connect snat_ports to br_int from SNAT namespace
-        for port in snat_ports:
-            # create interface_name
-            ri._set_subnet_info(port)
-            interface_name = ri.get_snat_int_device_name(port['id'])
-            # TODO(Carl) calling private method on router.  Will fix soon.
-            ri._internal_network_added(snat_ns.name, port['network_id'],
-                                       port['id'], port['ip_cidr'],
-                                       port['mac_address'], interface_name,
-                                       SNAT_INT_DEV_PREFIX)
-        self._external_gateway_added(ri, ex_gw_port, gw_interface_name,
-                                     snat_ns.name, preserve_ips=[])
-        ri.snat_iptables_manager = iptables_manager.IptablesManager(
-            namespace=snat_ns.name,
-            use_ipv6=self.use_ipv6)
-        # kicks the FW Agent to add rules for the snat namespace
-        self.process_router_add(ri)
 
     def add_arp_entry(self, context, payload):
         """Add arp entry into router namespace.  Called from RPC."""

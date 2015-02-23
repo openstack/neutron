@@ -157,7 +157,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         external_port = router.get_ex_gw_port()
         ex_port_ipv6 = router._get_ipv6_lladdr(
             external_port['mac_address'])
-        external_device_name = self.agent.get_external_device_name(
+        external_device_name = router.get_external_device_name(
             external_port['id'])
         external_device_cidr = external_port['ip_cidr']
         internal_port = router.router[l3_constants.INTERFACE_KEY][0]
@@ -270,7 +270,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         floating_ips = router.router[l3_constants.FLOATINGIP_KEY]
         external_port = router.get_ex_gw_port()
         return len(floating_ips) and all(ip_lib.device_exists_with_ip_mac(
-            self.agent.get_external_device_name(external_port['id']),
+            router.get_external_device_name(external_port['id']),
             '%s/32' % fip['floating_ip_address'],
             external_port['mac_address'],
             namespace=router.ns_name) for fip in floating_ips)
@@ -433,7 +433,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertNotIn(old_gw, new_config)
         self.assertIn(new_gw, new_config)
         external_port = router.get_ex_gw_port()
-        external_device_name = self.agent.get_external_device_name(
+        external_device_name = router.get_external_device_name(
             external_port['id'])
         self.assertNotIn('%s/24 dev %s' %
                          (old_external_device_ip, external_device_name),
@@ -448,7 +448,7 @@ class L3AgentTestCase(L3AgentTestFramework):
 
         if enable_ha:
             port = router.get_ex_gw_port()
-            interface_name = self.agent.get_external_device_name(port['id'])
+            interface_name = router.get_external_device_name(port['id'])
             self._assert_no_ip_addresses_on_interface(router.ns_name,
                                                       interface_name)
             utils.wait_until_true(lambda: router.ha_state == 'master')
@@ -496,12 +496,12 @@ class L3AgentTestCase(L3AgentTestFramework):
     def _assert_external_device(self, router):
         external_port = router.get_ex_gw_port()
         self.assertTrue(self.device_exists_with_ip_mac(
-            external_port, self.agent.get_external_device_name,
+            external_port, router.get_external_device_name,
             router.ns_name))
 
     def _assert_gateway(self, router):
         external_port = router.get_ex_gw_port()
-        external_device_name = self.agent.get_external_device_name(
+        external_device_name = router.get_external_device_name(
             external_port['id'])
         external_device = ip_lib.IPDevice(external_device_name,
                                           namespace=router.ns_name)
@@ -797,7 +797,7 @@ class TestDvrRouter(L3AgentTestFramework):
         # snat_ns_name namespace
         if self.agent.conf.agent_mode == 'dvr_snat':
             self.assertTrue(self.device_exists_with_ip_mac(
-                external_port, self.agent.get_external_device_name,
+                external_port, router.get_external_device_name,
                 snat_ns_name))
         # if the agent is in dvr mode then the snat_ns_name namespace
         # should not be present at all:
@@ -829,7 +829,7 @@ class TestDvrRouter(L3AgentTestFramework):
         namespace = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
             router.router_id)
         external_port = router.get_ex_gw_port()
-        external_device_name = self.agent.get_external_device_name(
+        external_device_name = router.get_external_device_name(
             external_port['id'])
         external_device = ip_lib.IPDevice(external_device_name,
                                           namespace=namespace)

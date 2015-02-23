@@ -165,9 +165,6 @@ class HaRouter(router.RouterInfo):
     def get_router_cidrs(self, device):
         return set(self._ha_get_existing_cidrs(device.name))
 
-    def _ha_external_gateway_removed(self, interface_name):
-        self._clear_vips(interface_name)
-
     def routes_updated(self):
         new_routes = self.router['routes']
 
@@ -216,7 +213,7 @@ class HaRouter(router.RouterInfo):
                 return False
         return True
 
-    def _ha_disable_addressing_on_interface(self, interface_name):
+    def _disable_ipv6_addressing_on_interface(self, interface_name):
         """Disable IPv6 link local addressing on the device and add it as
         a VIP to keepalived. This means that the IPv6 link local address
         will only be present on the master.
@@ -230,14 +227,9 @@ class HaRouter(router.RouterInfo):
         self._remove_vip(ipv6_lladdr)
         self._add_vip(ipv6_lladdr, interface_name, scope='link')
 
-    def _ha_external_gateway_added(self, ex_gw_port, interface_name):
+    def _add_gateway_vip(self, ex_gw_port, interface_name):
         self._add_vip(ex_gw_port['ip_cidr'], interface_name)
         self._add_default_gw_virtual_route(ex_gw_port, interface_name)
-
-    def _ha_external_gateway_updated(self, ex_gw_port, interface_name):
-        old_gateway_cidr = self.ex_gw_port['ip_cidr']
-        self._remove_vip(old_gateway_cidr)
-        self._ha_external_gateway_added(ex_gw_port, interface_name)
 
     def add_floating_ip(self, fip, interface_name, device):
         fip_ip = fip['floating_ip_address']
@@ -261,7 +253,7 @@ class HaRouter(router.RouterInfo):
                              namespace=self.ns_name,
                              prefix=router.INTERNAL_DEV_PREFIX)
 
-        self._ha_disable_addressing_on_interface(interface_name)
+        self._disable_ipv6_addressing_on_interface(interface_name)
         self._add_vip(port['ip_cidr'], interface_name)
 
     def internal_network_removed(self, port):
@@ -319,3 +311,20 @@ class HaRouter(router.RouterInfo):
         state = 'master' if ha_cidr in cidrs else 'backup'
         self.ha_state = state
         callback(self.router_id, state)
+
+    def external_gateway_added(self, ex_gw_port, interface_name):
+        self._plug_external_gateway(ex_gw_port, interface_name, self.ns_name)
+        self._add_gateway_vip(ex_gw_port, interface_name)
+        self._disable_ipv6_addressing_on_interface(interface_name)
+
+    def external_gateway_updated(self, ex_gw_port, interface_name):
+        self._plug_external_gateway(ex_gw_port, interface_name, self.ns_name)
+        old_gateway_cidr = self.ex_gw_port['ip_cidr']
+        self._remove_vip(old_gateway_cidr)
+        self._add_gateway_vip(ex_gw_port, interface_name)
+
+    def external_gateway_removed(self, ex_gw_port, interface_name):
+        self._clear_vips(interface_name)
+
+        super(HaRouter, self).external_gateway_removed(ex_gw_port,
+                                                       interface_name)
