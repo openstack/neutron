@@ -796,7 +796,14 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     agent_id=L2_AGENT_2['host'])
                 self.assertEqual(port_id, details['port_id'])
 
-    def test_host_changed(self):
+    def _update_and_check_portbinding(self, port_id, host_id):
+        data = {'port': {'binding:host_id': host_id}}
+        req = self.new_update_request('ports', data, port_id)
+        res = self.deserialize(self.fmt,
+                               req.get_response(self.api))
+        self.assertEqual(host_id, res['port']['binding:host_id'])
+
+    def _test_host_changed(self, twice):
         self._register_ml2_agents()
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: L2_AGENT['host']}
@@ -810,12 +817,11 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.adminContext,
                     agent_id=L2_AGENT['host'],
                     device=device1)
-                data2 = {'port': {'binding:host_id': L2_AGENT_2['host']}}
-                req = self.new_update_request('ports', data2, p1['id'])
-                res = self.deserialize(self.fmt,
-                                       req.get_response(self.api))
-                self.assertEqual(res['port']['binding:host_id'],
-                                 L2_AGENT_2['host'])
+                if twice:
+                    self._update_and_check_portbinding(p1['id'],
+                                                       L2_AGENT_4['host'])
+                self._update_and_check_portbinding(p1['id'],
+                                                   L2_AGENT_2['host'])
                 self.mock_fanout.reset_mock()
                 # NOTE(yamamoto): see bug #1441488
                 self.adminContext.session.expire_all()
@@ -836,51 +842,11 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.mock_fanout.assert_called_with(
                     mock.ANY, 'remove_fdb_entries', expected)
 
-    def test_host_changed_twice(self):
-        self._register_ml2_agents()
-        with self.subnet(network=self._network) as subnet:
-            host_arg = {portbindings.HOST_ID: L2_AGENT['host']}
-            with self.port(subnet=subnet, cidr='10.0.0.0/24',
-                           device_owner=DEVICE_OWNER_COMPUTE,
-                           arg_list=(portbindings.HOST_ID,),
-                           **host_arg) as port1:
-                p1 = port1['port']
-                device1 = 'tap' + p1['id']
-                self.callbacks.update_device_up(
-                    self.adminContext,
-                    agent_id=L2_AGENT['host'],
-                    device=device1)
-                data2 = {'port': {'binding:host_id': L2_AGENT_2['host']}}
-                req = self.new_update_request('ports', data2, p1['id'])
-                res = self.deserialize(self.fmt,
-                                       req.get_response(self.api))
-                self.assertEqual(res['port']['binding:host_id'],
-                                 L2_AGENT_2['host'])
-                data4 = {'port': {'binding:host_id': L2_AGENT_4['host']}}
-                req = self.new_update_request('ports', data4, p1['id'])
-                res = self.deserialize(self.fmt,
-                                       req.get_response(self.api))
-                self.assertEqual(res['port']['binding:host_id'],
-                                 L2_AGENT_4['host'])
-                self.mock_fanout.reset_mock()
-                # NOTE(yamamoto): see bug #1441488
-                self.adminContext.session.expire_all()
-                self.callbacks.get_device_details(
-                    self.adminContext,
-                    device=device1,
-                    agent_id=L2_AGENT_4['host'])
-                p1_ips = [p['ip_address'] for p in p1['fixed_ips']]
-                expected = {p1['network_id']:
-                            {'ports':
-                             {'20.0.0.1': [constants.FLOODING_ENTRY,
-                                           l2pop_rpc.PortInfo(
-                                               p1['mac_address'],
-                                               p1_ips[0])]},
-                             'network_type': 'vxlan',
-                             'segment_id': 1}}
+    def test_host_changed(self):
+        self._test_host_changed(twice=False)
 
-                self.mock_fanout.assert_called_with(
-                    mock.ANY, 'remove_fdb_entries', expected)
+    def test_host_changed_twice(self):
+        self._test_host_changed(twice=True)
 
     def test_delete_port_invokes_update_device_down(self):
         l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
