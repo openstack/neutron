@@ -811,6 +811,15 @@ class MechanismDriver(object):
         """
         pass
 
+    def check_vlan_transparency(self, context):
+        """Check if the network supports vlan transparency.
+
+        :param context: NetworkContext instance describing the network.
+
+        Check if the network supports vlan transparency or not.
+        """
+        pass
+
 
 @six.add_metaclass(abc.ABCMeta)
 class ExtensionDriver(object):

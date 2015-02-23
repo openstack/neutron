@@ -296,8 +296,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         data = {'network': {'name': name,
                             'admin_state_up': admin_state_up,
                             'tenant_id': self._tenant_id}}
-        for arg in (('admin_state_up', 'tenant_id', 'shared') +
-                    (arg_list or ())):
+        for arg in (('admin_state_up', 'tenant_id', 'shared',
+                     'vlan_transparent') + (arg_list or ())):
             # Arg must be present
             if arg in kwargs:
                 data['network'][arg] = kwargs[arg]
@@ -2032,6 +2032,12 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         with self.network(name=name) as net:
             self.assertEqual(net['network']['mtu'],
                              constants.DEFAULT_NETWORK_MTU)
+
+    def test_create_network_vlan_transparent(self):
+        name = "vlan_transparent"
+        cfg.CONF.set_override('vlan_transparent', True)
+        with self.network(name=name, vlan_transparent=True) as net:
+            self.assertEqual(net['network']['vlan_transparent'], True)
 
     def test_update_network(self):
         with self.network() as network:

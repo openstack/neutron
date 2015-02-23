@@ -784,6 +784,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                'mtu': network.get('mtu', constants.DEFAULT_NETWORK_MTU),
                'status': network['status'],
                'shared': network['shared'],
+               'vlan_transparent': network['vlan_transparent'],
                'subnets': [subnet['id']
                            for subnet in network['subnets']]}
         # Call auxiliary extend functions, if any
@@ -872,6 +873,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     'admin_state_up': n['admin_state_up'],
                     'mtu': n.get('mtu', constants.DEFAULT_NETWORK_MTU),
                     'shared': n['shared'],
+                    'vlan_transparent': n.get('vlan_transparent', False),
                     'status': n.get('status', constants.NET_STATUS_ACTIVE)}
             network = models_v2.Network(**args)
             context.session.add(network)

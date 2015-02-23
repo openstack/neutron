@@ -65,6 +65,7 @@ class PluginClient(base_v2.BaseNeutronClient):
         # Supply defaults that are expected to be set by the api
         # framwork
         kwargs.setdefault('admin_state_up', True)
+        kwargs.setdefault('vlan_transparent', False)
         kwargs.setdefault('shared', False)
         data = dict(network=kwargs)
         result = self.plugin.create_network(self.ctx, data)

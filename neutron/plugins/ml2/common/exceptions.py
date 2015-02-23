@@ -21,3 +21,8 @@ from neutron.common import exceptions
 class MechanismDriverError(exceptions.NeutronException):
     """Mechanism driver call failed."""
     message = _("%(method)s failed.")
+
+
+class VlanTransparencyError(exceptions.NeutronException):
+    """Vlan Transparency not supported by all mechanism drivers."""
+    message = _("Backend does not support VLAN Transparency.")
