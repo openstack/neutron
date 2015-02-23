@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+import testtools
 
 from neutron.agent.l3 import event_observers
 from neutron.services import advanced_service as adv_svc
@@ -45,21 +46,23 @@ class TestL3EventObservers(base.BaseTestCase):
         self.event_observers.add(observer)
         self.assertIn(observer, self.event_observers.observers)
 
-    def test_add_duplicate_observer_is_ignored(self):
-        observer = object()
+    def test_add_duplicate_observer_type_raises(self):
+        agent = mock.Mock()
+        observer = DummyService1(agent)
         self.event_observers.add(observer)
-        try:
-            self.event_observers.add(observer)
-        except Exception:
-            self.fail('Duplicate additions of observers should be ignored')
+
+        observer2 = DummyService1(agent)
+        with testtools.ExpectedException(ValueError):
+            self.event_observers.add(observer2)
+
         self.assertEqual(1, len(self.event_observers.observers))
 
     def test_observers_in_service_notified(self):
         """Test that correct handlers for multiple services are called."""
         l3_agent = mock.Mock()
         router_info = mock.Mock()
-        observer1 = DummyService1.instance(l3_agent)
-        observer2 = DummyService2.instance(l3_agent)
+        observer1 = DummyService1(l3_agent)
+        observer2 = DummyService2(l3_agent)
         observer1_before_add = mock.patch.object(
             DummyService1, 'before_router_added').start()
         observer2_before_add = mock.patch.object(

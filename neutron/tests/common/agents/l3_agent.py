@@ -19,12 +19,6 @@ from neutron.agent.l3 import agent
 class TestL3NATAgent(agent.L3NATAgentWithStateReport):
     NESTED_NAMESPACE_SEPARATOR = '@'
 
-    def __init__(self, host, conf=None):
-        super(TestL3NATAgent, self).__init__(host, conf)
-        self.event_observers.observers = set(
-            observer.__class__(self) for observer in
-            self.event_observers.observers)
-
     def get_ns_name(self, router_id):
         ns_name = super(TestL3NATAgent, self).get_ns_name(router_id)
         return "%s%s%s" % (ns_name, self.NESTED_NAMESPACE_SEPARATOR, self.host)

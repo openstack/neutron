@@ -21,9 +21,14 @@ class L3EventObservers(object):
     def __init__(self):
         self.observers = set()
 
-    def add(self, observer):
+    def add(self, new_observer):
         """Add a listener for L3 agent notifications."""
-        self.observers.add(observer)
+        for observer in self.observers:
+            if type(observer) == type(new_observer):
+                raise ValueError('Only a single instance of AdvancedService '
+                                 'may be registered, per type of service.')
+
+        self.observers.add(new_observer)
 
     def notify(self, l3_event_action, *args, **kwargs):
         """Give interested parties a chance to act on event.

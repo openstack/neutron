@@ -34,22 +34,13 @@ class TestAdvancedService(base.BaseTestCase):
         super(TestAdvancedService, self).setUp()
         self.agent = mock.Mock()
         self.test_observers = event_observers.L3EventObservers()
-        # Ensure no instances for each test
-        FakeServiceA._instance = None
-        FakeServiceB._instance = None
 
     def test_create_service(self):
         """Test agent saved and service added to observer list."""
-        my_service = FakeServiceA.instance(self.agent)
+        my_service = FakeServiceA(self.agent)
         self.test_observers.add(my_service)
         self.assertIn(my_service, self.test_observers.observers)
         self.assertEqual(self.agent, my_service.l3_agent)
-
-    def test_service_is_singleton(self):
-        """Test that two services of same time use same instance."""
-        a1 = FakeServiceA.instance(self.agent)
-        a2 = FakeServiceA.instance(self.agent)
-        self.assertIs(a1, a2)
 
     def test_shared_observers_for_different_services(self):
         """Test different service type instances created.
@@ -57,13 +48,13 @@ class TestAdvancedService(base.BaseTestCase):
         The services are unique instances, with different agents, but
         sharing the same observer list.
         """
-        a = FakeServiceA.instance(self.agent)
+        a = FakeServiceA(self.agent)
         self.test_observers.add(a)
         self.assertEqual(self.agent, a.l3_agent)
         self.assertIn(a, self.test_observers.observers)
 
         another_agent = mock.Mock()
-        b = FakeServiceB.instance(another_agent)
+        b = FakeServiceB(another_agent)
         self.test_observers.add(b)
         self.assertNotEqual(a, b)
         self.assertEqual(another_agent, b.l3_agent)
@@ -76,10 +67,10 @@ class TestAdvancedService(base.BaseTestCase):
         The services are unique instances, shared the same agent, but
         are using different observer lists.
         """
-        a = FakeServiceA.instance(self.agent)
+        a = FakeServiceA(self.agent)
         self.test_observers.add(a)
         other_observers = event_observers.L3EventObservers()
-        b = FakeServiceB.instance(self.agent)
+        b = FakeServiceB(self.agent)
         other_observers.add(b)
 
         self.assertNotEqual(a, b)
