@@ -178,6 +178,7 @@ function _install_rootwrap_sudoers {
     VENV_NAME=${venv:-dsvm-functional}
     VENV_PATH=$NEUTRON_PATH/.tox/$VENV_NAME
     ROOTWRAP_SUDOER_CMD="$VENV_PATH/bin/neutron-rootwrap $VENV_PATH/etc/neutron/rootwrap.conf *"
+    ROOTWRAP_DAEMON_SUDOER_CMD="$VENV_PATH/bin/neutron-rootwrap-daemon $VENV_PATH/etc/neutron/rootwrap.conf"
     TEMPFILE=$(mktemp)
     cat << EOF > $TEMPFILE
 # A bug in oslo.rootwrap [1] prevents commands executed with 'ip netns
@@ -194,6 +195,7 @@ function _install_rootwrap_sudoers {
 #
 Defaults:$STACK_USER  secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$VENV_PATH/bin"
 $STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD
+$STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_DAEMON_SUDOER_CMD
 EOF
     chmod 0440 $TEMPFILE
     sudo chown root:root $TEMPFILE
