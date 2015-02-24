@@ -323,9 +323,9 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.process_monitor = mock.patch(
             'neutron.agent.linux.external_process.ProcessMonitor').start()
 
-        self.send_arp_p = mock.patch(
-            'neutron.agent.linux.ip_lib.send_gratuitous_arp')
-        self.send_arp = self.send_arp_p.start()
+        self.send_adv_notif_p = mock.patch(
+            'neutron.agent.linux.ip_lib.send_ip_addr_adv_notif')
+        self.send_adv_notif = self.send_adv_notif_p.start()
 
         self.dvr_cls_p = mock.patch('neutron.agent.linux.interface.NullDriver')
         driver_cls = self.dvr_cls_p.start()
@@ -510,8 +510,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri.internal_network_added(port)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
-            self.send_arp.assert_called_once_with(ri.ns_name, interface_name,
-                                                  '99.0.1.9', mock.ANY)
+            self.send_adv_notif.assert_called_once_with(ri.ns_name,
+                                                        interface_name,
+                                                        '99.0.1.9', mock.ANY)
         elif action == 'remove':
             self.device_exists.return_value = True
             ri.internal_network_removed(port)
@@ -622,7 +623,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
             if no_subnet and not dual_stack:
-                self.assertEqual(self.send_arp.call_count, 0)
+                self.assertEqual(self.send_adv_notif.call_count, 0)
                 ip_cidrs = []
                 gateway_ips = []
                 if no_sub_gw:
@@ -640,7 +641,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                     exp_arp_calls += [mock.call(ri.ns_name, interface_name,
                                                 '2001:192:168:100::2',
                                                 mock.ANY)]
-                self.send_arp.assert_has_calls(exp_arp_calls)
+                self.send_adv_notif.assert_has_calls(exp_arp_calls)
                 ip_cidrs = ['20.0.0.30/24']
                 gateway_ips = ['20.0.0.1']
                 if dual_stack:
@@ -811,7 +812,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri.use_ipv6 = True
             exp_arp_calls += [mock.call(ri.ns_name, interface_name,
                                         '2001:192:168:100::2', mock.ANY)]
-        self.send_arp.assert_has_calls(exp_arp_calls)
+        self.send_adv_notif.assert_has_calls(exp_arp_calls)
         ip_cidrs = ['20.0.0.30/24']
         gateway_ips = ['20.0.0.1']
         if dual_stack:
@@ -1148,7 +1149,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         del router[l3_constants.INTERFACE_KEY]
         del router['gw_port']
         ri.process(agent)
-        self.assertEqual(self.send_arp.call_count, 1)
+        self.assertEqual(self.send_adv_notif.call_count, 1)
         distributed = ri.router.get('distributed', False)
         self.assertEqual(ri.process_floating_ip_addresses.called,
                          distributed)
@@ -1385,7 +1386,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(len(mangle_rules_delta), 1)
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
                                        router)
-        self.assertEqual(self.send_arp.call_count, 1)
+        self.assertEqual(self.send_adv_notif.call_count, 1)
 
     def test_process_router_snat_enabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1412,7 +1413,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(len(mangle_rules_delta), 1)
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
                                        router)
-        self.assertEqual(self.send_arp.call_count, 1)
+        self.assertEqual(self.send_adv_notif.call_count, 1)
 
     def test_process_router_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1426,8 +1427,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Reassign the router object to RouterInfo
         ri.router = router
         ri.process(agent)
-        # send_arp is called both times process is called
-        self.assertEqual(self.send_arp.call_count, 2)
+        # send_ip_addr_adv_notif is called both times process is called
+        self.assertEqual(self.send_adv_notif.call_count, 2)
 
     def _test_process_ipv6_only_or_dual_stack_gw(self, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1617,8 +1618,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Reassign the router object to RouterInfo
         ri.router = router
         ri.process(agent)
-        # send_arp is called both times process is called
-        self.assertEqual(self.send_arp.call_count, 2)
+        # send_ip_addr_adv_notif is called both times process is called
+        self.assertEqual(self.send_adv_notif.call_count, 2)
 
     def test_process_router_ipv6_interface_removed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
