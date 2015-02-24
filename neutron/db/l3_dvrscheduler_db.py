@@ -155,7 +155,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def dvr_deletens_if_no_port(self, context, port_id):
         """Delete the DVR namespace if no dvr serviced port exists."""
-        router_ids = self.get_dvr_routers_by_portid(context, port_id)
+        admin_context = context.elevated()
+        router_ids = self.get_dvr_routers_by_portid(admin_context, port_id)
         port_host = ml2_db.get_port_binding_host(port_id)
         if not router_ids:
             LOG.debug('No namespaces available for this DVR port %(port)s '
@@ -164,10 +165,11 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             return []
         removed_router_info = []
         for router_id in router_ids:
-            subnet_ids = self.get_subnet_ids_on_router(context, router_id)
+            subnet_ids = self.get_subnet_ids_on_router(admin_context,
+                                                       router_id)
             port_exists_on_subnet = False
             for subnet in subnet_ids:
-                if self.check_ports_active_on_host_and_subnet(context,
+                if self.check_ports_active_on_host_and_subnet(admin_context,
                                                               port_host,
                                                               port_id,
                                                               subnet):
@@ -180,7 +182,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                           'device_owner':
                           [q_const.DEVICE_OWNER_DVR_INTERFACE]}
             int_ports = self._core_plugin.get_ports(
-                context, filters=filter_rtr)
+                admin_context, filters=filter_rtr)
             for prt in int_ports:
                 dvr_binding = (ml2_db.
                                get_dvr_port_binding_by_host(context.session,
