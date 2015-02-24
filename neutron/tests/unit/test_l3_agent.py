@@ -64,9 +64,9 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
         cidr_pool = '35.4.%i.0/24'
         gw_pool = '35.4.%i.1'
     elif ip_version == 6:
-        ip_pool = 'fd01:%x::6'
-        cidr_pool = 'fd01:%x::/64'
-        gw_pool = 'fd01:%x::1'
+        ip_pool = 'fd01:%x:1::6'
+        cidr_pool = 'fd01:%x:1::/64'
+        gw_pool = 'fd01:%x:1::1'
     else:
         raise ValueError("Invalid ip_version: %s" % ip_version)
 

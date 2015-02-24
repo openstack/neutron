@@ -177,8 +177,9 @@ class HaRouter(router.RouterInfo):
         instance = self._get_keepalived_instance()
 
         # Filter out all of the old routes while keeping only the default route
+        default_gw = ('::/0', '0.0.0.0/0')
         instance.virtual_routes = [route for route in instance.virtual_routes
-                                   if route.destination == '0.0.0.0/0']
+                                   if route.destination in default_gw]
         for route in new_routes:
             instance.virtual_routes.append(keepalived.KeepalivedVirtualRoute(
                 route['destination'],
@@ -190,13 +191,15 @@ class HaRouter(router.RouterInfo):
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if gw_ip:
             # TODO(Carl) This is repeated everywhere.  A method would be nice.
+            default_gw = ('0.0.0.0/0' if netaddr.IPAddress(gw_ip).version == 4
+                          else '::/0')
             instance = self._get_keepalived_instance()
             instance.virtual_routes = (
                 [route for route in instance.virtual_routes
-                 if route.destination != '0.0.0.0/0'])
+                 if route.destination != default_gw])
             instance.virtual_routes.append(
                 keepalived.KeepalivedVirtualRoute(
-                    '0.0.0.0/0', gw_ip, interface_name))
+                    default_gw, gw_ip, interface_name))
 
     def _get_ipv6_lladdr(self, mac_addr):
         return '%s/64' % netaddr.EUI(mac_addr).ipv6_link_local()
