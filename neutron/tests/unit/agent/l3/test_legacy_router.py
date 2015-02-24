@@ -52,28 +52,27 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
             namespace=ri.ns_name)
 
 
-@mock.patch.object(ip_lib, 'send_gratuitous_arp')
+@mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
 class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):
-    def test_add_floating_ip(self, send_gratuitous_arp):
+    def test_add_floating_ip(self, send_ip_addr_adv_notif):
         ri = self._create_router()
         ri._add_fip_addr_to_device = mock.Mock(return_value=True)
-        self.agent_conf.send_arp_for_ha = mock.sentinel.arp_count
         ip = '15.1.2.3'
         result = ri.add_floating_ip({'floating_ip_address': ip},
                                     mock.sentinel.interface_name,
                                     mock.sentinel.device)
-        ip_lib.send_gratuitous_arp.assert_called_once_with(
+        ip_lib.send_ip_addr_adv_notif.assert_called_once_with(
             ri.ns_name,
             mock.sentinel.interface_name,
             ip,
-            mock.sentinel.arp_count)
+            self.agent_conf)
         self.assertEqual(l3_constants.FLOATINGIP_STATUS_ACTIVE, result)
 
-    def test_add_floating_ip_error(self, send_gratuitous_arp):
+    def test_add_floating_ip_error(self, send_ip_addr_adv_notif):
         ri = self._create_router()
         ri._add_fip_addr_to_device = mock.Mock(return_value=False)
         result = ri.add_floating_ip({'floating_ip_address': '15.1.2.3'},
                                     mock.sentinel.interface_name,
                                     mock.sentinel.device)
-        self.assertFalse(ip_lib.send_gratuitous_arp.called)
+        self.assertFalse(ip_lib.send_ip_addr_adv_notif.called)
         self.assertEqual(l3_constants.FLOATINGIP_STATUS_ERROR, result)

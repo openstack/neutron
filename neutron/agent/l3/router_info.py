@@ -295,10 +295,10 @@ class RouterInfo(object):
         ip_cidrs = common_utils.fixed_ip_cidrs(fixed_ips)
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name)
         for fixed_ip in fixed_ips:
-            ip_lib.send_gratuitous_arp(ns_name,
-                                       interface_name,
-                                       fixed_ip['ip_address'],
-                                       self.agent_conf.send_arp_for_ha)
+            ip_lib.send_ip_addr_adv_notif(ns_name,
+                                          interface_name,
+                                          fixed_ip['ip_address'],
+                                          self.agent_conf)
 
     def internal_network_added(self, port):
         network_id = port['network_id']
@@ -466,10 +466,10 @@ class RouterInfo(object):
                             preserve_ips=preserve_ips,
                             enable_ra_on_gw=enable_ra_on_gw)
         for fixed_ip in ex_gw_port['fixed_ips']:
-            ip_lib.send_gratuitous_arp(ns_name,
-                                       interface_name,
-                                       fixed_ip['ip_address'],
-                                       self.agent_conf.send_arp_for_ha)
+            ip_lib.send_ip_addr_adv_notif(ns_name,
+                                          interface_name,
+                                          fixed_ip['ip_address'],
+                                          self.agent_conf)
 
     def is_v6_gateway_set(self, gateway_ips):
         """Check to see if list of gateway_ips has an IPv6 gateway.
