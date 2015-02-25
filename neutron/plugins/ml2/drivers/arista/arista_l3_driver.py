@@ -131,16 +131,16 @@ class AristaL3Driver(object):
         if cfg.CONF.l3_arista.get('primary_l3_host') == '':
             msg = _('Required option primary_l3_host is not set')
             LOG.error(msg)
-            raise arista_exc.AristaSevicePluginConfigError(msg=msg)
+            raise arista_exc.AristaServicePluginConfigError(msg=msg)
         if cfg.CONF.l3_arista.get('mlag_config'):
             if cfg.CONF.l3_arista.get('secondary_l3_host') == '':
                 msg = _('Required option secondary_l3_host is not set')
                 LOG.error(msg)
-                raise arista_exc.AristaSevicePluginConfigError(msg=msg)
+                raise arista_exc.AristaServicePluginConfigError(msg=msg)
         if cfg.CONF.l3_arista.get('primary_l3_host_username') == '':
             msg = _('Required option primary_l3_host_username is not set')
             LOG.error(msg)
-            raise arista_exc.AristaSevicePluginConfigError(msg=msg)
+            raise arista_exc.AristaServicePluginConfigError(msg=msg)
 
     def create_router_on_eos(self, router_name, rdm, server):
         """Creates a router on Arista HW Device.

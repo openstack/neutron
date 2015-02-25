@@ -20,20 +20,20 @@ import sys
 from neutron.tests import base
 
 
-class SytemExitTestCase(base.BaseTestCase):
+class SystemExitTestCase(base.BaseTestCase):
 
     def setUp(self):
         def _fail_SystemExit(exc_info):
             if isinstance(exc_info[1], SystemExit):
                 self.fail("A SystemExit was allowed out")
-        super(SytemExitTestCase, self).setUp()
+        super(SystemExitTestCase, self).setUp()
         # add the handler last so reaching it means the handler in BaseTestCase
         # didn't do it's job
         self.addOnException(_fail_SystemExit)
 
     def run(self, *args, **kwargs):
         exc = self.assertRaises(AssertionError,
-                                super(SytemExitTestCase, self).run,
+                                super(SystemExitTestCase, self).run,
                                 *args, **kwargs)
         # this message should be generated when SystemExit is raised by a test
         self.assertIn('A SystemExit was raised during the test.', str(exc))

@@ -271,7 +271,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                            'agent': binding.dhcp_agent_id})
                 # still continue and allow concurrent scheduling attempt
             except Exception:
-                LOG.exception(_LE("Unexpected exception occured while "
+                LOG.exception(_LE("Unexpected exception occurred while "
                                   "removing network %(net)s from agent "
                                   "%(agent)s"),
                               {'net': binding.network_id,
