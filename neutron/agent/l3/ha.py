@@ -17,6 +17,7 @@ import os
 
 from oslo_config import cfg
 
+from neutron.agent.linux import keepalived
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
@@ -33,7 +34,8 @@ OPTS = [
                       'config files')),
     cfg.StrOpt('ha_vrrp_auth_type',
                default='PASS',
-               help=_('VRRP authentication type AH/PASS')),
+               choices=keepalived.VALID_AUTH_TYPES,
+               help=_('VRRP authentication type')),
     cfg.StrOpt('ha_vrrp_auth_password',
                help=_('VRRP authentication password'),
                secret=True),
