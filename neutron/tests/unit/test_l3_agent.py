@@ -727,7 +727,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router['gw_port_host'] = HOSTNAME
         self._test_external_gateway_action('remove', router, dual_stack=True)
 
-    def _verify_snat_rules(self, rules, router, negate=False):
+    def _verify_snat_mangle_rules(self, nat_rules, mangle_rules, router,
+                                  negate=False):
         interfaces = router[l3_constants.INTERFACE_KEY]
         source_cidrs = []
         for iface in interfaces:
@@ -741,8 +742,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         expected_rules = [
             '! -i %s ! -o %s -m conntrack ! --ctstate DNAT -j ACCEPT' %
             (interface_name, interface_name),
-            '-o %s -j SNAT --to-source %s' % (interface_name, source_nat_ip)]
-        for r in rules:
+            '-o %s -j SNAT --to-source %s' % (interface_name, source_nat_ip),
+            '-m mark ! --mark 0x2 -m conntrack --ctstate DNAT '
+            '-j SNAT --to-source %s' % source_nat_ip]
+        for r in nat_rules:
+            if negate:
+                self.assertNotIn(r.rule, expected_rules)
+            else:
+                self.assertIn(r.rule, expected_rules)
+        expected_rules = [
+            '-i %s -j MARK --set-xmark 0x2/0xffffffff' % interface_name]
+        for r in mangle_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
             else:
@@ -1112,6 +1122,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Process with NAT
         ri.process(agent)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        orig_mangle_rules = ri.iptables_manager.ipv4['mangle'].rules[:]
         # Reprocess without NAT
         router['enable_snat'] = False
         # Reassign the router object to RouterInfo
@@ -1121,8 +1132,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # IpTablesRule instances
         nat_rules_delta = [r for r in orig_nat_rules
                            if r not in ri.iptables_manager.ipv4['nat'].rules]
-        self.assertEqual(len(nat_rules_delta), 2)
-        self._verify_snat_rules(nat_rules_delta, router)
+        self.assertEqual(len(nat_rules_delta), 3)
+        mangle_rules_delta = [
+            r for r in orig_mangle_rules
+            if r not in ri.iptables_manager.ipv4['mangle'].rules]
+        self.assertEqual(len(mangle_rules_delta), 1)
+        self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
+                                       router)
         self.assertEqual(self.send_arp.call_count, 1)
 
     def test_process_router_snat_enabled(self):
@@ -1133,6 +1149,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Process without NAT
         ri.process(agent)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        orig_mangle_rules = ri.iptables_manager.ipv4['mangle'].rules[:]
         # Reprocess with NAT
         router['enable_snat'] = True
         # Reassign the router object to RouterInfo
@@ -1142,8 +1159,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # IpTablesRule instances
         nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
                            if r not in orig_nat_rules]
-        self.assertEqual(len(nat_rules_delta), 2)
-        self._verify_snat_rules(nat_rules_delta, router)
+        self.assertEqual(len(nat_rules_delta), 3)
+        mangle_rules_delta = [
+            r for r in ri.iptables_manager.ipv4['mangle'].rules
+            if r not in orig_mangle_rules]
+        self.assertEqual(len(mangle_rules_delta), 1)
+        self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
+                                       router)
         self.assertEqual(self.send_arp.call_count, 1)
 
     def test_process_router_interface_added(self):
@@ -1481,14 +1503,24 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         jump_float_rule = "-A %s-snat -j %s-float-snat" % (wrap_name,
                                                            wrap_name)
-        snat_rule = ("-A %s-snat -o iface -j SNAT --to-source %s") % (
+        snat_rule1 = ("-A %s-snat -o iface -j SNAT --to-source %s") % (
+            wrap_name, ex_gw_port['fixed_ips'][0]['ip_address'])
+        snat_rule2 = ("-A %s-snat -m mark ! --mark 0x2 "
+                      "-m conntrack --ctstate DNAT "
+                      "-j SNAT --to-source %s") % (
             wrap_name, ex_gw_port['fixed_ips'][0]['ip_address'])
 
         self.assertIn(jump_float_rule, nat_rules)
 
-        self.assertIn(snat_rule, nat_rules)
+        self.assertIn(snat_rule1, nat_rules)
+        self.assertIn(snat_rule2, nat_rules)
         self.assertThat(nat_rules.index(jump_float_rule),
-                        matchers.LessThan(nat_rules.index(snat_rule)))
+                        matchers.LessThan(nat_rules.index(snat_rule1)))
+
+        mangle_rules = map(str, ri.iptables_manager.ipv4['mangle'].rules)
+        mangle_rule = ("-A %s-mark -i iface "
+                       "-j MARK --set-xmark 0x2/0xffffffff") % wrap_name
+        self.assertIn(mangle_rule, mangle_rules)
 
     def test_process_router_delete_stale_internal_devices(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
