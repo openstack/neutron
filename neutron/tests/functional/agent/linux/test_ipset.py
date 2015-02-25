@@ -16,6 +16,7 @@
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_manager
 from neutron.tests.functional.agent.linux import base
+from neutron.tests.functional.agent.linux import helpers
 
 IPSET_SET = 'test-set'
 IPSET_ETHERTYPE = 'IPv4'
@@ -36,6 +37,7 @@ class IpsetBase(base.BaseIPVethTestCase):
             namespace=self.dst_ns.namespace)
 
         self._add_iptables_ipset_rules(self.dst_iptables)
+        self.pinger = helpers.Pinger(self.src_ns)
 
     def _create_ipset_manager_and_set(self, dst_ns, set_name):
         ipset = ipset_manager.IpsetManager(
@@ -59,28 +61,28 @@ class IpsetBase(base.BaseIPVethTestCase):
 class IpsetManagerTestCase(IpsetBase):
 
     def test_add_member_allows_ping(self):
-        self.pinger.assert_no_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.pinger.assert_no_ping(self.DST_ADDRESS)
         self.ipset._add_member_to_set(IPSET_SET, self.SRC_ADDRESS)
-        self.pinger.assert_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.pinger.assert_ping(self.DST_ADDRESS)
 
     def test_del_member_denies_ping(self):
         self.ipset._add_member_to_set(IPSET_SET, self.SRC_ADDRESS)
-        self.pinger.assert_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.pinger.assert_ping(self.DST_ADDRESS)
 
         self.ipset._del_member_from_set(IPSET_SET, self.SRC_ADDRESS)
-        self.pinger.assert_no_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.pinger.assert_no_ping(self.DST_ADDRESS)
 
     def test_refresh_ipset_allows_ping(self):
         self.ipset._refresh_set(IPSET_SET, [UNRELATED_IP], IPSET_ETHERTYPE)
-        self.pinger.assert_no_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.pinger.assert_no_ping(self.DST_ADDRESS)
 
         self.ipset._refresh_set(IPSET_SET, [UNRELATED_IP, self.SRC_ADDRESS],
                                 IPSET_ETHERTYPE)
-        self.pinger.assert_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.pinger.assert_ping(self.DST_ADDRESS)
 
         self.ipset._refresh_set(IPSET_SET, [self.SRC_ADDRESS, UNRELATED_IP],
                                 IPSET_ETHERTYPE)
-        self.pinger.assert_ping_from_ns(self.src_ns, self.DST_ADDRESS)
+        self.pinger.assert_ping(self.DST_ADDRESS)
 
     def test_destroy_ipset_set(self):
         self.assertRaises(RuntimeError, self.ipset._destroy, IPSET_SET)

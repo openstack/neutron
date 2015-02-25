@@ -34,6 +34,8 @@ expected_calls_and_values is a list of (expected_call, return_value):
   A return value or an exception can be specified.
 """
 
+import unittest
+
 
 def setup_mock_calls(mocked_call, expected_calls_and_values):
     return_values = [call[1] for call in expected_calls_and_values]
@@ -44,3 +46,12 @@ def verify_mock_calls(mocked_call, expected_calls_and_values,
                       any_order=False):
     expected_calls = [call[0] for call in expected_calls_and_values]
     mocked_call.assert_has_calls(expected_calls, any_order=any_order)
+
+
+def fail(msg=None):
+    """Fail immediatly, with the given message.
+
+    This method is equivalent to TestCase.fail without requiring a
+    testcase instance (usefully for reducing coupling).
+    """
+    raise unittest.TestCase.failureException(msg)
