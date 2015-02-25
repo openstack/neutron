@@ -150,7 +150,10 @@ class NsxvRouterExtAttributes(model_base.BASEV2):
                           sa.ForeignKey('routers.id', ondelete="CASCADE"),
                           primary_key=True)
     distributed = sa.Column(sa.Boolean, default=False, nullable=False)
-    exclusive = sa.Column(sa.Boolean, default=False, nullable=False)
+    router_type = sa.Column(
+        sa.Enum('shared', 'exclusive',
+                name='nsxv_router_type'),
+        default='exclusive', nullable=False)
     service_router = sa.Column(sa.Boolean, default=False, nullable=False)
     # Add a relationship to the Router model in order to instruct
     # SQLAlchemy to eagerly load this association

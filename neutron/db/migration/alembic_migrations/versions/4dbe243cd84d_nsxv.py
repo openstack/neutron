@@ -38,6 +38,8 @@ internal_edge_purpose_enum = sa.Enum('inter_edge_net',
                                      name='nsxv_internal_edges_purpose')
 tz_binding_type_enum = sa.Enum('flat', 'vlan', 'portgroup',
                                name='nsxv_tz_network_bindings_binding_type')
+router_types_enum = sa.Enum('shared', 'exclusive',
+                            name='nsxv_router_type')
 
 
 def upgrade():
@@ -138,7 +140,8 @@ def upgrade():
         'nsxv_router_ext_attributes',
         sa.Column('router_id', sa.String(length=36), nullable=False),
         sa.Column('distributed', sa.Boolean(), nullable=False),
-        sa.Column('exclusive', sa.Boolean(), nullable=False),
+        sa.Column('router_type', router_types_enum,
+                  default='exclusive', nullable=False),
         sa.Column('service_router', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
@@ -164,3 +167,4 @@ def downgrade():
     internal_network_purpose_enum.drop(op.get_bind(), checkfirst=False)
     internal_edge_purpose_enum.drop(op.get_bind(), checkfirst=False)
     tz_binding_type_enum.drop(op.get_bind(), checkfirst=False)
+    router_types_enum.drop(op.get_bind(), checkfirst=False)
