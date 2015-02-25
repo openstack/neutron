@@ -1860,7 +1860,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._router_removed(update.id)
                 continue
 
-            self._process_routers([router])
+            try:
+                self._process_routers([router])
+            except Exception:
+                msg = _("Failed to process router '%s'")
+                LOG.exception(msg, update.id)
+                self.fullsync = True
+                continue
             LOG.debug("Finished a router update for %s", update.id)
             rp.fetched_and_processed(update.timestamp)
 
