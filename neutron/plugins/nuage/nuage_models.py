@@ -25,6 +25,8 @@ class NetPartition(model_base.BASEV2, models_v2.HasId):
     name = sa.Column(sa.String(64))
     l3dom_tmplt_id = sa.Column(sa.String(36))
     l2dom_tmplt_id = sa.Column(sa.String(36))
+    isolated_zone = sa.Column(sa.String(64))
+    shared_zone = sa.Column(sa.String(64))
 
 
 class NetPartitionRouter(model_base.BASEV2):
@@ -36,7 +38,9 @@ class NetPartitionRouter(model_base.BASEV2):
     router_id = sa.Column(sa.String(36),
                           sa.ForeignKey('routers.id', ondelete="CASCADE"),
                           primary_key=True)
-    nuage_router_id = sa.Column(sa.String(36))
+    nuage_router_id = sa.Column(sa.String(36), unique=True)
+    nuage_rtr_rt = sa.Column(sa.String(36))
+    nuage_rtr_rd = sa.Column(sa.String(36))
 
 
 class ProviderNetBinding(model_base.BASEV2):
@@ -64,7 +68,8 @@ class SubnetL2Domain(model_base.BASEV2):
     net_partition_id = sa.Column(sa.String(36),
                                  sa.ForeignKey('nuage_net_partitions.id',
                                  ondelete="CASCADE"))
-    nuage_subnet_id = sa.Column(sa.String(36))
+    nuage_subnet_id = sa.Column(sa.String(36), unique=True)
     nuage_l2dom_tmplt_id = sa.Column(sa.String(36))
     nuage_user_id = sa.Column(sa.String(36))
     nuage_group_id = sa.Column(sa.String(36))
+    nuage_managed_subnet = sa.Column(sa.Boolean())
