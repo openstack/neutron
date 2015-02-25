@@ -33,7 +33,6 @@ Device = collections.namedtuple('Device', 'name ip_cidr mac_address namespace')
 class IpLibTestFramework(base.BaseLinuxTestCase):
     def setUp(self):
         super(IpLibTestFramework, self).setUp()
-        self.check_sudo_enabled()
         self._configure()
 
     def _configure(self):

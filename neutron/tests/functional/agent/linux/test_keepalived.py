@@ -17,15 +17,12 @@ from oslo_config import cfg
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
-from neutron.tests.functional import base as functional_base
+from neutron.tests import base
 from neutron.tests.unit.agent.linux import test_keepalived
 
 
-class KeepalivedManagerTestCase(functional_base.BaseSudoTestCase,
+class KeepalivedManagerTestCase(base.BaseTestCase,
                                 test_keepalived.KeepalivedConfBaseMixin):
-    def setUp(self):
-        super(KeepalivedManagerTestCase, self).setUp()
-        self.check_sudo_enabled()
 
     def test_keepalived_spawn(self):
         expected_config = self._get_config()

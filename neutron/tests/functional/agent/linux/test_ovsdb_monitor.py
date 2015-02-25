@@ -49,7 +49,6 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
         self.bridge = self.create_ovs_bridge()
 
     def _check_test_requirements(self):
-        self.check_sudo_enabled()
         self.check_command(['ovsdb-client', 'list-dbs'],
                            'Exit code: 1',
                            'password-less sudo not granted for ovsdb-client',

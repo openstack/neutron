@@ -43,9 +43,6 @@ class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
     neutron-sanity-check runs without throwing an exception, as in the case
     where someone modifies the API without updating the check script.
     """
-    def setUp(self):
-        super(SanityTestCaseRoot, self).setUp()
-        self.check_sudo_enabled()
 
     def test_ovs_vxlan_support_runs(self):
         checks.ovs_vxlan_supported()

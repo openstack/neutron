@@ -161,10 +161,6 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
     DST_ADDRESS = '192.168.0.2'
     BROADCAST_ADDRESS = '192.168.0.255'
 
-    def setUp(self):
-        super(BaseIPVethTestCase, self).setUp()
-        self.check_sudo_enabled()
-
     @staticmethod
     def _set_ip_up(device, cidr, broadcast, ip_version=4):
         device.addr.add(ip_version=ip_version, cidr=cidr, broadcast=broadcast)
