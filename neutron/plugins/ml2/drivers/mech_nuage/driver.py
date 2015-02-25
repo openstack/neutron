@@ -21,9 +21,9 @@ from neutron.i18n import _LE
 from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.nuage.common import config
-from neutron.plugins.nuage.common import constants as nuage_const
-from neutron.plugins.nuage import plugin
+from nuage_neutron.plugins.nuage.common import config
+from nuage_neutron.plugins.nuage.common import constants as nuage_const
+from nuage_neutron.plugins.nuage import plugin
 
 LOG = log.getLogger(__name__)
 
