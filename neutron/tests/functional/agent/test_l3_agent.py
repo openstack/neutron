@@ -62,12 +62,18 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
         mock.patch.object(self.agent, '_send_gratuitous_arp_packet').start()
 
-    def manage_router(self, enable_ha):
-        router = test_l3_agent.prepare_router_data(enable_snat=True,
-                                                   enable_floating_ip=True,
-                                                   enable_ha=enable_ha)
-        self.addCleanup(self._delete_router, router['id'])
-        ri = self._create_router(router)
+    def manage_router(self, enable_ha, ip_version=4, enable_fip=True,
+                      enable_snat=True):
+        if ip_version == 6:
+            enable_snat = False
+            enable_fip = False
+
+        r = test_l3_agent.prepare_router_data(ip_version=ip_version,
+                                              enable_snat=enable_snat,
+                                              enable_floating_ip=enable_fip,
+                                              enable_ha=enable_ha)
+        self.addCleanup(self._delete_router, r['id'])
+        ri = self._create_router(r)
         return ri
 
     def _create_router(self, router):
@@ -183,6 +189,9 @@ class L3AgentTestCase(L3AgentTestFramework):
     def test_ha_router_lifecycle(self):
         self._router_lifecycle(enable_ha=True)
 
+    def test_ipv6_ha_router_lifecycle(self):
+        self._router_lifecycle(enable_ha=True, ip_version=6)
+
     def test_keepalived_configuration(self):
         router = self.manage_router(enable_ha=True)
         expected = self.get_expected_keepalive_configuration(router)
@@ -214,8 +223,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertNotIn(old_external_device_ip, new_config)
         self.assertIn(new_external_device_ip, new_config)
 
-    def _router_lifecycle(self, enable_ha):
-        router = self.manage_router(enable_ha)
+    def _router_lifecycle(self, enable_ha, ip_version=4):
+        router = self.manage_router(enable_ha, ip_version)
 
         if enable_ha:
             port = self.agent._get_ex_gw_port(router)
@@ -236,10 +245,15 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertTrue(self._metadata_proxy_exists(router))
         self._assert_internal_devices(router)
         self._assert_external_device(router)
-        self._assert_gateway(router)
-        self._assert_floating_ips(router)
-        self._assert_snat_chains(router)
-        self._assert_floating_ip_chains(router)
+        if ip_version == 4:
+            # Note(SridharG): enable the assert_gateway for IPv6 once
+            # keepalived on Ubuntu14.04 (i.e., check-neutron-dsvm-functional
+            # platform) is updated to 1.2.10 (or above).
+            # For more details: https://review.openstack.org/#/c/151284/
+            self._assert_gateway(router)
+            self._assert_floating_ips(router)
+            self._assert_snat_chains(router)
+            self._assert_floating_ip_chains(router)
 
         if enable_ha:
             self._assert_ha_device(router)
