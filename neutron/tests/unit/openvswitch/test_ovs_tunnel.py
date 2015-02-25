@@ -184,7 +184,7 @@ class TunnelTest(base.BaseTestCase):
         ]
 
         self.mock_tun_bridge_expected = [
-            mock.call.reset_bridge(),
+            mock.call.reset_bridge(secure_mode=True),
             mock.call.add_patch_port('patch-int', 'patch-tun'),
         ]
         self.mock_int_bridge_expected += [
@@ -598,7 +598,7 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
 
         self.mock_tun_bridge_expected = [
-            mock.call.reset_bridge(),
+            mock.call.reset_bridge(secure_mode=True),
             mock.call.add_patch_port('patch-int', 'patch-tun'),
         ]
         self.mock_int_bridge_expected += [

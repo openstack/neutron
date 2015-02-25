@@ -752,7 +752,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         if not self.tun_br:
             self.tun_br = ovs_lib.OVSBridge(tun_br_name, self.root_helper)
 
-        self.tun_br.reset_bridge()
+        self.tun_br.reset_bridge(secure_mode=True)
         self.patch_tun_ofport = self.int_br.add_patch_port(
             cfg.CONF.OVS.int_peer_patch_port, cfg.CONF.OVS.tun_peer_patch_port)
         self.patch_int_ofport = self.tun_br.add_patch_port(

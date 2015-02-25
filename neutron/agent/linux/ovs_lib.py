@@ -32,6 +32,9 @@ DEFAULT_OVS_VSCTL_TIMEOUT = 10
 # Special return value for an invalid OVS ofport
 INVALID_OFPORT = '-1'
 
+# OVS bridge fail modes
+FAILMODE_SECURE = 'secure'
+
 OPTS = [
     cfg.IntOpt('ovs_vsctl_timeout',
                default=DEFAULT_OVS_VSCTL_TIMEOUT,
@@ -75,8 +78,11 @@ class BaseOVS(object):
                 if not check_error:
                     ctxt.reraise = False
 
-    def add_bridge(self, bridge_name):
-        self.run_vsctl(["--", "--may-exist", "add-br", bridge_name])
+    def add_bridge(self, bridge_name, secure_mode=False):
+        cmd = ["--", "--may-exist", "add-br", bridge_name]
+        if secure_mode:
+            cmd += ["--", "set-fail-mode", bridge_name, FAILMODE_SECURE]
+        self.run_vsctl(cmd)
         return OVSBridge(bridge_name, self.root_helper)
 
     def delete_bridge(self, bridge_name):
@@ -126,7 +132,7 @@ class OVSBridge(BaseOVS):
         return res
 
     def set_secure_mode(self):
-        self.run_vsctl(['--', 'set-fail-mode', self.br_name, 'secure'],
+        self.run_vsctl(['--', 'set-fail-mode', self.br_name, FAILMODE_SECURE],
                        check_error=True)
 
     def set_protocols(self, protocols):
@@ -134,15 +140,15 @@ class OVSBridge(BaseOVS):
                         "protocols=%s" % protocols],
                        check_error=True)
 
-    def create(self):
-        self.add_bridge(self.br_name)
+    def create(self, secure_mode=False):
+        self.add_bridge(self.br_name, secure_mode)
 
     def destroy(self):
         self.delete_bridge(self.br_name)
 
-    def reset_bridge(self):
+    def reset_bridge(self, secure_mode=False):
         self.destroy()
-        self.create()
+        self.create(secure_mode)
 
     def add_port(self, port_name):
         self.run_vsctl(["--", "--may-exist", "add-port", self.br_name,
