@@ -634,6 +634,8 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                             mock.call(cfg.CONF),
                             mock.call().run()]
                         )
+                        cfg.CONF.set_override.assert_called_once_with(
+                            "connection", "", "database")
 
     def test_init_state_reporting(self):
         with mock.patch('os.makedirs'):

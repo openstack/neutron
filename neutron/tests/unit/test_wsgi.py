@@ -49,6 +49,23 @@ def open_no_proxy(*args, **kwargs):
     return opener.open(*args, **kwargs)
 
 
+class TestWorkerService(base.BaseTestCase):
+    """WorkerService tests."""
+
+    @mock.patch('neutron.db.api')
+    def test_start_withoutdb_call(self, apimock):
+        _service = mock.Mock()
+        _service.pool = mock.Mock()
+        _service.pool.spawn = mock.Mock()
+        _service.pool.spawn.return_value = None
+
+        _app = mock.Mock()
+        cfg.CONF.set_override("connection", "", "database")
+        workerservice = wsgi.WorkerService(_service, _app)
+        workerservice.start()
+        self.assertFalse(apimock.get_engine.called)
+
+
 class TestWSGIServer(base.BaseTestCase):
     """WSGI server tests."""
 
