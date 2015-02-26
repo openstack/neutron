@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
 import sys
 import time
 
@@ -22,7 +23,6 @@ from eventlet import event
 from eventlet import greenthread
 
 from neutron.openstack.common._i18n import _LE, _LW
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
@@ -84,9 +84,9 @@ class FixedIntervalLoopingCall(LoopingCallBase):
                         break
                     delay = end - start - interval
                     if delay > 0:
-                        LOG.warn(_LW('task %(func_name)s run outlasted '
+                        LOG.warn(_LW('task %(func_name)r run outlasted '
                                      'interval by %(delay).2f sec'),
-                                 {'func_name': repr(self.f), 'delay': delay})
+                                 {'func_name': self.f, 'delay': delay})
                     greenthread.sleep(-delay if delay < 0 else 0)
             except LoopingCallDone as e:
                 self.stop()
@@ -127,9 +127,9 @@ class DynamicLoopingCall(LoopingCallBase):
 
                     if periodic_interval_max is not None:
                         idle = min(idle, periodic_interval_max)
-                    LOG.debug('Dynamic looping call %(func_name)s sleeping '
+                    LOG.debug('Dynamic looping call %(func_name)r sleeping '
                               'for %(idle).02f seconds',
-                              {'func_name': repr(self.f), 'idle': idle})
+                              {'func_name': self.f, 'idle': idle})
                     greenthread.sleep(idle)
             except LoopingCallDone as e:
                 self.stop()
