@@ -152,3 +152,6 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
             },
         }
         self.upd_fdb_entry1 = {'chg_ip': self.upd_fdb_entry1_val}
+
+    def _tunnel_port_lookup(self, network_type, remote_ip):
+        return self.ofports[network_type].get(remote_ip)
