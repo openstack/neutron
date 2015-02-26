@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import logging
 import pprint
 
@@ -156,7 +157,8 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def test_models_sync(self):
         # drop all tables after a test run
-        self.addCleanup(self._cleanup)
+        self.addCleanup(functools.partial(self.db.backend.drop_all_objects,
+                                          self.get_engine()))
 
         # run migration scripts
         self.db_sync(self.get_engine())
