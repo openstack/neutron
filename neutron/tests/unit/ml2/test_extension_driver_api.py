@@ -29,18 +29,56 @@ class ExtensionDriverTestCase(test_ml2_plugin.Ml2PluginV2TestCase):
 
     def test_network_attr(self):
         with self.network() as network:
+            # Test create network
             ent = network['network'].get('network_extension')
             self.assertIsNotNone(ent)
 
+            # Test list networks
+            res = self._list('networks')
+            val = res['networks'][0].get('network_extension')
+            self.assertEqual('Test_Network_Extension', val)
+
+            # Test network update
+            data = {'network':
+                    {'network_extension': 'Test_Network_Extension_Update'}}
+            res = self._update('networks', network['network']['id'], data)
+            val = res['network'].get('network_extension')
+            self.assertEqual('Test_Network_Extension_Update', val)
+
     def test_subnet_attr(self):
         with self.subnet() as subnet:
+            # Test create subnet
             ent = subnet['subnet'].get('subnet_extension')
             self.assertIsNotNone(ent)
 
+            # Test list subnets
+            res = self._list('subnets')
+            val = res['subnets'][0].get('subnet_extension')
+            self.assertEqual('Test_Subnet_Extension', val)
+
+            # Test subnet update
+            data = {'subnet':
+                    {'subnet_extension': 'Test_Subnet_Extension_Update'}}
+            res = self._update('subnets', subnet['subnet']['id'], data)
+            val = res['subnet'].get('subnet_extension')
+            self.assertEqual('Test_Subnet_Extension_Update', val)
+
     def test_port_attr(self):
         with self.port() as port:
+            # Test create port
             ent = port['port'].get('port_extension')
             self.assertIsNotNone(ent)
+
+            # Test list ports
+            res = self._list('ports')
+            val = res['ports'][0].get('port_extension')
+            self.assertEqual('Test_Port_Extension', val)
+
+            # Test port update
+            data = {'port': {'port_extension': 'Test_Port_Extension_Update'}}
+            res = self._update('ports', port['port']['id'], data)
+            val = res['port'].get('port_extension')
+            self.assertEqual('Test_Port_Extension_Update', val)
 
 
 class TestExtensionDriver(api.ExtensionDriver):
@@ -56,11 +94,35 @@ class TestExtensionDriver(api.ExtensionDriver):
     def extension_alias(self):
         return self._supported_extension_alias
 
-    def process_create_network(self, session, data, result):
+    def process_create_network(self, plugin_context, data, result):
         result['network_extension'] = self.network_extension
 
-    def process_create_subnet(self, session, data, result):
+    def process_create_subnet(self, plugin_context, data, result):
         result['subnet_extension'] = self.subnet_extension
 
-    def process_create_port(self, session, data, result):
+    def process_create_port(self, plugin_context, data, result):
         result['port_extension'] = self.port_extension
+
+    def process_update_network(self, plugin_context, data, result):
+        self.network_extension = data['network']['network_extension']
+        result['network_extension'] = self.network_extension
+
+    def process_update_subnet(self, plugin_context, data, result):
+        self.subnet_extension = data['subnet']['subnet_extension']
+        result['subnet_extension'] = self.subnet_extension
+
+    def process_update_port(self, plugin_context, data, result):
+        self.port_extension = data['port_extension']
+        result['port_extension'] = self.port_extension
+
+    def extend_network_dict(self, session, base_model, result):
+        if self._supported_extension_alias is 'test_extension':
+            result['network_extension'] = self.network_extension
+
+    def extend_subnet_dict(self, session, base_model, result):
+        if self._supported_extension_alias is 'test_extension':
+            result['subnet_extension'] = self.subnet_extension
+
+    def extend_port_dict(self, session, base_model, result):
+        if self._supported_extension_alias is 'test_extension':
+            result['port_extension'] = self.port_extension
