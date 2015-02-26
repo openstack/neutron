@@ -25,6 +25,7 @@ import sys
 
 from oslo_concurrency import lockutils
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.agent.common import config
@@ -33,7 +34,6 @@ from neutron.agent.linux import utils as linux_utils
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.i18n import _LE, _LW
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

@@ -139,7 +139,7 @@ class TestWSGIServer(base.BaseTestCase):
         server.stop()
 
     @mock.patch.object(wsgi, 'eventlet')
-    @mock.patch.object(wsgi, 'logging')
+    @mock.patch.object(wsgi, 'loggers')
     def test__run(self, logging_mock, eventlet_mock):
         server = wsgi.Server('test')
         server._run("app", "socket")

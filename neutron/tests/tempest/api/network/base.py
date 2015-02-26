@@ -14,13 +14,13 @@
 #    under the License.
 
 import netaddr
+from oslo_log import log as logging
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api.contrib import clients
 from neutron.tests.tempest.common.utils import data_utils
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
-from neutron.openstack.common import log as logging
 import neutron.tests.tempest.test
 
 CONF = config.CONF

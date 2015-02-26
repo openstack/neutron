@@ -15,9 +15,10 @@
 
 import copy
 
+from oslo_log import log as logging
+
 import neutron.tests.tempest.common.generator.base_generator as base
 import neutron.tests.tempest.common.generator.valid_generator as valid
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

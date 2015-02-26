@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
 
@@ -21,7 +22,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import extra_dhcp_opt as edo_ext
-from neutron.openstack.common import log as logging
+
 
 LOG = logging.getLogger(__name__)
 

@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_log import log as logging
+
 from neutron.common import constants as n_const
 from neutron.common import log
 from neutron.extensions import portbindings
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.freescale import config  # noqa

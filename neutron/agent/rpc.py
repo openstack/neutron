@@ -14,6 +14,8 @@
 #    under the License.
 
 import itertools
+
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import timeutils
 
@@ -21,7 +23,6 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.i18n import _LW
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

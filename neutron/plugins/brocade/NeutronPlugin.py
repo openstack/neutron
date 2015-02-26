@@ -21,6 +21,7 @@
 
 from oslo_config import cfg
 from oslo_context import context as oslo_context
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import importutils
 
@@ -47,7 +48,6 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.plugins.brocade.db import models as brocade_db
 from neutron.plugins.brocade import vlanbm as vbm
 from neutron.plugins.common import constants as svc_constants

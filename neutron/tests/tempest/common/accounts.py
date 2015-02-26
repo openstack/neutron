@@ -15,13 +15,13 @@
 import hashlib
 import os
 
+from oslo_concurrency import lockutils
+from oslo_log import log as logging
 import yaml
 
 from neutron.tests.tempest.common import cred_provider
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
-from oslo_concurrency import lockutils
-from neutron.openstack.common import log as logging
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)

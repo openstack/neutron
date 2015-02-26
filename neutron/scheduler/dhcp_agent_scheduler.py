@@ -17,13 +17,13 @@ import random
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import log as logging
 from sqlalchemy import sql
 
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.i18n import _LI, _LW
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
+
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
@@ -19,7 +21,6 @@ from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron.i18n import _LW
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 INTERNAL_DEV_PREFIX = 'qr-'

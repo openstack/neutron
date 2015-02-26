@@ -25,13 +25,13 @@ import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.agent.common import config
 from neutron.common import constants
 from neutron.common import utils
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

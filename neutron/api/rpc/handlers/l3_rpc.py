@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
 
@@ -25,7 +26,6 @@ from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as plugin_constants
 
 

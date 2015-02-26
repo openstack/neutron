@@ -13,10 +13,10 @@
 #    under the License.
 
 import eventlet
+from oslo_log import log as logging
 
 from neutron.agent.linux import async_process
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

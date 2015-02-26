@@ -12,8 +12,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import log as logging
 import oslo_messaging
 import sqlalchemy as sa
 from sqlalchemy import func
@@ -32,7 +34,6 @@ from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

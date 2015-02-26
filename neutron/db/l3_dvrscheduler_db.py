@@ -16,6 +16,7 @@
 import random
 
 from oslo_db import exception as db_exc
+from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -28,7 +29,6 @@ from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.i18n import _LI, _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import db as ml2_db
 
 LOG = logging.getLogger(__name__)

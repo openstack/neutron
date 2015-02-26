@@ -20,7 +20,6 @@ class HackingTestCase(base.BaseTestCase):
 
     def test_log_translations(self):
         expected_marks = {
-            'audit': '_',
             'error': '_LE',
             'info': '_LI',
             'warn': '_LW',

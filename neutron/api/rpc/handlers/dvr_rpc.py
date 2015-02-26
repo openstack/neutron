@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import constants
@@ -20,7 +21,6 @@ from neutron.common import log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import manager
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

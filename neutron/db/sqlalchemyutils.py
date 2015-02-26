@@ -13,12 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 from six import moves
 import sqlalchemy
 from sqlalchemy.orm import properties
 
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

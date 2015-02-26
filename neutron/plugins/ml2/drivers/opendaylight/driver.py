@@ -16,10 +16,10 @@
 from networking_odl.common import constants as odl_const
 from networking_odl.ml2 import mech_driver
 from oslo_config import cfg
+from oslo_log import log
 
 from neutron.common import constants as n_const
 from neutron.extensions import portbindings
-from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
 

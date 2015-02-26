@@ -14,14 +14,13 @@
 #    under the License.
 
 import eventlet
-
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

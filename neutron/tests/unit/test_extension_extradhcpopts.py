@@ -14,12 +14,13 @@
 # limitations under the License.
 
 import copy
+
+from oslo_log import log as logging
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import extradhcpopt_db as edo_db
 from neutron.extensions import extra_dhcp_opt as edo_ext
-from neutron.openstack.common import log as logging
 from neutron.tests.unit import test_db_plugin
 
 LOG = logging.getLogger(__name__)

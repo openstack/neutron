@@ -16,6 +16,7 @@
 import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import log as logging
 from oslo_utils import excutils
 from sqlalchemy import and_
 from sqlalchemy import event
@@ -35,7 +36,6 @@ from neutron.extensions import l3
 from neutron.i18n import _LE, _LI
 from neutron import manager
 from neutron import neutron_plugin_base_v2
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 

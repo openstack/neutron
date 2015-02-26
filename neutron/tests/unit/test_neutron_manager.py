@@ -16,11 +16,10 @@
 import types
 
 import fixtures
-
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.tests import base
 from neutron.tests.unit import dummy_plugin

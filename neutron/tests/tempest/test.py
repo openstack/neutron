@@ -24,6 +24,8 @@ import urllib
 import uuid
 
 import fixtures
+from oslo_log import log as logging
+from oslo_utils import importutils
 import six
 import testscenarios
 import testtools
@@ -33,8 +35,6 @@ from neutron.tests.tempest.common import credentials
 import neutron.tests.tempest.common.generator.valid_generator as valid
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
-from oslo_utils import importutils
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

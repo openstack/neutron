@@ -14,11 +14,12 @@
 #    under the License.
 
 import copy
-import netaddr
-import webob.exc
 
+import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import excutils
+import webob.exc
 
 from neutron.api import api_common
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -28,7 +29,6 @@ from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import policy as common_policy
 from neutron import policy
 from neutron import quota

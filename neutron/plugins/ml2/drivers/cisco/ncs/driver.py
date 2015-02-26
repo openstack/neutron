@@ -16,10 +16,10 @@
 import re
 
 from oslo_config import cfg
+from oslo_log import log
 from oslo_serialization import jsonutils
 import requests
 
-from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)

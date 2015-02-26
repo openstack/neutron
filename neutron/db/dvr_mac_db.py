@@ -13,9 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
 from oslo_db import exception as db_exc
-
+from oslo_log import log as logging
 import sqlalchemy as sa
+from sqlalchemy.orm import exc
 
 from neutron.common import exceptions as q_exc
 from neutron.common import log
@@ -25,11 +27,10 @@ from neutron.extensions import dvr as ext_dvr
 from neutron.extensions import portbindings
 from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common import log as logging
-from oslo_config import cfg
-from sqlalchemy.orm import exc
+
 
 LOG = logging.getLogger(__name__)
+
 
 dvr_mac_address_opts = [
     cfg.StrOpt('dvr_base_mac',

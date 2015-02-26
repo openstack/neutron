@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import importutils
 import six
 
@@ -23,7 +24,6 @@ from neutron.common import constants as constants
 from neutron.common import ipv6_utils
 from neutron.common import log
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
 from neutron.services.metering.drivers import abstract_driver
 
 

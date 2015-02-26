@@ -22,10 +22,10 @@ import sys
 
 import eventlet
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.common import config
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
 from neutron import service
 
 LOG = logging.getLogger(__name__)

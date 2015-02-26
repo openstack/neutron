@@ -19,9 +19,10 @@ Policy engine for neutron.  Largely copied from nova.
 
 import collections
 import itertools
-import logging
+import logging as std_logging
 import re
 
+from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
 
@@ -29,11 +30,10 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import log
 from neutron.openstack.common import policy
 
 
-LOG = log.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 _ENFORCER = None
 ADMIN_CTX_POLICY = 'context_is_admin'
@@ -357,7 +357,7 @@ def _prepare_check(context, action, target):
 
 
 def log_rule_list(match_rule):
-    if LOG.isEnabledFor(logging.DEBUG):
+    if LOG.isEnabledFor(std_logging.DEBUG):
         rules = _process_rules_list([], match_rule)
         LOG.debug("Enforcing rules: %s", rules)
 

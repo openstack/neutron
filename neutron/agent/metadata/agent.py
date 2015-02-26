@@ -21,6 +21,8 @@ import eventlet
 import httplib2
 from neutronclient.v2_0 import client
 from oslo_config import cfg
+from oslo_log import log as logging
+from oslo_log import loggers
 import oslo_messaging
 from oslo_utils import excutils
 import six.moves.urllib.parse as urlparse
@@ -34,7 +36,6 @@ from neutron.common import utils
 from neutron import context
 from neutron.i18n import _LE, _LW
 from neutron.openstack.common.cache import cache
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron import wsgi
 
@@ -294,7 +295,7 @@ class UnixDomainWSGIServer(wsgi.Server):
                              application,
                              max_size=self.num_threads,
                              protocol=UnixDomainHttpProtocol,
-                             log=logging.WritableLogger(logger))
+                             log=loggers.WritableLogger(logger))
 
 
 class UnixDomainMetadataProxy(object):

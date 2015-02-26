@@ -14,12 +14,12 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.common import constants as const
 from neutron import context as n_context
 from neutron.db import api as db_api
 from neutron.i18n import _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.l2pop import config  # noqa

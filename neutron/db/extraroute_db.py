@@ -15,6 +15,7 @@
 
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
 
@@ -25,7 +26,6 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import extraroute
 from neutron.extensions import l3
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

@@ -16,9 +16,9 @@
 import functools
 
 from heleosapi import exceptions as h_exc
+from oslo_log import log as logging
 
 from neutron.i18n import _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.embrane.common import constants as p_con
 
 LOG = logging.getLogger(__name__)

@@ -18,6 +18,7 @@ import os
 import mock
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.common import config
 from neutron.agent.dhcp import config as dhcp_config
@@ -25,7 +26,6 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.common import config as base_config
 from neutron.common import constants
-from neutron.openstack.common import log as logging
 from neutron.tests import base
 
 LOG = logging.getLogger(__name__)

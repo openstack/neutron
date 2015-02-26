@@ -17,9 +17,9 @@ from eventlet import greenthread
 from eventlet import queue
 from heleosapi import constants as h_con
 from heleosapi import exceptions as h_exc
+from oslo_log import log as logging
 
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 from neutron.plugins.embrane.agent.operations import router_operations
 from neutron.plugins.embrane.common import constants as p_con
 from neutron.plugins.embrane.common import contexts as ctx

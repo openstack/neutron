@@ -13,13 +13,13 @@
 import collections
 import weakref
 
+from oslo_log import log as logging
 from oslo_utils import reflection
 
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import resources
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

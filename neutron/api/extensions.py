@@ -21,6 +21,7 @@ import itertools
 import os
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import routes
 import six
 import webob.dec
@@ -31,7 +32,6 @@ from neutron.common import repos
 import neutron.extensions
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron import wsgi
 
 

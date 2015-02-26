@@ -17,6 +17,7 @@ from heleosapi import backend_operations as h_op
 from heleosapi import constants as h_con
 from heleosapi import exceptions as h_exc
 from oslo_config import cfg
+from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as l3_constants
@@ -26,7 +27,6 @@ from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 from neutron.plugins.embrane.agent import dispatcher
 from neutron.plugins.embrane.common import config  # noqa
 from neutron.plugins.embrane.common import constants as p_con

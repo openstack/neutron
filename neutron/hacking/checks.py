@@ -29,8 +29,6 @@ import pep8
 #    neutron/tests/unit/hacking/test_checks.py
 
 _all_log_levels = {
-    # NOTE(yamamoto): Following nova which uses _() for audit.
-    'audit': '_',
     'error': '_LE',
     'info': '_LI',
     'warn': '_LW',

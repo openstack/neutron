@@ -13,6 +13,7 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_const
@@ -26,7 +27,6 @@ from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.i18n import _LI
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 
 

@@ -14,11 +14,11 @@
 #    under the License.
 
 from heleosapi import info as h_info
+from oslo_log import log as logging
 
 from neutron.common import constants
 from neutron.db import models_v2
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

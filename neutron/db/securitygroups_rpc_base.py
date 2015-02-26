@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as q_const
@@ -24,7 +25,6 @@ from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
 from neutron.i18n import _LW
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

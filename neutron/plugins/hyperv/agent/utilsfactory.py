@@ -16,9 +16,9 @@
 import sys
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.i18n import _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.hyperv.agent import utils
 from neutron.plugins.hyperv.agent import utilsv2
 

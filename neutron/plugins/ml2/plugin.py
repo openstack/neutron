@@ -14,11 +14,12 @@
 #    under the License.
 
 import contextlib
-from eventlet import greenthread
 
+from eventlet import greenthread
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as os_db_exception
+from oslo_log import log
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
 from oslo_utils import importutils
@@ -55,7 +56,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc

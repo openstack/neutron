@@ -20,9 +20,9 @@ import exceptions
 import re
 import urlparse
 
+from oslo_log import log as logging
 import six
 
-from neutron.openstack.common import log as logging
 from neutron.tests.tempest.services.identity.v2.json import token_client as json_v2id
 from neutron.tests.tempest.services.identity.v3.json import token_client as json_v3id
 

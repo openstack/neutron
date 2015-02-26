@@ -15,6 +15,7 @@
 
 import random
 
+from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import constants
@@ -23,7 +24,6 @@ from neutron.common import topics
 from neutron.common import utils
 from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 
 

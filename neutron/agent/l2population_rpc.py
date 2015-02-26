@@ -16,11 +16,11 @@
 import abc
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import six
 
 from neutron.common import constants as n_const
 from neutron.common import log
-from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 
 LOG = logging.getLogger(__name__)

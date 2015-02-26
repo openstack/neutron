@@ -13,8 +13,8 @@
 #    under the License.
 
 import eventlet
-
 from oslo_config import cfg as q_conf
+from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
 
@@ -37,7 +37,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet
 from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils as uuidutils
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred

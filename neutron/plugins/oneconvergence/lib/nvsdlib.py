@@ -14,10 +14,10 @@
 
 """Intermidiate NVSD Library."""
 
+from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
 
-from neutron.openstack.common import log as logging
 import neutron.plugins.oneconvergence.lib.exception as nvsdexception
 from neutron.plugins.oneconvergence.lib import plugin_helper
 

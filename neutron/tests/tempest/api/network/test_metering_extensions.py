@@ -12,9 +12,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_log import log as logging
+
 from neutron.tests.tempest.api.network import base
 from neutron.tests.tempest.common.utils import data_utils
-from neutron.openstack.common import log as logging
 from neutron.tests.tempest import test
 
 

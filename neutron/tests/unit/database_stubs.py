@@ -15,8 +15,9 @@
 
 """stubs.py provides interface methods for the database test cases"""
 
+from oslo_log import log as logging
+
 from neutron.db import api as db
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

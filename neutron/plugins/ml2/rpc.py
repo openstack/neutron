@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
 
@@ -26,7 +27,6 @@ from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common import log
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel

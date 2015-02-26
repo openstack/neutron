@@ -18,6 +18,7 @@ import operator
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 
@@ -28,7 +29,6 @@ from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

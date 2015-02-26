@@ -18,11 +18,11 @@ import sys
 
 from networking_mlnx.plugins.mlnx.agent import mlnx_eswitch_neutron_agent
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.i18n import _LE, _LI
 from neutron.common import config as common_config
 from neutron.common import utils
-from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.agent import config  # noqa
 
 LOG = logging.getLogger(__name__)

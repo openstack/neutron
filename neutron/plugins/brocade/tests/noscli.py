@@ -21,7 +21,8 @@ from __future__ import print_function
 
 import argparse
 
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
+
 from neutron.plugins.brocade.nos import nosdriver as nos
 
 LOG = logging.getLogger(__name__)

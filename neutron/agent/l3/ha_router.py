@@ -12,9 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
 import shutil
 import signal
+
+import netaddr
+from oslo_log import log as logging
 
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
@@ -22,7 +24,6 @@ from neutron.agent.linux import keepalived
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 HA_DEV_PREFIX = 'ha-'
