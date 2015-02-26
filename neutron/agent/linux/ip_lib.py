@@ -643,7 +643,9 @@ def iproute_arg_supported(command, arg):
 
 
 def _arping(ns_name, iface_name, address, count):
-    arping_cmd = ['arping', '-A', '-I', iface_name, '-c', count, address]
+    # Pass -w to set timeout to ensure exit if interface removed while running
+    arping_cmd = ['arping', '-A', '-I', iface_name, '-c', count,
+                  '-w', 1.5 * count, address]
     try:
         ip_wrapper = IPWrapper(namespace=ns_name)
         ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)

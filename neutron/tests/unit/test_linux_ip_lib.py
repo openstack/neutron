@@ -945,10 +945,11 @@ class TestIpNeighCommand(TestIPCmdBase):
 class TestArpPing(TestIPCmdBase):
     def _test_arping(self, function, address, spawn_n, mIPWrapper):
         spawn_n.side_effect = lambda f: f()
+        ARPING_COUNT = 3
         function(mock.sentinel.ns_name,
                  mock.sentinel.iface_name,
                  address,
-                 mock.sentinel.count)
+                 ARPING_COUNT)
 
         self.assertTrue(spawn_n.called)
         mIPWrapper.assert_called_once_with(namespace=mock.sentinel.ns_name)
@@ -958,7 +959,8 @@ class TestArpPing(TestIPCmdBase):
         # Just test that arping is called with the right arguments
         arping_cmd = ['arping', '-A',
                       '-I', mock.sentinel.iface_name,
-                      '-c', mock.sentinel.count,
+                      '-c', ARPING_COUNT,
+                      '-w', mock.ANY,
                       address]
         ip_wrapper.netns.execute.assert_any_call(arping_cmd,
                                                  check_exit_code=True)
