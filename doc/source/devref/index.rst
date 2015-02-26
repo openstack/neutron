@@ -47,6 +47,7 @@ Neutron Internals
    l2_agents
    advanced_services
    oslo-incubator
+   callbacks
 
 
 Module Reference
