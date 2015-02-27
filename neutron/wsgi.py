@@ -26,7 +26,6 @@ import sys
 import time
 
 import eventlet.wsgi
-eventlet.patcher.monkey_patch(all=False, socket=True, thread=True)
 from oslo_config import cfg
 import oslo_i18n
 from oslo_serialization import jsonutils
