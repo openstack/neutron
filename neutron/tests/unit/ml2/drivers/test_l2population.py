@@ -83,13 +83,15 @@ L2_AGENT_4 = {
 }
 
 L2_AGENT_5 = {
-    'binary': 'neutron-ofagent-agent',
+    'binary': 'neutron-fake-agent',
     'host': HOST + '_5',
     'topic': constants.L2_AGENT_TOPIC,
     'configurations': {'tunneling_ip': '20.0.0.5',
                        'tunnel_types': [],
                        'interface_mappings': {'physnet1': 'eth9'},
                        'l2pop_network_types': ['vlan']},
+    # NOTE(yamamoto): mech_fake_agent has a comment to explain why
+    # OFA is used here.
     'agent_type': constants.AGENT_TYPE_OFA,
     'tunnel_type': [],
     'start_flag': True
@@ -100,7 +102,7 @@ DEVICE_OWNER_COMPUTE = 'compute:None'
 
 
 class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
-    _mechanism_drivers = ['openvswitch', 'ofagent', 'l2population']
+    _mechanism_drivers = ['openvswitch', 'fake_agent', 'l2population']
 
     def setUp(self):
         super(TestL2PopulationRpcTestCase, self).setUp()
