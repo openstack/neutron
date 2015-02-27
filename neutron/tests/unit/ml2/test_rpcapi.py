@@ -227,16 +227,6 @@ class RpcApiTestCase(base.BaseTestCase):
                 segmentation_id='fake_segmentation_id',
                 physical_network='fake_physical_network')
 
-    def test_port_delete(self):
-        rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
-        self._test_rpc_api(
-            rpcapi,
-            topics.get_topic_name(topics.AGENT,
-                                  topics.PORT,
-                                  topics.DELETE),
-            'port_delete', rpc_method='cast',
-            fanout=True, port_id='fake_port')
-
     def test_tunnel_update(self):
         rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
         self._test_rpc_api(

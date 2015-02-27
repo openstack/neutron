@@ -1188,7 +1188,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # fact that an error occurred.
             LOG.error(_LE("mechanism_manager.delete_port_postcommit failed for"
                           " port %s"), id)
-        self.notifier.port_delete(context, id)
         self.notify_security_groups_member_updated(context, port)
 
     def get_bound_port_context(self, plugin_context, port_id, host=None):
