@@ -40,7 +40,6 @@ from neutron.tests import base
 class PolicyFileTestCase(base.BaseTestCase):
     def setUp(self):
         super(PolicyFileTestCase, self).setUp()
-        self.addCleanup(policy.reset)
         self.context = context.Context('fake', 'fake', is_admin=False)
         self.target = {'tenant_id': 'fake'}
 
@@ -66,7 +65,6 @@ class PolicyFileTestCase(base.BaseTestCase):
 class PolicyTestCase(base.BaseTestCase):
     def setUp(self):
         super(PolicyTestCase, self).setUp()
-        self.addCleanup(policy.reset)
         # NOTE(vish): preload rules to circumvent reloading from file
         rules = {
             "true": '@',
@@ -174,7 +172,6 @@ class DefaultPolicyTestCase(base.BaseTestCase):
             jsonutils.dump(self.rules, policyfile)
         cfg.CONF.set_override('policy_file', tmpfilename)
         policy.refresh()
-        self.addCleanup(policy.reset)
 
         self.context = context.Context('fake', 'fake')
 
@@ -201,10 +198,13 @@ FAKE_RESOURCE = {"%ss" % FAKE_RESOURCE_NAME:
 
 class NeutronPolicyTestCase(base.BaseTestCase):
 
+    def fakepolicyinit(self, **kwargs):
+        enf = policy._ENFORCER
+        enf.set_rules(common_policy.Rules(self.rules))
+
     def setUp(self):
         super(NeutronPolicyTestCase, self).setUp()
         policy.refresh()
-        self.addCleanup(policy.reset)
         self.admin_only_legacy = "role:admin"
         self.admin_or_owner_legacy = "role:admin or tenant_id:%(tenant_id)s"
         # Add a Fake 'something' resource to RESOURCE_ATTRIBUTE_MAP
@@ -245,16 +245,12 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                             "rule:shared"
         }.items())
 
-        def fakepolicyinit(**kwargs):
-            enf = policy._ENFORCER
-            enf.set_rules(common_policy.Rules(self.rules))
-
         def remove_fake_resource():
             del attributes.RESOURCE_ATTRIBUTE_MAP["%ss" % FAKE_RESOURCE_NAME]
 
         self.patcher = mock.patch.object(neutron.policy,
                                          'init',
-                                         new=fakepolicyinit)
+                                         new=self.fakepolicyinit)
         self.patcher.start()
         self.addCleanup(remove_fake_resource)
         self.context = context.Context('fake', 'fake', roles=['user'])
@@ -500,7 +496,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         # Trigger a policy with rule admin_or_owner
         action = "create_network"
         target = {'tenant_id': 'fake'}
-        policy.init()
+        self.fakepolicyinit()
         self.assertRaises(exceptions.PolicyCheckError,
                           policy.enforce,
                           self.context, action, target)

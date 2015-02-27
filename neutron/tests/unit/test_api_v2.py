@@ -113,6 +113,9 @@ class APIv2TestBase(base.BaseTestCase, testlib_plugin.PluginSetupHelper):
         cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
                               group='QUOTAS')
 
+        # APIRouter initialization resets policy module, re-initializing it
+        policy.init()
+
 
 class _ArgMatcher(object):
     """An adapter to assist mock assertions, used to custom compare."""
@@ -518,8 +521,6 @@ class APIv2TestCase(APIv2TestBase):
 # Note: since all resources use the same controller and validation
 # logic, we actually get really good coverage from testing just networks.
 class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
-    def setUp(self):
-        super(JSONV2TestCase, self).setUp()
 
     def _test_list(self, req_tenant_id, real_tenant_id):
         env = {}
@@ -1027,8 +1028,6 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_get_keystone_strip_admin_only_attribute(self):
         tenant_id = _uuid()
         # Inject rule in policy engine
-        policy.init()
-        self.addCleanup(policy.reset)
         rules = {'get_network:name': common_policy.parse_rule(
             "rule:admin_only")}
         policy.set_rules(rules, overwrite=False)

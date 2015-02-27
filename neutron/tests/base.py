@@ -33,6 +33,7 @@ from oslo_messaging import conffixture as messaging_conffixture
 
 from neutron.common import config
 from neutron.common import rpc as n_rpc
+from neutron import policy
 from neutron.tests import fake_notifier
 from neutron.tests import sub_base
 
@@ -103,6 +104,9 @@ class BaseTestCase(sub_base.SubBaseTestCase):
 
         self.setup_rpc_mocks()
         self.setup_config()
+
+        policy.init()
+        self.addCleanup(policy.reset)
 
     def get_new_temp_dir(self):
         """Create a new temporary directory.

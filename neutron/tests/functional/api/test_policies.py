@@ -94,7 +94,6 @@ class APIPolicyTestCase(base.BaseTestCase):
                          True)
 
     def tearDown(self):
-        policy.reset()
         if self.ATTRIBUTE_MAP_COPY:
             attributes.RESOURCE_ATTRIBUTE_MAP = self.ATTRIBUTE_MAP_COPY
         super(APIPolicyTestCase, self).tearDown()
