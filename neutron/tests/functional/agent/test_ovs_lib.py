@@ -16,6 +16,7 @@
 import collections
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.linux import ip_lib
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
@@ -25,7 +26,8 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
     # good to also add the openflow-related functions
     def setUp(self):
         super(OVSBridgeTestCase, self).setUp()
-        self.br = self.create_ovs_bridge()
+        self.ovs = ovs_lib.BaseOVS()
+        self.br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
     def create_ovs_port(self, *interface_attrs):
         # Convert ((a, b), (c, d)) to {a: b, c: d} and add 'type' by default
@@ -118,7 +120,7 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
             "OpenFlow10")
 
     def test_get_datapath_id(self):
-        brdev = self.ip.device(self.br.br_name)
+        brdev = ip_lib.IPDevice(self.br.br_name)
         dpid = brdev.link.attributes['link/ether'].replace(':', '')
         self.br.set_db_attribute('Bridge',
                                  self.br.br_name, 'datapath_id', dpid)
@@ -216,6 +218,11 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
 
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
+
+    def setUp(self):
+        super(OVSLibTestCase, self).setUp()
+        self.ovs = ovs_lib.BaseOVS()
+
     def test_bridge_lifecycle_baseovs(self):
         name = base.get_rand_name(prefix=net_helpers.BR_PREFIX)
         self.addCleanup(self.ovs.delete_bridge, name)
@@ -226,7 +233,9 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         self.assertFalse(self.ovs.bridge_exists(name))
 
     def test_get_bridges(self):
-        bridges = {self.create_ovs_bridge().br_name for i in range(5)}
+        bridges = {
+            self.useFixture(net_helpers.OVSBridgeFixture()).bridge.br_name
+            for i in range(5)}
         self.assertTrue(set(self.ovs.get_bridges()).issuperset(bridges))
 
     def test_bridge_lifecycle_ovsbridge(self):

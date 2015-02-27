@@ -19,13 +19,14 @@ from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.cmd import netns_cleanup
-from neutron.tests.functional.agent.linux import base
+from neutron.tests.common import net_helpers
+from neutron.tests.functional import base
 
 GET_NAMESPACES = 'neutron.agent.linux.ip_lib.IPWrapper.get_namespaces'
 TEST_INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
 
 
-class NetnsCleanupTest(base.BaseIPVethTestCase):
+class NetnsCleanupTest(base.BaseSudoTestCase):
     def setUp(self):
         super(NetnsCleanupTest, self).setUp()
 
@@ -44,16 +45,22 @@ class NetnsCleanupTest(base.BaseIPVethTestCase):
         self.config_parse(conf=self.conf, args=args)
 
     def test_cleanup_network_namespaces_cleans_dhcp_and_l3_namespaces(self):
-        l3_ns, dhcp_ns = self.prepare_veth_pairs(l3_agent.NS_PREFIX,
-                                                 dhcp.NS_PREFIX)
+        dhcp_namespace = self.useFixture(
+            net_helpers.NamespaceFixture(dhcp.NS_PREFIX)).name
+        l3_namespace = self.useFixture(
+            net_helpers.NamespaceFixture(l3_agent.NS_PREFIX)).name
+        bridge = self.useFixture(
+            net_helpers.VethPortFixture(namespace=dhcp_namespace)).bridge
+        self.useFixture(
+            net_helpers.VethPortFixture(bridge, l3_namespace))
+
         # we scope the get_namespaces to our own ones not to affect other
         # tests, as otherwise cleanup will kill them all
-        self.get_namespaces.return_value = [l3_ns.namespace,
-                                            dhcp_ns.namespace]
+        self.get_namespaces.return_value = [l3_namespace, dhcp_namespace]
 
         netns_cleanup.cleanup_network_namespaces(self.conf)
 
         self.get_namespaces_p.stop()
         namespaces_now = ip_lib.IPWrapper.get_namespaces()
-        self.assertNotIn(l3_ns.namespace, namespaces_now)
-        self.assertNotIn(dhcp_ns.namespace, namespaces_now)
+        self.assertNotIn(l3_namespace, namespaces_now)
+        self.assertNotIn(dhcp_namespace, namespaces_now)

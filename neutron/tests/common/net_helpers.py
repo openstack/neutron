@@ -13,10 +13,15 @@
 #    under the License.
 #
 
+import abc
+
 import fixtures
 import netaddr
+import six
 
+from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import ovs_lib
 from neutron.common import constants as n_const
 from neutron.openstack.common import uuidutils
 from neutron.tests import base as tests_base
@@ -62,6 +67,8 @@ class NamespaceFixture(fixtures.Fixture):
 
     :ivar ip_wrapper: created namespace
     :type ip_wrapper: IPWrapper
+    :ivar name: created namespace name
+    :type name: str
     """
 
     def __init__(self, prefix=NS_PREFIX):
@@ -108,3 +115,158 @@ class VethFixture(fixtures.Fixture):
                 # NOTE(cbrandily): It seems a veth is automagically deleted
                 # when a namespace owning a veth endpoint is deleted.
                 pass
+
+
+@six.add_metaclass(abc.ABCMeta)
+class PortFixture(fixtures.Fixture):
+    """Create a port.
+
+    :ivar port: created port
+    :type port: IPDevice
+    :ivar bridge: port bridge
+    """
+
+    def __init__(self, bridge=None, namespace=None):
+        self.bridge = bridge
+        self.namespace = namespace
+
+    @abc.abstractmethod
+    def _create_bridge_fixture(self):
+        pass
+
+    @abc.abstractmethod
+    def setUp(self):
+        super(PortFixture, self).setUp()
+        if not self.bridge:
+            self.bridge = self.useFixture(self._create_bridge_fixture()).bridge
+
+
+class OVSBridgeFixture(fixtures.Fixture):
+    """Create an OVS bridge.
+
+    :ivar bridge: created bridge
+    :type bridge: OVSBridge
+    """
+
+    def setUp(self):
+        super(OVSBridgeFixture, self).setUp()
+        ovs = ovs_lib.BaseOVS()
+        self.bridge = common_base.create_resource(BR_PREFIX, ovs.add_bridge)
+        self.addCleanup(self.bridge.destroy)
+
+
+class OVSPortFixture(PortFixture):
+
+    def _create_bridge_fixture(self):
+        return OVSBridgeFixture()
+
+    def setUp(self):
+        super(OVSPortFixture, self).setUp()
+
+        port_name = common_base.create_resource(PORT_PREFIX, self.create_port)
+        self.addCleanup(self.bridge.delete_port, port_name)
+        self.port = ip_lib.IPDevice(port_name)
+
+        ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        ns_ip_wrapper.add_device_to_namespace(self.port)
+        self.port.link.set_up()
+
+    def create_port(self, name):
+        self.bridge.add_port(name, ('type', 'internal'))
+        return name
+
+
+class LinuxBridgeFixture(fixtures.Fixture):
+    """Create a linux bridge.
+
+    :ivar bridge: created bridge
+    :type bridge: BridgeDevice
+    :ivar namespace: created bridge namespace
+    :type namespace: str
+    """
+
+    def setUp(self):
+        super(LinuxBridgeFixture, self).setUp()
+
+        self.namespace = self.useFixture(NamespaceFixture()).name
+        self.bridge = common_base.create_resource(
+            BR_PREFIX,
+            bridge_lib.BridgeDevice.addbr,
+            namespace=self.namespace)
+        self.addCleanup(self.bridge.delbr)
+        self.bridge.link.set_up()
+        self.addCleanup(self.bridge.link.set_down)
+
+
+class LinuxBridgePortFixture(PortFixture):
+    """Create a linux bridge port.
+
+    :ivar port: created port
+    :type port: IPDevice
+    :ivar br_port: bridge side veth peer port
+    :type br_port: IPDevice
+    """
+
+    def _create_bridge_fixture(self):
+        return LinuxBridgeFixture()
+
+    def setUp(self):
+        super(LinuxBridgePortFixture, self).setUp()
+        self.port, self.br_port = self.useFixture(VethFixture()).ports
+
+        # bridge side
+        br_ip_wrapper = ip_lib.IPWrapper(self.bridge.namespace)
+        br_ip_wrapper.add_device_to_namespace(self.br_port)
+        self.bridge.addif(self.br_port)
+        self.br_port.link.set_up()
+
+        # port side
+        ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        ns_ip_wrapper.add_device_to_namespace(self.port)
+        self.port.link.set_up()
+
+
+class VethBridge(object):
+
+    def __init__(self, ports):
+        self.ports = ports
+        self.unallocated_ports = set(self.ports)
+
+    def allocate_port(self):
+        try:
+            return self.unallocated_ports.pop()
+        except KeyError:
+            tools.fail('All FakeBridge ports (%s) are already allocated.' %
+                       len(self.ports))
+
+
+class VethBridgeFixture(fixtures.Fixture):
+    """Simulate a bridge with a veth.
+
+    :ivar bridge: created bridge
+    :type bridge: FakeBridge
+    """
+
+    def setUp(self):
+        super(VethBridgeFixture, self).setUp()
+        ports = self.useFixture(VethFixture()).ports
+        self.bridge = VethBridge(ports)
+
+
+class VethPortFixture(PortFixture):
+    """Create a veth bridge port.
+
+    :ivar port: created port
+    :type port: IPDevice
+    """
+
+    def _create_bridge_fixture(self):
+        return VethBridgeFixture()
+
+    def setUp(self):
+        super(VethPortFixture, self).setUp()
+        self.port = self.bridge.allocate_port()
+
+        ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        ns_ip_wrapper.add_device_to_namespace(self.port)
+        self.port.link.set_up()
