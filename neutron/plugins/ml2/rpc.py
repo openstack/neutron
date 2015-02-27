@@ -199,6 +199,10 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         self.topic_port_update = topics.get_topic_name(topic,
                                                        topics.PORT,
                                                        topics.UPDATE)
+        self.topic_port_delete = topics.get_topic_name(topic,
+                                                       topics.PORT,
+                                                       topics.DELETE)
+
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
@@ -214,3 +218,8 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         cctxt.cast(context, 'port_update', port=port,
                    network_type=network_type, segmentation_id=segmentation_id,
                    physical_network=physical_network)
+
+    def port_delete(self, context, port_id):
+        cctxt = self.client.prepare(topic=self.topic_port_delete,
+                                    fanout=True)
+        cctxt.cast(context, 'port_delete', port_id=port_id)
