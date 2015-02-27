@@ -330,7 +330,9 @@ class TestDhcpAgent(base.BaseTestCase):
             trace_level='warning',
             expected_sync=False)
 
-    def _test_sync_state_helper(self, known_networks, active_networks):
+    def _test_sync_state_helper(self, known_net_ids, active_net_ids):
+        active_networks = set(mock.Mock(id=netid) for netid in active_net_ids)
+
         with mock.patch(DHCP_PLUGIN) as plug:
             mock_plugin = mock.Mock()
             mock_plugin.get_active_networks_info.return_value = active_networks
@@ -338,23 +340,18 @@ class TestDhcpAgent(base.BaseTestCase):
 
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
 
-            attrs_to_mock = dict(
-                [(a, mock.DEFAULT) for a in
-                 ['refresh_dhcp_helper', 'disable_dhcp_helper', 'cache']])
+            attrs_to_mock = dict([(a, mock.DEFAULT)
+                                 for a in ['disable_dhcp_helper', 'cache',
+                                           'safe_configure_dhcp_for_network']])
 
             with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
-                mocks['cache'].get_network_ids.return_value = known_networks
+                mocks['cache'].get_network_ids.return_value = known_net_ids
                 dhcp.sync_state()
 
-                exp_refresh = [
-                    mock.call(net_id) for net_id in active_networks]
-
-                diff = set(known_networks) - set(active_networks)
+                diff = set(known_net_ids) - set(active_net_ids)
                 exp_disable = [mock.call(net_id) for net_id in diff]
-
                 mocks['cache'].assert_has_calls([mock.call.get_network_ids()])
-                mocks['refresh_dhcp_helper'].assert_has_called(exp_refresh)
-                mocks['disable_dhcp_helper'].assert_has_called(exp_disable)
+                mocks['disable_dhcp_helper'].assert_has_calls(exp_disable)
 
     def test_sync_state_initial(self):
         self._test_sync_state_helper([], ['a'])
@@ -366,19 +363,10 @@ class TestDhcpAgent(base.BaseTestCase):
         self._test_sync_state_helper(['b'], ['a'])
 
     def test_sync_state_waitall(self):
-        class mockNetwork(object):
-            id = '0'
-            admin_state_up = True
-            subnets = []
-
-            def __init__(self, id):
-                self.id = id
         with mock.patch.object(dhcp_agent.eventlet.GreenPool, 'waitall') as w:
-            active_networks = [mockNetwork('1'), mockNetwork('2'),
-                               mockNetwork('3'), mockNetwork('4'),
-                               mockNetwork('5')]
-            known_networks = ['1', '2', '3', '4', '5']
-            self._test_sync_state_helper(known_networks, active_networks)
+            active_net_ids = ['1', '2', '3', '4', '5']
+            known_net_ids = ['1', '2', '3', '4', '5']
+            self._test_sync_state_helper(known_net_ids, active_net_ids)
             w.assert_called_once_with()
 
     def test_sync_state_plugin_error(self):
