@@ -22,14 +22,12 @@ import itertools
 import logging
 import re
 
-from oslo_config import cfg
 from oslo_utils import excutils
 from oslo_utils import importutils
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions
-import neutron.common.utils as utils
 from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import log
 from neutron.openstack.common import policy
@@ -71,11 +69,6 @@ def init():
     global _ENFORCER
     if not _ENFORCER:
         _ENFORCER = policy.Enforcer()
-        # NOTE: Method _get_policy_path in common.policy can not always locate
-        # neutron policy file (when init() is called in tests),
-        # so set it explicitly.
-        _ENFORCER.policy_path = utils.find_config_file({},
-                                                       cfg.CONF.policy_file)
         _ENFORCER.load_rules(True)
 
 
