@@ -48,12 +48,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     IPTABLES_DIRECTION = {INGRESS_DIRECTION: 'physdev-out',
                           EGRESS_DIRECTION: 'physdev-in'}
 
-    def __init__(self):
+    def __init__(self, namespace=None):
         self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=ipv6_utils.is_enabled())
+            use_ipv6=ipv6_utils.is_enabled(),
+            namespace=namespace)
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
         # driver composed over this one
-        self.ipset = ipset_manager.IpsetManager()
+        self.ipset = ipset_manager.IpsetManager(namespace=namespace)
         # list of port which has security group
         self.filtered_ports = {}
         self._add_fallback_chain_v4v6()

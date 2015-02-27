@@ -15,6 +15,7 @@
 import netaddr
 import testscenarios
 
+from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
@@ -46,6 +47,11 @@ def get_rand_veth_name():
 
 def get_rand_port_name():
     return get_rand_name(prefix=PORT_PREFIX,
+                         max_length=n_const.DEVICE_NAME_MAX_LEN)
+
+
+def get_rand_bridge_name():
+    return get_rand_name(prefix=BR_PREFIX,
                          max_length=n_const.DEVICE_NAME_MAX_LEN)
 
 
@@ -182,3 +188,21 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
         self._set_ip_up(dst_veth, '%s/24' % dst_addr)
 
         return src_ns, dst_ns
+
+
+class BaseBridgeTestCase(BaseIPVethTestCase):
+    def create_veth_pairs(self, dst_namespace):
+        src_ns = self._create_namespace()
+        src_veth = get_rand_veth_name()
+        dst_veth = get_rand_veth_name()
+
+        return src_ns.add_veth(src_veth, dst_veth, dst_namespace)
+
+    def create_bridge(self, br_ns=None):
+        br_ns = br_ns or self._create_namespace()
+        br_name = get_rand_bridge_name()
+        bridge = bridge_lib.BridgeDevice.addbr(br_name, br_ns.namespace)
+        self.addCleanup(bridge.delbr)
+        bridge.link.set_up()
+        self.addCleanup(bridge.link.set_down)
+        return bridge
