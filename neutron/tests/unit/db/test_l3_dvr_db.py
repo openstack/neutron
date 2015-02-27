@@ -200,7 +200,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
                               ) as (cw, cs):
             self.mixin._create_gw_port(
                 self.ctx, router_id, router_db, mock.ANY,
-                mock.ANY, mock.ANY)
+                mock.ANY)
             self.assertFalse(cs.call_count)
 
     def test_build_routers_list_with_gw_port_mismatch(self):

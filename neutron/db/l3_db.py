@@ -273,9 +273,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         return candidates
 
     def _create_router_gw_port(self, context, router, network_id, ext_ips):
-        if ext_ips and len(ext_ips) > 1:
-            msg = _("Routers support only 1 external IP")
-            raise n_exc.BadRequest(resource='router', msg=msg)
         # Port has no 'tenant-id', as it is hidden from user
         gw_port = self._core_plugin.create_port(context.elevated(), {
             'port': {'tenant_id': '',  # intentionally not set
@@ -325,13 +322,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                             raise n_exc.BadRequest(resource='router', msg=msg)
         return network_id
 
-    def _delete_current_gw_port(self, context, router_id, router, new_network,
-                                ext_ip_change):
-        """Delete gw port if attached to an old network or IPs changed."""
+    def _delete_current_gw_port(self, context, router_id, router, new_network):
+        """Delete gw port if attached to an old network."""
         port_requires_deletion = (
-            router.gw_port and
-            (router.gw_port['network_id'] != new_network or ext_ip_change)
-        )
+            router.gw_port and router.gw_port['network_id'] != new_network)
         if not port_requires_deletion:
             return
         admin_ctx = context.elevated()
@@ -362,9 +356,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 raise l3.RouterInUse(router_id=router_id, reason=e)
 
     def _create_gw_port(self, context, router_id, router, new_network,
-                        ext_ips, ext_ip_change):
+                        ext_ips):
         new_valid_gw_port_attachment = (
-            new_network and (not router.gw_port or ext_ip_change or
+            new_network and (not router.gw_port or
                              router.gw_port['network_id'] != new_network))
         if new_valid_gw_port_attachment:
             subnets = self._core_plugin._get_subnets_by_network(context,
@@ -374,6 +368,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                                                   new_network, subnet['id'],
                                                   subnet['cidr'])
             self._create_router_gw_port(context, router, new_network, ext_ips)
+
+    def _update_current_gw_port(self, context, router_id, router, ext_ips):
+        self._core_plugin.update_port(context, router.gw_port['id'], {'port':
+                                      {'fixed_ips': ext_ips}})
+        context.session.expire(router.gw_port)
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
         # TODO(salvatore-orlando): guarantee atomic behavior also across
@@ -385,10 +384,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         ext_ip_change = self._check_for_external_ip_change(
             context, gw_port, ext_ips)
         network_id = self._validate_gw_info(context, gw_port, info, ext_ips)
-        self._delete_current_gw_port(context, router_id, router, network_id,
-                                     ext_ip_change)
-        self._create_gw_port(context, router_id, router, network_id, ext_ips,
-                             ext_ip_change)
+        if gw_port and ext_ip_change and gw_port['network_id'] == network_id:
+            self._update_current_gw_port(context, router_id, router,
+                                         ext_ips)
+        else:
+            self._delete_current_gw_port(context, router_id, router,
+                                         network_id)
+            self._create_gw_port(context, router_id, router, network_id,
+                                 ext_ips)
 
     def _check_for_external_ip_change(self, context, gw_port, ext_ips):
         # determine if new external IPs differ from the existing fixed_ips
@@ -425,7 +428,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
         #TODO(nati) Refactor here when we have router insertion model
         router = self._ensure_router_not_in_use(context, id)
-        self._delete_current_gw_port(context, id, router, None, False)
+        self._delete_current_gw_port(context, id, router, None)
 
         router_ports = router.attached_ports.all()
         for rp in router_ports:
