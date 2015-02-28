@@ -53,7 +53,6 @@ METADATA_REQUEST_TIMEOUT = 60
 class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
-        self.check_sudo_enabled()
         mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
         self.agent = self._configure_agent('agent1')
 

@@ -17,14 +17,14 @@ from oslo_config import cfg
 from six import moves
 
 from neutron.agent.linux import external_process
+from neutron.tests import base
 from neutron.tests.functional.agent.linux import simple_daemon
-from neutron.tests.functional import base
 
 
 UUID_FORMAT = "test-uuid-%d"
 
 
-class BaseTestProcessMonitor(base.BaseSudoTestCase):
+class BaseTestProcessMonitor(base.BaseTestCase):
 
     def setUp(self):
         super(BaseTestProcessMonitor, self).setUp()
