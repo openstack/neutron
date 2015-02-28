@@ -31,6 +31,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
+from neutron.agent.linux import utils
 from neutron.agent.metadata import agent as metadata_agent
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
@@ -395,7 +396,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             port = router.get_ex_gw_port()
             interface_name = self.agent.get_external_device_name(port['id'])
             self._assert_no_ip_addresses_on_interface(router, interface_name)
-            helpers.wait_until_true(lambda: router.ha_state == 'master')
+            utils.wait_until_true(lambda: router.ha_state == 'master')
 
             # Keepalived notifies of a state transition when it starts,
             # not when it ends. Thus, we have to wait until keepalived finishes
@@ -407,7 +408,7 @@ class L3AgentTestCase(L3AgentTestFramework):
                 device,
                 self.agent.get_internal_device_name,
                 router.ns_name)
-            helpers.wait_until_true(device_exists)
+            utils.wait_until_true(device_exists)
 
         self.assertTrue(self._namespace_exists(router.ns_name))
         self.assertTrue(self._metadata_proxy_exists(self.agent.conf, router))
@@ -478,7 +479,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         restarted_agent = l3_test_agent.TestL3NATAgent(self.agent.host,
                                                        self.agent.conf)
         self._create_router(restarted_agent, router1.router)
-        helpers.wait_until_true(lambda: self._floating_ips_configured(router1))
+        utils.wait_until_true(lambda: self._floating_ips_configured(router1))
 
 
 class L3HATestFramework(L3AgentTestFramework):
@@ -506,16 +507,16 @@ class L3HATestFramework(L3AgentTestFramework):
 
         router2 = self.manage_router(self.failover_agent, router_info_2)
 
-        helpers.wait_until_true(lambda: router1.ha_state == 'master')
-        helpers.wait_until_true(lambda: router2.ha_state == 'backup')
+        utils.wait_until_true(lambda: router1.ha_state == 'master')
+        utils.wait_until_true(lambda: router2.ha_state == 'backup')
 
         device_name = router1.get_ha_device_name(
             router1.router[l3_constants.HA_INTERFACE_KEY]['id'])
         ha_device = ip_lib.IPDevice(device_name, namespace=router1.ns_name)
         ha_device.link.set_down()
 
-        helpers.wait_until_true(lambda: router2.ha_state == 'master')
-        helpers.wait_until_true(lambda: router1.ha_state == 'fault')
+        utils.wait_until_true(lambda: router2.ha_state == 'master')
+        utils.wait_until_true(lambda: router1.ha_state == 'fault')
 
 
 class MetadataFakeProxyHandler(object):

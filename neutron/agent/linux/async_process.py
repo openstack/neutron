@@ -16,6 +16,7 @@ import eventlet
 import eventlet.event
 import eventlet.queue
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
@@ -52,7 +53,8 @@ class AsyncProcess(object):
     ...     print line
     """
 
-    def __init__(self, cmd, run_as_root=False, respawn_interval=None):
+    def __init__(self, cmd, run_as_root=False, respawn_interval=None,
+                 namespace=None):
         """Constructor.
 
         :param cmd: The list of command arguments to invoke.
@@ -60,8 +62,11 @@ class AsyncProcess(object):
         :param respawn_interval: Optional, the interval in seconds to wait
                to respawn after unexpected process death. Respawn will
                only be attempted if a value of 0 or greater is provided.
+        :param namespace: Optional, start the command in the specified
+               namespace.
         """
-        self.cmd = cmd
+        self.cmd_without_namespace = cmd
+        self.cmd = ip_lib.add_namespace_to_cmd(cmd, namespace)
         self.run_as_root = run_as_root
         if respawn_interval is not None and respawn_interval < 0:
             raise ValueError(_('respawn_interval must be >= 0 if provided.'))
@@ -75,21 +80,44 @@ class AsyncProcess(object):
         self._stdout_lines = eventlet.queue.LightQueue()
         self._stderr_lines = eventlet.queue.LightQueue()
 
-    def start(self):
-        """Launch a process and monitor it asynchronously."""
+    def is_active(self):
+        # If using sudo rootwrap as a root_helper, we have to wait until sudo
+        # spawns rootwrap and rootwrap spawns the process.
+
+        return utils.pid_invoked_with_cmdline(
+            self.pid, self.cmd_without_namespace)
+
+    def start(self, blocking=False):
+        """Launch a process and monitor it asynchronously.
+
+        :param blocking: Block until the process has started.
+        :raises eventlet.timeout.Timeout if blocking is True and the process
+                did not start in time.
+        """
         if self._kill_event:
             raise AsyncProcessException(_('Process is already started'))
         else:
             LOG.debug('Launching async process [%s].', self.cmd)
             self._spawn()
 
-    def stop(self):
-        """Halt the process and watcher threads."""
+        if blocking:
+            utils.wait_until_true(self.is_active)
+
+    def stop(self, blocking=False):
+        """Halt the process and watcher threads.
+
+        :param blocking: Block until the process has stopped.
+        :raises eventlet.timeout.Timeout if blocking is True and the process
+                did not stop in time.
+        """
         if self._kill_event:
             LOG.debug('Halting async process [%s].', self.cmd)
             self._kill()
         else:
             raise AsyncProcessException(_('Process is not running.'))
+
+        if blocking:
+            utils.wait_until_true(lambda: not self.is_active())
 
     def _spawn(self):
         """Spawn a process and its watchers."""
@@ -107,6 +135,13 @@ class AsyncProcess(object):
                                      self._kill_event)
             self._watchers.append(watcher)
 
+    @property
+    def pid(self):
+        if self._process:
+            return utils.get_root_helper_child_pid(
+                self._process.pid,
+                run_as_root=self.run_as_root)
+
     def _kill(self, respawning=False):
         """Kill the process and the associated watcher greenthreads.
 
@@ -116,8 +151,7 @@ class AsyncProcess(object):
         # Halt the greenthreads
         self._kill_event.send()
 
-        pid = utils.get_root_helper_child_pid(self._process.pid,
-                                              run_as_root=self.run_as_root)
+        pid = self.pid
         if pid:
             self._kill_process(pid)
 

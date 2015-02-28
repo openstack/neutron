@@ -21,6 +21,7 @@ import socket
 import struct
 import tempfile
 
+import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
 from oslo_config import cfg
@@ -213,3 +214,60 @@ def get_root_helper_child_pid(pid, run_as_root=False):
                 # Last process in the tree, return it
                 break
     return pid
+
+
+def remove_abs_path(cmd):
+    """Remove absolute path of executable in cmd
+
+    Note: New instance of list is returned
+
+    :param cmd: parsed shlex command (e.g. ['/bin/foo', 'param1', 'param two'])
+
+    """
+    if cmd and os.path.isabs(cmd[0]):
+        cmd = list(cmd)
+        cmd[0] = os.path.basename(cmd[0])
+
+    return cmd
+
+
+def get_cmdline_from_pid(pid):
+    if pid is None or not os.path.exists('/proc/%s' % pid):
+        return []
+    with open('/proc/%s/cmdline' % pid, 'r') as f:
+        return f.readline().split('\0')[:-1]
+
+
+def cmdlines_are_equal(cmd1, cmd2):
+    """Validate provided lists containing output of /proc/cmdline are equal
+
+    This function ignores absolute paths of executables in order to have
+    correct results in case one list uses absolute path and the other does not.
+    """
+    cmd1 = remove_abs_path(cmd1)
+    cmd2 = remove_abs_path(cmd2)
+    return cmd1 == cmd2
+
+
+def pid_invoked_with_cmdline(pid, expected_cmd):
+    """Validate process with given pid is running with provided parameters
+
+    """
+    cmdline = get_cmdline_from_pid(pid)
+    return cmdlines_are_equal(expected_cmd, cmdline)
+
+
+def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
+    """
+    Wait until callable predicate is evaluated as True
+
+    :param predicate: Callable deciding whether waiting should continue.
+    Best practice is to instantiate predicate with functools.partial()
+    :param timeout: Timeout in seconds how long should function wait.
+    :param sleep: Polling interval for results in seconds.
+    :param exception: Exception class for eventlet.Timeout.
+    (see doc for eventlet.Timeout for more information)
+    """
+    with eventlet.timeout.Timeout(timeout, exception):
+        while not predicate():
+            eventlet.sleep(sleep)
