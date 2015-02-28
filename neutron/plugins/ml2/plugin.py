@@ -156,9 +156,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                   fanout=False)
         return self.conn.consume_in_threads()
 
-    def _filter_nets_provider(self, context, nets, filters):
-        # TODO(rkukura): Implement filtering.
-        return nets
+    def _filter_nets_provider(self, context, networks, filters):
+        return [network
+                for network in networks
+                if self.type_manager.network_matches_filters(network, filters)
+                ]
 
     def _notify_l3_agent_new_port(self, context, port):
         if not port:

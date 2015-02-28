@@ -96,7 +96,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             # at the same time.
             if attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
                 raise mpnet.SegmentsSetInConjunctionWithProviders()
-            return [self._process_provider_segment(network)]
+            segment = self._get_provider_segment(network)
+            return [self._process_provider_segment(segment)]
         elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
             segments = [self._process_provider_segment(s)
                         for s in network[mpnet.SEGMENTS]]
@@ -104,6 +105,31 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 segments,
                 self.is_partial_segment)
             return segments
+
+    def _match_segment(self, segment, filters):
+        return all(not filters.get(attr) or segment.get(attr) in filters[attr]
+                   for attr in provider.ATTRIBUTES)
+
+    def _get_provider_segment(self, network):
+        # TODO(manishg): Placeholder method
+        # Code intended for operating on a provider segment should use
+        # this method to extract the segment, even though currently the
+        # segment attributes are part of the network dictionary. In the
+        # future, network and segment information will be decoupled and
+        # here we will do the job of extracting the segment information.
+        return network
+
+    def network_matches_filters(self, network, filters):
+        if not filters:
+            return True
+        if any(attributes.is_attr_set(network.get(attr))
+               for attr in provider.ATTRIBUTES):
+            segments = [self._get_provider_segment(network)]
+        elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+            segments = self._get_attribute(network, mpnet.SEGMENTS)
+        else:
+            return True
+        return any(self._match_segment(s, filters) for s in segments)
 
     def _get_attribute(self, attrs, key):
         value = attrs.get(key)
