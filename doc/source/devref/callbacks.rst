@@ -300,29 +300,35 @@ The output is:
 FAQ
 ===
 
-Q. What is the relationship between Callbacks and Taskflow?
-A. There is no overlap between Callbacks and Taskflow or mutual exclusion; as matter of fact they
+What is the relationship between Callbacks and Taskflow?
+
+   There is no overlap between Callbacks and Taskflow or mutual exclusion; as matter of fact they
    can be combined; You could have a callback that goes on and trigger a taskflow. It is a nice
    way of separating implementation from abstraction, because you can keep the callback in place
    and change Taskflow with something else.
-Q. Is there any ordering guarantee during notifications? In other words, can I have one callback
-   be notified before another(s)?
-A. No, the ordering in which callbacks are notified is completely arbitrary by design: callbacks
-   should know nothing about each other, and ordering should not matter; a callback will always be
-   notified and its outcome should always be the same regardless as to in which order is it
-   notified. Priorities can be a future extension, if a use case arises that require enforced
-   ordering.
-Q. Is the registry thread-safe?
-A. Short answer is no: it is not safe to make mutations while callbacks are being called (more
-   details as to why can be found `here <https://hg.python.org/releasing/2.7.9/file/753a8f457ddc/Objects/dictobject.c#l937>`_).
-   A mutation could happen if a 'subscribe'/'unsuscribe' operation interleaves with the execution
-   of the notify loop. Albeit there is a possibility that things may end up in a bad state, the
-   registry works correctly under the assumption that subscriptions happen at the very beginning
-   of the life of the process and that the unsubscriptions (if any) take place at the very end.
-   In this case, chances that things do go badly may be pretty slim. Making the registry
-   thread-safe will be considered as a future improvement.
-Q. Can I use lambdas or 'closures' as callbacks?
-A. Currently a weakref.proxy(callback) is registered instead of the callback itself. This means
-   that certain constructs like lambdas, cannot be used as callbacks. Even though this limitation
-   could be easily lifted, use of methods or module functions should be preferred over lambdas
-   or nested functions for maintanability and testability reasons.
+
+Is there any ordering guarantee during notifications?
+
+  No, the ordering in which callbacks are notified is completely arbitrary by design: callbacks
+  should know nothing about each other, and ordering should not matter; a callback will always be
+  notified and its outcome should always be the same regardless as to in which order is it
+  notified. Priorities can be a future extension, if a use case arises that require enforced
+  ordering.
+
+Is the registry thread-safe?
+
+  Short answer is no: it is not safe to make mutations while callbacks are being called (more
+  details as to why can be found `here <https://hg.python.org/releasing/2.7.9/file/753a8f457ddc/Objects/dictobject.c#l937>`_).
+  A mutation could happen if a 'subscribe'/'unsuscribe' operation interleaves with the execution
+  of the notify loop. Albeit there is a possibility that things may end up in a bad state, the
+  registry works correctly under the assumption that subscriptions happen at the very beginning
+  of the life of the process and that the unsubscriptions (if any) take place at the very end.
+  In this case, chances that things do go badly may be pretty slim. Making the registry
+  thread-safe will be considered as a future improvement.
+
+Can I use lambdas or 'closures' as callbacks?
+
+  Currently a weakref.proxy(callback) is registered instead of the callback itself. This means
+  that certain constructs like lambdas, cannot be used as callbacks. Even though this limitation
+  could be easily lifted, use of methods or module functions should be preferred over lambdas
+  or nested functions for maintanability and testability reasons.
