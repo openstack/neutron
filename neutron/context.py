@@ -110,21 +110,19 @@ class ContextBase(oslo_context.RequestContext):
                             _del_read_deleted)
 
     def to_dict(self):
-        return {'user_id': self.user_id,
-                'tenant_id': self.tenant_id,
-                'project_id': self.project_id,
-                'is_admin': self.is_admin,
-                'read_deleted': self.read_deleted,
-                'roles': self.roles,
-                'timestamp': str(self.timestamp),
-                'request_id': self.request_id,
-                'tenant': self.tenant,
-                'user': self.user,
-                'tenant_name': self.tenant_name,
-                'project_name': self.tenant_name,
-                'user_name': self.user_name,
-                'auth_token': self.auth_token,
-                }
+        context = super(ContextBase, self).to_dict()
+        context.update({
+            'user_id': self.user_id,
+            'tenant_id': self.tenant_id,
+            'project_id': self.project_id,
+            'read_deleted': self.read_deleted,
+            'roles': self.roles,
+            'timestamp': str(self.timestamp),
+            'tenant_name': self.tenant_name,
+            'project_name': self.tenant_name,
+            'user_name': self.user_name,
+        })
+        return context
 
     @classmethod
     def from_dict(cls, values):
