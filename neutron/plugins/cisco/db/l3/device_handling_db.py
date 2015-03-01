@@ -77,7 +77,7 @@ CSR1KV_OPTS = [
                       'becomes operational.')),
     cfg.StrOpt('csr1kv_username', default='stack',
                help=_('Username to use for CSR1kv configurations.')),
-    cfg.StrOpt('csr1kv_password', default='cisco',
+    cfg.StrOpt('csr1kv_password', default='cisco', secret=True,
                help=_('Password to use for CSR1kv configurations.'))
 ]
 
