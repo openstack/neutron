@@ -273,13 +273,6 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
                                             server)
 
 
-class WorkerService(wsgi.WorkerService):
-    def start(self):
-        self._server = self._service.pool.spawn(self._service._run,
-                                                self._application,
-                                                self._service._socket)
-
-
 class UnixDomainWSGIServer(wsgi.Server):
     def __init__(self, name):
         self._socket = None
