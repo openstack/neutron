@@ -397,7 +397,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-brocade_           |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-cisco_             |                       |           |                  |         |              |
+| networking-cisco_             |  core,ml2,l3,fw,vpn   |    yes    |       yes        |   [B]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-hyperv_            |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -435,6 +435,13 @@ Arista
 .. _networking-brocade:
 
 .. _networking-cisco:
+
+Cisco
+-----
+
+* Git: https://git.openstack.org/stackforge/networking-cisco
+* Launchpad: https://launchpad.net/networking-cisco
+* PyPI: https://pypi.python.org/pypi/networking-cisco
 
 .. _networking-hyperv:
 
