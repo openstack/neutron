@@ -364,15 +364,68 @@ be the bare minimum you have to complete in order to get you off the ground.
   `3rd Party CI <http://ci.openstack.org/third_party.html>`_ to get one.
 * TODO(armax): ...
 
-The 'ODL ML2 Mechanism Driver' - example 1
-------------------------------------------
 
-* Create the StackForge repo: https://review.openstack.org/#/c/136854/
-* TODO(armax): continue with adding meat on the bone here
+Decomposition progress chart
+============================
 
-The 'OVSvAPP Mechanism Driver' - example 2
-------------------------------------------
+The following chart captures the following aspects:
 
-* Create the StackForge repo: https://review.openstack.org/#/c/136091/
-* Cookiecutter initial commit: https://review.openstack.org/#/c/141268/
-* TODO(armax): continue with adding meat on the bone here
+* Name: the name of the project that implements a Neutron plugin or driver.
+* Plugins/Drivers: whether the source code contains a core (aka monolithic)
+  plugin, a set of ML2 drivers, and/or (service) plugins (or extensions) for
+  firewall, vpn, and load balancers.
+* Git Repository: a link to the publicly available source code.
+* Launchpad: a link to the Launchpad project, for managing bugs and blueprints.
+* PyPI: a link to the PyPI package.
+* State: a code to represent the current state of the decomposition. Possible
+  values are:
+
+  * [A] External repo available, no code decomposition
+  * [B] External repo available, partial code decomposition
+  * [C] External repo available, code decomposition is complete
+
+  Absense of an entry for an existing plugin or driver means no active effort
+  has been observed or potentially not required.
+* Completed in: the release in which the effort is considered completed. Code
+  completion can be deemed as such, if there is no overlap/duplication between
+  what exists in the Neutron tree, and what it exists in the vendor repo.
+
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| Name                          |    Plugins/Drivers    |    Git   | Launchpad |       PyPI       |  State  | Completed in |
++===============================+=======================+==========+===========+==================+=========+==============+
+| networking-arista             |          ML2          | `[1.g]`_ |     x     |      `[1.p]`_    |   [B]   |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-brocade            |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-cisco              |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-hyperv             |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-metaplugin         |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-midonet            |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-mlnx               |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| nuage-openstack-neutron       |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-odl                |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-ofagent            |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-ovs-dpdk           |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-plumgrid           |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| networking-vphere             |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| pluribus                      |                       |          |           |                  |         |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+| vmware-nsx                    |    core,fw,lb,vpn     | `[2.g]`_ | `[2.l]`_  |     `[2.p]`_     |   [B]   |              |
++-------------------------------+-----------------------+----------+-----------+------------------+---------+--------------+
+
+.. _[1.g]: https://github.com/stackforge/networking-arista
+.. _[1.p]: https://pypi.python.org/pypi/networking_arista
+.. _[2.g]: https://github.com/stackforge/vmware-nsx
+.. _[2.l]: https://launchpad.net/vmware-nsx
+.. _[2.p]: https://pypi.python.org/pypi/vmware-nsx
