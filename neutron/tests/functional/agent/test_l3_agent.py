@@ -44,6 +44,7 @@ from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
 from neutron.openstack.common import uuidutils
+from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
@@ -683,35 +684,25 @@ class L3AgentTestCase(L3AgentTestFramework):
         router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
         router_ip = router_ip_cidr.partition('/')[0]
 
-        src_ip_cidr = net_helpers.increment_ip_cidr(router_ip_cidr)
-        dst_ip_cidr = net_helpers.increment_ip_cidr(src_ip_cidr)
-        dst_ip = dst_ip_cidr.partition('/')[0]
+        br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
+        src_machine, dst_machine = self.useFixture(
+            machine_fixtures.PeerMachines(
+                br_int,
+                net_helpers.increment_ip_cidr(router_ip_cidr),
+                router_ip)).machines
+
         dst_fip = '19.4.4.10'
         router.router[l3_constants.FLOATINGIP_KEY] = []
-        self._add_fip(router, dst_fip, fixed_address=dst_ip)
+        self._add_fip(router, dst_fip, fixed_address=dst_machine.ip)
         router.process(self.agent)
 
-        br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
-
-        # FIXME(cbrandily): temporary, will be replaced by fake machines
-        src_ns = self._create_namespace(prefix='test-src-')
-        src_port = self.useFixture(
-            net_helpers.OVSPortFixture(br_int, src_ns.namespace)).port
-        src_port.addr.add(src_ip_cidr)
-        net_helpers.set_namespace_gateway(src_port, router_ip)
-        dst_ns = self._create_namespace(prefix='test-dst-')
-        dst_port = self.useFixture(
-            net_helpers.OVSPortFixture(br_int, dst_ns.namespace)).port
-        dst_port.addr.add(dst_ip_cidr)
-        net_helpers.set_namespace_gateway(dst_port, router_ip)
-
-        protocol_port = helpers.get_free_namespace_port(dst_ns)
+        protocol_port = helpers.get_free_namespace_port(dst_machine.namespace)
         # client sends to fip
-        netcat = helpers.NetcatTester(src_ns, dst_ns, dst_ip,
-                                      protocol_port,
-                                      client_address=dst_fip,
-                                      run_as_root=True,
-                                      udp=False)
+        netcat = helpers.NetcatTester(
+            ip_lib.IPWrapper(src_machine.namespace),
+            ip_lib.IPWrapper(dst_machine.namespace),
+            dst_machine.ip, protocol_port, client_address=dst_fip,
+            run_as_root=True, udp=False)
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
 
@@ -804,24 +795,21 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
         self._create_metadata_fake_server(webob.exc.HTTPOk.code)
 
         # Create and configure client namespace
-        client_ns = self._create_namespace()
         router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
-        ip_cidr = net_helpers.increment_ip_cidr(router_ip_cidr)
         br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
 
-        # FIXME(cbrandily): temporary, will be replaced by a fake machine
-        port = self.useFixture(
-            net_helpers.OVSPortFixture(br_int, client_ns.namespace)).port
-        port.addr.add(ip_cidr)
-        net_helpers.set_namespace_gateway(port,
-                                          router_ip_cidr.partition('/')[0])
+        machine = self.useFixture(
+            machine_fixtures.FakeMachine(
+                br_int,
+                net_helpers.increment_ip_cidr(router_ip_cidr),
+                router_ip_cidr.partition('/')[0]))
 
         # Query metadata proxy
         url = 'http://%(host)s:%(port)s' % {'host': dhcp.METADATA_DEFAULT_IP,
                                             'port': dhcp.METADATA_PORT}
         cmd = 'curl', '--max-time', METADATA_REQUEST_TIMEOUT, '-D-', url
         try:
-            raw_headers = client_ns.netns.execute(cmd)
+            raw_headers = machine.execute(cmd)
         except RuntimeError:
             self.fail('metadata proxy unreachable on %s before timeout' % url)
 

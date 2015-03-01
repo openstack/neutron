@@ -14,7 +14,9 @@
 
 import testscenarios
 
+from neutron.agent.linux import ip_lib
 from neutron.tests import base as tests_base
+from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 
@@ -32,9 +34,6 @@ get_rand_name = tests_base.get_rand_name
 
 
 class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
-
-    def _create_namespace(self, prefix=net_helpers.NS_PREFIX):
-        return self.useFixture(net_helpers.NamespaceFixture(prefix)).ip_wrapper
 
     def create_veth(self):
         return self.useFixture(net_helpers.VethFixture()).ports
@@ -54,27 +53,12 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
         self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
 
 
-class BaseIPVethTestCase(BaseLinuxTestCase):
-    SRC_ADDRESS = '192.168.0.1'
-    DST_ADDRESS = '192.168.0.2'
-
-    @staticmethod
-    def _set_ip_up(device, cidr):
-        device.addr.add(cidr)
-        device.link.set_up()
+class BaseIPVethTestCase(functional_base.BaseSudoTestCase):
 
     def prepare_veth_pairs(self):
-
-        src_addr = self.SRC_ADDRESS
-        dst_addr = self.DST_ADDRESS
-
-        src_veth, dst_veth = self.create_veth()
-        src_ns = self._create_namespace()
-        dst_ns = self._create_namespace()
-        src_ns.add_device_to_namespace(src_veth)
-        dst_ns.add_device_to_namespace(dst_veth)
-
-        self._set_ip_up(src_veth, '%s/24' % src_addr)
-        self._set_ip_up(dst_veth, '%s/24' % dst_addr)
-
-        return src_ns, dst_ns
+        bridge = self.useFixture(net_helpers.VethBridgeFixture()).bridge
+        machines = self.useFixture(
+            machine_fixtures.PeerMachines(bridge)).machines
+        self.SRC_ADDRESS = machines[0].ip
+        self.DST_ADDRESS = machines[1].ip
+        return [ip_lib.IPWrapper(m.namespace) for m in machines]
