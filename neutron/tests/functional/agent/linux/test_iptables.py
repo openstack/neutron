@@ -16,15 +16,19 @@ import os.path
 
 import testtools
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils
 from neutron.tests import base
+from neutron.tests.common import machine_fixtures
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional.agent.linux.bin import ipt_binname
 from neutron.tests.functional.agent.linux import helpers
+from neutron.tests.functional import base as functional_base
 
 
-class IptablesManagerTestCase(linux_base.BaseIPVethTestCase):
+class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
     DIRECTION_CHAIN_MAPPER = {'ingress': 'INPUT',
                               'egress': 'OUTPUT'}
     PROTOCOL_BLOCK_RULE = '-p %s -j DROP'
@@ -32,17 +36,21 @@ class IptablesManagerTestCase(linux_base.BaseIPVethTestCase):
 
     def setUp(self):
         super(IptablesManagerTestCase, self).setUp()
-        self.client_ns, self.server_ns = self.prepare_veth_pairs()
+
+        bridge = self.useFixture(net_helpers.VethBridgeFixture()).bridge
+        self.client, self.server = self.useFixture(
+            machine_fixtures.PeerMachines(bridge)).machines
+
         self.client_fw, self.server_fw = self.create_firewalls()
         # The port is used in isolated namespace that precludes possibility of
         # port conflicts
-        self.port = helpers.get_free_namespace_port(self.server_ns.namespace)
+        self.port = helpers.get_free_namespace_port(self.server.namespace)
 
     def create_firewalls(self):
         client_iptables = iptables_manager.IptablesManager(
-            namespace=self.client_ns.namespace)
+            namespace=self.client.namespace)
         server_iptables = iptables_manager.IptablesManager(
-            namespace=self.server_ns.namespace)
+            namespace=self.server.namespace)
 
         return client_iptables, server_iptables
 
@@ -71,49 +79,48 @@ class IptablesManagerTestCase(linux_base.BaseIPVethTestCase):
         return chain, rule
 
     def _test_with_nc(self, fw_manager, direction, port, udp):
-        netcat = helpers.NetcatTester(self.client_ns, self.server_ns,
-                                      self.DST_ADDRESS, self.port,
-                                      run_as_root=True, udp=udp)
+        netcat = helpers.NetcatTester(
+            ip_lib.IPWrapper(self.client.namespace),
+            ip_lib.IPWrapper(self.server.namespace),
+            self.server.ip, self.port, run_as_root=True, udp=udp)
         self.addCleanup(netcat.stop_processes)
         protocol = 'tcp'
         if udp:
             protocol = 'udp'
         self.assertTrue(netcat.test_connectivity())
         self.filter_add_rule(
-            fw_manager, self.DST_ADDRESS, direction, protocol, port)
+            fw_manager, self.server.ip, direction, protocol, port)
         with testtools.ExpectedException(RuntimeError):
             netcat.test_connectivity()
         self.filter_remove_rule(
-            fw_manager, self.DST_ADDRESS, direction, protocol, port)
+            fw_manager, self.server.ip, direction, protocol, port)
         self.assertTrue(netcat.test_connectivity(True))
 
     def test_icmp(self):
-        pinger = helpers.Pinger(self.client_ns)
-        pinger.assert_ping(self.DST_ADDRESS)
+        self.client.assert_ping(self.server.ip)
         self.server_fw.ipv4['filter'].add_rule('INPUT',
                                                linux_base.ICMP_BLOCK_RULE)
         self.server_fw.apply()
-        pinger.assert_no_ping(self.DST_ADDRESS)
+        self.client.assert_no_ping(self.server.ip)
         self.server_fw.ipv4['filter'].remove_rule('INPUT',
                                                   linux_base.ICMP_BLOCK_RULE)
         self.server_fw.apply()
-        pinger.assert_ping(self.DST_ADDRESS)
+        self.client.assert_ping(self.server.ip)
 
     def test_mangle_icmp(self):
-        pinger = helpers.Pinger(self.client_ns)
-        pinger.assert_ping(self.DST_ADDRESS)
+        self.client.assert_ping(self.server.ip)
         self.server_fw.ipv4['mangle'].add_rule('INPUT',
                                                linux_base.ICMP_MARK_RULE)
         self.server_fw.ipv4['filter'].add_rule('INPUT',
                                                linux_base.MARKED_BLOCK_RULE)
         self.server_fw.apply()
-        pinger.assert_no_ping(self.DST_ADDRESS)
+        self.client.assert_no_ping(self.server.ip)
         self.server_fw.ipv4['mangle'].remove_rule('INPUT',
                                                   linux_base.ICMP_MARK_RULE)
         self.server_fw.ipv4['filter'].remove_rule('INPUT',
                                                   linux_base.MARKED_BLOCK_RULE)
         self.server_fw.apply()
-        pinger.assert_ping(self.DST_ADDRESS)
+        self.client.assert_ping(self.server.ip)
 
     def test_tcp_input_port(self):
         self._test_with_nc(self.server_fw, 'ingress', self.port, udp=False)

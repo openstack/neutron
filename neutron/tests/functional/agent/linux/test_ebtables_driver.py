@@ -15,9 +15,9 @@
 
 from neutron.agent.linux import ebtables_driver
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils as linux_utils
-from neutron.tests.functional.agent.linux import base
-from neutron.tests.functional.agent.linux import helpers
+from neutron.tests.common import machine_fixtures
+from neutron.tests.common import net_helpers
+from neutron.tests.functional import base
 
 
 NO_FILTER_APPLY = (
@@ -70,36 +70,31 @@ FILTER_APPLY_TEMPLATE = (
     "COMMIT")
 
 
-class EbtablesLowLevelTestCase(base.BaseIPVethTestCase):
+class EbtablesLowLevelTestCase(base.BaseSudoTestCase):
 
     def setUp(self):
         super(EbtablesLowLevelTestCase, self).setUp()
-        self.src_ns, self.dst_ns = self.prepare_veth_pairs()
-        devs = [d for d in self.src_ns.get_devices() if d.name != "lo"]
-        src_dev_name = devs[0].name
-        self.ns = self.src_ns.namespace
-        self.execute = linux_utils.execute
-        self.pinger = helpers.Pinger(self.src_ns)
+
+        bridge = self.useFixture(net_helpers.VethBridgeFixture()).bridge
+        self.source, self.destination = self.useFixture(
+            machine_fixtures.PeerMachines(bridge)).machines
 
         # Extract MAC and IP address of one of my interfaces
-        self.mac = self.src_ns.device(src_dev_name).link.address
-        addr = [a for a in
-                self.src_ns.device(src_dev_name).addr.list()][0]['cidr']
-        self.addr = addr.split("/")[0]
+        self.mac = self.source.port.link.address
+        self.addr = self.source.ip
 
         # Pick one of the namespaces and setup a bridge for the local ethernet
         # interface there, because ebtables only works on bridged interfaces.
-        self.src_ns.netns.execute("brctl addbr mybridge".split())
-        self.src_ns.netns.execute(("brctl addif mybridge %s" % src_dev_name).
-                                  split())
+        self.source.execute(['brctl', 'addbr', 'mybridge'])
+        self.source.execute(
+            ['brctl', 'addif', 'mybridge', self.source.port.name])
 
         # Take the IP addrss off one of the interfaces and apply it to the
         # bridge interface instead.
-        dev_source = ip_lib.IPDevice(src_dev_name, self.src_ns.namespace)
-        dev_mybridge = ip_lib.IPDevice("mybridge", self.src_ns.namespace)
-        dev_source.addr.delete(addr)
+        self.source.port.addr.delete(self.source.ip_cidr)
+        dev_mybridge = ip_lib.IPDevice("mybridge", self.source.namespace)
         dev_mybridge.link.set_up()
-        dev_mybridge.addr.add(addr)
+        dev_mybridge.addr.add(self.source.ip_cidr)
 
     def _test_basic_port_filter_wrong_mac(self):
         # Setup filter with wrong IP/MAC address pair. Basic filters only allow
@@ -108,15 +103,13 @@ class EbtablesLowLevelTestCase(base.BaseIPVethTestCase):
         mac_ip_pair = dict(mac_addr="11:11:11:22:22:22", ip_addr=self.addr)
         filter_apply = FILTER_APPLY_TEMPLATE % mac_ip_pair
         ebtables_driver.ebtables_restore(filter_apply,
-                                         self.execute,
-                                         self.ns)
-        self.pinger.assert_no_ping(self.DST_ADDRESS)
+                                         self.source.execute)
+        self.source.assert_no_ping(self.destination.ip)
 
         # Assure that ping will work once we unfilter the instance
         ebtables_driver.ebtables_restore(NO_FILTER_APPLY,
-                                         self.execute,
-                                         self.ns)
-        self.pinger.assert_ping(self.DST_ADDRESS)
+                                         self.source.execute)
+        self.source.assert_ping(self.destination.ip)
 
     def _test_basic_port_filter_correct_mac(self):
         # Use the correct IP/MAC address pair for this one.
@@ -124,10 +117,9 @@ class EbtablesLowLevelTestCase(base.BaseIPVethTestCase):
 
         filter_apply = FILTER_APPLY_TEMPLATE % mac_ip_pair
         ebtables_driver.ebtables_restore(filter_apply,
-                                         self.execute,
-                                         self.ns)
+                                         self.source.execute)
 
-        self.pinger.assert_ping(self.DST_ADDRESS)
+        self.source.assert_ping(self.destination.ip)
 
     def test_ebtables_filtering(self):
         # Cannot parallelize those tests. Therefore need to call them

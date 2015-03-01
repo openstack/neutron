@@ -14,9 +14,7 @@
 
 import testscenarios
 
-from neutron.agent.linux import ip_lib
 from neutron.tests import base as tests_base
-from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 
@@ -54,14 +52,3 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
     def setUp(self):
         super(BaseOVSLinuxTestCase, self).setUp()
         self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
-
-
-class BaseIPVethTestCase(functional_base.BaseSudoTestCase):
-
-    def prepare_veth_pairs(self):
-        bridge = self.useFixture(net_helpers.VethBridgeFixture()).bridge
-        machines = self.useFixture(
-            machine_fixtures.PeerMachines(bridge)).machines
-        self.SRC_ADDRESS = machines[0].ip
-        self.DST_ADDRESS = machines[1].ip
-        return [ip_lib.IPWrapper(m.namespace) for m in machines]
