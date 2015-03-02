@@ -415,7 +415,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-ovs-dpdk_          |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-plumgrid_          |                       |           |                  |         |              |
+| networking-plumgrid_          |          core         |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-vsphere_           |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -459,6 +459,13 @@ OpenDayLight
 .. _networking-ovs-dpdk:
 
 .. _networking-plumgrid:
+
+PLUMgrid
+---------
+
+* Git: https://github.com/stackforge/networking-plumgrid
+* Launchpad: https://launchpad.net/networking-plumgrid
+* PyPI: https://pypi.python.org/pypi/networking-plumgrid
 
 .. _networking-vsphere:
 
