@@ -1615,7 +1615,11 @@ def main():
         # commands target xen dom0 rather than domU.
         cfg.CONF.set_default('ip_lib_force_root', True)
 
-    agent = OVSNeutronAgent(**agent_config)
+    try:
+        agent = OVSNeutronAgent(**agent_config)
+    except RuntimeError as e:
+        LOG.error(_LE("%s Agent terminated!"), e)
+        sys.exit(1)
     signal.signal(signal.SIGTERM, agent._handle_sigterm)
 
     # Start everything.
