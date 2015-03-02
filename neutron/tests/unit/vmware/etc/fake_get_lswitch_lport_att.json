@@ -1,7 +1,0 @@
-{
-  "LogicalPortAttachment":
-    {
-      "type": "%(att_type)s",
-      "schema": "/ws.v1/schema/%(att_type)s"
-    }
-}

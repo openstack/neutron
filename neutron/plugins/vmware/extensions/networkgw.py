@@ -19,7 +19,6 @@ from oslo_config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.api.v2 import resource_helper
-from neutron.plugins.vmware.common import utils
 
 GATEWAY_RESOURCE_NAME = "network_gateway"
 DEVICE_RESOURCE_NAME = "gateway_device"
@@ -29,6 +28,20 @@ NETWORK_GATEWAYS = "%ss" % EXT_ALIAS
 GATEWAY_DEVICES = "%ss" % DEVICE_RESOURCE_NAME.replace('_', '-')
 DEVICE_ID_ATTR = 'id'
 IFACE_NAME_ATTR = 'interface_name'
+
+
+# TODO(salv-orlando): This type definition is duplicated into
+# stackforge/vmware-nsx. This temporary duplication should be removed once the
+# plugin decomposition is finished.
+# Allowed network types for the NSX Plugin
+class NetworkTypes(object):
+    """Allowed provider network types for the NSX Plugin."""
+    L3_EXT = 'l3_ext'
+    STT = 'stt'
+    GRE = 'gre'
+    FLAT = 'flat'
+    VLAN = 'vlan'
+    BRIDGE = 'bridge'
 
 # Attribute Map for Network Gateway Resource
 # TODO(salvatore-orlando): add admin state as other neutron resources
@@ -111,11 +124,11 @@ def _validate_connector_type(data, valid_values=None):
         msg = _("A connector type is required to create a gateway device")
         return msg
     connector_types = (valid_values if valid_values else
-                       [utils.NetworkTypes.GRE,
-                        utils.NetworkTypes.STT,
-                        utils.NetworkTypes.BRIDGE,
-                        'ipsec%s' % utils.NetworkTypes.GRE,
-                        'ipsec%s' % utils.NetworkTypes.STT])
+                       [NetworkTypes.GRE,
+                        NetworkTypes.STT,
+                        NetworkTypes.BRIDGE,
+                        'ipsec%s' % NetworkTypes.GRE,
+                        'ipsec%s' % NetworkTypes.STT])
     if data not in connector_types:
         msg = _("Unknown connector type: %s") % data
         return msg
