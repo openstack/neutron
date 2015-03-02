@@ -1317,26 +1317,6 @@ class TestOvsNeutronAgent(object):
                            self.agent.state_rpc.client):
             self.assertEqual(10, rpc_client.timeout)
 
-    def test_cleanup_stale_flows_iter_0(self):
-        with mock.patch.object(self.agent.int_br, 'agent_uuid_stamp',
-                               new=1234),\
-            mock.patch.object(self.agent.int_br,
-                              'dump_flows_all_tables') as dump_flows,\
-                mock.patch.object(self.agent.int_br,
-                                  'delete_flows') as del_flow:
-            dump_flows.return_value = [
-                'cookie=0x4d2, duration=50.156s, table=0,actions=drop',
-                'cookie=0x4321, duration=54.143s, table=2, priority=0',
-                'cookie=0x2345, duration=50.125s, table=2, priority=0',
-                'cookie=0x4d2, duration=52.112s, table=3, actions=drop',
-            ]
-            self.agent.cleanup_stale_flows()
-            expected = [
-                mock.call(cookie='0x4321/-1', table='2'),
-                mock.call(cookie='0x2345/-1', table='2'),
-            ]
-            self.assertEqual(expected, del_flow.mock_calls)
-
     def test_set_rpc_timeout_no_value(self):
         self.agent.quitting_rpc_timeout = None
         with mock.patch.object(self.agent, 'set_rpc_timeout') as mock_set_rpc:
@@ -1438,7 +1418,51 @@ class TestOvsNeutronAgent(object):
 
 class TestOvsNeutronAgentOFCtl(TestOvsNeutronAgent,
                                ovs_test_base.OVSOFCtlTestBase):
-    pass
+    def test_cleanup_stale_flows_iter_0(self):
+        with mock.patch.object(self.agent.int_br, 'agent_uuid_stamp',
+                               new=1234),\
+            mock.patch.object(self.agent.int_br,
+                              'dump_flows_all_tables') as dump_flows,\
+                mock.patch.object(self.agent.int_br,
+                                  'delete_flows') as del_flow:
+            dump_flows.return_value = [
+                'cookie=0x4d2, duration=50.156s, table=0,actions=drop',
+                'cookie=0x4321, duration=54.143s, table=2, priority=0',
+                'cookie=0x2345, duration=50.125s, table=2, priority=0',
+                'cookie=0x4d2, duration=52.112s, table=3, actions=drop',
+            ]
+            self.agent.cleanup_stale_flows()
+            expected = [
+                mock.call(cookie='0x4321/-1', table='2'),
+                mock.call(cookie='0x2345/-1', table='2'),
+            ]
+            self.assertEqual(expected, del_flow.mock_calls)
+
+
+class TestOvsNeutronAgentRyu(TestOvsNeutronAgent,
+                             ovs_test_base.OVSRyuTestBase):
+    def test_cleanup_stale_flows_iter_0(self):
+        uint64_max = (1 << 64) - 1
+        with mock.patch.object(self.agent.int_br, 'agent_uuid_stamp',
+                               new=1234),\
+            mock.patch.object(self.agent.int_br,
+                              'dump_flows') as dump_flows,\
+                mock.patch.object(self.agent.int_br,
+                                  'delete_flows') as del_flow:
+            dump_flows.return_value = [
+                # mock ryu.ofproto.ofproto_v1_3_parser.OFPFlowStats
+                mock.Mock(cookie=1234, table_id=0),
+                mock.Mock(cookie=17185, table_id=2),
+                mock.Mock(cookie=9029, table_id=2),
+                mock.Mock(cookie=1234, table_id=3),
+            ]
+            self.agent.cleanup_stale_flows()
+            expected = [mock.call(cookie=17185,
+                                  cookie_mask=uint64_max),
+                        mock.call(cookie=9029,
+                                  cookie_mask=uint64_max)]
+            del_flow.assert_has_calls(expected, any_order=True)
+            self.assertEqual(len(expected), len(del_flow.mock_calls))
 
 
 class AncillaryBridgesTest(object):
@@ -1541,6 +1565,11 @@ class AncillaryBridgesTest(object):
 
 class AncillaryBridgesTestOFCtl(AncillaryBridgesTest,
                                 ovs_test_base.OVSOFCtlTestBase):
+    pass
+
+
+class AncillaryBridgesTestRyu(AncillaryBridgesTest,
+                              ovs_test_base.OVSRyuTestBase):
     pass
 
 
@@ -2424,6 +2453,11 @@ class TestOvsDvrNeutronAgent(object):
 
 class TestOvsDvrNeutronAgentOFCtl(TestOvsDvrNeutronAgent,
                                   ovs_test_base.OVSOFCtlTestBase):
+    pass
+
+
+class TestOvsDvrNeutronAgentRyu(TestOvsDvrNeutronAgent,
+                                ovs_test_base.OVSRyuTestBase):
     pass
 
 

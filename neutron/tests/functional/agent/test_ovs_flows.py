@@ -14,6 +14,7 @@
 #    under the License.
 
 import eventlet
+import fixtures
 import mock
 
 from oslo_config import cfg
@@ -21,6 +22,7 @@ from oslo_utils import importutils
 
 from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
+from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovsagt
@@ -47,18 +49,34 @@ class _OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
         self.br_int = None
         self.init_done = False
         self.init_done_ev = eventlet.event.Event()
-        self._main_thread = eventlet.spawn(self._kick_main)
         self.addCleanup(self._kill_main)
+        retry_count = 3
+        while True:
+            cfg.CONF.set_override('of_listen_port',
+                                  net_helpers.get_free_namespace_port(
+                                      n_const.PROTO_NAME_TCP),
+                                  group='OVS')
+            self.of_interface_mod.init_config()
+            self._main_thread = eventlet.spawn(self._kick_main)
 
-        # Wait for _kick_main -> of_interface main -> _agent_main
-        # NOTE(yamamoto): This complexity came from how "native" of_interface
-        # runs its openflow controller.  "native" of_interface's main routine
-        # blocks while running the embedded openflow controller.  In that case,
-        # the agent rpc_loop runs in another thread.  However, for FT we need
-        # to run setUp() and test_xxx() in the same thread.  So I made this
-        # run of_interface's main in a separate thread instead.
-        while not self.init_done:
-            self.init_done_ev.wait()
+            # Wait for _kick_main -> of_interface main -> _agent_main
+            # NOTE(yamamoto): This complexity came from how "native"
+            # of_interface runs its openflow controller.  "native"
+            # of_interface's main routine blocks while running the
+            # embedded openflow controller.  In that case, the agent
+            # rpc_loop runs in another thread.  However, for FT we
+            # need to run setUp() and test_xxx() in the same thread.
+            # So I made this run of_interface's main in a separate
+            # thread instead.
+            try:
+                while not self.init_done:
+                    self.init_done_ev.wait()
+                break
+            except fixtures.TimeoutException:
+                self._kill_main()
+            retry_count -= 1
+            if retry_count < 0:
+                raise Exception('port allocation failed')
 
     def _kick_main(self):
         with mock.patch.object(ovsagt, 'main', self._agent_main):
@@ -85,6 +103,11 @@ class _OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
 class _OVSAgentOFCtlTestBase(_OVSAgentTestBase):
     _MAIN_MODULE = ('neutron.plugins.ml2.drivers.openvswitch.agent.'
                     'openflow.ovs_ofctl.main')
+
+
+class _OVSAgentNativeTestBase(_OVSAgentTestBase):
+    _MAIN_MODULE = ('neutron.plugins.ml2.drivers.openvswitch.agent.'
+                    'openflow.native.main')
 
 
 class _ARPSpoofTestCase(object):
@@ -194,6 +217,10 @@ class ARPSpoofOFCtlTestCase(_ARPSpoofTestCase, _OVSAgentOFCtlTestBase):
     pass
 
 
+class ARPSpoofNativeTestCase(_ARPSpoofTestCase, _OVSAgentNativeTestBase):
+    pass
+
+
 class _CanaryTableTestCase(object):
     def test_canary_table(self):
         self.br_int.delete_flows()
@@ -205,4 +232,8 @@ class _CanaryTableTestCase(object):
 
 
 class CanaryTableOFCtlTestCase(_CanaryTableTestCase, _OVSAgentOFCtlTestBase):
+    pass
+
+
+class CanaryTableNativeTestCase(_CanaryTableTestCase, _OVSAgentNativeTestBase):
     pass

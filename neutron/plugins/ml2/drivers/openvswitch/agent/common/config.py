@@ -45,12 +45,27 @@ ovs_opts = [
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 help=_("Use veths instead of patch ports to interconnect the "
                        "integration bridge to physical bridges.")),
-    cfg.StrOpt('of_interface', default='ovs-ofctl', choices=['ovs-ofctl'],
+    cfg.StrOpt('of_interface', default='ovs-ofctl',
+               choices=['ovs-ofctl', 'native'],
                help=_("OpenFlow interface to use.")),
     cfg.StrOpt('datapath_type', default=constants.OVS_DATAPATH_SYSTEM,
                choices=[constants.OVS_DATAPATH_SYSTEM,
                         constants.OVS_DATAPATH_NETDEV],
                help=_("OVS datapath to use.")),
+    cfg.IPOpt('of_listen_address', default='127.0.0.1',
+              help=_("Address to listen on for OpenFlow connections. "
+                     "Used only for 'native' driver.")),
+    cfg.IntOpt('of_listen_port', default=6633,
+               help=_("Port to listen on for OpenFlow connections. "
+                      "Used only for 'native' driver.")),
+    cfg.IntOpt('of_connect_timeout', default=30,
+               help=_("Timeout in seconds to wait for "
+                      "the local switch connecting the controller. "
+                      "Used only for 'native' driver.")),
+    cfg.IntOpt('of_request_timeout', default=10,
+               help=_("Timeout in seconds to wait for a single "
+                      "OpenFlow request. "
+                      "Used only for 'native' driver.")),
 ]
 
 agent_opts = [
