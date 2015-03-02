@@ -87,7 +87,7 @@ class KeepalivedConfBaseMixin(object):
         virtual_route = keepalived.KeepalivedVirtualRoute(n_consts.IPv4_ANY,
                                                           "192.168.1.1",
                                                           "eth1")
-        instance1.virtual_routes.append(virtual_route)
+        instance1.virtual_routes.gateway_routes = [virtual_route]
 
         instance2 = keepalived.KeepalivedInstance('MASTER', 'eth4', 2,
                                                   ['169.254.192.0/18'],
@@ -187,6 +187,43 @@ class KeepalivedStateExceptionTestCase(base.BaseTestCase):
         self.assertRaises(keepalived.InvalidAuthenticationTypeException,
                           instance.set_authentication,
                           invalid_auth_type, 'some_password')
+
+
+class KeepalivedInstanceRoutesTestCase(base.BaseTestCase):
+    @classmethod
+    def _get_instance_routes(cls):
+        routes = keepalived.KeepalivedInstanceRoutes()
+        default_gw_eth0 = keepalived.KeepalivedVirtualRoute(
+            '0.0.0.0/0', '1.0.0.254', 'eth0')
+        default_gw_eth1 = keepalived.KeepalivedVirtualRoute(
+            '::/0', 'fe80::3e97:eff:fe26:3bfa/64', 'eth1')
+        routes.gateway_routes = [default_gw_eth0, default_gw_eth1]
+        extra_routes = [
+            keepalived.KeepalivedVirtualRoute('10.0.0.0/8', '1.0.0.1'),
+            keepalived.KeepalivedVirtualRoute('20.0.0.0/8', '2.0.0.2')]
+        routes.extra_routes = extra_routes
+        return routes
+
+    def test_routes(self):
+        routes = self._get_instance_routes()
+        self.assertEqual(len(routes.routes), 4)
+
+    def test_remove_routes_on_interface(self):
+        routes = self._get_instance_routes()
+        routes.remove_routes_on_interface('eth0')
+        self.assertEqual(len(routes.routes), 3)
+        routes.remove_routes_on_interface('eth1')
+        self.assertEqual(len(routes.routes), 2)
+
+    def test_build_config(self):
+        expected = """    virtual_routes {
+        0.0.0.0/0 via 1.0.0.254 dev eth0
+        ::/0 via fe80::3e97:eff:fe26:3bfa/64 dev eth1
+        10.0.0.0/8 via 1.0.0.1
+        20.0.0.0/8 via 2.0.0.2
+    }"""
+        routes = self._get_instance_routes()
+        self.assertEqual(expected, '\n'.join(routes.build_config()))
 
 
 class KeepalivedInstanceTestCase(base.BaseTestCase,

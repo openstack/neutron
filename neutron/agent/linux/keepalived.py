@@ -107,6 +107,32 @@ class KeepalivedVirtualRoute(object):
         return output
 
 
+class KeepalivedInstanceRoutes(object):
+    def __init__(self):
+        self.gateway_routes = []
+        self.extra_routes = []
+
+    def remove_routes_on_interface(self, interface_name):
+        self.gateway_routes = [gw_rt for gw_rt in self.gateway_routes
+                               if gw_rt.interface_name != interface_name]
+        # NOTE(amuller): extra_routes are initialized from the router's
+        # 'routes' attribute. These routes do not have an interface
+        # parameter and so cannot be removed via an interface_name lookup.
+
+    @property
+    def routes(self):
+        return self.gateway_routes + self.extra_routes
+
+    def __len__(self):
+        return len(self.routes)
+
+    def build_config(self):
+        return itertools.chain(['    virtual_routes {'],
+                               ('        %s' % route.build_config()
+                                for route in self.routes),
+                               ['    }'])
+
+
 class KeepalivedInstance(object):
     """Instance section of a keepalived configuration."""
 
@@ -127,7 +153,7 @@ class KeepalivedInstance(object):
         self.mcast_src_ip = mcast_src_ip
         self.track_interfaces = []
         self.vips = []
-        self.virtual_routes = []
+        self.virtual_routes = KeepalivedInstanceRoutes()
         self.authentication = None
         metadata_cidr = '169.254.169.254/32'
         self.primary_vip_range = get_free_range(
@@ -148,8 +174,7 @@ class KeepalivedInstance(object):
         self.vips = [vip for vip in self.vips
                      if vip.interface_name != interface_name]
 
-        self.virtual_routes = [vroute for vroute in self.virtual_routes
-                               if vroute.interface_name != interface_name]
+        self.virtual_routes.remove_routes_on_interface(interface_name)
 
     def remove_vip_by_ip_address(self, ip_address):
         self.vips = [vip for vip in self.vips
@@ -243,8 +268,8 @@ class KeepalivedInstance(object):
 
         config.extend(self._build_vips_config())
 
-        if self.virtual_routes:
-            config.extend(self._build_virtual_routes_config())
+        if len(self.virtual_routes):
+            config.extend(self.virtual_routes.build_config())
 
         config.append('}')
 
