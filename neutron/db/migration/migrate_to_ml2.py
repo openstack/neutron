@@ -14,8 +14,8 @@
 #    under the License.
 
 """
-This script will migrate the database of an openvswitch or linuxbridge
-plugin so that it can be used with the ml2 plugin.
+This script will migrate the database of an openvswitch, linuxbridge or
+Hyper-V plugin so that it can be used with the ml2 plugin.
 
 Known Limitations:
 
@@ -72,6 +72,7 @@ from neutron.plugins.ml2.drivers import type_vxlan
 # Migration targets
 LINUXBRIDGE = 'linuxbridge'
 OPENVSWITCH = 'openvswitch'
+HYPERV = 'hyperv'
 
 # Releases
 ICEHOUSE = 'icehouse'
@@ -380,6 +381,27 @@ class MigrateLinuxBridgeToMl2_Juno(BaseMigrateToMl2):
         binding['segmentation_id'] = segmentation_id
 
 
+class MigrateHyperVPluginToMl2_Juno(BaseMigrateToMl2):
+
+    def __init__(self):
+        super(MigrateHyperVPluginToMl2_Juno, self).__init__(
+            vif_type=portbindings.VIF_TYPE_HYPERV,
+            driver_type=HYPERV,
+            segment_table_name='hyperv_network_bindings',
+            vlan_allocation_table_name='hyperv_vlan_allocations',
+            old_tables=['portbindingports'])
+
+    def migrate_segment_dict(self, binding):
+        super(MigrateHyperVPluginToMl2_Juno, self).migrate_segment_dict(
+            binding)
+        # the 'hyperv_network_bindings' table has the column
+        # 'segmentation_id' instead of 'vlan_id'.
+        vlan_id = binding.pop('segmentation_id')
+        network_type, segmentation_id = interpret_vlan_id(vlan_id)
+        binding['network_type'] = network_type
+        binding['segmentation_id'] = segmentation_id
+
+
 class MigrateOpenvswitchToMl2_Juno(BaseMigrateToMl2):
 
     def __init__(self):
@@ -435,21 +457,27 @@ class MigrateOpenvswitchToMl2_Icehouse(MigrateOpenvswitchToMl2_Juno,
     pass
 
 
+class MigrateHyperVPluginToMl2_Icehouse(MigrateHyperVPluginToMl2_Juno,
+                                        BaseMigrateToMl2_IcehouseMixin):
+    pass
+
 migrate_map = {
     ICEHOUSE: {
         OPENVSWITCH: MigrateOpenvswitchToMl2_Icehouse,
         LINUXBRIDGE: MigrateLinuxBridgeToMl2_Icehouse,
+        HYPERV: MigrateHyperVPluginToMl2_Icehouse,
     },
     JUNO: {
         OPENVSWITCH: MigrateOpenvswitchToMl2_Juno,
         LINUXBRIDGE: MigrateLinuxBridgeToMl2_Juno,
+        HYPERV: MigrateHyperVPluginToMl2_Juno,
     },
 }
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('plugin', choices=[OPENVSWITCH, LINUXBRIDGE],
+    parser.add_argument('plugin', choices=[OPENVSWITCH, LINUXBRIDGE, HYPERV],
                         help=_('The plugin type whose database will be '
                                'migrated'))
     parser.add_argument('connection',
@@ -466,11 +494,11 @@ def main():
     #TODO(marun) Provide a verbose option
     args = parser.parse_args()
 
-    if args.plugin == LINUXBRIDGE and (args.tunnel_type or
-                                       args.vxlan_udp_port):
+    if args.plugin in [LINUXBRIDGE, HYPERV] and (args.tunnel_type or
+                                                 args.vxlan_udp_port):
         msg = _('Tunnel args (tunnel-type and vxlan-udp-port) are not valid '
                 'for the %s plugin')
-        parser.error(msg % LINUXBRIDGE)
+        parser.error(msg % args.plugin)
 
     try:
         migrate_func = migrate_map[args.release][args.plugin]()
