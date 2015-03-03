@@ -115,6 +115,8 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('network_vlan_ranges',
                                      [self.phys_vrange, self.phys2_vrange],
                                      group='ml2_type_vlan')
+        config.cfg.CONF.set_override('flat_networks', ['noagent'],
+                                     group='ml2_type_flat')
         self.setup_parent()
         self.driver = ml2_plugin.Ml2Plugin()
         self.context = context.get_admin_context()
