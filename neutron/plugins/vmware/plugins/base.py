@@ -140,12 +140,16 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        self._nsx_create_fip_port,
                        l3_db.DEVICE_OWNER_ROUTER_INTF:
                        self._nsx_create_router_port,
+                       constants.DEVICE_OWNER_DVR_INTERFACE:
+                       self._nsx_create_router_port,
                        networkgw_db.DEVICE_OWNER_NET_GW_INTF:
                        self._nsx_create_l2_gw_port,
                        'default': self._nsx_create_port},
             'delete': {l3_db.DEVICE_OWNER_ROUTER_GW:
                        self._nsx_delete_ext_gw_port,
                        l3_db.DEVICE_OWNER_ROUTER_INTF:
+                       self._nsx_delete_router_port,
+                       constants.DEVICE_OWNER_DVR_INTERFACE:
                        self._nsx_delete_router_port,
                        l3_db.DEVICE_OWNER_FLOATINGIP:
                        self._nsx_delete_fip_port,
