@@ -21,6 +21,7 @@ import mock
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import six
 import testtools
 import webob
@@ -44,7 +45,6 @@ from neutron.callbacks import resources
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
-from neutron.openstack.common import uuidutils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers

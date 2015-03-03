@@ -17,6 +17,8 @@ import math
 import operator
 
 import netaddr
+from oslo_utils import uuidutils
+
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -24,7 +26,6 @@ from neutron.db import models_v2
 import neutron.ipam as ipam
 from neutron.ipam import driver
 from neutron.ipam import utils as ipam_utils
-from neutron.openstack.common import uuidutils
 
 
 class SubnetAllocator(driver.Pool):

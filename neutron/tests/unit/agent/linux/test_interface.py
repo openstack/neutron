@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
@@ -22,7 +23,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.extensions import flavor
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 

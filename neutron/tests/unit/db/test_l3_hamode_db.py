@@ -16,6 +16,7 @@ import datetime
 import mock
 from oslo_config import cfg
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -27,7 +28,6 @@ from neutron.db import l3_hamode_db
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests.common import helpers
 from neutron.tests.unit import testlib_api

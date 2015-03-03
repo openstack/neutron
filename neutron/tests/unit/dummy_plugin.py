@@ -13,13 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
+
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.common import exceptions
 from neutron.db import servicetype_db
 from neutron.extensions import servicetype
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.services import service_base
 

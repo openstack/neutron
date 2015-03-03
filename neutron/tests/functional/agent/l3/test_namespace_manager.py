@@ -14,12 +14,12 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
-from neutron.openstack.common import uuidutils
 from neutron.tests.functional import base
 
 _uuid = uuidutils.generate_uuid

@@ -15,6 +15,7 @@
 
 import netaddr
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -23,7 +24,6 @@ from neutron import context
 import neutron.ipam as ipam
 from neutron.ipam import subnet_alloc
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 

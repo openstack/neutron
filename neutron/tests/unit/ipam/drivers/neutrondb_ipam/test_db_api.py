@@ -13,10 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
+
 from neutron import context
 from neutron.ipam.drivers.neutrondb_ipam import db_api
 from neutron.ipam.drivers.neutrondb_ipam import db_models
-from neutron.openstack.common import uuidutils
 from neutron.tests.unit import testlib_api
 
 

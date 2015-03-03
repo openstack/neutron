@@ -16,6 +16,7 @@ import mock
 import netaddr
 
 from oslo_log import log
+from oslo_utils import uuidutils
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
@@ -32,7 +33,6 @@ from neutron.callbacks import registry
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
 

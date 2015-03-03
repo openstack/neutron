@@ -15,6 +15,7 @@ import types
 import mock
 import netaddr
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.common import constants
 from neutron.common import ipv6_utils
@@ -23,7 +24,6 @@ from neutron import ipam
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 from neutron.tests.unit.ipam import fake_driver
 

@@ -14,8 +14,8 @@
 #    under the License.
 
 import mock
-
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
@@ -23,7 +23,6 @@ from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import ha as l3_ha_agent
 from neutron.agent.metadata import config
 from neutron.agent.metadata import driver as metadata_driver
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 

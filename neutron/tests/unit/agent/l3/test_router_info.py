@@ -11,13 +11,13 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 

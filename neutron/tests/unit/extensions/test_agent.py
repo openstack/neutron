@@ -19,6 +19,7 @@ import time
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.api.v2 import attributes
@@ -27,7 +28,6 @@ from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import agent
-from neutron.openstack.common import uuidutils
 from neutron.tests.common import helpers
 from neutron.tests import tools
 from neutron.tests.unit.api.v2 import test_base

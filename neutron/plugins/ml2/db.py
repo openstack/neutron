@@ -15,6 +15,7 @@
 
 from oslo_db import exception as db_exc
 from oslo_log import log
+from oslo_utils import uuidutils
 import six
 from sqlalchemy import or_
 from sqlalchemy.orm import exc
@@ -25,7 +26,6 @@ from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import portbindings
 from neutron.i18n import _LE, _LI
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 
