@@ -341,6 +341,20 @@ class L3SchedulerTestBaseMixin(object):
                                         router['router']['id'])
             self.assertNotEqual(already_scheduled, auto_s.called)
 
+    def test__unbind_router_removes_binding(self):
+        agent_id = self.agent_id1
+        agent = self.agent1
+        router = self._make_router(self.fmt,
+                                   tenant_id=str(uuid.uuid4()),
+                                   name='r1')
+        self._test_schedule_bind_router(agent, router)
+        self._unbind_router(self.adminContext,
+                            router['router']['id'],
+                            agent_id)
+        bindings = self._get_l3_bindings_hosting_routers(
+            self.adminContext, [router['router']['id']])
+        self.assertEqual(0, len(bindings))
+
     def _create_router_for_l3_agent_dvr_test(self,
                                              distributed=False,
                                              external_gw=None):

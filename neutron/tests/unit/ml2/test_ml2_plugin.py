@@ -28,7 +28,6 @@ from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import l3_db
 from neutron.extensions import external_net as external_net
-from neutron.extensions import l3agentscheduler
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
@@ -508,10 +507,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             self.port(device_owner='compute:None'),
             mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_port',
                               return_value=[ns_to_delete]),
-            mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent',
-                side_effect=l3agentscheduler.RouterNotHostedByL3Agent(
-                            router_id=ns_to_delete['router_id'],
-                            agent_id=ns_to_delete['agent_id']))
+            mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent')
         ) as (get_service_plugin, port, dvr_delns_ifno_port,
               remove_router_from_l3_agent):
 
