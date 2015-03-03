@@ -1248,9 +1248,12 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             # the isolation level is set to READ COMMITTED allocations made
             # concurrently will be returned by this query
             if not is_auto_addr_subnet:
-                if self._subnet_check_ip_allocations(context, id):
-                    LOG.debug("Found IP allocations on subnet %s, "
-                              "cannot delete", id)
+                alloc = self._subnet_check_ip_allocations(context, id)
+                if alloc:
+                    LOG.info(_LI("Found IP allocation %(alloc)s on subnet "
+                                 "%(subnet)s, cannot delete"),
+                             {'alloc': alloc,
+                              'subnet': id})
                     raise n_exc.SubnetInUse(subnet_id=id)
 
             context.session.delete(subnet)
