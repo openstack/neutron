@@ -15,6 +15,8 @@
 import atexit
 import fcntl
 import grp
+import logging as std_logging
+from logging import handlers
 import os
 import pwd
 import signal
@@ -54,6 +56,25 @@ def setgid(group_id_or_name):
             msg = _('Failed to set gid %s') % new_gid
             LOG.critical(msg)
             raise exceptions.FailToDropPrivilegesExit(msg)
+
+
+def unwatch_log():
+    """Replace WatchedFileHandler handlers by FileHandler ones.
+
+    Neutron logging uses WatchedFileHandler handlers but they do not
+    support privileges drop, this method replaces them by FileHandler
+    handlers supporting privileges drop.
+    """
+    log_root = logging.getLogger(None).logger
+    to_replace = [h for h in log_root.handlers
+                  if isinstance(h, handlers.WatchedFileHandler)]
+    for handler in to_replace:
+        new_handler = std_logging.FileHandler(handler.baseFilename,
+                                              mode=handler.mode,
+                                              encoding=handler.encoding,
+                                              delay=handler.delay)
+        log_root.removeHandler(handler)
+        log_root.addHandler(new_handler)
 
 
 def drop_privileges(user=None, group=None):
@@ -136,7 +157,7 @@ class Daemon(object):
     """
     def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null',
                  stderr='/dev/null', procname='python', uuid=None,
-                 user=None, group=None):
+                 user=None, group=None, watch_log=True):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
@@ -144,6 +165,7 @@ class Daemon(object):
         self.pidfile = Pidfile(pidfile, procname, uuid)
         self.user = user
         self.group = group
+        self.watch_log = watch_log
 
     def _fork(self):
         try:
@@ -206,4 +228,6 @@ class Daemon(object):
 
         start() will call this method after the process has daemonized.
         """
+        if not self.watch_log:
+            unwatch_log()
         drop_privileges(self.user, self.group)

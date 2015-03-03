@@ -292,7 +292,8 @@ class TestProxyDaemon(base.BaseTestCase):
                                       router_id='router_id',
                                       network_id=None,
                                       user=mock.ANY,
-                                      group=mock.ANY),
+                                      group=mock.ANY,
+                                      watch_log=mock.ANY),
                             mock.call().start()]
                         )
 
@@ -315,6 +316,7 @@ class TestProxyDaemon(base.BaseTestCase):
                                       router_id='router_id',
                                       network_id=None,
                                       user=mock.ANY,
-                                      group=mock.ANY),
+                                      group=mock.ANY,
+                                      watch_log=mock.ANY),
                             mock.call().run()]
                         )

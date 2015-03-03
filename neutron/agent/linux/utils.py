@@ -17,6 +17,7 @@ import fcntl
 import glob
 import httplib
 import os
+import pwd
 import shlex
 import socket
 import struct
@@ -332,6 +333,15 @@ def ensure_directory_exists_without_file(path):
                     ctxt.reraise = False
     else:
         ensure_dir(dirname)
+
+
+def is_effective_user(user_id_or_name):
+    """Returns True if user_id_or_name is effective user (id/name)."""
+    euid = os.geteuid()
+    if str(user_id_or_name) == str(euid):
+        return True
+    effective_user_name = pwd.getpwuid(euid).pw_name
+    return user_id_or_name == effective_user_name
 
 
 class UnixDomainHTTPConnection(httplib.HTTPConnection):
