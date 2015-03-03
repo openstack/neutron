@@ -886,7 +886,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 if a.port_id:
                     # calling update_port() for each allocation to remove the
                     # IP from the port and call the MechanismDrivers
-                    data = {'port':
+                    data = {attributes.PORT:
                             {'fixed_ips': [{'subnet_id': ip.subnet_id,
                                             'ip_address': ip.ip_address}
                                            for ip in a.ports.fixed_ips
@@ -914,7 +914,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
-            dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
+            dhcp_opts = attrs.get(edo_ext.EXTRADHCPOPTS, [])
             result = super(Ml2Plugin, self).create_port(context, port)
             self.extension_manager.process_create_port(context, attrs, result)
             self._process_port_create_security_group(context, result, sgids)
@@ -935,7 +935,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result, mech_context
 
     def create_port(self, context, port):
-        attrs = port['port']
+        attrs = port[attributes.PORT]
         result, mech_context = self._create_port_db(context, port)
         new_host_port = self._get_host_port_if_changed(mech_context, attrs)
         self._notify_l3_agent_new_port(context, new_host_port)
@@ -987,10 +987,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.error(_LE("_bind_port_if_needed failed. "
                               "Deleting all ports from create bulk '%s'"),
                           resource_ids)
-                self._delete_objects(context, 'port', objects)
+                self._delete_objects(context, attributes.PORT, objects)
 
     def update_port(self, context, id, port):
-        attrs = port['port']
+        attrs = port[attributes.PORT]
         need_port_update_notify = False
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
@@ -1016,7 +1016,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                               port)
             self.extension_manager.process_update_port(context, attrs,
                                                        updated_port)
-            if addr_pair.ADDRESS_PAIRS in port['port']:
+            if addr_pair.ADDRESS_PAIRS in attrs:
                 need_port_update_notify |= (
                     self.update_address_pairs_on_port(context, id, port,
                                                       original_port,
@@ -1077,7 +1077,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding.router_id = attrs and attrs.get('device_id')
 
     def update_dvr_port_binding(self, context, id, port):
-        attrs = port['port']
+        attrs = port[attributes.PORT]
 
         host = attrs and attrs.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
