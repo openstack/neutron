@@ -32,7 +32,7 @@ vlan_opts = [
 ]
 
 vxlan_opts = [
-    cfg.BoolOpt('enable_vxlan', default=False,
+    cfg.BoolOpt('enable_vxlan', default=True,
                 help=_("Enable VXLAN on the agent. Can be enabled when "
                        "agent is managed by ml2 plugin using linuxbridge "
                        "mechanism driver")),
