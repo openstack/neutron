@@ -606,6 +606,11 @@ class Dnsmasq(DhcpLocalProcess):
                 )
 
             if subnet.ip_version == 4:
+                host_routes.extend(["%s,0.0.0.0" % (s.cidr) for s in
+                                    self.network.subnets
+                                    if (s.ip_version == 4 and
+                                        s.cidr != subnet.cidr)])
+
                 if host_routes:
                     if gateway:
                         host_routes.append("%s,%s" % ("0.0.0.0/0", gateway))
