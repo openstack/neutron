@@ -38,10 +38,13 @@ class ChanceScheduler(object):
     def _schedule_bind_network(self, context, agents, network_id):
         for agent in agents:
             context.session.begin(subtransactions=True)
+            # saving agent_id to use it after rollback to avoid
+            # DetachedInstanceError
+            agent_id = agent.id
+            binding = agentschedulers_db.NetworkDhcpAgentBinding()
+            binding.dhcp_agent_id = agent_id
+            binding.network_id = network_id
             try:
-                binding = agentschedulers_db.NetworkDhcpAgentBinding()
-                binding.dhcp_agent = agent
-                binding.network_id = network_id
                 context.session.add(binding)
                 # try to actually write the changes and catch integrity
                 # DBDuplicateEntry
@@ -49,11 +52,11 @@ class ChanceScheduler(object):
             except db_exc.DBDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 context.session.rollback()
-                LOG.info(_LI('Agent %s already present'), agent)
+                LOG.info(_LI('Agent %s already present'), agent_id)
             LOG.debug('Network %(network_id)s is scheduled to be '
                       'hosted by DHCP agent %(agent_id)s',
                       {'network_id': network_id,
-                       'agent_id': agent})
+                       'agent_id': agent_id})
 
     def schedule(self, plugin, context, network):
         """Schedule the network to active DHCP agent(s).
