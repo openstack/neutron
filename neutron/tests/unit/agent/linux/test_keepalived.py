@@ -15,6 +15,7 @@
 import testtools
 
 from neutron.agent.linux import keepalived
+from neutron.common import constants as n_consts
 from neutron.tests import base
 
 # Keepalived user guide:
@@ -84,7 +85,7 @@ class KeepalivedConfBaseMixin(object):
         instance1.vips.append(vip_address3)
         instance1.vips.append(vip_address_ex)
 
-        virtual_route = keepalived.KeepalivedVirtualRoute("0.0.0.0/0",
+        virtual_route = keepalived.KeepalivedVirtualRoute(n_consts.IPv4_ANY,
                                                           "192.168.1.1",
                                                           "eth1")
         instance1.virtual_routes.append(virtual_route)
@@ -282,7 +283,7 @@ class KeepalivedVipAddressTestCase(base.BaseTestCase):
 
 class KeepalivedVirtualRouteTestCase(base.BaseTestCase):
     def test_virtual_route_with_dev(self):
-        route = keepalived.KeepalivedVirtualRoute('0.0.0.0/0', '1.2.3.4',
+        route = keepalived.KeepalivedVirtualRoute(n_consts.IPv4_ANY, '1.2.3.4',
                                                   'eth0')
         self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0',
                          route.build_config())
