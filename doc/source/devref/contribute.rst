@@ -403,7 +403,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-metaplugin_        |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-midonet_           |                       |           |                  |         |              |
+| networking-midonet_           |        core,lb        |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-mlnx_              |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -441,6 +441,13 @@ Arista
 .. _networking-metaplugin:
 
 .. _networking-midonet:
+
+MidoNet
+-------
+
+*  Git: https://github.com/stackforge/networking-midonet
+*  Launchpad: https://launchpad.net/networking-midonet
+*  Pypi: https://pypi.python.org/pypi/networking-midonet
 
 .. _networking-mlnx:
 
