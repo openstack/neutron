@@ -67,8 +67,7 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
 
         with contextlib.nested(
             mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
-                       'OVSNeutronAgent.setup_integration_br',
-                       return_value=mock.Mock()),
+                       'OVSNeutronAgent.setup_integration_br'),
             mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
                        'OVSNeutronAgent.setup_ancillary_bridges',
                        return_value=[]),
