@@ -166,26 +166,20 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
         device.addr.add(ip_version=ip_version, cidr=cidr, broadcast=broadcast)
         device.link.set_up()
 
-    def prepare_veth_pairs(self, src_addr=None,
-                           dst_addr=None,
-                           broadcast_addr=None,
-                           src_ns=None, dst_ns=None,
-                           src_veth=None,
-                           dst_veth=None):
+    def prepare_veth_pairs(self):
 
-        src_addr = src_addr or self.SRC_ADDRESS
-        dst_addr = dst_addr or self.DST_ADDRESS
-        broadcast_addr = broadcast_addr or self.BROADCAST_ADDRESS
-        src_veth = src_veth or get_rand_veth_name()
-        dst_veth = dst_veth or get_rand_veth_name()
-        src_ns = src_ns or self._create_namespace()
-        dst_ns = dst_ns or self._create_namespace()
+        src_addr = self.SRC_ADDRESS
+        dst_addr = self.DST_ADDRESS
+        src_veth = get_rand_veth_name()
+        dst_veth = get_rand_veth_name()
+        src_ns = self._create_namespace()
+        dst_ns = self._create_namespace()
 
         src_veth, dst_veth = src_ns.add_veth(src_veth,
                                              dst_veth,
                                              dst_ns.namespace)
 
-        self._set_ip_up(src_veth, '%s/24' % src_addr, broadcast_addr)
-        self._set_ip_up(dst_veth, '%s/24' % dst_addr, broadcast_addr)
+        self._set_ip_up(src_veth, '%s/24' % src_addr, self.BROADCAST_ADDRESS)
+        self._set_ip_up(dst_veth, '%s/24' % dst_addr, self.BROADCAST_ADDRESS)
 
         return src_ns, dst_ns
