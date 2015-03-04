@@ -595,7 +595,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
 
     def _bind_port_level(self, context, level, segments_to_bind):
         binding = context._binding
-        port_id = context._port['id']
+        port_id = context.current['id']
         LOG.debug("Attempting to bind port %(port)s on host %(host)s "
                   "at level %(level)s using segments %(segments)s",
                   {'port': port_id,
@@ -652,7 +652,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                               driver.name)
         binding.vif_type = portbindings.VIF_TYPE_BINDING_FAILED
         LOG.error(_LE("Failed to bind port %(port)s on host %(host)s"),
-                  {'port': context._port['id'],
+                  {'port': context.current['id'],
                    'host': binding.host})
 
     def _check_driver_to_bind(self, driver, segments_to_bind, binding_levels):
