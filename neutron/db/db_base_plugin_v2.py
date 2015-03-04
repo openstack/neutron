@@ -122,6 +122,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         route_qry = context.session.query(models_v2.SubnetRoute)
         return route_qry.filter_by(subnet_id=subnet_id).all()
 
+    def _get_router_gw_ports_by_network(self, context, network_id):
+        port_qry = context.session.query(models_v2.Port)
+        return port_qry.filter_by(network_id=network_id,
+                device_owner=constants.DEVICE_OWNER_ROUTER_GW).all()
+
     def _get_subnets_by_network(self, context, network_id):
         subnet_qry = context.session.query(models_v2.Subnet)
         return subnet_qry.filter_by(network_id=network_id).all()
@@ -1086,6 +1091,23 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     pool=pool_range,
                     ip_address=gateway_ip)
 
+    def _update_router_gw_ports(self, context, subnet_id, network_id):
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
+        if l3plugin:
+            gw_ports = self._get_router_gw_ports_by_network(context,
+                    network_id)
+            router_ids = [p['device_id'] for p in gw_ports]
+            ctx_admin = ctx.get_admin_context()
+            for id in router_ids:
+                router = l3plugin.get_router(ctx_admin, id)
+                external_gateway_info = router['external_gateway_info']
+                external_gateway_info['external_fixed_ips'].append(
+                                             {'subnet_id': subnet_id})
+                info = {'router': {'external_gateway_info':
+                    external_gateway_info}}
+                l3plugin.update_router(context, id, info)
+
     def create_subnet(self, context, subnet):
 
         net = netaddr.IPNetwork(subnet['subnet']['cidr'])
@@ -1108,13 +1130,14 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         self._validate_subnet(context, s)
 
         tenant_id = self._get_tenant_id_for_create(context, s)
+        subnet_id = s.get('id') or uuidutils.generate_uuid()
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, s["network_id"])
             self._validate_subnet_cidr(context, network, s['cidr'])
             # The 'shared' attribute for subnets is for internal plugin
             # use only. It is not exposed through the API
             args = {'tenant_id': tenant_id,
-                    'id': s.get('id') or uuidutils.generate_uuid(),
+                    'id': subnet_id,
                     'name': s['name'],
                     'network_id': s['network_id'],
                     'ip_version': s['ip_version'],
@@ -1154,6 +1177,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     first_ip=pool['start'],
                     last_ip=pool['end'])
                 context.session.add(ip_range)
+
+        if network.external:
+            self._update_router_gw_ports(context, subnet_id, s['network_id'])
 
         return self._make_subnet_dict(subnet)
 
