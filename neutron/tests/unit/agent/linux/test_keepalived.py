@@ -192,7 +192,7 @@ class KeepalivedStateExceptionTestCase(base.BaseTestCase):
         invalid_auth_type = '[hip, hip]'
         instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
                                                  '169.254.192.0/18')
-        self.assertRaises(keepalived.InvalidAuthenticationTypeExecption,
+        self.assertRaises(keepalived.InvalidAuthenticationTypeException,
                           instance.set_authentication,
                           invalid_auth_type, 'some_password')
 

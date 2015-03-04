@@ -60,21 +60,33 @@ def get_free_range(parent_range, excluded_ranges, size=PRIMARY_VIP_RANGE_SIZE):
 
 
 class InvalidInstanceStateException(exceptions.NeutronException):
-    message = (_('Invalid instance state: %%(state)s, valid states are: '
-                 '%(valid_states)s') %
-               {'valid_states': ', '.join(VALID_STATES)})
+    message = _('Invalid instance state: %(state)s, valid states are: '
+                '%(valid_states)s')
+
+    def __init__(self, **kwargs):
+        if 'valid_states' not in kwargs:
+            kwargs['valid_states'] = ', '.join(VALID_STATES)
+        super(InvalidInstanceStateException, self).__init__(**kwargs)
 
 
 class InvalidNotifyStateException(exceptions.NeutronException):
-    message = (_('Invalid notify state: %%(state)s, valid states are: '
-                 '%(valid_notify_states)s') %
-               {'valid_notify_states': ', '.join(VALID_NOTIFY_STATES)})
+    message = _('Invalid notify state: %(state)s, valid states are: '
+                '%(valid_notify_states)s')
+
+    def __init__(self, **kwargs):
+        if 'valid_notify_states' not in kwargs:
+            kwargs['valid_notify_states'] = ', '.join(VALID_NOTIFY_STATES)
+        super(InvalidNotifyStateException, self).__init__(**kwargs)
 
 
-class InvalidAuthenticationTypeExecption(exceptions.NeutronException):
-    message = (_('Invalid authentication type: %%(auth_type)s, '
-                 'valid types are: %(valid_auth_types)s') %
-               {'valid_auth_types': ', '.join(VALID_AUTH_TYPES)})
+class InvalidAuthenticationTypeException(exceptions.NeutronException):
+    message = _('Invalid authentication type: %(auth_type)s, '
+                'valid types are: %(valid_auth_types)s')
+
+    def __init__(self, **kwargs):
+        if 'valid_auth_types' not in kwargs:
+            kwargs['valid_auth_types'] = ', '.join(VALID_AUTH_TYPES)
+        super(InvalidAuthenticationTypeException, self).__init__(**kwargs)
 
 
 class KeepalivedVipAddress(object):
@@ -140,7 +152,7 @@ class KeepalivedInstance(object):
 
     def set_authentication(self, auth_type, password):
         if auth_type not in VALID_AUTH_TYPES:
-            raise InvalidAuthenticationTypeExecption(auth_type=auth_type)
+            raise InvalidAuthenticationTypeException(auth_type=auth_type)
 
         self.authentication = (auth_type, password)
 
