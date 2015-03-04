@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev303\n"
+"Project-Id-Version: neutron 2015.1.dev347\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-02-28 06:12+0000\n"
+"POT-Creation-Date: 2015-03-04 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1766,7 +1766,7 @@ msgstr ""
 msgid "ipv6_address_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1281
+#: neutron/db/db_base_plugin_v2.py:1284
 msgid "mac address update"
 msgstr ""
 
@@ -1786,15 +1786,15 @@ msgstr ""
 msgid "the nexthop is used by router"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:44
+#: neutron/db/l3_agentschedulers_db.py:43
 msgid "Driver to use for scheduling router to a default L3 agent"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:47
+#: neutron/db/l3_agentschedulers_db.py:46
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:49
+#: neutron/db/l3_agentschedulers_db.py:48
 msgid ""
 "Automatically reschedule routers from offline L3 agents to online L3 "
 "agents."
@@ -2006,57 +2006,57 @@ msgstr ""
 msgid "Package neutron-%s not installed"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:90
+#: neutron/db/migration/migrate_to_ml2.py:91
 msgid "Missing version in alembic_versions table"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:92
+#: neutron/db/migration/migrate_to_ml2.py:93
 #, python-format
 msgid "Multiple versions in alembic_versions table: %s"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:96
+#: neutron/db/migration/migrate_to_ml2.py:97
 #, python-format
 msgid ""
 "Unsupported database schema %(current)s. Please migrate your database to "
 "one of following versions: %(supported)s"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:425
+#: neutron/db/migration/migrate_to_ml2.py:447
 #, python-format
 msgid "Unknown tunnel type: %s"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:453
+#: neutron/db/migration/migrate_to_ml2.py:481
 msgid "The plugin type whose database will be migrated"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:456
+#: neutron/db/migration/migrate_to_ml2.py:484
 msgid "The connection url for the target db"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:459
+#: neutron/db/migration/migrate_to_ml2.py:487
 #, python-format
 msgid "The %s tunnel type to migrate from"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:462
+#: neutron/db/migration/migrate_to_ml2.py:490
 #: neutron/plugins/openvswitch/common/config.py:65
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:465
+#: neutron/db/migration/migrate_to_ml2.py:493
 msgid "Retain the old plugin's tables"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:471
+#: neutron/db/migration/migrate_to_ml2.py:499
 #, python-format
 msgid ""
 "Tunnel args (tunnel-type and vxlan-udp-port) are not valid for the %s "
 "plugin"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:478
+#: neutron/db/migration/migrate_to_ml2.py:506
 #, python-format
 msgid ""
 "Support for migrating %(plugin)s for release %(release)s is not yet "
@@ -2374,17 +2374,12 @@ msgstr ""
 
 #: neutron/extensions/l3agentscheduler.py:176
 #, python-format
-msgid "The router %(router_id)s is not hosted by L3 agent %(agent_id)s."
-msgstr ""
-
-#: neutron/extensions/l3agentscheduler.py:181
-#, python-format
 msgid ""
 "Cannot host %(router_type)s router %(router_id)s on %(agent_mode)s L3 "
 "agent %(agent_id)s."
 msgstr ""
 
-#: neutron/extensions/l3agentscheduler.py:186
+#: neutron/extensions/l3agentscheduler.py:181
 #, python-format
 msgid ""
 "Not allowed to manually assign a %(router_type)s router %(router_id)s "
@@ -4258,7 +4253,7 @@ msgstr ""
 msgid "network_type value '%s' not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:227
+#: neutron/plugins/ml2/plugin.py:226
 msgid "binding:profile value too large"
 msgstr ""
 
@@ -4949,24 +4944,24 @@ msgid ""
 "or clear protocol before changing ether type."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:900
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1574
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:903
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1569
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:905
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:908
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:920
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:923
 #, python-format
 msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:923
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1598
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:926
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1593
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -5072,7 +5067,7 @@ msgid ""
 "error: %(error)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1595
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1590
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
@@ -5149,40 +5144,6 @@ msgstr ""
 msgid ""
 "Set new timeout in seconds for new rpc calls after agent receives "
 "SIGTERM. If value is set to 0, rpc timeout won't be changed"
-msgstr ""
-
-#: neutron/plugins/plumgrid/common/exceptions.py:22
-#, python-format
-msgid "PLUMgrid Plugin Error: %(err_msg)s"
-msgstr ""
-
-#: neutron/plugins/plumgrid/common/exceptions.py:26
-#, python-format
-msgid "Connection failed with PLUMgrid Director: %(err_msg)s"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:45
-msgid "PLUMgrid Director server to connect to"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:47
-msgid "PLUMgrid Director server port to connect to"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:49
-msgid "PLUMgrid Director admin username"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:51
-msgid "PLUMgrid Director admin password"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:53
-msgid "PLUMgrid Director server timeout"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:56
-msgid "PLUMgrid Driver"
 msgstr ""
 
 #: neutron/plugins/sriovnicagent/eswitch_manager.py:49
@@ -6295,12 +6256,12 @@ msgstr ""
 msgid "No host cert for %(server)s in cert %(cert)s"
 msgstr ""
 
-#: neutron/tests/unit/ml2/test_ml2_plugin.py:276
+#: neutron/tests/unit/ml2/test_ml2_plugin.py:275
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/tests/unit/ml2/test_ml2_plugin.py:277
+#: neutron/tests/unit/ml2/test_ml2_plugin.py:276
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""
@@ -6453,8 +6414,8 @@ msgid "An OFC exception has occurred: Failed to connect OFC : "
 msgstr ""
 
 #: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:747
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:922
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:939
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:923
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:940
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""

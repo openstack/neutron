@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-02-28 06:12+0000\n"
-"PO-Revision-Date: 2015-02-26 20:20+0000\n"
+"POT-Creation-Date: 2015-03-04 06:14+0000\n"
+"PO-Revision-Date: 2015-03-03 18:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (Taiwan) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_TW/)\n"
@@ -150,7 +150,7 @@ msgstr "已啟動 L3 代理程式"
 msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:645
+#: neutron/agent/linux/dhcp.py:650
 #, python-format
 msgid ""
 "Cannot apply dhcp option %(opt)s because it's ip_version %(version)d is not "
@@ -294,7 +294,12 @@ msgstr "找到的儲存區大於子網路 CIDR：%(start)s - %(end)s"
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "發現重疊的範圍：%(l_range)s 及 %(r_range)s"
 
-#: neutron/db/l3_agentschedulers_db.py:78
+#: neutron/db/db_base_plugin_v2.py:1253
+#, python-format
+msgid "Found IP allocation %(alloc)s on subnet %(subnet)s, cannot delete"
+msgstr ""
+
+#: neutron/db/l3_agentschedulers_db.py:77
 msgid ""
 "Skipping period L3 agent status check because automatic router rescheduling "
 "is disabled."
@@ -659,8 +664,8 @@ msgstr "正在移除埠 %s"
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:427
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:980
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:819
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1433
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:822
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1428
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:251
 msgid "Agent out of sync with plugin!"
 msgstr "代理程式與外掛程式不同步！"
@@ -669,7 +674,7 @@ msgstr "代理程式與外掛程式不同步！"
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:261
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1019
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:154
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1627
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1626
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:345
 msgid "Agent initialized successfully, now running... "
 msgstr "已順利地起始設定代理程式，現正在執行中..."
@@ -797,8 +802,8 @@ msgid "RPC agent_id: %s"
 msgstr "RPC agent_id：%s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:865
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:710
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1160
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:713
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1155
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:209
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
@@ -810,15 +815,15 @@ msgid "Device %s not defined on plugin"
 msgstr "外掛程式上未定義裝置 %s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:905
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:740
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1215
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1232
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:743
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1210
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1227
 #, python-format
 msgid "Attachment %s removed"
 msgstr "已移除連接裝置 %s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:917
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1244
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1239
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:235
 #, python-format
 msgid "Port %s updated."
@@ -925,26 +930,26 @@ msgstr ""
 msgid "Extended port dict for driver '%(drv)s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:138
+#: neutron/plugins/ml2/plugin.py:137
 msgid "Modular L2 Plugin initialization complete"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:290
+#: neutron/plugins/ml2/plugin.py:289
 #, python-format
 msgid "Attempt %(count)s to bind port %(port)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:678
+#: neutron/plugins/ml2/plugin.py:677
 #, python-format
 msgid "Port %s was deleted concurrently"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:689
+#: neutron/plugins/ml2/plugin.py:688
 #, python-format
 msgid "Subnet %s was deleted concurrently"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1231
+#: neutron/plugins/ml2/plugin.py:1223
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -1139,39 +1144,39 @@ msgstr ""
 msgid "unknown network %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:439
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:518
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:442
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:513
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr "正在將 %(vlan_id)s 指派為 net-id = %(net_uuid)s 的本端 VLAN"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:489
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:621
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:492
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:616
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "正在從 net-id = %(net_uuid)s 收回 VLAN = %(vlan_id)s"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:557
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:560
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr "port_unbound() net_uuid %s 不在 local_vlan_map 中"
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:696
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1154
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:699
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1149
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be "
 "processed"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:729
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1184
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:732
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1179
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:824
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1461
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:827
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1456
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "代理程式通道與外掛程式不同步！"
 
@@ -1184,51 +1189,29 @@ msgstr ""
 msgid "L2 Agent operating in DVR Mode with MAC %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:716
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:711
 #, python-format
 msgid "port_unbound(): net_uuid %s not in local_vlan_map"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:788
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:783
 #, python-format
 msgid "Adding %s to list of bridges."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:931
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:926
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr "正在將實體網路 %(physical_network)s 對映到橋接器 %(bridge)s"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1040
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1035
 #, python-format
 msgid "Port '%(port_name)s' has lost its vlan tag '%(vlan_tag)d'!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1203
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1198
 #, python-format
 msgid "Ancillary Port %s added"
-msgstr ""
-
-#: neutron/plugins/plumgrid/drivers/fake_plumlib.py:30
-msgid "Python PLUMgrid Fake Library Started "
-msgstr ""
-
-#: neutron/plugins/plumgrid/drivers/fake_plumlib.py:34
-#, python-format
-msgid "Fake Director: %s"
-msgstr ""
-
-#: neutron/plugins/plumgrid/drivers/plumlib.py:36
-msgid "Python PLUMgrid Library Started "
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:74
-msgid "Neutron PLUMgrid Director: Starting Plugin"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:92
-#, python-format
-msgid "Neutron PLUMgrid Director: %s"
 msgstr ""
 
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:191
@@ -1409,7 +1392,7 @@ msgstr ""
 msgid "TaskManager terminated"
 msgstr ""
 
-#: neutron/scheduler/dhcp_agent_scheduler.py:52
+#: neutron/scheduler/dhcp_agent_scheduler.py:55
 #, python-format
 msgid "Agent %s already present"
 msgstr ""

@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev303\n"
+"Project-Id-Version: neutron 2015.1.dev347\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-02-28 06:12+0000\n"
+"POT-Creation-Date: 2015-03-04 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -87,7 +87,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/dhcp/agent.py:571 neutron/agent/l3/agent.py:1125
-#: neutron/agent/metadata/agent.py:353
+#: neutron/agent/metadata/agent.py:346
 #: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:270
 msgid ""
@@ -256,7 +256,7 @@ msgid ""
 "not report to the server in the last %(dead_time)s seconds."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:104
+#: neutron/db/l3_agentschedulers_db.py:103
 #, python-format
 msgid ""
 "Rescheduling router %(router)s from agent %(agent)s because the agent did"
@@ -536,23 +536,23 @@ msgstr ""
 msgid "Could not expand segment %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:525
+#: neutron/plugins/ml2/plugin.py:524
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:763
+#: neutron/plugins/ml2/plugin.py:762
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1257
+#: neutron/plugins/ml2/plugin.py:1249
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1289
+#: neutron/plugins/ml2/plugin.py:1281
 #, python-format
 msgid "Port %s not found during update"
 msgstr ""
@@ -693,14 +693,14 @@ msgstr ""
 msgid "Unable to create tunnel port. Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:630
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1069
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:633
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1064
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:731
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1186
+#: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:734
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1181
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
@@ -724,37 +724,31 @@ msgid ""
 "message: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:488
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:483
 #, python-format
 msgid "Action %s not supported"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:909
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:904
 #, python-format
 msgid ""
 "Creating an interface named %(name)s exceeds the %(limit)d character "
 "limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1341
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1336
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1384
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1379
 msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1388
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1383
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
 "periodically."
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:769
-msgid ""
-"Networks with admin_state_up=False are not supported by PLUMgrid plugin "
-"yet."
 msgstr ""
 
 #: neutron/plugins/sriovnicagent/eswitch_manager.py:146
@@ -1059,12 +1053,12 @@ msgid ""
 "security group %(sec_group_id)s was not found on the backend"
 msgstr ""
 
-#: neutron/scheduler/dhcp_agent_scheduler.py:80
-#: neutron/scheduler/dhcp_agent_scheduler.py:88
+#: neutron/scheduler/dhcp_agent_scheduler.py:83
+#: neutron/scheduler/dhcp_agent_scheduler.py:91
 msgid "No more DHCP agents"
 msgstr ""
 
-#: neutron/scheduler/dhcp_agent_scheduler.py:119
+#: neutron/scheduler/dhcp_agent_scheduler.py:122
 #, python-format
 msgid "DHCP agent %s is not active"
 msgstr ""
