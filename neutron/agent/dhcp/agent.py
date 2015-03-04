@@ -22,9 +22,9 @@ from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import importutils
 
-from neutron.agent.common import config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
+from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants
 from neutron.common import exceptions
@@ -336,7 +336,7 @@ class DhcpAgent(manager.Manager):
         # The proxy might work for either a single network
         # or all the networks connected via a router
         # to the one passed as a parameter
-        neutron_lookup_param = '--network_id=%s' % network.id
+        kwargs = {'network_id': network.id}
         # When the metadata network is enabled, the proxy might
         # be started for the router attached to the network
         if self.conf.enable_metadata_network:
@@ -353,28 +353,15 @@ class DhcpAgent(manager.Manager):
                                 {'port_num': len(router_ports),
                                  'port_id': router_ports[0].id,
                                  'router_id': router_ports[0].device_id})
-                neutron_lookup_param = ('--router_id=%s' %
-                                        router_ports[0].device_id)
+                kwargs = {'router_id': router_ports[0].device_id}
 
-        def callback(pid_file):
-            metadata_proxy_socket = cfg.CONF.metadata_proxy_socket
-            proxy_cmd = ['neutron-ns-metadata-proxy',
-                         '--pid_file=%s' % pid_file,
-                         '--metadata_proxy_socket=%s' % metadata_proxy_socket,
-                         neutron_lookup_param,
-                         '--state_path=%s' % self.conf.state_path,
-                         '--metadata_port=%d' % dhcp.METADATA_PORT]
-            proxy_cmd.extend(config.get_log_args(
-                cfg.CONF, 'neutron-ns-metadata-proxy-%s.log' % network.id))
-            return proxy_cmd
-
-        self._process_monitor.enable(uuid=network.id,
-                                     cmd_callback=callback,
-                                     namespace=network.namespace)
+        metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
+            self._process_monitor, network.namespace, dhcp.METADATA_PORT,
+            self.conf, **kwargs)
 
     def disable_isolated_metadata_proxy(self, network):
-        self._process_monitor.disable(uuid=network.id,
-                                      namespace=network.namespace)
+        metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
+            self._process_monitor, network.id, network.namespace)
 
 
 class DhcpPluginApi(object):

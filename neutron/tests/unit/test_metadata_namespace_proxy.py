@@ -19,6 +19,7 @@ import testtools
 import webob
 
 from neutron.agent.metadata import namespace_proxy as ns_proxy
+from neutron.common import exceptions
 from neutron.common import utils
 from neutron.tests import base
 
@@ -75,7 +76,8 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                                               req.body)
 
     def test_no_argument_passed_to_init(self):
-        with testtools.ExpectedException(ValueError):
+        with testtools.ExpectedException(
+                exceptions.NetworkIdOrRouterIdRequiredError):
             ns_proxy.NetworkMetadataProxyHandler()
 
     def test_call_internal_server_error(self):

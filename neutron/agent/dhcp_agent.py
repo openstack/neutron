@@ -21,6 +21,7 @@ from oslo_config import cfg
 from neutron.agent.common import config
 from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.linux import interface
+from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.openstack.common import service
@@ -34,6 +35,7 @@ def register_options():
     cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
     cfg.CONF.register_opts(dhcp_config.DHCP_OPTS)
     cfg.CONF.register_opts(dhcp_config.DNSMASQ_OPTS)
+    cfg.CONF.register_opts(metadata_driver.MetadataDriver.OPTS)
     cfg.CONF.register_opts(interface.OPTS)
 
 

@@ -751,34 +751,28 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         ])
 
     def test_disable_isolated_metadata_proxy(self):
-        self.dhcp.disable_isolated_metadata_proxy(fake_network)
-        self.external_process.assert_has_calls([
-            self._process_manager_constructor_call(),
-            mock.call().disable()
-        ])
+        method_path = ('neutron.agent.metadata.driver.MetadataDriver'
+                       '.destroy_monitored_metadata_proxy')
+        with mock.patch(method_path) as destroy:
+            self.dhcp.disable_isolated_metadata_proxy(fake_network)
+            destroy.assert_called_once_with(self.dhcp._process_monitor,
+                                            fake_network.id,
+                                            fake_network.namespace)
 
     def _test_metadata_network(self, network):
         cfg.CONF.set_override('enable_metadata_network', True)
         cfg.CONF.set_override('debug', True)
         cfg.CONF.set_override('verbose', False)
         cfg.CONF.set_override('log_file', 'test.log')
-        self.dhcp.enable_isolated_metadata_proxy(network)
-
-        self.external_process.assert_has_calls([
-            self._process_manager_constructor_call()])
-
-        callback = self.external_process.call_args[1]['default_cmd_callback']
-        result_cmd = callback('pidfile')
-        self.assertEqual(
-            result_cmd,
-            ['neutron-ns-metadata-proxy',
-             '--pid_file=pidfile',
-             '--metadata_proxy_socket=%s' % cfg.CONF.metadata_proxy_socket,
-             '--router_id=forzanapoli',
-             '--state_path=%s' % cfg.CONF.state_path,
-             '--metadata_port=%d' % dhcp.METADATA_PORT,
-             '--debug',
-             '--log-file=neutron-ns-metadata-proxy-%s.log' % network.id])
+        method_path = ('neutron.agent.metadata.driver.MetadataDriver'
+                       '.spawn_monitored_metadata_proxy')
+        with mock.patch(method_path) as spawn:
+            self.dhcp.enable_isolated_metadata_proxy(network)
+            spawn.assert_called_once_with(self.dhcp._process_monitor,
+                                          network.namespace,
+                                          dhcp.METADATA_PORT,
+                                          cfg.CONF,
+                                          router_id='forzanapoli')
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
         self._test_metadata_network(fake_meta_network)
