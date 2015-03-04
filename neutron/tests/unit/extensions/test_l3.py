@@ -2299,6 +2299,14 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                   floating_ip='10.0.0.10',
                                   http_status=exc.HTTPConflict.code)
 
+    def test_router_specify_id_backend(self):
+        plugin = manager.NeutronManager.get_service_plugins()[
+                    service_constants.L3_ROUTER_NAT]
+        router_req = {'router': {'id': _uuid(), 'name': 'router',
+                                 'admin_state_up': True}}
+        result = plugin.create_router(context.Context('', 'foo'), router_req)
+        self.assertEqual(result['id'], router_req['router']['id'])
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
