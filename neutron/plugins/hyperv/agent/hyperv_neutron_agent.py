@@ -100,6 +100,10 @@ class HyperVSecurityAgent(n_rpc.RpcCallback,
                                                      self.topic,
                                                      consumers)
 
+    @property
+    def use_enhanced_rpc(self):
+        return False
+
 
 class HyperVSecurityCallbackMixin(n_rpc.RpcCallback,
                                   sg_rpc.SecurityGroupAgentRpcCallbackMixin):
