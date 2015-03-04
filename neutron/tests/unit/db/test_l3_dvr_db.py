@@ -155,6 +155,30 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             'device_id': ['agent_id'],
             'device_owner': [l3_const.DEVICE_OWNER_AGENT_GW]})
 
+    def _test_prepare_direct_delete_dvr_internal_ports(self, port):
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp:
+            plugin = mock.Mock()
+            gp.return_value = plugin
+            plugin.get_ports.return_value = [port]
+        plugin.assertRaises(l3.L3PortInUse,
+                            plugin.delete_port,
+                            self.ctx,
+                            'my_port_id')
+
+    def test_prevent_delete_floatingip_agent_gateway_port(self):
+        port = {
+            'id': 'my_port_id',
+            'device_owner': l3_const.DEVICE_OWNER_AGENT_GW
+        }
+        self._test_prepare_direct_delete_dvr_internal_ports(port)
+
+    def test_prevent_delete_csnat_port(self):
+        port = {
+            'id': 'my_port_id',
+            'device_owner': l3_const.DEVICE_OWNER_ROUTER_SNAT
+        }
+        self._test_prepare_direct_delete_dvr_internal_ports(port)
+
     def test__create_gw_port_with_no_gateway(self):
         router = {
             'name': 'foo_router',
