@@ -571,8 +571,6 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
             with mock.patch('os.makedirs') as makedirs:
                 isdir.return_value = False
                 agent.UnixDomainMetadataProxy(mock.Mock())
-
-                isdir.assert_called_once_with('/the')
                 makedirs.assert_called_once_with('/the', 0o755)
 
     def test_init_exists(self):
@@ -580,8 +578,6 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
             with mock.patch('os.unlink') as unlink:
                 isdir.return_value = True
                 agent.UnixDomainMetadataProxy(mock.Mock())
-
-                isdir.assert_called_once_with('/the')
                 unlink.assert_called_once_with('/the/path')
 
     def test_init_exists_unlink_no_file(self):
@@ -593,10 +589,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                     unlink.side_effect = OSError
 
                     agent.UnixDomainMetadataProxy(mock.Mock())
-
-                    isdir.assert_called_once_with('/the')
                     unlink.assert_called_once_with('/the/path')
-                    exists.assert_called_once_with('/the/path')
 
     def test_init_exists_unlink_fails_file_still_exists(self):
         with mock.patch('os.path.isdir') as isdir:
@@ -608,10 +601,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
 
                     with testtools.ExpectedException(OSError):
                         agent.UnixDomainMetadataProxy(mock.Mock())
-
-                    isdir.assert_called_once_with('/the')
                     unlink.assert_called_once_with('/the/path')
-                    exists.assert_called_once_with('/the/path')
 
     def test_run(self):
         with mock.patch.object(agent, 'MetadataProxyHandler') as handler:
@@ -623,7 +613,6 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                         p = agent.UnixDomainMetadataProxy(self.cfg.CONF)
                         p.run()
 
-                        isdir.assert_called_once_with('/the')
                         makedirs.assert_called_once_with('/the', 0o755)
                         server.assert_has_calls([
                             mock.call('neutron-metadata-agent'),
