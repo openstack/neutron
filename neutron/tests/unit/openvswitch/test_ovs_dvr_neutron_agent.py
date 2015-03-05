@@ -146,7 +146,7 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
             with contextlib.nested(
                 mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                            'db_get_val',
-                           return_value=str(self._old_local_vlan)),
+                           return_value=self._old_local_vlan),
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_subnet_for_dvr',
                                   return_value={
