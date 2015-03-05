@@ -853,6 +853,37 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 self.assertIn('mac_address', port['port'])
                 self._delete('ports', port['port']['id'])
 
+    def test_create_port_public_network_with_invalid_ip_no_subnet_id(self,
+            expected_error='InvalidIpForNetwork'):
+        with self.network(shared=True) as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24'):
+                ips = [{'ip_address': '1.1.1.1'}]
+                res = self._create_port(self.fmt,
+                                        network['network']['id'],
+                                        webob.exc.HTTPBadRequest.code,
+                                        fixed_ips=ips,
+                                        set_context=True)
+                data = self.deserialize(self.fmt, res)
+                msg = str(n_exc.InvalidIpForNetwork(ip_address='1.1.1.1'))
+                self.assertEqual(expected_error, data['NeutronError']['type'])
+                self.assertEqual(msg, data['NeutronError']['message'])
+
+    def test_create_port_public_network_with_invalid_ip_and_subnet_id(self,
+            expected_error='InvalidIpForSubnet'):
+        with self.network(shared=True) as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
+                ips = [{'subnet_id': subnet['subnet']['id'],
+                        'ip_address': '1.1.1.1'}]
+                res = self._create_port(self.fmt,
+                                        network['network']['id'],
+                                        webob.exc.HTTPBadRequest.code,
+                                        fixed_ips=ips,
+                                        set_context=True)
+                data = self.deserialize(self.fmt, res)
+                msg = str(n_exc.InvalidIpForSubnet(ip_address='1.1.1.1'))
+                self.assertEqual(expected_error, data['NeutronError']['type'])
+                self.assertEqual(msg, data['NeutronError']['message'])
+
     def test_create_ports_bulk_native(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk port create")

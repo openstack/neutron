@@ -257,8 +257,15 @@ class TestContrailSubnetsV2(test_plugin.TestSubnetsV2,
 
 class TestContrailPortsV2(test_plugin.TestPortsV2,
                           ContrailPluginTestCase):
-    def setUp(self):
-        super(TestContrailPortsV2, self).setUp()
+    def test_create_port_public_network_with_invalid_ip_no_subnet_id(self):
+        super(TestContrailPortsV2, self). \
+            test_create_port_public_network_with_invalid_ip_no_subnet_id(
+                expected_error='ContrailBadRequestError')
+
+    def test_create_port_public_network_with_invalid_ip_and_subnet_id(self):
+        super(TestContrailPortsV2, self). \
+            test_create_port_public_network_with_invalid_ip_and_subnet_id(
+                expected_error='ContrailBadRequestError')
 
     def test_delete_ports_by_device_id(self):
         self.skipTest("This method tests rpc API of "
