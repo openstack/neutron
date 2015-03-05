@@ -33,14 +33,16 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         super(ARPSpoofTestCase, self).setUp()
         self.src_addr = '192.168.0.1'
         self.dst_addr = '192.168.0.2'
-        self.src_ns = self._create_namespace()
-        self.dst_ns = self._create_namespace()
+        self.src_namespace = self.useFixture(
+            net_helpers.NamespaceFixture()).name
+        self.dst_namespace = self.useFixture(
+            net_helpers.NamespaceFixture()).name
         self.pinger = machine_fixtures.Pinger(
-            self.src_ns.namespace, max_attempts=2)
+            self.src_namespace, max_attempts=2)
         self.src_p = self.useFixture(
-            net_helpers.OVSPortFixture(self.br, self.src_ns.namespace)).port
+            net_helpers.OVSPortFixture(self.br, self.src_namespace)).port
         self.dst_p = self.useFixture(
-            net_helpers.OVSPortFixture(self.br, self.dst_ns.namespace)).port
+            net_helpers.OVSPortFixture(self.br, self.dst_namespace)).port
         # wait to add IPs until after anti-spoof rules to ensure ARP doesn't
         # happen before
 
