@@ -401,7 +401,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-hyperv_            |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-metaplugin_        |                       |           |                  |         |              |
+| networking-metaplugin_        |         core          |    no     |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-midonet_           |        core,lb        |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -439,6 +439,11 @@ Arista
 .. _networking-hyperv:
 
 .. _networking-metaplugin:
+
+Metaplugin
+----------
+
+* Git: https://github.com/ntt-sic/networking-metaplugin
 
 .. _networking-midonet:
 
