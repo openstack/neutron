@@ -181,6 +181,12 @@ class OVSBridgeFixture(fixtures.Fixture):
 
 class OVSPortFixture(PortFixture):
 
+    def __init__(self, bridge=None, namespace=None, attrs=None):
+        super(OVSPortFixture, self).__init__(bridge, namespace)
+        if attrs is None:
+            attrs = []
+        self.attrs = attrs
+
     def _create_bridge_fixture(self):
         return OVSBridgeFixture()
 
@@ -196,7 +202,8 @@ class OVSPortFixture(PortFixture):
         self.port.link.set_up()
 
     def create_port(self, name):
-        self.bridge.add_port(name, ('type', 'internal'))
+        self.attrs.insert(0, ('type', 'internal'))
+        self.bridge.add_port(name, *self.attrs)
         return name
 
 

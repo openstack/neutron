@@ -107,9 +107,51 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         utils.wait_until_true(lambda: self.monitor.data_received is True)
         self.assertTrue(self.monitor.has_updates,
                         'Initial call should always be true')
-        self.assertFalse(self.monitor.has_updates,
-                         'has_updates without port addition should be False')
+        # clear the event list
+        self.monitor.get_events()
         self.useFixture(net_helpers.OVSPortFixture())
         # has_updates after port addition should become True
-        while not self.monitor.has_updates:
-            eventlet.sleep(0.01)
+        utils.wait_until_true(lambda: self.monitor.has_updates is True)
+
+    def _expected_devices_events(self, devices, state):
+        """Helper to check that events are received for expected devices.
+
+        :param devices: The list of expected devices. WARNING: This list
+          is modified by this method
+        :param state: The state of the devices (added or removed)
+        """
+        events = self.monitor.get_events()
+        event_devices = [
+            (dev['name'], dev['external_ids']) for dev in events.get(state)]
+        for dev in event_devices:
+            if dev[0] in devices:
+                devices.remove(dev[0])
+                self.assertEqual(dev[1].get('iface-status'), 'active')
+            if not devices:
+                return True
+
+    def test_get_events(self):
+        utils.wait_until_true(lambda: self.monitor.data_received is True)
+        devices = self.monitor.get_events()
+        self.assertTrue(devices.get('added'),
+                        'Initial call should always be true')
+        p_attrs = [('external_ids', {'iface-status': 'active'})]
+        br = self.useFixture(net_helpers.OVSBridgeFixture())
+        p1 = self.useFixture(net_helpers.OVSPortFixture(
+            br.bridge, None, p_attrs))
+        p2 = self.useFixture(net_helpers.OVSPortFixture(
+            br.bridge, None, p_attrs))
+        added_devices = [p1.port.name, p2.port.name]
+        utils.wait_until_true(
+            lambda: self._expected_devices_events(added_devices, 'added'))
+        br.bridge.delete_port(p1.port.name)
+        br.bridge.delete_port(p2.port.name)
+        removed_devices = [p1.port.name, p2.port.name]
+        utils.wait_until_true(
+            lambda: self._expected_devices_events(removed_devices, 'removed'))
+        # restart
+        self.monitor.stop(block=True)
+        self.monitor.start(block=True, timeout=60)
+        devices = self.monitor.get_events()
+        self.assertTrue(devices.get('added'),
+                        'Initial call should always be true')
