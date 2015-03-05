@@ -411,7 +411,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-odl_               |      ml2,l3,lb,fw     |    yes    |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-ofagent_           |                       |           |                  |         |              |
+| networking-ofagent_           |          ml2          |    yes    |       no         |   [B]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-ovs-dpdk_          |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -474,6 +474,12 @@ OpenDayLight
 * Launchpad: https://launchpad.net/networking-odl
 
 .. _networking-ofagent:
+
+OpenFlow Agent (ofagent)
+------------------------
+
+* Git: https://github.com/stackforge/networking-ofagent
+* Launchpad: https://launchpad.net/networking-ofagent
 
 .. _networking-ovs-dpdk:
 
