@@ -50,9 +50,9 @@ class TestAsyncProcess(AsyncProcessTestFramework):
         proc = async_process.AsyncProcess(['tail', '-f',
                                            self.test_file_path])
         self.addCleanup(self._safe_stop, proc)
-        proc.start(blocking=True)
+        proc.start(block=True)
         self._check_stdout(proc)
-        proc.stop(blocking=True)
+        proc.stop(block=True)
 
         # Ensure that the process and greenthreads have stopped
         proc._process.wait()
