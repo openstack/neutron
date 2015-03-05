@@ -14,6 +14,7 @@
 
 import netaddr
 
+from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as l3_constants
@@ -32,8 +33,7 @@ class RouterInfo(object):
                  router,
                  agent_conf,
                  interface_driver,
-                 use_ipv6=False,
-                 ns_name=None):
+                 use_ipv6=False):
         self.router_id = router_id
         self.ex_gw_port = None
         self._snat_enabled = None
@@ -42,7 +42,14 @@ class RouterInfo(object):
         self.floating_ips = set()
         # Invoke the setter for establishing initial SNAT action
         self.router = router
-        self.ns_name = ns_name
+        self.use_ipv6 = use_ipv6
+        self.ns_name = None
+        self.router_namespace = None
+        if agent_conf.use_namespaces:
+            ns = namespaces.RouterNamespace(
+                router_id, agent_conf, interface_driver, use_ipv6)
+            self.router_namespace = ns
+            self.ns_name = ns.name
         self.iptables_manager = iptables_manager.IptablesManager(
             use_ipv6=use_ipv6,
             namespace=self.ns_name)
@@ -225,3 +232,12 @@ class RouterInfo(object):
         for fip in self.router.get(l3_constants.FLOATINGIP_KEY, []):
             fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ERROR
         return fip_statuses
+
+    def create(self):
+        if self.router_namespace:
+            self.router_namespace.create()
+
+    def delete(self):
+        self.radvd.disable()
+        if self.router_namespace:
+            self.router_namespace.delete()

@@ -373,6 +373,10 @@ class NetworkIdOrRouterIdRequiredError(NeutronException):
     message = _('network_id and router_id are None. One must be provided.')
 
 
+class AbortSyncRouters(NeutronException):
+    message = _("Aborting periodic_sync_routers_task due to an error")
+
+
 # Shared *aas exceptions, pending them being refactored out of Neutron
 # proper.
 

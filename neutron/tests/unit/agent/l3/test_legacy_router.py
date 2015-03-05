@@ -17,7 +17,10 @@ import mock
 from neutron.agent.l3 import legacy_router
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
+from neutron.openstack.common import uuidutils
 from neutron.tests import base
+
+_uuid = uuidutils.generate_uuid
 
 
 class BasicRouterTestCaseFramework(base.BaseTestCase):
@@ -26,11 +29,11 @@ class BasicRouterTestCaseFramework(base.BaseTestCase):
             router = mock.MagicMock()
         self.agent_conf = mock.Mock()
         self.driver = mock.Mock()
-        return legacy_router.LegacyRouter(mock.sentinel.router_id,
+        self.router_id = _uuid()
+        return legacy_router.LegacyRouter(self.router_id,
                                           router,
                                           self.agent_conf,
                                           self.driver,
-                                          ns_name=mock.sentinel.namespace,
                                           **kwargs)
 
 
@@ -46,7 +49,7 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         device.addr.delete.assert_called_once_with(4, cidr)
         self.driver.delete_conntrack_state.assert_called_once_with(
             ip=cidr,
-            namespace=mock.sentinel.namespace)
+            namespace=ri.ns_name)
 
 
 @mock.patch.object(ip_lib, 'send_gratuitous_arp')
@@ -55,13 +58,12 @@ class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):
         ri = self._create_router()
         ri._add_fip_addr_to_device = mock.Mock(return_value=True)
         self.agent_conf.send_arp_for_ha = mock.sentinel.arp_count
-        ri.ns_name = mock.sentinel.ns_name
         ip = '15.1.2.3'
         result = ri.add_floating_ip({'floating_ip_address': ip},
                                     mock.sentinel.interface_name,
                                     mock.sentinel.device)
         ip_lib.send_gratuitous_arp.assert_called_once_with(
-            mock.sentinel.ns_name,
+            ri.ns_name,
             mock.sentinel.interface_name,
             ip,
             mock.sentinel.arp_count)

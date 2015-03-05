@@ -22,12 +22,14 @@ from oslo_utils import importutils
 from oslo_utils import timeutils
 
 from neutron.agent.l3 import dvr
-from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router
+from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import event_observers
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import legacy_router
+from neutron.agent.l3 import namespace_manager
+from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_processing_queue as queue
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -55,9 +57,10 @@ except Exception:
     from neutron.services.firewall.agents.l3reference import firewall_l3_agent
 
 LOG = logging.getLogger(__name__)
-NS_PREFIX = 'qrouter-'
-INTERNAL_DEV_PREFIX = 'qr-'
-EXTERNAL_DEV_PREFIX = 'qg-'
+# TODO(Carl) Following constants retained to increase SNR during refactoring
+NS_PREFIX = namespaces.NS_PREFIX
+INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
+EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 
 
 class L3PluginApi(object):
@@ -197,7 +200,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                         continue
             break
 
-        self._clean_stale_namespaces = self.conf.use_namespaces
+        self.namespaces_manager = namespace_manager.NamespaceManager(
+            self.conf,
+            self.driver,
+            self.conf.use_namespaces)
 
         self._queue = queue.RouterProcessingQueue()
         self.event_observers = event_observers.L3EventObservers()
@@ -225,95 +231,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             msg = _LE('Router id is required if not using namespaces.')
             LOG.error(msg)
             raise SystemExit(1)
-
-    def _list_namespaces(self):
-        """Get a set of all router namespaces on host
-
-        The argument routers is the list of routers that are recorded in
-        the database as being hosted on this node.
-        """
-        try:
-            root_ip = ip_lib.IPWrapper()
-
-            host_namespaces = root_ip.get_namespaces()
-            return set(ns for ns in host_namespaces
-                       if (ns.startswith(NS_PREFIX)
-                           or ns.startswith(dvr.SNAT_NS_PREFIX)))
-        except RuntimeError:
-            LOG.exception(_LE('RuntimeError in obtaining router list '
-                            'for namespace cleanup.'))
-            return set()
-
-    def _get_routers_namespaces(self, router_ids):
-        namespaces = set(self.get_ns_name(rid) for rid in router_ids)
-        namespaces.update(self.get_snat_ns_name(rid) for rid in router_ids)
-        return namespaces
-
-    def _cleanup_namespaces(self, router_namespaces, router_ids):
-        """Destroy stale router namespaces on host when L3 agent restarts
-
-        This routine is called when self._clean_stale_namespaces is True.
-
-        The argument router_namespaces is the list of all routers namespaces
-        The argument router_ids is the list of ids for known routers.
-        """
-        # Don't destroy namespaces of routers this agent handles.
-        ns_to_ignore = self._get_routers_namespaces(router_ids)
-
-        ns_to_destroy = router_namespaces - ns_to_ignore
-        for ns in ns_to_destroy:
-            try:
-                self._destroy_namespace(ns)
-            except RuntimeError:
-                LOG.exception(_LE('Failed to destroy stale router namespace '
-                                  '%s'), ns)
-        self._clean_stale_namespaces = False
-
-    def _destroy_namespace(self, ns):
-        if ns.startswith(NS_PREFIX):
-            self._destroy_router_namespace(ns)
-        elif ns.startswith(dvr_fip_ns.FIP_NS_PREFIX):
-            self._destroy_fip_namespace(ns)
-        elif ns.startswith(dvr.SNAT_NS_PREFIX):
-            self._destroy_snat_namespace(ns)
-
-    def _delete_namespace(self, ns_ip, ns):
-        try:
-            ns_ip.netns.delete(ns)
-        except RuntimeError:
-            LOG.exception(_LE('Failed trying to delete namespace: %s'), ns)
-
-    def _destroy_router_namespace(self, ns):
-        router_id = self.get_router_id(ns)
-        if router_id in self.router_info:
-            self.router_info[router_id].radvd.disable()
-        ns_ip = ip_lib.IPWrapper(namespace=ns)
-        for d in ns_ip.get_devices(exclude_loopback=True):
-            if d.name.startswith(INTERNAL_DEV_PREFIX):
-                # device is on default bridge
-                self.driver.unplug(d.name, namespace=ns,
-                                   prefix=INTERNAL_DEV_PREFIX)
-            elif d.name.startswith(dvr_fip_ns.ROUTER_2_FIP_DEV_PREFIX):
-                ns_ip.del_veth(d.name)
-            elif d.name.startswith(EXTERNAL_DEV_PREFIX):
-                self.driver.unplug(d.name,
-                                   bridge=self.conf.external_network_bridge,
-                                   namespace=ns,
-                                   prefix=EXTERNAL_DEV_PREFIX)
-
-        if self.conf.router_delete_namespaces:
-            self._delete_namespace(ns_ip, ns)
-
-    def _create_namespace(self, name):
-        ip_wrapper_root = ip_lib.IPWrapper()
-        ip_wrapper = ip_wrapper_root.ensure_namespace(name)
-        ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
-        if self.use_ipv6:
-            ip_wrapper.netns.execute(['sysctl', '-w',
-                                      'net.ipv6.conf.all.forwarding=1'])
-
-    def _create_router_namespace(self, ri):
-        self._create_namespace(ri.ns_name)
 
     def _fetch_external_net_id(self, force=False):
         """Find UUID of single external network for this agent."""
@@ -349,14 +266,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if router.get('distributed') and router.get('ha'):
             raise n_exc.DvrHaRouterNotSupported(router_id=router_id)
 
-        ns_name = (self.get_ns_name(router_id)
-                   if self.conf.use_namespaces else None)
         args = []
         kwargs = {
             'router_id': router_id,
             'router': router,
             'use_ipv6': self.use_ipv6,
-            'ns_name': ns_name,
             'agent_conf': self.conf,
             'interface_driver': self.driver,
         }
@@ -380,8 +294,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             adv_svc.AdvancedService.before_router_added, ri)
 
         self.router_info[router_id] = ri
-        if self.conf.use_namespaces:
-            self._create_router_namespace(ri)
+        ri.create()
         self.process_router_add(ri)
 
         if ri.is_ha:
@@ -405,8 +318,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.router[l3_constants.FLOATINGIP_KEY] = []
         self.process_router(ri)
         del self.router_info[router_id]
-        self._destroy_router_namespace(ri.ns_name)
-
+        ri.delete()
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_removed, ri)
 
@@ -656,12 +568,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def get_external_device_name(self, port_id):
         return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
-    def get_ns_name(self, router_id):
-        return (NS_PREFIX + router_id)
-
-    def get_router_id(self, ns_name):
-        return ns_name[len(NS_PREFIX):]
-
     def get_floating_agent_gw_interface(self, ri, ext_net_id):
         """Filter Floating Agent GW port for the external network."""
         fip_ports = ri.router.get(l3_constants.FLOATINGIP_AGENT_INTF_KEY, [])
@@ -711,7 +617,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if ri.router['distributed']:
             if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT and
                 self.get_gw_port_host(ri.router) == self.host):
-                ns_name = self.get_snat_ns_name(ri.router['id'])
+                ns_name = ri.snat_namespace.name
             else:
                 # no centralized SNAT gateway for this node/agent
                 LOG.debug("not hosting snat for router: %s", ri.router['id'])
@@ -764,7 +670,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
             if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
                 and self.get_gw_port_host(ri.router) == self.host):
-                ns_name = self.get_snat_ns_name(ri.router['id'])
+                ns_name = ri.snat_namespace.name
             else:
                 # not hosting agent - no work to do
                 LOG.debug('DVR: CSNAT not hosted: %s', ex_gw_port)
@@ -780,7 +686,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                            namespace=ns_name,
                            prefix=EXTERNAL_DEV_PREFIX)
         if ri.router['distributed']:
-            self._destroy_snat_namespace(ns_name)
+            ri.delete_snat_namespace()
 
     def external_gateway_nat_rules(self, ex_gw_ip, interface_name):
         rules = [('POSTROUTING', '! -i %(interface_name)s '
@@ -834,7 +740,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                         ['ip_address'], port, interface_name)
                 if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
                     and self.get_gw_port_host(ri.router) == self.host):
-                    ns_name = self.get_snat_ns_name(ri.router['id'])
+                    ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
+                        ri.router['id'])
                     self._set_subnet_info(sn_port)
                     interface_name = (
                           self.get_snat_int_device_name(sn_port['id']))
@@ -860,7 +767,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     snat_interface = (
                         self.get_snat_int_device_name(snat_port['id'])
                     )
-                    ns_name = self.get_snat_ns_name(ri.router['id'])
+                    ns_name = ri.snat_namespace.name
                     prefix = dvr.SNAT_INT_DEV_PREFIX
                     if ip_lib.device_exists(snat_interface,
                                             namespace=ns_name):
@@ -1013,11 +920,18 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # uncaught -- prevents setting it to False below then the next call
         # to periodic_sync_routers_task will re-enter this code and try again.
 
-        # Capture a picture of namespaces *before* fetching the full list from
-        # the database.  This is important to correctly identify stale ones.
-        namespaces = set()
-        if self._clean_stale_namespaces:
-            namespaces = self._list_namespaces()
+        # Context manager self.namespaces_manager captures a picture of
+        # namespaces *before* fetch_and_sync_all_routers fetches the full list
+        # of routers from the database.  This is important to correctly
+        # identify stale ones.
+
+        try:
+            with self.namespaces_manager as ns_manager:
+                self.fetch_and_sync_all_routers(context, ns_manager)
+        except n_exc.AbortSyncRouters:
+            self.fullsync = True
+
+    def fetch_and_sync_all_routers(self, context, ns_manager):
         prev_router_ids = set(self.router_info)
         timestamp = timeutils.utcnow()
 
@@ -1030,9 +944,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         except oslo_messaging.MessagingException:
             LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
+            raise n_exc.AbortSyncRouters()
         else:
             LOG.debug('Processing :%r', routers)
             for r in routers:
+                ns_manager.keep_router(r['id'])
                 update = queue.RouterUpdate(r['id'],
                                             queue.PRIORITY_SYNC_ROUTERS_TASK,
                                             router=r,
@@ -1041,23 +957,16 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self.fullsync = False
             LOG.debug("periodic_sync_routers_task successfully completed")
 
-            # Resync is not necessary for the cleanup of stale namespaces
             curr_router_ids = set([r['id'] for r in routers])
 
-            # Two kinds of stale routers:  Routers for which info is cached in
-            # self.router_info and the others.  First, handle the former.
+            # Delete routers that have disappeared since the last sync
             for router_id in prev_router_ids - curr_router_ids:
+                ns_manager.keep_router(router_id)
                 update = queue.RouterUpdate(router_id,
                                             queue.PRIORITY_SYNC_ROUTERS_TASK,
                                             timestamp=timestamp,
                                             action=queue.DELETE_ROUTER)
                 self._queue.add(update)
-
-            # Next, one effort to clean out namespaces for which we don't have
-            # a record.  (i.e. _clean_stale_namespaces=False after one pass)
-            if self._clean_stale_namespaces:
-                ids_to_keep = curr_router_ids | prev_router_ids
-                self._cleanup_namespaces(namespaces, ids_to_keep)
 
     def after_start(self):
         eventlet.spawn_n(self._process_routers_loop)

@@ -15,7 +15,10 @@
 import mock
 
 from neutron.agent.l3 import ha_router
+from neutron.openstack.common import uuidutils
 from neutron.tests import base
+
+_uuid = uuidutils.generate_uuid
 
 
 class TestBasicRouterOperations(base.BaseTestCase):
@@ -25,11 +28,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def _create_router(self, router=None, **kwargs):
         if not router:
             router = mock.MagicMock()
-        return ha_router.HaRouter(mock.sentinel.router_id,
+        self.agent_conf = mock.Mock()
+        # NOTE The use_namespaces config will soon be deprecated
+        self.agent_conf.use_namespaces = True
+        self.router_id = _uuid()
+        return ha_router.HaRouter(self.router_id,
                                   router,
-                                  mock.sentinel.agent_conf,
+                                  self.agent_conf,
                                   mock.sentinel.driver,
-                                  ns_name=mock.sentinel.namespace,
                                   **kwargs)
 
     def test_get_router_cidrs_returns_ha_cidrs(self):

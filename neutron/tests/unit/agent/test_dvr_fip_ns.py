@@ -97,7 +97,9 @@ class TestDvrFipNs(base.BaseTestCase):
         dev2.name = 'fg-aaaa'
         ip_wrapper.get_devices.return_value = [dev1, dev2]
 
-        self.fip_ns.destroy()
+        self.conf.router_delete_namespaces = False
+
+        self.fip_ns.delete()
 
         ext_net_bridge = self.conf.external_network_bridge
         ns_name = self.fip_ns.get_name()

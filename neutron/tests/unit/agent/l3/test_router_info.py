@@ -26,6 +26,7 @@ class TestRouterInfo(base.BaseTestCase):
         super(TestRouterInfo, self).setUp()
 
         conf = agent_config.setup_conf()
+        conf.use_namespaces = True
 
         self.ip_cls_p = mock.patch('neutron.agent.linux.ip_lib.IPWrapper')
         ip_cls = self.ip_cls_p.start()
@@ -40,8 +41,7 @@ class TestRouterInfo(base.BaseTestCase):
             any_order=True)
 
     def test_routing_table_update(self):
-        ri = router_info.RouterInfo(_uuid(), {}, ns_name=_uuid(),
-                                    **self.ri_kwargs)
+        ri = router_info.RouterInfo(_uuid(), {}, **self.ri_kwargs)
         ri.router = {}
 
         fake_route1 = {'destination': '135.207.0.0/16',
@@ -70,8 +70,7 @@ class TestRouterInfo(base.BaseTestCase):
         self._check_agent_method_called(expected)
 
     def test_routes_updated(self):
-        ri = router_info.RouterInfo(_uuid(), {}, ns_name=_uuid(),
-                                    **self.ri_kwargs)
+        ri = router_info.RouterInfo(_uuid(), {}, **self.ri_kwargs)
         ri.router = {}
 
         fake_old_routes = []
