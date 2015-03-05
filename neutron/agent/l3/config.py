@@ -16,9 +16,14 @@
 
 from oslo_config import cfg
 
+from neutron.common import constants
+
 
 OPTS = [
-    cfg.StrOpt('agent_mode', default='legacy',
+    cfg.StrOpt('agent_mode', default=constants.L3_AGENT_MODE_LEGACY,
+               choices=(constants.L3_AGENT_MODE_DVR,
+                        constants.L3_AGENT_MODE_DVR_SNAT,
+                        constants.L3_AGENT_MODE_LEGACY),
                help=_("The working mode for the agent. Allowed modes are: "
                       "'legacy' - this preserves the existing behavior "
                       "where the L3 agent is deployed on a centralized "

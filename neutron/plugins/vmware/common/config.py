@@ -61,9 +61,9 @@ base_opts = [
                       "does not support namespaces otherwise access_network "
                       "should be used.")),
     cfg.StrOpt('default_transport_type', default='stt',
+               choices=('stt', 'gre', 'bridge', 'ipsec_gre', 'ipsec_stt'),
                deprecated_group='NVP',
-               help=_("The default network tranport type to use (stt, gre, "
-                      "bridge, ipsec_gre, or ipsec_stt)")),
+               help=_("The default network transport type to use")),
     cfg.StrOpt('agent_mode', default=AgentModes.AGENT,
                deprecated_group='NVP',
                help=_("The mode used to implement DHCP/metadata services.")),
