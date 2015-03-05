@@ -19,6 +19,8 @@ import mock
 
 from oslo_config import cfg
 
+from neutron.agent.common import config as agent_config
+from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import config as l3_config
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.openstack.common import uuidutils
@@ -28,15 +30,7 @@ from neutron.tests import base
 _uuid = uuidutils.generate_uuid
 
 
-class TestMetadataDriver(base.BaseTestCase):
-
-    EUID = 123
-    EGID = 456
-
-    def setUp(self):
-        super(TestMetadataDriver, self).setUp()
-        cfg.CONF.register_opts(l3_config.OPTS)
-        cfg.CONF.register_opts(metadata_driver.MetadataDriver.OPTS)
+class TestMetadataDriverRules(base.BaseTestCase):
 
     def test_metadata_nat_rules(self):
         rules = ('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
@@ -61,6 +55,26 @@ class TestMetadataDriver(base.BaseTestCase):
             [rule],
             metadata_driver.MetadataDriver.metadata_mangle_rules('0x1'))
 
+
+class TestMetadataDriverProcess(base.BaseTestCase):
+
+    EUID = 123
+    EGID = 456
+
+    def setUp(self):
+        super(TestMetadataDriverProcess, self).setUp()
+        agent_config.register_interface_driver_opts_helper(cfg.CONF)
+        cfg.CONF.set_override('interface_driver',
+                              'neutron.agent.linux.interface.NullDriver')
+        agent_config.register_use_namespaces_opts_helper(cfg.CONF)
+
+        mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
+        mock.patch('neutron.agent.l3.ha.AgentMixin'
+                   '._init_ha_conf_path').start()
+
+        cfg.CONF.register_opts(l3_config.OPTS)
+        cfg.CONF.register_opts(metadata_driver.MetadataDriver.OPTS)
+
     def _test_spawn_metadata_proxy(self, expected_user, expected_group,
                                    user='', group=''):
         router_id = _uuid()
@@ -73,13 +87,17 @@ class TestMetadataDriver(base.BaseTestCase):
         cfg.CONF.set_override('log_file', 'test.log')
         cfg.CONF.set_override('debug', True)
 
-        driver = metadata_driver.MetadataDriver
+        agent = l3_agent.L3NATAgent('localhost')
         with contextlib.nested(
                 mock.patch('os.geteuid', return_value=self.EUID),
                 mock.patch('os.getegid', return_value=self.EGID),
                 mock.patch(ip_class_path)) as (geteuid, getegid, ip_mock):
-            driver.spawn_metadata_proxy(router_id, router_ns, metadata_port,
-                                        cfg.CONF)
+            agent.metadata_driver.spawn_monitored_metadata_proxy(
+                agent.process_monitor,
+                router_ns,
+                metadata_port,
+                agent.conf,
+                router_id=router_id)
             ip_mock.assert_has_calls([
                 mock.call(namespace=router_ns),
                 mock.call().netns.execute([
