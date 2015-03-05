@@ -618,7 +618,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return [obj['result'] for obj in objects]
 
     def update_network(self, context, id, network):
-        provider._raise_if_updates_provider_attributes(network['network'])
+        net_data = network[attributes.NETWORK]
+        provider._raise_if_updates_provider_attributes(net_data)
 
         session = context.session
         with session.begin(subtransactions=True):
@@ -626,10 +627,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             updated_network = super(Ml2Plugin, self).update_network(context,
                                                                     id,
                                                                     network)
-            self.extension_manager.process_update_network(context, network,
+            self.extension_manager.process_update_network(context, net_data,
                                                           updated_network)
-            self._process_l3_update(context, updated_network,
-                                    network['network'])
+            self._process_l3_update(context, updated_network, net_data)
             self.type_manager.extend_network_dict_provider(context,
                                                            updated_network)
             mech_context = driver_context.NetworkContext(
@@ -779,8 +779,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).create_subnet(context, subnet)
-            self.extension_manager.process_create_subnet(context, subnet,
-                                                         result)
+            self.extension_manager.process_create_subnet(
+                context, subnet[attributes.SUBNET], result)
             mech_context = driver_context.SubnetContext(self, context, result)
             self.mechanism_manager.create_subnet_precommit(mech_context)
 
@@ -807,8 +807,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             original_subnet = super(Ml2Plugin, self).get_subnet(context, id)
             updated_subnet = super(Ml2Plugin, self).update_subnet(
                 context, id, subnet)
-            self.extension_manager.process_update_subnet(context, subnet,
-                                                         updated_subnet)
+            self.extension_manager.process_update_subnet(
+                context, subnet[attributes.SUBNET], updated_subnet)
             mech_context = driver_context.SubnetContext(
                 self, context, updated_subnet, original_subnet=original_subnet)
             self.mechanism_manager.update_subnet_precommit(mech_context)
