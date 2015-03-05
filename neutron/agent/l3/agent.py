@@ -289,7 +289,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.radvd = ra.DaemonMonitor(router['id'],
                                     ri.ns_name,
                                     self.process_monitor,
-                                    self.get_internal_device_name)
+                                    ri.get_internal_device_name)
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_added, ri)
 
@@ -373,7 +373,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         existing_devices = self._get_existing_devices(ri)
         current_internal_devs = set([n for n in existing_devices
                                      if n.startswith(INTERNAL_DEV_PREFIX)])
-        current_port_devs = set([self.get_internal_device_name(id) for
+        current_port_devs = set([ri.get_internal_device_name(id) for
                                  id in current_port_ids])
         stale_devs = current_internal_devs - current_port_devs
         for stale_dev in stale_devs:
@@ -562,9 +562,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         else:
             return self.get_external_device_name(ex_gw_port['id'])
 
-    def get_internal_device_name(self, port_id):
-        return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
-
     def get_external_device_name(self, port_id):
         return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
@@ -582,7 +579,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             snat_ports = self.get_snat_interfaces(ri)
             for p in ri.internal_ports:
                 gateway = self._map_internal_interfaces(ri, p, snat_ports)
-                id_name = self.get_internal_device_name(p['id'])
+                id_name = ri.get_internal_device_name(p['id'])
                 if gateway:
                     self._snat_redirect_add(ri, gateway['fixed_ips'][0]
                                             ['ip_address'], p, id_name)
@@ -593,9 +590,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                          snat_ports)
             for port in snat_ports:
                 for ip in port['fixed_ips']:
-                    self._update_arp_entry(ri, ip['ip_address'],
-                                           port['mac_address'],
-                                           ip['subnet_id'], 'add')
+                    ri._update_arp_entry(ip['ip_address'],
+                                         port['mac_address'],
+                                         ip['subnet_id'],
+                                         'add')
             return
 
         # Compute a list of addresses this router is supposed to have.
@@ -665,7 +663,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     self._get_external_device_interface_name(ri, ex_gw_port))
                 ri.process_floating_ip_addresses(to_fip_interface_name)
             for p in ri.internal_ports:
-                internal_interface = self.get_internal_device_name(p['id'])
+                internal_interface = ri.get_internal_device_name(p['id'])
                 self._snat_redirect_remove(ri, p, internal_interface)
 
             if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
@@ -720,7 +718,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         internal_cidr = port['ip_cidr']
         mac_address = port['mac_address']
 
-        interface_name = self.get_internal_device_name(port_id)
+        interface_name = ri.get_internal_device_name(port_id)
 
         self._internal_network_added(ri.ns_name, network_id, port_id,
                                      internal_cidr, mac_address,
@@ -755,7 +753,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def internal_network_removed(self, ri, port):
         port_id = port['id']
-        interface_name = self.get_internal_device_name(port_id)
+        interface_name = ri.get_internal_device_name(port_id)
         if ri.router['distributed'] and ri.ex_gw_port:
             # DVR handling code for SNAT
             self._snat_redirect_remove(ri, port, interface_name)
@@ -881,7 +879,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     router = routers[0]
 
             if not router:
-                self._router_removed(update.id)
+                try:
+                    self._router_removed(update.id)
+                except Exception:
+                    # TODO(Carl) Stop this fullsync non-sense.  Just retry this
+                    # one router by sticking the update at the end of the queue
+                    # at a lower priority.
+                    self.fullsync = True
                 continue
 
             try:

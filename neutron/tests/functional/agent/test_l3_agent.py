@@ -162,7 +162,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         internal_port = router.router[l3_constants.INTERFACE_KEY][0]
         int_port_ipv6 = router._get_ipv6_lladdr(
             internal_port['mac_address'])
-        internal_device_name = self.agent.get_internal_device_name(
+        internal_device_name = router.get_internal_device_name(
             internal_port['id'])
         internal_device_cidr = internal_port['ip_cidr']
         floating_ip_cidr = common_utils.ip_to_cidr(
@@ -250,7 +250,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         self.assertTrue(len(internal_devices))
         for device in internal_devices:
             self.assertTrue(self.device_exists_with_ip_mac(
-                device, self.agent.get_internal_device_name, router.ns_name))
+                device, router.get_internal_device_name, router.ns_name))
 
     def _assert_extra_routes(self, router):
         routes = ip_lib.get_routing_table(namespace=router.ns_name)
@@ -406,7 +406,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             device_exists = functools.partial(
                 self.device_exists_with_ip_mac,
                 device,
-                self.agent.get_internal_device_name,
+                router.get_internal_device_name,
                 router.ns_name)
             utils.wait_until_true(device_exists)
 

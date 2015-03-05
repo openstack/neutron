@@ -12,12 +12,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+from oslo_utils import excutils
+
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
+from neutron.i18n import _LE
+from neutron.openstack.common import log as logging
+
+LOG = logging.getLogger(__name__)
 
 
 class DvrRouter(router.RouterInfo):
@@ -157,3 +164,33 @@ class DvrRouter(router.RouterInfo):
         # first step is to move the deletion of the snat namespace here
         self.snat_namespace.delete()
         self.snat_namespace = None
+
+    def _get_internal_port(self, subnet_id):
+        """Return internal router port based on subnet_id."""
+        router_ports = self.router.get(l3_constants.INTERFACE_KEY, [])
+        for port in router_ports:
+            fips = port['fixed_ips']
+            for f in fips:
+                if f['subnet_id'] == subnet_id:
+                    return port
+
+    def _update_arp_entry(self, ip, mac, subnet_id, operation):
+        """Add or delete arp entry into router namespace for the subnet."""
+        port = self._get_internal_port(subnet_id)
+        # update arp entry only if the subnet is attached to the router
+        if not port:
+            return
+
+        ip_cidr = str(ip) + '/32'
+        try:
+            # TODO(mrsmith): optimize the calls below for bulk calls
+            net = netaddr.IPNetwork(ip_cidr)
+            interface_name = self.get_internal_device_name(port['id'])
+            device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
+            if operation == 'add':
+                device.neigh.add(net.version, ip, mac)
+            elif operation == 'delete':
+                device.neigh.delete(net.version, ip, mac)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_LE("DVR: Failed updating arp entry"))
