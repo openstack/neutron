@@ -26,6 +26,8 @@ from webob import exc
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
+from neutron.callbacks import exceptions
+from neutron.callbacks import registry
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron import context
@@ -1351,6 +1353,57 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               r['router']['id'],
                                               s['subnet']['id'],
                                               None)
+
+    def test_router_remove_interface_callback_failure_returns_409(self):
+        with contextlib.nested(
+            self.router(),
+            self.subnet(),
+            mock.patch.object(registry, 'notify')) as (r, s, notify):
+                errors = [
+                    exceptions.NotificationError(
+                        'foo_callback_id', n_exc.InUse()),
+                ]
+                # we fail the first time, but not the second, when
+                # the clean-up takes place
+                notify.side_effect = [
+                    exceptions.CallbackFailure(errors=errors), None
+                ]
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None)
+                self._router_interface_action(
+                    'remove',
+                    r['router']['id'],
+                    s['subnet']['id'],
+                    None,
+                    exc.HTTPConflict.code)
+                # remove properly to clean-up
+                self._router_interface_action(
+                    'remove',
+                    r['router']['id'],
+                    s['subnet']['id'],
+                    None)
+
+    def test_router_clear_gateway_callback_failure_returns_409(self):
+        with contextlib.nested(
+            self.router(),
+            self.subnet(),
+            mock.patch.object(registry, 'notify')) as (r, s, notify):
+                errors = [
+                    exceptions.NotificationError(
+                        'foo_callback_id', n_exc.InUse()),
+                ]
+                notify.side_effect = exceptions.CallbackFailure(errors=errors)
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                       r['router']['id'],
+                       s['subnet']['network_id'])
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'],
+                    external_gw_info={},
+                    expected_code=exc.HTTPConflict.code)
 
     def test_router_remove_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
