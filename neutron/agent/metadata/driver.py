@@ -88,12 +88,12 @@ class MetadataDriver(advanced_service.AdvancedService):
     @classmethod
     def metadata_filter_rules(cls, port, mark):
         return [('INPUT', '-m mark --mark %s -j ACCEPT' % mark),
-                ('INPUT', '-s 0.0.0.0/0 -p tcp -m tcp --dport %s '
+                ('INPUT', '-p tcp -m tcp --dport %s '
                  '-j DROP' % port)]
 
     @classmethod
     def metadata_mangle_rules(cls, mark):
-        return [('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+        return [('PREROUTING', '-d 169.254.169.254/32 '
                  '-p tcp -m tcp --dport 80 '
                  '-j MARK --set-xmark %(value)s/%(mask)s' %
                  {'value': mark,
@@ -101,7 +101,7 @@ class MetadataDriver(advanced_service.AdvancedService):
 
     @classmethod
     def metadata_nat_rules(cls, port):
-        return [('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+        return [('PREROUTING', '-d 169.254.169.254/32 '
                  '-p tcp -m tcp --dport 80 -j REDIRECT '
                  '--to-port %s' % port)]
 

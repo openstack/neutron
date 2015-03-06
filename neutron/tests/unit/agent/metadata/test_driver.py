@@ -33,7 +33,7 @@ _uuid = uuidutils.generate_uuid
 class TestMetadataDriverRules(base.BaseTestCase):
 
     def test_metadata_nat_rules(self):
-        rules = ('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+        rules = ('PREROUTING', '-d 169.254.169.254/32 '
                  '-p tcp -m tcp --dport 80 -j REDIRECT --to-port 8775')
         self.assertEqual(
             [rules],
@@ -41,13 +41,13 @@ class TestMetadataDriverRules(base.BaseTestCase):
 
     def test_metadata_filter_rules(self):
         rules = [('INPUT', '-m mark --mark 0x1 -j ACCEPT'),
-                 ('INPUT', '-s 0.0.0.0/0 -p tcp -m tcp --dport 8775 -j DROP')]
+                 ('INPUT', '-p tcp -m tcp --dport 8775 -j DROP')]
         self.assertEqual(
             rules,
             metadata_driver.MetadataDriver.metadata_filter_rules(8775, '0x1'))
 
     def test_metadata_mangle_rules(self):
-        rule = ('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+        rule = ('PREROUTING', '-d 169.254.169.254/32 '
                 '-p tcp -m tcp --dport 80 '
                 '-j MARK --set-xmark 0x1/%s' %
                 metadata_driver.METADATA_ACCESS_MARK_MASK)
