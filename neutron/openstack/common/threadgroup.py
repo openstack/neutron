@@ -11,12 +11,12 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import logging
 import threading
 
 import eventlet
 from eventlet import greenpool
 
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 
 
@@ -96,6 +96,8 @@ class ThreadGroup(object):
                 continue
             try:
                 x.stop()
+            except eventlet.greenlet.GreenletExit:
+                pass
             except Exception as ex:
                 LOG.exception(ex)
 

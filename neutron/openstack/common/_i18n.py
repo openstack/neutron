@@ -17,14 +17,14 @@ See http://docs.openstack.org/developer/oslo.i18n/usage.html
 """
 
 try:
-    import oslo.i18n
+    import oslo_i18n
 
     # NOTE(dhellmann): This reference to o-s-l-o will be replaced by the
     # application name when this module is synced into the separate
     # repository. It is OK to have more than one translation function
     # using the same domain, since there will still only be one message
     # catalog.
-    _translators = oslo.i18n.TranslatorFactory(domain='neutron')
+    _translators = oslo_i18n.TranslatorFactory(domain='neutron')
 
     # The primary translation function using the well-known name "_"
     _ = _translators.primary
@@ -40,6 +40,6 @@ try:
     _LC = _translators.log_critical
 except ImportError:
     # NOTE(dims): Support for cases where a project wants to use
-    # code from neutron-incubator, but is not ready to be internationalized
+    # code from oslo-incubator, but is not ready to be internationalized
     # (like tempest)
     _ = _LI = _LW = _LE = _LC = lambda x: x
