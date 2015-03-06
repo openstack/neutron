@@ -126,14 +126,19 @@ class TestDvrFipNs(base.BaseTestCase):
         pair = lla.LinkLocalAddressPair('169.254.31.28/31')
         allocator.allocate.return_value = pair
         device_exists.return_value = False
+        ip_wrapper = IPWrapper()
+        self.conf.network_device_mtu = 2000
+        ip_wrapper.add_veth.return_value = (IPDevice(), IPDevice())
+
         self.fip_ns.create_rtr_2_fip_link(ri)
 
-        ip_wrapper = IPWrapper()
         ip_wrapper.add_veth.assert_called_with(rtr_2_fip_name,
                                                fip_2_rtr_name,
                                                fip_ns_name)
 
         device = IPDevice()
+        device.link.set_mtu.assert_called_with(2000)
+        self.assertEqual(device.link.set_mtu.call_count, 2)
         device.route.add_gateway.assert_called_once_with(
             '169.254.31.29', table=16)
 
