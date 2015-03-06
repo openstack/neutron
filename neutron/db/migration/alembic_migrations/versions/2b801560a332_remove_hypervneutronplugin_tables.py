@@ -66,10 +66,16 @@ def _migrate_segment_dict(binding):
 
 def _migrate_vlan_allocations():
     # Code similar to migrate_to_ml2.BaseMigrateToMl2.migrate_vlan_allocations
-    op.execute('INSERT INTO ml2_vlan_allocations '
-               'SELECT physical_network, vlan_id, allocated '
-               'FROM hyperv_vlan_allocations '
-               'WHERE allocated = TRUE')
+    if op.get_bind().engine.name == 'ibm_db_sa':
+        op.execute('INSERT INTO ml2_vlan_allocations '
+                   'SELECT physical_network, vlan_id, allocated '
+                   'FROM hyperv_vlan_allocations '
+                   'WHERE allocated = 1')
+    else:
+        op.execute('INSERT INTO ml2_vlan_allocations '
+                   'SELECT physical_network, vlan_id, allocated '
+                   'FROM hyperv_vlan_allocations '
+                   'WHERE allocated = TRUE')
 
 
 def _migrate_network_segments(engine):
