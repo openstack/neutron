@@ -22,6 +22,7 @@ from neutron.tests.functional.agent.linux import simple_daemon
 
 
 UUID_FORMAT = "test-uuid-%d"
+SERVICE_NAME = "service"
 
 
 class BaseTestProcessMonitor(base.BaseTestCase):
@@ -30,13 +31,13 @@ class BaseTestProcessMonitor(base.BaseTestCase):
         super(BaseTestProcessMonitor, self).setUp()
         cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
         self._child_processes = []
-        self._ext_processes = None
+        self._process_monitor = None
         self.create_child_processes_manager('respawn')
         self.addCleanup(self.cleanup_spawned_children)
 
     def create_child_processes_manager(self, action):
         cfg.CONF.set_override('check_child_processes_action', action, 'AGENT')
-        self._ext_processes = self.build_process_monitor()
+        self._process_monitor = self.build_process_monitor()
 
     def build_process_monitor(self):
         return external_process.ProcessMonitor(
@@ -56,11 +57,14 @@ class BaseTestProcessMonitor(base.BaseTestCase):
         for child_number in moves.xrange(n):
             uuid = self._child_uuid(child_number)
             _callback = self._make_cmdline_callback(uuid)
-            self._ext_processes.enable(uuid=uuid,
-                                       cmd_callback=_callback,
-                                       service=service)
+            pm = external_process.ProcessManager(
+                conf=cfg.CONF,
+                uuid=uuid,
+                default_cmd_callback=_callback,
+                service=service)
+            pm.enable()
+            self._process_monitor.register(uuid, SERVICE_NAME, pm)
 
-            pm = self._ext_processes.get_process_manager(uuid, service)
             self._child_processes.append(pm)
 
     @staticmethod
@@ -70,16 +74,11 @@ class BaseTestProcessMonitor(base.BaseTestCase):
     def _kill_last_child(self):
         self._child_processes[-1].disable()
 
-    def spawn_child_processes_and_kill_last(self, service=None, number=2):
-        self.spawn_n_children(number, service)
-        self._kill_last_child()
-        self.assertFalse(self._child_processes[-1].active)
-
-    def wait_for_all_childs_respawned(self):
-        def all_childs_active():
+    def wait_for_all_children_respawned(self):
+        def all_children_active():
             return all(pm.active for pm in self._child_processes)
 
-        self._wait_for_condition(all_childs_active)
+        self._wait_for_condition(all_children_active)
 
     def _wait_for_condition(self, exit_condition, extra_time=5):
         # we need to allow extra_time for the check process to happen
@@ -92,24 +91,13 @@ class BaseTestProcessMonitor(base.BaseTestCase):
                 eventlet.sleep(0.01)
 
     def cleanup_spawned_children(self):
-        if self._ext_processes:
-            self._ext_processes.disable_all()
+        for pm in self._child_processes:
+            pm.disable()
 
 
 class TestProcessMonitor(BaseTestProcessMonitor):
 
     def test_respawn_handler(self):
-        self.spawn_child_processes_and_kill_last()
-        self.wait_for_all_childs_respawned()
-
-    def test_new_process_monitor_finds_old_process(self):
-        self.spawn_n_children(1)
-        spawn_process = self._child_processes[-1]
-        uuid = spawn_process.uuid
-
-        another_pm = self.build_process_monitor()
-        self.assertTrue(another_pm.is_active(uuid))
-        self.assertEqual(another_pm.get_pid(uuid), spawn_process.pid)
-
-    def test_tries_to_get_pid_for_unknown_uuid(self):
-        self.assertIsNone(self._ext_processes.get_pid('bad-uuid'))
+        self.spawn_n_children(2)
+        self._kill_last_child()
+        self.wait_for_all_children_respawned()

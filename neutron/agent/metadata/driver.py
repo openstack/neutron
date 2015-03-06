@@ -27,6 +27,7 @@ LOG = logging.getLogger(__name__)
 
 # Access with redirection to metadata proxy iptables mark mask
 METADATA_ACCESS_MARK_MASK = '0xffffffff'
+METADATA_SERVICE_NAME = 'metadata-proxy'
 
 
 class MetadataDriver(advanced_service.AdvancedService):
@@ -83,7 +84,8 @@ class MetadataDriver(advanced_service.AdvancedService):
 
         self.destroy_monitored_metadata_proxy(self.l3_agent.process_monitor,
                                               router.router['id'],
-                                              router.ns_name)
+                                              router.ns_name,
+                                              self.l3_agent.conf)
 
     @classmethod
     def metadata_filter_rules(cls, port, mark):
@@ -143,20 +145,25 @@ class MetadataDriver(advanced_service.AdvancedService):
     @classmethod
     def spawn_monitored_metadata_proxy(cls, monitor, ns_name, port, conf,
                                        network_id=None, router_id=None):
+        uuid = network_id or router_id
         callback = cls._get_metadata_proxy_callback(
             port, conf, network_id=network_id, router_id=router_id)
-        monitor.enable(network_id or router_id, callback, ns_name)
+        pm = cls._get_metadata_proxy_process_manager(uuid, ns_name, conf,
+                                                     callback=callback)
+        pm.enable()
+        monitor.register(uuid, METADATA_SERVICE_NAME, pm)
 
     @classmethod
-    def destroy_monitored_metadata_proxy(cls, monitor, uuid, ns_name):
-        monitor.disable(uuid, ns_name)
+    def destroy_monitored_metadata_proxy(cls, monitor, uuid, ns_name, conf):
+        monitor.unregister(uuid, METADATA_SERVICE_NAME)
+        pm = cls._get_metadata_proxy_process_manager(uuid, ns_name, conf)
+        pm.disable()
 
-    # TODO(mangelajo): remove the unmonitored _get_*_process_manager,
-    #                  _spawn_* and _destroy* when keepalived stops
-    #                  spawning and killing proxies on its own.
     @classmethod
-    def _get_metadata_proxy_process_manager(cls, router_id, ns_name, conf):
+    def _get_metadata_proxy_process_manager(cls, router_id, ns_name, conf,
+                                            callback=None):
         return external_process.ProcessManager(
-            conf,
-            router_id,
-            ns_name)
+            conf=conf,
+            uuid=router_id,
+            namespace=ns_name,
+            default_cmd_callback=callback)

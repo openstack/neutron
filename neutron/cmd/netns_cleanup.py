@@ -23,7 +23,6 @@ from neutron.agent.common import config as agent_config
 from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.linux import dhcp
-from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
@@ -70,12 +69,6 @@ def setup_conf():
     return conf
 
 
-def _get_dhcp_process_monitor(config):
-    return external_process.ProcessMonitor(
-        config=config,
-        resource_type='dhcp')
-
-
 def kill_dhcp(conf, namespace):
     """Disable DHCP for a network if DHCP is still active."""
     network_id = namespace.replace(dhcp.NS_PREFIX, '')
@@ -83,7 +76,6 @@ def kill_dhcp(conf, namespace):
     dhcp_driver = importutils.import_object(
         conf.dhcp_driver,
         conf=conf,
-        process_monitor=_get_dhcp_process_monitor(conf),
         network=dhcp.NetModel(conf.use_namespaces, {'id': network_id}),
         plugin=FakeDhcpPlugin())
 
