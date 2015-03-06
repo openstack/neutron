@@ -35,7 +35,6 @@ disable=
  expression-not-assigned,
  fixme,
  global-statement,
- global-variable-not-assigned,
  no-init,
  non-parent-init-called,
  not-callable,
@@ -54,7 +53,6 @@ disable=
  bad-continuation,
  invalid-name,
  missing-docstring,
- old-style-class,
  superfluous-parens,
 # "R" Refactor recommendations
  abstract-class-little-used,
