@@ -68,6 +68,9 @@ IPv6 = 'IPv6'
 IPv4_BITS = 32
 IPv6_BITS = 128
 
+IPv4_ANY = '0.0.0.0/0'
+IPv6_ANY = '::/0'
+
 DHCP_RESPONSE_PORT = 68
 
 MIN_VLAN_TAG = 1

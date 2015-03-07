@@ -20,6 +20,7 @@ from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
 from neutron.openstack.common import log as logging
 
@@ -178,7 +179,7 @@ class HaRouter(router.RouterInfo):
         instance = self._get_keepalived_instance()
 
         # Filter out all of the old routes while keeping only the default route
-        default_gw = ('::/0', '0.0.0.0/0')
+        default_gw = (n_consts.IPv6_ANY, n_consts.IPv4_ANY)
         instance.virtual_routes = [route for route in instance.virtual_routes
                                    if route.destination in default_gw]
         for route in new_routes:
@@ -192,8 +193,9 @@ class HaRouter(router.RouterInfo):
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if gw_ip:
             # TODO(Carl) This is repeated everywhere.  A method would be nice.
-            default_gw = ('0.0.0.0/0' if netaddr.IPAddress(gw_ip).version == 4
-                          else '::/0')
+            default_gw = (n_consts.IPv4_ANY if
+                          netaddr.IPAddress(gw_ip).version == 4 else
+                          n_consts.IPv6_ANY)
             instance = self._get_keepalived_instance()
             instance.virtual_routes = (
                 [route for route in instance.virtual_routes

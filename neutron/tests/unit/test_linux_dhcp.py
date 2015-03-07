@@ -196,7 +196,7 @@ class FakeV4HostRoute(object):
 
 
 class FakeV4HostRouteGateway(object):
-    destination = '0.0.0.0/0'
+    destination = constants.IPv4_ANY
     nexthop = '10.0.0.1'
 
 

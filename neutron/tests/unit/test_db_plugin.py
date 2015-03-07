@@ -2603,7 +2603,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_bad_V4_cidr_prefix_len(self):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
-                    'cidr': '0.0.0.0/0',
+                    'cidr': constants.IPv4_ANY,
                     'ip_version': '4',
                     'tenant_id': network['network']['tenant_id'],
                     'gateway_ip': '0.0.0.1'}}

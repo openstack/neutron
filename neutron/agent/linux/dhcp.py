@@ -592,7 +592,7 @@ class Dnsmasq(DhcpLocalProcess):
             gateway = subnet.gateway_ip
             host_routes = []
             for hr in subnet.host_routes:
-                if hr.destination == "0.0.0.0/0":
+                if hr.destination == constants.IPv4_ANY:
                     if not gateway:
                         gateway = hr.nexthop
                 else:
@@ -616,7 +616,8 @@ class Dnsmasq(DhcpLocalProcess):
 
                 if host_routes:
                     if gateway:
-                        host_routes.append("%s,%s" % ("0.0.0.0/0", gateway))
+                        host_routes.append("%s,%s" % (constants.IPv4_ANY,
+                                                      gateway))
                     options.append(
                         self._format_option(subnet.ip_version, i,
                                             'classless-static-route',

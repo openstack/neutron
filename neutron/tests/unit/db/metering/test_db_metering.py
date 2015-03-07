@@ -18,6 +18,7 @@ import webob.exc
 
 from neutron.api import extensions
 from neutron.common import config
+from neutron.common import constants as n_consts
 from neutron import context
 import neutron.extensions
 from neutron.extensions import metering
@@ -253,7 +254,7 @@ class TestMetering(MeteringPluginDbTestCase):
                                          excluded),
                 self.metering_label_rule(metering_label_id,
                                          direction,
-                                         '0.0.0.0/0',
+                                         n_consts.IPv4_ANY,
                                          False)) as metering_label_rule:
 
                 self._test_list_resources('metering-label-rule',

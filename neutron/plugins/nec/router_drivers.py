@@ -18,6 +18,7 @@ import httplib
 from oslo_utils import excutils
 import six
 
+from neutron.common import constants
 from neutron.common import log as call_log
 from neutron.common import utils
 from neutron.i18n import _LE, _LW
@@ -95,7 +96,7 @@ class RouterOpenFlowDriver(RouterDriverBase):
 
     def _process_gw_port(self, gw_info, routes):
         if gw_info and gw_info['gateway_ip']:
-            routes.append({'destination': '0.0.0.0/0',
+            routes.append({'destination': constants.IPv4_ANY,
                            'nexthop': gw_info['gateway_ip']})
 
     @call_log.log
