@@ -96,13 +96,14 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                          'vif_type': port[portbindings.VIF_TYPE]})
             return {'device': device}
 
-        new_status = (q_const.PORT_STATUS_BUILD if port['admin_state_up']
-                      else q_const.PORT_STATUS_DOWN)
-        if port['status'] != new_status:
-            plugin.update_port_status(rpc_context,
-                                      port_id,
-                                      new_status,
-                                      host)
+        if (not host or host == port_context.host):
+            new_status = (q_const.PORT_STATUS_BUILD if port['admin_state_up']
+                          else q_const.PORT_STATUS_DOWN)
+            if port['status'] != new_status:
+                plugin.update_port_status(rpc_context,
+                                          port_id,
+                                          new_status,
+                                          host)
 
         entry = {'device': device,
                  'network_id': port['network_id'],
