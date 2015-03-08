@@ -622,6 +622,7 @@ class TestBase(base.BaseTestCase):
         self.makedirs = mock.patch('os.makedirs').start()
         self.isdir = mock.patch('os.path.isdir').start()
         self.isdir.return_value = False
+        self.rmtree = mock.patch('shutil.rmtree').start()
 
         self.external_process = mock.patch(
             'neutron.agent.linux.external_process.ProcessManager').start()
@@ -774,6 +775,18 @@ class TestDhcpLocalProcess(TestBase):
             self._assert_disabled(lp)
 
         ip.return_value.netns.delete.assert_called_with('qdhcp-ns')
+
+    def test_disable_config_dir_removed_after_destroy(self):
+        parent = mock.MagicMock()
+        parent.attach_mock(self.rmtree, 'rmtree')
+        parent.attach_mock(self.mock_mgr, 'DeviceManager')
+
+        lp = LocalChild(self.conf, FakeDualNetwork())
+        lp.disable(retain_port=False)
+
+        expected = [mock.call.DeviceManager().destroy(mock.ANY, mock.ANY),
+                    mock.call.rmtree(mock.ANY, ignore_errors=True)]
+        parent.assert_has_calls(expected)
 
     def test_get_interface_name(self):
         with mock.patch('__builtin__.open') as mock_open:
@@ -1352,13 +1365,10 @@ class TestDnsmasq(TestBase):
         net = FakeV4Network()
         path = '/opt/data/neutron/dhcp'
         self.conf.dhcp_confs = path
-
-        with mock.patch('shutil.rmtree') as rmtree:
-            lp = LocalChild(self.conf, net)
-            lp._remove_config_files()
-
-            rmtree.assert_called_once_with(os.path.join(path, net.id),
-                                           ignore_errors=True)
+        lp = LocalChild(self.conf, net)
+        lp._remove_config_files()
+        self.rmtree.assert_called_once_with(os.path.join(path, net.id),
+                                            ignore_errors=True)
 
     def test_existing_dhcp_networks(self):
         path = '/opt/data/neutron/dhcp'

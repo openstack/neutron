@@ -219,10 +219,9 @@ class DhcpLocalProcess(DhcpBase):
         """Disable DHCP for this network by killing the local process."""
         self.process_monitor.unregister(self.network.id, DNSMASQ_SERVICE_NAME)
         self._get_process_manager().disable()
-
-        self._remove_config_files()
         if not retain_port:
             self._destroy_namespace_and_port()
+        self._remove_config_files()
 
     def _destroy_namespace_and_port(self):
         try:
