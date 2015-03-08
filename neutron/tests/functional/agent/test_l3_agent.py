@@ -29,6 +29,7 @@ from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import dvr_snat_ns
+from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import dhcp
@@ -460,6 +461,62 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertIn('%s/24 dev %s' %
                       (new_external_device_ip, external_device_name),
                       new_config)
+
+    def test_periodic_sync_routers_task(self):
+        routers_to_keep = []
+        routers_to_delete = []
+        ns_names_to_retrieve = set()
+        for i in range(2):
+            routers_to_keep.append(self.generate_router_info(False))
+            self.manage_router(self.agent, routers_to_keep[i])
+            ns_names_to_retrieve.add(namespaces.NS_PREFIX +
+                                     routers_to_keep[i]['id'])
+        for i in range(2):
+            routers_to_delete.append(self.generate_router_info(False))
+            self.manage_router(self.agent, routers_to_delete[i])
+            ns_names_to_retrieve.add(namespaces.NS_PREFIX +
+                                     routers_to_delete[i]['id'])
+
+        # Mock the plugin RPC API to Simulate a situation where the agent
+        # was handling the 4 routers created above, it went down and after
+        # starting up again, two of the routers were deleted via the API
+        mocked_get_routers = (
+            neutron_l3_agent.L3PluginApi.return_value.get_routers)
+        mocked_get_routers.return_value = routers_to_keep
+
+        # Synchonize the agent with the plug-in
+        with mock.patch.object(namespace_manager.NamespaceManager, 'list_all',
+                               return_value=ns_names_to_retrieve):
+            self.agent.periodic_sync_routers_task(self.agent.context)
+
+        # Mock the plugin RPC API so a known external network id is returned
+        # when the router updates are processed by the agent
+        external_network_id = _uuid()
+        mocked_get_external_network_id = (
+            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
+        mocked_get_external_network_id.return_value = external_network_id
+
+        # Plug external_gateway_info in the routers that are not going to be
+        # deleted by the agent when it processes the updates. Otherwise,
+        # _process_router_if_compatible in the agent fails
+        for i in range(2):
+            routers_to_keep[i]['external_gateway_info'] = {'network_id':
+                                                           external_network_id}
+
+        # Have the agent process the update from the plug-in and verify
+        # expected behavior
+        for _ in routers_to_keep + routers_to_delete:
+            self.agent._process_router_update()
+
+        for i in range(2):
+            self.assertIn(routers_to_keep[i]['id'], self.agent.router_info)
+            self.assertTrue(self._namespace_exists(namespaces.NS_PREFIX +
+                                                   routers_to_keep[i]['id']))
+        for i in range(2):
+            self.assertNotIn(routers_to_delete[i]['id'],
+                             self.agent.router_info)
+            self.assertFalse(self._namespace_exists(
+                namespaces.NS_PREFIX + routers_to_delete[i]['id']))
 
     def _router_lifecycle(self, enable_ha, ip_version=4, dual_stack=False):
         router_info = self.generate_router_info(enable_ha, ip_version,
