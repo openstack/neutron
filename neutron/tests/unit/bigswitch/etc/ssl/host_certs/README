@@ -1,2 +1,0 @@
-host_certs directory for SSL unit tests
-No files will be created here, but it should exist for the tests
