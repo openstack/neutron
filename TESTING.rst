@@ -138,6 +138,12 @@ to install and configure all of Neutron's package dependencies.  It is
 not necessary to provide this option if devstack has already been used
 to deploy Neutron to the target host.
 
+To run the api tests against a live Neutron daemon, deploy tempest and
+neutron with devstack and then run the following commands: ::
+
+    export TEMPEST_CONFIG_DIR=/opt/stack/tempest/etc
+    tox -e api
+
 For more information on the standard Tox-based test infrastructure used by
 OpenStack and how to do some common test/debugging procedures with Testr,
 see this wiki page:
