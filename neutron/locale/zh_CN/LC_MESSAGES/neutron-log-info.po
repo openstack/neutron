@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-07 06:14+0000\n"
-"PO-Revision-Date: 2015-03-07 02:17+0000\n"
+"POT-Creation-Date: 2015-03-08 06:07+0000\n"
+"PO-Revision-Date: 2015-03-07 08:47+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
@@ -429,7 +429,7 @@ msgstr "捕获到 %s，正在停止子代"
 
 #: neutron/openstack/common/service.py:399
 msgid "Wait called after thread killed. Cleaning up."
-msgstr ""
+msgstr "线程结束，正在清理"
 
 #: neutron/openstack/common/service.py:415
 #, python-format
