@@ -221,6 +221,12 @@ class TestDhcpAgent(base.BaseTestCase):
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
 
+    def test_init_host(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(dhcp, 'sync_state') as sync_state:
+            dhcp.init_host()
+            sync_state.assert_called_once_with()
+
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
         # sync_state is needed for this test
