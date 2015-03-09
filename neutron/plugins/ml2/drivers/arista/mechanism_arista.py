@@ -155,8 +155,6 @@ class AristaDriver(driver_api.MechanismDriver):
         with self.eos_sync_lock:
             if db_lib.is_network_provisioned(tenant_id, network_id):
                 db_lib.forget_network(tenant_id, network_id)
-            # if necessary, delete tenant as well.
-            self.delete_tenant(tenant_id)
 
     def delete_network_postcommit(self, context):
         """Send network delete request to Arista HW."""
@@ -170,6 +168,8 @@ class AristaDriver(driver_api.MechanismDriver):
             # alive.
             try:
                 self.rpc.delete_network(tenant_id, network_id)
+                # if necessary, delete tenant as well.
+                self.delete_tenant(tenant_id)
             except arista_exc.AristaRpcError:
                 LOG.info(EOS_UNREACHABLE_MSG)
                 raise ml2_exc.MechanismDriverError()
@@ -324,8 +324,6 @@ class AristaDriver(driver_api.MechanismDriver):
                                         network_id, tenant_id):
                 db_lib.forget_vm(device_id, host_id, port_id,
                              network_id, tenant_id)
-            # if necessary, delete tenant as well.
-            self.delete_tenant(tenant_id)
 
     def delete_port_postcommit(self, context):
         """unPlug a physical host from a network.
@@ -356,6 +354,8 @@ class AristaDriver(driver_api.MechanismDriver):
                                                       port_id,
                                                       network_id,
                                                       tenant_id)
+            # if necessary, delete tenant as well.
+            self.delete_tenant(tenant_id)
         except arista_exc.AristaRpcError:
             LOG.info(EOS_UNREACHABLE_MSG)
             raise ml2_exc.MechanismDriverError()
@@ -370,6 +370,11 @@ class AristaDriver(driver_api.MechanismDriver):
                               db_lib.num_vms_provisioned(tenant_id))
         if not objects_for_tenant:
             db_lib.forget_tenant(tenant_id)
+            try:
+                self.rpc.delete_tenant(tenant_id)
+            except arista_exc.AristaRpcError:
+                LOG.info(EOS_UNREACHABLE_MSG)
+                raise ml2_exc.MechanismDriverError()
 
     def _host_name(self, hostname):
         fqdns_used = cfg.CONF.ml2_arista['use_fqdn']
