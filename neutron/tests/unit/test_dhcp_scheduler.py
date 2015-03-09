@@ -212,7 +212,8 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             notifier = mock.MagicMock()
             self.agent_notifiers[constants.AGENT_TYPE_DHCP] = notifier
             self.remove_networks_from_down_agents()
-            rn.assert_called_with(mock.ANY, agents[0].id, self.network_id)
+            rn.assert_called_with(mock.ANY, agents[0].id, self.network_id,
+                                  notify=False)
             sch.assert_called_with(mock.ANY, {'id': self.network_id})
             notifier.network_added_to_agent.assert_called_with(
                 mock.ANY, self.network_id, agents[1].host)
@@ -232,7 +233,8 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             notifier = mock.MagicMock()
             self.agent_notifiers[constants.AGENT_TYPE_DHCP] = notifier
             self.remove_networks_from_down_agents()
-            rn.assert_called_with(mock.ANY, agents[0].id, self.network_id)
+            rn.assert_called_with(mock.ANY, agents[0].id, self.network_id,
+                                  notify=False)
             sch.assert_called_with(mock.ANY, {'id': self.network_id})
             self.assertFalse(notifier.network_added_to_agent.called)
 
