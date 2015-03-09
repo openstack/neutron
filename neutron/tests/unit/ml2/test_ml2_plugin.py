@@ -460,6 +460,31 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertIsNone(l3plugin.disassociate_floatingips(ctx, port_id))
 
 
+class TestMl2PluginOnly(Ml2PluginV2TestCase):
+    """For testing methods that don't call drivers"""
+
+    def _test_check_mac_update_allowed(self, vif_type, expect_change=True):
+        plugin = manager.NeutronManager.get_plugin()
+        port = {'mac_address': "fake_mac", 'id': "fake_id"}
+        if expect_change:
+            new_attrs = {"mac_address": "dummy_mac"}
+        else:
+            new_attrs = {"mac_address": port['mac_address']}
+        binding = mock.Mock()
+        binding.vif_type = vif_type
+        mac_changed = plugin._check_mac_update_allowed(port, new_attrs,
+                                                       binding)
+        self.assertEqual(expect_change, mac_changed)
+
+    def test_check_mac_update_allowed_if_no_mac_change(self):
+        self._test_check_mac_update_allowed(portbindings.VIF_TYPE_UNBOUND,
+                                            expect_change=False)
+
+    def test_check_mac_update_allowed_unless_bound(self):
+        with testtools.ExpectedException(exc.PortBound):
+            self._test_check_mac_update_allowed(portbindings.VIF_TYPE_OVS)
+
+
 class TestMl2DvrPortsV2(TestMl2PortsV2):
     def setUp(self):
         super(TestMl2DvrPortsV2, self).setUp()

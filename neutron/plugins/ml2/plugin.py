@@ -1002,7 +1002,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if not port_db:
                 raise exc.PortNotFound(port_id=id)
             mac_address_updated = self._check_mac_update_allowed(
-                port_db, port, binding)
+                port_db, attrs, binding)
             need_port_update_notify |= mac_address_updated
             original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
