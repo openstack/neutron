@@ -383,6 +383,9 @@ The following chart captures the following aspects:
   * [A] External repo available, no code decomposition
   * [B] External repo available, partial code decomposition
   * [C] External repo available, code decomposition is complete
+  * [D] Not deemed required. Driver is already bare-bone and decomposition
+        effort is not considered justified. Assessment may change in the
+        future
 
   Absense of an entry for an existing plugin or driver means no active effort
   has been observed or potentially not required.
@@ -393,6 +396,8 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | Name                          |    Plugins/Drivers    | Launchpad |       PyPI       |  State  | Completed in |
 +===============================+=======================+===========+==================+=========+==============+
+| freescale-nscs_               |         ml2,fw        |    no     |       no         |   [D]   |              |
++-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-arista_            |          ml2          |    no     |       yes        |   [B]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-brocade_           |                       |           |                  |         |              |
