@@ -207,13 +207,15 @@ class AgentMixin(object):
     def _add_default_gw_virtual_route(self, ri, ex_gw_port, interface_name):
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if gw_ip:
+            default_gw = ('0.0.0.0/0' if netaddr.IPAddress(gw_ip).version == 4
+                          else '::/0')
             instance = ri.keepalived_manager.config.get_instance(ri.ha_vr_id)
             instance.virtual_routes = (
                 [route for route in instance.virtual_routes
-                 if route.destination != '0.0.0.0/0'])
+                 if route.destination != default_gw])
             instance.virtual_routes.append(
                 keepalived.KeepalivedVirtualRoute(
-                    '0.0.0.0/0', gw_ip, interface_name))
+                    default_gw, gw_ip, interface_name))
 
     def _ha_external_gateway_added(self, ri, ex_gw_port, interface_name):
         self._add_vip(ri, ex_gw_port['ip_cidr'], interface_name)
@@ -263,8 +265,9 @@ class AgentMixin(object):
         instance = ri.keepalived_manager.config.get_instance(ri.ha_vr_id)
 
         # Filter out all of the old routes while keeping only the default route
+        default_gw = ('::/0', '0.0.0.0/0')
         instance.virtual_routes = [route for route in instance.virtual_routes
-                                   if route.destination == '0.0.0.0/0']
+                                   if route.destination in default_gw]
         for route in new_routes:
             instance.virtual_routes.append(keepalived.KeepalivedVirtualRoute(
                 route['destination'],
