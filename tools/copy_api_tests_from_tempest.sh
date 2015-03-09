@@ -32,6 +32,8 @@ function copy_files {
         'tempest/common/utils'
         'tempest/services'
         'tempest/services/identity'
+        'tempest/services/identity/v2'
+        'tempest/services/identity/v2/json'
         'tempest/services/identity/v3'
         'tempest/services/identity/v3/json'
         'tempest/services/network'
