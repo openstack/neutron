@@ -2023,21 +2023,41 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     break
         self.assertTrue(found)
 
+    def _test_router_delete_subnet_inuse_returns_409(self, router, subnet):
+        r, s = router, subnet
+        self._router_interface_action('add',
+                                      r['router']['id'],
+                                      s['subnet']['id'],
+                                      None)
+        # subnet cannot be deleted as it's attached to a router
+        self._delete('subnets', s['subnet']['id'],
+                     expected_code=exc.HTTPConflict.code)
+        # remove interface so test can exit without errors
+        self._router_interface_action('remove',
+                                      r['router']['id'],
+                                      s['subnet']['id'],
+                                      None)
+
+    def _ipv6_subnet(self, mode):
+        return self.subnet(cidr='fd00::1/64', gateway_ip='fd00::1',
+                           ip_version=6,
+                           ipv6_ra_mode=mode,
+                           ipv6_address_mode=mode)
+
     def test_router_delete_subnet_inuse_returns_409(self):
         with self.router() as r:
             with self.subnet() as s:
-                self._router_interface_action('add',
-                                              r['router']['id'],
-                                              s['subnet']['id'],
-                                              None)
-                # subnet cannot be delete as it's attached to a router
-                self._delete('subnets', s['subnet']['id'],
-                             expected_code=exc.HTTPConflict.code)
-                # remove interface so test can exit without errors
-                self._router_interface_action('remove',
-                                              r['router']['id'],
-                                              s['subnet']['id'],
-                                              None)
+                self._test_router_delete_subnet_inuse_returns_409(r, s)
+
+    def test_router_delete_ipv6_slaac_subnet_inuse_returns_409(self):
+        with self.router() as r:
+            with self._ipv6_subnet(l3_constants.IPV6_SLAAC) as s:
+                self._test_router_delete_subnet_inuse_returns_409(r, s)
+
+    def test_router_delete_dhcpv6_stateless_subnet_inuse_returns_409(self):
+        with self.router() as r:
+            with self._ipv6_subnet(l3_constants.DHCPV6_STATELESS) as s:
+                self._test_router_delete_subnet_inuse_returns_409(r, s)
 
     def test_delete_ext_net_with_disassociated_floating_ips(self):
         with self.network() as net:
