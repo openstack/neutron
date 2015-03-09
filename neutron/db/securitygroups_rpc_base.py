@@ -194,7 +194,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                 if remote_gid not in remote_security_group_info:
                     remote_security_group_info[remote_gid] = {}
                 if ethertype not in remote_security_group_info[remote_gid]:
-                    remote_security_group_info[remote_gid][ethertype] = []
+                    # this set will be serialized into a list by rpc code
+                    remote_security_group_info[remote_gid][ethertype] = set()
 
             direction = rule_in_db['direction']
             rule_dict = {
@@ -228,9 +229,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         for sg_id, member_ips in ips.items():
             for ip in member_ips:
                 ethertype = 'IPv%d' % netaddr.IPNetwork(ip).version
-                if (ethertype in sg_info['sg_member_ips'][sg_id]
-                    and ip not in sg_info['sg_member_ips'][sg_id][ethertype]):
-                    sg_info['sg_member_ips'][sg_id][ethertype].append(ip)
+                if ethertype in sg_info['sg_member_ips'][sg_id]:
+                    sg_info['sg_member_ips'][sg_id][ethertype].add(ip)
         return sg_info
 
     def _select_rules_for_ports(self, context, ports):

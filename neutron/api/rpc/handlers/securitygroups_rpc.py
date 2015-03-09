@@ -71,9 +71,11 @@ class SecurityGroupServerRpcCallback(object):
         :returns:
         sg_info{
           'security_groups': {sg_id: [rule1, rule2]}
-          'sg_member_ips': {sg_id: {'IPv4': [], 'IPv6': []}}
+          'sg_member_ips': {sg_id: {'IPv4': set(), 'IPv6': set()}}
           'devices': {device_id: {device_info}}
         }
+
+        Note that sets are serialized into lists by rpc code.
         """
         devices_info = kwargs.get('devices')
         ports = self._get_devices_info(devices_info)
