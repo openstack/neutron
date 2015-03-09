@@ -1,0 +1,6 @@
+---
+prelude: >
+    ML2: ports can now recover from binding failed state.
+features:
+  - Ports that failed to bind when an L2 agent was offline can now recover after
+    the agent is back online.
