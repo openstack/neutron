@@ -1183,6 +1183,21 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertEqual(len(expected_calls),
                              len(do_action_flows_fn.mock_calls))
 
+    def test_del_fdb_flow_idempotency(self):
+        lvm = mock.Mock()
+        lvm.network_type = 'gre'
+        lvm.vlan = 'vlan1'
+        lvm.segmentation_id = 'seg1'
+        lvm.tun_ofports = set(['1', '2'])
+        with contextlib.nested(
+            mock.patch.object(self.agent.tun_br, 'mod_flow'),
+            mock.patch.object(self.agent.tun_br, 'delete_flows')
+        ) as (mod_flow_fn, delete_flows_fn):
+            self.agent.del_fdb_flow(self.agent.tun_br, n_const.FLOODING_ENTRY,
+                                    '1.1.1.1', lvm, '3')
+            self.assertFalse(mod_flow_fn.called)
+            self.assertFalse(delete_flows_fn.called)
+
     def test_recl_lv_port_to_preserve(self):
         self._prepare_l2_pop_ofports()
         self.agent.l2_pop = True
