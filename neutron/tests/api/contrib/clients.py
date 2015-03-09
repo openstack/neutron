@@ -97,9 +97,12 @@ class Manager(manager.Manager):
         self.region_client = RegionClientJSON(self.auth_provider, **params)
         self.credentials_client = CredentialsClientJSON(self.auth_provider,
                                                         **params)
-        self.token_client = TokenClientJSON()
+        # Token clients do not use the catalog. They only need default_params.
+        self.token_client = TokenClientJSON(CONF.identity.uri,
+                                            **self.default_params)
         if CONF.identity_feature_enabled.api_v3:
-            self.token_v3_client = V3TokenClientJSON()
+            self.token_v3_client = V3TokenClientJSON(CONF.identity.uri_v3,
+                                                     **self.default_params)
 
 
 class AdminManager(Manager):
