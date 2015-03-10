@@ -412,6 +412,8 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-mlnx_              |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
+| networking-nec_               |         core          |    yes    |       no         |   [C]   |     Kilo     |
++-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | nuage-openstack-neutron_      |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-odl_               |      ml2,l3,lb,fw     |    yes    |       no         |   [C]   |     Kilo     |
@@ -467,6 +469,14 @@ MidoNet
 *  Pypi: https://pypi.python.org/pypi/networking-midonet
 
 .. _networking-mlnx:
+
+.. _networking-nec:
+
+NEC
+---
+
+* Git: https://github.com/stackforge/networking-nec
+* Launchpad: https://launchpad.net/networking-nec
 
 .. _nuage-openstack-neutron:
 

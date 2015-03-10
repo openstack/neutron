@@ -1,13 +1,11 @@
-Quantum NEC OpenFlow Plugin
+Neutron NEC OpenFlow Plugin
+===========================
 
+Neutron plugins for NEC OpenFlow networking products and
+Trema Sliceable Switch (reference implementation).
 
-# -- What's this?
+* Main Page: https://wiki.openstack.org/wiki/Neutron/NEC_OpenFlow_Plugin
 
-https://wiki.openstack.org/wiki/Neutron/NEC_OpenFlow_Plugin
-
-
-# -- Installation
-
-Use QuickStart Script for this plugin.  This provides you auto installation and
-configuration of Nova, Neutron and Trema.
-https://github.com/nec-openstack/quantum-openflow-plugin/tree/folsom
+* Repository:
+  * http://git.openstack.org/cgit/stackforge/networking-nec/
+  * https://github.com/stackforge/networking-nec
