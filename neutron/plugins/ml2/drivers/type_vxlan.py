@@ -120,9 +120,10 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
             chunked_vnis = (vnis_to_remove[i:i + bulk_size] for i in
                             range(0, len(vnis_to_remove), bulk_size))
             for vni_list in chunked_vnis:
-                session.query(VxlanAllocation).filter(
-                    VxlanAllocation.vxlan_vni.in_(vni_list)).delete(
-                        synchronize_session=False)
+                if vni_list:
+                    session.query(VxlanAllocation).filter(
+                        VxlanAllocation.vxlan_vni.in_(vni_list)).delete(
+                            synchronize_session=False)
             # collect vnis that need to be added
             vnis = list(vxlan_vnis - existing_vnis)
             chunked_vnis = (vnis[i:i + bulk_size] for i in

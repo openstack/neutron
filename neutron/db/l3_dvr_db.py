@@ -365,6 +365,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _build_routers_list(self, context, routers, gw_ports):
         # Perform a single query up front for all routers
+        if not routers:
+            return []
         router_ids = [r['id'] for r in routers]
         snat_binding = l3_dvrsched_db.CentralizedSnatL3AgentBinding
         query = (context.session.query(snat_binding).

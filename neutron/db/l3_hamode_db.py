@@ -435,6 +435,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                 self._delete_ha_interfaces(context, router_db.id)
 
     def get_ha_router_port_bindings(self, context, router_ids, host=None):
+        if not router_ids:
+            return []
         query = context.session.query(L3HARouterAgentPortBinding)
 
         if host:

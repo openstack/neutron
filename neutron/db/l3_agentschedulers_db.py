@@ -360,6 +360,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             for key, value in filters.iteritems():
                 column = getattr(agents_db.Agent, key, None)
                 if column:
+                    if not value:
+                        return []
                     query = query.filter(column.in_(value))
 
             agent_modes = filters.get('agent_modes', [])
@@ -481,6 +483,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def get_l3_agent_with_min_routers(self, context, agent_ids):
         """Return l3 agent with the least number of routers."""
+        if not agent_ids:
+            return None
         query = context.session.query(
             agents_db.Agent,
             func.count(
