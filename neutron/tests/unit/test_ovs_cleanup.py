@@ -26,16 +26,6 @@ from neutron.tests import base
 
 class TestOVSCleanup(base.BaseTestCase):
 
-    def setup_config(self):
-        # don't use default config
-        pass
-
-    def test_setup_conf(self):
-        conf = util.setup_conf()
-        self.assertEqual(conf.external_network_bridge, 'br-ex')
-        self.assertEqual(conf.ovs_integration_bridge, 'br-int')
-        self.assertFalse(conf.ovs_all_ports)
-
     def test_main(self):
         bridges = ['br-int', 'br-ex']
         ports = ['p1', 'p2', 'p3']

@@ -22,10 +22,6 @@ from neutron.tests import base
 
 class ConfigurationTest(base.BaseTestCase):
 
-    def setup_config(self):
-        # don't use default config
-        pass
-
     def test_load_paste_app_not_found(self):
         self.config(api_paste_config='no_such_file.conf')
         with mock.patch.object(cfg.CONF, 'find_file', return_value=None) as ff:
