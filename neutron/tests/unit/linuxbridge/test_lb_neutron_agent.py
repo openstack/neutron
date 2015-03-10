@@ -47,8 +47,10 @@ class TestLinuxBridge(base.BaseTestCase):
         super(TestLinuxBridge, self).setUp()
         interface_mappings = {'physnet1': 'eth1'}
 
-        self.linux_bridge = linuxbridge_neutron_agent.LinuxBridgeManager(
-            interface_mappings)
+        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
+                               'get_interface_by_ip', return_value=None):
+            self.linux_bridge = linuxbridge_neutron_agent.LinuxBridgeManager(
+                interface_mappings)
 
     def test_ensure_physical_in_bridge_invalid(self):
         result = self.linux_bridge.ensure_physical_in_bridge('network_id',
@@ -104,8 +106,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                                     'get_interface_mac')
         self.get_mac = self.get_mac_p.start()
         self.get_mac.return_value = '00:00:00:00:00:01'
-        self.agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC({},
-                                                                          0)
+        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
+                               'get_interface_by_ip', return_value=None):
+            self.agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC(
+                {}, 0)
 
     def test_treat_devices_removed_with_existed_device(self):
         agent = self.agent
@@ -339,8 +343,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         super(TestLinuxBridgeManager, self).setUp()
         self.interface_mappings = {'physnet1': 'eth1'}
 
-        self.lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
-            self.interface_mappings)
+        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
+                               'get_interface_by_ip', return_value=None):
+            self.lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
+                self.interface_mappings)
 
     def test_interface_exists_on_bridge(self):
         with mock.patch.object(os, 'listdir') as listdir_fn:
@@ -752,8 +758,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_delete_vxlan_bridge_no_int_mappings(self):
         interface_mappings = {}
-        lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
-            interface_mappings)
+        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
+                               'get_interface_by_ip', return_value=None):
+            lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
+                interface_mappings)
 
         with contextlib.nested(
             mock.patch.object(ip_lib, "device_exists"),
