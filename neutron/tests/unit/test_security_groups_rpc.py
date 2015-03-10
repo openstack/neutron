@@ -490,8 +490,8 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'remote_group_id': sg2_id}
                     ]},
                     'sg_member_ips': {sg2_id: {
-                        'IPv4': [u'10.0.0.3'],
-                        'IPv6': [],
+                        'IPv4': set([u'10.0.0.3']),
+                        'IPv6': set(),
                     }}
                 }
                 self.assertEqual(expected['security_groups'],
@@ -626,7 +626,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'remote_group_id': sg1_id}
                     ]},
                     'sg_member_ips': {sg1_id: {
-                        'IPv6': [],
+                        'IPv6': set(),
                     }}
                 }
                 self.assertEqual(expected['security_groups'],
