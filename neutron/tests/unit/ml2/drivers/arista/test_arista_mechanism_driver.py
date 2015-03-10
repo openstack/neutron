@@ -107,9 +107,6 @@ class AristaDriverTestCase(testlib_api.SqlTestCase):
         expected_calls = [
             mock.call.is_network_provisioned(tenant_id, network_id),
             mock.call.forget_network(tenant_id, network_id),
-            mock.call.num_nets_provisioned(tenant_id),
-            mock.call.num_vms_provisioned(tenant_id),
-            mock.call.forget_tenant(tenant_id),
         ]
 
         mechanism_arista.db_lib.assert_has_calls(expected_calls)
@@ -224,9 +221,6 @@ class AristaDriverTestCase(testlib_api.SqlTestCase):
                                         network_id, tenant_id),
             mock.call.forget_vm(vm_id, host_id, port_id,
                                 network_id, tenant_id),
-            mock.call.num_nets_provisioned(tenant_id),
-            mock.call.num_vms_provisioned(tenant_id),
-            mock.call.forget_tenant(tenant_id),
         ]
 
         mechanism_arista.db_lib.assert_has_calls(expected_calls)
