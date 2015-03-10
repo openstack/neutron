@@ -412,7 +412,7 @@ class Dnsmasq(DhcpLocalProcess):
         # If all subnets turn off dhcp, kill the process.
         if not self._enable_dhcp():
             self.disable()
-            LOG.debug('Killing dhcpmasq for network since all subnets have '
+            LOG.debug('Killing dnsmasq for network since all subnets have '
                       'turned off DHCP: %s', self.network.id)
             return
 
