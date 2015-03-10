@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
 from oslo_config import cfg
 from six import moves
 
 from neutron.agent.linux import external_process
+from neutron.agent.linux import utils
 from neutron.tests import base
 from neutron.tests.functional.agent.linux import simple_daemon
 
@@ -78,17 +78,16 @@ class BaseTestProcessMonitor(base.BaseTestCase):
         def all_children_active():
             return all(pm.active for pm in self._child_processes)
 
-        self._wait_for_condition(all_children_active)
-
-    def _wait_for_condition(self, exit_condition, extra_time=5):
         # we need to allow extra_time for the check process to happen
         # and properly execute action over the gone processes under
         # high load conditions
         max_wait_time = (
-            cfg.CONF.AGENT.check_child_processes_interval + extra_time)
-        with self.assert_max_execution_time(max_wait_time):
-            while not exit_condition():
-                eventlet.sleep(0.01)
+            cfg.CONF.AGENT.check_child_processes_interval + 5)
+        utils.wait_until_true(
+            all_children_active,
+            timeout=max_wait_time,
+            sleep=0.01,
+            exception=RuntimeError('Not all children respawned.'))
 
     def cleanup_spawned_children(self):
         for pm in self._child_processes:
