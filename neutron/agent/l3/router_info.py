@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import ra
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
@@ -61,6 +62,25 @@ class RouterInfo(object):
         self.driver = interface_driver
         # radvd is a neutron.agent.linux.ra.DaemonMonitor
         self.radvd = None
+
+    def initialize(self, process_monitor):
+        """Initialize the router on the system.
+
+        This differs from __init__ in that this method actually affects the
+        system creating namespaces, starting processes, etc.  The other merely
+        initializes the python object.  This separates in-memory object
+        initialization from methods that actually go do stuff to the system.
+
+        :param process_monitor: The agent's process monitor instance.
+        """
+        self.process_monitor = process_monitor
+        self.radvd = ra.DaemonMonitor(self.router_id,
+                                      self.ns_name,
+                                      process_monitor,
+                                      self.get_internal_device_name)
+
+        if self.router_namespace:
+            self.router_namespace.create()
 
     @property
     def router(self):
@@ -257,11 +277,11 @@ class RouterInfo(object):
             fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ERROR
         return fip_statuses
 
-    def create(self):
-        if self.router_namespace:
-            self.router_namespace.create()
-
-    def delete(self):
+    def delete(self, agent):
+        self.router['gw_port'] = None
+        self.router[l3_constants.INTERFACE_KEY] = []
+        self.router[l3_constants.FLOATINGIP_KEY] = []
+        self.process(agent)
         self.radvd.disable()
         if self.router_namespace:
             self.router_namespace.delete()
@@ -514,3 +534,23 @@ class RouterInfo(object):
                 fip_statuses = self.put_fips_in_error_state()
 
         agent.update_fip_statuses(self, existing_floating_ips, fip_statuses)
+
+    @common_utils.exception_logger()
+    def process(self, agent):
+        """Process updates to this router
+
+        This method is the point where the agent requests that updates be
+        applied to this router.
+
+        :param agent: Passes the agent in order to send RPC messages.
+        """
+        self._process_internal_ports()
+        self.process_external(agent)
+        # Process static routes for router
+        self.routes_updated()
+
+        # Update ex_gw_port and enable_snat on the router info cache
+        self.ex_gw_port = self.get_ex_gw_port()
+        self.snat_ports = self.router.get(
+            l3_constants.SNAT_ROUTER_INTF_KEY, [])
+        self.enable_snat = self.router.get('enable_snat')

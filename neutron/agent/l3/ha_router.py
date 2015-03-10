@@ -32,11 +32,12 @@ IP_MONITOR_PROCESS_SERVICE = 'ip_monitor'
 
 
 class HaRouter(router.RouterInfo):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, state_change_callback, *args, **kwargs):
         super(HaRouter, self).__init__(*args, **kwargs)
 
         self.ha_port = None
         self.keepalived_manager = None
+        self.state_change_callback = state_change_callback
 
     @property
     def is_ha(self):
@@ -73,7 +74,8 @@ class HaRouter(router.RouterInfo):
             LOG.error(_LE('Error while writing HA state for %s'),
                       self.router_id)
 
-    def initialize(self, process_monitor, state_change_callback):
+    def initialize(self, process_monitor):
+        super(HaRouter, self).initialize(process_monitor)
         ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
         if not ha_port:
             LOG.error(_LE('Unable to process HA router %s without HA port'),
@@ -84,13 +86,8 @@ class HaRouter(router.RouterInfo):
         self.ha_port = ha_port
         self._init_keepalived_manager(process_monitor)
         self.ha_network_added()
-        self.update_initial_state(state_change_callback)
+        self.update_initial_state(self.state_change_callback)
         self.spawn_state_change_monitor(process_monitor)
-
-    def terminate(self, process_monitor):
-        self.destroy_state_change_monitor(process_monitor)
-        self.ha_network_removed()
-        self.disable_keepalived()
 
     def _init_keepalived_manager(self, process_monitor):
         self.keepalived_manager = keepalived.KeepalivedManager(
@@ -338,3 +335,15 @@ class HaRouter(router.RouterInfo):
 
         super(HaRouter, self).external_gateway_removed(ex_gw_port,
                                                        interface_name)
+
+    def delete(self, agent):
+        self.destroy_state_change_monitor(self.process_monitor)
+        self.ha_network_removed()
+        self.disable_keepalived()
+        super(HaRouter, self).delete(agent)
+
+    def process(self, agent):
+        super(HaRouter, self).process(agent)
+
+        if self.ha_port:
+            self.enable_keepalived()
