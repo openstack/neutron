@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev420\n"
+"Project-Id-Version: neutron 2015.1.dev448\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-07 06:14+0000\n"
+"POT-Creation-Date: 2015-03-10 06:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -88,7 +88,6 @@ msgstr ""
 
 #: neutron/agent/dhcp/agent.py:558 neutron/agent/l3/agent.py:1040
 #: neutron/agent/metadata/agent.py:346
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:321
 #: neutron/services/metering/agents/metering_agent.py:270
 msgid ""
 "Neutron server does not support state report. State report for this agent"
@@ -121,12 +120,12 @@ msgstr ""
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:231
+#: neutron/agent/linux/dhcp.py:230
 #, python-format
 msgid "Failed trying to delete interface: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:239
+#: neutron/agent/linux/dhcp.py:238
 #, python-format
 msgid "Failed trying to delete namespace: %s"
 msgstr ""
@@ -327,114 +326,6 @@ msgstr ""
 msgid "pid %d not in child list"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:318
-#, python-format
-msgid ""
-"Setting admin_state_up=False is not supported in this plugin version. "
-"Ignoring setting for resource: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:324
-#, python-format
-msgid ""
-"Operational status is internally set by the plugin. Ignoring setting "
-"status=%s."
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:349
-#, python-format
-msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:400
-#, python-format
-msgid "Storing to certificate for host %(server)s at %(path)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:572
-#, python-format
-msgid "No device MAC attached to port %s. Skipping notification to controller."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:616
-msgid "Backend server(s) do not support automated consitency checks."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:620
-#, python-format
-msgid "Consistency watchdog disabled by polling interval setting of %s."
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/consistency_db.py:189
-#, python-format
-msgid ""
-"Gave up waiting for consistency DB lock, trying to take it. Current hash "
-"is: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/consistency_db.py:205
-msgid "Hash record already gone, no lock to clear."
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/consistency_db.py:209
-#, python-format
-msgid "Another server already removed the lock. %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/porttracker_db.py:40
-msgid "No host_id in port request to track port location."
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/porttracker_db.py:43
-#, python-format
-msgid "Received an empty port ID for host_id '%s'"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:130
-#, python-format
-msgid ""
-"Error in loading routing service helper. Class specified is %(class)s. "
-"Reason:%(reason)s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:201
-msgid "No routing service helper loaded"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:278
-#, python-format
-msgid ""
-"[Agent registration] Neutron server said that device manager was not "
-"ready. Retrying in %0.2f seconds "
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_status.py:59
-#, python-format
-msgid "Cannot ping ip address: %s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:338
-#, python-format
-msgid "Cannot find interface: %s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:478
-#, python-format
-msgid "VRF %s not present"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:539
-#, python-format
-msgid "Info for router %s was not found. Skipping router removal"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:554
-#, python-format
-msgid ""
-"Router remove for router_id: %s was incomplete. Adding the router to "
-"removed_routers list"
-msgstr ""
-
 #: neutron/plugins/cisco/db/n1kv_db_v2.py:582
 #, python-format
 msgid "vlan_id %(vlan)s on physical network %(network)s not found"
@@ -443,20 +334,6 @@ msgstr ""
 #: neutron/plugins/cisco/db/n1kv_db_v2.py:659
 #, python-format
 msgid "vxlan_id %s not found"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:329
-#, python-format
-msgid "Cisco cfg agent %s is not alive"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:463
-msgid "There are no active Cisco cfg agents"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:284
-#, python-format
-msgid "Aborting resource deletion after %d unsuccessful attempts"
 msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:174
@@ -535,12 +412,12 @@ msgstr ""
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1245
+#: neutron/plugins/ml2/plugin.py:1248
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1277
+#: neutron/plugins/ml2/plugin.py:1280
 #, python-format
 msgid "Port %s not found during update"
 msgstr ""
@@ -631,10 +508,6 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:167
 #, python-format
 msgid "Port %(port)s updated by agent %(agent)s isn't bound to any segment"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:136
-msgid "Ignoring port notification to controller because of missing host ID."
 msgstr ""
 
 #: neutron/plugins/nec/nec_plugin.py:213

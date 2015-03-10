@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev420\n"
+"Project-Id-Version: neutron 2015.1.dev448\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-07 06:14+0000\n"
+"POT-Creation-Date: 2015-03-10 06:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -115,7 +115,7 @@ msgstr ""
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:226 neutron/agent/linux/dhcp.py:784
+#: neutron/agent/l3/agent.py:226 neutron/agent/linux/dhcp.py:783
 msgid "An interface driver must be specified"
 msgstr ""
 
@@ -124,7 +124,6 @@ msgid "Router id is required if not using namespaces."
 msgstr ""
 
 #: neutron/agent/l3/agent.py:331
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:632
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -216,7 +215,7 @@ msgstr ""
 msgid "Pidfile %s already exist. Daemon already running?"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:790
+#: neutron/agent/linux/dhcp.py:789
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
@@ -286,7 +285,6 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/linux/ovs_lib.py:204 neutron/agent/linux/ovs_lib.py:299
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:55
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
 msgstr ""
@@ -465,7 +463,7 @@ msgstr ""
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1315
+#: neutron/db/db_base_plugin_v2.py:1332
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr ""
@@ -537,71 +535,6 @@ msgstr ""
 msgid "Unhandled exception"
 msgstr ""
 
-#: neutron/plugins/bigswitch/l3_router_plugin.py:214
-#, python-format
-msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/l3_router_plugin.py:283
-msgid "NeutronRestProxyV2: too many external networks"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:398
-msgid "Iconsistency with backend controller triggering full synchronization."
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:415
-#, python-format
-msgid "NeutronRestProxyV2: Unable to create port: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:118
-msgid "Couldn't retrieve capabilities. Newer API calls won't be supported."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:172
-msgid "ServerProxy: Could not establish HTTPS connection"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:180
-msgid "ServerProxy: Could not establish HTTP connection"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:222
-#, python-format
-msgid "ServerProxy: %(action)s failure, %(e)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:469
-#, python-format
-msgid ""
-"ServerProxy: %(action)s failure for servers: %(server)r Response: "
-"%(response)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:475
-#, python-format
-msgid ""
-"ServerProxy: Error details: status=%(status)d, reason=%(reason)r, "
-"ret=%(ret)s, data=%(data)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:489
-#, python-format
-msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:632
-msgid "Encountered an error checking controller health."
-msgstr ""
-
-#: neutron/plugins/bigswitch/agent/restproxy_agent.py:141
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:442
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:206
-#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:140
-msgid "Error in agent event loop"
-msgstr ""
-
 #: neutron/plugins/brocade/NeutronPlugin.py:297
 #: neutron/plugins/brocade/NeutronPlugin.py:341
 #: neutron/plugins/brocade/NeutronPlugin.py:394
@@ -622,218 +555,6 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:339
 #, python-format
 msgid "NETCONF error: %s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:230
-#, python-format
-msgid ""
-"Invalid payload format for received RPC message "
-"`hosting_devices_removed`. Error is %(error)s. Payload is %(payload)s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:283
-msgid ""
-"[Agent registration] Neutron server said that no device manager was "
-"found. Cannot continue. Exiting!"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:287
-#, python-format
-msgid "[Agent registration] %d unsuccessful registration attempts. Exiting!"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:326
-msgid "Failed sending agent report!"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/driver_mgr.py:81
-#, python-format
-msgid ""
-"Error loading cfg agent driver %(driver)s for hosting device template "
-"%(t_name)s(%(t_id)s)"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:63
-#, python-format
-msgid "Missing device parameter:%s. Aborting CSR1kvRoutingDriver initialization"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:229
-#, python-format
-msgid "Unknown route command %s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:437
-#, python-format
-msgid "Mismatch in ACL configuration for %s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:468
-#, python-format
-msgid "Failed creating VRF %s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:482
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:495
-#, python-format
-msgid "VRF %s not present"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:224
-msgid "Failed processing routers"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:285
-msgid "RPC Error in fetching routers from plugin"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:381
-#, python-format
-msgid "Key Error, missing key: %s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:385
-#, python-format
-msgid "Driver Exception on router:%(id)s. Error is %(e)s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:396
-#, python-format
-msgid "Exception in processing routers on device:%s"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:123
-#, python-format
-msgid "No tenant with a name or ID of %s exists."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:126
-#, python-format
-msgid "Multiple tenants matches found for %s"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:145
-msgid "The virtual management network has no subnet. Please assign one."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:155
-msgid ""
-"The virtual management network does not have unique name. Please ensure "
-"that it is."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:159
-msgid "There is no virtual management network. Please create one."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:181
-msgid ""
-"The security group for the virtual management network does not have "
-"unique name. Please ensure that it is."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:186
-msgid ""
-"There is no security group for the virtual management network. Please "
-"create one."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:200
-msgid "Error loading hosting device driver"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:213
-msgid "Error loading plugging driver"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:422
-#, python-format
-msgid "Failed to delete hosting device %s service VM. Will un-register it anyway."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:410
-#, python-format
-msgid "DB inconsistency: No type and hosting info associated with router %s"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:415
-#, python-format
-msgid "DB inconsistency: Multiple type and hosting info associated with router %s"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:438
-#, python-format
-msgid "DB inconsistency: No hosting info associated with router %s"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:515
-#, python-format
-msgid "Failed to allocate hosting port for port %s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/service_vm_lib.py:70
-#, python-format
-msgid "Failure determining running Nova services: %s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/service_vm_lib.py:87
-#, python-format
-msgid "Failed to get status of service VM instance %(id)s, due to %(err)s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/service_vm_lib.py:103
-#, python-format
-msgid "Failure finding needed Nova resource: %s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/service_vm_lib.py:125
-#, python-format
-msgid "Failed to create service VM instance: %s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/service_vm_lib.py:141
-#, python-format
-msgid "Failed to delete service VM instance %(id)s, due to %(err)s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/hosting_device_drivers/csr1kv_hd_driver.py:69
-msgid "Failed to create config file. Trying to clean up."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:108
-#, python-format
-msgid ""
-"The %(resource)s %(name)s does not have unique name. Please refer to "
-"admin guide and create one."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:113
-#, python-format
-msgid ""
-"There is no %(resource)s %(name)s. Please refer to admin guide and create"
-" one."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:213
-#, python-format
-msgid "Error %s when creating service VM resources. Cleaning up."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:321
-#, python-format
-msgid ""
-"Failed to delete %(resource_name)s %(net_id)s for service vm due to "
-"%(err)s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:453
-#, python-format
-msgid "Hosting port DB inconsistency for hosting device %s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:506
-#, python-format
-msgid "Port trunk pair DB inconsistency for port %s"
 msgstr ""
 
 #: neutron/plugins/cisco/models/virt_phy_sw_v2.py:280
@@ -860,6 +581,12 @@ msgstr ""
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:323
 #, python-format
 msgid "Port metrics raw enabling for port: %s"
+msgstr ""
+
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:442
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:206
+#: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:140
+msgid "Error in agent event loop"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/security_groups_driver.py:62
@@ -982,7 +709,7 @@ msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 
 #: neutron/plugins/ml2/db.py:243 neutron/plugins/ml2/db.py:329
-#: neutron/plugins/ml2/plugin.py:1197
+#: neutron/plugins/ml2/plugin.py:1200
 #, python-format
 msgid "Multiple ports have port_id starting with %s"
 msgstr ""
@@ -1092,41 +819,41 @@ msgstr ""
 msgid "mechanism_manager.create_subnet_postcommit failed, deleting subnet '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:893
+#: neutron/plugins/ml2/plugin.py:896
 #, python-format
 msgid "Exception deleting fixed_ip from port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:902
+#: neutron/plugins/ml2/plugin.py:905
 msgid "mechanism_manager.delete_subnet_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:942
+#: neutron/plugins/ml2/plugin.py:945
 #, python-format
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:954
+#: neutron/plugins/ml2/plugin.py:957
 #, python-format
 msgid "_bind_port_if_needed failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:982
+#: neutron/plugins/ml2/plugin.py:985
 #, python-format
 msgid "_bind_port_if_needed failed. Deleting all ports from create bulk '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1081
+#: neutron/plugins/ml2/plugin.py:1084
 #, python-format
 msgid "No Host supplied to bind DVR Port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1180
+#: neutron/plugins/ml2/plugin.py:1183
 #, python-format
 msgid "mechanism_manager.delete_port_postcommit failed for port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1206
+#: neutron/plugins/ml2/plugin.py:1209
 #, python-format
 msgid "Binding info for DVR port %s not found"
 msgstr ""
@@ -1240,10 +967,6 @@ msgstr ""
 
 #: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:317
 msgid "APIC host agent: failed in reporting state"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:108
-msgid "Inconsistency with backend controller triggering full synchronization."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mech_nuage/driver.py:92
@@ -1630,10 +1353,5 @@ msgstr ""
 #: neutron/services/metering/agents/metering_agent.py:181
 #, python-format
 msgid "Driver %(driver)s:%(func)s runtime error"
-msgstr ""
-
-#: neutron/tests/unit/cisco/l3/device_handling_test_support.py:99
-#, python-format
-msgid "Failed to delete port %(p_id)s for vm instance %(v_id)s due to %(err)s"
 msgstr ""
 
