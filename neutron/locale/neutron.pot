@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev420\n"
+"Project-Id-Version: neutron 2015.1.dev448\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-07 06:14+0000\n"
+"POT-Creation-Date: 2015-03-10 06:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -325,7 +325,6 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/l3/agent.py:329
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:630
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr ""
@@ -441,17 +440,17 @@ msgstr ""
 msgid "Unable to unlock pid file"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:245
+#: neutron/agent/linux/dhcp.py:244
 #, python-format
 msgid "Error while reading %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:252
+#: neutron/agent/linux/dhcp.py:251
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:254
+#: neutron/agent/linux/dhcp.py:253
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
@@ -1768,7 +1767,7 @@ msgstr ""
 msgid "ipv6_address_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1283
+#: neutron/db/db_base_plugin_v2.py:1300
 msgid "mac address update"
 msgstr ""
 
@@ -1839,9 +1838,6 @@ msgid ""
 msgstr ""
 
 #: neutron/db/l3_db.py:496 neutron/db/l3_db.py:657 neutron/db/l3_dvr_db.py:321
-#: neutron/plugins/bigswitch/l3_router_plugin.py:172
-#: neutron/plugins/bigswitch/l3_router_plugin.py:181
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:182
 #: neutron/plugins/opencontrail/contrail_plugin.py:499
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
@@ -2641,269 +2637,6 @@ msgstr ""
 msgid "%(what)s is deprecated as of %(as_of)s. It will not be superseded."
 msgstr ""
 
-#: neutron/plugins/bigswitch/config.py:27
-msgid ""
-"A comma separated list of Big Switch or Floodlight servers and port "
-"numbers. The plugin proxies the requests to the Big Switch/Floodlight "
-"server, which performs the networking configuration. Only oneserver is "
-"needed per deployment, but you may wish todeploy multiple servers to "
-"support failover."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:34
-msgid ""
-"The username and password for authenticating against  the Big Switch or "
-"Floodlight controller."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:37
-msgid ""
-"If True, Use SSL when connecting to the Big Switch or Floodlight "
-"controller."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:40
-msgid ""
-"Trust and store the first certificate received for each controller "
-"address and use it to validate future connections to that address."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:44
-msgid "Disables SSL certificate validation for controllers"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:46
-msgid "Re-use HTTP/HTTPS connections to the controller."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:49
-msgid "Directory containing ca_certs and host_certs certificate directories."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:52
-msgid "Sync data on connect"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:54
-msgid ""
-"If neutron fails to create a resource because the backend controller "
-"doesn't know of a dependency, the plugin automatically triggers a full "
-"data synchronization to the controller."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:59
-msgid ""
-"Time between verifications that the backend controller database is "
-"consistent with Neutron. (0 to disable)"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:62
-msgid ""
-"Maximum number of seconds to wait for proxy request to connect and "
-"complete."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:65
-msgid ""
-"Maximum number of threads to spawn to handle large volumes of port "
-"creations."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:69
-msgid "User defined identifier for this Neutron deployment"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:71
-msgid ""
-"Flag to decide if a route to the metadata server should be injected into "
-"the VM"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:76
-msgid ""
-"The default router rules installed in new tenant routers. Repeat the "
-"config option for each rule. Format is "
-"<tenant>:<source>:<destination>:<action> Use an * to specify default for "
-"all tenants."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:81
-msgid "Maximum number of router rules"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:85
-msgid "Virtual interface type to configure on Nova compute nodes"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:92
-#, python-format
-msgid "Nova compute nodes to manually set VIF type to %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:99
-msgid "List of allowed vif_type values."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:103
-msgid ""
-"Name of integration bridge on compute nodes used for security group "
-"insertion."
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:106
-msgid "Seconds between agent checks for port changes"
-msgstr ""
-
-#: neutron/plugins/bigswitch/config.py:108
-msgid "Virtual switch type."
-msgstr ""
-
-#: neutron/plugins/bigswitch/l3_router_plugin.py:58
-msgid "L3 Router Service Plugin for Big Switch fabric"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:93
-msgid "Syntax error in server config file, aborting plugin"
-msgstr ""
-
-#: neutron/plugins/bigswitch/plugin.py:233
-#, python-format
-msgid "Unable to update remote topology: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:79
-#, python-format
-msgid "Error in REST call to remote network controller: %(reason)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:269
-msgid "Servers not defined. Aborting server manager."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:276
-#, python-format
-msgid "Servers must be defined as <ip>:<port>. Configuration was %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:335
-#, python-format
-msgid "ssl_cert_directory [%s] does not exist. Create it or disable ssl."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:352
-#, python-format
-msgid "No certificates were found to verify controller %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:395
-#, python-format
-msgid ""
-"Could not retrieve initial certificate from controller %(server)s. Error "
-"details: %(error)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:454
-msgid "Server requires synchronization, but no topology function was defined."
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:524
-#, python-format
-msgid "Unable to create remote router: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:530
-#, python-format
-msgid "Unable to update remote router: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:535
-#, python-format
-msgid "Unable to delete remote router: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:541
-#, python-format
-msgid "Unable to add router interface: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:546
-#, python-format
-msgid "Unable to delete remote intf: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:552
-#, python-format
-msgid "Unable to create remote network: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:558
-#: neutron/plugins/bigswitch/servermanager.py:563
-#, python-format
-msgid "Unable to update remote network: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:578
-#, python-format
-msgid "Unable to create remote port: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:583
-#, python-format
-msgid "Unable to delete remote port: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:593
-#, python-format
-msgid "Unable to create floating IP: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:598
-#, python-format
-msgid "Unable to update floating IP: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:603
-#, python-format
-msgid "Unable to delete floating IP: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:608
-#, python-format
-msgid "Unable to retrieve switch: %s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/extensions/routerrule.py:26
-#, python-format
-msgid "Invalid format for router rules: %(rule)s, %(reason)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/extensions/routerrule.py:30
-#, python-format
-msgid ""
-"Unable to complete rules update for %(router_id)s. The number of rules "
-"exceeds the maximum %(quota)s."
-msgstr ""
-
-#: neutron/plugins/bigswitch/extensions/routerrule.py:47
-#, python-format
-msgid "Invalid data format for router rule: '%s'"
-msgstr ""
-
-#: neutron/plugins/bigswitch/extensions/routerrule.py:79
-#, python-format
-msgid "Duplicate nexthop in rule '%s'"
-msgstr ""
-
-#: neutron/plugins/bigswitch/extensions/routerrule.py:87
-#, python-format
-msgid "Action must be either permit or deny. '%s' was provided"
-msgstr ""
-
-#: neutron/plugins/bigswitch/extensions/routerrule.py:99
-#, python-format
-msgid "Duplicate router rules (src,dst)  found '%s'"
-msgstr ""
-
 #: neutron/plugins/brocade/NeutronPlugin.py:62
 #: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:33
 #: neutron/services/l3_router/brocade/l3_router_plugin.py:37
@@ -2940,68 +2673,6 @@ msgstr ""
 #: neutron/plugins/cisco/network_plugin.py:114
 #, python-format
 msgid "'%(model)s' object has no attribute '%(name)s'"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:101
-msgid ""
-"Interval when the process_services() loop executes in seconds. This is "
-"when the config agent lets each service helper to process its neutron "
-"resources."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:108
-msgid "Path of the routing service helper class."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_exceptions.py:26
-msgid ""
-"Critical device parameter missing. Failed initializing CSR1kv routing "
-"driver."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_exceptions.py:32
-#, python-format
-msgid ""
-"Failed connecting to CSR1kv. Reason: %(reason)s. Connection params are "
-"User:%(user)s, Host:%(host)s, Port:%(port)s, Device timeout:%(timeout)s."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_exceptions.py:39
-#, python-format
-msgid "Error executing snippet:%(snippet)s. ErrorType:%(type)s ErrorTag:%(tag)s."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_exceptions.py:45
-#, python-format
-msgid ""
-"Data in attribute: %(attribute)s does not correspond to expected value. "
-"Value received is %(value)s. "
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_exceptions.py:50
-#, python-format
-msgid "Driver %(driver)s does not exist."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_exceptions.py:54
-#, python-format
-msgid "Driver not found for resource id:%(id)s."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_exceptions.py:58
-#, python-format
-msgid "Driver cannot be set for missing parameter:%(p)s."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_status.py:30
-msgid "Time in seconds for connecting to a hosting device"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_status.py:32
-msgid ""
-"The time in seconds until a backlogged hosting device is presumed dead. "
-"This value should be set up high enough to recover from a period of "
-"connectivity loss or high load when the device may not be responding."
 msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:22
@@ -3443,121 +3114,6 @@ msgstr ""
 
 #: neutron/plugins/cisco/db/n1kv_db_v2.py:1438
 msgid "Segment range overlaps with another profile"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:43
-msgid "Name of the L3 admin tenant."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:45
-msgid ""
-"Name of management network for device configuration. Default value is "
-"osn_mgmt_nw"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:48
-msgid ""
-"Default security group applied on management port. Default value is "
-"mgmt_sec_grp."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:51
-msgid "Seconds of no status update until a cfg agent is considered down."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:54
-msgid "Ensure that Nova is running before attempting to create any VM."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:60
-msgid "Name of Glance image for CSR1kv."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:62
-msgid "UUID of Nova flavor for CSR1kv."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:66
-msgid "Plugging driver for CSR1kv."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:70
-msgid "Hosting device driver for CSR1kv."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:74
-msgid "Config agent driver for CSR1kv."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:76
-msgid "Booting time in seconds before a CSR1kv becomes operational."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:79
-msgid "Username to use for CSR1kv configurations."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:81
-msgid "Password to use for CSR1kv configurations."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:47
-msgid ""
-"Time in seconds between renewed scheduling attempts of non-scheduled "
-"routers."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:55
-msgid "Router could not be created due to internal error."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:59
-msgid "Internal error during router processing."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:63
-#, python-format
-msgid "Could not get binding information for router %(router_id)s."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/service_vm_lib.py:32
-msgid "Path to templates for hosting devices."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/service_vm_lib.py:35
-msgid "Path to config drive files for service VM instances."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/hosting_device_drivers/csr1kv_hd_driver.py:34
-msgid "CSR1kv configdrive template file."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:41
-msgid "Name of N1kv port profile for management ports."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:43
-msgid ""
-"Name of N1kv port profile for T1 ports (i.e., ports carrying traffic from"
-" VXLAN segmented networks)."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:46
-msgid ""
-"Name of N1kv port profile for T2 ports (i.e., ports carrying traffic from"
-" VLAN segmented networks)."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:49
-msgid ""
-"Name of N1kv network profile for T1 networks (i.e., trunk networks for "
-"VXLAN segmented traffic)."
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:52
-msgid ""
-"Name of N1kv network profile for T2 networks (i.e., trunk networks for "
-"VLAN segmented traffic)."
 msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_client.py:296
@@ -4635,16 +4191,6 @@ msgid ""
 "restarts"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:201
-#, python-format
-msgid "No cache entry for host %s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/mech_bigswitch/driver.py:206
-#, python-format
-msgid "Expired cache entry for host %s"
-msgstr ""
-
 #: neutron/plugins/ml2/drivers/mech_sriov/exceptions.py:23
 #, python-format
 msgid "Unsupported network type %(net_type)s."
@@ -5364,21 +4910,6 @@ msgid ""
 "IPTablesManager.apply failed to apply the following set of iptables "
 "rules:\n"
 "%s"
-msgstr ""
-
-#: neutron/tests/unit/bigswitch/fake_server.py:122
-#, python-format
-msgid "No floating IPs in requesturi=%(uri)s, body=%(body)s"
-msgstr ""
-
-#: neutron/tests/unit/bigswitch/fake_server.py:131
-#, python-format
-msgid "Expected floating IPs from multiple tenants.uri=%(uri)s, body=%(body)s"
-msgstr ""
-
-#: neutron/tests/unit/bigswitch/fake_server.py:176
-#, python-format
-msgid "No host cert for %(server)s in cert %(cert)s"
 msgstr ""
 
 #: neutron/tests/unit/ml2/test_ml2_plugin.py:275

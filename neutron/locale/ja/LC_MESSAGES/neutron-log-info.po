@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-07 06:14+0000\n"
-"PO-Revision-Date: 2015-03-07 02:17+0000\n"
+"POT-Creation-Date: 2015-03-10 06:15+0000\n"
+"PO-Revision-Date: 2015-03-09 17:57+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Japanese (http://www.transifex.com/projects/p/neutron/"
 "language/ja/)\n"
@@ -151,7 +151,7 @@ msgstr "L3 エージェントが始動しました"
 msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:654
+#: neutron/agent/linux/dhcp.py:653
 #, python-format
 msgid ""
 "Cannot apply dhcp option %(opt)s because it's ip_version %(version)d is not "
@@ -299,7 +299,7 @@ msgstr ""
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "オーバーラップする範囲が見つかりました: %(l_range)s から %(r_range)s"
 
-#: neutron/db/db_base_plugin_v2.py:1252
+#: neutron/db/db_base_plugin_v2.py:1269
 #, python-format
 msgid "Found IP allocation %(alloc)s on subnet %(subnet)s, cannot delete"
 msgstr ""
@@ -440,172 +440,10 @@ msgstr ""
 msgid "Waiting on %d children to exit"
 msgstr "%d 個の子で終了を待機しています"
 
-#: neutron/plugins/bigswitch/plugin.py:476
-#, python-format
-msgid "NeutronRestProxy: Starting plugin. Version=%s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:120
-#, python-format
-msgid "The following capabilities were received for %(server)s: %(cap)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/servermanager.py:514
-#, python-format
-msgid ""
-"NeutronRestProxyV2: Received and ignored error code %(code)s on %(action)s "
-"action to resource %(resource)s"
-msgstr ""
-
-#: neutron/plugins/bigswitch/db/consistency_db.py:196
-msgid "Failed to take lock. Another process updated the DB first."
-msgstr ""
-
 #: neutron/plugins/brocade/NeutronPlugin.py:307
 #, python-format
 msgid "Allocated vlan (%d) from the pool"
 msgstr "プールからの割り振り済み VLAN (%d)"
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:141
-msgid "Cisco cfg agent started"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/cfg_agent.py:274
-msgid "[Agent registration] Agent successfully registered"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_status.py:143
-#, python-format
-msgid ""
-"Hosting device: %(hd_id)s @ %(ip)s hasn't passed minimum boot time. Skipping "
-"it. "
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_status.py:147
-#, python-format
-msgid "Checking hosting device: %(hd_id)s @ %(ip)s for reachability."
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_status.py:154
-#, python-format
-msgid ""
-"Hosting device: %(hd_id)s @ %(ip)s is now reachable. Adding it to response"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_status.py:158
-#, python-format
-msgid "Hosting device: %(hd_id)s @ %(ip)s still not reachable "
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:321
-#, python-format
-msgid "Interfaces:%s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:336
-#, python-format
-msgid "IP Address:%s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:373
-#, python-format
-msgid "Enabled interface %s "
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:392
-#, python-format
-msgid "VRFs:%s"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:466
-#, python-format
-msgid "VRF %s successfully created"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:476
-#, python-format
-msgid "VRF %s removed"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/device_drivers/csr1kv/csr1kv_routing_driver.py:680
-#, python-format
-msgid "%s successfully executed"
-msgstr ""
-
-#: neutron/plugins/cisco/cfg_agent/service_helpers/routing_svc_helper.py:372
-#, python-format
-msgid "Router: %(id)s is on an unreachable hosting device. "
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:149
-#, python-format
-msgid ""
-"The virtual management network has %d subnets. The first one will be used."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:367
-msgid ""
-"Not all Nova services are up and running. Skipping this CSR1kv vm create "
-"request."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/device_handling_db.py:404
-msgid "Created a CSR1kv hosting device VM"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:318
-#, python-format
-msgid "Attempting to schedule router %s."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:330
-#, python-format
-msgid "Successfully scheduled router %(r_id)s to hosting device %(d_id)s"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:337
-#, python-format
-msgid "Un-schedule router %s."
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:350
-#, python-format
-msgid "Backlogging router %s for renewed scheduling attempt later"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:357
-#, python-format
-msgid "Router %s removed from backlog"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:367
-msgid "Processing router (scheduling) backlog"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l3/l3_router_appliance_db.py:387
-msgid "Synchronizing router (scheduling) backlog"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:290
-#, python-format
-msgid "Resource deletion attempt %d starting"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:310
-msgid "Resource deletion succeeded"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:413
-#, python-format
-msgid "Updating trunk: %(action)s VLAN %(tag)d for network_id %(id)s"
-msgstr ""
-
-#: neutron/plugins/cisco/l3/plugging_drivers/n1kv_trunking_driver.py:460
-#, python-format
-msgid ""
-"Attempt %(attempt)d to find trunk ports for hosting device %(hd_id)s failed. "
-"Trying again in %(time)d seconds."
-msgstr ""
 
 #: neutron/plugins/cisco/models/virt_phy_sw_v2.py:117
 #, python-format
@@ -946,7 +784,7 @@ msgstr ""
 msgid "Subnet %s was deleted concurrently"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1219
+#: neutron/plugins/ml2/plugin.py:1222
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
