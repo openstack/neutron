@@ -15,6 +15,8 @@
 
 import testtools
 
+import mock
+
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron.tests import base
@@ -204,6 +206,12 @@ class TestAttributes(base.BaseTestCase):
         msg = attributes._validate_ip_address(ip_addr)
         self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
 
+        # Depending on platform to run UTs, this case might or might not be
+        # an equivalent to test_validate_ip_address_bsd.
+        ip_addr = '1' * 59
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
+
         ip_addr = '1.1.1.1 has whitespace'
         msg = attributes._validate_ip_address(ip_addr)
         self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
@@ -215,6 +223,18 @@ class TestAttributes(base.BaseTestCase):
         ip_addr = '111.1.1.1\nwhitespace'
         msg = attributes._validate_ip_address(ip_addr)
         self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+
+    def test_validate_ip_address_bsd(self):
+        # NOTE(yamamoto):  On NetBSD and OS X, netaddr.IPAddress() accepts
+        # '1' * 59 as a valid address.  The behaviour is inherited from
+        # libc behaviour there.  This test ensures that our validator reject
+        # such addresses on such platforms by mocking netaddr to emulate
+        # the behaviour.
+        ip_addr = '1' * 59
+        with mock.patch('netaddr.IPAddress') as ip_address_cls:
+            msg = attributes._validate_ip_address(ip_addr)
+        ip_address_cls.assert_called_once_with(ip_addr)
+        self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
     def test_validate_ip_pools(self):
         pools = [[{'end': '10.0.0.254'}],
