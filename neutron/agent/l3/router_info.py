@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
-
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
@@ -167,8 +165,7 @@ class RouterInfo(object):
         """
         try:
             ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
-            net = netaddr.IPNetwork(ip_cidr)
-            device.addr.add(net.version, ip_cidr, str(net.broadcast))
+            device.addr.add(ip_cidr)
             return True
         except RuntimeError:
             # any exception occurred here should cause the floating IP
@@ -180,8 +177,7 @@ class RouterInfo(object):
         raise NotImplementedError()
 
     def remove_floating_ip(self, device, ip_cidr):
-        net = netaddr.IPNetwork(ip_cidr)
-        device.addr.delete(net.version, ip_cidr)
+        device.addr.delete(ip_cidr)
         self.driver.delete_conntrack_state(namespace=self.ns_name, ip=ip_cidr)
 
     def get_router_cidrs(self, device):

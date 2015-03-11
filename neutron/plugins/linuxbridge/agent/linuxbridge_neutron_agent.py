@@ -260,9 +260,7 @@ class LinuxBridgeManager(object):
         # Append IP's to bridge if necessary
         if ips:
             for ip in ips:
-                dst_device.addr.add(ip_version=ip['ip_version'],
-                                    cidr=ip['cidr'],
-                                    broadcast=ip['broadcast'])
+                dst_device.addr.add(cidr=ip['cidr'])
 
         if gateway:
             # Ensure that the gateway can be updated by changing the metric
@@ -276,8 +274,7 @@ class LinuxBridgeManager(object):
         # Remove IP's from interface
         if ips:
             for ip in ips:
-                src_device.addr.delete(ip_version=ip['ip_version'],
-                                       cidr=ip['cidr'])
+                src_device.addr.delete(cidr=ip['cidr'])
 
     def _bridge_exists_and_ensure_up(self, bridge_name):
         """Check if the bridge exists and make sure it is up."""

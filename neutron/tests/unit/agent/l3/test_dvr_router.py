@@ -58,8 +58,8 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
     @mock.patch.object(ip_lib, 'send_garp_for_proxyarp')
     @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'IpRule')
-    def test_floating_ip_added_dist(self, mIpRule, mIPDevice, mock_arp):
+    @mock.patch.object(ip_lib, 'IPRule')
+    def test_floating_ip_added_dist(self, mIPRule, mIPDevice, mock_arp):
         router = mock.MagicMock()
         ri = self._create_router(router)
         ext_net_id = _uuid()
@@ -84,14 +84,14 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.dist_fip_count = 0
         ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
         ri.floating_ip_added_dist(fip, ip_cidr)
-        mIpRule().add.assert_called_with('192.168.0.1', 16, FIP_PRI)
+        mIPRule().rule.add.assert_called_with('192.168.0.1', 16, FIP_PRI)
         self.assertEqual(1, ri.dist_fip_count)
         # TODO(mrsmith): add more asserts
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'IpRule')
-    def test_floating_ip_removed_dist(self, mIpRule, mIPDevice, mIPWrapper):
+    @mock.patch.object(ip_lib, 'IPRule')
+    def test_floating_ip_removed_dist(self, mIPRule, mIPDevice, mIPWrapper):
         router = mock.MagicMock()
         ri = self._create_router(router)
 
@@ -114,7 +114,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         s = lla.LinkLocalAddressPair('169.254.30.42/31')
         ri.rtr_fip_subnet = s
         ri.floating_ip_removed_dist(fip_cidr)
-        mIpRule().delete.assert_called_with(
+        mIPRule().rule.delete.assert_called_with(
             str(netaddr.IPNetwork(fip_cidr).ip), 16, FIP_PRI)
         mIPDevice().route.delete_route.assert_called_with(fip_cidr, str(s.ip))
         self.assertFalse(ri.fip_ns.unsubscribe.called)

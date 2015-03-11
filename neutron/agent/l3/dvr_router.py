@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
 from oslo_utils import excutils
 
 from neutron.agent.l3 import dvr_fip_ns
@@ -76,8 +75,8 @@ class DvrRouter(router.RouterInfo):
         rule_pr = self.fip_ns.allocate_rule_priority()
         self.floating_ips_dict[floating_ip] = rule_pr
         fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
-        ip_rule = ip_lib.IpRule(namespace=self.ns_name)
-        ip_rule.add(fixed_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
+        ip_rule = ip_lib.IPRule(namespace=self.ns_name)
+        ip_rule.rule.add(fixed_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
         #Add routing rule in fip namespace
         fip_ns_name = self.fip_ns.get_name()
         rtr_2_fip, _ = self.rtr_fip_subnet.get_pair()
@@ -105,8 +104,8 @@ class DvrRouter(router.RouterInfo):
         fip_ns_name = self.fip_ns.get_name()
         if floating_ip in self.floating_ips_dict:
             rule_pr = self.floating_ips_dict[floating_ip]
-            ip_rule = ip_lib.IpRule(namespace=self.ns_name)
-            ip_rule.delete(floating_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
+            ip_rule = ip_lib.IPRule(namespace=self.ns_name)
+            ip_rule.rule.delete(floating_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
             self.fip_ns.deallocate_rule_priority(rule_pr)
             #TODO(rajeev): Handle else case - exception/log?
 
@@ -182,16 +181,14 @@ class DvrRouter(router.RouterInfo):
         if not port:
             return
 
-        ip_cidr = str(ip) + '/32'
         try:
             # TODO(mrsmith): optimize the calls below for bulk calls
-            net = netaddr.IPNetwork(ip_cidr)
             interface_name = self.get_internal_device_name(port['id'])
             device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
             if operation == 'add':
-                device.neigh.add(net.version, ip, mac)
+                device.neigh.add(ip, mac)
             elif operation == 'delete':
-                device.neigh.delete(net.version, ip, mac)
+                device.neigh.delete(ip, mac)
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.exception(_LE("DVR: Failed updating arp entry"))

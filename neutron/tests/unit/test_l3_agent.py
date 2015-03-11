@@ -237,7 +237,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.mock_ip = mock.MagicMock()
         ip_cls.return_value = self.mock_ip
 
-        ip_rule = mock.patch('neutron.agent.linux.ip_lib.IpRule').start()
+        ip_rule = mock.patch('neutron.agent.linux.ip_lib.IPRule').start()
         self.mock_rule = mock.MagicMock()
         ip_rule.return_value = self.mock_rule
 
@@ -387,6 +387,18 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'network_id': _uuid(),
                   'mac_address': 'ca:fe:de:ad:be:ef',
                   'ip_cidr': '20.0.0.31/24'}
+        ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
+                                     'subnet_id': _uuid()}],
+                      'subnet': {'gateway_ip': '20.0.0.1'},
+                      'extra_subnets': [{'cidr': '172.16.0.0/24'}],
+                      'id': _uuid(),
+                      'binding:host_id': HOSTNAME,
+                      'network_id': _uuid(),
+                      'mac_address': 'ca:fe:de:ad:be:ef',
+                      'ip_cidr': '20.0.0.30/24'}
+        ri.snat_ports = sn_port
+        ri.ex_gw_port = ex_gw_port
+        ri.snat_namespace = mock.Mock()
 
         if action == 'add':
             self.device_exists.return_value = False
@@ -407,6 +419,16 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 sn_port['mac_address'],
                 agent.get_snat_int_device_name(sn_port['id']),
                 dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+        elif action == 'remove':
+            self.device_exists.return_value = False
+            agent._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            agent._snat_redirect_remove = mock.Mock()
+            agent.internal_network_removed(ri, port)
+            agent._snat_redirect_remove.assert_called_with(
+                ri,
+                sn_port['fixed_ips'][0]['ip_address'],
+                port,
+                ri.get_internal_device_name(port['id']))
 
     def test_agent_add_internal_network(self):
         self._test_internal_network_action('add')
@@ -417,9 +439,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_agent_remove_internal_network(self):
         self._test_internal_network_action('remove')
 
+    def test_agent_remove_internal_network_dist(self):
+        self._test_internal_network_action_dist('remove')
+
     def _test_external_gateway_action(self, action, router):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ex_net_id = _uuid()
+        sn_port = self.snat_ports[1]
         # Special setup for dvr routers
         if router.get('distributed'):
             agent.conf.agent_mode = 'dvr_snat'
@@ -433,6 +459,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                       **self.ri_kwargs)
             ri.create_snat_namespace()
             ri.fip_ns = agent.get_fip_ns(ex_net_id)
+            ri.internal_ports = self.snat_ports
         else:
             ri = l3router.RouterInfo(
                 router['id'], router,
@@ -476,12 +503,21 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         elif action == 'remove':
             self.device_exists.return_value = True
+            agent._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            agent._snat_redirect_remove = mock.Mock()
             agent.external_gateway_removed(ri, ex_gw_port, interface_name)
-            self.mock_driver.unplug.assert_called_once_with(
-                interface_name,
-                bridge=agent.conf.external_network_bridge,
-                namespace=mock.ANY,
-                prefix=mock.ANY)
+            if not router.get('distributed'):
+                self.mock_driver.unplug.assert_called_once_with(
+                    interface_name,
+                    bridge=agent.conf.external_network_bridge,
+                    namespace=mock.ANY,
+                    prefix=mock.ANY)
+            else:
+                agent._snat_redirect_remove.assert_called_with(
+                    ri,
+                    sn_port['fixed_ips'][0]['ip_address'],
+                    sn_port,
+                    ri.get_internal_device_name(sn_port['id']))
         else:
             raise Exception("Invalid action %s" % action)
 
@@ -665,7 +701,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ports[0]['subnet']['id'] = _get_subnet_id(ports[0])
         ri._set_subnet_arp_info(ports[0])
         self.mock_ip_dev.neigh.add.assert_called_once_with(
-            4, '1.2.3.4', '00:11:22:33:44:55')
+            '1.2.3.4', '00:11:22:33:44:55')
 
         # Test negative case
         router['distributed'] = False
@@ -686,7 +722,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.add_arp_entry(None, payload)
         agent.router_deleted(None, router['id'])
         self.mock_ip_dev.neigh.add.assert_called_once_with(
-            4, '1.7.23.11', '00:11:22:33:44:55')
+            '1.7.23.11', '00:11:22:33:44:55')
 
     def test_add_arp_entry_no_routerinfo(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -726,7 +762,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # now delete it
         agent.del_arp_entry(None, payload)
         self.mock_ip_dev.neigh.delete.assert_called_once_with(
-            4, '1.5.25.15', '00:44:33:22:11:55')
+            '1.5.25.15', '00:44:33:22:11:55')
         agent.router_deleted(None, router['id'])
 
     def test_process_cent_router(self):

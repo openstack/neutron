@@ -46,7 +46,7 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
 
         ri.remove_floating_ip(device, cidr)
 
-        device.addr.delete.assert_called_once_with(4, cidr)
+        device.addr.delete.assert_called_once_with(cidr)
         self.driver.delete_conntrack_state.assert_called_once_with(
             ip=cidr,
             namespace=ri.ns_name)

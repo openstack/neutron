@@ -36,8 +36,6 @@ from neutron.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 
-IPV4 = 4
-IPV6 = 6
 UDP = 'udp'
 TCP = 'tcp'
 DNS_PORT = 53
@@ -277,8 +275,10 @@ class Dnsmasq(DhcpLocalProcess):
     # The ports that need to be opened when security policies are active
     # on the Neutron port used for DHCP.  These are provided as a convenience
     # for users of this class.
-    PORTS = {IPV4: [(UDP, DNS_PORT), (TCP, DNS_PORT), (UDP, DHCPV4_PORT)],
-             IPV6: [(UDP, DNS_PORT), (TCP, DNS_PORT), (UDP, DHCPV6_PORT)],
+    PORTS = {constants.IP_VERSION_4:
+             [(UDP, DNS_PORT), (TCP, DNS_PORT), (UDP, DHCPV4_PORT)],
+             constants.IP_VERSION_6:
+             [(UDP, DNS_PORT), (TCP, DNS_PORT), (UDP, DHCPV6_PORT)],
              }
 
     _TAG_PREFIX = 'tag%d'
