@@ -435,6 +435,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.floating_ips = set(fip_statuses.keys())
         for fip_id in existing_floating_ips - ri.floating_ips:
             fip_statuses[fip_id] = l3_constants.FLOATINGIP_STATUS_DOWN
+        LOG.debug('Sending floating ip statuses: %s', fip_statuses)
         # Update floating IP status on the neutron server
         self.plugin_rpc.update_floatingip_statuses(
             self.context, ri.router_id, fip_statuses)

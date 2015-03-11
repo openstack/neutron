@@ -214,6 +214,9 @@ class RouterInfo(object):
             if ip_cidr not in existing_cidrs:
                 fip_statuses[fip['id']] = self.add_floating_ip(
                     fip, interface_name, device)
+                LOG.debug('Floating ip %(id)s added, status %(status)s',
+                          {'id': fip['id'],
+                           'status': fip_statuses.get(fip['id'])})
 
         fips_to_remove = (
             ip_cidr for ip_cidr in existing_cidrs - new_cidrs
