@@ -35,6 +35,7 @@ class TestNetnsCleanup(base.BaseTestCase):
             util.kill_dhcp(conf, 'ns')
 
             expected_params = {'conf': conf, 'network': mock.ANY,
+                               'process_monitor': mock.ANY,
                                'plugin': mock.ANY}
             import_object.assert_called_once_with('driver', **expected_params)
 
