@@ -549,7 +549,7 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
                 'app',
                 protocol=agent.UnixDomainHttpProtocol,
                 log=mock.ANY,
-                custom_pool=self.server.pool
+                max_size=self.server.num_threads
             )
             self.assertTrue(len(logging.mock_calls))
 

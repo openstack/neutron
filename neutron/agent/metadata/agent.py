@@ -292,7 +292,7 @@ class UnixDomainWSGIServer(wsgi.Server):
         logger = logging.getLogger('eventlet.wsgi.server')
         eventlet.wsgi.server(socket,
                              application,
-                             custom_pool=self.pool,
+                             max_size=self.num_threads,
                              protocol=UnixDomainHttpProtocol,
                              log=logging.WritableLogger(logger))
 

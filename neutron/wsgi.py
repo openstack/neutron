@@ -118,10 +118,12 @@ class WorkerService(object):
 class Server(object):
     """Server class to manage multiple WSGI sockets and applications."""
 
-    def __init__(self, name, threads=1000):
+    def __init__(self, name, num_threads=1000):
         # Raise the default from 8192 to accommodate large tokens
         eventlet.wsgi.MAX_HEADER_LINE = CONF.max_header_line
-        self.pool = eventlet.GreenPool(threads)
+        self.num_threads = num_threads
+        # Pool for a greenthread in which wsgi server will be running
+        self.pool = eventlet.GreenPool(1)
         self.name = name
         self._server = None
         # A value of 0 is converted to None because None is what causes the
@@ -254,7 +256,8 @@ class Server(object):
 
     def _run(self, application, socket):
         """Start a WSGI server in a new green thread."""
-        eventlet.wsgi.server(socket, application, custom_pool=self.pool,
+        eventlet.wsgi.server(socket, application,
+                             max_size=self.num_threads,
                              log=logging.WritableLogger(LOG),
                              keepalive=CONF.wsgi_keep_alive,
                              socket_timeout=self.client_socket_timeout)
