@@ -437,7 +437,7 @@ Arista
 ------
 
 * Git: https://github.com/stackforge/networking-arista
-* Pypi: https://pypi.python.org/pypi/networking-arista
+* PyPI: https://pypi.python.org/pypi/networking-arista
 
 .. _networking-brocade:
 
@@ -464,9 +464,9 @@ Metaplugin
 MidoNet
 -------
 
-*  Git: https://github.com/stackforge/networking-midonet
-*  Launchpad: https://launchpad.net/networking-midonet
-*  Pypi: https://pypi.python.org/pypi/networking-midonet
+* Git: https://github.com/stackforge/networking-midonet
+* Launchpad: https://launchpad.net/networking-midonet
+* PyPI: https://pypi.python.org/pypi/networking-midonet
 
 .. _networking-mlnx:
 
@@ -522,6 +522,6 @@ PLUMgrid
 VMware
 ------
 
-*  Git: https://github.com/stackforge/vmware-nsx
-*  Launchpad: https://launchpad.net/vmware-nsx
-*  Pypi: https://pypi.python.org/pypi/vmware-nsx
+* Git: https://github.com/stackforge/vmware-nsx
+* Launchpad: https://launchpad.net/vmware-nsx
+* PyPI: https://pypi.python.org/pypi/vmware-nsx
