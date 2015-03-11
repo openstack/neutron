@@ -70,9 +70,13 @@ def execute(cmd, process_input=None, addl_env=None,
                                   addl_env=addl_env)
         _stdout, _stderr = obj.communicate(process_input)
         obj.stdin.close()
-        m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdout: %(stdout)s\n"
-              "Stderr: %(stderr)s") % {'cmd': cmd, 'code': obj.returncode,
-                                       'stdout': _stdout, 'stderr': _stderr}
+        m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdin: %(stdin)s\n"
+              "Stdout: %(stdout)s\nStderr: %(stderr)s") % \
+            {'cmd': cmd,
+             'code': obj.returncode,
+             'stdin': process_input or '',
+             'stdout': _stdout,
+             'stderr': _stderr}
 
         extra_ok_codes = extra_ok_codes or []
         if obj.returncode and obj.returncode in extra_ok_codes:
