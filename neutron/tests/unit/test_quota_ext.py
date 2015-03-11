@@ -302,6 +302,14 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
                                      tenant_id,
                                      network=-2)
 
+    def test_quotas_limit_check_with_not_registered_resource_fails(self):
+        tenant_id = 'tenant_id1'
+        self.assertRaises(exceptions.QuotaResourceUnknown,
+                          quota.QUOTAS.limit_check,
+                          context.get_admin_context(load_admin_roles=False),
+                          tenant_id,
+                          foobar=1)
+
     def test_quotas_get_tenant_from_request_context(self):
         tenant_id = 'tenant_id1'
         env = {'neutron.context': context.Context('', tenant_id,
@@ -393,8 +401,7 @@ class TestDbQuotaDriver(base.BaseTestCase):
 
             quotas = driver._get_quotas(ctx,
                                         target_tenant,
-                                        default_quotas,
-                                        ['network'])
+                                        default_quotas)
 
             self.assertEqual(quotas, foo_quotas)
             get_tenant_quotas.assert_called_once_with(ctx,

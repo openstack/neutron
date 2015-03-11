@@ -66,7 +66,7 @@ class ConfDriver(object):
     in neutron.conf.
     """
 
-    def _get_quotas(self, context, resources, keys):
+    def _get_quotas(self, context, resources):
         """Get quotas.
 
         A helper method which retrieves the quotas for the specific
@@ -75,20 +75,10 @@ class ConfDriver(object):
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resources.
-        :param keys: A list of the desired quotas to retrieve.
         """
 
-        # Filter resources
-        desired = set(keys)
-        sub_resources = dict((k, v) for k, v in resources.items()
-                             if k in desired)
-
-        # Make sure we accounted for all of them...
-        if len(keys) != len(sub_resources):
-            unknown = desired - set(sub_resources.keys())
-            raise exceptions.QuotaResourceUnknown(unknown=sorted(unknown))
         quotas = {}
-        for resource in sub_resources.values():
+        for resource in resources.values():
             quotas[resource.name] = resource.default
         return quotas
 
@@ -99,10 +89,6 @@ class ConfDriver(object):
         For limits--those quotas for which there is no usage
         synchronization function--this method checks that a set of
         proposed values are permitted by the limit restriction.
-
-        This method will raise a QuotaResourceUnknown exception if a
-        given resource is unknown or if it is not a simple limit
-        resource.
 
         If any of the proposed values is over the defined quota, an
         OverQuota exception will be raised with the sorted list of the
@@ -115,14 +101,13 @@ class ConfDriver(object):
         :param values: A dictionary of the values to check against the
                        quota.
         """
-
         # Ensure no value is less than zero
         unders = [key for key, val in values.items() if val < 0]
         if unders:
             raise exceptions.InvalidQuotaValue(unders=sorted(unders))
 
         # Get the applicable quotas
-        quotas = self._get_quotas(context, resources, values.keys())
+        quotas = self._get_quotas(context, resources)
 
         # Check the quotas and construct a list of the resources that
         # would be put over limit by the desired values
@@ -284,16 +269,27 @@ class QuotaEngine(object):
         the proposed value.
 
         This method will raise a QuotaResourceUnknown exception if a
-        given resource is unknown or if it is not a simple limit
-        resource.
+        given resource is unknown or if it is not a countable resource.
 
-        If any of the proposed values is over the defined quota, an
-        OverQuota exception will be raised with the sorted list of the
-        resources which are too high.  Otherwise, the method returns
-        nothing.
+        If any of the proposed values exceeds the respective quota defined
+        for the tenant, an OverQuota exception will be raised.
+        The exception will include a sorted list with the resources
+        which exceed the quota limit. Otherwise, the method returns nothing.
 
-        :param context: The request context, for access checks.
+        :param context: Request context
+        :param tenant_id: Tenant for which the quota limit is being checked
+        :param values: Dict specifying requested deltas for each resource
         """
+        # Verify that resources are managed by the quota engine
+        requested_resources = set(values.keys())
+        managed_resources = set([res for res in self._resources.keys()
+                                 if res in requested_resources])
+
+        # Make sure we accounted for all of them...
+        unknown_resources = requested_resources - managed_resources
+        if unknown_resources:
+            raise exceptions.QuotaResourceUnknown(
+                unknown=sorted(unknown_resources))
 
         return self.get_driver().limit_check(context, tenant_id,
                                              self._resources, values)

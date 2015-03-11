@@ -112,7 +112,7 @@ class DbQuotaDriver(object):
                                      limit=limit)
                 context.session.add(tenant_quota)
 
-    def _get_quotas(self, context, tenant_id, resources, keys):
+    def _get_quotas(self, context, tenant_id, resources):
         """Retrieves the quotas for specific resources.
 
         A helper method which retrieves the quotas for the specific
@@ -122,21 +122,10 @@ class DbQuotaDriver(object):
         :param context: The request context, for access checks.
         :param tenant_id: the tenant_id to check quota.
         :param resources: A dictionary of the registered resources.
-        :param keys: A list of the desired quotas to retrieve.
-
         """
-        desired = set(keys)
-        sub_resources = dict((k, v) for k, v in resources.items()
-                             if k in desired)
-
-        # Make sure we accounted for all of them...
-        if len(keys) != len(sub_resources):
-            unknown = desired - set(sub_resources.keys())
-            raise exceptions.QuotaResourceUnknown(unknown=sorted(unknown))
-
         # Grab and return the quotas (without usages)
         quotas = DbQuotaDriver.get_tenant_quotas(
-            context, sub_resources, tenant_id)
+            context, resources, tenant_id)
 
         return dict((k, v) for k, v in quotas.items())
 
@@ -146,10 +135,6 @@ class DbQuotaDriver(object):
         For limits--those quotas for which there is no usage
         synchronization function--this method checks that a set of
         proposed values are permitted by the limit restriction.
-
-        This method will raise a QuotaResourceUnknown exception if a
-        given resource is unknown or if it is not a simple limit
-        resource.
 
         If any of the proposed values is over the defined quota, an
         OverQuota exception will be raised with the sorted list of the
@@ -169,7 +154,7 @@ class DbQuotaDriver(object):
             raise exceptions.InvalidQuotaValue(unders=sorted(unders))
 
         # Get the applicable quotas
-        quotas = self._get_quotas(context, tenant_id, resources, values.keys())
+        quotas = self._get_quotas(context, tenant_id, resources)
 
         # Check the quotas and construct a list of the resources that
         # would be put over limit by the desired values

@@ -132,15 +132,3 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase):
         self.assertRaises(exceptions.InvalidQuotaValue,
                           self.plugin.limit_check, context.get_admin_context(),
                           PROJECT, resources, values)
-
-    def test_limit_check_wrong_values_size(self):
-        resource_1 = 'res_test_1'
-        resource_2 = 'res_test_2'
-
-        resources = {resource_1: TestResource(resource_1, 2)}
-        values = {resource_1: 1, resource_2: 1}
-
-        self.plugin.update_quota_limit(self.context, PROJECT, resource_1, 2)
-        self.assertRaises(exceptions.QuotaResourceUnknown,
-                          self.plugin.limit_check, context.get_admin_context(),
-                          PROJECT, resources, values)
