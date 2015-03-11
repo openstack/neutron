@@ -406,6 +406,8 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-hyperv_            |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
+| networking-ibm_               |         ml2,l3        |    yes    |       no         |   [B]   |     Kilo     |
++-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-metaplugin_        |         core          |    no     |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-midonet_           |        core,lb        |    yes    |       yes        |   [C]   |     Kilo     |
@@ -431,6 +433,7 @@ The following chart captures the following aspects:
 | vmware-nsx_                   |         core          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 
+
 .. _networking-arista:
 
 Arista
@@ -451,6 +454,15 @@ Cisco
 * PyPI: https://pypi.python.org/pypi/networking-cisco
 
 .. _networking-hyperv:
+
+
+.. _networking-ibm:
+
+IBM SDNVE
+---------
+
+* Git: https://github.com/stackforge/networking-ibm
+* Launchpad: https://launchpad.net/networking-ibm
 
 .. _networking-metaplugin:
 
@@ -525,3 +537,4 @@ VMware
 * Git: https://github.com/stackforge/vmware-nsx
 * Launchpad: https://launchpad.net/vmware-nsx
 * PyPI: https://pypi.python.org/pypi/vmware-nsx
+
