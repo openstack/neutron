@@ -880,6 +880,48 @@ class TestDvrRouter(L3AgentTestFramework):
     def test_dvr_router_lifecycle_without_ha_with_snat_with_fips(self):
         self._dvr_router_lifecycle(enable_ha=False, enable_snat=True)
 
+    def _helper_create_dvr_router_fips_for_ext_network(
+            self, agent_mode, **dvr_router_kwargs):
+        self.agent.conf.agent_mode = agent_mode
+        router_info = self.generate_dvr_router_info(**dvr_router_kwargs)
+        mocked_ext_net_id = (
+            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
+        mocked_ext_net_id.return_value = (
+            router_info['_floatingips'][0]['floating_network_id'])
+        router = self.manage_router(self.agent, router_info)
+        fip_ns = router.fip_ns.get_name()
+        return router, fip_ns
+
+    def _validate_fips_for_external_network(self, router, fip_ns):
+        self.assertTrue(self._namespace_exists(router.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_dvr_floating_ips(router)
+        self._assert_snat_namespace_does_not_exist(router)
+
+    def test_dvr_router_fips_for_multiple_ext_networks(self):
+        agent_mode = 'dvr'
+        # Create the first router fip with external net1
+        dvr_router1_kwargs = {'ip_address': '19.4.4.3',
+                              'subnet_cidr': '19.4.4.0/24',
+                              'gateway_ip': '19.4.4.1',
+                              'gateway_mac': 'ca:fe:de:ab:cd:ef'}
+        router1, fip1_ns = (
+            self._helper_create_dvr_router_fips_for_ext_network(
+                agent_mode, **dvr_router1_kwargs))
+        # Validate the fip with external net1
+        self._validate_fips_for_external_network(router1, fip1_ns)
+
+        # Create the second router fip with external net2
+        dvr_router2_kwargs = {'ip_address': '19.4.5.3',
+                              'subnet_cidr': '19.4.5.0/24',
+                              'gateway_ip': '19.4.5.1',
+                              'gateway_mac': 'ca:fe:de:ab:cd:fe'}
+        router2, fip2_ns = (
+            self._helper_create_dvr_router_fips_for_ext_network(
+                agent_mode, **dvr_router2_kwargs))
+        # Validate the fip with external net2
+        self._validate_fips_for_external_network(router2, fip2_ns)
+
     def _dvr_router_lifecycle(self, enable_ha=False, enable_snat=False,
                               custom_mtu=2000):
         '''Test dvr router lifecycle
@@ -936,11 +978,13 @@ class TestDvrRouter(L3AgentTestFramework):
         self._assert_interfaces_deleted_from_ovs()
         self._assert_router_does_not_exist(router)
 
-    def generate_dvr_router_info(self, enable_ha=False, enable_snat=False):
+    def generate_dvr_router_info(
+        self, enable_ha=False, enable_snat=False, **kwargs):
         router = test_l3_agent.prepare_router_data(
             enable_snat=enable_snat,
             enable_floating_ip=True,
-            enable_ha=enable_ha)
+            enable_ha=enable_ha,
+            **kwargs)
         internal_ports = router.get(l3_constants.INTERFACE_KEY, [])
         router['distributed'] = True
         router['gw_port_host'] = self.agent.conf.host
