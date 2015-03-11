@@ -29,7 +29,7 @@ ARISTA_DRIVER_OPTS = [
     cfg.StrOpt('eapi_username',
                default='',
                help=_('Username for Arista EOS. This is required field. '
-                      'If not set, all communications to Arista EOS'
+                      'If not set, all communications to Arista EOS '
                       'will fail.')),
     cfg.StrOpt('eapi_password',
                default='',
@@ -40,7 +40,7 @@ ARISTA_DRIVER_OPTS = [
     cfg.StrOpt('eapi_host',
                default='',
                help=_('Arista EOS IP address. This is required field. '
-                      'If not set, all communications to Arista EOS'
+                      'If not set, all communications to Arista EOS '
                       'will fail.')),
     cfg.BoolOpt('use_fqdn',
                 default=True,
@@ -112,7 +112,7 @@ ARISTA_L3_PLUGIN = [
                 default=False,
                 help=_('A "True" value for this flag indicates to create a '
                        'router in VRF. If not set, all routers are created '
-                       'in default VRF.'
+                       'in default VRF. '
                        'This is optional. If not set, a value of "False" '
                        'is assumed.')),
     cfg.IntOpt('l3_sync_interval',

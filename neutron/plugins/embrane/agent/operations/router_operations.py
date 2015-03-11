@@ -93,7 +93,7 @@ def _delete_dva(api, tenant_id, neutron_router):
     try:
         api.delete_dva(tenant_id, neutron_router["id"])
     except h_exc.DvaNotFound:
-        LOG.warning(_LW("The router %s had no physical representation,"
+        LOG.warning(_LW("The router %s had no physical representation, "
                         "likely already deleted"), neutron_router["id"])
     return p_con.Status.DELETED
 
@@ -122,7 +122,7 @@ def _shrink_dva_iface(api, tenant_id, neutron_router, port_id):
         dva = api.shrink_interface(tenant_id, neutron_router["id"],
                                    neutron_router["admin_state_up"], port_id)
     except h_exc.InterfaceNotFound:
-        LOG.warning(_LW("Interface %s not found in the heleos back-end,"
+        LOG.warning(_LW("Interface %s not found in the heleos back-end, "
                         "likely already deleted"), port_id)
         return (p_con.Status.ACTIVE if neutron_router["admin_state_up"] else
                 p_con.Status.READY)

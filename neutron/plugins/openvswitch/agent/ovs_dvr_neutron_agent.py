@@ -81,7 +81,7 @@ class OVSPort(object):
         self.device_owner = device_owner
 
     def __str__(self):
-        return ("OVSPort: id = %s, ofport = %s, mac = %s,"
+        return ("OVSPort: id = %s, ofport = %s, mac = %s, "
                 "device_owner = %s, subnets = %s" %
                 (self.id, self.ofport, self.mac,
                  self.device_owner, self.subnets))
