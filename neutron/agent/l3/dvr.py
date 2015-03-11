@@ -68,10 +68,6 @@ class AgentMixin(object):
         return (SNAT_INT_DEV_PREFIX +
                 port_id)[:self.driver.DEV_NAME_LEN]
 
-    # TODO(Carl) Remove this method when vpnaas no longer needs it.
-    def get_snat_ns_name(self, router_id):
-        return (SNAT_NS_PREFIX + router_id)
-
     def get_snat_interfaces(self, ri):
         return ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
 
