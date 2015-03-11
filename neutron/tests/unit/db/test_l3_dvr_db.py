@@ -22,6 +22,7 @@ from neutron.db import l3_dvr_db
 from neutron.extensions import l3
 from neutron import manager
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants as plugin_const
 from neutron.tests.unit import testlib_api
 
 _uuid = uuidutils.generate_uuid
@@ -516,3 +517,46 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             self.mixin.check_router_has_no_vpnaas(mock.ANY, {'id': 'foo_id'})
             vpn_plugin.check_router_in_use.assert_called_once_with(
                 mock.ANY, 'foo_id')
+
+    def test_remove_router_interface_delete_router_l3agent_binding(self):
+        interface_info = {'subnet_id': '123'}
+        router = mock.MagicMock()
+        router.extra_attributes.distributed = True
+        plugin = mock.MagicMock()
+        plugin.get_l3_agents_hosting_routers = mock.Mock(
+            return_value=[mock.MagicMock()])
+        plugin.check_ports_exist_on_l3agent = mock.Mock(
+            return_value=False)
+        plugin.remove_router_from_l3_agent = mock.Mock(
+            return_value=None)
+        with contextlib.nested(
+            mock.patch.object(self.mixin,
+                              '_get_router'),
+            mock.patch.object(self.mixin,
+                              '_get_device_owner'),
+            mock.patch.object(self.mixin,
+                              '_remove_interface_by_subnet'),
+            mock.patch.object(self.mixin,
+                              'delete_csnat_router_interface_ports'),
+            mock.patch.object(manager.NeutronManager,
+                              'get_service_plugins'),
+            mock.patch.object(self.mixin,
+                              '_make_router_interface_info'),
+            mock.patch.object(self.mixin,
+                              'notify_router_interface_action'),
+                             ) as (grtr, gdev, rmintf, delintf, gplugin,
+                                   mkintf, notify):
+            grtr.return_value = router
+            gdev.return_value = mock.Mock()
+            rmintf.return_value = (mock.MagicMock(), mock.Mock())
+            mkintf.return_value = mock.Mock()
+            gplugin.return_value = {plugin_const.L3_ROUTER_NAT: plugin}
+            delintf.return_value = None
+            notify.return_value = None
+
+            self.mixin.manager = manager
+            self.mixin.remove_router_interface(
+                self.ctx, mock.Mock(), interface_info)
+            self.assertTrue(plugin.get_l3_agents_hosting_routers.called)
+            self.assertTrue(plugin.check_ports_exist_on_l3agent.called)
+            self.assertTrue(plugin.remove_router_from_l3_agent.called)
