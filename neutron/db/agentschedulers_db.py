@@ -370,6 +370,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             return {'networks':
                     self.get_networks(context, filters={'id': net_ids})}
         else:
+            # Exception will be thrown if the requested agent does not exist.
+            self._get_agent(context, id)
             return {'networks': []}
 
     def list_active_networks_on_active_dhcp_agent(self, context, host):

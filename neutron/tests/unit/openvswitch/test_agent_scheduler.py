@@ -1175,9 +1175,14 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 admin_context=False)
 
     def test_list_routers_hosted_by_l3_agent_with_invalid_agent(self):
-        invalid_agentid = 'non_existent_agent'
+        invalid_agentid = 'non_existing_agent'
         self._list_routers_hosted_by_l3_agent(invalid_agentid,
                                               exc.HTTPNotFound.code)
+
+    def test_list_networks_hosted_by_dhcp_agent_with_invalid_agent(self):
+        invalid_agentid = 'non_existing_agent'
+        self._list_networks_hosted_by_dhcp_agent(invalid_agentid,
+                                                 exc.HTTPNotFound.code)
 
 
 class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
