@@ -154,13 +154,17 @@ ATTRIBUTES_TO_UPDATE = 'attributes_to_update'
 # but here it will be limited by this value for consistency.
 DB_INTEGER_MAX_VALUE = 2 ** 31 - 1
 
+# TODO(amuller): Re-define the RPC namespaces once Oslo messaging supports
+# Targets with multiple namespaces. Neutron will then implement callbacks
+# for its RPC clients in order to support rolling upgrades.
+
 # RPC Interface for agents to call DHCP API implemented on the plugin side
-RPC_NAMESPACE_DHCP_PLUGIN = 'dhcp'
+RPC_NAMESPACE_DHCP_PLUGIN = None
 # RPC interface for the metadata service to get info from the plugin side
-RPC_NAMESPACE_METADATA = 'metadata'
+RPC_NAMESPACE_METADATA = None
 # RPC interface for agent to plugin security group API
-RPC_NAMESPACE_SECGROUP = 'secgroup'
+RPC_NAMESPACE_SECGROUP = None
 # RPC interface for agent to plugin DVR api
-RPC_NAMESPACE_DVR = 'dvr'
+RPC_NAMESPACE_DVR = None
 # RPC interface for reporting state back to the plugin
-RPC_NAMESPACE_STATE = 'report_state'
+RPC_NAMESPACE_STATE = None
