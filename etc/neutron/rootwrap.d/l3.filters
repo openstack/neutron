@@ -49,3 +49,6 @@ kill_keepalived: KillFilter, root, /usr/sbin/keepalived, -HUP, -15, -9
 
 # l3 agent to delete floatingip's conntrack state
 conntrack: CommandFilter, conntrack, root
+
+# keepalived state change monitor
+keepalived_state_change: CommandFilter, neutron-keepalived-state-change, root

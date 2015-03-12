@@ -63,6 +63,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def setUp(self):
         super(TestMetadataDriverProcess, self).setUp()
+        mock.patch('eventlet.spawn').start()
         agent_config.register_interface_driver_opts_helper(cfg.CONF)
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')

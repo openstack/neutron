@@ -12,21 +12,23 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import shutil
-import signal
 
 import netaddr
 from oslo_log import log as logging
 
 from neutron.agent.l3 import router_info as router
+from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
-from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
+from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 HA_DEV_PREFIX = 'ha-'
+IP_MONITOR_PROCESS_SERVICE = 'ip_monitor'
 
 
 class HaRouter(router.RouterInfo):
@@ -69,6 +71,18 @@ class HaRouter(router.RouterInfo):
             LOG.debug('Error while reading HA state for %s', self.router_id)
             return None
 
+    @ha_state.setter
+    def ha_state(self, new_state):
+        self._verify_ha()
+        ha_state_path = self.keepalived_manager._get_full_config_file_path(
+            'state')
+        try:
+            with open(ha_state_path, 'w') as f:
+                f.write(new_state)
+        except (OSError, IOError):
+            LOG.error(_LE('Error while writing HA state for %s'),
+                      self.router_id)
+
     def _init_keepalived_manager(self, process_monitor):
         self.keepalived_manager = keepalived.KeepalivedManager(
             self.router['id'],
@@ -106,27 +120,6 @@ class HaRouter(router.RouterInfo):
         self.keepalived_manager.disable()
         conf_dir = self.keepalived_manager.get_conf_dir()
         shutil.rmtree(conf_dir)
-
-    def _add_keepalived_notifiers(self):
-        callback = (
-            metadata_driver.MetadataDriver._get_metadata_proxy_callback(
-                self.agent_conf.metadata_port, self.agent_conf,
-                router_id=self.router_id))
-        # TODO(mangelajo): use the process monitor in keepalived when
-        #                  keepalived stops killing/starting metadata
-        #                  proxy on its own
-        pm = (
-            metadata_driver.MetadataDriver.
-            _get_metadata_proxy_process_manager(self.router_id,
-                                                self.ns_name,
-                                                self.agent_conf))
-        pid = pm.get_pid_file_name()
-        self.keepalived_manager.add_notifier(
-            callback(pid), 'master', self.ha_vr_id)
-        for state in ('backup', 'fault'):
-            self.keepalived_manager.add_notifier(
-                ['kill', '-%s' % signal.SIGKILL,
-                 '$(cat ' + pid + ')'], state, self.ha_vr_id)
 
     def _get_keepalived_instance(self):
         return self.keepalived_manager.config.get_instance(self.ha_vr_id)
@@ -276,3 +269,53 @@ class HaRouter(router.RouterInfo):
 
         interface_name = self.get_internal_device_name(port['id'])
         self._clear_vips(interface_name)
+
+    def _get_state_change_monitor_process_manager(self):
+        return external_process.ProcessManager(
+            self.agent_conf,
+            '%s.monitor' % self.router_id,
+            self.ns_name,
+            default_cmd_callback=self._get_state_change_monitor_callback())
+
+    def _get_state_change_monitor_callback(self):
+        ha_device = self.get_ha_device_name(self.ha_port['id'])
+        ha_cidr = self._get_primary_vip()
+
+        def callback(pid_file):
+            cmd = [
+                'neutron-keepalived-state-change',
+                '--router_id=%s' % self.router_id,
+                '--namespace=%s' % self.ns_name,
+                '--conf_dir=%s' % self.keepalived_manager.get_conf_dir(),
+                '--monitor_interface=%s' % ha_device,
+                '--monitor_cidr=%s' % ha_cidr,
+                '--pid_file=%s' % pid_file,
+                '--state_path=%s' % self.agent_conf.state_path,
+                '--user=%s' % os.geteuid(),
+                '--group=%s' % os.getegid()]
+            return cmd
+
+        return callback
+
+    def spawn_state_change_monitor(self, process_monitor):
+        pm = self._get_state_change_monitor_process_manager()
+        pm.enable()
+        process_monitor.register(
+            self.router_id, IP_MONITOR_PROCESS_SERVICE, pm)
+
+    def destroy_state_change_monitor(self, process_monitor):
+        pm = self._get_state_change_monitor_process_manager()
+        process_monitor.unregister(
+            self.router_id, IP_MONITOR_PROCESS_SERVICE)
+        pm.disable()
+
+    def update_initial_state(self, callback):
+        ha_device = ip_lib.IPDevice(
+            self.get_ha_device_name(self.ha_port['id']),
+            self.ns_name)
+        addresses = ha_device.addr.list()
+        cidrs = (address['cidr'] for address in addresses)
+        ha_cidr = self._get_primary_vip()
+        state = 'master' if ha_cidr in cidrs else 'backup'
+        self.ha_state = state
+        callback(self.router_id, state)
