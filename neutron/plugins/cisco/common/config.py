@@ -70,6 +70,10 @@ cisco_n1k_opts = [
                help=_("Number of threads to use to make HTTP requests")),
     cfg.IntOpt('http_timeout', default=15,
                help=_("N1K http timeout duration in seconds")),
+    cfg.BoolOpt('restrict_network_profiles', default=False,
+               help=_("Restrict tenants from accessing network profiles "
+                      "belonging to some other tenant")),
+
 ]
 
 cfg.CONF.register_opts(cisco_opts, "CISCO")

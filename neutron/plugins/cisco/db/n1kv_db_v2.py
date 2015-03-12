@@ -515,7 +515,7 @@ def reserve_vxlan(db_session, network_profile):
         raise n_exc.NoNetworkAvailable()
 
 
-def alloc_network(db_session, network_profile_id):
+def alloc_network(db_session, network_profile_id, tenant_id):
     """
     Allocate network using first available free segment ID in segment range.
 
@@ -524,7 +524,7 @@ def alloc_network(db_session, network_profile_id):
     """
     with db_session.begin(subtransactions=True):
         network_profile = get_network_profile(db_session,
-                                              network_profile_id)
+                                              network_profile_id, tenant_id)
         if network_profile.segment_type == c_const.NETWORK_TYPE_VLAN:
             return reserve_vlan(db_session, network_profile)
         if network_profile.segment_type == c_const.NETWORK_TYPE_OVERLAY:
@@ -784,12 +784,12 @@ def create_network_profile(db_session, network_profile):
         return net_profile
 
 
-def delete_network_profile(db_session, id):
+def delete_network_profile(db_session, id, tenant_id=None):
     """Delete Network Profile."""
     LOG.debug(_("delete_network_profile()"))
     with db_session.begin(subtransactions=True):
         try:
-            network_profile = get_network_profile(db_session, id)
+            network_profile = get_network_profile(db_session, id, tenant_id)
             db_session.delete(network_profile)
             (db_session.query(n1kv_models_v2.ProfileBinding).
              filter_by(profile_id=id).delete())
@@ -798,21 +798,27 @@ def delete_network_profile(db_session, id):
             raise c_exc.ProfileTenantBindingNotFound(profile_id=id)
 
 
-def update_network_profile(db_session, id, network_profile):
+def update_network_profile(db_session, id, network_profile, tenant_id=None):
     """Update Network Profile."""
     LOG.debug(_("update_network_profile()"))
     with db_session.begin(subtransactions=True):
-        profile = get_network_profile(db_session, id)
+        profile = get_network_profile(db_session, id, tenant_id)
         profile.update(network_profile)
         return profile
 
 
-def get_network_profile(db_session, id):
+def get_network_profile(db_session, id, tenant_id=None):
     """Get Network Profile."""
     LOG.debug(_("get_network_profile()"))
+    if tenant_id and c_conf.CISCO_N1K.restrict_network_profiles:
+        if _profile_binding_exists(db_session=db_session,
+                                   tenant_id=tenant_id,
+                                   profile_id=id,
+                                   profile_type=c_const.NETWORK) is None:
+            raise c_exc.ProfileTenantBindingNotFound(profile_id=id)
     try:
-        return db_session.query(
-            n1kv_models_v2.NetworkProfile).filter_by(id=id).one()
+        return db_session.query(n1kv_models_v2.NetworkProfile).filter_by(
+                   id=id).one()
     except exc.NoResultFound:
         raise c_exc.NetworkProfileNotFound(profile=id)
 
@@ -1084,10 +1090,12 @@ class NetworkProfile_db_mixin(object):
         """
         # Check whether the network profile is in use.
         if self._segment_in_use(context.session,
-                                get_network_profile(context.session, id)):
+                                get_network_profile(context.session, id,
+                                                    context.tenant_id)):
             raise c_exc.NetworkProfileInUse(profile=id)
         # Delete and return the network profile if it is not in use.
-        _profile = delete_network_profile(context.session, id)
+        _profile = delete_network_profile(context.session, id,
+                                          context.tenant_id)
         return self._make_network_profile_dict(_profile)
 
     def update_network_profile(self, context, id, network_profile):
@@ -1104,7 +1112,8 @@ class NetworkProfile_db_mixin(object):
         # Flag to check whether network profile is updated or not.
         is_updated = False
         p = network_profile["network_profile"]
-        original_net_p = get_network_profile(context.session, id)
+        original_net_p = get_network_profile(context.session, id,
+                                             context.tenant_id)
         # Update network profile to tenant id binding.
         if context.is_admin and c_const.ADD_TENANTS in p:
             profile_bindings = _get_profile_bindings_by_uuid(context.session,
@@ -1137,7 +1146,8 @@ class NetworkProfile_db_mixin(object):
             p.get("segment_range") != original_net_p.segment_range):
             if not self._segment_in_use(context.session, original_net_p):
                 delete_segment_allocations(context.session, original_net_p)
-                updated_net_p = update_network_profile(context.session, id, p)
+                updated_net_p = update_network_profile(context.session, id, p,
+                                                       context.tenant_id)
                 self._validate_segment_range_uniqueness(context,
                                                         updated_net_p, id)
                 if original_net_p.segment_type == c_const.NETWORK_TYPE_VLAN:
@@ -1162,7 +1172,8 @@ class NetworkProfile_db_mixin(object):
         # Return network profile if it is successfully updated.
         if is_updated:
             return self._make_network_profile_dict(
-                update_network_profile(context.session, id, p))
+                update_network_profile(context.session, id, p,
+                                       context.tenant_id))
 
     def get_network_profile(self, context, id, fields=None):
         """
@@ -1174,7 +1185,7 @@ class NetworkProfile_db_mixin(object):
                         profile dictionary. Only these fields will be returned
         :returns: network profile dictionary
         """
-        profile = get_network_profile(context.session, id)
+        profile = get_network_profile(context.session, id, context.tenant_id)
         return self._make_network_profile_dict(profile, fields)
 
     def get_network_profiles(self, context, filters=None, fields=None):
@@ -1229,7 +1240,7 @@ class NetworkProfile_db_mixin(object):
         :returns: true if network profile exist else False
         """
         try:
-            get_network_profile(context.session, id)
+            get_network_profile(context.session, id, context.tenant_id)
             return True
         except c_exc.NetworkProfileNotFound(profile=id):
             return False
