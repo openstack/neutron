@@ -15,6 +15,7 @@
 
 import fcntl
 import glob
+import httplib
 import os
 import shlex
 import socket
@@ -27,6 +28,7 @@ from eventlet.green import subprocess
 from eventlet import greenthread
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_log import loggers
 from oslo_rootwrap import client
 from oslo_utils import excutils
 
@@ -34,6 +36,7 @@ from neutron.agent.common import config
 from neutron.common import constants
 from neutron.common import utils
 from neutron.i18n import _LE
+from neutron import wsgi
 
 
 LOG = logging.getLogger(__name__)
@@ -316,3 +319,64 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
     with eventlet.timeout.Timeout(timeout, exception):
         while not predicate():
             eventlet.sleep(sleep)
+
+
+def ensure_directory_exists_without_file(path):
+    dirname = os.path.dirname(path)
+    if os.path.isdir(dirname):
+        try:
+            os.unlink(path)
+        except OSError:
+            with excutils.save_and_reraise_exception() as ctxt:
+                if not os.path.exists(path):
+                    ctxt.reraise = False
+    else:
+        ensure_dir(dirname)
+
+
+class UnixDomainHTTPConnection(httplib.HTTPConnection):
+    """Connection class for HTTP over UNIX domain socket."""
+    def __init__(self, host, port=None, strict=None, timeout=None,
+                 proxy_info=None):
+        httplib.HTTPConnection.__init__(self, host, port, strict)
+        self.timeout = timeout
+        self.socket_path = cfg.CONF.metadata_proxy_socket
+
+    def connect(self):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        if self.timeout:
+            self.sock.settimeout(self.timeout)
+        self.sock.connect(self.socket_path)
+
+
+class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
+    def __init__(self, request, client_address, server):
+        if client_address == '':
+            client_address = ('<local>', 0)
+        # base class is old-style, so super does not work properly
+        eventlet.wsgi.HttpProtocol.__init__(self, request, client_address,
+                                            server)
+
+
+class UnixDomainWSGIServer(wsgi.Server):
+    def __init__(self, name):
+        self._socket = None
+        self._launcher = None
+        self._server = None
+        super(UnixDomainWSGIServer, self).__init__(name)
+
+    def start(self, application, file_socket, workers, backlog):
+        self._socket = eventlet.listen(file_socket,
+                                       family=socket.AF_UNIX,
+                                       backlog=backlog)
+
+        self._launch(application, workers=workers)
+
+    def _run(self, application, socket):
+        """Start a WSGI service in a new green thread."""
+        logger = logging.getLogger('eventlet.wsgi.server')
+        eventlet.wsgi.server(socket,
+                             application,
+                             max_size=self.num_threads,
+                             protocol=UnixDomainHttpProtocol,
+                             log=loggers.WritableLogger(logger))

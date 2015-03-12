@@ -12,9 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import httplib
-import socket
-
 import httplib2
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -22,6 +19,7 @@ import six.moves.urllib.parse as urlparse
 import webob
 
 from neutron.agent.linux import daemon
+from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
 from neutron.common import exceptions
 from neutron.common import utils
@@ -29,20 +27,6 @@ from neutron.i18n import _LE
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
-
-
-class UnixDomainHTTPConnection(httplib.HTTPConnection):
-    """Connection class for HTTP over UNIX domain socket."""
-    def __init__(self, host, port=None, strict=None, timeout=None,
-                 proxy_info=None):
-        httplib.HTTPConnection.__init__(self, host, port, strict)
-        self.timeout = timeout
-
-    def connect(self):
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        if self.timeout:
-            self.sock.settimeout(self.timeout)
-        self.sock.connect(cfg.CONF.metadata_proxy_socket)
 
 
 class NetworkMetadataProxyHandler(object):
@@ -98,7 +82,7 @@ class NetworkMetadataProxyHandler(object):
             method=method,
             headers=headers,
             body=body,
-            connection_type=UnixDomainHTTPConnection)
+            connection_type=agent_utils.UnixDomainHTTPConnection)
 
         if resp.status == 200:
             LOG.debug(resp)

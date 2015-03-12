@@ -14,21 +14,16 @@
 
 import hashlib
 import hmac
-import os
-import socket
 
-import eventlet
 import httplib2
 from neutronclient.v2_0 import client
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_log import loggers
 import oslo_messaging
-from oslo_utils import excutils
 import six.moves.urllib.parse as urlparse
 import webob
 
-from neutron.agent.linux import utils as linux_utils
+from neutron.agent.linux import utils as agent_utils
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
@@ -38,7 +33,6 @@ from neutron import context
 from neutron.i18n import _LE, _LW
 from neutron.openstack.common.cache import cache
 from neutron.openstack.common import loopingcall
-from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
 
@@ -266,55 +260,12 @@ class MetadataProxyHandler(object):
                         hashlib.sha256).hexdigest()
 
 
-class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
-    def __init__(self, request, client_address, server):
-        if client_address == '':
-            client_address = ('<local>', 0)
-        # base class is old-style, so super does not work properly
-        eventlet.wsgi.HttpProtocol.__init__(self, request, client_address,
-                                            server)
-
-
-class UnixDomainWSGIServer(wsgi.Server):
-    def __init__(self, name):
-        self._socket = None
-        self._launcher = None
-        self._server = None
-        super(UnixDomainWSGIServer, self).__init__(name)
-
-    def start(self, application, file_socket, workers, backlog):
-        self._socket = eventlet.listen(file_socket,
-                                       family=socket.AF_UNIX,
-                                       backlog=backlog)
-
-        self._launch(application, workers=workers)
-
-    def _run(self, application, socket):
-        """Start a WSGI service in a new green thread."""
-        logger = logging.getLogger('eventlet.wsgi.server')
-        eventlet.wsgi.server(socket,
-                             application,
-                             max_size=self.num_threads,
-                             protocol=UnixDomainHttpProtocol,
-                             log=loggers.WritableLogger(logger))
-
-
 class UnixDomainMetadataProxy(object):
 
     def __init__(self, conf):
         self.conf = conf
-
-        dirname = os.path.dirname(cfg.CONF.metadata_proxy_socket)
-        if os.path.isdir(dirname):
-            try:
-                os.unlink(cfg.CONF.metadata_proxy_socket)
-            except OSError:
-                with excutils.save_and_reraise_exception() as ctxt:
-                    if not os.path.exists(cfg.CONF.metadata_proxy_socket):
-                        ctxt.reraise = False
-        else:
-            linux_utils.ensure_dir(dirname)
-
+        agent_utils.ensure_directory_exists_without_file(
+            cfg.CONF.metadata_proxy_socket)
         self._init_state_reporting()
 
     def _init_state_reporting(self):
@@ -355,7 +306,7 @@ class UnixDomainMetadataProxy(object):
         self.agent_state.pop('start_flag', None)
 
     def run(self):
-        server = UnixDomainWSGIServer('neutron-metadata-agent')
+        server = agent_utils.UnixDomainWSGIServer('neutron-metadata-agent')
         server.start(MetadataProxyHandler(self.conf),
                      self.conf.metadata_proxy_socket,
                      workers=self.conf.metadata_workers,

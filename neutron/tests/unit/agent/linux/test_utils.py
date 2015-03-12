@@ -11,9 +11,11 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import os
 
 import mock
+import socket
 import testtools
 
 from neutron.agent.linux import utils
@@ -221,3 +223,62 @@ class TestBaseOSUtils(base.BaseTestCase):
         utils.ensure_dir('/the')
         isdir.assert_called_once_with('/the')
         self.assertFalse(makedirs.called)
+
+
+class TestUnixDomainHttpConnection(base.BaseTestCase):
+    def test_connect(self):
+        with mock.patch.object(utils, 'cfg') as cfg:
+            cfg.CONF.metadata_proxy_socket = '/the/path'
+            with mock.patch('socket.socket') as socket_create:
+                conn = utils.UnixDomainHTTPConnection('169.254.169.254',
+                                                      timeout=3)
+                conn.connect()
+
+                socket_create.assert_has_calls([
+                    mock.call(socket.AF_UNIX, socket.SOCK_STREAM),
+                    mock.call().settimeout(3),
+                    mock.call().connect('/the/path')]
+                )
+                self.assertEqual(conn.timeout, 3)
+
+
+class TestUnixDomainHttpProtocol(base.BaseTestCase):
+    def test_init_empty_client(self):
+        u = utils.UnixDomainHttpProtocol(mock.Mock(), '', mock.Mock())
+        self.assertEqual(u.client_address, ('<local>', 0))
+
+    def test_init_with_client(self):
+        u = utils.UnixDomainHttpProtocol(mock.Mock(), 'foo', mock.Mock())
+        self.assertEqual(u.client_address, 'foo')
+
+
+class TestUnixDomainWSGIServer(base.BaseTestCase):
+    def setUp(self):
+        super(TestUnixDomainWSGIServer, self).setUp()
+        self.eventlet_p = mock.patch.object(utils, 'eventlet')
+        self.eventlet = self.eventlet_p.start()
+        self.server = utils.UnixDomainWSGIServer('test')
+
+    def test_start(self):
+        mock_app = mock.Mock()
+        with mock.patch.object(self.server, '_launch') as launcher:
+            self.server.start(mock_app, '/the/path', workers=5, backlog=128)
+            self.eventlet.assert_has_calls([
+                mock.call.listen(
+                    '/the/path',
+                    family=socket.AF_UNIX,
+                    backlog=128
+                )]
+            )
+            launcher.assert_called_once_with(mock_app, workers=5)
+
+    def test_run(self):
+        self.server._run('app', 'sock')
+
+        self.eventlet.wsgi.server.assert_called_once_with(
+            'sock',
+            'app',
+            protocol=utils.UnixDomainHttpProtocol,
+            log=mock.ANY,
+            max_size=self.server.num_threads
+        )
