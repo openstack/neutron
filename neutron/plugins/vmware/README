@@ -1,0 +1,14 @@
+VMware Neutron plugins
+===========================
+
+Neutron plugins for VMware NSX family products
+
+* For configuration information, supported extensions, and architectural
+  documentation please refer to the plugin wiki page:
+  https://wiki.openstack.org/wiki/Neutron/VMware_NSX_plugins
+
+* Full plugin code available at:
+  * http://git.openstack.org/cgit/stackforge/vmware-nsx
+  * https://github.com/stackforge/vmware-nsx
+
+* Pypi location: https://pypi.python.org/pypi/vmware-nsx
