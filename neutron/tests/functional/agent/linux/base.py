@@ -33,6 +33,7 @@ ICMP_MARK_RULE = ('-j MARK --set-xmark %(value)s/%(mask)s'
 MARKED_BLOCK_RULE = '-m mark --mark %s -j DROP' % MARK_VALUE
 ICMP_BLOCK_RULE = '-p icmp -j DROP'
 VETH_PREFIX = 'tst-vth'
+NS_PREFIX = 'func-'
 
 
 #TODO(jschwarz): Move these two functions to neutron/tests/common/
@@ -62,11 +63,16 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
                 self.skipTest(skip_msg)
             raise
 
-    def _create_namespace(self):
+    @staticmethod
+    def _cleanup_namespace(namespace):
+        if namespace.netns.exists(namespace.namespace):
+            namespace.netns.delete(namespace.namespace)
+
+    def _create_namespace(self, prefix=NS_PREFIX):
         ip_cmd = ip_lib.IPWrapper()
-        name = "func-%s" % uuidutils.generate_uuid()
+        name = prefix + uuidutils.generate_uuid()
         namespace = ip_cmd.ensure_namespace(name)
-        self.addCleanup(namespace.netns.delete, namespace.namespace)
+        self.addCleanup(BaseLinuxTestCase._cleanup_namespace, namespace)
 
         return namespace
 
@@ -165,14 +171,15 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
         device.addr.add(cidr)
         device.link.set_up()
 
-    def prepare_veth_pairs(self):
+    def prepare_veth_pairs(self, src_ns_prefix=NS_PREFIX,
+                           dst_ns_prefix=NS_PREFIX):
 
         src_addr = self.SRC_ADDRESS
         dst_addr = self.DST_ADDRESS
         src_veth = get_rand_veth_name()
         dst_veth = get_rand_veth_name()
-        src_ns = self._create_namespace()
-        dst_ns = self._create_namespace()
+        src_ns = self._create_namespace(src_ns_prefix)
+        dst_ns = self._create_namespace(dst_ns_prefix)
 
         src_veth, dst_veth = src_ns.add_veth(src_veth,
                                              dst_veth,

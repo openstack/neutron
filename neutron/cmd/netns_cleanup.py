@@ -142,6 +142,19 @@ def destroy_namespace(conf, namespace, force=False):
         LOG.exception(_LE('Error unable to destroy namespace: %s'), namespace)
 
 
+def cleanup_network_namespaces(conf):
+    # Identify namespaces that are candidates for deletion.
+    candidates = [ns for ns in
+                  ip_lib.IPWrapper.get_namespaces()
+                  if eligible_for_deletion(conf, ns, conf.force)]
+
+    if candidates:
+        time.sleep(2)
+
+        for namespace in candidates:
+            destroy_namespace(conf, namespace, conf.force)
+
+
 def main():
     """Main method for cleaning up network namespaces.
 
@@ -162,14 +175,4 @@ def main():
     conf = setup_conf()
     conf()
     config.setup_logging()
-
-    # Identify namespaces that are candidates for deletion.
-    candidates = [ns for ns in
-                  ip_lib.IPWrapper.get_namespaces()
-                  if eligible_for_deletion(conf, ns, conf.force)]
-
-    if candidates:
-        time.sleep(2)
-
-        for namespace in candidates:
-            destroy_namespace(conf, namespace, conf.force)
+    cleanup_network_namespaces(conf)
