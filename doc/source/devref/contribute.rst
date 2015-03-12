@@ -400,6 +400,8 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-arista_            |       ml2,l3          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
+| networking-bigswitch_         |      ml2,core,l3      |    no     |       yes        |   [C]   |     Kilo     |
++-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-brocade_           |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-cisco_             |  core,ml2,l3,fw,vpn   |    yes    |       yes        |   [B]   |              |
@@ -439,6 +441,14 @@ Arista
 * Git: https://github.com/stackforge/networking-arista
 * Launchpad: https://launchpad.net/networking-arista
 * Pypi: https://pypi.python.org/pypi/networking-arista
+
+.. _networking-bigswitch:
+
+Big Switch Networks
+-------------------
+
+* Git: https://git.openstack.org/stackforge/networking-bigswitch
+* Pypi: https://pypi.python.org/pypi/bsnstacklib
 
 .. _networking-brocade:
 
