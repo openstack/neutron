@@ -143,20 +143,31 @@ class TestCli(base.BaseTestCase):
             {'sql': False}
         )
 
-    def test_downgrade(self):
         self._main_test_helper(
-            ['prog', 'downgrade', '--sql', 'folsom'],
-            'downgrade',
-            ('folsom',),
-            {'sql': True}
-        )
-
-        self._main_test_helper(
-            ['prog', 'downgrade', '--delta', '2'],
-            'downgrade',
-            ('-2',),
+            ['prog', 'upgrade', 'kilo', '--delta', '3'],
+            'upgrade',
+            ('kilo+3',),
             {'sql': False}
         )
+
+    def assert_command_fails(self, command):
+        # Avoid cluttering stdout with argparse error messages
+        mock.patch('argparse.ArgumentParser._print_message').start()
+        with mock.patch.object(sys, 'argv', command), mock.patch.object(
+                cli, 'run_sanity_checks'):
+            self.assertRaises(SystemExit, cli.main)
+
+    def test_downgrade_fails(self):
+        self.assert_command_fails(['prog', 'downgrade', '--sql', 'juno'])
+
+    def test_upgrade_negative_relative_revision_fails(self):
+        self.assert_command_fails(['prog', 'upgrade', '-2'])
+
+    def test_upgrade_negative_delta_fails(self):
+        self.assert_command_fails(['prog', 'upgrade', '--delta', '-2'])
+
+    def test_upgrade_rejects_delta_with_relative_revision(self):
+        self.assert_command_fails(['prog', 'upgrade', '+2', '--delta', '3'])
 
     def _test_validate_head_file_helper(self, heads, file_content=None):
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
