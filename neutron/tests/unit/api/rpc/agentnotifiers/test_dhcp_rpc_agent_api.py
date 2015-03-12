@@ -139,9 +139,9 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self._test__notify_agents('port_update_end',
                                   expected_scheduling=0, expected_casts=1)
 
-    def test__notify_agents_cast_required_wo_scheduling_on_subnet_create(self):
+    def test__notify_agents_cast_required_with_scheduling_subnet_create(self):
         self._test__notify_agents('subnet_create_end',
-                                  expected_scheduling=0, expected_casts=1)
+                                  expected_scheduling=1, expected_casts=1)
 
     def test__notify_agents_no_action(self):
         self._test__notify_agents('network_create_end',

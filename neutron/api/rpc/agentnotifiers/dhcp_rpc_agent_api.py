@@ -70,8 +70,8 @@ class DhcpAgentNotifyAPI(object):
                     {'network': {'id': network['id']}}, agent['host'])
         elif not existing_agents:
             LOG.warn(_LW('Unable to schedule network %s: no agents available; '
-                         'will retry on subsequent port creation events.'),
-                     network['id'])
+                         'will retry on subsequent port and subnet creation '
+                         'events.'), network['id'])
         return new_agents + existing_agents
 
     def _get_enabled_agents(self, context, network, agents, method, payload):
@@ -126,6 +126,7 @@ class DhcpAgentNotifyAPI(object):
 
             # schedule the network first, if needed
             schedule_required = (
+                method == 'subnet_create_end' or
                 method == 'port_create_end' and
                 not self._is_reserved_dhcp_port(payload['port']))
             if schedule_required:
