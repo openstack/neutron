@@ -7,3 +7,6 @@ Note: Initial version of this driver support VLANs only.
 
 For more details on use please refer to:
 https://wiki.openstack.org/wiki/Arista-neutron-ml2-driver
+
+The back-end of the driver is now moved to:
+https://github.com/stackforge/networking-arista

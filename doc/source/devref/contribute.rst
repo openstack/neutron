@@ -398,7 +398,7 @@ The following chart captures the following aspects:
 +===============================+=======================+===========+==================+=========+==============+
 | freescale-nscs_               |         ml2,fw        |    no     |       no         |   [D]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-arista_            |          ml2          |    no     |       yes        |   [B]   |              |
+| networking-arista_            |       ml2,l3          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-brocade_           |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -437,7 +437,8 @@ Arista
 ------
 
 * Git: https://github.com/stackforge/networking-arista
-* PyPI: https://pypi.python.org/pypi/networking-arista
+* Launchpad: https://launchpad.net/networking-arista
+* Pypi: https://pypi.python.org/pypi/networking-arista
 
 .. _networking-brocade:
 
