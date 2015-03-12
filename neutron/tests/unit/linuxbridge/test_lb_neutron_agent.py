@@ -108,7 +108,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                                                                           0)
 
     def test_treat_devices_removed_with_existed_device(self):
-        agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC({}, 0)
+        agent = self.agent
         devices = [DEVICE_1]
         with contextlib.nested(
             mock.patch.object(agent.plugin_rpc, "update_device_down"),
@@ -125,7 +125,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 self.assertTrue(fn_rdf.called)
 
     def test_treat_devices_removed_with_not_existed_device(self):
-        agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC({}, 0)
+        agent = self.agent
         devices = [DEVICE_1]
         with contextlib.nested(
             mock.patch.object(agent.plugin_rpc, "update_device_down"),
@@ -142,7 +142,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 self.assertTrue(fn_rdf.called)
 
     def test_treat_devices_removed_failed(self):
-        agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC({}, 0)
+        agent = self.agent
         devices = [DEVICE_1]
         with contextlib.nested(
             mock.patch.object(agent.plugin_rpc, "update_device_down"),
