@@ -344,6 +344,24 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
                            extra_environ=env, expect_errors=True)
         self.assertEqual(400, res.status_int)
 
+    def test_make_reservation_resource_unknown_raises(self):
+        tenant_id = 'tenant_id1'
+        self.assertRaises(exceptions.QuotaResourceUnknown,
+                          quota.QUOTAS.make_reservation,
+                          context.get_admin_context(load_admin_roles=False),
+                          tenant_id,
+                          {'foobar': 1},
+                          plugin=None)
+
+    def test_make_reservation_negative_delta_raises(self):
+        tenant_id = 'tenant_id1'
+        self.assertRaises(exceptions.InvalidQuotaValue,
+                          quota.QUOTAS.make_reservation,
+                          context.get_admin_context(load_admin_roles=False),
+                          tenant_id,
+                          {'network': -1},
+                          plugin=None)
+
 
 class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
     fmt = 'json'

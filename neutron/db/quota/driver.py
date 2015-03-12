@@ -13,8 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_db import api as oslo_db_api
+from oslo_log import log
+
 from neutron.common import exceptions
+from neutron.db import api as db_api
+from neutron.db.quota import api as quota_api
 from neutron.db.quota import models as quota_models
+
+LOG = log.getLogger(__name__)
 
 
 class DbQuotaDriver(object):
@@ -42,7 +49,8 @@ class DbQuotaDriver(object):
         # update with tenant specific limits
         q_qry = context.session.query(quota_models.Quota).filter_by(
             tenant_id=tenant_id)
-        tenant_quota.update((q['resource'], q['limit']) for q in q_qry)
+        for item in q_qry:
+            tenant_quota[item['resource']] = item['limit']
 
         return tenant_quota
 
@@ -115,6 +123,112 @@ class DbQuotaDriver(object):
             context, resources, tenant_id)
 
         return dict((k, v) for k, v in quotas.items())
+
+    def _handle_expired_reservations(self, context, tenant_id,
+                                     resource, expired_amount):
+        LOG.debug(("Adjusting usage for resource %(resource)s: "
+                   "removing %(expired)d reserved items"),
+                  {'resource': resource,
+                   'expired': expired_amount})
+        # TODO(salv-orlando): It should be possible to do this
+        # operation for all resources with a single query.
+        # Update reservation usage
+        quota_api.set_quota_usage(
+            context,
+            resource,
+            tenant_id,
+            reserved=-expired_amount,
+            delta=True)
+        # Delete expired reservations (we don't want them to accrue
+        # in the database)
+        quota_api.remove_expired_reservations(
+            context, tenant_id=tenant_id)
+
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True,
+                               retry_on_deadlock=True)
+    def make_reservation(self, context, tenant_id, resources, deltas, plugin):
+        # Lock current reservation table
+        # NOTE(salv-orlando): This routine uses DB write locks.
+        # These locks are acquired by the count() method invoked on resources.
+        # Please put your shotguns aside.
+        # A non locking algorithm for handling reservation is feasible, however
+        # it will require two database writes even in cases when there are not
+        # concurrent reservations.
+        # For this reason it might be advisable to handle contention using
+        # this kind of locks and paying the cost of a write set certification
+        # failure when a mysql galera cluster is employed. Also, this class of
+        # locks should be ok to use when support for sending "hotspot" writes
+        # to a single node will be avaialable.
+        requested_resources = deltas.keys()
+        with context.session.begin():
+            # Gather current usage information
+            # TODO(salv-orlando): calling count() for every resource triggers
+            # multiple queries on quota usage. This should be improved, however
+            # this is not an urgent matter as the REST API currently only
+            # allows allocation of a resource at a time
+            # NOTE: pass plugin too for compatibility with CountableResource
+            # instances
+            current_usages = dict(
+                (resource, resources[resource].count(
+                    context, plugin, tenant_id)) for
+                resource in requested_resources)
+            # get_tenant_quotes needs in inout a dictionary mapping resource
+            # name to BaseResosurce instances so that the default quota can be
+            # retrieved
+            current_limits = self.get_tenant_quotas(
+                context, resources, tenant_id)
+            # Adjust for expired reservations. Apparently it is cheaper than
+            # querying everytime for active reservations and counting overall
+            # quantity of resources reserved
+            expired_deltas = quota_api.get_reservations_for_resources(
+                context, tenant_id, requested_resources, expired=True)
+            # Verify that the request can be accepted with current limits
+            resources_over_limit = []
+            for resource in requested_resources:
+                expired_reservations = expired_deltas.get(resource, 0)
+                total_usage = current_usages[resource] - expired_reservations
+                # A negative quota limit means infinite
+                if current_limits[resource] < 0:
+                    LOG.debug(("Resource %(resource)s has unlimited quota "
+                               "limit. It is possible to allocate %(delta)s "
+                               "items."), {'resource': resource,
+                                           'delta': deltas[resource]})
+                    continue
+                res_headroom = current_limits[resource] - total_usage
+                LOG.debug(("Attempting to reserve %(delta)d items for "
+                           "resource %(resource)s. Total usage: %(total)d; "
+                           "quota limit: %(limit)d; headroom:%(headroom)d"),
+                          {'resource': resource,
+                           'delta': deltas[resource],
+                           'total': total_usage,
+                           'limit': current_limits[resource],
+                           'headroom': res_headroom})
+                if res_headroom < deltas[resource]:
+                    resources_over_limit.append(resource)
+                if expired_reservations:
+                    self._handle_expired_reservations(
+                        context, tenant_id, resource, expired_reservations)
+
+            if resources_over_limit:
+                raise exceptions.OverQuota(overs=sorted(resources_over_limit))
+            # Success, store the reservation
+            # TODO(salv-orlando): Make expiration time configurable
+            return quota_api.create_reservation(
+                context, tenant_id, deltas)
+
+    def commit_reservation(self, context, reservation_id):
+        # Do not mark resource usage as dirty. If a reservation is committed,
+        # then the releveant resources have been created. Usage data for these
+        # resources has therefore already been marked dirty.
+        quota_api.remove_reservation(context, reservation_id,
+                                     set_dirty=False)
+
+    def cancel_reservation(self, context, reservation_id):
+        # Mark resource usage as dirty so the next time both actual resources
+        # used and reserved will be recalculated
+        quota_api.remove_reservation(context, reservation_id,
+                                     set_dirty=True)
 
     def limit_check(self, context, tenant_id, resources, values):
         """Check simple quota limits.

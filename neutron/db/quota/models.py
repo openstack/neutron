@@ -13,10 +13,31 @@
 #    under the License.
 
 import sqlalchemy as sa
+from sqlalchemy import orm
 from sqlalchemy import sql
 
 from neutron.db import model_base
 from neutron.db import models_v2
+
+
+class ResourceDelta(model_base.BASEV2):
+    resource = sa.Column(sa.String(255), primary_key=True)
+    reservation_id = sa.Column(sa.String(36),
+                               sa.ForeignKey('reservations.id',
+                                             ondelete='CASCADE'),
+                               primary_key=True,
+                               nullable=False)
+    # Requested amount of resource
+    amount = sa.Column(sa.Integer)
+
+
+class Reservation(model_base.BASEV2, models_v2.HasId):
+    tenant_id = sa.Column(sa.String(255))
+    expiration = sa.Column(sa.DateTime())
+    resource_deltas = orm.relationship(ResourceDelta,
+                                       backref='reservation',
+                                       lazy="joined",
+                                       cascade='all, delete-orphan')
 
 
 class Quota(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
