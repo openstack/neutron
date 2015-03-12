@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev448\n"
+"Project-Id-Version: neutron 2015.1.dev472\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-10 06:15+0000\n"
+"POT-Creation-Date: 2015-03-11 06:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -32,7 +32,7 @@ msgstr ""
 msgid "Loading Plugin: %s"
 msgstr ""
 
-#: neutron/policy.py:120
+#: neutron/policy.py:113
 #, python-format
 msgid ""
 "Inserting policy:%(new_policy)s in place of deprecated "
@@ -134,13 +134,13 @@ msgstr ""
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:573 neutron/agent/l3/agent.py:1050
+#: neutron/agent/dhcp/agent.py:573 neutron/agent/l3/agent.py:1051
 #: neutron/services/metering/agents/metering_agent.py:278
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:979
+#: neutron/agent/l3/agent.py:980
 msgid "L3 agent started"
 msgstr ""
 
@@ -322,12 +322,12 @@ msgstr ""
 msgid "No Service associated, so safe to migrate: %s listed"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:528
+#: neutron/db/l3_dvr_db.py:530
 #, python-format
 msgid "Agent Gateway port does not exist, so create one: %s"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:612
+#: neutron/db/l3_dvr_db.py:614
 #, python-format
 msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
@@ -619,7 +619,6 @@ msgid "Controller IPs: %s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:795
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:123
 #: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:89
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:99
 #, python-format
@@ -922,36 +921,6 @@ msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:53
 msgid "Agent initialised successfully, now running... "
-msgstr ""
-
-#: neutron/plugins/nec/nec_plugin.py:280
-#, python-format
-msgid "deactivate_port(): OFC port for port=%s is already removed."
-msgstr ""
-
-#: neutron/plugins/nec/nec_router.py:334
-#, python-format
-msgid "Enabled router drivers: %s"
-msgstr ""
-
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:52
-#, python-format
-msgid "Update ports: added=%(added)s, removed=%(removed)s"
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:108
-#, python-format
-msgid "Specified resource %s does not exist on OFC "
-msgstr ""
-
-#: neutron/plugins/nec/common/ofc_client.py:140
-#, python-format
-msgid "Waiting for %s seconds due to OFC Service_Unavailable."
-msgstr ""
-
-#: neutron/plugins/nec/drivers/__init__.py:37
-#, python-format
-msgid "Loading OFC driver: %s"
 msgstr ""
 
 #: neutron/plugins/oneconvergence/agent/nvsd_neutron_agent.py:153
