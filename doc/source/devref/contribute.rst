@@ -410,7 +410,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-midonet_           |        core,lb        |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-mlnx_              |                       |           |                  |         |              |
+| networking-mlnx_              |          ml2          |    yes    |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-nec_               |         core          |    yes    |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -469,6 +469,12 @@ MidoNet
 * PyPI: https://pypi.python.org/pypi/networking-midonet
 
 .. _networking-mlnx:
+
+Mellanox
+--------
+
+* Git: https://github.com/stackforge/networking-mlnx
+* Launchpad: https://launchpad.net/networking-mlnx
 
 .. _networking-nec:
 
