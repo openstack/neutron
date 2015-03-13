@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest_lib.common.utils import data_utils
+
 from neutron.tests.tempest.api.network import base
 from neutron.tests.api.contrib import clients
-from neutron.tests.tempest.common.utils import data_utils
 from neutron.tests.tempest import config
 from neutron.tests.tempest import test
 

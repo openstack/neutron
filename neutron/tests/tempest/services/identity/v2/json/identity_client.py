@@ -269,3 +269,15 @@ class IdentityClientJSON(service_client.ServiceClient):
         body = json.loads(body)
         return service_client.ResponseBodyList(resp,
                                                body['extensions']['values'])
+
+    def create_user_ec2_credentials(self, user_id, tenant_id):
+        post_body = json.dumps({'tenant_id': tenant_id})
+        resp, body = self.post('/users/%s/credentials/OS-EC2' % user_id,
+                               post_body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, self._parse_resp(body))
+
+    def list_user_ec2_credentials(self, user_id):
+        resp, body = self.get('/users/%s/credentials/OS-EC2' % user_id)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBodyList(resp, self._parse_resp(body))

@@ -14,8 +14,8 @@
 import time
 
 from oslo_log import log as logging
+from tempest_lib.common.utils import misc as misc_utils
 
-from neutron.tests.tempest.common.utils import misc as misc_utils
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
 

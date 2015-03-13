@@ -17,6 +17,7 @@ import copy
 import functools
 
 import jsonschema
+
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)

@@ -58,7 +58,8 @@ def is_admin_available():
             is_admin = False
     else:
         try:
-            cred_provider.get_configured_credentials('identity_admin')
+            cred_provider.get_configured_credentials('identity_admin',
+                                                     fill_in=False)
         except exceptions.InvalidConfiguration:
             is_admin = False
     return is_admin

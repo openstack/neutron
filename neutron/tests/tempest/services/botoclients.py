@@ -20,7 +20,6 @@ import types
 import urlparse
 
 from neutron.tests.tempest import config
-from neutron.tests.tempest import exceptions
 
 import boto
 import boto.ec2
@@ -33,41 +32,15 @@ class BotoClientBase(object):
 
     ALLOWED_METHODS = set()
 
-    def __init__(self, username=None, password=None,
-                 auth_url=None, tenant_name=None,
-                 *args, **kwargs):
-        # FIXME(andreaf) replace credentials and auth_url with auth_provider
+    def __init__(self, identity_client):
+        self.identity_client = identity_client
 
-        insecure_ssl = CONF.identity.disable_ssl_certificate_validation
         self.ca_cert = CONF.identity.ca_certificates_file
-
         self.connection_timeout = str(CONF.boto.http_socket_timeout)
         self.num_retries = str(CONF.boto.num_retries)
         self.build_timeout = CONF.boto.build_timeout
-        self.ks_cred = {"username": username,
-                        "password": password,
-                        "auth_url": auth_url,
-                        "tenant_name": tenant_name,
-                        "insecure": insecure_ssl,
-                        "cacert": self.ca_cert}
 
-    def _keystone_aws_get(self):
-        # FIXME(andreaf) Move EC2 credentials to AuthProvider
-        import keystoneclient.v2_0.client
-
-        keystone = keystoneclient.v2_0.client.Client(**self.ks_cred)
-        ec2_cred_list = keystone.ec2.list(keystone.auth_user_id)
-        ec2_cred = None
-        for cred in ec2_cred_list:
-            if cred.tenant_id == keystone.auth_tenant_id:
-                ec2_cred = cred
-                break
-        else:
-            ec2_cred = keystone.ec2.create(keystone.auth_user_id,
-                                           keystone.auth_tenant_id)
-        if not all((ec2_cred, ec2_cred.access, ec2_cred.secret)):
-            raise lib_exc.NotFound("Unable to get access and secret keys")
-        return ec2_cred
+        self.connection_data = {}
 
     def _config_boto_timeout(self, timeout, retries):
         try:
@@ -105,21 +78,37 @@ class BotoClientBase(object):
     def get_connection(self):
         self._config_boto_timeout(self.connection_timeout, self.num_retries)
         self._config_boto_ca_certificates_file(self.ca_cert)
-        if not all((self.connection_data["aws_access_key_id"],
-                   self.connection_data["aws_secret_access_key"])):
-            if all([self.ks_cred.get('auth_url'),
-                    self.ks_cred.get('username'),
-                    self.ks_cred.get('tenant_name'),
-                    self.ks_cred.get('password')]):
-                ec2_cred = self._keystone_aws_get()
-                self.connection_data["aws_access_key_id"] = \
-                    ec2_cred.access
-                self.connection_data["aws_secret_access_key"] = \
-                    ec2_cred.secret
-            else:
-                raise exceptions.InvalidConfiguration(
-                    "Unable to get access and secret keys")
+
+        ec2_client_args = {'aws_access_key_id': CONF.boto.aws_access,
+                           'aws_secret_access_key': CONF.boto.aws_secret}
+        if not all(ec2_client_args.values()):
+            ec2_client_args = self.get_aws_credentials(self.identity_client)
+
+        self.connection_data.update(ec2_client_args)
         return self.connect_method(**self.connection_data)
+
+    def get_aws_credentials(self, identity_client):
+        """
+        Obtain existing, or create new AWS credentials
+        :param identity_client: identity client with embedded credentials
+        :return: EC2 credentials
+        """
+        ec2_cred_list = identity_client.list_user_ec2_credentials(
+            identity_client.user_id)
+        for cred in ec2_cred_list:
+            if cred['tenant_id'] == identity_client.tenant_id:
+                ec2_cred = cred
+                break
+        else:
+            ec2_cred = identity_client.create_user_ec2_credentials(
+                identity_client.user_id, identity_client.tenant_id)
+        if not all((ec2_cred, ec2_cred['access'], ec2_cred['secret'])):
+            raise lib_exc.NotFound("Unable to get access and secret keys")
+        else:
+            ec2_cred_aws = {}
+            ec2_cred_aws['aws_access_key_id'] = ec2_cred['access']
+            ec2_cred_aws['aws_secret_access_key'] = ec2_cred['secret']
+        return ec2_cred_aws
 
 
 class APIClientEC2(BotoClientBase):
@@ -127,11 +116,9 @@ class APIClientEC2(BotoClientBase):
     def connect_method(self, *args, **kwargs):
         return boto.connect_ec2(*args, **kwargs)
 
-    def __init__(self, *args, **kwargs):
-        super(APIClientEC2, self).__init__(*args, **kwargs)
+    def __init__(self, identity_client):
+        super(APIClientEC2, self).__init__(identity_client)
         insecure_ssl = CONF.identity.disable_ssl_certificate_validation
-        aws_access = CONF.boto.aws_access
-        aws_secret = CONF.boto.aws_secret
         purl = urlparse.urlparse(CONF.boto.ec2_url)
 
         region_name = CONF.compute.region
@@ -147,14 +134,12 @@ class APIClientEC2(BotoClientBase):
                 port = 443
         else:
             port = int(port)
-        self.connection_data = {"aws_access_key_id": aws_access,
-                                "aws_secret_access_key": aws_secret,
-                                "is_secure": purl.scheme == "https",
-                                "validate_certs": not insecure_ssl,
-                                "region": region,
-                                "host": purl.hostname,
-                                "port": port,
-                                "path": purl.path}
+        self.connection_data.update({"is_secure": purl.scheme == "https",
+                                     "validate_certs": not insecure_ssl,
+                                     "region": region,
+                                     "host": purl.hostname,
+                                     "port": port,
+                                     "path": purl.path})
 
     ALLOWED_METHODS = set(('create_key_pair', 'get_key_pair',
                            'delete_key_pair', 'import_key_pair',
@@ -207,11 +192,9 @@ class ObjectClientS3(BotoClientBase):
     def connect_method(self, *args, **kwargs):
         return boto.connect_s3(*args, **kwargs)
 
-    def __init__(self, *args, **kwargs):
-        super(ObjectClientS3, self).__init__(*args, **kwargs)
+    def __init__(self, identity_client):
+        super(ObjectClientS3, self).__init__(identity_client)
         insecure_ssl = CONF.identity.disable_ssl_certificate_validation
-        aws_access = CONF.boto.aws_access
-        aws_secret = CONF.boto.aws_secret
         purl = urlparse.urlparse(CONF.boto.s3_url)
         port = purl.port
         if port is None:
@@ -221,14 +204,12 @@ class ObjectClientS3(BotoClientBase):
                 port = 443
         else:
             port = int(port)
-        self.connection_data = {"aws_access_key_id": aws_access,
-                                "aws_secret_access_key": aws_secret,
-                                "is_secure": purl.scheme == "https",
-                                "validate_certs": not insecure_ssl,
-                                "host": purl.hostname,
-                                "port": port,
-                                "calling_format": boto.s3.connection.
-                                OrdinaryCallingFormat()}
+        self.connection_data.update({"is_secure": purl.scheme == "https",
+                                     "validate_certs": not insecure_ssl,
+                                     "host": purl.hostname,
+                                     "port": port,
+                                     "calling_format": boto.s3.connection.
+                                     OrdinaryCallingFormat()})
 
     ALLOWED_METHODS = set(('create_bucket', 'delete_bucket', 'generate_url',
                            'get_all_buckets', 'get_bucket', 'delete_key',
