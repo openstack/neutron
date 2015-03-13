@@ -23,8 +23,8 @@ import eventlet
 eventlet.monkey_patch()
 
 import netaddr
-from neutron.plugins.openvswitch.agent import ovs_dvr_neutron_agent
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging
 from six import moves
 
@@ -44,9 +44,9 @@ from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.openvswitch.agent import ovs_dvr_neutron_agent
 from neutron.plugins.openvswitch.common import constants
 
 

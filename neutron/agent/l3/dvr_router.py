@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.agent.l3 import dvr_fip_ns
@@ -21,7 +22,6 @@ from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

@@ -17,6 +17,7 @@
 import functools
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import importutils
 
@@ -25,7 +26,6 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.i18n import _LI, _LW
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 # history

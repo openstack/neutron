@@ -15,7 +15,7 @@
 """Log helper functions."""
 import functools
 
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
 
 
 def log(method):

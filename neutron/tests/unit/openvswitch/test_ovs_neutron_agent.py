@@ -19,6 +19,7 @@ import time
 import mock
 import netaddr
 from oslo_config import cfg
+from oslo_log import log
 import testtools
 
 from neutron.agent.linux import async_process
@@ -26,7 +27,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
-from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
@@ -1004,7 +1004,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
 
         with contextlib.nested(
             mock.patch.object(async_process.AsyncProcess, "_spawn"),
-            mock.patch.object(log.ContextAdapter, 'exception'),
+            mock.patch.object(log.KeywordArgumentAdapter, 'exception'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
                               'scan_ports'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,

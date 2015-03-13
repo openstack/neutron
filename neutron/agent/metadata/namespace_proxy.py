@@ -17,6 +17,7 @@ import socket
 
 import httplib2
 from oslo_config import cfg
+from oslo_log import log as logging
 import six.moves.urllib.parse as urlparse
 import webob
 
@@ -25,7 +26,6 @@ from neutron.common import config
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)

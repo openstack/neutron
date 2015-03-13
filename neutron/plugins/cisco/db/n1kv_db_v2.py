@@ -12,8 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
 import re
+
+import netaddr
+from oslo_log import log as logging
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
@@ -23,7 +25,6 @@ from neutron.common import exceptions as n_exc
 import neutron.db.api as db
 from neutron.db import models_v2
 from neutron.i18n import _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config as c_conf

@@ -15,9 +15,10 @@
 
 import re
 
+from oslo_log import log
+
 from neutron.common import constants
 from neutron.extensions import portbindings
-from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
 

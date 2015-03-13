@@ -17,6 +17,7 @@ import contextlib
 import itertools
 
 import mock
+from oslo_log import log as logging
 import testtools
 from webob import exc
 
@@ -24,7 +25,6 @@ from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin

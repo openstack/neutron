@@ -19,10 +19,10 @@ IPv6-related utilities and helper functions.
 import os
 
 import netaddr
+from oslo_log import log
 
 from neutron.common import constants
 from neutron.i18n import _LI
-from neutron.openstack.common import log
 
 
 LOG = log.getLogger(__name__)

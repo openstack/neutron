@@ -18,9 +18,9 @@ import sys
 import time
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common import log as logging
 
 # Check needed for unit testing on Unix
 if sys.platform == 'win32':

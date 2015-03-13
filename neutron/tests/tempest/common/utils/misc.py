@@ -16,7 +16,7 @@
 import inspect
 import re
 
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 

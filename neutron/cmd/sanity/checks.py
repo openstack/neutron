@@ -16,6 +16,7 @@
 import re
 
 import netaddr
+from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ip_link_support
@@ -23,7 +24,6 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as const
 from neutron.plugins.openvswitch.common import constants as ovs_const

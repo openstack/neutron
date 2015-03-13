@@ -15,6 +15,7 @@
 
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent import firewall
 from neutron.agent.linux import ipset_manager
@@ -23,7 +24,6 @@ from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

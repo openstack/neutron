@@ -14,14 +14,15 @@
 #    under the License.
 
 import contextlib
+
 from oslo_config import cfg
+from oslo_log import log as logging
 from webob import exc
 
 from neutron.common import constants
 from neutron.db import extraroute_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_l3_plugin as test_l3

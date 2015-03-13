@@ -19,6 +19,7 @@ import functools
 import mock
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 import testtools
 import webob
 import webob.dec
@@ -38,7 +39,6 @@ from neutron.agent.metadata import agent as metadata_agent
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.services import advanced_service as adv_svc
 from neutron.tests.functional.agent.linux import base
@@ -61,10 +61,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         config = cfg.ConfigOpts()
         config.register_opts(common_config.core_opts)
         config.register_opts(common_config.core_cli_opts)
-        config.register_cli_opts(logging.common_cli_opts)
-        config.register_cli_opts(logging.logging_cli_opts)
-        config.register_opts(logging.generic_log_opts)
-        config.register_opts(logging.log_opts)
+        logging.register_options(config)
         agent_config.register_process_monitor_opts(config)
         return config
 

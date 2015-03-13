@@ -20,6 +20,7 @@ import re
 import shutil
 
 import netaddr
+from oslo_log import log as logging
 from oslo_utils import importutils
 import six
 
@@ -31,7 +32,6 @@ from neutron.common import exceptions
 from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)

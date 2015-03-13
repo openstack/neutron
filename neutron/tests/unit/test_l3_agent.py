@@ -15,10 +15,11 @@
 
 import contextlib
 import copy
-import eventlet
 
+import eventlet
 import mock
 import netaddr
+from oslo_log import log
 import oslo_messaging
 from testtools import matchers
 
@@ -40,7 +41,6 @@ from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.i18n import _LE
-from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
@@ -179,8 +179,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         super(BasicRouterOperationsFramework, self).setUp()
         self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
-        self.conf.register_cli_opts(log.common_cli_opts)
-        self.conf.register_cli_opts(log.logging_cli_opts)
+        log.register_options(self.conf)
         self.conf.register_opts(l3_config.OPTS)
         self.conf.register_opts(ha.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)

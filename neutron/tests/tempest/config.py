@@ -18,10 +18,9 @@ from __future__ import print_function
 import logging as std_logging
 import os
 
-from oslo.config import cfg
-
 from oslo_concurrency import lockutils
-from neutron.openstack.common import log as logging
+from oslo_config import cfg
+from oslo_log import log as logging
 
 
 def register_opt_group(conf, opt_group, options):
@@ -1099,6 +1098,8 @@ def register_opts():
         register_opt_group(cfg.CONF, g, o)
 
 
+# TODO(ihrachys): this function should probably be removed since it's not used
+# anywhere, and accesses internal implementation details of olso libraries
 def list_opts():
     """Return a list of oslo.config options available.
 
@@ -1197,7 +1198,7 @@ class TempestConfigPrivate(object):
             cfg.CONF([], project='tempest', default_config_files=config_files)
         else:
             cfg.CONF([], project='tempest')
-        logging.setup('tempest')
+        logging.setup(cfg.CONF, 'tempest')
         LOG = logging.getLogger('tempest')
         LOG.info("Using tempest config file %s" % path)
         register_opts()
@@ -1218,6 +1219,8 @@ class TempestConfigProxy(object):
 
     def _fix_log_levels(self):
         """Tweak the oslo log defaults."""
+        # TODO(ihrachys): this code accesses internal details of oslo.log
+        # library (and does it wrong), hence should be fixed
         for opt in logging.log_opts:
             if opt.dest == 'default_log_levels':
                 opt.default.extend(self._extra_log_defaults)

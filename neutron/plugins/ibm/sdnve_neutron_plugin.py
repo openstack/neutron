@@ -18,6 +18,7 @@
 import functools
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 
@@ -33,7 +34,6 @@ from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
 from neutron.plugins.ibm.common import exceptions as sdnve_exc

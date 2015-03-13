@@ -10,11 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
+
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

@@ -15,11 +15,11 @@
 import eventlet
 import eventlet.event
 import eventlet.queue
+from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

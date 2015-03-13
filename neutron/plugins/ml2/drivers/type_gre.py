@@ -15,6 +15,7 @@
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import log
 from six import moves
 import sqlalchemy as sa
 from sqlalchemy import sql
@@ -23,7 +24,6 @@ from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.i18n import _LE, _LW
-from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
 

@@ -15,12 +15,13 @@
 
 import sys
 
+from oslo_config import cfg
+from oslo_log import log as logging
+
 from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
 from neutron.i18n import _LE, _LW
-from neutron.openstack.common import log as logging
-from oslo_config import cfg
 
 
 LOG = logging.getLogger(__name__)

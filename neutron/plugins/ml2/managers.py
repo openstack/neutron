@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log
 import stevedore
 
 from neutron.api.v2 import attributes
@@ -22,7 +23,6 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api

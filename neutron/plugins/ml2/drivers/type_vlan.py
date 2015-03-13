@@ -16,6 +16,7 @@
 import sys
 
 from oslo_config import cfg
+from oslo_log import log
 from six import moves
 import sqlalchemy as sa
 
@@ -25,7 +26,6 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api

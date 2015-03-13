@@ -14,12 +14,12 @@
 
 import abc
 
+from oslo_log import log as logging
 import six
 
 from neutron.tests.tempest import auth
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
-from neutron.openstack.common import log as logging
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)

@@ -14,13 +14,13 @@
 
 import abc
 
+from oslo_log import log as logging
 import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
 from neutron.common import exceptions as nexception
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services import service_base
 

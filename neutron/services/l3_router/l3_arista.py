@@ -18,6 +18,7 @@ import threading
 from networking_arista.common import db_lib
 from networking_arista.l3Plugin import arista_l3_driver
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
@@ -32,7 +33,6 @@ from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_gwmode_db
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.plugins.ml2.driver_context import NetworkContext  # noqa
 

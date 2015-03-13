@@ -14,9 +14,9 @@
 #    under the License.
 
 from eventlet import greenthread
-
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
@@ -31,7 +31,6 @@ from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
 from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 cfg.CONF.register_opt(

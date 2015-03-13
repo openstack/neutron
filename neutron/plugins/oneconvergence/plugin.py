@@ -15,6 +15,7 @@
 """Implementation of OneConvergence Neutron Plugin."""
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 from oslo_utils import importutils
@@ -42,7 +43,6 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as svc_constants
 import neutron.plugins.oneconvergence.lib.config  # noqa
 import neutron.plugins.oneconvergence.lib.exception as nvsdexception

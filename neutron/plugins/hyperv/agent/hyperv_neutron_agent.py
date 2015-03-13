@@ -23,6 +23,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.agent.common import config
@@ -33,7 +34,6 @@ from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron import context
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.hyperv.agent import utils

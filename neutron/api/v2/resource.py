@@ -21,13 +21,13 @@ import sys
 
 import netaddr
 import oslo_i18n
+from oslo_log import log as logging
 import six
 import webob.dec
 import webob.exc
 
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import policy as common_policy
 from neutron import wsgi
 

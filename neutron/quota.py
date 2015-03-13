@@ -17,12 +17,12 @@
 import sys
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import importutils
 import webob
 
 from neutron.common import exceptions
 from neutron.i18n import _LI, _LW
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 QUOTA_DB_MODULE = 'neutron.db.quota_db'

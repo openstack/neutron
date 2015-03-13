@@ -14,11 +14,11 @@
 
 import netaddr
 from oslo_config import cfg
+from oslo_log import log
 
 from neutron.common import constants as n_consts
 from neutron.extensions import portbindings
 from neutron.i18n import _LE
-from neutron.openstack.common import log
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
 from nuage_neutron.plugins.nuage.common import config

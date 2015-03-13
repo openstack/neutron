@@ -16,11 +16,11 @@
 import os
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.linux import keepalived
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

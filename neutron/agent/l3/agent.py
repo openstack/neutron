@@ -16,6 +16,7 @@
 import eventlet
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 from oslo_utils import importutils
@@ -45,7 +46,6 @@ from neutron.common import utils as common_utils
 from neutron import context as n_context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.services import advanced_service as adv_svc

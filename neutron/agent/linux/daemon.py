@@ -20,9 +20,10 @@ import pwd
 import signal
 import sys
 
+from oslo_log import log as logging
+
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

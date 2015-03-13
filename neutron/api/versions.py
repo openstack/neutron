@@ -14,10 +14,10 @@
 #    under the License.
 
 import oslo_i18n
+from oslo_log import log as logging
 import webob.dec
 
 from neutron.api.views import versions as versions_view
-from neutron.openstack.common import log as logging
 from neutron import wsgi
 
 

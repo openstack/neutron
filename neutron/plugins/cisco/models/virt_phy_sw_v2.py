@@ -15,6 +15,7 @@
 
 import inspect
 
+from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
 
@@ -23,7 +24,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.i18n import _LE, _LI
 from neutron import neutron_plugin_base_v2
-from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as cred
 from neutron.plugins.cisco.common import config as conf

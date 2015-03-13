@@ -17,8 +17,9 @@ import glob
 import os
 import re
 
+from oslo_log import log as logging
+
 from neutron.i18n import _LE, _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.sriovnicagent.common import exceptions as exc
 from neutron.plugins.sriovnicagent import pci_lib
 

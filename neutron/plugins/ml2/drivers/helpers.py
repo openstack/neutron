@@ -14,10 +14,10 @@
 #    under the License.
 
 from oslo_db import exception as db_exc
+from oslo_log import log
 
 from neutron.common import exceptions as exc
 from neutron.i18n import _LW
-from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 
 

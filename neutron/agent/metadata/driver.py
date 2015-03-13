@@ -16,11 +16,11 @@
 import os
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.common import config
 from neutron.agent.linux import external_process
 from neutron.common import exceptions
-from neutron.openstack.common import log as logging
 from neutron.services import advanced_service
 
 LOG = logging.getLogger(__name__)

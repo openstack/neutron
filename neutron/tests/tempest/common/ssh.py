@@ -20,10 +20,10 @@ import socket
 import time
 import warnings
 
+from oslo_log import log as logging
 import six
 
 from neutron.tests.tempest import exceptions
-from neutron.openstack.common import log as logging
 
 
 with warnings.catch_warnings():

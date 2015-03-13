@@ -15,9 +15,10 @@
 
 import re
 
+from oslo_log import log as logging
+
 from neutron.agent.linux import ip_lib
 from neutron.i18n import _LE, _LW
-from neutron.openstack.common import log as logging
 from neutron.plugins.sriovnicagent.common import exceptions as exc
 
 LOG = logging.getLogger(__name__)

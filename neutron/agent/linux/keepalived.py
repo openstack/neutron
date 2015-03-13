@@ -19,11 +19,11 @@ import stat
 
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import exceptions
-from neutron.openstack.common import log as logging
 
 VALID_STATES = ['MASTER', 'BACKUP']
 VALID_NOTIFY_STATES = ['master', 'backup', 'fault']

@@ -13,11 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
+
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.db import servicetype_db
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

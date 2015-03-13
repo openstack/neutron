@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
+
 from neutron.agent import firewall
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.plugins.hyperv.agent import utilsfactory
 from neutron.plugins.hyperv.agent import utilsv2
 

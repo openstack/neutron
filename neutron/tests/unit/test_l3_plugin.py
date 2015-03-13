@@ -20,6 +20,7 @@ import copy
 import mock
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import importutils
 from webob import exc
 
@@ -42,7 +43,6 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.tests import base

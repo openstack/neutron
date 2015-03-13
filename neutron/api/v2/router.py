@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import routes as routes_mapper
 import six.moves.urllib.parse as urlparse
 import webob
@@ -24,7 +25,6 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron import policy
 from neutron import wsgi
 

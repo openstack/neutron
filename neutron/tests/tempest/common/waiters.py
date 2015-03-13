@@ -13,10 +13,11 @@
 
 import time
 
+from oslo_log import log as logging
+
 from neutron.tests.tempest.common.utils import misc as misc_utils
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
-from neutron.openstack.common import log as logging
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)

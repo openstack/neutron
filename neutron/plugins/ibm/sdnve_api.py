@@ -21,11 +21,11 @@ import urllib
 import httplib2
 from keystoneclient.v2_0 import client as keyclient
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.api.v2 import attributes
 from neutron.common import utils
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
 from neutron import wsgi

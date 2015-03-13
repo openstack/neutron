@@ -13,12 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
 import re
+
+import netaddr
+from oslo_log import log as logging
 
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
 

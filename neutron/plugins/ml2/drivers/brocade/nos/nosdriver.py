@@ -19,11 +19,11 @@ Neutron network life-cycle management.
 """
 
 from ncclient import manager
+from oslo_log import log as logging
 from oslo_utils import excutils
 from xml.etree import ElementTree
 
 from neutron.i18n import _LE
-from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.brocade.nos import nctemplates as template
 
 

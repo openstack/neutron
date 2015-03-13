@@ -17,6 +17,7 @@ import abc
 
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import importutils
 import six
 
@@ -27,7 +28,6 @@ from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.extensions import flavor
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

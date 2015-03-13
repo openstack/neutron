@@ -16,9 +16,10 @@
 import abc
 import six
 
+from oslo_log import log
+
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
-from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
 

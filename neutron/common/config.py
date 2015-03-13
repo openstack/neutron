@@ -24,13 +24,13 @@ from keystoneclient import auth
 from keystoneclient import session as ks_session
 from oslo_config import cfg
 from oslo_db import options as db_options
+from oslo_log import log as logging
 import oslo_messaging
 from paste import deploy
 
 from neutron.api.v2 import attributes
 from neutron.common import utils
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
 from neutron import version
 
 
@@ -163,6 +163,8 @@ nova_opts = [
 ]
 cfg.CONF.register_opts(nova_opts, group=NOVA_CONF_SECTION)
 
+logging.register_options(cfg.CONF)
+
 
 def init(args, **kwargs):
     cfg.CONF(args=args, project='neutron',
@@ -185,7 +187,7 @@ def init(args, **kwargs):
 def setup_logging():
     """Sets up the logging options for a log with supplied name."""
     product_name = "neutron"
-    logging.setup(product_name)
+    logging.setup(cfg.CONF, product_name)
     LOG.info(_LI("Logging enabled!"))
     LOG.info(_LI("%(prog)s version %(version)s"),
              {'prog': sys.argv[0],

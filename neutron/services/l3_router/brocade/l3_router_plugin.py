@@ -18,11 +18,11 @@
 """Implentation of Brocade SVI service Plugin."""
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2.drivers.brocade.db import models as brocade_db
 from neutron.plugins.ml2.drivers.brocade.nos import nosdriver as driver

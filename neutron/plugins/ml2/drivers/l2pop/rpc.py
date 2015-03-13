@@ -16,11 +16,11 @@
 import collections
 import copy
 
+from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
