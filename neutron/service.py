@@ -18,7 +18,6 @@ import logging as std_logging
 import os
 import random
 
-from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_messaging import server as rpc_server
@@ -41,9 +40,8 @@ service_opts = [
                default=40,
                help=_('Seconds between running periodic tasks')),
     cfg.IntOpt('api_workers',
-               help=_('Number of separate API worker processes for service. '
-                      'If not specified, the default is equal to the number '
-                      'of CPUs available for best performance.')),
+               default=0,
+               help=_('Number of separate API worker processes for service')),
     cfg.IntOpt('rpc_workers',
                default=0,
                help=_('Number of RPC worker processes for service')),
@@ -167,13 +165,6 @@ def serve_rpc():
                               'details.'))
 
 
-def _get_api_workers():
-    workers = cfg.CONF.api_workers
-    if workers is None:
-        workers = processutils.get_worker_count()
-    return workers
-
-
 def _run_wsgi(app_name):
     app = config.load_paste_app(app_name)
     if not app:
@@ -181,7 +172,7 @@ def _run_wsgi(app_name):
         return
     server = wsgi.Server("Neutron")
     server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host,
-                 workers=_get_api_workers())
+                 workers=cfg.CONF.api_workers)
     # Dump all option values here after all options are parsed
     cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
     LOG.info(_LI("Neutron service started, listening on %(host)s:%(port)s"),
