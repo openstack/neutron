@@ -14,6 +14,7 @@
 #    under the License.
 import abc
 
+from oslo_config import cfg
 from oslo_log import log
 
 from neutron.common import exceptions as exc
@@ -28,7 +29,7 @@ LOG = log.getLogger(__name__)
 TUNNEL = 'tunnel'
 
 
-class TunnelTypeDriver(helpers.TypeDriverHelper):
+class TunnelTypeDriver(helpers.SegmentTypeDriver):
     """Define stable abstract interface for ML2 type drivers.
 
     tunnel type networks rely on tunnel endpoints. This class defines abstract
@@ -145,7 +146,8 @@ class TunnelTypeDriver(helpers.TypeDriverHelper):
                 raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
         return {api.NETWORK_TYPE: self.get_type(),
                 api.PHYSICAL_NETWORK: None,
-                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key)}
+                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
+                api.MTU: self.get_mtu()}
 
     def allocate_tenant_segment(self, session):
         alloc = self.allocate_partially_specified_segment(session)
@@ -153,7 +155,8 @@ class TunnelTypeDriver(helpers.TypeDriverHelper):
             return
         return {api.NETWORK_TYPE: self.get_type(),
                 api.PHYSICAL_NETWORK: None,
-                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key)}
+                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
+                api.MTU: self.get_mtu()}
 
     def release_segment(self, session, segment):
         tunnel_id = segment[api.SEGMENTATION_ID]
@@ -182,6 +185,15 @@ class TunnelTypeDriver(helpers.TypeDriverHelper):
         return (session.query(self.model).
                 filter_by(**{self.segmentation_key: tunnel_id}).
                 first())
+
+    def get_mtu(self, physical_network=None):
+        seg_mtu = super(TunnelTypeDriver, self).get_mtu()
+        mtu = []
+        if seg_mtu > 0:
+            mtu.append(seg_mtu)
+        if cfg.CONF.ml2.path_mtu > 0:
+            mtu.append(cfg.CONF.ml2.path_mtu)
+        return min(mtu) if mtu else 0
 
 
 class TunnelRpcCallbackMixin(object):

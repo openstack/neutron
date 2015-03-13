@@ -585,6 +585,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.NetworkContext(self, context,
                                                          result)
             self.mechanism_manager.create_network_precommit(mech_context)
+
+            if net_data.get(api.MTU, 0) > 0:
+                res = super(Ml2Plugin, self).update_network(context,
+                    result['id'], network)
+                result[api.MTU] = res.get(api.MTU, 0)
+
         return result, mech_context
 
     @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,

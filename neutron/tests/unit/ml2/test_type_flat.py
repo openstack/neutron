@@ -16,10 +16,10 @@
 from neutron.common import exceptions as exc
 import neutron.db.api as db
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_flat
 from neutron.tests.unit import testlib_api
-from oslo_config import cfg
 
 
 FLAT_NETWORKS = ['flat_net1', 'flat_net2']
@@ -29,10 +29,11 @@ class FlatTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(FlatTypeTest, self).setUp()
-        cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
+        config.cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
                               group='ml2_type_flat')
         self.driver = type_flat.FlatTypeDriver()
         self.session = db.get_session()
+        self.driver.physnet_mtus = []
 
     def _get_allocation(self, session, segment):
         return session.query(type_flat.FlatAllocation).filter_by(
@@ -111,3 +112,24 @@ class FlatTypeTest(testlib_api.SqlTestCase):
     def test_allocate_tenant_segment(self):
         observed = self.driver.allocate_tenant_segment(self.session)
         self.assertIsNone(observed)
+
+    def test_get_mtu(self):
+        config.cfg.CONF.set_override('segment_mtu', 1475, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1450, self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('segment_mtu', 1375, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1375, self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1425, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1400, self.driver.get_mtu('physnet2'))
+
+        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
+        self.driver.physnet_mtus = {}
+        self.assertEqual(0, self.driver.get_mtu('physnet1'))

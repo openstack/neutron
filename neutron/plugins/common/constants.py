@@ -85,3 +85,7 @@ TYPE_NONE = 'none'
 
 # Values for network_type
 VXLAN_UDP_PORT = 4789
+
+# Network Type MTU overhead
+GRE_ENCAP_OVERHEAD = 42
+VXLAN_ENCAP_OVERHEAD = 50

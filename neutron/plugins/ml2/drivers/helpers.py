@@ -13,24 +13,42 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
 
 from neutron.common import exceptions as exc
+from neutron.common import utils
 from neutron.plugins.ml2 import driver_api as api
 
 
 LOG = log.getLogger(__name__)
 
 
-class TypeDriverHelper(api.TypeDriver):
-    """TypeDriver Helper for segment allocation.
+class BaseTypeDriver(api.TypeDriver):
+    """BaseTypeDriver for functions common to Segment and flat."""
+
+    def __init__(self):
+        try:
+            self.physnet_mtus = utils.parse_mappings(
+                cfg.CONF.ml2.physical_network_mtus
+            )
+        except Exception:
+            self.physnet_mtus = []
+
+    def get_mtu(self, physical_network=None):
+        return cfg.CONF.ml2.segment_mtu
+
+
+class SegmentTypeDriver(BaseTypeDriver):
+    """SegmentTypeDriver for segment allocation.
 
     Provide methods helping to perform segment allocation fully or partially
     specified.
     """
 
     def __init__(self, model):
+        super(SegmentTypeDriver, self).__init__()
         self.model = model
         self.primary_keys = set(dict(model.__table__.columns))
         self.primary_keys.remove("allocated")

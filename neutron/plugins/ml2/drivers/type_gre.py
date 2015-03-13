@@ -166,3 +166,7 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
 
         with session.begin(subtransactions=True):
             session.query(GreEndpoints).filter_by(ip_address=ip).delete()
+
+    def get_mtu(self, physical_network=None):
+        mtu = super(GreTypeDriver, self).get_mtu(physical_network)
+        return mtu - p_const.GRE_ENCAP_OVERHEAD if mtu else 0

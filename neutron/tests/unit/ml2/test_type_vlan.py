@@ -20,10 +20,10 @@ from neutron.common import exceptions as exc
 import neutron.db.api as db
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
+from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
-from oslo_config import cfg
 
 PROVIDER_NET = 'phys_net1'
 TENANT_NET = 'phys_net2'
@@ -41,13 +41,15 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(VlanTypeTest, self).setUp()
-        cfg.CONF.set_override('network_vlan_ranges', NETWORK_VLAN_RANGES,
-                              group='ml2_type_vlan')
+        config.cfg.CONF.set_override('network_vlan_ranges',
+                                     NETWORK_VLAN_RANGES,
+                                     group='ml2_type_vlan')
         self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
             NETWORK_VLAN_RANGES)
         self.driver = type_vlan.VlanTypeDriver()
         self.driver._sync_vlan_allocations()
         self.session = db.get_session()
+        self.driver.physnet_mtus = []
 
     def test_parse_network_exception_handling(self):
         with mock.patch.object(plugin_utils,
@@ -201,6 +203,27 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                           self.driver.reserve_provider_segment,
                           self.session,
                           segment)
+
+    def test_get_mtu(self):
+        config.cfg.CONF.set_override('segment_mtu', 1475, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1450, self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('segment_mtu', 1375, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1375, self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1450, self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
+        self.driver.physnet_mtus = {}
+        self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
     def test_allocate_tenant_segment(self):
         for __ in range(VLAN_MIN, VLAN_MAX + 1):
