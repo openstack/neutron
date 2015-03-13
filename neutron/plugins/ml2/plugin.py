@@ -34,6 +34,9 @@ from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
 from neutron.common import ipv6_utils
@@ -161,20 +164,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 for network in networks
                 if self.type_manager.network_matches_filters(network, filters)
                 ]
-
-    def _notify_l3_agent_new_port(self, context, port):
-        if not port:
-            return
-
-        # Whenever a DVR serviceable port comes up on a
-        # node, it has to be communicated to the L3 Plugin
-        # and agent for creating the respective namespaces.
-        if (utils.is_dvr_serviced(port['device_owner'])):
-            l3plugin = manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT)
-            if (utils.is_extension_supported(
-                l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)):
-                l3plugin.dvr_update_router_addvm(context, port)
 
     def _get_host_port_if_changed(self, mech_context, attrs):
         binding = mech_context._binding
@@ -943,7 +932,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         attrs = port[attributes.PORT]
         result, mech_context = self._create_port_db(context, port)
         new_host_port = self._get_host_port_if_changed(mech_context, attrs)
-        self._notify_l3_agent_new_port(context, new_host_port)
+        # notify any plugin that is interested in port create events
+        kwargs = {'context': context, 'port': new_host_port}
+        registry.notify(resources.PORT, events.AFTER_CREATE, self, **kwargs)
 
         try:
             self.mechanism_manager.create_port_postcommit(mech_context)
@@ -979,7 +970,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if attrs and attrs.get(portbindings.HOST_ID):
                 new_host_port = self._get_host_port_if_changed(
                     obj['mech_context'], attrs)
-                self._notify_l3_agent_new_port(context, new_host_port)
+                kwargs = {'context': context, 'port': new_host_port}
+                registry.notify(
+                    resources.PORT, events.AFTER_CREATE, self, **kwargs)
 
         try:
             for obj in objects:
@@ -997,11 +990,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def update_port(self, context, id, port):
         attrs = port[attributes.PORT]
         need_port_update_notify = False
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
-        is_dvr_enabled = utils.is_extension_supported(
-            l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)
-
         session = context.session
 
         # REVISIT: Serialize this operation with a semaphore to
@@ -1041,10 +1029,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.update_port_precommit(mech_context)
 
         # Notifications must be sent after the above transaction is complete
-        if mac_address_updated and l3plugin and is_dvr_enabled:
-            # NOTE: "add" actually does a 'replace' operation
-            l3plugin.dvr_vmarp_table_update(context, updated_port, "add")
-        self._notify_l3_agent_new_port(context, new_host_port)
+        kwargs = {
+            'context': context,
+            'port': new_host_port,
+            'mac_address_updated': mac_address_updated,
+        }
+        registry.notify(resources.PORT, events.AFTER_UPDATE, self, **kwargs)
 
         # TODO(apech) - handle errors raised by update_port, potentially
         # by re-calling update_port with the previous attributes. For
