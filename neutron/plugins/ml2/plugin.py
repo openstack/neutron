@@ -18,6 +18,7 @@ import contextlib
 from eventlet import greenthread
 from oslo_concurrency import lockutils
 from oslo_config import cfg
+from oslo_db import api as oslo_db_api
 from oslo_db import exception as os_db_exception
 from oslo_log import log
 from oslo_serialization import jsonutils
@@ -597,8 +598,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_network_precommit(mech_context)
         return result, mech_context
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True)
+    def _create_network_with_retries(self, context, network):
+        return self._create_network_db(context, network)
+
     def create_network(self, context, network):
-        result, mech_context = self._create_network_db(context, network)
+        result, mech_context = self._create_network_with_retries(context,
+                                                                 network)
         try:
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
