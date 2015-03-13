@@ -418,7 +418,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-odl_               |      ml2,l3,lb,fw     |    yes    |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-ofagent_           |          ml2          |    yes    |       no         |   [C]   |     Kilo     |
+| networking-ofagent_           |          ml2          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-ovs-dpdk_          |          ml2          |    yes    |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -502,6 +502,7 @@ OpenFlow Agent (ofagent)
 
 * Git: https://github.com/stackforge/networking-ofagent
 * Launchpad: https://launchpad.net/networking-ofagent
+* PyPI: https://pypi.python.org/pypi/networking-ofagent
 
 .. _networking-ovs-dpdk:
 
