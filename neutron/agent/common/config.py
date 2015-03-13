@@ -31,6 +31,12 @@ ROOT_HELPER_OPTS = [
                 default=True,
                 help=_('Use the root helper to read the namespaces from '
                        'the operating system.')),
+    # We can't just use root_helper=sudo neutron-rootwrap-daemon $cfg because
+    # it isn't appropriate for long-lived processes spawned with create_process
+    # Having a bool use_rootwrap_daemon option precludes specifying the
+    # rootwrap daemon command, which may be necessary for Xen?
+    cfg.StrOpt('root_helper_daemon',
+               help=_('Root helper daemon application to use when possible.')),
 ]
 
 AGENT_STATE_OPTS = [

@@ -34,3 +34,10 @@ class TestRootHelper(base.BaseTestCase):
         conf = config.setup_conf()
         config.register_root_helper(conf)
         self.assertEqual(config.get_root_helper(conf), 'sudo')
+
+    def test_agent_root_helper_daemon(self):
+        conf = config.setup_conf()
+        config.register_root_helper(conf)
+        rhd = 'my_root_helper_daemon'
+        conf.set_override('root_helper_daemon', rhd, 'AGENT')
+        self.assertEqual(rhd, conf.AGENT.root_helper_daemon)

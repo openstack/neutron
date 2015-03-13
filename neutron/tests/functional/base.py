@@ -56,3 +56,6 @@ class BaseSudoTestCase(base.BaseTestCase):
         config.register_root_helper(cfg.CONF)
         self.config(group='AGENT',
                     root_helper=os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD))
+        self.config(group='AGENT',
+                    root_helper_daemon=os.environ.get(
+                        'OS_ROOTWRAP_DAEMON_CMD'))

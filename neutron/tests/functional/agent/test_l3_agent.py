@@ -92,7 +92,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
                           get_temp_file_path('external/pids'))
         conf.set_override('host', host)
         agent = neutron_l3_agent.L3NATAgentWithStateReport(host, conf)
-        mock.patch.object(ip_lib, 'send_gratuitous_arp').start()
+        mock.patch.object(ip_lib, '_arping').start()
 
         return agent
 
