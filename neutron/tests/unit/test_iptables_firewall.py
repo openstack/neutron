@@ -34,8 +34,11 @@ FAKE_PREFIX = {'IPv4': '10.0.0.0/24',
                'IPv6': 'fe80::/48'}
 FAKE_IP = {'IPv4': '10.0.0.1',
            'IPv6': 'fe80::1'}
-#TODO(mangelajo): replace all 'fake_sgid' strings for the constant
+#TODO(mangelajo): replace all '*_sgid' strings for the constants
 FAKE_SGID = 'fake_sgid'
+OTHER_SGID = 'other_sgid'
+_IPv6 = constants.IPv6
+_IPv4 = constants.IPv4
 
 
 class BaseIptablesFirewallTestCase(base.BaseTestCase):
@@ -1420,16 +1423,25 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
                 'security_groups': [sg_id],
                 'security_group_source_groups': [sg_id]}
 
-    def _fake_sg_rule_for_ethertype(self, ethertype):
-        return {'direction': 'ingress', 'remote_group_id': 'fake_sgid',
+    def _fake_sg_rule_for_ethertype(self, ethertype, remote_group):
+        return {'direction': 'ingress', 'remote_group_id': remote_group,
                 'ethertype': ethertype}
 
-    def _fake_sg_rule(self):
-        return {'fake_sgid': [self._fake_sg_rule_for_ethertype('IPv4'),
-                              self._fake_sg_rule_for_ethertype('IPv6')]}
+    def _fake_sg_rules(self, sg_id=FAKE_SGID, remote_groups=None):
+        remote_groups = remote_groups or {_IPv4: [FAKE_SGID],
+                                          _IPv6: [FAKE_SGID]}
+        rules = []
+        for ip_version, remote_group_list in remote_groups.iteritems():
+            for remote_group in remote_group_list:
+                rules.append(self._fake_sg_rule_for_ethertype(ip_version,
+                                                              remote_group))
+        return {sg_id: rules}
+
+    def _fake_sg_members(self, sg_ids=None):
+        return {sg_id: copy.copy(FAKE_IP) for sg_id in (sg_ids or [FAKE_SGID])}
 
     def test_prepare_port_filter_with_new_members(self):
-        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.sg_rules = self._fake_sg_rules()
         self.firewall.sg_members = {'fake_sgid': {
             'IPv4': ['10.0.0.1', '10.0.0.2'], 'IPv6': ['fe80::1']}}
         self.firewall.pre_sg_members = {}
@@ -1444,12 +1456,75 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall.ipset.assert_has_calls(calls)
 
     def _setup_fake_firewall_members_and_rules(self, firewall):
-        firewall.sg_rules = self._fake_sg_rule()
-        firewall.pre_sg_rules = self._fake_sg_rule()
-        firewall.sg_members = {'fake_sgid': {
-            'IPv4': ['10.0.0.1'],
-            'IPv6': ['fe80::1']}}
+        firewall.sg_rules = self._fake_sg_rules()
+        firewall.pre_sg_rules = self._fake_sg_rules()
+        firewall.sg_members = self._fake_sg_members()
         firewall.pre_sg_members = firewall.sg_members
+
+    def _prepare_rules_and_members_for_removal(self):
+        self._setup_fake_firewall_members_and_rules(self.firewall)
+        self.firewall.pre_sg_members[OTHER_SGID] = (
+            self.firewall.pre_sg_members[FAKE_SGID])
+
+    def test_determine_remote_sgs_to_remove(self):
+        self._prepare_rules_and_members_for_removal()
+        ports = [self._fake_port()]
+
+        self.assertEqual(
+            {_IPv4: set([OTHER_SGID]), _IPv6: set([OTHER_SGID])},
+            self.firewall._determine_remote_sgs_to_remove(ports))
+
+    def test_determine_remote_sgs_to_remove_ipv6_unreferenced(self):
+        self._prepare_rules_and_members_for_removal()
+        ports = [self._fake_port()]
+        self.firewall.sg_rules = self._fake_sg_rules(
+            remote_groups={_IPv4: [OTHER_SGID, FAKE_SGID],
+                           _IPv6: [FAKE_SGID]})
+        self.assertEqual(
+            {_IPv4: set(), _IPv6: set([OTHER_SGID])},
+            self.firewall._determine_remote_sgs_to_remove(ports))
+
+    def test_get_remote_sg_ids_by_ipversion(self):
+        self.firewall.sg_rules = self._fake_sg_rules(
+            remote_groups={_IPv4: [FAKE_SGID], _IPv6: [OTHER_SGID]})
+
+        ports = [self._fake_port()]
+
+        self.assertEqual(
+            {_IPv4: set([FAKE_SGID]), _IPv6: set([OTHER_SGID])},
+            self.firewall._get_remote_sg_ids_sets_by_ipversion(ports))
+
+    def test_determine_sg_rules_to_remove(self):
+        self.firewall.pre_sg_rules = self._fake_sg_rules(sg_id=OTHER_SGID)
+        ports = [self._fake_port()]
+
+        self.assertEqual(set([OTHER_SGID]),
+                         self.firewall._determine_sg_rules_to_remove(ports))
+
+    def test_get_sg_ids_set_for_ports(self):
+        sg_ids = set([FAKE_SGID, OTHER_SGID])
+        ports = [self._fake_port(sg_id) for sg_id in sg_ids]
+
+        self.assertEqual(sg_ids,
+                         self.firewall._get_sg_ids_set_for_ports(ports))
+
+    def test_clear_sg_members(self):
+        self.firewall.sg_members = self._fake_sg_members(
+            sg_ids=[FAKE_SGID, OTHER_SGID])
+        self.firewall._clear_sg_members(_IPv4, [OTHER_SGID])
+
+        self.assertEqual(0, len(self.firewall.sg_members[OTHER_SGID][_IPv4]))
+
+    def test_remove_unused_sg_members(self):
+        self.firewall.sg_members = self._fake_sg_members([FAKE_SGID,
+                                                          OTHER_SGID])
+        self.firewall.sg_members[FAKE_SGID][_IPv4] = []
+        self.firewall.sg_members[FAKE_SGID][_IPv6] = []
+        self.firewall.sg_members[OTHER_SGID][_IPv6] = []
+        self.firewall._remove_unused_sg_members()
+
+        self.assertIn(OTHER_SGID, self.firewall.sg_members)
+        self.assertNotIn(FAKE_SGID, self.firewall.sg_members)
 
     def test_remove_unused_security_group_info_clears_unused_rules(self):
         self._setup_fake_firewall_members_and_rules(self.firewall)
@@ -1457,21 +1532,21 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
 
         # create another SG which won't be referenced by any filtered port
         fake_sg_rules = self.firewall.sg_rules['fake_sgid']
-        self.firewall.pre_sg_rules['other_sgid'] = fake_sg_rules
-        self.firewall.sg_rules['other_sgid'] = fake_sg_rules
+        self.firewall.pre_sg_rules[OTHER_SGID] = fake_sg_rules
+        self.firewall.sg_rules[OTHER_SGID] = fake_sg_rules
 
         # call the cleanup function, and check the unused sg_rules are out
         self.firewall._remove_unused_security_group_info()
-        self.assertNotIn('other_sgid', self.firewall.sg_rules)
+        self.assertNotIn(OTHER_SGID, self.firewall.sg_rules)
 
-    def test_remove_unused_sg_members(self):
+    def test_remove_unused_security_group_info(self):
         self._setup_fake_firewall_members_and_rules(self.firewall)
         # no filtered ports in 'fake_sgid', so all rules and members
         # are not needed and we expect them to be cleaned up
-        self.firewall.prepare_port_filter(self._fake_port('other_sgid'))
+        self.firewall.prepare_port_filter(self._fake_port(OTHER_SGID))
         self.firewall._remove_unused_security_group_info()
 
-        self.assertNotIn('fake_sgid', self.firewall.sg_members)
+        self.assertNotIn(FAKE_SGID, self.firewall.sg_members)
 
     def test_remove_all_unused_info(self):
         self._setup_fake_firewall_members_and_rules(self.firewall)
@@ -1481,8 +1556,8 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.assertFalse(self.firewall.sg_rules)
 
     def test_prepare_port_filter_with_deleted_member(self):
-        self.firewall.sg_rules = self._fake_sg_rule()
-        self.firewall.pre_sg_rules = self._fake_sg_rule()
+        self.firewall.sg_rules = self._fake_sg_rules()
+        self.firewall.pre_sg_rules = self._fake_sg_rules()
         self.firewall.sg_members = {'fake_sgid': {
             'IPv4': [
                 '10.0.0.1', '10.0.0.3', '10.0.0.4', '10.0.0.5'],
@@ -1500,7 +1575,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall.ipset.assert_has_calls(calls, True)
 
     def test_remove_port_filter_with_destroy_ipset_chain(self):
-        self.firewall.sg_rules = self._fake_sg_rule()
+        self.firewall.sg_rules = self._fake_sg_rules()
         port = self._fake_port()
         self.firewall.sg_members = {'fake_sgid': {
             'IPv4': ['10.0.0.1'],
@@ -1531,13 +1606,13 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall.ipset.assert_has_calls(calls)
 
     def test_prepare_port_filter_with_sg_no_member(self):
-        self.firewall.sg_rules = self._fake_sg_rule()
-        self.firewall.sg_rules['fake_sgid'].append(
+        self.firewall.sg_rules = self._fake_sg_rules()
+        self.firewall.sg_rules[FAKE_SGID].append(
             {'direction': 'ingress', 'remote_group_id': 'fake_sgid2',
              'ethertype': 'IPv4'})
         self.firewall.sg_rules.update()
-        self.firewall.sg_members = {'fake_sgid': {
-            'IPv4': ['10.0.0.1', '10.0.0.2'], 'IPv6': ['fe80::1']}}
+        self.firewall.sg_members['fake_sgid'] = {
+            'IPv4': ['10.0.0.1', '10.0.0.2'], 'IPv6': ['fe80::1']}
         self.firewall.pre_sg_members = {}
         port = self._fake_port()
         port['security_group_source_groups'].append('fake_sgid2')
@@ -1549,8 +1624,8 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall.ipset.assert_has_calls(calls)
 
     def test_filter_defer_apply_off_with_sg_only_ipv6_rule(self):
-        self.firewall.sg_rules = self._fake_sg_rule()
-        self.firewall.pre_sg_rules = self._fake_sg_rule()
+        self.firewall.sg_rules = self._fake_sg_rules()
+        self.firewall.pre_sg_rules = self._fake_sg_rules()
         self.firewall.ipset_chains = {'IPv4fake_sgid': ['10.0.0.2'],
                                       'IPv6fake_sgid': ['fe80::1']}
         self.firewall.sg_members = {'fake_sgid': {
@@ -1579,7 +1654,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
             'IPv6': [FAKE_IP['IPv6']]}}
 
         port = self._fake_port()
-        rule = self._fake_sg_rule_for_ethertype('IPv4')
+        rule = self._fake_sg_rule_for_ethertype(_IPv4, FAKE_SGID)
         rules = self.firewall._expand_sg_rule_with_remote_ips(
             rule, port, 'ingress')
         self.assertEqual(list(rules),
