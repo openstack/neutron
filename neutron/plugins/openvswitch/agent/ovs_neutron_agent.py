@@ -605,8 +605,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         '''Reclaim a local VLAN.
 
         :param net_uuid: the network uuid associated with this vlan.
-        :param lvm: a LocalVLANMapping object that tracks (vlan, lsw_id,
-            vif_ids) mapping.
         '''
         lvm = self.local_vlan_map.pop(net_uuid, None)
         if lvm is None:
@@ -738,10 +736,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def setup_integration_br(self):
         '''Setup the integration bridge.
 
-        Create patch ports and remove all existing flows.
-
-        :param bridge_name: the name of the integration bridge.
-        :returns: the integration bridge
+        Delete patch ports and remove all existing flows.
         '''
         # Ensure the integration bridge is created.
         # ovs_lib.OVSBridge.create() will run
@@ -912,7 +907,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         '''Setup the physical network bridges.
 
         Creates physical network bridges and links them to the
-        integration bridge using veths.
+        integration bridge using veths or patch ports.
 
         :param bridge_mappings: map physical network names to bridge names.
         '''
