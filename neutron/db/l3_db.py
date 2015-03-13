@@ -97,7 +97,8 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
     floating_ip_address = sa.Column(sa.String(64), nullable=False)
     floating_network_id = sa.Column(sa.String(36), nullable=False)
-    floating_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
+    floating_port_id = sa.Column(sa.String(36),
+                                 sa.ForeignKey('ports.id', ondelete="CASCADE"),
                                  nullable=False)
     fixed_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
     fixed_ip_address = sa.Column(sa.String(64))
@@ -912,11 +913,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def _delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
         router_id = floatingip['router_id']
-        with context.session.begin(subtransactions=True):
-            context.session.delete(floatingip)
-            self._core_plugin.delete_port(context.elevated(),
-                                          floatingip['floating_port_id'],
-                                          l3_port_check=False)
+        # Foreign key cascade will take care of the removal of the
+        # floating IP record once the port is deleted. We can't start
+        # a transaction first to remove it ourselves because the delete_port
+        # method will yield in its post-commit activities.
+        self._core_plugin.delete_port(context.elevated(),
+                                      floatingip['floating_port_id'],
+                                      l3_port_check=False)
         return router_id
 
     def delete_floatingip(self, context, id):
