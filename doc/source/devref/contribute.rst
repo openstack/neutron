@@ -402,7 +402,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-bigswitch_         |      ml2,core,l3      |    no     |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-brocade_           |                       |           |                  |         |              |
+| networking-brocade_           |        ml2,l3         |   yes     |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-cisco_             |  core,ml2,l3,fw,vpn   |    yes    |       yes        |   [B]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -451,6 +451,11 @@ Big Switch Networks
 * Pypi: https://pypi.python.org/pypi/bsnstacklib
 
 .. _networking-brocade:
+
+* Git: https://github.com/stackforge/networking-brocade
+* Launchpad: https://launchpad.net/networking-brocade
+* PyPI: https://pypi.python.org/pypi/networking-brocade
+
 
 .. _networking-cisco:
 
