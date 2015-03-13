@@ -351,8 +351,8 @@ class KeepalivedNotifierMixin(object):
 
     def _get_full_config_file_path(self, filename, ensure_conf_dir=True):
         conf_dir = self.get_conf_dir()
-        if ensure_conf_dir and not os.path.isdir(conf_dir):
-            os.makedirs(conf_dir, 0o755)
+        if ensure_conf_dir:
+            utils.ensure_dir(conf_dir)
         return os.path.join(conf_dir, filename)
 
 

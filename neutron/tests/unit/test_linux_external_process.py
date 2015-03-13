@@ -16,6 +16,7 @@ import mock
 import os.path
 
 from neutron.agent.linux import external_process as ep
+from neutron.agent.linux import utils
 from neutron.tests import base
 
 
@@ -26,7 +27,8 @@ class TestProcessManager(base.BaseTestCase):
         self.execute = self.execute_p.start()
         self.delete_if_exists = mock.patch(
             'neutron.openstack.common.fileutils.delete_if_exists').start()
-        self.makedirs = mock.patch('os.makedirs').start()
+        self.ensure_dir = mock.patch.object(
+            utils, 'ensure_dir').start()
 
         self.conf = mock.Mock()
         self.conf.external_pids = '/var/path'
@@ -34,7 +36,7 @@ class TestProcessManager(base.BaseTestCase):
     def test_processmanager_ensures_pid_dir(self):
         pid_file = os.path.join(self.conf.external_pids, 'pid')
         ep.ProcessManager(self.conf, 'uuid', pid_file=pid_file)
-        self.makedirs.assert_called_once_with(self.conf.external_pids, 0o755)
+        self.ensure_dir.assert_called_once_with(self.conf.external_pids)
 
     def test_enable_no_namespace(self):
         callback = mock.Mock()

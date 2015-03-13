@@ -170,7 +170,7 @@ class DhcpLocalProcess(DhcpBase):
                                                version, plugin)
         self.confs_dir = self.get_confs_dir(conf)
         self.network_conf_dir = os.path.join(self.confs_dir, network.id)
-        self._ensure_network_conf_dir()
+        utils.ensure_dir(self.network_conf_dir)
 
     @staticmethod
     def get_confs_dir(conf):
@@ -179,11 +179,6 @@ class DhcpLocalProcess(DhcpBase):
     def get_conf_file_name(self, kind):
         """Returns the file name for a given kind of config file."""
         return os.path.join(self.network_conf_dir, kind)
-
-    def _ensure_network_conf_dir(self):
-        """Ensures the directory for configuration files is created."""
-        if not os.path.isdir(self.network_conf_dir):
-            os.makedirs(self.network_conf_dir, 0o755)
 
     def _remove_config_files(self):
         shutil.rmtree(self.network_conf_dir, ignore_errors=True)
@@ -200,7 +195,7 @@ class DhcpLocalProcess(DhcpBase):
         if self.active:
             self.restart()
         elif self._enable_dhcp():
-            self._ensure_network_conf_dir()
+            utils.ensure_dir(self.network_conf_dir)
             interface_name = self.device_manager.setup(self.network)
             self.interface_name = interface_name
             self.spawn_process()
