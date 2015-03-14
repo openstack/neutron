@@ -16,10 +16,10 @@
 import netaddr
 import random
 
+from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.tempest.api.network import base
-from neutron.tests.tempest.common.utils import data_utils
 from neutron.tests.tempest import config
 from neutron.tests.tempest import test
 

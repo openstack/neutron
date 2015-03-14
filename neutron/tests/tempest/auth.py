@@ -328,11 +328,17 @@ class KeystoneV3AuthProvider(KeystoneAuthProvider):
 
     def _auth_params(self):
         return dict(
-            user=self.credentials.username,
+            user_id=self.credentials.user_id,
+            username=self.credentials.username,
             password=self.credentials.password,
-            project=self.credentials.tenant_name,
-            user_domain=self.credentials.user_domain_name,
-            project_domain=self.credentials.project_domain_name,
+            project_id=self.credentials.project_id,
+            project_name=self.credentials.project_name,
+            user_domain_id=self.credentials.user_domain_id,
+            user_domain_name=self.credentials.user_domain_name,
+            project_domain_id=self.credentials.project_domain_id,
+            project_domain_name=self.credentials.project_domain_name,
+            domain_id=self.credentials.domain_id,
+            domain_name=self.credentials.domain_name,
             auth_data=True)
 
     def _fill_credentials(self, auth_data_body):
@@ -439,7 +445,9 @@ def is_identity_version_supported(identity_version):
     return identity_version in IDENTITY_VERSION
 
 
-def get_credentials(auth_url, fill_in=True, identity_version='v2', **kwargs):
+def get_credentials(auth_url, fill_in=True, identity_version='v2',
+                    disable_ssl_certificate_validation=None, ca_certs=None,
+                    trace_requests=None, **kwargs):
     """
     Builds a credentials object based on the configured auth_version
 
@@ -451,6 +459,11 @@ def get_credentials(auth_url, fill_in=True, identity_version='v2', **kwargs):
            by invoking ``is_valid()``
     :param identity_version (string): identity API version is used to
            select the matching auth provider and credentials class
+    :param disable_ssl_certificate_validation: whether to enforce SSL
+           certificate validation in SSL API requests to the auth system
+    :param ca_certs: CA certificate bundle for validation of certificates
+           in SSL API requests to the auth system
+    :param trace_requests: trace in log API requests to the auth system
     :param kwargs (dict): Dict of credential key/value pairs
 
     Examples:
@@ -471,7 +484,10 @@ def get_credentials(auth_url, fill_in=True, identity_version='v2', **kwargs):
     creds = credential_class(**kwargs)
     # Fill in the credentials fields that were not specified
     if fill_in:
-        auth_provider = auth_provider_class(creds, auth_url)
+        dsvm = disable_ssl_certificate_validation
+        auth_provider = auth_provider_class(
+            creds, auth_url, disable_ssl_certificate_validation=dsvm,
+            ca_certs=ca_certs, trace_requests=trace_requests)
         creds = auth_provider.fill_credentials()
     return creds
 
@@ -569,7 +585,7 @@ class KeystoneV3Credentials(Credentials):
     Credentials suitable for the Keystone Identity V3 API
     """
 
-    ATTRIBUTES = ['domain_name', 'password', 'tenant_name', 'username',
+    ATTRIBUTES = ['domain_id', 'domain_name', 'password', 'username',
                   'project_domain_id', 'project_domain_name', 'project_id',
                   'project_name', 'tenant_id', 'tenant_name', 'user_domain_id',
                   'user_domain_name', 'user_id']
@@ -615,6 +631,8 @@ class KeystoneV3Credentials(Credentials):
         - None
         - Project id (optional domain)
         - Project name and its domain id/name
+        - Domain id
+        - Domain name
         """
         valid_user_domain = any(
             [self.user_domain_id is not None,
@@ -625,11 +643,16 @@ class KeystoneV3Credentials(Credentials):
         valid_user = any(
             [self.user_id is not None,
              self.username is not None and valid_user_domain])
-        valid_project = any(
+        valid_project_scope = any(
             [self.project_name is None and self.project_id is None,
              self.project_id is not None,
              self.project_name is not None and valid_project_domain])
-        return all([self.password is not None, valid_user, valid_project])
+        valid_domain_scope = any(
+            [self.domain_id is None and self.domain_name is None,
+             self.domain_id or self.domain_name])
+        return all([self.password is not None,
+                    valid_user,
+                    valid_project_scope and valid_domain_scope])
 
 
 IDENTITY_VERSION = {'v2': (KeystoneV2Credentials, KeystoneV2AuthProvider),

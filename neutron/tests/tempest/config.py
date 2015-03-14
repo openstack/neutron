@@ -18,8 +18,8 @@ from __future__ import print_function
 import logging as std_logging
 import os
 
-from oslo_concurrency import lockutils
 from oslo_config import cfg
+
 from oslo_log import log as logging
 
 
@@ -700,9 +700,6 @@ OrchestrationGroup = [
                default='m1.micro',
                help="Instance type for tests. Needs to be big enough for a "
                     "full OS plus the test workload"),
-    cfg.StrOpt('image_ref',
-               help="Name of heat-cfntools enabled image to use when "
-                    "launching test instances."),
     cfg.StrOpt('keypair_name',
                help="Name of existing keypair to launch servers with."),
     cfg.IntOpt('max_template_size',
@@ -1098,24 +1095,13 @@ def register_opts():
         register_opt_group(cfg.CONF, g, o)
 
 
-# TODO(ihrachys): this function should probably be removed since it's not used
-# anywhere, and accesses internal implementation details of olso libraries
 def list_opts():
     """Return a list of oslo.config options available.
 
     The purpose of this is to allow tools like the Oslo sample config file
     generator to discover the options exposed to users.
     """
-    optlist = [(g.name, o) for g, o in _opts]
-
-    # NOTE(jgrimm): Can be removed once oslo-incubator/oslo changes happen.
-    optlist.append((None, lockutils.util_opts))
-    optlist.append((None, logging.common_cli_opts))
-    optlist.append((None, logging.logging_cli_opts))
-    optlist.append((None, logging.generic_log_opts))
-    optlist.append((None, logging.log_opts))
-
-    return optlist
+    return [(g.name, o) for g, o in _opts]
 
 
 # this should never be called outside of this class
@@ -1194,6 +1180,7 @@ class TempestConfigPrivate(object):
         # to remove an issue with the config file up to date checker.
         if parse_conf:
             config_files.append(path)
+        logging.register_options(cfg.CONF)
         if os.path.isfile(path):
             cfg.CONF([], project='tempest', default_config_files=config_files)
         else:
@@ -1212,18 +1199,15 @@ class TempestConfigProxy(object):
     _path = None
 
     _extra_log_defaults = [
-        'keystoneclient.session=INFO',
-        'paramiko.transport=INFO',
-        'requests.packages.urllib3.connectionpool=WARN'
+        ('keystoneclient.session', std_logging.INFO),
+        ('paramiko.transport', std_logging.INFO),
+        ('requests.packages.urllib3.connectionpool', std_logging.WARN),
     ]
 
     def _fix_log_levels(self):
         """Tweak the oslo log defaults."""
-        # TODO(ihrachys): this code accesses internal details of oslo.log
-        # library (and does it wrong), hence should be fixed
-        for opt in logging.log_opts:
-            if opt.dest == 'default_log_levels':
-                opt.default.extend(self._extra_log_defaults)
+        for name, level in self._extra_log_defaults:
+            std_logging.getLogger(name).setLevel(level)
 
     def __getattr__(self, attr):
         if not self._config:

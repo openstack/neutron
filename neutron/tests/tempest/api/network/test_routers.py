@@ -14,10 +14,10 @@
 #    under the License.
 
 import netaddr
+from tempest_lib.common.utils import data_utils
 
 from neutron.tests.tempest.api.network import base_routers as base
 from neutron.tests.api.contrib import clients
-from neutron.tests.tempest.common.utils import data_utils
 from neutron.tests.tempest import config
 from neutron.tests.tempest import test
 
