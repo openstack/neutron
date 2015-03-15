@@ -162,7 +162,7 @@ class PortSecurityDbMixin(object):
         # conveniently set port_security_enabled to true this way
         # user doesn't also have to pass in port_security_enabled=True
         # when creating ports.
-        elif (has_ip and attrs.is_attr_set('security_groups')):
+        elif (has_ip and attrs.is_attr_set(port.get('security_groups'))):
             port_security_enabled = True
         else:
             port_security_enabled = self._get_network_security_binding(

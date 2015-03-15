@@ -286,6 +286,17 @@ class TestPortSecurity(PortSecurityDBTestCase):
         self.assertEqual(port['port']['security_groups'], [security_group_id])
         self._delete('ports', port['port']['id'])
 
+    def test_create_port_without_security_group_and_net_sec_false(self):
+        res = self._create_network('json', 'net1', True,
+                                   arg_list=('port_security_enabled',),
+                                   port_security_enabled=False)
+        net = self.deserialize('json', res)
+        self._create_subnet('json', net['network']['id'], '10.0.0.0/24')
+        res = self._create_port('json', net['network']['id'])
+        port = self.deserialize('json', res)
+        self.assertFalse(port['port'][psec.PORTSECURITY])
+        self._delete('ports', port['port']['id'])
+
     def test_update_port_security_off_with_security_group(self):
         if self._skip_security_group:
             self.skipTest("Plugin does not support security groups")
