@@ -1677,6 +1677,25 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self.assertIn({'ip_address': eui_addr,
                                    'subnet_id': subnet2['subnet']['id']}, ips)
 
+    def test_create_router_port_ipv4_and_ipv6_slaac_no_fixed_ips(self):
+        with self.network() as network:
+            # Create an IPv4 and an IPv6 SLAAC subnet on the network
+            with contextlib.nested(
+                self.subnet(network),
+                self.subnet(network,
+                            cidr='2607:f0d0:1002:51::/64',
+                            ip_version=6,
+                            gateway_ip='fe80::1',
+                            ipv6_address_mode=constants.IPV6_SLAAC)):
+                # Create a router port without specifying fixed_ips
+                port = self._make_port(
+                    self.fmt, network['network']['id'],
+                    device_owner=constants.DEVICE_OWNER_ROUTER_INTF)
+                # Router port should only have an IPv4 address
+                fixed_ips = port['port']['fixed_ips']
+                self.assertEqual(1, len(fixed_ips))
+                self.assertEqual('10.0.0.2', fixed_ips[0]['ip_address'])
+
     def _make_v6_subnet(self, network, ra_addr_mode):
         return (self._make_subnet(self.fmt, network, gateway='fe80::1',
                                   cidr='fe80::/64', ip_version=6,
@@ -3025,11 +3044,13 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    cidr='fe80::/64', ip_version=6,
                                    ipv6_ra_mode=constants.IPV6_SLAAC,
                                    ipv6_address_mode=constants.IPV6_SLAAC)
+        kwargs = {}
         if port_owner:
-            res = self._create_port(self.fmt, net_id=network['network']['id'],
-                                    device_owner=port_owner)
-        else:
-            res = self._create_port(self.fmt, net_id=network['network']['id'])
+            kwargs['device_owner'] = port_owner
+            if port_owner in constants.ROUTER_INTERFACE_OWNERS:
+                kwargs['fixed_ips'] = [{'ip_address': 'fe80::1'}]
+        res = self._create_port(self.fmt, net_id=network['network']['id'],
+                                **kwargs)
 
         port = self.deserialize(self.fmt, res)
         self.assertEqual(1, len(port['port']['fixed_ips']))
@@ -4960,7 +4981,8 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
         port = {'port': {
             'network_id': 'fbb9b578-95eb-4b79-a116-78e5c4927176',
             'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-            'mac_address': '12:34:56:78:44:ab'}}
+            'mac_address': '12:34:56:78:44:ab',
+            'device_owner': 'compute'}}
         expected = []
         for subnet in subnets:
             addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
