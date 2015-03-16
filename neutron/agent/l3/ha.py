@@ -62,13 +62,13 @@ class AgentMixin(object):
             return
 
         ri._set_subnet_info(ha_port)
+        ri.ha_port = ha_port
+        ri._init_keepalived_manager(self.process_monitor)
         ri.ha_network_added(ha_port['network_id'],
                             ha_port['id'],
                             ha_port['ip_cidr'],
                             ha_port['mac_address'])
-        ri.ha_port = ha_port
 
-        ri._init_keepalived_manager(self.process_monitor)
         ri._add_keepalived_notifiers()
 
     def process_ha_router_removed(self, ri):

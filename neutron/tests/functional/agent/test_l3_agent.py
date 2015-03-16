@@ -402,7 +402,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         if enable_ha:
             port = router.get_ex_gw_port()
             interface_name = self.agent.get_external_device_name(port['id'])
-            self._assert_no_ip_addresses_on_interface(router, interface_name)
+            self._assert_no_ip_addresses_on_interface(router.ns_name,
+                                                      interface_name)
             utils.wait_until_true(lambda: router.ha_state == 'master')
 
             # Keepalived notifies of a state transition when it starts,
@@ -466,18 +467,28 @@ class L3AgentTestCase(L3AgentTestFramework):
             router.router[l3_constants.HA_INTERFACE_KEY],
             router.get_ha_device_name, router.ns_name))
 
-    def _assert_no_ip_addresses_on_interface(self, router, interface):
-        device = ip_lib.IPDevice(interface, namespace=router.ns_name)
-        self.assertEqual([], device.addr.list())
+    @classmethod
+    def _get_addresses_on_device(cls, namespace, interface):
+        return [address['cidr'] for address in
+                ip_lib.IPDevice(interface, namespace=namespace).addr.list()]
+
+    def _assert_no_ip_addresses_on_interface(self, namespace, interface):
+        self.assertEqual(
+            [], self._get_addresses_on_device(namespace, interface))
 
     def test_ha_router_conf_on_restarted_agent(self):
         router_info = self.generate_router_info(enable_ha=True)
-        router1 = self._create_router(self.agent, router_info)
+        router1 = self.manage_router(self.agent, router_info)
         self._add_fip(router1, '192.168.111.12')
         restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
             self.agent.host, self.agent.conf)
         self._create_router(restarted_agent, router1.router)
         utils.wait_until_true(lambda: self.floating_ips_configured(router1))
+        self.assertIn(
+            router1._get_primary_vip(),
+            self._get_addresses_on_device(
+                router1.ns_name,
+                router1.get_ha_device_name(router1.ha_port['id'])))
 
 
 class L3HATestFramework(L3AgentTestFramework):
