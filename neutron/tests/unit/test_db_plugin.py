@@ -1728,6 +1728,57 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         self._show('ports', port['port']['id'],
                    expected_code=webob.exc.HTTPNotFound.code)
 
+    def test_update_port_with_ipv6_slaac_subnet_in_fixed_ips(self):
+        """Test port update with an IPv6 SLAAC subnet in fixed IPs."""
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        # Create a port using an IPv4 subnet and an IPv6 SLAAC subnet
+        self._make_subnet(self.fmt, network, gateway='10.0.0.1',
+                          cidr='10.0.0.0/24', ip_version=4)
+        subnet_v6 = self._make_v6_subnet(network, constants.IPV6_SLAAC)
+        res = self._create_port(self.fmt, net_id=network['network']['id'])
+        port = self.deserialize(self.fmt, res)
+        self.assertEqual(2, len(port['port']['fixed_ips']))
+        # Update port including only the IPv6 SLAAC subnet
+        data = {'port': {'fixed_ips': [{'subnet_id':
+                                        subnet_v6['subnet']['id']}]}}
+        req = self.new_update_request('ports', data,
+                                      port['port']['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        # Port should only have an address corresponding to IPv6 SLAAC subnet
+        ips = res['port']['fixed_ips']
+        self.assertEqual(1, len(ips))
+        self.assertEqual(self._calc_ipv6_addr_by_EUI64(port, subnet_v6),
+                         ips[0]['ip_address'])
+
+    def test_update_port_excluding_ipv6_slaac_subnet_from_fixed_ips(self):
+        """Test port update excluding IPv6 SLAAC subnet from fixed ips."""
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        # Create a port using an IPv4 subnet and an IPv6 SLAAC subnet
+        subnet_v4 = self._make_subnet(self.fmt, network, gateway='10.0.0.1',
+                                      cidr='10.0.0.0/24', ip_version=4)
+        subnet_v6 = self._make_v6_subnet(network, constants.IPV6_SLAAC)
+        res = self._create_port(self.fmt, net_id=network['network']['id'])
+        port = self.deserialize(self.fmt, res)
+        self.assertEqual(2, len(port['port']['fixed_ips']))
+        # Update port including only the IPv4 subnet
+        data = {'port': {'fixed_ips': [{'subnet_id':
+                                        subnet_v4['subnet']['id'],
+                                        'ip_address': "10.0.0.10"}]}}
+        req = self.new_update_request('ports', data,
+                                      port['port']['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        # Port should still have an addr corresponding to IPv6 SLAAC subnet
+        ips = res['port']['fixed_ips']
+        self.assertEqual(2, len(ips))
+        eui_addr = self._calc_ipv6_addr_by_EUI64(port, subnet_v6)
+        expected_v6_ip = {'subnet_id': subnet_v6['subnet']['id'],
+                          'ip_address': eui_addr}
+        self.assertIn(expected_v6_ip, ips)
+
     def test_ip_allocation_for_ipv6_2_subnet_slaac_mode(self):
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
