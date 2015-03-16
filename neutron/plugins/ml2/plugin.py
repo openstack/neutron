@@ -1182,7 +1182,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.notifier.port_delete(context, id)
         self.notify_security_groups_member_updated(context, port)
 
-    def get_bound_port_context(self, plugin_context, port_id, host=None):
+    def get_bound_port_context(self, plugin_context, port_id, host=None,
+                               cached_networks=None):
         session = plugin_context.session
         with session.begin(subtransactions=True):
             try:
@@ -1199,7 +1200,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                           port_id)
                 return
             port = self._make_port_dict(port_db)
-            network = self.get_network(plugin_context, port['network_id'])
+            network = (cached_networks or {}).get(port['network_id'])
+
+            if not network:
+                network = self.get_network(plugin_context, port['network_id'])
+
             if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
                 binding = db.get_dvr_port_binding_by_host(
                     session, port['id'], host)
