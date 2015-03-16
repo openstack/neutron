@@ -1622,23 +1622,111 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self.assertIn({'ip_address': eui_addr,
                                    'subnet_id': subnet2['subnet']['id']}, ips)
 
+    def _make_v6_subnet(self, network, ra_addr_mode):
+        return (self._make_subnet(self.fmt, network, gateway='fe80::1',
+                                  cidr='fe80::/64', ip_version=6,
+                                  ipv6_ra_mode=ra_addr_mode,
+                                  ipv6_address_mode=ra_addr_mode))
+
+    @staticmethod
+    def _calc_ipv6_addr_by_EUI64(port, subnet):
+        port_mac = port['port']['mac_address']
+        subnet_cidr = subnet['subnet']['cidr']
+        return str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr, port_mac))
+
     def test_ip_allocation_for_ipv6_subnet_slaac_address_mode(self):
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
-        v6_subnet = self._make_subnet(self.fmt, network,
-                                      gateway='fe80::1',
-                                      cidr='fe80::/64',
-                                      ip_version=6,
-                                      ipv6_ra_mode=None,
-                                      ipv6_address_mode=constants.IPV6_SLAAC)
+        subnet = self._make_v6_subnet(network, constants.IPV6_SLAAC)
         port = self._make_port(self.fmt, network['network']['id'])
-        self.assertEqual(len(port['port']['fixed_ips']), 1)
-        port_mac = port['port']['mac_address']
-        subnet_cidr = v6_subnet['subnet']['cidr']
-        eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
-                                                         port_mac))
-        self.assertEqual(port['port']['fixed_ips'][0]['ip_address'], eui_addr)
+        self.assertEqual(1, len(port['port']['fixed_ips']))
+        self.assertEqual(self._calc_ipv6_addr_by_EUI64(port, subnet),
+                         port['port']['fixed_ips'][0]['ip_address'])
+
+    def _test_create_port_with_ipv6_subnet_in_fixed_ips(self, addr_mode):
+        """Test port create with an IPv6 subnet incl in fixed IPs."""
+        with self.network(name='net') as network:
+            subnet = self._make_v6_subnet(network, addr_mode)
+            subnet_id = subnet['subnet']['id']
+            fixed_ips = [{'subnet_id': subnet_id}]
+            with self.port(subnet=subnet, fixed_ips=fixed_ips) as port:
+                if addr_mode == constants.IPV6_SLAAC:
+                    exp_ip_addr = self._calc_ipv6_addr_by_EUI64(port, subnet)
+                else:
+                    exp_ip_addr = 'fe80::2'
+                port_fixed_ips = port['port']['fixed_ips']
+                self.assertEqual(1, len(port_fixed_ips))
+                self.assertEqual(exp_ip_addr,
+                                 port_fixed_ips[0]['ip_address'])
+
+    def test_create_port_with_ipv6_slaac_subnet_in_fixed_ips(self):
+        self._test_create_port_with_ipv6_subnet_in_fixed_ips(
+            addr_mode=constants.IPV6_SLAAC)
+
+    def test_create_port_with_ipv6_dhcp_stateful_subnet_in_fixed_ips(self):
+        self._test_create_port_with_ipv6_subnet_in_fixed_ips(
+            addr_mode=constants.DHCPV6_STATEFUL)
+
+    def test_create_port_with_multiple_ipv4_and_ipv6_subnets(self):
+        """Test port create with multiple IPv4, IPv6 DHCP/SLAAC subnets."""
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        sub_dicts = [
+            {'gateway': '10.0.0.1', 'cidr': '10.0.0.0/24',
+             'ip_version': 4, 'ra_addr_mode': None},
+            {'gateway': '10.0.1.1', 'cidr': '10.0.1.0/24',
+             'ip_version': 4, 'ra_addr_mode': None},
+            {'gateway': 'fe80::1', 'cidr': 'fe80::/64',
+             'ip_version': 6, 'ra_addr_mode': constants.IPV6_SLAAC},
+            {'gateway': 'fe81::1', 'cidr': 'fe81::/64',
+             'ip_version': 6, 'ra_addr_mode': constants.IPV6_SLAAC},
+            {'gateway': 'fe82::1', 'cidr': 'fe82::/64',
+             'ip_version': 6, 'ra_addr_mode': constants.DHCPV6_STATEFUL},
+            {'gateway': 'fe83::1', 'cidr': 'fe83::/64',
+             'ip_version': 6, 'ra_addr_mode': constants.DHCPV6_STATEFUL}]
+        subnets = {}
+        for sub_dict in sub_dicts:
+            subnet = self._make_subnet(
+                self.fmt, network,
+                gateway=sub_dict['gateway'],
+                cidr=sub_dict['cidr'],
+                ip_version=sub_dict['ip_version'],
+                ipv6_ra_mode=sub_dict['ra_addr_mode'],
+                ipv6_address_mode=sub_dict['ra_addr_mode'])
+            subnets[subnet['subnet']['id']] = sub_dict
+        res = self._create_port(self.fmt, net_id=network['network']['id'])
+        port = self.deserialize(self.fmt, res)
+        # Since the create port request was made without a list of fixed IPs,
+        # the port should be associated with addresses for one of the
+        # IPv4 subnets, one of the DHCPv6 subnets, and both of the IPv6
+        # SLAAC subnets.
+        self.assertEqual(4, len(port['port']['fixed_ips']))
+        addr_mode_count = {None: 0, constants.DHCPV6_STATEFUL: 0,
+                           constants.IPV6_SLAAC: 0}
+        for fixed_ip in port['port']['fixed_ips']:
+            subnet_id = fixed_ip['subnet_id']
+            if subnet_id in subnets:
+                addr_mode_count[subnets[subnet_id]['ra_addr_mode']] += 1
+        self.assertEqual(1, addr_mode_count[None])
+        self.assertEqual(1, addr_mode_count[constants.DHCPV6_STATEFUL])
+        self.assertEqual(2, addr_mode_count[constants.IPV6_SLAAC])
+
+    def test_delete_port_with_ipv6_slaac_address(self):
+        """Test that a port with an IPv6 SLAAC address can be deleted."""
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        # Create a port that has an associated IPv6 SLAAC address
+        self._make_v6_subnet(network, constants.IPV6_SLAAC)
+        res = self._create_port(self.fmt, net_id=network['network']['id'])
+        port = self.deserialize(self.fmt, res)
+        self.assertEqual(1, len(port['port']['fixed_ips']))
+        # Confirm that the port can be deleted
+        self._delete('ports', port['port']['id'])
+        self._show('ports', port['port']['id'],
+                   expected_code=webob.exc.HTTPNotFound.code)
 
     def test_ip_allocation_for_ipv6_2_subnet_slaac_mode(self):
         res = self._create_network(fmt=self.fmt, name='net',
