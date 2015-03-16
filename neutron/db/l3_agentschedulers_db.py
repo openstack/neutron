@@ -384,8 +384,6 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         ports on the host, running the input l3agent.
         """
         subnet_ids = self.get_subnet_ids_on_router(context, router_id)
-        if not subnet_ids:
-            return False
 
         core_plugin = manager.NeutronManager.get_plugin()
         filter = {'fixed_ips': {'subnet_id': subnet_ids}}
