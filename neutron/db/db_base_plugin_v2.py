@@ -884,7 +884,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                'shared': subnetpool['shared'],
                'prefixes': [prefix['cidr']
                             for prefix in subnetpool['prefixes']],
-               'ip_version': subnetpool['ip_version']}
+               'ip_version': subnetpool['ip_version'],
+               'default_quota': subnetpool['default_quota']}
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,
@@ -1512,7 +1513,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                          sp_reader.default_prefixlen,
                          'min_prefixlen': sp_reader.min_prefixlen,
                          'max_prefixlen': sp_reader.max_prefixlen,
-                         'shared': sp_reader.shared}
+                         'shared': sp_reader.shared,
+                         'default_quota': sp_reader.default_quota}
             subnetpool = models_v2.SubnetPool(**pool_args)
             context.session.add(subnetpool)
             for prefix in sp_reader.prefixes:
@@ -1548,7 +1550,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             updated['prefixes'] = orig_prefixes
 
         for key in ['id', 'name', 'ip_version', 'min_prefixlen',
-                    'max_prefixlen', 'default_prefixlen', 'shared']:
+                    'max_prefixlen', 'default_prefixlen', 'shared',
+                    'default_quota']:
             self._write_key(key, updated, model, new_pool)
 
         return updated

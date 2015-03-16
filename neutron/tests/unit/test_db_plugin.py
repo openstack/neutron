@@ -4815,6 +4815,21 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 400)
 
+    def test_update_subnetpool_default_quota(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24',
+                                         default_quota=10)
+
+        self.assertEqual(initial_subnetpool['subnetpool']['default_quota'],
+                         10)
+        data = {'subnetpool': {'default_quota': '1'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(res['subnetpool']['default_quota'], 1)
+
     def test_allocate_any_subnet_with_prefixlen(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
@@ -5066,6 +5081,29 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                           sp['subnetpool']['id'])
             res = req.get_response(self.api)
             self.assertEqual(res.status_int, 400)
+
+    def test_allocate_subnet_over_quota(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21',
+                                              default_quota=2048)
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'ip_version': 4,
+                               'prefixlen': 21,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            # Allocate a subnet to fill the quota
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 201)
+            # Attempt to allocate a /21 again
+            res = req.get_response(self.api)
+            # Assert error
+            self.assertEqual(res.status_int, 409)
 
 
 class DbModelTestCase(base.BaseTestCase):

@@ -42,6 +42,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                             min_prefixlen, ip_version,
                             max_prefixlen=attributes.ATTR_NOT_SPECIFIED,
                             default_prefixlen=attributes.ATTR_NOT_SPECIFIED,
+                            default_quota=attributes.ATTR_NOT_SPECIFIED,
                             shared=False):
         subnetpool = {'subnetpool': {'name': name,
                                      'tenant_id': self._tenant_id,
@@ -49,7 +50,8 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                      'min_prefixlen': min_prefixlen,
                                      'max_prefixlen': max_prefixlen,
                                      'default_prefixlen': default_prefixlen,
-                                     'shared': shared}}
+                                     'shared': shared,
+                                     'default_quota': default_quota}}
         return plugin.create_subnetpool(ctx, subnetpool)
 
     def _get_subnetpool(self, ctx, plugin, id):
@@ -142,3 +144,25 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
             detail = res.get_details()
             self.assertEqual(detail.gateway_ip,
                              netaddr.IPAddress('10.1.2.254'))
+
+    def test__allocation_value_for_tenant_no_allocations(self):
+        sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
+                                      ['10.1.0.0/16', '192.168.1.0/24'],
+                                      21, 4)
+        sa = subnet_alloc.SubnetAllocator(sp)
+        value = sa._allocations_used_by_tenant(self.ctx.session, 32)
+        self.assertEqual(value, 0)
+
+    def test_subnetpool_default_quota_exceeded(self):
+        sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
+                                      ['fe80::/48'],
+                                      48, 6, default_quota=1)
+        sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
+        sa = subnet_alloc.SubnetAllocator(sp)
+        req = ipam.SpecificSubnetRequest(self._tenant_id,
+                                         uuidutils.generate_uuid(),
+                                         'fe80::/63')
+        self.assertRaises(n_exc.SubnetPoolQuotaExceeded,
+                          sa.allocate_subnet,
+                          self.ctx.session,
+                          req)

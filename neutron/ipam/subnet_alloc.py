@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import math
 import operator
 
 import netaddr
@@ -34,6 +35,7 @@ class SubnetAllocator(driver.Pool):
 
     def __init__(self, subnetpool):
         self._subnetpool = subnetpool
+        self._sp_helper = SubnetPoolHelper()
 
     def _get_allocated_cidrs(self, session):
         query = session.query(
@@ -42,7 +44,7 @@ class SubnetAllocator(driver.Pool):
         return (x.cidr for x in subnets)
 
     def _get_available_prefix_list(self, session):
-        prefixes = (x.cidr for x in self._subnetpool['prefixes'])
+        prefixes = (x.cidr for x in self._subnetpool.prefixes)
         allocations = self._get_allocated_cidrs(session)
         prefix_set = netaddr.IPSet(iterable=prefixes)
         allocation_set = netaddr.IPSet(iterable=allocations)
@@ -52,8 +54,42 @@ class SubnetAllocator(driver.Pool):
                       key=operator.attrgetter('prefixlen'),
                       reverse=True)
 
+    def _num_quota_units_in_prefixlen(self, prefixlen, quota_unit):
+        return math.pow(2, quota_unit - prefixlen)
+
+    def _allocations_used_by_tenant(self, session, quota_unit):
+        subnetpool_id = self._subnetpool['id']
+        tenant_id = self._subnetpool['tenant_id']
+        with session.begin(subtransactions=True):
+            qry = session.query(
+                 models_v2.Subnet).with_lockmode('update')
+            allocations = qry.filter_by(subnetpool_id=subnetpool_id,
+                                        tenant_id=tenant_id)
+            value = 0
+            for allocation in allocations:
+                prefixlen = netaddr.IPNetwork(allocation.cidr).prefixlen
+                value += self._num_quota_units_in_prefixlen(prefixlen,
+                                                            quota_unit)
+            return value
+
+    def _check_subnetpool_tenant_quota(self, session, tenant_id, prefixlen):
+        quota_unit = self._sp_helper.ip_version_subnetpool_quota_unit(
+                                               self._subnetpool['ip_version'])
+        quota = self._subnetpool.get('default_quota')
+
+        if quota:
+            used = self._allocations_used_by_tenant(session, quota_unit)
+            requested_units = self._num_quota_units_in_prefixlen(prefixlen,
+                                                                 quota_unit)
+
+            if used + requested_units > quota:
+                raise n_exc.SubnetPoolQuotaExceeded()
+
     def _allocate_any_subnet(self, session, request):
         with session.begin(subtransactions=True):
+            self._check_subnetpool_tenant_quota(session,
+                                                request.tenant_id,
+                                                request.prefixlen)
             prefix_pool = self._get_available_prefix_list(session)
             for prefix in prefix_pool:
                 if request.prefixlen >= prefix.prefixlen:
@@ -73,6 +109,9 @@ class SubnetAllocator(driver.Pool):
 
     def _allocate_specific_subnet(self, session, request):
         with session.begin(subtransactions=True):
+            self._check_subnetpool_tenant_quota(session,
+                                                request.tenant_id,
+                                                request.prefixlen)
             subnet = request.subnet
             available = self._get_available_prefix_list(session)
             matched = netaddr.all_matching_cidrs(subnet, available)
@@ -152,7 +191,7 @@ class SubnetPoolReader(object):
     _sp_helper = None
 
     def __init__(self, subnetpool):
-        self._read_prefix_list(subnetpool)
+        self._read_prefix_info(subnetpool)
         self._sp_helper = SubnetPoolHelper()
         self._read_id(subnetpool)
         self._read_prefix_bounds(subnetpool)
@@ -168,6 +207,7 @@ class SubnetPoolReader(object):
                            'max_prefixlen': self.max_prefixlen,
                            'default_prefix': self.default_prefix,
                            'default_prefixlen': self.default_prefixlen,
+                           'default_quota': self.default_quota,
                            'shared': self.shared}
 
     def _read_attrs(self, subnetpool, keys):
@@ -225,7 +265,7 @@ class SubnetPoolReader(object):
             setattr(self, prefix_attr, prefix_cidr)
             setattr(self, prefixlen_attr, prefixlen)
 
-    def _read_prefix_list(self, subnetpool):
+    def _read_prefix_info(self, subnetpool):
         prefix_list = subnetpool['prefixes']
         if not prefix_list:
             raise n_exc.EmptySubnetPoolPrefixList()
@@ -236,6 +276,10 @@ class SubnetPoolReader(object):
                 ip_version = netaddr.IPNetwork(prefix).version
             elif netaddr.IPNetwork(prefix).version != ip_version:
                 raise n_exc.PrefixVersionMismatch()
+        self.default_quota = subnetpool.get('default_quota')
+
+        if self.default_quota is attributes.ATTR_NOT_SPECIFIED:
+            self.default_quota = None
 
         self.ip_version = ip_version
         self.prefixes = self._compact_subnetpool_prefix_list(prefix_list)
@@ -253,12 +297,16 @@ class SubnetPoolReader(object):
 
 class SubnetPoolHelper(object):
 
-    PREFIX_VERSION_INFO = {4: {'max_prefixlen': constants.IPv4_BITS,
+    _PREFIX_VERSION_INFO = {4: {'max_prefixlen': constants.IPv4_BITS,
                                'wildcard': '0.0.0.0',
-                               'default_min_prefixlen': 8},
+                               'default_min_prefixlen': 8,
+                               # IPv4 quota measured in units of /32
+                               'quota_units': 32},
                            6: {'max_prefixlen': constants.IPv6_BITS,
                                'wildcard': '::',
-                               'default_min_prefixlen': 64}}
+                               'default_min_prefixlen': 64,
+                               # IPv6 quota measured in units of /64
+                               'quota_units': 64}}
 
     def validate_min_prefixlen(self, min_prefixlen, max_prefixlen):
         if min_prefixlen < 0:
@@ -272,7 +320,7 @@ class SubnetPoolHelper(object):
                                              base_prefixlen=max_prefixlen)
 
     def validate_max_prefixlen(self, prefixlen, ip_version):
-        max = self.PREFIX_VERSION_INFO[ip_version]['max_prefixlen']
+        max = self._PREFIX_VERSION_INFO[ip_version]['max_prefixlen']
         if prefixlen > max:
             raise n_exc.IllegalSubnetPoolPrefixBounds(
                                             prefix_type='max_prefixlen',
@@ -298,10 +346,13 @@ class SubnetPoolHelper(object):
                                              base_prefixlen=max_prefixlen)
 
     def wildcard(self, ip_version):
-        return self.PREFIX_VERSION_INFO[ip_version]['wildcard']
+        return self._PREFIX_VERSION_INFO[ip_version]['wildcard']
 
     def default_max_prefixlen(self, ip_version):
-        return self.PREFIX_VERSION_INFO[ip_version]['max_prefixlen']
+        return self._PREFIX_VERSION_INFO[ip_version]['max_prefixlen']
 
     def default_min_prefixlen(self, ip_version):
-        return self.PREFIX_VERSION_INFO[ip_version]['default_min_prefixlen']
+        return self._PREFIX_VERSION_INFO[ip_version]['default_min_prefixlen']
+
+    def ip_version_subnetpool_quota_unit(self, ip_version):
+        return self._PREFIX_VERSION_INFO[ip_version]['quota_units']
