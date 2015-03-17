@@ -153,6 +153,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                     getattr(manager.NeutronManager.get_plugin(),
                             native_sorting_attr_name, False))
 
+        self.plugin = manager.NeutronManager.get_plugin()
         self._skip_native_sorting = not _is_native_sorting_support()
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
