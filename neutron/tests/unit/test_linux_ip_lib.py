@@ -17,6 +17,7 @@ import mock
 import netaddr
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils  # noqa
 from neutron.common import exceptions
 from neutron.tests import base
 
@@ -235,49 +236,25 @@ class TestIpWrapper(base.BaseTestCase):
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
         self.execute = self.execute_p.start()
 
-    def test_get_devices(self):
-        self.execute.return_value = '\n'.join(LINK_SAMPLE)
+    @mock.patch('os.path.islink')
+    @mock.patch('os.listdir', return_value=['lo'])
+    def test_get_devices(self, mocked_listdir, mocked_islink):
         retval = ip_lib.IPWrapper().get_devices()
-        self.assertEqual(retval,
-                         [ip_lib.IPDevice('lo'),
-                          ip_lib.IPDevice('eth0'),
-                          ip_lib.IPDevice('br-int'),
-                          ip_lib.IPDevice('gw-ddc717df-49'),
-                          ip_lib.IPDevice('foo:foo'),
-                          ip_lib.IPDevice('foo@foo'),
-                          ip_lib.IPDevice('foo:foo@foo'),
-                          ip_lib.IPDevice('foo@foo:foo'),
-                          ip_lib.IPDevice('bar.9'),
-                          ip_lib.IPDevice('bar'),
-                          ip_lib.IPDevice('bar:bar'),
-                          ip_lib.IPDevice('bar@bar'),
-                          ip_lib.IPDevice('bar:bar@bar'),
-                          ip_lib.IPDevice('bar@bar:bar')])
+        mocked_islink.assert_called_once_with('/sys/class/net/lo')
+        self.assertEqual(retval, [ip_lib.IPDevice('lo')])
 
-        self.execute.assert_called_once_with(['o', 'd'], 'link', ('list',),
-                                             log_fail_as_error=True)
-
-    def test_get_devices_malformed_line(self):
-        self.execute.return_value = '\n'.join(LINK_SAMPLE + ['gibberish'])
-        retval = ip_lib.IPWrapper().get_devices()
-        self.assertEqual(retval,
-                         [ip_lib.IPDevice('lo'),
-                          ip_lib.IPDevice('eth0'),
-                          ip_lib.IPDevice('br-int'),
-                          ip_lib.IPDevice('gw-ddc717df-49'),
-                          ip_lib.IPDevice('foo:foo'),
-                          ip_lib.IPDevice('foo@foo'),
-                          ip_lib.IPDevice('foo:foo@foo'),
-                          ip_lib.IPDevice('foo@foo:foo'),
-                          ip_lib.IPDevice('bar.9'),
-                          ip_lib.IPDevice('bar'),
-                          ip_lib.IPDevice('bar:bar'),
-                          ip_lib.IPDevice('bar@bar'),
-                          ip_lib.IPDevice('bar:bar@bar'),
-                          ip_lib.IPDevice('bar@bar:bar')])
-
-        self.execute.assert_called_once_with(['o', 'd'], 'link', ('list',),
-                                             log_fail_as_error=True)
+    @mock.patch('neutron.agent.linux.utils.execute')
+    def test_get_devices_namespaces(self, mocked_execute):
+        fake_str = mock.Mock()
+        fake_str.split.return_value = ['lo']
+        mocked_execute.return_value = fake_str
+        retval = ip_lib.IPWrapper(namespace='foo').get_devices()
+        mocked_execute.assert_called_once_with(
+                ['ip', 'netns', 'exec', 'foo', 'find', '/sys/class/net',
+                 '-maxdepth', '1', '-type', 'l', '-printf', '%f '],
+                run_as_root=True, log_fail_as_error=True)
+        self.assertTrue(fake_str.split.called)
+        self.assertEqual(retval, [ip_lib.IPDevice('lo', namespace='foo')])
 
     def test_get_namespaces(self):
         self.execute.return_value = '\n'.join(NETNS_SAMPLE)

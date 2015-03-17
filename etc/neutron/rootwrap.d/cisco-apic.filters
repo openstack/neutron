@@ -13,4 +13,5 @@ lldpctl: CommandFilter, lldpctl, root
 
 # ip_lib filters
 ip: IpFilter, ip, root
+find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -printf, %.*
 ip_exec: IpNetnsExecFilter, ip, root

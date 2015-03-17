@@ -15,6 +15,7 @@
 
 import eventlet
 import netaddr
+import os
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -32,11 +33,8 @@ OPTS = [
 
 
 LOOPBACK_DEVNAME = 'lo'
-# NOTE(ethuleau): depend of the version of iproute2, the vlan
-# interface details vary.
-VLAN_INTERFACE_DETAIL = ['vlan protocol 802.1q',
-                         'vlan protocol 802.1Q',
-                         'vlan id']
+
+SYS_NET_PATH = '/sys/class/net'
 
 
 class SubProcessBase(object):
@@ -93,22 +91,27 @@ class IPWrapper(SubProcessBase):
 
     def get_devices(self, exclude_loopback=False):
         retval = []
-        output = self._run(['o', 'd'], 'link', ('list',))
-        for line in output.split('\n'):
-            if '<' not in line:
+        if self.namespace:
+            # we call out manually because in order to avoid screen scraping
+            # iproute2 we use find to see what is in the sysfs directory, as
+            # suggested by Stephen Hemminger (iproute2 dev).
+            output = utils.execute(['ip', 'netns', 'exec', self.namespace,
+                                    'find', SYS_NET_PATH, '-maxdepth', '1',
+                                    '-type', 'l', '-printf', '%f '],
+                                   run_as_root=True,
+                                   log_fail_as_error=self.log_fail_as_error
+                                   ).split()
+        else:
+            output = (
+                i for i in os.listdir(SYS_NET_PATH)
+                if os.path.islink(os.path.join(SYS_NET_PATH, i))
+            )
+
+        for name in output:
+            if exclude_loopback and name == LOOPBACK_DEVNAME:
                 continue
-            tokens = line.split(' ', 2)
-            if len(tokens) == 3:
-                if any(v in tokens[2] for v in VLAN_INTERFACE_DETAIL):
-                    delimiter = '@'
-                else:
-                    delimiter = ':'
-                name = tokens[1].rpartition(delimiter)[0].strip()
+            retval.append(IPDevice(name, namespace=self.namespace))
 
-                if exclude_loopback and name == LOOPBACK_DEVNAME:
-                    continue
-
-                retval.append(IPDevice(name, namespace=self.namespace))
         return retval
 
     def add_tuntap(self, name, mode='tap'):
