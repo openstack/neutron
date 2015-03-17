@@ -70,16 +70,25 @@ def parse_service_provider_opt():
             raise n_exc.Invalid(
                 _("Provider name is limited by 255 characters: %s") % name)
 
-    # Main neutron config file
+    # TODO(dougwig) - phase out the neutron.conf location for service
+    # providers a cycle or two after Kilo.
+
+    # Look in neutron.conf for service providers first (legacy mode)
     try:
         svc_providers_opt = cfg.CONF.service_providers.service_provider
     except cfg.NoSuchOptError:
         svc_providers_opt = []
 
-    # Add in entries from the *aas conf files
-    neutron_mods = repos.NeutronModules()
-    for x in neutron_mods.installed_list():
-        svc_providers_opt += neutron_mods.service_providers(x)
+    # Look in neutron-*aas.conf files for service provider configs
+    if svc_providers_opt:
+        LOG.warning(_LW("Reading service_providers from legacy location in "
+                        "neutron.conf, and ignoring values in "
+                        "neutron_*aas.conf files; this override will be "
+                        "going away soon."))
+    else:
+        neutron_mods = repos.NeutronModules()
+        for x in neutron_mods.installed_list():
+            svc_providers_opt += neutron_mods.service_providers(x)
 
     LOG.debug("Service providers = %s", svc_providers_opt)
 
