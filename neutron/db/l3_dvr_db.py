@@ -333,9 +333,19 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             port, subnet = self._remove_interface_by_subnet(
                 context, router_id, subnet_id, device_owner)
 
-        if router.extra_attributes.distributed and router.gw_port:
-            self.delete_csnat_router_interface_ports(
-                context.elevated(), router, subnet_id=subnet_id)
+        if router.extra_attributes.distributed:
+            if router.gw_port:
+                self.delete_csnat_router_interface_ports(
+                    context.elevated(), router, subnet_id=subnet_id)
+            plugin = manager.NeutronManager.get_service_plugins().get(
+                        constants.L3_ROUTER_NAT)
+            l3_agents = plugin.get_l3_agents_hosting_routers(context,
+                                                             [router_id])
+            for l3_agent in l3_agents:
+                if not plugin.check_ports_exist_on_l3agent(context, l3_agent,
+                                                           router_id):
+                    plugin.remove_router_from_l3_agent(
+                        context, l3_agent['id'], router_id)
 
         router_interface_info = self._make_router_interface_info(
             router_id, port['tenant_id'], port['id'],
