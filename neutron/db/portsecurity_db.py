@@ -154,8 +154,7 @@ class PortSecurityDbMixin(object):
                 port['device_owner'].startswith('network:')):
             return (False, has_ip)
 
-        if (psec.PORTSECURITY in port and
-            isinstance(port[psec.PORTSECURITY], bool)):
+        if attrs.is_attr_set(port.get(psec.PORTSECURITY)):
             port_security_enabled = port[psec.PORTSECURITY]
 
         # If port has an ip and security_groups are passed in
