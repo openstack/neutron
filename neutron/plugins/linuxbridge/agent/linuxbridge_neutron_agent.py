@@ -625,7 +625,8 @@ class LinuxBridgeManager:
         for mac, ip in ports:
             if mac != constants.FLOODING_ENTRY[0]:
                 self.add_fdb_ip_entry(mac, ip, interface)
-                self.add_fdb_bridge_entry(mac, agent_ip, interface)
+                self.add_fdb_bridge_entry(mac, agent_ip, interface,
+                                          operation="replace")
             elif self.vxlan_mode == lconst.VXLAN_UCAST:
                 if self.fdb_bridge_entry_exists(mac, interface):
                     self.add_fdb_bridge_entry(mac, agent_ip, interface,
