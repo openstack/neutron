@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from networking_mlnx.plugins.mlnx.agent import constants
 from oslo_config import cfg
 
 from neutron.agent.common import config
@@ -24,10 +23,6 @@ eswitch_opts = [
     cfg.ListOpt('physical_interface_mappings',
                 default=DEFAULT_INTERFACE_MAPPINGS,
                 help=_("List of <physical_network>:<physical_interface>")),
-    cfg.StrOpt('vnic_type',
-               default=constants.VIF_TYPE_DIRECT,
-               choices=(constants.VIF_TYPE_DIRECT, constants.VIF_TYPE_HOSTDEV),
-               help=_("Type of VM network interface")),
     cfg.StrOpt('daemon_endpoint',
                default='tcp://127.0.0.1:60001',
                help=_('eswitch daemon end point')),
