@@ -165,6 +165,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         """Call type drivers to create network segments."""
         segments = self._process_provider_create(network)
         session = context.session
+        mtu = []
         with session.begin(subtransactions=True):
             network_id = network['id']
             if segments:
@@ -173,9 +174,14 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                         session, segment)
                     db.add_network_segment(session, network_id,
                                            segment, segment_index)
+                    if segment.get(api.MTU) > 0:
+                        mtu.append(segment[api.MTU])
             else:
                 segment = self.allocate_tenant_segment(session)
                 db.add_network_segment(session, network_id, segment)
+                if segment.get(api.MTU) > 0:
+                    mtu.append(segment[api.MTU])
+        network[api.MTU] = min(mtu) if mtu else 0
 
     def is_partial_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]

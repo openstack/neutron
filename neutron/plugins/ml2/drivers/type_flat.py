@@ -23,6 +23,7 @@ from neutron.db import model_base
 from neutron.i18n import _LI, _LW
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import helpers
 
 LOG = log.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class FlatAllocation(model_base.BASEV2):
                                  primary_key=True)
 
 
-class FlatTypeDriver(api.TypeDriver):
+class FlatTypeDriver(helpers.BaseTypeDriver):
     """Manage state for flat networks with ML2.
 
     The FlatTypeDriver implements the 'flat' network_type. Flat
@@ -62,6 +63,7 @@ class FlatTypeDriver(api.TypeDriver):
     """
 
     def __init__(self):
+        super(FlatTypeDriver, self).__init__()
         self._parse_networks(cfg.CONF.ml2_type_flat.flat_networks)
 
     def _parse_networks(self, entries):
@@ -112,6 +114,7 @@ class FlatTypeDriver(api.TypeDriver):
             except db_exc.DBDuplicateEntry:
                 raise exc.FlatNetworkInUse(
                     physical_network=physical_network)
+            segment[api.MTU] = self.get_mtu(alloc.physical_network)
         return segment
 
     def allocate_tenant_segment(self, session):
@@ -130,3 +133,12 @@ class FlatTypeDriver(api.TypeDriver):
         else:
             LOG.warning(_LW("No flat network found on physical network %s"),
                         physical_network)
+
+    def get_mtu(self, physical_network):
+        seg_mtu = super(FlatTypeDriver, self).get_mtu()
+        mtu = []
+        if seg_mtu > 0:
+            mtu.append(seg_mtu)
+        if physical_network in self.physnet_mtus:
+            mtu.append(int(self.physnet_mtus[physical_network]))
+        return min(mtu) if mtu else 0

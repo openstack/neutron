@@ -177,3 +177,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
 
         with session.begin(subtransactions=True):
             session.query(VxlanEndpoints).filter_by(ip_address=ip).delete()
+
+    def get_mtu(self, physical_network=None):
+        mtu = super(VxlanTypeDriver, self).get_mtu()
+        return mtu - p_const.VXLAN_ENCAP_OVERHEAD if mtu else 0

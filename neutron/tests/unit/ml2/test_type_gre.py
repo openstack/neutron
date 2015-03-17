@@ -21,6 +21,7 @@ import testtools
 
 from neutron.db import api as db_api
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.drivers import type_gre
 from neutron.tests.unit.ml2 import test_rpcapi
 from neutron.tests.unit.ml2 import test_type_tunnel
@@ -124,6 +125,30 @@ class GreTypeTest(test_type_tunnel.TunnelTypeTestMixin,
         self.driver._add_allocation(session, {2})
         with testtools.ExpectedException(sa_exc.NoResultFound):
             _get_allocation(session, 1)
+
+    def test_get_mtu(self):
+        config.cfg.CONF.set_override('segment_mtu', 1500, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1475 - p_const.GRE_ENCAP_OVERHEAD,
+                         self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('segment_mtu', 1425, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1400, 'physnet2': 1400}
+        self.assertEqual(1425 - p_const.GRE_ENCAP_OVERHEAD,
+                         self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1425}
+        self.assertEqual(1475 - p_const.GRE_ENCAP_OVERHEAD,
+                         self.driver.get_mtu('physnet2'))
+
+        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
+        self.driver.physnet_mtus = {}
+        self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
 
 class GreTypeMultiRangeTest(test_type_tunnel.TunnelTypeMultiRangeTestMixin,

@@ -25,6 +25,7 @@ ID = 'id'
 NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
+MTU = 'mtu'
 
 # The following keys are used in the binding level dictionaries
 # available via the binding_levels and original_binding_levels
@@ -139,6 +140,17 @@ class TypeDriver(object):
         tenant or provider network's type-specific resource. Runtime
         errors are not expected, but raising an exception will result
         in rollback of the transaction.
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_mtu(self, physical):
+        """Get driver's network MTU.
+
+        :returns mtu: maximum transmission unit
+
+        Returns the mtu for the network based on the config values and
+        the network type.
         """
         pass
 

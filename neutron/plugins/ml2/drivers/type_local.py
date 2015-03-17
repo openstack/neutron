@@ -62,3 +62,6 @@ class LocalTypeDriver(api.TypeDriver):
     def release_segment(self, session, segment):
         # No resources to release
         pass
+
+    def get_mtu(self, physical_network=None):
+        pass
