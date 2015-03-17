@@ -17,6 +17,38 @@ from oslo_config import cfg
 from neutron.common import utils
 
 
+SHARED_OPTS = [
+    cfg.StrOpt('metadata_proxy_socket',
+               default='$state_path/metadata_proxy',
+               help=_('Location for Metadata Proxy UNIX domain socket.')),
+    cfg.StrOpt('metadata_proxy_user',
+               default='',
+               help=_("User (uid or name) running metadata proxy after "
+                      "its initialization (if empty: agent effective "
+                      "user).")),
+    cfg.StrOpt('metadata_proxy_group',
+               default='',
+               help=_("Group (gid or name) running metadata proxy after "
+                      "its initialization (if empty: agent effective "
+                      "group)."))
+]
+
+
+DRIVER_OPTS = [
+    cfg.BoolOpt('metadata_proxy_watch_log',
+                default=None,
+                help=_("Enable/Disable log watch by metadata proxy. It "
+                       "should be disabled when metadata_proxy_user/group "
+                       "is not allowed to read/write its log file and "
+                       "copytruncate logrotate option must be used if "
+                       "logrotate is enabled on metadata proxy log "
+                       "files. Option default value is deduced from "
+                       "metadata_proxy_user: watch log is enabled if "
+                       "metadata_proxy_user is agent effective user "
+                       "id/name.")),
+]
+
+
 METADATA_PROXY_HANDLER_OPTS = [
      cfg.StrOpt('admin_user',
                 help=_("Admin user")),
@@ -66,11 +98,29 @@ METADATA_PROXY_HANDLER_OPTS = [
                 help=_("Private key of client certificate."))
 ]
 
+DEDUCE_MODE = 'deduce'
+USER_MODE = 'user'
+GROUP_MODE = 'group'
+ALL_MODE = 'all'
+SOCKET_MODES = (DEDUCE_MODE, USER_MODE, GROUP_MODE, ALL_MODE)
+
 
 UNIX_DOMAIN_METADATA_PROXY_OPTS = [
-    cfg.StrOpt('metadata_proxy_socket',
-               default='$state_path/metadata_proxy',
-               help=_('Location for Metadata Proxy UNIX domain socket')),
+    cfg.StrOpt('metadata_proxy_socket_mode',
+               default=DEDUCE_MODE,
+               choices=SOCKET_MODES,
+               help=_("Metadata Proxy UNIX domain socket mode, 3 values "
+                      "allowed: "
+                      "'deduce': deduce mode from metadata_proxy_user/group "
+                      "values, "
+                      "'user': set metadata proxy socket mode to 0o644, to "
+                      "use when metadata_proxy_user is agent effective user "
+                      "or root, "
+                      "'group': set metadata proxy socket mode to 0o664, to "
+                      "use when metadata_proxy_group is agent effective "
+                      "group or root, "
+                      "'all': set metadata proxy socket mode to 0o666, to use "
+                      "otherwise.")),
     cfg.IntOpt('metadata_workers',
                default=utils.cpu_count() // 2,
                help=_('Number of separate worker processes for metadata '

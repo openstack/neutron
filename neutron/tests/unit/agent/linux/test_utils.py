@@ -215,6 +215,11 @@ class FakeUser(object):
         self.pw_name = name
 
 
+class FakeGroup(object):
+    def __init__(self, name):
+        self.gr_name = name
+
+
 class TestBaseOSUtils(base.BaseTestCase):
 
     EUID = 123
@@ -263,6 +268,34 @@ class TestBaseOSUtils(base.BaseTestCase):
         self.assertFalse(utils.is_effective_user('wrong'))
         geteuid.assert_called_once_with()
         getpwuid.assert_called_once_with(self.EUID)
+
+    @mock.patch('os.getegid', return_value=EGID)
+    @mock.patch('grp.getgrgid', return_value=FakeGroup(EGNAME))
+    def test_is_effective_group_id(self, getgrgid, getegid):
+        self.assertTrue(utils.is_effective_group(self.EGID))
+        getegid.assert_called_once_with()
+        self.assertFalse(getgrgid.called)
+
+    @mock.patch('os.getegid', return_value=EGID)
+    @mock.patch('grp.getgrgid', return_value=FakeGroup(EGNAME))
+    def test_is_effective_group_str_id(self, getgrgid, getegid):
+        self.assertTrue(utils.is_effective_group(str(self.EGID)))
+        getegid.assert_called_once_with()
+        self.assertFalse(getgrgid.called)
+
+    @mock.patch('os.getegid', return_value=EGID)
+    @mock.patch('grp.getgrgid', return_value=FakeGroup(EGNAME))
+    def test_is_effective_group_name(self, getgrgid, getegid):
+        self.assertTrue(utils.is_effective_group(self.EGNAME))
+        getegid.assert_called_once_with()
+        getgrgid.assert_called_once_with(self.EGID)
+
+    @mock.patch('os.getegid', return_value=EGID)
+    @mock.patch('grp.getgrgid', return_value=FakeGroup(EGNAME))
+    def test_is_not_effective_group(self, getgrgid, getegid):
+        self.assertFalse(utils.is_effective_group('wrong'))
+        getegid.assert_called_once_with()
+        getgrgid.assert_called_once_with(self.EGID)
 
 
 class TestUnixDomainHttpConnection(base.BaseTestCase):

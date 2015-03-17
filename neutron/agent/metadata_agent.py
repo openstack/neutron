@@ -28,6 +28,7 @@ LOG = logging.getLogger(__name__)
 
 
 def main():
+    cfg.CONF.register_opts(metadata_conf.SHARED_OPTS)
     cfg.CONF.register_opts(metadata_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS)
     cfg.CONF.register_opts(metadata_conf.METADATA_PROXY_HANDLER_OPTS)
     cache.register_oslo_configs(cfg.CONF)

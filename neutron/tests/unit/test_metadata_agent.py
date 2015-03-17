@@ -20,6 +20,7 @@ import webob
 
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import agent
+from neutron.agent.metadata import config
 from neutron.agent import metadata_agent
 from neutron.common import constants
 from neutron.common import utils
@@ -521,6 +522,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         self.cfg.CONF.metadata_proxy_socket = '/the/path'
         self.cfg.CONF.metadata_workers = 0
         self.cfg.CONF.metadata_backlog = 128
+        self.cfg.CONF.metadata_proxy_socket_mode = config.USER_MODE
 
     @mock.patch.object(agent_utils, 'ensure_dir')
     def test_init_doesnot_exists(self, ensure_dir):
@@ -569,7 +571,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
             mock.call('neutron-metadata-agent'),
             mock.call().start(handler.return_value,
                               '/the/path', workers=0,
-                              backlog=128),
+                              backlog=128, mode=0o644),
             mock.call().wait()]
         )
 

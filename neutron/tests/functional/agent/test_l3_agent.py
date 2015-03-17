@@ -15,6 +15,7 @@
 
 import copy
 import functools
+import os.path
 
 import mock
 import netaddr
@@ -776,12 +777,21 @@ class MetadataFakeProxyHandler(object):
 
 class MetadataL3AgentTestCase(L3AgentTestFramework):
 
+    SOCKET_MODE = 0o644
+
     def _create_metadata_fake_server(self, status):
         server = utils.UnixDomainWSGIServer('metadata-fake-server')
         self.addCleanup(server.stop)
+
+        # NOTE(cbrandily): TempDir fixture creates a folder with 0o700
+        # permissions but metadata_proxy_socket folder must be readable by all
+        # users
+        self.useFixture(
+            helpers.RecursivePermDirFixture(
+                os.path.dirname(self.agent.conf.metadata_proxy_socket), 0o555))
         server.start(MetadataFakeProxyHandler(status),
                      self.agent.conf.metadata_proxy_socket,
-                     workers=0, backlog=4096)
+                     workers=0, backlog=4096, mode=self.SOCKET_MODE)
 
     def test_access_to_metadata_proxy(self):
         """Test access to the l3-agent metadata proxy.
@@ -828,6 +838,39 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
         # Check status code
         firstline = raw_headers.splitlines()[0]
         self.assertIn(str(webob.exc.HTTPOk.code), firstline.split())
+
+
+class UnprivilegedUserMetadataL3AgentTestCase(MetadataL3AgentTestCase):
+    """Test metadata proxy with least privileged user.
+
+    The least privileged user has uid=65534 and is commonly named 'nobody' but
+    not always, that's why we use its uid.
+    """
+
+    SOCKET_MODE = 0o664
+
+    def setUp(self):
+        super(UnprivilegedUserMetadataL3AgentTestCase, self).setUp()
+        self.agent.conf.set_override('metadata_proxy_user', '65534')
+        self.agent.conf.set_override('metadata_proxy_watch_log', False)
+
+
+class UnprivilegedUserGroupMetadataL3AgentTestCase(MetadataL3AgentTestCase):
+    """Test metadata proxy with least privileged user/group.
+
+    The least privileged user has uid=65534 and is commonly named 'nobody' but
+    not always, that's why we use its uid.
+    Its group has gid=65534 and is commonly named 'nobody' or 'nogroup', that's
+    why we use its gid.
+    """
+
+    SOCKET_MODE = 0o666
+
+    def setUp(self):
+        super(UnprivilegedUserGroupMetadataL3AgentTestCase, self).setUp()
+        self.agent.conf.set_override('metadata_proxy_user', '65534')
+        self.agent.conf.set_override('metadata_proxy_group', '65534')
+        self.agent.conf.set_override('metadata_proxy_watch_log', False)
 
 
 class TestDvrRouter(L3AgentTestFramework):

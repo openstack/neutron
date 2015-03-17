@@ -23,7 +23,7 @@ from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import ha
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
-from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent.metadata import config as metadata_config
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.openstack.common import service
@@ -32,7 +32,8 @@ from neutron import service as neutron_service
 
 def register_opts(conf):
     conf.register_opts(l3_config.OPTS)
-    conf.register_opts(metadata_driver.MetadataDriver.OPTS)
+    conf.register_opts(metadata_config.DRIVER_OPTS)
+    conf.register_opts(metadata_config.SHARED_OPTS)
     conf.register_opts(ha.OPTS)
     config.register_interface_driver_opts_helper(conf)
     config.register_use_namespaces_opts_helper(conf)
