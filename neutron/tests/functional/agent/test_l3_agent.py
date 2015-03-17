@@ -35,7 +35,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
-from neutron.agent.metadata import agent as metadata_agent
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
@@ -544,7 +543,7 @@ class MetadataFakeProxyHandler(object):
 class MetadataL3AgentTestCase(L3AgentTestFramework):
 
     def _create_metadata_fake_server(self, status):
-        server = metadata_agent.UnixDomainWSGIServer('metadata-fake-server')
+        server = utils.UnixDomainWSGIServer('metadata-fake-server')
         self.addCleanup(server.stop)
         server.start(MetadataFakeProxyHandler(status),
                      self.agent.conf.metadata_proxy_socket,

@@ -12,12 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import socket
-
 import mock
 import testtools
 import webob
 
+from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import namespace_proxy as ns_proxy
 from neutron.common import exceptions
 from neutron.common import utils
@@ -34,24 +33,6 @@ class FakeConf(object):
     nova_metadata_ip = '9.9.9.9'
     nova_metadata_port = 8775
     metadata_proxy_shared_secret = 'secret'
-
-
-class TestUnixDomainHttpConnection(base.BaseTestCase):
-    def test_connect(self):
-        with mock.patch.object(ns_proxy, 'cfg') as cfg:
-            cfg.CONF.metadata_proxy_socket = '/the/path'
-            with mock.patch('socket.socket') as socket_create:
-                conn = ns_proxy.UnixDomainHTTPConnection('169.254.169.254',
-                                                         timeout=3)
-
-                conn.connect()
-
-                socket_create.assert_has_calls([
-                    mock.call(socket.AF_UNIX, socket.SOCK_STREAM),
-                    mock.call().settimeout(3),
-                    mock.call().connect('/the/path')]
-                )
-                self.assertEqual(conn.timeout, 3)
 
 
 class TestNetworkMetadataProxyHandler(base.BaseTestCase):
@@ -111,7 +92,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Neutron-Router-ID': 'router_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    connection_type=agent_utils.UnixDomainHTTPConnection,
                     body=''
                 )]
             )
@@ -141,7 +122,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Neutron-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    connection_type=agent_utils.UnixDomainHTTPConnection,
                     body=''
                 )]
             )
@@ -171,7 +152,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Neutron-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    connection_type=agent_utils.UnixDomainHTTPConnection,
                     body=''
                 )]
             )
@@ -211,7 +192,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Neutron-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    connection_type=agent_utils.UnixDomainHTTPConnection,
                     body=''
                 )]
             )
@@ -240,7 +221,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Neutron-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    connection_type=agent_utils.UnixDomainHTTPConnection,
                     body=''
                 )]
             )
@@ -267,7 +248,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Neutron-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    connection_type=agent_utils.UnixDomainHTTPConnection,
                     body=''
                 )]
             )
