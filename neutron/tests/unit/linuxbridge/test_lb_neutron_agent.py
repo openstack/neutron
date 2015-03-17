@@ -972,7 +972,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                            'port_mac', 'dev', 'vxlan-1', 'nud', 'permanent'],
                           run_as_root=True,
                           check_exit_code=False),
-                mock.call(['bridge', 'fdb', 'add', 'port_mac', 'dev',
+                mock.call(['bridge', 'fdb', 'replace', 'port_mac', 'dev',
                            'vxlan-1', 'dst', 'agent_ip'],
                           run_as_root=True,
                           check_exit_code=False),
