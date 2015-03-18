@@ -270,6 +270,17 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertEqual('DOWN', port['port']['status'])
             self.assertEqual('DOWN', self.port_create_status)
 
+    def test_update_port_status_short_id(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        with self.port() as port:
+            with mock.patch.object(ml2_db, 'get_binding_levels',
+                                   return_value=[]) as mock_gbl:
+                port_id = port['port']['id']
+                short_id = port_id[:11]
+                plugin.update_port_status(ctx, short_id, 'UP')
+                mock_gbl.assert_called_once_with(mock.ANY, port_id, mock.ANY)
+
     def test_update_port_mac(self):
         self.check_update_port_mac(
             host_arg={portbindings.HOST_ID: HOST},
