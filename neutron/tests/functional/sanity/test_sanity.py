@@ -61,3 +61,6 @@ class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
 
     def test_namespace_root_read_detection_runs(self):
         checks.netns_read_requires_helper()
+
+    def test_ovsdb_native_supported_runs(self):
+        checks.ovsdb_native_supported()
