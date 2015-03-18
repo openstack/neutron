@@ -48,12 +48,12 @@ CONF = cfg.CONF
 CONF.import_opt('state_path', 'neutron.common.config')
 LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), '..', '..')
-TEST_ROOT_DIR = os.path.dirname(__file__)
+ROOTDIR = os.path.dirname(__file__)
+ETCDIR = os.path.join(ROOTDIR, 'etc')
 
 
-def etcdir(filename, root=TEST_ROOT_DIR):
-    return os.path.join(root, 'etc', filename)
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
 
 
 def fake_use_fatal_exceptions(*args):
@@ -214,12 +214,8 @@ class BaseTestCase(DietTestCase):
         """Create the default configurations."""
         # neutron.conf.test includes rpc_backend which needs to be cleaned up
         if args is None:
-            args = ['--config-file', etcdir('neutron.conf.test')]
-        # this is needed to add ROOT_DIR to the list of paths that oslo.config
-        # will try to traverse when searching for a new config file (it's
-        # needed so that policy module can locate policy_file)
-        args += ['--config-file', etcdir('neutron.conf', root=ROOT_DIR)]
-
+            args = []
+        args += ['--config-file', etcdir('neutron.conf.test')]
         if conf is None:
             config.init(args=args)
         else:
