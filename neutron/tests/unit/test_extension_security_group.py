@@ -1238,8 +1238,9 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rules = {'security_group_rules': [rule1['security_group_rule'],
                                               rule2['security_group_rule']]}
             res = self._create_security_group_rule(self.fmt, rules)
-            self.deserialize(self.fmt, res)
+            ret = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+            self.assertEqual(2, len(ret['security_group_rules']))
 
     def test_create_security_group_rule_bulk_emulated(self):
         real_has_attr = hasattr

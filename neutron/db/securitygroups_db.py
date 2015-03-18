@@ -308,7 +308,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                     port_range_max=rule['port_range_max'],
                     remote_ip_prefix=rule.get('remote_ip_prefix'))
                 context.session.add(db)
-            ret.append(self._make_security_group_rule_dict(db))
+                ret.append(self._make_security_group_rule_dict(db))
         return ret
 
     def create_security_group_rule(self, context, security_group_rule):
