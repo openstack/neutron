@@ -29,7 +29,7 @@ from neutron.common import constants
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
-from neutron.i18n import _LW
+from neutron.i18n import _LE, _LW
 from neutron import manager
 
 LOG = logging.getLogger(__name__)
@@ -272,10 +272,41 @@ class AgentExtRpcCallback(object):
         """Report state from agent to server."""
         time = kwargs['time']
         time = timeutils.parse_strtime(time)
-        if self.START_TIME > time:
-            LOG.debug("Message with invalid timestamp received")
-            return
         agent_state = kwargs['agent_state']['agent_state']
+        self._check_clock_sync_on_agent_start(agent_state, time)
+        if self.START_TIME > time:
+            time_agent = timeutils.isotime(time)
+            time_server = timeutils.isotime(self.START_TIME)
+            log_dict = {'agent_time': time_agent, 'server_time': time_server}
+            LOG.debug("Stale message received with timestamp: %(agent_time)s. "
+                      "Skipping processing because it's older than the "
+                      "server start timestamp: %(server_time)s", log_dict)
+            return
         if not self.plugin:
             self.plugin = manager.NeutronManager.get_plugin()
         self.plugin.create_or_update_agent(context, agent_state)
+
+    def _check_clock_sync_on_agent_start(self, agent_state, agent_time):
+        """Checks if the server and the agent times are in sync.
+
+        Method checks if the agent time is in sync with the server time
+        on start up. Ignores it, on subsequent re-connects.
+        """
+        if agent_state.get('start_flag'):
+            time_server_now = timeutils.utcnow()
+            diff = abs((time_server_now - agent_time).seconds)
+            if diff > cfg.CONF.agent_down_time:
+                agent_name = agent_state['agent_type']
+                time_agent = timeutils.isotime(agent_time)
+                host = agent_state['host']
+                log_dict = {'host': host,
+                            'agent_name': agent_name,
+                            'agent_time': time_agent,
+                            'threshold': cfg.CONF.agent_down_time,
+                            'serv_time': timeutils.isotime(time_server_now)}
+                LOG.error(_LE("Message received from the host: %(host)s "
+                              "during the registration of %(agent_name)s has "
+                              "a timestamp: %(agent_time)s. This differs from "
+                              "the current server timestamp: %(serv_time)s by "
+                              "more than the threshold agent down"
+                              "time: %(threshold)s."), log_dict)
