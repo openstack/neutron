@@ -387,6 +387,15 @@ def ip_to_cidr(ip, prefix=None):
     return str(net)
 
 
+def fixed_ip_cidrs(fixed_ips):
+    """Create a list of a port's fixed IPs in cidr notation.
+
+    :param fixed_ips: A neutron port's fixed_ips dictionary
+    """
+    return [ip_to_cidr(fixed_ip['ip_address'], fixed_ip.get('prefixlen'))
+            for fixed_ip in fixed_ips]
+
+
 def is_cidr_host(cidr):
     """Determines if the cidr passed in represents a single host network
 

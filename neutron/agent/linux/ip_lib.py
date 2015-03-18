@@ -595,16 +595,18 @@ def device_exists(device_name, namespace=None):
     return bool(address)
 
 
-def device_exists_with_ip_mac(device_name, ip_cidr, mac, namespace=None):
-    """Return True if the device with the given IP and MAC addresses
+def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
+    """Return True if the device with the given IP addresses and MAC address
     exists in the namespace.
     """
     try:
         device = IPDevice(device_name, namespace=namespace)
         if mac != device.link.address:
             return False
-        if ip_cidr not in (ip['cidr'] for ip in device.addr.list()):
-            return False
+        device_ip_cidrs = [ip['cidr'] for ip in device.addr.list()]
+        for ip_cidr in ip_cidrs:
+            if ip_cidr not in device_ip_cidrs:
+                return False
     except RuntimeError:
         return False
     else:

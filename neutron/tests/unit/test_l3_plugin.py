@@ -2234,7 +2234,9 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 self.assertEqual(1, len(routers))
                 interfaces = routers[0][l3_constants.INTERFACE_KEY]
                 self.assertEqual(1, len(interfaces))
-                subnet_id = interfaces[0]['subnet']['id']
+                subnets = interfaces[0]['subnets']
+                self.assertEqual(1, len(subnets))
+                subnet_id = subnets[0]['id']
                 wanted_subnetid = p['port']['fixed_ips'][0]['subnet_id']
                 self.assertEqual(wanted_subnetid, subnet_id)
                 # clean-up
@@ -2280,7 +2282,9 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                     context.get_admin_context(), [r['router']['id']])
                 self.assertEqual(1, len(routers))
                 gw_port = routers[0]['gw_port']
-                self.assertEqual(s['subnet']['id'], gw_port['subnet']['id'])
+                subnets = gw_port.get('subnets')
+                self.assertEqual(1, len(subnets))
+                self.assertEqual(s['subnet']['id'], subnets[0]['id'])
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
