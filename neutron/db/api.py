@@ -40,6 +40,12 @@ def get_engine():
     return facade.get_engine()
 
 
+def dispose():
+    # Don't need to do anything if an enginefacade hasn't been created
+    if _FACADE is not None:
+        get_engine().pool.dispose()
+
+
 def get_session(autocommit=True, expire_on_commit=False):
     """Helper method to grab session."""
     facade = _create_facade_lazily()

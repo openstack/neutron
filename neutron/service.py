@@ -119,7 +119,7 @@ class RpcWorker(object):
         # We may have just forked from parent process.  A quick disposal of the
         # existing sql connections avoids producing errors later when they are
         # discovered to be broken.
-        session.get_engine().pool.dispose()
+        session.dispose()
         self._servers = self._plugin.start_rpc_listeners()
 
     def wait(self):
