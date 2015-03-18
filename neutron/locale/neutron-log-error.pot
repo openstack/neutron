@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev472\n"
+"Project-Id-Version: neutron 2015.1.dev561\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-11 06:13+0000\n"
+"POT-Creation-Date: 2015-03-17 06:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -60,22 +60,22 @@ msgstr ""
 msgid "Exception occurs when waiting for timer"
 msgstr ""
 
-#: neutron/wsgi.py:144
+#: neutron/wsgi.py:147
 #, python-format
 msgid "Unable to listen on %(host)s:%(port)s"
 msgstr ""
 
-#: neutron/wsgi.py:781
+#: neutron/wsgi.py:785
 #, python-format
 msgid "InvalidContentType: %s"
 msgstr ""
 
-#: neutron/wsgi.py:785
+#: neutron/wsgi.py:789
 #, python-format
 msgid "MalformedRequestBody: %s"
 msgstr ""
 
-#: neutron/wsgi.py:794
+#: neutron/wsgi.py:798
 msgid "Internal error"
 msgstr ""
 
@@ -98,96 +98,96 @@ msgstr ""
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:564 neutron/agent/l3/agent.py:1046
-#: neutron/agent/metadata/agent.py:351
+#: neutron/agent/dhcp/agent.py:564 neutron/agent/l3/agent.py:898
+#: neutron/agent/metadata/agent.py:304
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:141
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:108
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:781
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:778
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:279
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:129
 #: neutron/services/metering/agents/metering_agent.py:275
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:164 neutron/tests/unit/test_l3_agent.py:1635
+#: neutron/agent/l3/agent.py:163 neutron/tests/unit/test_l3_agent.py:1650
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:226 neutron/agent/linux/dhcp.py:783
+#: neutron/agent/l3/agent.py:225 neutron/agent/linux/dhcp.py:778
 msgid "An interface driver must be specified"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:231
+#: neutron/agent/l3/agent.py:230
 msgid "Router id is required if not using namespaces."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:331
-#, python-format
-msgid "Ignoring multiple IPs on router port %s"
-msgstr ""
-
-#: neutron/agent/l3/agent.py:547
+#: neutron/agent/l3/agent.py:484
 msgid "Missing subnet/agent_gateway_port"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:818
+#: neutron/agent/l3/agent.py:670
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:876
+#: neutron/agent/l3/agent.py:728
 #, python-format
 msgid "Failed to fetch router information for '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:900
+#: neutron/agent/l3/agent.py:752
 #, python-format
 msgid "Removing incompatible router '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:904
+#: neutron/agent/l3/agent.py:756
 #, python-format
 msgid "Failed to process compatible router '%s'"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:953
+#: neutron/agent/l3/agent.py:805
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
-#: neutron/agent/l3/dvr.py:115
-msgid "DVR: no map match_port found!"
-msgstr ""
-
-#: neutron/agent/l3/dvr.py:150
-msgid "DVR: error adding redirection logic"
-msgstr ""
-
-#: neutron/agent/l3/dvr.py:162
-msgid "DVR: removed snat failed"
-msgstr ""
-
-#: neutron/agent/l3/dvr_router.py:197
+#: neutron/agent/l3/dvr_router.py:206
 msgid "DVR: Failed updating arp entry"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:61
+#: neutron/agent/l3/dvr_router.py:236
+msgid "DVR: no map match_port found!"
+msgstr ""
+
+#: neutron/agent/l3/dvr_router.py:273
+msgid "DVR: error adding redirection logic"
+msgstr ""
+
+#: neutron/agent/l3/dvr_router.py:285
+msgid "DVR: removed snat failed"
+msgstr ""
+
+#: neutron/agent/l3/ha.py:60
 #, python-format
 msgid "Unable to process HA router %s without ha port"
 msgstr ""
 
-#: neutron/agent/l3/namespace_manager.py:89
+#: neutron/agent/l3/namespace_manager.py:90
 #, python-format
 msgid "Failed to destroy stale namespace %s"
 msgstr ""
 
-#: neutron/agent/l3/namespace_manager.py:118
+#: neutron/agent/l3/namespace_manager.py:119
 msgid "RuntimeError in obtaining namespace list for namespace cleanup."
 msgstr ""
 
-#: neutron/agent/l3/namespaces.py:51
+#: neutron/agent/l3/namespaces.py:52
 #, python-format
 msgid "Failed trying to delete namespace: %s"
+msgstr ""
+
+#: neutron/agent/l3/router_info.py:96
+#, python-format
+msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
 #: neutron/agent/linux/async_process.py:172
@@ -200,21 +200,21 @@ msgstr ""
 msgid "An error occurred while communicating with async process [%s]."
 msgstr ""
 
-#: neutron/agent/linux/daemon.py:93
+#: neutron/agent/linux/daemon.py:94
 #, python-format
 msgid "Error while handling pidfile: %s"
 msgstr ""
 
-#: neutron/agent/linux/daemon.py:153
+#: neutron/agent/linux/daemon.py:154
 msgid "Fork failed"
 msgstr ""
 
-#: neutron/agent/linux/daemon.py:195
+#: neutron/agent/linux/daemon.py:196
 #, python-format
 msgid "Pidfile %s already exist. Daemon already running?"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:789
+#: neutron/agent/linux/dhcp.py:784
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
@@ -242,31 +242,31 @@ msgid ""
 "identified by uuid %(uuid)s"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:153
+#: neutron/agent/linux/interface.py:149
 #, python-format
 msgid "Failed deleting ingress connection state of floatingip %s"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:162
+#: neutron/agent/linux/interface.py:158
 #, python-format
 msgid "Failed deleting egress connection state of floatingip %s"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:277 neutron/agent/linux/interface.py:318
-#: neutron/agent/linux/interface.py:380 neutron/agent/linux/interface.py:420
+#: neutron/agent/linux/interface.py:273 neutron/agent/linux/interface.py:314
+#: neutron/agent/linux/interface.py:376 neutron/agent/linux/interface.py:416
 #, python-format
 msgid "Failed unplugging interface '%s'"
 msgstr ""
 
-#: neutron/agent/linux/ip_lib.py:650
+#: neutron/agent/linux/ip_lib.py:668
 #, python-format
 msgid "Failed sending gratuitous ARP to %(addr)s on %(iface)s in namespace %(ns)s"
 msgstr ""
 
-#: neutron/agent/linux/ip_link_support.py:104
-#: neutron/plugins/sriovnicagent/pci_lib.py:56
-#: neutron/plugins/sriovnicagent/pci_lib.py:77
-#: neutron/plugins/sriovnicagent/pci_lib.py:103
+#: neutron/agent/linux/ip_link_support.py:105
+#: neutron/plugins/sriovnicagent/pci_lib.py:57
+#: neutron/plugins/sriovnicagent/pci_lib.py:78
+#: neutron/plugins/sriovnicagent/pci_lib.py:104
 msgid "Failed executing ip command"
 msgstr ""
 
@@ -303,13 +303,13 @@ msgstr ""
 msgid "Error received from ovsdb monitor: %s"
 msgstr ""
 
-#: neutron/agent/linux/utils.py:170
+#: neutron/agent/linux/utils.py:218
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:113
-#: neutron/agent/metadata/namespace_proxy.py:72
+#: neutron/agent/metadata/agent.py:109
+#: neutron/agent/metadata/namespace_proxy.py:56
 msgid "Unexpected error."
 msgstr ""
 
@@ -386,51 +386,51 @@ msgstr ""
 msgid "Error unable to destroy namespace: %s"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:47
+#: neutron/cmd/sanity_check.py:48
 msgid ""
 "Check for Open vSwitch VXLAN support failed. Please ensure that the "
 "version of openvswitch being used has VXLAN support."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:56
+#: neutron/cmd/sanity_check.py:57
 msgid ""
 "Check for iproute2 VXLAN support failed. Please ensure that the iproute2 "
 "has VXLAN support."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:64
+#: neutron/cmd/sanity_check.py:65
 msgid ""
 "Check for Open vSwitch patch port support failed. Please ensure that the "
 "version of openvswitch being used has patch port support or disable "
 "features requiring patch ports (gre/vxlan, etc.)."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:81
+#: neutron/cmd/sanity_check.py:82
 msgid ""
 "The user that is executing neutron does not have permissions to read the "
 "namespaces. Enable the use_helper_for_ns_read configuration option."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:98
+#: neutron/cmd/sanity_check.py:99
 #, python-format
 msgid ""
 "The installed version of dnsmasq is too old. Please update to at least "
 "version %s."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:107
+#: neutron/cmd/sanity_check.py:108
 msgid ""
 "Nova notifications are enabled, but novaclient is not installed. Either "
 "disable nova notifications or install python-novaclient."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:116
+#: neutron/cmd/sanity_check.py:117
 msgid ""
 "Check for Open vSwitch ARP responder support failed. Please ensure that "
 "the version of openvswitch being used has ARP flows support."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:125
+#: neutron/cmd/sanity_check.py:126
 msgid ""
 "Check for VF management support failed. Please ensure that the version of"
 " ip link being used has VF support."
@@ -457,7 +457,7 @@ msgid ""
 "%(agent)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:852 neutron/plugins/ml2/plugin.py:559
+#: neutron/db/db_base_plugin_v2.py:852 neutron/plugins/ml2/plugin.py:549
 #, python-format
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
 msgstr ""
@@ -467,22 +467,22 @@ msgstr ""
 msgid "Unable to generate mac address after %s attempts"
 msgstr ""
 
-#: neutron/db/dvr_mac_db.py:97
+#: neutron/db/dvr_mac_db.py:98
 #, python-format
 msgid "MAC generation error after %s attempts"
 msgstr ""
 
-#: neutron/db/dvr_mac_db.py:169
+#: neutron/db/dvr_mac_db.py:170
 #, python-format
 msgid "Could not retrieve gateway port for subnet %s"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:116
+#: neutron/db/l3_agentschedulers_db.py:117
 #, python-format
 msgid "Failed to reschedule router %s"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:121
+#: neutron/db/l3_agentschedulers_db.py:122
 msgid "Exception encountered during router rescheduling."
 msgstr ""
 
@@ -550,8 +550,6 @@ msgstr ""
 #: neutron/plugins/brocade/nos/nosdriver.py:107
 #: neutron/plugins/brocade/nos/nosdriver.py:120
 #: neutron/plugins/brocade/nos/nosdriver.py:133
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:328
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:339
 #, python-format
 msgid "NETCONF error: %s"
 msgstr ""
@@ -587,12 +585,12 @@ msgstr ""
 msgid "Error in agent event loop"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/security_groups_driver.py:62
+#: neutron/plugins/hyperv/agent/security_groups_driver.py:63
 #, python-format
 msgid "Hyper-V Exception: %(hyperv_exeption)s while adding rule: %(rule)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/security_groups_driver.py:72
+#: neutron/plugins/hyperv/agent/security_groups_driver.py:73
 #, python-format
 msgid "Hyper-V Exception: %(hyperv_exeption)s while removing rule: %(rule)s"
 msgstr ""
@@ -650,8 +648,8 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:255
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1609
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1621
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1612
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1624
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
@@ -661,53 +659,53 @@ msgstr ""
 msgid "Failed creating vxlan interface for %(segmentation_id)s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:342
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:339
 #, python-format
 msgid "Unable to add %(interface)s to %(bridge_name)s! Exception: %(e)s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:355
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:352
 #, python-format
 msgid "Unable to add vxlan interface for network %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:362
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:359
 #, python-format
 msgid "No mapping for physical network %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:371
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:368
 #, python-format
 msgid "Unknown network_type %(network_type)s for network %(network_id)s."
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:456
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:453
 #, python-format
 msgid "Cannot delete bridge %s, does not exist"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:535
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:532
 msgid "No valid Segmentation ID to perform UCAST test."
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:791
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:788
 msgid "Unable to obtain MAC address for unique ID. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:988
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:985
 #: neutron/plugins/sriovnicagent/sriov_nic_agent.py:270
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1011
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1008
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:39
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/ml2/db.py:243 neutron/plugins/ml2/db.py:329
-#: neutron/plugins/ml2/plugin.py:1200
+#: neutron/plugins/ml2/db.py:242 neutron/plugins/ml2/db.py:328
+#: neutron/plugins/ml2/plugin.py:1199
 #, python-format
 msgid "Multiple ports have port_id starting with %s"
 msgstr ""
@@ -761,77 +759,77 @@ msgstr ""
 msgid "Extension driver '%(name)s' failed in %(method)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:282
+#: neutron/plugins/ml2/plugin.py:272
 #, python-format
 msgid "Failed to commit binding results for %(port)s after %(max)s tries"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:439
+#: neutron/plugins/ml2/plugin.py:429
 #, python-format
 msgid "Serialized vif_details DB value '%(value)s' for port %(port)s is invalid"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:450
+#: neutron/plugins/ml2/plugin.py:440
 #, python-format
 msgid "Serialized profile DB value '%(value)s' for port %(port)s is invalid"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:536
+#: neutron/plugins/ml2/plugin.py:526
 #, python-format
 msgid "Could not find %s to delete."
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:539
+#: neutron/plugins/ml2/plugin.py:529
 #, python-format
 msgid "Could not delete %(res)s %(id)s."
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:572
+#: neutron/plugins/ml2/plugin.py:562
 #, python-format
 msgid ""
 "mechanism_manager.create_%(res)s_postcommit failed for %(res)s: "
 "'%(failed_id)s'. Deleting %(res)ss %(resource_ids)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:606
+#: neutron/plugins/ml2/plugin.py:602
 #, python-format
 msgid "mechanism_manager.create_network_postcommit failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:676
+#: neutron/plugins/ml2/plugin.py:672
 #, python-format
 msgid "Exception auto-deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:688
+#: neutron/plugins/ml2/plugin.py:684
 #, python-format
 msgid "Exception auto-deleting subnet %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:770
+#: neutron/plugins/ml2/plugin.py:766
 msgid "mechanism_manager.delete_network_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:791
+#: neutron/plugins/ml2/plugin.py:787
 #, python-format
 msgid "mechanism_manager.create_subnet_postcommit failed, deleting subnet '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:896
+#: neutron/plugins/ml2/plugin.py:892
 #, python-format
 msgid "Exception deleting fixed_ip from port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:905
+#: neutron/plugins/ml2/plugin.py:901
 msgid "mechanism_manager.delete_subnet_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:945
+#: neutron/plugins/ml2/plugin.py:943
 #, python-format
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:957
+#: neutron/plugins/ml2/plugin.py:955
 #, python-format
 msgid "_bind_port_if_needed failed, deleting port '%s'"
 msgstr ""
@@ -841,17 +839,17 @@ msgstr ""
 msgid "_bind_port_if_needed failed. Deleting all ports from create bulk '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1084
+#: neutron/plugins/ml2/plugin.py:1081
 #, python-format
 msgid "No Host supplied to bind DVR Port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1183
+#: neutron/plugins/ml2/plugin.py:1180
 #, python-format
 msgid "mechanism_manager.delete_port_postcommit failed for port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1209
+#: neutron/plugins/ml2/plugin.py:1212
 #, python-format
 msgid "Binding info for DVR port %s not found"
 msgstr ""
@@ -878,92 +876,25 @@ msgstr ""
 msgid "Skipping unreasonable VXLAN VNI range %(tun_min)s:%(tun_max)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/arista/arista_l3_driver.py:276
-#, python-format
-msgid "Failed to delete router %s from EOS"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/arista/arista_l3_driver.py:350
-#, python-format
-msgid "Failed to remove interface from router %s on EOS"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/arista/arista_l3_driver.py:377
-#, python-format
-msgid "Error occurred while trying to execute commands %(cmd)s on EOS %(host)s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:148
-msgid "Brocade Mechanism: failed to create network in db"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:184
-msgid "Brocade NOS driver: failed in create network"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:214
-msgid "Brocade Mechanism: failed to delete network in db"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:242
-msgid "Brocade NOS driver: failed to delete network"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:283
-msgid "Brocade Mechanism: failed to create port in db"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:321
-msgid "Brocade Mechanism: failed to delete port in db"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:415
-#, python-format
-msgid "Brocade NOS driver: failed to associate mac %s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:435
-#, python-format
-msgid "Brocade NOS driver: failed to dissociate MAC %s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:85
-msgid "Connect failed to switch"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:104
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:114
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:142
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:159
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:172
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:185
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:352
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:371
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:385
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:398
-#: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:411
-msgid "NETCONF error"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:111
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:110
 msgid "APIC service agent: failed in reporting state"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:196
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:195
 #, python-format
 msgid "No such interface (ignored): %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:246
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:245
 msgid "APIC service agent: exception in LLDP parsing"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:301
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:300
 #, python-format
 msgid "APIC service agent: can not get MACaddr for %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:317
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_topology.py:316
 msgid "APIC host agent: failed in reporting state"
 msgstr ""
 
@@ -1045,132 +976,132 @@ msgstr ""
 msgid "Request failed from Controller side with Status=%s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:164
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:163
 msgid ""
 "DVR: Failed to obtain a valid local DVR MAC address - L2 Agent operating "
 "in Non-DVR Mode"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:415
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:414
 #, python-format
 msgid "DVR: Duplicate DVR router interface detected for subnet %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:423
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:422
 #, python-format
 msgid "DVR: Unable to retrieve subnet information for subnet_id %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:599
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:598
 #, python-format
 msgid "Centralized-SNAT port %s already seen on "
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:601
+#: neutron/plugins/openvswitch/agent/ovs_dvr_neutron_agent.py:600
 #, python-format
 msgid "a different subnet %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:343
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:351
 msgid "No tunnel_type specified, cannot create tunnels"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:346
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:369
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:354
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:377
 #, python-format
 msgid "tunnel_type %s not supported by agent"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:362
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:370
 msgid "No tunnel_ip specified, cannot delete tunnels"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:366
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:374
 msgid "No tunnel_type specified, cannot delete tunnels"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:504
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:512
 #, python-format
 msgid "No local VLAN available for net-id=%s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:543
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:551
 #, python-format
 msgid ""
 "Cannot provision %(network_type)s network for net-id=%(net_uuid)s - "
 "tunneling disabled"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:562
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:570
 #, python-format
 msgid ""
 "Cannot provision flat network for net-id=%(net_uuid)s - no bridge for "
 "physical_network %(physical_network)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:590
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:598
 #, python-format
 msgid ""
 "Cannot provision VLAN network for net-id=%(net_uuid)s - no bridge for "
 "physical_network %(physical_network)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:599
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:607
 #, python-format
 msgid ""
 "Cannot provision unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:657
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:663
 #, python-format
 msgid ""
 "Cannot reclaim unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:805
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:808
 msgid ""
 "Failed to create OVS patch port. Cannot have tunneling enabled on this "
 "agent, since this version of OVS does not support tunnels or patch ports."
 " Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:932
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:935
 #, python-format
 msgid ""
 "Bridge %(bridge)s for physical network %(physical_network)s does not "
 "exist. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1084
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1087
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1286
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1289
 #, python-format
 msgid ""
 "process_network_ports - iteration:%d - failure while retrieving port "
 "details from server"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1315
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1318
 #, python-format
 msgid ""
 "process_ancillary_network_ports - iteration:%d - failure while retrieving"
 " port details from server"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1460
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1463
 msgid "Error while synchronizing tunnels"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1530
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1533
 msgid "Error while processing VIF ports"
 msgstr ""
 
-#: neutron/plugins/sriovnicagent/eswitch_manager.py:47
+#: neutron/plugins/sriovnicagent/eswitch_manager.py:48
 #, python-format
 msgid "Failed to get devices for %s"
 msgstr ""
@@ -1223,50 +1154,36 @@ msgstr ""
 msgid "Failed fwaas process services sync"
 msgstr ""
 
-#: neutron/services/l3_router/l3_arista.py:113
+#: neutron/services/l3_router/l3_arista.py:114
 #, python-format
 msgid "Error creating router on Arista HW router=%s "
 msgstr ""
 
-#: neutron/services/l3_router/l3_arista.py:136
+#: neutron/services/l3_router/l3_arista.py:137
 #, python-format
 msgid "Error updating router on Arista HW router=%s "
 msgstr ""
 
-#: neutron/services/l3_router/l3_arista.py:151
+#: neutron/services/l3_router/l3_arista.py:152
 #, python-format
 msgid "Error deleting router on Arista HW router %(r)s exception=%(e)s"
 msgstr ""
 
-#: neutron/services/l3_router/l3_arista.py:197
+#: neutron/services/l3_router/l3_arista.py:198
 #, python-format
 msgid "Error Adding subnet %(subnet)s to router %(router_id)s on Arista HW"
 msgstr ""
 
-#: neutron/services/l3_router/l3_arista.py:231
+#: neutron/services/l3_router/l3_arista.py:232
 #, python-format
 msgid ""
 "Error removing interface %(interface)s from router %(router_id)s on "
 "Arista HWException =(exc)s"
 msgstr ""
 
-#: neutron/services/l3_router/l3_arista.py:277
+#: neutron/services/l3_router/l3_arista.py:278
 #, python-format
 msgid "Error Adding interface %(subnet_id)s to router %(router_id)s on Arista HW"
-msgstr ""
-
-#: neutron/services/l3_router/brocade/l3_router_plugin.py:177
-#, python-format
-msgid ""
-"Failed to create Brocade resources to add router interface. "
-"info=%(info)s, router_id=%(router_id)s"
-msgstr ""
-
-#: neutron/services/l3_router/brocade/l3_router_plugin.py:224
-#, python-format
-msgid ""
-"Fail remove of interface from brocade router interface. info=%(info)s, "
-"router_id=%(router_id)s"
 msgstr ""
 
 #: neutron/services/metering/agents/metering_agent.py:60
