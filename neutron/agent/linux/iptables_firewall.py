@@ -24,6 +24,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
+from neutron.extensions import portsecurity as psec
 from neutron.i18n import _LI
 
 
@@ -57,9 +58,11 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.ipset = ipset_manager.IpsetManager(namespace=namespace)
         # list of port which has security group
         self.filtered_ports = {}
+        self.unfiltered_ports = {}
         self._add_fallback_chain_v4v6()
         self._defer_apply = False
         self._pre_defer_filtered_ports = None
+        self._pre_defer_unfiltered_ports = None
         # List of security group rules for ports residing on this host
         self.sg_rules = {}
         self.pre_sg_rules = None
@@ -71,7 +74,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     @property
     def ports(self):
-        return self.filtered_ports
+        return dict(self.filtered_ports, **self.unfiltered_ports)
 
     def update_security_group_rules(self, sg_id, sg_rules):
         LOG.debug("Update rules of security group (%s)", sg_id)
@@ -81,42 +84,72 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         LOG.debug("Update members of security group (%s)", sg_id)
         self.sg_members[sg_id] = collections.defaultdict(list, sg_members)
 
+    def _ps_enabled(self, port):
+        return port.get(psec.PORTSECURITY, True)
+
+    def _set_ports(self, port):
+        if not self._ps_enabled(port):
+            self.unfiltered_ports[port['device']] = port
+            self.filtered_ports.pop(port['device'], None)
+        else:
+            self.filtered_ports[port['device']] = port
+            self.unfiltered_ports.pop(port['device'], None)
+
+    def _unset_ports(self, port):
+        self.unfiltered_ports.pop(port['device'], None)
+        self.filtered_ports.pop(port['device'], None)
+
     def prepare_port_filter(self, port):
         LOG.debug("Preparing device (%s) filter", port['device'])
         self._remove_chains()
-        self.filtered_ports[port['device']] = port
+        self._set_ports(port)
+
         # each security group has it own chains
         self._setup_chains()
         self.iptables.apply()
 
     def update_port_filter(self, port):
         LOG.debug("Updating device (%s) filter", port['device'])
-        if port['device'] not in self.filtered_ports:
+        if port['device'] not in self.ports:
             LOG.info(_LI('Attempted to update port filter which is not '
                          'filtered %s'), port['device'])
             return
         self._remove_chains()
-        self.filtered_ports[port['device']] = port
+        self._set_ports(port)
         self._setup_chains()
         self.iptables.apply()
 
     def remove_port_filter(self, port):
         LOG.debug("Removing device (%s) filter", port['device'])
-        if not self.filtered_ports.get(port['device']):
+        if port['device'] not in self.ports:
             LOG.info(_LI('Attempted to remove port filter which is not '
                          'filtered %r'), port)
             return
         self._remove_chains()
-        self.filtered_ports.pop(port['device'], None)
+        self._unset_ports(port)
         self._setup_chains()
         self.iptables.apply()
+
+    def _add_accept_rule_port_sec(self, port, direction):
+        self._update_port_sec_rules(port, direction, add=True)
+
+    def _remove_rule_port_sec(self, port, direction):
+        self._update_port_sec_rules(port, direction, add=False)
+
+    def _remove_rule_from_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules):
+        for rule in ipv4_rules:
+            self.iptables.ipv4['filter'].remove_rule(chain_name, rule)
+
+        for rule in ipv6_rules:
+            self.iptables.ipv6['filter'].remove_rule(chain_name, rule)
 
     def _setup_chains(self):
         """Setup ingress and egress chain for a port."""
         if not self._defer_apply:
-            self._setup_chains_apply(self.filtered_ports)
+            self._setup_chains_apply(self.filtered_ports,
+                                     self.unfiltered_ports)
 
-    def _setup_chains_apply(self, ports):
+    def _setup_chains_apply(self, ports, unfiltered_ports):
         self._add_chain_by_name_v4v6(SG_CHAIN)
         for port in ports.values():
             self._setup_chain(port, INGRESS_DIRECTION)
@@ -124,16 +157,24 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.iptables.ipv4['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
             self.iptables.ipv6['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
 
+        for port in unfiltered_ports.values():
+            self._add_accept_rule_port_sec(port, INGRESS_DIRECTION)
+            self._add_accept_rule_port_sec(port, EGRESS_DIRECTION)
+
     def _remove_chains(self):
         """Remove ingress and egress chain for a port."""
         if not self._defer_apply:
-            self._remove_chains_apply(self.filtered_ports)
+            self._remove_chains_apply(self.filtered_ports,
+                                      self.unfiltered_ports)
 
-    def _remove_chains_apply(self, ports):
+    def _remove_chains_apply(self, ports, unfiltered_ports):
         for port in ports.values():
             self._remove_chain(port, INGRESS_DIRECTION)
             self._remove_chain(port, EGRESS_DIRECTION)
             self._remove_chain(port, SPOOF_FILTER)
+        for port in unfiltered_ports.values():
+            self._remove_rule_port_sec(port, INGRESS_DIRECTION)
+            self._remove_rule_port_sec(port, EGRESS_DIRECTION)
         self._remove_chain_by_name_v4v6(SG_CHAIN)
 
     def _setup_chain(self, port, DIRECTION):
@@ -172,6 +213,30 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _get_device_name(self, port):
         return port['device']
+
+    def _update_port_sec_rules(self, port, direction, add=False):
+        # add/remove rules in FORWARD and INPUT chain
+        device = self._get_device_name(port)
+
+        jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
+                     '-j ACCEPT' % (self.IPTABLES_DIRECTION[direction],
+                                    device)]
+        if add:
+            self._add_rules_to_chain_v4v6(
+                'FORWARD', jump_rule, jump_rule, comment=ic.PORT_SEC_ACCEPT)
+        else:
+            self._remove_rule_from_chain_v4v6('FORWARD', jump_rule, jump_rule)
+
+        if direction == EGRESS_DIRECTION:
+            jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
+                         '-j ACCEPT' % (self.IPTABLES_DIRECTION[direction],
+                                        device)]
+            if add:
+                self._add_rules_to_chain_v4v6('INPUT', jump_rule, jump_rule,
+                                              comment=ic.PORT_SEC_ACCEPT)
+            else:
+                self._remove_rule_from_chain_v4v6(
+                    'INPUT', jump_rule, jump_rule)
 
     def _add_chain(self, port, direction):
         chain_name = self._port_chain_name(port, direction)
@@ -496,6 +561,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if not self._defer_apply:
             self.iptables.defer_apply_on()
             self._pre_defer_filtered_ports = dict(self.filtered_ports)
+            self._pre_defer_unfiltered_ports = dict(self.unfiltered_ports)
             self.pre_sg_members = dict(self.sg_members)
             self.pre_sg_rules = dict(self.sg_rules)
             self._defer_apply = True
@@ -587,11 +653,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def filter_defer_apply_off(self):
         if self._defer_apply:
             self._defer_apply = False
-            self._remove_chains_apply(self._pre_defer_filtered_ports)
-            self._setup_chains_apply(self.filtered_ports)
+            self._remove_chains_apply(self._pre_defer_filtered_ports,
+                                      self._pre_defer_unfiltered_ports)
+            self._setup_chains_apply(self.filtered_ports,
+                                     self.unfiltered_ports)
             self.iptables.defer_apply_off()
             self._remove_unused_security_group_info()
             self._pre_defer_filtered_ports = None
+            self._pre_defer_unfiltered_ports = None
 
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):

@@ -166,7 +166,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 
 class PortSecurityDBTestCase(PortSecurityTestCase):
-    def setUp(self, plugin=None):
+    def setUp(self, plugin=None, service_plugins=None):
         plugin = plugin or DB_PLUGIN_KLASS
         super(PortSecurityDBTestCase, self).setUp(plugin)
 
@@ -279,7 +279,9 @@ class TestPortSecurity(PortSecurityDBTestCase):
             'json', self._create_security_group(self.fmt, 'asdf', 'asdf'))
         security_group_id = security_group['security_group']['id']
         res = self._create_port('json', net['network']['id'],
-                                arg_list=('security_groups',),
+                                arg_list=('security_groups',
+                                    'port_security_enabled'),
+                                port_security_enabled=True,
                                 security_groups=[security_group_id])
         port = self.deserialize('json', res)
         self.assertEqual(port['port'][psec.PORTSECURITY], True)
