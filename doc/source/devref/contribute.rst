@@ -368,7 +368,11 @@ be the bare minimum you have to complete in order to get you off the ground.
 Decomposition progress chart
 ============================
 
-The following chart captures the following aspects:
+The chart below captures the progress of the core-vendor-decomposition effort
+for existing plugins and drivers at the time the decomp effort started. New
+drivers and plugins are not required to be listed here. This chart is short
+lived: once the effort is complete, this chart no longer needs to exist and
+will be removed. The following aspects are captured:
 
 * Name: the name of the project that implements a Neutron plugin or driver. The
   name is an internal target for links that point to source code, etc.
@@ -384,8 +388,8 @@ The following chart captures the following aspects:
   * [B] External repo available, partial code decomposition
   * [C] External repo available, code decomposition is complete
   * [D] Not deemed required. Driver is already bare-bone and decomposition
-        effort is not considered justified. Assessment may change in the
-        future
+    effort is not considered justified. Assessment may change in the
+    future.
 
   Absense of an entry for an existing plugin or driver means no active effort
   has been observed or potentially not required.
@@ -396,7 +400,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | Name                          |    Plugins/Drivers    | Launchpad |       PyPI       |  State  | Completed in |
 +===============================+=======================+===========+==================+=========+==============+
-| freescale-nscs_               |         ml2,fw        |    no     |       no         |   [D]   |              |
+| freescale-nscs                |         ml2,fw        |    no     |       no         |   [D]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-arista_            |       ml2,l3          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -424,13 +428,7 @@ The following chart captures the following aspects:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-ofagent_           |          ml2          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-ovs-dpdk_          |          ml2          |    yes    |       no         |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-plumgrid_          |          core         |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-vsphere_           |                       |           |                  |         |              |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| pluribus_                     |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | vmware-nsx_                   |         core          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -454,6 +452,9 @@ Big Switch Networks
 * Pypi: https://pypi.python.org/pypi/bsnstacklib
 
 .. _networking-brocade:
+
+Brocade
+-------
 
 * Git: https://github.com/stackforge/networking-brocade
 * Launchpad: https://launchpad.net/networking-brocade
@@ -531,14 +532,6 @@ OpenFlow Agent (ofagent)
 * Launchpad: https://launchpad.net/networking-ofagent
 * PyPI: https://pypi.python.org/pypi/networking-ofagent
 
-.. _networking-ovs-dpdk:
-
-Networking OVS-DPDK
--------------------
-
-* Git: https://github.com/stackforge/networking-ovs-dpdk
-* Launchpad: https://launchpad.net/networking-ovs-dpdk
-
 .. _networking-plumgrid:
 
 PLUMgrid
@@ -548,10 +541,6 @@ PLUMgrid
 * Launchpad: https://launchpad.net/networking-plumgrid
 * PyPI: https://pypi.python.org/pypi/networking-plumgrid
 
-.. _networking-vsphere:
-
-.. _pluribus:
-
 .. _vmware-nsx:
 
 VMware
@@ -560,4 +549,3 @@ VMware
 * Git: https://github.com/stackforge/vmware-nsx
 * Launchpad: https://launchpad.net/vmware-nsx
 * PyPI: https://pypi.python.org/pypi/vmware-nsx
-
