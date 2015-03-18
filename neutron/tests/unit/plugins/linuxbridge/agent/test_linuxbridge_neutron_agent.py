@@ -84,14 +84,6 @@ class TestLinuxBridge(base.BaseTestCase):
 
 class TestLinuxBridgeAgent(base.BaseTestCase):
 
-    LINK_SAMPLE = [
-        '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue \\'
-        'state UNKNOWN \\'
-        'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00',
-        '2: eth77: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 \\'
-        'qdisc mq state UP qlen 1000\    link/ether \\'
-        'cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff']
-
     def setUp(self):
         super(TestLinuxBridgeAgent, self).setUp()
         # disable setting up periodic state reporting
@@ -99,9 +91,9 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
-        self.execute = self.execute_p.start()
-        self.execute.return_value = '\n'.join(self.LINK_SAMPLE)
+        self.get_devices_p = mock.patch.object(ip_lib.IPWrapper, 'get_devices')
+        self.get_devices = self.get_devices_p.start()
+        self.get_devices.return_value = [ip_lib.IPDevice('eth77')]
         self.get_mac_p = mock.patch('neutron.agent.linux.utils.'
                                     'get_interface_mac')
         self.get_mac = self.get_mac_p.start()
@@ -917,14 +909,14 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
         super(TestLinuxBridgeRpcCallbacks, self).setUp()
 
-        self.u_execute_p = mock.patch('neutron.agent.linux.utils.execute')
-        self.u_execute = self.u_execute_p.start()
-
         class FakeLBAgent(object):
             def __init__(self):
                 self.agent_id = 1
-                self.br_mgr = (linuxbridge_neutron_agent.
-                               LinuxBridgeManager({'physnet1': 'eth1'}))
+                with mock.patch.object(
+                        linuxbridge_neutron_agent.LinuxBridgeManager,
+                        'get_interface_by_ip', return_value=None):
+                    self.br_mgr = (linuxbridge_neutron_agent.
+                                   LinuxBridgeManager({'physnet1': 'eth1'}))
 
                 self.br_mgr.vxlan_mode = lconst.VXLAN_UCAST
                 segment = mock.Mock()
