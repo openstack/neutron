@@ -200,11 +200,10 @@ class KeepalivedStateExceptionTestCase(base.BaseTestCase):
 
 class KeepalivedInstanceTestCase(base.BaseTestCase,
                                  KeepalivedConfBaseMixin):
-    def test_generate_primary_vip(self):
+    def test_get_primary_vip(self):
         instance = keepalived.KeepalivedInstance('MASTER', 'ha0', 42,
                                                  '169.254.192.0/18')
-        self.assertEqual('169.254.0.42/24',
-                         str(instance._generate_primary_vip()))
+        self.assertEqual('169.254.0.42/24', instance.get_primary_vip())
 
     def test_remove_adresses_by_interface(self):
         config = self._get_config()

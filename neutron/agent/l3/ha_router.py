@@ -131,6 +131,9 @@ class HaRouter(router.RouterInfo):
     def _get_keepalived_instance(self):
         return self.keepalived_manager.config.get_instance(self.ha_vr_id)
 
+    def _get_primary_vip(self):
+        return self._get_keepalived_instance().get_primary_vip()
+
     def get_ha_device_name(self, port_id):
         return (HA_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
@@ -141,7 +144,8 @@ class HaRouter(router.RouterInfo):
                          namespace=self.ns_name,
                          prefix=HA_DEV_PREFIX)
         self.driver.init_l3(interface_name, [internal_cidr],
-                            namespace=self.ns_name)
+                            namespace=self.ns_name,
+                            preserve_ips=[self._get_primary_vip()])
 
     def ha_network_removed(self):
         interface_name = self.get_ha_device_name(self.ha_port['id'])

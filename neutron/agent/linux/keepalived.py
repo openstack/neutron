@@ -185,7 +185,7 @@ class KeepalivedInstance(object):
             ('        %s' % i for i in self.track_interfaces),
             ['    }'])
 
-    def _generate_primary_vip(self):
+    def get_primary_vip(self):
         """Return an address in the primary_vip_range CIDR, with the router's
         VRID in the host section.
 
@@ -197,7 +197,7 @@ class KeepalivedInstance(object):
 
         ip = (netaddr.IPNetwork(self.primary_vip_range).network +
               self.vrouter_id)
-        return netaddr.IPNetwork('%s/%s' % (ip, PRIMARY_VIP_RANGE_SIZE))
+        return str(netaddr.IPNetwork('%s/%s' % (ip, PRIMARY_VIP_RANGE_SIZE)))
 
     def _build_vips_config(self):
         # NOTE(amuller): The primary VIP must be consistent in order to avoid
@@ -212,8 +212,7 @@ class KeepalivedInstance(object):
         # interface IP and floating IPs) are placed in the
         # virtual_ipaddress_excluded section.
 
-        primary = KeepalivedVipAddress(str(self._generate_primary_vip()),
-                                       self.interface)
+        primary = KeepalivedVipAddress(self.get_primary_vip(), self.interface)
         vips_result = ['    virtual_ipaddress {',
                        '        %s' % primary.build_config(),
                        '    }']
