@@ -45,7 +45,3 @@ def upgrade():
                                 ['ipsec_site_connections.id'],
                                 ondelete='CASCADE')
     )
-
-
-def downgrade():
-    pass

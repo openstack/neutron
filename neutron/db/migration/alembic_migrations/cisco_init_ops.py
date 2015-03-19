@@ -153,23 +153,3 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['profile_id'], ['cisco_policy_profiles.id']),
         sa.PrimaryKeyConstraint('port_id'))
-
-
-def downgrade():
-    op.drop_table('cisco_n1kv_port_bindings')
-    op.drop_table('cisco_n1kv_network_bindings')
-    op.drop_table('cisco_n1kv_multi_segments')
-    op.drop_table('cisco_provider_networks')
-    op.drop_table('cisco_n1kv_trunk_segments')
-    op.drop_table('cisco_n1kv_vmnetworks')
-    op.drop_table('cisco_n1kv_profile_bindings')
-    op.drop_table('cisco_nexusport_bindings')
-    op.drop_table('cisco_qos_policies')
-    op.drop_table('cisco_credentials')
-    op.drop_table('cisco_n1kv_vxlan_allocations')
-    op.drop_table('cisco_network_profiles')
-    op.drop_table('cisco_n1kv_vlan_allocations')
-    op.drop_table('cisco_policy_profiles')
-    # generate DDL for dropping enumns
-    segment_type.drop(op.get_bind(), checkfirst=False)
-    profile_type.drop(op.get_bind(), checkfirst=False)

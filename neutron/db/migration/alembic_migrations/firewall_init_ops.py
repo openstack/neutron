@@ -73,10 +73,3 @@ def upgrade():
                                 ['firewall_policies.id'],
                                 name='firewall_rules_ibfk_1'),
         sa.PrimaryKeyConstraint('id'))
-
-
-def downgrade():
-    op.drop_table('firewall_rules')
-    op.drop_table('firewalls')
-    op.drop_table('firewall_policies')
-    action_types.drop(op.get_bind(), checkfirst=False)

@@ -48,9 +48,3 @@ def upgrade():
                                 ['meteringlabels.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'))
-
-
-def downgrade():
-    op.drop_table('meteringlabelrules')
-    op.drop_table('meteringlabels')
-    direction.drop(op.get_bind(), checkfirst=False)

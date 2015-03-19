@@ -39,7 +39,3 @@ def upgrade():
             ['network_id'], ['networks.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('network_id')
     )
-
-
-def downgrade():
-    op.drop_table('nuage_provider_net_bindings')

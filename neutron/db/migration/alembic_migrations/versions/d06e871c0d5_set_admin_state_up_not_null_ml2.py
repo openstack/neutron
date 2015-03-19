@@ -41,11 +41,3 @@ def upgrade():
         'ml2_brocadeports', 'admin_state_up',
         nullable=False,
         existing_type=sa.Boolean)
-
-
-@migration.skip_if_offline
-def downgrade():
-    migration.alter_column_if_exists(
-        'ml2_brocadeports', 'admin_state_up',
-        nullable=True,
-        existing_type=sa.Boolean)

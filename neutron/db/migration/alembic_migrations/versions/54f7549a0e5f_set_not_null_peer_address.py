@@ -41,11 +41,3 @@ def upgrade():
         'ipsec_site_connections', 'peer_address',
         existing_type=sa.String(255),
         nullable=False)
-
-
-@migration.skip_if_offline
-def downgrade():
-    migration.alter_column_if_exists(
-        'ipsec_site_connections', 'peer_address',
-        nullable=True,
-        existing_type=sa.String(255))

@@ -75,12 +75,3 @@ def upgrade(active_plugins=None, options=None):
                               primary_key=True),
                     sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
                                             ondelete='CASCADE'))
-
-
-def downgrade(active_plugins=None, options=None):
-    op.drop_table('ha_router_vrid_allocations')
-    op.drop_table('ha_router_networks')
-    op.drop_table('ha_router_agent_port_bindings')
-    l3_ha_states.drop(op.get_bind(), checkfirst=False)
-    op.drop_column('router_extra_attributes', 'ha_vr_id')
-    op.drop_column('router_extra_attributes', 'ha')

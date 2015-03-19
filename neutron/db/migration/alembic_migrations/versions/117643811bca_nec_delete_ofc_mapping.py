@@ -172,7 +172,3 @@ def upgrade():
     op.drop_table('ofcnetworks')
     op.drop_table('ofcports')
     op.drop_table('ofcfilters')
-
-
-def downgrade():
-    pass

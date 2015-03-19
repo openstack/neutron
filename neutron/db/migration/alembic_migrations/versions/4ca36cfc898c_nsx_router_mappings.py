@@ -49,7 +49,3 @@ def upgrade():
     # each record in routers
     op.execute("INSERT INTO neutron_nsx_router_mappings SELECT id,id "
                "from routers")
-
-
-def downgrade():
-    pass

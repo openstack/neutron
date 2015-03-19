@@ -40,9 +40,3 @@ def upgrade():
     for table in TABLES:
         op.create_index(op.f('ix_%s_tenant_id' % table),
                         table, ['tenant_id'], unique=False)
-
-
-def downgrade():
-    for table in TABLES:
-        op.drop_index(op.f('ix_%s_tenant_id' % table),
-                      table_name=table)

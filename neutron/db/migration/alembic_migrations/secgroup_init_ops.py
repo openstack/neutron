@@ -56,10 +56,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['security_group_id'], ['securitygroups.id']),
         sa.PrimaryKeyConstraint('port_id', 'security_group_id'))
-
-
-def downgrade():
-    op.drop_table('securitygroupportbindings')
-    op.drop_table('securitygrouprules')
-    op.drop_table('securitygroups')
-    rule_direction_enum.drop(op.get_bind(), checkfirst=False)

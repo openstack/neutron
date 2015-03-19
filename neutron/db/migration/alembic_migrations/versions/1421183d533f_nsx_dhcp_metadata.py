@@ -52,7 +52,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['lsn_id'], ['lsn.lsn_id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('lsn_port_id'))
-
-
-def downgrade():
-    pass

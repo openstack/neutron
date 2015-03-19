@@ -32,7 +32,3 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column('networks', sa.Column('vlan_transparent', sa.Boolean(),
                   nullable=True))
-
-
-def downgrade():
-    op.drop_column('networks', 'vlan_transparent')

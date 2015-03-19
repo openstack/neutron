@@ -49,7 +49,3 @@ def upgrade():
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['network_id'], ['ml2_brocadenetworks.id']))
-
-
-def downgrade():
-    pass

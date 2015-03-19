@@ -48,19 +48,3 @@ def upgrade():
         sa.Column('neutron_type', sa.String(length=32), nullable=False),
         sa.Column('apic_name', sa.String(length=255), nullable=False),
         sa.PrimaryKeyConstraint('neutron_id', 'neutron_type'))
-
-
-def downgrade():
-
-    op.drop_table('cisco_ml2_apic_names')
-    op.drop_table('cisco_ml2_apic_host_links')
-
-    op.create_table(
-        'cisco_ml2_apic_port_profiles',
-        sa.Column('node_id', sa.String(length=255), nullable=False),
-        sa.Column('profile_id', sa.String(length=64), nullable=False),
-        sa.Column('hpselc_id', sa.String(length=64), nullable=False),
-        sa.Column('module', sa.String(length=10), nullable=False),
-        sa.Column('from_port', sa.Integer(), nullable=False),
-        sa.Column('to_port', sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint('node_id'))

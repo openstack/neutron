@@ -26,23 +26,8 @@ revision = '408cfbf6923c'
 down_revision = '1f71e54a85e7'
 
 from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():
     op.drop_table('tunnelkeylasts')
     op.drop_table('tunnelkeys')
-
-
-def downgrade():
-    op.create_table(
-        'tunnelkeylasts',
-        sa.Column('last_key', sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint('last_key'))
-    op.create_table(
-        'tunnelkeys',
-        sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.Column('tunnel_key', sa.Integer(), autoincrement=False,
-                  nullable=False),
-        sa.ForeignKeyConstraint(['network_id'], ['networks.id'], ),
-        sa.PrimaryKeyConstraint('tunnel_key'))

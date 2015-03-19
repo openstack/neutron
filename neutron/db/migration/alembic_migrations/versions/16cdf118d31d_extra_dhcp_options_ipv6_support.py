@@ -52,19 +52,3 @@ def upgrade():
         source='extradhcpopts',
         local_cols=['port_id', 'opt_name', 'ip_version']
     )
-
-
-def downgrade():
-    with migration.remove_fks_from_table(TABLE_NAME):
-        op.drop_constraint(
-            name=CONSTRAINT_NAME_NEW,
-            table_name='extradhcpopts',
-            type_='unique'
-        )
-        op.drop_column('extradhcpopts', 'ip_version')
-
-    op.create_unique_constraint(
-        name=CONSTRAINT_NAME_OLD,
-        source='extradhcpopts',
-        local_cols=['port_id', 'opt_name']
-    )

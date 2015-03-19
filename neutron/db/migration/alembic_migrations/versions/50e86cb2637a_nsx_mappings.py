@@ -49,7 +49,3 @@ def upgrade():
             "neutron_id, nvp_id as nsx_port_id, null as nsx_switch_id from"
             " quantum_nvp_port_mapping")
         op.drop_table('quantum_nvp_port_mapping')
-
-
-def downgrade():
-    pass

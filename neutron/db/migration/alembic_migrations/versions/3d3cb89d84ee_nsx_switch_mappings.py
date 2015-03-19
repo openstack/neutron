@@ -38,7 +38,3 @@ def upgrade():
         # There might be multiple switches for a neutron network
         sa.PrimaryKeyConstraint('neutron_id', 'nsx_id'),
     )
-
-
-def downgrade():
-    pass

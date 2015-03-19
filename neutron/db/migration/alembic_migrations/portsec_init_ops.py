@@ -36,8 +36,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('port_id'))
-
-
-def downgrade():
-    op.drop_table('portsecuritybindings')
-    op.drop_table('networksecuritybindings')

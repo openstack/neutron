@@ -55,9 +55,3 @@ def upgrade():
         sa.Column('contract_id', sa.String(length=64), nullable=False),
         sa.Column('filter_id', sa.String(length=64), nullable=False),
         sa.PrimaryKeyConstraint('tenant_id'))
-
-
-def downgrade(active_plugins=None, options=None):
-    op.drop_table('cisco_ml2_apic_contracts')
-    op.drop_table('cisco_ml2_apic_port_profiles')
-    op.drop_table('cisco_ml2_apic_epgs')

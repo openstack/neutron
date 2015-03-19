@@ -115,15 +115,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
             ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('network_id', 'dhcp_agent_id'))
-
-
-def downgrade():
-    op.drop_table('networkdhcpagentbindings')
-    op.drop_table('ipavailabilityranges')
-    op.drop_table('ipallocations')
-    op.drop_table('subnetroutes')
-    op.drop_table('ipallocationpools')
-    op.drop_table('dnsnameservers')
-    op.drop_table('subnets')
-    op.drop_table('ports')
-    op.drop_table('networks')

@@ -78,11 +78,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'))
-
-
-def downgrade():
-    op.drop_table('routerl3agentbindings')
-    op.drop_table('routerroutes')
-    op.drop_table('floatingips')
-    op.drop_table('routers')
-    op.drop_table('externalnetworks')

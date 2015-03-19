@@ -122,18 +122,3 @@ def upgrade():
         sa.Column('mac', sa.String(length=32), nullable=False),
         sa.ForeignKeyConstraint(['id'], ['ports.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'))
-
-
-def downgrade():
-    op.drop_table('portinfos')
-    op.drop_table('packetfilters')
-    op.drop_table('ofctenants')
-    op.drop_table('ofcports')
-    op.drop_table('ofcfilters')
-    op.drop_table('ofcnetworkmappings')
-    op.drop_table('ofcfiltermappings')
-    op.drop_table('ofctenantmappings')
-    op.drop_table('ofcnetworks')
-    op.drop_table('routerproviders')
-    op.drop_table('ofcroutermappings')
-    op.drop_table('ofcportmappings')

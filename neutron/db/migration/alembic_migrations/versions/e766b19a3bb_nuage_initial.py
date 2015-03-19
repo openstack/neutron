@@ -92,7 +92,3 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('router_id'),
     )
-
-
-def downgrade():
-    pass

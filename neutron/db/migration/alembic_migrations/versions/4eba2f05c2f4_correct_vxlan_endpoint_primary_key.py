@@ -36,8 +36,3 @@ PK_NAME = 'ml2_vxlan_endpoints_pkey'
 def upgrade():
     op.drop_constraint(PK_NAME, TABLE_NAME, type_='primary')
     op.create_primary_key(PK_NAME, TABLE_NAME, cols=['ip_address'])
-
-
-def downgrade():
-    op.drop_constraint(PK_NAME, TABLE_NAME, type_='primary')
-    op.create_primary_key(PK_NAME, TABLE_NAME, cols=['ip_address', 'udp_port'])

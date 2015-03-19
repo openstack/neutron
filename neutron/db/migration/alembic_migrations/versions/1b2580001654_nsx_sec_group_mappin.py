@@ -48,7 +48,3 @@ def upgrade():
     # each record in securitygroups
     op.execute("INSERT INTO neutron_nsx_security_group_mappings SELECT id,id "
                "from securitygroups")
-
-
-def downgrade():
-    pass

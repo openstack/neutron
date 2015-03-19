@@ -61,20 +61,3 @@ def upgrade():
                             server_default=sa.sql.false()))
     _migrate_data('router_extra_attributes', 'nsxrouterextattributess')
     op.drop_table('nsxrouterextattributess')
-
-
-def downgrade():
-    op.create_table(
-        'nsxrouterextattributess',
-        sa.Column('router_id', sa.String(length=36), nullable=False),
-        sa.Column('distributed', sa.Boolean(), nullable=False,
-                  server_default=sa.sql.false()),
-        sa.Column('service_router', sa.Boolean(), nullable=False,
-                  server_default=sa.sql.false()),
-        sa.ForeignKeyConstraint(
-            ['router_id'], ['routers.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('router_id')
-    )
-    op.execute(("INSERT INTO nsxrouterextattributess "
-                "SELECT * from router_extra_attributes"))
-    op.drop_column('router_extra_attributes', 'service_router')

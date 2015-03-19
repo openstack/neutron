@@ -51,8 +51,3 @@ def upgrade():
     # if another plugin was configured before the nuage one
     if not migration.schema_has_table('routerroutes'):
         l3_init_ops.create_routerroutes()
-
-
-def downgrade():
-    # The routerroutes table should not be dropped
-    op.drop_table('routerroutes_mapping')

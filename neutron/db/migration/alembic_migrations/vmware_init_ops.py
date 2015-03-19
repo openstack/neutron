@@ -181,25 +181,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('port_id'))
-
-
-def downgrade():
-    op.drop_table('maclearningstates')
-    op.drop_table('portqueuemappings')
-    op.drop_table('networkqueuemappings')
-    op.drop_table('qosqueues')
-    op.drop_table('networkconnections')
-    op.drop_table('networkgatewaydevices')
-    op.drop_table('networkgateways')
-    op.drop_table('vcns_edge_vip_bindings')
-    op.drop_table('vcns_firewall_rule_bindings')
-    op.drop_table('vcns_edge_monitor_bindings')
-    op.drop_table('vcns_edge_pool_bindings')
-    op.drop_table('vcns_router_bindings')
-    op.drop_table('nsxrouterextattributess')
-    op.drop_table('nvp_multi_provider_networks')
-    op.drop_table('nvp_network_bindings')
-    op.drop_table('quantum_nvp_port_mapping')
-    l2gw_segmentation_type.drop(op.get_bind(), checkfirst=False)
-    qos_marking.drop(op.get_bind(), checkfirst=False)
-    net_binding_type.drop(op.get_bind(), checkfirst=False)

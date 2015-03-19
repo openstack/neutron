@@ -38,7 +38,3 @@ def upgrade():
                'port_security_enabled) SELECT id, True FROM ports '
                'WHERE id NOT IN (SELECT port_id FROM '
                'portsecuritybindings);')
-
-
-def downgrade():
-    pass

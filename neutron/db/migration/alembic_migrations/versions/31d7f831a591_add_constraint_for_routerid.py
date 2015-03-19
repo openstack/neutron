@@ -26,7 +26,6 @@ revision = '31d7f831a591'
 down_revision = '37f322991f59'
 
 from alembic import op
-import sqlalchemy as sa
 
 from neutron.db import migration
 
@@ -74,36 +73,4 @@ def upgrade():
             name=PK_NAME,
             table_name=TABLE_NAME,
             cols=['router_id', 'l3_agent_id']
-        )
-
-
-def downgrade():
-
-    context = op.get_context()
-    dialect = context.bind.dialect.name
-
-    op.drop_constraint(
-        name=PK_NAME,
-        table_name=TABLE_NAME,
-        type_='primary'
-    )
-
-    op.add_column(
-        TABLE_NAME,
-        sa.Column('id', sa.String(32))
-    )
-
-    if dialect == 'ibm_db_sa':
-        # DB2 doesn't support nullable column in primary key
-        op.alter_column(
-            table_name=TABLE_NAME,
-            column_name='id',
-            nullable=False
-        )
-
-    with migration.remove_fks_from_table(TABLE_NAME):
-        op.create_primary_key(
-            name=PK_NAME,
-            table_name=TABLE_NAME,
-            cols=['id']
         )

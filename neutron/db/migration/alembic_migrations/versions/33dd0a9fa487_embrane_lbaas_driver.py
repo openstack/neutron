@@ -44,7 +44,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['port_id'], [u'ports.id'],
                                 name=u'embrane_pool_port_ibfk_2'),
         sa.PrimaryKeyConstraint(u'pool_id'))
-
-
-def downgrade():
-    pass

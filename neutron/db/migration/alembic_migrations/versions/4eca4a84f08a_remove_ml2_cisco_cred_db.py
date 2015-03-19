@@ -29,8 +29,6 @@ down_revision = '33c3db036fe4'
 from alembic import op
 
 from neutron.db import migration
-from neutron.db.migration.alembic_migrations import ml2_init_ops
-
 
 TABLE = 'cisco_ml2_credentials'
 
@@ -38,8 +36,3 @@ TABLE = 'cisco_ml2_credentials'
 def upgrade():
     if migration.schema_has_table(TABLE):
         op.drop_table(TABLE)
-
-
-def downgrade():
-    if not migration.schema_has_table(TABLE):
-        ml2_init_ops.create_cisco_ml2_credentials()

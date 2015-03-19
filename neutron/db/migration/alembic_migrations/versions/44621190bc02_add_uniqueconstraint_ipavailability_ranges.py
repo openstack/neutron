@@ -45,17 +45,3 @@ def upgrade():
         source=TABLE_NAME,
         local_cols=['last_ip', 'allocation_pool_id']
     )
-
-
-def downgrade():
-    op.drop_constraint(
-        name=UC_1_NAME,
-        table_name=TABLE_NAME,
-        type_='unique'
-    )
-
-    op.drop_constraint(
-        name=UC_2_NAME,
-        table_name=TABLE_NAME,
-        type_='unique'
-    )

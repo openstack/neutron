@@ -46,7 +46,3 @@ def upgrade():
                   sa.Column('status',
                             sa.String(length=16),
                             nullable=True))
-
-
-def downgrade():
-    pass

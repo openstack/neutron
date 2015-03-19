@@ -48,23 +48,3 @@ def upgrade():
         'poolstatisticss', 'total_connections',
         nullable=False,
         existing_type=sa.BigInteger())
-
-
-@migration.skip_if_offline
-def downgrade():
-    migration.alter_column_if_exists(
-        'poolstatisticss', 'bytes_in',
-        nullable=True,
-        existing_type=sa.BigInteger())
-    migration.alter_column_if_exists(
-        'poolstatisticss', 'bytes_out',
-        nullable=True,
-        existing_type=sa.BigInteger())
-    migration.alter_column_if_exists(
-        'poolstatisticss', 'active_connections',
-        nullable=True,
-        existing_type=sa.BigInteger())
-    migration.alter_column_if_exists(
-        'poolstatisticss', 'total_connections',
-        nullable=True,
-        existing_type=sa.BigInteger())

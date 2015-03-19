@@ -41,24 +41,3 @@ def upgrade():
         sa.Column('router_id', sa.String(length=64), nullable=False),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id']),
         sa.PrimaryKeyConstraint('router_id'))
-
-
-def downgrade():
-
-    op.drop_table('cisco_ml2_apic_contracts')
-
-    op.create_table(
-        'cisco_ml2_apic_epgs',
-        sa.Column('network_id', sa.String(length=255), nullable=False),
-        sa.Column('epg_id', sa.String(length=64), nullable=False),
-        sa.Column('segmentation_id', sa.String(length=64), nullable=False),
-        sa.Column('provider', sa.Boolean(), server_default=sa.sql.false(),
-                  nullable=False),
-        sa.PrimaryKeyConstraint('network_id'))
-
-    op.create_table(
-        'cisco_ml2_apic_contracts',
-        sa.Column('tenant_id', sa.String(length=255)),
-        sa.Column('contract_id', sa.String(length=64), nullable=False),
-        sa.Column('filter_id', sa.String(length=64), nullable=False),
-        sa.PrimaryKeyConstraint('tenant_id'))

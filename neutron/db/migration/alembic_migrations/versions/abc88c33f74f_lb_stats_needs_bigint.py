@@ -42,7 +42,3 @@ def upgrade():
                         type_=sa.BigInteger(), existing_type=sa.Integer())
         op.alter_column('poolstatisticss', 'total_connections',
                         type_=sa.BigInteger(), existing_type=sa.Integer())
-
-
-def downgrade():
-    pass

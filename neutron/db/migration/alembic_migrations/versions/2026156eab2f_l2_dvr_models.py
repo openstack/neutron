@@ -60,8 +60,3 @@ def upgrade():
                                 ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('port_id', 'host')
     )
-
-
-def downgrade():
-    op.drop_table('ml2_dvr_port_bindings')
-    op.drop_table('dvr_host_macs')

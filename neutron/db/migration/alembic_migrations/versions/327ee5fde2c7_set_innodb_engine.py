@@ -38,7 +38,3 @@ def upgrade():
     if op.get_bind().dialect.name == 'mysql':
         for table in TABLES:
             op.execute("ALTER TABLE %s ENGINE=InnoDB" % table)
-
-
-def downgrade():
-    pass

@@ -52,10 +52,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('network_id'))
-
-
-def downgrade():
-    op.drop_table('ovs_network_bindings')
-    op.drop_table('ovs_vlan_allocations')
-    op.drop_table('ovs_tunnel_allocations')
-    op.drop_table('ovs_tunnel_endpoints')

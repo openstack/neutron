@@ -35,7 +35,3 @@ def upgrade():
         sa.Column('hash_id', sa.String(255), primary_key=True),
         sa.Column('hash', sa.String(255), nullable=False)
     )
-
-
-def downgrade():
-    pass

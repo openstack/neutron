@@ -40,7 +40,3 @@ def upgrade():
         'firewall_rules', 'protocol',
         type_=sa.String(40),
         existing_nullable=True)
-
-
-def downgrade():
-    pass
