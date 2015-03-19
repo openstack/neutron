@@ -231,6 +231,71 @@ class FWaaSExtensionTestJSON(base.BaseNetworkTest):
         # Delete firewall
         self.client.delete_firewall(firewall_id)
 
+    @test.idempotent_id('1355cf5c-77d4-4bb9-87d7-e50c194d08b5')
+    def test_firewall_insertion_mode_add_remove_router(self):
+        # Create routers
+        router1 = self.create_router(
+            data_utils.rand_name('router-'),
+            admin_state_up=True)
+        router2 = self.create_router(
+            data_utils.rand_name('router-'),
+            admin_state_up=True)
+
+        # Create firewall on a router1
+        body = self.client.create_firewall(
+            name=data_utils.rand_name("firewall"),
+            firewall_policy_id=self.fw_policy['id'],
+            router_ids=[router1['id']])
+        created_firewall = body['firewall']
+        firewall_id = created_firewall['id']
+        self.addCleanup(self._try_delete_firewall, firewall_id)
+
+        self.assertEqual([router1['id']], created_firewall['router_ids'])
+
+        # Wait for the firewall resource to become ready
+        self._wait_until_ready(firewall_id)
+
+        # Add router2 to the firewall
+        body = self.client.update_firewall(
+            firewall_id, router_ids=[router1['id'], router2['id']])
+        updated_firewall = body['firewall']
+        self.assertIn(router2['id'], updated_firewall['router_ids'])
+        self.assertEqual(2, len(updated_firewall['router_ids']))
+
+        # Wait for the firewall resource to become ready
+        self._wait_until_ready(firewall_id)
+
+        # Remove router1 from the firewall
+        body = self.client.update_firewall(
+            firewall_id, router_ids=[router2['id']])
+        updated_firewall = body['firewall']
+        self.assertNotIn(router1['id'], updated_firewall['router_ids'])
+        self.assertEqual(1, len(updated_firewall['router_ids']))
+
+    @test.idempotent_id('c60ceff5-d51f-451d-b6e6-cb983d16ab6b')
+    def test_firewall_insertion_mode_one_firewall_per_router(self):
+        # Create router required for an ACTIVE firewall
+        router = self.create_router(
+            data_utils.rand_name('router1-'),
+            admin_state_up=True)
+
+        # Create firewall
+        body = self.client.create_firewall(
+            name=data_utils.rand_name("firewall"),
+            firewall_policy_id=self.fw_policy['id'],
+            router_ids=[router['id']])
+        created_firewall = body['firewall']
+        self.addCleanup(self._try_delete_firewall, created_firewall['id'])
+
+        # Try to create firewall with the same router
+        self.assertRaisesRegexp(
+            lib_exc.Conflict,
+            "An object with that identifier already exists",
+            self.client.create_firewall,
+            name=data_utils.rand_name("firewall"),
+            firewall_policy_id=self.fw_policy['id'],
+            router_ids=[router['id']])
+
     @test.attr(type='smoke')
     @test.idempotent_id('53305b4b-9897-4e01-87c0-2ae386083180')
     def test_firewall_rule_insertion_position_removal_rule_from_policy(self):
