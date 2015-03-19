@@ -1772,9 +1772,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         return self._create_bulk('port', context, ports)
 
     def _create_port_with_mac(self, context, network_id, port_data,
-                              mac_address, nested=False):
+                              mac_address):
         try:
-            with context.session.begin(subtransactions=True, nested=nested):
+            # since this method could either be used within or outside the
+            # transaction, use convenience method to avoid passing a flag
+            with db_api.autonested_transaction(context.session):
                 db_port = models_v2.Port(mac_address=mac_address, **port_data)
                 context.session.add(db_port)
                 return db_port
@@ -1786,12 +1788,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         for i in range(max_retries):
             mac = self._generate_mac()
             try:
-                # nested = True frames an operation that may potentially fail
-                # within a transaction, so that it can be rolled back to the
-                # point before its failure while maintaining the enclosing
-                # transaction
                 return self._create_port_with_mac(
-                    context, network_id, port_data, mac, nested=True)
+                    context, network_id, port_data, mac)
             except n_exc.MacAddressInUse:
                 LOG.debug('Generated mac %(mac_address)s exists on '
                           'network %(network_id)s',
