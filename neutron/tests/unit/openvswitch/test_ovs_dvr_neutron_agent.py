@@ -34,17 +34,6 @@ FAKE_IP1 = '10.0.0.1'
 FAKE_IP2 = '10.0.0.2'
 
 
-class CreateAgentConfigMapDvr(base.BaseTestCase):
-
-    def test_create_agent_config_map_enable_distributed_routing(self):
-        self.addCleanup(cfg.CONF.reset)
-        # Verify setting only enable_tunneling will default tunnel_type to GRE
-        cfg.CONF.set_override('enable_distributed_routing', True,
-                              group='AGENT')
-        cfgmap = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
-        self.assertEqual(cfgmap['enable_distributed_routing'], True)
-
-
 class TestOvsDvrNeutronAgent(base.BaseTestCase):
 
     def setUp(self):
