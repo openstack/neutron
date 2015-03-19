@@ -40,6 +40,7 @@ from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
 from neutron.openstack.common import uuidutils
 from neutron.services import advanced_service as adv_svc
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.unit import test_l3_agent
@@ -602,10 +603,11 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
         # Create and configure client namespace
         client_ns = self._create_namespace()
         router_ip_cidr = router.internal_ports[0]['ip_cidr']
-        ip_cidr = self.shift_ip_cidr(router_ip_cidr)
+        ip_cidr = net_helpers.increment_ip_cidr(router_ip_cidr)
         br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
         port = self.bind_namespace_to_cidr(client_ns, br_int, ip_cidr)
-        self.set_namespace_gateway(port, router_ip_cidr.partition('/')[0])
+        net_helpers.set_namespace_gateway(port,
+                                          router_ip_cidr.partition('/')[0])
 
         # Query metadata proxy
         url = 'http://%(host)s:%(port)s' % {'host': dhcp.METADATA_DEFAULT_IP,
