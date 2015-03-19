@@ -481,6 +481,16 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     original_ips.remove(original_ip)
                     new_ips.remove(new_ip)
                     prev_ips.append(original_ip)
+                    break
+            else:
+                # For ports that are not router ports, retain any automatic
+                # (non-optional, e.g. IPv6 SLAAC) addresses.
+                if device_owner not in constants.ROUTER_INTERFACE_OWNERS:
+                    subnet = self._get_subnet(context,
+                                              original_ip['subnet_id'])
+                    if (ipv6_utils.is_auto_address_subnet(subnet)):
+                        original_ips.remove(original_ip)
+                        prev_ips.append(original_ip)
 
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(context, network_id, new_ips,
