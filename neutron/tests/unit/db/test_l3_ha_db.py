@@ -197,23 +197,6 @@ class L3HATestCase(L3HATestFramework):
                          interface['device_owner'])
         self.assertEqual(cfg.CONF.l3_ha_net_cidr, interface['subnet']['cidr'])
 
-    def test_update_state(self):
-        router = self._create_router()
-        self._bind_router(router['id'])
-        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
-                                                        self.agent1['host'])
-        state = routers[0].get(constants.HA_ROUTER_STATE_KEY)
-        self.assertEqual('standby', state)
-
-        self.plugin.update_router_state(self.admin_ctx, router['id'], 'active',
-                                        self.agent1['host'])
-
-        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
-                                                        self.agent1['host'])
-
-        state = routers[0].get(constants.HA_ROUTER_STATE_KEY)
-        self.assertEqual('active', state)
-
     def test_unique_ha_network_per_tenant(self):
         tenant1 = _uuid()
         tenant2 = _uuid()

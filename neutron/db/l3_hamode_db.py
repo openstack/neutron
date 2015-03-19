@@ -28,7 +28,7 @@ from neutron.db import l3_dvr_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3_ext_ha_mode as l3_ha
-from neutron.i18n import _LI, _LW
+from neutron.i18n import _LI
 
 VR_ID_RANGE = set(range(1, 255))
 MAX_ALLOCATION_TRIES = 10
@@ -409,18 +409,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
             self._notify_ha_interfaces_updated(context, router_db.id)
 
         return router_db
-
-    def update_router_state(self, context, router_id, state, host):
-        with context.session.begin(subtransactions=True):
-            bindings = self.get_ha_router_port_bindings(context, [router_id],
-                                                        host)
-            if bindings:
-                if len(bindings) > 1:
-                    LOG.warn(_LW("The router %(router_id)s is bound multiple "
-                                 "times on the agent %(host)s"),
-                             {'router_id': router_id, 'host': host})
-
-                bindings[0].update({'state': state})
 
     def delete_router(self, context, id):
         router_db = self._get_router(context, id)
