@@ -297,8 +297,13 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("network_scheduler_driver",
             'neutron.scheduler.dhcp_agent_scheduler.WeightScheduler')
+        self.dhcp_periodic_p = mock.patch(
+            'neutron.db.agentschedulers_db.DhcpAgentSchedulerDbMixin.'
+            'start_periodic_dhcp_agent_status_check')
+        self.patched_dhcp_periodic = self.dhcp_periodic_p.start()
         self.plugin = importutils.import_object('neutron.plugins.ml2.plugin.'
                                                 'Ml2Plugin')
+        self.assertEqual(1, self.patched_dhcp_periodic.call_count)
         self.plugin.network_scheduler = importutils.import_object(
             'neutron.scheduler.dhcp_agent_scheduler.WeightScheduler'
         )
