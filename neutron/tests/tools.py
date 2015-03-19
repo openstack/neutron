@@ -49,7 +49,7 @@ def verify_mock_calls(mocked_call, expected_calls_and_values,
 
 
 def fail(msg=None):
-    """Fail immediatly, with the given message.
+    """Fail immediately, with the given message.
 
     This method is equivalent to TestCase.fail without requiring a
     testcase instance (usefully for reducing coupling).

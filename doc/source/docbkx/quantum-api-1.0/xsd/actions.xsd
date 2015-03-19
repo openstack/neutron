@@ -297,7 +297,7 @@
                       <p>
                           A reference to an image to use for the
                           rebuild.  A local image need contain only an
-                          Image ID. External images must contian a
+                          Image ID. External images must contain a
                           link that provides the full path to the
                           image resource.  You must supply an image
                           when rebuilding.
