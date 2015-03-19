@@ -66,7 +66,6 @@ class KeepalivedConfBaseMixin(object):
                                                   advert_int=5)
         instance1.set_authentication('AH', 'pass123')
         instance1.track_interfaces.append("eth0")
-        instance1.set_notify('master', '/tmp/script.sh')
 
         vip_address1 = keepalived.KeepalivedVipAddress('192.168.1.0/24',
                                                        'eth1')
@@ -136,7 +135,6 @@ class KeepalivedConfTestCase(base.BaseTestCase,
     virtual_routes {
         0.0.0.0/0 via 192.168.1.1 dev eth1
     }
-    notify_master "/tmp/script.sh"
 }
 vrrp_instance VR_2 {
     state MASTER
@@ -177,20 +175,12 @@ vrrp_instance VR_2 {
 
 class KeepalivedStateExceptionTestCase(base.BaseTestCase):
     def test_state_exception(self):
-        instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
-                                                 '169.254.192.0/18')
-
-        invalid_notify_state = 'a seal walks'
-        self.assertRaises(keepalived.InvalidNotifyStateException,
-                          instance.set_notify,
-                          invalid_notify_state, '/tmp/script.sh')
-
-        invalid_vrrp_state = 'into a club'
+        invalid_vrrp_state = 'a seal walks'
         self.assertRaises(keepalived.InvalidInstanceStateException,
                           keepalived.KeepalivedInstance,
                           invalid_vrrp_state, 'eth0', 33, '169.254.192.0/18')
 
-        invalid_auth_type = '[hip, hip]'
+        invalid_auth_type = 'into a club'
         instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
                                                  '169.254.192.0/18')
         self.assertRaises(keepalived.InvalidAuthenticationTypeException,
@@ -233,7 +223,6 @@ class KeepalivedInstanceTestCase(base.BaseTestCase,
     virtual_routes {
         0.0.0.0/0 via 192.168.1.1 dev eth1
     }
-    notify_master "/tmp/script.sh"
 }
 vrrp_instance VR_2 {
     state MASTER

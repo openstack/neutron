@@ -177,6 +177,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
 
     def setUp(self):
         super(BasicRouterOperationsFramework, self).setUp()
+        mock.patch('eventlet.spawn').start()
         self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         log.register_options(self.conf)
@@ -200,7 +201,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.ensure_dir = mock.patch('neutron.agent.linux.utils'
                                      '.ensure_dir').start()
 
-        mock.patch('neutron.agent.linux.keepalived.KeepalivedNotifierMixin'
+        mock.patch('neutron.agent.linux.keepalived.KeepalivedManager'
                    '._get_full_config_file_path').start()
 
         self.utils_exec_p = mock.patch(

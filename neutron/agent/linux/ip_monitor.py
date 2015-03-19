@@ -60,7 +60,7 @@ class IPMonitor(async_process.AsyncProcess):
     """Wrapper over `ip monitor address`.
 
     To monitor and react indefinitely:
-        m = IPMonitor(namespace='tmp')
+        m = IPMonitor(namespace='tmp', root_as_root=True)
         m.start()
         for iterable in m:
             event = IPMonitorEvent.from_text(iterable)
@@ -69,9 +69,10 @@ class IPMonitor(async_process.AsyncProcess):
 
     def __init__(self,
                  namespace=None,
+                 run_as_root=True,
                  respawn_interval=None):
         super(IPMonitor, self).__init__(['ip', '-o', 'monitor', 'address'],
-                                        run_as_root=True,
+                                        run_as_root=run_as_root,
                                         respawn_interval=respawn_interval,
                                         namespace=namespace)
 
