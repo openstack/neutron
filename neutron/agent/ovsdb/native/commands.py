@@ -19,14 +19,9 @@ from oslo_utils import excutils
 
 from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import idlutils
-from neutron.common import exceptions
 from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
-
-
-class RowNotFound(exceptions.NeutronException):
-    message = _("Table %(table)s has no row with %(col)s=%(match)s")
 
 
 class BaseCommand(api.Command):
@@ -46,22 +41,6 @@ class BaseCommand(api.Command):
                 if not check_error:
                     ctx.reraise = False
 
-    def row_by_index(self, table, match, *default):
-        tab = self.api._tables[table]
-        idx = idlutils.get_index_column(tab)
-        return self.row_by_value(table, idx, match, *default)
-
-    def row_by_value(self, table, column, match, *default):
-        tab = self.api._tables[table]
-        try:
-            return next(r for r in tab.rows.values()
-                        if getattr(r, column) == match)
-        except StopIteration:
-            if len(default) == 1:
-                return default[0]
-            else:
-                raise RowNotFound(table=table, col=column, match=match)
-
     def __str__(self):
         command_info = self.__dict__
         return "%s(%s)" % (
@@ -78,7 +57,8 @@ class AddBridgeCommand(BaseCommand):
 
     def run_idl(self, txn):
         if self.may_exist:
-            br = self.row_by_value('Bridge', 'name', self.name, None)
+            br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name',
+                                       self.name, None)
             if br:
                 return
         row = txn.insert(self.api._tables['Bridge'])
@@ -103,8 +83,9 @@ class DelBridgeCommand(BaseCommand):
 
     def run_idl(self, txn):
         try:
-            br = self.row_by_value('Bridge', 'name', self.name)
-        except RowNotFound:
+            br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name',
+                                       self.name)
+        except idlutils.RowNotFound:
             if self.if_exists:
                 return
             else:
@@ -128,8 +109,8 @@ class BridgeExistsCommand(BaseCommand):
         self.name = name
 
     def run_idl(self, txn):
-        self.result = bool(self.row_by_value('Bridge',
-                                             'name', self.name, None))
+        self.result = bool(idlutils.row_by_value(self.api.idl, 'Bridge',
+                                                 'name', self.name, None))
 
 
 class ListBridgesCommand(BaseCommand):
@@ -149,7 +130,7 @@ class BrGetExternalIdCommand(BaseCommand):
         self.field = field
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.name)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.name)
         self.result = br.external_ids[self.field]
 
 
@@ -161,7 +142,7 @@ class BrSetExternalIdCommand(BaseCommand):
         self.value = value
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.name)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.name)
         external_ids = getattr(br, 'external_ids', {})
         external_ids[self.field] = self.value
         br.external_ids = external_ids
@@ -175,7 +156,7 @@ class DbSetCommand(BaseCommand):
         self.col_values = col_values
 
     def run_idl(self, txn):
-        record = self.row_by_index(self.table, self.record)
+        record = idlutils.row_by_record(self.api.idl, self.table, self.record)
         for col, val in self.col_values:
             # TODO(twilson) Ugh, the OVS library doesn't like OrderedDict
             # We're only using it to make a unit test work, so we should fix
@@ -193,7 +174,7 @@ class DbClearCommand(BaseCommand):
         self.column = column
 
     def run_idl(self, txn):
-        record = self.row_by_index(self.table, self.record)
+        record = idlutils.row_by_record(self.api.idl, self.table, self.record)
         # Create an empty value of the column type
         value = type(getattr(record, self.column))()
         setattr(record, self.column, value)
@@ -207,7 +188,7 @@ class DbGetCommand(BaseCommand):
         self.column = column
 
     def run_idl(self, txn):
-        record = self.row_by_index(self.table, self.record)
+        record = idlutils.row_by_record(self.api.idl, self.table, self.record)
         # TODO(twilson) This feels wrong, but ovs-vsctl returns single results
         # on set types without the list. The IDL is returning them as lists,
         # even if the set has the maximum number of items set to 1. Might be
@@ -226,7 +207,7 @@ class SetControllerCommand(BaseCommand):
         self.targets = targets
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.bridge)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
         controllers = []
         for target in self.targets:
             controller = txn.insert(self.api._tables['Controller'])
@@ -242,7 +223,7 @@ class DelControllerCommand(BaseCommand):
         self.bridge = bridge
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.bridge)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
         br.controller = []
 
 
@@ -252,7 +233,7 @@ class GetControllerCommand(BaseCommand):
         self.bridge = bridge
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.bridge)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
         br.verify('controller')
         self.result = [c.target for c in br.controller]
 
@@ -264,7 +245,7 @@ class SetFailModeCommand(BaseCommand):
         self.mode = mode
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.bridge)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
         br.verify('fail_mode')
         br.fail_mode = self.mode
 
@@ -277,9 +258,10 @@ class AddPortCommand(BaseCommand):
         self.may_exist = may_exist
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.bridge)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
         if self.may_exist:
-            port = self.row_by_value('Port', 'name', self.port, None)
+            port = idlutils.row_by_value(self.api.idl, 'Port', 'name',
+                                         self.port, None)
             if port:
                 return
         port = txn.insert(self.api._tables['Port'])
@@ -306,14 +288,16 @@ class DelPortCommand(BaseCommand):
 
     def run_idl(self, txn):
         try:
-            port = self.row_by_value('Port', 'name', self.port)
-        except RowNotFound:
+            port = idlutils.row_by_value(self.api.idl, 'Port', 'name',
+                                         self.port)
+        except idlutils.RowNotFound:
             if self.if_exists:
                 return
             msg = _LE("Port %s does not exist") % self.port
             raise RuntimeError(msg)
         if self.bridge:
-            br = self.row_by_value('Bridge', 'name', self.bridge)
+            br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name',
+                                       self.bridge)
         else:
             br = next(b for b in self.api._tables['Bridge'].rows.values()
                       if port in b.ports)
@@ -344,7 +328,7 @@ class ListPortsCommand(BaseCommand):
         self.bridge = bridge
 
     def run_idl(self, txn):
-        br = self.row_by_value('Bridge', 'name', self.bridge)
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
         self.result = [p.name for p in br.ports if p.name != self.bridge]
 
 
@@ -359,7 +343,7 @@ class PortToBridgeCommand(BaseCommand):
         # name on the Port's (or Interface's for iface_to_br) external_id field
         # In fact, if we did that, the only place that uses to_br functions
         # could just add the external_id field to the conditions passed to find
-        port = self.row_by_value('Port', 'name', self.name)
+        port = idlutils.row_by_value(self.api.idl, 'Port', 'name', self.name)
         bridges = self.api._tables['Bridge'].rows.values()
         self.result = next(br.name for br in bridges if port in br.ports)
 
@@ -370,10 +354,10 @@ class DbListCommand(BaseCommand):
         self.table = self.api._tables[table]
         self.columns = columns or self.table.columns.keys() + ['_uuid']
         self.if_exists = if_exists
-        idx = idlutils.get_index_column(self.table)
         if records:
-            self.records = [uuid for uuid, row in self.table.rows.items()
-                            if getattr(row, idx) in records]
+            self.records = [
+                idlutils.row_by_record(self.api.idl, table, record).uuid
+                for record in records]
         else:
             self.records = self.table.rows.keys()
 

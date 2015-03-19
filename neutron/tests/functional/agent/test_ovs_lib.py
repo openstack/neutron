@@ -102,6 +102,16 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         self.br.del_controller()
         self.assertEqual([], self.br.get_controller())
 
+    def test_non_index_queries(self):
+        controllers = ['tcp:127.0.0.1:6633']
+        self.br.set_controller(controllers)
+        cmd = self.br.ovsdb.db_set('Controller', self.br.br_name,
+                                   ('connection_mode', 'out-of-band'))
+        cmd.execute(check_error=True)
+        self.assertEqual('out-of-band',
+                         self.br.db_get_val('Controller', self.br.br_name,
+                                            'connection_mode'))
+
     def test_set_fail_mode(self):
         self.br.set_secure_mode()
         self._assert_br_fail_mode(ovs_lib.FAILMODE_SECURE)
