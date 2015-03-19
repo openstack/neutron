@@ -22,6 +22,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import retrying
 import six
+import uuid
 
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
@@ -427,6 +428,20 @@ class OVSBridge(BaseOVS):
         else:
             msg = _('Unable to determine mac address for %s') % self.br_name
             raise Exception(msg)
+
+    def set_controllers_connection_mode(self, connection_mode):
+        """Set bridge controllers connection mode.
+
+        :param connection_mode: "out-of-band" or "in-band"
+        """
+        attr = [('connection_mode', connection_mode)]
+        controllers = self.db_get_val('Bridge', self.br_name, 'controller')
+        controllers = [controllers] if isinstance(
+            controllers, uuid.UUID) else controllers
+        with self.ovsdb.transaction(check_error=True) as txn:
+            for controller_uuid in controllers:
+                txn.add(self.ovsdb.db_set('Controller',
+                                          controller_uuid, *attr))
 
     def __enter__(self):
         self.create()
