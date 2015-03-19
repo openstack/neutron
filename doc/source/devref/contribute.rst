@@ -410,7 +410,7 @@ will be removed. The following aspects are captured:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-cisco_             |  core,ml2,l3,fw,vpn   |    yes    |       yes        |   [B]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-hyperv_            |                       |           |                  |         |              |
+| networking-hyperv_            |          ml2          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-ibm_               |         ml2,l3        |    yes    |       no         |   [B]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -472,6 +472,12 @@ Cisco
 
 .. _networking-hyperv:
 
+Hyper-V
+-------
+
+* Git: https://github.com/stackforge/networking-hyperv
+* Launchpad: https://launchpad.net/networking-hyperv
+* PyPi: https://pypi.python.org/pypi/networking-hyperv
 
 .. _networking-ibm:
 
