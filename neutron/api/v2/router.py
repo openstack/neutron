@@ -33,6 +33,7 @@ LOG = logging.getLogger(__name__)
 
 RESOURCES = {'network': 'networks',
              'subnet': 'subnets',
+             'subnetpool': 'subnetpools',
              'port': 'ports'}
 SUB_RESOURCES = {}
 COLLECTION_ACTIONS = ['index', 'create']

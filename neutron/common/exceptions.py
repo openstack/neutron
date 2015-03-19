@@ -79,6 +79,10 @@ class SubnetNotFound(NotFound):
     message = _("Subnet %(subnet_id)s could not be found")
 
 
+class SubnetPoolNotFound(NotFound):
+    message = _("Subnet pool %(subnetpool_id)s could not be found")
+
+
 class PortNotFound(NotFound):
     message = _("Port %(port_id)s could not be found")
 
@@ -397,3 +401,28 @@ class FirewallInternalDriverError(NeutronException):
     raise this exception to the agent
     """
     message = _("%(driver)s: Internal driver error.")
+
+
+class MissingMinSubnetPoolPrefix(BadRequest):
+    message = _("Unspecified minimum subnet pool prefix")
+
+
+class EmptySubnetPoolPrefixList(BadRequest):
+    message = _("Empty subnet pool prefix list")
+
+
+class PrefixVersionMismatch(BadRequest):
+    message = _("Cannot mix IPv4 and IPv6 prefixes in a subnet pool")
+
+
+class UnsupportedMinSubnetPoolPrefix(BadRequest):
+    message = _("Prefix '%(prefix)s' not supported in IPv%(version)s pool")
+
+
+class IllegalSubnetPoolPrefixBounds(BadRequest):
+    message = _("Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, "
+                "%(base_prefix_type)s=%(base_prefixlen)s")
+
+
+class IllegalSubnetPoolPrefixUpdate(BadRequest):
+    message = _("Illegal update to prefixes: %(msg)s")

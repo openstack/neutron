@@ -209,6 +209,36 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
                                   name='ipv6_address_modes'), nullable=True)
 
 
+class SubnetPoolPrefix(model_base.BASEV2):
+    """Represents a neutron subnet pool prefix
+    """
+
+    __tablename__ = 'subnetpoolprefixes'
+
+    cidr = sa.Column(sa.String(64), nullable=False, primary_key=True)
+    subnetpool_id = sa.Column(sa.String(36),
+                              sa.ForeignKey('subnetpools.id'),
+                              nullable=False,
+                              primary_key=True)
+
+
+class SubnetPool(model_base.BASEV2, HasId, HasTenant):
+    """Represents a neutron subnet pool.
+    """
+
+    name = sa.Column(sa.String(255))
+    ip_version = sa.Column(sa.Integer, nullable=False)
+    default_prefixlen = sa.Column(sa.Integer, nullable=False)
+    min_prefixlen = sa.Column(sa.Integer, nullable=False)
+    max_prefixlen = sa.Column(sa.Integer, nullable=False)
+    shared = sa.Column(sa.Boolean, nullable=False)
+    allow_overlap = sa.Column(sa.Boolean, nullable=False)
+    prefixes = orm.relationship(SubnetPoolPrefix,
+                                backref='subnetpools',
+                                cascade='all, delete, delete-orphan',
+                                lazy='joined')
+
+
 class Network(model_base.BASEV2, HasId, HasTenant):
     """Represents a v2 neutron network."""
 

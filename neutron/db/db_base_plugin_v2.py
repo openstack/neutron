@@ -34,6 +34,7 @@ from neutron.db import models_v2
 from neutron.db import sqlalchemyutils
 from neutron.extensions import l3
 from neutron.i18n import _LE, _LI
+from neutron.ipam import subnet_alloc
 from neutron import manager
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import uuidutils
@@ -95,6 +96,16 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         except exc.NoResultFound:
             raise n_exc.SubnetNotFound(subnet_id=id)
         return subnet
+
+    def _get_subnetpool(self, context, id):
+        try:
+            return self._get_by_id(context, models_v2.SubnetPool, id)
+        except exc.NoResultFound:
+            raise n_exc.SubnetPoolNotFound(subnetpool_id=id)
+
+    def _get_all_subnetpools(self, context):
+        # NOTE(tidwellr): see note in _get_all_subnets()
+        return context.session.query(models_v2.SubnetPool).all()
 
     def _get_port(self, context, id):
         try:
@@ -846,6 +857,23 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         self._apply_dict_extend_functions(attributes.SUBNETS, res, subnet)
         return self._fields(res, fields)
 
+    def _make_subnetpool_dict(self, subnetpool, fields=None):
+        default_prefixlen = str(subnetpool['default_prefixlen'])
+        min_prefixlen = str(subnetpool['min_prefixlen'])
+        max_prefixlen = str(subnetpool['max_prefixlen'])
+        res = {'id': subnetpool['id'],
+               'name': subnetpool['name'],
+               'tenant_id': subnetpool['tenant_id'],
+               'default_prefixlen': default_prefixlen,
+               'min_prefixlen': min_prefixlen,
+               'max_prefixlen': max_prefixlen,
+               'shared': subnetpool['shared'],
+               'allow_overlap': subnetpool['allow_overlap'],
+               'prefixes': [prefix['cidr']
+                            for prefix in subnetpool['prefixes']],
+               'ip_version': subnetpool['ip_version']}
+        return self._fields(res, fields)
+
     def _make_port_dict(self, port, fields=None,
                         process_extensions=True):
         res = {"id": port["id"],
@@ -1325,6 +1353,120 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     def get_subnets_count(self, context, filters=None):
         return self._get_collection_count(context, models_v2.Subnet,
                                           filters=filters)
+
+    def _create_subnetpool_prefix(self, context, cidr, subnetpool_id):
+        prefix_args = {'cidr': cidr, 'subnetpool_id': subnetpool_id}
+        subnetpool_prefix = models_v2.SubnetPoolPrefix(**prefix_args)
+        context.session.add(subnetpool_prefix)
+
+    def create_subnetpool(self, context, subnetpool):
+        """Create a subnetpool"""
+        sp = subnetpool['subnetpool']
+        sp_reader = subnet_alloc.SubnetPoolReader(sp)
+        tenant_id = self._get_tenant_id_for_create(context, sp)
+        with context.session.begin(subtransactions=True):
+            pool_args = {'tenant_id': tenant_id,
+                         'id': sp_reader.id,
+                         'name': sp_reader.name,
+                         'ip_version': sp_reader.ip_version,
+                         'default_prefixlen':
+                         sp_reader.default_prefixlen,
+                         'min_prefixlen': sp_reader.min_prefixlen,
+                         'max_prefixlen': sp_reader.max_prefixlen,
+                         'shared': sp_reader.shared,
+                         'allow_overlap': sp_reader.allow_overlap}
+            subnetpool = models_v2.SubnetPool(**pool_args)
+            context.session.add(subnetpool)
+            for prefix in sp_reader.prefixes:
+                self._create_subnetpool_prefix(context,
+                                               prefix,
+                                               subnetpool.id)
+
+        return self._make_subnetpool_dict(subnetpool)
+
+    def _update_subnetpool_prefixes(self, context, prefix_list, id):
+        with context.session.begin(subtransactions=True):
+            context.session.query(models_v2.SubnetPoolPrefix).filter_by(
+                subnetpool_id=id).delete()
+            for prefix in prefix_list:
+                model_prefix = models_v2.SubnetPoolPrefix(cidr=prefix,
+                                                      subnetpool_id=id)
+                context.session.add(model_prefix)
+
+    def _updated_subnetpool_dict(self, model, new_pool):
+        updated = {}
+        new_prefixes = new_pool.get('prefixes', attributes.ATTR_NOT_SPECIFIED)
+        orig_prefixes = [str(x.cidr) for x in model['prefixes']]
+        if new_prefixes is not attributes.ATTR_NOT_SPECIFIED:
+            orig_set = netaddr.IPSet(orig_prefixes)
+            new_set = netaddr.IPSet(new_prefixes)
+            if not orig_set.issubset(new_set):
+                msg = _("Existing prefixes must be "
+                        "a subset of the new prefixes")
+                raise n_exc.IllegalSubnetPoolPrefixUpdate(msg=msg)
+            new_set.compact()
+            updated['prefixes'] = [str(x.cidr) for x in new_set.iter_cidrs()]
+        else:
+            updated['prefixes'] = orig_prefixes
+
+        for key in ['id', 'name', 'ip_version', 'min_prefixlen',
+                    'max_prefixlen', 'default_prefixlen', 'allow_overlap',
+                    'shared']:
+            self._write_key(key, updated, model, new_pool)
+
+        return updated
+
+    def _write_key(self, key, update, orig, new_dict):
+        new_val = new_dict.get(key, attributes.ATTR_NOT_SPECIFIED)
+        if new_val is not attributes.ATTR_NOT_SPECIFIED:
+            update[key] = new_dict[key]
+        else:
+            update[key] = orig[key]
+
+    def update_subnetpool(self, context, id, subnetpool):
+        """Update a subnetpool"""
+        new_sp = subnetpool['subnetpool']
+
+        with context.session.begin(subtransactions=True):
+            orig_sp = self._get_subnetpool(context, id)
+            updated = self._updated_subnetpool_dict(orig_sp, new_sp)
+            updated['tenant_id'] = orig_sp.tenant_id
+            reader = subnet_alloc.SubnetPoolReader(updated)
+            orig_sp.update(self._filter_non_model_columns(
+                                                      reader.subnetpool,
+                                                      models_v2.SubnetPool))
+            self._update_subnetpool_prefixes(context,
+                                             reader.prefixes,
+                                             id)
+        for key in ['min_prefixlen', 'max_prefixlen', 'default_prefixlen']:
+            updated['key'] = str(updated[key])
+
+        return updated
+
+    def get_subnetpool(self, context, id, fields=None):
+        """Retrieve a subnetpool."""
+        subnetpool = self._get_subnetpool(context, id)
+        return self._make_subnetpool_dict(subnetpool, fields)
+
+    def get_subnetpools(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        """Retrieve list of subnetpools."""
+        marker_obj = self._get_marker_obj(context, 'subnetpool', limit, marker)
+        collection = self._get_collection(context, models_v2.SubnetPool,
+                                    self._make_subnetpool_dict,
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
+        return collection
+
+    def delete_subnetpool(self, context, id):
+        """Delete a subnetpool."""
+        with context.session.begin(subtransactions=True):
+            subnetpool = self._get_subnetpool(context, id)
+            context.session.delete(subnetpool)
 
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
         if (device_owner and device_owner.startswith('network:')):

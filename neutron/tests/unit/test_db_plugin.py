@@ -18,6 +18,7 @@ import copy
 import itertools
 
 import mock
+import netaddr
 from oslo_config import cfg
 from oslo_utils import importutils
 from testtools import matchers
@@ -357,6 +358,23 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         kwargs.update({'override': overrides})
         return self._create_bulk(fmt, number, 'subnet', base_data, **kwargs)
 
+    def _create_subnetpool(self, fmt, prefixes,
+                           expected_res_status=None, admin=False, **kwargs):
+        subnetpool = {'subnetpool': {'prefixes': prefixes}}
+        for k, v in kwargs.items():
+            subnetpool['subnetpool'][k] = str(v)
+
+        api = self._api_for_resource('subnetpools')
+        subnetpools_req = self.new_create_request('subnetpools',
+                                                  subnetpool, fmt)
+        if not admin:
+            neutron_context = context.Context('', kwargs['tenant_id'])
+            subnetpools_req.environ['neutron.context'] = neutron_context
+        subnetpool_res = subnetpools_req.get_response(api)
+        if expected_res_status:
+            self.assertEqual(subnetpool_res.status_int, expected_res_status)
+        return subnetpool_res
+
     def _create_port(self, fmt, net_id, expected_res_status=None,
                      arg_list=None, **kwargs):
         data = {'port': {'network_id': net_id,
@@ -447,6 +465,18 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
+    def _make_subnetpool(self, fmt, prefixes, admin=False, **kwargs):
+        res = self._create_subnetpool(fmt,
+                                      prefixes,
+                                      None,
+                                      admin,
+                                      **kwargs)
+        # Things can go wrong - raise HTTP exc with res code only
+        # so it can be caught by unit tests
+        if res.status_int >= webob.exc.HTTPClientError.code:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
+
     def _make_port(self, fmt, net_id, expected_res_status=None, **kwargs):
         res = self._create_port(fmt, net_id, expected_res_status, **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
@@ -456,7 +486,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         return self.deserialize(fmt, res)
 
     def _api_for_resource(self, resource):
-        if resource in ['networks', 'subnets', 'ports']:
+        if resource in ['networks', 'subnets', 'ports', 'subnetpools']:
             return self.api
         else:
             return self.ext_api
@@ -538,8 +568,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                          neutron_context=neutron_context,
                          query_params=query_params)
         resource = resource.replace('-', '_')
-        self.assertEqual(sorted([i['id'] for i in res['%ss' % resource]]),
-                         sorted([i[resource]['id'] for i in items]))
+        self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
+                              [i[resource]['id'] for i in items])
 
     @contextlib.contextmanager
     def network(self, name='net1',
@@ -577,6 +607,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
                                        ipv6_ra_mode=ipv6_ra_mode,
                                        ipv6_address_mode=ipv6_address_mode)
             yield subnet
+
+    @contextlib.contextmanager
+    def subnetpool(self, prefixes, admin=False, **kwargs):
+        subnetpool = self._make_subnetpool(self.fmt,
+                                           prefixes,
+                                           admin,
+                                           **kwargs)
+        yield subnetpool
 
     @contextlib.contextmanager
     def port(self, subnet=None, fmt=None, **kwargs):
@@ -675,6 +713,27 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         expected_res = [item[resource]['id'] for item in items]
         expected_res.reverse()
         self.assertEqual(expected_res, [n['id'] for n in item_res])
+
+    def _compare_resource(self, observed_res, expected_res, res_name):
+        '''
+           Compare the observed and expected resources (ie compare subnets)
+        '''
+        for k in expected_res:
+            self.assertIn(k, observed_res[res_name])
+            if isinstance(expected_res[k], list):
+                self.assertEqual(sorted(observed_res[res_name][k]),
+                                 sorted(expected_res[k]))
+            else:
+                self.assertEqual(observed_res[res_name][k], expected_res[k])
+
+    def _validate_resource(self, resource, keys, res_name):
+        for k in keys:
+            self.assertIn(k, resource[res_name])
+            if isinstance(keys[k], list):
+                self.assertEqual(sorted(resource[res_name][k]),
+                                 sorted(keys[k]))
+            else:
+                self.assertEqual(resource[res_name][k], keys[k])
 
 
 class TestBasicGet(NeutronDbPluginV2TestCase):
@@ -2674,22 +2733,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         keys.setdefault('enable_dhcp', True)
         with self.subnet(network=network, **keys) as subnet:
             # verify the response has each key with the correct value
-            for k in keys:
-                self.assertIn(k, subnet['subnet'])
-                if isinstance(keys[k], list):
-                    self.assertEqual(sorted(subnet['subnet'][k]),
-                                     sorted(keys[k]))
-                else:
-                    self.assertEqual(subnet['subnet'][k], keys[k])
+            self._validate_resource(subnet, keys, 'subnet')
             # verify the configured validations are correct
             if expected:
-                for k in expected:
-                    self.assertIn(k, subnet['subnet'])
-                    if isinstance(expected[k], list):
-                        self.assertEqual(sorted(subnet['subnet'][k]),
-                                         sorted(expected[k]))
-                    else:
-                        self.assertEqual(subnet['subnet'][k], expected[k])
+                self._compare_resource(subnet, expected, 'subnet')
         self._delete('subnets', subnet['subnet']['id'])
         return subnet
 
@@ -4383,6 +4430,378 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.port() as p:
             self._delete('subnets', p['port']['fixed_ips'][0]['subnet_id'],
                          expected_code=webob.exc.HTTPConflict.code)
+
+
+class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
+
+    _POOL_NAME = 'test-pool'
+
+    def _test_create_subnetpool(self, prefixes, expected=None,
+                                admin=False, **kwargs):
+        keys = kwargs.copy()
+        keys.setdefault('tenant_id', self._tenant_id)
+        with self.subnetpool(prefixes, admin, **keys) as subnetpool:
+            self._validate_resource(subnetpool, keys, 'subnetpool')
+            if expected:
+                self._compare_resource(subnetpool, expected, 'subnetpool')
+        return subnetpool
+
+    def _validate_default_prefix(self, prefix, subnetpool):
+        self.assertEqual(subnetpool['subnetpool']['default_prefixlen'], prefix)
+
+    def _validate_min_prefix(self, prefix, subnetpool):
+        self.assertEqual(subnetpool['subnetpool']['min_prefixlen'], prefix)
+
+    def _validate_max_prefix(self, prefix, subnetpool):
+        self.assertEqual(subnetpool['subnetpool']['max_prefixlen'], prefix)
+
+    def test_create_subnetpool_empty_prefix_list(self):
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self._test_create_subnetpool,
+                          [],
+                          name=self._POOL_NAME,
+                          tenant_id=self._tenant_id,
+                          min_prefixlen='21')
+
+    def test_create_subnetpool_ipv4_24_with_defaults(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/24')
+        subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                  name=self._POOL_NAME,
+                                                  tenant_id=self._tenant_id,
+                                                  min_prefixlen='21')
+        self._validate_default_prefix('21', subnetpool)
+        self._validate_min_prefix('21', subnetpool)
+
+    def test_create_subnetpool_ipv4_21_with_defaults(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/21')
+        subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                  name=self._POOL_NAME,
+                                                  tenant_id=self._tenant_id,
+                                                  min_prefixlen='21')
+        self._validate_default_prefix('21', subnetpool)
+        self._validate_min_prefix('21', subnetpool)
+
+    def test_create_subnetpool_ipv4_default_prefix_too_small(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/21')
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self._test_create_subnetpool,
+                          [subnet.cidr],
+                          tenant_id=self._tenant_id,
+                          name=self._POOL_NAME,
+                          min_prefixlen='21',
+                          default_prefixlen='20')
+
+    def test_create_subnetpool_ipv4_default_prefix_too_large(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/21')
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self._test_create_subnetpool,
+                          [subnet.cidr],
+                          tenant_id=self._tenant_id,
+                          name=self._POOL_NAME,
+                          max_prefixlen=24,
+                          default_prefixlen='32')
+
+    def test_create_subnetpool_ipv4_default_prefix_bounds(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/21')
+        subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME)
+        self._validate_min_prefix('8', subnetpool)
+        self._validate_default_prefix('8', subnetpool)
+        self._validate_max_prefix('32', subnetpool)
+
+    def test_create_subnetpool_ipv6_default_prefix_bounds(self):
+        subnet = netaddr.IPNetwork('fe80::/48')
+        subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME)
+        self._validate_min_prefix('64', subnetpool)
+        self._validate_default_prefix('64', subnetpool)
+        self._validate_max_prefix('128', subnetpool)
+
+    def test_create_subnetpool_ipv4_supported_default_prefix(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/21')
+        subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME,
+                                                  min_prefixlen='21',
+                                                  default_prefixlen='26')
+        self._validate_default_prefix('26', subnetpool)
+
+    def test_create_subnetpool_ipv4_supported_min_prefix(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/24')
+        subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME,
+                                                  min_prefixlen='26')
+        self._validate_min_prefix('26', subnetpool)
+        self._validate_default_prefix('26', subnetpool)
+
+    def test_create_subnetpool_ipv4_default_prefix_smaller_than_min(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/21')
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self._test_create_subnetpool,
+                          [subnet.cidr],
+                          tenant_id=self._tenant_id,
+                          name=self._POOL_NAME,
+                          default_prefixlen='22',
+                          min_prefixlen='23')
+
+    def test_create_subnetpool_mixed_ip_version(self):
+        subnet_v4 = netaddr.IPNetwork('10.10.10.0/21')
+        subnet_v6 = netaddr.IPNetwork('fe80::/48')
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self._test_create_subnetpool,
+                          [subnet_v4.cidr, subnet_v6.cidr],
+                          tenant_id=self._tenant_id,
+                          name=self._POOL_NAME,
+                          min_prefixlen='21')
+
+    def test_create_subnetpool_ipv6_with_defaults(self):
+        subnet = netaddr.IPNetwork('fe80::/48')
+        subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME,
+                                                  min_prefixlen='48')
+        self._validate_default_prefix('48', subnetpool)
+        self._validate_min_prefix('48', subnetpool)
+
+    def test_get_subnetpool(self):
+        subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME,
+                                                  min_prefixlen='24')
+        req = self.new_show_request('subnetpools',
+                                    subnetpool['subnetpool']['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(subnetpool['subnetpool']['id'],
+                         res['subnetpool']['id'])
+
+    def test_get_subnetpool_different_tenants_not_shared(self):
+        subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                                  shared=False,
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME,
+                                                  min_prefixlen='24')
+        req = self.new_show_request('subnetpools',
+                                    subnetpool['subnetpool']['id'])
+        neutron_context = context.Context('', 'not-the-owner')
+        req.environ['neutron.context'] = neutron_context
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 404)
+
+    def test_get_subnetpool_different_tenants_shared(self):
+        subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                                  None,
+                                                  True,
+                                                  name=self._POOL_NAME,
+                                                  min_prefixlen='24',
+                                                  shared=True)
+        req = self.new_show_request('subnetpools',
+                                    subnetpool['subnetpool']['id'])
+        neutron_context = context.Context('', self._tenant_id)
+        req.environ['neutron.context'] = neutron_context
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(subnetpool['subnetpool']['id'],
+                         res['subnetpool']['id'])
+
+    def test_list_subnetpools_different_tenants_shared(self):
+        self._test_create_subnetpool(['10.10.10.0/24'],
+                                     None,
+                                     True,
+                                     name=self._POOL_NAME,
+                                     min_prefixlen='24',
+                                     shared=True)
+        admin_res = self._list('subnetpools')
+        mortal_res = self._list('subnetpools',
+                   neutron_context=context.Context('', 'not-the-owner'))
+        self.assertEqual(len(admin_res['subnetpools']), 1)
+        self.assertEqual(len(mortal_res['subnetpools']), 1)
+
+    def test_list_subnetpools_different_tenants_not_shared(self):
+        self._test_create_subnetpool(['10.10.10.0/24'],
+                                     None,
+                                     True,
+                                     name=self._POOL_NAME,
+                                     min_prefixlen='24',
+                                     shared=False)
+        admin_res = self._list('subnetpools')
+        mortal_res = self._list('subnetpools',
+                   neutron_context=context.Context('', 'not-the-owner'))
+        self.assertEqual(len(admin_res['subnetpools']), 1)
+        self.assertEqual(len(mortal_res['subnetpools']), 0)
+
+    def test_delete_subnetpool(self):
+        subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                                  tenant_id=self._tenant_id,
+                                                  name=self._POOL_NAME,
+                                                  min_prefixlen='24')
+        req = self.new_delete_request('subnetpools',
+                                      subnetpool['subnetpool']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 204)
+
+    def test_delete_nonexistent_subnetpool(self):
+        req = self.new_delete_request('subnetpools',
+                                      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        res = req.get_response(self._api_for_resource('subnetpools'))
+        self.assertEqual(res.status_int, 404)
+
+    def test_update_subnetpool_prefix_list_append(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.8.0/21'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24')
+
+        data = {'subnetpool': {'prefixes': ['10.10.8.0/21', '3.3.3.0/24',
+                                            '2.2.2.0/24']}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        api = self._api_for_resource('subnetpools')
+        res = self.deserialize(self.fmt, req.get_response(api))
+        self.assertItemsEqual(res['subnetpool']['prefixes'],
+                              ['10.10.8.0/21', '3.3.3.0/24', '2.2.2.0/24'])
+
+    def test_update_subnetpool_prefix_list_compaction(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24')
+
+        data = {'subnetpool': {'prefixes': ['10.10.10.0/24',
+                                            '10.10.11.0/24']}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        api = self._api_for_resource('subnetpools')
+        res = self.deserialize(self.fmt, req.get_response(api))
+        self.assertItemsEqual(res['subnetpool']['prefixes'],
+                              ['10.10.10.0/23'])
+
+    def test_illegal_subnetpool_prefix_list_update(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24')
+
+        data = {'subnetpool': {'prefixes': ['10.10.11.0/24']}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        api = self._api_for_resource('subnetpools')
+        res = req.get_response(api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_update_subnetpool_default_prefix(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.8.0/21'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24')
+
+        data = {'subnetpool': {'default_prefixlen': '26'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        api = self._api_for_resource('subnetpools')
+        res = self.deserialize(self.fmt, req.get_response(api))
+        self.assertEqual(res['subnetpool']['default_prefixlen'], 26)
+
+    def test_update_subnetpool_min_prefix(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24')
+
+        data = {'subnetpool': {'min_prefixlen': '21'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(res['subnetpool']['min_prefixlen'], 21)
+
+    def test_update_subnetpool_min_prefix_larger_than_max(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='21',
+                                         max_prefixlen='24')
+
+        data = {'subnetpool': {'min_prefixlen': '28'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_update_subnetpool_max_prefix(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='21',
+                                         max_prefixlen='24')
+
+        data = {'subnetpool': {'max_prefixlen': '26'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(res['subnetpool']['max_prefixlen'], 26)
+
+    def test_update_subnetpool_max_prefix_less_than_min(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24')
+
+        data = {'subnetpool': {'max_prefixlen': '21'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_update_subnetpool_max_prefix_less_than_default(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='21',
+                                         default_prefixlen='24')
+
+        data = {'subnetpool': {'max_prefixlen': '22'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_update_subnetpool_default_prefix_less_than_min(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='21')
+
+        data = {'subnetpool': {'default_prefixlen': '20'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_update_subnetpool_default_prefix_larger_than_max(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='21',
+                                         max_prefixlen='24')
+
+        data = {'subnetpool': {'default_prefixlen': '28'}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_update_subnetpool_prefix_list_mixed_ip_version(self):
+        initial_subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                         tenant_id=self._tenant_id,
+                                         name=self._POOL_NAME,
+                                         min_prefixlen='24')
+
+        data = {'subnetpool': {'prefixes': ['fe80::/48']}}
+        req = self.new_update_request('subnetpools', data,
+                                      initial_subnetpool['subnetpool']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
 
 
 class DbModelTestCase(base.BaseTestCase):
