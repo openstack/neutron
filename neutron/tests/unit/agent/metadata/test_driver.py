@@ -33,7 +33,7 @@ _uuid = uuidutils.generate_uuid
 class TestMetadataDriverRules(base.BaseTestCase):
 
     def test_metadata_nat_rules(self):
-        rules = ('PREROUTING', '-d 169.254.169.254/32 '
+        rules = ('PREROUTING', '-d 169.254.169.254/32 -i qr-+ '
                  '-p tcp -m tcp --dport 80 -j REDIRECT --to-port 8775')
         self.assertEqual(
             [rules],
