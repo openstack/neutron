@@ -384,8 +384,9 @@ class IptablesManager(object):
             try:
                 self.defer_apply_off()
             except Exception:
-                raise n_exc.IpTablesApplyException('Failure applying ip '
-                                                   'tables rules')
+                msg = _LE('Failure applying iptables rules')
+                LOG.exception(msg)
+                raise n_exc.IpTablesApplyException(msg)
 
     def defer_apply_on(self):
         self.iptables_apply_deferred = True

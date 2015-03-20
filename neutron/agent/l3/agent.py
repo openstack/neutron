@@ -385,6 +385,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 ri.disable_keepalived()
 
     def _process_external(self, ri):
+        existing_floating_ips = ri.floating_ips
         try:
             with ri.iptables_manager.defer_apply():
                 self._process_external_gateway(ri)
@@ -395,7 +396,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     return
 
                 # Process SNAT/DNAT rules and addresses for floating IPs
-                existing_floating_ips = ri.floating_ips
                 if ri.router['distributed']:
                     self.create_dvr_fip_interfaces(ri, ex_gw_port)
                 ri.process_snat_dnat_for_fip()
