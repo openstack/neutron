@@ -23,6 +23,8 @@ from oslo_utils import importutils
 from neutron.agent.common import config as agent_config
 from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import dvr
+from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
@@ -34,7 +36,10 @@ from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)
-NS_MANGLING_PATTERN = ('(%s|%s)' % (dhcp.NS_PREFIX, l3_agent.NS_PREFIX) +
+NS_MANGLING_PATTERN = ('(%s|%s|%s|%s)' % (dhcp.NS_PREFIX,
+                                          l3_agent.NS_PREFIX,
+                                          dvr.SNAT_NS_PREFIX,
+                                          dvr_fip_ns.FIP_NS_PREFIX) +
                        attributes.UUID_PATTERN)
 
 
