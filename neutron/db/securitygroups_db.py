@@ -298,7 +298,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 rule = rule_dict['security_group_rule']
                 tenant_id = self._get_tenant_id_for_create(context, rule)
                 db = SecurityGroupRule(
-                    id=uuidutils.generate_uuid(), tenant_id=tenant_id,
+                    id=(rule.get('id') or uuidutils.generate_uuid()),
+                    tenant_id=tenant_id,
                     security_group_id=rule['security_group_id'],
                     direction=rule['direction'],
                     remote_group_id=rule.get('remote_group_id'),
