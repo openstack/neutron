@@ -20,6 +20,7 @@ import six
 
 interface_map = {
     'vsctl': 'neutron.agent.ovsdb.impl_vsctl.OvsdbVsctl',
+    'native': 'neutron.agent.ovsdb.impl_idl.OvsdbIdl',
 }
 
 OPTS = [

@@ -129,6 +129,7 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
 class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
     scenarios = [
         ('vsctl', dict(ovsdb_interface='vsctl')),
+        ('native', dict(ovsdb_interface='native')),
     ]
 
     def setUp(self):
