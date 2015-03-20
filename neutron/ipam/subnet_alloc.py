@@ -37,7 +37,7 @@ class SubnetPoolReader(object):
         self._read_id(subnetpool)
         self._read_prefix_bounds(subnetpool)
         self._read_attrs(subnetpool,
-                         ['tenant_id', 'name', 'allow_overlap', 'shared'])
+                         ['tenant_id', 'name', 'shared'])
         self.subnetpool = {'id': self.id,
                            'name': self.name,
                            'tenant_id': self.tenant_id,
@@ -48,7 +48,6 @@ class SubnetPoolReader(object):
                            'max_prefixlen': self.max_prefixlen,
                            'default_prefix': self.default_prefix,
                            'default_prefixlen': self.default_prefixlen,
-                           'allow_overlap': self.allow_overlap,
                            'shared': self.shared}
 
     def _read_attrs(self, subnetpool, keys):
