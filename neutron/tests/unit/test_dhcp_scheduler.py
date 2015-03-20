@@ -31,6 +31,7 @@ from neutron.db import models_v2
 from neutron.extensions import dhcpagentscheduler
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import testlib_plugin
 
 # Required to generate tests from scenarios. Not compatible with nose.
 load_tests = testscenarios.load_tests_apply_scenarios
@@ -268,7 +269,8 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             self.assertIn('foo4', res_ids)
 
 
-class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
+class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase,
+                                       testlib_plugin.PluginSetupHelper):
     """Unit test scenarios for WeightScheduler.schedule."""
 
     hostc = {
@@ -294,7 +296,7 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     def setUp(self):
         super(DHCPAgentWeightSchedulerTestCase, self).setUp()
         DB_PLUGIN_KLASS = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        self.setup_coreplugin(DB_PLUGIN_KLASS)
         cfg.CONF.set_override("network_scheduler_driver",
             'neutron.scheduler.dhcp_agent_scheduler.WeightScheduler')
         self.dhcp_periodic_p = mock.patch(
