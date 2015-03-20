@@ -23,6 +23,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import common_db_mixin
 from neutron.db import extraroute_db
+from neutron.db import l3_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
@@ -58,6 +59,7 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
         super(L3RouterPlugin, self).__init__()
         if 'dvr' in self.supported_extension_aliases:
             l3_dvrscheduler_db.subscribe()
+        l3_db.subscribe()
 
     def setup_rpc(self):
         # RPC support

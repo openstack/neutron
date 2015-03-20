@@ -17,6 +17,7 @@ import contextlib
 import mock
 
 from neutron.common import constants as l3_const
+from neutron.common import exceptions
 from neutron import context
 from neutron.db import l3_dvr_db
 from neutron.extensions import l3
@@ -161,7 +162,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             plugin = mock.Mock()
             gp.return_value = plugin
             plugin._get_port.return_value = port
-            self.assertRaises(l3.L3PortInUse,
+            self.assertRaises(exceptions.ServicePortInUse,
                               self.mixin.prevent_l3_port_deletion,
                               self.ctx,
                               port['id'])

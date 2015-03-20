@@ -128,6 +128,11 @@ class PortInUse(InUse):
                 "device %(device_id)s.")
 
 
+class ServicePortInUse(InUse):
+    message = _("Port %(port_id)s cannot be deleted directly via the "
+                "port API: %(reason)s")
+
+
 class PortBound(InUse):
     message = _("Unable to complete operation on port %(port_id)s, "
                 "port is already bound, port type: %(vif_type)s, "

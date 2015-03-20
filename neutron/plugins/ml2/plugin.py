@@ -35,6 +35,7 @@ from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
+from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as const
@@ -1185,15 +1186,34 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self._process_dvr_port_binding(mech_context, context, attrs)
             self._bind_port_if_needed(mech_context)
 
+    def _pre_delete_port(self, context, port_id, port_check):
+        """Do some preliminary operations before deleting the port."""
+        LOG.debug("Deleting port %s", port_id)
+        try:
+            # notify interested parties of imminent port deletion;
+            # a failure here prevents the operation from happening
+            kwargs = {
+                'context': context,
+                'port_id': port_id,
+                'port_check': port_check
+            }
+            registry.notify(
+                resources.PORT, events.BEFORE_DELETE, self, **kwargs)
+        except exceptions.CallbackFailure as e:
+            # NOTE(armax): preserve old check's behavior
+            if len(e.errors) == 1:
+                raise e.errors[0].error
+            raise exc.ServicePortInUse(port_id=port_id, reason=e)
+
     def delete_port(self, context, id, l3_port_check=True):
-        LOG.debug("Deleting port %s", id)
+        self._pre_delete_port(context, id, l3_port_check)
+        # TODO(armax): get rid of the l3 dependency in the with block
         removed_routers = []
+        router_ids = []
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         is_dvr_enabled = utils.is_extension_supported(
             l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)
-        if l3plugin and l3_port_check:
-            l3plugin.prevent_l3_port_deletion(context, id)
 
         session = context.session
         # REVISIT: Serialize this operation with a semaphore to
@@ -1238,14 +1258,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                       {"port_id": id, "owner": device_owner})
             super(Ml2Plugin, self).delete_port(context, id)
 
-        # now that we've left db transaction, we are safe to notify
-        if l3plugin:
-            if is_dvr_enabled:
-                l3plugin.dvr_vmarp_table_update(context, port, "del")
-            l3plugin.notify_routers_updated(context, router_ids)
-            for router in removed_routers:
-                l3plugin.remove_router_from_l3_agent(
-                    context, router['agent_id'], router['router_id'])
+        self._post_delete_port(
+            context, port, router_ids, removed_routers, bound_mech_contexts)
+
+    def _post_delete_port(
+        self, context, port, router_ids, removed_routers, bound_mech_contexts):
+        kwargs = {
+            'context': context,
+            'port': port,
+            'router_ids': router_ids,
+            'removed_routers': removed_routers
+        }
+        registry.notify(resources.PORT, events.AFTER_DELETE, self, **kwargs)
         try:
             # Note that DVR Interface ports will have bindings on
             # multiple hosts, and so will have multiple mech_contexts,
@@ -1257,8 +1281,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # delete the port.  Ideally we'd notify the caller of the
             # fact that an error occurred.
             LOG.error(_LE("mechanism_manager.delete_port_postcommit failed for"
-                          " port %s"), id)
-        self.notifier.port_delete(context, id)
+                          " port %s"), port['id'])
+        self.notifier.port_delete(context, port['id'])
         self.notify_security_groups_member_updated(context, port)
 
     def get_bound_port_context(self, plugin_context, port_id, host=None,

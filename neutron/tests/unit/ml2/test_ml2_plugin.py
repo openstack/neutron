@@ -23,6 +23,7 @@ import webob
 
 from oslo_db import exception as db_exc
 
+from neutron.callbacks import registry
 from neutron.common import constants
 from neutron.common import exceptions as exc
 from neutron.common import utils
@@ -419,7 +420,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with contextlib.nested(
             self.port(),
             mock.patch.object(l3plugin, 'disassociate_floatingips'),
-            mock.patch.object(l3plugin, 'notify_routers_updated')
+            mock.patch.object(registry, 'notify')
         ) as (port, disassociate_floatingips, notify):
 
             port_id = port['port']['id']
@@ -432,9 +433,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             ])
 
             # check that notifier was still triggered
-            notify.assert_has_calls([
-                mock.call(ctx, disassociate_floatingips.return_value)
-            ])
+            self.assertTrue(notify.call_counts)
 
     def test_check_if_compute_port_serviced_by_dvr(self):
         self.assertTrue(utils.is_dvr_serviced('compute:None'))
@@ -511,25 +510,20 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                               'get_service_plugins',
                               return_value=self.service_plugins),
             self.port(device_owner=device_owner),
-            mock.patch.object(self.l3plugin, 'notify_routers_updated'),
+            mock.patch.object(registry, 'notify'),
             mock.patch.object(self.l3plugin, 'disassociate_floatingips',
                               return_value=fip_set),
             mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_port',
                               return_value=[ns_to_delete]),
-            mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent')
         ) as (get_service_plugin, port, notify, disassociate_floatingips,
-              dvr_delns_ifno_port, remove_router_from_l3_agent):
+              dvr_delns_ifno_port):
 
             port_id = port['port']['id']
             self.plugin.delete_port(self.context, port_id)
 
-            notify.assert_has_calls([mock.call(self.context, fip_set)])
+            self.assertTrue(notify.call_count)
             dvr_delns_ifno_port.assert_called_once_with(self.context,
                                                         port['port']['id'])
-            remove_router_from_l3_agent.assert_has_calls([
-                mock.call(self.context, ns_to_delete['agent_id'],
-                          ns_to_delete['router_id'])
-            ])
 
     def test_delete_last_vm_port(self):
         self._test_delete_dvr_serviced_port(device_owner='compute:None')
@@ -537,26 +531,6 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
     def test_delete_last_vm_port_with_floatingip(self):
         self._test_delete_dvr_serviced_port(device_owner='compute:None',
                                             floating_ip=True)
-
-    def test_delete_vm_port_namespace_already_deleted(self):
-        ns_to_delete = {'host': 'myhost',
-                        'agent_id': 'vm_l3_agent',
-                        'router_id': 'my_router'}
-
-        with contextlib.nested(
-            mock.patch.object(manager.NeutronManager,
-                              'get_service_plugins',
-                              return_value=self.service_plugins),
-            self.port(device_owner='compute:None'),
-            mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_port',
-                              return_value=[ns_to_delete]),
-            mock.patch.object(self.l3plugin, 'remove_router_from_l3_agent')
-        ) as (get_service_plugin, port, dvr_delns_ifno_port,
-              remove_router_from_l3_agent):
-
-            self.plugin.delete_port(self.context, port['port']['id'])
-            remove_router_from_l3_agent.assert_called_once_with(self.context,
-                ns_to_delete['agent_id'], ns_to_delete['router_id'])
 
     def test_delete_lbaas_vip_port(self):
         self._test_delete_dvr_serviced_port(
@@ -1353,11 +1327,10 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
             self.notify.assert_called_once_with('port', 'after_update',
                 plugin, **kwargs)
 
-    def test_vmarp_table_update_outside_of_delete_transaction(self):
+    def test_notify_outside_of_delete_transaction(self):
+        self.notify.side_effect = (
+            lambda r, e, t, **kwargs: self._ensure_transaction_is_closed())
         l3plugin = mock.Mock()
-        l3plugin.dvr_vmarp_table_update = (
-            lambda *args, **kwargs: self._ensure_transaction_is_closed())
-        l3plugin.dvr_deletens_if_no_port.return_value = []
         l3plugin.supported_extension_aliases = [
             'router', constants.L3_AGENT_SCHEDULER_EXT_ALIAS,
             constants.L3_DISTRIBUTED_EXT_ALIAS
@@ -1370,6 +1343,7 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                               return_value={'L3_ROUTER_NAT': l3plugin}),
         ):
             plugin = self._create_plugin_for_create_update_port(mock.Mock())
-            # deleting the port will call dvr_vmarp_table_update, which will
+            # deleting the port will call registry.notify, which will
             # run the transaction balancing function defined in this test
             plugin.delete_port(self.context, 'fake_id')
+            self.assertTrue(self.notify.call_count)
