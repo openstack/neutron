@@ -498,6 +498,7 @@ class DvrRouter(router.RouterInfo):
             ex_gw_port['network_id'])
         LOG.debug("FloatingIP agent gateway port received from the plugin: "
                   "%s", fip_agent_port)
+        is_first = False
         if floating_ips:
             is_first = self.fip_ns.subscribe(self.router_id)
             if is_first and fip_agent_port:
@@ -507,7 +508,7 @@ class DvrRouter(router.RouterInfo):
                     self.fip_ns.create_gateway_port(fip_agent_port)
 
         if self.fip_ns.agent_gateway_port and floating_ips:
-            if self.dist_fip_count == 0:
+            if self.dist_fip_count == 0 or is_first:
                 self.fip_ns.create_rtr_2_fip_link(self)
 
                 # kicks the FW Agent to add rules for the IR namespace if
