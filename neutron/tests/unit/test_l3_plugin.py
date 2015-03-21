@@ -409,12 +409,14 @@ class L3NatTestCaseMixin(object):
     def router(self, name='router1', admin_state_up=True,
                fmt=None, tenant_id=_uuid(),
                external_gateway_info=None, set_context=False,
+               no_delete=False,
                **kwargs):
         router = self._make_router(fmt or self.fmt, tenant_id, name,
                                    admin_state_up, external_gateway_info,
                                    set_context, **kwargs)
         yield router
-        self._delete('routers', router['router']['id'])
+        if not no_delete:
+            self._delete('routers', router['router']['id'])
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
