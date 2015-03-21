@@ -816,6 +816,8 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         with self.router() as router:
             l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
+        self._delete('routers', router['router']['id'])
+
         # deleted router
         ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
                                        router_ids=[router['router']['id']])
