@@ -22,6 +22,7 @@ from oslo_config import cfg
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import config as l3_config
+from neutron.agent.l3 import ha as l3_ha_agent
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
@@ -74,6 +75,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                    '._init_ha_conf_path').start()
 
         cfg.CONF.register_opts(l3_config.OPTS)
+        cfg.CONF.register_opts(l3_ha_agent.OPTS)
         cfg.CONF.register_opts(metadata_driver.MetadataDriver.OPTS)
 
     def _test_spawn_metadata_proxy(self, expected_user, expected_group,

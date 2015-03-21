@@ -387,6 +387,43 @@ class L3HATestCase(L3HATestFramework):
         routers_after = self.plugin.get_routers(self.admin_ctx)
         self.assertEqual(routers_before, routers_after)
 
+    def test_update_routers_states(self):
+        router1 = self._create_router()
+        self._bind_router(router1['id'])
+        router2 = self._create_router()
+        self._bind_router(router2['id'])
+
+        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
+                                                        self.agent1['host'])
+        for router in routers:
+            self.assertEqual('standby', router[constants.HA_ROUTER_STATE_KEY])
+
+        states = {router1['id']: 'active',
+                  router2['id']: 'standby'}
+        self.plugin.update_routers_states(
+            self.admin_ctx, states, self.agent1['host'])
+
+        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
+                                                        self.agent1['host'])
+        for router in routers:
+            self.assertEqual(states[router['id']],
+                             router[constants.HA_ROUTER_STATE_KEY])
+
+    def test_set_router_states_handles_concurrently_deleted_router(self):
+        router1 = self._create_router()
+        self._bind_router(router1['id'])
+        router2 = self._create_router()
+        self._bind_router(router2['id'])
+        bindings = self.plugin.get_ha_router_port_bindings(
+            self.admin_ctx, [router1['id'], router2['id']])
+        self.plugin.delete_router(self.admin_ctx, router1['id'])
+        self.plugin._set_router_states(
+            self.admin_ctx, bindings, {router1['id']: 'active',
+                                       router2['id']: 'active'})
+        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
+                                                        self.agent1['host'])
+        self.assertEqual('active', routers[0][constants.HA_ROUTER_STATE_KEY])
+
     def test_exclude_dvr_agents_for_ha_candidates(self):
         """Test dvr agents are not counted in the ha candidates.
 

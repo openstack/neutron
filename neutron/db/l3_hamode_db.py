@@ -462,3 +462,20 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                                                                   router_ids,
                                                                   active)
         return self._process_sync_ha_data(context, sync_data, host)
+
+    @classmethod
+    def _set_router_states(cls, context, bindings, states):
+        for binding in bindings:
+            try:
+                with context.session.begin(subtransactions=True):
+                    binding.state = states[binding.router_id]
+            except (orm.exc.StaleDataError, orm.exc.ObjectDeletedError):
+                # Take concurrently deleted routers in to account
+                pass
+
+    def update_routers_states(self, context, states, host):
+        """Receive dict of router ID to state and update them all."""
+
+        bindings = self.get_ha_router_port_bindings(
+            context, router_ids=states.keys(), host=host)
+        self._set_router_states(context, bindings, states)

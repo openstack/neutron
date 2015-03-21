@@ -24,6 +24,7 @@ from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import constants as l3_constants
 from neutron.i18n import _LE, _LI
+from neutron.notifiers import batch_notifier
 
 LOG = logging.getLogger(__name__)
 
@@ -91,6 +92,8 @@ class AgentMixin(object):
     def __init__(self, host):
         self._init_ha_conf_path()
         super(AgentMixin, self).__init__(host)
+        self.state_change_notifier = batch_notifier.BatchNotifier(
+            self._calculate_batch_duration(), self.notify_server)
         eventlet.spawn(self._start_keepalived_notifications_server)
 
     def _start_keepalived_notifications_server(self):
@@ -98,11 +101,22 @@ class AgentMixin(object):
             L3AgentKeepalivedStateChangeServer(self, self.conf))
         state_change_server.run()
 
+    def _calculate_batch_duration(self):
+        # Slave becomes the master after not hearing from it 3 times
+        detection_time = self.conf.ha_vrrp_advert_int * 3
+
+        # Keepalived takes a couple of seconds to configure the VIPs
+        configuration_time = 2
+
+        # Give it enough slack to batch all events due to the same failure
+        return (detection_time + configuration_time) * 2
+
     def enqueue_state_change(self, router_id, state):
         LOG.info(_LI('Router %(router_id)s transitioned to %(state)s'),
                  {'router_id': router_id,
                   'state': state})
         self._update_metadata_proxy(router_id, state)
+        self.state_change_notifier.queue_event((router_id, state))
 
     def _update_metadata_proxy(self, router_id, state):
         try:
@@ -121,6 +135,17 @@ class AgentMixin(object):
             LOG.debug('Closing metadata proxy for router %s', router_id)
             self.metadata_driver.destroy_monitored_metadata_proxy(
                 self.process_monitor, ri.router_id, ri.ns_name, self.conf)
+
+    def notify_server(self, batched_events):
+        translation_map = {'master': 'active',
+                           'backup': 'standby',
+                           'fault': 'standby'}
+        translated_states = dict((router_id, translation_map[state]) for
+                                 router_id, state in batched_events)
+        LOG.debug('Updating server with HA routers states %s',
+                  translated_states)
+        self.plugin_rpc.update_ha_routers_states(
+            self.context, translated_states)
 
     def _init_ha_conf_path(self):
         ha_full_path = os.path.dirname("/%s/" % self.conf.ha_confs_path)

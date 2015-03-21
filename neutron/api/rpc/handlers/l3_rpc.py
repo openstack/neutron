@@ -35,13 +35,14 @@ LOG = logging.getLogger(__name__)
 class L3RpcCallback(object):
     """L3 agent RPC callback in plugin implementations."""
 
-    # 1.0  L3PluginApi BASE_RPC_API_VERSION
-    # 1.1  Support update_floatingip_statuses
+    # 1.0 L3PluginApi BASE_RPC_API_VERSION
+    # 1.1 Support update_floatingip_statuses
     # 1.2 Added methods for DVR support
     # 1.3 Added a method that returns the list of activated services
     # 1.4 Added L3 HA update_router_state. This method was later removed,
-    #     since it was unused. The RPC version was not changed.
-    target = oslo_messaging.Target(version='1.4')
+    #     since it was unused. The RPC version was not changed
+    # 1.5 Added update_ha_routers_states
+    target = oslo_messaging.Target(version='1.5')
 
     @property
     def plugin(self):
@@ -209,3 +210,15 @@ class L3RpcCallback(object):
                   'host %(host)s', {'agent_port': agent_port,
                   'host': host})
         return agent_port
+
+    def update_ha_routers_states(self, context, **kwargs):
+        """Update states for HA routers.
+
+        Get a map of router_id to its HA state on a host and update the DB.
+        State must be in: ('active', 'standby').
+        """
+        states = kwargs.get('states')
+        host = kwargs.get('host')
+
+        LOG.debug('Updating HA routers states on host %s: %s', host, states)
+        self.l3plugin.update_routers_states(context, states, host)
