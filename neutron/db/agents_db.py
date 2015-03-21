@@ -89,7 +89,7 @@ class Agent(model_base.BASEV2, models_v2.HasId):
     # configurations: a json dict string, I think 4095 is enough
     configurations = sa.Column(sa.String(4095), nullable=False)
     # load - number of resources hosted by the agent
-    load = sa.Column(sa.Integer, default=0, nullable=False)
+    load = sa.Column(sa.Integer, server_default='0', nullable=False)
 
     @property
     def is_active(self):
