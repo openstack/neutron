@@ -29,7 +29,7 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    # Workaround for Alemic bug #89
+    # Workaround for Alembic bug #89
     # https://bitbucket.org/zzzeek/alembic/issue/89
     context = op.get_context()
     if context.bind.dialect.name == 'postgresql':
