@@ -50,6 +50,10 @@ _uuid = uuidutils.generate_uuid
 METADATA_REQUEST_TIMEOUT = 60
 
 
+def get_ovs_bridge(br_name):
+    return ovs_lib.OVSBridge(br_name)
+
+
 class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
@@ -543,9 +547,8 @@ class L3HATestFramework(L3AgentTestFramework):
         super(L3HATestFramework, self).setUp()
         self.failover_agent = self._configure_agent('agent2')
 
-        br_int_1 = self.get_ovs_bridge(
-            self.agent.conf.ovs_integration_bridge)
-        br_int_2 = self.get_ovs_bridge(
+        br_int_1 = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
+        br_int_2 = get_ovs_bridge(
             self.failover_agent.conf.ovs_integration_bridge)
 
         veth1, veth2 = self.create_veth()
@@ -628,7 +631,7 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
         client_ns = self._create_namespace()
         router_ip_cidr = router.internal_ports[0]['ip_cidr']
         ip_cidr = self.shift_ip_cidr(router_ip_cidr)
-        br_int = self.get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
+        br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
         port = self.bind_namespace_to_cidr(client_ns, br_int, ip_cidr)
         self.set_namespace_gateway(port, router_ip_cidr.partition('/')[0])
 

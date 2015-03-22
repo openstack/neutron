@@ -18,9 +18,9 @@ import testscenarios
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
-from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.openstack.common import uuidutils
+from neutron.tests.common import base
 from neutron.tests.functional import base as functional_base
 from neutron.tests import sub_base
 
@@ -61,14 +61,6 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
     def setUp(self):
         super(BaseLinuxTestCase, self).setUp()
 
-    def check_command(self, cmd, error_text, skip_msg, run_as_root=False):
-        try:
-            utils.execute(cmd, run_as_root=run_as_root)
-        except RuntimeError as e:
-            if error_text in str(e) and not self.fail_on_missing_deps:
-                self.skipTest(skip_msg)
-            raise
-
     @staticmethod
     def _cleanup_namespace(namespace):
         if namespace.netns.exists(namespace.namespace):
@@ -82,28 +74,21 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
 
         return namespace
 
-    def create_resource(self, name_prefix, creation_func, *args, **kwargs):
-        """Create a new resource that does not already exist.
-
-        :param name_prefix: The prefix for a randomly generated name
-        :param creation_func: A function taking the name of the resource
-               to be created as it's first argument.  An error is assumed
-               to indicate a name collision.
-        :param *args *kwargs: These will be passed to the create function.
-        """
-        while True:
-            name = get_rand_name(max_length=n_const.DEVICE_NAME_MAX_LEN,
-                                 prefix=name_prefix)
-            try:
-                return creation_func(name, *args, **kwargs)
-            except RuntimeError:
-                continue
-
     def create_veth(self):
         ip_wrapper = ip_lib.IPWrapper()
         name1 = get_rand_veth_name()
         name2 = get_rand_veth_name()
-        self.addCleanup(ip_wrapper.del_veth, name1)
+
+        # NOTE(cbrandily): will be removed in follow-up change
+        def destroy():
+            try:
+                ip_wrapper.del_veth(name1)
+            except RuntimeError:
+                # NOTE(cbrandily): It seems a veth is automagically deleted
+                # when a namespace owning a veth endpoint is deleted.
+                pass
+
+        self.addCleanup(destroy)
         veth1, veth2 = ip_wrapper.add_veth(name1, name2)
         return veth1, veth2
 
@@ -139,19 +124,16 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
         self.ip = ip_lib.IPWrapper()
 
     def create_ovs_bridge(self, br_prefix=BR_PREFIX):
-        br = self.create_resource(br_prefix, self.ovs.add_bridge)
+        br = base.create_resource(br_prefix, self.ovs.add_bridge)
         self.addCleanup(br.destroy)
         return br
-
-    def get_ovs_bridge(self, br_name):
-        return ovs_lib.OVSBridge(br_name)
 
     def create_ovs_port_in_ns(self, br, ns):
         def create_port(name):
             br.replace_port(name, ('type', 'internal'))
             self.addCleanup(br.delete_port, name)
             return name
-        port_name = self.create_resource(PORT_PREFIX, create_port)
+        port_name = base.create_resource(PORT_PREFIX, create_port)
         port_dev = self.ip.device(port_name)
         ns.add_device_to_namespace(port_dev)
         port_dev.link.set_up()
@@ -183,14 +165,12 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
 
         src_addr = self.SRC_ADDRESS
         dst_addr = self.DST_ADDRESS
-        src_veth = get_rand_veth_name()
-        dst_veth = get_rand_veth_name()
+
+        src_veth, dst_veth = self.create_veth()
         src_ns = self._create_namespace(src_ns_prefix)
         dst_ns = self._create_namespace(dst_ns_prefix)
-
-        src_veth, dst_veth = src_ns.add_veth(src_veth,
-                                             dst_veth,
-                                             dst_ns.namespace)
+        src_ns.add_device_to_namespace(src_veth)
+        dst_ns.add_device_to_namespace(dst_veth)
 
         self._set_ip_up(src_veth, '%s/24' % src_addr)
         self._set_ip_up(dst_veth, '%s/24' % dst_addr)
@@ -199,12 +179,16 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
 
 
 class BaseBridgeTestCase(BaseIPVethTestCase):
+
     def create_veth_pairs(self, dst_namespace):
         src_ns = self._create_namespace()
-        src_veth = get_rand_veth_name()
-        dst_veth = get_rand_veth_name()
+        dst_ns = ip_lib.IPWrapper(dst_namespace)
 
-        return src_ns.add_veth(src_veth, dst_veth, dst_namespace)
+        src_veth, dst_veth = self.create_veth()
+        src_ns.add_device_to_namespace(src_veth)
+        dst_ns.add_device_to_namespace(dst_veth)
+
+        return src_veth, dst_veth
 
     def create_bridge(self, br_ns=None):
         br_ns = br_ns or self._create_namespace()

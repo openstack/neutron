@@ -102,7 +102,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
                         'Initial call should always be true')
         self.assertFalse(self.monitor.has_updates,
                          'has_updates without port addition should be False')
-        self.create_resource('test-port-', self.bridge.add_port)
+        self.create_ovs_port_in_ns(self.bridge, self.ip)
         # has_updates after port addition should become True
         while not self.monitor.has_updates:
             eventlet.sleep(0.01)
