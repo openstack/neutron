@@ -167,6 +167,17 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertFalse(set_ovs_db_func.called)
             self.assertFalse(delete_flows_func.called)
 
+    def test_check_agent_configurations_raises(self):
+        self.agent.enable_distributed_routing = True
+        self.agent.l2_pop = False
+        self.assertRaises(ValueError,
+                          self.agent._check_agent_configurations)
+
+    def test_check_agent_configurations(self):
+        self.agent.enable_distributed_routing = True
+        self.agent.l2_pop = True
+        self.assertIsNone(self.agent._check_agent_configurations())
+
     def test_port_bound_deletes_flows_for_valid_ofport(self):
         self._mock_port_bound(ofport=1, new_local_vlan=1)
 

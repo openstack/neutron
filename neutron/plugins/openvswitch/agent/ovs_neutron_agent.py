@@ -183,6 +183,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             'agent_type': q_const.AGENT_TYPE_OVS,
             'start_flag': True}
 
+        # Validate agent configurations
+        self._check_agent_configurations()
+
         # Keep track of int_br's device count for use by _report_state()
         self.int_br_device_count = 0
 
@@ -1554,6 +1557,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         for rpc_api in (self.plugin_rpc, self.sg_plugin_rpc,
                         self.dvr_plugin_rpc, self.state_rpc):
             rpc_api.client.timeout = timeout
+
+    def _check_agent_configurations(self):
+        if self.enable_distributed_routing and not self.l2_pop:
+            raise ValueError(_("DVR cannot be enabled without "
+                               "L2 population."))
 
 
 def _ofport_set_to_str(ofport_set):
