@@ -54,7 +54,7 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
     predicate = expected_keys.__eq__ if strict else expected_keys.issubset
 
     if not predicate(provided_keys):
-        msg = (_("Validation of dictionary's keys failed."
+        msg = (_("Validation of dictionary's keys failed. "
                  "Expected keys: %(expected_keys)s "
                  "Provided keys: %(provided_keys)s") %
                {'expected_keys': expected_keys,

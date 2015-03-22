@@ -81,7 +81,7 @@ core_opts = [
     cfg.BoolOpt('allow_overlapping_ips', default=False,
                 help=_("Allow overlapping IP support in Neutron")),
     cfg.StrOpt('host', default=utils.get_hostname(),
-               help=_("Hostname to be used by the neutron server, agents and"
+               help=_("Hostname to be used by the neutron server, agents and "
                       "services running on this machine. All the agents and "
                       "services running on this machine must use the same "
                       "host value.")),

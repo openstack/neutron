@@ -124,7 +124,7 @@ class SubnetInUse(InUse):
 
 class PortInUse(InUse):
     message = _("Unable to complete operation on port %(port_id)s "
-                "for network %(net_id)s. Port already has an attached"
+                "for network %(net_id)s. Port already has an attached "
                 "device %(device_id)s.")
 
 
@@ -234,7 +234,7 @@ class UnsupportedPortDeviceOwner(Conflict):
 
 
 class OverlappingAllocationPools(Conflict):
-    message = _("Found overlapping allocation pools:"
+    message = _("Found overlapping allocation pools: "
                 "%(pool_1)s %(pool_2)s for subnet %(subnet_cidr)s.")
 
 

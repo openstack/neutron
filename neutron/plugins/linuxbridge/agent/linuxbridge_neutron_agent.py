@@ -95,8 +95,8 @@ class LinuxBridgeManager(object):
 
     def get_bridge_name(self, network_id):
         if not network_id:
-            LOG.warning(_LW("Invalid Network ID, will lead to incorrect bridge"
-                            "name"))
+            LOG.warning(_LW("Invalid Network ID, will lead to incorrect "
+                            "bridge name"))
         bridge_name = BRIDGE_NAME_PREFIX + network_id[0:11]
         return bridge_name
 

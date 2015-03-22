@@ -138,11 +138,11 @@ class SdnveNeutronAgent(object):
         new_controller = info.get('new_controller')
         out_of_band = info.get('out_of_band')
         if self.int_br and new_controller:
-            LOG.debug("info_update received. New controller"
+            LOG.debug("info_update received. New controller "
                       "is to be set to: %s", new_controller)
             self.int_br.set_controller(["tcp:" + new_controller])
             if out_of_band:
-                LOG.debug("info_update received. New controller"
+                LOG.debug("info_update received. New controller "
                           "is set to be out of band")
                 self.int_br.set_db_attribute("Controller",
                                              self.int_bridge_name,

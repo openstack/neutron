@@ -168,8 +168,8 @@ class RequestHandler(object):
                            'body': body, 'header': self.headers})
                 resp, replybody = self.httpclient.request(
                     myurl, method=method, body=body, headers=self.headers)
-                LOG.debug(("Response recd from SDN-VE. resp: %(resp)s"
-                           "body: %(body)s"),
+                LOG.debug("Response recd from SDN-VE. resp: %(resp)s "
+                          "body: %(body)s",
                           {'resp': resp.status, 'body': replybody})
                 status_code = resp.status
 
