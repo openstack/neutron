@@ -278,29 +278,33 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         router = self._get_router(context, router_id)
         device_owner = self._get_device_owner(context, router)
 
+        # This should be True unless adding an IPv6 prefix to an existing port
+        new_port = True
+
         if add_by_port:
-            port = self._add_interface_by_port(
-                context, router, interface_info['port_id'], device_owner)
+            port, subnets = self._add_interface_by_port(
+                    context, router, interface_info['port_id'], device_owner)
         elif add_by_sub:
-            port = self._add_interface_by_subnet(
-                context, router, interface_info['subnet_id'], device_owner)
+            port, subnets, new_port = self._add_interface_by_subnet(
+                    context, router, interface_info['subnet_id'], device_owner)
 
-        with context.session.begin(subtransactions=True):
-            router_port = l3_db.RouterPort(
-                port_id=port['id'],
-                router_id=router.id,
-                port_type=device_owner
-            )
-            context.session.add(router_port)
+        if new_port:
+            with context.session.begin(subtransactions=True):
+                router_port = l3_db.RouterPort(
+                    port_id=port['id'],
+                    router_id=router.id,
+                    port_type=device_owner
+                )
+                context.session.add(router_port)
 
-        if router.extra_attributes.distributed and router.gw_port:
-            self.add_csnat_router_interface_port(
-                context.elevated(), router, port['network_id'],
-                port['fixed_ips'][0]['subnet_id'])
+            if router.extra_attributes.distributed and router.gw_port:
+                self.add_csnat_router_interface_port(
+                    context.elevated(), router, port['network_id'],
+                    port['fixed_ips'][-1]['subnet_id'])
 
         router_interface_info = self._make_router_interface_info(
-            router_id, port['tenant_id'], port['id'],
-            port['fixed_ips'][0]['subnet_id'])
+            router_id, port['tenant_id'], port['id'], subnets[-1]['id'],
+            [subnet['id'] for subnet in subnets])
         self.notify_router_interface_action(
             context, router_interface_info, 'add')
         return router_interface_info
@@ -315,14 +319,14 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         device_owner = self._get_device_owner(context, router)
 
         if remove_by_port:
-            port, subnet = self._remove_interface_by_port(
-                context, router_id, port_id, subnet_id, device_owner)
+            port, subnets = self._remove_interface_by_port(
+                    context, router_id, port_id, subnet_id, device_owner)
         # remove_by_subnet is not used here, because the validation logic of
         # _validate_interface_info ensures that at least one of remote_by_*
         # is True.
         else:
-            port, subnet = self._remove_interface_by_subnet(
-                context, router_id, subnet_id, device_owner)
+            port, subnets = self._remove_interface_by_subnet(
+                    context, router_id, subnet_id, device_owner)
 
         if router.extra_attributes.distributed:
             if router.gw_port:
@@ -339,8 +343,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                         context, l3_agent['id'], router_id)
 
         router_interface_info = self._make_router_interface_info(
-            router_id, port['tenant_id'], port['id'],
-            port['fixed_ips'][0]['subnet_id'])
+            router_id, port['tenant_id'], port['id'], subnets[0]['id'],
+            [subnet['id'] for subnet in subnets])
         self.notify_router_interface_action(
             context, router_interface_info, 'remove')
         return router_interface_info

@@ -43,21 +43,21 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
    MinRtrAdvInterval 3;
    MaxRtrAdvInterval 10;
 
-   {% if ra_mode == constants.DHCPV6_STATELESS %}
+   {% if constants.DHCPV6_STATELESS in ra_modes %}
    AdvOtherConfigFlag on;
    {% endif %}
 
-   {% if ra_mode == constants.DHCPV6_STATEFUL %}
+   {% if constants.DHCPV6_STATEFUL in ra_modes %}
    AdvManagedFlag on;
    {% endif %}
 
-   {% if ra_mode in (constants.IPV6_SLAAC, constants.DHCPV6_STATELESS) %}
+   {% for prefix in prefixes %}
    prefix {{ prefix }}
    {
         AdvOnLink on;
         AdvAutonomous on;
    };
-   {% endif %}
+   {% endfor %}
 };
 """)
 
@@ -79,16 +79,20 @@ class DaemonMonitor(object):
         buf = six.StringIO()
         for p in router_ports:
             subnets = p.get('subnets', [])
-            for subnet in subnets:
-                prefix = subnet['cidr']
-                if netaddr.IPNetwork(prefix).version == 6:
-                    interface_name = self._dev_name_helper(p['id'])
-                    ra_mode = subnet['ipv6_ra_mode']
-                    buf.write('%s' % CONFIG_TEMPLATE.render(
-                        ra_mode=ra_mode,
-                        interface_name=interface_name,
-                        prefix=prefix,
-                        constants=constants))
+            v6_subnets = [subnet for subnet in subnets if
+                    netaddr.IPNetwork(subnet['cidr']).version == 6]
+            if not v6_subnets:
+                continue
+            ra_modes = {subnet['ipv6_ra_mode'] for subnet in v6_subnets}
+            auto_config_prefixes = [subnet['cidr'] for subnet in v6_subnets if
+                    subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC or
+                    subnet['ipv6_ra_mode'] == constants.DHCPV6_STATELESS]
+            interface_name = self._dev_name_helper(p['id'])
+            buf.write('%s' % CONFIG_TEMPLATE.render(
+                ra_modes=list(ra_modes),
+                interface_name=interface_name,
+                prefixes=auto_config_prefixes,
+                constants=constants))
 
         utils.replace_file(radvd_conf, buf.getvalue())
         return radvd_conf

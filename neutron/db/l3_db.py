@@ -34,7 +34,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.i18n import _LI
+from neutron.i18n import _LI, _LE
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -509,18 +509,50 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 raise n_exc.PortInUse(net_id=port['network_id'],
                                       port_id=port['id'],
                                       device_id=port['device_id'])
+
+            # Only allow one router port with IPv6 subnets per network id
+            if self._port_has_ipv6_address(port):
+                for existing_port in (rp.port for rp in router.attached_ports):
+                    if (existing_port['network_id'] == port['network_id'] and
+                            self._port_has_ipv6_address(existing_port)):
+                        msg = _("Cannot have multiple router ports with the "
+                                "same network id if both contain IPv6 "
+                                "subnets. Existing port %(p)s has IPv6 "
+                                "subnet(s) and network id %(nid)s")
+                        raise n_exc.BadRequest(resource='router', msg=msg % {
+                            'p': existing_port['id'],
+                            'nid': existing_port['network_id']})
+
             fixed_ips = [ip for ip in port['fixed_ips']]
-            if len(fixed_ips) != 1:
-                msg = _('Router port must have exactly one fixed IP')
+            subnets = []
+            for fixed_ip in fixed_ips:
+                subnet = self._core_plugin._get_subnet(context,
+                                                       fixed_ip['subnet_id'])
+                subnets.append(subnet)
+                self._check_for_dup_router_subnet(context, router,
+                                                  port['network_id'],
+                                                  subnet['id'],
+                                                  subnet['cidr'])
+
+            # Keep the restriction against multiple IPv4 subnets
+            if len([s for s in subnets if s['ip_version'] == 4]) > 1:
+                msg = _LE("Cannot have multiple "
+                          "IPv4 subnets on router port")
                 raise n_exc.BadRequest(resource='router', msg=msg)
-            subnet_id = fixed_ips[0]['subnet_id']
-            subnet = self._core_plugin._get_subnet(context, subnet_id)
-            self._check_for_dup_router_subnet(context, router,
-                                              port['network_id'],
-                                              subnet['id'],
-                                              subnet['cidr'])
+
             port.update({'device_id': router.id, 'device_owner': owner})
-            return port
+            return port, subnets
+
+    def _port_has_ipv6_address(self, port):
+        for fixed_ip in port['fixed_ips']:
+            if netaddr.IPNetwork(fixed_ip['ip_address']).version == 6:
+                return True
+
+    def _find_ipv6_router_port_by_network(self, router, net_id):
+        for port in router.attached_ports:
+            p = port['port']
+            if p['network_id'] == net_id and self._port_has_ipv6_address(p):
+                return port
 
     def _add_interface_by_subnet(self, context, router, subnet_id, owner):
         subnet = self._core_plugin._get_subnet(context, subnet_id)
@@ -540,6 +572,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         fixed_ip = {'ip_address': subnet['gateway_ip'],
                     'subnet_id': subnet['id']}
 
+        if subnet['ip_version'] == 6:
+            # Add new prefix to an existing ipv6 port with the same network id
+            # if one exists
+            port = self._find_ipv6_router_port_by_network(router,
+                                                          subnet['network_id'])
+            if port:
+                fixed_ips = list(port['port']['fixed_ips'])
+                fixed_ips.append(fixed_ip)
+                return self._core_plugin.update_port(context,
+                        port['port_id'], {'port':
+                            {'fixed_ips': fixed_ips}}), [subnet], False
+
         return self._core_plugin.create_port(context, {
             'port':
             {'tenant_id': subnet['tenant_id'],
@@ -549,16 +593,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
              'admin_state_up': True,
              'device_id': router.id,
              'device_owner': owner,
-             'name': ''}})
+             'name': ''}}), [subnet], True
 
     @staticmethod
     def _make_router_interface_info(
-            router_id, tenant_id, port_id, subnet_id):
+            router_id, tenant_id, port_id, subnet_id, subnet_ids):
         return {
             'id': router_id,
             'tenant_id': tenant_id,
             'port_id': port_id,
-            'subnet_id': subnet_id
+            'subnet_id': subnet_id,  # deprecated by IPv6 multi-prefix
+            'subnet_ids': subnet_ids
         }
 
     def add_router_interface(self, context, router_id, interface_info):
@@ -566,26 +611,30 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         add_by_port, add_by_sub = self._validate_interface_info(interface_info)
         device_owner = self._get_device_owner(context, router_id)
 
+        # This should be True unless adding an IPv6 prefix to an existing port
+        new_port = True
+
         if add_by_port:
-            port = self._add_interface_by_port(
-                context, router, interface_info['port_id'], device_owner)
+            port, subnets = self._add_interface_by_port(
+                    context, router, interface_info['port_id'], device_owner)
         # add_by_subnet is not used here, because the validation logic of
         # _validate_interface_info ensures that either of add_by_* is True.
         else:
-            port = self._add_interface_by_subnet(
-                context, router, interface_info['subnet_id'], device_owner)
+            port, subnets, new_port = self._add_interface_by_subnet(
+                    context, router, interface_info['subnet_id'], device_owner)
 
-        with context.session.begin(subtransactions=True):
-            router_port = RouterPort(
-                port_id=port['id'],
-                router_id=router.id,
-                port_type=device_owner
-            )
-            context.session.add(router_port)
+        if new_port:
+            with context.session.begin(subtransactions=True):
+                router_port = RouterPort(
+                    port_id=port['id'],
+                    router_id=router.id,
+                    port_type=device_owner
+                )
+                context.session.add(router_port)
 
         return self._make_router_interface_info(
-            router.id, port['tenant_id'], port['id'],
-            port['fixed_ips'][0]['subnet_id'])
+            router.id, port['tenant_id'], port['id'], subnets[-1]['id'],
+            [subnet['id'] for subnet in subnets])
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
@@ -621,16 +670,19 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         except exc.NoResultFound:
             raise l3.RouterInterfaceNotFound(router_id=router_id,
                                              port_id=port_id)
-        port_subnet_id = port_db['fixed_ips'][0]['subnet_id']
-        if subnet_id and port_subnet_id != subnet_id:
+        port_subnet_ids = [fixed_ip['subnet_id']
+                           for fixed_ip in port_db['fixed_ips']]
+        if subnet_id and subnet_id not in port_subnet_ids:
             raise n_exc.SubnetMismatchForPort(
                 port_id=port_id, subnet_id=subnet_id)
-        subnet = self._core_plugin._get_subnet(context, port_subnet_id)
-        self._confirm_router_interface_not_in_use(
-            context, router_id, port_subnet_id)
+        subnets = [self._core_plugin._get_subnet(context, port_subnet_id)
+                   for port_subnet_id in port_subnet_ids]
+        for port_subnet_id in port_subnet_ids:
+            self._confirm_router_interface_not_in_use(
+                    context, router_id, port_subnet_id)
         self._core_plugin.delete_port(context, port_db['id'],
                                       l3_port_check=False)
-        return (port_db, subnet)
+        return (port_db, subnets)
 
     def _remove_interface_by_subnet(self, context,
                                     router_id, subnet_id, owner):
@@ -647,10 +699,20 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             )
 
             for p in ports:
-                if p['fixed_ips'][0]['subnet_id'] == subnet_id:
+                port_subnets = [fip['subnet_id'] for fip in p['fixed_ips']]
+                if subnet_id in port_subnets and len(port_subnets) > 1:
+                    # multiple prefix port - delete prefix from port
+                    fixed_ips = [fip for fip in p['fixed_ips'] if
+                            fip['subnet_id'] != subnet_id]
+                    self._core_plugin.update_port(context, p['id'],
+                            {'port':
+                                {'fixed_ips': fixed_ips}})
+                    return (p, [subnet])
+                elif subnet_id in port_subnets:
+                    # only one subnet on port - delete the port
                     self._core_plugin.delete_port(context, p['id'],
                                                   l3_port_check=False)
-                    return (p, subnet)
+                    return (p, [subnet])
         except exc.NoResultFound:
             pass
         raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
@@ -664,18 +726,20 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         subnet_id = interface_info.get('subnet_id')
         device_owner = self._get_device_owner(context, router_id)
         if remove_by_port:
-            port, subnet = self._remove_interface_by_port(context, router_id,
-                                                          port_id, subnet_id,
-                                                          device_owner)
+            port, subnets = self._remove_interface_by_port(context, router_id,
+                                                           port_id, subnet_id,
+                                                           device_owner)
         # remove_by_subnet is not used here, because the validation logic of
         # _validate_interface_info ensures that at least one of remote_by_*
         # is True.
         else:
-            port, subnet = self._remove_interface_by_subnet(
-                context, router_id, subnet_id, device_owner)
+            port, subnets = self._remove_interface_by_subnet(
+                    context, router_id, subnet_id, device_owner)
 
         return self._make_router_interface_info(router_id, port['tenant_id'],
-                                                port['id'], subnet['id'])
+                                                port['id'], subnets[0]['id'],
+                                                [subnet['id'] for subnet in
+                                                    subnets])
 
     def _get_floatingip(self, context, id):
         try:
