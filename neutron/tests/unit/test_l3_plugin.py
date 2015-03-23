@@ -389,7 +389,7 @@ class L3NatTestCaseMixin(object):
         interface_data = {}
         if subnet_id:
             interface_data.update({'subnet_id': subnet_id})
-        if port_id and (action != 'add' or not subnet_id):
+        if port_id:
             interface_data.update({'port_id': port_id})
 
         req = self.new_action_request('routers', interface_data, router_id,
@@ -1181,6 +1181,17 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                           expected_code=exc.
                                           HTTPBadRequest.code)
 
+    def test_router_add_interface_with_both_ids_returns_400(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                with self.port(subnet=s) as p:
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  s['subnet']['id'],
+                                                  p['port']['id'],
+                                                  expected_code=exc.
+                                                  HTTPBadRequest.code)
+
     def test_router_add_gateway_dup_subnet1_returns_400(self):
         with self.router() as r:
             with self.subnet() as s:
@@ -1424,6 +1435,25 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   None,
                                                   p['port']['id'])
 
+    def test_router_remove_interface_nothing_returns_400(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                with self.port(subnet=s) as p:
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  None,
+                                                  None,
+                                                  exc.HTTPBadRequest.code)
+                    #remove properly to clean-up
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+
     def test_router_remove_interface_returns_200(self):
         with self.router() as r:
             with self.port() as p:
@@ -1436,6 +1466,19 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               None,
                                               p['port']['id'],
                                               expected_body=body)
+
+    def test_router_remove_interface_with_both_ids_returns_200(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                with self.port(subnet=s) as p:
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  s['subnet']['id'],
+                                                  p['port']['id'])
 
     def test_router_remove_interface_wrong_port_returns_404(self):
         with self.router() as r:

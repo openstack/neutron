@@ -317,19 +317,21 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         return router_interface_info
 
     def remove_router_interface(self, context, router_id, interface_info):
-        if not interface_info:
-            msg = _("Either subnet_id or port_id must be specified")
-            raise n_exc.BadRequest(resource='router', msg=msg)
-
+        remove_by_port, remove_by_subnet = (
+            self._validate_interface_info(interface_info, for_removal=True)
+        )
         port_id = interface_info.get('port_id')
         subnet_id = interface_info.get('subnet_id')
         router = self._get_router(context, router_id)
         device_owner = self._get_device_owner(context, router)
 
-        if port_id:
+        if remove_by_port:
             port, subnet = self._remove_interface_by_port(
                 context, router_id, port_id, subnet_id, device_owner)
-        elif subnet_id:
+        # remove_by_subnet is not used here, because the validation logic of
+        # _validate_interface_info ensures that at least one of remote_by_*
+        # is True.
+        else:
             port, subnet = self._remove_interface_by_subnet(
                 context, router_id, subnet_id, device_owner)
 
