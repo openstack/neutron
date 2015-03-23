@@ -36,5 +36,7 @@ def main():
     config.init(sys.argv[1:])
     config.setup_logging()
     utils.log_opt_values(LOG)
+    # metadata agent need not connect DB
+    cfg.CONF.set_override("connection", "", "database")
     proxy = agent.UnixDomainMetadataProxy(cfg.CONF)
     proxy.run()

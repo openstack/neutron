@@ -99,9 +99,10 @@ class WorkerService(object):
 
     def start(self):
         # We may have just forked from parent process.  A quick disposal of the
-        # existing sql connections avoids producting 500 errors later when they
+        # existing sql connections avoids producing 500 errors later when they
         # are discovered to be broken.
-        api.get_engine().pool.dispose()
+        if CONF.database.connection:
+            api.get_engine().pool.dispose()
         self._server = self._service.pool.spawn(self._service._run,
                                                 self._application,
                                                 self._service._socket)
