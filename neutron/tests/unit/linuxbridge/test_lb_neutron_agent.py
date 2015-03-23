@@ -1059,3 +1059,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                           check_exit_code=False)
             ]
             execute_fn.assert_has_calls(expected)
+
+    def test_fdb_update_chg_ip_empty_lists(self):
+        fdb_entries = {'chg_ip': {'net_id': {'agent_ip': {}}}}
+        self.lb_rpc.fdb_update(None, fdb_entries)

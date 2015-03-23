@@ -722,11 +722,11 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 if agent_ip == self.agent.br_mgr.local_ip:
                     continue
 
-                after = state.get('after')
+                after = state.get('after', [])
                 for mac, ip in after:
                     self.agent.br_mgr.add_fdb_ip_entry(mac, ip, interface)
 
-                before = state.get('before')
+                before = state.get('before', [])
                 for mac, ip in before:
                     self.agent.br_mgr.remove_fdb_ip_entry(mac, ip, interface)
 
