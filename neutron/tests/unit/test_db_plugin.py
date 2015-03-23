@@ -41,7 +41,6 @@ from neutron import manager
 from neutron.tests import base
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
@@ -78,8 +77,7 @@ def _get_create_db_method(resource):
         return 'create_%s' % resource
 
 
-class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
-                                testlib_plugin.PluginSetupHelper):
+class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     fmt = 'json'
     resource_prefix_map = {}
 

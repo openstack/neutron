@@ -30,7 +30,6 @@ from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 
 DEFAULT_SERVICE_DEFS = [{'service_class': constants.DUMMY,
@@ -160,8 +159,7 @@ class TestServiceTypeExtensionManager(object):
         return []
 
 
-class ServiceTypeExtensionTestCaseBase(testlib_api.WebTestCase,
-                                       testlib_plugin.PluginSetupHelper):
+class ServiceTypeExtensionTestCaseBase(testlib_api.WebTestCase):
     fmt = 'json'
 
     def setUp(self):

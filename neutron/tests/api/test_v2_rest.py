@@ -22,8 +22,8 @@ from tempest_lib import exceptions
 import testscenarios
 
 from neutron.tests.api import base_v2
-from neutron.tests import sub_base
-from neutron.tests.tempest import test as t_test
+from neutron.tests import base
+from neutron.tests.tempest.api.network import base as t_base
 
 # Required to generate tests from scenarios.  Not compatible with nose.
 load_tests = testscenarios.load_tests_apply_scenarios
@@ -34,7 +34,7 @@ class TempestRestClient(base_v2.BaseNeutronClient):
     @property
     def client(self):
         if not hasattr(self, '_client'):
-            manager = t_test.BaseTestCase.get_client_manager()
+            manager = t_base.BaseNetworkTest.get_client_manager()
             self._client = manager.network_client
         return self._client
 
@@ -56,19 +56,19 @@ class TempestRestClient(base_v2.BaseNeutronClient):
     def _create_network(self, **kwargs):
         # Internal method - use create_network() instead
         body = self.client.create_network(**kwargs)
-        return sub_base.AttributeDict(body['network'])
+        return base.AttributeDict(body['network'])
 
     def update_network(self, id_, **kwargs):
         body = self.client.update_network(id_, **kwargs)
-        return sub_base.AttributeDict(body['network'])
+        return base.AttributeDict(body['network'])
 
     def get_network(self, id_, **kwargs):
         body = self.client.show_network(id_, **kwargs)
-        return sub_base.AttributeDict(body['network'])
+        return base.AttributeDict(body['network'])
 
     def get_networks(self, **kwargs):
         body = self.client.list_networks(**kwargs)
-        return [sub_base.AttributeDict(x) for x in body['networks']]
+        return [base.AttributeDict(x) for x in body['networks']]
 
     def delete_network(self, id_):
         self.client.delete_network(id_)
@@ -76,3 +76,7 @@ class TempestRestClient(base_v2.BaseNeutronClient):
 
 class TestApiWithRestClient(base_v2.BaseTestApi):
     scenarios = [('tempest', {'client': TempestRestClient()})]
+
+    def setUp(self):
+        raise self.skipException(
+            'Tempest fixture requirements prevent this test from running')

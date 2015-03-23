@@ -19,10 +19,10 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
-from neutron.tests.common import base
+from neutron.tests import base as tests_base
+from neutron.tests.common import base as common_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
-from neutron.tests import sub_base
 
 
 BR_PREFIX = 'test-br'
@@ -36,7 +36,7 @@ ICMP_BLOCK_RULE = '-p icmp -j DROP'
 
 
 #TODO(jschwarz): Move these two functions to neutron/tests/common/
-get_rand_name = sub_base.get_rand_name
+get_rand_name = tests_base.get_rand_name
 
 
 def get_rand_bridge_name():
@@ -69,7 +69,7 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
         self.ip = ip_lib.IPWrapper()
 
     def create_ovs_bridge(self, br_prefix=BR_PREFIX):
-        br = base.create_resource(br_prefix, self.ovs.add_bridge)
+        br = common_base.create_resource(br_prefix, self.ovs.add_bridge)
         self.addCleanup(br.destroy)
         return br
 
@@ -78,7 +78,7 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, BaseLinuxTestCase):
             br.replace_port(name, ('type', 'internal'))
             self.addCleanup(br.delete_port, name)
             return name
-        port_name = base.create_resource(PORT_PREFIX, create_port)
+        port_name = common_base.create_resource(PORT_PREFIX, create_port)
         port_dev = self.ip.device(port_name)
         ns.add_device_to_namespace(port_dev)
         port_dev.link.set_up()

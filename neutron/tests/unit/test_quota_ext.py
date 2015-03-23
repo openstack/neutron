@@ -32,15 +32,13 @@ from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 _get_path = test_api_v2._get_path
 
 
-class QuotaExtensionTestCase(testlib_api.WebTestCase,
-                             testlib_plugin.PluginSetupHelper):
+class QuotaExtensionTestCase(testlib_api.WebTestCase):
 
     def setUp(self):
         super(QuotaExtensionTestCase, self).setUp()

@@ -18,14 +18,14 @@ from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
 
 from neutron.common import rpc
-from neutron.tests import sub_base
+from neutron.tests import base
 
 
 CONF = cfg.CONF
 CONF.import_opt('state_path', 'neutron.common.config')
 
 
-class ServiceTestCase(sub_base.SubBaseTestCase):
+class ServiceTestCase(base.DietTestCase):
     # the class cannot be based on BaseTestCase since it mocks rpc.Connection
 
     def setUp(self):

@@ -20,11 +20,9 @@ from neutron import context
 from neutron import manager
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 
-class TestNetworks(testlib_api.SqlTestCase,
-                   testlib_plugin.PluginSetupHelper):
+class TestNetworks(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestNetworks, self).setUp()
         self._tenant_id = 'test-tenant'

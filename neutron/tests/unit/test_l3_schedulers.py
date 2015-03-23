@@ -44,7 +44,6 @@ from neutron.tests import base
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_l3_plugin
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 # the below code is required for the following reason
 # (as documented in testscenarios)
@@ -855,8 +854,7 @@ class L3DvrScheduler(l3_db.L3_NAT_db_mixin,
     pass
 
 
-class L3DvrSchedulerTestCase(testlib_api.SqlTestCase,
-                             testlib_plugin.PluginSetupHelper):
+class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -1168,8 +1166,7 @@ class L3HAPlugin(db_v2.NeutronDbPluginV2,
 
 
 class L3HATestCaseMixin(testlib_api.SqlTestCase,
-                        L3SchedulerBaseMixin,
-                        testlib_plugin.PluginSetupHelper):
+                        L3SchedulerBaseMixin):
 
     def setUp(self):
         super(L3HATestCaseMixin, self).setUp()
@@ -1435,7 +1432,6 @@ class L3HALeastRoutersSchedulerTestCase(L3HATestCaseMixin):
 
 
 class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
-                                         testlib_plugin.PluginSetupHelper,
                                          L3SchedulerBaseMixin):
     """Test cases to test get_l3_agents.
 

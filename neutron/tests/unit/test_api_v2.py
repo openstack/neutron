@@ -38,7 +38,6 @@ from neutron import quota
 from neutron.tests import base
 from neutron.tests import fake_notifier
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
@@ -87,7 +86,7 @@ class ResourceIndexTestCase(base.BaseTestCase):
         self.assertEqual(link['rel'], 'self')
 
 
-class APIv2TestBase(base.BaseTestCase, testlib_plugin.PluginSetupHelper):
+class APIv2TestBase(base.BaseTestCase):
     def setUp(self):
         super(APIv2TestBase, self).setUp()
 
@@ -1093,7 +1092,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self.assertEqual(res.status_int, 400)
 
 
-class SubresourceTest(base.BaseTestCase, testlib_plugin.PluginSetupHelper):
+class SubresourceTest(base.BaseTestCase):
     def setUp(self):
         super(SubresourceTest, self).setUp()
 
@@ -1368,7 +1367,7 @@ class QuotaTest(APIv2TestBase):
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
 
 
-class ExtensionTestCase(base.BaseTestCase, testlib_plugin.PluginSetupHelper):
+class ExtensionTestCase(base.BaseTestCase):
     def setUp(self):
         super(ExtensionTestCase, self).setUp()
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'

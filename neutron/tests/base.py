@@ -13,36 +13,40 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""Base test case for tests that do not rely on Tempest.
-
-To change behavoir that is common to all tests, please target
-the neutron.tests.sub_base module instead.
-
-If a test needs to import a dependency like Tempest, see
-neutron.tests.sub_base for a base test class that can be used without
-errors due to duplicate configuration definitions.
+"""Base test cases for all neutron tests.
 """
 
+import contextlib
+import gc
 import logging as std_logging
+import os
 import os.path
+import random
+import traceback
+import weakref
 
+import eventlet.timeout
 import fixtures
 import mock
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
+from oslo_utils import strutils
+import testtools
 
 from neutron.agent.linux import external_process
 from neutron.common import config
 from neutron.common import rpc as n_rpc
+from neutron.db import agentschedulers_db
+from neutron import manager
 from neutron import policy
 from neutron.tests import fake_notifier
-from neutron.tests import sub_base
+from neutron.tests import post_mortem_debug
 
 
 CONF = cfg.CONF
 CONF.import_opt('state_path', 'neutron.common.config')
-LOG_FORMAT = sub_base.LOG_FORMAT
+LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..', '..')
 TEST_ROOT_DIR = os.path.dirname(__file__)
@@ -60,7 +64,125 @@ def fake_consume_in_threads(self):
     return []
 
 
-bool_from_env = sub_base.bool_from_env
+def get_rand_name(max_length=None, prefix='test'):
+    name = prefix + str(random.randint(1, 0x7fffffff))
+    return name[:max_length] if max_length is not None else name
+
+
+def bool_from_env(key, strict=False, default=False):
+    value = os.environ.get(key)
+    return strutils.bool_from_string(value, strict=strict, default=default)
+
+
+class AttributeDict(dict):
+
+    """
+    Provide attribute access (dict.key) to dictionary values.
+    """
+
+    def __getattr__(self, name):
+        """Allow attribute access for all keys in the dict."""
+        if name in self:
+            return self[name]
+        raise AttributeError(_("Unknown attribute '%s'.") % name)
+
+
+class DietTestCase(testtools.TestCase):
+    """Same great taste, less filling.
+
+    BaseTestCase is responsible for doing lots of plugin-centric setup
+    that not all tests require (or can tolerate).  This class provides
+    only functionality that is common across all tests.
+    """
+
+    def setUp(self):
+        super(DietTestCase, self).setUp()
+
+        # Configure this first to ensure pm debugging support for setUp()
+        debugger = os.environ.get('OS_POST_MORTEM_DEBUGGER')
+        if debugger:
+            self.addOnException(post_mortem_debug.get_exception_handler(
+                debugger))
+
+        if bool_from_env('OS_DEBUG'):
+            _level = std_logging.DEBUG
+        else:
+            _level = std_logging.INFO
+        capture_logs = bool_from_env('OS_LOG_CAPTURE')
+        if not capture_logs:
+            std_logging.basicConfig(format=LOG_FORMAT, level=_level)
+        self.log_fixture = self.useFixture(
+            fixtures.FakeLogger(
+                format=LOG_FORMAT,
+                level=_level,
+                nuke_handlers=capture_logs,
+            ))
+
+        test_timeout = int(os.environ.get('OS_TEST_TIMEOUT', 0))
+        if test_timeout == -1:
+            test_timeout = 0
+        if test_timeout > 0:
+            self.useFixture(fixtures.Timeout(test_timeout, gentle=True))
+
+        # If someone does use tempfile directly, ensure that it's cleaned up
+        self.useFixture(fixtures.NestedTempfile())
+        self.useFixture(fixtures.TempHomeDir())
+
+        self.addCleanup(mock.patch.stopall)
+
+        if bool_from_env('OS_STDOUT_CAPTURE'):
+            stdout = self.useFixture(fixtures.StringStream('stdout')).stream
+            self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
+        if bool_from_env('OS_STDERR_CAPTURE'):
+            stderr = self.useFixture(fixtures.StringStream('stderr')).stream
+            self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
+
+        self.addOnException(self.check_for_systemexit)
+
+    def check_for_systemexit(self, exc_info):
+        if isinstance(exc_info[1], SystemExit):
+            self.fail("A SystemExit was raised during the test. %s"
+                      % traceback.format_exception(*exc_info))
+
+    @contextlib.contextmanager
+    def assert_max_execution_time(self, max_execution_time=5):
+        with eventlet.timeout.Timeout(max_execution_time, False):
+            yield
+            return
+        self.fail('Execution of this test timed out')
+
+    def assertOrderedEqual(self, expected, actual):
+        expect_val = self.sort_dict_lists(expected)
+        actual_val = self.sort_dict_lists(actual)
+        self.assertEqual(expect_val, actual_val)
+
+    def sort_dict_lists(self, dic):
+        for key, value in dic.iteritems():
+            if isinstance(value, list):
+                dic[key] = sorted(value)
+            elif isinstance(value, dict):
+                dic[key] = self.sort_dict_lists(value)
+        return dic
+
+    def assertDictSupersetOf(self, expected_subset, actual_superset):
+        """Checks that actual dict contains the expected dict.
+
+        After checking that the arguments are of the right type, this checks
+        that each item in expected_subset is in, and matches, what is in
+        actual_superset. Separate tests are done, so that detailed info can
+        be reported upon failure.
+        """
+        if not isinstance(expected_subset, dict):
+            self.fail("expected_subset (%s) is not an instance of dict" %
+                      type(expected_subset))
+        if not isinstance(actual_superset, dict):
+            self.fail("actual_superset (%s) is not an instance of dict" %
+                      type(actual_superset))
+        for k, v in expected_subset.items():
+            self.assertIn(k, actual_superset)
+            self.assertEqual(v, actual_superset[k],
+                             "Key %(key)s expected: %(exp)r, actual %(act)r" %
+                             {'key': k, 'exp': v, 'act': actual_superset[k]})
 
 
 class ProcessMonitorFixture(fixtures.Fixture):
@@ -85,7 +207,7 @@ class ProcessMonitorFixture(fixtures.Fixture):
         self.instances.append(instance)
 
 
-class BaseTestCase(sub_base.SubBaseTestCase):
+class BaseTestCase(DietTestCase):
 
     @staticmethod
     def config_parse(conf=None, args=None):
@@ -209,3 +331,57 @@ class BaseTestCase(sub_base.SubBaseTestCase):
         group = kw.pop('group', None)
         for k, v in kw.iteritems():
             CONF.set_override(k, v, group)
+
+    def setup_coreplugin(self, core_plugin=None):
+        self.useFixture(PluginFixture(core_plugin))
+
+    def setup_notification_driver(self, notification_driver=None):
+        self.addCleanup(fake_notifier.reset)
+        if notification_driver is None:
+            notification_driver = [fake_notifier.__name__]
+        cfg.CONF.set_override("notification_driver", notification_driver)
+
+
+class PluginFixture(fixtures.Fixture):
+
+    def __init__(self, core_plugin=None):
+        self.core_plugin = core_plugin
+
+    def setUp(self):
+        super(PluginFixture, self).setUp()
+        self.dhcp_periodic_p = mock.patch(
+            'neutron.db.agentschedulers_db.DhcpAgentSchedulerDbMixin.'
+            'start_periodic_dhcp_agent_status_check')
+        self.patched_dhcp_periodic = self.dhcp_periodic_p.start()
+        # Plugin cleanup should be triggered last so that
+        # test-specific cleanup has a chance to release references.
+        self.addCleanup(self.cleanup_core_plugin)
+        if self.core_plugin is not None:
+            cfg.CONF.set_override('core_plugin', self.core_plugin)
+
+    def cleanup_core_plugin(self):
+        """Ensure that the core plugin is deallocated."""
+        nm = manager.NeutronManager
+        if not nm.has_instance():
+            return
+
+        # TODO(marun) Fix plugins that do not properly initialize notifiers
+        agentschedulers_db.AgentSchedulerDbMixin.agent_notifiers = {}
+
+        # Perform a check for deallocation only if explicitly
+        # configured to do so since calling gc.collect() after every
+        # test increases test suite execution time by ~50%.
+        check_plugin_deallocation = (
+            bool_from_env('OS_CHECK_PLUGIN_DEALLOCATION'))
+        if check_plugin_deallocation:
+            plugin = weakref.ref(nm._instance.plugin)
+
+        nm.clear_instance()
+
+        if check_plugin_deallocation:
+            gc.collect()
+
+            # TODO(marun) Ensure that mocks are deallocated?
+            if plugin() and not isinstance(plugin(), mock.Base):
+                raise AssertionError(
+                    'The plugin for this test was not deallocated.')

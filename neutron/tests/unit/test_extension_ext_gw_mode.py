@@ -30,7 +30,6 @@ from neutron.openstack.common import uuidutils
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_l3_plugin
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 _uuid = uuidutils.generate_uuid
 FAKE_GW_PORT_ID = _uuid()
@@ -75,8 +74,7 @@ class TestDbSepPlugin(test_l3_plugin.TestL3NatServicePlugin,
     supported_extension_aliases = ["router", "ext-gw-mode"]
 
 
-class TestL3GwModeMixin(testlib_api.SqlTestCase,
-                        testlib_plugin.PluginSetupHelper):
+class TestL3GwModeMixin(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestL3GwModeMixin, self).setUp()

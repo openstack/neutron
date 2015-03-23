@@ -19,7 +19,6 @@ from neutron.openstack.common import uuidutils
 from neutron.services.metering.agents import metering_agent
 from neutron.tests import base
 from neutron.tests import fake_notifier
-from neutron.tests.unit import testlib_plugin
 
 
 _uuid = uuidutils.generate_uuid
@@ -36,8 +35,7 @@ ROUTERS = [{'status': 'ACTIVE',
             'id': _uuid()}]
 
 
-class TestMeteringOperations(base.BaseTestCase,
-                             testlib_plugin.NotificationSetupHelper):
+class TestMeteringOperations(base.BaseTestCase):
 
     def setUp(self):
         super(TestMeteringOperations, self).setUp()

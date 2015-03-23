@@ -25,10 +25,9 @@ from neutron.common import exceptions as q_exc
 from neutron import context
 from neutron import manager
 from neutron.tests.api import base_v2
-from neutron.tests import sub_base
+from neutron.tests import base
 from neutron.tests.unit.ml2 import test_ml2_plugin
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 
 # Each plugin must add a class to plugin_configurations that can configure the
@@ -70,20 +69,20 @@ class PluginClient(base_v2.BaseNeutronClient):
         kwargs.setdefault('shared', False)
         data = dict(network=kwargs)
         result = self.plugin.create_network(self.ctx, data)
-        return sub_base.AttributeDict(result)
+        return base.AttributeDict(result)
 
     def update_network(self, id_, **kwargs):
         data = dict(network=kwargs)
         result = self.plugin.update_network(self.ctx, id_, data)
-        return sub_base.AttributeDict(result)
+        return base.AttributeDict(result)
 
     def get_network(self, *args, **kwargs):
         result = self.plugin.get_network(self.ctx, *args, **kwargs)
-        return sub_base.AttributeDict(result)
+        return base.AttributeDict(result)
 
     def get_networks(self, *args, **kwargs):
         result = self.plugin.get_networks(self.ctx, *args, **kwargs)
-        return [sub_base.AttributeDict(x) for x in result]
+        return [base.AttributeDict(x) for x in result]
 
     def delete_network(self, id_):
         self.plugin.delete_network(self.ctx, id_)
@@ -100,8 +99,7 @@ def get_scenarios():
 
 
 class TestPluginApi(base_v2.BaseTestApi,
-                    testlib_api.SqlTestCase,
-                    testlib_plugin.PluginSetupHelper):
+                    testlib_api.SqlTestCase):
 
     scenarios = get_scenarios()
 
@@ -112,5 +110,5 @@ class TestPluginApi(base_v2.BaseTestApi,
         # setUp, since that setup will be called by SqlTestCase.setUp.
         super(TestPluginApi, self).setUp(setup_parent=False)
         testlib_api.SqlTestCase.setUp(self)
-        self.setup_coreplugin(self.plugin_conf.plugin_name)
+        self.useFixture(base.PluginFixture(self.plugin_conf.plugin_name))
         self.plugin_conf.setUp(self)

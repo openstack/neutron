@@ -52,7 +52,7 @@ import abc
 import six
 import testtools
 
-from neutron.tests import sub_base
+from neutron.tests import base
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -101,7 +101,7 @@ class BaseNeutronClient(object):
         pass
 
 
-class BaseTestApi(sub_base.SubBaseTestCase):
+class BaseTestApi(base.BaseTestCase):
 
     scenarios = ()
 
@@ -113,7 +113,7 @@ class BaseTestApi(sub_base.SubBaseTestCase):
         self.client.setUp(self)
 
     def test_network_lifecycle(self):
-        net = self.client.create_network(name=sub_base.get_rand_name())
+        net = self.client.create_network(name=base.get_rand_name())
         listed_networks = dict((x.id, x.name)
                                for x in self.client.get_networks())
         self.assertIn(net.id, listed_networks)

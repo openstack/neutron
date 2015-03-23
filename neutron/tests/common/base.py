@@ -12,7 +12,7 @@
 #
 
 from neutron.common import constants as n_const
-from neutron.tests import sub_base
+from neutron.tests import base
 
 
 def create_resource(prefix, creation_func, *args, **kwargs):
@@ -25,7 +25,7 @@ def create_resource(prefix, creation_func, *args, **kwargs):
     :param *args *kwargs: These will be passed to the create function.
     """
     while True:
-        name = sub_base.get_rand_name(
+        name = base.get_rand_name(
             max_length=n_const.DEVICE_NAME_MAX_LEN,
             prefix=prefix)
         try:

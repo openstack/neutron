@@ -31,7 +31,6 @@ from neutron.db import models_v2
 from neutron.extensions import dhcpagentscheduler
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 # Required to generate tests from scenarios. Not compatible with nose.
 load_tests = testscenarios.load_tests_apply_scenarios
@@ -271,8 +270,7 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             self.assertIn('foo4', res_ids)
 
 
-class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase,
-                                       testlib_plugin.PluginSetupHelper):
+class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     """Unit test scenarios for WeightScheduler.schedule."""
 
     hostc = {

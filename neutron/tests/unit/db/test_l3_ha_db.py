@@ -28,7 +28,6 @@ from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit import testlib_plugin
 
 _uuid = uuidutils.generate_uuid
 
@@ -40,8 +39,7 @@ class FakeL3PluginWithAgents(common_db_mixin.CommonDbMixin,
     pass
 
 
-class L3HATestFramework(testlib_api.SqlTestCase,
-                        testlib_plugin.PluginSetupHelper):
+class L3HATestFramework(testlib_api.SqlTestCase):
     def setUp(self):
         super(L3HATestFramework, self).setUp()
 
