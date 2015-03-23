@@ -26,7 +26,6 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
@@ -47,6 +46,7 @@ from neutron.plugins.cisco.db import network_db_v2
 from neutron.plugins.cisco.extensions import n1kv
 from neutron.plugins.cisco.n1kv import n1kv_client
 from neutron.plugins.common import constants as svc_constants
+from neutron.plugins.common import utils
 
 
 LOG = logging.getLogger(__name__)

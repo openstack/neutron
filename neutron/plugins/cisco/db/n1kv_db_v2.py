@@ -20,7 +20,6 @@ from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 import neutron.db.api as db
 from neutron.db import models_v2
@@ -29,6 +28,8 @@ from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config as c_conf
 from neutron.plugins.cisco.db import n1kv_models_v2
+from neutron.plugins.common import constants as p_const
+
 
 LOG = logging.getLogger(__name__)
 
@@ -1381,20 +1382,20 @@ class NetworkProfile_db_mixin(object):
         seg_min, seg_max = self._get_segment_range(net_p['segment_range'])
         if segment_type == c_const.NETWORK_TYPE_VLAN:
             if not ((seg_min <= seg_max) and
-                    ((seg_min in range(constants.MIN_VLAN_TAG,
+                    ((seg_min in range(p_const.MIN_VLAN_TAG,
                                        c_const.N1KV_VLAN_RESERVED_MIN) and
-                      seg_max in range(constants.MIN_VLAN_TAG,
+                      seg_max in range(p_const.MIN_VLAN_TAG,
                                        c_const.N1KV_VLAN_RESERVED_MIN)) or
                      (seg_min in range(c_const.N1KV_VLAN_RESERVED_MAX + 1,
-                                       constants.MAX_VLAN_TAG) and
+                                       p_const.MAX_VLAN_TAG) and
                       seg_max in range(c_const.N1KV_VLAN_RESERVED_MAX + 1,
-                                       constants.MAX_VLAN_TAG)))):
+                                       p_const.MAX_VLAN_TAG)))):
                 msg = (_("Segment range is invalid, select from "
                          "%(min)s-%(nmin)s, %(nmax)s-%(max)s") %
-                       {"min": constants.MIN_VLAN_TAG,
+                       {"min": p_const.MIN_VLAN_TAG,
                         "nmin": c_const.N1KV_VLAN_RESERVED_MIN - 1,
                         "nmax": c_const.N1KV_VLAN_RESERVED_MAX + 1,
-                        "max": constants.MAX_VLAN_TAG - 1})
+                        "max": p_const.MAX_VLAN_TAG - 1})
                 LOG.error(msg)
                 raise n_exc.InvalidInput(error_message=msg)
             profiles = _get_network_profiles(

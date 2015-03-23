@@ -373,7 +373,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                          constants.TAP_DEVICE_PREFIX)
 
     def test_get_vxlan_device_name(self):
-        vn_id = constants.MAX_VXLAN_VNI
+        vn_id = p_const.MAX_VXLAN_VNI
         self.assertEqual(self.lbm.get_vxlan_device_name(vn_id),
                          "vxlan-" + str(vn_id))
         self.assertIsNone(self.lbm.get_vxlan_device_name(vn_id + 1))
