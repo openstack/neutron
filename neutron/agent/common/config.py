@@ -53,7 +53,9 @@ INTERFACE_DRIVER_OPTS = [
 
 USE_NAMESPACES_OPTS = [
     cfg.BoolOpt('use_namespaces', default=True,
-                help=_("Allow overlapping IP.")),
+                help=_("Allow overlapping IP. This option is deprecated and "
+                       "will be removed in a future release."),
+                deprecated_for_removal=True),
 ]
 
 IPTABLES_OPTS = [
