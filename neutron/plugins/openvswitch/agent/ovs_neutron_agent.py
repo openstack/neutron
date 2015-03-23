@@ -180,6 +180,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             'agent_type': q_const.AGENT_TYPE_OVS,
             'start_flag': True}
 
+        if tunnel_types:
+            self.enable_tunneling = True
+        else:
+            self.enable_tunneling = False
+
         # Validate agent configurations
         self._check_agent_configurations()
 
@@ -200,11 +205,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.polling_interval = polling_interval
         self.minimize_polling = minimize_polling
         self.ovsdb_monitor_respawn_interval = ovsdb_monitor_respawn_interval
-
-        if tunnel_types:
-            self.enable_tunneling = True
-        else:
-            self.enable_tunneling = False
         self.local_ip = local_ip
         self.tunnel_count = 0
         self.vxlan_udp_port = cfg.CONF.AGENT.vxlan_udp_port
@@ -1556,9 +1556,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             rpc_api.client.timeout = timeout
 
     def _check_agent_configurations(self):
-        if self.enable_distributed_routing and not self.l2_pop:
-            raise ValueError(_("DVR cannot be enabled without "
-                               "L2 population."))
+        if (self.enable_distributed_routing and self.enable_tunneling
+            and not self.l2_pop):
+            raise ValueError(_("DVR deployments for VXLAN/GRE underlays "
+                               "require L2-pop to be enabled, in both the "
+                               "Agent and Server side."))
 
 
 def _ofport_set_to_str(ofport_set):
