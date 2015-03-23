@@ -17,7 +17,6 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 
-from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.i18n import _LE, _LI, _LW
@@ -107,7 +106,7 @@ class OVSPort(object):
         return self.ofport
 
 
-class OVSDVRNeutronAgent(dvr_rpc.DVRAgentRpcApiMixin):
+class OVSDVRNeutronAgent(object):
     '''
     Implements OVS-based DVR(Distributed Virtual Router), for overlay networks.
     '''
