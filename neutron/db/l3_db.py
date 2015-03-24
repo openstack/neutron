@@ -722,10 +722,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             models_v2.IPAllocation.subnet_id == internal_subnet_id
         )
 
-        router_port = routerport_qry.first()
-
-        if router_port and router_port.router.gw_port:
-            return router_port.router.id
+        for router_port in routerport_qry:
+            router_id = router_port.router.id
+            router_gw_qry = context.session.query(models_v2.Port)
+            has_gw_port = router_gw_qry.filter_by(
+                network_id=external_network_id,
+                device_id=router_id,
+                device_owner=DEVICE_OWNER_ROUTER_GW).count()
+            if has_gw_port:
+                return router_id
 
         raise l3.ExternalGatewayForFloatingIPNotFound(
             subnet_id=internal_subnet_id,
