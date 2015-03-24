@@ -67,7 +67,7 @@ PROCESS_MONITOR_OPTS = [
     cfg.StrOpt('check_child_processes_action', default='respawn',
                choices=['respawn', 'exit'],
                help=_('Action to be executed when a child process dies')),
-    cfg.IntOpt('check_child_processes_interval', default=0,
+    cfg.IntOpt('check_child_processes_interval', default=60,
                help=_('Interval between checks of child process liveness '
                       '(seconds), use 0 to disable')),
 ]
