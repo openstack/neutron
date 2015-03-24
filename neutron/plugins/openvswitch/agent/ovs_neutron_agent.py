@@ -26,9 +26,9 @@ import oslo_messaging
 from six import moves
 
 from neutron.agent.common import config
+from neutron.agent.common import ovs_lib
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import polling
 from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc

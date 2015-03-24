@@ -34,7 +34,7 @@ OPTS = [
 ]
 cfg.CONF.register_opts(OPTS, 'OVS')
 # TODO(twilson) DEFAULT.ovs_vsctl_timeout should be OVS.vsctl_timeout
-cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.linux.ovs_lib')
+cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
 
 LOG = logging.getLogger(__name__)
 

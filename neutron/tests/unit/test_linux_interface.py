@@ -16,9 +16,9 @@
 import mock
 
 from neutron.agent.common import config
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.extensions import flavor
@@ -273,7 +273,7 @@ class TestOVSInterfaceDriver(TestBase):
     def test_unplug(self, bridge=None):
         if not bridge:
             bridge = 'br-int'
-        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br:
+        with mock.patch('neutron.agent.common.ovs_lib.OVSBridge') as ovs_br:
             ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('tap0')
             ovs_br.assert_has_calls([mock.call(bridge),
@@ -347,7 +347,7 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
     def test_unplug(self, bridge=None):
         if not bridge:
             bridge = 'br-int'
-        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br:
+        with mock.patch('neutron.agent.common.ovs_lib.OVSBridge') as ovs_br:
             ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('ns-0', bridge=bridge)
             ovs_br.assert_has_calls([mock.call(bridge),

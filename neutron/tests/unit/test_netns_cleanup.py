@@ -96,9 +96,10 @@ class TestNetnsCleanup(base.BaseTestCase):
         device.name = 'tap1'
         device.link.delete.side_effect = RuntimeError
 
-        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br_cls:
+        with mock.patch(
+                'neutron.agent.common.ovs_lib.OVSBridge') as ovs_br_cls:
             br_patch = mock.patch(
-                'neutron.agent.linux.ovs_lib.BaseOVS.get_bridge_for_iface')
+                'neutron.agent.common.ovs_lib.BaseOVS.get_bridge_for_iface')
             with br_patch as mock_get_bridge_for_iface:
                 mock_get_bridge_for_iface.return_value = 'br-int'
                 ovs_bridge = mock.Mock()
@@ -119,9 +120,10 @@ class TestNetnsCleanup(base.BaseTestCase):
         device.name = 'tap1'
         device.link.delete.side_effect = RuntimeError
 
-        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs_br_cls:
+        with mock.patch(
+                'neutron.agent.common.ovs_lib.OVSBridge') as ovs_br_cls:
             br_patch = mock.patch(
-                'neutron.agent.linux.ovs_lib.BaseOVS.get_bridge_for_iface')
+                'neutron.agent.common.ovs_lib.BaseOVS.get_bridge_for_iface')
             with br_patch as mock_get_bridge_for_iface:
                 with mock.patch.object(util.LOG, 'debug') as debug:
                     mock_get_bridge_for_iface.return_value = None

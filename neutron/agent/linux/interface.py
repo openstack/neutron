@@ -21,8 +21,8 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 import six
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions

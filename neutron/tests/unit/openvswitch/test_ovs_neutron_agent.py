@@ -22,9 +22,9 @@ from oslo_config import cfg
 from oslo_log import log
 import testtools
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
@@ -115,16 +115,16 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
                        'OVSNeutronAgent.setup_ancillary_bridges',
                        return_value=[]),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'create'),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'set_secure_mode'),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'get_local_port_mac',
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
                        return_value='00:00:00:00:00:01'),
-            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.get_bridges'),
+            mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),
             mock.patch('neutron.openstack.common.loopingcall.'
                        'FixedIntervalLoopingCall',
                        new=MockFixedIntervalLoopingCall)):
@@ -147,9 +147,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 ovs_neutron_agent.LocalVLANMapping(
                     old_local_vlan, None, None, None))
         with contextlib.nested(
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'set_db_attribute', return_value=True),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'db_get_val', return_value=old_local_vlan),
             mock.patch.object(self.agent.int_br, 'delete_flows')
         ) as (set_ovs_db_func, get_ovs_db_func, delete_flows_func):
@@ -191,9 +191,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         port = mock.Mock()
         port.ofport = 1
         with contextlib.nested(
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'set_db_attribute', return_value=True),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'db_get_val', return_value=cur_tag),
             mock.patch.object(self.agent.int_br, 'add_flow')
         ) as (set_ovs_db_func, get_ovs_db_func, add_flow_func):
@@ -1121,14 +1121,14 @@ class AncillaryBridgesTest(base.BaseTestCase):
                        'OVSNeutronAgent.setup_integration_br'),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
                        return_value='00:00:00:00:00:01'),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'get_local_port_mac',
                        return_value='00:00:00:00:00:01'),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                        'set_secure_mode'),
-            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.get_bridges',
+            mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
                        return_value=bridges),
-            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.'
+            mock.patch('neutron.agent.common.ovs_lib.BaseOVS.'
                        'get_bridge_external_bridge_id',
                        side_effect=pullup_side_effect)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**self.kwargs)

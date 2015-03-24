@@ -19,7 +19,7 @@ import mock
 from oslo_config import cfg
 import testtools
 
-from neutron.agent.linux import ovs_lib
+from neutron.agent.common import ovs_lib
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import topics
 from neutron.extensions import securitygroup as ext_sg

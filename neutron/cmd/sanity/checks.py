@@ -19,9 +19,9 @@ import netaddr
 from oslo_log import log as logging
 import six
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ip_link_support
-from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils
 from neutron.i18n import _LE

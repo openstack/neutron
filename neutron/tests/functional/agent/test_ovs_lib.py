@@ -15,7 +15,7 @@
 
 import collections
 
-from neutron.agent.linux import ovs_lib
+from neutron.agent.common import ovs_lib
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 

@@ -24,7 +24,7 @@ eventlet.monkey_patch()
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.agent.linux import ovs_lib
+from neutron.agent.common import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config

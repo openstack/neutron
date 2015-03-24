@@ -15,9 +15,9 @@
 import netaddr
 import testscenarios
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.common import constants as n_const
 from neutron.tests.common import base
 from neutron.tests.common import net_helpers

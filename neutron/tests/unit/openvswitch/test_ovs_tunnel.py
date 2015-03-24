@@ -21,8 +21,8 @@ import mock
 from oslo_config import cfg
 from oslo_log import log
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
 from neutron.plugins.openvswitch.common import constants

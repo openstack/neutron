@@ -26,6 +26,7 @@ import webob.dec
 import webob.exc
 
 from neutron.agent.common import config as agent_config
+from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
@@ -33,7 +34,6 @@ from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants

@@ -17,8 +17,8 @@ import contextlib
 import itertools
 import mock
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.cmd import ovs_cleanup as util
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
@@ -37,9 +37,9 @@ class TestOVSCleanup(base.BaseTestCase):
             mock.patch('neutron.common.config.setup_logging'),
             mock.patch('neutron.cmd.ovs_cleanup.setup_conf',
                        return_value=conf),
-            mock.patch('neutron.agent.linux.ovs_lib.BaseOVS.get_bridges',
+            mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
                        return_value=bridges),
-            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge'),
+            mock.patch('neutron.agent.common.ovs_lib.OVSBridge'),
             mock.patch.object(util, 'collect_neutron_ports',
                               return_value=ports),
             mock.patch.object(util, 'delete_neutron_ports')
@@ -60,7 +60,7 @@ class TestOVSCleanup(base.BaseTestCase):
                                 '99:00:aa:bb:cc:dd', 'br')
         ports = [[port1, port2], [port3]]
         portnames = [p.port_name for p in itertools.chain(*ports)]
-        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge') as ovs:
+        with mock.patch('neutron.agent.common.ovs_lib.OVSBridge') as ovs:
             ovs.return_value.get_vif_ports.side_effect = ports
             bridges = ['br-int', 'br-ex']
             ret = util.collect_neutron_ports(bridges)
