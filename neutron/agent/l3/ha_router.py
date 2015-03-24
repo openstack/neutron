@@ -83,10 +83,7 @@ class HaRouter(router.RouterInfo):
         self._set_subnet_info(ha_port)
         self.ha_port = ha_port
         self._init_keepalived_manager(process_monitor)
-        self.ha_network_added(ha_port['network_id'],
-                              ha_port['id'],
-                              ha_port['ip_cidr'],
-                              ha_port['mac_address'])
+        self.ha_network_added()
         self.update_initial_state(state_change_callback)
         self.spawn_state_change_monitor(process_monitor)
 
@@ -105,7 +102,7 @@ class HaRouter(router.RouterInfo):
 
         config = self.keepalived_manager.config
 
-        interface_name = self.get_ha_device_name(self.ha_port['id'])
+        interface_name = self.get_ha_device_name()
         ha_port_cidr = self.ha_port['subnet']['cidr']
         instance = keepalived.KeepalivedInstance(
             'BACKUP',
@@ -139,22 +136,26 @@ class HaRouter(router.RouterInfo):
     def _get_primary_vip(self):
         return self._get_keepalived_instance().get_primary_vip()
 
-    def get_ha_device_name(self, port_id):
-        return (HA_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+    def get_ha_device_name(self):
+        return (HA_DEV_PREFIX + self.ha_port['id'])[:self.driver.DEV_NAME_LEN]
 
-    def ha_network_added(self, network_id, port_id, internal_cidr,
-                         mac_address):
-        interface_name = self.get_ha_device_name(port_id)
-        self.driver.plug(network_id, port_id, interface_name, mac_address,
+    def ha_network_added(self):
+        interface_name = self.get_ha_device_name()
+
+        self.driver.plug(self.ha_port['network_id'],
+                         self.ha_port['id'],
+                         interface_name,
+                         self.ha_port['mac_address'],
                          namespace=self.ns_name,
                          prefix=HA_DEV_PREFIX)
-        self.driver.init_l3(interface_name, [internal_cidr],
+        self.driver.init_l3(interface_name,
+                            [self.ha_port['ip_cidr']],
                             namespace=self.ns_name,
                             preserve_ips=[self._get_primary_vip()])
 
     def ha_network_removed(self):
-        interface_name = self.get_ha_device_name(self.ha_port['id'])
-        self.driver.unplug(interface_name, namespace=self.ns_name,
+        self.driver.unplug(self.get_ha_device_name(),
+                           namespace=self.ns_name,
                            prefix=HA_DEV_PREFIX)
         self.ha_port = None
 
@@ -279,7 +280,7 @@ class HaRouter(router.RouterInfo):
             default_cmd_callback=self._get_state_change_monitor_callback())
 
     def _get_state_change_monitor_callback(self):
-        ha_device = self.get_ha_device_name(self.ha_port['id'])
+        ha_device = self.get_ha_device_name()
         ha_cidr = self._get_primary_vip()
 
         def callback(pid_file):
@@ -312,7 +313,7 @@ class HaRouter(router.RouterInfo):
 
     def update_initial_state(self, callback):
         ha_device = ip_lib.IPDevice(
-            self.get_ha_device_name(self.ha_port['id']),
+            self.get_ha_device_name(),
             self.ns_name)
         addresses = ha_device.addr.list()
         cidrs = (address['cidr'] for address in addresses)
