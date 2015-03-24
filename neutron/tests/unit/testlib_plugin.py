@@ -55,6 +55,10 @@ class PluginSetupHelper(object):
                 self.fail('The plugin for this test was not deallocated.')
 
     def setup_coreplugin(self, core_plugin=None):
+        self.dhcp_periodic_p = mock.patch(
+            'neutron.db.agentschedulers_db.DhcpAgentSchedulerDbMixin.'
+            'start_periodic_dhcp_agent_status_check')
+        self.patched_dhcp_periodic = self.dhcp_periodic_p.start()
         # Plugin cleanup should be triggered last so that
         # test-specific cleanup has a chance to release references.
         self.addCleanup(self.cleanup_core_plugin)
