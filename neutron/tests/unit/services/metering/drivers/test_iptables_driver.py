@@ -360,3 +360,19 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                         wrap=False)]
 
         self.v4filter_inst.assert_has_calls(calls)
+
+    def test_get_traffic_counters_with_missing_chain(self):
+        for r in TEST_ROUTERS:
+            rm = iptables_driver.RouterWithMetering(self.metering.conf, r)
+            rm.metering_labels = {r['_metering_labels'][0]['id']: 'fake'}
+            self.metering.routers[r['id']] = rm
+
+        mocked_method = self.iptables_cls.return_value.get_traffic_counters
+        mocked_method.side_effect = [{'pkts': 1, 'bytes': 8},
+                                     RuntimeError('Failed to find the chain')]
+
+        counters = self.metering.get_traffic_counters(None, TEST_ROUTERS)
+        expected_label_id = TEST_ROUTERS[0]['_metering_labels'][0]['id']
+        self.assertIn(expected_label_id, counters)
+        self.assertEqual(1, counters[expected_label_id]['pkts'])
+        self.assertEqual(8, counters[expected_label_id]['bytes'])
