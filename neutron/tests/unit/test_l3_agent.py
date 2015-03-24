@@ -1882,7 +1882,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         get_conf_file_name = 'neutron.agent.linux.utils.get_conf_file_name'
         get_pid_file_name = ('neutron.agent.linux.external_process.'
                              'ProcessManager.get_pid_file_name')
-        utils_execute = 'neutron.agent.linux.utils.execute'
+        utils_execute = 'neutron.agent.common.utils.execute'
 
         mock.patch(get_conf_file_name).start().return_value = conffile
         mock.patch(get_pid_file_name).start().return_value = pidfile

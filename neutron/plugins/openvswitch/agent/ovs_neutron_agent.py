@@ -27,10 +27,10 @@ from six import moves
 
 from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
+from neutron.agent.common import polling
+from neutron.agent.common import utils
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import polling
-from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dvr_rpc
@@ -1410,7 +1410,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def rpc_loop(self, polling_manager=None):
         if not polling_manager:
-            polling_manager = polling.AlwaysPoll()
+            polling_manager = polling.get_polling_manager(
+                minimize_polling=False)
 
         sync = True
         ports = set()

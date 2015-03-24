@@ -23,8 +23,8 @@ from oslo_utils import excutils
 import retrying
 import six
 
+from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI, _LW

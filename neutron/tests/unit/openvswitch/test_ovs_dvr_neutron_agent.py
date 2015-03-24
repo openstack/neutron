@@ -18,7 +18,7 @@ import mock
 from oslo_config import cfg
 import oslo_messaging
 
-from neutron.agent.linux import utils
+from neutron.agent.common import utils
 from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent

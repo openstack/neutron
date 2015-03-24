@@ -20,7 +20,7 @@ from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
 
-from neutron.agent.linux import utils
+from neutron.agent.common import utils
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.i18n import _LE
 
