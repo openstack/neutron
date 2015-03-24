@@ -26,6 +26,7 @@ from neutron.i18n import _LE, _LW
 
 LOG = logging.getLogger(__name__)
 INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
+EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 
 
 class RouterInfo(object):
@@ -88,6 +89,12 @@ class RouterInfo(object):
     def get_internal_device_name(self, port_id):
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
+    def get_external_device_name(self, port_id):
+        return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+
+    def get_external_device_interface_name(self, ex_gw_port):
+        return self.get_external_device_name(ex_gw_port['id'])
+
     def _set_subnet_info(self, port):
         ips = port['fixed_ips']
         if not ips:
@@ -101,8 +108,9 @@ class RouterInfo(object):
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets
         if self._snat_action:
-            snat_callback(self, self._router.get('gw_port'),
-                          *args, action=self._snat_action)
+            snat_callback(self._router.get('gw_port'),
+                          *args,
+                          action=self._snat_action)
         self._snat_action = None
 
     def _update_routing_table(self, operation, route):
@@ -338,8 +346,7 @@ class RouterInfo(object):
 
         existing_devices = self._get_existing_devices()
         current_internal_devs = set(n for n in existing_devices
-                                    if n.startswith(
-                                        INTERNAL_DEV_PREFIX))
+                                    if n.startswith(INTERNAL_DEV_PREFIX))
         current_port_devs = set(self.get_internal_device_name(port_id)
                                 for port_id in current_port_ids)
         stale_devs = current_internal_devs - current_port_devs
@@ -349,3 +356,163 @@ class RouterInfo(object):
             self.driver.unplug(stale_dev,
                                namespace=self.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
+
+    def _list_floating_ip_cidrs(self):
+        # Compute a list of addresses this router is supposed to have.
+        # This avoids unnecessarily removing those addresses and
+        # causing a momentarily network outage.
+        floating_ips = self.get_floating_ips()
+        return [common_utils.ip_to_cidr(ip['floating_ip_address'])
+                for ip in floating_ips]
+
+    def _plug_external_gateway(self, ex_gw_port, interface_name, ns_name):
+        if not ip_lib.device_exists(interface_name, namespace=ns_name):
+            self.driver.plug(ex_gw_port['network_id'],
+                             ex_gw_port['id'],
+                             interface_name,
+                             ex_gw_port['mac_address'],
+                             bridge=self.agent_conf.external_network_bridge,
+                             namespace=ns_name,
+                             prefix=EXTERNAL_DEV_PREFIX)
+
+    def _external_gateway_added(self, ex_gw_port, interface_name,
+                                ns_name, preserve_ips):
+        self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
+
+        self.driver.init_l3(interface_name,
+                            [ex_gw_port['ip_cidr']],
+                            namespace=ns_name,
+                            gateway=ex_gw_port['subnet'].get('gateway_ip'),
+                            extra_subnets=ex_gw_port.get('extra_subnets', []),
+                            preserve_ips=preserve_ips)
+        ip_address = ex_gw_port['ip_cidr'].split('/')[0]
+        ip_lib.send_gratuitous_arp(ns_name,
+                                   interface_name,
+                                   ip_address,
+                                   self.agent_conf.send_arp_for_ha)
+
+    def external_gateway_added(self, ex_gw_port, interface_name):
+        preserve_ips = self._list_floating_ip_cidrs()
+        self._external_gateway_added(
+            ex_gw_port, interface_name, self.ns_name, preserve_ips)
+
+    def external_gateway_updated(self, ex_gw_port, interface_name):
+        preserve_ips = self._list_floating_ip_cidrs()
+        self._external_gateway_added(
+            ex_gw_port, interface_name, self.ns_name, preserve_ips)
+
+    def external_gateway_removed(self, ex_gw_port, interface_name):
+        self.driver.unplug(interface_name,
+                           bridge=self.agent_conf.external_network_bridge,
+                           namespace=self.ns_name,
+                           prefix=EXTERNAL_DEV_PREFIX)
+
+    def _process_external_gateway(self, ex_gw_port):
+        # TODO(Carl) Refactor to clarify roles of ex_gw_port vs self.ex_gw_port
+        ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
+                         self.ex_gw_port and self.ex_gw_port['id'])
+
+        interface_name = None
+        if ex_gw_port_id:
+            interface_name = self.get_external_device_name(ex_gw_port_id)
+        if ex_gw_port:
+            def _gateway_ports_equal(port1, port2):
+                def _get_filtered_dict(d, ignore):
+                    return dict((k, v) for k, v in d.iteritems()
+                                if k not in ignore)
+
+                keys_to_ignore = set(['binding:host_id'])
+                port1_filtered = _get_filtered_dict(port1, keys_to_ignore)
+                port2_filtered = _get_filtered_dict(port2, keys_to_ignore)
+                return port1_filtered == port2_filtered
+
+            self._set_subnet_info(ex_gw_port)
+            if not self.ex_gw_port:
+                self.external_gateway_added(ex_gw_port, interface_name)
+            elif not _gateway_ports_equal(ex_gw_port, self.ex_gw_port):
+                self.external_gateway_updated(ex_gw_port, interface_name)
+        elif not ex_gw_port and self.ex_gw_port:
+            self.external_gateway_removed(self.ex_gw_port, interface_name)
+
+        existing_devices = self._get_existing_devices()
+        stale_devs = [dev for dev in existing_devices
+                      if dev.startswith(EXTERNAL_DEV_PREFIX)
+                      and dev != interface_name]
+        for stale_dev in stale_devs:
+            LOG.debug('Deleting stale external router device: %s', stale_dev)
+            self.driver.unplug(stale_dev,
+                               bridge=self.agent_conf.external_network_bridge,
+                               namespace=self.ns_name,
+                               prefix=EXTERNAL_DEV_PREFIX)
+
+        # Process SNAT rules for external gateway
+        self.perform_snat_action(self._handle_router_snat_rules,
+                                 interface_name)
+
+    def external_gateway_nat_rules(self, ex_gw_ip, interface_name):
+        rules = [('POSTROUTING', '! -i %(interface_name)s '
+                  '! -o %(interface_name)s -m conntrack ! '
+                  '--ctstate DNAT -j ACCEPT' %
+                  {'interface_name': interface_name}),
+                 ('snat', '-o %s -j SNAT --to-source %s' %
+                  (interface_name, ex_gw_ip))]
+        return rules
+
+    def _empty_snat_chains(self, iptables_manager):
+        iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
+        iptables_manager.ipv4['nat'].empty_chain('snat')
+
+    def _add_snat_rules(self, ex_gw_port, iptables_manager,
+                        interface_name, action):
+        if action == 'add_rules' and ex_gw_port:
+            # ex_gw_port should not be None in this case
+            # NAT rules are added only if ex_gw_port has an IPv4 address
+            for ip_addr in ex_gw_port['fixed_ips']:
+                ex_gw_ip = ip_addr['ip_address']
+                if netaddr.IPAddress(ex_gw_ip).version == 4:
+                    rules = self.external_gateway_nat_rules(ex_gw_ip,
+                                                            interface_name)
+                    for rule in rules:
+                        iptables_manager.ipv4['nat'].add_rule(*rule)
+                    break
+
+    def _handle_router_snat_rules(self, ex_gw_port,
+                                  interface_name, action):
+        self._empty_snat_chains(self.iptables_manager)
+
+        self.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
+
+        self._add_snat_rules(ex_gw_port,
+                             self.iptables_manager,
+                             interface_name,
+                             action)
+
+    def process_external(self, agent):
+        existing_floating_ips = self.floating_ips
+        try:
+            with self.iptables_manager.defer_apply():
+                ex_gw_port = self.get_ex_gw_port()
+                self._process_external_gateway(ex_gw_port)
+                # TODO(Carl) Return after setting existing_floating_ips and
+                # still call update_fip_statuses?
+                if not ex_gw_port:
+                    return
+
+                # Process SNAT/DNAT rules and addresses for floating IPs
+                if self.router['distributed']:
+                    self.create_dvr_fip_interfaces(ex_gw_port)
+                self.process_snat_dnat_for_fip()
+
+            # Once NAT rules for floating IPs are safely in place
+            # configure their addresses on the external gateway port
+            interface_name = self.get_external_device_interface_name(
+                ex_gw_port)
+            fip_statuses = self.configure_fip_addresses(interface_name)
+
+        except (n_exc.FloatingIpSetupException,
+                n_exc.IpTablesApplyException) as e:
+                # All floating IPs must be put in error state
+                LOG.exception(e)
+                fip_statuses = self.put_fips_in_error_state()
+
+        agent.update_fip_statuses(self, existing_floating_ips, fip_statuses)

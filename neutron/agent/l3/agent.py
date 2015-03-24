@@ -14,7 +14,6 @@
 #
 
 import eventlet
-import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -331,52 +330,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_removed, ri)
 
-    def _process_external_gateway(self, ri):
-        ex_gw_port = ri.get_ex_gw_port()
-        ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
-                         ri.ex_gw_port and ri.ex_gw_port['id'])
-
-        interface_name = None
-        if ex_gw_port_id:
-            interface_name = self.get_external_device_name(ex_gw_port_id)
-        if ex_gw_port:
-            def _gateway_ports_equal(port1, port2):
-                def _get_filtered_dict(d, ignore):
-                    return dict((k, v) for k, v in d.iteritems()
-                                if k not in ignore)
-
-                keys_to_ignore = set(['binding:host_id'])
-                port1_filtered = _get_filtered_dict(port1, keys_to_ignore)
-                port2_filtered = _get_filtered_dict(port2, keys_to_ignore)
-                return port1_filtered == port2_filtered
-
-            ri._set_subnet_info(ex_gw_port)
-            if not ri.ex_gw_port:
-                self.external_gateway_added(ri, ex_gw_port, interface_name)
-            elif not _gateway_ports_equal(ex_gw_port, ri.ex_gw_port):
-                self.external_gateway_updated(ri, ex_gw_port, interface_name)
-        elif not ex_gw_port and ri.ex_gw_port:
-            self.external_gateway_removed(ri, ri.ex_gw_port, interface_name)
-
-        existing_devices = ri._get_existing_devices()
-        stale_devs = [dev for dev in existing_devices
-                      if dev.startswith(EXTERNAL_DEV_PREFIX)
-                      and dev != interface_name]
-        for stale_dev in stale_devs:
-            LOG.debug('Deleting stale external router device: %s',
-                      stale_dev)
-            self.driver.unplug(stale_dev,
-                               bridge=self.conf.external_network_bridge,
-                               namespace=ri.ns_name,
-                               prefix=EXTERNAL_DEV_PREFIX)
-
-        # Process SNAT rules for external gateway
-        if (not ri.router['distributed'] or
-            ex_gw_port and ri.get_gw_port_host() == self.host):
-            ri.perform_snat_action(self._handle_router_snat_rules,
-                                   interface_name)
-
-    def _update_fip_statuses(self, ri, existing_floating_ips, fip_statuses):
+    def update_fip_statuses(self, ri, existing_floating_ips, fip_statuses):
         # Identify floating IPs which were disabled
         ri.floating_ips = set(fip_statuses.keys())
         for fip_id in existing_floating_ips - ri.floating_ips:
@@ -393,36 +347,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             else:
                 ri.disable_keepalived()
 
-    def _process_external(self, ri):
-        existing_floating_ips = ri.floating_ips
-        try:
-            with ri.iptables_manager.defer_apply():
-                self._process_external_gateway(ri)
-                ex_gw_port = ri.get_ex_gw_port()
-                # TODO(Carl) Return after setting existing_floating_ips and
-                # still call _update_fip_statuses?
-                if not ex_gw_port:
-                    return
-
-                # Process SNAT/DNAT rules and addresses for floating IPs
-                if ri.router['distributed']:
-                    self.create_dvr_fip_interfaces(ri, ex_gw_port)
-                ri.process_snat_dnat_for_fip()
-
-            # Once NAT rules for floating IPs are safely in place
-            # configure their addresses on the external gateway port
-            interface_name = self._get_external_device_interface_name(
-                ri, ex_gw_port)
-            fip_statuses = ri.configure_fip_addresses(interface_name)
-
-        except (n_exc.FloatingIpSetupException,
-                n_exc.IpTablesApplyException) as e:
-                # All floating IPs must be put in error state
-                LOG.exception(e)
-                fip_statuses = ri.put_fips_in_error_state()
-
-        self._update_fip_statuses(ri, existing_floating_ips, fip_statuses)
-
     @common_utils.exception_logger()
     def process_router(self, ri):
         # TODO(mrsmith) - we shouldn't need to check here
@@ -433,7 +357,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             ri.fip_ns = self.get_fip_ns(ex_gw_port['network_id'])
             ri.fip_ns.scan_fip_ports(ri)
         ri._process_internal_ports()
-        self._process_external(ri)
+        ri.process_external(self)
         # Process static routes for router
         ri.routes_updated()
 
@@ -444,203 +368,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.ex_gw_port = ex_gw_port
         ri.snat_ports = ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
         ri.enable_snat = ri.router.get('enable_snat')
-
-    def _handle_router_snat_rules(self, ri, ex_gw_port,
-                                  interface_name, action):
-        # Remove all the rules
-        # This is safe because if use_namespaces is set as False
-        # then the agent can only configure one router, otherwise
-        # each router's SNAT rules will be in their own namespace
-        if not ri.router['distributed']:
-            iptables_manager = ri.iptables_manager
-        elif ri.snat_iptables_manager:
-            iptables_manager = ri.snat_iptables_manager
-        else:
-            LOG.debug("DVR router: no snat rules to be handled")
-            return
-
-        iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
-        iptables_manager.ipv4['nat'].empty_chain('snat')
-
-        if not ri.router['distributed']:
-            # Add back the jump to float-snat
-            iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
-
-        # And add them back if the action is add_rules
-        if action == 'add_rules' and ex_gw_port:
-            # ex_gw_port should not be None in this case
-            # NAT rules are added only if ex_gw_port has an IPv4 address
-            for ip_addr in ex_gw_port['fixed_ips']:
-                ex_gw_ip = ip_addr['ip_address']
-                if netaddr.IPAddress(ex_gw_ip).version == 4:
-                    rules = self.external_gateway_nat_rules(ex_gw_ip,
-                                                            interface_name)
-                    for rule in rules:
-                        iptables_manager.ipv4['nat'].add_rule(*rule)
-                    break
-        iptables_manager.apply()
-
-    def create_dvr_fip_interfaces(self, ri, ex_gw_port):
-        floating_ips = ri.get_floating_ips()
-        fip_agent_port = ri.get_floating_agent_gw_interface(
-            ex_gw_port['network_id'])
-        LOG.debug("FloatingIP agent gateway port received from the plugin: "
-                  "%s", fip_agent_port)
-        if floating_ips:
-            is_first = ri.fip_ns.subscribe(ri.router_id)
-            if is_first and fip_agent_port:
-                if 'subnet' not in fip_agent_port:
-                    LOG.error(_LE('Missing subnet/agent_gateway_port'))
-                else:
-                    ri._set_subnet_info(fip_agent_port)
-                    ri.fip_ns.create_gateway_port(fip_agent_port)
-
-        if ri.fip_ns.agent_gateway_port and floating_ips:
-            if ri.dist_fip_count == 0:
-                ri.fip_ns.create_rtr_2_fip_link(ri)
-
-                # kicks the FW Agent to add rules for the IR namespace if
-                # configured
-                self.process_router_add(ri)
-
-    def _get_external_device_interface_name(self, ri, ex_gw_port):
-        if ri.router['distributed']:
-            fip_int = ri.fip_ns.get_int_device_name(ri.router_id)
-            if ip_lib.device_exists(fip_int, namespace=ri.fip_ns.get_name()):
-                return ri.fip_ns.get_rtr_ext_device_name(ri.router_id)
-        else:
-            return self.get_external_device_name(ex_gw_port['id'])
-
-    def get_external_device_name(self, port_id):
-        return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
-
-    def external_gateway_added(self, ri, ex_gw_port, interface_name):
-        if ri.router['distributed']:
-            ip_wrapr = ip_lib.IPWrapper(namespace=ri.ns_name)
-            ip_wrapr.netns.execute(['sysctl', '-w',
-                                   'net.ipv4.conf.all.send_redirects=0'])
-            snat_ports = ri.get_snat_interfaces()
-            for p in ri.internal_ports:
-                gateway = ri._map_internal_interfaces(p, snat_ports)
-                id_name = ri.get_internal_device_name(p['id'])
-                if gateway:
-                    ri._snat_redirect_add(
-                        gateway['fixed_ips'][0]['ip_address'], p, id_name)
-
-            if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT and
-                ri.get_gw_port_host() == self.host):
-                self._create_dvr_gateway(ri, ex_gw_port, interface_name,
-                                         snat_ports)
-            for port in snat_ports:
-                for ip in port['fixed_ips']:
-                    ri._update_arp_entry(ip['ip_address'],
-                                         port['mac_address'],
-                                         ip['subnet_id'],
-                                         'add')
-            return
-
-        # Compute a list of addresses this router is supposed to have.
-        # This avoids unnecessarily removing those addresses and
-        # causing a momentarily network outage.
-        floating_ips = ri.get_floating_ips()
-        preserve_ips = [common_utils.ip_to_cidr(ip['floating_ip_address'])
-                        for ip in floating_ips]
-
-        self._external_gateway_added(ri, ex_gw_port, interface_name,
-                                     ri.ns_name, preserve_ips)
-
-        if ri.is_ha:
-            ri._ha_external_gateway_added(ex_gw_port, interface_name)
-            ri._ha_disable_addressing_on_interface(interface_name)
-
-    def external_gateway_updated(self, ri, ex_gw_port, interface_name):
-        preserve_ips = []
-        if ri.router['distributed']:
-            if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT and
-                ri.get_gw_port_host() == self.host):
-                ns_name = ri.snat_namespace.name
-            else:
-                # no centralized SNAT gateway for this node/agent
-                LOG.debug("not hosting snat for router: %s", ri.router['id'])
-                return
-        else:
-            ns_name = ri.ns_name
-            floating_ips = ri.get_floating_ips()
-            preserve_ips = [common_utils.ip_to_cidr(ip['floating_ip_address'])
-                            for ip in floating_ips]
-
-        self._external_gateway_added(ri, ex_gw_port, interface_name,
-                                     ns_name, preserve_ips)
-
-        if ri.is_ha:
-            ri._ha_external_gateway_updated(ex_gw_port, interface_name)
-
-    def _external_gateway_added(self, ri, ex_gw_port, interface_name,
-                                ns_name, preserve_ips):
-        if not ip_lib.device_exists(interface_name, namespace=ns_name):
-            self.driver.plug(ex_gw_port['network_id'],
-                             ex_gw_port['id'], interface_name,
-                             ex_gw_port['mac_address'],
-                             bridge=self.conf.external_network_bridge,
-                             namespace=ns_name,
-                             prefix=EXTERNAL_DEV_PREFIX)
-
-        if not ri.is_ha:
-            self.driver.init_l3(
-                interface_name, [ex_gw_port['ip_cidr']], namespace=ns_name,
-                gateway=ex_gw_port['subnet'].get('gateway_ip'),
-                extra_subnets=ex_gw_port.get('extra_subnets', []),
-                preserve_ips=preserve_ips)
-            ip_address = ex_gw_port['ip_cidr'].split('/')[0]
-            ip_lib.send_gratuitous_arp(ns_name,
-                                       interface_name,
-                                       ip_address,
-                                       self.conf.send_arp_for_ha)
-
-    def external_gateway_removed(self, ri, ex_gw_port, interface_name):
-        if ri.router['distributed']:
-            # TODO(Carl) Should this be calling process_snat_dnat_for_fip?
-            ri.process_floating_ip_nat_rules()
-            if ri.fip_ns:
-                to_fip_interface_name = (
-                    self._get_external_device_interface_name(ri, ex_gw_port))
-                ri.process_floating_ip_addresses(to_fip_interface_name)
-            snat_ports = ri.get_snat_interfaces()
-            for p in ri.internal_ports:
-                gateway = self._map_internal_interfaces(ri, p, snat_ports)
-                internal_interface = ri.get_internal_device_name(p['id'])
-                ri._snat_redirect_remove(gateway['fixed_ips'][0]['ip_address'],
-                                         p,
-                                         internal_interface)
-
-            if (self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
-                and ri.get_gw_port_host() == self.host):
-                ns_name = ri.snat_namespace.name
-            else:
-                # not hosting agent - no work to do
-                LOG.debug('DVR: CSNAT not hosted: %s', ex_gw_port)
-                return
-        else:
-            ns_name = ri.ns_name
-
-        if ri.is_ha:
-            ri._ha_external_gateway_removed(interface_name)
-
-        self.driver.unplug(interface_name,
-                           bridge=self.conf.external_network_bridge,
-                           namespace=ns_name,
-                           prefix=EXTERNAL_DEV_PREFIX)
-        if ri.router['distributed']:
-            ri.delete_snat_namespace()
-
-    def external_gateway_nat_rules(self, ex_gw_ip, interface_name):
-        rules = [('POSTROUTING', '! -i %(interface_name)s '
-                  '! -o %(interface_name)s -m conntrack ! '
-                  '--ctstate DNAT -j ACCEPT' %
-                  {'interface_name': interface_name}),
-                 ('snat', '-o %s -j SNAT --to-source %s' %
-                  (interface_name, ex_gw_ip))]
-        return rules
 
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
