@@ -25,8 +25,21 @@ class BaseRouterTest(base.BaseAdminNetworkTest):
     def resource_setup(cls):
         super(BaseRouterTest, cls).resource_setup()
 
-    def _delete_router(self, router_id):
-        self.client.delete_router(router_id)
+    def _cleanup_router(self, router):
+        self.delete_router(router)
+        self.routers.remove(router)
+
+    def _create_router(self, name, admin_state_up=False,
+                       external_network_id=None, enable_snat=None):
+        # associate a cleanup with created routers to avoid quota limits
+        router = self.create_router(name, admin_state_up,
+                                    external_network_id, enable_snat)
+        self.addCleanup(self._cleanup_router, router)
+        return router
+
+    def _delete_router(self, router_id, network_client=None):
+        client = network_client or self.client
+        client.delete_router(router_id)
         # Asserting that the router is not found in the list
         # after deletion
         list_body = self.client.list_routers()

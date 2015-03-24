@@ -268,7 +268,8 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
 
     @classmethod
     def create_router(cls, router_name=None, admin_state_up=False,
-                      external_network_id=None, enable_snat=None):
+                      external_network_id=None, enable_snat=None,
+                      **kwargs):
         ext_gw_info = {}
         if external_network_id:
             ext_gw_info['network_id'] = external_network_id
@@ -276,7 +277,7 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             ext_gw_info['enable_snat'] = enable_snat
         body = cls.client.create_router(
             router_name, external_gateway_info=ext_gw_info,
-            admin_state_up=admin_state_up)
+            admin_state_up=admin_state_up, **kwargs)
         router = body['router']
         cls.routers.append(router)
         return router
