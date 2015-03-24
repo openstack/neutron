@@ -22,8 +22,7 @@ import webob
 
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
-from neutron.common import constants as l3_constants
-from neutron.i18n import _LE, _LI
+from neutron.i18n import _LI
 from neutron.notifiers import batch_notifier
 
 LOG = logging.getLogger(__name__)
@@ -150,25 +149,3 @@ class AgentMixin(object):
     def _init_ha_conf_path(self):
         ha_full_path = os.path.dirname("/%s/" % self.conf.ha_confs_path)
         agent_utils.ensure_dir(ha_full_path)
-
-    def process_ha_router_added(self, ri):
-        ha_port = ri.router.get(l3_constants.HA_INTERFACE_KEY)
-        if not ha_port:
-            LOG.error(_LE('Unable to process HA router %s without ha port'),
-                      ri.router_id)
-            return
-
-        ri._set_subnet_info(ha_port)
-        ri.ha_port = ha_port
-        ri._init_keepalived_manager(self.process_monitor)
-        ri.ha_network_added(ha_port['network_id'],
-                            ha_port['id'],
-                            ha_port['ip_cidr'],
-                            ha_port['mac_address'])
-
-        ri.update_initial_state(self.enqueue_state_change)
-        ri.spawn_state_change_monitor(self.process_monitor)
-
-    def process_ha_router_removed(self, ri):
-        ri.destroy_state_change_monitor(self.process_monitor)
-        ri.ha_network_removed()

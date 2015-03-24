@@ -306,7 +306,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.process_router_add(ri)
 
         if ri.is_ha:
-            self.process_ha_router_added(ri)
+            ri.initialize(self.process_monitor, self.enqueue_state_change)
 
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
@@ -319,7 +319,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             adv_svc.AdvancedService.before_router_removed, ri)
 
         if ri.is_ha:
-            self.process_ha_router_removed(ri)
+            ri.terminate(self.process_monitor)
 
         ri.router['gw_port'] = None
         ri.router[l3_constants.INTERFACE_KEY] = []
@@ -340,13 +340,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.plugin_rpc.update_floatingip_statuses(
             self.context, ri.router_id, fip_statuses)
 
-    def _process_ha_router(self, ri):
-        if ri.is_ha:
-            if ri.ha_port:
-                ri.spawn_keepalived()
-            else:
-                ri.disable_keepalived()
-
     @common_utils.exception_logger()
     def process_router(self, ri):
         # TODO(mrsmith) - we shouldn't need to check here
@@ -361,8 +354,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # Process static routes for router
         ri.routes_updated()
 
-        # Enable or disable keepalived for ha routers
-        self._process_ha_router(ri)
+        # If process_router was called during a create or update
+        if ri.is_ha and ri.ha_port:
+            ri.enable_keepalived()
 
         # Update ex_gw_port and enable_snat on the router info cache
         ri.ex_gw_port = ex_gw_port
