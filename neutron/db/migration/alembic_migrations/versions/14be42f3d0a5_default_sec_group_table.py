@@ -63,10 +63,6 @@ def upgrade():
     op.execute(ins)
 
 
-def downgrade():
-    op.drop_table('default_security_group')
-
-
 def check_sanity(connection):
     res = get_duplicate_default_security_groups(connection)
     if res:

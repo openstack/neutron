@@ -27,8 +27,6 @@ down_revision = '41662e32bce2'
 
 from alembic import op
 
-from neutron.db import migration
-
 TABLE_NAME = 'ports'
 CONSTRAINT_NAME = 'uniq_ports0network_id0mac_address'
 
@@ -39,12 +37,3 @@ def upgrade():
         source=TABLE_NAME,
         local_cols=['network_id', 'mac_address']
     )
-
-
-def downgrade():
-    with migration.remove_fks_from_table(TABLE_NAME):
-        op.drop_constraint(
-            CONSTRAINT_NAME,
-            TABLE_NAME,
-            type_='unique'
-        )

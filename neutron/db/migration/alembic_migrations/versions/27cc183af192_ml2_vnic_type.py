@@ -37,7 +37,3 @@ def upgrade():
                       sa.Column('vnic_type', sa.String(length=64),
                                 nullable=False,
                                 server_default='normal'))
-
-
-def downgrade():
-    pass

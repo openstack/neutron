@@ -48,7 +48,3 @@ def upgrade():
         op.execute("INSERT INTO router_extra_attributes "
               "SELECT id as router_id, "
               "False as distributed from routers")
-
-
-def downgrade():
-    op.drop_table('router_extra_attributes')

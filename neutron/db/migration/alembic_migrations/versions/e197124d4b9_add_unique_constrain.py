@@ -41,7 +41,3 @@ def upgrade():
             source=TABLE_NAME,
             local_cols=['pool_id', 'address', 'protocol_port']
         )
-
-
-def downgrade():
-    pass

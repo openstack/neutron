@@ -134,19 +134,3 @@ def upgrade():
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.PrimaryKeyConstraint('id'))
-
-
-def downgrade():
-    op.drop_table('arista_provisioned_tenants')
-    op.drop_table('arista_provisioned_vms')
-    op.drop_table('arista_provisioned_nets')
-    op.drop_table('cisco_ml2_credentials')
-    op.drop_table('cisco_ml2_nexusport_bindings')
-    op.drop_table('ml2_port_bindings')
-    op.drop_table('ml2_network_segments')
-    op.drop_table('ml2_flat_allocations')
-    op.drop_table('ml2_gre_allocations')
-    op.drop_table('ml2_vxlan_allocations')
-    op.drop_table('ml2_gre_endpoints')
-    op.drop_table('ml2_vxlan_endpoints')
-    op.drop_table('ml2_vlan_allocations')

@@ -44,7 +44,3 @@ def upgrade():
     if engine.name == 'postgresql':
         op.execute("ALTER TYPE nvp_network_bindings_binding_type "
                    "RENAME TO tz_network_bindings_binding_type;")
-
-
-def downgrade():
-    pass

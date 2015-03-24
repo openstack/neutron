@@ -29,11 +29,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     op.add_column('meteringlabels', sa.Column('shared', sa.Boolean(),
                                               server_default=sa.sql.false(),
                                               nullable=True))
-
-
-def downgrade(active_plugins=None, options=None):
-    op.drop_column('meteringlabels', 'shared')

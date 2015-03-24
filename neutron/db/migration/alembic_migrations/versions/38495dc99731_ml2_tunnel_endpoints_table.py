@@ -49,20 +49,3 @@ def upgrade():
         source='ml2_vxlan_endpoints',
         local_cols=['host']
     )
-
-
-def downgrade():
-
-    op.drop_constraint(
-        name=CONSTRAINT_NAME_VXLAN,
-        table_name='ml2_vxlan_endpoints',
-        type_='unique'
-    )
-    op.drop_column('ml2_vxlan_endpoints', 'host')
-
-    op.drop_constraint(
-        name=CONSTRAINT_NAME_GRE,
-        table_name='ml2_gre_endpoints',
-        type_='unique'
-    )
-    op.drop_column('ml2_gre_endpoints', 'host')

@@ -78,19 +78,3 @@ def upgrade():
                                      'nuage_port_mapping')
     migration.rename_table_if_exists('routerroutes_mapping',
                                      'nuage_routerroutes_mapping')
-
-
-@migration.skip_if_offline
-def downgrade():
-    migration.drop_table_if_exists('nuage_floatingip_mapping')
-    migration.drop_table_if_exists('nuage_floatingip_pool_mapping')
-    migration.rename_table_if_exists('nuage_net_partitions', 'net_partitions')
-    migration.rename_table_if_exists('nuage_net_partition_router_mapping',
-                                     'net_partition_router_mapping')
-    migration.rename_table_if_exists('nuage_router_zone_mapping',
-                                     'router_zone_mapping')
-    migration.rename_table_if_exists('nuage_subnet_l2dom_mapping',
-                                     'subnet_l2dom_mapping')
-    migration.rename_table_if_exists('nuage_port_mapping', 'port_mapping')
-    migration.rename_table_if_exists('nuage_routerroutes_mapping',
-                                     'routerroutes_mapping')

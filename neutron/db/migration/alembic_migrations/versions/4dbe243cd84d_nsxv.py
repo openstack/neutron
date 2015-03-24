@@ -146,25 +146,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('router_id'))
-
-
-def downgrade():
-    op.drop_table('nsxv_router_ext_attributes')
-    op.drop_table('nsxv_rule_mappings')
-    op.drop_table('nsxv_port_index_mappings')
-    op.drop_table('nsxv_port_vnic_mappings')
-    op.drop_table('nsxv_tz_network_bindings')
-    op.drop_table('nsxv_security_group_section_mappings')
-    op.drop_table('nsxv_spoofguard_policy_network_mappings')
-    op.drop_table('nsxv_edge_vnic_bindings')
-    op.drop_table('nsxv_edge_dhcp_static_bindings')
-    op.drop_table('nsxv_firewall_rule_bindings')
-    op.drop_table('nsxv_internal_edges')
-    op.drop_table('nsxv_internal_networks')
-    op.drop_table('nsxv_router_bindings')
-    appliance_sizes_enum.drop(op.get_bind(), checkfirst=False)
-    edge_types_enum.drop(op.get_bind(), checkfirst=False)
-    internal_network_purpose_enum.drop(op.get_bind(), checkfirst=False)
-    internal_edge_purpose_enum.drop(op.get_bind(), checkfirst=False)
-    tz_binding_type_enum.drop(op.get_bind(), checkfirst=False)
-    router_types_enum.drop(op.get_bind(), checkfirst=False)

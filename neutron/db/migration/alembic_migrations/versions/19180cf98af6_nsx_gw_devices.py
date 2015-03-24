@@ -70,7 +70,3 @@ def upgrade():
                "FROM networkgatewaydevicereferences AS gw_dev_ref "
                "INNER JOIN networkgateways AS net_gw ON "
                "gw_dev_ref.network_gateway_id=net_gw.id")
-
-
-def downgrade():
-    pass

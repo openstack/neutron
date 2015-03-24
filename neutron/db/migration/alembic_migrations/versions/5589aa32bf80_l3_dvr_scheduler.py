@@ -44,7 +44,3 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('router_id')
     )
-
-
-def downgrade():
-    op.drop_table('csnat_l3_agent_bindings')

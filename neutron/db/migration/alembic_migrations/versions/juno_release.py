@@ -29,8 +29,3 @@ down_revision = '544673ac99ab'
 def upgrade():
     """A no-op migration for marking the Juno release."""
     pass
-
-
-def downgrade():
-    """A no-op migration for marking the Juno release."""
-    pass

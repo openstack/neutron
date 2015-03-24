@@ -48,37 +48,32 @@ from neutron.plugins.cisco.common import cisco_constants
 # ml2_vxlan_allocations.allocated
 # This migration will be skipped when executed offline mode.
 
+default = sqlalchemy.sql.false()
+
 
 def upgrade():
-    run(True)
-
-
-def downgrade():
     run()
 
 
 @migration.skip_if_offline
-def run(default=None):
-    set_default_ml2(default)
-    set_default_mlnx(default)
-    set_default_brocade(default)
-    set_default_cisco(default)
-    set_default_vmware(default)
-    set_default_agents(default)
+def run():
+    set_default_ml2()
+    set_default_mlnx()
+    set_default_brocade()
+    set_default_cisco()
+    set_default_vmware()
+    set_default_agents()
 
 
-def set_default_brocade(default):
-    if default:
-        default = ''
+def set_default_brocade():
+    default = ''
     migration.alter_column_if_exists(
         'brocadeports', 'port_id',
         server_default=default,
         existing_type=sa.String(36))
 
 
-def set_default_mlnx(default):
-    if default:
-        default = sqlalchemy.sql.false()
+def set_default_mlnx():
     migration.alter_column_if_exists(
         'segmentation_id_allocation', 'allocated',
         server_default=default,
@@ -86,12 +81,9 @@ def set_default_mlnx(default):
         existing_type=sa.Boolean)
 
 
-def set_default_cisco(default):
-    profile_binding_default = (cisco_constants.TENANT_ID_NOT_SET
-                               if default else None)
-    profile_default = '0' if default else None
-    if default:
-        default = sqlalchemy.sql.false()
+def set_default_cisco():
+    profile_binding_default = cisco_constants.TENANT_ID_NOT_SET
+    profile_default = '0'
     migration.alter_column_if_exists(
         'cisco_n1kv_profile_bindings', 'tenant_id',
         existing_type=sa.String(length=36),
@@ -108,9 +100,7 @@ def set_default_cisco(default):
         existing_nullable=False)
 
 
-def set_default_vmware(default=None):
-    if default:
-        default = sqlalchemy.sql.false()
+def set_default_vmware():
     migration.alter_column_if_exists(
         'nsxrouterextattributess', 'service_router',
         server_default=default,
@@ -127,9 +117,8 @@ def set_default_vmware(default=None):
         existing_type=sa.Boolean)
 
 
-def set_default_agents(default=None):
-    if default:
-        default = sqlalchemy.sql.true()
+def set_default_agents():
+    default = sqlalchemy.sql.true()
     migration.alter_column_if_exists(
         'agents', 'admin_state_up',
         server_default=default,
@@ -137,9 +126,7 @@ def set_default_agents(default=None):
         existing_type=sa.Boolean)
 
 
-def set_default_ml2(default=None):
-    if default:
-        default = sqlalchemy.sql.false()
+def set_default_ml2():
     migration.alter_column_if_exists(
         'ml2_gre_allocations', 'allocated',
         server_default=default,

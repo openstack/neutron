@@ -40,11 +40,3 @@ def upgrade():
         'cisco_nexusport_bindings', 'vlan_id',
         nullable=False,
         existing_type=sa.Integer)
-
-
-@migration.skip_if_offline
-def downgrade():
-    migration.alter_column_if_exists(
-        'cisco_nexusport_bindings', 'vlan_id',
-        nullable=True,
-        existing_type=sa.Integer)

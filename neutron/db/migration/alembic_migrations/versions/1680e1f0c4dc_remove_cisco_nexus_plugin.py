@@ -26,28 +26,11 @@ revision = '1680e1f0c4dc'
 down_revision = '3c346828361e'
 
 from alembic import op
-import sqlalchemy as sa
 
 
-def upgrade(active_plugins=None, options=None):
+def upgrade():
     op.execute('INSERT INTO cisco_ml2_nexusport_bindings (port_id, '
                'vlan_id, switch_ip, instance_id) SELECT '
                'port_id, vlan_id, switch_ip, instance_id FROM '
                'cisco_nexusport_bindings')
     op.drop_table('cisco_nexusport_bindings')
-
-
-def downgrade(active_plugins=None, options=None):
-    op.create_table(
-        'cisco_nexusport_bindings',
-        sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column('port_id', sa.String(255)),
-        sa.Column('vlan_id', sa.Integer(), nullable=False),
-        sa.Column('switch_ip', sa.String(255), nullable=False),
-        sa.Column('instance_id', sa.String(255), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.execute('INSERT INTO cisco_nexusport_bindings (port_id, '
-               'vlan_id, switch_ip, instance_id) SELECT '
-               'port_id, vlan_id, switch_ip, instance_id FROM '
-               'cisco_ml2_nexusport_bindings')

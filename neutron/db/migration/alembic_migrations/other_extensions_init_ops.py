@@ -82,13 +82,3 @@ def upgrade():
         sa.Column('router_id', sa.String(length=36), nullable=False),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'], ),
         sa.PrimaryKeyConstraint('resource_id', 'resource_type'))
-
-
-def downgrade():
-    op.drop_table('servicerouterbindings')
-    op.drop_table('routerservicetypebindings')
-    op.drop_table('extradhcpopts')
-    op.drop_table('portbindingports')
-    op.drop_table('allowedaddresspairs')
-    op.drop_table('quotas')
-    op.drop_table('providerresourceassociations')

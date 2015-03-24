@@ -46,7 +46,3 @@ def upgrade():
                         new_column_name='neutron_id',
                         existing_type=sa.String(length=36),
                         existing_nullable=False)
-
-
-def downgrade():
-    pass

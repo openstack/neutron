@@ -53,7 +53,3 @@ def upgrade():
                                     name='ipv6_address_modes'),
                             nullable=True)
                   )
-
-
-def downgrade():
-    pass

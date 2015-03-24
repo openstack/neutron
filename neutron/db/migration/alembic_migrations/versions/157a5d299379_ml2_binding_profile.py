@@ -36,7 +36,3 @@ def upgrade():
         op.add_column('ml2_port_bindings',
                       sa.Column('profile', sa.String(length=4095),
                                 nullable=False, server_default=''))
-
-
-def downgrade():
-    pass

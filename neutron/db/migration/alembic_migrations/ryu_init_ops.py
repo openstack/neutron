@@ -33,8 +33,3 @@ def upgrade():
                   nullable=False),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'], ),
         sa.PrimaryKeyConstraint('tunnel_key'))
-
-
-def downgrade():
-    op.drop_table('tunnelkeys')
-    op.drop_table('tunnelkeylasts')

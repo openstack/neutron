@@ -44,12 +44,3 @@ def upgrade():
         source='floatingips', referent='ports',
         local_cols=['floating_port_id'], remote_cols=['id'], ondelete='CASCADE'
     )
-
-
-def downgrade():
-    _drop_constraint()
-    op.create_foreign_key(
-        name=None,
-        source='floatingips', referent='ports',
-        local_cols=['floating_port_id'], remote_cols=['id']
-    )

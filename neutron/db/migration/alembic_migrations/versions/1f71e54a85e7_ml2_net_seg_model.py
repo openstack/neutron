@@ -34,7 +34,3 @@ def upgrade():
     op.add_column('ml2_network_segments',
                   sa.Column('segment_index', sa.Integer(), nullable=False,
                   server_default='0'))
-
-
-def downgrade():
-    op.drop_column('ml2_network_segments', 'segment_index')

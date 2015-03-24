@@ -71,9 +71,3 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('router_id')
     )
-
-
-def downgrade():
-    op.drop_table('cisco_router_mappings')
-    op.drop_table('cisco_port_mappings')
-    op.drop_table('cisco_hosting_devices')

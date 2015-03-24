@@ -32,7 +32,6 @@ revision = '2b801560a332'
 down_revision = '2d2a8a565438'
 
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.sql import expression as sa_expr
 
 from neutron.extensions import portbindings
@@ -133,23 +132,3 @@ def upgrade():
 
     op.drop_table('hyperv_vlan_allocations')
     op.drop_table('hyperv_network_bindings')
-
-
-def downgrade():
-    op.create_table(
-        'hyperv_vlan_allocations',
-        sa.Column('physical_network', sa.String(length=64), nullable=False),
-        sa.Column('vlan_id', sa.Integer(), autoincrement=False,
-                  nullable=False),
-        sa.Column('allocated', sa.Boolean(), nullable=False),
-        sa.PrimaryKeyConstraint('physical_network', 'vlan_id'))
-
-    op.create_table(
-        'hyperv_network_bindings',
-        sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.Column('network_type', sa.String(length=32), nullable=False),
-        sa.Column('physical_network', sa.String(length=64), nullable=True),
-        sa.Column('segmentation_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('network_id'))

@@ -122,21 +122,3 @@ def upgrade():
                                 ['ipsec_site_connections.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('cidr', 'ipsec_site_connection_id'))
-
-
-def downgrade():
-    op.drop_table('ipsecpeercidrs')
-    op.drop_table('ipsec_site_connections')
-    op.drop_table('vpnservices')
-    op.drop_table('ikepolicies')
-    op.drop_table('ipsecpolicies')
-    auth_algorithms.drop(op.get_bind(), checkfirst=False)
-    encryption_algorithms.drop(op.get_bind(), checkfirst=False)
-    encapsulation_modes.drop(op.get_bind(), checkfirst=False)
-    lifetime_unit_types.drop(op.get_bind(), checkfirst=False)
-    transform_protocols.drop(op.get_bind(), checkfirst=False)
-    pfs_types.drop(op.get_bind(), checkfirst=False)
-    phase1_negotiation_modes.drop(op.get_bind(), checkfirst=False)
-    ike_versions.drop(op.get_bind(), checkfirst=False)
-    initiator_types.drop(op.get_bind(), checkfirst=False)
-    dpd_actions.drop(op.get_bind(), checkfirst=False)

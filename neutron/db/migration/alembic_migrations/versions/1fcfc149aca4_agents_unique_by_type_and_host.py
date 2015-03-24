@@ -46,7 +46,3 @@ def upgrade():
         source=TABLE_NAME,
         local_cols=['agent_type', 'host']
     )
-
-
-def downgrade():
-    pass

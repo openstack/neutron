@@ -38,7 +38,3 @@ def upgrade():
                         existing_nullable=True)
     else:
         metering_init_ops.create_meteringlabels()
-
-
-def downgrade():
-    pass

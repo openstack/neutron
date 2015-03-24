@@ -36,8 +36,3 @@ def upgrade():
         sa.Column('tenant_id', sa.String(length=36), nullable=True),
         sa.ForeignKeyConstraint(['network_id'], ['brocadenetworks.id'], ),
         sa.PrimaryKeyConstraint('port_id'))
-
-
-def downgrade():
-    op.drop_table('brocadeports')
-    op.drop_table('brocadenetworks')

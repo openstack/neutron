@@ -38,11 +38,3 @@ def upgrade():
     for table in ('servicedefinitions', 'servicetypes'):
         if migration.schema_has_table(table):
             op.drop_table(table)
-
-
-def downgrade():
-    """Don't create the tables
-
-    These tables would be created during downgrade at correct place in
-    migration timeline at revision 557edfc53098.
-    """

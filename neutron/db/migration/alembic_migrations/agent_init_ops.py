@@ -37,7 +37,3 @@ def upgrade():
         sa.Column('description', sa.String(length=255), nullable=True),
         sa.Column('configurations', sa.String(length=4095), nullable=False),
         sa.PrimaryKeyConstraint('id'))
-
-
-def downgrade():
-    op.drop_table('agents')

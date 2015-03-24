@@ -39,12 +39,3 @@ def upgrade():
         op.f('ix_ml2_vlan_allocations_physical_network_allocated'),
         'ml2_vlan_allocations', ['physical_network', 'allocated'],
         unique=False)
-
-
-def downgrade():
-    op.drop_index(op.f('ix_ml2_vxlan_allocations_allocated'),
-                  table_name='ml2_vxlan_allocations')
-    op.drop_index(op.f('ix_ml2_gre_allocations_allocated'),
-                  table_name='ml2_gre_allocations')
-    op.drop_index(op.f('ix_ml2_vlan_allocations_physical_network_allocated'),
-                  table_name='ml2_vlan_allocations')

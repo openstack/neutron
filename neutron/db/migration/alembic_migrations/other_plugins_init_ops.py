@@ -79,12 +79,3 @@ def upgrade():
         sa.ForeignKeyConstraint(['rule_id'], ['routerrules.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('rule_id', 'nexthop'))
-
-
-def downgrade():
-    op.drop_table('nexthops')
-    op.drop_table('routerrules')
-    op.drop_table('routerflavors')
-    op.drop_table('networkflavors')
-    op.drop_table('hyperv_network_bindings')
-    op.drop_table('hyperv_vlan_allocations')

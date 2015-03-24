@@ -130,18 +130,3 @@ def upgrade():
         sa.Column('total_connections', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(['pool_id'], ['pools.id'], ),
         sa.PrimaryKeyConstraint('pool_id'))
-
-
-def downgrade():
-    op.drop_table('poolstatisticss')
-    op.drop_table('poolmonitorassociations')
-    op.drop_table('members')
-    op.drop_table('poolloadbalanceragentbindings')
-    op.drop_table('sessionpersistences')
-    op.drop_table('pools')
-    op.drop_table('vips')
-    op.drop_table('healthmonitors')
-    protocols.drop(op.get_bind(), checkfirst=False)
-    session_persistence_type.drop(op.get_bind(), checkfirst=False)
-    lb_methods.drop(op.get_bind(), checkfirst=False)
-    health_monitor_type.drop(op.get_bind(), checkfirst=False)

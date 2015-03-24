@@ -51,17 +51,3 @@ def upgrade():
         name=CONSTRAINT_NAME_NS,
         source='nuage_subnet_l2dom_mapping',
         local_cols=['nuage_subnet_id'])
-
-
-def downgrade():
-    op.drop_column('nuage_net_partition_router_mapping', 'nuage_rtr_rt')
-    op.drop_column('nuage_net_partition_router_mapping', 'nuage_rtr_rd')
-    op.drop_column('nuage_net_partitions', 'isolated_zone')
-    op.drop_column('nuage_net_partitions', 'shared_zone')
-    op.drop_column('nuage_subnet_l2dom_mapping', 'nuage_managed_subnet')
-    op.drop_constraint(CONSTRAINT_NAME_NS,
-                       'nuage_subnet_l2dom_mapping',
-                       type_='unique')
-    op.drop_constraint(CONSTRAINT_NAME_NR,
-                       'nuage_net_partition_router_mapping',
-                       type_='unique')

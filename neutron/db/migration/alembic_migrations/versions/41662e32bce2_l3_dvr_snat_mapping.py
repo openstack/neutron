@@ -47,18 +47,3 @@ def upgrade():
         op.create_primary_key(name=None,
                               table_name=TABLE_NAME,
                               cols=['router_id', 'l3_agent_id'])
-
-
-def downgrade():
-    inspector = reflection.Inspector.from_engine(op.get_bind())
-    prev_pk_const = inspector.get_pk_constraint(TABLE_NAME)
-    prev_pk_name = prev_pk_const.get('name')
-
-    with migration.remove_fks_from_table(TABLE_NAME):
-        op.drop_constraint(name=prev_pk_name,
-                           table_name=TABLE_NAME,
-                           type_='primary')
-
-        op.create_primary_key(name=None,
-                              table_name=TABLE_NAME,
-                              cols=['router_id'])

@@ -32,7 +32,3 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column('networks', sa.Column('mtu', sa.Integer(),
                   nullable=True))
-
-
-def downgrade():
-    op.drop_column('networks', 'mtu')

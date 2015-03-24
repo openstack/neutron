@@ -29,15 +29,3 @@ down_revision = '5ac1c354a051'
 def upgrade():
     """A no-op migration for marking the Icehouse release."""
     pass
-
-
-def downgrade():
-    # We are purging all downgrade methods from icehouse to havana because:
-    # 1) havana is going to become unsupported during Kilo cycle.
-    # 2) most people will upgrade from icehouse, while a minor percentage
-    #    from havana
-    # 3) downgrade use cases are mostly to revert after failed upgrades
-    # See discussion in https://review.openstack.org/109952 for details
-
-    raise NotImplementedError("Downgrade from icehouse to havana not "
-                              "supported")

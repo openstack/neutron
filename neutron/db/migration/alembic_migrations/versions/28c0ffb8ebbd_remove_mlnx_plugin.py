@@ -26,50 +26,9 @@ revision = '28c0ffb8ebbd'
 down_revision = '408cfbf6923c'
 
 from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():
     op.drop_table('mlnx_network_bindings')
     op.drop_table('segmentation_id_allocation')
     op.drop_table('port_profile')
-
-
-def downgrade():
-    op.create_table(
-        'port_profile',
-        sa.Column(
-            'port_id', sa.String(length=36), nullable=False),
-        sa.Column(
-            'vnic_type', sa.String(length=32), nullable=False),
-        sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('port_id'),
-    )
-    op.create_table(
-        'segmentation_id_allocation',
-        sa.Column('physical_network',
-                  sa.String(length=64),
-                  nullable=False),
-        sa.Column('segmentation_id',
-                  sa.Integer(),
-                  autoincrement=False,
-                  nullable=False),
-        sa.Column('allocated',
-                  sa.Boolean(),
-                  server_default=sa.sql.false(),
-                  nullable=False),
-        sa.PrimaryKeyConstraint('physical_network', 'segmentation_id')
-    )
-    op.create_table(
-        'mlnx_network_bindings',
-        sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.Column('network_type', sa.String(length=32), nullable=False),
-        sa.Column('physical_network', sa.String(length=64), nullable=True),
-        sa.Column('segmentation_id',
-                  sa.Integer(),
-                  autoincrement=False, nullable=False),
-        sa.ForeignKeyConstraint(['network_id'],
-                                ['networks.id']),
-        sa.PrimaryKeyConstraint('network_id'),
-    )

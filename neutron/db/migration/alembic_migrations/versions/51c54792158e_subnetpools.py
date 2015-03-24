@@ -55,8 +55,3 @@ def upgrade():
                                             ['subnetpools.id'],
                                             ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('cidr', 'subnetpool_id'))
-
-
-def downgrade():
-    op.drop_table('subnetpoolprefixes')
-    op.drop_table('subnetpools')

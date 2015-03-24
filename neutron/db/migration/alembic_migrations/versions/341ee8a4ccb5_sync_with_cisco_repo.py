@@ -65,12 +65,3 @@ def upgrade():
     op.add_column('cisco_ml2_nexusport_bindings', sa.Column(
         'is_provider_vlan', sa.Boolean(), nullable=False,
         server_default=sa.sql.false()))
-
-
-def downgrade():
-    op.drop_table('ml2_nexus_vxlan_mcast_groups')
-    op.drop_table('ml2_nexus_vxlan_allocations')
-    op.drop_table('cisco_ml2_nexus_nve')
-
-    op.drop_column('cisco_ml2_nexusport_bindings', 'vni')
-    op.drop_column('cisco_ml2_nexusport_bindings', 'is_provider_vlan')

@@ -64,7 +64,3 @@ def upgrade():
         local_cols=['network_profile_id'], remote_cols=['id'],
         ondelete='CASCADE'
     )
-
-
-def downgrade():
-    pass

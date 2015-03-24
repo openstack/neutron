@@ -30,7 +30,3 @@ from neutron.db.migration.alembic_migrations import heal_script
 
 def upgrade():
     heal_script.heal()
-
-
-def downgrade():
-    pass

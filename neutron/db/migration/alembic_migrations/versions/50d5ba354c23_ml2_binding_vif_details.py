@@ -62,7 +62,3 @@ def upgrade():
     op.drop_column('ml2_port_bindings', 'cap_port_filter')
     if op.get_bind().engine.name == 'ibm_db_sa':
         op.execute("CALL SYSPROC.ADMIN_CMD('REORG TABLE ml2_port_bindings')")
-
-
-def downgrade():
-    pass

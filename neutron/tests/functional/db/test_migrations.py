@@ -261,3 +261,24 @@ class TestSanityCheck(test_base.DbTestCase):
             script = script_dir.get_revision("14be42f3d0a5").module
             self.assertRaises(script.DuplicateSecurityGroupsNamedDefault,
                               script.check_sanity, conn)
+
+
+class TestWalkMigrations(test_base.DbTestCase):
+
+    def setUp(self):
+        super(TestWalkMigrations, self).setUp()
+        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config.neutron_config = cfg.CONF
+
+    def test_no_downgrade(self):
+        script_dir = alembic_script.ScriptDirectory.from_config(
+            self.alembic_config)
+        versions = [v for v in script_dir.walk_revisions(base='base',
+                                                         head='heads')]
+        failed_revisions = []
+        for version in versions:
+            if hasattr(version.module, 'downgrade'):
+                failed_revisions.append(version.revision)
+
+        if failed_revisions:
+            self.fail('Migrations %s have downgrade' % failed_revisions)
