@@ -19,8 +19,8 @@ from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.common import constants as n_const
-from neutron.openstack.common import uuidutils
 from neutron.tests.common import base
+from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 from neutron.tests import sub_base
 
@@ -33,22 +33,10 @@ ICMP_MARK_RULE = ('-j MARK --set-xmark %(value)s/%(mask)s'
                   % {'value': MARK_VALUE, 'mask': MARK_MASK})
 MARKED_BLOCK_RULE = '-m mark --mark %s -j DROP' % MARK_VALUE
 ICMP_BLOCK_RULE = '-p icmp -j DROP'
-VETH_PREFIX = 'tst-vth'
-NS_PREFIX = 'func-'
 
 
 #TODO(jschwarz): Move these two functions to neutron/tests/common/
 get_rand_name = sub_base.get_rand_name
-
-
-def get_rand_veth_name():
-    return get_rand_name(max_length=n_const.DEVICE_NAME_MAX_LEN,
-                         prefix=VETH_PREFIX)
-
-
-def get_rand_port_name():
-    return get_rand_name(prefix=PORT_PREFIX,
-                         max_length=n_const.DEVICE_NAME_MAX_LEN)
 
 
 def get_rand_bridge_name():
@@ -58,54 +46,11 @@ def get_rand_bridge_name():
 
 class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
 
-    def setUp(self):
-        super(BaseLinuxTestCase, self).setUp()
-
-    @staticmethod
-    def _cleanup_namespace(namespace):
-        if namespace.netns.exists(namespace.namespace):
-            namespace.netns.delete(namespace.namespace)
-
-    def _create_namespace(self, prefix=NS_PREFIX):
-        ip_cmd = ip_lib.IPWrapper()
-        name = prefix + uuidutils.generate_uuid()
-        namespace = ip_cmd.ensure_namespace(name)
-        self.addCleanup(BaseLinuxTestCase._cleanup_namespace, namespace)
-
-        return namespace
+    def _create_namespace(self, prefix=net_helpers.NS_PREFIX):
+        return self.useFixture(net_helpers.NamespaceFixture(prefix)).ip_wrapper
 
     def create_veth(self):
-        ip_wrapper = ip_lib.IPWrapper()
-        name1 = get_rand_veth_name()
-        name2 = get_rand_veth_name()
-
-        # NOTE(cbrandily): will be removed in follow-up change
-        def destroy():
-            try:
-                ip_wrapper.del_veth(name1)
-            except RuntimeError:
-                # NOTE(cbrandily): It seems a veth is automagically deleted
-                # when a namespace owning a veth endpoint is deleted.
-                pass
-
-        self.addCleanup(destroy)
-        veth1, veth2 = ip_wrapper.add_veth(name1, name2)
-        return veth1, veth2
-
-    def set_namespace_gateway(self, port_dev, gateway_ip):
-        """Set gateway for the namespace associated to the port."""
-        if not port_dev.namespace:
-            self.fail('tests should not change test machine gateway')
-        port_dev.route.add_gateway(gateway_ip)
-
-    def shift_ip_cidr(self, ip_cidr, offset=1):
-        """Shift ip_cidr offset times.
-
-        example: shift_ip_cidr("1.2.3.4/24", 2) ==> "1.2.3.6/24"
-        """
-        net = netaddr.IPNetwork(ip_cidr)
-        net.value += offset
-        return str(net)
+        return self.useFixture(net_helpers.VethFixture()).ports
 
 
 # Regarding MRO, it goes BaseOVSLinuxTestCase, WithScenarios,
@@ -160,8 +105,8 @@ class BaseIPVethTestCase(BaseLinuxTestCase):
         device.addr.add(cidr)
         device.link.set_up()
 
-    def prepare_veth_pairs(self, src_ns_prefix=NS_PREFIX,
-                           dst_ns_prefix=NS_PREFIX):
+    def prepare_veth_pairs(self, src_ns_prefix=net_helpers.NS_PREFIX,
+                           dst_ns_prefix=net_helpers.NS_PREFIX):
 
         src_addr = self.SRC_ADDRESS
         dst_addr = self.DST_ADDRESS
