@@ -342,14 +342,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         with context.session.begin(subtransactions=True):
             bindings = self._get_l3_bindings_hosting_routers(
                 context, [router_id])
-            results = []
-            for binding in bindings:
-                l3_agent_dict = self._make_agent_dict(binding.l3_agent)
-                results.append(l3_agent_dict)
-            if results:
-                return {'agents': results}
-            else:
-                return {'agents': []}
+
+        return {'agents': [self._make_agent_dict(binding.l3_agent) for
+                           binding in bindings]}
 
     def get_l3_agents(self, context, active=None, filters=None):
         query = context.session.query(agents_db.Agent)

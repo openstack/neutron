@@ -59,3 +59,24 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.L3AgentSchedulerDbMixin):
             order_by('count'))
 
         return [record[0] for record in query]
+
+    def _get_agents_dict_for_router(self, agents_and_states):
+        agents = []
+        for agent, ha_state in agents_and_states:
+            l3_agent_dict = self._make_agent_dict(agent)
+            l3_agent_dict['ha_state'] = ha_state
+            agents.append(l3_agent_dict)
+        return {'agents': agents}
+
+    def list_l3_agents_hosting_router(self, context, router_id):
+        with context.session.begin(subtransactions=True):
+            router_db = self._get_router(context, router_id)
+            if router_db.extra_attributes.ha:
+                bindings = self.get_l3_bindings_hosting_router_with_ha_states(
+                    context, router_id)
+            else:
+                bindings = self._get_l3_bindings_hosting_routers(
+                    context, [router_id])
+                bindings = [(binding.l3_agent, None) for binding in bindings]
+
+        return self._get_agents_dict_for_router(bindings)

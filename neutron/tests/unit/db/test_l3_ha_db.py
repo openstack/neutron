@@ -26,6 +26,7 @@ from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron import manager
 from neutron.openstack.common import uuidutils
+from neutron.scheduler import l3_agent_scheduler
 from neutron.tests.unit import testlib_api
 from neutron.tests.unit import testlib_plugin
 
@@ -93,12 +94,43 @@ class L3HATestFramework(testlib_api.SqlTestCase,
 
     def _bind_router(self, router_id):
         with self.admin_ctx.session.begin(subtransactions=True):
-            bindings = self.plugin.get_ha_router_port_bindings(self.admin_ctx,
-                                                               [router_id])
+            scheduler = l3_agent_scheduler.ChanceScheduler()
+            agents_db = self.plugin.get_agents_db(self.admin_ctx)
+            scheduler.bind_ha_router_to_agents(
+                self.plugin,
+                self.admin_ctx,
+                router_id,
+                agents_db)
 
-            for agent_id, binding in zip(
-                    [self.agent1['id'], self.agent2['id']], bindings):
-                binding.l3_agent_id = agent_id
+    def test_get_ha_router_port_bindings(self):
+        router = self._create_router()
+        self._bind_router(router['id'])
+        bindings = self.plugin.get_ha_router_port_bindings(
+            self.admin_ctx, [router['id']])
+        binding_dicts = [{'router_id': binding['router_id'],
+                          'l3_agent_id': binding['l3_agent_id']}
+                         for binding in bindings]
+        self.assertIn({'router_id': router['id'],
+                       'l3_agent_id': self.agent1['id']}, binding_dicts)
+        self.assertIn({'router_id': router['id'],
+                       'l3_agent_id': self.agent2['id']}, binding_dicts)
+
+    def test_get_l3_bindings_hosting_router_with_ha_states_ha_router(self):
+        router = self._create_router()
+        self._bind_router(router['id'])
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
+        bindings = self.plugin.get_l3_bindings_hosting_router_with_ha_states(
+            self.admin_ctx, router['id'])
+        agent_ids = [(agent[0]['id'], agent[1]) for agent in bindings]
+        self.assertIn((self.agent1['id'], 'active'), agent_ids)
+        self.assertIn((self.agent2['id'], 'standby'), agent_ids)
+
+    def test_get_l3_bindings_hosting_router_with_ha_states_not_scheduled(self):
+        router = self._create_router(ha=False)
+        bindings = self.plugin.get_l3_bindings_hosting_router_with_ha_states(
+            self.admin_ctx, router['id'])
+        self.assertEqual([], bindings)
 
 
 class L3HATestCase(L3HATestFramework):

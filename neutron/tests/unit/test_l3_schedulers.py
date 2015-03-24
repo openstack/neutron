@@ -1239,6 +1239,37 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
             self.plugin.reschedule_routers_from_down_agents()
             self.assertFalse(reschedule.called)
 
+    def test_list_l3_agents_hosting_ha_router(self):
+        router = self._create_ha_router()
+        self.plugin.schedule_router(self.adminContext, router['id'])
+
+        agents = self.plugin.list_l3_agents_hosting_router(
+            self.adminContext, router['id'])['agents']
+        for agent in agents:
+            self.assertEqual('standby', agent['ha_state'])
+
+        self.plugin.update_routers_states(
+            self.adminContext, {router['id']: 'active'}, self.agent1.host)
+        agents = self.plugin.list_l3_agents_hosting_router(
+            self.adminContext, router['id'])['agents']
+        for agent in agents:
+            expected_state = ('active' if agent['host'] == self.agent1.host
+                              else 'standby')
+            self.assertEqual(expected_state, agent['ha_state'])
+
+    def test_list_l3_agents_hosting_legacy_router(self):
+        router = self._create_ha_router(ha=False)
+        self.plugin.schedule_router(self.adminContext, router['id'])
+
+        agents = self.plugin.list_l3_agents_hosting_router(
+            self.adminContext, router['id'])['agents']
+        for agent in agents:
+            self.assertIsNone(agent['ha_state'])
+
+    def test_get_agents_dict_for_router_unscheduled_returns_empty_list(self):
+        self.assertEqual({'agents': []},
+                         self.plugin._get_agents_dict_for_router([]))
+
 
 class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
 
