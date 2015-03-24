@@ -13,17 +13,11 @@
 #    under the License.
 
 """
-Previously, running 'tox -e dsvm-functional' simply ran a normal test discovery
-of the ./neutron/tests/functional tree. In order to save gate resources, we
-decided to forgo adding a new gate job specifically for the full-stack
-framework, and instead discover tests that are present in
-./neutron/tests/fullstack.
-
-In short, running 'tox -e dsvm-functional' now runs both functional tests and
-full-stack tests, and this code allows for the test discovery needed.
+In order to save gate resources, test paths that have similar
+environmental requirements to the functional path are marked for
+discovery.
 """
 
-import os
 import unittest
 
 
@@ -37,8 +31,8 @@ def load_tests(_, tests, pattern):
 
     loader = unittest.loader.TestLoader()
     suite.addTests(_discover(loader, "./neutron/tests/functional", pattern))
-
-    if os.getenv('OS_RUN_FULLSTACK') == '1':
-        suite.addTests(_discover(loader, "./neutron/tests/fullstack", pattern))
+    suite.addTests(_discover(loader, "./neutron/tests/fullstack", pattern))
+    suite.addTests(_discover(loader, "./neutron/tests/retargetable",
+                             pattern))
 
     return suite

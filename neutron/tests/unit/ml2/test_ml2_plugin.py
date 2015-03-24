@@ -21,6 +21,7 @@ import testtools
 import uuid
 import webob
 
+import fixtures
 from oslo_db import exception as db_exc
 
 from neutron.callbacks import registry
@@ -66,20 +67,24 @@ DEVICE_OWNER_COMPUTE = 'compute:None'
 HOST = 'fake_host'
 
 
-class Ml2PluginConf(object):
-    """Plugin configuration shared across the unit and functional tests.
+# TODO(marun) - Move to somewhere common for reuse
+class PluginConfFixture(fixtures.Fixture):
+    """Plugin configuration shared across the unit and functional tests."""
 
-    TODO(marun) Evolve a configuration interface usable across all plugins.
-    """
+    def __init__(self, plugin_name, parent_setup=None):
+        self.plugin_name = plugin_name
+        self.parent_setup = parent_setup
 
-    plugin_name = PLUGIN_NAME
+    def setUp(self):
+        super(PluginConfFixture, self).setUp()
+        if self.parent_setup:
+            self.parent_setup()
 
-    @staticmethod
-    def setUp(test_case, parent_setup=None):
-        """Perform additional configuration around the parent's setUp."""
-        if parent_setup:
-            parent_setup()
-        test_case.port_create_status = 'DOWN'
+
+class Ml2ConfFixture(PluginConfFixture):
+
+    def __init__(self, parent_setup=None):
+        super(Ml2ConfFixture, self).__init__(PLUGIN_NAME, parent_setup)
 
 
 class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
@@ -95,10 +100,11 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         # by the common configuration setUp.
         parent_setup = functools.partial(
             super(Ml2PluginV2TestCase, self).setUp,
-            plugin=Ml2PluginConf.plugin_name,
+            plugin=PLUGIN_NAME,
             service_plugins=service_plugins,
         )
-        Ml2PluginConf.setUp(self, parent_setup)
+        self.useFixture(Ml2ConfFixture(parent_setup))
+        self.port_create_status = 'DOWN'
 
     def setUp(self):
         # Enable the test mechanism driver to ensure that
