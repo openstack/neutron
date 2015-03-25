@@ -123,11 +123,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         self.net_create_status = 'ACTIVE'
         self.port_create_status = 'ACTIVE'
 
-        self.dhcp_periodic_p = mock.patch(
-            'neutron.db.agentschedulers_db.DhcpAgentSchedulerDbMixin.'
-            'start_periodic_dhcp_agent_status_check')
-        self.patched_dhcp_periodic = self.dhcp_periodic_p.start()
-
         def _is_native_bulk_supported():
             plugin_obj = manager.NeutronManager.get_plugin()
             native_bulk_attr_name = ("_%s__native_bulk_support"
