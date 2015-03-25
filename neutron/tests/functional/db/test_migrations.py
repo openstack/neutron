@@ -112,7 +112,8 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     * ``add_*`` means that it is missing in db;
 
     * ``modify_*`` means that on column in db is set wrong
-        type/nullable/server_default. Element contains information:
+      type/nullable/server_default. Element contains information:
+
         - what should be modified,
         - schema,
         - table,
