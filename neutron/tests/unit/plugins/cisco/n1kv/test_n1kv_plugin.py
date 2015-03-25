@@ -1286,6 +1286,8 @@ class TestN1kvL3Test(test_l3.L3NatExtensionTestCase):
     pass
 
 
-class TestN1kvL3SchedulersTest(test_l3_agent_scheduler.L3SchedulerTestCase):
+class TestN1kvL3SchedulersTest(
+    test_l3_agent_scheduler.L3SchedulerTestCaseMixin,
+    test_plugin.NeutronDbPluginV2TestCase):
 
     pass
