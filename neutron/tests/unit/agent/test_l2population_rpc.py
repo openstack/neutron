@@ -14,8 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 import mock
 
 from neutron.common import constants as n_const
@@ -63,10 +61,9 @@ class TestL2populationRpcCallBackTunnelMixin(
         self.assertEqual(expected, results)
 
     def test_fdb_add_tun(self):
-        with contextlib.nested(
-            mock.patch.object(self.fakeagent, 'setup_tunnel_port'),
-            mock.patch.object(self.fakeagent, 'add_fdb_flow'),
-        ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
+        with mock.patch.object(self.fakeagent, 'setup_tunnel_port'),\
+                mock.patch.object(self.fakeagent, 'add_fdb_flow'
+                                  ) as mock_add_fdb_flow:
             self.fakeagent.fdb_add_tun('context', self.fakebr, self.lvm1,
                                        self.agent_ports,
                                        self._tunnel_port_lookup)
@@ -84,11 +81,11 @@ class TestL2populationRpcCallBackTunnelMixin(
     def test_fdb_add_tun_non_existence_key_in_ofports(self):
         ofport = self.lvm1.network_type + '0a0a0a0a'
         del self.ofports[self.type_gre][self.ports[1].ip]
-        with contextlib.nested(
-            mock.patch.object(self.fakeagent, 'setup_tunnel_port',
-                              return_value=ofport),
-            mock.patch.object(self.fakeagent, 'add_fdb_flow'),
-        ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
+        with mock.patch.object(self.fakeagent, 'setup_tunnel_port',
+                               return_value=ofport
+                               ) as mock_setup_tunnel_port,\
+                mock.patch.object(self.fakeagent, 'add_fdb_flow'
+                                  ) as mock_add_fdb_flow:
             self.fakeagent.fdb_add_tun('context', self.fakebr, self.lvm1,
                                        self.agent_ports,
                                        self._tunnel_port_lookup)
@@ -107,11 +104,11 @@ class TestL2populationRpcCallBackTunnelMixin(
 
     def test_fdb_add_tun_unavailable_ofport(self):
         del self.ofports[self.type_gre][self.ports[1].ip]
-        with contextlib.nested(
-            mock.patch.object(self.fakeagent, 'setup_tunnel_port',
-                              return_value=0),
-            mock.patch.object(self.fakeagent, 'add_fdb_flow'),
-        ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
+        with mock.patch.object(self.fakeagent, 'setup_tunnel_port',
+                               return_value=0
+                               ) as mock_setup_tunnel_port,\
+                mock.patch.object(self.fakeagent, 'add_fdb_flow'
+                                  ) as mock_add_fdb_flow:
             self.fakeagent.fdb_add_tun('context', self.fakebr, self.lvm1,
                                        self.agent_ports,
                                        self._tunnel_port_lookup)
@@ -145,10 +142,10 @@ class TestL2populationRpcCallBackTunnelMixin(
 
     def test_fdb_remove_tun_flooding_entry(self):
         self.agent_ports[self.ports[1].ip] = [n_const.FLOODING_ENTRY]
-        with contextlib.nested(
-            mock.patch.object(self.fakeagent, 'del_fdb_flow'),
-            mock.patch.object(self.fakeagent, 'cleanup_tunnel_port'),
-        ) as (mock_del_fdb_flow, mock_cleanup_tunnel_port):
+        with mock.patch.object(self.fakeagent, 'del_fdb_flow'
+                               ) as mock_del_fdb_flow,\
+                mock.patch.object(self.fakeagent, 'cleanup_tunnel_port'
+                                  ) as mock_cleanup_tunnel_port:
             self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm1,
                                           self.agent_ports,
                                           self._tunnel_port_lookup)

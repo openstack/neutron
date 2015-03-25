@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import itertools
 import mock
 
@@ -26,30 +25,29 @@ from neutron.tests import base
 
 class TestOVSCleanup(base.BaseTestCase):
 
-    def test_main(self):
+    @mock.patch('neutron.common.config.setup_logging')
+    @mock.patch('neutron.cmd.ovs_cleanup.setup_conf')
+    @mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges')
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    @mock.patch.object(util, 'collect_neutron_ports')
+    @mock.patch.object(util, 'delete_neutron_ports')
+    def test_main(self, mock_delete, mock_collect, mock_ovs,
+                  mock_get_bridges, mock_conf, mock_logging):
         bridges = ['br-int', 'br-ex']
         ports = ['p1', 'p2', 'p3']
         conf = mock.Mock()
         conf.ovs_all_ports = False
         conf.ovs_integration_bridge = 'br-int'
         conf.external_network_bridge = 'br-ex'
-        with contextlib.nested(
-            mock.patch('neutron.common.config.setup_logging'),
-            mock.patch('neutron.cmd.ovs_cleanup.setup_conf',
-                       return_value=conf),
-            mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
-                       return_value=bridges),
-            mock.patch('neutron.agent.common.ovs_lib.OVSBridge'),
-            mock.patch.object(util, 'collect_neutron_ports',
-                              return_value=ports),
-            mock.patch.object(util, 'delete_neutron_ports')
-        ) as (_log, _conf, _get, ovs, collect, delete):
-            with mock.patch('neutron.common.config.setup_logging'):
-                util.main()
-                ovs.assert_has_calls([mock.call().delete_ports(
-                    all_ports=False)])
-                collect.assert_called_once_with(set(bridges))
-                delete.assert_called_once_with(ports)
+        mock_conf.return_value = conf
+        mock_get_bridges.return_value = bridges
+        mock_collect.return_value = ports
+
+        util.main()
+        mock_ovs.assert_has_calls([mock.call().delete_ports(
+            all_ports=False)])
+        mock_collect.assert_called_once_with(set(bridges))
+        mock_delete.assert_called_once_with(ports)
 
     def test_collect_neutron_ports(self):
         port1 = ovs_lib.VifPort('tap1234', 1, uuidutils.generate_uuid(),
@@ -66,18 +64,18 @@ class TestOVSCleanup(base.BaseTestCase):
             ret = util.collect_neutron_ports(bridges)
             self.assertEqual(ret, portnames)
 
-    def test_delete_neutron_ports(self):
+    @mock.patch.object(ip_lib, 'IPDevice')
+    def test_delete_neutron_ports(self, mock_ip):
         ports = ['tap1234', 'tap5678', 'tap09ab']
         port_found = [True, False, True]
-        with contextlib.nested(
-            mock.patch.object(ip_lib, 'device_exists',
-                              side_effect=port_found),
-            mock.patch.object(ip_lib, 'IPDevice')
-        ) as (device_exists, ip_dev):
+
+        with mock.patch.object(
+                ip_lib, 'device_exists',
+                side_effect=port_found) as device_exists:
             util.delete_neutron_ports(ports)
             device_exists.assert_has_calls([mock.call(p) for p in ports])
-            ip_dev.assert_has_calls(
+            mock_ip.assert_has_calls(
                 [mock.call('tap1234'),
-                 mock.call().link.delete(),
-                 mock.call('tap09ab'),
-                 mock.call().link.delete()])
+             mock.call().link.delete(),
+             mock.call('tap09ab'),
+             mock.call().link.delete()])
