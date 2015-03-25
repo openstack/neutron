@@ -309,11 +309,14 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if not router_ids:
             return []
         query = context.session.query(RouterL3AgentBinding)
+        query = query.options(orm.contains_eager(
+                              RouterL3AgentBinding.l3_agent))
+        query = query.join(RouterL3AgentBinding.l3_agent)
         if len(router_ids) > 1:
-            query = query.options(joinedload('l3_agent')).filter(
+            query = query.filter(
                 RouterL3AgentBinding.router_id.in_(router_ids))
         else:
-            query = query.options(joinedload('l3_agent')).filter(
+            query = query.filter(
                 RouterL3AgentBinding.router_id == router_ids[0])
         if admin_state_up is not None:
             query = (query.filter(agents_db.Agent.admin_state_up ==

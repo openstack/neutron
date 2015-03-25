@@ -695,6 +695,31 @@ class L3SchedulerTestBaseMixin(object):
                                                 l3_agent, router['id'])
         self.assertTrue(val)
 
+    def test_get_l3_agents_hosting_routers(self):
+        agent = self._register_l3_agent('host_6')
+        router = self._make_router(self.fmt,
+                                   tenant_id=str(uuid.uuid4()),
+                                   name='r1')
+        ctx = self.adminContext
+        router_id = router['router']['id']
+        self.plugin.router_scheduler.bind_router(ctx, router_id, agent)
+        agents = self.get_l3_agents_hosting_routers(ctx,
+                                                    [router_id])
+        self.assertEqual([agent.id], [agt.id for agt in agents])
+        agents = self.get_l3_agents_hosting_routers(ctx,
+                                                    [router_id],
+                                                    admin_state_up=True)
+        self.assertEqual([agent.id], [agt.id for agt in agents])
+
+        self._set_l3_agent_admin_state(ctx, agent.id, False)
+        agents = self.get_l3_agents_hosting_routers(ctx,
+                                                    [router_id])
+        self.assertEqual([agent.id], [agt.id for agt in agents])
+        agents = self.get_l3_agents_hosting_routers(ctx,
+                                                    [router_id],
+                                                    admin_state_up=True)
+        self.assertEqual([], agents)
+
 
 class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                           l3_db.L3_NAT_db_mixin,
