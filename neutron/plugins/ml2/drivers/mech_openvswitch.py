@@ -50,3 +50,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_mappings(self, agent):
         return agent['configurations'].get('bridge_mappings', {})
+
+    def check_vlan_transparency(self, context):
+        """Currently Openvswitch driver doesn't support vlan transparency."""
+        return False

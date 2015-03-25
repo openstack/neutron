@@ -2242,12 +2242,6 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         self.assertEqual(ctx_manager.exception.code,
                          webob.exc.HTTPForbidden.code)
 
-    def test_create_network_vlan_transparent(self):
-        name = "vlan_transparent"
-        cfg.CONF.set_override('vlan_transparent', True)
-        with self.network(name=name, vlan_transparent=True) as net:
-            self.assertEqual(net['network']['vlan_transparent'], True)
-
     def test_update_network(self):
         with self.network() as network:
             data = {'network': {'name': 'a_brand_new_name'}}

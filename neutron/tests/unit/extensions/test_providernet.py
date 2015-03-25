@@ -139,7 +139,6 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         exp_input = {'network': data}
         exp_input['network'].update({'admin_state_up': True,
                                      'tenant_id': 'an_admin',
-                                     'vlan_transparent': False,
                                      'shared': False})
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=exp_input)

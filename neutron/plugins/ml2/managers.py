@@ -22,6 +22,7 @@ from neutron.common import exceptions as exc
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron.extensions import vlantransparent
 from neutron.i18n import _LE, _LI
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
@@ -297,14 +298,17 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Helper method for checking vlan transparecncy support.
 
         :param context: context parameter to pass to each method call
-        :raises: neutron.plugins.ml2.common.VlanTransparencyError
-        if any mechanism driver doesn't support vlan transparency.
+        :raises: neutron.extensions.vlantransparent.
+        VlanTransparencyDriverError if any mechanism driver doesn't
+        support vlan transparency.
         """
-        if not cfg.CONF.vlan_transparent:
+        if context.current['vlan_transparent'] is None:
             return
-        for driver in self.ordered_mech_drivers:
-            if driver.obj.check_vlan_transparency(context) is False:
-                raise ml2_exc.VlanTransparencyError()
+
+        if context.current['vlan_transparent']:
+            for driver in self.ordered_mech_drivers:
+                if not driver.obj.check_vlan_transparency(context):
+                    raise vlantransparent.VlanTransparencyDriverError()
 
     def _call_on_drivers(self, method_name, context,
                          continue_on_failure=False):
