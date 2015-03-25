@@ -65,7 +65,7 @@ class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
             with self.ctx.session.begin(subtransactions=True):
                 self.ctx.session.add(agent)
 
-    def _create_and_set_agents_down(self, hosts, down_agent_count=0):
+    def _create_and_set_agents_down(self, hosts, down_agent_count=0, **kwargs):
         dhcp_agents = self._get_agents(hosts)
         # bring down the specified agents
         for agent in dhcp_agents[:down_agent_count]:
@@ -73,6 +73,8 @@ class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
             hour_old = old_time - datetime.timedelta(hours=1)
             agent['heartbeat_timestamp'] = hour_old
             agent['started_at'] = hour_old
+        for agent in dhcp_agents:
+            agent.update(kwargs)
         self._save_agents(dhcp_agents)
         return dhcp_agents
 
@@ -377,3 +379,43 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase,
         self.assertEqual('host-c', agent1[0]['host'])
         self.assertEqual('host-c', agent2[0]['host'])
         self.assertEqual('host-d', agent3[0]['host'])
+
+
+class TestDhcpSchedulerFilter(TestDhcpSchedulerBaseTestCase,
+                              sched_db.DhcpAgentSchedulerDbMixin):
+    def _test_get_dhcp_agents_hosting_networks(self, expected, **kwargs):
+        agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)
+        agents += self._create_and_set_agents_down(['host-c', 'host-d'], 1,
+                                                   admin_state_up=False)
+        self._test_schedule_bind_network(agents, self.network_id)
+        agents = self.get_dhcp_agents_hosting_networks(self.ctx,
+                                                       [self.network_id],
+                                                       **kwargs)
+        host_ids = set(a['host'] for a in agents)
+        self.assertEqual(expected, host_ids)
+
+    def test_get_dhcp_agents_hosting_networks_default(self):
+        self._test_get_dhcp_agents_hosting_networks({'host-a', 'host-b',
+                                                     'host-c', 'host-d'})
+
+    def test_get_dhcp_agents_hosting_networks_active(self):
+        self._test_get_dhcp_agents_hosting_networks({'host-b', 'host-d'},
+                                                    active=True)
+
+    def test_get_dhcp_agents_hosting_networks_admin_up(self):
+        self._test_get_dhcp_agents_hosting_networks({'host-a', 'host-b'},
+                                                    admin_state_up=True)
+
+    def test_get_dhcp_agents_hosting_networks_active_admin_up(self):
+        self._test_get_dhcp_agents_hosting_networks({'host-b'},
+                                                    active=True,
+                                                    admin_state_up=True)
+
+    def test_get_dhcp_agents_hosting_networks_admin_down(self):
+        self._test_get_dhcp_agents_hosting_networks({'host-c', 'host-d'},
+                                                    admin_state_up=False)
+
+    def test_get_dhcp_agents_hosting_networks_active_admin_down(self):
+        self._test_get_dhcp_agents_hosting_networks({'host-d'},
+                                                    active=True,
+                                                    admin_state_up=False)
