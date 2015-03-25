@@ -155,14 +155,12 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         ha_device_name = router.get_ha_device_name(router.ha_port['id'])
         ha_device_cidr = router.ha_port['ip_cidr']
         external_port = router.get_ex_gw_port()
-        ex_port_ipv6 = router._get_ipv6_lladdr(
-            external_port['mac_address'])
+        ex_port_ipv6 = ip_lib.get_ipv6_lladdr(external_port['mac_address'])
         external_device_name = router.get_external_device_name(
             external_port['id'])
         external_device_cidr = external_port['ip_cidr']
         internal_port = router.router[l3_constants.INTERFACE_KEY][0]
-        int_port_ipv6 = router._get_ipv6_lladdr(
-            internal_port['mac_address'])
+        int_port_ipv6 = ip_lib.get_ipv6_lladdr(internal_port['mac_address'])
         internal_device_name = router.get_internal_device_name(
             internal_port['id'])
         internal_device_cidr = internal_port['ip_cidr']

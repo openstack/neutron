@@ -306,7 +306,7 @@ class KeepalivedManager(object):
         conf_dir = os.path.join(confs_dir, self.resource_id)
         return conf_dir
 
-    def _get_full_config_file_path(self, filename, ensure_conf_dir=True):
+    def get_full_config_file_path(self, filename, ensure_conf_dir=True):
         conf_dir = self.get_conf_dir()
         if ensure_conf_dir:
             utils.ensure_dir(conf_dir)
@@ -314,13 +314,13 @@ class KeepalivedManager(object):
 
     def _output_config_file(self):
         config_str = self.config.get_config_str()
-        config_path = self._get_full_config_file_path('keepalived.conf')
+        config_path = self.get_full_config_file_path('keepalived.conf')
         utils.replace_file(config_path, config_str)
 
         return config_path
 
     def get_conf_on_disk(self):
-        config_path = self._get_full_config_file_path('keepalived.conf')
+        config_path = self.get_full_config_file_path('keepalived.conf')
         try:
             with open(config_path) as conf:
                 return conf.read()
