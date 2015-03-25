@@ -51,6 +51,7 @@ class NetworkClientJSON(service_client.ServiceClient):
         service_resource_prefix_map = {
             'networks': '',
             'subnets': '',
+            'subnetpools': '',
             'ports': '',
             'pools': 'lb',
             'vips': 'lb',
@@ -167,6 +168,46 @@ class NetworkClientJSON(service_client.ServiceClient):
             if name[:prefix_len] == prefix:
                 return method_functors[index](name[prefix_len:])
         raise AttributeError(name)
+
+    # Subnetpool methods
+    def create_subnetpool(self, post_data):
+        body = self.serialize_list(post_data, "subnetpools", "subnetpool")
+        uri = self.get_uri("subnetpools")
+        resp, body = self.post(uri, body)
+        body = {'subnetpool': self.deserialize_list(body)}
+        self.expected_success(201, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def get_subnetpool(self, id):
+        uri = self.get_uri("subnetpools")
+        subnetpool_uri = '%s/%s' % (uri, id)
+        resp, body = self.get(subnetpool_uri)
+        body = {'subnetpool': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_subnetpool(self, id):
+        uri = self.get_uri("subnetpools")
+        subnetpool_uri = '%s/%s' % (uri, id)
+        resp, body = self.delete(subnetpool_uri)
+        self.expected_success(204, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def list_subnetpools(self):
+        uri = self.get_uri("subnetpools")
+        resp, body = self.get(uri)
+        body = {'subnetpools': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def update_subnetpool(self, id, post_data):
+        body = self.serialize_list(post_data, "subnetpools", "subnetpool")
+        uri = self.get_uri("subnetpools")
+        subnetpool_uri = '%s/%s' % (uri, id)
+        resp, body = self.put(subnetpool_uri, body)
+        body = {'subnetpool': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
 
     # Common methods that are hard to automate
     def create_bulk_network(self, names):
