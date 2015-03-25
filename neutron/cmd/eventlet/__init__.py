@@ -10,5 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
-eventlet.monkey_patch()
+from neutron.common import eventlet_utils
+
+eventlet_utils.monkey_patch()

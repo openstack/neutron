@@ -1,3 +1,6 @@
+# Copyright (c) 2015 Cloudbase Solutions.
+# All Rights Reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -10,6 +13,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from neutron.common import eventlet_utils
+from neutron.plugins.openvswitch.agent import ovs_neutron_agent
 
-eventlet_utils.monkey_patch()
+
+def main():
+    ovs_neutron_agent.main()

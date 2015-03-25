@@ -19,9 +19,6 @@ import signal
 import sys
 import time
 
-import eventlet
-eventlet.monkey_patch()
-
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
