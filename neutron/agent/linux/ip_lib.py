@@ -717,3 +717,7 @@ def add_namespace_to_cmd(cmd, namespace=None):
 
 def get_ip_version(ip_or_cidr):
     return netaddr.IPNetwork(ip_or_cidr).version
+
+
+def get_ipv6_lladdr(mac_addr):
+    return '%s/64' % netaddr.EUI(mac_addr).ipv6_link_local()

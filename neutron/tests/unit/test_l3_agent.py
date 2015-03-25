@@ -202,7 +202,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                      '.ensure_dir').start()
 
         mock.patch('neutron.agent.linux.keepalived.KeepalivedManager'
-                   '._get_full_config_file_path').start()
+                   '.get_full_config_file_path').start()
 
         self.utils_exec_p = mock.patch(
             'neutron.agent.linux.utils.execute')

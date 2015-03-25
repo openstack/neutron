@@ -38,12 +38,6 @@ class HaRouter(router.RouterInfo):
         self.ha_port = None
         self.keepalived_manager = None
 
-    def _verify_ha(self):
-        # TODO(Carl) Remove when is_ha below is removed.
-        if not self.is_ha:
-            raise ValueError(_('Router %s is not a HA router') %
-                             self.router_id)
-
     @property
     def is_ha(self):
         # TODO(Carl) Remove when refactoring to use sub-classes is complete.
@@ -51,18 +45,15 @@ class HaRouter(router.RouterInfo):
 
     @property
     def ha_priority(self):
-        self._verify_ha()
         return self.router.get('priority', keepalived.HA_DEFAULT_PRIORITY)
 
     @property
     def ha_vr_id(self):
-        self._verify_ha()
         return self.router.get('ha_vr_id')
 
     @property
     def ha_state(self):
-        self._verify_ha()
-        ha_state_path = self.keepalived_manager._get_full_config_file_path(
+        ha_state_path = self.keepalived_manager.get_full_config_file_path(
             'state')
         try:
             with open(ha_state_path, 'r') as f:
@@ -73,8 +64,7 @@ class HaRouter(router.RouterInfo):
 
     @ha_state.setter
     def ha_state(self, new_state):
-        self._verify_ha()
-        ha_state_path = self.keepalived_manager._get_full_config_file_path(
+        ha_state_path = self.keepalived_manager.get_full_config_file_path(
             'state')
         try:
             with open(ha_state_path, 'w') as f:
@@ -158,12 +148,12 @@ class HaRouter(router.RouterInfo):
         instance = self._get_keepalived_instance()
         instance.remove_vips_vroutes_by_interface(interface)
 
-    def _ha_get_existing_cidrs(self, interface_name):
+    def _get_cidrs_from_keepalived(self, interface_name):
         instance = self._get_keepalived_instance()
         return instance.get_existing_vip_ip_addresses(interface_name)
 
     def get_router_cidrs(self, device):
-        return set(self._ha_get_existing_cidrs(device.name))
+        return set(self._get_cidrs_from_keepalived(device.name))
 
     def routes_updated(self):
         new_routes = self.router['routes']
@@ -196,9 +186,6 @@ class HaRouter(router.RouterInfo):
                 keepalived.KeepalivedVirtualRoute(
                     default_gw, gw_ip, interface_name))
 
-    def _get_ipv6_lladdr(self, mac_addr):
-        return '%s/64' % netaddr.EUI(mac_addr).ipv6_link_local()
-
     def _should_delete_ipv6_lladdr(self, ipv6_lladdr):
         """Only the master should have any IP addresses configured.
         Let keepalived manage IPv6 link local addresses, the same way we let
@@ -219,7 +206,7 @@ class HaRouter(router.RouterInfo):
         will only be present on the master.
         """
         device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
-        ipv6_lladdr = self._get_ipv6_lladdr(device.link.address)
+        ipv6_lladdr = ip_lib.get_ipv6_lladdr(device.link.address)
 
         if self._should_delete_ipv6_lladdr(ipv6_lladdr):
             device.addr.flush(n_consts.IP_VERSION_6)

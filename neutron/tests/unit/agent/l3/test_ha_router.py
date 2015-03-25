@@ -43,5 +43,5 @@ class TestBasicRouterOperations(base.BaseTestCase):
         device = mock.MagicMock()
         device.name.return_value = 'eth2'
         addresses = ['15.1.2.2/24', '15.1.2.3/32']
-        ri._ha_get_existing_cidrs = mock.MagicMock(return_value=addresses)
+        ri._get_cidrs_from_keepalived = mock.MagicMock(return_value=addresses)
         self.assertEqual(set(addresses), ri.get_router_cidrs(device))
