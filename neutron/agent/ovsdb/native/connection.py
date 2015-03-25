@@ -15,6 +15,7 @@
 import os
 import Queue
 import threading
+import traceback
 
 from ovs.db import idl
 from ovs import poller
@@ -80,7 +81,9 @@ class Connection(object):
                 try:
                     txn.results.put(txn.do_commit())
                 except Exception as ex:
-                    txn.results.put(ex)
+                    er = idlutils.ExceptionResult(ex=ex,
+                                                  tb=traceback.format_exc())
+                    txn.results.put(er)
                 self.txns.task_done()
 
     def queue_txn(self, txn):

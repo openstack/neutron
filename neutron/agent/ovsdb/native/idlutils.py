@@ -21,6 +21,12 @@ from ovs import poller
 from ovs import stream
 
 
+class ExceptionResult(object):
+    def __init__(self, ex, tb):
+        self.ex = ex
+        self.tb = tb
+
+
 def get_schema_helper(connection):
     err, strm = stream.Stream.open_block(
         stream.Stream.open(connection))
