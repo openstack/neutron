@@ -868,7 +868,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                'min_prefixlen': min_prefixlen,
                'max_prefixlen': max_prefixlen,
                'shared': subnetpool['shared'],
-               'allow_overlap': subnetpool['allow_overlap'],
                'prefixes': [prefix['cidr']
                             for prefix in subnetpool['prefixes']],
                'ip_version': subnetpool['ip_version']}
@@ -1373,8 +1372,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                          sp_reader.default_prefixlen,
                          'min_prefixlen': sp_reader.min_prefixlen,
                          'max_prefixlen': sp_reader.max_prefixlen,
-                         'shared': sp_reader.shared,
-                         'allow_overlap': sp_reader.allow_overlap}
+                         'shared': sp_reader.shared}
             subnetpool = models_v2.SubnetPool(**pool_args)
             context.session.add(subnetpool)
             for prefix in sp_reader.prefixes:
@@ -1410,8 +1408,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             updated['prefixes'] = orig_prefixes
 
         for key in ['id', 'name', 'ip_version', 'min_prefixlen',
-                    'max_prefixlen', 'default_prefixlen', 'allow_overlap',
-                    'shared']:
+                    'max_prefixlen', 'default_prefixlen', 'shared']:
             self._write_key(key, updated, model, new_pool)
 
         return updated
