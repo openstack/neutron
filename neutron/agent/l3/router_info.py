@@ -499,8 +499,6 @@ class RouterInfo(object):
                     return
 
                 # Process SNAT/DNAT rules and addresses for floating IPs
-                if self.router['distributed']:
-                    self.create_dvr_fip_interfaces(ex_gw_port)
                 self.process_snat_dnat_for_fip()
 
             # Once NAT rules for floating IPs are safely in place

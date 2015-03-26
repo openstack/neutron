@@ -476,6 +476,12 @@ class DvrRouter(router.RouterInfo):
 
         super(DvrRouter, self).perform_snat_action(snat_callback, *args)
 
+    def process_external(self, agent):
+        ex_gw_port = self.get_ex_gw_port()
+        if ex_gw_port:
+            self.create_dvr_fip_interfaces(ex_gw_port)
+        super(DvrRouter, self).process_external(agent)
+
     def create_dvr_fip_interfaces(self, ex_gw_port):
         floating_ips = self.get_floating_ips()
         fip_agent_port = self.get_floating_agent_gw_interface(
