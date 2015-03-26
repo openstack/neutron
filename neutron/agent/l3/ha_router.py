@@ -73,6 +73,28 @@ class HaRouter(router.RouterInfo):
             LOG.error(_LE('Error while writing HA state for %s'),
                       self.router_id)
 
+    def initialize(self, process_monitor, state_change_callback):
+        ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
+        if not ha_port:
+            LOG.error(_LE('Unable to process HA router %s without HA port'),
+                      self.router_id)
+            return
+
+        self._set_subnet_info(ha_port)
+        self.ha_port = ha_port
+        self._init_keepalived_manager(process_monitor)
+        self.ha_network_added(ha_port['network_id'],
+                              ha_port['id'],
+                              ha_port['ip_cidr'],
+                              ha_port['mac_address'])
+        self.update_initial_state(state_change_callback)
+        self.spawn_state_change_monitor(process_monitor)
+
+    def terminate(self, process_monitor):
+        self.destroy_state_change_monitor(process_monitor)
+        self.ha_network_removed()
+        self.disable_keepalived()
+
     def _init_keepalived_manager(self, process_monitor):
         self.keepalived_manager = keepalived.KeepalivedManager(
             self.router['id'],
@@ -103,7 +125,7 @@ class HaRouter(router.RouterInfo):
 
         config.add_instance(instance)
 
-    def spawn_keepalived(self):
+    def enable_keepalived(self):
         self.keepalived_manager.spawn()
 
     def disable_keepalived(self):
