@@ -215,6 +215,8 @@ class ContrailPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self, plugin=None, ext_mgr=None):
         if 'v6' in self._testMethodName:
             self.skipTest("OpenContrail Plugin does not support IPV6.")
+        if 'test_create_subnet_only_ip_version' in self._testMethodName:
+            self.skipTest("OpenContrail Plugin does not support subnet pools.")
         cfg.CONF.keystone_authtoken = KeyStoneInfo()
         mock.patch('requests.post').start().side_effect = FAKE_SERVER.request
         super(ContrailPluginTestCase, self).setUp(self._plugin_name)

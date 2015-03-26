@@ -1212,7 +1212,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
                                retry_on_request=True,
                                retry_on_deadlock=True)
-    def _create_subnet_from_pool(self, context, subnet):
+    def _create_subnet_from_pool(self, context, subnet, subnetpool_id):
         s = subnet['subnet']
         tenant_id = self._get_tenant_id_for_create(context, s)
         has_allocpool = attributes.is_attr_set(s['allocation_pools'])
@@ -1223,7 +1223,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             raise n_exc.BadRequest(resource='subnets', msg=reason)
 
         with context.session.begin(subtransactions=True):
-            subnetpool = self._get_subnetpool(context, s['subnetpool_id'])
+            subnetpool = self._get_subnetpool(context, subnetpool_id)
             network = self._get_network(context, s["network_id"])
             allocator = subnet_alloc.SubnetAllocator(subnetpool)
             req = self._make_subnet_request(tenant_id, s, subnetpool)
@@ -1273,6 +1273,39 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                          subnet['network_id'])
         return self._make_subnet_dict(subnet)
 
+    def _get_subnetpool_id(self, subnet):
+        """Returns the subnetpool id for this request
+
+        If the pool id was explicitly set in the request then that will be
+        returned, even if it is None.
+
+        Otherwise, the default pool for the IP version requested will be
+        returned.  This will either be a pool id or None (the default for each
+        configuration parameter).  This implies that the ip version must be
+        either set implicitly with a specific cidr or explicitly using
+        ip_version attribute.
+
+        :param subnet: The subnet dict from the request
+        """
+        subnetpool_id = subnet.get('subnetpool_id',
+                                   attributes.ATTR_NOT_SPECIFIED)
+        if subnetpool_id != attributes.ATTR_NOT_SPECIFIED:
+            return subnetpool_id
+
+        cidr = subnet.get('cidr')
+        if attributes.is_attr_set(cidr):
+            ip_version = netaddr.IPNetwork(cidr).version
+        else:
+            ip_version = subnet.get('ip_version')
+            if not attributes.is_attr_set(ip_version):
+                msg = _('ip_version must be specified in the absence of '
+                        'cidr and subnetpool_id')
+                raise n_exc.BadRequest(resource='subnets', msg=msg)
+
+        if ip_version == 4:
+            return cfg.CONF.default_ipv4_subnet_pool
+        return cfg.CONF.default_ipv6_subnet_pool
+
     def create_subnet(self, context, subnet):
 
         s = subnet['subnet']
@@ -1290,11 +1323,15 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             net = netaddr.IPNetwork(s['cidr'])
             subnet['subnet']['cidr'] = '%s/%s' % (net.network, net.prefixlen)
 
-        subnetpool_id = s.get('subnetpool_id', attributes.ATTR_NOT_SPECIFIED)
-        if not attributes.is_attr_set(subnetpool_id):
+        subnetpool_id = self._get_subnetpool_id(s)
+        if not subnetpool_id:
+            if not has_cidr:
+                msg = _('A cidr must be specified in the absence of a '
+                        'subnet pool')
+                raise n_exc.BadRequest(resource='subnets', msg=msg)
             # Create subnet from the implicit(AKA null) pool
             return self._create_subnet_from_implicit_pool(context, subnet)
-        return self._create_subnet_from_pool(context, subnet)
+        return self._create_subnet_from_pool(context, subnet, subnetpool_id)
 
     def _update_subnet_dns_nameservers(self, context, id, s):
         old_dns_list = self._get_dns_by_subnet(context, id)

@@ -782,7 +782,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                           'allow_put': False,
                           'default': ATTR_NOT_SPECIFIED,
                           'required_by_policy': False,
-                          'validate': {'type:uuid': None},
+                          'validate': {'type:uuid_or_none': None},
                           'is_visible': True},
         'prefixlen': {'allow_post': True,
                       'allow_put': False,
