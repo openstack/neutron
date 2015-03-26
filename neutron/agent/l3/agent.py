@@ -35,6 +35,9 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -220,7 +223,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         if self.conf.enable_metadata_proxy:
             self.metadata_driver = metadata_driver.MetadataDriver(self)
-            self.event_observers.add(self.metadata_driver)
 
     def _check_config_params(self):
         """Check items in configuration files.
@@ -309,6 +311,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri = self._create_router(router_id, router)
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_added, ri)
+        registry.notify(resources.ROUTER, events.BEFORE_CREATE,
+                        self, router=ri)
 
         self.router_info[router_id] = ri
 
@@ -326,12 +330,15 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_removed, ri)
+        registry.notify(resources.ROUTER, events.BEFORE_DELETE,
+                        self, router=ri)
 
         ri.delete(self)
         del self.router_info[router_id]
 
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_removed, ri)
+        registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
 
     def update_fip_statuses(self, ri, existing_floating_ips, fip_statuses):
         # Identify floating IPs which were disabled
@@ -413,15 +420,19 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.process(self)
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_added, ri)
+        registry.notify(resources.ROUTER, events.AFTER_CREATE, self, router=ri)
 
     def _process_updated_router(self, router):
         ri = self.router_info[router['id']]
         ri.router = router
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_updated, ri)
+        registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
+                        self, router=ri)
         ri.process(self)
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_updated, ri)
+        registry.notify(resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
 
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():

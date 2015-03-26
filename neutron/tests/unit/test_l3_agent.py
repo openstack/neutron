@@ -37,6 +37,8 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.callbacks import manager
+from neutron.callbacks import registry
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
@@ -44,7 +46,6 @@ from neutron.i18n import _LE
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
-
 
 _uuid = uuidutils.generate_uuid
 HOSTNAME = 'myhost'
@@ -309,6 +310,10 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
 
         self.ri_kwargs = {'agent_conf': self.conf,
                           'interface_driver': self.mock_driver}
+
+        self._callback_manager = manager.CallbacksManager()
+        mock.patch.object(registry, '_get_callback_manager',
+                          return_value=self._callback_manager).start()
 
     def _process_router_instance_for_agent(self, agent, ri, router):
         ri.router = router
