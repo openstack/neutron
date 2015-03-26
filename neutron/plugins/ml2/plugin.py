@@ -1361,7 +1361,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 updated_port = self._make_port_dict(port)
                 network = self.get_network(context,
                                            original_port['network_id'])
-                levels = db.get_binding_levels(session, port_id,
+                levels = db.get_binding_levels(session, port.id,
                                                port.port_binding.host)
                 mech_context = driver_context.PortContext(
                     self, context, updated_port, network, port.port_binding,
