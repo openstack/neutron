@@ -27,10 +27,12 @@ import logging as std_logging
 import os.path
 
 import fixtures
+import mock
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
 
+from neutron.agent.linux import external_process
 from neutron.common import config
 from neutron.common import rpc as n_rpc
 from neutron import policy
@@ -59,6 +61,28 @@ def fake_consume_in_threads(self):
 
 
 bool_from_env = sub_base.bool_from_env
+
+
+class ProcessMonitorFixture(fixtures.Fixture):
+    """Test fixture to capture and cleanup any spawn process monitor."""
+    def setUp(self):
+        super(ProcessMonitorFixture, self).setUp()
+        self.old_callable = (
+            external_process.ProcessMonitor._spawn_checking_thread)
+        p = mock.patch("neutron.agent.linux.external_process.ProcessMonitor."
+                       "_spawn_checking_thread",
+                       new=lambda x: self.record_calls(x))
+        p.start()
+        self.instances = []
+        self.addCleanup(self.stop)
+
+    def stop(self):
+        for instance in self.instances:
+            instance.stop()
+
+    def record_calls(self, instance):
+        self.old_callable(instance)
+        self.instances.append(instance)
 
 
 class BaseTestCase(sub_base.SubBaseTestCase):
@@ -97,6 +121,7 @@ class BaseTestCase(sub_base.SubBaseTestCase):
         cfg.CONF.set_override('state_path', self.get_default_temp_dir().path)
 
         self.addCleanup(CONF.reset)
+        self.useFixture(ProcessMonitorFixture())
 
         self.useFixture(fixtures.MonkeyPatch(
             'neutron.common.exceptions.NeutronException.use_fatal_exceptions',

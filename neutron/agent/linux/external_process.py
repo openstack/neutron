@@ -199,7 +199,11 @@ class ProcessMonitor(object):
         self._monitored_processes.pop(service_id, None)
 
     def stop(self):
-        """Stop the process monitoring. """
+        """Stop the process monitoring.
+
+        This method will stop the monitoring thread, but no monitored
+        process will be stopped.
+        """
         self._monitor_processes = False
 
     def _spawn_checking_thread(self):
