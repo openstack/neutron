@@ -94,7 +94,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         with self.admin_ctx.session.begin(subtransactions=True):
             scheduler = l3_agent_scheduler.ChanceScheduler()
             agents_db = self.plugin.get_agents_db(self.admin_ctx)
-            scheduler.bind_ha_router_to_agents(
+            scheduler._bind_ha_router_to_agents(
                 self.plugin,
                 self.admin_ctx,
                 router_id,
