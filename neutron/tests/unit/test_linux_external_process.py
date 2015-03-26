@@ -23,7 +23,7 @@ from neutron.tests import base
 class TestProcessManager(base.BaseTestCase):
     def setUp(self):
         super(TestProcessManager, self).setUp()
-        self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
+        self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         self.execute = self.execute_p.start()
         self.delete_if_exists = mock.patch(
             'neutron.openstack.common.fileutils.delete_if_exists').start()

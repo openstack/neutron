@@ -616,7 +616,7 @@ class TestBase(base.BaseTestCase):
         self.conf.set_override('state_path', '')
 
         self.replace_p = mock.patch('neutron.agent.linux.utils.replace_file')
-        self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
+        self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         self.safe = self.replace_p.start()
         self.execute = self.execute_p.start()
 

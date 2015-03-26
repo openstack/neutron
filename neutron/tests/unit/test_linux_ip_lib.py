@@ -16,8 +16,8 @@
 import mock
 import netaddr
 
+from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils  # noqa
 from neutron.common import exceptions
 from neutron.tests import base
 
@@ -181,7 +181,7 @@ RULE_V6_SAMPLE = ("""
 class TestSubProcessBase(base.BaseTestCase):
     def setUp(self):
         super(TestSubProcessBase, self).setUp()
-        self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
+        self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         self.execute = self.execute_p.start()
 
     def test_execute_wrapper(self):
@@ -243,7 +243,7 @@ class TestIpWrapper(base.BaseTestCase):
         mocked_islink.assert_called_once_with('/sys/class/net/lo')
         self.assertEqual(retval, [ip_lib.IPDevice('lo')])
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch('neutron.agent.common.utils.execute')
     def test_get_devices_namespaces(self, mocked_execute):
         fake_str = mock.Mock()
         fake_str.split.return_value = ['lo']
@@ -309,7 +309,7 @@ class TestIpWrapper(base.BaseTestCase):
         with mock.patch.object(ip_lib, 'IPDevice') as ip_dev:
             ip = ip_lib.IPWrapper()
             with mock.patch.object(ip.netns, 'exists') as ns_exists:
-                with mock.patch('neutron.agent.linux.utils.execute'):
+                with mock.patch('neutron.agent.common.utils.execute'):
                     ns_exists.return_value = False
                     ip.ensure_namespace('ns')
                     self.execute.assert_has_calls(
@@ -860,7 +860,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
         self.netns_cmd = ip_lib.IpNetnsCommand(self.parent)
 
     def test_add_namespace(self):
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+        with mock.patch('neutron.agent.common.utils.execute') as execute:
             ns = self.netns_cmd.add('ns')
             self._assert_sudo([], ('add', 'ns'), use_root_namespace=True)
             self.assertEqual(ns.namespace, 'ns')
@@ -870,7 +870,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 run_as_root=True, check_exit_code=True, extra_ok_codes=None)
 
     def test_delete_namespace(self):
-        with mock.patch('neutron.agent.linux.utils.execute'):
+        with mock.patch('neutron.agent.common.utils.execute'):
             self.netns_cmd.delete('ns')
             self._assert_sudo([], ('delete', 'ns'), use_root_namespace=True)
 
@@ -879,7 +879,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
         retval = '\n'.join(NETNS_SAMPLE)
         # need another instance to avoid mocking
         netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+        with mock.patch('neutron.agent.common.utils.execute') as execute:
             execute.return_value = retval
             self.assertTrue(
                 netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
@@ -892,7 +892,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
         retval = '\n'.join(NETNS_SAMPLE)
         # need another instance to avoid mocking
         netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+        with mock.patch('neutron.agent.common.utils.execute') as execute:
             execute.return_value = retval
             self.assertFalse(
                 netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
@@ -902,7 +902,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
 
     def test_execute(self):
         self.parent.namespace = 'ns'
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+        with mock.patch('neutron.agent.common.utils.execute') as execute:
             self.netns_cmd.execute(['ip', 'link', 'list'])
             execute.assert_called_once_with(['ip', 'netns', 'exec', 'ns', 'ip',
                                              'link', 'list'],
@@ -912,7 +912,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
 
     def test_execute_env_var_prepend(self):
         self.parent.namespace = 'ns'
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+        with mock.patch('neutron.agent.common.utils.execute') as execute:
             env = dict(FOO=1, BAR=2)
             self.netns_cmd.execute(['ip', 'link', 'list'], env)
             execute.assert_called_once_with(
@@ -922,7 +922,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 run_as_root=True, check_exit_code=True, extra_ok_codes=None)
 
     def test_execute_nosudo_with_no_namespace(self):
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+        with mock.patch('neutron.agent.common.utils.execute') as execute:
             self.parent.namespace = None
             self.netns_cmd.execute(['test'])
             execute.assert_called_once_with(['test'],

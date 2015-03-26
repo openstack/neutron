@@ -23,9 +23,9 @@ from oslo_log import log
 import testtools
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.common import utils
 from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
@@ -933,7 +933,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
 
     def test_daemon_loop_uses_polling_manager(self):
         with mock.patch(
-            'neutron.agent.linux.polling.get_polling_manager') as mock_get_pm:
+            'neutron.agent.common.polling.get_polling_manager') as mock_get_pm:
             with mock.patch.object(self.agent, 'rpc_loop') as mock_loop:
                 self.agent.daemon_loop()
         mock_get_pm.assert_called_with(True,

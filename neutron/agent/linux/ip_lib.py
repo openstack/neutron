@@ -19,7 +19,7 @@ import os
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron.agent.linux import utils
+from neutron.agent.common import utils
 from neutron.common import exceptions
 from neutron.i18n import _LE
 

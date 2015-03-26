@@ -133,7 +133,7 @@ class TunnelTest(base.BaseTestCase):
                                          self.TUN_BRIDGE,
                                          self.MAP_TUN_BRIDGE]
 
-        self.execute = mock.patch('neutron.agent.linux.utils.execute').start()
+        self.execute = mock.patch('neutron.agent.common.utils.execute').start()
 
         self._define_expected_calls()
 
