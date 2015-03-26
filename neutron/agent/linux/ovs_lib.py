@@ -22,5 +22,6 @@ from neutron.agent.common import ovs_lib
 INVALID_OFPORT = ovs_lib.INVALID_OFPORT
 BaseOVS = ovs_lib.BaseOVS
 OVSBridge = ovs_lib.OVSBridge
+DeferredOVSBridge = ovs_lib.DeferredOVSBridge
 VifPort = ovs_lib.VifPort
 _build_flow_expr_str = ovs_lib._build_flow_expr_str
