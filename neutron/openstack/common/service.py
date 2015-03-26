@@ -199,6 +199,13 @@ class ServiceWrapper(object):
 
 
 class ProcessLauncher(object):
+    _signal_handlers_set = set()
+
+    @classmethod
+    def _handle_class_signals(cls, *args, **kwargs):
+        for handler in cls._signal_handlers_set:
+            handler(*args, **kwargs)
+
     def __init__(self, wait_interval=0.01):
         """Constructor.
 
@@ -214,7 +221,8 @@ class ProcessLauncher(object):
         self.handle_signal()
 
     def handle_signal(self):
-        _set_signals_handler(self._handle_signal)
+        self._signal_handlers_set.add(self._handle_signal)
+        _set_signals_handler(self._handle_class_signals)
 
     def _handle_signal(self, signo, frame):
         self.sigcaught = signo
@@ -391,8 +399,14 @@ class ProcessLauncher(object):
                 if not _is_sighup_and_daemon(self.sigcaught):
                     break
 
+                cfg.CONF.reload_config_files()
+                for service in set(
+                        [wrap.service for wrap in self.children.values()]):
+                    service.reset()
+
                 for pid in self.children:
                     os.kill(pid, signal.SIGHUP)
+
                 self.running = True
                 self.sigcaught = None
         except eventlet.greenlet.GreenletExit:
