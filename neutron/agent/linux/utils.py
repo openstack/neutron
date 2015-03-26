@@ -286,23 +286,23 @@ def get_cmdline_from_pid(pid):
         return f.readline().split('\0')[:-1]
 
 
-def cmdlines_are_equal(cmd1, cmd2):
-    """Validate provided lists containing output of /proc/cmdline are equal
-
-    This function ignores absolute paths of executables in order to have
-    correct results in case one list uses absolute path and the other does not.
-    """
-    cmd1 = remove_abs_path(cmd1)
-    cmd2 = remove_abs_path(cmd2)
-    return cmd1 == cmd2
+def cmd_matches_expected(cmd, expected_cmd):
+    abs_cmd = remove_abs_path(cmd)
+    abs_expected_cmd = remove_abs_path(expected_cmd)
+    if abs_cmd != abs_expected_cmd:
+        # Commands executed with #! are prefixed with the script
+        # executable. Check for the expected cmd being a subset of the
+        # actual cmd to cover this possibility.
+        abs_cmd = remove_abs_path(abs_cmd[1:])
+    return abs_cmd == abs_expected_cmd
 
 
 def pid_invoked_with_cmdline(pid, expected_cmd):
     """Validate process with given pid is running with provided parameters
 
     """
-    cmdline = get_cmdline_from_pid(pid)
-    return cmdlines_are_equal(expected_cmd, cmdline)
+    cmd = get_cmdline_from_pid(pid)
+    return cmd_matches_expected(cmd, expected_cmd)
 
 
 def wait_until_true(predicate, timeout=60, sleep=1, exception=None):

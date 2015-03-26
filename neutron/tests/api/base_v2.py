@@ -55,19 +55,6 @@ import testtools
 from neutron.tests import sub_base
 
 
-class AttributeDict(dict):
-
-    """
-    Provide attribute access (dict.key) to dictionary values.
-    """
-
-    def __getattr__(self, name):
-        """Allow attribute access for all keys in the dict."""
-        if name in self:
-            return self[name]
-        raise AttributeError(_("Unknown attribute '%s'.") % name)
-
-
 @six.add_metaclass(abc.ABCMeta)
 class BaseNeutronClient(object):
     """
