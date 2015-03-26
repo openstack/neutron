@@ -29,12 +29,26 @@ from alembic import op
 
 
 def upgrade():
-    op.execute('INSERT INTO networksecuritybindings (network_id, '
-               'port_security_enabled) SELECT id, True FROM networks '
-               'WHERE id NOT IN (SELECT network_id FROM '
-               'networksecuritybindings);')
+    context = op.get_context()
 
-    op.execute('INSERT INTO portsecuritybindings (port_id, '
-               'port_security_enabled) SELECT id, True FROM ports '
-               'WHERE id NOT IN (SELECT port_id FROM '
-               'portsecuritybindings);')
+    if context.bind.dialect.name == 'ibm_db_sa':
+        # NOTE(junxie): DB2 stores booleans as 0 and 1.
+        op.execute('INSERT INTO networksecuritybindings (network_id, '
+                   'port_security_enabled) SELECT id, 1 FROM networks '
+                   'WHERE id NOT IN (SELECT network_id FROM '
+                   'networksecuritybindings);')
+
+        op.execute('INSERT INTO portsecuritybindings (port_id, '
+                   'port_security_enabled) SELECT id, 1 FROM ports '
+                   'WHERE id NOT IN (SELECT port_id FROM '
+                   'portsecuritybindings);')
+    else:
+        op.execute('INSERT INTO networksecuritybindings (network_id, '
+                   'port_security_enabled) SELECT id, True FROM networks '
+                   'WHERE id NOT IN (SELECT network_id FROM '
+                   'networksecuritybindings);')
+
+        op.execute('INSERT INTO portsecuritybindings (port_id, '
+                   'port_security_enabled) SELECT id, True FROM ports '
+                   'WHERE id NOT IN (SELECT port_id FROM '
+                   'portsecuritybindings);')
