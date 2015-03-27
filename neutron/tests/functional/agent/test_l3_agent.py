@@ -151,6 +151,10 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             name_getter(expected_device['id']), expected_device['ip_cidr'],
             expected_device['mac_address'], namespace)
 
+    def get_device_mtu(self, target_device, name_getter, namespace):
+        device = ip_lib.IPDevice(name_getter(target_device), namespace)
+        return device.link.mtu
+
     def get_expected_keepalive_configuration(self, router):
         router_id = router.router_id
         ha_device_name = router.get_ha_device_name(router.ha_port['id'])
@@ -656,7 +660,8 @@ class TestDvrRouter(L3AgentTestFramework):
     def test_dvr_router_lifecycle_without_ha_with_snat_with_fips(self):
         self._dvr_router_lifecycle(enable_ha=False, enable_snat=True)
 
-    def _dvr_router_lifecycle(self, enable_ha=False, enable_snat=False):
+    def _dvr_router_lifecycle(self, enable_ha=False, enable_snat=False,
+                              custom_mtu=2000):
         '''Test dvr router lifecycle
 
         :param enable_ha: sets the ha value for the router.
@@ -668,6 +673,7 @@ class TestDvrRouter(L3AgentTestFramework):
         # Since by definition this is a dvr (distributed = true)
         # only dvr and dvr_snat are applicable
         self.agent.conf.agent_mode = 'dvr_snat' if enable_snat else 'dvr'
+        self.agent.conf.network_device_mtu = custom_mtu
 
         # We get the router info particular to a dvr router
         router_info = self.generate_dvr_router_info(
@@ -704,6 +710,7 @@ class TestDvrRouter(L3AgentTestFramework):
         self._assert_floating_ip_chains(router)
         self._assert_metadata_chains(router)
         self._assert_extra_routes(router)
+        self._assert_rfp_fpr_mtu(router, custom_mtu)
 
         self._delete_router(self.agent, router.router_id)
         self._assert_interfaces_deleted_from_ovs()
@@ -889,3 +896,13 @@ class TestDvrRouter(L3AgentTestFramework):
         self._create_router(restarted_agent, router1.router)
         self._assert_dvr_snat_gateway(router1)
         self.assertFalse(self._namespace_exists(fip_ns))
+
+    def _assert_rfp_fpr_mtu(self, router, expected_mtu=1500):
+        dev_mtu = self.get_device_mtu(
+            router.router_id, router.fip_ns.get_rtr_ext_device_name,
+            router.ns_name)
+        self.assertEqual(expected_mtu, dev_mtu)
+        dev_mtu = self.get_device_mtu(
+            router.router_id, router.fip_ns.get_int_device_name,
+            router.fip_ns.get_name())
+        self.assertEqual(expected_mtu, dev_mtu)

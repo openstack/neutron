@@ -199,6 +199,9 @@ class FipNamespace(namespaces.Namespace):
             self._internal_ns_interface_added(str(fip_2_rtr),
                                               fip_2_rtr_name,
                                               fip_ns_name)
+            if self.agent_conf.network_device_mtu:
+                int_dev[0].link.set_mtu(self.agent_conf.network_device_mtu)
+                int_dev[1].link.set_mtu(self.agent_conf.network_device_mtu)
             int_dev[0].link.set_up()
             int_dev[1].link.set_up()
 
