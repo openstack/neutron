@@ -19,8 +19,8 @@ import netaddr
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
 from neutron.openstack.common import uuidutils
-from neutron.tests.common import base
-from neutron.tests import sub_base
+from neutron.tests import base as tests_base
+from neutron.tests.common import base as common_base
 from neutron.tests import tools
 
 NS_PREFIX = 'func-'
@@ -31,8 +31,8 @@ VETH1_PREFIX = 'test-veth1'
 
 
 def get_rand_port_name():
-    return sub_base.get_rand_name(max_length=n_const.DEVICE_NAME_MAX_LEN,
-                                  prefix=PORT_PREFIX)
+    return tests_base.get_rand_name(max_length=n_const.DEVICE_NAME_MAX_LEN,
+                                    prefix=PORT_PREFIX)
 
 
 def increment_ip_cidr(ip_cidr, offset=1):
@@ -95,7 +95,7 @@ class VethFixture(fixtures.Fixture):
             name1 = name0.replace(VETH0_PREFIX, VETH1_PREFIX)
             return ip_wrapper.add_veth(name0, name1)
 
-        self.ports = base.create_resource(VETH0_PREFIX, _create_veth)
+        self.ports = common_base.create_resource(VETH0_PREFIX, _create_veth)
         self.addCleanup(self.destroy)
 
     def destroy(self):
