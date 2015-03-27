@@ -157,7 +157,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def get_expected_keepalive_configuration(self, router):
         router_id = router.router_id
-        ha_device_name = router.get_ha_device_name(router.ha_port['id'])
+        ha_device_name = router.get_ha_device_name()
         ha_device_cidr = router.ha_port['ip_cidr']
         external_port = router.get_ex_gw_port()
         ex_port_ipv6 = ip_lib.get_ipv6_lladdr(external_port['mac_address'])
@@ -279,8 +279,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             namespace=router.ns_name) for fip in floating_ips)
 
     def fail_ha_router(self, router):
-        device_name = router.get_ha_device_name(
-            router.router[l3_constants.HA_INTERFACE_KEY]['id'])
+        device_name = router.get_ha_device_name()
         ha_device = ip_lib.IPDevice(device_name, router.ns_name)
         ha_device.link.set_down()
 
@@ -514,9 +513,10 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.assertEqual(expected_gateway, existing_gateway)
 
     def _assert_ha_device(self, router):
-        self.assertTrue(self.device_exists_with_ip_mac(
-            router.router[l3_constants.HA_INTERFACE_KEY],
-            router.get_ha_device_name, router.ns_name))
+        device = router.router[l3_constants.HA_INTERFACE_KEY]
+        self.assertTrue(ip_lib.device_exists_with_ip_mac(
+            router.get_ha_device_name(), device['ip_cidr'],
+            device['mac_address'], router.ns_name))
 
     @classmethod
     def _get_addresses_on_device(cls, namespace, interface):
@@ -539,7 +539,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             router1._get_primary_vip(),
             self._get_addresses_on_device(
                 router1.ns_name,
-                router1.get_ha_device_name(router1.ha_port['id'])))
+                router1.get_ha_device_name()))
 
 
 class L3HATestFramework(L3AgentTestFramework):
@@ -582,8 +582,7 @@ class L3HATestFramework(L3AgentTestFramework):
         utils.wait_until_true(lambda: router1.ha_state == 'master')
         utils.wait_until_true(lambda: router2.ha_state == 'backup')
 
-        device_name = router1.get_ha_device_name(
-            router1.router[l3_constants.HA_INTERFACE_KEY]['id'])
+        device_name = router1.get_ha_device_name()
         ha_device = ip_lib.IPDevice(device_name, namespace=router1.ns_name)
         ha_device.link.set_down()
 
