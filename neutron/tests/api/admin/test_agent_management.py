@@ -27,7 +27,8 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
             raise cls.skipException(msg)
         body = cls.admin_client.list_agents()
         agents = body['agents']
-        cls.agent = agents[0]
+        cls.agent = agents[0]  # don't modify this agent
+        cls.dyn_agent = agents[1]
 
     @test.attr(type='smoke')
     @test.idempotent_id('9c80f04d-11f3-44a4-8738-ed2f879b0ff4')
@@ -73,7 +74,7 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
         self.useFixture(fixtures.LockFixture('agent_description'))
         description = 'description for update agent.'
         agent_description = {'description': description}
-        body = self.admin_client.update_agent(agent_id=self.agent['id'],
+        body = self.admin_client.update_agent(agent_id=self.dyn_agent['id'],
                                               agent_info=agent_description)
         self.addCleanup(self._restore_agent)
         updated_description = body['agent']['description']
