@@ -31,6 +31,14 @@ class NoopMeteringDriver(abstract_driver.MeteringAbstractDriver):
         pass
 
     @log.log
+    def add_metering_label_rule(self, context, routers):
+        pass
+
+    @log.log
+    def remove_metering_label_rule(self, context, routers):
+        pass
+
+    @log.log
     def add_metering_label(self, context, routers):
         pass
 

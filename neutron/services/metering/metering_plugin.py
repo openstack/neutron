@@ -57,8 +57,8 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         rule = super(MeteringPlugin, self).create_metering_label_rule(
             context, metering_label_rule)
 
-        data = self.get_sync_data_metering(context)
-        self.meter_rpc.update_metering_label_rules(context, data)
+        data = self.get_sync_data_for_rule(context, rule)
+        self.meter_rpc.add_metering_label_rule(context, data)
 
         return rule
 
@@ -66,7 +66,6 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         rule = super(MeteringPlugin, self).delete_metering_label_rule(
             context, rule_id)
 
-        data = self.get_sync_data_metering(context)
-        self.meter_rpc.update_metering_label_rules(context, data)
-
+        data = self.get_sync_data_for_rule(context, rule)
+        self.meter_rpc.remove_metering_label_rule(context, data)
         return rule

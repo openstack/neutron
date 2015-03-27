@@ -216,6 +216,14 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         LOG.debug("Get router traffic counters")
         return self._invoke_driver(context, routers, 'get_traffic_counters')
 
+    def add_metering_label_rule(self, context, routers):
+        return self._invoke_driver(context, routers,
+                                   'add_metering_label_rule')
+
+    def remove_metering_label_rule(self, context, routers):
+        return self._invoke_driver(context, routers,
+                                   'remove_metering_label_rule')
+
     def update_metering_label_rules(self, context, routers):
         LOG.debug("Update metering rules from agent")
         return self._invoke_driver(context, routers,
