@@ -86,16 +86,6 @@ class FlatTypeTest(testlib_api.SqlTestCase):
                           self.driver.validate_provider_segment,
                           segment)
 
-    def test_validate_provider_segment_with_empty_physical_nets_list(self):
-        config.cfg.CONF.set_override('flat_networks', [],
-                                     group='ml2_type_flat')
-        driver = type_flat.FlatTypeDriver()
-        segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
-                   api.PHYSICAL_NETWORK: 'flat_net'}
-        self.assertRaises(exc.InvalidInput,
-                          driver.validate_provider_segment,
-                          segment)
-
     def test_reserve_provider_segment(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
                    api.PHYSICAL_NETWORK: 'flat_net1'}
