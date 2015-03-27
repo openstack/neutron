@@ -19,6 +19,7 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.db import agentschedulers_db
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 
@@ -40,10 +41,11 @@ class MeteringAgentNotifyAPI(object):
             service_constants.L3_ROUTER_NAT)
 
         l3_routers = {}
+        state = agentschedulers_db.get_admin_state_up_filter()
         for router in routers:
             l3_agents = plugin.get_l3_agents_hosting_routers(
                 adminContext, [router['id']],
-                admin_state_up=True,
+                admin_state_up=state,
                 active=True)
             for l3_agent in l3_agents:
                 LOG.debug('Notify metering agent at %(topic)s.%(host)s '

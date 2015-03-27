@@ -22,6 +22,7 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.db import agentschedulers_db
 from neutron.i18n import _LE
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
@@ -51,10 +52,11 @@ class L3AgentNotifyAPI(object):
         adminContext = context if context.is_admin else context.elevated()
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
+        state = agentschedulers_db.get_admin_state_up_filter()
         for router_id in router_ids:
             l3_agents = plugin.get_l3_agents_hosting_routers(
                 adminContext, [router_id],
-                admin_state_up=True,
+                admin_state_up=state,
                 active=True)
             if shuffle_agents:
                 random.shuffle(l3_agents)
@@ -78,10 +80,11 @@ class L3AgentNotifyAPI(object):
                         context or context.elevated())
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
+        state = agentschedulers_db.get_admin_state_up_filter()
         l3_agents = (plugin.
                      get_l3_agents_hosting_routers(adminContext,
                                                    [router_id],
-                                                   admin_state_up=True,
+                                                   admin_state_up=state,
                                                    active=True))
         # TODO(murali): replace cast with fanout to avoid performance
         # issues at greater scale.

@@ -49,6 +49,15 @@ AGENTS_SCHEDULER_OPTS = [
                        'agents.')),
     cfg.IntOpt('dhcp_agents_per_network', default=1,
                help=_('Number of DHCP agents scheduled to host a network.')),
+    cfg.BoolOpt('enable_services_on_agents_with_admin_state_down',
+                default=False,
+                help=_('Enable services on an agent with admin_state_up '
+                       'False. If this option is False, when admin_state_up '
+                       'of an agent is turned False, services on it will be '
+                       'disabled. Agents with admin_state_up False are not '
+                       'selected for automatic scheduling regardless of this '
+                       'option. But manual scheduling to such agents is '
+                       'available if this option is True.')),
 ]
 
 cfg.CONF.register_opts(AGENTS_SCHEDULER_OPTS)
@@ -314,7 +323,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         with context.session.begin(subtransactions=True):
             agent_db = self._get_agent(context, id)
             if (agent_db['agent_type'] != constants.AGENT_TYPE_DHCP or
-                    not agent_db['admin_state_up']):
+                    not services_available(agent_db['admin_state_up'])):
                 raise dhcpagentscheduler.InvalidDHCPAgent(id=id)
             dhcp_agents = self.get_dhcp_agents_hosting_networks(
                 context, [network_id])
@@ -384,7 +393,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             LOG.debug("DHCP Agent not found on host %s", host)
             return []
 
-        if not agent.admin_state_up:
+        if not services_available(agent.admin_state_up):
             return []
         query = context.session.query(NetworkDhcpAgentBinding.network_id)
         query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == agent.id)
@@ -416,3 +425,19 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
     def auto_schedule_networks(self, context, host):
         if self.network_scheduler:
             self.network_scheduler.auto_schedule_networks(self, context, host)
+
+
+# helper functions for readability.
+def services_available(admin_state_up):
+    if cfg.CONF.enable_services_on_agents_with_admin_state_down:
+        # Services are available regardless admin_state_up
+        return True
+    return admin_state_up
+
+
+def get_admin_state_up_filter():
+    if cfg.CONF.enable_services_on_agents_with_admin_state_down:
+        # Avoid filtering on admin_state_up at all
+        return None
+    # Filters on admin_state_up is True
+    return True

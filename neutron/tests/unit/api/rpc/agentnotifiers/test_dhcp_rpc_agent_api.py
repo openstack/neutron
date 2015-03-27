@@ -21,6 +21,7 @@ from oslo_utils import timeutils
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import utils
 from neutron.db import agents_db
+from neutron.db.agentschedulers_db import cfg
 from neutron.tests import base
 
 
@@ -87,11 +88,14 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.assertEqual(expected_errors, self.mock_log.error.call_count)
 
     def test__get_enabled_agents(self):
-        agent = agents_db.Agent()
-        agent.admin_state_up = True
-        agent.heartbeat_timestamp = timeutils.utcnow()
+        agent1 = agents_db.Agent()
+        agent1.admin_state_up = True
+        agent1.heartbeat_timestamp = timeutils.utcnow()
+        agent2 = agents_db.Agent()
+        agent2.admin_state_up = False
+        agent2.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_network_id'}
-        self._test__get_enabled_agents(network, agents=[agent])
+        self._test__get_enabled_agents(network, agents=[agent1])
 
     def test__get_enabled_agents_with_inactive_ones(self):
         agent1 = agents_db.Agent()
@@ -110,6 +114,18 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         network = {'id': 'foo_network_id', 'subnets': ['foo_subnet_id']}
         self._test__get_enabled_agents(network, [], port_count=20,
                                        expected_warnings=0, expected_errors=1)
+
+    def test__get_enabled_agents_with_admin_state_down(self):
+        cfg.CONF.set_override(
+            'enable_services_on_agents_with_admin_state_down', True)
+        agent1 = agents_db.Agent()
+        agent1.admin_state_up = True
+        agent1.heartbeat_timestamp = timeutils.utcnow()
+        agent2 = agents_db.Agent()
+        agent2.admin_state_up = False
+        agent2.heartbeat_timestamp = timeutils.utcnow()
+        network = {'id': 'foo_network_id'}
+        self._test__get_enabled_agents(network, agents=[agent1, agent2])
 
     def test__notify_agents_fanout_required(self):
         self.notifier._notify_agents(mock.ANY,

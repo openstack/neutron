@@ -584,11 +584,13 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 expected_code=exc.HTTPForbidden.code,
                 admin_context=False)
 
-    def test_network_add_to_dhcp_agent(self):
+    def _test_network_add_to_dhcp_agent(self, admin_state_up=True):
         with self.network() as net1:
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
+            if not admin_state_up:
+                self._set_agent_admin_state_up(DHCP_HOSTA, False)
             num_before_add = len(
                 self._list_networks_hosted_by_dhcp_agent(
                     hosta_id)['networks'])
@@ -599,6 +601,14 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     hosta_id)['networks'])
         self.assertEqual(0, num_before_add)
         self.assertEqual(1, num_after_add)
+
+    def test_network_add_to_dhcp_agent(self):
+        self._test_network_add_to_dhcp_agent()
+
+    def test_network_add_to_dhcp_agent_with_admin_state_down(self):
+        cfg.CONF.set_override(
+            'enable_services_on_agents_with_admin_state_down', True)
+        self._test_network_add_to_dhcp_agent(admin_state_up=False)
 
     def test_network_remove_from_dhcp_agent(self):
         dhcp_hosta = {
@@ -653,6 +663,39 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             port_list = self.deserialize('json', port_res)
             self.assertEqual(port_list['ports'][0]['device_id'],
                              constants.DEVICE_ID_RESERVED_DHCP_PORT)
+
+    def _test_get_active_networks_from_admin_state_down_agent(self,
+                                                              keep_services):
+        if keep_services:
+            cfg.CONF.set_override(
+                'enable_services_on_agents_with_admin_state_down', True)
+        dhcp_hosta = {
+            'binary': 'neutron-dhcp-agent',
+            'host': DHCP_HOSTA,
+            'topic': 'DHCP_AGENT',
+            'configurations': {'dhcp_driver': 'dhcp_driver',
+                               'use_namespaces': True,
+                               },
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        self._register_one_agent_state(dhcp_hosta)
+        dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
+        with self.port():
+            nets = dhcp_rpc_cb.get_active_networks(self.adminContext,
+                                                   host=DHCP_HOSTA)
+            self.assertEqual(1, len(nets))
+            self._set_agent_admin_state_up(DHCP_HOSTA, False)
+            nets = dhcp_rpc_cb.get_active_networks(self.adminContext,
+                                                   host=DHCP_HOSTA)
+            if keep_services:
+                self.assertEqual(1, len(nets))
+            else:
+                self.assertEqual(0, len(nets))
+
+    def test_dhcp_agent_keep_services_off(self):
+        self._test_get_active_networks_from_admin_state_down_agent(False)
+
+    def test_dhcp_agent_keep_services_on(self):
+        self._test_get_active_networks_from_admin_state_down_agent(True)
 
     def _take_down_agent_and_run_reschedule(self, host):
         # take down the agent on host A and ensure B is alive
@@ -1106,11 +1149,13 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           None)
             self._delete('routers', router['router']['id'])
 
-    def test_router_add_to_l3_agent(self):
+    def _test_router_add_to_l3_agent(self, admin_state_up=True):
         with self.router() as router1:
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
+            if not admin_state_up:
+                self._set_agent_admin_state_up(L3_HOSTA, False)
             num_before_add = len(
                 self._list_routers_hosted_by_l3_agent(
                     hosta_id)['routers'])
@@ -1126,6 +1171,14 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     hosta_id)['routers'])
         self.assertEqual(0, num_before_add)
         self.assertEqual(1, num_after_add)
+
+    def test_router_add_to_l3_agent(self):
+        self._test_router_add_to_l3_agent()
+
+    def test_router_add_to_l3_agent_with_admin_state_down(self):
+        cfg.CONF.set_override(
+            'enable_services_on_agents_with_admin_state_down', True)
+        self._test_router_add_to_l3_agent(admin_state_up=False)
 
     def test_router_add_to_l3_agent_two_times(self):
         with self.router() as router1:
@@ -1173,6 +1226,31 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 router1['router']['id'],
                 expected_code=exc.HTTPForbidden.code,
                 admin_context=False)
+
+    def _test_sync_routers_from_admin_state_down_agent(self, keep_services):
+        if keep_services:
+            cfg.CONF.set_override(
+                'enable_services_on_agents_with_admin_state_down', True)
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
+        self._register_agent_states()
+        hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3, L3_HOSTA)
+        with self.router() as router:
+            self._add_router_to_l3_agent(hosta_id,
+                                         router['router']['id'])
+            routers = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
+            self.assertEqual(1, len(routers))
+            self._set_agent_admin_state_up(L3_HOSTA, False)
+            routers = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
+            if keep_services:
+                self.assertEqual(1, len(routers))
+            else:
+                self.assertEqual(0, len(routers))
+
+    def test_l3_agent_keep_services_off(self):
+        self._test_sync_routers_from_admin_state_down_agent(False)
+
+    def test_l3_agent_keep_services_on(self):
+        self._test_sync_routers_from_admin_state_down_agent(True)
 
     def test_list_routers_hosted_by_l3_agent_with_invalid_agent(self):
         invalid_agentid = 'non_existing_agent'
