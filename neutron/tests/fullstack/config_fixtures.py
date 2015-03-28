@@ -19,12 +19,12 @@ import fixtures
 import six
 
 from neutron.common import constants
+from neutron.tests import base
 from neutron.tests.common import helpers as c_helpers
 from neutron.tests.functional.agent.linux import helpers
-from neutron.tests import sub_base
 
 
-class ConfigDict(sub_base.AttributeDict):
+class ConfigDict(base.AttributeDict):
     def update(self, other):
         self.convert_to_attr_dict(other)
         super(ConfigDict, self).update(other)
@@ -36,8 +36,8 @@ class ConfigDict(sub_base.AttributeDict):
         """
         for key, value in other.iteritems():
             if isinstance(value, dict):
-                if not isinstance(value, sub_base.AttributeDict):
-                    other[key] = sub_base.AttributeDict(value)
+                if not isinstance(value, base.AttributeDict):
+                    other[key] = base.AttributeDict(value)
                 self.convert_to_attr_dict(value)
 
 
@@ -122,7 +122,7 @@ class NeutronConfigFixture(ConfigFixture):
         })
 
     def _generate_host(self):
-        return sub_base.get_rand_name(prefix='host-')
+        return base.get_rand_name(prefix='host-')
 
     def _generate_state_path(self, temp_dir):
         # Assume that temp_dir will be removed by the caller
@@ -174,10 +174,10 @@ class ML2ConfigFixture(ConfigFixture):
 
     def _generate_bridge_mappings(self):
         return ('physnet1:%s' %
-                sub_base.get_rand_name(
+                base.get_rand_name(
                     prefix='br-eth',
                     max_length=constants.DEVICE_NAME_MAX_LEN))
 
     def _generate_integration_bridge(self):
-        return sub_base.get_rand_name(prefix='br-int',
-                                      max_length=constants.DEVICE_NAME_MAX_LEN)
+        return base.get_rand_name(prefix='br-int',
+                                  max_length=constants.DEVICE_NAME_MAX_LEN)
