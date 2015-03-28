@@ -101,8 +101,9 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         return agent
 
     def generate_router_info(self, enable_ha, ip_version=4, extra_routes=True,
-                             enable_fip=True, enable_snat=True):
-        if ip_version == 6:
+                             enable_fip=True, enable_snat=True,
+                             dual_stack=False):
+        if ip_version == 6 and not dual_stack:
             enable_snat = False
             enable_fip = False
             extra_routes = False
@@ -111,7 +112,8 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
                                                  enable_snat=enable_snat,
                                                  enable_floating_ip=enable_fip,
                                                  enable_ha=enable_ha,
-                                                 extra_routes=extra_routes)
+                                                 extra_routes=extra_routes,
+                                                 dual_stack=dual_stack)
 
     def manage_router(self, agent, router):
         self.addCleanup(self._delete_router, agent, router['id'])
@@ -145,11 +147,18 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             router.ns_name)
         return pm.active
 
-    def device_exists_with_ip_mac(self, expected_device, name_getter,
-                                  namespace):
-        return ip_lib.device_exists_with_ip_mac(
-            name_getter(expected_device['id']), expected_device['ip_cidr'],
+    def device_exists_with_ips_and_mac(self, expected_device, name_getter,
+                                       namespace):
+        ip_cidrs = common_utils.fixed_ip_cidrs(expected_device['fixed_ips'])
+        return ip_lib.device_exists_with_ips_and_mac(
+            name_getter(expected_device['id']), ip_cidrs,
             expected_device['mac_address'], namespace)
+
+    @staticmethod
+    def _port_first_ip_cidr(port):
+        fixed_ip = port['fixed_ips'][0]
+        return common_utils.ip_to_cidr(fixed_ip['ip_address'],
+                                       fixed_ip['prefixlen'])
 
     def get_device_mtu(self, target_device, name_getter, namespace):
         device = ip_lib.IPDevice(name_getter(target_device), namespace)
@@ -158,20 +167,20 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def get_expected_keepalive_configuration(self, router):
         router_id = router.router_id
         ha_device_name = router.get_ha_device_name()
-        ha_device_cidr = router.ha_port['ip_cidr']
+        ha_device_cidr = self._port_first_ip_cidr(router.ha_port)
         external_port = router.get_ex_gw_port()
         ex_port_ipv6 = ip_lib.get_ipv6_lladdr(external_port['mac_address'])
         external_device_name = router.get_external_device_name(
             external_port['id'])
-        external_device_cidr = external_port['ip_cidr']
+        external_device_cidr = self._port_first_ip_cidr(external_port)
         internal_port = router.router[l3_constants.INTERFACE_KEY][0]
         int_port_ipv6 = ip_lib.get_ipv6_lladdr(internal_port['mac_address'])
         internal_device_name = router.get_internal_device_name(
             internal_port['id'])
-        internal_device_cidr = internal_port['ip_cidr']
+        internal_device_cidr = self._port_first_ip_cidr(internal_port)
         floating_ip_cidr = common_utils.ip_to_cidr(
             router.get_floating_ips()[0]['floating_ip_address'])
-        default_gateway_ip = external_port['subnet'].get('gateway_ip')
+        default_gateway_ip = external_port['subnets'][0].get('gateway_ip')
 
         return """vrrp_instance VR_1 {
     state BACKUP
@@ -250,7 +259,7 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
         internal_devices = router.router[l3_constants.INTERFACE_KEY]
         self.assertTrue(len(internal_devices))
         for device in internal_devices:
-            self.assertTrue(self.device_exists_with_ip_mac(
+            self.assertTrue(self.device_exists_with_ips_and_mac(
                 device, router.get_internal_device_name, router.ns_name))
 
     def _assert_extra_routes(self, router):
@@ -272,11 +281,12 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
     def floating_ips_configured(self, router):
         floating_ips = router.router[l3_constants.FLOATINGIP_KEY]
         external_port = router.get_ex_gw_port()
-        return len(floating_ips) and all(ip_lib.device_exists_with_ip_mac(
-            router.get_external_device_name(external_port['id']),
-            '%s/32' % fip['floating_ip_address'],
-            external_port['mac_address'],
-            namespace=router.ns_name) for fip in floating_ips)
+        return len(floating_ips) and all(
+            ip_lib.device_exists_with_ips_and_mac(
+                router.get_external_device_name(external_port['id']),
+                ['%s/32' % fip['floating_ip_address']],
+                external_port['mac_address'],
+                namespace=router.ns_name) for fip in floating_ips)
 
     def fail_ha_router(self, router):
         device_name = router.get_ha_device_name()
@@ -352,7 +362,7 @@ class L3AgentTestCase(L3AgentTestFramework):
                 calls)
 
     def test_legacy_router_lifecycle(self):
-        self._router_lifecycle(enable_ha=False)
+        self._router_lifecycle(enable_ha=False, dual_stack=True)
 
     def test_ha_router_lifecycle(self):
         self._router_lifecycle(enable_ha=True)
@@ -418,8 +428,15 @@ class L3AgentTestCase(L3AgentTestFramework):
         existing_fip = '19.4.4.2'
         new_fip = '19.4.4.3'
         self._add_fip(router, new_fip)
-        router.router['gw_port']['subnet']['gateway_ip'] = '19.4.4.5'
-        router.router['gw_port']['fixed_ips'][0]['ip_address'] = '19.4.4.10'
+        subnet_id = _uuid()
+        fixed_ips = [{'ip_address': '19.4.4.10',
+                      'prefixlen': 24,
+                      'subnet_id': subnet_id}]
+        subnets = [{'id': subnet_id,
+                    'cidr': '19.4.4.0/24',
+                    'gateway_ip': '19.4.4.5'}]
+        router.router['gw_port']['subnets'] = subnets
+        router.router['gw_port']['fixed_ips'] = fixed_ips
 
         self.agent.process_router(router)
 
@@ -444,8 +461,9 @@ class L3AgentTestCase(L3AgentTestFramework):
                       (new_external_device_ip, external_device_name),
                       new_config)
 
-    def _router_lifecycle(self, enable_ha, ip_version=4):
-        router_info = self.generate_router_info(enable_ha, ip_version)
+    def _router_lifecycle(self, enable_ha, ip_version=4, dual_stack=False):
+        router_info = self.generate_router_info(enable_ha, ip_version,
+                                                dual_stack=dual_stack)
         router = self.manage_router(self.agent, router_info)
 
         if enable_ha:
@@ -461,7 +479,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             # device has an IP address.
             device = router.router[l3_constants.INTERFACE_KEY][-1]
             device_exists = functools.partial(
-                self.device_exists_with_ip_mac,
+                self.device_exists_with_ips_and_mac,
                 device,
                 router.get_internal_device_name,
                 router.ns_name)
@@ -472,7 +490,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             lambda: self._metadata_proxy_exists(self.agent.conf, router))
         self._assert_internal_devices(router)
         self._assert_external_device(router)
-        if ip_version == 4:
+        if not (enable_ha and (ip_version == 6 or dual_stack)):
             # Note(SridharG): enable the assert_gateway for IPv6 once
             # keepalived on Ubuntu14.04 (i.e., check-neutron-dsvm-functional
             # platform) is updated to 1.2.10 (or above).
@@ -497,7 +515,7 @@ class L3AgentTestCase(L3AgentTestFramework):
 
     def _assert_external_device(self, router):
         external_port = router.get_ex_gw_port()
-        self.assertTrue(self.device_exists_with_ip_mac(
+        self.assertTrue(self.device_exists_with_ips_and_mac(
             external_port, router.get_external_device_name,
             router.ns_name))
 
@@ -507,16 +525,19 @@ class L3AgentTestCase(L3AgentTestFramework):
             external_port['id'])
         external_device = ip_lib.IPDevice(external_device_name,
                                           namespace=router.ns_name)
-        existing_gateway = (
-            external_device.route.get_gateway().get('gateway'))
-        expected_gateway = external_port['subnet']['gateway_ip']
-        self.assertEqual(expected_gateway, existing_gateway)
+        for subnet in external_port['subnets']:
+            expected_gateway = subnet['gateway_ip']
+            ip_vers = netaddr.IPAddress(expected_gateway).version
+            existing_gateway = (external_device.route.get_gateway(
+                ip_version=ip_vers).get('gateway'))
+            self.assertEqual(expected_gateway, existing_gateway)
 
     def _assert_ha_device(self, router):
-        device = router.router[l3_constants.HA_INTERFACE_KEY]
-        self.assertTrue(ip_lib.device_exists_with_ip_mac(
-            router.get_ha_device_name(), device['ip_cidr'],
-            device['mac_address'], router.ns_name))
+        def ha_router_dev_name_getter(not_used):
+            return router.get_ha_device_name()
+        self.assertTrue(self.device_exists_with_ips_and_mac(
+            router.router[l3_constants.HA_INTERFACE_KEY],
+            ha_router_dev_name_getter, router.ns_name))
 
     @classmethod
     def _get_addresses_on_device(cls, namespace, interface):
@@ -631,7 +652,7 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
 
         # Create and configure client namespace
         client_ns = self._create_namespace()
-        router_ip_cidr = router.internal_ports[0]['ip_cidr']
+        router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
         ip_cidr = net_helpers.increment_ip_cidr(router_ip_cidr)
         br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
         port = self.bind_namespace_to_cidr(client_ns, br_int, ip_cidr)
@@ -746,24 +767,26 @@ class TestDvrRouter(L3AgentTestFramework):
         if not fip_gw_port_list and external_gw_port:
             # Get values from external gateway port
             fixed_ip = external_gw_port['fixed_ips'][0]
-            float_subnet = external_gw_port['subnet']
+            float_subnet = external_gw_port['subnets'][0]
             port_ip = fixed_ip['ip_address']
             # Pick an ip address which is not the same as port_ip
             fip_gw_port_ip = str(netaddr.IPAddress(port_ip) + 5)
             # Add floatingip agent gateway port info to router
+            prefixlen = netaddr.IPNetwork(float_subnet['cidr']).prefixlen
             router[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = [
-                {'subnet':
+                {'subnets': [
                     {'cidr': float_subnet['cidr'],
-                        'gateway_ip': float_subnet['gateway_ip'],
-                        'id': fixed_ip['subnet_id']},
-                    'network_id': external_gw_port['network_id'],
-                    'device_owner': 'network:floatingip_agent_gateway',
-                    'mac_address': 'fa:16:3e:80:8d:89',
-                    'binding:host_id': self.agent.conf.host,
-                    'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
-                                    'ip_address': fip_gw_port_ip}],
-                    'id': _uuid(),
-                    'device_id': _uuid()}
+                     'gateway_ip': float_subnet['gateway_ip'],
+                     'id': fixed_ip['subnet_id']}],
+                 'network_id': external_gw_port['network_id'],
+                 'device_owner': 'network:floatingip_agent_gateway',
+                 'mac_address': 'fa:16:3e:80:8d:89',
+                 'binding:host_id': self.agent.conf.host,
+                 'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
+                                'ip_address': fip_gw_port_ip,
+                                'prefixlen': prefixlen}],
+                 'id': _uuid(),
+                 'device_id': _uuid()}
             ]
 
     def _add_snat_port_info_to_router(self, router, internal_ports):
@@ -773,24 +796,26 @@ class TestDvrRouter(L3AgentTestFramework):
             # Get values from internal port
             port = internal_ports[0]
             fixed_ip = port['fixed_ips'][0]
-            snat_subnet = port['subnet']
+            snat_subnet = port['subnets'][0]
             port_ip = fixed_ip['ip_address']
             # Pick an ip address which is not the same as port_ip
             snat_ip = str(netaddr.IPAddress(port_ip) + 5)
             # Add the info to router as the first snat port
             # in the list of snat ports
+            prefixlen = netaddr.IPNetwork(snat_subnet['cidr']).prefixlen
             router[l3_constants.SNAT_ROUTER_INTF_KEY] = [
-                {'subnet':
+                {'subnets': [
                     {'cidr': snat_subnet['cidr'],
-                        'gateway_ip': snat_subnet['gateway_ip'],
-                        'id': fixed_ip['subnet_id']},
-                    'network_id': port['network_id'],
-                    'device_owner': 'network:router_centralized_snat',
-                    'mac_address': 'fa:16:3e:80:8d:89',
-                    'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
-                                    'ip_address': snat_ip}],
-                    'id': _uuid(),
-                    'device_id': _uuid()}
+                     'gateway_ip': snat_subnet['gateway_ip'],
+                     'id': fixed_ip['subnet_id']}],
+                 'network_id': port['network_id'],
+                 'device_owner': 'network:router_centralized_snat',
+                 'mac_address': 'fa:16:3e:80:8d:89',
+                 'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
+                                'ip_address': snat_ip,
+                                'prefixlen': prefixlen}],
+                 'id': _uuid(),
+                 'device_id': _uuid()}
             ]
 
     def _assert_dvr_external_device(self, router):
@@ -802,7 +827,7 @@ class TestDvrRouter(L3AgentTestFramework):
         # that the correct ports and ip addresses exist in the
         # snat_ns_name namespace
         if self.agent.conf.agent_mode == 'dvr_snat':
-            self.assertTrue(self.device_exists_with_ip_mac(
+            self.assertTrue(self.device_exists_with_ips_and_mac(
                 external_port, router.get_external_device_name,
                 snat_ns_name))
         # if the agent is in dvr mode then the snat_ns_name namespace
@@ -841,7 +866,7 @@ class TestDvrRouter(L3AgentTestFramework):
                                           namespace=namespace)
         existing_gateway = (
             external_device.route.get_gateway().get('gateway'))
-        expected_gateway = external_port['subnet']['gateway_ip']
+        expected_gateway = external_port['subnets'][0]['gateway_ip']
         self.assertEqual(expected_gateway, existing_gateway)
 
     def _assert_snat_namespace_does_not_exist(self, router):
@@ -864,9 +889,9 @@ class TestDvrRouter(L3AgentTestFramework):
         external_gw_port = floating_agent_gw_port[0]
         fip_ns = self.agent.get_fip_ns(floating_ips[0]['floating_network_id'])
         fip_ns_name = fip_ns.get_name()
-        fg_port_created_successfully = ip_lib.device_exists_with_ip_mac(
+        fg_port_created_successfully = ip_lib.device_exists_with_ips_and_mac(
             fip_ns.get_ext_device_name(external_gw_port['id']),
-            external_gw_port['ip_cidr'],
+            [self._port_first_ip_cidr(external_gw_port)],
             external_gw_port['mac_address'],
             namespace=fip_ns_name)
         self.assertTrue(fg_port_created_successfully)

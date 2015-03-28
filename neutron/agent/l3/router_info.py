@@ -22,7 +22,7 @@ from neutron.agent.linux import iptables_manager
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
-from neutron.i18n import _LE, _LW
+from neutron.i18n import _LW
 
 LOG = logging.getLogger(__name__)
 INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
@@ -94,16 +94,6 @@ class RouterInfo(object):
 
     def get_external_device_interface_name(self, ex_gw_port):
         return self.get_external_device_name(ex_gw_port['id'])
-
-    def _set_subnet_info(self, port):
-        ips = port['fixed_ips']
-        if not ips:
-            raise Exception(_("Router port %s has no IP address") % port['id'])
-        if len(ips) > 1:
-            LOG.error(_LE("Ignoring multiple IPs on router port %s"),
-                      port['id'])
-        prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
-        port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
 
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets
@@ -267,7 +257,7 @@ class RouterInfo(object):
             self.router_namespace.delete()
 
     def _internal_network_added(self, ns_name, network_id, port_id,
-                                internal_cidr, mac_address,
+                                fixed_ips, mac_address,
                                 interface_name, prefix):
         if not ip_lib.device_exists(interface_name,
                                     namespace=ns_name):
@@ -275,18 +265,18 @@ class RouterInfo(object):
                              namespace=ns_name,
                              prefix=prefix)
 
-        self.driver.init_l3(interface_name, [internal_cidr],
-                            namespace=ns_name)
-        ip_address = internal_cidr.split('/')[0]
-        ip_lib.send_gratuitous_arp(ns_name,
-                                   interface_name,
-                                   ip_address,
-                                   self.agent_conf.send_arp_for_ha)
+        ip_cidrs = common_utils.fixed_ip_cidrs(fixed_ips)
+        self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name)
+        for fixed_ip in fixed_ips:
+            ip_lib.send_gratuitous_arp(ns_name,
+                                       interface_name,
+                                       fixed_ip['ip_address'],
+                                       self.agent_conf.send_arp_for_ha)
 
     def internal_network_added(self, port):
         network_id = port['network_id']
         port_id = port['id']
-        internal_cidr = port['ip_cidr']
+        fixed_ips = port['fixed_ips']
         mac_address = port['mac_address']
 
         interface_name = self.get_internal_device_name(port_id)
@@ -294,7 +284,7 @@ class RouterInfo(object):
         self._internal_network_added(self.ns_name,
                                      network_id,
                                      port_id,
-                                     internal_cidr,
+                                     fixed_ips,
                                      mac_address,
                                      interface_name,
                                      INTERNAL_DEV_PREFIX)
@@ -326,19 +316,22 @@ class RouterInfo(object):
         new_ipv6_port = False
         old_ipv6_port = False
         for p in new_ports:
-            self._set_subnet_info(p)
             self.internal_network_added(p)
             self.internal_ports.append(p)
-            if (not new_ipv6_port and
-                    netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
-                new_ipv6_port = True
+            if not new_ipv6_port:
+                for subnet in p['subnets']:
+                    if netaddr.IPNetwork(subnet['cidr']).version == 6:
+                        new_ipv6_port = True
+                        break
 
         for p in old_ports:
             self.internal_network_removed(p)
             self.internal_ports.remove(p)
-            if (not old_ipv6_port and
-                    netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
-                old_ipv6_port = True
+            if not old_ipv6_port:
+                for subnet in p['subnets']:
+                    if netaddr.IPNetwork(subnet['cidr']).version == 6:
+                        old_ipv6_port = True
+                        break
 
         # Enable RA
         if new_ipv6_port or old_ipv6_port:
@@ -379,17 +372,23 @@ class RouterInfo(object):
                                 ns_name, preserve_ips):
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
 
+        # Build up the interface and gateway IP addresses that
+        # will be added to the interface.
+        ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
+        gateway_ips = [subnet['gateway_ip']
+                       for subnet in ex_gw_port['subnets']
+                       if subnet['gateway_ip']]
         self.driver.init_l3(interface_name,
-                            [ex_gw_port['ip_cidr']],
+                            ip_cidrs,
                             namespace=ns_name,
-                            gateway=ex_gw_port['subnet'].get('gateway_ip'),
+                            gateway_ips=gateway_ips,
                             extra_subnets=ex_gw_port.get('extra_subnets', []),
                             preserve_ips=preserve_ips)
-        ip_address = ex_gw_port['ip_cidr'].split('/')[0]
-        ip_lib.send_gratuitous_arp(ns_name,
-                                   interface_name,
-                                   ip_address,
-                                   self.agent_conf.send_arp_for_ha)
+        for fixed_ip in ex_gw_port['fixed_ips']:
+            ip_lib.send_gratuitous_arp(ns_name,
+                                       interface_name,
+                                       fixed_ip['ip_address'],
+                                       self.agent_conf.send_arp_for_ha)
 
     def external_gateway_added(self, ex_gw_port, interface_name):
         preserve_ips = self._list_floating_ip_cidrs()
@@ -426,7 +425,6 @@ class RouterInfo(object):
                 port2_filtered = _get_filtered_dict(port2, keys_to_ignore)
                 return port1_filtered == port2_filtered
 
-            self._set_subnet_info(ex_gw_port)
             if not self.ex_gw_port:
                 self.external_gateway_added(ex_gw_port, interface_name)
             elif not _gateway_ports_equal(ex_gw_port, self.ex_gw_port):

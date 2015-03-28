@@ -110,7 +110,7 @@ class KeepalivedVirtualRoute(object):
 class KeepalivedInstance(object):
     """Instance section of a keepalived configuration."""
 
-    def __init__(self, state, interface, vrouter_id, ha_cidr,
+    def __init__(self, state, interface, vrouter_id, ha_cidrs,
                  priority=HA_DEFAULT_PRIORITY, advert_int=None,
                  mcast_src_ip=None, nopreempt=False):
         self.name = 'VR_%s' % vrouter_id
@@ -132,9 +132,7 @@ class KeepalivedInstance(object):
         metadata_cidr = '169.254.169.254/32'
         self.primary_vip_range = get_free_range(
             parent_range='169.254.0.0/16',
-            excluded_ranges=[metadata_cidr,
-                             FIP_LL_SUBNET,
-                             ha_cidr],
+            excluded_ranges=[metadata_cidr, FIP_LL_SUBNET] + ha_cidrs,
             size=PRIMARY_VIP_RANGE_SIZE)
 
     def set_authentication(self, auth_type, password):

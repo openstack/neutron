@@ -80,7 +80,6 @@ class HaRouter(router.RouterInfo):
                       self.router_id)
             return
 
-        self._set_subnet_info(ha_port)
         self.ha_port = ha_port
         self._init_keepalived_manager(process_monitor)
         self.ha_network_added()
@@ -103,12 +102,13 @@ class HaRouter(router.RouterInfo):
         config = self.keepalived_manager.config
 
         interface_name = self.get_ha_device_name()
-        ha_port_cidr = self.ha_port['subnet']['cidr']
+        subnets = self.ha_port.get('subnets', [])
+        ha_port_cidrs = [subnet['cidr'] for subnet in subnets]
         instance = keepalived.KeepalivedInstance(
             'BACKUP',
             interface_name,
             self.ha_vr_id,
-            ha_port_cidr,
+            ha_port_cidrs,
             nopreempt=True,
             advert_int=self.agent_conf.ha_vrrp_advert_int,
             priority=self.ha_priority)
@@ -148,8 +148,8 @@ class HaRouter(router.RouterInfo):
                          self.ha_port['mac_address'],
                          namespace=self.ns_name,
                          prefix=HA_DEV_PREFIX)
-        self.driver.init_l3(interface_name,
-                            [self.ha_port['ip_cidr']],
+        ip_cidrs = common_utils.fixed_ip_cidrs(self.ha_port['fixed_ips'])
+        self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=self.ns_name,
                             preserve_ips=[self._get_primary_vip()])
 
@@ -195,19 +195,22 @@ class HaRouter(router.RouterInfo):
         self.routes = new_routes
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
-        gw_ip = ex_gw_port['subnet']['gateway_ip']
-        if gw_ip:
-            # TODO(Carl) This is repeated everywhere.  A method would be nice.
-            default_gw = (n_consts.IPv4_ANY if
-                          netaddr.IPAddress(gw_ip).version == 4 else
-                          n_consts.IPv6_ANY)
-            instance = self._get_keepalived_instance()
-            instance.virtual_routes = (
-                [route for route in instance.virtual_routes
-                 if route.destination != default_gw])
-            instance.virtual_routes.append(
-                keepalived.KeepalivedVirtualRoute(
-                    default_gw, gw_ip, interface_name))
+        subnets = ex_gw_port.get('subnets', [])
+        for subnet in subnets:
+            gw_ip = subnet['gateway_ip']
+            if gw_ip:
+                # TODO(Carl) This is repeated everywhere.  A method would
+                # be nice.
+                default_gw = (n_consts.IPv4_ANY if
+                              netaddr.IPAddress(gw_ip).version == 4 else
+                              n_consts.IPv6_ANY)
+                instance = self._get_keepalived_instance()
+                instance.virtual_routes = (
+                    [route for route in instance.virtual_routes
+                     if route.destination != default_gw])
+                instance.virtual_routes.append(
+                    keepalived.KeepalivedVirtualRoute(
+                        default_gw, gw_ip, interface_name))
 
     def _should_delete_ipv6_lladdr(self, ipv6_lladdr):
         """Only the master should have any IP addresses configured.
@@ -238,7 +241,8 @@ class HaRouter(router.RouterInfo):
         self._add_vip(ipv6_lladdr, interface_name, scope='link')
 
     def _add_gateway_vip(self, ex_gw_port, interface_name):
-        self._add_vip(ex_gw_port['ip_cidr'], interface_name)
+        for ip_cidr in common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips']):
+            self._add_vip(ip_cidr, interface_name)
         self._add_default_gw_virtual_route(ex_gw_port, interface_name)
 
     def add_floating_ip(self, fip, interface_name, device):
@@ -264,7 +268,8 @@ class HaRouter(router.RouterInfo):
                              prefix=router.INTERNAL_DEV_PREFIX)
 
         self._disable_ipv6_addressing_on_interface(interface_name)
-        self._add_vip(port['ip_cidr'], interface_name)
+        for ip_cidr in common_utils.fixed_ip_cidrs(port['fixed_ips']):
+            self._add_vip(ip_cidr, interface_name)
 
     def internal_network_removed(self, port):
         super(HaRouter, self).internal_network_removed(port)
@@ -329,8 +334,9 @@ class HaRouter(router.RouterInfo):
 
     def external_gateway_updated(self, ex_gw_port, interface_name):
         self._plug_external_gateway(ex_gw_port, interface_name, self.ns_name)
-        old_gateway_cidr = self.ex_gw_port['ip_cidr']
-        self._remove_vip(old_gateway_cidr)
+        ip_cidrs = common_utils.fixed_ip_cidrs(self.ex_gw_port['fixed_ips'])
+        for old_gateway_cidr in ip_cidrs:
+            self._remove_vip(old_gateway_cidr)
         self._add_gateway_vip(ex_gw_port, interface_name)
 
     def external_gateway_removed(self, ex_gw_port, interface_name):

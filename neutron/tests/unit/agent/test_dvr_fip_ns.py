@@ -70,13 +70,16 @@ class TestDvrFipNs(base.BaseTestCase):
     @mock.patch.object(ip_lib, 'send_gratuitous_arp')
     @mock.patch.object(ip_lib, 'device_exists')
     def test_gateway_added(self, device_exists, send_arp, IPDevice, IPWrapper):
+        subnet_id = _uuid()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                        'subnet_id': _uuid()}],
-                         'subnet': {'gateway_ip': '20.0.0.1'},
+                                        'prefixlen': 24,
+                                        'subnet_id': subnet_id}],
+                         'subnets': [{'id': subnet_id,
+                                      'cidr': '20.0.0.0/24',
+                                      'gateway_ip': '20.0.0.1'}],
                          'id': _uuid(),
                          'network_id': self.net_id,
-                         'mac_address': 'ca:fe:de:ad:be:ef',
-                         'ip_cidr': '20.0.0.30/24'}
+                         'mac_address': 'ca:fe:de:ad:be:ef'}
 
         device_exists.return_value = False
         self.fip_ns._gateway_added(agent_gw_port,

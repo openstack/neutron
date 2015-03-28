@@ -63,13 +63,16 @@ class TestDvrRouterOperations(base.BaseTestCase):
         router = mock.MagicMock()
         ri = self._create_router(router)
         ext_net_id = _uuid()
+        subnet_id = _uuid()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                        'subnet_id': _uuid()}],
-                         'subnet': {'gateway_ip': '20.0.0.1'},
+                                        'prefixlen': 24,
+                                        'subnet_id': subnet_id}],
+                         'subnets': [{'id': subnet_id,
+                                      'cidr': '20.0.0.0/24',
+                                      'gateway_ip': '20.0.0.1'}],
                          'id': _uuid(),
                          'network_id': ext_net_id,
-                         'mac_address': 'ca:fe:de:ad:be:ef',
-                         'ip_cidr': '20.0.0.30/24'}
+                         'mac_address': 'ca:fe:de:ad:be:ef'}
 
         fip = {'id': _uuid(),
                'host': HOSTNAME,
@@ -95,13 +98,16 @@ class TestDvrRouterOperations(base.BaseTestCase):
         router = mock.MagicMock()
         ri = self._create_router(router)
 
+        subnet_id = _uuid()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                        'subnet_id': _uuid()}],
-                         'subnet': {'gateway_ip': '20.0.0.1'},
+                                        'prefixlen': 24,
+                                        'subnet_id': subnet_id}],
+                         'subnets': [{'id': subnet_id,
+                                      'cidr': '20.0.0.0/24',
+                                      'gateway_ip': '20.0.0.1'}],
                          'id': _uuid(),
                          'network_id': _uuid(),
-                         'mac_address': 'ca:fe:de:ad:be:ef',
-                         'ip_cidr': '20.0.0.30/24'}
+                         'mac_address': 'ca:fe:de:ad:be:ef'}
         fip_cidr = '11.22.33.44/24'
 
         ri.dist_fip_count = 2

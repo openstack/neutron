@@ -199,13 +199,8 @@ class DvrRouter(router.RouterInfo):
             with excutils.save_and_reraise_exception():
                 LOG.exception(_LE("DVR: Failed updating arp entry"))
 
-    def _set_subnet_arp_info(self, port):
+    def _set_subnet_arp_info(self, subnet_id):
         """Set ARP info retrieved from Plugin for existing ports."""
-        if 'id' not in port['subnet']:
-            return
-
-        subnet_id = port['subnet']['id']
-
         # TODO(Carl) Can we eliminate the need to make this RPC while
         # processing a router.
         subnet_ports = self.agent.get_ports_by_subnet(subnet_id)
@@ -251,32 +246,50 @@ class DvrRouter(router.RouterInfo):
             snat_idx = net.value
         return snat_idx
 
-    def _snat_redirect_add(self, gateway, sn_port, sn_int):
-        """Adds rules and routes for SNAT redirection."""
+    def _snat_redirect_modify(self, gateway, sn_port, sn_int, is_add):
+        """Adds or removes rules and routes for SNAT redirection."""
         try:
-            ip_cidr = sn_port['ip_cidr']
-            snat_idx = self._get_snat_idx(ip_cidr)
             ns_ipr = ip_lib.IPRule(namespace=self.ns_name)
             ns_ipd = ip_lib.IPDevice(sn_int, namespace=self.ns_name)
-            ns_ipwrapr = ip_lib.IPWrapper(namespace=self.ns_name)
-            ns_ipd.route.add_gateway(gateway, table=snat_idx)
-            ns_ipr.rule.add(ip_cidr, snat_idx, snat_idx)
-            ns_ipwrapr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
-                                     'send_redirects=0' % sn_int])
+            if is_add:
+                ns_ipwrapr = ip_lib.IPWrapper(namespace=self.ns_name)
+            for port_fixed_ip in sn_port['fixed_ips']:
+                # Find the first gateway IP address matching this IP version
+                port_ip_addr = port_fixed_ip['ip_address']
+                port_ip_vers = netaddr.IPAddress(port_ip_addr).version
+                for gw_fixed_ip in gateway['fixed_ips']:
+                    gw_ip_addr = gw_fixed_ip['ip_address']
+                    if netaddr.IPAddress(gw_ip_addr).version == port_ip_vers:
+                        sn_port_cidr = common_utils.ip_to_cidr(
+                            port_ip_addr, port_fixed_ip['prefixlen'])
+                        snat_idx = self._get_snat_idx(sn_port_cidr)
+                        if is_add:
+                            ns_ipd.route.add_gateway(gw_ip_addr,
+                                                     table=snat_idx)
+                            ns_ipr.rule.add(sn_port_cidr, snat_idx, snat_idx)
+                            ns_ipwrapr.netns.execute(
+                                ['sysctl', '-w',
+                                 'net.ipv4.conf.%s.send_redirects=0' % sn_int])
+                        else:
+                            ns_ipd.route.delete_gateway(gw_ip_addr,
+                                                        table=snat_idx)
+                            ns_ipr.rule.delete(sn_port_cidr, snat_idx,
+                                               snat_idx)
+                        break
         except Exception:
-            LOG.exception(_LE('DVR: error adding redirection logic'))
+            if is_add:
+                exc = _LE('DVR: error adding redirection logic')
+            else:
+                exc = _LE('DVR: removed snat failed')
+            LOG.exception(exc)
+
+    def _snat_redirect_add(self, gateway, sn_port, sn_int):
+        """Adds rules and routes for SNAT redirection."""
+        self._snat_redirect_modify(gateway, sn_port, sn_int, is_add=True)
 
     def _snat_redirect_remove(self, gateway, sn_port, sn_int):
         """Removes rules and routes for SNAT redirection."""
-        try:
-            ip_cidr = sn_port['ip_cidr']
-            snat_idx = self._get_snat_idx(ip_cidr)
-            ns_ipr = ip_lib.IPRule(namespace=self.ns_name)
-            ns_ipd = ip_lib.IPDevice(sn_int, namespace=self.ns_name)
-            ns_ipd.route.delete_gateway(gateway, table=snat_idx)
-            ns_ipr.rule.delete(ip_cidr, snat_idx, snat_idx)
-        except Exception:
-            LOG.exception(_LE('DVR: removed snat failed'))
+        self._snat_redirect_modify(gateway, sn_port, sn_int, is_add=False)
 
     def get_gw_port_host(self):
         host = self.router.get('gw_port_host')
@@ -304,26 +317,24 @@ class DvrRouter(router.RouterInfo):
             return
 
         interface_name = self.get_internal_device_name(port['id'])
-        self._snat_redirect_add(sn_port['fixed_ips'][0]['ip_address'],
-                                port,
-                                interface_name)
+        self._snat_redirect_add(sn_port, port, interface_name)
 
         if not self._is_this_snat_host():
             return
 
         ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(self.router['id'])
-        self._set_subnet_info(sn_port)
         interface_name = self.get_snat_int_device_name(sn_port['id'])
         self._internal_network_added(
             ns_name,
             sn_port['network_id'],
             sn_port['id'],
-            sn_port['ip_cidr'],
+            sn_port['fixed_ips'],
             sn_port['mac_address'],
             interface_name,
             dvr_snat_ns.SNAT_INT_DEV_PREFIX)
 
-        self._set_subnet_arp_info(port)
+        for subnet in port['subnets']:
+            self._set_subnet_arp_info(subnet['id'])
 
     def _dvr_internal_network_removed(self, port):
         if not self.ex_gw_port:
@@ -335,9 +346,7 @@ class DvrRouter(router.RouterInfo):
 
         # DVR handling code for SNAT
         interface_name = self.get_internal_device_name(port['id'])
-        self._snat_redirect_remove(sn_port['fixed_ips'][0]['ip_address'],
-                                   port,
-                                   interface_name)
+        self._snat_redirect_remove(sn_port, port, interface_name)
 
         mode = self.agent_conf.agent_mode
         is_this_snat_host = (mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
@@ -375,10 +384,9 @@ class DvrRouter(router.RouterInfo):
         # connect snat_ports to br_int from SNAT namespace
         for port in snat_ports:
             # create interface_name
-            self._set_subnet_info(port)
             interface_name = self.get_snat_int_device_name(port['id'])
             self._internal_network_added(snat_ns.name, port['network_id'],
-                                         port['id'], port['ip_cidr'],
+                                         port['id'], port['fixed_ips'],
                                          port['mac_address'], interface_name,
                                          dvr_snat_ns.SNAT_INT_DEV_PREFIX)
         self._external_gateway_added(ex_gw_port, gw_interface_name,
@@ -401,8 +409,7 @@ class DvrRouter(router.RouterInfo):
             gateway = self._map_internal_interfaces(p, snat_ports)
             id_name = self.get_internal_device_name(p['id'])
             if gateway:
-                self._snat_redirect_add(
-                    gateway['fixed_ips'][0]['ip_address'], p, id_name)
+                self._snat_redirect_add(gateway, p, id_name)
 
         if self._is_this_snat_host():
             self._create_dvr_gateway(ex_gw_port, interface_name, snat_ports)
@@ -436,9 +443,7 @@ class DvrRouter(router.RouterInfo):
         for p in self.internal_ports:
             gateway = self._map_internal_interfaces(p, snat_ports)
             internal_interface = self.get_internal_device_name(p['id'])
-            self._snat_redirect_remove(gateway['fixed_ips'][0]['ip_address'],
-                                       p,
-                                       internal_interface)
+            self._snat_redirect_remove(gateway, p, internal_interface)
 
         if not self._is_this_snat_host():
             # no centralized SNAT gateway for this node/agent
@@ -491,10 +496,9 @@ class DvrRouter(router.RouterInfo):
         if floating_ips:
             is_first = self.fip_ns.subscribe(self.router_id)
             if is_first and fip_agent_port:
-                if 'subnet' not in fip_agent_port:
+                if 'subnets' not in fip_agent_port:
                     LOG.error(_LE('Missing subnet/agent_gateway_port'))
                 else:
-                    self._set_subnet_info(fip_agent_port)
                     self.fip_ns.create_gateway_port(fip_agent_port)
 
         if self.fip_ns.agent_gateway_port and floating_ips:
