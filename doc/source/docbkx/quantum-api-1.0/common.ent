@@ -11,27 +11,27 @@
         </response>
         <response status="503" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:serviceUnavailable"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
         <response status="401" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:unauthorized"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
         <response status="403" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:forbidden"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
         <response status="400" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:badRequest"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
         <response status="405" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:badMethod"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
         <response status="413" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:overLimit"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
            '>
       <!--
@@ -41,7 +41,7 @@
            '
         <response status="404" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:itemNotFound"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
            '>
       <!--
@@ -51,7 +51,7 @@
            '
         <response status="415" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:badMediaType"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
            '>
       <!--
@@ -61,7 +61,7 @@
            '
         <response status="503" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:serverCapacityUnavailable"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
            '>
       <!--
@@ -72,7 +72,7 @@
            '
         <response status="409" xmlns="http://wadl.dev.java.net/2009/02">
             <representation mediaType="application/xml" element="osapi:buildInProgress"/>
-            <representation mediaType="applicaiton/json"/>
+            <representation mediaType="application/json"/>
         </response>
            '>
 

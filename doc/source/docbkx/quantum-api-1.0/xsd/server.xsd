@@ -255,7 +255,7 @@
                   xmlns="http://www.w3.org/1999/xhtml">
                   <p>
                       A reference to an image used to create the
-                      server. External images must contian a link that
+                      server. External images must contain a link that
                       provides the full path to the image resource.
                   </p>
               </xsd:documentation>

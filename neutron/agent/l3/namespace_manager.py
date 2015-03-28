@@ -63,7 +63,7 @@ class NamespaceManager(object):
         # TODO(carl) Preserves old behavior of L3 agent where cleaning
         # namespaces was only done once after restart.  Still a good idea?
         if exc_type:
-            # An exception occured in the caller's with statement
+            # An exception occurred in the caller's with statement
             return False
         if not self._clean_stale:
             # No need to cleanup

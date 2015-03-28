@@ -567,7 +567,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._defer_apply = True
 
     def _remove_unused_security_group_info(self):
-        """Remove any unnecesary local security group info or unused ipsets.
+        """Remove any unnecessary local security group info or unused ipsets.
 
         This function has to be called after applying the last iptables
         rules, so we're in a point where no iptable rule depends
@@ -618,7 +618,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _determine_sg_rules_to_remove(self, filtered_ports):
         """Calculate which security groups need to be removed.
 
-        We find out by substracting our previous sg group ids,
+        We find out by subtracting our previous sg group ids,
         with the security groups associated to a set of ports.
         """
         port_group_ids = self._get_sg_ids_set_for_ports(filtered_ports)
