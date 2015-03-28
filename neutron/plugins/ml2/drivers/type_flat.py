@@ -92,8 +92,7 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
         if not physical_network:
             msg = _("physical_network required for flat provider network")
             raise exc.InvalidInput(error_message=msg)
-        if (self.flat_networks is not None and
-                physical_network not in self.flat_networks):
+        if self.flat_networks and physical_network not in self.flat_networks:
             msg = (_("physical_network '%s' unknown for flat provider network")
                    % physical_network)
             raise exc.InvalidInput(error_message=msg)
