@@ -420,7 +420,7 @@ will be removed. The following aspects are captured:
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-mlnx_              |          ml2          |    yes    |       no         |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-nec_               |         core          |    yes    |       no         |   [C]   |     Kilo     |
+| networking-nec_               |         core          |    yes    |       yes        |   [C]   |     Kilo     |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | nuage-openstack-neutron_      |                       |           |                  |         |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
@@ -518,6 +518,7 @@ NEC
 
 * Git: https://github.com/stackforge/networking-nec
 * Launchpad: https://launchpad.net/networking-nec
+* PyPI: https://pypi.python.org/pypi/networking-nec
 
 .. _nuage-openstack-neutron:
 
