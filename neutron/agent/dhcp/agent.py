@@ -316,8 +316,21 @@ class DhcpAgent(manager.Manager):
         updated_port = dhcp.DictModel(payload['port'])
         network = self.cache.get_network_by_id(updated_port.network_id)
         if network:
+            driver_action = 'reload_allocations'
+            if self._is_port_on_this_agent(updated_port):
+                orig = self.cache.get_port_by_id(updated_port['id'])
+                # assume IP change if not in cache
+                old_ips = {i['ip_address'] for i in orig['fixed_ips'] or []}
+                new_ips = {i['ip_address'] for i in updated_port['fixed_ips']}
+                if old_ips != new_ips:
+                    driver_action = 'restart'
             self.cache.put_port(updated_port)
-            self.call_driver('reload_allocations', network)
+            self.call_driver(driver_action, network)
+
+    def _is_port_on_this_agent(self, port):
+        thishost = utils.get_dhcp_agent_device_id(
+            port['network_id'], self.conf.host)
+        return port['device_id'] == thishost
 
     # Use the update handler for the port create event.
     port_create_end = port_update_end
