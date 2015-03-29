@@ -74,6 +74,17 @@ agent_opts = [
                        "Allows the switch (when supporting an overlay) "
                        "to respond to an ARP request locally without "
                        "performing a costly ARP broadcast into the overlay.")),
+    cfg.BoolOpt('prevent_arp_spoofing', default=False,
+                help=_("Enable suppression of ARP responses that don't match "
+                       "an IP address that belongs to the port from which "
+                       "they originate. Note: This prevents the VMs attached "
+                       "to this agent from spoofing, it doesn't protect them "
+                       "from other devices which have the capability to spoof "
+                       "(e.g. bare metal or VMs attached to agents without "
+                       "this flag set to True). Spoofing rules will not be "
+                       "added to any ports that have port security disabled. "
+                       "This requires a version of OVS that supports matching "
+                       "ARP headers.")),
     cfg.BoolOpt('dont_fragment', default=True,
                 help=_("Set or un-set the don't fragment (DF) bit on "
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),

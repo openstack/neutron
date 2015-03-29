@@ -56,6 +56,9 @@ class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
     def test_arp_responder_runs(self):
         checks.arp_responder_supported()
 
+    def test_arp_header_match_runs(self):
+        checks.arp_header_match_supported()
+
     def test_vf_management_runs(self):
         checks.vf_management_supported()
 

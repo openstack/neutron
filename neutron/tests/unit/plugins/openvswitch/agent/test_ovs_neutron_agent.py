@@ -43,6 +43,11 @@ FAKE_IP1 = '10.0.0.1'
 FAKE_IP2 = '10.0.0.2'
 
 
+class FakeVif(object):
+    ofport = 99
+    port_name = 'name'
+
+
 class CreateAgentConfigMap(base.BaseTestCase):
 
     def test_create_agent_config_map_succeeds(self):
@@ -1048,9 +1053,12 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                               'setup_integration_br'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
                               'setup_physical_bridges'),
-            mock.patch.object(time, 'sleep')
+            mock.patch.object(time, 'sleep'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'update_stale_ofport_rules')
         ) as (spawn_fn, log_exception, scan_ports, process_network_ports,
-              check_ovs_status, setup_int_br, setup_phys_br, time_sleep):
+              check_ovs_status, setup_int_br, setup_phys_br, time_sleep,
+              update_stale):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]
@@ -1078,7 +1086,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        'removed': set(['tap0']),
                        'added': set([])}, True)
         ])
-
+        self.assertTrue(update_stale.called)
         # Verify the second time through the loop we triggered an
         # OVS restart and re-setup the bridges
         setup_int_br.assert_has_calls([mock.call()])
@@ -1097,6 +1105,102 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         with mock.patch.object(self.agent, 'set_rpc_timeout') as mock_set_rpc:
             self.agent._handle_sigterm(None, None)
         self.assertFalse(mock_set_rpc.called)
+
+    def test_arp_spoofing_disabled(self):
+        self.agent.prevent_arp_spoofing = False
+        # all of this is required just to get to the part of
+        # treat_devices_added_or_updated that checks the prevent_arp_spoofing
+        # flag
+        self.agent.int_br = mock.Mock()
+        self.agent.treat_vif_port = mock.Mock()
+        self.agent.get_vif_port_by_id = mock.Mock(return_value=FakeVif())
+        self.agent.plugin_rpc = mock.Mock()
+        plist = [{a: a for a in ('port_id', 'network_id', 'network_type',
+                                 'physical_network', 'segmentation_id',
+                                 'admin_state_up', 'fixed_ips', 'device',
+                                 'device_owner')}]
+        self.agent.plugin_rpc.get_devices_details_list.return_value = plist
+        self.agent.setup_arp_spoofing_protection = mock.Mock()
+        self.agent.treat_devices_added_or_updated([], False)
+        self.assertFalse(self.agent.setup_arp_spoofing_protection.called)
+
+    def test_arp_spoofing_port_security_disabled(self):
+        int_br = mock.Mock()
+        self.agent.setup_arp_spoofing_protection(
+            int_br, FakeVif(), {'port_security_enabled': False})
+        self.assertFalse(int_br.add_flows.called)
+
+    def test_arp_spoofing_basic_rule_setup(self):
+        vif = FakeVif()
+        fake_details = {'fixed_ips': []}
+        self.agent.prevent_arp_spoofing = True
+        int_br = mock.Mock()
+        self.agent.setup_arp_spoofing_protection(int_br, vif, fake_details)
+        int_br.delete_flows.assert_has_calls(
+            [mock.call(table=mock.ANY, in_port=vif.ofport)])
+        # make sure redirect into spoof table is installed
+        int_br.add_flow.assert_any_call(
+            table=constants.LOCAL_SWITCHING, in_port=vif.ofport,
+            arp_op=constants.ARP_REPLY, proto='arp', actions=mock.ANY,
+            priority=10)
+        # make sure drop rule for replies is installed
+        int_br.add_flow.assert_any_call(
+            table=constants.ARP_SPOOF_TABLE,
+            proto='arp', arp_op=constants.ARP_REPLY, actions='DROP',
+            priority=mock.ANY)
+
+    def test_arp_spoofing_fixed_and_allowed_addresses(self):
+        vif = FakeVif()
+        fake_details = {
+            'fixed_ips': [{'ip_address': '192.168.44.100'},
+                          {'ip_address': '192.168.44.101'}],
+            'allowed_address_pairs': [{'ip_address': '192.168.44.102/32'},
+                                      {'ip_address': '192.168.44.103/32'}]
+        }
+        self.agent.prevent_arp_spoofing = True
+        int_br = mock.Mock()
+        self.agent.setup_arp_spoofing_protection(int_br, vif, fake_details)
+        # make sure all addresses are allowed
+        for addr in ('192.168.44.100', '192.168.44.101', '192.168.44.102/32',
+                     '192.168.44.103/32'):
+            int_br.add_flow.assert_any_call(
+                table=constants.ARP_SPOOF_TABLE, in_port=vif.ofport,
+                proto='arp', arp_op=constants.ARP_REPLY, actions='NORMAL',
+                arp_spa=addr, priority=mock.ANY)
+
+    def test__get_ofport_moves(self):
+        previous = {'port1': 1, 'port2': 2}
+        current = {'port1': 5, 'port2': 2}
+        # we expect it to tell us port1 moved
+        expected = ['port1']
+        self.assertEqual(expected,
+                         self.agent._get_ofport_moves(current, previous))
+
+    def test_update_stale_ofport_rules_clears_old(self):
+        self.agent.prevent_arp_spoofing = True
+        self.agent.vifname_to_ofport_map = {'port1': 1, 'port2': 2}
+        self.agent.int_br = mock.Mock()
+        # simulate port1 was removed
+        newmap = {'port2': 2}
+        self.agent.int_br.get_vif_port_to_ofport_map.return_value = newmap
+        self.agent.update_stale_ofport_rules()
+        # rules matching port 1 should have been deleted
+        self.assertEqual(self.agent.int_br.delete_flows.mock_calls,
+                         [mock.call(in_port=1)])
+        # make sure the state was updated with the new map
+        self.assertEqual(self.agent.vifname_to_ofport_map, newmap)
+
+    def test_update_stale_ofport_rules_treats_moved(self):
+        self.agent.prevent_arp_spoofing = True
+        self.agent.vifname_to_ofport_map = {'port1': 1, 'port2': 2}
+        self.agent.treat_devices_added_or_updated = mock.Mock()
+        self.agent.int_br = mock.Mock()
+        # simulate port1 was moved
+        newmap = {'port2': 2, 'port1': 90}
+        self.agent.int_br.get_vif_port_to_ofport_map.return_value = newmap
+        self.agent.update_stale_ofport_rules()
+        self.agent.treat_devices_added_or_updated.assert_called_with(
+            ['port1'], ovs_restarted=False)
 
 
 class AncillaryBridgesTest(base.BaseTestCase):

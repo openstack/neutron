@@ -107,6 +107,16 @@ def arp_responder_supported():
                                actions=actions)
 
 
+def arp_header_match_supported():
+    return ofctl_arg_supported(cmd='add-flow',
+                               table=24,
+                               priority=1,
+                               proto='arp',
+                               arp_op='0x2',
+                               arp_spa='1.1.1.1',
+                               actions="NORMAL")
+
+
 def vf_management_supported():
     try:
         vf_section = ip_link_support.IpLinkSupport.get_vf_mgmt_section()
