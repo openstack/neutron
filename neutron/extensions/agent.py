@@ -52,7 +52,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'is_visible': True},
         'description': {'allow_post': False, 'allow_put': True,
                         'is_visible': True,
-                        'validate': {'type:string': None}},
+                        'validate': {'type:string': attr.DESCRIPTION_MAX_LEN}},
     },
 }
 

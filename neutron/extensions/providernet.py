@@ -22,15 +22,21 @@ NETWORK_TYPE = 'provider:network_type'
 PHYSICAL_NETWORK = 'provider:physical_network'
 SEGMENTATION_ID = 'provider:segmentation_id'
 ATTRIBUTES = (NETWORK_TYPE, PHYSICAL_NETWORK, SEGMENTATION_ID)
+
+# Common definitions for maximum string field length
+NETWORK_TYPE_MAX_LEN = 32
+PHYSICAL_NETWORK_MAX_LEN = 64
+
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         NETWORK_TYPE: {'allow_post': True, 'allow_put': True,
-                       'validate': {'type:string': None},
+                       'validate': {'type:string': NETWORK_TYPE_MAX_LEN},
                        'default': attributes.ATTR_NOT_SPECIFIED,
                        'enforce_policy': True,
                        'is_visible': True},
         PHYSICAL_NETWORK: {'allow_post': True, 'allow_put': True,
-                           'validate': {'type:string': None},
+                           'validate': {'type:string':
+                                        PHYSICAL_NETWORK_MAX_LEN},
                            'default': attributes.ATTR_NOT_SPECIFIED,
                            'enforce_policy': True,
                            'is_visible': True},
