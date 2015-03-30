@@ -21,6 +21,7 @@ from oslo_log import log as logging
 from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
+from neutron.db import l3_hamode_db
 from neutron.i18n import _LE, _LW
 
 
@@ -32,6 +33,7 @@ cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
 cfg.CONF.import_group('ml2_sriov',
                       'neutron.plugins.ml2.drivers.mech_sriov.mech_driver')
 dhcp_agent.register_options()
+cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
 
 
 class BoolOptCallback(cfg.BoolOpt):
@@ -99,6 +101,15 @@ def check_dnsmasq_version():
         LOG.error(_LE('The installed version of dnsmasq is too old. '
                       'Please update to at least version %s.'),
                   checks.get_minimal_dnsmasq_version_supported())
+    return result
+
+
+def check_keepalived_ipv6_support():
+    result = checks.keepalived_ipv6_supported()
+    if not result:
+        LOG.error(_LE('The installed version of keepalived does not support '
+                      'IPv6. Please update to at least version 1.2.10 for '
+                      'IPv6 support.'))
     return result
 
 
@@ -178,6 +189,8 @@ OPTS = [
                     help=_('Check ovsdb native interface support')),
     BoolOptCallback('ebtables_installed', check_ebtables,
                     help=_('Check ebtables installation')),
+    BoolOptCallback('keepalived_ipv6_support', check_keepalived_ipv6_support,
+                    help=_('Check keepalived IPv6 support')),
 ]
 
 
@@ -211,6 +224,8 @@ def enable_tests_from_config():
         cfg.CONF.set_override('dnsmasq_version', True)
     if cfg.CONF.OVS.ovsdb_interface == 'native':
         cfg.CONF.set_override('ovsdb_native', True)
+    if cfg.CONF.l3_ha:
+        cfg.CONF.set_override('keepalived_ipv6_support', True)
 
 
 def all_tests_passed():
