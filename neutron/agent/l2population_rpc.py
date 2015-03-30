@@ -16,11 +16,11 @@
 import abc
 
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import six
 
 from neutron.common import constants as n_const
-from neutron.common import log
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 
 LOG = logging.getLogger(__name__)
@@ -36,17 +36,17 @@ class L2populationRpcCallBackMixin(object):
         fdb_add(), fdb_remove(), fdb_update()
     '''
 
-    @log.log
+    @log_helpers.log_method_call
     def add_fdb_entries(self, context, fdb_entries, host=None):
         if not host or host == cfg.CONF.host:
             self.fdb_add(context, self._unmarshall_fdb_entries(fdb_entries))
 
-    @log.log
+    @log_helpers.log_method_call
     def remove_fdb_entries(self, context, fdb_entries, host=None):
         if not host or host == cfg.CONF.host:
             self.fdb_remove(context, self._unmarshall_fdb_entries(fdb_entries))
 
-    @log.log
+    @log_helpers.log_method_call
     def update_fdb_entries(self, context, fdb_entries, host=None):
         if not host or host == cfg.CONF.host:
             self.fdb_update(context, self._unmarshall_fdb_entries(fdb_entries))
@@ -224,7 +224,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
             agent_ports = values.get('ports')
             yield (lvm, agent_ports)
 
-    @log.log
+    @log_helpers.log_method_call
     def fdb_add_tun(self, context, br, lvm, agent_ports, lookup_port):
         for remote_ip, ports in agent_ports.items():
             # Ensure we have a tunnel port with this remote agent
@@ -237,7 +237,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
             for port in ports:
                 self.add_fdb_flow(br, port, remote_ip, lvm, ofport)
 
-    @log.log
+    @log_helpers.log_method_call
     def fdb_remove_tun(self, context, br, lvm, agent_ports, lookup_port):
         for remote_ip, ports in agent_ports.items():
             ofport = lookup_port(lvm.network_type, remote_ip)
@@ -249,7 +249,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                     # Check if this tunnel port is still used
                     self.cleanup_tunnel_port(br, ofport, lvm.network_type)
 
-    @log.log
+    @log_helpers.log_method_call
     def fdb_update(self, context, fdb_entries):
         '''Call methods named '_fdb_<action>'.
 
@@ -264,7 +264,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
 
             getattr(self, method)(context, values)
 
-    @log.log
+    @log_helpers.log_method_call
     def fdb_chg_ip_tun(self, context, br, fdb_entries, local_ip,
                        local_vlan_map):
         '''fdb update when an IP of a port is updated.

@@ -18,13 +18,13 @@ import threading
 from networking_arista.common import db_lib
 from networking_arista.l3Plugin import arista_l3_driver
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as q_const
-from neutron.common import log
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron import context as nctx
@@ -94,7 +94,7 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.timer.cancel()
             self.timer = None
 
-    @log.log
+    @log_helpers.log_method_call
     def create_router(self, context, router):
         """Create a new router entry in DB, and create it Arista HW."""
 
@@ -116,7 +116,7 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 super(AristaL3ServicePlugin, self).delete_router(context,
                                                     new_router['id'])
 
-    @log.log
+    @log_helpers.log_method_call
     def update_router(self, context, router_id, router):
         """Update an existing router in DB, and update it in Arista HW."""
 
@@ -137,7 +137,7 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.error(_LE("Error updating router on Arista HW router=%s "),
                       new_router)
 
-    @log.log
+    @log_helpers.log_method_call
     def delete_router(self, context, router_id):
         """Delete an existing router from Arista HW as well as from the DB."""
 
@@ -157,7 +157,7 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             super(AristaL3ServicePlugin, self).delete_router(context,
                                                              router_id)
 
-    @log.log
+    @log_helpers.log_method_call
     def add_router_interface(self, context, router_id, interface_info):
         """Add a subnet of a network to an existing router."""
 
@@ -203,7 +203,7 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                     router_id,
                                                     interface_info)
 
-    @log.log
+    @log_helpers.log_method_call
     def remove_router_interface(self, context, router_id, interface_info):
         """Remove a subnet of a network from an existing router."""
 

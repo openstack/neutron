@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
 from neutron.common import constants as n_const
-from neutron.common import log
 from neutron.extensions import portbindings
 from neutron.i18n import _LI
 from neutron.plugins.common import constants
@@ -31,7 +31,7 @@ class FslsdnMechanismDriver(api.MechanismDriver):
 
     """Freescale SDN OS Mechanism Driver for ML2 Plugin."""
 
-    @log.log
+    @log_helpers.log_method_call
     def initialize(self):
         """Initialize the Mechanism driver."""
 
@@ -42,7 +42,7 @@ class FslsdnMechanismDriver(api.MechanismDriver):
 
     # Network Management
     @staticmethod
-    @log.log
+    @log_helpers.log_method_call
     def _prepare_crd_network(network, segments):
         """Helper function to create 'network' data."""
 
@@ -137,7 +137,7 @@ class FslsdnMechanismDriver(api.MechanismDriver):
 
     # Subnet Management
     @staticmethod
-    @log.log
+    @log_helpers.log_method_call
     def _prepare_crd_subnet(subnet):
         """Helper function to prepare 'subnet' data."""
 
@@ -220,7 +220,7 @@ class FslsdnMechanismDriver(api.MechanismDriver):
                            'physnet': segment[api.PHYSICAL_NETWORK],
                            'nettype': segment[api.NETWORK_TYPE]})
 
-    @log.log
+    @log_helpers.log_method_call
     def check_segment(self, segment):
         """Verify a segment is valid for the FSL SDN MechanismDriver."""
 

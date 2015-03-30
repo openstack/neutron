@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 import six
@@ -22,7 +23,6 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as constants
 from neutron.common import ipv6_utils
-from neutron.common import log
 from neutron.i18n import _LE, _LI
 from neutron.services.metering.drivers import abstract_driver
 
@@ -99,7 +99,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
         return r
 
-    @log.log
+    @log_helpers.log_method_call
     def update_routers(self, context, routers):
         # disassociate removed routers
         router_ids = set(router['id'] for router in routers)
@@ -123,7 +123,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
                 elif gw_port_id:
                     self._process_associate_metering_label(router)
 
-    @log.log
+    @log_helpers.log_method_call
     def remove_router(self, context, router_id):
         if router_id in self.routers:
             del self.routers[router_id]
@@ -248,22 +248,22 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
                 del rm.metering_labels[label_id]
 
-    @log.log
+    @log_helpers.log_method_call
     def add_metering_label(self, context, routers):
         for router in routers:
             self._process_associate_metering_label(router)
 
-    @log.log
+    @log_helpers.log_method_call
     def add_metering_label_rule(self, context, routers):
         for router in routers:
             self._add_metering_label_rule(router)
 
-    @log.log
+    @log_helpers.log_method_call
     def remove_metering_label_rule(self, context, routers):
         for router in routers:
             self._remove_metering_label_rule(router)
 
-    @log.log
+    @log_helpers.log_method_call
     def update_metering_label_rules(self, context, routers):
         for router in routers:
             self._update_metering_label_rules(router)
@@ -330,12 +330,12 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
                                                        label_chain,
                                                        rules_chain)
 
-    @log.log
+    @log_helpers.log_method_call
     def remove_metering_label(self, context, routers):
         for router in routers:
             self._process_disassociate_metering_label(router)
 
-    @log.log
+    @log_helpers.log_method_call
     def get_traffic_counters(self, context, routers):
         accs = {}
         for router in routers:
