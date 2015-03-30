@@ -38,6 +38,7 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
+from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config
@@ -606,6 +607,30 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
     def test_check_mac_update_allowed_unless_bound(self):
         with testtools.ExpectedException(exc.PortBound):
             self._test_check_mac_update_allowed(portbindings.VIF_TYPE_OVS)
+
+    def test__device_to_port_id_prefix_names(self):
+        input_output = [('sg-abcdefg', 'abcdefg'),
+                        ('tap123456', '123456'),
+                        ('qvo567890', '567890')]
+        for device, expected in input_output:
+            self.assertEqual(expected,
+                             ml2_plugin.Ml2Plugin._device_to_port_id(device))
+
+    def test__device_to_port_id_mac_address(self):
+        with self.port() as p:
+            mac = p['port']['mac_address']
+            port_id = p['port']['id']
+            self.assertEqual(port_id,
+                             ml2_plugin.Ml2Plugin._device_to_port_id(mac))
+
+    def test__device_to_port_id_not_uuid_not_mac(self):
+        dev = '1234567'
+        self.assertEqual(dev, ml2_plugin.Ml2Plugin._device_to_port_id(dev))
+
+    def test__device_to_port_id_UUID(self):
+        port_id = uuidutils.generate_uuid()
+        self.assertEqual(port_id,
+                         ml2_plugin.Ml2Plugin._device_to_port_id(port_id))
 
 
 class TestMl2DvrPortsV2(TestMl2PortsV2):

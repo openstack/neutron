@@ -141,6 +141,16 @@ DEVICE_NAME_MAX_LEN = 15
 
 # Device names start with "tap"
 TAP_DEVICE_PREFIX = 'tap'
+# The vswitch side of a veth pair for a nova iptables filter setup
+VETH_DEVICE_PREFIX = 'qvo'
+# prefix for SNAT interface in DVR
+SNAT_INT_DEV_PREFIX = 'sg-'
+
+# Possible prefixes to partial port IDs in interface names used by the OVS,
+# Linux Bridge, and IVS VIF drivers in Nova and the neutron agents. See the
+# 'get_ovs_interfaceid' method in Nova (nova/virt/libvirt/vif.py) for details.
+INTERFACE_PREFIXES = (TAP_DEVICE_PREFIX, VETH_DEVICE_PREFIX,
+                      SNAT_INT_DEV_PREFIX)
 
 ATTRIBUTES_TO_UPDATE = 'attributes_to_update'
 
