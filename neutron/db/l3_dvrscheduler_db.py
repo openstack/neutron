@@ -317,8 +317,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
 
 def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
-    LOG.debug('Received %s %s' % (resource, event))
-    port = kwargs['port']
+    LOG.debug('Received %(resource)s %(event)s', {
+        'resource': resource,
+        'event': event})
+    port = kwargs.get('port')
     if not port:
         return
 
