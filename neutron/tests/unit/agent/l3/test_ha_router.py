@@ -32,7 +32,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         # NOTE The use_namespaces config will soon be deprecated
         self.agent_conf.use_namespaces = True
         self.router_id = _uuid()
-        return ha_router.HaRouter(self.router_id,
+        return ha_router.HaRouter(mock.sentinel.enqueue_state,
+                                  self.router_id,
                                   router,
                                   self.agent_conf,
                                   mock.sentinel.driver,

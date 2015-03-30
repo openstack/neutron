@@ -315,7 +315,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                         ri.ns_name,
                                         agent.process_monitor,
                                         ri.get_internal_device_name)
-        agent.process_router(ri)
+        ri.process(agent)
 
 
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
@@ -894,7 +894,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
              'fixed_ip_address': '7.7.7.7',
              'port_id': _uuid(),
              'host': HOSTNAME}]}
-        agent.process_router(ri)
+        ri.process(agent)
         ri.process_floating_ip_addresses.assert_called_with(mock.ANY)
         ri.process_floating_ip_addresses.reset_mock()
         ri.process_floating_ip_nat_rules.assert_called_with()
@@ -906,7 +906,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         fake_floatingips2['floatingips'][0]['fixed_ip_address'] = '7.7.7.8'
 
         router[l3_constants.FLOATINGIP_KEY] = fake_floatingips2['floatingips']
-        agent.process_router(ri)
+        ri.process(agent)
         ri.process_floating_ip_addresses.assert_called_with(mock.ANY)
         ri.process_floating_ip_addresses.reset_mock()
         ri.process_floating_ip_nat_rules.assert_called_with()
@@ -923,7 +923,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                     ['fixed_ips'][0]['ip_address']))
         ri.router['gw_port']['fixed_ips'][0]['ip_address'] = str(old_ip + 1)
 
-        agent.process_router(ri)
+        ri.process(agent)
         ri.process_floating_ip_addresses.reset_mock()
         ri.process_floating_ip_nat_rules.reset_mock()
         self.assertEqual(ri.external_gateway_added.call_count, 0)
@@ -931,7 +931,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         # remove just the floating ips
         del router[l3_constants.FLOATINGIP_KEY]
-        agent.process_router(ri)
+        ri.process(agent)
         ri.process_floating_ip_addresses.assert_called_with(mock.ANY)
         ri.process_floating_ip_addresses.reset_mock()
         ri.process_floating_ip_nat_rules.assert_called_with()
@@ -940,7 +940,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # now no ports so state is torn down
         del router[l3_constants.INTERFACE_KEY]
         del router['gw_port']
-        agent.process_router(ri)
+        ri.process(agent)
         self.assertEqual(self.send_arp.call_count, 1)
         distributed = ri.router.get('distributed', False)
         self.assertEqual(ri.process_floating_ip_addresses.called,
@@ -1110,13 +1110,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # Process with NAT
-        agent.process_router(ri)
+        ri.process(agent)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
         # Reprocess without NAT
         router['enable_snat'] = False
         # Reassign the router object to RouterInfo
         ri.router = router
-        agent.process_router(ri)
+        ri.process(agent)
         # For some reason set logic does not work well with
         # IpTablesRule instances
         nat_rules_delta = [r for r in orig_nat_rules
@@ -1131,13 +1131,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # Process without NAT
-        agent.process_router(ri)
+        ri.process(agent)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
         # Reprocess with NAT
         router['enable_snat'] = True
         # Reassign the router object to RouterInfo
         ri.router = router
-        agent.process_router(ri)
+        ri.process(agent)
         # For some reason set logic does not work well with
         # IpTablesRule instances
         nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
@@ -1152,13 +1152,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # Process with NAT
-        agent.process_router(ri)
+        ri.process(agent)
         # Add an interface and reprocess
         router_append_interface(router)
         # Reassign the router object to RouterInfo
         ri.router = router
-        agent.process_router(ri)
-        # send_arp is called both times process_router is called
+        ri.process(agent)
+        # send_arp is called both times process is called
         self.assertEqual(self.send_arp.call_count, 2)
 
     def _test_process_ipv6_only_or_dual_stack_gw(self, dual_stack=False):
@@ -1203,7 +1203,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # Process with NAT
-        agent.process_router(ri)
+        ri.process(agent)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
         # Add an IPv6 interface and reprocess
         router_append_interface(router, count=1, ip_version=6, ra_mode=ra_mode,
@@ -1261,7 +1261,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # Process with NAT
-        agent.process_router(ri)
+        ri.process(agent)
         # Add an IPv4 and IPv6 interface and reprocess
         router_append_interface(router, count=1, ip_version=4)
         router_append_interface(router, count=1, ip_version=6)
@@ -1275,13 +1275,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # Process with NAT
-        agent.process_router(ri)
+        ri.process(agent)
         # Add an interface and reprocess
         del router[l3_constants.INTERFACE_KEY][1]
         # Reassign the router object to RouterInfo
         ri.router = router
-        agent.process_router(ri)
-        # send_arp is called both times process_router is called
+        ri.process(agent)
+        # send_arp is called both times process is called
         self.assertEqual(self.send_arp.call_count, 2)
 
     def test_process_router_ipv6_interface_removed(self):
@@ -1313,7 +1313,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             # raise RuntimeError to simulate that an unexpected exception
             # occurs
             internal_network_added.side_effect = RuntimeError
-            self.assertRaises(RuntimeError, agent.process_router, ri)
+            self.assertRaises(RuntimeError, ri.process, agent)
             self.assertNotIn(
                 router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
 
@@ -1322,7 +1322,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
             # periodic_sync_routers_task finds out that _rpc_loop failed to
             # process the router last time, it will retry in the next run.
-            agent.process_router(ri)
+            ri.process(agent)
             # We were able to add the port to ri.internal_ports
             self.assertIn(
                 router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
@@ -1333,7 +1333,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # add an internal port
-        agent.process_router(ri)
+        ri.process(agent)
 
         with mock.patch.object(
                 ri,
@@ -1343,7 +1343,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             internal_net_removed.side_effect = RuntimeError
             ri.internal_ports[0]['admin_state_up'] = False
             # The above port is set to down state, remove it.
-            self.assertRaises(RuntimeError, agent.process_router, ri)
+            self.assertRaises(RuntimeError, ri.process, agent)
             self.assertIn(
                 router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
 
@@ -1352,7 +1352,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
             # periodic_sync_routers_task finds out that _rpc_loop failed to
             # process the router last time, it will retry in the next run.
-            agent.process_router(ri)
+            ri.process(agent)
             # We were able to remove the port from ri.internal_ports
             self.assertNotIn(
                 router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
@@ -1374,7 +1374,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                             router,
                                             **self.ri_kwargs)
             ri.external_gateway_added = mock.Mock()
-            agent.process_router(ri)
+            ri.process(agent)
             # Assess the call for putting the floating IP up was performed
             mock_update_fip_status.assert_called_once_with(
                 mock.ANY, ri.router_id,
@@ -1383,7 +1383,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             # Process the router again, this time without floating IPs
             router[l3_constants.FLOATINGIP_KEY] = []
             ri.router = router
-            agent.process_router(ri)
+            ri.process(agent)
             # Assess the call for putting the floating IP up was performed
             mock_update_fip_status.assert_called_once_with(
                 mock.ANY, ri.router_id,
@@ -1406,7 +1406,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri.process_floating_ip_addresses = mock.Mock(
                 side_effect=RuntimeError)
             ri.external_gateway_added = mock.Mock()
-            agent.process_router(ri)
+            ri.process(agent)
             # Assess the call for putting the floating IP into Error
             # was performed
             mock_update_fip_status.assert_called_once_with(
@@ -1520,7 +1520,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                      external_gateway_removed,
                                      external_gateway_added):
 
-            agent.process_router(ri)
+            ri.process(agent)
 
             self.assertEqual(external_gateway_added.call_count, 1)
             self.assertFalse(external_gateway_removed.called)
@@ -1545,7 +1545,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         self.mock_ip.get_devices.return_value = stale_devlist
 
-        agent.process_router(ri)
+        ri.process(agent)
 
         self.mock_driver.unplug.assert_called_with(
             stale_devnames[0],

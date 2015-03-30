@@ -32,7 +32,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_processing_queue as queue
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as l3_constants
@@ -40,7 +39,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.common import utils as common_utils
 from neutron import context as n_context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
@@ -288,25 +286,22 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             return dvr_router.DvrRouter(*args, **kwargs)
 
         if router.get('ha'):
+            kwargs['state_change_callback'] = self.enqueue_state_change
             return ha_router.HaRouter(*args, **kwargs)
 
         return legacy_router.LegacyRouter(*args, **kwargs)
 
     def _router_added(self, router_id, router):
         ri = self._create_router(router_id, router)
-        ri.radvd = ra.DaemonMonitor(router['id'],
-                                    ri.ns_name,
-                                    self.process_monitor,
-                                    ri.get_internal_device_name)
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_added, ri)
 
         self.router_info[router_id] = ri
-        ri.create()
-        self.process_router_add(ri)
 
-        if ri.is_ha:
-            ri.initialize(self.process_monitor, self.enqueue_state_change)
+        ri.initialize(self.process_monitor)
+
+        # TODO(Carl) This is a hook in to fwaas.  It should be cleaned up.
+        self.process_router_add(ri)
 
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
@@ -318,15 +313,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_removed, ri)
 
-        if ri.is_ha:
-            ri.terminate(self.process_monitor)
-
-        ri.router['gw_port'] = None
-        ri.router[l3_constants.INTERFACE_KEY] = []
-        ri.router[l3_constants.FLOATINGIP_KEY] = []
-        self.process_router(ri)
+        ri.delete(self)
         del self.router_info[router_id]
-        ri.delete()
+
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_removed, ri)
 
@@ -339,29 +328,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # Update floating IP status on the neutron server
         self.plugin_rpc.update_floatingip_statuses(
             self.context, ri.router_id, fip_statuses)
-
-    @common_utils.exception_logger()
-    def process_router(self, ri):
-        # TODO(mrsmith) - we shouldn't need to check here
-        if 'distributed' not in ri.router:
-            ri.router['distributed'] = False
-        ex_gw_port = ri.get_ex_gw_port()
-        if ri.router.get('distributed') and ex_gw_port:
-            ri.fip_ns = self.get_fip_ns(ex_gw_port['network_id'])
-            ri.fip_ns.scan_fip_ports(ri)
-        ri._process_internal_ports()
-        ri.process_external(self)
-        # Process static routes for router
-        ri.routes_updated()
-
-        # If process_router was called during a create or update
-        if ri.is_ha and ri.ha_port:
-            ri.enable_keepalived()
-
-        # Update ex_gw_port and enable_snat on the router info cache
-        ri.ex_gw_port = ex_gw_port
-        ri.snat_ports = ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
-        ri.enable_snat = ri.router.get('enable_snat')
 
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
@@ -427,21 +393,19 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self._process_updated_router(router)
 
     def _process_added_router(self, router):
-        # TODO(pcm): Next refactoring will rework this logic
         self._router_added(router['id'], router)
         ri = self.router_info[router['id']]
         ri.router = router
-        self.process_router(ri)
+        ri.process(self)
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_added, ri)
 
     def _process_updated_router(self, router):
-        # TODO(pcm): Next refactoring will rework this logic
         ri = self.router_info[router['id']]
         ri.router = router
         self.event_observers.notify(
             adv_svc.AdvancedService.before_router_updated, ri)
-        self.process_router(ri)
+        ri.process(self)
         self.event_observers.notify(
             adv_svc.AdvancedService.after_router_updated, ri)
 

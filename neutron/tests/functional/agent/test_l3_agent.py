@@ -384,7 +384,7 @@ class L3AgentTestCase(L3AgentTestFramework):
 
         clean_fips(router)
         self._add_fip(router, client_address, fixed_address=server_address)
-        self.agent.process_router(router)
+        router.process(self.agent)
 
         router_ns = ip_lib.IPWrapper(namespace=router.ns_name)
         netcat = helpers.NetcatTester(router_ns, router_ns,
@@ -407,7 +407,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             assert_num_of_conntrack_rules(1)
 
             clean_fips(router)
-            self.agent.process_router(router)
+            router.process(self.agent)
             assert_num_of_conntrack_rules(0)
 
             with testtools.ExpectedException(RuntimeError):
@@ -439,7 +439,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         router.router['gw_port']['subnets'] = subnets
         router.router['gw_port']['fixed_ips'] = fixed_ips
 
-        self.agent.process_router(router)
+        router.process(self.agent)
 
         # Get the updated configuration and assert that both FIPs are in,
         # and that the GW IP address was updated.
