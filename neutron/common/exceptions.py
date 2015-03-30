@@ -453,3 +453,7 @@ class SubnetPoolDeleteError(BadRequest):
 
 class SubnetPoolQuotaExceeded(OverQuota):
     message = _("Per-tenant subnet pool prefix quota exceeded")
+
+
+class DeviceNotFoundError(NeutronException):
+    message = _("IP Device '%(device_name)s' does not exist")

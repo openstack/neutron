@@ -18,6 +18,7 @@ import netaddr
 import os
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import excutils
 
 from neutron.agent.common import utils
 from neutron.common import exceptions
@@ -406,7 +407,14 @@ class IpRouteCommand(IpDeviceCommandBase):
                 'dev', self.name]
         if table:
             args += ['table', table]
-        self._as_root([ip_version], tuple(args))
+        try:
+            self._as_root([ip_version], tuple(args))
+        except RuntimeError as rte:
+            with (excutils.save_and_reraise_exception()) as ctx:
+                if "Cannot find device" in rte.message:
+                    ctx.reraise = False
+                    raise exceptions.DeviceNotFoundError(
+                        device_name=self.name)
 
     def list_onlink_routes(self, ip_version):
         def iterate_routes():
