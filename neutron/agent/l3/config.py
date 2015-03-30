@@ -57,6 +57,23 @@ OPTS = [
     cfg.StrOpt('gateway_external_network_id', default='',
                help=_("UUID of external network for routers implemented "
                       "by the agents.")),
+    cfg.StrOpt('ipv6_gateway', default='',
+               help=_("With IPv6, the network used for the external gateway "
+                      "does not need to have an associated subnet, since the "
+                      "automatically assigned link-local address (LLA) can "
+                      "be used. However, an IPv6 gateway address is needed "
+                      "for use as the next-hop for the default route. "
+                      "If no IPv6 gateway address is configured here, "
+                      "(and only then) the neutron router will be configured "
+                      "to get its default route from router advertisements "
+                      "(RAs) from the upstream router; in which case the "
+                      "upstream router must also be configured to send "
+                      "these RAs. "
+                      "The ipv6_gateway, when configured, should be the LLA "
+                      "of the interface on the upstream router. If a "
+                      "next-hop using a global unique address (GUA) is "
+                      "desired, it needs to be done via a subnet allocated "
+                      "to the network and not through this parameter. ")),
     cfg.BoolOpt('enable_metadata_proxy', default=True,
                 help=_("Allow running metadata proxy.")),
     cfg.BoolOpt('router_delete_namespaces', default=False,

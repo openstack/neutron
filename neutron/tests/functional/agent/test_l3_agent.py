@@ -103,18 +103,23 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def generate_router_info(self, enable_ha, ip_version=4, extra_routes=True,
                              enable_fip=True, enable_snat=True,
-                             dual_stack=False):
+                             dual_stack=False, v6_ext_gw_with_sub=True):
         if ip_version == 6 and not dual_stack:
             enable_snat = False
             enable_fip = False
             extra_routes = False
 
+        if not v6_ext_gw_with_sub:
+            self.agent.conf.set_override('ipv6_gateway',
+                                         'fe80::f816:3eff:fe2e:1')
         return test_l3_agent.prepare_router_data(ip_version=ip_version,
                                                  enable_snat=enable_snat,
                                                  enable_floating_ip=enable_fip,
                                                  enable_ha=enable_ha,
                                                  extra_routes=extra_routes,
-                                                 dual_stack=dual_stack)
+                                                 dual_stack=dual_stack,
+                                                 v6_ext_gw_with_sub=(
+                                                     v6_ext_gw_with_sub))
 
     def manage_router(self, agent, router):
         self.addCleanup(self._delete_router, agent, router['id'])
@@ -365,6 +370,10 @@ class L3AgentTestCase(L3AgentTestFramework):
     def test_legacy_router_lifecycle(self):
         self._router_lifecycle(enable_ha=False, dual_stack=True)
 
+    def test_legacy_router_lifecycle_with_no_gateway_subnet(self):
+        self._router_lifecycle(enable_ha=False, dual_stack=True,
+                               v6_ext_gw_with_sub=False)
+
     def test_ha_router_lifecycle(self):
         self._router_lifecycle(enable_ha=True)
 
@@ -518,9 +527,12 @@ class L3AgentTestCase(L3AgentTestFramework):
             self.assertFalse(self._namespace_exists(
                 namespaces.NS_PREFIX + routers_to_delete[i]['id']))
 
-    def _router_lifecycle(self, enable_ha, ip_version=4, dual_stack=False):
+    def _router_lifecycle(self, enable_ha, ip_version=4,
+                          dual_stack=False, v6_ext_gw_with_sub=True):
         router_info = self.generate_router_info(enable_ha, ip_version,
-                                                dual_stack=dual_stack)
+                                                dual_stack=dual_stack,
+                                                v6_ext_gw_with_sub=(
+                                                    v6_ext_gw_with_sub))
         router = self.manage_router(self.agent, router_info)
 
         if enable_ha:
@@ -552,7 +564,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             # keepalived on Ubuntu14.04 (i.e., check-neutron-dsvm-functional
             # platform) is updated to 1.2.10 (or above).
             # For more details: https://review.openstack.org/#/c/151284/
-            self._assert_gateway(router)
+            self._assert_gateway(router, v6_ext_gw_with_sub)
             self.assertTrue(self.floating_ips_configured(router))
             self._assert_snat_chains(router)
             self._assert_floating_ip_chains(router)
@@ -576,18 +588,24 @@ class L3AgentTestCase(L3AgentTestFramework):
             external_port, router.get_external_device_name,
             router.ns_name))
 
-    def _assert_gateway(self, router):
+    def _assert_gateway(self, router, v6_ext_gw_with_sub=True):
         external_port = router.get_ex_gw_port()
         external_device_name = router.get_external_device_name(
             external_port['id'])
         external_device = ip_lib.IPDevice(external_device_name,
                                           namespace=router.ns_name)
         for subnet in external_port['subnets']:
-            expected_gateway = subnet['gateway_ip']
-            ip_vers = netaddr.IPAddress(expected_gateway).version
-            existing_gateway = (external_device.route.get_gateway(
-                ip_version=ip_vers).get('gateway'))
-            self.assertEqual(expected_gateway, existing_gateway)
+            self._gateway_check(subnet['gateway_ip'], external_device)
+        if not v6_ext_gw_with_sub:
+            self._gateway_check(self.agent.conf.ipv6_gateway,
+                                external_device)
+
+    def _gateway_check(self, gateway_ip, external_device):
+        expected_gateway = gateway_ip
+        ip_vers = netaddr.IPAddress(expected_gateway).version
+        existing_gateway = (external_device.route.get_gateway(
+            ip_version=ip_vers).get('gateway'))
+        self.assertEqual(expected_gateway, existing_gateway)
 
     def _assert_ha_device(self, router):
         def ha_router_dev_name_getter(not_used):

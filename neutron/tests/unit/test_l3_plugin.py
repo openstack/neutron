@@ -1342,13 +1342,22 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     s['subnet']['network_id'],
                     expected_code=exc.HTTPBadRequest.code)
 
-    def test_router_add_gateway_no_subnet_returns_400(self):
+    def test_router_add_gateway_no_subnet(self):
         with self.router() as r:
             with self.network() as n:
                 self._set_net_external(n['network']['id'])
                 self._add_external_gateway_to_router(
                     r['router']['id'],
-                    n['network']['id'], expected_code=exc.HTTPBadRequest.code)
+                    n['network']['id'])
+                body = self._show('routers', r['router']['id'])
+                net_id = body['router']['external_gateway_info']['network_id']
+                self.assertEqual(net_id, n['network']['id'])
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    n['network']['id'])
+                body = self._show('routers', r['router']['id'])
+                gw_info = body['router']['external_gateway_info']
+                self.assertIsNone(gw_info)
 
     def test_router_remove_interface_inuse_returns_409(self):
         with self.router() as r:

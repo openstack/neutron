@@ -78,12 +78,14 @@ class LinuxInterfaceDriver(object):
         self.conf = conf
 
     def init_l3(self, device_name, ip_cidrs, namespace=None,
-                preserve_ips=[], gateway_ips=None, extra_subnets=[]):
+                preserve_ips=[], gateway_ips=None, extra_subnets=[],
+                enable_ra_on_gw=False):
         """Set the L3 settings for the interface using data from the port.
 
         ip_cidrs: list of 'X.X.X.X/YY' strings
         preserve_ips: list of ip cidrs that should not be removed from device
         gateway_ips: For gateway ports, list of external gateway ip addresses
+        enable_ra_on_gw: Boolean to indicate configuring acceptance of IPv6 RA
         """
         device = ip_lib.IPDevice(device_name, namespace=namespace)
 
@@ -113,6 +115,9 @@ class LinuxInterfaceDriver(object):
 
         for gateway_ip in gateway_ips or []:
             device.route.add_gateway(gateway_ip)
+
+        if enable_ra_on_gw:
+            self._configure_ipv6_ra(namespace, device_name)
 
         new_onlink_routes = set(s['cidr'] for s in extra_subnets)
         existing_onlink_routes = set(
@@ -165,6 +170,13 @@ class LinuxInterfaceDriver(object):
 
     def get_device_name(self, port):
         return (self.DEV_NAME_PREFIX + port.id)[:self.DEV_NAME_LEN]
+
+    @staticmethod
+    def _configure_ipv6_ra(namespace, dev_name):
+        """Configure acceptance of IPv6 route advertisements on an intf."""
+        # Learn the default router's IP address via RAs
+        ip_lib.IPWrapper(namespace=namespace).netns.execute(
+            ['sysctl', '-w', 'net.ipv6.conf.%s.accept_ra=2' % dev_name])
 
     @abc.abstractmethod
     def plug(self, network_id, port_id, device_name, mac_address,
