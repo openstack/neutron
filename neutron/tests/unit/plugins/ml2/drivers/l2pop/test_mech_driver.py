@@ -781,6 +781,21 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.assertFalse(mock_fanout.called)
                 fanout_patch.stop()
 
+    def test_get_device_details_port_id(self):
+        self._register_ml2_agents()
+        host_arg = {portbindings.HOST_ID: L2_AGENT['host']}
+        with self.port(arg_list=(portbindings.HOST_ID,),
+                       **host_arg) as port:
+            port_id = port['port']['id']
+            # ensure various formats all result in correct port_id
+            formats = ['tap' + port_id[0:8], port_id,
+                       port['port']['mac_address']]
+            for device in formats:
+                details = self.callbacks.get_device_details(
+                    self.adminContext, device=device,
+                    agent_id=L2_AGENT_2['host'])
+                self.assertEqual(port_id, details['port_id'])
+
     def test_host_changed(self):
         self._register_ml2_agents()
         with self.subnet(network=self._network) as subnet:
