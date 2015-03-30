@@ -49,10 +49,7 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
         values = filters and filters.get(portbindings.HOST_ID, [])
         if not values:
             return query
-        if len(values) == 1:
-            query = query.filter(PortBindingPort.host == values[0])
-        else:
-            query = query.filter(PortBindingPort.host.in_(values))
+        query = query.filter(PortBindingPort.host.in_(values))
         return query
 
     db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
