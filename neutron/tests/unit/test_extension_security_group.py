@@ -266,11 +266,27 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self._assert_sg_rule_has_kvs(v6_rule, expected)
 
     def test_skip_duplicate_default_sg_error(self):
-        # can't always raise, or create_security_group will hang
+        num_called = [0]
+        original_func = self.plugin.create_security_group
+
+        def side_effect(context, security_group, default_sg):
+            # can't always raise, or create_security_group will hang
+            self.assertTrue(default_sg)
+            self.assertTrue(num_called[0] < 2)
+            num_called[0] += 1
+            ret = original_func(context, security_group, default_sg)
+            if num_called[0] == 1:
+                return ret
+            # make another call to cause an exception.
+            # NOTE(yamamoto): raising the exception by ourselves
+            # doesn't update the session state appropriately.
+            self.assertRaises(exc.DBDuplicateEntry,
+                              original_func, context, security_group,
+                              default_sg)
+
         with mock.patch.object(SecurityGroupTestPlugin,
                                'create_security_group',
-                               side_effect=[exc.DBDuplicateEntry(),
-                                            {'id': 'foo'}]):
+                               side_effect=side_effect):
             self.plugin.create_network(
                 context.get_admin_context(),
                 {'network': {'name': 'foo',

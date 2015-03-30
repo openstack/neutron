@@ -530,27 +530,27 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         query = self._model_query(context, DefaultSecurityGroup)
         # the next loop should do 2 iterations at max
         while True:
-            with db_api.autonested_transaction(context.session):
+            try:
+                default_group = query.filter_by(tenant_id=tenant_id).one()
+            except exc.NoResultFound:
+                security_group = {
+                    'security_group':
+                        {'name': 'default',
+                         'tenant_id': tenant_id,
+                         'description': _('Default security group')}
+                }
                 try:
-                    default_group = query.filter_by(tenant_id=tenant_id).one()
-                except exc.NoResultFound:
-                    security_group = {
-                        'security_group':
-                            {'name': 'default',
-                             'tenant_id': tenant_id,
-                             'description': _('Default security group')}
-                    }
-                    try:
+                    with db_api.autonested_transaction(context.session):
                         ret = self.create_security_group(
                             context, security_group, default_sg=True)
-                    except exception.DBDuplicateEntry as ex:
-                        LOG.debug("Duplicate default security group %s was "
-                                  "not created", ex.value)
-                        continue
-                    else:
-                        return ret['id']
+                except exception.DBDuplicateEntry as ex:
+                    LOG.debug("Duplicate default security group %s was "
+                              "not created", ex.value)
+                    continue
                 else:
-                    return default_group['security_group_id']
+                    return ret['id']
+            else:
+                return default_group['security_group_id']
 
     def _get_security_groups_on_port(self, context, port):
         """Check that all security groups on port belong to tenant.
