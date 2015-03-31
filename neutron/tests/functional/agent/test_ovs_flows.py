@@ -37,6 +37,7 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         self.dst_addr = '192.168.0.2'
         self.src_ns = self._create_namespace()
         self.dst_ns = self._create_namespace()
+        self.pinger = helpers.Pinger(self.src_ns, max_attempts=2)
         self.src_p = self.useFixture(
             net_helpers.OVSPortFixture(self.br, self.src_ns.namespace)).port
         self.dst_p = self.useFixture(
@@ -49,8 +50,7 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        pinger = helpers.Pinger(self.src_ns)
-        pinger.assert_ping(self.dst_addr)
+        self.pinger.assert_ping(self.dst_addr)
 
     def test_arp_spoof_doesnt_block_ipv6(self):
         self.src_addr = '2000::1'
@@ -69,8 +69,7 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         self._setup_arp_spoof_for_port(self.dst_p.name, ['192.168.0.3'])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        pinger = helpers.Pinger(self.src_ns)
-        pinger.assert_no_ping(self.dst_addr)
+        self.pinger.assert_no_ping(self.dst_addr)
 
     def test_arp_spoof_blocks_request(self):
         # this will prevent the source from sending an ARP
@@ -92,8 +91,7 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
                                                          self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        pinger = helpers.Pinger(self.src_ns)
-        pinger.assert_ping(self.dst_addr)
+        self.pinger.assert_ping(self.dst_addr)
 
     def test_arp_spoof_allowed_address_pairs_0cidr(self):
         self._setup_arp_spoof_for_port(self.dst_p.name, ['9.9.9.9/0',
@@ -111,8 +109,7 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
                                        psec=False)
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        pinger = helpers.Pinger(self.src_ns)
-        pinger.assert_ping(self.dst_addr)
+        self.pinger.assert_ping(self.dst_addr)
 
     def _setup_arp_spoof_for_port(self, port, addrs, psec=True):
         of_port_map = self.br.get_vif_port_to_ofport_map()
