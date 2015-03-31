@@ -140,6 +140,10 @@ class Port(model_base.BASEV2, HasId, HasTenant):
     device_owner = sa.Column(sa.String(attr.DEVICE_OWNER_MAX_LEN),
                              nullable=False)
     __table_args__ = (
+        sa.Index(
+            'ix_ports_network_id_mac_address', 'network_id', 'mac_address'),
+        sa.Index(
+            'ix_ports_network_id_device_owner', 'network_id', 'device_owner'),
         sa.UniqueConstraint(
             network_id, mac_address,
             name='uniq_ports0network_id0mac_address'),
