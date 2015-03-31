@@ -21,6 +21,7 @@ import collections
 import contextlib
 
 import mock
+from oslo_config import cfg
 from oslo_context import context as oslo_context
 from sqlalchemy.orm import exc
 
@@ -32,6 +33,9 @@ from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc as plugin_rpc
 from neutron.tests import base
+
+
+cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
 
 
 class RpcCallbacksTestCase(base.BaseTestCase):

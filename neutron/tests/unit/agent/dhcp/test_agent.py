@@ -540,8 +540,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         config.register_interface_driver_opts_helper(cfg.CONF)
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
-        cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
-        cfg.CONF.register_opts(dhcp_config.DHCP_OPTS)
+        entry.register_options()  # register all dhcp cfg options
 
         self.plugin_p = mock.patch(DHCP_PLUGIN)
         plugin_cls = self.plugin_p.start()
