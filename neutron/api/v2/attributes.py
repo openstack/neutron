@@ -703,8 +703,6 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
-        'mtu': {'allow_post': False, 'allow_put': False,
-                'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
