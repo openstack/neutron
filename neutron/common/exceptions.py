@@ -431,3 +431,21 @@ class IllegalSubnetPoolPrefixBounds(BadRequest):
 
 class IllegalSubnetPoolPrefixUpdate(BadRequest):
     message = _("Illegal update to prefixes: %(msg)s")
+
+
+class SubnetAllocationError(NeutronException):
+    message = _("Failed to allocate subnet: %(reason)s")
+
+
+class MinPrefixSubnetAllocationError(BadRequest):
+    message = _("Unable to allocate subnet with prefix length %(prefixlen)s, "
+                "minimum allowed prefix is %(min_prefixlen)s")
+
+
+class MaxPrefixSubnetAllocationError(BadRequest):
+    message = _("Unable to allocate subnet with prefix length %(prefixlen)s, "
+                "maximum allowed prefix is %(max_prefixlen)s")
+
+
+class SubnetPoolDeleteError(BadRequest):
+    message = _("Unable to delete subnet pool: %(reason)s")

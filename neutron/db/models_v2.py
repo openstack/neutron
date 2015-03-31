@@ -184,6 +184,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
 
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
+    subnetpool_id = sa.Column(sa.String(36), index=True)
     ip_version = sa.Column(sa.Integer, nullable=False)
     cidr = sa.Column(sa.String(64), nullable=False)
     gateway_ip = sa.Column(sa.String(64))

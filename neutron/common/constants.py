@@ -115,6 +115,7 @@ DHCP_AGENT_SCHEDULER_EXT_ALIAS = 'dhcp_agent_scheduler'
 LBAAS_AGENT_SCHEDULER_EXT_ALIAS = 'lbaas_agent_scheduler'
 L3_DISTRIBUTED_EXT_ALIAS = 'dvr'
 L3_HA_MODE_EXT_ALIAS = 'l3-ha'
+SUBNET_ALLOCATION_EXT_ALIAS = 'subnet_allocation'
 
 # Protocol names and numbers for Security Groups/Firewalls
 PROTO_NAME_TCP = 'tcp'

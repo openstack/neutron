@@ -86,6 +86,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
         super(NeutronDbPluginV2TestCase, self).setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
+        cfg.CONF.set_override('allow_overlapping_ips', True)
         # Make sure at each test according extensions for the plugin is loaded
         extensions.PluginAwareExtensionManager._instance = None
         # Save the attributes map in case the plugin will alter it
@@ -4813,6 +4814,258 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                       initial_subnetpool['subnetpool']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 400)
+
+    def test_allocate_any_subnet_with_prefixlen(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a subnet allocation (no CIDR)
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'prefixlen': 24,
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+
+            subnet = netaddr.IPNetwork(res['subnet']['cidr'])
+            self.assertEqual(subnet.prefixlen, 24)
+            # Assert the allocated subnet CIDR is a subnet of our pool prefix
+            supernet = netaddr.smallest_matching_cidr(
+                                                 subnet,
+                                                 sp['subnetpool']['prefixes'])
+            self.assertEqual(supernet, netaddr.IPNetwork('10.10.0.0/16'))
+
+    def test_allocate_any_subnet_with_default_prefixlen(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request any subnet allocation using default prefix
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+
+            subnet = netaddr.IPNetwork(res['subnet']['cidr'])
+            self.assertEqual(subnet.prefixlen,
+                             int(sp['subnetpool']['default_prefixlen']))
+
+    def test_allocate_specific_subnet_with_mismatch_prefixlen(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.1.0/24',
+                               'prefixlen': 26,
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 400)
+
+    def test_allocate_specific_subnet_with_matching_prefixlen(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.1.0/24',
+                               'prefixlen': 24,
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 400)
+
+    def test_allocate_specific_subnet(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.1.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+
+            # Assert the allocated subnet CIDR is what we expect
+            subnet = netaddr.IPNetwork(res['subnet']['cidr'])
+            self.assertEqual(subnet, netaddr.IPNetwork('10.10.1.0/24'))
+
+    def test_allocate_specific_subnet_non_existent_prefix(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '192.168.1.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 500)
+
+    def test_allocate_specific_subnet_already_allocated(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.10.0/24'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.10.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            # Allocate the subnet
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 201)
+            # Attempt to allocate it again
+            res = req.get_response(self.api)
+            # Assert error
+            self.assertEqual(res.status_int, 500)
+
+    def test_allocate_specific_subnet_prefix_too_small(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.0.0/20',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 400)
+
+    def test_allocate_specific_subnet_prefix_specific_gw(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.1.0/24',
+                               'gateway_ip': '10.10.1.254',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(res['subnet']['gateway_ip'], '10.10.1.254')
+
+    def test_allocate_specific_subnet_prefix_allocation_pools(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a specific subnet allocation
+            pools = [{'start': '10.10.1.2',
+                     'end': '10.10.1.253'}]
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.1.0/24',
+                               'gateway_ip': '10.10.1.1',
+                               'ip_version': 4,
+                               'allocation_pools': pools,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(res['subnet']['allocation_pools'][0]['start'],
+                             pools[0]['start'])
+            self.assertEqual(res['subnet']['allocation_pools'][0]['end'],
+                             pools[0]['end'])
+
+    def test_allocate_any_subnet_prefix_allocation_pools(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.10.0/24'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request an any subnet allocation
+            pools = [{'start': '10.10.10.1',
+                     'end': '10.10.10.254'}]
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'prefixlen': '24',
+                               'ip_version': 4,
+                               'allocation_pools': pools,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 400)
+
+    def test_allocate_specific_subnet_prefix_too_large(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21',
+                                              max_prefixlen='21')
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.0.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 400)
+
+    def test_delete_subnetpool_existing_allocations(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.0.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            req.get_response(self.api)
+            req = self.new_delete_request('subnetpools',
+                                          sp['subnetpool']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 400)
 
 
 class DbModelTestCase(base.BaseTestCase):

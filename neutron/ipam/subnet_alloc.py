@@ -13,11 +13,131 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import operator
+
 import netaddr
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
+from neutron.db import models_v2
+import neutron.ipam as ipam
+from neutron.ipam import driver
 from neutron.openstack.common import uuidutils
+
+
+class SubnetAllocator(driver.Pool):
+    """Class for handling allocation of subnet prefixes from a subnet pool.
+
+       This class leverages the pluggable IPAM interface where possible to
+       make merging into IPAM framework easier in future cycles.
+    """
+
+    def __init__(self, subnetpool):
+        self._subnetpool = subnetpool
+
+    def _get_allocated_cidrs(self, session):
+        query = session.query(
+            models_v2.Subnet).with_lockmode('update')
+        subnets = query.filter_by(subnetpool_id=self._subnetpool['id'])
+        return (x.cidr for x in subnets)
+
+    def _get_available_prefix_list(self, session):
+        prefixes = (x.cidr for x in self._subnetpool['prefixes'])
+        allocations = self._get_allocated_cidrs(session)
+        prefix_set = netaddr.IPSet(iterable=prefixes)
+        allocation_set = netaddr.IPSet(iterable=allocations)
+        available_set = prefix_set.difference(allocation_set)
+        available_set.compact()
+        return sorted(available_set.iter_cidrs(),
+                      key=operator.attrgetter('prefixlen'),
+                      reverse=True)
+
+    def _allocate_any_subnet(self, session, request):
+        with session.begin(subtransactions=True):
+            prefix_pool = self._get_available_prefix_list(session)
+            for prefix in prefix_pool:
+                if request.prefixlen >= prefix.prefixlen:
+                    subnet = prefix.subnet(request.prefixlen).next()
+                    gateway_ip = request.gateway_ip
+                    if not gateway_ip:
+                        gateway_ip = subnet.network + 1
+
+                    return IpamSubnet(request.tenant_id,
+                                      request.subnet_id,
+                                      subnet.cidr,
+                                      gateway_ip=gateway_ip,
+                                      allocation_pools=None)
+            msg = _("Insufficient prefix space to allocate subnet size /%s")
+            raise n_exc.SubnetAllocationError(reason=msg %
+                                              str(request.prefixlen))
+
+    def _allocate_specific_subnet(self, session, request):
+        with session.begin(subtransactions=True):
+            subnet = request.subnet
+            available = self._get_available_prefix_list(session)
+            matched = netaddr.all_matching_cidrs(subnet, available)
+            if len(matched) is 1 and matched[0].prefixlen <= subnet.prefixlen:
+                return IpamSubnet(request.tenant_id,
+                                  request.subnet_id,
+                                  subnet.cidr,
+                                  gateway_ip=request.gateway_ip,
+                                  allocation_pools=request.allocation_pools)
+            msg = _("Cannot allocate requested subnet from the available "
+                    "set of prefixes")
+            raise n_exc.SubnetAllocationError(reason=msg)
+
+    def allocate_subnet(self, session, request):
+        max_prefixlen = int(self._subnetpool['max_prefixlen'])
+        min_prefixlen = int(self._subnetpool['min_prefixlen'])
+        if request.prefixlen > max_prefixlen:
+            raise n_exc.MaxPrefixSubnetAllocationError(
+                              prefixlen=request.prefixlen,
+                              max_prefixlen=max_prefixlen)
+        if request.prefixlen < min_prefixlen:
+            raise n_exc.MinPrefixSubnetAllocationError(
+                              prefixlen=request.prefixlen,
+                              min_prefixlen=min_prefixlen)
+
+        if isinstance(request, ipam.AnySubnetRequest):
+            return self._allocate_any_subnet(session, request)
+        elif isinstance(request, ipam.SpecificSubnetRequest):
+            return self._allocate_specific_subnet(session, request)
+        else:
+            msg = _("Unsupported request type")
+            raise n_exc.SubnetAllocationError(reason=msg)
+
+    def get_subnet(self, subnet, subnet_id):
+        raise NotImplementedError()
+
+    def update_subnet(self, request):
+        raise NotImplementedError()
+
+    def remove_subnet(self, subnet, subnet_id):
+        raise NotImplementedError()
+
+
+class IpamSubnet(driver.Subnet):
+
+    def __init__(self,
+                 tenant_id,
+                 subnet_id,
+                 cidr,
+                 gateway_ip=None,
+                 allocation_pools=None):
+        self._req = ipam.SpecificSubnetRequest(tenant_id,
+                                               subnet_id,
+                                               cidr,
+                                               gateway_ip=gateway_ip,
+                                               allocation_pools=None)
+
+    def allocate(self, address_request):
+        raise NotImplementedError()
+
+    def deallocate(self, address):
+        raise NotImplementedError()
+
+    def get_details(self):
+        return self._req
 
 
 class SubnetPoolReader(object):

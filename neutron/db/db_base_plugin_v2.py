@@ -15,6 +15,7 @@
 
 import netaddr
 from oslo_config import cfg
+from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -29,11 +30,13 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron import context as ctx
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.db import sqlalchemyutils
 from neutron.extensions import l3
 from neutron.i18n import _LE, _LI
+from neutron import ipam
 from neutron.ipam import subnet_alloc
 from neutron import manager
 from neutron import neutron_plugin_base_v2
@@ -130,6 +133,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     def _get_subnets_by_network(self, context, network_id):
         subnet_qry = context.session.query(models_v2.Subnet)
         return subnet_qry.filter_by(network_id=network_id).all()
+
+    def _get_subnets_by_subnetpool(self, context, subnetpool_id):
+        subnet_qry = context.session.query(models_v2.Subnet)
+        return subnet_qry.filter_by(subnetpool_id=subnetpool_id).all()
 
     def _get_all_subnets(self, context):
         # NOTE(salvatore-orlando): This query might end up putting
@@ -845,6 +852,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                'network_id': subnet['network_id'],
                'ip_version': subnet['ip_version'],
                'cidr': subnet['cidr'],
+               'subnetpool_id': subnet.get('subnetpool_id'),
                'allocation_pools': [{'start': pool['first_ip'],
                                      'end': pool['last_ip']}
                                     for pool in subnet['allocation_pools']],
@@ -1022,7 +1030,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
         ip_ver = s['ip_version']
 
-        if 'cidr' in s:
+        if attributes.is_attr_set(s.get('cidr')):
             self._validate_ip_version(ip_ver, s['cidr'], 'cidr')
 
         if attributes.is_attr_set(s.get('gateway_ip')):
@@ -1109,80 +1117,184 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     external_gateway_info}}
                 l3plugin.update_router(context, id, info)
 
-    def create_subnet(self, context, subnet):
+    def _save_subnet(self, context,
+                     network,
+                     subnet_args,
+                     dns_nameservers,
+                     host_routes,
+                     allocation_pools):
 
-        net = netaddr.IPNetwork(subnet['subnet']['cidr'])
-        # turn the CIDR into a proper subnet
-        subnet['subnet']['cidr'] = '%s/%s' % (net.network, net.prefixlen)
-
-        s = subnet['subnet']
-
-        if s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED:
-            s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
-
-        if s['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
-            s['allocation_pools'] = self._allocate_pools_for_subnet(context, s)
+        if not attributes.is_attr_set(allocation_pools):
+            allocation_pools = self._allocate_pools_for_subnet(context,
+                                                               subnet_args)
         else:
-            self._validate_allocation_pools(s['allocation_pools'], s['cidr'])
-            if s['gateway_ip'] is not None:
-                self._validate_gw_out_of_pools(s['gateway_ip'],
-                                               s['allocation_pools'])
+            self._validate_allocation_pools(allocation_pools,
+                                            subnet_args['cidr'])
+            if subnet_args['gateway_ip']:
+                self._validate_gw_out_of_pools(subnet_args['gateway_ip'],
+                                               allocation_pools)
 
-        self._validate_subnet(context, s)
+        self._validate_subnet_cidr(context, network, subnet_args['cidr'])
 
+        subnet = models_v2.Subnet(**subnet_args)
+        context.session.add(subnet)
+        if attributes.is_attr_set(dns_nameservers):
+            for addr in dns_nameservers:
+                ns = models_v2.DNSNameServer(address=addr,
+                                             subnet_id=subnet.id)
+                context.session.add(ns)
+
+        if attributes.is_attr_set(host_routes):
+            for rt in host_routes:
+                route = models_v2.SubnetRoute(
+                    subnet_id=subnet.id,
+                    destination=rt['destination'],
+                    nexthop=rt['nexthop'])
+                context.session.add(route)
+
+        for pool in allocation_pools:
+            ip_pool = models_v2.IPAllocationPool(subnet=subnet,
+                                                 first_ip=pool['start'],
+                                                 last_ip=pool['end'])
+            context.session.add(ip_pool)
+            ip_range = models_v2.IPAvailabilityRange(
+                ipallocationpool=ip_pool,
+                first_ip=pool['start'],
+                last_ip=pool['end'])
+            context.session.add(ip_range)
+
+        return subnet
+
+    def _make_subnet_args(self, context, shared, detail,
+                          subnet, subnetpool_id=None):
+        args = {'tenant_id': detail.tenant_id,
+                'id': detail.subnet_id,
+                'name': subnet['name'],
+                'network_id': subnet['network_id'],
+                'ip_version': subnet['ip_version'],
+                'cidr': str(detail.subnet.cidr),
+                'subnetpool_id': subnetpool_id,
+                'enable_dhcp': subnet['enable_dhcp'],
+                'gateway_ip': self._gateway_ip_str(subnet, detail.subnet),
+                'shared': shared}
+        if subnet['ip_version'] == 6 and subnet['enable_dhcp']:
+            if attributes.is_attr_set(subnet['ipv6_ra_mode']):
+                args['ipv6_ra_mode'] = subnet['ipv6_ra_mode']
+            if attributes.is_attr_set(subnet['ipv6_address_mode']):
+                args['ipv6_address_mode'] = subnet['ipv6_address_mode']
+        return args
+
+    def _make_subnet_request(self, tenant_id, subnet, subnetpool):
+        cidr = subnet.get('cidr')
+        subnet_id = subnet.get('id', uuidutils.generate_uuid())
+        is_any_subnetpool_request = not attributes.is_attr_set(cidr)
+
+        if is_any_subnetpool_request:
+            prefixlen = subnet['prefixlen']
+            if not attributes.is_attr_set(prefixlen):
+                prefixlen = int(subnetpool['default_prefixlen'])
+
+            return ipam.AnySubnetRequest(
+                          tenant_id,
+                          subnet_id,
+                          utils.ip_version_from_int(subnetpool['ip_version']),
+                          prefixlen)
+        else:
+            return ipam.SpecificSubnetRequest(tenant_id,
+                                              subnet_id,
+                                              cidr)
+
+    def _gateway_ip_str(self, subnet, cidr_net):
+        if subnet.get('gateway_ip') is attributes.ATTR_NOT_SPECIFIED:
+                return str(cidr_net.network + 1)
+        return subnet.get('gateway_ip')
+
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True,
+                               retry_on_deadlock=True)
+    def _create_subnet_from_pool(self, context, subnet):
+        s = subnet['subnet']
         tenant_id = self._get_tenant_id_for_create(context, s)
-        subnet_id = s.get('id') or uuidutils.generate_uuid()
+        has_allocpool = attributes.is_attr_set(s['allocation_pools'])
+        is_any_subnetpool_request = not attributes.is_attr_set(s['cidr'])
+        if is_any_subnetpool_request and has_allocpool:
+            reason = _("allocation_pools allowed only "
+                       "for specific subnet requests.")
+            raise n_exc.BadRequest(resource='subnets', msg=reason)
+
+        with context.session.begin(subtransactions=True):
+            subnetpool = self._get_subnetpool(context, s['subnetpool_id'])
+            network = self._get_network(context, s["network_id"])
+            allocator = subnet_alloc.SubnetAllocator(subnetpool)
+            req = self._make_subnet_request(tenant_id, s, subnetpool)
+
+            ipam_subnet = allocator.allocate_subnet(context.session, req)
+            detail = ipam_subnet.get_details()
+            subnet = self._save_subnet(context,
+                                       network,
+                                       self._make_subnet_args(
+                                              context,
+                                              network.shared,
+                                              detail,
+                                              s,
+                                              subnetpool_id=subnetpool['id']),
+                                       s['dns_nameservers'],
+                                       s['host_routes'],
+                                       s['allocation_pools'])
+        if network.external:
+            self._update_router_gw_ports(context,
+                                         subnet['id'],
+                                         subnet['network_id'])
+        return self._make_subnet_dict(subnet)
+
+    def _create_subnet_from_implicit_pool(self, context, subnet):
+        s = subnet['subnet']
+        self._validate_subnet(context, s)
+        tenant_id = self._get_tenant_id_for_create(context, s)
+        id = s.get('id', uuidutils.generate_uuid())
+        detail = ipam.SpecificSubnetRequest(tenant_id,
+                                            id,
+                                            s['cidr'])
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, s["network_id"])
             self._validate_subnet_cidr(context, network, s['cidr'])
-            # The 'shared' attribute for subnets is for internal plugin
-            # use only. It is not exposed through the API
-            args = {'tenant_id': tenant_id,
-                    'id': subnet_id,
-                    'name': s['name'],
-                    'network_id': s['network_id'],
-                    'ip_version': s['ip_version'],
-                    'cidr': s['cidr'],
-                    'enable_dhcp': s['enable_dhcp'],
-                    'gateway_ip': s['gateway_ip'],
-                    'shared': network.shared}
-            if s['ip_version'] == 6 and s['enable_dhcp']:
-                if attributes.is_attr_set(s['ipv6_ra_mode']):
-                    args['ipv6_ra_mode'] = s['ipv6_ra_mode']
-                if attributes.is_attr_set(s['ipv6_address_mode']):
-                    args['ipv6_address_mode'] = s['ipv6_address_mode']
-            subnet = models_v2.Subnet(**args)
-
-            context.session.add(subnet)
-            if s['dns_nameservers'] is not attributes.ATTR_NOT_SPECIFIED:
-                for addr in s['dns_nameservers']:
-                    ns = models_v2.DNSNameServer(address=addr,
-                                                 subnet_id=subnet.id)
-                    context.session.add(ns)
-
-            if s['host_routes'] is not attributes.ATTR_NOT_SPECIFIED:
-                for rt in s['host_routes']:
-                    route = models_v2.SubnetRoute(
-                        subnet_id=subnet.id,
-                        destination=rt['destination'],
-                        nexthop=rt['nexthop'])
-                    context.session.add(route)
-
-            for pool in s['allocation_pools']:
-                ip_pool = models_v2.IPAllocationPool(subnet=subnet,
-                                                     first_ip=pool['start'],
-                                                     last_ip=pool['end'])
-                context.session.add(ip_pool)
-                ip_range = models_v2.IPAvailabilityRange(
-                    ipallocationpool=ip_pool,
-                    first_ip=pool['start'],
-                    last_ip=pool['end'])
-                context.session.add(ip_range)
-
+            subnet = self._save_subnet(context,
+                                       network,
+                                       self._make_subnet_args(context,
+                                                              network.shared,
+                                                              detail,
+                                                              s),
+                                       s['dns_nameservers'],
+                                       s['host_routes'],
+                                       s['allocation_pools'])
         if network.external:
-            self._update_router_gw_ports(context, subnet_id, s['network_id'])
-
+            self._update_router_gw_ports(context,
+                                         subnet['id'],
+                                         subnet['network_id'])
         return self._make_subnet_dict(subnet)
+
+    def create_subnet(self, context, subnet):
+
+        s = subnet['subnet']
+        cidr = s.get('cidr', attributes.ATTR_NOT_SPECIFIED)
+        prefixlen = s.get('prefixlen', attributes.ATTR_NOT_SPECIFIED)
+        has_cidr = attributes.is_attr_set(cidr)
+        has_prefixlen = attributes.is_attr_set(prefixlen)
+
+        if has_cidr and has_prefixlen:
+            msg = _('cidr and prefixlen must not be supplied together')
+            raise n_exc.BadRequest(resource='subnets', msg=msg)
+
+        if has_cidr:
+            # turn the CIDR into a proper subnet
+            net = netaddr.IPNetwork(s['cidr'])
+            subnet['subnet']['cidr'] = '%s/%s' % (net.network, net.prefixlen)
+
+        subnetpool_id = s.get('subnetpool_id', attributes.ATTR_NOT_SPECIFIED)
+        if not attributes.is_attr_set(subnetpool_id):
+            # Create subnet from the implicit(AKA null) pool
+            return self._create_subnet_from_implicit_pool(context, subnet)
+        return self._create_subnet_from_pool(context, subnet)
 
     def _update_subnet_dns_nameservers(self, context, id, s):
         old_dns_list = self._get_dns_by_subnet(context, id)
@@ -1387,6 +1499,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
     def create_subnetpool(self, context, subnetpool):
         """Create a subnetpool"""
+
         sp = subnetpool['subnetpool']
         sp_reader = subnet_alloc.SubnetPoolReader(sp)
         tenant_id = self._get_tenant_id_for_create(context, sp)
@@ -1490,6 +1603,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         """Delete a subnetpool."""
         with context.session.begin(subtransactions=True):
             subnetpool = self._get_subnetpool(context, id)
+            subnets = self._get_subnets_by_subnetpool(context, id)
+            if subnets:
+                reason = _("Subnet pool has existing allocations")
+                raise n_exc.SubnetPoolDeleteError(reason=reason)
             context.session.delete(subnetpool)
 
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
