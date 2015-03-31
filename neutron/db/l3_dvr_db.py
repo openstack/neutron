@@ -151,20 +151,19 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                         agent['id'])
             return router_db
 
-    def _delete_current_gw_port(self, context, router_id, router, new_network,
-                                ext_ip_change):
+    def _delete_current_gw_port(self, context, router_id, router, new_network):
         super(L3_NAT_with_dvr_db_mixin,
               self)._delete_current_gw_port(context, router_id,
-                                            router, new_network, ext_ip_change)
+                                            router, new_network)
         if router.extra_attributes.distributed:
             self.delete_csnat_router_interface_ports(
                 context.elevated(), router)
 
-    def _create_gw_port(self, context, router_id, router, new_network, ext_ips,
-                        ext_ip_change):
+    def _create_gw_port(self, context, router_id, router, new_network,
+                        ext_ips):
         super(L3_NAT_with_dvr_db_mixin,
               self)._create_gw_port(context, router_id, router, new_network,
-                                    ext_ips, ext_ip_change)
+                                    ext_ips)
         # Make sure that the gateway port exists before creating the
         # snat interface ports for distributed router.
         if router.extra_attributes.distributed and router.gw_port:

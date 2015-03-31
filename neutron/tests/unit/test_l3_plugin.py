@@ -848,6 +848,35 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 fip['floatingip']['router_id'], None,
                 expected_code=exc.HTTPConflict.code)
 
+    def test_router_update_gateway_add_multiple_prefixes_ipv6(self):
+        with self.network() as n:
+            with self.subnet(network=n) as s1, \
+                self.subnet(network=n, ip_version=6, cidr='2001:db8::/32') \
+                as s2, (self.router()) as r:
+                self._set_net_external(n['network']['id'])
+                res1 = self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        n['network']['id'],
+                        ext_ips=[{'subnet_id': s1['subnet']['id']}])
+                fip1 = (res1['router']['external_gateway_info']
+                        ['external_fixed_ips'][0])
+                self.assertEqual(s1['subnet']['id'], fip1['subnet_id'])
+                res2 = self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        n['network']['id'],
+                        ext_ips=[{'ip_address': fip1['ip_address'],
+                                  'subnet_id': s1['subnet']['id']},
+                                 {'subnet_id': s2['subnet']['id']}])
+                self.assertEqual(fip1, res2['router']['external_gateway_info']
+                                           ['external_fixed_ips'][0])
+                fip2 = (res2['router']['external_gateway_info']
+                        ['external_fixed_ips'][1])
+                self.assertEqual(s2['subnet']['id'], fip2['subnet_id'])
+                self.assertNotEqual(fip1['subnet_id'],
+                                    fip2['subnet_id'])
+                self.assertNotEqual(fip1['ip_address'],
+                                    fip2['ip_address'])
+
     def _test_router_add_interface_subnet(self, router, subnet, msg=None):
         exp_notifications = ['router.create.start',
                              'router.create.end',
