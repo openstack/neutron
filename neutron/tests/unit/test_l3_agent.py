@@ -107,7 +107,8 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
 
 def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
                         enable_floating_ip=False, enable_ha=False,
-                        extra_routes=False, dual_stack=False):
+                        extra_routes=False, dual_stack=False,
+                        v6_ext_gw_with_sub=True):
     fixed_ips = []
     subnets = []
     for loop_version in (4, 6):
@@ -116,7 +117,8 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
             prefixlen = 24
             subnet_cidr = '19.4.4.0/24'
             gateway_ip = '19.4.4.1'
-        elif loop_version == 6 and (ip_version == 6 or dual_stack):
+        elif (loop_version == 6 and (ip_version == 6 or dual_stack) and
+              v6_ext_gw_with_sub):
             ip_address = 'fd00::4'
             prefixlen = 64
             subnet_cidr = 'fd00::/64'
@@ -486,6 +488,64 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_agent_remove_internal_network_dist(self):
         self._test_internal_network_action_dist('remove')
 
+    def _add_external_gateway(self, ri, router, ex_gw_port, interface_name,
+                              enable_ra_on_gw=False,
+                              use_fake_fip=False,
+                              no_subnet=False, no_sub_gw=None,
+                              dual_stack=False):
+        self.device_exists.return_value = False
+        if no_sub_gw is None:
+            no_sub_gw = []
+        if use_fake_fip:
+            fake_fip = {'floatingips': [{'id': _uuid(),
+                                         'floating_ip_address': '192.168.1.34',
+                                         'fixed_ip_address': '192.168.0.1',
+                                         'port_id': _uuid()}]}
+            router[l3_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
+        ri.external_gateway_added(ex_gw_port, interface_name)
+        if not router.get('distributed'):
+            self.assertEqual(self.mock_driver.plug.call_count, 1)
+            self.assertEqual(self.mock_driver.init_l3.call_count, 1)
+            if no_subnet and not dual_stack:
+                self.assertEqual(self.send_arp.call_count, 0)
+                ip_cidrs = []
+                gateway_ips = []
+                if no_sub_gw:
+                    gateway_ips.append(no_sub_gw)
+                kwargs = {'preserve_ips': [],
+                          'gateway_ips': gateway_ips,
+                          'namespace': 'qrouter-' + router['id'],
+                          'extra_subnets': [],
+                          'enable_ra_on_gw': enable_ra_on_gw}
+            else:
+                exp_arp_calls = [mock.call(ri.ns_name, interface_name,
+                                           '20.0.0.30', mock.ANY)]
+                if dual_stack and not no_sub_gw:
+                    exp_arp_calls += [mock.call(ri.ns_name, interface_name,
+                                                '2001:192:168:100::2',
+                                                mock.ANY)]
+                self.send_arp.assert_has_calls(exp_arp_calls)
+                ip_cidrs = ['20.0.0.30/24']
+                gateway_ips = ['20.0.0.1']
+                if dual_stack:
+                    if no_sub_gw:
+                        gateway_ips.append(no_sub_gw)
+                    else:
+                        ip_cidrs.append('2001:192:168:100::2/64')
+                        gateway_ips.append('2001:192:168:100::1')
+                kwargs = {'preserve_ips': ['192.168.1.34/32'],
+                          'gateway_ips': gateway_ips,
+                          'namespace': 'qrouter-' + router['id'],
+                          'extra_subnets': [{'cidr': '172.16.0.0/24'}],
+                          'enable_ra_on_gw': enable_ra_on_gw}
+            self.mock_driver.init_l3.assert_called_with(interface_name,
+                                                        ip_cidrs,
+                                                        **kwargs)
+        else:
+            ri._create_dvr_gateway.assert_called_once_with(
+                ex_gw_port, interface_name,
+                self.snat_ports)
+
     def _test_external_gateway_action(self, action, router, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ex_net_id = _uuid()
@@ -509,6 +569,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 router['id'], router,
                 **self.ri_kwargs)
 
+        ri.use_ipv6 = False
         subnet_id = _uuid()
         fixed_ips = [{'subnet_id': subnet_id,
                       'ip_address': '20.0.0.30',
@@ -517,6 +578,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                     'cidr': '20.0.0.0/24',
                     'gateway_ip': '20.0.0.1'}]
         if dual_stack:
+            ri.use_ipv6 = True
             subnet_id_v6 = _uuid()
             fixed_ips.append({'subnet_id': subnet_id_v6,
                               'ip_address': '2001:192:168:100::2',
@@ -530,42 +592,40 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                       'id': _uuid(),
                       'network_id': ex_net_id,
                       'mac_address': 'ca:fe:de:ad:be:ef'}
+        ex_gw_port_no_sub = {'fixed_ips': [],
+                             'id': _uuid(),
+                             'network_id': ex_net_id,
+                             'mac_address': 'ca:fe:de:ad:be:ef'}
         interface_name = ri.get_external_device_name(ex_gw_port['id'])
 
         if action == 'add':
-            self.device_exists.return_value = False
-            fake_fip = {'floatingips': [{'id': _uuid(),
-                                         'floating_ip_address': '192.168.1.34',
-                                         'fixed_ip_address': '192.168.0.1',
-                                         'port_id': _uuid()}]}
-            router[l3_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
-            ri.external_gateway_added(ex_gw_port, interface_name)
-            if not router.get('distributed'):
-                self.assertEqual(self.mock_driver.plug.call_count, 1)
-                self.assertEqual(self.mock_driver.init_l3.call_count, 1)
-                exp_arp_calls = [mock.call(ri.ns_name, interface_name,
-                                           '20.0.0.30', mock.ANY)]
-                if dual_stack:
-                    exp_arp_calls += [mock.call(ri.ns_name, interface_name,
-                                                '2001:192:168:100::2',
-                                                mock.ANY)]
-                self.send_arp.assert_has_calls(exp_arp_calls)
-                ip_cidrs = ['20.0.0.30/24']
-                gateway_ips = ['20.0.0.1']
-                if dual_stack:
-                    ip_cidrs.append('2001:192:168:100::2/64')
-                    gateway_ips.append('2001:192:168:100::1')
-                kwargs = {'preserve_ips': ['192.168.1.34/32'],
-                          'gateway_ips': gateway_ips,
-                          'namespace': 'qrouter-' + router['id'],
-                          'extra_subnets': [{'cidr': '172.16.0.0/24'}]}
-                self.mock_driver.init_l3.assert_called_with(interface_name,
-                                                            ip_cidrs,
-                                                            **kwargs)
+            self._add_external_gateway(ri, router, ex_gw_port, interface_name,
+                                       use_fake_fip=True,
+                                       dual_stack=dual_stack)
+
+        elif action == 'add_no_sub':
+            ri.use_ipv6 = True
+            self._add_external_gateway(ri, router, ex_gw_port_no_sub,
+                                       interface_name, enable_ra_on_gw=True,
+                                       no_subnet=True)
+
+        elif action == 'add_no_sub_v6_gw':
+            ri.use_ipv6 = True
+            self.conf.set_override('ipv6_gateway',
+                                   'fe80::f816:3eff:fe2e:1')
+            if dual_stack:
+                use_fake_fip = True
+                # Remove v6 entries
+                del ex_gw_port['fixed_ips'][-1]
+                del ex_gw_port['subnets'][-1]
             else:
-                ri._create_dvr_gateway.assert_called_once_with(
-                    ex_gw_port, interface_name,
-                    self.snat_ports)
+                use_fake_fip = False
+                ex_gw_port = ex_gw_port_no_sub
+            self._add_external_gateway(ri, router, ex_gw_port,
+                                       interface_name, no_subnet=True,
+                                       no_sub_gw='fe80::f816:3eff:fe2e:1',
+                                       use_fake_fip=use_fake_fip,
+                                       dual_stack=dual_stack)
 
         elif action == 'remove':
             self.device_exists.return_value = True
@@ -616,6 +676,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test_external_gateway_updated(self, dual_stack=False):
         router = prepare_router_data(num_internal_ports=2)
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
+        ri.use_ipv6 = False
         interface_name, ex_gw_port = self._prepare_ext_gw_test(
             ri, dual_stack=dual_stack)
 
@@ -630,6 +691,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         exp_arp_calls = [mock.call(ri.ns_name, interface_name,
                                    '20.0.0.30', mock.ANY)]
         if dual_stack:
+            ri.use_ipv6 = True
             exp_arp_calls += [mock.call(ri.ns_name, interface_name,
                                         '2001:192:168:100::2', mock.ANY)]
         self.send_arp.assert_has_calls(exp_arp_calls)
@@ -641,7 +703,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         kwargs = {'preserve_ips': ['192.168.1.34/32'],
                   'gateway_ips': gateway_ips,
                   'namespace': 'qrouter-' + router['id'],
-                  'extra_subnets': [{'cidr': '172.16.0.0/24'}]}
+                  'extra_subnets': [{'cidr': '172.16.0.0/24'}],
+                  'enable_ra_on_gw': False}
         self.mock_driver.init_l3.assert_called_with(interface_name,
                                                     ip_cidrs,
                                                     **kwargs)
@@ -706,6 +769,22 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router['distributed'] = True
         router['gw_port_host'] = HOSTNAME
         self._test_external_gateway_action('add', router, dual_stack=True)
+
+    def test_agent_add_external_gateway_no_subnet(self):
+        router = prepare_router_data(num_internal_ports=2,
+                                     v6_ext_gw_with_sub=False)
+        self._test_external_gateway_action('add_no_sub', router)
+
+    def test_agent_add_external_gateway_no_subnet_with_ipv6_gw(self):
+        router = prepare_router_data(num_internal_ports=2,
+                                     v6_ext_gw_with_sub=False)
+        self._test_external_gateway_action('add_no_sub_v6_gw', router)
+
+    def test_agent_add_external_gateway_dual_stack_no_subnet_w_ipv6_gw(self):
+        router = prepare_router_data(num_internal_ports=2,
+                                     v6_ext_gw_with_sub=False)
+        self._test_external_gateway_action('add_no_sub_v6_gw',
+                                           router, dual_stack=True)
 
     def test_agent_remove_external_gateway(self):
         router = prepare_router_data(num_internal_ports=2)

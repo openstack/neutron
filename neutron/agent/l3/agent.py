@@ -14,6 +14,7 @@
 #
 
 import eventlet
+import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -236,6 +237,19 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             msg = _LE('Router id is required if not using namespaces.')
             LOG.error(msg)
             raise SystemExit(1)
+
+        if self.conf.ipv6_gateway:
+            # ipv6_gateway configured. Check for valid v6 link-local address.
+            try:
+                msg = _LE("%s used in config as ipv6_gateway is not a valid "
+                          "IPv6 link-local address."),
+                ip_addr = netaddr.IPAddress(self.conf.ipv6_gateway)
+                if ip_addr.version != 6 or not ip_addr.is_link_local():
+                    LOG.error(msg, self.conf.ipv6_gateway)
+                    raise SystemExit(1)
+            except netaddr.AddrFormatError:
+                LOG.error(msg, self.conf.ipv6_gateway)
+                raise SystemExit(1)
 
     def _fetch_external_net_id(self, force=False):
         """Find UUID of single external network for this agent."""

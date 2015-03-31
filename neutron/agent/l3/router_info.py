@@ -395,20 +395,41 @@ class RouterInfo(object):
         # Build up the interface and gateway IP addresses that
         # will be added to the interface.
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
-        gateway_ips = [subnet['gateway_ip']
-                       for subnet in ex_gw_port['subnets']
-                       if subnet['gateway_ip']]
+        gateway_ips = []
+        enable_ra_on_gw = False
+        if 'subnets' in ex_gw_port:
+            gateway_ips = [subnet['gateway_ip']
+                           for subnet in ex_gw_port['subnets']
+                           if subnet['gateway_ip']]
+        if self.use_ipv6 and not self.is_v6_gateway_set(gateway_ips):
+            # No IPv6 gateway is available, but IPv6 is enabled.
+            if self.agent_conf.ipv6_gateway:
+                # ipv6_gateway configured, use address for default route.
+                gateway_ips.append(self.agent_conf.ipv6_gateway)
+            else:
+                # ipv6_gateway is also not configured.
+                # Use RA for default route.
+                enable_ra_on_gw = True
         self.driver.init_l3(interface_name,
                             ip_cidrs,
                             namespace=ns_name,
                             gateway_ips=gateway_ips,
                             extra_subnets=ex_gw_port.get('extra_subnets', []),
-                            preserve_ips=preserve_ips)
+                            preserve_ips=preserve_ips,
+                            enable_ra_on_gw=enable_ra_on_gw)
         for fixed_ip in ex_gw_port['fixed_ips']:
             ip_lib.send_gratuitous_arp(ns_name,
                                        interface_name,
                                        fixed_ip['ip_address'],
                                        self.agent_conf.send_arp_for_ha)
+
+    def is_v6_gateway_set(self, gateway_ips):
+        """Check to see if list of gateway_ips has an IPv6 gateway.
+        """
+        # Note - don't require a try-except here as all
+        # gateway_ips elements are valid addresses, if they exist.
+        return any(netaddr.IPAddress(gw_ip).version == 6
+                   for gw_ip in gateway_ips)
 
     def external_gateway_added(self, ex_gw_port, interface_name):
         preserve_ips = self._list_floating_ip_cidrs()

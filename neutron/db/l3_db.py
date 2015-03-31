@@ -288,11 +288,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                      'name': ''}})
 
         if not gw_port['fixed_ips']:
-            self._core_plugin.delete_port(context.elevated(), gw_port['id'],
-                                          l3_port_check=False)
-            msg = (_('No IPs available for external network %s') %
-                   network_id)
-            raise n_exc.BadRequest(resource='router', msg=msg)
+            LOG.debug('No IPs available for external network %s',
+                      network_id)
 
         with context.session.begin(subtransactions=True):
             router.gw_port = self._core_plugin._get_port(context.elevated(),
