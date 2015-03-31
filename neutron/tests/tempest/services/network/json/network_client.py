@@ -169,8 +169,8 @@ class NetworkClientJSON(service_client.ServiceClient):
         raise AttributeError(name)
 
     # Common methods that are hard to automate
-    def create_bulk_network(self, names):
-        network_list = [{'name': name} for name in names]
+    def create_bulk_network(self, names, shared=False):
+        network_list = [{'name': name, 'shared': shared} for name in names]
         post_data = {'networks': network_list}
         body = self.serialize_list(post_data, "networks", "network")
         uri = self.get_uri("networks")
