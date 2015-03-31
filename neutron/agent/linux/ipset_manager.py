@@ -13,17 +13,12 @@
 
 import copy
 
-from oslo_config import cfg
-
-from neutron.agent.common import config
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 
 IPSET_ADD_BULK_THRESHOLD = 5
 SWAP_SUFFIX = '-new'
 IPSET_NAME_MAX_LENGTH = 31 - len(SWAP_SUFFIX)
-
-config.register_ipset_opts(cfg.CONF)
 
 
 class IpsetManager(object):
@@ -45,15 +40,6 @@ class IpsetManager(object):
         """
         name = ethertype + id
         return name[:IPSET_NAME_MAX_LENGTH]
-
-    @staticmethod
-    def get_hashargs():
-        args = []
-        if cfg.CONF.AGENT.ipset_hashsize:
-            args.extend(['hashsize', str(cfg.CONF.AGENT.ipset_hashsize)])
-        if cfg.CONF.AGENT.ipset_maxelem:
-            args.extend(['maxelem', str(cfg.CONF.AGENT.ipset_maxelem)])
-        return args
 
     def set_exists(self, id, ethertype):
         """Returns true if the id+ethertype pair is known to the manager."""
@@ -101,10 +87,8 @@ class IpsetManager(object):
     def _refresh_set(self, set_name, member_ips, ethertype):
         new_set_name = set_name + SWAP_SUFFIX
         set_type = self._get_ipset_set_type(ethertype)
-        hash_args = ' '.join(self.get_hashargs())
-        process_input = ["create %s hash:ip family %s %s" % (new_set_name,
-                                                             set_type,
-                                                             hash_args)]
+        process_input = ["create %s hash:ip family %s" % (new_set_name,
+                                                          set_type)]
         for ip in member_ips:
             process_input.append("add %s %s" % (new_set_name, ip))
 
@@ -121,7 +105,6 @@ class IpsetManager(object):
     def _create_set(self, set_name, ethertype):
         cmd = ['ipset', 'create', '-exist', set_name, 'hash:ip', 'family',
                self._get_ipset_set_type(ethertype)]
-        cmd.extend(self.get_hashargs())
         self._apply(cmd)
         self.ipset_sets[set_name] = []
 
