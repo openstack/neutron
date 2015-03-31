@@ -447,18 +447,19 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         """Allocate IP addresses according to the configured fixed_ips."""
         ips = []
         for fixed in fixed_ips:
+            subnet = self._get_subnet(context, fixed['subnet_id'])
+            is_auto_addr = ipv6_utils.is_auto_address_subnet(subnet)
             if 'ip_address' in fixed:
-                # Remove the IP address from the allocation pool
-                NeutronDbPluginV2._allocate_specific_ip(
-                    context, fixed['subnet_id'], fixed['ip_address'])
+                if not is_auto_addr:
+                    # Remove the IP address from the allocation pool
+                    NeutronDbPluginV2._allocate_specific_ip(
+                        context, fixed['subnet_id'], fixed['ip_address'])
                 ips.append({'ip_address': fixed['ip_address'],
                             'subnet_id': fixed['subnet_id']})
             # Only subnet ID is specified => need to generate IP
             # from subnet
             else:
-                subnet = self._get_subnet(context, fixed['subnet_id'])
-                if (subnet['ip_version'] == 6 and
-                        ipv6_utils.is_auto_address_subnet(subnet)):
+                if is_auto_addr:
                     prefix = subnet['cidr']
                     ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
                         prefix, mac_address)
