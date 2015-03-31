@@ -193,9 +193,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                           query_string=params, context=context)
 
     def new_create_request(self, resource, data, fmt=None, id=None,
-                           subresource=None):
+                           subresource=None, context=None):
         return self._req('POST', resource, data, fmt, id=id,
-                         subresource=subresource)
+                         subresource=subresource, context=context)
 
     def new_list_request(self, resource, fmt=None, params=None,
                          subresource=None):
@@ -2740,6 +2740,20 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                           cidr=cidr)
         self.assertEqual(4, subnet['subnet']['ip_version'])
         self.assertIn('name', subnet['subnet'])
+
+    def test_create_subnet_with_network_different_tenant(self):
+        with self.network(shared=False, tenant_id='tenant1') as network:
+            ctx = context.Context(user_id='non_admin',
+                                  tenant_id='tenant2',
+                                  is_admin=False)
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '10.0.2.0/24',
+                    'ip_version': '4',
+                    'gateway_ip': '10.0.2.1'}}
+            req = self.new_create_request('subnets', data,
+                                          self.fmt, context=ctx)
+            res = req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_create_two_subnets(self):
         gateway_ips = ['10.0.0.1', '10.0.1.1']
