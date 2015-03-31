@@ -38,7 +38,7 @@ class IpsetManager(object):
         """Returns the given ipset name for an id+ethertype pair.
         This reference can be used from iptables.
         """
-        name = ethertype + id
+        name = 'NET' + ethertype + id
         return name[:IPSET_NAME_MAX_LENGTH]
 
     def set_exists(self, id, ethertype):
@@ -87,7 +87,7 @@ class IpsetManager(object):
     def _refresh_set(self, set_name, member_ips, ethertype):
         new_set_name = set_name + SWAP_SUFFIX
         set_type = self._get_ipset_set_type(ethertype)
-        process_input = ["create %s hash:ip family %s" % (new_set_name,
+        process_input = ["create %s hash:net family %s" % (new_set_name,
                                                           set_type)]
         for ip in member_ips:
             process_input.append("add %s %s" % (new_set_name, ip))
@@ -103,7 +103,7 @@ class IpsetManager(object):
         self.ipset_sets[set_name].remove(member_ip)
 
     def _create_set(self, set_name, ethertype):
-        cmd = ['ipset', 'create', '-exist', set_name, 'hash:ip', 'family',
+        cmd = ['ipset', 'create', '-exist', set_name, 'hash:net', 'family',
                self._get_ipset_set_type(ethertype)]
         self._apply(cmd)
         self.ipset_sets[set_name] = []
