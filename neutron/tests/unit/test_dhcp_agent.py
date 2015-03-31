@@ -930,9 +930,12 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             [mock.call.call_driver('restart', fake_network)])
 
     def test_port_update_on_dhcp_agents_port_no_ip_change(self):
-        payload = dict(port=fake_port1)
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = fake_port1
+        payload = dict(port=fake_port1)
+        device_id = utils.get_dhcp_agent_device_id(
+            payload['port']['network_id'], self.dhcp.conf.host)
+        payload['port']['device_id'] = device_id
         self.dhcp.port_update_end(None, payload)
         self.call_driver.assert_has_calls(
             [mock.call.call_driver('reload_allocations', fake_network)])
