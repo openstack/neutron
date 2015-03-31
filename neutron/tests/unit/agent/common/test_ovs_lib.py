@@ -28,6 +28,15 @@ from neutron.tests import tools
 
 OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
 
+# some test data for get_vif_port_to_ofport_map that exhibited bug 1444269
+OVSLIST_WITH_UNSET_PORT = (
+    '{"data":[["patch-tun",["map",[]],1],["tap2ab72a72-44",["map",[["attached-'
+    'mac","fa:16:3e:b0:f8:38"],["iface-id","2ab72a72-4407-4ef3-806a-b2172f3e4d'
+    'c7"],["iface-status","active"]]],2],["tap6b108774-15",["map",[["attached-'
+    'mac","fa:16:3e:02:f5:91"],["iface-id","6b108774-1559-45e9-a7c3-b714f11722'
+    'cf"],["iface-status","active"]]],["set",[]]]],"headings":["name","externa'
+    'l_ids","ofport"]}')
+
 
 class OFCTLParamListMatcher(object):
 
@@ -552,6 +561,12 @@ class OVS_Lib_Test(base.BaseTestCase):
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
         if is_xen:
             get_xapi_iface_id.assert_called_once_with('tap99id')
+
+    def test_get_vif_port_to_ofport_map(self):
+        self.execute.return_value = OVSLIST_WITH_UNSET_PORT
+        results = self.br.get_vif_port_to_ofport_map()
+        expected = {'2ab72a72-4407-4ef3-806a-b2172f3e4dc7': 2, 'patch-tun': 1}
+        self.assertEqual(expected, results)
 
     def test_get_vif_ports_nonxen(self):
         self._test_get_vif_ports(is_xen=False)
