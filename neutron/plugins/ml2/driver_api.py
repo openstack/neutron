@@ -377,15 +377,83 @@ class PortContext(object):
 
     @abc.abstractproperty
     def host(self):
-        """Return the host associated with the 'current' port."""
+        """Return the host with which the port is associated.
+
+        In the context of a host-specific operation on a distributed
+        port, the host property indicates the host for which the port
+        operation is being performed. Otherwise, it is the same value
+        as current['binding:host_id'].
+        """
         pass
 
     @abc.abstractproperty
     def original_host(self):
-        """Return the host associated with the 'original' port.
+        """Return the original host with which the port was associated.
 
-        Method is only valid within calls to update_port_precommit
-        and update_port_postcommit.
+        In the context of a host-specific operation on a distributed
+        port, the original_host property indicates the host for which
+        the port operation is being performed. Otherwise, it is the
+        same value as original['binding:host_id'].
+
+        This property is only valid within calls to
+        update_port_precommit and update_port_postcommit. It returns
+        None otherwise.
+        """
+        pass
+
+    @abc.abstractproperty
+    def vif_type(self):
+        """Return the vif_type indicating the binding state of the port.
+
+        In the context of a host-specific operation on a distributed
+        port, the vif_type property indicates the binding state for
+        the host for which the port operation is being
+        performed. Otherwise, it is the same value as
+        current['binding:vif_type'].
+        """
+        pass
+
+    @abc.abstractproperty
+    def original_vif_type(self):
+        """Return the original vif_type of the port.
+
+        In the context of a host-specific operation on a distributed
+        port, the original_vif_type property indicates original
+        binding state for the host for which the port operation is
+        being performed. Otherwise, it is the same value as
+        original['binding:vif_type'].
+
+        This property is only valid within calls to
+        update_port_precommit and update_port_postcommit. It returns
+        None otherwise.
+        """
+        pass
+
+    @abc.abstractproperty
+    def vif_details(self):
+        """Return the vif_details describing the binding of the port.
+
+        In the context of a host-specific operation on a distributed
+        port, the vif_details property describes the binding for the
+        host for which the port operation is being
+        performed. Otherwise, it is the same value as
+        current['binding:vif_details'].
+        """
+        pass
+
+    @abc.abstractproperty
+    def original_vif_details(self):
+        """Return the original vif_details of the port.
+
+        In the context of a host-specific operation on a distributed
+        port, the original_vif_details property describes the original
+        binding for the host for which the port operation is being
+        performed. Otherwise, it is the same value as
+        original['binding:vif_details'].
+
+        This property is only valid within calls to
+        update_port_precommit and update_port_postcommit. It returns
+        None otherwise.
         """
         pass
 

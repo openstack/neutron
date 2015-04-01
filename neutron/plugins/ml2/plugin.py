@@ -241,7 +241,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context._clear_binding_levels()
 
         if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
-            binding.vif_type = portbindings.VIF_TYPE_DISTRIBUTED
+            binding.vif_type = portbindings.VIF_TYPE_UNBOUND
             binding.vif_details = ''
             db.clear_binding_levels(session, port_id, original_host)
             mech_context._clear_binding_levels()
@@ -431,11 +431,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return (cur_context, commit)
 
     def _update_port_dict_binding(self, port, binding):
-        port[portbindings.HOST_ID] = binding.host
         port[portbindings.VNIC_TYPE] = binding.vnic_type
         port[portbindings.PROFILE] = self._get_profile(binding)
-        port[portbindings.VIF_TYPE] = binding.vif_type
-        port[portbindings.VIF_DETAILS] = self._get_vif_details(binding)
+        if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+            port[portbindings.HOST_ID] = ''
+            port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_DISTRIBUTED
+            port[portbindings.VIF_DETAILS] = {}
+        else:
+            port[portbindings.HOST_ID] = binding.host
+            port[portbindings.VIF_TYPE] = binding.vif_type
+            port[portbindings.VIF_DETAILS] = self._get_vif_details(binding)
 
     def _get_vif_details(self, binding):
         if binding.vif_details:

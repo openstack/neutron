@@ -113,6 +113,22 @@ class FakePortContext(api.PortContext):
         return None
 
     @property
+    def vif_type(self):
+        return portbindings.UNBOUND
+
+    @property
+    def original_vif_type(self):
+        return portbindings.UNBOUND
+
+    @property
+    def vif_details(self):
+        return None
+
+    @property
+    def original_vif_details(self):
+        return None
+
+    @property
     def segments_to_bind(self):
         return self._network_context.network_segments
 

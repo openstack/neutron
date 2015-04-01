@@ -85,6 +85,12 @@ class LoggerMechanismDriver(api.MechanismDriver):
         network_context = context.network
         LOG.info(_("%(method)s called with port settings %(current)s "
                    "(original settings %(original)s) "
+                   "host %(host)s "
+                   "(original host %(original_host)s) "
+                   "vif type %(vif_type)s "
+                   "(original vif type %(original_vif_type)s) "
+                   "vif details %(vif_details)s "
+                   "(original vif details %(original_vif_details)s) "
                    "binding levels %(levels)s "
                    "(original binding levels %(original_levels)s) "
                    "on network %(network)s "
@@ -92,6 +98,12 @@ class LoggerMechanismDriver(api.MechanismDriver):
                  {'method': method_name,
                   'current': context.current,
                   'original': context.original,
+                  'host': context.host,
+                  'original_host': context.original_host,
+                  'vif_type': context.vif_type,
+                  'original_vif_type': context.original_vif_type,
+                  'vif_details': context.vif_details,
+                  'original_vif_details': context.original_vif_details,
                   'levels': context.binding_levels,
                   'original_levels': context.original_binding_levels,
                   'network': network_context.current,
