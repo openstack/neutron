@@ -801,3 +801,28 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
             del_flows_tn_fn.assert_called_with(table=constants.DVR_NOT_LEARN,
                                                dl_src=newmac)
             self.assertFalse(add_flow_fn.called)
+
+    def test_ovs_restart(self):
+        self._setup_for_dvr_test()
+        reset_methods = (
+            'reset_ovs_parameters', 'reset_dvr_parameters',
+            'setup_dvr_flows_on_integ_br', 'setup_dvr_flows_on_tun_br',
+            'setup_dvr_flows_on_phys_br', 'setup_dvr_mac_flows_on_all_brs')
+        reset_mocks = [mock.patch.object(self.agent.dvr_agent, method).start()
+                       for method in reset_methods]
+        with contextlib.nested(
+            mock.patch.object(self.agent, 'check_ovs_status',
+                              return_value=constants.OVS_RESTARTED),
+            mock.patch.object(self.agent, '_agent_has_updates',
+                              side_effect=TypeError('loop exit'))
+        ):
+            # block RPC calls and bridge calls
+            self.agent.setup_physical_bridges = mock.Mock()
+            self.agent.setup_integration_br = mock.Mock()
+            self.agent.reset_tunnel_br = mock.Mock()
+            self.agent.state_rpc = mock.Mock()
+            try:
+                self.agent.rpc_loop(polling_manager=mock.Mock())
+            except TypeError:
+                pass
+        self.assertTrue(all([x.called for x in reset_mocks]))

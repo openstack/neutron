@@ -241,10 +241,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if self.enable_tunneling:
             self.setup_tunnel_br()
 
-        self.dvr_agent.setup_dvr_flows_on_integ_br()
-        self.dvr_agent.setup_dvr_flows_on_tun_br()
-        self.dvr_agent.setup_dvr_flows_on_phys_br()
-        self.dvr_agent.setup_dvr_mac_flows_on_all_brs()
+        self.dvr_agent.setup_dvr_flows()
 
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
@@ -1442,13 +1439,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     self.reset_tunnel_br()
                     self.setup_tunnel_br()
                     tunnel_sync = True
-                    if self.enable_distributed_routing:
-                        self.dvr_agent.reset_ovs_parameters(self.int_br,
-                                                     self.tun_br,
-                                                     self.patch_int_ofport,
-                                                     self.patch_tun_ofport)
-                        self.dvr_agent.reset_dvr_parameters()
-                        self.dvr_agent.setup_dvr_flows_on_integ_tun_br()
+                if self.enable_distributed_routing:
+                    self.dvr_agent.reset_ovs_parameters(self.int_br,
+                                                 self.tun_br,
+                                                 self.patch_int_ofport,
+                                                 self.patch_tun_ofport)
+                    self.dvr_agent.reset_dvr_parameters()
+                    self.dvr_agent.setup_dvr_flows()
             elif ovs_status == constants.OVS_DEAD:
                 # Agent doesn't apply any operations when ovs is dead, to
                 # prevent unexpected failure or crash. Sleep and continue

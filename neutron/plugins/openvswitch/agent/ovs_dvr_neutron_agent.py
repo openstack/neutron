@@ -135,6 +135,12 @@ class OVSDVRNeutronAgent(object):
         if self.enable_distributed_routing:
             self.get_dvr_mac_address()
 
+    def setup_dvr_flows(self):
+        self.setup_dvr_flows_on_integ_br()
+        self.setup_dvr_flows_on_tun_br()
+        self.setup_dvr_flows_on_phys_br()
+        self.setup_dvr_mac_flows_on_all_brs()
+
     def reset_ovs_parameters(self, integ_br, tun_br,
                              patch_int_ofport, patch_tun_ofport):
         '''Reset the openvswitch parameters'''
