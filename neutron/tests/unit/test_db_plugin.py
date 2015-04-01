@@ -2811,6 +2811,74 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
+    def test_create_subnet_no_ip_version(self):
+        with self.network() as network:
+            cfg.CONF.set_override('default_ipv4_subnet_pool', None)
+            cfg.CONF.set_override('default_ipv6_subnet_pool', None)
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_only_ip_version_v6_no_pool(self):
+        with self.network() as network:
+            tenant_id = network['network']['tenant_id']
+            cfg.CONF.set_override('default_ipv6_subnet_pool', None)
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'ip_version': '6',
+                    'tenant_id': tenant_id}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_only_ip_version_v4(self):
+        with self.network() as network:
+            tenant_id = network['network']['tenant_id']
+            subnetpool_prefix = '10.0.0.0/8'
+            with self.subnetpool(prefixes=[subnetpool_prefix],
+                                 admin=False,
+                                 name="My subnet pool",
+                                 tenant_id=tenant_id,
+                                 min_prefixlen='25') as subnetpool:
+                subnetpool_id = subnetpool['subnetpool']['id']
+                cfg.CONF.set_override('default_ipv4_subnet_pool',
+                                      subnetpool_id)
+                data = {'subnet': {'network_id': network['network']['id'],
+                        'ip_version': '4',
+                        'prefixlen': '27',
+                        'tenant_id': tenant_id}}
+                subnet_req = self.new_create_request('subnets', data)
+                res = subnet_req.get_response(self.api)
+                subnet = self.deserialize(self.fmt, res)['subnet']
+                ip_net = netaddr.IPNetwork(subnet['cidr'])
+                self.assertTrue(ip_net in netaddr.IPNetwork(subnetpool_prefix))
+                self.assertEqual(27, ip_net.prefixlen)
+                self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
+
+    def test_create_subnet_only_ip_version_v6(self):
+        with self.network() as network:
+            tenant_id = network['network']['tenant_id']
+            subnetpool_prefix = '2000::/56'
+            with self.subnetpool(prefixes=[subnetpool_prefix],
+                                 admin=False,
+                                 name="My ipv6 subnet pool",
+                                 tenant_id=tenant_id,
+                                 min_prefixlen='64') as subnetpool:
+                subnetpool_id = subnetpool['subnetpool']['id']
+                cfg.CONF.set_override('default_ipv6_subnet_pool',
+                                      subnetpool_id)
+                data = {'subnet': {'network_id': network['network']['id'],
+                        'ip_version': '6',
+                        'tenant_id': tenant_id}}
+                subnet_req = self.new_create_request('subnets', data)
+                res = subnet_req.get_response(self.api)
+                subnet = self.deserialize(self.fmt, res)['subnet']
+                self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
+                ip_net = netaddr.IPNetwork(subnet['cidr'])
+                self.assertTrue(ip_net in netaddr.IPNetwork(subnetpool_prefix))
+                self.assertEqual(64, ip_net.prefixlen)
+
     def test_create_subnet_bad_V4_cidr_prefix_len(self):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
