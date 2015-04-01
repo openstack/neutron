@@ -550,7 +550,8 @@ class Dnsmasq(DhcpLocalProcess):
                            "ip": ip_address})
 
         utils.replace_file(filename, buf.getvalue())
-        LOG.debug(_('Done building host file %s'), filename)
+        LOG.debug('Done building host file %s with contents:\n%s', filename,
+                  buf.getvalue())
         return filename
 
     def _read_hosts_file_leases(self, filename):
