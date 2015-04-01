@@ -80,8 +80,8 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
             'neutron.agent.linux.interface.OVSInterfaceDriver')
         conf.set_override('router_delete_namespaces', True)
 
-        br_int = self.create_ovs_bridge()
-        br_ex = self.create_ovs_bridge()
+        br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        br_ex = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         conf.set_override('ovs_integration_bridge', br_int.br_name)
         conf.set_override('external_network_bridge', br_ex.br_name)
 
@@ -656,12 +656,18 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._add_fip(router, dst_fip, fixed_address=dst_ip)
         router.process(self.agent)
 
-        src_ns = self._create_namespace(prefix='test-src-')
-        dst_ns = self._create_namespace(prefix='test-dst-')
         br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
-        src_port = self.bind_namespace_to_cidr(src_ns, br_int, src_ip_cidr)
+
+        # FIXME(cbrandily): temporary, will be replaced by fake machines
+        src_ns = self._create_namespace(prefix='test-src-')
+        src_port = self.useFixture(
+            net_helpers.OVSPortFixture(br_int, src_ns.namespace)).port
+        src_port.addr.add(src_ip_cidr)
         net_helpers.set_namespace_gateway(src_port, router_ip)
-        dst_port = self.bind_namespace_to_cidr(dst_ns, br_int, dst_ip_cidr)
+        dst_ns = self._create_namespace(prefix='test-dst-')
+        dst_port = self.useFixture(
+            net_helpers.OVSPortFixture(br_int, dst_ns.namespace)).port
+        dst_port.addr.add(dst_ip_cidr)
         net_helpers.set_namespace_gateway(dst_port, router_ip)
 
         protocol_port = helpers.get_free_namespace_port(dst_ns)
@@ -767,7 +773,11 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
         router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
         ip_cidr = net_helpers.increment_ip_cidr(router_ip_cidr)
         br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
-        port = self.bind_namespace_to_cidr(client_ns, br_int, ip_cidr)
+
+        # FIXME(cbrandily): temporary, will be replaced by a fake machine
+        port = self.useFixture(
+            net_helpers.OVSPortFixture(br_int, client_ns.namespace)).port
+        port.addr.add(ip_cidr)
         net_helpers.set_namespace_gateway(port,
                                           router_ip_cidr.partition('/')[0])
 

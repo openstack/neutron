@@ -27,6 +27,7 @@ from oslo_config import cfg
 
 from neutron.agent.linux import ovsdb_monitor
 from neutron.agent.linux import utils
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base as functional_base
 
@@ -46,7 +47,6 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
                         root_helper=" ".join([functional_base.SUDO_CMD] * 2))
 
         self._check_test_requirements()
-        self.bridge = self.create_ovs_bridge()
 
     def _check_test_requirements(self):
         self.check_command(['ovsdb-client', 'list-dbs'],
@@ -102,7 +102,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
                         'Initial call should always be true')
         self.assertFalse(self.monitor.has_updates,
                          'has_updates without port addition should be False')
-        self.create_ovs_port_in_ns(self.bridge, self.ip)
+        self.useFixture(net_helpers.OVSPortFixture())
         # has_updates after port addition should become True
         while not self.monitor.has_updates:
             eventlet.sleep(0.01)
