@@ -469,6 +469,8 @@ class Dnsmasq(DhcpLocalProcess):
         (
             port,  # a DictModel instance representing the port.
             alloc,  # a DictModel instance of the allocated ip and subnet.
+                    # if alloc is None, it means there is no need to allocate
+                    # an IPv6 address because of stateless DHCPv6 network.
             host_name,  # Host name.
             name,  # Canonical hostname in the format 'hostname[.domain]'.
         )
@@ -482,8 +484,13 @@ class Dnsmasq(DhcpLocalProcess):
                 # dhcp agent
                 if alloc.subnet_id in v6_nets:
                     addr_mode = v6_nets[alloc.subnet_id].ipv6_address_mode
-                    if addr_mode != constants.DHCPV6_STATEFUL:
+                    if addr_mode == constants.IPV6_SLAAC:
                         continue
+                    elif addr_mode == constants.DHCPV6_STATELESS:
+                        alloc = hostname = fqdn = None
+                        yield (port, alloc, hostname, fqdn)
+                        continue
+
                 hostname = 'host-%s' % alloc.ip_address.replace(
                     '.', '-').replace(':', '-')
                 fqdn = hostname
@@ -512,6 +519,14 @@ class Dnsmasq(DhcpLocalProcess):
 
         LOG.debug(_('Building host file: %s'), filename)
         for (port, alloc, hostname, name) in self._iter_hosts():
+            if not alloc:
+                if getattr(port, 'extra_dhcp_opts', False):
+                    buf.write('%s,%s%s\n' %
+                              (port.mac_address, 'set:', port.id))
+                LOG.debug('Adding %(mac)s : set:%(tag)s',
+                          {"mac": port.mac_address, "tag": port.id})
+                continue
+
             # (dzyu) Check if it is legal ipv6 address, if so, need wrap
             # it with '[]' to let dnsmasq to distinguish MAC address from
             # IPv6 address.
@@ -519,17 +534,20 @@ class Dnsmasq(DhcpLocalProcess):
             if netaddr.valid_ipv6(ip_address):
                 ip_address = '[%s]' % ip_address
 
-            LOG.debug(_('Adding %(mac)s : %(name)s : %(ip)s'),
-                      {"mac": port.mac_address, "name": name,
-                       "ip": ip_address})
-
             if getattr(port, 'extra_dhcp_opts', False):
                 buf.write('%s,%s,%s,%s%s\n' %
                           (port.mac_address, name, ip_address,
                            'set:', port.id))
+                LOG.debug('Adding %(mac)s : %(name)s : %(ip)s : '
+                          'set:%(tag)s',
+                          {"mac": port.mac_address, "name": name,
+                           "ip": ip_address, "tag": port.id})
             else:
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
+                LOG.debug('Adding %(mac)s : %(name)s : %(ip)s',
+                          {"mac": port.mac_address, "name": name,
+                           "ip": ip_address})
 
         utils.replace_file(filename, buf.getvalue())
         LOG.debug(_('Done building host file %s'), filename)
@@ -570,7 +588,8 @@ class Dnsmasq(DhcpLocalProcess):
         for (port, alloc, hostname, fqdn) in self._iter_hosts():
             # It is compulsory to write the `fqdn` before the `hostname` in
             # order to obtain it in PTR responses.
-            buf.write('%s\t%s %s\n' % (alloc.ip_address, fqdn, hostname))
+            if alloc:
+                buf.write('%s\t%s %s\n' % (alloc.ip_address, fqdn, hostname))
         addn_hosts = self.get_conf_file_name('addn_hosts')
         utils.replace_file(addn_hosts, buf.getvalue())
         return addn_hosts
