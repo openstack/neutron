@@ -73,10 +73,6 @@ class ContextBase(oslo_context.RequestContext):
             admin_roles = policy.get_admin_roles()
             if admin_roles:
                 self.roles = list(set(self.roles) | set(admin_roles))
-        # Log only once the context has been configured to prevent
-        # format errors.
-        if kwargs:
-            LOG.debug('Arguments dropped when creating context: %s', kwargs)
 
     @property
     def project_id(self):

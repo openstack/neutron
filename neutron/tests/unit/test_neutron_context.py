@@ -41,11 +41,6 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertIsNone(ctx.tenant_name)
         self.assertIsNone(ctx.auth_token)
 
-    def test_neutron_context_create_logs_unknown_kwarg(self):
-        with mock.patch.object(context.LOG, 'debug') as mock_log:
-            context.Context('user_id', 'tenant_id', foo=None)
-        self.assertEqual(mock_log.call_count, 1)
-
     def test_neutron_context_create_with_name(self):
         ctx = context.Context('user_id', 'tenant_id',
                               tenant_name='tenant_name', user_name='user_name')
