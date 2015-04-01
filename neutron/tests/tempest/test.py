@@ -30,7 +30,7 @@ import six
 import testscenarios
 import testtools
 
-from neutron.tests.api.contrib import clients
+from neutron.tests.api import clients
 from neutron.tests.tempest.common import credentials
 import neutron.tests.tempest.common.generator.valid_generator as valid
 from neutron.tests.tempest import config
