@@ -449,3 +449,7 @@ class MaxPrefixSubnetAllocationError(BadRequest):
 
 class SubnetPoolDeleteError(BadRequest):
     message = _("Unable to delete subnet pool: %(reason)s")
+
+
+class SubnetPoolQuotaExceeded(OverQuota):
+    message = _("Per-tenant subnet pool prefix quota exceeded")
