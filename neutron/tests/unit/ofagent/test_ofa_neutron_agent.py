@@ -841,3 +841,22 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             result = self.agent._get_ofport_names('hoge')
         _get_ports.assert_called_once_with('hoge')
         self.assertEqual(set(names), result)
+
+    def test_port_dead(self):
+        net = "539b161f-b31a-11e4-8c19-08606e7f74e7"
+        mac = "08:60:6e:7f:74:e7"
+        ofport = 111
+        vlan = 99
+        port = mock.Mock()
+        port.ofport = ofport
+        port.vif_mac = mac
+        lvm = mock.Mock()
+        lvm.vlan = vlan
+        self.agent.local_vlan_map[net] = lvm
+        with contextlib.nested(
+            mock.patch.object(self.agent.int_br, 'check_in_port_delete_port'),
+            mock.patch.object(self.agent.int_br, 'local_out_delete_port'),
+        ) as (check_in_port_delete_port, local_out_delete_port):
+            self.agent.port_dead(port, net_uuid=net)
+        check_in_port_delete_port.assert_called_once_with(ofport)
+        local_out_delete_port.assert_called_once_with(vlan, mac)
