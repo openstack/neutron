@@ -26,7 +26,6 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import exceptions
-from neutron.services import advanced_service
 
 LOG = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ METADATA_ACCESS_MARK_MASK = '0xffffffff'
 METADATA_SERVICE_NAME = 'metadata-proxy'
 
 
-class MetadataDriver(advanced_service.AdvancedService):
+class MetadataDriver(object):
 
     OPTS = [
         cfg.StrOpt('metadata_proxy_socket',
@@ -66,7 +65,6 @@ class MetadataDriver(advanced_service.AdvancedService):
     ]
 
     def __init__(self, l3_agent):
-        super(MetadataDriver, self).__init__(l3_agent)
         self.metadata_port = l3_agent.conf.metadata_port
         self.metadata_access_mark = l3_agent.conf.metadata_access_mark
         registry.subscribe(
