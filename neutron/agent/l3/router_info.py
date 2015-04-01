@@ -29,6 +29,8 @@ LOG = logging.getLogger(__name__)
 INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
 EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 
+EXTERNAL_INGRESS_MARK_MASK = '0xffffffff'
+
 
 class RouterInfo(object):
 
@@ -489,17 +491,28 @@ class RouterInfo(object):
                                  interface_name)
 
     def external_gateway_nat_rules(self, ex_gw_ip, interface_name):
+        mark = self.agent_conf.external_ingress_mark
         rules = [('POSTROUTING', '! -i %(interface_name)s '
                   '! -o %(interface_name)s -m conntrack ! '
                   '--ctstate DNAT -j ACCEPT' %
                   {'interface_name': interface_name}),
                  ('snat', '-o %s -j SNAT --to-source %s' %
-                  (interface_name, ex_gw_ip))]
+                  (interface_name, ex_gw_ip)),
+                 ('snat', '-m mark ! --mark %s '
+                  '-m conntrack --ctstate DNAT '
+                  '-j SNAT --to-source %s' % (mark, ex_gw_ip))]
+        return rules
+
+    def external_gateway_mangle_rules(self, interface_name):
+        mark = self.agent_conf.external_ingress_mark
+        rules = [('mark', '-i %s -j MARK --set-xmark %s/%s' %
+                 (interface_name, mark, EXTERNAL_INGRESS_MARK_MASK))]
         return rules
 
     def _empty_snat_chains(self, iptables_manager):
         iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
         iptables_manager.ipv4['nat'].empty_chain('snat')
+        iptables_manager.ipv4['mangle'].empty_chain('mark')
 
     def _add_snat_rules(self, ex_gw_port, iptables_manager,
                         interface_name, action):
@@ -513,6 +526,9 @@ class RouterInfo(object):
                                                             interface_name)
                     for rule in rules:
                         iptables_manager.ipv4['nat'].add_rule(*rule)
+                    rules = self.external_gateway_mangle_rules(interface_name)
+                    for rule in rules:
+                        iptables_manager.ipv4['mangle'].add_rule(*rule)
                     break
 
     def _handle_router_snat_rules(self, ex_gw_port,

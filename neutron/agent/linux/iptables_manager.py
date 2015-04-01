@@ -364,6 +364,11 @@ class IptablesManager(object):
             self.ipv4['nat'].add_chain('float-snat')
             self.ipv4['nat'].add_rule('snat', '-j $float-snat')
 
+            # Add a mark chain to mangle PREROUTING chain. It is used to
+            # identify ingress packets from a certain interface.
+            self.ipv4['mangle'].add_chain('mark')
+            self.ipv4['mangle'].add_rule('PREROUTING', '-j $mark')
+
     def get_chain(self, table, chain, ip_version=4, wrap=True):
         try:
             requested_table = {4: self.ipv4, 6: self.ipv6}[ip_version][table]

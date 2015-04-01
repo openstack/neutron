@@ -637,6 +637,43 @@ class L3AgentTestCase(L3AgentTestFramework):
                 router1.ns_name,
                 router1.get_ha_device_name()))
 
+    def test_fip_connection_from_same_subnet(self):
+        '''Test connection to floatingip which is associated with
+           fixed_ip on the same subnet of the source fixed_ip.
+           In other words it confirms that return packets surely
+           go through the router.
+        '''
+        router_info = self.generate_router_info(enable_ha=False)
+        router = self.manage_router(self.agent, router_info)
+        router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
+        router_ip = router_ip_cidr.partition('/')[0]
+
+        src_ip_cidr = net_helpers.increment_ip_cidr(router_ip_cidr)
+        dst_ip_cidr = net_helpers.increment_ip_cidr(src_ip_cidr)
+        dst_ip = dst_ip_cidr.partition('/')[0]
+        dst_fip = '19.4.4.10'
+        router.router[l3_constants.FLOATINGIP_KEY] = []
+        self._add_fip(router, dst_fip, fixed_address=dst_ip)
+        router.process(self.agent)
+
+        src_ns = self._create_namespace(prefix='test-src-')
+        dst_ns = self._create_namespace(prefix='test-dst-')
+        br_int = get_ovs_bridge(self.agent.conf.ovs_integration_bridge)
+        src_port = self.bind_namespace_to_cidr(src_ns, br_int, src_ip_cidr)
+        net_helpers.set_namespace_gateway(src_port, router_ip)
+        dst_port = self.bind_namespace_to_cidr(dst_ns, br_int, dst_ip_cidr)
+        net_helpers.set_namespace_gateway(dst_port, router_ip)
+
+        protocol_port = helpers.get_free_namespace_port(dst_ns)
+        # client sends to fip
+        netcat = helpers.NetcatTester(src_ns, dst_ns, dst_ip,
+                                      protocol_port,
+                                      client_address=dst_fip,
+                                      run_as_root=True,
+                                      udp=False)
+        self.addCleanup(netcat.stop_processes)
+        self.assertTrue(netcat.test_connectivity())
+
 
 class L3HATestFramework(L3AgentTestFramework):
 
