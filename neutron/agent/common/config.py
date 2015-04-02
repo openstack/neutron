@@ -73,7 +73,7 @@ PROCESS_MONITOR_OPTS = [
 ]
 
 
-def get_log_args(conf, log_file_name):
+def get_log_args(conf, log_file_name, **kwargs):
     cmd_args = []
     if conf.debug:
         cmd_args.append('--debug')
@@ -91,6 +91,8 @@ def get_log_args(conf, log_file_name):
             log_dir = os.path.dirname(conf.log_file)
         if log_dir:
             cmd_args.append('--log-dir=%s' % log_dir)
+        if kwargs.get('metadata_proxy_watch_log') is False:
+            cmd_args.append('--metadata_proxy_watch_log=false')
     else:
         if conf.use_syslog:
             cmd_args.append('--use-syslog')

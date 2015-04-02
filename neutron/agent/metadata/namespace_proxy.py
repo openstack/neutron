@@ -110,10 +110,10 @@ class NetworkMetadataProxyHandler(object):
 
 class ProxyDaemon(daemon.Daemon):
     def __init__(self, pidfile, port, network_id=None, router_id=None,
-                 user=None, group=None):
+                 user=None, group=None, watch_log=True):
         uuid = network_id or router_id
         super(ProxyDaemon, self).__init__(pidfile, uuid=uuid, user=user,
-                                         group=group)
+                                         group=group, watch_log=watch_log)
         self.network_id = network_id
         self.router_id = router_id
         self.port = port
@@ -160,6 +160,11 @@ def main():
                    default=None,
                    help=_("Group (gid or name) running metadata proxy after "
                           "its initialization")),
+        cfg.BoolOpt('metadata_proxy_watch_log',
+                    default=True,
+                    help=_("Watch file log. Log watch should be disabled when "
+                           "metadata_proxy_user/group has no read/write "
+                           "permissions on metadata proxy log file.")),
     ]
 
     cfg.CONF.register_cli_opts(opts)
@@ -173,7 +178,8 @@ def main():
                         network_id=cfg.CONF.network_id,
                         router_id=cfg.CONF.router_id,
                         user=cfg.CONF.metadata_proxy_user,
-                        group=cfg.CONF.metadata_proxy_group)
+                        group=cfg.CONF.metadata_proxy_group,
+                        watch_log=cfg.CONF.metadata_proxy_watch_log)
 
     if cfg.CONF.daemonize:
         proxy.start()

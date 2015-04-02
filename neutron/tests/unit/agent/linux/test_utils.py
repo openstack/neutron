@@ -210,7 +210,18 @@ class TestPathUtilities(base.BaseTestCase):
         self.assertFalse(utils.cmd_matches_expected('foo', 'bar'))
 
 
+class FakeUser(object):
+    def __init__(self, name):
+        self.pw_name = name
+
+
 class TestBaseOSUtils(base.BaseTestCase):
+
+    EUID = 123
+    EUNAME = 'user'
+    EGID = 456
+    EGNAME = 'group'
+
     @mock.patch.object(os.path, 'isdir', return_value=False)
     @mock.patch.object(os, 'makedirs')
     def test_ensure_dir_not_exist(self, makedirs, isdir):
@@ -224,6 +235,34 @@ class TestBaseOSUtils(base.BaseTestCase):
         utils.ensure_dir('/the')
         isdir.assert_called_once_with('/the')
         self.assertFalse(makedirs.called)
+
+    @mock.patch('os.geteuid', return_value=EUID)
+    @mock.patch('pwd.getpwuid', return_value=FakeUser(EUNAME))
+    def test_is_effective_user_id(self, getpwuid, geteuid):
+        self.assertTrue(utils.is_effective_user(self.EUID))
+        geteuid.assert_called_once_with()
+        self.assertFalse(getpwuid.called)
+
+    @mock.patch('os.geteuid', return_value=EUID)
+    @mock.patch('pwd.getpwuid', return_value=FakeUser(EUNAME))
+    def test_is_effective_user_str_id(self, getpwuid, geteuid):
+        self.assertTrue(utils.is_effective_user(str(self.EUID)))
+        geteuid.assert_called_once_with()
+        self.assertFalse(getpwuid.called)
+
+    @mock.patch('os.geteuid', return_value=EUID)
+    @mock.patch('pwd.getpwuid', return_value=FakeUser(EUNAME))
+    def test_is_effective_user_name(self, getpwuid, geteuid):
+        self.assertTrue(utils.is_effective_user(self.EUNAME))
+        geteuid.assert_called_once_with()
+        getpwuid.assert_called_once_with(self.EUID)
+
+    @mock.patch('os.geteuid', return_value=EUID)
+    @mock.patch('pwd.getpwuid', return_value=FakeUser(EUNAME))
+    def test_is_not_effective_user(self, getpwuid, geteuid):
+        self.assertFalse(utils.is_effective_user('wrong'))
+        geteuid.assert_called_once_with()
+        getpwuid.assert_called_once_with(self.EUID)
 
 
 class TestUnixDomainHttpConnection(base.BaseTestCase):

@@ -21,6 +21,7 @@ from oslo_log import log as logging
 from neutron.agent.common import config
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
+from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.services import advanced_service
 
@@ -47,7 +48,18 @@ class MetadataDriver(advanced_service.AdvancedService):
                    default='',
                    help=_("Group (gid or name) running metadata proxy after "
                           "its initialization (if empty: agent effective "
-                          "group)"))
+                          "group)")),
+        cfg.BoolOpt('metadata_proxy_watch_log',
+                    default=None,
+                    help=_("Enable/Disable log watch by metadata proxy. It "
+                           "should be disabled when metadata_proxy_user/group "
+                           "is not allowed to read/write its log file and "
+                           "copytruncate logrotate option must be used if "
+                           "logrotate is enabled on metadata proxy log "
+                           "files. Option default value is deduced from "
+                           "metadata_proxy_user: watch log is enabled if "
+                           "metadata_proxy_user is agent effective user "
+                           "id/name.")),
     ]
 
     def __init__(self, l3_agent):
@@ -112,10 +124,17 @@ class MetadataDriver(advanced_service.AdvancedService):
                   'port': port})]
 
     @classmethod
-    def _get_metadata_proxy_user_group(cls, conf):
-        user = conf.metadata_proxy_user or os.geteuid()
-        group = conf.metadata_proxy_group or os.getegid()
-        return user, group
+    def _get_metadata_proxy_user_group_watchlog(cls, conf):
+        user = conf.metadata_proxy_user or str(os.geteuid())
+        group = conf.metadata_proxy_group or str(os.getegid())
+
+        watch_log = conf.metadata_proxy_watch_log
+        if watch_log is None:
+            # NOTE(cbrandily): Commonly, log watching can be enabled only
+            # when metadata proxy user is agent effective user (id/name).
+            watch_log = utils.is_effective_user(user)
+
+        return user, group, watch_log
 
     @classmethod
     def _get_metadata_proxy_callback(cls, port, conf, network_id=None,
@@ -131,7 +150,8 @@ class MetadataDriver(advanced_service.AdvancedService):
 
         def callback(pid_file):
             metadata_proxy_socket = conf.metadata_proxy_socket
-            user, group = cls._get_metadata_proxy_user_group(conf)
+            user, group, watch_log = (
+                cls._get_metadata_proxy_user_group_watchlog(conf))
             proxy_cmd = ['neutron-ns-metadata-proxy',
                          '--pid_file=%s' % pid_file,
                          '--metadata_proxy_socket=%s' % metadata_proxy_socket,
@@ -141,7 +161,8 @@ class MetadataDriver(advanced_service.AdvancedService):
                          '--metadata_proxy_user=%s' % user,
                          '--metadata_proxy_group=%s' % group]
             proxy_cmd.extend(config.get_log_args(
-                conf, 'neutron-ns-metadata-proxy-%s.log' % uuid))
+                conf, 'neutron-ns-metadata-proxy-%s.log' % uuid,
+                metadata_proxy_watch_log=watch_log))
             return proxy_cmd
 
         return callback
