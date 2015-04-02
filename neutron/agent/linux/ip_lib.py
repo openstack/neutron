@@ -559,9 +559,9 @@ class IpNetnsCommand(IpCommandBase):
         self._as_root([], ('delete', name), use_root_namespace=True)
 
     def execute(self, cmds, addl_env=None, check_exit_code=True,
-                extra_ok_codes=None):
+                extra_ok_codes=None, run_as_root=False):
         ns_params = []
-        kwargs = {}
+        kwargs = {'run_as_root': run_as_root}
         if self._parent.namespace:
             kwargs['run_as_root'] = True
             ns_params = ['ip', 'netns', 'exec', self._parent.namespace]

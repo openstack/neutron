@@ -208,7 +208,8 @@ class DhcpLocalProcess(DhcpBase):
             uuid=self.network.id,
             namespace=self.network.namespace,
             default_cmd_callback=cmd_callback,
-            pid_file=self.get_conf_file_name('pid'))
+            pid_file=self.get_conf_file_name('pid'),
+            run_as_root=True)
 
     def disable(self, retain_port=False):
         """Disable DHCP for this network by killing the local process."""
@@ -402,7 +403,7 @@ class Dnsmasq(DhcpLocalProcess):
         """Release a DHCP lease."""
         cmd = ['dhcp_release', self.interface_name, ip, mac_address]
         ip_wrapper = ip_lib.IPWrapper(namespace=self.network.namespace)
-        ip_wrapper.netns.execute(cmd)
+        ip_wrapper.netns.execute(cmd, run_as_root=True)
 
     def _output_config_files(self):
         self._output_hosts_file()

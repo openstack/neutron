@@ -125,7 +125,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                     '--metadata_proxy_watch_log=false')
             ip_mock.assert_has_calls([
                 mock.call(namespace=router_ns),
-                mock.call().netns.execute(netns_execute_args, addl_env=None)
+                mock.call().netns.execute(netns_execute_args, addl_env=None,
+                                          run_as_root=False)
             ])
 
     def test_spawn_metadata_proxy_with_agent_user(self):

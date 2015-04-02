@@ -927,7 +927,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
             self.netns_cmd.execute(['test'])
             execute.assert_called_once_with(['test'],
                                             check_exit_code=True,
-                                            extra_ok_codes=None)
+                                            extra_ok_codes=None,
+                                            run_as_root=False)
 
 
 class TestDeviceExists(base.BaseTestCase):

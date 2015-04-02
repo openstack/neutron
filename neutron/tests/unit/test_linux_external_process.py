@@ -52,7 +52,8 @@ class TestProcessManager(base.BaseTestCase):
                 callback.assert_called_once_with('pidfile')
                 self.execute.assert_called_once_with(['the', 'cmd'],
                                                      check_exit_code=True,
-                                                     extra_ok_codes=None)
+                                                     extra_ok_codes=None,
+                                                     run_as_root=False)
 
     def test_enable_with_namespace(self):
         callback = mock.Mock()
@@ -69,8 +70,8 @@ class TestProcessManager(base.BaseTestCase):
                     callback.assert_called_once_with('pidfile')
                     ip_lib.assert_has_calls([
                         mock.call.IPWrapper(namespace='ns'),
-                        mock.call.IPWrapper().netns.execute(['the', 'cmd'],
-                                                            addl_env=None)])
+                        mock.call.IPWrapper().netns.execute(
+                            ['the', 'cmd'], addl_env=None, run_as_root=False)])
 
     def test_enable_with_namespace_process_active(self):
         callback = mock.Mock()
