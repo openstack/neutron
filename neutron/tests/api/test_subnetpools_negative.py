@@ -18,8 +18,8 @@ import copy
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 
-from neutron.tests.tempest.api.network import base
-from neutron.tests.api.contrib import clients
+from neutron.tests.api import base
+from neutron.tests.api import clients
 from neutron.tests.tempest import config
 from neutron.tests.tempest import test
 
