@@ -18,12 +18,20 @@ from neutron.tests import base
 def create_resource(prefix, creation_func, *args, **kwargs):
     """Create a new resource that does not already exist.
 
+    If prefix isn't 'max_length' in size, a random suffix is concatenated to
+    ensure it is random. Otherwise, 'prefix' is used as is.
+
     :param prefix: The prefix for a randomly generated name
     :param creation_func: A function taking the name of the resource
            to be created as it's first argument.  An error is assumed
            to indicate a name collision.
     :param *args *kwargs: These will be passed to the create function.
     """
+
+    # Don't generate a random name if prefix is already full-length.
+    if len(prefix) == n_const.DEVICE_NAME_MAX_LEN:
+        return creation_func(prefix, *args, **kwargs)
+
     while True:
         name = base.get_rand_name(
             max_length=n_const.DEVICE_NAME_MAX_LEN,
