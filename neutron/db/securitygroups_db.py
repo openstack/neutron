@@ -575,7 +575,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         requested_groups = set(port_sg)
         port_sg_missing = requested_groups - valid_groups
         if port_sg_missing:
-            raise ext_sg.SecurityGroupNotFound(id=str(port_sg_missing[0]))
+            raise ext_sg.SecurityGroupNotFound(id=', '.join(port_sg_missing))
 
         return requested_groups
 
