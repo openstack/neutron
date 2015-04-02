@@ -543,6 +543,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         v6_stateless = []
         net_id_filter = {'network_id': [p['network_id']]}
         subnets = self.get_subnets(context, filters=net_id_filter)
+        is_router_port = (
+            p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS or
+            p['device_owner'] == constants.DEVICE_OWNER_ROUTER_SNAT)
 
         fixed_configured = p['fixed_ips'] is not attributes.ATTR_NOT_SPECIFIED
         if fixed_configured:
@@ -556,8 +559,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
             # For ports that are not router ports, implicitly include all
             # auto-address subnets for address association.
-            if (not p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS and
-                p['device_owner'] != constants.DEVICE_OWNER_ROUTER_SNAT):
+            if not is_router_port:
                 v6_stateless += [subnet for subnet in subnets
                                  if ipv6_utils.is_auto_address_subnet(subnet)]
         else:
@@ -567,11 +569,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             for subnet in subnets:
                 if subnet['ip_version'] == 4:
                     v4.append(subnet)
-                else:
-                    if ipv6_utils.is_auto_address_subnet(subnet):
+                elif ipv6_utils.is_auto_address_subnet(subnet):
+                    if not is_router_port:
                         v6_stateless.append(subnet)
-                    else:
-                        v6_stateful.append(subnet)
+                else:
+                    v6_stateful.append(subnet)
 
             version_subnets = [v4, v6_stateful]
             for subnets in version_subnets:
