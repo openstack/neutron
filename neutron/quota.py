@@ -156,9 +156,12 @@ class BaseResource(object):
     @property
     def default(self):
         """Return the default value of the quota."""
-        return getattr(cfg.CONF.QUOTAS,
-                       self.flag,
-                       cfg.CONF.QUOTAS.default_quota)
+        # Any negative value will be interpreted as an infinite quota,
+        # and stored as -1 for compatibility with current behaviour
+        value = getattr(cfg.CONF.QUOTAS,
+                        self.flag,
+                        cfg.CONF.QUOTAS.default_quota)
+        return max(value, -1)
 
 
 class CountableResource(BaseResource):

@@ -79,6 +79,16 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
         super(QuotaExtensionTestCase, self).tearDown()
 
+    def _test_quota_default_values(self, expected_values):
+        tenant_id = 'tenant_id1'
+        env = {'neutron.context': context.Context('', tenant_id)}
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           extra_environ=env)
+        quota = self.deserialize(res)
+        for resource, expected_value in expected_values.items():
+            self.assertEqual(expected_value,
+                             quota['quota'][resource])
+
 
 class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
     fmt = 'json'
@@ -97,15 +107,24 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         self.assertEqual(200, res.status_int)
 
     def test_quotas_default_values(self):
-        tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id)}
-        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
-                           extra_environ=env)
-        quota = self.deserialize(res)
-        self.assertEqual(10, quota['quota']['network'])
-        self.assertEqual(10, quota['quota']['subnet'])
-        self.assertEqual(50, quota['quota']['port'])
-        self.assertEqual(-1, quota['quota']['extra1'])
+        self._test_quota_default_values(
+            {'network': 10,
+             'subnet': 10,
+             'port': 50,
+             'extra1': -1})
+
+    def test_quotas_negative_default_value(self):
+        cfg.CONF.set_override(
+            'quota_port', -666, group='QUOTAS')
+        cfg.CONF.set_override(
+            'quota_network', -10, group='QUOTAS')
+        cfg.CONF.set_override(
+            'quota_subnet', -50, group='QUOTAS')
+        self._test_quota_default_values(
+            {'network': -1,
+             'subnet': -1,
+             'port': -1,
+             'extra1': -1})
 
     def test_show_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
@@ -337,15 +356,20 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
         super(QuotaExtensionCfgTestCase, self).setUp()
 
     def test_quotas_default_values(self):
-        tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id)}
-        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
-                           extra_environ=env)
-        quota = self.deserialize(res)
-        self.assertEqual(10, quota['quota']['network'])
-        self.assertEqual(10, quota['quota']['subnet'])
-        self.assertEqual(50, quota['quota']['port'])
-        self.assertEqual(-1, quota['quota']['extra1'])
+        self._test_quota_default_values(
+            {'network': 10,
+             'subnet': 10,
+             'port': 50,
+             'extra1': -1})
+
+    def test_quotas_negative_default_value(self):
+        cfg.CONF.set_override(
+            'quota_port', -666, group='QUOTAS')
+        self._test_quota_default_values(
+            {'network': 10,
+             'subnet': 10,
+             'port': -1,
+             'extra1': -1})
 
     def test_show_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
