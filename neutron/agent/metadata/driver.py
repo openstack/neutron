@@ -22,6 +22,9 @@ from neutron.agent.common import config
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import exceptions
 from neutron.services import advanced_service
 
@@ -66,39 +69,10 @@ class MetadataDriver(advanced_service.AdvancedService):
         super(MetadataDriver, self).__init__(l3_agent)
         self.metadata_port = l3_agent.conf.metadata_port
         self.metadata_access_mark = l3_agent.conf.metadata_access_mark
-
-    def after_router_added(self, router):
-        for c, r in self.metadata_filter_rules(self.metadata_port,
-                                               self.metadata_access_mark):
-            router.iptables_manager.ipv4['filter'].add_rule(c, r)
-        for c, r in self.metadata_mangle_rules(self.metadata_access_mark):
-            router.iptables_manager.ipv4['mangle'].add_rule(c, r)
-        for c, r in self.metadata_nat_rules(self.metadata_port):
-            router.iptables_manager.ipv4['nat'].add_rule(c, r)
-        router.iptables_manager.apply()
-
-        if not router.is_ha:
-            self.spawn_monitored_metadata_proxy(
-                self.l3_agent.process_monitor,
-                router.ns_name,
-                self.metadata_port,
-                self.l3_agent.conf,
-                router_id=router.router_id)
-
-    def before_router_removed(self, router):
-        for c, r in self.metadata_filter_rules(self.metadata_port,
-                                               self.metadata_access_mark):
-            router.iptables_manager.ipv4['filter'].remove_rule(c, r)
-        for c, r in self.metadata_mangle_rules(self.metadata_access_mark):
-            router.iptables_manager.ipv4['mangle'].remove_rule(c, r)
-        for c, r in self.metadata_nat_rules(self.metadata_port):
-            router.iptables_manager.ipv4['nat'].remove_rule(c, r)
-        router.iptables_manager.apply()
-
-        self.destroy_monitored_metadata_proxy(self.l3_agent.process_monitor,
-                                              router.router['id'],
-                                              router.ns_name,
-                                              self.l3_agent.conf)
+        registry.subscribe(
+            after_router_added, resources.ROUTER, events.AFTER_CREATE)
+        registry.subscribe(
+            before_router_removed, resources.ROUTER, events.BEFORE_DELETE)
 
     @classmethod
     def metadata_filter_rules(cls, port, mark):
@@ -192,3 +166,42 @@ class MetadataDriver(advanced_service.AdvancedService):
             uuid=router_id,
             namespace=ns_name,
             default_cmd_callback=callback)
+
+
+def after_router_added(resource, event, l3_agent, **kwargs):
+    router = kwargs['router']
+    proxy = l3_agent.metadata_driver
+    for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
+                                           proxy.metadata_access_mark):
+        router.iptables_manager.ipv4['filter'].add_rule(c, r)
+    for c, r in proxy.metadata_mangle_rules(proxy.metadata_access_mark):
+        router.iptables_manager.ipv4['mangle'].add_rule(c, r)
+    for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
+        router.iptables_manager.ipv4['nat'].add_rule(c, r)
+    router.iptables_manager.apply()
+
+    if not router.is_ha:
+        proxy.spawn_monitored_metadata_proxy(
+            l3_agent.process_monitor,
+            router.ns_name,
+            proxy.metadata_port,
+            l3_agent.conf,
+            router_id=router.router_id)
+
+
+def before_router_removed(resource, event, l3_agent, **kwargs):
+    router = kwargs['router']
+    proxy = l3_agent.metadata_driver
+    for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
+                                           proxy.metadata_access_mark):
+        router.iptables_manager.ipv4['filter'].remove_rule(c, r)
+    for c, r in proxy.metadata_mangle_rules(proxy.metadata_access_mark):
+        router.iptables_manager.ipv4['mangle'].remove_rule(c, r)
+    for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
+        router.iptables_manager.ipv4['nat'].remove_rule(c, r)
+    router.iptables_manager.apply()
+
+    proxy.destroy_monitored_metadata_proxy(l3_agent.process_monitor,
+                                          router.router['id'],
+                                          router.ns_name,
+                                          l3_agent.conf)
