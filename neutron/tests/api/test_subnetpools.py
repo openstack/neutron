@@ -181,6 +181,64 @@ class SubnetPoolsTest(base.BaseNetworkTest):
         self.assertEqual(name, subnetpool['name'])
         self.assertTrue(subnetpool['shared'])
 
+    def _create_subnet_from_pool(self, subnet_values=None, pool_values=None):
+        pool_name, pool_id = self._create_subnetpool(self.client, pool_values)
+        subnet_name = data_utils.rand_name(SUBNETPOOL_NAME)
+        network = self.create_network()
+        network_id = network['id']
+        kwargs = {'name': subnet_name,
+                  'subnetpool_id': pool_id}
+        if subnet_values:
+            kwargs.update(subnet_values)
+        body = self.client.create_subnet(
+            network_id=network_id,
+            ip_version=self.ip_version,
+            **kwargs)
+        subnet = body['subnet']
+        self.addCleanup(self.client.delete_subnetpool, pool_id)
+        self.addCleanup(self.client.delete_network, network_id)
+        return pool_id, subnet
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('1362ed7d-3089-42eb-b3a5-d6cb8398ee77')
+    def test_create_subnet_from_pool_with_prefixlen(self):
+        subnet_values = {"prefixlen": self.max_prefixlen}
+        pool_id, subnet = self._create_subnet_from_pool(subnet_values)
+        cidr = str(subnet['cidr'])
+        self.assertEqual(pool_id, subnet['subnetpool_id'])
+        self.assertTrue(cidr.endswith(str(self.max_prefixlen)))
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('86b86189-9789-4582-9c3b-7e2bfe5735ee')
+    def test_create_subnet_from_pool_with_subnet_cidr(self):
+        subnet_values = {"cidr": self.subnet_cidr}
+        pool_id, subnet = self._create_subnet_from_pool(subnet_values)
+        cidr = str(subnet['cidr'])
+        self.assertEqual(pool_id, subnet['subnetpool_id'])
+        self.assertEqual(cidr, self.subnet_cidr)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('83f76e3a-9c40-40c2-a015-b7c5242178d8')
+    def test_create_subnet_from_pool_with_default_prefixlen(self):
+        # If neither cidr nor prefixlen is specified,
+        # subnet will use subnetpool default_prefixlen for cidr.
+        pool_id, subnet = self._create_subnet_from_pool()
+        cidr = str(subnet['cidr'])
+        self.assertEqual(pool_id, subnet['subnetpool_id'])
+        prefixlen = self._subnetpool_data['subnetpool']['min_prefixlen']
+        self.assertTrue(cidr.endswith(str(prefixlen)))
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('a64af292-ec52-4bde-b654-a6984acaf477')
+    def test_create_subnet_from_pool_with_quota(self):
+        pool_values = {'default_quota': 4}
+        subnet_values = {"prefixlen": self.max_prefixlen}
+        pool_id, subnet = self._create_subnet_from_pool(subnet_values,
+                                                        pool_values)
+        cidr = str(subnet['cidr'])
+        self.assertEqual(pool_id, subnet['subnetpool_id'])
+        self.assertTrue(cidr.endswith(str(self.max_prefixlen)))
+
 
 class SubnetPoolsTestV6(SubnetPoolsTest):
 
