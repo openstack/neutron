@@ -1508,6 +1508,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         updated_ports_copy = set()
         ancillary_ports = set()
         tunnel_sync = True
+        ovs_restarted = False
         while self.run_daemon_loop:
             start = time.time()
             port_stats = {'regular': {'added': 0,
@@ -1552,7 +1553,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 except Exception:
                     LOG.exception(_LE("Error while synchronizing tunnels"))
                     tunnel_sync = True
-            ovs_restarted = (ovs_status == constants.OVS_RESTARTED)
+            ovs_restarted |= (ovs_status == constants.OVS_RESTARTED)
             if self._agent_has_updates(polling_manager) or ovs_restarted:
                 try:
                     LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
@@ -1620,6 +1621,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                             sync = sync | rc
 
                     polling_manager.polling_completed()
+                    # Keep this flag in the last line of "try" block,
+                    # so we can sure that no other Exception occurred.
+                    if not sync:
+                        ovs_restarted = False
                 except Exception:
                     LOG.exception(_LE("Error while processing VIF ports"))
                     # Put the ports back in self.updated_port
