@@ -40,8 +40,7 @@ from neutron.tests import fake_notifier
 from neutron.tests.unit import testlib_api
 
 
-ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-EXTDIR = os.path.join(ROOTDIR, 'unit/extensions')
+EXTDIR = os.path.join(base.ROOTDIR, 'unit/extensions')
 
 _uuid = uuidutils.generate_uuid
 

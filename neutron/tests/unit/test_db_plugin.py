@@ -5458,3 +5458,63 @@ class NeutronDbPluginV2AsMixinTestCase(testlib_api.SqlTestCase):
         self.net_data['network']['status'] = 'BUILD'
         net = self.plugin.create_network(self.context, self.net_data)
         self.assertEqual(net['status'], 'BUILD')
+
+
+class TestNetworks(testlib_api.SqlTestCase):
+    def setUp(self):
+        super(TestNetworks, self).setUp()
+        self._tenant_id = 'test-tenant'
+
+        # Update the plugin
+        self.setup_coreplugin(DB_PLUGIN_KLASS)
+
+    def _create_network(self, plugin, ctx, shared=True):
+        network = {'network': {'name': 'net',
+                               'shared': shared,
+                               'admin_state_up': True,
+                               'tenant_id': self._tenant_id}}
+        created_network = plugin.create_network(ctx, network)
+        return (network, created_network['id'])
+
+    def _create_port(self, plugin, ctx, net_id, device_owner, tenant_id):
+        port = {'port': {'name': 'port',
+                         'network_id': net_id,
+                         'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                         'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                         'admin_state_up': True,
+                         'device_id': 'device_id',
+                         'device_owner': device_owner,
+                         'tenant_id': tenant_id}}
+        plugin.create_port(ctx, port)
+
+    def _test_update_shared_net_used(self,
+                                     device_owner,
+                                     expected_exception=None):
+        plugin = manager.NeutronManager.get_plugin()
+        ctx = context.get_admin_context()
+        network, net_id = self._create_network(plugin, ctx)
+
+        self._create_port(plugin,
+                          ctx,
+                          net_id,
+                          device_owner,
+                          self._tenant_id + '1')
+
+        network['network']['shared'] = False
+
+        if (expected_exception):
+            with testlib_api.ExpectedException(expected_exception):
+                plugin.update_network(ctx, net_id, network)
+        else:
+            plugin.update_network(ctx, net_id, network)
+
+    def test_update_shared_net_used_fails(self):
+        self._test_update_shared_net_used('', n_exc.InvalidSharedSetting)
+
+    def test_update_shared_net_used_as_router_gateway(self):
+        self._test_update_shared_net_used(
+            constants.DEVICE_OWNER_ROUTER_GW)
+
+    def test_update_shared_net_used_by_floating_ip(self):
+        self._test_update_shared_net_used(
+            constants.DEVICE_OWNER_FLOATINGIP)
