@@ -510,11 +510,11 @@ class ServerPool(object):
             LOG.error(errstr, resp[2])
             raise RemoteRestError(reason=resp[2], status=resp[0])
         if resp[0] in ignore_codes:
-            LOG.warning(_("NeutronRestProxyV2: Received and ignored error "
-                          "code %(code)s on %(action)s action to resource "
-                          "%(resource)s"),
-                        {'code': resp[2], 'action': action,
-                         'resource': resource})
+            LOG.info(_("NeutronRestProxyV2: Received and ignored error "
+                       "code %(code)s on %(action)s action to resource "
+                       "%(resource)s"),
+                     {'code': resp[2], 'action': action,
+                      'resource': resource})
         return resp
 
     def rest_create_router(self, tenant_id, router):
@@ -604,7 +604,10 @@ class ServerPool(object):
     def rest_get_switch(self, switch_id):
         resource = SWITCHES_PATH % switch_id
         errstr = _("Unable to retrieve switch: %s")
-        return self.rest_action('GET', resource, errstr=errstr)
+        resp = self.rest_action('GET', resource, errstr=errstr,
+                                ignore_codes=[404])
+        # return None if switch not found, else return switch info
+        return None if resp[0] == 404 else resp[3]
 
     def _consistency_watchdog(self, polling_interval=60):
         if 'consistency' not in self.get_capabilities():

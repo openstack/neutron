@@ -184,15 +184,11 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
             pass
 
         try:
-            self.servers.rest_get_switch(host)
-            exists = True
-        except servermanager.RemoteRestError as e:
-            if e.status == 404:
-                exists = False
-            else:
-                # Another error, return without caching to try again on
-                # next binding
-                return
+            exists = bool(self.servers.rest_get_switch(host))
+        except servermanager.RemoteRestError:
+            # Connectivity or internal server error. Skip cache to try again on
+            # next binding attempt
+            return
         self.ivs_host_cache[host] = {
             'timestamp': datetime.datetime.now(),
             'exists': exists
