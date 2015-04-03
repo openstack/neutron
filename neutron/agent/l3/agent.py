@@ -486,7 +486,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         while True:
             pool.spawn_n(self._process_router_update)
 
-    @periodic_task.periodic_task
+    # NOTE(kevinbenton): this is set to 1 second because the actual interval
+    # is controlled by a FixedIntervalLoopingCall in neutron/service.py that
+    # is responsible for task execution.
+    @periodic_task.periodic_task(spacing=1)
     def periodic_sync_routers_task(self, context):
         self.process_services_sync(context)
         LOG.debug("Starting periodic_sync_routers_task - fullsync:%s",
