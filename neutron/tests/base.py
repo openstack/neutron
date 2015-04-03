@@ -74,6 +74,10 @@ def bool_from_env(key, strict=False, default=False):
     return strutils.bool_from_string(value, strict=strict, default=default)
 
 
+def get_test_timeout(default=0):
+    return int(os.environ.get('OS_TEST_TIMEOUT', 0))
+
+
 class AttributeDict(dict):
 
     """
@@ -118,7 +122,7 @@ class DietTestCase(testtools.TestCase):
                 nuke_handlers=capture_logs,
             ))
 
-        test_timeout = int(os.environ.get('OS_TEST_TIMEOUT', 0))
+        test_timeout = get_test_timeout()
         if test_timeout == -1:
             test_timeout = 0
         if test_timeout > 0:
