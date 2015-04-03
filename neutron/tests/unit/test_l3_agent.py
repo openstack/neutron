@@ -17,6 +17,8 @@ import contextlib
 import copy
 
 import eventlet
+from itertools import chain as iter_chain
+from itertools import combinations as iter_combinations
 import mock
 import netaddr
 from oslo_log import log
@@ -104,6 +106,75 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
              'mac_address': str(mac_address),
              'subnets': subnets})
         mac_address.value += 1
+
+
+def router_append_subnet(router, count=1, ip_version=4,
+                         ipv6_subnet_modes=None, interface_id=None):
+    if ip_version == 6:
+        subnet_mode_none = {'ra_mode': None, 'address_mode': None}
+        if not ipv6_subnet_modes:
+            ipv6_subnet_modes = [subnet_mode_none] * count
+        elif len(ipv6_subnet_modes) != count:
+            ipv6_subnet_modes.extend([subnet_mode_none for i in
+                                      xrange(len(ipv6_subnet_modes), count)])
+
+    if ip_version == 4:
+        ip_pool = '35.4.%i.4'
+        cidr_pool = '35.4.%i.0/24'
+        prefixlen = 24
+        gw_pool = '35.4.%i.1'
+    elif ip_version == 6:
+        ip_pool = 'fd01:%x::6'
+        cidr_pool = 'fd01:%x::/64'
+        prefixlen = 64
+        gw_pool = 'fd01:%x::1'
+    else:
+        raise ValueError("Invalid ip_version: %s" % ip_version)
+
+    interfaces = copy.deepcopy(router.get(l3_constants.INTERFACE_KEY, []))
+    if interface_id:
+        try:
+            interface = (i for i in interfaces
+                         if i['id'] == interface_id).next()
+        except StopIteration:
+            raise ValueError("interface_id not found")
+
+        fixed_ips, subnets = interface['fixed_ips'], interface['subnets']
+    else:
+        interface = None
+        fixed_ips, subnets = [], []
+
+    num_existing_subnets = len(subnets)
+    for i in xrange(count):
+        subnet_id = _uuid()
+        fixed_ips.append(
+                {'ip_address': ip_pool % (i + num_existing_subnets),
+                 'subnet_id': subnet_id,
+                 'prefixlen': prefixlen})
+        subnets.append(
+                {'id': subnet_id,
+                 'cidr': cidr_pool % (i + num_existing_subnets),
+                 'gateway_ip': gw_pool % (i + num_existing_subnets),
+                 'ipv6_ra_mode': ipv6_subnet_modes[i]['ra_mode'],
+                 'ipv6_address_mode': ipv6_subnet_modes[i]['address_mode']})
+
+    if interface:
+        # Update old interface
+        index = interfaces.index(interface)
+        interfaces[index].update({'fixed_ips': fixed_ips, 'subnets': subnets})
+    else:
+        # New interface appended to interfaces list
+        mac_address = netaddr.EUI('ca:fe:de:ad:be:ef')
+        mac_address.dialect = netaddr.mac_unix
+        interfaces.append(
+            {'id': _uuid(),
+             'network_id': _uuid(),
+             'admin_state_up': True,
+             'mac_address': str(mac_address),
+             'fixed_ips': fixed_ips,
+             'subnets': subnets})
+
+    router[l3_constants.INTERFACE_KEY] = interfaces
 
 
 def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
@@ -1330,6 +1401,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           namespace=ri.ns_name,
                           conf=mock.ANY)]
 
+    def _process_router_ipv6_subnet_added(
+            self, router, ipv6_subnet_modes=None):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
+        agent.external_gateway_added = mock.Mock()
+        self._process_router_instance_for_agent(agent, ri, router)
+        # Add an IPv6 interface with len(ipv6_subnet_modes) subnets
+        # and reprocess
+        router_append_subnet(router, count=len(ipv6_subnet_modes),
+                ip_version=6, ipv6_subnet_modes=ipv6_subnet_modes)
+        # Reassign the router object to RouterInfo
+        self._process_router_instance_for_agent(agent, ri, router)
+        return ri
+
     def _assert_ri_process_enabled(self, ri, process):
         """Verify that process was enabled for a router instance."""
         expected_calls = self._expected_call_lookup_ri_process(
@@ -1360,6 +1445,59 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Expect radvd configured with prefix
         self.assertIn('prefix',
                       self.utils_replace_file.call_args[0][1].split())
+
+    def test_process_router_ipv6_subnets_added(self):
+        router = prepare_router_data()
+        ri = self._process_router_ipv6_subnet_added(router, ipv6_subnet_modes=[
+            {'ra_mode': l3_constants.IPV6_SLAAC,
+             'address_mode': l3_constants.IPV6_SLAAC},
+            {'ra_mode': l3_constants.DHCPV6_STATELESS,
+             'address_mode': l3_constants.DHCPV6_STATELESS},
+            {'ra_mode': l3_constants.DHCPV6_STATEFUL,
+             'address_mode': l3_constants.DHCPV6_STATEFUL}])
+        self._assert_ri_process_enabled(ri, 'radvd')
+        radvd_config = self.utils_replace_file.call_args[0][1].split()
+        # Assert we have a prefix from IPV6_SLAAC and a prefix from
+        # DHCPV6_STATELESS on one interface
+        self.assertEqual(2, radvd_config.count("prefix"))
+        self.assertEqual(1, radvd_config.count("interface"))
+
+    def test_process_router_ipv6_subnets_added_to_existing_port(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = prepare_router_data()
+        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
+        agent.external_gateway_added = mock.Mock()
+        self._process_router_instance_for_agent(agent, ri, router)
+        # Add the first subnet on a new interface
+        router_append_subnet(router, count=1, ip_version=6, ipv6_subnet_modes=[
+            {'ra_mode': l3_constants.IPV6_SLAAC,
+             'address_mode': l3_constants.IPV6_SLAAC}])
+        self._process_router_instance_for_agent(agent, ri, router)
+        self._assert_ri_process_enabled(ri, 'radvd')
+        radvd_config = self.utils_replace_file.call_args[0][1].split()
+        self.assertEqual(1, len(ri.internal_ports[1]['subnets']))
+        self.assertEqual(1, len(ri.internal_ports[1]['fixed_ips']))
+        self.assertEqual(1, radvd_config.count("prefix"))
+        self.assertEqual(1, radvd_config.count("interface"))
+        # Reset mocks to verify radvd enabled and configured correctly
+        # after second subnet added to interface
+        self.external_process.reset_mock()
+        self.utils_replace_file.reset_mock()
+        # Add the second subnet on the same interface
+        interface_id = router[l3_constants.INTERFACE_KEY][1]['id']
+        router_append_subnet(router, count=1, ip_version=6, ipv6_subnet_modes=[
+            {'ra_mode': l3_constants.IPV6_SLAAC,
+             'address_mode': l3_constants.IPV6_SLAAC}],
+            interface_id=interface_id)
+        self._process_router_instance_for_agent(agent, ri, router)
+        # radvd should have been enabled again and the interface
+        # should have two prefixes
+        self._assert_ri_process_enabled(ri, 'radvd')
+        radvd_config = self.utils_replace_file.call_args[0][1].split()
+        self.assertEqual(2, len(ri.internal_ports[1]['subnets']))
+        self.assertEqual(2, len(ri.internal_ports[1]['fixed_ips']))
+        self.assertEqual(2, radvd_config.count("prefix"))
+        self.assertEqual(1, radvd_config.count("interface"))
 
     def test_process_router_ipv6v4_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1407,6 +1545,38 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         del router[l3_constants.INTERFACE_KEY][1]
         self._process_router_instance_for_agent(agent, ri, router)
         self._assert_ri_process_disabled(ri, 'radvd')
+
+    def test_process_router_ipv6_subnet_removed(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = prepare_router_data()
+        ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
+        agent.external_gateway_added = mock.Mock()
+        self._process_router_instance_for_agent(agent, ri, router)
+        # Add an IPv6 interface with two subnets and reprocess
+        router_append_subnet(router, count=2, ip_version=6,
+                             ipv6_subnet_modes=([
+                                 {'ra_mode': l3_constants.IPV6_SLAAC,
+                                  'address_mode': l3_constants.IPV6_SLAAC}
+                             ] * 2))
+        self._process_router_instance_for_agent(agent, ri, router)
+        self._assert_ri_process_enabled(ri, 'radvd')
+        # Reset mocks to check for modified radvd config
+        self.utils_replace_file.reset_mock()
+        self.external_process.reset_mock()
+        # Remove one subnet from the interface and reprocess
+        interfaces = copy.deepcopy(router[l3_constants.INTERFACE_KEY])
+        del interfaces[1]['subnets'][0]
+        del interfaces[1]['fixed_ips'][0]
+        router[l3_constants.INTERFACE_KEY] = interfaces
+        self._process_router_instance_for_agent(agent, ri, router)
+        # Assert radvd was enabled again and that we only have one
+        # prefix on the interface
+        self._assert_ri_process_enabled(ri, 'radvd')
+        radvd_config = self.utils_replace_file.call_args[0][1].split()
+        self.assertEqual(1, len(ri.internal_ports[1]['subnets']))
+        self.assertEqual(1, len(ri.internal_ports[1]['fixed_ips']))
+        self.assertEqual(1, radvd_config.count("interface"))
+        self.assertEqual(1, radvd_config.count("prefix"))
 
     def test_process_router_internal_network_added_unexpected_error(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -2161,30 +2331,33 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertIn(_join('-m', 'syslog'), cmd)
 
     def test_generate_radvd_conf_other_and_managed_flag(self):
-        _skip_check = object()
-        skip = lambda flag: True if flag is _skip_check else False
-
+        # expected = {ra_mode: (AdvOtherConfigFlag, AdvManagedFlag), ...}
         expected = {l3_constants.IPV6_SLAAC: (False, False),
                     l3_constants.DHCPV6_STATELESS: (True, False),
-        # we don't check other flag for stateful since it's redundant
-        # for this mode and can be ignored by clients, as per RFC4861
-                    l3_constants.DHCPV6_STATEFUL: (_skip_check, True)}
+                    l3_constants.DHCPV6_STATEFUL: (False, True)}
 
-        for ra_mode, flags_set in expected.iteritems():
+        modes = [l3_constants.IPV6_SLAAC, l3_constants.DHCPV6_STATELESS,
+                 l3_constants.DHCPV6_STATEFUL]
+        mode_combos = list(iter_chain(*[[list(combo) for combo in
+            iter_combinations(modes, i)] for i in range(1, len(modes) + 1)]))
+
+        for mode_list in mode_combos:
+            ipv6_subnet_modes = [{'ra_mode': mode, 'address_mode': mode}
+                                 for mode in mode_list]
             router = prepare_router_data()
-            ri = self._process_router_ipv6_interface_added(router,
-                                                           ra_mode=ra_mode)
+            ri = self._process_router_ipv6_subnet_added(router,
+                                                        ipv6_subnet_modes)
 
             ri.radvd._generate_radvd_conf(router[l3_constants.INTERFACE_KEY])
 
             def assertFlag(flag):
                 return (self.assertIn if flag else self.assertNotIn)
 
-            other_flag, managed_flag = flags_set
-            if not skip(other_flag):
-                assertFlag(other_flag)('AdvOtherConfigFlag on;',
-                    self.utils_replace_file.call_args[0][1])
+            other_flag, managed_flag = (
+                    any(expected[mode][0] for mode in mode_list),
+                    any(expected[mode][1] for mode in mode_list))
 
-            if not skip(managed_flag):
-                assertFlag(managed_flag)('AdvManagedFlag on',
-                    self.utils_replace_file.call_args[0][1])
+            assertFlag(other_flag)('AdvOtherConfigFlag on;',
+                self.utils_replace_file.call_args[0][1])
+            assertFlag(managed_flag)('AdvManagedFlag on;',
+                self.utils_replace_file.call_args[0][1])

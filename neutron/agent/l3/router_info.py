@@ -323,6 +323,25 @@ class RouterInfo(object):
         ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
         return [ip_dev.name for ip_dev in ip_devs]
 
+    @staticmethod
+    def _get_updated_ports(existing_ports, current_ports):
+        updated_ports = dict()
+        current_ports_dict = {p['id']: p for p in current_ports}
+        for existing_port in existing_ports:
+            current_port = current_ports_dict.get(existing_port['id'])
+            if current_port:
+                if sorted(existing_port['fixed_ips']) != (
+                        sorted(current_port['fixed_ips'])):
+                    updated_ports[current_port['id']] = current_port
+        return updated_ports
+
+    @staticmethod
+    def _port_has_ipv6_subnet(port):
+        if 'subnets' in port:
+            for subnet in port['subnets']:
+                if netaddr.IPNetwork(subnet['cidr']).version == 6:
+                    return True
+
     def _process_internal_ports(self):
         existing_port_ids = set(p['id'] for p in self.internal_ports)
 
@@ -334,29 +353,33 @@ class RouterInfo(object):
         new_ports = [p for p in internal_ports if p['id'] in new_port_ids]
         old_ports = [p for p in self.internal_ports
                      if p['id'] not in current_port_ids]
+        updated_ports = self._get_updated_ports(self.internal_ports,
+                                                internal_ports)
 
-        new_ipv6_port = False
-        old_ipv6_port = False
+        enable_ra = False
         for p in new_ports:
             self.internal_network_added(p)
             self.internal_ports.append(p)
-            if not new_ipv6_port:
-                for subnet in p['subnets']:
-                    if netaddr.IPNetwork(subnet['cidr']).version == 6:
-                        new_ipv6_port = True
-                        break
+            enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
         for p in old_ports:
             self.internal_network_removed(p)
             self.internal_ports.remove(p)
-            if not old_ipv6_port:
-                for subnet in p['subnets']:
-                    if netaddr.IPNetwork(subnet['cidr']).version == 6:
-                        old_ipv6_port = True
-                        break
+            enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
+
+        if updated_ports:
+            for index, p in enumerate(internal_ports):
+                if not updated_ports.get(p['id']):
+                    continue
+                self.internal_ports[index] = updated_ports[p['id']]
+                interface_name = self.get_internal_device_name(p['id'])
+                ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
+                self.driver.init_l3(interface_name, ip_cidrs=ip_cidrs,
+                        namespace=self.ns_name)
+                enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
         # Enable RA
-        if new_ipv6_port or old_ipv6_port:
+        if enable_ra:
             self.radvd.enable(internal_ports)
 
         existing_devices = self._get_existing_devices()

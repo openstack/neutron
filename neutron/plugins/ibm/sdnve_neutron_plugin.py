@@ -542,6 +542,12 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                               "failed to add the interface in the roll back."
                               " of a remove_router_interface operation"))
 
+    def _find_router_port_by_subnet_id(self, ports, subnet_id):
+        for p in ports:
+            subnet_ids = [fip['subnet_id'] for fip in p['fixed_ips']]
+            if subnet_id in subnet_ids:
+                return p['id']
+
     @_ha
     def remove_router_interface(self, context, router_id, interface_info):
         LOG.debug("Remove router interface in progress: "
@@ -576,7 +582,14 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       'network_id': [subnet['network_id']]}
                 ports = self.get_ports(context, filters=df)
                 if ports:
-                    pid = ports[0]['id']
+                    pid = self._find_router_port_by_subnet_id(ports, subnet_id)
+                    if not pid:
+                        raise sdnve_exc.SdnveException(
+                                msg=(_('Update router-remove-interface '
+                                       'failed SDN-VE: subnet %(sid) is not '
+                                       'associated with any ports on router '
+                                       '%(rid)'), {'sid': subnet_id,
+                                     'rid': router_id}))
                     interface_info['port_id'] = pid
                     msg = ("SdnvePluginV2.remove_router_interface "
                            "subnet_id: %(sid)s  port_id: %(pid)s")
@@ -593,6 +606,11 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             try:
+                if not port_id:
+                    # port_id was not originally given in interface_info,
+                    # so we want to remove the interface by subnet instead
+                    # of port
+                    del interface_info['port_id']
                 info = super(SdnvePluginV2, self).remove_router_interface(
                     context, router_id, interface_info)
             except Exception:

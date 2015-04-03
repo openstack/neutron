@@ -507,7 +507,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
                                    mkintf, notify):
             grtr.return_value = router
             gdev.return_value = mock.Mock()
-            rmintf.return_value = (mock.MagicMock(), mock.Mock())
+            rmintf.return_value = (mock.MagicMock(), mock.MagicMock())
             mkintf.return_value = mock.Mock()
             gplugin.return_value = {plugin_const.L3_ROUTER_NAT: plugin}
             delintf.return_value = None
