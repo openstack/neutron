@@ -24,6 +24,39 @@ fixes that are submitted also have tests to prove that they stay
 fixed!  In addition, before proposing for merge, all of the
 current tests should be passing.
 
+Structure of the unit test tree
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The structure of the unit test tree should match the structure of the
+code tree, e.g. ::
+
+ - target module: neutron.agent.utils
+
+ - test module: neutron.tests.unit.agent.test_utils
+
+Unit test modules should have the same path under neutron/tests/unit/
+as the module they target has under neutron/, and their name should be
+the name of the target module prefixed by 'test_'.  This requirement
+is intended to make it easier for developers to find the unit tests
+for a given module.
+
+Similarly, when a test module targets a package, that module's name
+should be the name of the package prefixed by 'test_' with the same
+path as when a test targets a module, e.g. ::
+
+ - target package: neutron.ipam
+
+ - test module: neutron.tests.unit.test_ipam
+
+The following command can be used to validate whether the unit test
+tree is structured according to the above requirements: ::
+
+    ./tools/check_unit_test_structure.sh
+
+Where appropriate, exceptions can be added to the above script.  If
+code is not part of the neutron namespace, for example, it's probably
+reasonable to exclude their unit tests from the check.
+
 Virtual environments
 ~~~~~~~~~~~~~~~~~~~~
 

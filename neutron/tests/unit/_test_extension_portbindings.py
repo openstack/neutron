@@ -22,10 +22,10 @@ from webob import exc
 from neutron import context
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
+class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     # VIF_TYPE must be overridden according to plugin vif_type
     VIF_TYPE = portbindings.VIF_TYPE_OTHER

@@ -27,9 +27,9 @@ from neutron.extensions import metering as ext_metering
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
-from neutron.tests.unit.db.metering import test_db_metering
-from neutron.tests.unit import test_db_plugin
-from neutron.tests.unit import test_l3_plugin
+from neutron.tests.unit.db.metering import test_metering_db
+from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.unit.extensions import test_l3
 
 
 _uuid = uuidutils.generate_uuid
@@ -58,9 +58,9 @@ class MeteringTestExtensionManager(object):
         return []
 
 
-class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
-                         test_l3_plugin.L3NatTestCaseMixin,
-                         test_db_metering.MeteringPluginDbTestCaseMixin):
+class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
+                         test_l3.L3NatTestCaseMixin,
+                         test_metering_db.MeteringPluginDbTestCaseMixin):
 
     resource_prefix_map = dict(
         (k.replace('_', '-'), constants.COMMON_PREFIXES[constants.METERING])
@@ -68,7 +68,7 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
     )
 
     def setUp(self):
-        plugin = 'neutron.tests.unit.test_l3_plugin.TestL3NatIntPlugin'
+        plugin = 'neutron.tests.unit.extensions.test_l3.TestL3NatIntPlugin'
         service_plugins = {'metering_plugin_name':
                            METERING_SERVICE_PLUGIN_KLASS}
         ext_mgr = MeteringTestExtensionManager()
@@ -277,9 +277,9 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
 
 class TestMeteringPluginL3AgentScheduler(
         l3_agentschedulers_db.L3AgentSchedulerDbMixin,
-        test_db_plugin.NeutronDbPluginV2TestCase,
-        test_l3_plugin.L3NatTestCaseMixin,
-        test_db_metering.MeteringPluginDbTestCaseMixin):
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
+        test_l3.L3NatTestCaseMixin,
+        test_metering_db.MeteringPluginDbTestCaseMixin):
 
     resource_prefix_map = dict(
         (k.replace('_', '-'), constants.COMMON_PREFIXES[constants.METERING])
@@ -288,7 +288,7 @@ class TestMeteringPluginL3AgentScheduler(
 
     def setUp(self, plugin_str=None, service_plugins=None, scheduler=None):
         if not plugin_str:
-            plugin_str = ('neutron.tests.unit.test_l3_plugin.'
+            plugin_str = ('neutron.tests.unit.extensions.test_l3.'
                           'TestL3NatIntAgentSchedulingPlugin')
 
         if not service_plugins:
@@ -384,13 +384,13 @@ class TestMeteringPluginL3AgentSchedulerServicePlugin(
     """
 
     def setUp(self):
-        l3_plugin = ('neutron.tests.unit.test_l3_plugin.'
+        l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
                      'TestL3NatAgentSchedulingServicePlugin')
         service_plugins = {'metering_plugin_name':
                            METERING_SERVICE_PLUGIN_KLASS,
                            'l3_plugin_name': l3_plugin}
 
-        plugin_str = ('neutron.tests.unit.test_l3_plugin.'
+        plugin_str = ('neutron.tests.unit.extensions.test_l3.'
                       'TestNoL3NatPlugin')
 
         super(TestMeteringPluginL3AgentSchedulerServicePlugin, self).setUp(
@@ -399,9 +399,9 @@ class TestMeteringPluginL3AgentSchedulerServicePlugin(
 
 
 class TestMeteringPluginRpcFromL3Agent(
-        test_db_plugin.NeutronDbPluginV2TestCase,
-        test_l3_plugin.L3NatTestCaseMixin,
-        test_db_metering.MeteringPluginDbTestCaseMixin):
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
+        test_l3.L3NatTestCaseMixin,
+        test_metering_db.MeteringPluginDbTestCaseMixin):
 
     resource_prefix_map = dict(
         (k.replace('_', '-'), constants.COMMON_PREFIXES[constants.METERING])
@@ -412,7 +412,7 @@ class TestMeteringPluginRpcFromL3Agent(
         service_plugins = {'metering_plugin_name':
                            METERING_SERVICE_PLUGIN_KLASS}
 
-        plugin = ('neutron.tests.unit.test_l3_plugin.'
+        plugin = ('neutron.tests.unit.extensions.test_l3.'
                   'TestL3NatIntAgentSchedulingPlugin')
 
         ext_mgr = MeteringTestExtensionManager()

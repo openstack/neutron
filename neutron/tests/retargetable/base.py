@@ -29,7 +29,7 @@ import testscenarios
 
 from neutron.tests import base as tests_base
 from neutron.tests.retargetable import client_fixtures
-from neutron.tests.unit.ml2 import test_ml2_plugin
+from neutron.tests.unit.plugins.ml2 import test_ml2_plugin
 
 
 # Each plugin must add a class to plugin_configurations that can configure the

@@ -24,7 +24,7 @@ import neutron.ipam as ipam
 from neutron.ipam import subnet_alloc
 from neutron import manager
 from neutron.openstack.common import uuidutils
-from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 
 
@@ -33,7 +33,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestSubnetAllocation, self).setUp()
         self._tenant_id = 'test-tenant'
-        self.setup_coreplugin(test_db_plugin.DB_PLUGIN_KLASS)
+        self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
         self.plugin = manager.NeutronManager.get_plugin()
         self.ctx = context.get_admin_context()
         cfg.CONF.set_override('allow_overlapping_ips', True)
