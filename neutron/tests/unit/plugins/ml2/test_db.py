@@ -144,7 +144,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_port(network_id, port_id)
         self._setup_neutron_portbinding(port_id, vif_type, host)
 
-        port_host = ml2_db.get_port_binding_host(port_id)
+        port_host = ml2_db.get_port_binding_host(self.ctx.session, port_id)
         self.assertEqual(host, port_host)
 
     def test_get_port_binding_host_multiple_results_found(self):
@@ -160,13 +160,13 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_port(network_id, port_id_two)
         self._setup_neutron_portbinding(port_id_two, vif_type, host)
 
-        port_host = ml2_db.get_port_binding_host(port_id)
+        port_host = ml2_db.get_port_binding_host(self.ctx.session, port_id)
         self.assertIsNone(port_host)
 
     def test_get_port_binding_host_result_not_found(self):
         port_id = uuidutils.generate_uuid()
 
-        port_host = ml2_db.get_port_binding_host(port_id)
+        port_host = ml2_db.get_port_binding_host(self.ctx.session, port_id)
         self.assertIsNone(port_host)
 
     def test_get_port(self):
