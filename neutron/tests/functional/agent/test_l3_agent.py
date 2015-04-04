@@ -36,13 +36,14 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.callbacks import events
 from neutron.callbacks import manager
 from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
 from neutron.openstack.common import uuidutils
-from neutron.services import advanced_service as adv_svc
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
@@ -316,11 +317,6 @@ class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
 
 
 class L3AgentTestCase(L3AgentTestFramework):
-    def test_observer_notifications_legacy_router(self):
-        self._test_observer_notifications(enable_ha=False)
-
-    def test_observer_notifications_ha_router(self):
-        self._test_observer_notifications(enable_ha=True)
 
     def test_keepalived_state_change_notification(self):
         enqueue_mock = mock.patch.object(
@@ -363,24 +359,40 @@ class L3AgentTestCase(L3AgentTestFramework):
             lambda: self._expected_rpc_report(
                 {router1.router_id: 'standby', router2.router_id: 'active'}))
 
-    def _test_observer_notifications(self, enable_ha):
-        """Test create, update, delete of router and notifications."""
-        with mock.patch.object(
-                self.agent.event_observers, 'notify') as notify:
-            router_info = self.generate_router_info(enable_ha)
-            router = self.manage_router(self.agent, router_info)
-            self.agent._process_updated_router(router.router)
-            self._delete_router(self.agent, router.router_id)
+    def test_agent_notifications_for_router_events(self):
+        """Test notifications for router create, update, and delete.
 
-            calls = notify.call_args_list
-            self.assertEqual(
-                [((adv_svc.AdvancedService.before_router_added, router),),
-                 ((adv_svc.AdvancedService.after_router_added, router),),
-                 ((adv_svc.AdvancedService.before_router_updated, router),),
-                 ((adv_svc.AdvancedService.after_router_updated, router),),
-                 ((adv_svc.AdvancedService.before_router_removed, router),),
-                 ((adv_svc.AdvancedService.after_router_removed, router),)],
-                calls)
+        Make sure that when the agent sends notifications of router events
+        for router create, update, and delete, that the correct handler is
+        called with the right resource, event, and router information.
+        """
+        event_handler = mock.Mock()
+        registry.subscribe(event_handler,
+                           resources.ROUTER, events.BEFORE_CREATE)
+        registry.subscribe(event_handler,
+                           resources.ROUTER, events.AFTER_CREATE)
+        registry.subscribe(event_handler,
+                           resources.ROUTER, events.BEFORE_UPDATE)
+        registry.subscribe(event_handler,
+                           resources.ROUTER, events.AFTER_UPDATE)
+        registry.subscribe(event_handler,
+                           resources.ROUTER, events.BEFORE_DELETE)
+        registry.subscribe(event_handler,
+                           resources.ROUTER, events.AFTER_DELETE)
+
+        router_info = self.generate_router_info(enable_ha=False)
+        router = self.manage_router(self.agent, router_info)
+        self.agent._process_updated_router(router.router)
+        self._delete_router(self.agent, router.router_id)
+
+        expected_calls = [
+            mock.call('router', 'before_create', self.agent, router=router),
+            mock.call('router', 'after_create', self.agent, router=router),
+            mock.call('router', 'before_update', self.agent, router=router),
+            mock.call('router', 'after_update', self.agent, router=router),
+            mock.call('router', 'before_delete', self.agent, router=router),
+            mock.call('router', 'after_delete', self.agent, router=router)]
+        event_handler.assert_has_calls(expected_calls)
 
     def test_legacy_router_lifecycle(self):
         self._router_lifecycle(enable_ha=False, dual_stack=True)
