@@ -64,8 +64,11 @@ class Transaction(api.Transaction):
     def commit(self):
         ovsdb_connection.queue_txn(self)
         result = self.results.get()
-        if isinstance(result, Exception) and self.check_error:
-            raise result
+        if self.check_error:
+            if isinstance(result, idlutils.ExceptionResult):
+                if self.log_errors:
+                    LOG.error(result.tb)
+                raise result.ex
         return result
 
     def do_commit(self):
