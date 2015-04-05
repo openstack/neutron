@@ -60,7 +60,7 @@ class ProcessManager(MonitoredProcess):
     """
     def __init__(self, conf, uuid, namespace=None, service=None,
                  pids_path=None, default_cmd_callback=None,
-                 cmd_addl_env=None, pid_file=None):
+                 cmd_addl_env=None, pid_file=None, run_as_root=False):
 
         self.conf = conf
         self.uuid = uuid
@@ -69,6 +69,7 @@ class ProcessManager(MonitoredProcess):
         self.cmd_addl_env = cmd_addl_env
         self.pids_path = pids_path or self.conf.external_pids
         self.pid_file = pid_file
+        self.run_as_root = run_as_root
 
         if service:
             self.service_pid_fname = 'pid.' + service
@@ -86,7 +87,8 @@ class ProcessManager(MonitoredProcess):
             cmd = cmd_callback(self.get_pid_file_name())
 
             ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
-            ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env)
+            ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
+                                     run_as_root=self.run_as_root)
         elif reload_cfg:
             self.reload_cfg()
 
