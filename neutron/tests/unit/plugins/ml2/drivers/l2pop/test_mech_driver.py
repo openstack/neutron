@@ -35,7 +35,7 @@ from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
 from neutron.tests import base
-from neutron.tests.unit.plugins.ml2 import test_ml2_plugin as test_plugin
+from neutron.tests.unit.plugins.ml2 import test_plugin
 
 HOST = 'my_l2_host'
 L2_AGENT = {

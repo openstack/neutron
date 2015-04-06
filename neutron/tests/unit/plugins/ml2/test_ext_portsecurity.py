@@ -15,10 +15,10 @@
 
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.extensions import test_portsecurity as test_psec
-from neutron.tests.unit.plugins.ml2 import test_ml2_plugin
+from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
-class PSExtDriverTestCase(test_ml2_plugin.Ml2PluginV2TestCase,
+class PSExtDriverTestCase(test_plugin.Ml2PluginV2TestCase,
                           test_psec.TestPortSecurity):
     _extension_drivers = ['port_security']
 

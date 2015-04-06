@@ -14,7 +14,7 @@
 #    under the License.
 
 from neutron.plugins.ml2.drivers.cisco.ncs import driver
-from neutron.tests.unit.plugins.ml2 import test_ml2_plugin as test_plugin
+from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
 class NCSTestCase(test_plugin.Ml2PluginV2TestCase):

@@ -25,7 +25,7 @@ from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic as md
 from neutron.plugins.ml2.drivers import type_vlan  # noqa
 from neutron.tests import base
 from neutron.tests.unit.plugins.ml2.drivers.cisco.apic import (
-    test_cisco_apic_common as mocked)
+    base as mocked)
 
 
 HOST_ID1 = 'ubuntu'

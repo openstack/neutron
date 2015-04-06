@@ -21,8 +21,7 @@ sys.modules["apicapi"] = mock.Mock()
 
 from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic as md
 from neutron.services.l3_router import l3_apic
-from neutron.tests.unit.plugins.ml2.drivers.cisco.apic import (
-    test_cisco_apic_common as mocked)
+from neutron.tests.unit.plugins.ml2.drivers.cisco.apic import base as mocked
 from neutron.tests.unit import testlib_api
 
 

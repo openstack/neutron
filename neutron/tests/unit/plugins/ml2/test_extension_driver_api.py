@@ -17,10 +17,10 @@ from neutron import context
 from neutron import manager
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2.drivers import ext_test
-from neutron.tests.unit.plugins.ml2 import test_ml2_plugin
+from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
-class ExtensionDriverTestCase(test_ml2_plugin.Ml2PluginV2TestCase):
+class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
 
     _extension_drivers = ['test']
 
@@ -128,7 +128,7 @@ class ExtensionDriverTestCase(test_ml2_plugin.Ml2PluginV2TestCase):
             self.assertTrue(ext_port_dict.called)
 
 
-class DBExtensionDriverTestCase(test_ml2_plugin.Ml2PluginV2TestCase):
+class DBExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     _extension_drivers = ['testdb']
 
     def setUp(self):

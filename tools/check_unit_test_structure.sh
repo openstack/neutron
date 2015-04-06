@@ -11,7 +11,24 @@ test_path=$neutron_path/$base_test_path
 test_files=$(find ${test_path} -iname 'test_*.py')
 
 ignore_regexes=(
-    "^plugins.*$"
+    # The following vendor plugins are not required to confrm to the
+    # structural requirements.
+    "^plugins/brocade.*$"
+    "^plugins/cisco.*$"
+    "^plugins/embrane.*$"
+    "^plugins/ibm.*$"
+    "^plugins/oneconvergence.*$"
+    # The following open source plugin tests are not actually unit
+    # tests and are ignored pending their relocation to the functional
+    # test tree.
+    "^plugins/ml2/drivers/mech_sriov/test_mech_sriov_nic_switch.py$"
+    "^plugins/ml2/test_security_group.py$"
+    "^plugins/ml2/test_port_binding.py$"
+    "^plugins/ml2/test_extension_driver_api.py$"
+    "^plugins/ml2/test_ext_portsecurity.py$"
+    "^plugins/ml2/test_agent_scheduler.py$"
+    "^plugins/openvswitch/test_ovs_tunnel.py$"
+    "^plugins/openvswitch/test_agent_scheduler.py$"
 )
 
 error_count=0

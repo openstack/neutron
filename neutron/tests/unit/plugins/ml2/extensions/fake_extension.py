@@ -39,15 +39,15 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Test_extension(extensions.ExtensionDescriptor):
+class Fake_extension(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
-        return "ML2 test extension"
+        return "ML2 fake extension"
 
     @classmethod
     def get_alias(cls):
-        return "test_extension"
+        return "fake_extension"
 
     @classmethod
     def get_description(cls):
@@ -56,7 +56,7 @@ class Test_extension(extensions.ExtensionDescriptor):
     @classmethod
     def get_namespace(cls):
         return ("http://docs.openstack.org/ext/neutron/ml2/test/"
-                "test_extension/api/v1.0")
+                "fake_extension/api/v1.0")
 
     @classmethod
     def get_updated(cls):

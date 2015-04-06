@@ -30,7 +30,7 @@ from neutron.tests.unit.plugins.ml2 import extensions as test_extensions
 
 
 class TestExtensionDriverBase(driver_api.ExtensionDriver):
-    _supported_extension_aliases = 'test_extension'
+    _supported_extension_aliases = 'fake_extension'
 
     def initialize(self):
         extensions.append_api_extensions_path(test_extensions.__path__)

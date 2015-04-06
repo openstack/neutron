@@ -23,8 +23,8 @@ from neutron.db import api as db_api
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.drivers import type_gre
-from neutron.tests.unit.plugins.ml2 import test_rpcapi
-from neutron.tests.unit.plugins.ml2 import test_type_tunnel
+from neutron.tests.unit.plugins.ml2.drivers import base_type_tunnel
+from neutron.tests.unit.plugins.ml2 import test_rpc
 from neutron.tests.unit import testlib_api
 
 
@@ -44,7 +44,7 @@ def _get_allocation(session, gre_id):
         gre_id=gre_id).one()
 
 
-class GreTypeTest(test_type_tunnel.TunnelTypeTestMixin,
+class GreTypeTest(base_type_tunnel.TunnelTypeTestMixin,
                   testlib_api.SqlTestCase):
     DRIVER_CLASS = type_gre.GreTypeDriver
     TYPE = p_const.TYPE_GRE
@@ -151,13 +151,13 @@ class GreTypeTest(test_type_tunnel.TunnelTypeTestMixin,
         self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
 
-class GreTypeMultiRangeTest(test_type_tunnel.TunnelTypeMultiRangeTestMixin,
+class GreTypeMultiRangeTest(base_type_tunnel.TunnelTypeMultiRangeTestMixin,
                             testlib_api.SqlTestCase):
     DRIVER_CLASS = type_gre.GreTypeDriver
 
 
-class GreTypeRpcCallbackTest(test_type_tunnel.TunnelRpcCallbackTestMixin,
-                             test_rpcapi.RpcCallbacksTestCase,
+class GreTypeRpcCallbackTest(base_type_tunnel.TunnelRpcCallbackTestMixin,
+                             test_rpc.RpcCallbacksTestCase,
                              testlib_api.SqlTestCase):
         DRIVER_CLASS = type_gre.GreTypeDriver
         TYPE = p_const.TYPE_GRE

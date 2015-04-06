@@ -17,7 +17,7 @@ import sys
 
 import mock
 from neutron import context
-from neutron.tests.unit.plugins.ml2 import test_ml2_plugin as test_plugin
+from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
 with mock.patch.dict(sys.modules,

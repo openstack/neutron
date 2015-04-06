@@ -18,8 +18,8 @@ import mock
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.drivers import type_vxlan
-from neutron.tests.unit.plugins.ml2 import test_rpcapi
-from neutron.tests.unit.plugins.ml2 import test_type_tunnel
+from neutron.tests.unit.plugins.ml2.drivers import base_type_tunnel
+from neutron.tests.unit.plugins.ml2 import test_rpc
 from neutron.tests.unit import testlib_api
 
 
@@ -31,7 +31,7 @@ VXLAN_UDP_PORT_ONE = 9999
 VXLAN_UDP_PORT_TWO = 8888
 
 
-class VxlanTypeTest(test_type_tunnel.TunnelTypeTestMixin,
+class VxlanTypeTest(base_type_tunnel.TunnelTypeTestMixin,
                     testlib_api.SqlTestCase):
     DRIVER_CLASS = type_vxlan.VxlanTypeDriver
     TYPE = p_const.TYPE_VXLAN
@@ -119,13 +119,13 @@ class VxlanTypeTest(test_type_tunnel.TunnelTypeTestMixin,
         self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
 
-class VxlanTypeMultiRangeTest(test_type_tunnel.TunnelTypeMultiRangeTestMixin,
+class VxlanTypeMultiRangeTest(base_type_tunnel.TunnelTypeMultiRangeTestMixin,
                               testlib_api.SqlTestCase):
     DRIVER_CLASS = type_vxlan.VxlanTypeDriver
 
 
-class VxlanTypeRpcCallbackTest(test_type_tunnel.TunnelRpcCallbackTestMixin,
-                               test_rpcapi.RpcCallbacksTestCase,
+class VxlanTypeRpcCallbackTest(base_type_tunnel.TunnelRpcCallbackTestMixin,
+                               test_rpc.RpcCallbacksTestCase,
                                testlib_api.SqlTestCase):
         DRIVER_CLASS = type_vxlan.VxlanTypeDriver
         TYPE = p_const.TYPE_VXLAN
