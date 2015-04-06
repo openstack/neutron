@@ -120,7 +120,8 @@ class Transaction(api.Transaction):
 class OvsdbIdl(api.API):
 
     ovsdb_connection = connection.Connection(cfg.CONF.OVS.ovsdb_connection,
-                                             cfg.CONF.ovs_vsctl_timeout)
+                                             cfg.CONF.ovs_vsctl_timeout,
+                                             'Open_vSwitch')
 
     def __init__(self, context):
         super(OvsdbIdl, self).__init__(context)
