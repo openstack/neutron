@@ -15,7 +15,6 @@
 
 import os
 
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import config
@@ -35,34 +34,6 @@ METADATA_SERVICE_NAME = 'metadata-proxy'
 
 
 class MetadataDriver(object):
-
-    OPTS = [
-        cfg.StrOpt('metadata_proxy_socket',
-                   default='$state_path/metadata_proxy',
-                   help=_('Location of Metadata Proxy UNIX domain '
-                          'socket')),
-        cfg.StrOpt('metadata_proxy_user',
-                   default='',
-                   help=_("User (uid or name) running metadata proxy after "
-                          "its initialization (if empty: agent effective "
-                          "user)")),
-        cfg.StrOpt('metadata_proxy_group',
-                   default='',
-                   help=_("Group (gid or name) running metadata proxy after "
-                          "its initialization (if empty: agent effective "
-                          "group)")),
-        cfg.BoolOpt('metadata_proxy_watch_log',
-                    default=None,
-                    help=_("Enable/Disable log watch by metadata proxy. It "
-                           "should be disabled when metadata_proxy_user/group "
-                           "is not allowed to read/write its log file and "
-                           "copytruncate logrotate option must be used if "
-                           "logrotate is enabled on metadata proxy log "
-                           "files. Option default value is deduced from "
-                           "metadata_proxy_user: watch log is enabled if "
-                           "metadata_proxy_user is agent effective user "
-                           "id/name.")),
-    ]
 
     def __init__(self, l3_agent):
         self.metadata_port = l3_agent.conf.metadata_port

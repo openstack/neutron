@@ -20,6 +20,8 @@ import select
 import shlex
 import subprocess
 
+import fixtures
+
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -31,6 +33,33 @@ READ_TIMEOUT = os.environ.get('OS_TEST_READ_TIMEOUT', 5)
 
 SS_SOURCE_PORT_PATTERN = re.compile(
     r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[0-9:].*')
+
+
+class RecursivePermDirFixture(fixtures.Fixture):
+    """Ensure at least perms permissions on directory and ancestors."""
+
+    def __init__(self, directory, perms):
+        super(RecursivePermDirFixture, self).__init__()
+        self.directory = directory
+        self.least_perms = perms
+
+    def setUp(self):
+        super(RecursivePermDirFixture, self).setUp()
+        previous_directory = None
+        current_directory = self.directory
+        while previous_directory != current_directory:
+            perms = os.stat(current_directory).st_mode
+            if perms & self.least_perms != self.least_perms:
+                os.chmod(current_directory, perms | self.least_perms)
+                self.addCleanup(self.safe_chmod, current_directory, perms)
+            previous_directory = current_directory
+            current_directory = os.path.dirname(current_directory)
+
+    def safe_chmod(self, path, mode):
+        try:
+            os.chmod(path, mode)
+        except OSError:
+            pass
 
 
 def get_free_namespace_port(tcp=True, namespace=None):

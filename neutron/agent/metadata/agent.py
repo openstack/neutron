@@ -24,6 +24,7 @@ import six.moves.urllib.parse as urlparse
 import webob
 
 from neutron.agent.linux import utils as agent_utils
+from neutron.agent.metadata import config
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
@@ -35,6 +36,12 @@ from neutron.openstack.common.cache import cache
 from neutron.openstack.common import loopingcall
 
 LOG = logging.getLogger(__name__)
+
+MODE_MAP = {
+    config.USER_MODE: 0o644,
+    config.GROUP_MODE: 0o664,
+    config.ALL_MODE: 0o666,
+}
 
 
 class MetadataPluginAPI(object):
@@ -305,10 +312,29 @@ class UnixDomainMetadataProxy(object):
             return
         self.agent_state.pop('start_flag', None)
 
+    def _get_socket_mode(self):
+        mode = self.conf.metadata_proxy_socket_mode
+        if mode == config.DEDUCE_MODE:
+            user = self.conf.metadata_proxy_user
+            if (not user or user == '0' or user == 'root'
+                    or agent_utils.is_effective_user(user)):
+                # user is agent effective user or root => USER_MODE
+                mode = config.USER_MODE
+            else:
+                group = self.conf.metadata_proxy_group
+                if not group or agent_utils.is_effective_group(group):
+                    # group is agent effective group => GROUP_MODE
+                    mode = config.GROUP_MODE
+                else:
+                    # otherwise => ALL_MODE
+                    mode = config.ALL_MODE
+        return MODE_MAP[mode]
+
     def run(self):
         server = agent_utils.UnixDomainWSGIServer('neutron-metadata-agent')
         server.start(MetadataProxyHandler(self.conf),
                      self.conf.metadata_proxy_socket,
                      workers=self.conf.metadata_workers,
-                     backlog=self.conf.metadata_backlog)
+                     backlog=self.conf.metadata_backlog,
+                     mode=self._get_socket_mode())
         server.wait()
