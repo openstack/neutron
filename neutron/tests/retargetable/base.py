@@ -77,4 +77,7 @@ class RetargetableApiTest(testscenarios.WithScenarios,
         if rest_enabled():
             raise self.skipException(
                 'Tempest fixture requirements prevent this test from running')
+        else:
+            raise self.skipException(
+                "Fullstack's db fixture usage prevents this test from running")
         self.useFixture(self.client)
