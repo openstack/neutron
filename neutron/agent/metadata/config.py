@@ -74,7 +74,7 @@ UNIX_DOMAIN_METADATA_PROXY_OPTS = [
     cfg.IntOpt('metadata_workers',
                default=utils.cpu_count() // 2,
                help=_('Number of separate worker processes for metadata '
-                      'server')),
+                      'server (defaults to half of the number of CPUs)')),
     cfg.IntOpt('metadata_backlog',
                default=4096,
                help=_('Number of backlog requests to configure the '
