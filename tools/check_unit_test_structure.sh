@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This script identifies the unit test modules that do not correspond
 # directly with a module in the code tree.  See TESTING.rst for the

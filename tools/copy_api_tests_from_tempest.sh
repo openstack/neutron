@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This script is intended to allow repeatable migration of the neutron
 # api tests from tempest.  The intention is to allow development to
