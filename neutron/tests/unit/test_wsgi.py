@@ -65,6 +65,18 @@ class TestWorkerService(base.BaseTestCase):
         workerservice.start()
         self.assertFalse(apimock.called)
 
+    @mock.patch("neutron.policy.refresh")
+    @mock.patch("neutron.common.config.setup_logging")
+    def test_reset(self, setup_logging_mock, refresh_mock):
+        _service = mock.Mock()
+        _app = mock.Mock()
+
+        worker_service = wsgi.WorkerService(_service, _app)
+        worker_service.reset()
+
+        setup_logging_mock.assert_called_once_with()
+        refresh_mock.assert_called_once_with()
+
 
 class TestWSGIServer(base.BaseTestCase):
     """WSGI server tests."""
@@ -132,7 +144,7 @@ class TestWSGIServer(base.BaseTestCase):
                         mock.call(
                             server._run,
                             None,
-                            mock_listen.return_value)
+                            mock_listen.return_value.dup.return_value)
                     ])
 
     def test_app(self):

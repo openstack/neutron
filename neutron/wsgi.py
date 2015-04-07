@@ -37,6 +37,7 @@ import six
 import webob.dec
 import webob.exc
 
+from neutron.common import config
 from neutron.common import exceptions as exception
 from neutron import context
 from neutron.db import api
@@ -99,12 +100,17 @@ class WorkerService(object):
         self._server = None
 
     def start(self):
+        # When api worker is stopped it kills the eventlet wsgi server which
+        # internally closes the wsgi server socket object. This server socket
+        # object becomes not usable which leads to "Bad file descriptor"
+        # errors on service restart.
+        # Duplicate a socket object to keep a file descriptor usable.
+        dup_sock = self._service._socket.dup()
         if CONF.use_ssl:
-            self._service._socket = self._service.wrap_ssl(
-                self._service._socket)
+            dup_sock = self._service.wrap_ssl(dup_sock)
         self._server = self._service.pool.spawn(self._service._run,
                                                 self._application,
-                                                self._service._socket)
+                                                dup_sock)
 
     def wait(self):
         if isinstance(self._server, eventlet.greenthread.GreenThread):
@@ -114,6 +120,10 @@ class WorkerService(object):
         if isinstance(self._server, eventlet.greenthread.GreenThread):
             self._server.kill()
             self._server = None
+
+    @staticmethod
+    def reset():
+        config.reset_service()
 
 
 class Server(object):

@@ -31,6 +31,7 @@ from paste import deploy
 from neutron.api.v2 import attributes
 from neutron.common import utils
 from neutron.i18n import _LI
+from neutron import policy
 from neutron import version
 
 
@@ -208,6 +209,14 @@ def setup_logging():
              {'prog': sys.argv[0],
               'version': version.version_info.release_string()})
     LOG.debug("command line: %s", " ".join(sys.argv))
+
+
+def reset_service():
+    # Reset worker in case SIGHUP is called.
+    # Note that this is called only in case a service is running in
+    # daemon mode.
+    setup_logging()
+    policy.refresh()
 
 
 def load_paste_app(app_name):
