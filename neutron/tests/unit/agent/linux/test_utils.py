@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
 import mock
 import socket
 import testtools
@@ -226,20 +224,6 @@ class TestBaseOSUtils(base.BaseTestCase):
     EUNAME = 'user'
     EGID = 456
     EGNAME = 'group'
-
-    @mock.patch.object(os.path, 'isdir', return_value=False)
-    @mock.patch.object(os, 'makedirs')
-    def test_ensure_dir_not_exist(self, makedirs, isdir):
-        utils.ensure_dir('/the')
-        isdir.assert_called_once_with('/the')
-        makedirs.assert_called_once_with('/the', 0o755)
-
-    @mock.patch.object(os.path, 'isdir', return_value=True)
-    @mock.patch.object(os, 'makedirs')
-    def test_ensure_dir_exist(self, makedirs, isdir):
-        utils.ensure_dir('/the')
-        isdir.assert_called_once_with('/the')
-        self.assertFalse(makedirs.called)
 
     @mock.patch('os.geteuid', return_value=EUID)
     @mock.patch('pwd.getpwuid', return_value=FakeUser(EUNAME))
