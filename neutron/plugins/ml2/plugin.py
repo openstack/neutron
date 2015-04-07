@@ -873,9 +873,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # the isolation level is set to READ COMMITTED allocations made
                 # concurrently will be returned by this query
                 if not is_auto_addr_subnet:
-                    if self._subnet_check_ip_allocations(context, id):
-                        LOG.debug("Found IP allocations on subnet %s, "
-                                  "cannot delete", id)
+                    alloc = self._subnet_check_ip_allocations(context, id)
+                    if alloc:
+                        LOG.info(_LI("Found port (%(port_id)s, %(ip)s) "
+                                     "having IP allocation on subnet "
+                                     "%(subnet)s, cannot delete"),
+                                 {'ip': alloc.ip_address,
+                                  'port_id': alloc.port_id,
+                                  'subnet': id})
                         raise exc.SubnetInUse(subnet_id=id)
 
                 # If allocated is None, then all the IPAllocation were

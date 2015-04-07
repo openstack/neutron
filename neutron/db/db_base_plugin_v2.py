@@ -1514,9 +1514,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             if not is_auto_addr_subnet:
                 alloc = self._subnet_check_ip_allocations(context, id)
                 if alloc:
-                    LOG.info(_LI("Found IP allocation %(alloc)s on subnet "
+                    LOG.info(_LI("Found port (%(port_id)s, %(ip)s) having IP "
+                                 "allocation on subnet "
                                  "%(subnet)s, cannot delete"),
-                             {'alloc': alloc,
+                             {'ip': alloc.ip_address,
+                              'port_id': alloc.port_id,
                               'subnet': id})
                     raise n_exc.SubnetInUse(subnet_id=id)
 
