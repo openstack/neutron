@@ -307,6 +307,14 @@ class DvrRouter(router.RouterInfo):
     def internal_network_added(self, port):
         super(DvrRouter, self).internal_network_added(port)
 
+        # NOTE: The following function _set_subnet_arp_info
+        # should be called to dynamically populate the arp
+        # entries for the dvr services ports into the router
+        # namespace. This does not have dependency on the
+        # external_gateway port or the agent_mode.
+        for subnet in port['subnets']:
+            self._set_subnet_arp_info(subnet['id'])
+
         ex_gw_port = self.get_ex_gw_port()
         if not ex_gw_port:
             return
@@ -332,9 +340,6 @@ class DvrRouter(router.RouterInfo):
             sn_port['mac_address'],
             interface_name,
             dvr_snat_ns.SNAT_INT_DEV_PREFIX)
-
-        for subnet in port['subnets']:
-            self._set_subnet_arp_info(subnet['id'])
 
     def _dvr_internal_network_removed(self, port):
         if not self.ex_gw_port:

@@ -1121,6 +1121,26 @@ class TestDvrRouter(L3AgentTestFramework):
         self._assert_dvr_snat_gateway(router1)
         self.assertFalse(self._namespace_exists(fip_ns))
 
+    def test_dvr_router_add_internal_network_set_arp_cache(self):
+        # Check that, when the router is set up and there are
+        # existing ports on the the uplinked subnet, the ARP
+        # cache is properly populated.
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = test_l3_agent.prepare_router_data()
+        router_info['distributed'] = True
+        expected_neighbor = '35.4.1.10'
+        port_data = {
+            'fixed_ips': [{'ip_address': expected_neighbor}],
+            'mac_address': 'fa:3e:aa:bb:cc:dd',
+            'device_owner': 'compute:None'
+        }
+        self.agent.plugin_rpc.get_ports_by_subnet.return_value = [port_data]
+        router1 = self._create_router(self.agent, router_info)
+        internal_device = router1.get_internal_device_name(
+            router_info['_interfaces'][0]['id'])
+        neighbors = ip_lib.IPDevice(internal_device, router1.ns_name).neigh
+        self.assertEqual(expected_neighbor, neighbors.show().split()[0])
+
     def _assert_rfp_fpr_mtu(self, router, expected_mtu=1500):
         dev_mtu = self.get_device_mtu(
             router.router_id, router.fip_ns.get_rtr_ext_device_name,

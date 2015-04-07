@@ -544,6 +544,11 @@ class IpNeighCommand(IpDeviceCommandBase):
                        'lladdr', mac_address,
                        'dev', self.name))
 
+    def show(self):
+        return self._as_root([],
+                      ('show',
+                       'dev', self.name))
+
 
 class IpNetnsCommand(IpCommandBase):
     COMMAND = 'netns'
