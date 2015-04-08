@@ -1,16 +1,16 @@
 hacking>=0.8.0,<0.9
 
 cliff>=1.4.3,<1.9
-coverage>=3.6
-discover
-fixtures>=0.3.14
-mock>=1.0
-python-subunit>=0.0.18
+coverage>=3.6,<=3.7.1
+discover<=0.4.0
+fixtures>=0.3.14,<=1.0.0
+mock>=1.0,<=1.0.1
+python-subunit>=0.0.18,<=1.1.0
 ordereddict
 sphinx>=1.1.2,<1.1.999
-testrepository>=0.0.18
-testtools>=0.9.34,!=1.2.0,!=1.4.0
-WebTest>=2.0
+testrepository>=0.0.18,<=0.0.20
+testtools>=0.9.34,!=1.2.0,!=1.4.0,<=1.7.1
+WebTest>=2.0,<=2.0.18
 # Packages for the Cisco Plugin
 ###############################
 configobj
