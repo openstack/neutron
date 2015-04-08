@@ -32,6 +32,7 @@ from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import l3_db
+from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
@@ -268,7 +269,45 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
 
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                        Ml2PluginV2TestCase):
-    pass
+    def test_delete_subnet_race_with_dhcp_port_creation(self):
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                subnet_id = subnet['subnet']['id']
+                attempt = [0]
+
+                def check_and_create_ports(context, subnet_id):
+                    """A method to emulate race condition.
+
+                    Adds dhcp port in the middle of subnet delete
+                    """
+                    if attempt[0] > 0:
+                        return False
+                    attempt[0] += 1
+                    data = {'port': {'network_id': network['network']['id'],
+                                     'tenant_id':
+                                     network['network']['tenant_id'],
+                                     'name': 'port1',
+                                     'admin_state_up': 1,
+                                     'device_owner':
+                                     constants.DEVICE_OWNER_DHCP,
+                                     'fixed_ips': [{'subnet_id': subnet_id}]}}
+                    port_req = self.new_create_request('ports', data)
+                    port_res = port_req.get_response(self.api)
+                    self.assertEqual(201, port_res.status_int)
+                    return (context.session.query(models_v2.IPAllocation).
+                            filter_by(subnet_id=subnet_id).
+                            join(models_v2.Port).first())
+
+                plugin = manager.NeutronManager.get_plugin()
+                # we mock _subnet_check_ip_allocations with method
+                # that creates DHCP port 'in the middle' of subnet_delete
+                # causing retry this way subnet is deleted on the
+                # second attempt
+                with mock.patch.object(plugin, '_subnet_check_ip_allocations',
+                                       side_effect=check_and_create_ports):
+                    req = self.new_delete_request('subnets', subnet_id)
+                    res = req.get_response(self.api)
+                    self.assertEqual(204, res.status_int)
 
 
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):

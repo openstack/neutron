@@ -1465,9 +1465,15 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         return result
 
     def _subnet_check_ip_allocations(self, context, subnet_id):
-        return context.session.query(
-            models_v2.IPAllocation).filter_by(
-                subnet_id=subnet_id).join(models_v2.Port).first()
+        return (context.session.query(models_v2.IPAllocation).
+                filter_by(subnet_id=subnet_id).join(models_v2.Port).first())
+
+    def _subnet_get_user_allocation(self, context, subnet_id):
+        """Check if there are any user ports on subnet and return first."""
+        return (context.session.query(models_v2.IPAllocation).
+                filter_by(subnet_id=subnet_id).join().
+                filter(~models_v2.Port.device_owner.
+                       in_(AUTO_DELETE_PORT_OWNERS)).first())
 
     def _subnet_check_ip_allocations_internal_router_ports(self, context,
                                                            subnet_id):

@@ -828,6 +828,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.mechanism_manager.update_subnet_postcommit(mech_context)
         return updated_subnet
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True)
     def delete_subnet(self, context, id):
         # REVISIT(rkukura) The super(Ml2Plugin, self).delete_subnet()
         # function is not used because it deallocates the subnet's addresses
@@ -875,13 +877,22 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 if not is_auto_addr_subnet:
                     alloc = self._subnet_check_ip_allocations(context, id)
                     if alloc:
-                        LOG.info(_LI("Found port (%(port_id)s, %(ip)s) "
-                                     "having IP allocation on subnet "
-                                     "%(subnet)s, cannot delete"),
-                                 {'ip': alloc.ip_address,
-                                  'port_id': alloc.port_id,
-                                  'subnet': id})
-                        raise exc.SubnetInUse(subnet_id=id)
+                        user_alloc = self._subnet_get_user_allocation(
+                            context, id)
+                        if user_alloc:
+                            LOG.info(_LI("Found port (%(port_id)s, %(ip)s) "
+                                         "having IP allocation on subnet "
+                                         "%(subnet)s, cannot delete"),
+                                     {'ip': user_alloc.ip_address,
+                                      'port_id': user_alloc.ports.id,
+                                      'subnet': id})
+                            raise exc.SubnetInUse(subnet_id=id)
+                        else:
+                            # allocation found and it was DHCP port
+                            # that appeared after autodelete ports were
+                            # removed - need to restart whole operation
+                            raise os_db_exception.RetryRequest(
+                                exc.SubnetInUse(subnet_id=id))
 
                 # If allocated is None, then all the IPAllocation were
                 # correctly deleted during the previous pass.
