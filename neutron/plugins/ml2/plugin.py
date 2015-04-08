@@ -41,6 +41,7 @@ from neutron.callbacks import resources
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
 from neutron.common import ipv6_utils
+from neutron.common import log as neutron_log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -156,6 +157,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
 
+    @neutron_log.log
     def start_rpc_listeners(self):
         self.endpoints = [rpc.RpcCallbacks(self.notifier, self.type_manager),
                           securitygroups_rpc.SecurityGroupServerRpcCallback(),
