@@ -764,6 +764,31 @@ class L3HATestFramework(L3AgentTestFramework):
         utils.wait_until_true(lambda: router2.ha_state == 'master')
         utils.wait_until_true(lambda: router1.ha_state == 'backup')
 
+    def test_ha_router_ipv6_radvd_status(self):
+        router_info = self.generate_router_info(ip_version=6, enable_ha=True)
+        router1 = self.manage_router(self.agent, router_info)
+        utils.wait_until_true(lambda: router1.ha_state == 'master')
+        utils.wait_until_true(lambda: router1.radvd.enabled)
+
+        def _check_lla_status(router, expected):
+            internal_devices = router.router[l3_constants.INTERFACE_KEY]
+            for device in internal_devices:
+                lladdr = ip_lib.get_ipv6_lladdr(device['mac_address'])
+                exists = ip_lib.device_exists_with_ips_and_mac(
+                    router.get_internal_device_name(device['id']), [lladdr],
+                    device['mac_address'], router.ns_name)
+                self.assertEqual(expected, exists)
+
+        _check_lla_status(router1, True)
+
+        device_name = router1.get_ha_device_name()
+        ha_device = ip_lib.IPDevice(device_name, namespace=router1.ns_name)
+        ha_device.link.set_down()
+
+        utils.wait_until_true(lambda: router1.ha_state == 'backup')
+        utils.wait_until_true(lambda: not router1.radvd.enabled, timeout=10)
+        _check_lla_status(router1, False)
+
 
 class MetadataFakeProxyHandler(object):
 

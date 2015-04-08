@@ -114,10 +114,7 @@ class AgentMixin(object):
         LOG.info(_LI('Router %(router_id)s transitioned to %(state)s'),
                  {'router_id': router_id,
                   'state': state})
-        self._update_metadata_proxy(router_id, state)
-        self.state_change_notifier.queue_event((router_id, state))
 
-    def _update_metadata_proxy(self, router_id, state):
         try:
             ri = self.router_info[router_id]
         except AttributeError:
@@ -125,6 +122,11 @@ class AgentMixin(object):
                          'possibly deleted concurrently.'), router_id)
             return
 
+        self._update_metadata_proxy(ri, router_id, state)
+        self._update_radvd_daemon(ri, state)
+        self.state_change_notifier.queue_event((router_id, state))
+
+    def _update_metadata_proxy(self, ri, router_id, state):
         if state == 'master':
             LOG.debug('Spawning metadata proxy for router %s', router_id)
             self.metadata_driver.spawn_monitored_metadata_proxy(
@@ -134,6 +136,14 @@ class AgentMixin(object):
             LOG.debug('Closing metadata proxy for router %s', router_id)
             self.metadata_driver.destroy_monitored_metadata_proxy(
                 self.process_monitor, ri.router_id, ri.ns_name, self.conf)
+
+    def _update_radvd_daemon(self, ri, state):
+        # Radvd has to be spawned only on the Master HA Router. If there are
+        # any state transitions, we enable/disable radvd accordingly.
+        if state == 'master':
+            ri.enable_radvd()
+        else:
+            ri.disable_radvd()
 
     def notify_server(self, batched_events):
         translation_map = {'master': 'active',
