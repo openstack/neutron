@@ -1426,7 +1426,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.debug("No binding found for DVR port %s", port['id'])
             return False
         else:
-            port_host = db.get_port_binding_host(port_id)
+            port_host = db.get_port_binding_host(context.session, port_id)
             return (port_host == host)
 
     def get_ports_from_devices(self, devices):

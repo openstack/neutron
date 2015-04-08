@@ -313,21 +313,20 @@ def make_port_dict_with_security_groups(port, sec_groups):
     return port_dict
 
 
-def get_port_binding_host(port_id):
-    session = db_api.get_session()
-    with session.begin(subtransactions=True):
-        try:
+def get_port_binding_host(session, port_id):
+    try:
+        with session.begin(subtransactions=True):
             query = (session.query(models.PortBinding).
                      filter(models.PortBinding.port_id.startswith(port_id)).
                      one())
-        except exc.NoResultFound:
-            LOG.debug("No binding found for port %(port_id)s",
-                      {'port_id': port_id})
-            return
-        except exc.MultipleResultsFound:
-            LOG.error(_LE("Multiple ports have port_id starting with %s"),
-                      port_id)
-            return
+    except exc.NoResultFound:
+        LOG.debug("No binding found for port %(port_id)s",
+                  {'port_id': port_id})
+        return
+    except exc.MultipleResultsFound:
+        LOG.error(_LE("Multiple ports have port_id starting with %s"),
+                  port_id)
+        return
     return query.host
 
 

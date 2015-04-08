@@ -163,7 +163,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     def dvr_deletens_if_no_port(self, context, port_id):
         """Delete the DVR namespace if no dvr serviced port exists."""
         router_ids = self.get_dvr_routers_by_portid(context, port_id)
-        port_host = ml2_db.get_port_binding_host(port_id)
+        port_host = ml2_db.get_port_binding_host(context.session, port_id)
         if not router_ids:
             LOG.debug('No namespaces available for this DVR port %(port)s '
                       'on host %(host)s', {'port': port_id,
