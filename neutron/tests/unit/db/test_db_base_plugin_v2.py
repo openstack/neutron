@@ -3811,62 +3811,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         self.assertEqual(ctx_manager.exception.code,
                          webob.exc.HTTPClientError.code)
 
-    def _test_create_subnet_ipv6_auto_addr_with_port_on_network(
-            self, addr_mode, device_owner=DEVICE_OWNER_COMPUTE):
-        # Create a network with one IPv4 subnet and one port
-        with self.network() as network:
-            with self.subnet(network=network) as v4_subnet:
-                with self.port(subnet=v4_subnet,
-                               device_owner=device_owner) as port:
-                    # Add an IPv6 auto-address subnet to the network
-                    with self.subnet(network=network, cidr='fe80::/64',
-                                     ip_version=6, ipv6_ra_mode=addr_mode,
-                                     ipv6_address_mode=addr_mode
-                                     ) as v6_subnet:
-                        if (device_owner == constants.DEVICE_OWNER_ROUTER_SNAT
-                            or device_owner in
-                            constants.ROUTER_INTERFACE_OWNERS):
-                            # DVR SNAT and router interfaces should not have
-                            # been updated with addresses from the new
-                            # auto-address subnet
-                            self.assertEqual(1,
-                                             len(port['port']['fixed_ips']))
-                        else:
-                            # Confirm that the port has been updated with an
-                            # address from the new auto-address subnet
-                            req = self.new_show_request(
-                                'ports', port['port']['id'], self.fmt)
-                            sport = self.deserialize(
-                                self.fmt, req.get_response(self.api))
-                            fixed_ips = sport['port']['fixed_ips']
-                            self.assertEqual(2, len(fixed_ips))
-                            self.assertIn(v6_subnet['subnet']['id'],
-                                          [fixed_ip['subnet_id'] for fixed_ip
-                                          in fixed_ips])
-
-    def test_create_subnet_ipv6_slaac_with_port_on_network(self):
-        self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
-            constants.IPV6_SLAAC)
-
-    def test_create_subnet_dhcpv6_stateless_with_port_on_network(self):
-        self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
-            constants.DHCPV6_STATELESS)
-
-    def test_create_subnet_ipv6_slaac_with_dhcp_port_on_network(self):
-        self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
-            constants.DHCPV6_STATELESS,
-            device_owner=constants.DEVICE_OWNER_DHCP)
-
-    def test_create_subnet_ipv6_slaac_with_router_intf_on_network(self):
-        self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
-            constants.DHCPV6_STATELESS,
-            device_owner=constants.DEVICE_OWNER_ROUTER_INTF)
-
-    def test_create_subnet_ipv6_slaac_with_snat_intf_on_network(self):
-        self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
-            constants.DHCPV6_STATELESS,
-            device_owner=constants.DEVICE_OWNER_ROUTER_SNAT)
-
     def test_update_subnet_no_gateway(self):
         with self.subnet() as subnet:
             data = {'subnet': {'gateway_ip': '10.0.0.1'}}
@@ -5386,7 +5330,6 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
                 'enable_dhcp': True,
                 'gateway_ip': u'2001:100::1',
                 'id': u'd1a28edd-bd83-480a-bd40-93d036c89f13',
-                'network_id': 'fbb9b578-95eb-4b79-a116-78e5c4927176',
                 'ip_version': 6,
                 'ipv6_address_mode': None,
                 'ipv6_ra_mode': u'slaac'},
@@ -5395,7 +5338,6 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
                 'enable_dhcp': True,
                 'gateway_ip': u'2001:200::1',
                 'id': u'dc813d3d-ed66-4184-8570-7325c8195e28',
-                'network_id': 'fbb9b578-95eb-4b79-a116-78e5c4927176',
                 'ip_version': 6,
                 'ipv6_address_mode': None,
                 'ipv6_ra_mode': u'slaac'}]
