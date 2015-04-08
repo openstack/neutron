@@ -828,6 +828,8 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.assertEqual(res['port']['binding:host_id'],
                                      L2_AGENT_2['host'])
                     self.mock_fanout.reset_mock()
+                    # NOTE(yamamoto): see bug #1441488
+                    self.adminContext.session.expire_all()
                     self.callbacks.get_device_details(
                         self.adminContext,
                         device=device1,
@@ -883,6 +885,8 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.assertEqual(res['port']['binding:host_id'],
                                      L2_AGENT_4['host'])
                     self.mock_fanout.reset_mock()
+                    # NOTE(yamamoto): see bug #1441488
+                    self.adminContext.session.expire_all()
                     self.callbacks.get_device_details(
                         self.adminContext,
                         device=device1,
