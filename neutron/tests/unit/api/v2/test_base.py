@@ -766,7 +766,6 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         net_id = _uuid()
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
         full_input = {'network': {'admin_state_up': True,
-                                  'vlan_transparent': False,
                                   'shared': False}}
         full_input['network'].update(initial_input['network'])
 
@@ -801,7 +800,6 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         # tenant_id should be fetched from env
         initial_input = {'network': {'name': 'net1'}}
         full_input = {'network': {'admin_state_up': True,
-                      'vlan_transparent': False,
                       'shared': False, 'tenant_id': tenant_id}}
         full_input['network'].update(initial_input['network'])
 
@@ -1421,8 +1419,7 @@ class ExtensionTestCase(base.BaseTestCase):
         net_id = _uuid()
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid(),
                                      'v2attrs:something_else': "abc"}}
-        data = {'network': {'admin_state_up': True, 'shared': False,
-                            'vlan_transparent': False}}
+        data = {'network': {'admin_state_up': True, 'shared': False}}
         data['network'].update(initial_input['network'])
 
         return_value = {'subnets': [], 'status': "ACTIVE",
