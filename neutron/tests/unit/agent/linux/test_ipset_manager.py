@@ -27,7 +27,7 @@ FAKE_IPS = ['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4',
 
 
 class BaseIpsetManagerTest(base.BaseTestCase):
-    def setUp(self, maxelem=None, hashsize=None):
+    def setUp(self, maxelem, hashsize):
         super(BaseIpsetManagerTest, self).setUp()
         cfg.CONF.register_opts(a_cfg.IPSET_OPTS, 'AGENT')
         cfg.CONF.set_override('ipset_maxelem', maxelem, 'AGENT')
@@ -105,8 +105,9 @@ class BaseIpsetManagerTest(base.BaseTestCase):
 class IpsetManagerTestCase(BaseIpsetManagerTest):
     """Run all tests, but with maxelem/hashsize values not configured
     """
-    def setUp(self):
-        super(IpsetManagerTestCase, self).setUp()
+    def setUp(self, maxelem=None, hashsize=None):
+        super(IpsetManagerTestCase, self).setUp(maxelem=maxelem,
+                                                hashsize=hashsize)
 
     def test_set_exists(self):
         self.add_first_ip()
@@ -145,4 +146,5 @@ class IpsetManagerTestCaseHashArgs(IpsetManagerTestCase):
     """Run all the above tests, but with maxelem/hashsize values configured
     """
     def setUp(self):
-        super(IpsetManagerTestCase, self).setUp(maxelem=131072, hashsize=2048)
+        super(IpsetManagerTestCaseHashArgs, self).setUp(maxelem=131072,
+                                                        hashsize=2048)
