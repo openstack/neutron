@@ -119,7 +119,7 @@ class DelBridgeCommand(BaseCommand):
         bridges = self.api._ovs.bridges
         bridges.remove(br)
         self.api._ovs.bridges = bridges
-        del self.api._tables['Bridge'].rows[br.uuid]
+        self.api._tables['Bridge'].rows[br.uuid].delete()
 
 
 class BridgeExistsCommand(BaseCommand):
@@ -334,8 +334,8 @@ class DelPortCommand(BaseCommand):
         # Also remove port/interface directly for indexing?
         port.verify('interfaces')
         for iface in port.interfaces:
-            del self.api._tables['Interface'].rows[iface.uuid]
-        del self.api._tables['Port'].rows[port.uuid]
+            self.api._tables['Interface'].rows[iface.uuid].delete()
+        self.api._tables['Port'].rows[port.uuid].delete()
 
 
 class ListPortsCommand(BaseCommand):
