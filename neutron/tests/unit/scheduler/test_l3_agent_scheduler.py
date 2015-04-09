@@ -1641,10 +1641,10 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
             admin_state_up=True)
         self.assertEqual(2, len(agents))
 
+        r2 = self._create_ha_router()
         self._set_l3_agent_admin_state(self.adminContext,
                                        self.agent_id2, False)
 
-        r2 = self._create_ha_router()
         self.plugin.schedule_router(self.adminContext, r2['id'])
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [r2['id']],
