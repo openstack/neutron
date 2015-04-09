@@ -56,5 +56,14 @@ class BaseFullStackTestCase(test_base.MySQLOpportunisticTestCase):
             'username': test_base.DbFixture.USERNAME,
             'password': test_base.DbFixture.PASSWORD,
             'db_name': self.engine.url.database}
+
+        self.original_conn = cfg.CONF.database.connection
+        self.addCleanup(self._revert_connection_address)
         cfg.CONF.set_override('connection', conn, group='database')
+
         model_base.BASEV2.metadata.create_all(self.engine)
+
+    def _revert_connection_address(self):
+        cfg.CONF.set_override('connection',
+                              self.original_conn,
+                              group='database')
