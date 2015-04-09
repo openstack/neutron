@@ -873,7 +873,8 @@ class TestDnsmasq(TestBase):
             '--dhcp-hostsfile=/dhcp/%s/host' % network.id,
             '--addn-hosts=/dhcp/%s/addn_hosts' % network.id,
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
-            '--dhcp-leasefile=/dhcp/%s/leases' % network.id]
+            '--dhcp-leasefile=/dhcp/%s/leases' % network.id,
+            '--dhcp-match=set:ipxe,175']
 
         seconds = ''
         if lease_duration == -1:
