@@ -41,10 +41,10 @@ ML2_BROCADE = [cfg.StrOpt('address', default='',
                           help=('OS type of the device.')),
                ]
 cfg.CONF.register_opts(SWITCHES, 'ml2_brocade_fi_ni')
+cfg.CONF.register_opts(ML2_BROCADE, 'ML2_BROCADE_MLX_EXAMPLE')
 
 
 class BrocadeFiNiMechanism(mechanism_brocade_fi_ni.BrocadeFiNiMechanism):
-
     def __init__(self):
         self._switch_names = cfg.CONF.ml2_brocade_fi_ni.switch_names
         switches = [x.strip() for x in self._switch_names.split(',')]
