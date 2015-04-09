@@ -21,11 +21,11 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
 
-class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
+class OVSBridgeTestBase(base.BaseOVSLinuxTestCase):
     # TODO(twilson) So far, only ovsdb-related tests are written. It would be
     # good to also add the openflow-related functions
     def setUp(self):
-        super(OVSBridgeTestCase, self).setUp()
+        super(OVSBridgeTestBase, self).setUp()
         self.ovs = ovs_lib.BaseOVS()
         self.br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
@@ -45,6 +45,9 @@ class OVSBridgeTestCase(base.BaseOVSLinuxTestCase):
         attrs = ('external_ids', {iface_field: iface_id, 'attached-mac': mac})
         port_name, ofport = self.create_ovs_port(attrs)
         return ovs_lib.VifPort(port_name, ofport, iface_id, mac, self.br)
+
+
+class OVSBridgeTestCase(OVSBridgeTestBase):
 
     def test_port_lifecycle(self):
         (port_name, ofport) = self.create_ovs_port(('type', 'internal'))

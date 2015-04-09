@@ -59,6 +59,12 @@ DVR_NOT_LEARN_VLAN = 3
 # Table 0 is used for forwarding.
 CANARY_TABLE = 23
 
+# Table for ARP poison/spoofing prevention rules
+ARP_SPOOF_TABLE = 24
+
+# type for ARP reply in ARP header
+ARP_REPLY = '0x2'
+
 # Map tunnel types to tables number
 TUN_TABLE = {p_const.TYPE_GRE: GRE_TUN_TO_LV,
              p_const.TYPE_VXLAN: VXLAN_TUN_TO_LV}

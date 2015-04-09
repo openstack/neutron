@@ -27,6 +27,7 @@ from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.extensions import portbindings
+from neutron.extensions import portsecurity as psec
 from neutron.i18n import _LW
 from neutron import manager
 from neutron.plugins.ml2 import driver_api as api
@@ -113,6 +114,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                  'physical_network': segment[api.PHYSICAL_NETWORK],
                  'fixed_ips': port['fixed_ips'],
                  'device_owner': port['device_owner'],
+                 'allowed_address_pairs': port['allowed_address_pairs'],
+                 'port_security_enabled': port.get(psec.PORTSECURITY, True),
                  'profile': port[portbindings.PROFILE]}
         LOG.debug("Returning: %s", entry)
         return entry

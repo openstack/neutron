@@ -521,9 +521,11 @@ class TunnelTest(base.BaseTestCase):
                               'process_network_ports'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
                               'tunnel_sync'),
-            mock.patch.object(time, 'sleep')
+            mock.patch.object(time, 'sleep'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'update_stale_ofport_rules')
         ) as (log_exception, scan_ports, process_network_ports,
-              ts, time_sleep):
+              ts, time_sleep, update_stale):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]
@@ -555,6 +557,7 @@ class TunnelTest(base.BaseTestCase):
                        'removed': set(['tap0']),
                        'added': set([])}, False)
         ])
+        self.assertTrue(update_stale.called)
         self._verify_mock_calls()
 
 

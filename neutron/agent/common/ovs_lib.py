@@ -331,6 +331,19 @@ class OVSBridge(BaseOVS):
 
         return edge_ports
 
+    def get_vif_port_to_ofport_map(self):
+        port_names = self.get_port_name_list()
+        cmd = self.ovsdb.db_list(
+            'Interface', port_names,
+            columns=['name', 'external_ids', 'ofport'], if_exists=True)
+        results = cmd.execute(check_error=True)
+        port_map = {}
+        for r in results:
+            # fall back to basic interface name
+            key = self.portid_from_external_ids(r['external_ids']) or r['name']
+            port_map[key] = r['ofport']
+        return port_map
+
     def get_vif_port_set(self):
         edge_ports = set()
         port_names = self.get_port_name_list()
@@ -346,14 +359,18 @@ class OVSBridge(BaseOVS):
                 LOG.warn(_LW("Found failed openvswitch port: %s"),
                          result['name'])
             elif 'attached-mac' in result['external_ids']:
-                external_ids = result['external_ids']
-                if 'iface-id' in external_ids:
-                    edge_ports.add(external_ids['iface-id'])
-                elif 'xs-vif-uuid' in external_ids:
-                    iface_id = self.get_xapi_iface_id(
-                        external_ids['xs-vif-uuid'])
-                    edge_ports.add(iface_id)
+                port_id = self.portid_from_external_ids(result['external_ids'])
+                if port_id:
+                    edge_ports.add(port_id)
         return edge_ports
+
+    def portid_from_external_ids(self, external_ids):
+        if 'iface-id' in external_ids:
+            return external_ids['iface-id']
+        if 'xs-vif-uuid' in external_ids:
+            iface_id = self.get_xapi_iface_id(
+                external_ids['xs-vif-uuid'])
+            return iface_id
 
     def get_port_tag_dict(self):
         """Get a dict of port names and associated vlan tags.
