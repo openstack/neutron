@@ -571,7 +571,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
-        LOG.debug("Report state task started")
         num_ex_gw_ports = 0
         num_interfaces = 0
         num_floating_ips = 0
@@ -595,7 +594,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
                                         self.use_call)
             self.agent_state.pop('start_flag', None)
             self.use_call = False
-            LOG.debug("Report state task successfully completed")
         except AttributeError:
             # This means the server does not support report_state
             LOG.warn(_LW("Neutron server does not support state report."
