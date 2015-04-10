@@ -46,7 +46,6 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
         super(BaseIptablesFirewallTestCase, self).setUp()
         cfg.CONF.register_opts(a_cfg.ROOT_HELPER_OPTS, 'AGENT')
         cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
-        cfg.CONF.register_opts(a_cfg.IPTABLES_OPTS, 'AGENT')
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.utils_exec_p = mock.patch(
             'neutron.agent.linux.utils.execute')

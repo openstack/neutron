@@ -37,6 +37,8 @@ from neutron.i18n import _LE, _LW
 
 LOG = logging.getLogger(__name__)
 
+config.register_iptables_opts(cfg.CONF)
+
 
 # NOTE(vish): Iptables supports chain names of up to 28 characters,  and we
 #             add up to 12 characters to binary_name which is used as a prefix,
@@ -288,7 +290,6 @@ class IptablesManager(object):
         else:
             self.execute = linux_utils.execute
 
-        config.register_iptables_opts(cfg.CONF)
         self.use_ipv6 = use_ipv6
         self.namespace = namespace
         self.iptables_apply_deferred = False

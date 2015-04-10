@@ -21,6 +21,8 @@ IPSET_ADD_BULK_THRESHOLD = 5
 SWAP_SUFFIX = '-new'
 IPSET_NAME_MAX_LENGTH = 31 - len(SWAP_SUFFIX)
 
+config.register_ipset_opts(cfg.CONF)
+
 
 class IpsetManager(object):
     """Smart wrapper for ipset.
@@ -32,7 +34,6 @@ class IpsetManager(object):
     def __init__(self, execute=None, namespace=None):
         self.execute = execute or linux_utils.execute
         self.namespace = namespace
-        config.register_ipset_opts(cfg.CONF)
         self.ipset_sets = {}
 
     @staticmethod

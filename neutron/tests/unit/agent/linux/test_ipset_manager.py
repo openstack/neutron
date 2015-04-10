@@ -14,7 +14,6 @@
 import mock
 from oslo_config import cfg
 
-from neutron.agent.common import config as a_cfg
 from neutron.agent.linux import ipset_manager
 from neutron.tests import base
 
@@ -29,7 +28,6 @@ FAKE_IPS = ['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4',
 class BaseIpsetManagerTest(base.BaseTestCase):
     def setUp(self, maxelem=None, hashsize=None):
         super(BaseIpsetManagerTest, self).setUp()
-        cfg.CONF.register_opts(a_cfg.IPSET_OPTS, 'AGENT')
         cfg.CONF.set_override('ipset_maxelem', maxelem, 'AGENT')
         cfg.CONF.set_override('ipset_hashsize', hashsize, 'AGENT')
         self.maxelem = maxelem
