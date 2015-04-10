@@ -132,7 +132,7 @@ class Port(model_base.BASEV2, HasId, HasTenant):
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
-    fixed_ips = orm.relationship(IPAllocation, backref='ports', lazy='joined')
+    fixed_ips = orm.relationship(IPAllocation, backref='port', lazy='joined')
     mac_address = sa.Column(sa.String(32), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     status = sa.Column(sa.String(16), nullable=False)

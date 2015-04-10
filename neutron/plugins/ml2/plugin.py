@@ -884,7 +884,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                          "having IP allocation on subnet "
                                          "%(subnet)s, cannot delete"),
                                      {'ip': user_alloc.ip_address,
-                                      'port_id': user_alloc.ports.id,
+                                      'port_id': user_alloc.port_id,
                                       'subnet': id})
                             raise exc.SubnetInUse(subnet_id=id)
                         else:
@@ -915,7 +915,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     data = {attributes.PORT:
                             {'fixed_ips': [{'subnet_id': ip.subnet_id,
                                             'ip_address': ip.ip_address}
-                                           for ip in a.ports.fixed_ips
+                                           for ip in a.port.fixed_ips
                                            if ip.subnet_id != id]}}
                     try:
                         self.update_port(context, a.port_id, data)
