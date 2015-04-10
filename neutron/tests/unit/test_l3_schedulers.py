@@ -611,6 +611,17 @@ class L3SchedulerTestBaseMixin(object):
                                                     l3_agent, router['id'])
             self.assertFalse(val)
 
+    def test_check_ports_exist_on_l3agent_if_no_subnets_then_return(self):
+        l3_agent, router = self._prepare_check_ports_exist_tests()
+        with mock.patch.object(manager.NeutronManager,
+                               'get_plugin') as getp:
+            getp.return_value = self.plugin
+            # no subnets and operation is remove_router_interface,
+            # so return immediately without calling get_ports
+            self.check_ports_exist_on_l3agent(self.adminContext,
+                                          l3_agent, router['id'])
+        self.assertFalse(self.plugin.get_ports.called)
+
     def test_check_ports_exist_on_l3agent_no_subnet_match(self):
         l3_agent, router = self._prepare_check_ports_exist_tests()
         with mock.patch.object(manager.NeutronManager,
@@ -633,7 +644,7 @@ class L3SchedulerTestBaseMixin(object):
                     'device_owner': 'compute:',
                     'id': 1234}
             self.plugin.get_ports.return_value = [port]
-            self.plugin.get_subnet_ids_on_router = mock.Mock(
+            self.get_subnet_ids_on_router = mock.Mock(
                 return_value=[port['subnet_id']])
             val = self.check_ports_exist_on_l3agent(self.adminContext,
                                                     l3_agent, router['id'])
