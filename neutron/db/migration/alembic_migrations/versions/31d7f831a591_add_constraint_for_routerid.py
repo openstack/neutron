@@ -30,6 +30,7 @@ from alembic import op
 from neutron.db import migration
 
 TABLE_NAME = 'routerl3agentbindings'
+AGENTS_TABLE_NAME = 'agents'
 PK_NAME = 'pk_routerl3agentbindings'
 
 
@@ -39,19 +40,24 @@ def upgrade():
     # and all the duplicate records which violate the PK
     # constraint need to be removed.
     context = op.get_context()
+    query_args = {'table': TABLE_NAME, 'agents_table': AGENTS_TABLE_NAME}
     if context.bind.dialect.name in ('postgresql', 'ibm_db_sa'):
         op.execute('DELETE FROM %(table)s WHERE id in ('
                    'SELECT %(table)s.id FROM %(table)s LEFT OUTER JOIN '
                    '(SELECT MIN(id) as id, router_id, l3_agent_id '
                    ' FROM %(table)s GROUP BY router_id, l3_agent_id) AS temp '
                    'ON %(table)s.id = temp.id WHERE temp.id is NULL);'
-                   % {'table': TABLE_NAME})
+                   % query_args)
     else:
         op.execute('DELETE %(table)s FROM %(table)s LEFT OUTER JOIN '
                    '(SELECT MIN(id) as id, router_id, l3_agent_id '
                    ' FROM %(table)s GROUP BY router_id, l3_agent_id) AS temp '
                    'ON %(table)s.id = temp.id WHERE temp.id is NULL;'
-                   % {'table': TABLE_NAME})
+                   % query_args)
+    # Remove orphaned records - bindings that reference non-existent agents
+    op.execute('DELETE FROM %(table)s '
+               'WHERE l3_agent_id NOT IN (select id from %(agents_table)s);'
+               % query_args)
 
     op.drop_column(TABLE_NAME, 'id')
 
