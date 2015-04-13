@@ -145,7 +145,7 @@ class L3RpcCallback(object):
     def get_external_network_id(self, context, **kwargs):
         """Get one external network id for l3 agent.
 
-        l3 agent expects only on external network when it performs
+        l3 agent expects only one external network when it performs
         this query.
         """
         context = neutron_context.get_admin_context()
