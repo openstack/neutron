@@ -10,7 +10,6 @@ eventlet>=0.16.1,!=0.17.0
 greenlet>=0.3.2
 httplib2>=0.7.5
 requests>=2.2.0,!=2.4.0
-jsonrpclib
 Jinja2>=2.6  # BSD License (3 clause)
 keystonemiddleware>=1.5.0
 netaddr>=0.7.12
