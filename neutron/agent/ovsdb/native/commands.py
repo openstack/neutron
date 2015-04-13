@@ -193,7 +193,7 @@ class DbGetCommand(BaseCommand):
         # on set types without the list. The IDL is returning them as lists,
         # even if the set has the maximum number of items set to 1. Might be
         # able to inspect the Schema and just do this conversion for that case.
-        result = getattr(record, self.column)
+        result = idlutils.get_column_value(record, self.column)
         if isinstance(result, list) and len(result) == 1:
             self.result = result[0]
         else:
