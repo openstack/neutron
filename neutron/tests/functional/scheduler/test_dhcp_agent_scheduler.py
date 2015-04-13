@@ -21,7 +21,8 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import common_db_mixin
 from neutron.scheduler import dhcp_agent_scheduler
-from neutron.tests.unit import test_dhcp_scheduler as test_dhcp_sch
+from neutron.tests.unit.scheduler import (test_dhcp_agent_scheduler as
+                                          test_dhcp_sch)
 from operator import attrgetter
 
 # Required to generate tests from scenarios. Not compatible with nose.
