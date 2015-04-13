@@ -38,7 +38,6 @@ from oslo_utils import excutils
 
 from neutron.common import constants as q_const
 
-
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
 SYNCHRONIZED_PREFIX = 'neutron-'
@@ -268,18 +267,6 @@ def is_extension_supported(plugin, ext_alias):
 
 def log_opt_values(log):
     cfg.CONF.log_opt_values(log, std_logging.DEBUG)
-
-
-def is_valid_vlan_tag(vlan):
-    return q_const.MIN_VLAN_TAG <= vlan <= q_const.MAX_VLAN_TAG
-
-
-def is_valid_gre_id(gre_id):
-    return q_const.MIN_GRE_ID <= gre_id <= q_const.MAX_GRE_ID
-
-
-def is_valid_vxlan_vni(vni):
-    return q_const.MIN_VXLAN_VNI <= vni <= q_const.MAX_VXLAN_VNI
 
 
 def get_random_mac(base_mac):

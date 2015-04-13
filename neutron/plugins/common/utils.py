@@ -17,14 +17,25 @@ Common utilities and helper functions for Openstack Networking Plugins.
 """
 
 from neutron.common import exceptions as n_exc
-from neutron.common import utils
 from neutron.plugins.common import constants as p_const
+
+
+def is_valid_vlan_tag(vlan):
+    return p_const.MIN_VLAN_TAG <= vlan <= p_const.MAX_VLAN_TAG
+
+
+def is_valid_gre_id(gre_id):
+    return p_const.MIN_GRE_ID <= gre_id <= p_const.MAX_GRE_ID
+
+
+def is_valid_vxlan_vni(vni):
+    return p_const.MIN_VXLAN_VNI <= vni <= p_const.MAX_VXLAN_VNI
 
 
 def verify_tunnel_range(tunnel_range, tunnel_type):
     """Raise an exception for invalid tunnel range or malformed range."""
-    mappings = {p_const.TYPE_GRE: utils.is_valid_gre_id,
-                p_const.TYPE_VXLAN: utils.is_valid_vxlan_vni}
+    mappings = {p_const.TYPE_GRE: is_valid_gre_id,
+                p_const.TYPE_VXLAN: is_valid_vxlan_vni}
     if tunnel_type in mappings:
         for ident in tunnel_range:
             if not mappings[tunnel_type](ident):
@@ -42,7 +53,7 @@ def verify_tunnel_range(tunnel_range, tunnel_type):
 def verify_vlan_range(vlan_range):
     """Raise an exception for invalid tags or malformed range."""
     for vlan_tag in vlan_range:
-        if not utils.is_valid_vlan_tag(vlan_tag):
+        if not is_valid_vlan_tag(vlan_tag):
             raise n_exc.NetworkVlanRangeError(
                 vlan_range=vlan_range,
                 error=_("%s is not a valid VLAN tag") % vlan_tag)

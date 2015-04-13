@@ -28,7 +28,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI, _LW
-from neutron.plugins.common import constants
+from neutron.plugins.common import constants as p_const
 
 # Default timeout for ovs-vsctl command
 DEFAULT_OVS_VSCTL_TIMEOUT = 10
@@ -264,15 +264,15 @@ class OVSBridge(BaseOVS):
         return DeferredOVSBridge(self, **kwargs)
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
-                        tunnel_type=constants.TYPE_GRE,
-                        vxlan_udp_port=constants.VXLAN_UDP_PORT,
+                        tunnel_type=p_const.TYPE_GRE,
+                        vxlan_udp_port=p_const.VXLAN_UDP_PORT,
                         dont_fragment=True):
         attrs = [('type', tunnel_type)]
         # TODO(twilson) This is an OrderedDict solely to make a test happy
         options = collections.OrderedDict()
         vxlan_uses_custom_udp_port = (
-            tunnel_type == constants.TYPE_VXLAN and
-            vxlan_udp_port != constants.VXLAN_UDP_PORT
+            tunnel_type == p_const.TYPE_VXLAN and
+            vxlan_udp_port != p_const.VXLAN_UDP_PORT
         )
         if vxlan_uses_custom_udp_port:
             options['dst_port'] = vxlan_udp_port

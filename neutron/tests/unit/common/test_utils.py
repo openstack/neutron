@@ -118,15 +118,15 @@ class TestParseTunnelRangesMixin(object):
 
 class TestGreTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
                                     base.BaseTestCase):
-    TUN_MIN = constants.MIN_GRE_ID
-    TUN_MAX = constants.MAX_GRE_ID
+    TUN_MIN = p_const.MIN_GRE_ID
+    TUN_MAX = p_const.MAX_GRE_ID
     TYPE = p_const.TYPE_GRE
 
 
 class TestVxlanTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
                                       base.BaseTestCase):
-    TUN_MIN = constants.MIN_VXLAN_VNI
-    TUN_MAX = constants.MAX_VXLAN_VNI
+    TUN_MIN = p_const.MIN_VXLAN_VNI
+    TUN_MAX = p_const.MAX_VXLAN_VNI
     TYPE = p_const.TYPE_VXLAN
 
 

@@ -115,7 +115,7 @@ class LinuxBridgeManager(object):
         return tap_device_name
 
     def get_vxlan_device_name(self, segmentation_id):
-        if 0 <= int(segmentation_id) <= constants.MAX_VXLAN_VNI:
+        if 0 <= int(segmentation_id) <= p_const.MAX_VXLAN_VNI:
             return VXLAN_INTERFACE_PREFIX + str(segmentation_id)
         else:
             LOG.warning(_LW("Invalid Segmentation ID: %s, will lead to "
@@ -523,7 +523,7 @@ class LinuxBridgeManager(object):
             return False
 
         test_iface = None
-        for seg_id in moves.xrange(1, constants.MAX_VXLAN_VNI + 1):
+        for seg_id in moves.xrange(1, p_const.MAX_VXLAN_VNI + 1):
             if not ip_lib.device_exists(
                     self.get_vxlan_device_name(seg_id)):
                 test_iface = self.ensure_vxlan(seg_id)

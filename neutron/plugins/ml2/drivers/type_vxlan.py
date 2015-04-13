@@ -29,9 +29,6 @@ from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
 
-VXLAN_UDP_PORT = 4789
-MAX_VXLAN_VNI = 16777215
-
 vxlan_opts = [
     cfg.ListOpt('vni_ranges',
                 default=[],
@@ -94,7 +91,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
         # determine current configured allocatable vnis
         vxlan_vnis = set()
         for tun_min, tun_max in self.tunnel_ranges:
-            if tun_max + 1 - tun_min > MAX_VXLAN_VNI:
+            if tun_max + 1 - tun_min > p_const.MAX_VXLAN_VNI:
                 LOG.error(_LE("Skipping unreasonable VXLAN VNI range "
                               "%(tun_min)s:%(tun_max)s"),
                           {'tun_min': tun_min, 'tun_max': tun_max})
@@ -157,7 +154,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
         return (session.query(VxlanEndpoints).
                 filter_by(ip_address=ip).first())
 
-    def add_endpoint(self, ip, host, udp_port=VXLAN_UDP_PORT):
+    def add_endpoint(self, ip, host, udp_port=p_const.VXLAN_UDP_PORT):
         LOG.debug("add_vxlan_endpoint() called for ip %s", ip)
         session = db_api.get_session()
         try:

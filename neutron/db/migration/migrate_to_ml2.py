@@ -66,7 +66,6 @@ import sqlalchemy as sa
 from neutron.extensions import portbindings
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2.drivers import type_vxlan
 
 
 # Migration targets
@@ -431,7 +430,7 @@ class MigrateOpenvswitchToMl2_Juno(BaseMigrateToMl2):
             """)
         elif tunnel_type == p_const.TYPE_VXLAN:
             if not vxlan_udp_port:
-                vxlan_udp_port = type_vxlan.VXLAN_UDP_PORT
+                vxlan_udp_port = p_const.VXLAN_UDP_PORT
             engine.execute("""
               INSERT INTO ml2_vxlan_allocations
                 SELECT tunnel_id as vxlan_vni, allocated
