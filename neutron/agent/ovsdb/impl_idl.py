@@ -39,18 +39,16 @@ cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
 LOG = logging.getLogger(__name__)
 
 
-ovsdb_connection = connection.Connection(cfg.CONF.OVS.ovsdb_connection,
-                                         cfg.CONF.ovs_vsctl_timeout)
-
-
 class Transaction(api.Transaction):
-    def __init__(self, context, api, check_error=False, log_errors=False):
+    def __init__(self, context, api, ovsdb_connection,
+                 check_error=False, log_errors=False):
         self.context = context
         self.api = api
         self.check_error = check_error
         self.log_errors = log_errors
         self.commands = []
         self.results = Queue.Queue(1)
+        self.ovsdb_connection = ovsdb_connection
 
     def add(self, command):
         """Add a command to the transaction
@@ -62,7 +60,7 @@ class Transaction(api.Transaction):
         return command
 
     def commit(self):
-        ovsdb_connection.queue_txn(self)
+        self.ovsdb_connection.queue_txn(self)
         result = self.results.get()
         if self.check_error:
             if isinstance(result, idlutils.ExceptionResult):
@@ -120,10 +118,14 @@ class Transaction(api.Transaction):
 
 
 class OvsdbIdl(api.API):
+
+    ovsdb_connection = connection.Connection(cfg.CONF.OVS.ovsdb_connection,
+                                             cfg.CONF.ovs_vsctl_timeout)
+
     def __init__(self, context):
         super(OvsdbIdl, self).__init__(context)
-        ovsdb_connection.start()
-        self.idl = ovsdb_connection.idl
+        OvsdbIdl.ovsdb_connection.start()
+        self.idl = OvsdbIdl.ovsdb_connection.idl
 
     @property
     def _tables(self):
@@ -134,7 +136,8 @@ class OvsdbIdl(api.API):
         return self._tables['Open_vSwitch'].rows.values()[0]
 
     def transaction(self, check_error=False, log_errors=True, **kwargs):
-        return Transaction(self.context, self, check_error, log_errors)
+        return Transaction(self.context, self, OvsdbIdl.ovsdb_connection,
+                           check_error, log_errors)
 
     def add_br(self, name, may_exist=True):
         return cmd.AddBridgeCommand(self, name, may_exist)
