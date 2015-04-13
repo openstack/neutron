@@ -19,21 +19,33 @@ import mock
 from neutron.common import constants as l3_const
 from neutron.common import exceptions
 from neutron import context
+from neutron.db import agents_db
+from neutron.db import common_db_mixin
+from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_dvr_db
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as plugin_const
-from neutron.tests.unit import testlib_api
+from neutron.tests.unit.db import test_db_base_plugin_v2
 
 _uuid = uuidutils.generate_uuid
 
 
-class L3DvrTestCase(testlib_api.SqlTestCase):
+class FakeL3Plugin(common_db_mixin.CommonDbMixin,
+                   l3_dvr_db.L3_NAT_with_dvr_db_mixin,
+                   l3_agentschedulers_db.L3AgentSchedulerDbMixin,
+                   agents_db.AgentDbMixin):
+    pass
+
+
+class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self):
-        super(L3DvrTestCase, self).setUp()
+        core_plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+        super(L3DvrTestCase, self).setUp(plugin=core_plugin)
+        self.core_plugin = manager.NeutronManager.get_plugin()
         self.ctx = context.get_admin_context()
-        self.mixin = l3_dvr_db.L3_NAT_with_dvr_db_mixin()
+        self.mixin = FakeL3Plugin()
 
     def _create_router(self, router):
         with self.ctx.session.begin(subtransactions=True):
@@ -519,6 +531,55 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             self.assertTrue(plugin.get_l3_agents_hosting_routers.called)
             self.assertTrue(plugin.check_ports_exist_on_l3agent.called)
             self.assertTrue(plugin.remove_router_from_l3_agent.called)
+
+    def test_remove_router_interface_csnat_ports_removal(self):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.network() as net_ext,\
+                self.subnet() as subnet1,\
+                self.subnet(cidr='20.0.0.0/24') as subnet2:
+            ext_net_id = net_ext['network']['id']
+            self.core_plugin.update_network(
+                self.ctx, ext_net_id,
+                {'network': {'router:external': True}})
+            self.mixin.update_router(
+                self.ctx, router['id'],
+                {'router': {'external_gateway_info':
+                            {'network_id': ext_net_id}}})
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': subnet1['subnet']['id']})
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': subnet2['subnet']['id']})
+
+            csnat_filters = {'device_owner':
+                             [l3_const.DEVICE_OWNER_ROUTER_SNAT]}
+            csnat_ports = self.core_plugin.get_ports(
+                self.ctx, filters=csnat_filters)
+            self.assertEqual(2, len(csnat_ports))
+
+            dvr_filters = {'device_owner':
+                           [l3_const.DEVICE_OWNER_DVR_INTERFACE]}
+            dvr_ports = self.core_plugin.get_ports(
+                self.ctx, filters=dvr_filters)
+            self.assertEqual(2, len(dvr_ports))
+
+            with mock.patch.object(manager.NeutronManager,
+                                  'get_service_plugins') as get_svc_plugin:
+                get_svc_plugin.return_value = {
+                    plugin_const.L3_ROUTER_NAT: self.mixin}
+                self.mixin.remove_router_interface(
+                    self.ctx, router['id'], {'port_id': dvr_ports[0]['id']})
+
+            csnat_ports = self.core_plugin.get_ports(
+                self.ctx, filters=csnat_filters)
+            self.assertEqual(1, len(csnat_ports))
+            self.assertEqual(dvr_ports[1]['fixed_ips'][0]['subnet_id'],
+                             csnat_ports[0]['fixed_ips'][0]['subnet_id'])
+
+            dvr_ports = self.core_plugin.get_ports(
+                self.ctx, filters=dvr_filters)
+            self.assertEqual(1, len(dvr_ports))
 
     def test__validate_router_migration_notify_advanced_services(self):
         router = {'name': 'foo_router', 'admin_state_up': True}
