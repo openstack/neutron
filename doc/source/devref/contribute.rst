@@ -402,37 +402,80 @@ will be removed. The following aspects are captured:
 +===============================+=======================+===========+==================+=========+==============+
 | freescale-nscs                |         ml2,fw        |    no     |       no         |   [D]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-arista_            |       ml2,l3          |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-bigswitch_         |      ml2,core,l3      |    no     |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-brocade_           |        ml2,l3         |   yes     |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 | networking-cisco_             |  core,ml2,l3,fw,vpn   |    yes    |       yes        |   [B]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-hyperv_            |          ml2          |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-ibm_               |         ml2,l3        |    yes    |       no         |   [B]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-metaplugin_        |         core          |    no     |       no         |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-midonet_           |        core,lb        |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-mlnx_              |          ml2          |    yes    |       no         |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-nec_               |         core          |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| nuage-openstack-neutron_      |                       |           |                  |         |              |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-odl_               |      ml2,l3,lb,fw     |    yes    |       no         |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-ofagent_           |          ml2          |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-plumgrid_          |          core         |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| vmware-nsx_                   |         core          |    yes    |       yes        |   [C]   |     Kilo     |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
 
+Affiliated projects
+===================
+
+This table shows projects that integrate with Neutron, in one form or another. These projects
+typically leverage the pluggable capabilities of Neutron, the Neutron API, or a combination of both.
+
++-------------------------------+-----------------------+
+| Name                          |    Functionality      |
++===============================+=======================+
+| dragonflow_                   |           l3          |
++-------------------------------+-----------------------+
+| group-based-policy_           |         intent        |
++-------------------------------+-----------------------+
+| networking-arista_            |         ml2,l3        |
++-------------------------------+-----------------------+
+| networking-bagpipe-l2_        |          vpn          |
++-------------------------------+-----------------------+
+| networking-bgpvpn_            |          vpn          |
++-------------------------------+-----------------------+
+| networking-bigswitch_         |      ml2,core,l3      |
++-------------------------------+-----------------------+
+| networking-brocade_           |        ml2,l3         |
++-------------------------------+-----------------------+
+| networking-edge-vpn_          |          vpn          |
++-------------------------------+-----------------------+
+| networking-hyperv_            |          ml2          |
++-------------------------------+-----------------------+
+| networking-ibm_               |         ml2,l3        |
++-------------------------------+-----------------------+
+| networking-l2gw_              |         l2            |
++-------------------------------+-----------------------+
+| networking-metaplugin_        |         core          |
++-------------------------------+-----------------------+
+| networking-midonet_           |        core,lb        |
++-------------------------------+-----------------------+
+| networking-mlnx_              |          ml2          |
++-------------------------------+-----------------------+
+| networking-nec_               |         core          |
++-------------------------------+-----------------------+
+| nuage-openstack-neutron_      |         core          |
++-------------------------------+-----------------------+
+| networking-odl_               |      ml2,l3,lb,fw     |
++-------------------------------+-----------------------+
+| networking-ofagent_           |          ml2          |
++-------------------------------+-----------------------+
+| networking-ovn_               |          ml2          |
++-------------------------------+-----------------------+
+| networking-ovs-dpdk_          |          ml2          |
++-------------------------------+-----------------------+
+| networking-plumgrid_          |          core         |
++-------------------------------+-----------------------+
+| networking-portforwarding_    |          l3           |
++-------------------------------+-----------------------+
+| neutron-powervm_              |          ml2          |
++-------------------------------+-----------------------+
+| networking-vsphere_           |          ml2          |
++-------------------------------+-----------------------+
+| vmware-nsx_                   |          core         |
++-------------------------------+-----------------------+
+
+Functionality legend
+--------------------
+
+- l2: a Layer 2 service;
+- ml2: an ML2 mechanism driver;
+- core: a monolithic plugin that can implement API at multiple layers L3-L7;
+- l3: a Layer 3 service plugin;
+- fw: a Firewall service plugin;
+- vpn: a VPN service plugin;
+- lb: a Load Balancer service plugin;
+- intent: a service plugin that provides a declarative API to realize networking;
 
 .. _networking-arista:
 
@@ -442,6 +485,22 @@ Arista
 * Git: https://github.com/stackforge/networking-arista
 * Launchpad: https://launchpad.net/networking-arista
 * Pypi: https://pypi.python.org/pypi/networking-arista
+
+.. _networking-bagpipe-l2:
+
+BaGPipe
+-------
+
+* Git: https://github.com/stackforge/networking-bagpipe-l2
+* Launchpad: https://launchpad.net/bagpipe-l2
+* Pypi: https://pypi.python.org/pypi/bagpipe-l2
+
+.. _networking-bgpvpn:
+
+BGPVPN
+-------
+
+* Git: https://github.com/stackforge/networking-bgpvpn
 
 .. _networking-bigswitch:
 
@@ -460,7 +519,6 @@ Brocade
 * Launchpad: https://launchpad.net/networking-brocade
 * PyPI: https://pypi.python.org/pypi/networking-brocade
 
-
 .. _networking-cisco:
 
 Cisco
@@ -469,6 +527,21 @@ Cisco
 * Git: https://git.openstack.org/stackforge/networking-cisco
 * Launchpad: https://launchpad.net/networking-cisco
 * PyPI: https://pypi.python.org/pypi/networking-cisco
+
+DragonFlow
+----------
+
+* Git: https://github.com/stackforge/dragonflow
+* Launchpad: https://launchpad.net/dragonflow
+* PyPi: https://pypi.python.org/pypi/DragonFlow
+
+.. _networking-edge-vpn:
+
+Edge VPN
+--------
+
+* Git: https://git.openstack.org/stackforge/networking-edge-vpn
+* Launchpad: https://launchpad.net/edge-vpn
 
 .. _networking-hyperv:
 
@@ -479,6 +552,15 @@ Hyper-V
 * Launchpad: https://launchpad.net/networking-hyperv
 * PyPi: https://pypi.python.org/pypi/networking-hyperv
 
+.. _group-based-policy:
+
+Group Based Policy
+------------------
+
+* Git: https://github.com/stackforge/group-based-policy
+* Launchpad: https://launchpad.net/group-based-policy
+* PyPi: https://pypi.python.org/pypi/group-based-policy
+
 .. _networking-ibm:
 
 IBM SDNVE
@@ -486,6 +568,14 @@ IBM SDNVE
 
 * Git: https://github.com/stackforge/networking-ibm
 * Launchpad: https://launchpad.net/networking-ibm
+
+.. _networking-l2gw:
+
+L2 Gateway
+----------
+
+* Git: https://github.com/stackforge/networking-l2gw
+* Launchpad: https://launchpad.net/networking-l2gw
 
 .. _networking-metaplugin:
 
@@ -522,6 +612,11 @@ NEC
 
 .. _nuage-openstack-neutron:
 
+Nuage
+-----
+
+* Git: https://github.com/nuage-networks/nuage-openstack-neutron
+
 .. _networking-odl:
 
 OpenDayLight
@@ -539,14 +634,56 @@ OpenFlow Agent (ofagent)
 * Launchpad: https://launchpad.net/networking-ofagent
 * PyPI: https://pypi.python.org/pypi/networking-ofagent
 
+.. _networking-ovn:
+
+Open Virtual Network
+--------------------
+
+* Git: https://github.com/stackforge/networking-ovn
+* Launchpad: https://launchpad.net/networking-ovn
+* PyPI: https://pypi.python.org/pypi/networking-ovn
+
+.. _networking-ovs-dpdk:
+
+Open DPDK
+---------
+
+* Git: https://github.com/stackforge/networking-ovs-dpdk
+* Launchpad: https://launchpad.net/networking-ovs-dpdk
+
 .. _networking-plumgrid:
 
 PLUMgrid
----------
+--------
 
 * Git: https://github.com/stackforge/networking-plumgrid
 * Launchpad: https://launchpad.net/networking-plumgrid
 * PyPI: https://pypi.python.org/pypi/networking-plumgrid
+
+.. _neutron-powervm:
+
+PowerVM
+-------
+
+* Git: https://github.com/stackforge/neutron-powervm
+* Launchpad: https://launchpad.net/neutron-powervm
+* PyPI: https://pypi.python.org/pypi/neutron-powervm
+
+.. _networking-portforwarding:
+
+PortForwarding
+--------------
+
+* Git: https://github.com/stackforge/networking-portforwarding
+* Launchpad: https://launchpad.net/networking-portforwarding
+
+.. _networking-vsphere:
+
+vSphere
+-------
+
+* Git: https://github.com/stackforge/networking-vsphere
+* Launchpad: https://launchpad.net/networking-vsphere
 
 .. _vmware-nsx:
 
