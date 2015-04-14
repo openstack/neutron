@@ -134,21 +134,6 @@ class HyperVUtilsV2(utils.HyperVUtils):
                                         vswitch_name)
         return vswitch[0]
 
-    def _get_vswitch_external_port(self, vswitch):
-        vswitch_ports = vswitch.associators(
-            wmi_result_class=self._ETHERNET_SWITCH_PORT)
-        for vswitch_port in vswitch_ports:
-            lan_endpoints = vswitch_port.associators(
-                wmi_result_class=self._LAN_ENDPOINT)
-            if len(lan_endpoints):
-                lan_endpoints = lan_endpoints[0].associators(
-                    wmi_result_class=self._LAN_ENDPOINT)
-                if len(lan_endpoints):
-                    ext_port = lan_endpoints[0].associators(
-                        wmi_result_class=self._EXTERNAL_PORT)
-                    if ext_port:
-                        return vswitch_port
-
     def set_vswitch_port_vlan_id(self, vlan_id, switch_port_name):
         port_alloc, found = self._get_switch_port_allocation(switch_port_name)
         if not found:
@@ -170,6 +155,10 @@ class HyperVUtilsV2(utils.HyperVUtils):
         (job_path, out, ret_val) = vs_man_svc.AddFeatureSettings(
             port_alloc.path_(), [vlan_settings.GetText_(1)])
         self._check_job_status(ret_val, job_path)
+
+    def set_switch_external_port_trunk_vlan(self, vswitch_name, vlan_id,
+                                            desired_endpoint_mode):
+        pass
 
     def _get_vlan_setting_data_from_port_alloc(self, port_alloc):
         return self._get_first_item(port_alloc.associators(
