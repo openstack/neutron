@@ -66,12 +66,12 @@ code tree, e.g. ::
 
 Unit test modules should have the same path under neutron/tests/unit/
 as the module they target has under neutron/, and their name should be
-the name of the target module prefixed by 'test_'.  This requirement
+the name of the target module prefixed by `test_`.  This requirement
 is intended to make it easier for developers to find the unit tests
 for a given module.
 
 Similarly, when a test module targets a package, that module's name
-should be the name of the package prefixed by 'test_' with the same
+should be the name of the package prefixed by `test_` with the same
 path as when a test targets a module, e.g. ::
 
  - target package: neutron.ipam
@@ -264,7 +264,7 @@ TEMPEST_CONFIG_DIR before invoking tox: ::
 
 
 Running individual tests
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 For running individual test modules or cases, you just need to pass
 the dot-separated path to the module you want as an argument to it.
