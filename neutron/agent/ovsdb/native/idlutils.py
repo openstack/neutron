@@ -93,14 +93,14 @@ class ExceptionResult(object):
         self.tb = tb
 
 
-def get_schema_helper(connection):
+def get_schema_helper(connection, schema_name):
     err, strm = stream.Stream.open_block(
         stream.Stream.open(connection))
     if err:
         raise Exception("Could not connect to %s" % (
             connection,))
     rpc = jsonrpc.Connection(strm)
-    req = jsonrpc.Message.create_request('get_schema', ['Open_vSwitch'])
+    req = jsonrpc.Message.create_request('get_schema', [schema_name])
     err, resp = rpc.transact_block(req)
     rpc.close()
     if err:

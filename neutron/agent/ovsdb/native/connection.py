@@ -49,19 +49,21 @@ class TransactionQueue(Queue.Queue, object):
 
 
 class Connection(object):
-    def __init__(self, connection, timeout):
+    def __init__(self, connection, timeout, schema_name):
         self.idl = None
         self.connection = connection
         self.timeout = timeout
         self.txns = TransactionQueue(1)
         self.lock = threading.Lock()
+        self.schema_name = schema_name
 
     def start(self):
         with self.lock:
             if self.idl is not None:
                 return
 
-            helper = idlutils.get_schema_helper(self.connection)
+            helper = idlutils.get_schema_helper(self.connection,
+                                                self.schema_name)
             helper.register_all()
             self.idl = idl.Idl(self.connection, helper)
             idlutils.wait_for_change(self.idl, self.timeout)
