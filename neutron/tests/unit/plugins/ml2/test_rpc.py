@@ -75,14 +75,14 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.plugin.get_bound_port_context.return_value = None
         self.assertEqual(
             {'device': 'fake_device'},
-            self.callbacks.get_device_details('fake_context',
+            self.callbacks.get_device_details(mock.Mock(),
                                               device='fake_device'))
 
     def test_get_device_details_port_context_without_bounded_segment(self):
         self.plugin.get_bound_port_context().bottom_bound_segment = None
         self.assertEqual(
             {'device': 'fake_device'},
-            self.callbacks.get_device_details('fake_context',
+            self.callbacks.get_device_details(mock.Mock(),
                                               device='fake_device'))
 
     def test_get_device_details_port_status_equal_new_status(self):
@@ -99,7 +99,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
                 port['admin_state_up'] = admin_state_up
                 port['status'] = status
                 self.plugin.update_port_status.reset_mock()
-                self.callbacks.get_device_details('fake_context')
+                self.callbacks.get_device_details(mock.Mock())
                 self.assertEqual(status == new_status,
                                  not self.plugin.update_port_status.called)
 
@@ -109,7 +109,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.plugin.get_bound_port_context().current = port
         self.plugin.get_bound_port_context().network.current = (
             {"id": "fake_network"})
-        self.callbacks.get_device_details('fake_context', host='fake_host',
+        self.callbacks.get_device_details(mock.Mock(), host='fake_host',
                                           cached_networks=cached_networks)
         self.assertTrue('fake_port' in cached_networks)
 
@@ -119,7 +119,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         port_context.current = port
         port_context.host = 'fake'
         self.plugin.update_port_status.reset_mock()
-        self.callbacks.get_device_details('fake_context',
+        self.callbacks.get_device_details(mock.Mock(),
                                           host='fake_host')
         self.assertFalse(self.plugin.update_port_status.called)
 
@@ -128,7 +128,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         port_context = self.plugin.get_bound_port_context()
         port_context.current = port
         self.plugin.update_port_status.reset_mock()
-        self.callbacks.get_device_details('fake_context')
+        self.callbacks.get_device_details(mock.Mock())
         self.assertTrue(self.plugin.update_port_status.called)
 
     def test_get_devices_details_list(self):
@@ -155,8 +155,8 @@ class RpcCallbacksTestCase(base.BaseTestCase):
     def _test_update_device_not_bound_to_host(self, func):
         self.plugin.port_bound_to_host.return_value = False
         self.plugin._device_to_port_id.return_value = 'fake_port_id'
-        res = func('fake_context', device='fake_device', host='fake_host')
-        self.plugin.port_bound_to_host.assert_called_once_with('fake_context',
+        res = func(mock.Mock(), device='fake_device', host='fake_host')
+        self.plugin.port_bound_to_host.assert_called_once_with(mock.ANY,
                                                                'fake_port_id',
                                                                'fake_host')
         return res
@@ -176,18 +176,18 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.plugin._device_to_port_id.return_value = 'fake_port_id'
         self.assertEqual(
             {'device': 'fake_device', 'exists': False},
-            self.callbacks.update_device_down('fake_context',
+            self.callbacks.update_device_down(mock.Mock(),
                                               device='fake_device',
                                               host='fake_host'))
         self.plugin.update_port_status.assert_called_once_with(
-            'fake_context', 'fake_port_id', constants.PORT_STATUS_DOWN,
+            mock.ANY, 'fake_port_id', constants.PORT_STATUS_DOWN,
             'fake_host')
 
     def test_update_device_down_call_update_port_status_failed(self):
         self.plugin.update_port_status.side_effect = exc.StaleDataError
         self.assertEqual({'device': 'fake_device', 'exists': False},
                          self.callbacks.update_device_down(
-                             'fake_context', device='fake_device'))
+                             mock.Mock(), device='fake_device'))
 
 
 class RpcApiTestCase(base.BaseTestCase):

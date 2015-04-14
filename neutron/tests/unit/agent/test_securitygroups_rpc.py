@@ -94,7 +94,7 @@ class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
         self.notify_security_groups_member_updated(context, port)
         del self.devices[id]
 
-    def get_port_from_device(self, device):
+    def get_port_from_device(self, context, device):
         device = self.devices.get(device)
         if device:
             device['security_group_rules'] = []

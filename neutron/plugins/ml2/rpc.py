@@ -67,7 +67,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                   {'device': device, 'agent_id': agent_id, 'host': host})
 
         plugin = manager.NeutronManager.get_plugin()
-        port_id = plugin._device_to_port_id(device)
+        port_id = plugin._device_to_port_id(rpc_context, device)
         port_context = plugin.get_bound_port_context(rpc_context,
                                                      port_id,
                                                      host,
@@ -144,7 +144,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                   "%(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
-        port_id = plugin._device_to_port_id(device)
+        port_id = plugin._device_to_port_id(rpc_context, device)
         port_exists = True
         if (host and not plugin.port_bound_to_host(rpc_context,
                                                    port_id, host)):
@@ -173,7 +173,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         LOG.debug("Device %(device)s up at agent %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
-        port_id = plugin._device_to_port_id(device)
+        port_id = plugin._device_to_port_id(rpc_context, device)
         if (host and not plugin.port_bound_to_host(rpc_context,
                                                    port_id, host)):
             LOG.debug("Device %(device)s not bound to the"

@@ -19,7 +19,6 @@ from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as n_const
-from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import portbindings
@@ -244,14 +243,14 @@ def get_port(session, port_id):
             return
 
 
-def get_port_from_device_mac(device_mac):
+def get_port_from_device_mac(context, device_mac):
     LOG.debug("get_port_from_device_mac() called for mac %s", device_mac)
-    session = db_api.get_session()
-    qry = session.query(models_v2.Port).filter_by(mac_address=device_mac)
+    qry = context.session.query(models_v2.Port).filter_by(
+        mac_address=device_mac)
     return qry.first()
 
 
-def get_ports_and_sgs(port_ids):
+def get_ports_and_sgs(context, port_ids):
     """Get ports from database with security group info."""
 
     # break large queries into smaller parts
@@ -259,25 +258,24 @@ def get_ports_and_sgs(port_ids):
         LOG.debug("Number of ports %(pcount)s exceeds the maximum per "
                   "query %(maxp)s. Partitioning queries.",
                   {'pcount': len(port_ids), 'maxp': MAX_PORTS_PER_QUERY})
-        return (get_ports_and_sgs(port_ids[:MAX_PORTS_PER_QUERY]) +
-                get_ports_and_sgs(port_ids[MAX_PORTS_PER_QUERY:]))
+        return (get_ports_and_sgs(context, port_ids[:MAX_PORTS_PER_QUERY]) +
+                get_ports_and_sgs(context, port_ids[MAX_PORTS_PER_QUERY:]))
 
     LOG.debug("get_ports_and_sgs() called for port_ids %s", port_ids)
 
     if not port_ids:
         # if port_ids is empty, avoid querying to DB to ask it for nothing
         return []
-    ports_to_sg_ids = get_sg_ids_grouped_by_port(port_ids)
+    ports_to_sg_ids = get_sg_ids_grouped_by_port(context, port_ids)
     return [make_port_dict_with_security_groups(port, sec_groups)
             for port, sec_groups in ports_to_sg_ids.iteritems()]
 
 
-def get_sg_ids_grouped_by_port(port_ids):
+def get_sg_ids_grouped_by_port(context, port_ids):
     sg_ids_grouped_by_port = {}
-    session = db_api.get_session()
     sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
 
-    with session.begin(subtransactions=True):
+    with context.session.begin(subtransactions=True):
         # partial UUIDs must be individually matched with startswith.
         # full UUIDs may be matched directly in an IN statement
         partial_uuids = set(port_id for port_id in port_ids
@@ -288,8 +286,8 @@ def get_sg_ids_grouped_by_port(port_ids):
         if full_uuids:
             or_criteria.append(models_v2.Port.id.in_(full_uuids))
 
-        query = session.query(models_v2.Port,
-                              sg_db.SecurityGroupPortBinding.security_group_id)
+        query = context.session.query(
+            models_v2.Port, sg_db.SecurityGroupPortBinding.security_group_id)
         query = query.outerjoin(sg_db.SecurityGroupPortBinding,
                                 models_v2.Port.id == sg_binding_port)
         query = query.filter(or_(*or_criteria))
