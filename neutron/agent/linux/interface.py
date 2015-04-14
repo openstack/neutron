@@ -117,7 +117,7 @@ class LinuxInterfaceDriver(object):
             device.route.add_gateway(gateway_ip)
 
         if enable_ra_on_gw:
-            self._configure_ipv6_ra(namespace, device_name)
+            self.configure_ipv6_ra(namespace, device_name)
 
         new_onlink_routes = set(s['cidr'] for s in extra_subnets)
         existing_onlink_routes = set(
@@ -172,7 +172,7 @@ class LinuxInterfaceDriver(object):
         return (self.DEV_NAME_PREFIX + port.id)[:self.DEV_NAME_LEN]
 
     @staticmethod
-    def _configure_ipv6_ra(namespace, dev_name):
+    def configure_ipv6_ra(namespace, dev_name):
         """Configure acceptance of IPv6 route advertisements on an intf."""
         # Learn the default router's IP address via RAs
         ip_lib.IPWrapper(namespace=namespace).netns.execute(

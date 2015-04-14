@@ -182,20 +182,19 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
                         v6_ext_gw_with_sub=True, **kwargs):
     fixed_ips = []
     subnets = []
+    gateway_mac = kwargs.get('gateway_mac', 'ca:fe:de:ad:be:ee')
     for loop_version in (4, 6):
         if loop_version == 4 and (ip_version == 4 or dual_stack):
             ip_address = kwargs.get('ip_address', '19.4.4.4')
             prefixlen = 24
             subnet_cidr = kwargs.get('subnet_cidr', '19.4.4.0/24')
             gateway_ip = kwargs.get('gateway_ip', '19.4.4.1')
-            gateway_mac = kwargs.get('gateway_mac', 'ca:fe:de:ad:be:ee')
         elif (loop_version == 6 and (ip_version == 6 or dual_stack) and
               v6_ext_gw_with_sub):
             ip_address = kwargs.get('ip_address', 'fd00::4')
             prefixlen = 64
             subnet_cidr = kwargs.get('subnet_cidr', 'fd00::/64')
             gateway_ip = kwargs.get('gateway_ip', 'fd00::1')
-            gateway_mac = kwargs.get('gateway_mac', 'ca:fe:de:ad:be:ee')
         else:
             continue
         subnet_id = _uuid()
@@ -205,7 +204,7 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
         subnets.append({'id': subnet_id,
                         'cidr': subnet_cidr,
                         'gateway_ip': gateway_ip})
-    if not fixed_ips:
+    if not fixed_ips and v6_ext_gw_with_sub:
         raise ValueError("Invalid ip_version: %s" % ip_version)
 
     router_id = _uuid()

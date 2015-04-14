@@ -113,9 +113,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             enable_fip = False
             extra_routes = False
 
-        if not v6_ext_gw_with_sub:
-            self.agent.conf.set_override('ipv6_gateway',
-                                         'fe80::f816:3eff:fe2e:1')
         return test_l3_agent.prepare_router_data(ip_version=ip_version,
                                                  enable_snat=enable_snat,
                                                  enable_floating_ip=enable_fip,
@@ -385,6 +382,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._router_lifecycle(enable_ha=False, dual_stack=True)
 
     def test_legacy_router_lifecycle_with_no_gateway_subnet(self):
+        self.agent.conf.set_override('ipv6_gateway',
+                                     'fe80::f816:3eff:fe2e:1')
         self._router_lifecycle(enable_ha=False, dual_stack=True,
                                v6_ext_gw_with_sub=False)
 
@@ -438,6 +437,18 @@ class L3AgentTestCase(L3AgentTestFramework):
 
     def test_ipv6_ha_router_lifecycle(self):
         self._router_lifecycle(enable_ha=True, ip_version=6)
+
+    def test_ipv6_ha_router_lifecycle_with_no_gw_subnet(self):
+        self.agent.conf.set_override('ipv6_gateway',
+                                     'fe80::f816:3eff:fe2e:1')
+        self._router_lifecycle(enable_ha=True, ip_version=6,
+                               v6_ext_gw_with_sub=False)
+
+    def test_ipv6_ha_router_lifecycle_with_no_gw_subnet_for_router_advts(self):
+        # Verify that router gw interface is configured to receive Router
+        # Advts from upstream router when no external gateway is configured.
+        self._router_lifecycle(enable_ha=True, dual_stack=True,
+                               v6_ext_gw_with_sub=False)
 
     def test_keepalived_configuration(self):
         router_info = self.generate_router_info(enable_ha=True)
@@ -592,6 +603,18 @@ class L3AgentTestCase(L3AgentTestFramework):
             self._assert_floating_ip_chains(router)
             self._assert_extra_routes(router)
         self._assert_metadata_chains(router)
+
+        # Verify router gateway interface is configured to receive Router Advts
+        # when IPv6 is enabled and no IPv6 gateway is configured.
+        if router.use_ipv6 and not v6_ext_gw_with_sub:
+            if not self.agent.conf.ipv6_gateway:
+                external_port = router.get_ex_gw_port()
+                external_device_name = router.get_external_device_name(
+                    external_port['id'])
+                ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
+                ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
+                    'net.ipv6.conf.%s.accept_ra' % external_device_name])
+                self.assertEqual('2', ra_state)
 
         if enable_ha:
             self._assert_ha_device(router)
