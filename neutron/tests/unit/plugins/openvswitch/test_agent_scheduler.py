@@ -186,6 +186,41 @@ class AgentSchedulerTestMixIn(object):
                               agent_state={'agent_state': agent_state},
                               time=timeutils.strtime())
 
+    def test_agent_registration_bad_timestamp(self):
+        dhcp_hosta = {
+            'binary': 'neutron-dhcp-agent',
+            'host': DHCP_HOSTA,
+            'start_flag': True,
+            'topic': 'DHCP_AGENT',
+            'configurations': {'dhcp_driver': 'dhcp_driver',
+                               'use_namespaces': True,
+                               },
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        callback = agents_db.AgentExtRpcCallback()
+        delta_time = datetime.datetime.now() - datetime.timedelta(days=1)
+        str_time = delta_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
+        callback.report_state(self.adminContext,
+                              agent_state={'agent_state': dhcp_hosta},
+                              time=str_time)
+
+    def test_agent_registration_invalid_timestamp_allowed(self):
+        dhcp_hosta = {
+            'binary': 'neutron-dhcp-agent',
+            'host': DHCP_HOSTA,
+            'start_flag': True,
+            'topic': 'DHCP_AGENT',
+            'configurations': {'dhcp_driver': 'dhcp_driver',
+                               'use_namespaces': True,
+                               },
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        callback = agents_db.AgentExtRpcCallback()
+        utc_time = datetime.datetime.utcnow()
+        delta_time = utc_time - datetime.timedelta(seconds=10)
+        str_time = delta_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
+        callback.report_state(self.adminContext,
+                              agent_state={'agent_state': dhcp_hosta},
+                              time=str_time)
+
     def _disable_agent(self, agent_id, admin_state_up=False):
         new_agent = {}
         new_agent['agent'] = {}
