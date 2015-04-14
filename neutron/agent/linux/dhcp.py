@@ -958,7 +958,8 @@ class DeviceManager(object):
         # ensure that the dhcp interface is first in the list
         if network.namespace is None:
             device = ip_lib.IPDevice(interface_name)
-            device.route.pullup_route(interface_name)
+            device.route.pullup_route(interface_name,
+                                      ip_version=constants.IP_VERSION_4)
 
         if self.conf.use_namespaces:
             self._set_default_route(network, interface_name)

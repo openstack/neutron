@@ -1236,7 +1236,8 @@ class TestDvrRouter(L3AgentTestFramework):
         internal_device = router1.get_internal_device_name(
             router_info['_interfaces'][0]['id'])
         neighbors = ip_lib.IPDevice(internal_device, router1.ns_name).neigh
-        self.assertEqual(expected_neighbor, neighbors.show().split()[0])
+        self.assertEqual(expected_neighbor,
+                         neighbors.show(ip_version=4).split()[0])
 
     def _assert_rfp_fpr_mtu(self, router, expected_mtu=1500):
         dev_mtu = self.get_device_mtu(
