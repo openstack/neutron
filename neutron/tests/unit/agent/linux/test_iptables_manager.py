@@ -20,7 +20,6 @@ import mock
 from oslo_config import cfg
 import testtools
 
-from neutron.agent.common import config as a_cfg
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import exceptions as n_exc
@@ -132,7 +131,6 @@ class IptablesCommentsTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IptablesCommentsTestCase, self).setUp()
-        cfg.CONF.register_opts(a_cfg.IPTABLES_OPTS, 'AGENT')
         cfg.CONF.set_override('comment_iptables_rules', True, 'AGENT')
         self.iptables = iptables_manager.IptablesManager()
         self.execute = mock.patch.object(self.iptables, "execute").start()
@@ -232,7 +230,6 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IptablesManagerStateFulTestCase, self).setUp()
-        cfg.CONF.register_opts(a_cfg.IPTABLES_OPTS, 'AGENT')
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.iptables = iptables_manager.IptablesManager()
         self.execute = mock.patch.object(self.iptables, "execute").start()
@@ -1015,7 +1012,6 @@ class IptablesManagerStateLessTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IptablesManagerStateLessTestCase, self).setUp()
-        cfg.CONF.register_opts(a_cfg.IPTABLES_OPTS, 'AGENT')
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.iptables = (iptables_manager.IptablesManager(state_less=True))
 

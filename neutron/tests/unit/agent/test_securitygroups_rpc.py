@@ -22,7 +22,6 @@ import oslo_messaging
 from testtools import matchers
 import webob.exc
 
-from neutron.agent.common import config
 from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -2505,7 +2504,6 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
     def setUp(self, defer_refresh_firewall=False, test_rpc_v1_1=True):
         super(TestSecurityGroupAgentWithIptables, self).setUp()
-        config.register_iptables_opts(cfg.CONF)
         set_firewall_driver(self.FIREWALL_DRIVER)
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
         cfg.CONF.set_override('comment_iptables_rules', False, group='AGENT')
