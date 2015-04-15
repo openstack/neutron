@@ -379,6 +379,25 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             return False
 
         core_plugin = manager.NeutronManager.get_plugin()
+        # NOTE(swami):Before checking for existence of dvr
+        # serviceable ports on the host managed by the l3
+        # agent, let's verify if at least one subnet has
+        # dhcp enabled. If so, then the host will have a
+        # dvr serviceable port, which is in fact the DHCP
+        # port.
+        # This optimization is valid assuming that the L3
+        # DVR_SNAT node will be the one hosting the DHCP
+        # Agent.
+        agent_conf = self.get_configuration_dict(l3_agent)
+        agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
+                                    constants.L3_AGENT_MODE_LEGACY)
+
+        for subnet_id in subnet_ids:
+            subnet_dict = core_plugin.get_subnet(context, subnet_id)
+            if (subnet_dict['enable_dhcp'] and (
+                agent_mode == constants.L3_AGENT_MODE_DVR_SNAT)):
+                return True
+
         filter = {'fixed_ips': {'subnet_id': subnet_ids}}
         ports = core_plugin.get_ports(context, filters=filter)
         for port in ports:
