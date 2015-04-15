@@ -27,7 +27,6 @@ from neutron.notifiers import batch_notifier
 
 LOG = logging.getLogger(__name__)
 
-HA_DEV_PREFIX = 'ha-'
 KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG = 4096
 
 OPTS = [

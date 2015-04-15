@@ -92,9 +92,9 @@ class HaRouter(router.RouterInfo):
         self.keepalived_manager = keepalived.KeepalivedManager(
             self.router['id'],
             keepalived.KeepalivedConf(),
+            process_monitor,
             conf_path=self.agent_conf.ha_confs_path,
-            namespace=self.ns_name,
-            process_monitor=process_monitor)
+            namespace=self.ns_name)
 
         config = self.keepalived_manager.config
 

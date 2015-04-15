@@ -290,14 +290,13 @@ class KeepalivedManager(object):
 
     """
 
-    def __init__(self, resource_id, config, conf_path='/tmp',
-                 namespace=None, process_monitor=None):
+    def __init__(self, resource_id, config, process_monitor, conf_path='/tmp',
+                 namespace=None):
         self.resource_id = resource_id
         self.config = config
         self.namespace = namespace
         self.process_monitor = process_monitor
         self.conf_path = conf_path
-        self.process = None
 
     def get_conf_dir(self):
         confs_dir = os.path.abspath(os.path.normpath(self.conf_path))
