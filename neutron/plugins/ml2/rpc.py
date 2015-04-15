@@ -106,7 +106,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
         entry = {'device': device,
                  'network_id': port['network_id'],
-                 'port_id': port_id,
+                 'port_id': port['id'],
                  'mac_address': port['mac_address'],
                  'admin_state_up': port['admin_state_up'],
                  'network_type': segment[api.NETWORK_TYPE],
