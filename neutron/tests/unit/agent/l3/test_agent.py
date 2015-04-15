@@ -180,21 +180,23 @@ def router_append_subnet(router, count=1, ip_version=4,
 def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
                         enable_floating_ip=False, enable_ha=False,
                         extra_routes=False, dual_stack=False,
-                        v6_ext_gw_with_sub=True):
+                        v6_ext_gw_with_sub=True, **kwargs):
     fixed_ips = []
     subnets = []
     for loop_version in (4, 6):
         if loop_version == 4 and (ip_version == 4 or dual_stack):
-            ip_address = '19.4.4.4'
+            ip_address = kwargs.get('ip_address', '19.4.4.4')
             prefixlen = 24
-            subnet_cidr = '19.4.4.0/24'
-            gateway_ip = '19.4.4.1'
+            subnet_cidr = kwargs.get('subnet_cidr', '19.4.4.0/24')
+            gateway_ip = kwargs.get('gateway_ip', '19.4.4.1')
+            gateway_mac = kwargs.get('gateway_mac', 'ca:fe:de:ad:be:ee')
         elif (loop_version == 6 and (ip_version == 6 or dual_stack) and
               v6_ext_gw_with_sub):
-            ip_address = 'fd00::4'
+            ip_address = kwargs.get('ip_address', 'fd00::4')
             prefixlen = 64
-            subnet_cidr = 'fd00::/64'
-            gateway_ip = 'fd00::1'
+            subnet_cidr = kwargs.get('subnet_cidr', 'fd00::/64')
+            gateway_ip = kwargs.get('gateway_ip', 'fd00::1')
+            gateway_mac = kwargs.get('gateway_mac', 'ca:fe:de:ad:be:ee')
         else:
             continue
         subnet_id = _uuid()
@@ -209,7 +211,7 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
 
     router_id = _uuid()
     ex_gw_port = {'id': _uuid(),
-                  'mac_address': 'ca:fe:de:ad:be:ee',
+                  'mac_address': gateway_mac,
                   'network_id': _uuid(),
                   'fixed_ips': fixed_ips,
                   'subnets': subnets}
