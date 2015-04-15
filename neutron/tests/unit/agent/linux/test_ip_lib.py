@@ -1008,38 +1008,6 @@ class TestArpPing(TestIPCmdBase):
         self._test_arping(
             ip_lib.send_gratuitous_arp, '20.0.0.1', spawn_n, mIPWrapper)
 
-    @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'IPWrapper')
-    @mock.patch('eventlet.spawn_n')
-    def test_send_garp_for_proxy_arp(self, spawn_n, mIPWrapper, mIPDevice):
-        addr = '20.0.0.1'
-        ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
-        mIPWrapper.reset_mock()
-        device = mIPDevice(mock.sentinel.iface_name,
-                           namespace=mock.sentinel.ns_name)
-        mIPDevice.reset_mock()
-
-        # Check that the address was added to the interface before arping
-        def check_added_address(*args, **kwargs):
-            mIPDevice.assert_called_once_with(mock.sentinel.iface_name,
-                                              namespace=mock.sentinel.ns_name)
-            device.addr.add.assert_called_once_with(addr + '/32')
-            self.assertFalse(device.addr.delete.called)
-            device.addr.reset_mock()
-
-        ip_wrapper.netns.execute.side_effect = check_added_address
-
-        self._test_arping(
-            ip_lib.send_garp_for_proxyarp, addr, spawn_n, mIPWrapper)
-
-        # Test that the address was removed after arping
-        device = mIPDevice(mock.sentinel.iface_name,
-                           namespace=mock.sentinel.ns_name)
-        device.addr.delete.assert_called_once_with(addr + '/32')
-
-        # If this was called then check_added_address probably had a assert
-        self.assertFalse(device.addr.add.called)
-
 
 class TestAddNamespaceToCmd(base.BaseTestCase):
     def test_add_namespace_to_cmd_with_namespace(self):

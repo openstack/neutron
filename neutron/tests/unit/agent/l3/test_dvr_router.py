@@ -56,7 +56,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
         self.assertEqual([{'host': mock.sentinel.myhost}], fips)
 
-    @mock.patch.object(ip_lib, 'send_garp_for_proxyarp')
+    @mock.patch.object(ip_lib, 'send_gratuitous_arp')
     @mock.patch.object(ip_lib, 'IPDevice')
     @mock.patch.object(ip_lib, 'IPRule')
     def test_floating_ip_added_dist(self, mIPRule, mIPDevice, mock_arp):
