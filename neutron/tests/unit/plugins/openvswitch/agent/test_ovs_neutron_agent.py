@@ -106,6 +106,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
+        cfg.CONF.set_default('prevent_arp_spoofing', False, 'AGENT')
         kwargs = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
 
         class MockFixedIntervalLoopingCall(object):
