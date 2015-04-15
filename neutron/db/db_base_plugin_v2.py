@@ -1052,6 +1052,30 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         if attributes.is_attr_set(s.get('cidr')):
             self._validate_ip_version(ip_ver, s['cidr'], 'cidr')
 
+        # TODO(watanabe.isao): After we found a way to avoid the re-sync
+        # from the agent side, this restriction could be removed.
+        if cur_subnet:
+            dhcp_was_enabled = cur_subnet.enable_dhcp
+        else:
+            dhcp_was_enabled = False
+        if s.get('enable_dhcp') and not dhcp_was_enabled:
+            subnet_prefixlen = netaddr.IPNetwork(s['cidr']).prefixlen
+            error_message = _("Subnet has a prefix length that is "
+                              "incompatible with DHCP service enabled.")
+            if ((ip_ver == 4 and subnet_prefixlen > 30) or
+                (ip_ver == 6 and subnet_prefixlen > 126)):
+                    raise n_exc.InvalidInput(error_message=error_message)
+            else:
+                # NOTE(watanabe.isao): The following restriction is necessary
+                # only when updating subnet.
+                if cur_subnet:
+                    range_qry = context.session.query(models_v2.
+                        IPAvailabilityRange).join(models_v2.IPAllocationPool)
+                    ip_range = range_qry.filter_by(subnet_id=s['id']).first()
+                    if not ip_range:
+                        raise n_exc.IpAddressGenerationFailure(
+                            net_id=cur_subnet.network_id)
+
         if attributes.is_attr_set(s.get('gateway_ip')):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
             if (cfg.CONF.force_gateway_on_subnet and
