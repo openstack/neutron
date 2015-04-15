@@ -11,6 +11,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from oslo_config import cfg
 
 from neutron.agent.common import config
@@ -109,7 +111,7 @@ class IpsetManager(object):
         self._restore_sets(process_input)
         self._swap_sets(new_set_name, set_name)
         self._destroy(new_set_name, True)
-        self.ipset_sets[set_name] = member_ips
+        self.ipset_sets[set_name] = copy.copy(member_ips)
 
     def _del_member_from_set(self, set_name, member_ip):
         cmd = ['ipset', 'del', set_name, member_ip]
