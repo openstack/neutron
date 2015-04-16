@@ -86,6 +86,56 @@ class FakeL3Scheduler(l3_agent_scheduler.L3Scheduler):
         pass
 
 
+class FakePortDB(object):
+    def __init__(self, port_list):
+        self._port_list = port_list
+
+    def _get_query_answer(self, port_list, filters):
+        answers = []
+        for port in port_list:
+            matched = True
+            for key, search_values in filters.items():
+                port_value = port.get(key, None)
+                if not port_value:
+                    matched = False
+                    break
+
+                if isinstance(port_value, list):
+                    sub_answers = self._get_query_answer(port_value,
+                                                         search_values)
+                    matched = len(sub_answers) > 0
+                else:
+                    matched = port_value in search_values
+
+                if not matched:
+                    break
+
+            if matched:
+                answers.append(port)
+
+        return answers
+
+    def get_port(self, context, port_id):
+        for port in self._port_list:
+            if port['id'] == port_id:
+                if port['tenant_id'] == context.tenant_id or context.is_admin:
+                    return port
+                break
+
+        return None
+
+    def get_ports(self, context, filters=None):
+        query_filters = dict()
+        if filters:
+            query_filters.update(filters)
+
+        if not context.is_admin:
+            query_filters['tenant_id'] = [context.tenant_id]
+
+        result = self._get_query_answer(self._port_list, query_filters)
+        return result
+
+
 class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def setUp(self):
@@ -1048,6 +1098,196 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 ]
         }
         self._test_dvr_serviced_port_exists_on_subnet(port=vip_port)
+
+    def _create_port(self, port_name, tenant_id, host, subnet_id, ip_address,
+                     status='ACTIVE',
+                     device_owner='compute:nova'):
+        return {
+            'id': port_name + '-port-id',
+            'tenant_id': tenant_id,
+            'device_id': port_name,
+            'device_owner': device_owner,
+            'status': status,
+            'binding:host_id': host,
+            'fixed_ips': [
+                {
+                    'subnet_id': subnet_id,
+                    'ip_address': ip_address
+                }
+            ]
+        }
+
+    def test_dvr_deletens_if_no_port_no_routers(self):
+        # Delete a vm port, the port subnet has no router interface.
+        vm_tenant_id = 'tenant-1'
+        my_context = q_context.Context('user-1', vm_tenant_id, is_admin=False)
+        vm_port_host = 'compute-node-1'
+
+        vm_port = self._create_port(
+            'deleted-vm', vm_tenant_id, vm_port_host,
+            'shared-subnet', '10.10.10.3',
+            status='INACTIVE')
+
+        vm_port_id = vm_port['id']
+        fakePortDB = FakePortDB([vm_port])
+
+        with contextlib.nested(
+            mock.patch.object(my_context, 'elevated',
+                              return_value=self.adminContext),
+            mock.patch('neutron.plugins.ml2.db.'
+                       'get_port_binding_host', return_value=vm_port_host),
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                       'get_ports', side_effect=fakePortDB.get_ports),
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                       'get_port', return_value=vm_port)) as (
+                _, mock_get_port_binding_host, _, _):
+
+            routers = self.dut.dvr_deletens_if_no_port(my_context, vm_port_id)
+            self.assertEqual([], routers)
+            mock_get_port_binding_host.assert_called_once_with(
+                self.adminContext.session, vm_port_id)
+
+    def test_dvr_deletens_if_no_ports_no_removeable_routers(self):
+        # A VM port is deleted, but the router can't be unscheduled from the
+        # compute node because there is another VM port present.
+        vm_tenant_id = 'tenant-1'
+        my_context = q_context.Context('user-1', vm_tenant_id, is_admin=False)
+        shared_subnet_id = '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+        vm_port_host = 'compute-node-1'
+
+        dvr_port = self._create_port(
+            'dvr-router', 'admin-tenant', vm_port_host,
+            shared_subnet_id, '10.10.10.1',
+            device_owner=constants.DEVICE_OWNER_DVR_INTERFACE)
+
+        deleted_vm_port = self._create_port(
+            'deleted-vm', vm_tenant_id, vm_port_host,
+            shared_subnet_id, '10.10.10.3',
+            status='INACTIVE')
+        deleted_vm_port_id = deleted_vm_port['id']
+
+        running_vm_port = self._create_port(
+            'running-vn', 'tenant-2', vm_port_host,
+            shared_subnet_id, '10.10.10.33')
+
+        fakePortDB = FakePortDB([running_vm_port, deleted_vm_port, dvr_port])
+
+        vm_port_binding = {
+            'port_id': deleted_vm_port_id,
+            'host': vm_port_host
+        }
+
+        with contextlib.nested(
+            mock.patch.object(my_context, 'elevated',
+                              return_value=self.adminContext),
+            mock.patch('neutron.plugins.ml2.db.get_port_binding_host',
+                       return_value=vm_port_host),
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                       'get_port', side_effect=fakePortDB.get_port),
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                       'get_ports', side_effect=fakePortDB.get_ports),
+            mock.patch('neutron.plugins.ml2.db.get_dvr_port_binding_by_host',
+                       return_value=vm_port_binding)) as (_,
+                mock_get_port_binding_host, _,
+                mock_get_ports,
+                mock_get_dvr_port_binding_by_host):
+
+            routers = self.dut.dvr_deletens_if_no_port(
+                my_context, deleted_vm_port_id)
+            self.assertEqual([], routers)
+
+            mock_get_port_binding_host.assert_called_once_with(
+                self.adminContext.session, deleted_vm_port_id)
+            self.assertTrue(mock_get_ports.called)
+            self.assertFalse(mock_get_dvr_port_binding_by_host.called)
+
+    def _test_dvr_deletens_if_no_ports_delete_routers(self,
+                                                      vm_tenant,
+                                                      router_tenant):
+        class FakeAgent(object):
+            def __init__(self, id, host, agent_type):
+                self.id = id
+                self.host = host
+                self.agent_type = agent_type
+
+        my_context = q_context.Context('user-1', vm_tenant, is_admin=False)
+        shared_subnet_id = '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+        vm_port_host = 'compute-node-1'
+
+        router_id = 'dvr-router'
+        dvr_port = self._create_port(
+            router_id, router_tenant, vm_port_host,
+            shared_subnet_id, '10.10.10.1',
+            device_owner=constants.DEVICE_OWNER_DVR_INTERFACE)
+        dvr_port_id = dvr_port['id']
+
+        deleted_vm_port = self._create_port(
+            'deleted-vm', vm_tenant, vm_port_host,
+            shared_subnet_id, '10.10.10.3',
+            status='INACTIVE')
+        deleted_vm_port_id = deleted_vm_port['id']
+
+        running_vm_port = self._create_port(
+             'running-vn', vm_tenant, 'compute-node-2',
+             shared_subnet_id, '10.10.10.33')
+
+        fakePortDB = FakePortDB([running_vm_port, dvr_port, deleted_vm_port])
+
+        dvr_port_binding = {
+            'port_id': dvr_port_id, 'host': vm_port_host
+        }
+
+        agent_id = 'l3-agent-on-compute-node-1'
+        l3_agent_on_vm_host = FakeAgent(agent_id,
+                                        vm_port_host,
+                                        constants.AGENT_TYPE_L3)
+
+        with contextlib.nested(
+            mock.patch.object(my_context, 'elevated',
+                              return_value=self.adminContext),
+            mock.patch('neutron.plugins.ml2.db.get_port_binding_host',
+                       return_value=vm_port_host),
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                       'get_port', side_effect=fakePortDB.get_port),
+            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                       'get_ports', side_effect=fakePortDB.get_ports),
+            mock.patch('neutron.plugins.ml2.db.get_dvr_port_binding_by_host',
+                       return_value=dvr_port_binding),
+            mock.patch('neutron.db.agents_db.AgentDbMixin.'
+                       '_get_agent_by_type_and_host',
+                       return_value=l3_agent_on_vm_host)) as (_,
+                mock_get_port_binding_host, _,
+                mock_get_ports,
+                mock_get_dvr_port_binding_by_host,
+                mock__get_agent_by_type_and_host):
+
+            routers = self.dut.dvr_deletens_if_no_port(
+                my_context, deleted_vm_port_id)
+
+            expected_router = {
+                'router_id': router_id,
+                'host': vm_port_host,
+                'agent_id': agent_id
+            }
+            self.assertEqual([expected_router], routers)
+
+            mock_get_port_binding_host.assert_called_once_with(
+                self.adminContext.session, deleted_vm_port_id)
+            self.assertTrue(mock_get_ports.called)
+            mock_get_dvr_port_binding_by_host.assert_called_once_with(
+                my_context.session, dvr_port_id, vm_port_host)
+
+    def test_dvr_deletens_if_no_ports_delete_admin_routers(self):
+        # test to see whether the last VM using a router created
+        # by the admin will be unscheduled on the compute node
+        self._test_dvr_deletens_if_no_ports_delete_routers(
+            'tenant-1', 'admin-tenant')
+
+    def test_dvr_deletens_if_no_ports_delete_tenant_routers(self):
+        # test to see whether the last VM using a tenant's private
+        # router will be unscheduled on the compute node
+        self._test_dvr_deletens_if_no_ports_delete_routers(
+            'tenant-1', 'tenant-1')
 
     def test_dvr_serviced_dhcp_port_exists_on_subnet(self):
         dhcp_port = {
