@@ -14,7 +14,10 @@
 #    under the License.
 
 """
-The module provides all database models.
+This module should not be changed.
+
+The module provides all database models that were present at the moment of
+creation of heal_script.
 
 Its purpose is to create comparable metadata with current database schema.
 Based on this comparison database can be healed with healing migration.
