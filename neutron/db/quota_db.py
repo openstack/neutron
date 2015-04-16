@@ -20,13 +20,12 @@ from neutron.db import model_base
 from neutron.db import models_v2
 
 
-class Quota(model_base.BASEV2, models_v2.HasId):
+class Quota(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represent a single quota override for a tenant.
 
     If there is no row for a given tenant id and resource, then the
-    default for the quota class is used.
+    default for the deployment is used.
     """
-    tenant_id = sa.Column(sa.String(255), index=True)
     resource = sa.Column(sa.String(255))
     limit = sa.Column(sa.Integer)
 
