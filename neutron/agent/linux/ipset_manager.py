@@ -17,7 +17,8 @@ from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 
 IPSET_ADD_BULK_THRESHOLD = 5
-SWAP_SUFFIX = '-new'
+NET_PREFIX = 'N'
+SWAP_SUFFIX = '-n'
 IPSET_NAME_MAX_LENGTH = 31 - len(SWAP_SUFFIX)
 
 
@@ -38,7 +39,7 @@ class IpsetManager(object):
         """Returns the given ipset name for an id+ethertype pair.
         This reference can be used from iptables.
         """
-        name = 'NET' + ethertype + id
+        name = NET_PREFIX + ethertype + id
         return name[:IPSET_NAME_MAX_LENGTH]
 
     def set_exists(self, id, ethertype):
