@@ -20,7 +20,7 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron import manager
 from neutron.plugins.common import constants
-from neutron import quota
+from neutron.quota import resource_registry
 
 LOG = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def build_resource_info(plural_mappings, resource_map, which_service,
         if translate_name:
             collection_name = collection_name.replace('_', '-')
         if register_quota:
-            quota.QUOTAS.register_resource_by_name(resource_name)
+            resource_registry.register_resource_by_name(resource_name)
         member_actions = action_map.get(resource_name, {})
         controller = base.create_resource(
             collection_name, resource_name, plugin, params,

@@ -29,7 +29,7 @@ from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
 from neutron import manager
-
+from neutron.quota import resource_registry
 
 LOG = logging.getLogger(__name__)
 
@@ -203,6 +203,7 @@ class DhcpRpcCallback(object):
         LOG.warning(_LW('Updating lease expiration is now deprecated. Issued  '
                         'from host %s.'), host)
 
+    @resource_registry.mark_resources_dirty
     def create_dhcp_port(self, context, **kwargs):
         """Create and return dhcp port information.
 

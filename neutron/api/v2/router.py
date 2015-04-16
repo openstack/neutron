@@ -27,7 +27,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron import manager
 from neutron import policy
-from neutron import quota
+from neutron.quota import resource_registry
 from neutron import wsgi
 
 
@@ -106,7 +106,7 @@ class APIRouter(wsgi.Router):
             _map_resource(RESOURCES[resource], resource,
                           attributes.RESOURCE_ATTRIBUTE_MAP.get(
                               RESOURCES[resource], dict()))
-            quota.QUOTAS.register_resource_by_name(resource)
+            resource_registry.register_resource_by_name(resource)
 
         for resource in SUB_RESOURCES:
             _map_resource(SUB_RESOURCES[resource]['collection_name'], resource,

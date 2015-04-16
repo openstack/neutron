@@ -29,6 +29,7 @@ from neutron.common import exceptions
 from neutron import context
 from neutron.db.quota import driver
 from neutron import quota
+from neutron.quota import resource_registry
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.api.v2 import test_base
@@ -64,7 +65,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         self.plugin.return_value.supported_extension_aliases = ['quotas']
         # QUOTAS will register the items in conf when starting
         # extra1 here is added later, so have to do it manually
-        quota.QUOTAS.register_resource_by_name('extra1')
+        resource_registry.register_resource_by_name('extra1')
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         app = config.load_paste_app('extensions_test_app')
         ext_middleware = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)

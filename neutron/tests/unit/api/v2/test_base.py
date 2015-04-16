@@ -37,6 +37,7 @@ from neutron import context
 from neutron import manager
 from neutron import policy
 from neutron import quota
+from neutron.quota import resource_registry
 from neutron.tests import base
 from neutron.tests import fake_notifier
 from neutron.tests import tools
@@ -1289,6 +1290,12 @@ class NotificationTest(APIv2TestBase):
 
 
 class DHCPNotificationTest(APIv2TestBase):
+
+    def setUp(self):
+        # This test does not have database support so tracking cannot be used
+        cfg.CONF.set_override('track_quota_usage', False, group='QUOTAS')
+        super(DHCPNotificationTest, self).setUp()
+
     def _test_dhcp_notifier(self, opname, resource, initial_input=None):
         instance = self.plugin.return_value
         instance.get_networks.return_value = initial_input
@@ -1340,6 +1347,23 @@ class DHCPNotificationTest(APIv2TestBase):
 
 
 class QuotaTest(APIv2TestBase):
+
+    def setUp(self):
+        # This test does not have database support so tracking cannot be used
+        cfg.CONF.set_override('track_quota_usage', False, group='QUOTAS')
+        super(QuotaTest, self).setUp()
+        # Use mock to let the API use a different QuotaEngine instance for
+        # unit test in this class. This will ensure resource are registered
+        # again and instanciated with neutron.quota.resource.CountableResource
+        replacement_registry = resource_registry.ResourceRegistry()
+        registry_patcher = mock.patch('neutron.quota.resource_registry.'
+                                      'ResourceRegistry.get_instance')
+        mock_registry = registry_patcher.start().return_value
+        mock_registry.get_resource = replacement_registry.get_resource
+        mock_registry.resources = replacement_registry.resources
+        # Register a resource
+        replacement_registry.register_resource_by_name('network')
+
     def test_create_network_quota(self):
         cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
@@ -1384,9 +1408,10 @@ class QuotaTest(APIv2TestBase):
 
 class ExtensionTestCase(base.BaseTestCase):
     def setUp(self):
+        # This test does not have database support so tracking cannot be used
+        cfg.CONF.set_override('track_quota_usage', False, group='QUOTAS')
         super(ExtensionTestCase, self).setUp()
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
-
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 

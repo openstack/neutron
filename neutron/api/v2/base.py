@@ -34,6 +34,7 @@ from neutron.db import api as db_api
 from neutron.i18n import _LE, _LI
 from neutron import policy
 from neutron import quota
+from neutron.quota import resource_registry
 
 
 LOG = logging.getLogger(__name__)
@@ -207,7 +208,15 @@ class Controller(object):
                                name,
                                resource,
                                pluralized=self._collection)
-                return getattr(self._plugin, name)(*arg_list, **kwargs)
+                ret_value = getattr(self._plugin, name)(*arg_list, **kwargs)
+                # It is simply impossible to predict whether one of this
+                # actions alters resource usage. For instance a tenant port
+                # is created when a router interface is added. Therefore it is
+                # important to mark as dirty resources whose counters have
+                # been altered by this operation
+                resource_registry.set_resources_dirty(request.context)
+                return ret_value
+
             return _handle_action
         else:
             raise AttributeError()
@@ -280,6 +289,9 @@ class Controller(object):
         pagination_links = pagination_helper.get_links(obj_list)
         if pagination_links:
             collection[self._collection + "_links"] = pagination_links
+        # Synchronize usage trackers, if needed
+        resource_registry.resync_resource(
+            request.context, self._resource, request.context.tenant_id)
         return collection
 
     def _item(self, request, id, do_authz=False, field_list=None,
@@ -436,6 +448,12 @@ class Controller(object):
                                          **kwargs)
 
         def notify(create_result):
+            # Ensure usage trackers for all resources affected by this API
+            # operation are marked as dirty
+            # TODO(salv-orlando): This operation will happen in a single
+            # transaction with reservation commit once that is implemented
+            resource_registry.set_resources_dirty(request.context)
+
             notifier_method = self._resource + '.create.end'
             self._notifier.info(request.context,
                                 notifier_method,
@@ -497,6 +515,9 @@ class Controller(object):
 
         obj_deleter = getattr(self._plugin, action)
         obj_deleter(request.context, id, **kwargs)
+        # A delete operation usually alters resource usage, so mark affected
+        # usage trackers as dirty
+        resource_registry.set_resources_dirty(request.context)
         notifier_method = self._resource + '.delete.end'
         self._notifier.info(request.context,
                             notifier_method,
@@ -561,6 +582,12 @@ class Controller(object):
         if parent_id:
             kwargs[self._parent_id_name] = parent_id
         obj = obj_updater(request.context, id, **kwargs)
+        # Usually an update operation does not alter resource usage, but as
+        # there might be side effects it might be worth checking for changes
+        # in resource usage here as well (e.g: a tenant port is created when a
+        # router interface is added)
+        resource_registry.set_resources_dirty(request.context)
+
         result = {self._resource: self._view(request.context, obj)}
         notifier_method = self._resource + '.update.end'
         self._notifier.info(request.context, notifier_method, result)
