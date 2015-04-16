@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-09 06:58+0000\n"
-"PO-Revision-Date: 2015-04-09 01:22+0000\n"
+"POT-Creation-Date: 2015-04-16 06:13+0000\n"
+"PO-Revision-Date: 2015-04-10 13:03+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
 "fr/)\n"
@@ -142,7 +142,7 @@ msgstr "Etat de synchronisation"
 msgid "Synchronizing state complete"
 msgstr "Etat de synchronisation complet"
 
-#: neutron/agent/dhcp/agent.py:586 neutron/agent/l3/agent.py:611
+#: neutron/agent/dhcp/agent.py:586 neutron/agent/l3/agent.py:609
 #: neutron/services/metering/agents/metering_agent.py:286
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -152,12 +152,12 @@ msgstr "agent_updated au niveau du serveur %s !"
 msgid "L3 agent started"
 msgstr "Agent de niveau 3 démarré"
 
-#: neutron/agent/l3/ha.py:114
+#: neutron/agent/l3/ha.py:113
 #, python-format
 msgid "Router %(router_id)s transitioned to %(state)s"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:124
+#: neutron/agent/l3/ha.py:123
 #, python-format
 msgid ""
 "Router %s is not managed by this agent. It was possibly deleted concurrently."
@@ -286,7 +286,7 @@ msgstr ""
 msgid "Adding network %(net)s to agent %(agent)%s on host %(host)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:630
+#: neutron/db/db_base_plugin_v2.py:636
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
@@ -295,38 +295,40 @@ msgstr ""
 "La validation du routage CIDR %(new_cidr)s a échoué : il chevauche le sous-"
 "réseau %(subnet_id)s (CIDR : %(cidr)s) "
 
-#: neutron/db/db_base_plugin_v2.py:657
+#: neutron/db/db_base_plugin_v2.py:663
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr "Adresse IP non valide trouvée dans le pool : %(start)s - %(end)s :"
 
-#: neutron/db/db_base_plugin_v2.py:664
+#: neutron/db/db_base_plugin_v2.py:670
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
 "Les adresses IP spécifiées ne correspondent à la version IP du sous-réseau"
 
-#: neutron/db/db_base_plugin_v2.py:668
+#: neutron/db/db_base_plugin_v2.py:674
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 "L'adresse IP de début (%(start)s) est supérieure à l'adresse IP de fin "
 "(%(end)s)."
 
-#: neutron/db/db_base_plugin_v2.py:673
+#: neutron/db/db_base_plugin_v2.py:679
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
 "Un pool plus volumineux que le routage CIDR de sous-réseau %(start)s - "
 "%(end)s a été trouvé."
 
-#: neutron/db/db_base_plugin_v2.py:697
+#: neutron/db/db_base_plugin_v2.py:703
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "Chevauchement d'intervalles trouvés : %(l_range)s et %(r_range)s"
 
-#: neutron/db/db_base_plugin_v2.py:1517
+#: neutron/db/db_base_plugin_v2.py:1567 neutron/plugins/ml2/plugin.py:883
 #, python-format
-msgid "Found IP allocation %(alloc)s on subnet %(subnet)s, cannot delete"
+msgid ""
+"Found port (%(port_id)s, %(ip)s) having IP allocation on subnet %(subnet)s, "
+"cannot delete"
 msgstr ""
 
 #: neutron/db/l3_agentschedulers_db.py:78
@@ -355,7 +357,7 @@ msgstr ""
 msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
 
-#: neutron/db/l3_dvrscheduler_db.py:312
+#: neutron/db/l3_dvrscheduler_db.py:315
 msgid "SNAT already bound to a service node."
 msgstr ""
 
@@ -412,49 +414,49 @@ msgstr "Tâche périodique %(task)s car elle est désactivée"
 msgid "Caught %s, exiting"
 msgstr "%s interceptée, sortie"
 
-#: neutron/openstack/common/service.py:231
+#: neutron/openstack/common/service.py:239
 msgid "Parent process has died unexpectedly, exiting"
 msgstr "Processus parent arrêté de manière inattendue, sortie"
 
-#: neutron/openstack/common/service.py:262
+#: neutron/openstack/common/service.py:270
 #, python-format
 msgid "Child caught %s, exiting"
 msgstr "L'enfant a reçu %s, sortie"
 
-#: neutron/openstack/common/service.py:301
+#: neutron/openstack/common/service.py:309
 msgid "Forking too fast, sleeping"
 msgstr "Bifurcation trop rapide, pause"
 
-#: neutron/openstack/common/service.py:320
+#: neutron/openstack/common/service.py:328
 #, python-format
 msgid "Started child %d"
 msgstr "Enfant démarré %d"
 
-#: neutron/openstack/common/service.py:330
+#: neutron/openstack/common/service.py:338
 #, python-format
 msgid "Starting %d workers"
 msgstr "Démarrage des travailleurs %d"
 
-#: neutron/openstack/common/service.py:347
+#: neutron/openstack/common/service.py:355
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
 msgstr "Enfant %(pid)d arrêté par le signal %(sig)d"
 
-#: neutron/openstack/common/service.py:351
+#: neutron/openstack/common/service.py:359
 #, python-format
 msgid "Child %(pid)s exited with status %(code)d"
 msgstr "Processus fils %(pid)s terminé avec le status %(code)d"
 
-#: neutron/openstack/common/service.py:390
+#: neutron/openstack/common/service.py:398
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr "%s interceptée, arrêt de l'enfant"
 
-#: neutron/openstack/common/service.py:399
+#: neutron/openstack/common/service.py:413
 msgid "Wait called after thread killed. Cleaning up."
 msgstr "Pause demandée après suppression de thread. Nettoyage."
 
-#: neutron/openstack/common/service.py:415
+#: neutron/openstack/common/service.py:429
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "En attente %d enfants pour sortie"
@@ -736,7 +738,7 @@ msgstr "Le port %s a été effacé en même temps"
 msgid "Subnet %s was deleted concurrently"
 msgstr "Le sous-réseau %s a été effacé en même temps"
 
-#: neutron/plugins/ml2/plugin.py:1336
+#: neutron/plugins/ml2/plugin.py:1352
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -766,12 +768,12 @@ msgstr ""
 msgid "%(type)s ID ranges: %(range)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:99
+#: neutron/plugins/ml2/drivers/type_vlan.py:97
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "Plages de réseau local virtuel de réseau : %s"
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:166
+#: neutron/plugins/ml2/drivers/type_vlan.py:164
 msgid "VlanTypeDriver initialization complete"
 msgstr ""
 

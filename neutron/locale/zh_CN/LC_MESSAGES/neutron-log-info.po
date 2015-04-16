@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-09 06:58+0000\n"
-"PO-Revision-Date: 2015-04-09 06:52+0000\n"
-"Last-Translator: 汪军 <wwyyzz08@sina.com>\n"
+"POT-Creation-Date: 2015-04-16 06:13+0000\n"
+"PO-Revision-Date: 2015-04-10 13:03+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
 "Language: zh_CN\n"
@@ -141,7 +141,7 @@ msgstr "正在使状态同步"
 msgid "Synchronizing state complete"
 msgstr "同步状态完成"
 
-#: neutron/agent/dhcp/agent.py:586 neutron/agent/l3/agent.py:611
+#: neutron/agent/dhcp/agent.py:586 neutron/agent/l3/agent.py:609
 #: neutron/services/metering/agents/metering_agent.py:286
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -151,12 +151,12 @@ msgstr "服务器端 %s 已更新代理！"
 msgid "L3 agent started"
 msgstr "已启动 L3 代理"
 
-#: neutron/agent/l3/ha.py:114
+#: neutron/agent/l3/ha.py:113
 #, python-format
 msgid "Router %(router_id)s transitioned to %(state)s"
 msgstr "路由器%(router_id)s 转换为%(state)s"
 
-#: neutron/agent/l3/ha.py:124
+#: neutron/agent/l3/ha.py:123
 #, python-format
 msgid ""
 "Router %s is not managed by this agent. It was possibly deleted concurrently."
@@ -282,7 +282,7 @@ msgstr ""
 msgid "Adding network %(net)s to agent %(agent)%s on host %(host)s"
 msgstr "在主机 %(host)s上添加网络%(net)s到代理%(agent)%s"
 
-#: neutron/db/db_base_plugin_v2.py:630
+#: neutron/db/db_base_plugin_v2.py:636
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
@@ -291,33 +291,35 @@ msgstr ""
 "针对 CIDR %(new_cidr)s 的验证失败 - 与子网 %(subnet_id)s（CIDR 为 %(cidr)s）"
 "重叠"
 
-#: neutron/db/db_base_plugin_v2.py:657
+#: neutron/db/db_base_plugin_v2.py:663
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr "在池中找到无效 IP 地址：%(start)s - %(end)s："
 
-#: neutron/db/db_base_plugin_v2.py:664
+#: neutron/db/db_base_plugin_v2.py:670
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr "指定的 IP 地址与子网 IP 版本不匹配"
 
-#: neutron/db/db_base_plugin_v2.py:668
+#: neutron/db/db_base_plugin_v2.py:674
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "起始 IP (%(start)s) 大于结束 IP (%(end)s)"
 
-#: neutron/db/db_base_plugin_v2.py:673
+#: neutron/db/db_base_plugin_v2.py:679
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr "找到超过子网 CIDR (%(start)s - %(end)s) 的池"
 
-#: neutron/db/db_base_plugin_v2.py:697
+#: neutron/db/db_base_plugin_v2.py:703
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "找到重叠范围：%(l_range)s 和 %(r_range)s"
 
-#: neutron/db/db_base_plugin_v2.py:1517
+#: neutron/db/db_base_plugin_v2.py:1567 neutron/plugins/ml2/plugin.py:883
 #, python-format
-msgid "Found IP allocation %(alloc)s on subnet %(subnet)s, cannot delete"
+msgid ""
+"Found port (%(port_id)s, %(ip)s) having IP allocation on subnet %(subnet)s, "
+"cannot delete"
 msgstr ""
 
 #: neutron/db/l3_agentschedulers_db.py:78
@@ -346,7 +348,7 @@ msgstr ""
 msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
 
-#: neutron/db/l3_dvrscheduler_db.py:312
+#: neutron/db/l3_dvrscheduler_db.py:315
 msgid "SNAT already bound to a service node."
 msgstr "SNAT 已经绑定到服务节点。"
 
@@ -403,49 +405,49 @@ msgstr "正在跳过周期性任务 %(task)s，因为它已禁用"
 msgid "Caught %s, exiting"
 msgstr "捕获到 %s，正在退出"
 
-#: neutron/openstack/common/service.py:231
+#: neutron/openstack/common/service.py:239
 msgid "Parent process has died unexpectedly, exiting"
 msgstr "父进程已意外终止，正在退出"
 
-#: neutron/openstack/common/service.py:262
+#: neutron/openstack/common/service.py:270
 #, python-format
 msgid "Child caught %s, exiting"
 msgstr "子代捕获 %s，正在退出"
 
-#: neutron/openstack/common/service.py:301
+#: neutron/openstack/common/service.py:309
 msgid "Forking too fast, sleeping"
 msgstr "派生速度太快，正在休眠"
 
-#: neutron/openstack/common/service.py:320
+#: neutron/openstack/common/service.py:328
 #, python-format
 msgid "Started child %d"
 msgstr "已启动子代 %d"
 
-#: neutron/openstack/common/service.py:330
+#: neutron/openstack/common/service.py:338
 #, python-format
 msgid "Starting %d workers"
 msgstr "正在启动 %d 工作程序"
 
-#: neutron/openstack/common/service.py:347
+#: neutron/openstack/common/service.py:355
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
 msgstr "信号 %(sig)d 已终止子代 %(pid)d"
 
-#: neutron/openstack/common/service.py:351
+#: neutron/openstack/common/service.py:359
 #, python-format
 msgid "Child %(pid)s exited with status %(code)d"
 msgstr "子代 %(pid)s 已退出，状态为 %(code)d"
 
-#: neutron/openstack/common/service.py:390
+#: neutron/openstack/common/service.py:398
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr "捕获到 %s，正在停止子代"
 
-#: neutron/openstack/common/service.py:399
+#: neutron/openstack/common/service.py:413
 msgid "Wait called after thread killed. Cleaning up."
 msgstr "线程结束，正在清理"
 
-#: neutron/openstack/common/service.py:415
+#: neutron/openstack/common/service.py:429
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "正在等待 %d 个子代退出"
@@ -725,7 +727,7 @@ msgstr "端口 %s 被同时删除"
 msgid "Subnet %s was deleted concurrently"
 msgstr "子网 %s 同时被删除 "
 
-#: neutron/plugins/ml2/plugin.py:1336
+#: neutron/plugins/ml2/plugin.py:1352
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -753,12 +755,12 @@ msgstr "完成L2插件模块初始化"
 msgid "%(type)s ID ranges: %(range)s"
 msgstr "%(type)s ID 范围: %(range)s"
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:99
+#: neutron/plugins/ml2/drivers/type_vlan.py:97
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "网络 VLAN 范围：%s"
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:166
+#: neutron/plugins/ml2/drivers/type_vlan.py:164
 msgid "VlanTypeDriver initialization complete"
 msgstr "Vlan类型驱动初始化完成"
 

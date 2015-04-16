@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev296\n"
+"Project-Id-Version: neutron 2015.2.dev68\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-09 06:58+0000\n"
+"POT-Creation-Date: 2015-04-16 06:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -431,19 +431,19 @@ msgstr ""
 msgid "Iptables mangle mark used to mark ingress from external network"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:36
+#: neutron/agent/l3/ha.py:35
 msgid "Location to store keepalived/conntrackd config files"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:41
+#: neutron/agent/l3/ha.py:40
 msgid "VRRP authentication type"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:43
+#: neutron/agent/l3/ha.py:42
 msgid "VRRP authentication password"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:47
+#: neutron/agent/l3/ha.py:46
 msgid "The advertisement interval in seconds"
 msgstr ""
 
@@ -614,7 +614,7 @@ msgstr ""
 msgid "ip link capability %(capability)s is not supported"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:200
+#: neutron/agent/linux/iptables_manager.py:202
 #, python-format
 msgid "Unknown chain: %r"
 msgstr ""
@@ -752,7 +752,9 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/metadata/config.py:126
-msgid "Number of separate worker processes for metadata server"
+msgid ""
+"Number of separate worker processes for metadata server (defaults to half"
+" of the number of CPUs)"
 msgstr ""
 
 #: neutron/agent/metadata/config.py:130
@@ -803,9 +805,22 @@ msgstr ""
 msgid "The connection string for the native OVSDB backend"
 msgstr ""
 
-#: neutron/agent/ovsdb/native/commands.py:29
+#: neutron/agent/ovsdb/native/idlutils.py:48
 #, python-format
-msgid "Table %(table)s has no row with %(col)s=%(match)s"
+msgid "Cannot find %(table)s with %(col)s=%(match)s"
+msgstr ""
+
+#: neutron/agent/ovsdb/native/idlutils.py:78
+#, python-format
+msgid "Table %s can only be queried by UUID"
+msgstr ""
+
+#: neutron/agent/ovsdb/native/idlutils.py:80
+msgid "'.' searches are not implemented"
+msgstr ""
+
+#: neutron/agent/ovsdb/native/idlutils.py:85
+msgid "record"
 msgstr ""
 
 #: neutron/agent/windows/utils.py:54
@@ -1828,34 +1843,34 @@ msgstr ""
 msgid "Bad prefix type for generate IPv6 address by EUI-64: %s"
 msgstr ""
 
-#: neutron/common/utils.py:203
+#: neutron/common/utils.py:202
 #: neutron/plugins/sriovnicagent/common/config.py:36
 #, python-format
 msgid "Invalid mapping: '%s'"
 msgstr ""
 
-#: neutron/common/utils.py:206
+#: neutron/common/utils.py:205
 #: neutron/plugins/sriovnicagent/common/config.py:39
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr ""
 
-#: neutron/common/utils.py:209
+#: neutron/common/utils.py:208
 #, python-format
 msgid "Missing value in mapping: '%s'"
 msgstr ""
 
-#: neutron/common/utils.py:211
+#: neutron/common/utils.py:210
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
-#: neutron/common/utils.py:214
+#: neutron/common/utils.py:213
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
-#: neutron/common/utils.py:420
+#: neutron/common/utils.py:407
 msgid "Illegal IP version number"
 msgstr ""
 
@@ -1932,30 +1947,30 @@ msgstr ""
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:615
+#: neutron/db/db_base_plugin_v2.py:621
 msgid "0 is not allowed as CIDR prefix length"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:625
+#: neutron/db/db_base_plugin_v2.py:631
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:710 neutron/db/db_base_plugin_v2.py:714
+#: neutron/db/db_base_plugin_v2.py:716 neutron/db/db_base_plugin_v2.py:720
 #, python-format
 msgid "Invalid route: %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:792
+#: neutron/db/db_base_plugin_v2.py:798
 #, python-format
 msgid ""
 "Invalid CIDR %s for IPv6 address mode. OpenStack uses the EUI-64 address "
 "format, which requires the prefix to be /64."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:800
+#: neutron/db/db_base_plugin_v2.py:806
 #, python-format
 msgid ""
 "ipv6_ra_mode set to '%(ra_mode)s' with ipv6_address_mode set to "
@@ -1963,68 +1978,68 @@ msgid ""
 "the same value"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:808
+#: neutron/db/db_base_plugin_v2.py:814
 msgid ""
 "ipv6_ra_mode or ipv6_address_mode cannot be set when enable_dhcp is set "
 "to False."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:814
+#: neutron/db/db_base_plugin_v2.py:820
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1030
+#: neutron/db/db_base_plugin_v2.py:1036
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1054
+#: neutron/db/db_base_plugin_v2.py:1060
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1074 neutron/db/db_base_plugin_v2.py:1088
+#: neutron/db/db_base_plugin_v2.py:1080 neutron/db/db_base_plugin_v2.py:1094
 #: neutron/plugins/opencontrail/contrail_plugin.py:312
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1081
+#: neutron/db/db_base_plugin_v2.py:1087
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1097
+#: neutron/db/db_base_plugin_v2.py:1103
 msgid "ipv6_ra_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1101
+#: neutron/db/db_base_plugin_v2.py:1107
 msgid "ipv6_address_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1234
+#: neutron/db/db_base_plugin_v2.py:1240
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1314
+#: neutron/db/db_base_plugin_v2.py:1320
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1331
+#: neutron/db/db_base_plugin_v2.py:1337
 msgid "cidr and prefixlen must not be supplied together"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1342
+#: neutron/db/db_base_plugin_v2.py:1348
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1593
+#: neutron/db/db_base_plugin_v2.py:1645
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1660
+#: neutron/db/db_base_plugin_v2.py:1712
 msgid "Subnet pool has existing allocations"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1667
+#: neutron/db/db_base_plugin_v2.py:1719
 msgid "mac address update"
 msgstr ""
 
@@ -2276,57 +2291,57 @@ msgstr ""
 msgid "Package neutron-%s not installed"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:91
+#: neutron/db/migration/migrate_to_ml2.py:90
 msgid "Missing version in alembic_versions table"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:93
+#: neutron/db/migration/migrate_to_ml2.py:92
 #, python-format
 msgid "Multiple versions in alembic_versions table: %s"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:97
+#: neutron/db/migration/migrate_to_ml2.py:96
 #, python-format
 msgid ""
 "Unsupported database schema %(current)s. Please migrate your database to "
 "one of following versions: %(supported)s"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:447
+#: neutron/db/migration/migrate_to_ml2.py:446
 #, python-format
 msgid "Unknown tunnel type: %s"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:481
+#: neutron/db/migration/migrate_to_ml2.py:480
 msgid "The plugin type whose database will be migrated"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:484
+#: neutron/db/migration/migrate_to_ml2.py:483
 msgid "The connection url for the target db"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:487
+#: neutron/db/migration/migrate_to_ml2.py:486
 #, python-format
 msgid "The %s tunnel type to migrate from"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:490
+#: neutron/db/migration/migrate_to_ml2.py:489
 #: neutron/plugins/openvswitch/common/config.py:65
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:493
+#: neutron/db/migration/migrate_to_ml2.py:492
 msgid "Retain the old plugin's tables"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:499
+#: neutron/db/migration/migrate_to_ml2.py:498
 #, python-format
 msgid ""
 "Tunnel args (tunnel-type and vxlan-udp-port) are not valid for the %s "
 "plugin"
 msgstr ""
 
-#: neutron/db/migration/migrate_to_ml2.py:506
+#: neutron/db/migration/migrate_to_ml2.py:505
 #, python-format
 msgid ""
 "Support for migrating %(plugin)s for release %(release)s is not yet "
@@ -3291,98 +3306,98 @@ msgstr ""
 msgid "Some config files were not parsed properly"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:597
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:598
 #, python-format
 msgid "Unreasonable vxlan ID range %(vxlan_min)s - %(vxlan_max)s"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:893
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:947
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:894
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:948
 msgid "Invalid profile type"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1139
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1140
 msgid "segment_range not required for TRUNK"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1145
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1146
 msgid "multicast_ip_range not required"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1274
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1275
 msgid "Invalid segment range. example range: 500-550"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1287
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1288
 msgid "Invalid multicast ip address range. example range: 224.1.1.1-224.1.1.10"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1294
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1295
 #, python-format
 msgid "%s is not a valid multicast ip address"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1298
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1299
 #, python-format
 msgid "%s is reserved multicast ip address"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1302
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1303
 #, python-format
 msgid "%s is not a valid ip address"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1306
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1307
 #, python-format
 msgid ""
 "Invalid multicast IP range '%(min_ip)s-%(max_ip)s': Range should be from "
 "low address to high address"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1319
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1320
 msgid "Arguments segment_type missing for network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1328
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1329
 msgid "segment_type should either be vlan, overlay, multi-segment or trunk"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1334
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1335
 msgid "Argument physical_network missing for network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1340
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1341
 msgid "segment_range not required for trunk"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1346
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1347
 msgid "Argument sub_type missing for network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1353
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1354
 msgid "Argument segment_range missing for network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1364
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1365
 msgid "Argument multicast_ip_range missing for VXLAN multicast network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1392
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1393
 #, python-format
 msgid "Segment range is invalid, select from %(min)s-%(nmin)s, %(nmax)s-%(max)s"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1410
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1411
 #, python-format
 msgid "segment range is invalid. Valid range is : %(min)s-%(max)s"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1424
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1425
 #, python-format
 msgid "NetworkProfile name %s already exists"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1441
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1442
 msgid "Segment range overlaps with another profile"
 msgstr ""
 
@@ -3483,21 +3498,21 @@ msgstr ""
 msgid "Cannot delete network '%s' that is a member of a multi-segment network"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:33
+#: neutron/plugins/common/utils.py:44
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:38
+#: neutron/plugins/common/utils.py:49
 msgid "End of tunnel range is less than start of tunnel range"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:48
+#: neutron/plugins/common/utils.py:59
 #, python-format
 msgid "%s is not a valid VLAN tag"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:52
+#: neutron/plugins/common/utils.py:63
 msgid "End of VLAN range is less than start of VLAN range"
 msgstr ""
 
@@ -4050,7 +4065,7 @@ msgstr ""
 msgid "Network type value '%s' not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:39
+#: neutron/plugins/ml2/drivers/type_vlan.py:37
 msgid ""
 "List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network> "
 "specifying physical_network names usable for VLAN provider and tenant "
@@ -4058,32 +4073,32 @@ msgid ""
 " to tenant networks."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:176
+#: neutron/plugins/ml2/drivers/type_vlan.py:174
 #, python-format
 msgid "physical_network '%s' unknown  for VLAN provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:181
+#: neutron/plugins/ml2/drivers/type_vlan.py:179
 #, python-format
 msgid "segmentation_id out of range (%(min)s through %(max)s)"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:187
+#: neutron/plugins/ml2/drivers/type_vlan.py:185
 msgid "segmentation_id requires physical_network for VLAN provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:195
+#: neutron/plugins/ml2/drivers/type_vlan.py:193
 #, python-format
 msgid "%s prohibited for VLAN provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:38
+#: neutron/plugins/ml2/drivers/type_vxlan.py:35
 msgid ""
 "Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
 "VXLAN VNI IDs that are available for tenant network allocation"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:42
+#: neutron/plugins/ml2/drivers/type_vxlan.py:39
 msgid "Multicast group for VXLAN. If unset, disables VXLAN multicast mode."
 msgstr ""
 
@@ -5027,8 +5042,8 @@ msgstr ""
 msgid "Keepalived didn't respawn"
 msgstr ""
 
-#: neutron/tests/unit/agent/linux/test_iptables_manager.py:842
-#: neutron/tests/unit/agent/linux/test_iptables_manager.py:876
+#: neutron/tests/unit/agent/linux/test_iptables_manager.py:839
+#: neutron/tests/unit/agent/linux/test_iptables_manager.py:873
 #, python-format
 msgid ""
 "IPTablesManager.apply failed to apply the following set of iptables "
@@ -5047,12 +5062,12 @@ msgid ""
 "operation."
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:310
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:349
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:311
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:350
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""
@@ -5084,8 +5099,8 @@ msgstr ""
 msgid "Adds test attributes to core resources."
 msgstr ""
 
-#: neutron/tests/unit/plugins/openvswitch/agent/test_ovs_neutron_agent.py:961
-#: neutron/tests/unit/plugins/openvswitch/agent/test_ovs_neutron_agent.py:978
+#: neutron/tests/unit/plugins/openvswitch/agent/test_ovs_neutron_agent.py:962
+#: neutron/tests/unit/plugins/openvswitch/agent/test_ovs_neutron_agent.py:979
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""

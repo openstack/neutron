@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.1.dev296\n"
+"Project-Id-Version: neutron 2015.2.dev68\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-09 06:58+0000\n"
+"POT-Creation-Date: 2015-04-16 06:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -113,7 +113,7 @@ msgstr ""
 msgid "Network %s info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:577 neutron/agent/l3/agent.py:606
+#: neutron/agent/dhcp/agent.py:577 neutron/agent/l3/agent.py:604
 #: neutron/agent/metadata/agent.py:311
 #: neutron/plugins/hyperv/agent/l2_agent.py:94
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:108
@@ -124,7 +124,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:172 neutron/tests/unit/agent/l3/test_agent.py:2084
+#: neutron/agent/l3/agent.py:172 neutron/tests/unit/agent/l3/test_agent.py:2086
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
@@ -300,11 +300,11 @@ msgstr ""
 msgid "Unable to parse route \"%s\""
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:392
+#: neutron/agent/linux/iptables_manager.py:393
 msgid "Failure applying iptables rules"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:470
+#: neutron/agent/linux/iptables_manager.py:471
 #, python-format
 msgid ""
 "IPTablesManager.apply failed to apply the following set of iptables "
@@ -327,7 +327,7 @@ msgstr ""
 msgid "Unexpected error."
 msgstr ""
 
-#: neutron/agent/ovsdb/impl_idl.py:106
+#: neutron/agent/ovsdb/impl_idl.py:104
 #, python-format
 msgid "OVSDB Error: %s"
 msgstr ""
@@ -342,21 +342,21 @@ msgstr ""
 msgid "Could not parse: %s"
 msgstr ""
 
-#: neutron/agent/ovsdb/native/commands.py:45
+#: neutron/agent/ovsdb/native/commands.py:40
 msgid "Error executing command"
 msgstr ""
 
-#: neutron/agent/ovsdb/native/commands.py:111
+#: neutron/agent/ovsdb/native/commands.py:92
 #, python-format
 msgid "Bridge %s does not exist"
 msgstr ""
 
-#: neutron/agent/ovsdb/native/commands.py:313
+#: neutron/agent/ovsdb/native/commands.py:296
 #, python-format
 msgid "Port %s does not exist"
 msgstr ""
 
-#: neutron/agent/ovsdb/native/commands.py:323
+#: neutron/agent/ovsdb/native/commands.py:307
 #, python-format
 msgid "Port %(port)s does not exist on %(bridge)s!"
 msgstr ""
@@ -500,24 +500,33 @@ msgid ""
 "package is installed. Error: %s"
 msgstr ""
 
+#: neutron/db/agents_db.py:307
+#, python-format
+msgid ""
+"Message received from the host: %(host)s during the registration of "
+"%(agent_name)s has a timestamp: %(agent_time)s. This differs from the "
+"current server timestamp: %(serv_time)s by more than the threshold agent "
+"downtime: %(threshold)s."
+msgstr ""
+
 #: neutron/db/agentschedulers_db.py:222
 #, python-format
 msgid "Failed to schedule network %s"
 msgstr ""
 
-#: neutron/db/agentschedulers_db.py:289
+#: neutron/db/agentschedulers_db.py:295
 #, python-format
 msgid ""
 "Unexpected exception occurred while removing network %(net)s from agent "
 "%(agent)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:931 neutron/plugins/ml2/plugin.py:559
+#: neutron/db/db_base_plugin_v2.py:937 neutron/plugins/ml2/plugin.py:559
 #, python-format
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1699
+#: neutron/db/db_base_plugin_v2.py:1751
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr ""
@@ -589,7 +598,7 @@ msgstr ""
 msgid "No handler for matches of kind %s"
 msgstr ""
 
-#: neutron/openstack/common/service.py:268
+#: neutron/openstack/common/service.py:276
 msgid "Unhandled exception"
 msgstr ""
 
@@ -741,7 +750,7 @@ msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 
 #: neutron/plugins/ml2/db.py:242 neutron/plugins/ml2/db.py:327
-#: neutron/plugins/ml2/plugin.py:1310
+#: neutron/plugins/ml2/plugin.py:1326
 #, python-format
 msgid "Multiple ports have port_id starting with %s"
 msgstr ""
@@ -851,41 +860,41 @@ msgstr ""
 msgid "mechanism_manager.create_subnet_postcommit failed, deleting subnet '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:908
+#: neutron/plugins/ml2/plugin.py:924
 #, python-format
 msgid "Exception deleting fixed_ip from port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:917
+#: neutron/plugins/ml2/plugin.py:933
 msgid "mechanism_manager.delete_subnet_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:982
+#: neutron/plugins/ml2/plugin.py:998
 #, python-format
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:994
+#: neutron/plugins/ml2/plugin.py:1010
 #, python-format
 msgid "_bind_port_if_needed failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1024
+#: neutron/plugins/ml2/plugin.py:1040
 #, python-format
 msgid "_bind_port_if_needed failed. Deleting all ports from create bulk '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1169
+#: neutron/plugins/ml2/plugin.py:1185
 #, python-format
 msgid "No Host supplied to bind DVR Port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1291
+#: neutron/plugins/ml2/plugin.py:1307
 #, python-format
 msgid "mechanism_manager.delete_port_postcommit failed for port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1323
+#: neutron/plugins/ml2/plugin.py:1339
 #, python-format
 msgid "Binding info for DVR port %s not found"
 msgstr ""
@@ -899,15 +908,15 @@ msgstr ""
 msgid "Skipping unreasonable gre ID range %(tun_min)s:%(tun_max)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:96
+#: neutron/plugins/ml2/drivers/type_vlan.py:94
 msgid "Failed to parse network_vlan_ranges. Service terminated!"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:88
+#: neutron/plugins/ml2/drivers/type_vxlan.py:85
 msgid "Failed to parse vni_ranges. Service terminated!"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:98
+#: neutron/plugins/ml2/drivers/type_vxlan.py:95
 #, python-format
 msgid "Skipping unreasonable VXLAN VNI range %(tun_min)s:%(tun_max)s"
 msgstr ""
@@ -1172,7 +1181,7 @@ msgstr ""
 msgid "Agent Initialization Failed"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:287
+#: neutron/scheduler/l3_agent_scheduler.py:288
 #, python-format
 msgid "Not enough candidates, a HA router needs at least %s agents"
 msgstr ""
