@@ -38,7 +38,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.callbacks import events
-from neutron.callbacks import manager
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import config as common_config
@@ -64,12 +63,6 @@ class L3AgentTestFramework(base.BaseLinuxTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
         mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
-
-        # TODO(pcm): Move this to BaseTestCase, if we find that more tests
-        # use this mechanism.
-        self._callback_manager = manager.CallbacksManager()
-        mock.patch.object(registry, '_get_callback_manager',
-                          return_value=self._callback_manager).start()
         self.agent = self._configure_agent('agent1')
 
     def _get_config_opts(self):
