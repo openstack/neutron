@@ -388,7 +388,8 @@ class OVSBridge(BaseOVS):
 
         """
         port_names = self.get_port_name_list()
-        cmd = self.ovsdb.db_list('Port', port_names, columns=['name', 'tag'])
+        cmd = self.ovsdb.db_list('Port', port_names, columns=['name', 'tag'],
+                                 if_exists=True)
         results = cmd.execute(check_error=True)
         return {p['name']: p['tag'] for p in results}
 
