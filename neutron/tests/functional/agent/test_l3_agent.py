@@ -60,7 +60,7 @@ def get_ovs_bridge(br_name):
     return ovs_lib.OVSBridge(br_name)
 
 
-class L3AgentTestFramework(base.BaseOVSLinuxTestCase):
+class L3AgentTestFramework(base.BaseLinuxTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
         mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
