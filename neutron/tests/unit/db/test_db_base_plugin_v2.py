@@ -31,6 +31,8 @@ from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import router
+from neutron.callbacks import exceptions
+from neutron.callbacks import registry
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -4608,6 +4610,35 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+
+    def test_delete_subnet_with_callback(self):
+        with contextlib.nested(
+            self.subnet(),
+            mock.patch.object(registry, 'notify')) as (subnet, notify):
+
+            errors = [
+                exceptions.NotificationError(
+                    'fake_id', n_exc.NeutronException()),
+            ]
+            notify.side_effect = [
+                exceptions.CallbackFailure(errors=errors), None
+            ]
+
+            # Make sure the delete request fails
+            delete_request = self.new_delete_request('subnets',
+                                                     subnet['subnet']['id'])
+            delete_response = delete_request.get_response(self.api)
+
+            self.assertTrue('NeutronError' in delete_response.json)
+            self.assertEqual('SubnetInUse',
+                             delete_response.json['NeutronError']['type'])
+
+            # Make sure the subnet wasn't deleted
+            list_request = self.new_list_request(
+                'subnets', params="id=%s" % subnet['subnet']['id'])
+            list_response = list_request.get_response(self.api)
+            self.assertEqual(subnet['subnet']['id'],
+                             list_response.json['subnets'][0]['id'])
 
     def _helper_test_validate_subnet(self, option, exception):
         cfg.CONF.set_override(option, 0)

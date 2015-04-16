@@ -119,7 +119,13 @@ class NetworkInUse(InUse):
 
 class SubnetInUse(InUse):
     message = _("Unable to complete operation on subnet %(subnet_id)s. "
-                "One or more ports have an IP allocation from this subnet.")
+                "%(reason)s")
+
+    def __init__(self, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs['reason'] = _("One or more ports have an IP allocation "
+                                 "from this subnet.")
+        super(SubnetInUse, self).__init__(**kwargs)
 
 
 class PortInUse(InUse):

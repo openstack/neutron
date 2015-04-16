@@ -900,6 +900,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                             raise os_db_exception.RetryRequest(
                                 exc.SubnetInUse(subnet_id=id))
 
+                db_base_plugin_v2._check_subnet_not_used(context, id)
+
                 # If allocated is None, then all the IPAllocation were
                 # correctly deleted during the previous pass.
                 if not allocated:

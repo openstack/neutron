@@ -25,6 +25,10 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import exceptions
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -54,6 +58,15 @@ LOG = logging.getLogger(__name__)
 # with these owners, it will allow subnet deletion to proceed with the
 # IP allocations being cleaned up by cascade.
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
+
+
+def _check_subnet_not_used(context, subnet_id):
+    try:
+        kwargs = {'context': context, 'subnet_id': subnet_id}
+        registry.notify(
+            resources.SUBNET, events.BEFORE_DELETE, None, **kwargs)
+    except exceptions.CallbackFailure as e:
+        raise n_exc.SubnetInUse(subnet_id=subnet_id, reason=e)
 
 
 class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
@@ -1572,6 +1585,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     def delete_subnet(self, context, id):
         with context.session.begin(subtransactions=True):
             subnet = self._get_subnet(context, id)
+
+            # Make sure the subnet isn't used by other resources
+            _check_subnet_not_used(context, id)
+
             # Delete all network owned ports
             qry_network_ports = (
                 context.session.query(models_v2.IPAllocation).
