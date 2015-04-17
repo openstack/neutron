@@ -19,6 +19,7 @@ import mock
 from neutron.common import constants as l3_const
 from neutron.common import exceptions
 from neutron import context
+from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron import manager
 from neutron.openstack.common import uuidutils
@@ -45,6 +46,19 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             router['distributed'] = distributed
         result = self._create_router(router)
         self.assertEqual(expected, result.extra_attributes['distributed'])
+
+    def test_router_id_query(self):
+        # need to create an object that has the common db method required
+        class DVRwithCommon(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
+                            common_db_mixin.CommonDbMixin):
+            pass
+        self.mixin = DVRwithCommon()
+        routers = [self._create_router({'name': '%s' % x,
+                                        'admin_state_up': True})
+                   for x in range(10)]
+        expected = [router['id'] for router in routers]
+        router_ids = self.mixin._get_router_ids(self.ctx)
+        self.assertEqual(sorted(expected), sorted(router_ids))
 
     def test_create_router_db_default(self):
         self._test__create_router_db(expected=False)

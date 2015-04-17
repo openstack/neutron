@@ -490,13 +490,17 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if ports:
             return ports[0]
 
+    def _get_router_ids(self, context):
+        """Function to retrieve router IDs for a context without joins"""
+        query = self._model_query(context, l3_db.Router.id)
+        return [row[0] for row in query]
+
     def _check_fips_availability_on_host_ext_net(
         self, context, host_id, fip_ext_net_id):
         """Query all floating_ips and filter on host and external net."""
         fip_count_on_host = 0
         with context.session.begin(subtransactions=True):
-            routers = self._get_sync_routers(context, router_ids=None)
-            router_ids = [router['id'] for router in routers]
+            router_ids = self._get_router_ids(context)
             floating_ips = self._get_sync_floating_ips(context, router_ids)
             # Check for the active floatingip in the host
             for fip in floating_ips:
