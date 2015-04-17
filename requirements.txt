@@ -6,6 +6,7 @@ pbr>=0.11,<2.0
 Paste
 PasteDeploy>=1.5.0
 Routes>=1.12.3,!=2.0
+debtcollector>=0.3.0 # Apache-2.0
 eventlet>=0.17.3
 greenlet>=0.3.2
 httplib2>=0.7.5

@@ -436,12 +436,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4, enable_dhcp=True,
                      dns_nameservers=None, host_routes=None, shared=None,
-                     ipv6_ra_mode=None, ipv6_address_mode=None):
+                     ipv6_ra_mode=None, ipv6_address_mode=None,
+                     tenant_id=None, set_context=False):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
                                   gateway_ip=gateway,
-                                  tenant_id=network['network']['tenant_id'],
+                                  tenant_id=(tenant_id or
+                                             network['network']['tenant_id']),
                                   allocation_pools=allocation_pools,
                                   ip_version=ip_version,
                                   enable_dhcp=enable_dhcp,
@@ -449,7 +451,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   host_routes=host_routes,
                                   shared=shared,
                                   ipv6_ra_mode=ipv6_ra_mode,
-                                  ipv6_address_mode=ipv6_address_mode)
+                                  ipv6_address_mode=ipv6_address_mode,
+                                  set_context=set_context)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= webob.exc.HTTPClientError.code:
@@ -583,7 +586,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                host_routes=None,
                shared=None,
                ipv6_ra_mode=None,
-               ipv6_address_mode=None):
+               ipv6_address_mode=None,
+               tenant_id=None,
+               set_context=False):
         with optional_ctx(network, self.network) as network_to_use:
             subnet = self._make_subnet(fmt or self.fmt,
                                        network_to_use,
@@ -596,7 +601,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                        host_routes,
                                        shared=shared,
                                        ipv6_ra_mode=ipv6_ra_mode,
-                                       ipv6_address_mode=ipv6_address_mode)
+                                       ipv6_address_mode=ipv6_address_mode,
+                                       tenant_id=tenant_id,
+                                       set_context=set_context)
             yield subnet
 
     @contextlib.contextmanager
@@ -3664,7 +3671,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def _test_validate_subnet_ipv6_modes(self, cur_subnet=None,
                                          expect_success=True, **modes):
         plugin = manager.NeutronManager.get_plugin()
-        ctx = context.get_admin_context(load_admin_roles=False)
+        ctx = context.get_admin_context()
         new_subnet = {'ip_version': 6,
                       'cidr': 'fe80::/64',
                       'enable_dhcp': True,
@@ -4579,8 +4586,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             plugin = manager.NeutronManager.get_plugin()
             e = self.assertRaises(exception,
                                   plugin._validate_subnet,
-                                  context.get_admin_context(
-                                      load_admin_roles=False),
+                                  context.get_admin_context(),
                                   subnet)
             self.assertThat(
                 str(e),
