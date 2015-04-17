@@ -51,6 +51,15 @@ ml2_opts = [
                        "<physnet>:<mtu val>. This mapping allows "
                        "specifying a physical network MTU value that "
                        "differs from the default segment_mtu value.")),
+    cfg.StrOpt('external_network_type',
+               help=_("Default network type for external networks when no "
+                      "provider attributes are specified. By default it is "
+                      "None, which means that if provider attributes are not "
+                      "specified while creating external networks then they "
+                      "will have the same type as tenant networks. Allowed "
+                      "values for external_network_type config option depend "
+                      "on the network type values configured in type_drivers "
+                      "config option."))
 ]
 
 
