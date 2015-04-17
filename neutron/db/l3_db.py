@@ -64,7 +64,8 @@ class RouterPort(model_base.BASEV2):
     port_type = sa.Column(sa.String(255))
     port = orm.relationship(
         models_v2.Port,
-        backref=orm.backref('routerport', uselist=False, cascade="all,delete"))
+        backref=orm.backref('routerport', uselist=False, cascade="all,delete"),
+        lazy='joined')
 
 
 class Router(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
