@@ -82,7 +82,8 @@ class L3RpcCallback(n_rpc.RpcCallback):
             self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             self._ensure_host_set_on_ports(context, host, routers)
         LOG.debug(_("Routers returned to l3 agent:\n %s"),
-                  jsonutils.dumps(routers, indent=5))
+                  utils.DelayedStringRenderer(jsonutils.dumps,
+                                              routers, indent=5))
         return routers
 
     def _ensure_host_set_on_ports(self, context, host, routers):
