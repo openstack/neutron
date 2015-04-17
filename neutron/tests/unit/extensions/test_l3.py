@@ -313,19 +313,6 @@ class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
             {l3_constants.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
 
 
-class L3NATdbonlyMixinTestCase(base.BaseTestCase):
-
-    def setUp(self):
-        super(L3NATdbonlyMixinTestCase, self).setUp()
-        self.mixin = l3_db.L3_NAT_dbonly_mixin()
-
-    def test_build_routers_list_with_gw_port_mismatch(self):
-        routers = [{'gw_port_id': 'foo_gw_port_id', 'id': 'foo_router_id'}]
-        gw_ports = {}
-        routers = self.mixin._build_routers_list(mock.ANY, routers, gw_ports)
-        self.assertIsNone(routers[0].get('gw_port'))
-
-
 class L3NatTestCaseMixin(object):
 
     def _create_router(self, fmt, tenant_id, name=None,
