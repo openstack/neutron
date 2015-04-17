@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import collections
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -358,9 +359,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             l3_db.RouterPort.router_id.in_(router_ids),
             l3_db.RouterPort.port_type == DEVICE_OWNER_DVR_SNAT
         )
-
-        interfaces = [self._core_plugin._make_port_dict(rp.port, None)
-                      for rp in qry]
+        interfaces = collections.defaultdict(list)
+        for rp in qry:
+            interfaces[rp.router_id].append(
+                self._core_plugin._make_port_dict(rp.port, None))
         LOG.debug("Return the SNAT ports: %s", interfaces)
         return interfaces
 
@@ -395,12 +397,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _process_routers(self, context, routers):
         routers_dict = {}
+        snat_intfs_by_router_id = self._get_snat_sync_interfaces(
+            context, [r['id'] for r in routers])
         for router in routers:
             routers_dict[router['id']] = router
-            router_ids = [router['id']]
             if router['gw_port_id']:
-                snat_router_intfs = self._get_snat_sync_interfaces(context,
-                                                                  router_ids)
+                snat_router_intfs = snat_intfs_by_router_id[router['id']]
                 LOG.debug("SNAT ports returned: %s ", snat_router_intfs)
                 router[SNAT_ROUTER_INTF_KEY] = snat_router_intfs
         return routers_dict
