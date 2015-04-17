@@ -23,6 +23,13 @@ from sqlalchemy import event
 from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
 
+try:
+    # NOTE(mriedem): This is to register the DB2 alembic code which
+    # is an optional runtime dependency.
+    from ibm_db_alembic.ibm_db import IbmDbImpl  # noqa # pylint: disable=unused-import
+except ImportError:
+    pass
+
 
 MYSQL_ENGINE = None
 
