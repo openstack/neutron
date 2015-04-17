@@ -18,21 +18,17 @@ environmental requirements to the functional path are marked for
 discovery.
 """
 
-import unittest
+import os.path
 
 
-def _discover(loader, path, pattern):
-    return loader.discover(path, pattern=pattern, top_level_dir=".")
-
-
-def load_tests(_, tests, pattern):
-    suite = unittest.TestSuite()
-    suite.addTests(tests)
-
-    loader = unittest.loader.TestLoader()
-    suite.addTests(_discover(loader, "./neutron/tests/functional", pattern))
-    suite.addTests(_discover(loader, "./neutron/tests/fullstack", pattern))
-    suite.addTests(_discover(loader, "./neutron/tests/retargetable",
-                             pattern))
-
-    return suite
+def load_tests(loader, tests, pattern):
+    this_dir = os.path.dirname(__file__)
+    parent_dir = os.path.dirname(this_dir)
+    target_dirs = [
+        this_dir,
+        os.path.join(parent_dir, 'retargetable'),
+    ]
+    for start_dir in target_dirs:
+        new_tests = loader.discover(start_dir=start_dir, pattern=pattern)
+        tests.addTests(new_tests)
+    return tests
