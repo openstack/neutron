@@ -19,9 +19,9 @@ import fixtures
 import netaddr
 import six
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ovs_lib
 from neutron.common import constants as n_const
 from neutron.openstack.common import uuidutils
 from neutron.tests import base as tests_base
