@@ -30,6 +30,7 @@ INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
 EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 
 EXTERNAL_INGRESS_MARK_MASK = '0xffffffff'
+FLOATINGIP_STATUS_NOCHANGE = object()
 
 
 class RouterInfo(object):
@@ -247,6 +248,10 @@ class RouterInfo(object):
                           {'id': fip['id'],
                            'status': fip_statuses.get(fip['id'])})
 
+                # mark the status as not changed. we can't remove it because
+                # that's how the caller determines that it was removed
+                if fip_statuses[fip['id']] == fip['status']:
+                    fip_statuses[fip['id']] = FLOATINGIP_STATUS_NOCHANGE
         fips_to_remove = (
             ip_cidr for ip_cidr in existing_cidrs - new_cidrs
             if common_utils.is_cidr_host(ip_cidr))

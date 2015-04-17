@@ -283,7 +283,8 @@ class TestFloatingIpWithMockDevice(BasicRouterTestCaseFramework):
         fip = {
             'id': fip_id, 'port_id': _uuid(),
             'floating_ip_address': '15.1.2.3',
-            'fixed_ip_address': '192.168.0.2'
+            'fixed_ip_address': '192.168.0.2',
+            'status': 'DOWN'
         }
         ri = self._create_router()
         ri.add_floating_ip = mock.Mock(
