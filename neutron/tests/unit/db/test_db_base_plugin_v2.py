@@ -2730,6 +2730,29 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 res = self.deserialize(self.fmt, req)
                 self.assertEqual(res['network']['admin_state_up'], v[1])
 
+    def test_get_user_allocation_for_dhcp_port_returns_none(self):
+        plugin = manager.NeutronManager.get_plugin()
+        if not hasattr(plugin, '_subnet_get_user_allocation'):
+            return
+        with contextlib.nested(
+            self.network(),
+            self.network()
+        ) as (net, net1):
+            with contextlib.nested(
+                self.subnet(network=net, cidr='10.0.0.0/24'),
+                self.subnet(network=net1, cidr='10.0.1.0/24')
+            ) as (subnet, subnet1):
+                with contextlib.nested(
+                    self.port(subnet=subnet, device_owner='network:dhcp'),
+                    self.port(subnet=subnet1)
+                ) as (p, p2):
+                    # check that user allocations on another network don't
+                    # affect _subnet_get_user_allocation method
+                    res = plugin._subnet_get_user_allocation(
+                        context.get_admin_context(),
+                        subnet['subnet']['id'])
+                    self.assertIsNone(res)
+
 
 class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
