@@ -144,14 +144,19 @@ class PortFixture(fixtures.Fixture):
 class OVSBridgeFixture(fixtures.Fixture):
     """Create an OVS bridge.
 
+    :ivar prefix: bridge name prefix
+    :type prefix: str
     :ivar bridge: created bridge
     :type bridge: OVSBridge
     """
 
+    def __init__(self, prefix=BR_PREFIX):
+        self.prefix = prefix
+
     def setUp(self):
         super(OVSBridgeFixture, self).setUp()
         ovs = ovs_lib.BaseOVS()
-        self.bridge = common_base.create_resource(BR_PREFIX, ovs.add_bridge)
+        self.bridge = common_base.create_resource(self.prefix, ovs.add_bridge)
         self.addCleanup(self.bridge.destroy)
 
 
