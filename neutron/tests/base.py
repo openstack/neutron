@@ -65,8 +65,23 @@ def fake_consume_in_threads(self):
 
 
 def get_rand_name(max_length=None, prefix='test'):
-    name = prefix + str(random.randint(1, 0x7fffffff))
-    return name[:max_length] if max_length is not None else name
+    """Return a random string.
+
+    The string will start with 'prefix' and will be exactly 'max_length'.
+    If 'max_length' is None, then exactly 8 random characters, each
+    hexadecimal, will be added. In case len(prefix) <= len(max_length),
+    ValueError will be raised to indicate the problem.
+    """
+
+    if max_length:
+        length = max_length - len(prefix)
+        if length <= 0:
+            raise ValueError("'max_length' must be bigger than 'len(prefix)'.")
+
+        suffix = ''.join(str(random.randint(0, 9)) for i in range(length))
+    else:
+        suffix = hex(random.randint(0x10000000, 0x7fffffff))[2:]
+    return prefix + suffix
 
 
 def bool_from_env(key, strict=False, default=False):
