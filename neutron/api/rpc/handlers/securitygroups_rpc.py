@@ -14,21 +14,53 @@
 
 import oslo_messaging
 
+from oslo_log import log as logging
+
 from neutron.common import constants
+from neutron.common import rpc as n_rpc
+from neutron.common import topics
+from neutron.i18n import _LW
 from neutron import manager
 
+LOG = logging.getLogger(__name__)
 
-# TODO(amotoki): Move security group RPC API and agent callback
-# from neutron/agent/securitygroups_rpc.py.
+
+class SecurityGroupServerRpcApi(object):
+    """RPC client for security group methods in the plugin.
+
+    This class implements the client side of an rpc interface.  This interface
+    is used by agents to call security group related methods implemented on the
+    plugin side.  The other side of this interface is defined in
+    SecurityGroupServerRpcCallback.  For more information about changing rpc
+    interfaces, see doc/source/devref/rpc_api.rst.
+    """
+    def __init__(self, topic):
+        target = oslo_messaging.Target(
+            topic=topic, version='1.0',
+            namespace=constants.RPC_NAMESPACE_SECGROUP)
+        self.client = n_rpc.get_client(target)
+
+    def security_group_rules_for_devices(self, context, devices):
+        LOG.debug("Get security group rules "
+                  "for devices via rpc %r", devices)
+        cctxt = self.client.prepare(version='1.1')
+        return cctxt.call(context, 'security_group_rules_for_devices',
+                          devices=devices)
+
+    def security_group_info_for_devices(self, context, devices):
+        LOG.debug("Get security group information for devices via rpc %r",
+                  devices)
+        cctxt = self.client.prepare(version='1.2')
+        return cctxt.call(context, 'security_group_info_for_devices',
+                          devices=devices)
 
 
 class SecurityGroupServerRpcCallback(object):
     """Callback for SecurityGroup agent RPC in plugin implementations.
 
     This class implements the server side of an rpc interface.  The client side
-    can be found in neutron.agent.securitygroups_rpc.SecurityGroupServerRpcApi.
-    For more information on changing rpc interfaces, see
-    doc/source/devref/rpc_api.rst.
+    can be found in SecurityGroupServerRpcApi. For more information on changing
+    rpc interfaces, see doc/source/devref/rpc_api.rst.
     """
 
     # API version history:
@@ -80,3 +112,99 @@ class SecurityGroupServerRpcCallback(object):
         devices_info = kwargs.get('devices')
         ports = self._get_devices_info(devices_info)
         return self.plugin.security_group_info_for_ports(context, ports)
+
+
+class SecurityGroupAgentRpcApiMixin(object):
+    """RPC client for security group methods to the agent.
+
+    This class implements the client side of an rpc interface.  This interface
+    is used by plugins to call security group methods implemented on the
+    agent side.  The other side of this interface can be found in
+    SecurityGroupAgentRpcCallbackMixin.  For more information about changing
+    rpc interfaces, see doc/source/devref/rpc_api.rst.
+    """
+
+    # history
+    #   1.1 Support Security Group RPC
+    SG_RPC_VERSION = "1.1"
+
+    def _get_security_group_topic(self):
+        return topics.get_topic_name(self.topic,
+                                     topics.SECURITY_GROUP,
+                                     topics.UPDATE)
+
+    def security_groups_rule_updated(self, context, security_groups):
+        """Notify rule updated security groups."""
+        if not security_groups:
+            return
+        cctxt = self.client.prepare(version=self.SG_RPC_VERSION,
+                                    topic=self._get_security_group_topic(),
+                                    fanout=True)
+        cctxt.cast(context, 'security_groups_rule_updated',
+                   security_groups=security_groups)
+
+    def security_groups_member_updated(self, context, security_groups):
+        """Notify member updated security groups."""
+        if not security_groups:
+            return
+        cctxt = self.client.prepare(version=self.SG_RPC_VERSION,
+                                    topic=self._get_security_group_topic(),
+                                    fanout=True)
+        cctxt.cast(context, 'security_groups_member_updated',
+                   security_groups=security_groups)
+
+    def security_groups_provider_updated(self, context):
+        """Notify provider updated security groups."""
+        cctxt = self.client.prepare(version=self.SG_RPC_VERSION,
+                                    topic=self._get_security_group_topic(),
+                                    fanout=True)
+        cctxt.cast(context, 'security_groups_provider_updated')
+
+
+class SecurityGroupAgentRpcCallbackMixin(object):
+    """A mix-in that enable SecurityGroup support in agent implementations.
+
+    This class implements the server side of an rpc interface.  The client side
+    can be found in SecurityGroupServerRpcApi. For more information on changing
+    rpc interfaces, see doc/source/devref/rpc_api.rst.
+
+    The sg_agent reference implementation is available in neutron/agent
+    """
+    # mix-in object should be have sg_agent
+    sg_agent = None
+
+    def _security_groups_agent_not_set(self):
+        LOG.warning(_LW("Security group agent binding currently not set. "
+                        "This should be set by the end of the init "
+                        "process."))
+
+    def security_groups_rule_updated(self, context, **kwargs):
+        """Callback for security group rule update.
+
+        :param security_groups: list of updated security_groups
+        """
+        security_groups = kwargs.get('security_groups', [])
+        LOG.debug("Security group rule updated on remote: %s",
+                  security_groups)
+        if not self.sg_agent:
+            return self._security_groups_agent_not_set()
+        self.sg_agent.security_groups_rule_updated(security_groups)
+
+    def security_groups_member_updated(self, context, **kwargs):
+        """Callback for security group member update.
+
+        :param security_groups: list of updated security_groups
+        """
+        security_groups = kwargs.get('security_groups', [])
+        LOG.debug("Security group member updated on remote: %s",
+                  security_groups)
+        if not self.sg_agent:
+            return self._security_groups_agent_not_set()
+        self.sg_agent.security_groups_member_updated(security_groups)
+
+    def security_groups_provider_updated(self, context, **kwargs):
+        """Callback for security group provider update."""
+        LOG.debug("Provider rule updated")
+        if not self.sg_agent:
+            return self._security_groups_agent_not_set()
+        self.sg_agent.security_groups_provider_updated()

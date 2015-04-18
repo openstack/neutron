@@ -17,8 +17,8 @@ from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
 
-from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dvr_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources

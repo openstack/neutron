@@ -1084,30 +1084,6 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id2)
 
 
-class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
-    def setUp(self):
-        super(SGAgentRpcCallBackMixinTestCase, self).setUp()
-        self.rpc = sg_rpc.SecurityGroupAgentRpcCallbackMixin()
-        self.rpc.sg_agent = mock.Mock()
-
-    def test_security_groups_rule_updated(self):
-        self.rpc.security_groups_rule_updated(None,
-                                              security_groups=['fake_sgid'])
-        self.rpc.sg_agent.assert_has_calls(
-            [mock.call.security_groups_rule_updated(['fake_sgid'])])
-
-    def test_security_groups_member_updated(self):
-        self.rpc.security_groups_member_updated(None,
-                                                security_groups=['fake_sgid'])
-        self.rpc.sg_agent.assert_has_calls(
-            [mock.call.security_groups_member_updated(['fake_sgid'])])
-
-    def test_security_groups_provider_updated(self):
-        self.rpc.security_groups_provider_updated(None)
-        self.rpc.sg_agent.assert_has_calls(
-            [mock.call.security_groups_provider_updated()])
-
-
 class SecurityGroupAgentRpcTestCaseForNoneDriver(base.BaseTestCase):
     def test_init_firewall_with_none_driver(self):
         set_enable_security_groups(False)
@@ -1596,25 +1572,6 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.refresh_firewall.assert_called_once_with()
         self.assertFalse(self.agent.prepare_devices_filter.called)
-
-
-class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
-    def test_security_group_rules_for_devices(self):
-        rpcapi = sg_rpc.SecurityGroupServerRpcApi('fake_topic')
-
-        with contextlib.nested(
-            mock.patch.object(rpcapi.client, 'call'),
-            mock.patch.object(rpcapi.client, 'prepare'),
-        ) as (
-            rpc_mock, prepare_mock
-        ):
-            prepare_mock.return_value = rpcapi.client
-            rpcapi.security_group_rules_for_devices('context', ['fake_device'])
-
-        rpc_mock.assert_called_once_with(
-                'context',
-                'security_group_rules_for_devices',
-                devices=['fake_device'])
 
 
 class FakeSGNotifierAPI(sg_rpc.SecurityGroupAgentRpcApiMixin):
