@@ -40,15 +40,15 @@ LOG = logging.getLogger(__name__)
 
 
 class Transaction(api.Transaction):
-    def __init__(self, context, api, ovsdb_connection,
+    def __init__(self, api, ovsdb_connection, timeout,
                  check_error=False, log_errors=False):
-        self.context = context
         self.api = api
         self.check_error = check_error
         self.log_errors = log_errors
         self.commands = []
         self.results = Queue.Queue(1)
         self.ovsdb_connection = ovsdb_connection
+        self.timeout = timeout
 
     def add(self, command):
         """Add a command to the transaction
@@ -74,7 +74,7 @@ class Transaction(api.Transaction):
         attempts = 0
         while True:
             elapsed_time = time.time() - start_time
-            if attempts > 0 and elapsed_time > self.context.vsctl_timeout:
+            if attempts > 0 and elapsed_time > self.timeout:
                 raise RuntimeError("OVS transaction timed out")
             attempts += 1
             # TODO(twilson) Make sure we don't loop longer than vsctl_timeout
@@ -97,7 +97,7 @@ class Transaction(api.Transaction):
                     LOG.debug("Lost connection to OVSDB, reconnecting!")
                     self.api.idl.force_reconnect()
                 idlutils.wait_for_change(
-                    self.api.idl, self.context.vsctl_timeout - elapsed_time,
+                    self.api.idl, self.timeout - elapsed_time,
                     seqno)
                 continue
             elif status == txn.ERROR:
@@ -137,7 +137,8 @@ class OvsdbIdl(api.API):
         return self._tables['Open_vSwitch'].rows.values()[0]
 
     def transaction(self, check_error=False, log_errors=True, **kwargs):
-        return Transaction(self.context, self, OvsdbIdl.ovsdb_connection,
+        return Transaction(self, OvsdbIdl.ovsdb_connection,
+                           self.context.vsctl_timeout,
                            check_error, log_errors)
 
     def add_br(self, name, may_exist=True):
