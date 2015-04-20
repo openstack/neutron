@@ -1427,6 +1427,17 @@ tag:tag0,option:router""".lstrip()
                                 float(2.66))
             self.assertTrue(warning.called)
 
+    def test__output_hosts_file_log_only_twice(self):
+        dm = dhcp.Dnsmasq(self.conf, FakeDualStackNetworkSingleDHCP(),
+                          version=dhcp.Dnsmasq.MINIMUM_VERSION)
+        with mock.patch.object(dhcp.LOG, 'process') as process:
+            process.return_value = ('fake_message', {})
+            dm._output_hosts_file()
+        # The method logs twice, at the start of and the end. There should be
+        # no other logs, no matter how many hosts there are to dump in the
+        # file.
+        self.assertEqual(2, process.call_count)
+
     def test_only_populates_dhcp_enabled_subnets(self):
         exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'
         exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
