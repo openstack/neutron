@@ -17,3 +17,4 @@ testscenarios>=0.4
 WebTest>=2.0
 oslotest>=1.5.1  # Apache-2.0
 tempest-lib>=0.5.0
+ddt>=0.7.0
