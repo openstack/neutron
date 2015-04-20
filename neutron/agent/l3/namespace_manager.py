@@ -100,9 +100,10 @@ class NamespaceManager(object):
         :param ns_name: The name of the namespace
         :returns: tuple with prefix and id or None if no prefix matches
         """
-        for prefix in [namespaces.NS_PREFIX, dvr_snat_ns.SNAT_NS_PREFIX]:
-            if ns_name.startswith(prefix):
-                return (prefix, ns_name[len(prefix):])
+        prefix = namespaces.get_prefix_from_ns_name(ns_name)
+        if prefix in (namespaces.NS_PREFIX, dvr_snat_ns.SNAT_NS_PREFIX):
+            identifier = namespaces.get_id_from_ns_name(ns_name)
+            return (prefix, identifier)
 
     def is_managed(self, ns_name):
         """Return True if the namespace name passed belongs to this manager."""
