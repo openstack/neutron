@@ -169,10 +169,12 @@ def condition_match(row, condition):
     elif isinstance(match, list):
         raise NotImplementedError()
     else:
-        if op == '==' and val != match:
-            matched = False
-        elif op == '!=' and val == match:
-            matched = False
+        if op == '=':
+            if val != match:
+                matched = False
+        elif op == '!=':
+            if val == match:
+                matched = False
         else:
             raise NotImplementedError()
     return matched
