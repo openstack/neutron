@@ -141,32 +141,36 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.mechanism_manager.initialize()
 
         self._setup_rpc()
-
-        # REVISIT(rkukura): Use stevedore for these?
-        self.network_scheduler = importutils.import_object(
-            cfg.CONF.network_scheduler_driver
-        )
-
-        self.start_periodic_dhcp_agent_status_check()
+        self._setup_dhcp()
         LOG.info(_LI("Modular L2 Plugin initialization complete"))
 
     def _setup_rpc(self):
+        """Initialize components to support agent communication."""
         self.notifier = rpc.AgentNotifierApi(topics.AGENT)
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
+        self.endpoints = [
+            rpc.RpcCallbacks(self.notifier, self.type_manager),
+            securitygroups_rpc.SecurityGroupServerRpcCallback(),
+            dvr_rpc.DVRServerRpcCallback(),
+            dhcp_rpc.DhcpRpcCallback(),
+            agents_db.AgentExtRpcCallback(),
+            metadata_rpc.MetadataRpcCallback()
+        ]
+
+    def _setup_dhcp(self):
+        """Initialize components to support DHCP."""
+        self.network_scheduler = importutils.import_object(
+            cfg.CONF.network_scheduler_driver
+        )
+        self.start_periodic_dhcp_agent_status_check()
 
     def start_rpc_listeners(self):
-        self.endpoints = [rpc.RpcCallbacks(self.notifier, self.type_manager),
-                          securitygroups_rpc.SecurityGroupServerRpcCallback(),
-                          dvr_rpc.DVRServerRpcCallback(),
-                          dhcp_rpc.DhcpRpcCallback(),
-                          agents_db.AgentExtRpcCallback(),
-                          metadata_rpc.MetadataRpcCallback()]
+        """Start the RPC loop to let the plugin communicate with agents."""
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection(new=True)
-        self.conn.create_consumer(self.topic, self.endpoints,
-                                  fanout=False)
+        self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
         return self.conn.consume_in_threads()
 
     def _filter_nets_provider(self, context, networks, filters):
