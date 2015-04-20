@@ -247,6 +247,12 @@ class HaRouter(router.RouterInfo):
     def remove_floating_ip(self, device, ip_cidr):
         self._remove_vip(ip_cidr)
 
+    def internal_network_updated(self, interface_name, ip_cidrs):
+        self._clear_vips(interface_name)
+        self._disable_ipv6_addressing_on_interface(interface_name)
+        for ip_cidr in ip_cidrs:
+            self._add_vip(ip_cidr, interface_name)
+
     def internal_network_added(self, port):
         port_id = port['id']
         interface_name = self.get_internal_device_name(port_id)
