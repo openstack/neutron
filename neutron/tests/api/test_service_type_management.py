@@ -10,22 +10,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest_lib import decorators
-
 from neutron.tests.api import base
 from neutron.tests.tempest import test
 
 
-class ServiceTypeManagementTestJSON(base.BaseNetworkTest):
+class ServiceTypeManagementTest(base.BaseNetworkTest):
 
     @classmethod
     def resource_setup(cls):
-        super(ServiceTypeManagementTestJSON, cls).resource_setup()
+        super(ServiceTypeManagementTest, cls).resource_setup()
         if not test.is_extension_enabled('service-type', 'network'):
             msg = "Neutron Service Type Management not enabled."
             raise cls.skipException(msg)
 
-    @decorators.skip_because(bug="1400370")
     @test.attr(type='smoke')
     @test.idempotent_id('2cbbeea9-f010-40f6-8df5-4eaa0c918ea6')
     def test_service_provider_list(self):
