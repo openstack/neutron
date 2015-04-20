@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import constants
-from neutron.common import log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import manager
@@ -38,23 +38,23 @@ class DVRServerRpcApi(object):
                                        namespace=constants.RPC_NAMESPACE_DVR)
         self.client = n_rpc.get_client(target)
 
-    @log.log
+    @log_helpers.log_method_call
     def get_dvr_mac_address_by_host(self, context, host):
         cctxt = self.client.prepare()
         return cctxt.call(context, 'get_dvr_mac_address_by_host', host=host)
 
-    @log.log
+    @log_helpers.log_method_call
     def get_dvr_mac_address_list(self, context):
         cctxt = self.client.prepare()
         return cctxt.call(context, 'get_dvr_mac_address_list')
 
-    @log.log
+    @log_helpers.log_method_call
     def get_ports_on_host_by_subnet(self, context, host, subnet):
         cctxt = self.client.prepare()
         return cctxt.call(context, 'get_ports_on_host_by_subnet',
                           host=host, subnet=subnet)
 
-    @log.log
+    @log_helpers.log_method_call
     def get_subnet_for_dvr(self, context, subnet):
         cctxt = self.client.prepare()
         return cctxt.call(context, 'get_subnet_for_dvr', subnet=subnet)

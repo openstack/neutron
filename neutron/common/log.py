@@ -17,7 +17,11 @@ import functools
 
 from oslo_log import log as logging
 
+from neutron.openstack.common import versionutils
 
+
+@versionutils.deprecated(as_of=versionutils.deprecated.LIBERTY,
+                         in_favor_of='oslo_log.helpers.log_method_call')
 def log(method):
     """Decorator helping to log method calls."""
     LOG = logging.getLogger(method.__module__)

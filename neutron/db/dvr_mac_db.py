@@ -15,12 +15,12 @@
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
 from neutron.common import exceptions as q_exc
-from neutron.common import log
 from neutron.common import utils
 from neutron.db import model_base
 from neutron.extensions import dvr as ext_dvr
@@ -123,7 +123,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return {'host': dvr_mac_entry['host'],
                 'mac_address': dvr_mac_entry['mac_address']}
 
-    @log.log
+    @log_helpers.log_method_call
     def get_ports_on_host_by_subnet(self, context, host, subnet):
         """Returns ports of interest, on a given subnet in the input host
 
@@ -154,7 +154,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                    'ports': ports_by_host})
         return ports_by_host
 
-    @log.log
+    @log_helpers.log_method_call
     def get_subnet_for_dvr(self, context, subnet):
         try:
             subnet_info = self.plugin.get_subnet(context, subnet)
