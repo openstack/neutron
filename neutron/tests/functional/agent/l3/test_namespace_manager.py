@@ -46,7 +46,7 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
             namespace.delete()
         except RuntimeError as e:
             # If the namespace didn't exist when delete was attempted, mission
-            # acomplished. Otherwise, re-raise the exception
+            # accomplished. Otherwise, re-raise the exception
             if 'No such file or directory' not in e.message:
                 raise e
 
