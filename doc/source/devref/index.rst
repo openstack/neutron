@@ -31,6 +31,7 @@ Programming HowTos and Tutorials
 
     development.environment
     contribute
+    sub_projects
 
 
 Neutron Internals
