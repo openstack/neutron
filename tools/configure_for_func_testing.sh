@@ -49,8 +49,11 @@ done
 
 # Default to environment variables to permit the gate_hook to override
 # when sourcing.
+VENV=${VENV:-dsvm-functional}
 DEVSTACK_PATH=${DEVSTACK_PATH:-$1}
- # The gate should automatically install dependencies.
+PROJECT_NAME=${PROJECT_NAME:-neutron}
+REPO_BASE=${GATE_DEST:-$(cd $(dirname "$0")/../.. && pwd)}
+# The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
 
 
@@ -64,8 +67,6 @@ set -x
 
 
 function _init {
-    NEUTRON_PATH=${NEUTRON_PATH:-$(cd $(dirname "$0")/.. && pwd)}
-
     # Subsequently-called devstack functions depend on the following variables.
     HOST_IP=127.0.0.1
     FILES=$DEVSTACK_PATH/files
@@ -175,10 +176,9 @@ function _install_agent_deps {
 function _install_rootwrap_sudoers {
     echo_summary "Installing rootwrap sudoers file"
 
-    VENV_NAME=${venv:-dsvm-functional}
-    VENV_PATH=$NEUTRON_PATH/.tox/$VENV_NAME
-    ROOTWRAP_SUDOER_CMD="$VENV_PATH/bin/neutron-rootwrap $VENV_PATH/etc/neutron/rootwrap.conf *"
-    ROOTWRAP_DAEMON_SUDOER_CMD="$VENV_PATH/bin/neutron-rootwrap-daemon $VENV_PATH/etc/neutron/rootwrap.conf"
+    PROJECT_VENV=$REPO_BASE/$PROJECT_NAME/.tox/$VENV
+    ROOTWRAP_SUDOER_CMD="$PROJECT_VENV/bin/neutron-rootwrap $PROJECT_VENV/etc/neutron/rootwrap.conf *"
+    ROOTWRAP_DAEMON_SUDOER_CMD="$PROJECT_VENV/bin/neutron-rootwrap-daemon $PROJECT_VENV/etc/neutron/rootwrap.conf"
     TEMPFILE=$(mktemp)
     cat << EOF > $TEMPFILE
 # A bug in oslo.rootwrap [1] prevents commands executed with 'ip netns
@@ -193,7 +193,7 @@ function _install_rootwrap_sudoers {
 #
 # 1: https://bugs.launchpad.net/oslo.rootwrap/+bug/1417331
 #
-Defaults:$STACK_USER  secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$VENV_PATH/bin"
+Defaults:$STACK_USER  secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PROJECT_VENV/bin"
 $STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD
 $STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_DAEMON_SUDOER_CMD
 EOF
