@@ -1260,7 +1260,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                        s['dns_nameservers'],
                                        s['host_routes'],
                                        s['allocation_pools'])
-        if network.external:
+        if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
                                          subnet['id'],
                                          subnet['network_id'])
@@ -1286,7 +1286,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                        s['dns_nameservers'],
                                        s['host_routes'],
                                        s['allocation_pools'])
-        if network.external:
+        if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
                                          subnet['id'],
                                          subnet['network_id'])
