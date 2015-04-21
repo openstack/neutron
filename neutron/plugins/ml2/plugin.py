@@ -63,7 +63,6 @@ from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as provider
-from neutron.extensions import securitygroup as ext_sg
 from neutron.extensions import vlantransparent
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
@@ -946,7 +945,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                          port_data[psec.PORTSECURITY])
 
         # allowed address pair checks
-        if attributes.is_attr_set(attrs.get(addr_pair.ADDRESS_PAIRS)):
+        if self._check_update_has_allowed_address_pairs(port):
             if not port_security:
                 raise addr_pair.AddressPairAndPortSecurityRequired()
         else:
@@ -955,7 +954,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if port_security:
             self._ensure_default_security_group_on_port(context, port)
-        elif attributes.is_attr_set(attrs.get(ext_sg.SECURITYGROUPS)):
+        elif self._check_update_has_security_groups(port):
             raise psec.PortSecurityAndIPRequiredForSecurityGroups()
 
     def _create_port_db(self, context, port):
