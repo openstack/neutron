@@ -35,6 +35,9 @@ get_rand_name = tests_base.get_rand_name
 
 class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
 
+    def _create_namespace(self, prefix=net_helpers.NS_PREFIX):
+        return self.useFixture(net_helpers.NamespaceFixture(prefix)).ip_wrapper
+
     def create_veth(self):
         return self.useFixture(net_helpers.VethFixture()).ports
 
