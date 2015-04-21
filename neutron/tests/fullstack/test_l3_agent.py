@@ -78,7 +78,10 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
             body={'subnet_id': subnet['subnet']['id']})
 
         router_id = router['router']['id']
-        self._assert_namespace_exists(self._get_namespace(router_id))
+        namespace = "%s@%s" % (
+            self._get_namespace(router_id),
+            self.environment.l3_agent.get_namespace_suffix(), )
+        self._assert_namespace_exists(namespace)
 
         self.client.remove_interface_router(
             router=router['router']['id'],

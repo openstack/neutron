@@ -207,9 +207,13 @@ class L3ConfigFixture(ConfigFixture):
                 'router_delete_namespaces': 'True',
                 'debug': 'True',
                 'verbose': 'True',
+                'test_namespace_suffix': self._generate_namespace_suffix(),
             }
         })
 
     def _generate_external_bridge(self):
         return base.get_rand_name(prefix='br-ex',
                                   max_length=constants.DEVICE_NAME_MAX_LEN)
+
+    def _generate_namespace_suffix(self):
+        return base.get_rand_name(prefix='test')

@@ -14,6 +14,7 @@
 
 from distutils import spawn
 import functools
+import os
 
 import fixtures
 from neutronclient.common import exceptions as nc_exc
@@ -24,6 +25,7 @@ from oslo_utils import timeutils
 
 from neutron.agent.linux import async_process
 from neutron.agent.linux import utils
+from neutron.tests import base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import config_fixtures
 
@@ -188,8 +190,13 @@ class L3AgentFixture(fixtures.Fixture):
 
         self.process_fixture = self.useFixture(ProcessFixture(
             name=self.NEUTRON_L3_AGENT,
-            exec_name=self.NEUTRON_L3_AGENT,
+            exec_name=spawn.find_executable(
+                'l3_agent.py',
+                path=os.path.join(base.ROOTDIR, 'common', 'agents')),
             config_filenames=config_filenames))
 
     def _get_br_ex_name(self):
         return self.plugin_config.DEFAULT.external_network_bridge
+
+    def get_namespace_suffix(self):
+        return self.plugin_config.DEFAULT.test_namespace_suffix
