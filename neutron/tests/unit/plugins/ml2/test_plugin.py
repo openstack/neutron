@@ -266,6 +266,28 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             self.assertEqual(db_api.MAX_RETRIES + 1, f.call_count)
 
 
+class TestMl2NetworksWithVlanTransparencyAndMTU(TestMl2NetworksV2):
+    def setUp(self, plugin=None):
+        config.cfg.CONF.set_override('path_mtu', 1000, group='ml2')
+        config.cfg.CONF.set_override('segment_mtu', 1000, group='ml2')
+        config.cfg.CONF.set_override('advertise_mtu', True)
+        config.cfg.CONF.set_override('vlan_transparent', True)
+        super(TestMl2NetworksWithVlanTransparencyAndMTU, self).setUp(plugin)
+
+    def test_create_network_vlan_transparent_and_mtu(self):
+        data = {'network': {'name': 'net1',
+                            mpnet.SEGMENTS:
+                            [{pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1'}],
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        res = network_req.get_response(self.api)
+        self.assertEqual(201, res.status_int)
+        network = self.deserialize(self.fmt, res)['network']
+        self.assertEqual(network['mtu'], 1000)
+        self.assertIn('vlan_transparent', network)
+
+
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                        Ml2PluginV2TestCase):
     pass
