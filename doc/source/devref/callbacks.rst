@@ -326,9 +326,55 @@ Is the registry thread-safe?
   In this case, chances that things do go badly may be pretty slim. Making the registry
   thread-safe will be considered as a future improvement.
 
-Can I use lambdas or 'closures' as callbacks?
+What kind of function can be a callback?
 
-  Currently a weakref.proxy(callback) is registered instead of the callback itself. This means
-  that certain constructs like lambdas, cannot be used as callbacks. Even though this limitation
-  could be easily lifted, use of methods or module functions should be preferred over lambdas
-  or nested functions for maintanability and testability reasons.
+  Anything you fancy: lambdas, 'closures', class, object or module methods. For instance:
+
+::
+
+  from neutron.callbacks import events
+  from neutron.callbacks import resources
+  from neutron.callbacks import registry
+
+
+  def callback1(resource, event, trigger, **kwargs):
+      print 'module callback'
+
+
+  class MyCallback(object):
+
+      def callback2(self, resource, event, trigger, **kwargs):
+          print 'object callback'
+
+      @classmethod
+      def callback3(cls, resource, event, trigger, **kwargs):
+          print 'class callback'
+
+
+  c = MyCallback()
+  registry.subscribe(callback1, resources.ROUTER, events.BEFORE_CREATE)
+  registry.subscribe(c.callback2, resources.ROUTER, events.BEFORE_CREATE)
+  registry.subscribe(MyCallback.callback3, resources.ROUTER, events.BEFORE_CREATE)
+
+  def do_notify():
+      def nested_subscribe(resource, event, trigger, **kwargs):
+          print 'nested callback'
+
+      registry.subscribe(nested_subscribe, resources.ROUTER, events.BEFORE_CREATE)
+
+      kwargs = {'foo': 'bar'}
+      registry.notify(resources.ROUTER, events.BEFORE_CREATE, do_notify, **kwargs)
+
+
+  print 'Notifying...'
+  do_notify()
+
+And the output is going to be:
+
+::
+
+  Notifying...
+  module callback
+  object callback
+  class callback
+  nested callback
