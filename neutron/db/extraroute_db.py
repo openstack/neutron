@@ -157,21 +157,6 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             routes_dict[(route['destination'], route['nexthop'])] = route
         return routes, routes_dict
 
-    def get_router(self, context, id, fields=None):
-        with context.session.begin(subtransactions=True):
-            router = super(ExtraRoute_dbonly_mixin, self).get_router(
-                context, id, fields)
-            return router
-
-    def get_routers(self, context, filters=None, fields=None,
-                    sorts=None, limit=None, marker=None,
-                    page_reverse=False):
-        with context.session.begin(subtransactions=True):
-            routers = super(ExtraRoute_dbonly_mixin, self).get_routers(
-                context, filters, fields, sorts=sorts, limit=limit,
-                marker=marker, page_reverse=page_reverse)
-            return routers
-
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
         super(ExtraRoute_dbonly_mixin,
