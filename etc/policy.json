@@ -53,6 +53,7 @@
     "create_port:binding:host_id": "rule:admin_only",
     "create_port:binding:profile": "rule:admin_only",
     "create_port:mac_learning_enabled": "rule:admin_or_network_owner or rule:context_is_advsvc",
+    "create_port:allowed_address_pairs": "rule:admin_or_network_owner",
     "get_port": "rule:admin_or_owner or rule:context_is_advsvc",
     "get_port:queue_id": "rule:admin_only",
     "get_port:binding:vif_type": "rule:admin_only",
@@ -66,6 +67,7 @@
     "update_port:binding:host_id": "rule:admin_only",
     "update_port:binding:profile": "rule:admin_only",
     "update_port:mac_learning_enabled": "rule:admin_or_network_owner or rule:context_is_advsvc",
+    "update_port:allowed_address_pairs": "rule:admin_or_network_owner",
     "delete_port": "rule:admin_or_owner or rule:context_is_advsvc",
 
     "get_router:ha": "rule:admin_only",
