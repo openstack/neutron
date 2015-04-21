@@ -98,11 +98,10 @@ class VethFixture(fixtures.Fixture):
         super(VethFixture, self).setUp()
         ip_wrapper = ip_lib.IPWrapper()
 
-        def _create_veth(name0):
-            name1 = name0.replace(VETH0_PREFIX, VETH1_PREFIX)
-            return ip_wrapper.add_veth(name0, name1)
+        self.ports = common_base.create_resource(
+            VETH0_PREFIX,
+            lambda name: ip_wrapper.add_veth(name, self.get_peer_name(name)))
 
-        self.ports = common_base.create_resource(VETH0_PREFIX, _create_veth)
         self.addCleanup(self.destroy)
 
     def destroy(self):
@@ -115,6 +114,15 @@ class VethFixture(fixtures.Fixture):
                 # NOTE(cbrandily): It seems a veth is automagically deleted
                 # when a namespace owning a veth endpoint is deleted.
                 pass
+
+    @staticmethod
+    def get_peer_name(name):
+        if name.startswith(VETH0_PREFIX):
+            return name.replace(VETH0_PREFIX, VETH1_PREFIX)
+        elif name.startswith(VETH1_PREFIX):
+            return name.replace(VETH1_PREFIX, VETH0_PREFIX)
+        else:
+            tools.fail('%s is not a valid VethFixture veth endpoint' % name)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -139,6 +147,17 @@ class PortFixture(fixtures.Fixture):
         super(PortFixture, self).setUp()
         if not self.bridge:
             self.bridge = self.useFixture(self._create_bridge_fixture()).bridge
+
+    @classmethod
+    def get(cls, bridge, namespace=None):
+        """Deduce PortFixture class from bridge type and instantiate it."""
+        if isinstance(bridge, ovs_lib.OVSBridge):
+            return OVSPortFixture(bridge, namespace)
+        if isinstance(bridge, bridge_lib.BridgeDevice):
+            return LinuxBridgePortFixture(bridge, namespace)
+        if isinstance(bridge, VethBridge):
+            return VethPortFixture(bridge, namespace)
+        tools.fail('Unexpected bridge type: %s' % type(bridge))
 
 
 class OVSBridgeFixture(fixtures.Fixture):
