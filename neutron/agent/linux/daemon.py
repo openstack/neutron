@@ -29,6 +29,8 @@ from neutron.i18n import _LE, _LI
 
 LOG = logging.getLogger(__name__)
 
+DEVNULL = object()
+
 
 def setuid(user_id_or_name):
     try:
@@ -155,8 +157,8 @@ class Daemon(object):
 
     Usage: subclass the Daemon class and override the run() method
     """
-    def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null',
-                 stderr='/dev/null', procname='python', uuid=None,
+    def __init__(self, pidfile, stdin=DEVNULL, stdout=DEVNULL,
+                 stderr=DEVNULL, procname='python', uuid=None,
                  user=None, group=None, watch_log=True):
         self.stdin = stdin
         self.stdout = stdout
@@ -192,9 +194,10 @@ class Daemon(object):
         # redirect standard file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
-        stdin = open(self.stdin, 'r')
-        stdout = open(self.stdout, 'a+')
-        stderr = open(self.stderr, 'a+', 0)
+        devnull = open(os.devnull, 'w+')
+        stdin = devnull if self.stdin is DEVNULL else self.stdin
+        stdout = devnull if self.stdout is DEVNULL else self.stdout
+        stderr = devnull if self.stderr is DEVNULL else self.stderr
         os.dup2(stdin.fileno(), sys.stdin.fileno())
         os.dup2(stdout.fileno(), sys.stdout.fileno())
         os.dup2(stderr.fileno(), sys.stderr.fileno())

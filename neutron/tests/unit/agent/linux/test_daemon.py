@@ -242,6 +242,8 @@ class TestDaemon(base.BaseTestCase):
                 d._fork()
 
     def test_daemonize(self):
+        self.os.devnull = '/dev/null'
+
         d = daemon.Daemon('pidfile')
         with mock.patch.object(d, '_fork') as fork:
             with mock.patch.object(daemon, 'atexit') as atexit:
