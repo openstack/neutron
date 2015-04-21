@@ -25,6 +25,7 @@ import webob
 import webob.exc
 
 from neutron.common import exceptions as exception
+from neutron.db import api
 from neutron.tests import base
 from neutron import wsgi
 
@@ -52,18 +53,17 @@ def open_no_proxy(*args, **kwargs):
 class TestWorkerService(base.BaseTestCase):
     """WorkerService tests."""
 
-    @mock.patch('neutron.db.api')
+    @mock.patch('neutron.db.api.get_engine')
     def test_start_withoutdb_call(self, apimock):
+        # clear engine from other tests
+        api._FACADE = None
         _service = mock.Mock()
-        _service.pool = mock.Mock()
-        _service.pool.spawn = mock.Mock()
         _service.pool.spawn.return_value = None
 
         _app = mock.Mock()
-        cfg.CONF.set_override("connection", "", "database")
         workerservice = wsgi.WorkerService(_service, _app)
         workerservice.start()
-        self.assertFalse(apimock.get_engine.called)
+        self.assertFalse(apimock.called)
 
 
 class TestWSGIServer(base.BaseTestCase):
