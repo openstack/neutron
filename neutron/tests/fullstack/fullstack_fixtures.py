@@ -59,7 +59,7 @@ class ProcessFixture(fixtures.Fixture):
 
     def cleanUp(self, *args, **kwargs):
         self.stop()
-        super(ProcessFixture, self, *args, **kwargs)
+        super(ProcessFixture, self).cleanUp(*args, **kwargs)
 
 
 class EnvironmentFixture(fixtures.Fixture):
