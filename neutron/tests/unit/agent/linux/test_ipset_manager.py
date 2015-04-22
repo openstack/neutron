@@ -12,9 +12,7 @@
 #    limitations under the License.
 
 import mock
-from oslo_config import cfg
 
-from neutron.agent.common import config as a_cfg
 from neutron.agent.linux import ipset_manager
 from neutron.tests import base
 
@@ -27,13 +25,8 @@ FAKE_IPS = ['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4',
 
 
 class BaseIpsetManagerTest(base.BaseTestCase):
-    def setUp(self, maxelem=None, hashsize=None):
+    def setUp(self):
         super(BaseIpsetManagerTest, self).setUp()
-        cfg.CONF.register_opts(a_cfg.IPSET_OPTS, 'AGENT')
-        cfg.CONF.set_override('ipset_maxelem', maxelem, 'AGENT')
-        cfg.CONF.set_override('ipset_hashsize', hashsize, 'AGENT')
-        self.maxelem = maxelem
-        self.hashsize = hashsize
         self.ipset = ipset_manager.IpsetManager()
         self.execute = mock.patch.object(self.ipset, "execute").start()
         self.expected_calls = []
@@ -43,13 +36,7 @@ class BaseIpsetManagerTest(base.BaseTestCase):
         self.execute.assert_has_calls(self.expected_calls, any_order=False)
 
     def expect_set(self, addresses):
-        hash_args = []
-        if self.hashsize:
-            hash_args.extend(['hashsize', str(self.hashsize)])
-        if self.maxelem:
-            hash_args.extend(['maxelem', str(self.maxelem)])
-        temp_input = ['create IPv4fake_sgid-new hash:ip family inet %s' %
-                      ' '.join(hash_args)]
+        temp_input = ['create IPv4fake_sgid-new hash:ip family inet']
         temp_input.extend('add IPv4fake_sgid-new %s' % ip for ip in addresses)
         input = '\n'.join(temp_input)
         self.expected_calls.extend([
@@ -76,14 +63,9 @@ class BaseIpsetManagerTest(base.BaseTestCase):
                       run_as_root=True) for ip in addresses)
 
     def expect_create(self):
-        ipset_call = ['ipset', 'create', '-exist', TEST_SET_NAME,
-                      'hash:ip', 'family', 'inet']
-        if self.hashsize:
-            ipset_call.extend(['hashsize', str(self.hashsize)])
-        if self.maxelem:
-            ipset_call.extend(['maxelem', str(self.maxelem)])
         self.expected_calls.append(
-            mock.call(ipset_call,
+            mock.call(['ipset', 'create', '-exist', TEST_SET_NAME,
+                       'hash:ip', 'family', 'inet'],
                       process_input=None,
                       run_as_root=True))
 
@@ -103,10 +85,6 @@ class BaseIpsetManagerTest(base.BaseTestCase):
 
 
 class IpsetManagerTestCase(BaseIpsetManagerTest):
-    """Run all tests, but with maxelem/hashsize values not configured
-    """
-    def setUp(self):
-        super(IpsetManagerTestCase, self).setUp()
 
     def test_set_exists(self):
         self.add_first_ip()
@@ -139,10 +117,3 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
         self.expect_destroy()
         self.ipset.destroy(TEST_SET_ID, ETHERTYPE)
         self.verify_mock_calls()
-
-
-class IpsetManagerTestCaseHashArgs(IpsetManagerTestCase):
-    """Run all the above tests, but with maxelem/hashsize values configured
-    """
-    def setUp(self):
-        super(IpsetManagerTestCase, self).setUp(maxelem=131072, hashsize=2048)
