@@ -742,6 +742,7 @@ class TestDhcpLocalProcess(TestBase):
             self._assert_disabled(lp)
 
     def test_disable(self):
+        self.conf.set_override('dhcp_delete_namespaces', False)
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
                               ['active', 'interface_name']])
         network = FakeDualNetwork()
@@ -760,7 +761,6 @@ class TestDhcpLocalProcess(TestBase):
         self.assertEqual(ip.return_value.netns.delete.call_count, 0)
 
     def test_disable_delete_ns(self):
-        self.conf.set_override('dhcp_delete_namespaces', True)
         attrs_to_mock = {'active': mock.DEFAULT}
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:

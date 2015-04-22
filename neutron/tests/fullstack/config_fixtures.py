@@ -204,7 +204,6 @@ class L3ConfigFixture(ConfigFixture):
                                      'OVSInterfaceDriver'),
                 'ovs_integration_bridge': integration_bridge,
                 'external_network_bridge': self._generate_external_bridge(),
-                'router_delete_namespaces': 'True',
                 'debug': 'True',
                 'verbose': 'True',
             }

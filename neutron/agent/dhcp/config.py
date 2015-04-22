@@ -49,7 +49,7 @@ DNSMASQ_OPTS = [
                 help=_('Comma-separated list of the DNS servers which will be '
                        'used as forwarders.'),
                 deprecated_name='dnsmasq_dns_server'),
-    cfg.BoolOpt('dhcp_delete_namespaces', default=False,
+    cfg.BoolOpt('dhcp_delete_namespaces', default=True,
                 help=_("Delete namespace after removing a dhcp server.")),
     cfg.IntOpt(
         'dnsmasq_lease_max',
