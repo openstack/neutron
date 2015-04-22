@@ -24,6 +24,8 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
 
+from oslo_log import log as logging
+
 
 class TestParseMappings(base.BaseTestCase):
     def parse(self, mapping_list, unique_values=True):
@@ -632,3 +634,32 @@ class TestIpVersionFromInt(base.BaseTestCase):
         self.assertRaises(ValueError,
                           utils.ip_version_from_int,
                           8)
+
+
+class TestDelayedStringRederer(base.BaseTestCase):
+    def test_call_deferred_until_str(self):
+        my_func = mock.MagicMock(return_value='Brie cheese!')
+        delayed = utils.DelayedStringRenderer(my_func, 1, 2, key_arg=44)
+        self.assertFalse(my_func.called)
+        string = "Type: %s" % delayed
+        my_func.assert_called_once_with(1, 2, key_arg=44)
+        self.assertEqual("Type: Brie cheese!", string)
+
+    def test_not_called_with_low_log_level(self):
+        LOG = logging.getLogger(__name__)
+        # make sure we return logging to previous level
+        current_log_level = LOG.logger.getEffectiveLevel()
+        self.addCleanup(LOG.logger.setLevel, current_log_level)
+
+        my_func = mock.MagicMock()
+        delayed = utils.DelayedStringRenderer(my_func)
+
+        # set to warning so we shouldn't be logging debug messages
+        LOG.logger.setLevel(logging.logging.WARNING)
+        LOG.debug("Hello %s", delayed)
+        self.assertFalse(my_func.called)
+
+        # but it should be called with the debug level
+        LOG.logger.setLevel(logging.logging.DEBUG)
+        LOG.debug("Hello %s", delayed)
+        self.assertTrue(my_func.called)
