@@ -1508,7 +1508,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         updated_ports_copy = set()
         ancillary_ports = set()
         tunnel_sync = True
-        ovs_status = constants.OVS_NORMAL
         while self.run_daemon_loop:
             start = time.time()
             port_stats = {'regular': {'added': 0,
