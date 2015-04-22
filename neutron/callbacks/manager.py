@@ -19,7 +19,7 @@ from oslo_utils import reflection
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import resources
-from neutron.i18n import _LE, _LI
+from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 
@@ -132,14 +132,14 @@ class CallbacksManager(object):
 
     def _notify_loop(self, resource, event, trigger, **kwargs):
         """The notification loop."""
-        LOG.info(_LI("Notify callbacks for %(resource)s, %(event)s"),
-                 {'resource': resource, 'event': event})
+        LOG.debug("Notify callbacks for %(resource)s, %(event)s",
+                  {'resource': resource, 'event': event})
 
         errors = []
         # TODO(armax): consider using a GreenPile
         for callback_id, callback in self._callbacks[resource][event].items():
             try:
-                LOG.info(_LI("Calling callback %s"), callback_id)
+                LOG.debug("Calling callback %s", callback_id)
                 callback(resource, event, trigger, **kwargs)
             except Exception as e:
                 LOG.exception(_LE("Error during notification for "
