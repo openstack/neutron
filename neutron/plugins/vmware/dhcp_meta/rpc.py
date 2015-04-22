@@ -23,7 +23,6 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as ntn_exc
 from neutron.db import db_base_plugin_v2
-from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import exception as api_exc
@@ -96,7 +95,8 @@ def handle_router_metadata_access(plugin, context, router_id, interface=None):
         return
     ctx_elevated = context.elevated()
     device_filter = {'device_id': [router_id],
-                     'device_owner': [l3_db.DEVICE_OWNER_ROUTER_INTF]}
+                     'device_owner': [const.DEVICE_OWNER_DVR_INTERFACE,
+                                      const.DEVICE_OWNER_ROUTER_INTF]}
     # Retrieve ports calling database plugin
     ports = db_base_plugin_v2.NeutronDbPluginV2.get_ports(
         plugin, ctx_elevated, filters=device_filter)
