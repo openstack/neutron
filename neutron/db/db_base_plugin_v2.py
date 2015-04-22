@@ -472,9 +472,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             # from subnet
             else:
                 if is_auto_addr:
-                    prefix = subnet['cidr']
-                    ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
-                        prefix, mac_address)
+                    ip_address = self._calculate_ipv6_eui64_addr(context,
+                                                                 subnet,
+                                                                 mac_address)
                     ips.append({'ip_address': ip_address.format(),
                                 'subnet_id': subnet['id']})
                 else:
@@ -531,6 +531,17 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             ips = self._allocate_fixed_ips(context, to_add, mac_address)
         return ips, prev_ips
 
+    def _calculate_ipv6_eui64_addr(self, context, subnet, mac_addr):
+        prefix = subnet['cidr']
+        network_id = subnet['network_id']
+        ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
+            prefix, mac_addr).format()
+        if not self._check_unique_ip(context, network_id,
+                                     subnet['id'], ip_address):
+            raise n_exc.IpAddressInUse(net_id=network_id,
+                                       ip_address=ip_address)
+        return ip_address
+
     def _allocate_ips_for_port(self, context, port):
         """Allocate IP addresses for the port.
 
@@ -585,13 +596,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         for subnet in v6_stateless:
             # IP addresses for IPv6 SLAAC and DHCPv6-stateless subnets
             # are implicitly included.
-            prefix = subnet['cidr']
-            ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(prefix,
-                                                           p['mac_address'])
-            if not self._check_unique_ip(context, p['network_id'],
-                                         subnet['id'], ip_address.format()):
-                raise n_exc.IpAddressInUse(net_id=p['network_id'],
-                                           ip_address=ip_address.format())
+            ip_address = self._calculate_ipv6_eui64_addr(context, subnet,
+                                                         p['mac_address'])
             ips.append({'ip_address': ip_address.format(),
                         'subnet_id': subnet['id']})
 
@@ -1343,8 +1349,46 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                         'subnet pool')
                 raise n_exc.BadRequest(resource='subnets', msg=msg)
             # Create subnet from the implicit(AKA null) pool
-            return self._create_subnet_from_implicit_pool(context, subnet)
-        return self._create_subnet_from_pool(context, subnet, subnetpool_id)
+            created_subnet = self._create_subnet_from_implicit_pool(context,
+                                                                    subnet)
+        else:
+            created_subnet = self._create_subnet_from_pool(context, subnet,
+                                                           subnetpool_id)
+
+        # If this subnet supports auto-addressing, then update any
+        # internal ports on the network with addresses for this subnet.
+        if ipv6_utils.is_auto_address_subnet(created_subnet):
+            self._add_auto_addrs_on_network_ports(context, created_subnet)
+
+        return created_subnet
+
+    def _add_auto_addrs_on_network_ports(self, context, subnet):
+        """For an auto-address subnet, add addrs for ports on the net."""
+        with context.session.begin(subtransactions=True):
+            network_id = subnet['network_id']
+            port_qry = context.session.query(models_v2.Port)
+            for port in port_qry.filter(
+                and_(models_v2.Port.network_id == network_id,
+                     models_v2.Port.device_owner !=
+                     constants.DEVICE_OWNER_ROUTER_SNAT,
+                     ~models_v2.Port.device_owner.in_(
+                         constants.ROUTER_INTERFACE_OWNERS))):
+                ip_address = self._calculate_ipv6_eui64_addr(
+                    context, subnet, port['mac_address'])
+                allocated = models_v2.IPAllocation(network_id=network_id,
+                                                   port_id=port['id'],
+                                                   ip_address=ip_address,
+                                                   subnet_id=subnet['id'])
+                try:
+                    # Do the insertion of each IP allocation entry within
+                    # the context of a nested transaction, so that the entry
+                    # is rolled back independently of other entries whenever
+                    # the corresponding port has been deleted.
+                    with context.session.begin_nested():
+                        context.session.add(allocated)
+                except db_exc.DBReferenceError:
+                    LOG.debug("Port %s was deleted while updating it with an "
+                              "IPv6 auto-address. Ignoring.", port['id'])
 
     def _update_subnet_dns_nameservers(self, context, id, s):
         old_dns_list = self._get_dns_by_subnet(context, id)
