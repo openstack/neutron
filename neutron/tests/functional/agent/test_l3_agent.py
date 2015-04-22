@@ -64,6 +64,7 @@ class L3AgentTestFramework(base.BaseLinuxTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
         mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
+        mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
         self.agent = self._configure_agent('agent1')
 
     def _get_config_opts(self):
