@@ -471,8 +471,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
             agent = self._get_agent_by_type_and_host(context,
                                                      constants.AGENT_TYPE_L3,
                                                      host)
-            sync_data = self.get_dvr_sync_data(context, host, agent,
-                                               router_ids, active)
+            sync_data = self._get_dvr_sync_data(context, host, agent,
+                                                router_ids, active)
         else:
             sync_data = super(L3_HA_NAT_db_mixin, self).get_sync_data(context,
                                                             router_ids, active)
