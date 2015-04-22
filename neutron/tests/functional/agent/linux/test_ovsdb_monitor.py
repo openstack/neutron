@@ -48,6 +48,8 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
                         root_helper=" ".join([functional_base.SUDO_CMD] * 2))
 
         self._check_test_requirements()
+        # ovsdb-client monitor needs to have a bridge to make any output
+        self.useFixture(net_helpers.OVSBridgeFixture())
 
     def _check_test_requirements(self):
         self.check_command(['ovsdb-client', 'list-dbs'],
