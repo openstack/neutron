@@ -18,10 +18,10 @@ netaddr>=0.7.6,<=0.7.14
 python-neutronclient>=2.3.4,<2.3.11
 SQLAlchemy>=0.7.8,!=0.9.5,<=0.9.99
 WebOb>=1.2.3,<=1.4
-python-keystoneclient>=0.7.0,<=0.11.2
+python-keystoneclient>=0.7.0,<0.12.0
 alembic>=0.4.1,<=0.7.5.post2
 six>=1.6.0,<=1.9.0
-stevedore>=0.14,<1.2
+stevedore>=0.14
 oslo.config>=1.2.0,<1.5
 oslo.rootwrap<1.4
 
