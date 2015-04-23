@@ -598,7 +598,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             if net_data.get(api.MTU, 0) > 0:
                 res = super(Ml2Plugin, self).update_network(context,
-                    result['id'], network)
+                    result['id'], {'network': {api.MTU: net_data[api.MTU]}})
                 result[api.MTU] = res.get(api.MTU, 0)
 
         return result, mech_context
