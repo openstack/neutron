@@ -41,6 +41,7 @@ from neutron.callbacks import resources
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
 from neutron.common import ipv6_utils
+from neutron.common import log as neutron_log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -166,6 +167,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         )
         self.start_periodic_dhcp_agent_status_check()
 
+    @neutron_log.log
     def start_rpc_listeners(self):
         """Start the RPC loop to let the plugin communicate with agents."""
         self.topic = topics.PLUGIN

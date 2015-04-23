@@ -19,6 +19,7 @@ from oslo_utils import importutils
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as q_const
+from neutron.common import log as neutron_log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import common_db_mixin
@@ -61,6 +62,7 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
             l3_dvrscheduler_db.subscribe()
         l3_db.subscribe()
 
+    @neutron_log.log
     def setup_rpc(self):
         # RPC support
         self.topic = topics.L3PLUGIN
