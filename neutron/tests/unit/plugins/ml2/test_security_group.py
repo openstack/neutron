@@ -18,10 +18,10 @@ import contextlib
 import math
 import mock
 
-from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
+from neutron.tests import tools
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.extensions import test_securitygroup as test_sg
@@ -39,16 +39,11 @@ class Ml2SecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
         notifier_cls.return_value = self.notifier
-        self._attribute_map_bk_ = {}
-        for item in attributes.RESOURCE_ATTRIBUTE_MAP:
-            self._attribute_map_bk_[item] = (attributes.
-                                             RESOURCE_ATTRIBUTE_MAP[item].
-                                             copy())
+        self.useFixture(tools.AttributeMapMemento())
         super(Ml2SecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
 
     def tearDown(self):
         super(Ml2SecurityGroupsTestCase, self).tearDown()
-        attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk_
 
 
 class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,

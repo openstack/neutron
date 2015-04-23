@@ -41,6 +41,7 @@ from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.tests import fake_notifier
+from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.extensions import test_agent
@@ -245,10 +246,7 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
                  'TestL3NatAgentSchedulingServicePlugin')
 
     def setUp(self):
-        # Save the global RESOURCE_ATTRIBUTE_MAP before loading plugin
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+        self.useFixture(tools.AttributeMapMemento())
         if self.l3_plugin:
             service_plugins = {'l3_plugin_name': self.l3_plugin}
         else:
@@ -264,7 +262,6 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self.restore_attribute_map)
         self.l3agentscheduler_dbMinxin = (
             manager.NeutronManager.get_service_plugins().get(
                 service_constants.L3_ROUTER_NAT))
@@ -278,10 +275,6 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         self.dhcp_notify_p = mock.patch(
             'neutron.extensions.dhcpagentscheduler.notify')
         self.patched_dhcp_notify = self.dhcp_notify_p.start()
-
-    def restore_attribute_map(self):
-        # Restore the original RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
 
 class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
@@ -1307,10 +1300,7 @@ class OvsDhcpAgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
     plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
     def setUp(self):
-        # Save the global RESOURCE_ATTRIBUTE_MAP before loading plugin
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+        self.useFixture(tools.AttributeMapMemento())
         super(OvsDhcpAgentNotifierTestCase, self).setUp(self.plugin_str)
         self.dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         self.dhcp_notifier_cast = mock.patch(
@@ -1325,12 +1315,7 @@ class OvsDhcpAgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self.restore_attribute_map)
         fake_notifier.reset()
-
-    def restore_attribute_map(self):
-        # Restore the original RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_network_add_to_dhcp_agent_notification(self):
         with self.network() as net1:
@@ -1474,10 +1459,9 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         self.dhcp_notifier = mock.Mock(name='dhcp_notifier')
         self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
         self.dhcp_notifier_cls.return_value = self.dhcp_notifier
-        # Save the global RESOURCE_ATTRIBUTE_MAP
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+
+        self.useFixture(tools.AttributeMapMemento())
+
         if self.l3_plugin:
             service_plugins = {'l3_plugin_name': self.l3_plugin}
         else:
@@ -1493,12 +1477,7 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self.restore_attribute_map)
         fake_notifier.reset()
-
-    def restore_attribute_map(self):
-        # Restore the original RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_router_add_to_l3_agent_notification(self):
         l3_plugin = (manager.NeutronManager.get_service_plugins()

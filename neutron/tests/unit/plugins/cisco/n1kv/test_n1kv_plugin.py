@@ -33,6 +33,7 @@ from neutron.plugins.cisco.extensions import network_profile
 from neutron.plugins.cisco.extensions import policy_profile
 from neutron.plugins.cisco.n1kv import n1kv_client
 from neutron.plugins.cisco.n1kv import n1kv_neutron_plugin
+from neutron.tests import tools
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
@@ -225,25 +226,17 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
         neutron_extensions.append_api_extensions_path(extensions.__path__)
 
-        # Save the original RESOURCE_ATTRIBUTE_MAP
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.items():
-            self.saved_attr_map[resource] = attrs.copy()
+        self.useFixture(tools.AttributeMapMemento())
         # Update the RESOURCE_ATTRIBUTE_MAP with n1kv specific extended attrs.
         attributes.RESOURCE_ATTRIBUTE_MAP["networks"].update(
             n1kv.EXTENDED_ATTRIBUTES_2_0["networks"])
         attributes.RESOURCE_ATTRIBUTE_MAP["ports"].update(
             n1kv.EXTENDED_ATTRIBUTES_2_0["ports"])
-        self.addCleanup(self.restore_resource_attribute_map)
         super(N1kvPluginTestCase, self).setUp(self._plugin_name,
                                               ext_mgr=ext_mgr)
         # Create some of the database entries that we require.
         self._make_test_profile()
         self._make_test_policy_profile()
-
-    def restore_resource_attribute_map(self):
-        # Restore the original RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
 
 class TestN1kvNetworkProfiles(N1kvPluginTestCase):

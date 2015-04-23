@@ -41,6 +41,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron import manager
 from neutron.tests import base
+from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit import testlib_api
 
@@ -93,14 +94,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         extensions.PluginAwareExtensionManager._instance = None
         # Save the attributes map in case the plugin will alter it
         # loading extensions
-        # Note(salvatore-orlando): shallow copy is not good enough in
-        # this case, but copy.deepcopy does not seem to work, since it
-        # causes test failures
-        self._attribute_map_bk = {}
-        for item in attributes.RESOURCE_ATTRIBUTE_MAP:
-            self._attribute_map_bk[item] = (attributes.
-                                            RESOURCE_ATTRIBUTE_MAP[item].
-                                            copy())
+        self.useFixture(tools.AttributeMapMemento())
         self._tenant_id = 'test-tenant'
 
         if not plugin:
@@ -162,8 +156,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._skip_native_pagination = None
         self._skip_native_sortin = None
         self.ext_api = None
-        # Restore the original attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
         super(NeutronDbPluginV2TestCase, self).tearDown()
 
     def setup_config(self):

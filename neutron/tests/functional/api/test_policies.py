@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
 import os.path
 
 from neutron import context
@@ -23,6 +22,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 from neutron.tests import base
+from neutron.tests import tools
 
 TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,8 +40,7 @@ class APIPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(APIPolicyTestCase, self).setUp()
-
-        self.ATTRIBUTE_MAP_COPY = copy.copy(attributes.RESOURCE_ATTRIBUTE_MAP)
+        self.useFixture(tools.AttributeMapMemento())
         self.extension_path = os.path.abspath(os.path.join(
             TEST_PATH, "../../../extensions"))
         policy.reset()
@@ -94,6 +93,5 @@ class APIPolicyTestCase(base.BaseTestCase):
                          True)
 
     def tearDown(self):
-        if self.ATTRIBUTE_MAP_COPY:
-            attributes.RESOURCE_ATTRIBUTE_MAP = self.ATTRIBUTE_MAP_COPY
+        policy.reset()
         super(APIPolicyTestCase, self).tearDown()
