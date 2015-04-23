@@ -21,7 +21,9 @@ import collections
 import logging as std_logging
 import re
 
+from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_policy import policy
 from oslo_utils import excutils
 from oslo_utils import importutils
 import six
@@ -30,7 +32,6 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LW
-from neutron.openstack.common import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -47,19 +48,19 @@ def reset():
         _ENFORCER = None
 
 
-def init():
+def init(conf=cfg.CONF, policy_file=None):
     """Init an instance of the Enforcer class."""
 
     global _ENFORCER
     if not _ENFORCER:
-        _ENFORCER = policy.Enforcer()
+        _ENFORCER = policy.Enforcer(conf, policy_file=policy_file)
         _ENFORCER.load_rules(True)
 
 
-def refresh():
+def refresh(policy_file=None):
     """Reset policy and init a new instance of Enforcer."""
     reset()
-    init()
+    init(policy_file=policy_file)
 
 
 def get_resource_and_action(action, pluralized=None):
@@ -372,7 +373,7 @@ def enforce(context, action, target, plugin=None, pluralized=None):
     :param pluralized: pluralized case of resource
         e.g. firewall_policy -> pluralized = "firewall_policies"
 
-    :raises neutron.openstack.common.policy.PolicyNotAuthorized:
+    :raises oslo_policy.policy.PolicyNotAuthorized:
             if verification fails.
     """
     # If we already know the context has admin rights do not perform an
