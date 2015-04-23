@@ -483,6 +483,8 @@ class Dnsmasq(DhcpLocalProcess):
         LOG.debug('Building host file: %s', filename)
         dhcp_enabled_subnet_ids = [s.id for s in self.network.subnets
                                    if s.enable_dhcp]
+        # NOTE(ihrachyshka): the loop should not log anything inside it, to
+        # avoid potential performance drop when lots of hosts are dumped
         for (port, alloc, hostname, name) in self._iter_hosts():
             if not alloc:
                 if getattr(port, 'extra_dhcp_opts', False):
