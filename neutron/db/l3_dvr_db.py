@@ -362,8 +362,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         interfaces = [self._core_plugin._make_port_dict(rp.port, None)
                       for rp in qry]
         LOG.debug("Return the SNAT ports: %s", interfaces)
-        if interfaces:
-            self._populate_subnets_for_ports(context, interfaces)
         return interfaces
 
     def _build_routers_list(self, context, routers, gw_ports):
@@ -436,8 +434,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                    'device_owner': [DEVICE_OWNER_AGENT_GW]}
         interfaces = self._core_plugin.get_ports(context.elevated(), filters)
         LOG.debug("Return the FIP ports: %s ", interfaces)
-        if interfaces:
-            self._populate_subnets_for_ports(context, interfaces)
         return interfaces
 
     def get_dvr_sync_data(self, context, host, agent, router_ids=None,
@@ -457,6 +453,14 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         routers_dict = self._process_routers(context, routers)
         self._process_floating_ips_dvr(context, routers_dict,
                                        floating_ips, host, agent)
+        ports_to_populate = []
+        for router in routers_dict.values():
+            if router.get('gw_port'):
+                ports_to_populate.append(router['gw_port'])
+            if router.get(l3_const.FLOATINGIP_AGENT_INTF_KEY):
+                ports_to_populate += router[l3_const.FLOATINGIP_AGENT_INTF_KEY]
+        ports_to_populate += interfaces
+        self._populate_subnets_for_ports(context, ports_to_populate)
         self._process_interfaces(routers_dict, interfaces)
         return routers_dict.values()
 
