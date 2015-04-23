@@ -11,7 +11,6 @@
 #    under the License.
 
 import collections
-import weakref
 
 from oslo_log import log as logging
 from oslo_utils import reflection
@@ -47,7 +46,7 @@ class CallbacksManager(object):
             raise exceptions.Invalid(element='event', value=event)
 
         callback_id = _get_id(callback)
-        self._callbacks[resource][event][callback_id] = weakref.proxy(callback)
+        self._callbacks[resource][event][callback_id] = callback
         # We keep a copy of callbacks to speed the unsubscribe operation.
         if callback_id not in self._index:
             self._index[callback_id] = collections.defaultdict(set)
