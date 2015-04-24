@@ -311,11 +311,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             mac_ipv6_pairs.append((mac, ip_address))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
-        #Note(nati) allow dhcp or RA packet
+        # Allow dhcp client packets
         ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
+        # Drop Router Advts from the port.
+        ipv6_rules += [comment_rule('-p icmpv6 --icmpv6-type %s '
+                                    '-j DROP' % constants.ICMPV6_TYPE_RA,
+                                    comment=ic.IPV6_RA_DROP)]
         ipv6_rules += [comment_rule('-p icmpv6 -j RETURN',
-                                    comment=ic.IPV6_RA_ALLOW)]
+                                    comment=ic.IPV6_ICMP_ALLOW)]
         ipv6_rules += [comment_rule('-p udp -m udp --sport 546 --dport 547 '
                                     '-j RETURN', comment=None)]
         mac_ipv4_pairs = []
