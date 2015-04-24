@@ -715,11 +715,11 @@ class L3HATestFramework(L3AgentTestFramework):
 
     def test_ha_router_failover(self):
         router_info = self.generate_router_info(enable_ha=True)
-        ns_name = "%s%s%s" % (
-                namespaces.RouterNamespace._get_ns_name(router_info['id']),
-                self.NESTED_NAMESPACE_SEPARATOR, self.agent.host)
-        mock.patch.object(namespaces.RouterNamespace, '_get_ns_name',
-                return_value=ns_name).start()
+        get_ns_name = mock.patch.object(
+            namespaces.RouterNamespace, '_get_ns_name').start()
+        get_ns_name.return_value = "%s%s%s" % (
+            namespaces.RouterNamespace._get_ns_name(router_info['id']),
+            self.NESTED_NAMESPACE_SEPARATOR, self.agent.host)
         router1 = self.manage_router(self.agent, router_info)
 
         router_info_2 = copy.deepcopy(router_info)
@@ -727,19 +727,15 @@ class L3HATestFramework(L3AgentTestFramework):
             test_l3_agent.get_ha_interface(ip='169.254.192.2',
                                            mac='22:22:22:22:22:22'))
 
-        ns_name = "%s%s%s" % (
-                namespaces.RouterNamespace._get_ns_name(router_info_2['id']),
-                self.NESTED_NAMESPACE_SEPARATOR, self.failover_agent.host)
-        mock.patch.object(namespaces.RouterNamespace, '_get_ns_name',
-                return_value=ns_name).start()
+        get_ns_name.return_value = "%s%s%s" % (
+            namespaces.RouterNamespace._get_ns_name(router_info_2['id']),
+            self.NESTED_NAMESPACE_SEPARATOR, self.failover_agent.host)
         router2 = self.manage_router(self.failover_agent, router_info_2)
 
         utils.wait_until_true(lambda: router1.ha_state == 'master')
         utils.wait_until_true(lambda: router2.ha_state == 'backup')
 
-        device_name = router1.get_ha_device_name()
-        ha_device = ip_lib.IPDevice(device_name, namespace=router1.ns_name)
-        ha_device.link.set_down()
+        self.fail_ha_router(router1)
 
         utils.wait_until_true(lambda: router2.ha_state == 'master')
         utils.wait_until_true(lambda: router1.ha_state == 'backup')
