@@ -120,6 +120,17 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                 original_port[ext_sg.SECURITYGROUPS])
         return need_notify
 
+    def check_and_notify_security_group_member_changed(
+            self, context, original_port, updated_port):
+        sg_change = not utils.compare_elements(
+            original_port.get(ext_sg.SECURITYGROUPS),
+            updated_port.get(ext_sg.SECURITYGROUPS))
+        if sg_change:
+            self.notify_security_groups_member_updated_bulk(
+                context, [original_port, updated_port])
+        elif original_port['fixed_ips'] != updated_port['fixed_ips']:
+            self.notify_security_groups_member_updated(context, updated_port)
+
     def is_security_group_member_updated(self, context,
                                          original_port, updated_port):
         """Check security group member updated or not.
