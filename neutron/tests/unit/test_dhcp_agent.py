@@ -245,6 +245,11 @@ class TestDhcpAgent(base.BaseTestCase):
             self.assertEqual(log.call_count, 1)
             self.assertEqual(expected_sync, dhcp.needs_resync)
 
+    def test_call_driver_ip_address_generation_failure(self):
+        error = common.RemoteError(
+            exc_type='IpAddressGenerationFailure')
+        self._test_call_driver_failure(exc=error, expected_sync=False)
+
     def test_call_driver_failure(self):
         self._test_call_driver_failure()
 
