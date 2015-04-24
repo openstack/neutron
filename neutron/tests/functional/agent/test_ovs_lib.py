@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import uuid
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
@@ -228,6 +229,33 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
     def test_reset_bridge_secure_mode(self):
         self.br.reset_bridge(secure_mode=True)
         self._assert_br_fail_mode(ovs_lib.FAILMODE_SECURE)
+
+    def test_set_controller_connection_mode(self):
+        controllers = ['tcp:192.0.2.0:6633']
+        self._set_controllers_connection_mode(controllers)
+
+    def test_set_multi_controllers_connection_mode(self):
+        controllers = ['tcp:192.0.2.0:6633', 'tcp:192.0.2.1:55']
+        self._set_controllers_connection_mode(controllers)
+
+    def _set_controllers_connection_mode(self, controllers):
+        self.br.set_controller(controllers)
+        self.assertEqual(controllers, self.br.get_controller())
+        self.br.set_controllers_connection_mode('out-of-band')
+        self._assert_controllers_connection_mode('out-of-band')
+        self.br.del_controller()
+        self.assertEqual([], self.br.get_controller())
+
+    def _assert_controllers_connection_mode(self, connection_mode):
+        controllers = self.br.db_get_val('Bridge', self.br.br_name,
+                                         'controller')
+        controllers = [controllers] if isinstance(
+            controllers, uuid.UUID) else controllers
+        for controller in controllers:
+            self.assertEqual(connection_mode,
+                             self.br.db_get_val('Controller',
+                                                controller,
+                                                'connection_mode'))
 
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
