@@ -39,6 +39,7 @@ L3_BROCADE = [cfg.StrOpt('address', default='',
                                'configured on the switch')),
               ]
 cfg.CONF.register_opts(SWITCHES, 'l3_brocade_mlx')
+cfg.CONF.register_opts(L3_BROCADE, 'L3_BROCADE_MLX_EXAMPLE')
 
 
 class BrocadeRouterPlugin(plugin.BrocadeRouterPlugin):
