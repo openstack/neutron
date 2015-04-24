@@ -50,15 +50,8 @@ class RecursivePermDirFixture(fixtures.Fixture):
             perms = os.stat(current_directory).st_mode
             if perms & self.least_perms != self.least_perms:
                 os.chmod(current_directory, perms | self.least_perms)
-                self.addCleanup(self.safe_chmod, current_directory, perms)
             previous_directory = current_directory
             current_directory = os.path.dirname(current_directory)
-
-    def safe_chmod(self, path, mode):
-        try:
-            os.chmod(path, mode)
-        except OSError:
-            pass
 
 
 def get_free_namespace_port(tcp=True, namespace=None):
