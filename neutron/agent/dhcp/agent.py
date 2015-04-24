@@ -120,7 +120,12 @@ class DhcpAgent(manager.Manager):
                             'still exist.'),
                         {'net_id': network.id, 'action': action})
         except Exception as e:
-            self.schedule_resync(e, network.id)
+            if getattr(e, 'exc_type', '') != 'IpAddressGenerationFailure':
+                # Don't resync if port could not be created because of an IP
+                # allocation failure. When the subnet is updated with a new
+                # allocation pool or a port is  deleted to free up an IP, this
+                # will automatically be retried on the notification
+                self.schedule_resync(e, network.id)
             if (isinstance(e, oslo_messaging.RemoteError)
                 and e.exc_type == 'NetworkNotFound'
                 or isinstance(e, exceptions.NetworkNotFound)):
