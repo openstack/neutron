@@ -16,12 +16,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
-from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
 from oslo_config import cfg
 
@@ -63,8 +61,6 @@ class IptablesFirewallTestCase(base.BaseSudoTestCase):
     # setup firewall on bridge and send packet from src_veth and observe
     # if sent packet can be observed on dst_veth
     def test_port_sec_within_firewall(self):
-        client_ip_wrapper = ip_lib.IPWrapper(self.client.namespace)
-        pinger = helpers.Pinger(client_ip_wrapper)
 
         # update the sg_group to make ping pass
         sg_rules = [{'ethertype': 'IPv4', 'direction': 'ingress',
@@ -76,13 +72,13 @@ class IptablesFirewallTestCase(base.BaseSudoTestCase):
                                                 self.FAKE_SECURITY_GROUP_ID,
                                                 sg_rules)
         self.firewall.prepare_port_filter(self.src_port_desc)
-        pinger.assert_ping(self.server.ip)
+        self.client.assert_ping(self.server.ip)
 
         # modify the src_veth's MAC and test again
         self._set_src_mac(self.MAC_SPOOFED)
-        pinger.assert_no_ping(self.server.ip)
+        self.client.assert_no_ping(self.server.ip)
 
         # update the port's port_security_enabled value and test again
         self.src_port_desc['port_security_enabled'] = False
         self.firewall.update_port_filter(self.src_port_desc)
-        pinger.assert_ping(self.server.ip)
+        self.client.assert_ping(self.server.ip)

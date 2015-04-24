@@ -15,14 +15,14 @@
 
 from neutron.cmd.sanity import checks
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent as ovsagt
+from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
-from neutron.tests.functional.agent.linux import base
-from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional.agent import test_ovs_lib
+from neutron.tests.functional import base
 
 
 class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
-                       base.BaseIPVethTestCase):
+                       base.BaseSudoTestCase):
 
     def setUp(self):
         if not checks.arp_header_match_supported():
@@ -35,7 +35,8 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         self.dst_addr = '192.168.0.2'
         self.src_ns = self._create_namespace()
         self.dst_ns = self._create_namespace()
-        self.pinger = helpers.Pinger(self.src_ns, max_attempts=2)
+        self.pinger = machine_fixtures.Pinger(
+            self.src_ns.namespace, max_attempts=2)
         self.src_p = self.useFixture(
             net_helpers.OVSPortFixture(self.br, self.src_ns.namespace)).port
         self.dst_p = self.useFixture(
