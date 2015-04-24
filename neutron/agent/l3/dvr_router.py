@@ -500,6 +500,17 @@ class DvrRouter(router.RouterInfo):
                   "%s", fip_agent_port)
         if floating_ips:
             is_first = self.fip_ns.subscribe(self.router_id)
+            if is_first and not fip_agent_port:
+                LOG.debug("No FloatingIP agent gateway port possibly due to "
+                          "late binding of the private port to the host, "
+                          "requesting agent gateway port for 'network-id' :"
+                          "%s", ex_gw_port['network_id'])
+                fip_agent_port = self.agent.plugin_rpc.get_agent_gateway_port(
+                    self.agent.context, ex_gw_port['network_id'])
+                if not fip_agent_port:
+                    LOG.error(_LE("No FloatingIP agent gateway port "
+                                  "returned from server for 'network-id': "
+                                  "%s"), ex_gw_port['network_id'])
             if is_first and fip_agent_port:
                 if 'subnets' not in fip_agent_port:
                     LOG.error(_LE('Missing subnet/agent_gateway_port'))
