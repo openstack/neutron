@@ -5312,6 +5312,21 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             # Assert error
             self.assertEqual(res.status_int, 409)
 
+    def test_allocate_any_ipv4_subnet_ipv6_pool(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['2001:db8:1:2::/63'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME)
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 400)
+
 
 class DbModelTestCase(base.BaseTestCase):
     """DB model tests."""

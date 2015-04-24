@@ -1267,6 +1267,15 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
         with context.session.begin(subtransactions=True):
             subnetpool = self._get_subnetpool(context, subnetpool_id)
+            ip_version = s.get('ip_version')
+            has_ip_version = attributes.is_attr_set(ip_version)
+            if has_ip_version and ip_version != subnetpool.ip_version:
+                args = {'req_ver': str(s['ip_version']),
+                        'pool_ver': str(subnetpool.ip_version)}
+                reason = _("Cannot allocate IPv%(req_ver)s subnet from "
+                           "IPv%(pool_ver)s subnet pool") % args
+                raise n_exc.BadRequest(resource='subnets', msg=reason)
+
             network = self._get_network(context, s["network_id"])
             allocator = subnet_alloc.SubnetAllocator(subnetpool)
             req = self._make_subnet_request(tenant_id, s, subnetpool)
