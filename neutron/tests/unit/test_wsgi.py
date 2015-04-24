@@ -698,6 +698,69 @@ class FaultTest(base.BaseTestCase):
 class TestWSGIServerWithSSL(base.BaseTestCase):
     """WSGI server tests."""
 
+    @mock.patch("exceptions.RuntimeError")
+    @mock.patch("os.path.exists")
+    def test__check_ssl_settings(self, exists_mock, runtime_error_mock):
+        exists_mock.return_value = True
+        CONF.set_default('use_ssl', True)
+        CONF.set_default("ssl_cert_file", 'certificate.crt')
+        CONF.set_default("ssl_key_file", 'privatekey.key')
+        CONF.set_default("ssl_ca_file", 'cacert.pem')
+        wsgi.Server("test_app")
+        self.assertFalse(runtime_error_mock.called)
+
+    @mock.patch("os.path.exists")
+    def test__check_ssl_settings_no_ssl_cert_file_fails(self, exists_mock):
+        exists_mock.side_effect = [False]
+        CONF.set_default('use_ssl', True)
+        CONF.set_default("ssl_cert_file", "/no/such/file")
+        self.assertRaises(RuntimeError, wsgi.Server, "test_app")
+
+    @mock.patch("os.path.exists")
+    def test__check_ssl_settings_no_ssl_key_file_fails(self, exists_mock):
+        exists_mock.side_effect = [True, False]
+        CONF.set_default('use_ssl', True)
+        CONF.set_default("ssl_cert_file", 'certificate.crt')
+        CONF.set_default("ssl_key_file", "/no/such/file")
+        self.assertRaises(RuntimeError, wsgi.Server, "test_app")
+
+    @mock.patch("os.path.exists")
+    def test__check_ssl_settings_no_ssl_ca_file_fails(self, exists_mock):
+        exists_mock.side_effect = [True, True, False]
+        CONF.set_default('use_ssl', True)
+        CONF.set_default("ssl_cert_file", 'certificate.crt')
+        CONF.set_default("ssl_key_file", 'privatekey.key')
+        CONF.set_default("ssl_ca_file", "/no/such/file")
+        self.assertRaises(RuntimeError, wsgi.Server, "test_app")
+
+    @mock.patch("ssl.wrap_socket")
+    @mock.patch("os.path.exists")
+    def _test_wrap_ssl(self, exists_mock, wrap_socket_mock, **kwargs):
+        exists_mock.return_value = True
+        sock = mock.Mock()
+        CONF.set_default("ssl_cert_file", 'certificate.crt')
+        CONF.set_default("ssl_key_file", 'privatekey.key')
+        ssl_kwargs = {'server_side': True,
+                      'certfile': CONF.ssl_cert_file,
+                      'keyfile': CONF.ssl_key_file,
+                      'cert_reqs': ssl.CERT_NONE,
+                      }
+        if kwargs:
+            ssl_kwargs.update(**kwargs)
+        server = wsgi.Server("test_app")
+        server.wrap_ssl(sock)
+        wrap_socket_mock.assert_called_once_with(sock, **ssl_kwargs)
+
+    def test_wrap_ssl(self):
+        self._test_wrap_ssl()
+
+    def test_wrap_ssl_ca_file(self):
+        CONF.set_default("ssl_ca_file", 'cacert.pem')
+        ssl_kwargs = {'ca_certs': CONF.ssl_ca_file,
+                      'cert_reqs': ssl.CERT_REQUIRED
+                      }
+        self._test_wrap_ssl(**ssl_kwargs)
+
     def test_app_using_ssl(self):
         CONF.set_default('use_ssl', True)
         CONF.set_default("ssl_cert_file",

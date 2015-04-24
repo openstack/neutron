@@ -102,6 +102,9 @@ class WorkerService(object):
         # existing sql connections avoids producing 500 errors later when they
         # are discovered to be broken.
         api.dispose()
+        if CONF.use_ssl:
+            self._service._socket = self._service.wrap_ssl(
+                self._service._socket)
         self._server = self._service.pool.spawn(self._service._run,
                                                 self._application,
                                                 self._service._socket)
@@ -130,6 +133,8 @@ class Server(object):
         # A value of 0 is converted to None because None is what causes the
         # wsgi server to wait forever.
         self.client_socket_timeout = CONF.client_socket_timeout or None
+        if CONF.use_ssl:
+            self._check_ssl_settings()
 
     def _get_socket(self, host, port, backlog):
         bind_addr = (host, port)
@@ -148,36 +153,6 @@ class Server(object):
                           {'host': host, 'port': port})
             sys.exit(1)
 
-        if CONF.use_ssl:
-            if not os.path.exists(CONF.ssl_cert_file):
-                raise RuntimeError(_("Unable to find ssl_cert_file "
-                                     ": %s") % CONF.ssl_cert_file)
-
-            # ssl_key_file is optional because the key may be embedded in the
-            # certificate file
-            if CONF.ssl_key_file and not os.path.exists(CONF.ssl_key_file):
-                raise RuntimeError(_("Unable to find "
-                                     "ssl_key_file : %s") % CONF.ssl_key_file)
-
-            # ssl_ca_file is optional
-            if CONF.ssl_ca_file and not os.path.exists(CONF.ssl_ca_file):
-                raise RuntimeError(_("Unable to find ssl_ca_file "
-                                     ": %s") % CONF.ssl_ca_file)
-
-        def wrap_ssl(sock):
-            ssl_kwargs = {
-                'server_side': True,
-                'certfile': CONF.ssl_cert_file,
-                'keyfile': CONF.ssl_key_file,
-                'cert_reqs': ssl.CERT_NONE,
-            }
-
-            if CONF.ssl_ca_file:
-                ssl_kwargs['ca_certs'] = CONF.ssl_ca_file
-                ssl_kwargs['cert_reqs'] = ssl.CERT_REQUIRED
-
-            return ssl.wrap_socket(sock, **ssl_kwargs)
-
         sock = None
         retry_until = time.time() + CONF.retry_until_window
         while not sock and time.time() < retry_until:
@@ -185,9 +160,6 @@ class Server(object):
                 sock = eventlet.listen(bind_addr,
                                        backlog=backlog,
                                        family=family)
-                if CONF.use_ssl:
-                    sock = wrap_ssl(sock)
-
             except socket.error as err:
                 with excutils.save_and_reraise_exception() as ctxt:
                     if err.errno == errno.EADDRINUSE:
@@ -210,6 +182,37 @@ class Server(object):
                             CONF.tcp_keepidle)
 
         return sock
+
+    @staticmethod
+    def _check_ssl_settings():
+        if not os.path.exists(CONF.ssl_cert_file):
+            raise RuntimeError(_("Unable to find ssl_cert_file "
+                                 ": %s") % CONF.ssl_cert_file)
+
+        # ssl_key_file is optional because the key may be embedded in the
+        # certificate file
+        if CONF.ssl_key_file and not os.path.exists(CONF.ssl_key_file):
+            raise RuntimeError(_("Unable to find "
+                                 "ssl_key_file : %s") % CONF.ssl_key_file)
+
+        # ssl_ca_file is optional
+        if CONF.ssl_ca_file and not os.path.exists(CONF.ssl_ca_file):
+            raise RuntimeError(_("Unable to find ssl_ca_file "
+                                 ": %s") % CONF.ssl_ca_file)
+
+    @staticmethod
+    def wrap_ssl(sock):
+        ssl_kwargs = {'server_side': True,
+                      'certfile': CONF.ssl_cert_file,
+                      'keyfile': CONF.ssl_key_file,
+                      'cert_reqs': ssl.CERT_NONE,
+                      }
+
+        if CONF.ssl_ca_file:
+            ssl_kwargs['ca_certs'] = CONF.ssl_ca_file
+            ssl_kwargs['cert_reqs'] = ssl.CERT_REQUIRED
+
+        return ssl.wrap_socket(sock, **ssl_kwargs)
 
     def start(self, application, port, host='0.0.0.0', workers=0):
         """Run a WSGI server with the given application."""
