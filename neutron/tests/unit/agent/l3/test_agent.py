@@ -848,6 +848,50 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             floating_ips[0], mock.sentinel.interface_name, device)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
+    def test_create_dvr_fip_interfaces_for_late_binding(self, lla_write):
+        fake_network_id = _uuid()
+        fake_subnet_id = _uuid()
+        fake_floatingips = {'floatingips': [
+            {'id': _uuid(),
+             'floating_ip_address': '20.0.0.3',
+             'fixed_ip_address': '192.168.0.1',
+             'floating_network_id': _uuid(),
+             'port_id': _uuid(),
+             'host': HOSTNAME}]}
+        agent_gateway_port = (
+            {'fixed_ips': [
+                {'ip_address': '20.0.0.30',
+                 'prefixlen': 24,
+                 'subnet_id': fake_subnet_id}],
+             'subnets': [
+                 {'id': fake_subnet_id,
+                  'gateway_ip': '20.0.0.1'}],
+             'id': _uuid(),
+             'network_id': fake_network_id,
+             'mac_address': 'ca:fe:de:ad:be:ef'}
+        )
+
+        router = l3_test_common.prepare_router_data(enable_snat=True)
+        router[l3_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
+        router[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = []
+        router['distributed'] = True
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = dvr_router.DvrEdgeRouter(
+            agent, HOSTNAME, router['id'], router, **self.ri_kwargs)
+
+        ext_gw_port = ri.router.get('gw_port')
+        ri.fip_ns = agent.get_fip_ns(ext_gw_port['network_id'])
+        ri.dist_fip_count = 0
+        ri.fip_ns.subscribe = mock.Mock()
+        with mock.patch.object(agent.plugin_rpc,
+                               'get_agent_gateway_port') as fip_gw_port:
+            fip_gw_port.return_value = agent_gateway_port
+            ri.create_dvr_fip_interfaces(ext_gw_port)
+            self.assertTrue(fip_gw_port.called)
+            self.assertEqual(agent_gateway_port,
+                             ri.fip_ns.agent_gateway_port)
+
+    @mock.patch.object(lla.LinkLocalAllocator, '_write')
     def test_create_dvr_fip_interfaces(self, lla_write):
         fake_network_id = _uuid()
         subnet_id = _uuid()
