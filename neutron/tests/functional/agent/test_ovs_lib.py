@@ -240,7 +240,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
 
     def _set_controllers_connection_mode(self, controllers):
         self.br.set_controller(controllers)
-        self.assertEqual(controllers, self.br.get_controller())
+        self.assertEqual(sorted(controllers), sorted(self.br.get_controller()))
         self.br.set_controllers_connection_mode('out-of-band')
         self._assert_controllers_connection_mode('out-of-band')
         self.br.del_controller()
