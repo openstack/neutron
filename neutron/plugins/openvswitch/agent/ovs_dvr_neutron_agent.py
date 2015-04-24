@@ -600,9 +600,13 @@ class OVSDVRNeutronAgent(object):
             # dvr routed subnet
             ovsport = self.local_ports[port.vif_id]
             subs = list(ovsport.get_subnets())
-            LOG.error(_LE("Centralized-SNAT port %s already seen on "),
-                      port.vif_id)
-            LOG.error(_LE("a different subnet %s"), subs[0])
+            LOG.error(_LE("Centralized-SNAT port %(port)s on subnet "
+                          "%(port_subnet)s already seen on a different "
+                          "subnet %(orig_subnet)s"), {
+                "port": port.vif_id,
+                "port_subnet": fixed_ips[0]['subnet_id'],
+                "orig_subnet": subs[0],
+            })
             return
         # since centralized-SNAT (CSNAT) port must have only one fixed
         # IP, directly use fixed_ips[0]
