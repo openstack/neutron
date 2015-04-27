@@ -315,6 +315,20 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 external_port['mac_address'],
                 namespace=router.ns_name) for fip in floating_ips)
 
+    def _test_update_floatingip_statuses(self, router_info):
+        router = self.manage_router(self.agent, router_info)
+        rpc = self.agent.plugin_rpc.update_floatingip_statuses
+        self.assertTrue(rpc.called)
+
+        # Assert that every defined FIP is updated via RPC
+        expected_fips = set([
+            (fip['id'], l3_constants.FLOATINGIP_STATUS_ACTIVE) for fip in
+            router.router[l3_constants.FLOATINGIP_KEY]])
+        call = [args[0] for args in rpc.call_args_list][0]
+        actual_fips = set(
+            [(fip_id, status) for fip_id, status in call[2].items()])
+        self.assertEqual(expected_fips, actual_fips)
+
     def fail_ha_router(self, router):
         device_name = router.get_ha_device_name()
         ha_device = ip_lib.IPDevice(device_name, router.ns_name)
@@ -398,6 +412,10 @@ class L3AgentTestCase(L3AgentTestFramework):
             mock.call('router', 'before_delete', self.agent, router=router),
             mock.call('router', 'after_delete', self.agent, router=router)]
         event_handler.assert_has_calls(expected_calls)
+
+    def test_legacy_router_update_floatingip_statuses(self):
+        self._test_update_floatingip_statuses(
+            self.generate_router_info(enable_ha=False))
 
     def test_legacy_router_lifecycle(self):
         self._router_lifecycle(enable_ha=False, dual_stack=True)
@@ -806,6 +824,10 @@ class L3HATestFramework(L3AgentTestFramework):
         br_int_1.add_port(veth1.name)
         br_int_2.add_port(veth2.name)
 
+    def test_ha_router_update_floatingip_statuses(self):
+        self._test_update_floatingip_statuses(
+            self.generate_router_info(enable_ha=True))
+
     def test_ha_router_failover(self):
         router_info = self.generate_router_info(enable_ha=True)
         get_ns_name = mock.patch.object(
@@ -1049,6 +1071,10 @@ class TestDvrRouter(L3AgentTestFramework):
         self.assertTrue(self._namespace_exists(fip_ns))
         self._assert_dvr_floating_ips(router)
         self._assert_snat_namespace_does_not_exist(router)
+
+    def test_dvr_update_floatingip_statuses(self):
+        self.agent.conf.agent_mode = 'dvr'
+        self._test_update_floatingip_statuses(self.generate_dvr_router_info())
 
     def test_dvr_router_fips_for_multiple_ext_networks(self):
         agent_mode = 'dvr'
