@@ -103,7 +103,8 @@ class DaemonMonitor(object):
             default_cmd_callback=callback,
             namespace=self._router_ns,
             service=RADVD_SERVICE_NAME,
-            conf=cfg.CONF)
+            conf=cfg.CONF,
+            run_as_root=True)
 
     def _spawn_radvd(self, radvd_conf):
         def callback(pid_file):

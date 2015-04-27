@@ -1399,7 +1399,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           service=process,
                           default_cmd_callback=mock.ANY,
                           namespace=ri.ns_name,
-                          conf=mock.ANY)]
+                          conf=mock.ANY,
+                          run_as_root=True)]
 
     def _process_router_ipv6_subnet_added(
             self, router, ipv6_subnet_modes=None):
