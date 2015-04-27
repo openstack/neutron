@@ -31,6 +31,10 @@ from neutron.tests.functional.agent.l3 import framework
 
 class L3HATestCase(framework.L3AgentTestFramework):
 
+    def test_ha_router_update_floatingip_statuses(self):
+        self._test_update_floatingip_statuses(
+            self.generate_router_info(enable_ha=True))
+
     def test_keepalived_state_change_notification(self):
         enqueue_mock = mock.patch.object(
             self.agent, 'enqueue_state_change').start()

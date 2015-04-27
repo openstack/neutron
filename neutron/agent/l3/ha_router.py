@@ -253,8 +253,7 @@ class HaRouter(router.RouterInfo):
         fip_ip = fip['floating_ip_address']
         ip_cidr = common_utils.ip_to_cidr(fip_ip)
         self._add_vip(ip_cidr, interface_name)
-        # TODO(Carl) Should this return status?
-        # return l3_constants.FLOATINGIP_STATUS_ACTIVE
+        return n_consts.FLOATINGIP_STATUS_ACTIVE
 
     def remove_floating_ip(self, device, ip_cidr):
         self._remove_vip(ip_cidr)

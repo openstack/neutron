@@ -161,6 +161,20 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             with testtools.ExpectedException(RuntimeError):
                 netcat.test_connectivity()
 
+    def _test_update_floatingip_statuses(self, router_info):
+        router = self.manage_router(self.agent, router_info)
+        rpc = self.agent.plugin_rpc.update_floatingip_statuses
+        self.assertTrue(rpc.called)
+
+        # Assert that every defined FIP is updated via RPC
+        expected_fips = set([
+            (fip['id'], l3_constants.FLOATINGIP_STATUS_ACTIVE) for fip in
+            router.router[l3_constants.FLOATINGIP_KEY]])
+        call = [args[0] for args in rpc.call_args_list][0]
+        actual_fips = set(
+            [(fip_id, status) for fip_id, status in call[2].items()])
+        self.assertEqual(expected_fips, actual_fips)
+
     def _gateway_check(self, gateway_ip, external_device):
         expected_gateway = gateway_ip
         ip_vers = netaddr.IPAddress(expected_gateway).version

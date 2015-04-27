@@ -47,6 +47,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
         return super(TestDvrRouter, self).manage_router(agent, router)
 
+    def test_dvr_update_floatingip_statuses(self):
+        self.agent.conf.agent_mode = 'dvr'
+        self._test_update_floatingip_statuses(self.generate_dvr_router_info())
+
     def test_dvr_router_lifecycle_without_ha_without_snat_with_fips(self):
         self._dvr_router_lifecycle(enable_ha=False, enable_snat=False)
 
