@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.openstack.common import uuidutils
@@ -46,7 +47,7 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
             SingleNodeEnvironment(), *args, **kwargs)
 
     def _get_namespace(self, router_id):
-        return "%s%s" % (l3_agent.NS_PREFIX, router_id)
+        return namespaces.build_ns_name(l3_agent.NS_PREFIX, router_id)
 
     def _assert_namespace_exists(self, ns_name):
         ip = ip_lib.IPWrapper(ns_name)

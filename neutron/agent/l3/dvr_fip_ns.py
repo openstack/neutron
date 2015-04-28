@@ -39,7 +39,7 @@ FIP_PR_END = FIP_PR_START + 40000
 class FipNamespace(namespaces.Namespace):
 
     def __init__(self, ext_net_id, agent_conf, driver, use_ipv6):
-        name = FIP_NS_PREFIX + ext_net_id
+        name = self._get_ns_name(ext_net_id)
         super(FipNamespace, self).__init__(
             name, agent_conf, driver, use_ipv6)
 
@@ -57,8 +57,12 @@ class FipNamespace(namespaces.Namespace):
         self.local_subnets = lla.LinkLocalAllocator(path, FIP_LL_SUBNET)
         self.destroyed = False
 
+    @classmethod
+    def _get_ns_name(cls, ext_net_id):
+        return namespaces.build_ns_name(FIP_NS_PREFIX, ext_net_id)
+
     def get_name(self):
-        return (FIP_NS_PREFIX + self._ext_net_id)
+        return self._get_ns_name(self._ext_net_id)
 
     def get_ext_device_name(self, port_id):
         return (FIP_EXT_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]

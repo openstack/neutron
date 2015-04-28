@@ -27,6 +27,37 @@ EXTERNAL_DEV_PREFIX = 'qg-'
 ROUTER_2_FIP_DEV_PREFIX = 'rfp-'
 
 
+def build_ns_name(prefix, identifier):
+    """Builds a namespace name from the given prefix and identifier
+
+    :param prefix: The prefix which must end with '-' for legacy reasons
+    :param identifier: The id associated with the namespace
+    """
+    return prefix + identifier
+
+
+def get_prefix_from_ns_name(ns_name):
+    """Parses prefix from prefix-identifier
+
+    :param ns_name: The name of a namespace
+    :returns: The prefix ending with a '-' or None if there is no '-'
+    """
+    dash_index = ns_name.find('-')
+    if 0 <= dash_index:
+        return ns_name[:dash_index + 1]
+
+
+def get_id_from_ns_name(ns_name):
+    """Parses identifier from prefix-identifier
+
+    :param ns_name: The name of a namespace
+    :returns: Identifier or None if there is no - to end the prefix
+    """
+    dash_index = ns_name.find('-')
+    if 0 <= dash_index:
+        return ns_name[dash_index + 1:]
+
+
 class Namespace(object):
 
     def __init__(self, name, agent_conf, driver, use_ipv6):
@@ -61,9 +92,9 @@ class RouterNamespace(Namespace):
         super(RouterNamespace, self).__init__(
             name, agent_conf, driver, use_ipv6)
 
-    @staticmethod
-    def _get_ns_name(router_id):
-        return (NS_PREFIX + router_id)
+    @classmethod
+    def _get_ns_name(cls, router_id):
+        return build_ns_name(NS_PREFIX, router_id)
 
     def delete(self):
         ns_ip = ip_lib.IPWrapper(namespace=self.name)

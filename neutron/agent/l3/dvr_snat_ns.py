@@ -30,7 +30,7 @@ class SnatNamespace(namespaces.Namespace):
 
     @classmethod
     def get_snat_ns_name(cls, router_id):
-        return (SNAT_NS_PREFIX + router_id)
+        return namespaces.build_ns_name(SNAT_NS_PREFIX, router_id)
 
     def delete(self):
         ns_ip = ip_lib.IPWrapper(namespace=self.name)
