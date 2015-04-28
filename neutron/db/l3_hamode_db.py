@@ -262,13 +262,13 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         """
 
         min_agents = cfg.CONF.min_l3_agents_per_router
-        num_agents = len(self.get_l3_agents(context,
+        num_agents = len(self.get_l3_agents(context, active=True,
             filters={'agent_modes': [constants.L3_AGENT_MODE_LEGACY,
                                      constants.L3_AGENT_MODE_DVR_SNAT]}))
         max_agents = cfg.CONF.max_l3_agents_per_router
         if max_agents:
             if max_agents > num_agents:
-                LOG.info(_LI("Number of available agents lower than "
+                LOG.info(_LI("Number of active agents lower than "
                              "max_l3_agents_per_router. L3 agents "
                              "available: %s"), num_agents)
             else:
