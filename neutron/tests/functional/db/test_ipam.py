@@ -36,7 +36,6 @@ def get_admin_test_context(db_url):
     ctx = context.Context(user_id=None,
                           tenant_id=None,
                           is_admin=True,
-                          read_deleted="no",
                           overwrite=False)
     facade = session.EngineFacade(db_url, mysql_sql_mode='STRICT_ALL_TABLES')
     ctx._session = facade.get_session(autocommit=False, expire_on_commit=True)
