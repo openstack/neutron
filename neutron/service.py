@@ -32,6 +32,7 @@ from neutron.i18n import _LE, _LI
 from neutron import manager
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import service as common_service
+from neutron import policy
 from neutron import wsgi
 
 
@@ -285,6 +286,10 @@ class Service(n_rpc.Service):
                 x.wait()
             except Exception:
                 LOG.exception(_LE("Exception occurs when waiting for timer"))
+
+    def reset(self):
+        config.setup_logging()
+        policy.refresh()
 
     def periodic_tasks(self, raise_on_error=False):
         """Tasks to be run at a periodic interval."""
