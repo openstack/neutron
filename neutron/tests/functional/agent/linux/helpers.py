@@ -21,6 +21,7 @@ import shlex
 import subprocess
 
 import fixtures
+import netaddr
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
@@ -106,7 +107,9 @@ class Pinger(object):
         self._max_attempts = max_attempts
 
     def _ping_destination(self, dest_address):
-        self.namespace.netns.execute(['ping', '-c', self._max_attempts,
+        ipversion = netaddr.IPAddress(dest_address).version
+        ping_command = 'ping' if ipversion == 4 else 'ping6'
+        self.namespace.netns.execute([ping_command, '-c', self._max_attempts,
                                       '-W', self._timeout, dest_address])
 
     def assert_ping(self, dst_ip):

@@ -50,6 +50,17 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         pinger = helpers.Pinger(self.src_ns)
         pinger.assert_ping(self.dst_addr)
 
+    def test_arp_spoof_doesnt_block_ipv6(self):
+        self.src_addr = '2000::1'
+        self.dst_addr = '2000::2'
+        self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr])
+        self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
+        self.src_p.addr.add('%s/64' % self.src_addr)
+        self.dst_p.addr.add('%s/64' % self.dst_addr)
+        # IPv6 addresses seem to take longer to initialize
+        pinger = helpers.Pinger(self.src_ns, max_attempts=4)
+        pinger.assert_ping(self.dst_addr)
+
     def test_arp_spoof_blocks_response(self):
         # this will prevent the destination from responding to the ARP
         # request for it's own address
