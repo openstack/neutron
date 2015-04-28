@@ -130,7 +130,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     # router, make sure to create corresponding
                     # snat interface ports that are to be consumed by
                     # the Service Node.
-                    if not self.create_snat_intf_ports_if_not_exists(
+                    if not self._create_snat_intf_ports_if_not_exists(
                         context.elevated(), router_db):
                         LOG.debug("SNAT interface ports not created: %s",
                                   router_db['id'])
@@ -157,7 +157,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         # Make sure that the gateway port exists before creating the
         # snat interface ports for distributed router.
         if router.extra_attributes.distributed and router.gw_port:
-            snat_p_list = self.create_snat_intf_ports_if_not_exists(
+            snat_p_list = self._create_snat_intf_ports_if_not_exists(
                 context.elevated(), router)
             if not snat_p_list:
                 LOG.debug("SNAT interface ports not created: %s", snat_p_list)
@@ -199,7 +199,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             # Check if distributed router and then delete the
             # FloatingIP agent gateway port
             if router_dict.get('distributed'):
-                self.clear_unused_fip_agent_gw_port(
+                self._clear_unused_fip_agent_gw_port(
                     admin_ctx, floatingip_db)
         super(L3_NAT_with_dvr_db_mixin, self)._update_fip_assoc(
             context, fip, floatingip_db, external_port)
@@ -211,7 +211,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             # Check if distributed router and then create the
             # FloatingIP agent gateway port
             if router_dict.get('distributed'):
-                vm_hostid = self.get_vm_port_hostid(
+                vm_hostid = self._get_vm_port_hostid(
                     context, fip_port)
                 if vm_hostid:
                     # FIXME (Swami): This FIP Agent Gateway port should be
@@ -225,7 +225,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                             vm_hostid))
                     LOG.debug("FIP Agent gateway port: %s", fip_agent_port)
 
-    def clear_unused_fip_agent_gw_port(
+    def _clear_unused_fip_agent_gw_port(
             self, context, floatingip_db):
         """Helper function to check for fip agent gw port and delete.
 
@@ -235,20 +235,20 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         the FIP agent gateway port. If even a single VM is using the
         port it will not delete.
         """
-        fip_hostid = self.get_vm_port_hostid(
+        fip_hostid = self._get_vm_port_hostid(
             context, floatingip_db['fixed_port_id'])
-        if fip_hostid and self.check_fips_availability_on_host_ext_net(
+        if fip_hostid and self._check_fips_availability_on_host_ext_net(
             context, fip_hostid, floatingip_db['floating_network_id']):
             LOG.debug('Deleting the Agent GW Port for ext-net: '
                       '%s', floatingip_db['floating_network_id'])
-            self.delete_floatingip_agent_gateway_port(
+            self._delete_floatingip_agent_gateway_port(
                 context, fip_hostid, floatingip_db['floating_network_id'])
 
     def delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
         if floatingip['fixed_port_id']:
             admin_ctx = context.elevated()
-            self.clear_unused_fip_agent_gw_port(
+            self._clear_unused_fip_agent_gw_port(
                 admin_ctx, floatingip)
         super(L3_NAT_with_dvr_db_mixin,
               self).delete_floatingip(context, id)
@@ -266,7 +266,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 context, port_id=port_id)
             if fip:
                 admin_ctx = context.elevated()
-                self.clear_unused_fip_agent_gw_port(
+                self._clear_unused_fip_agent_gw_port(
                     admin_ctx, fip)
         return super(L3_NAT_with_dvr_db_mixin,
                      self).disassociate_floatingips(context,
@@ -298,7 +298,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 context.session.add(router_port)
 
             if router.extra_attributes.distributed and router.gw_port:
-                self.add_csnat_router_interface_port(
+                self._add_csnat_router_interface_port(
                     context.elevated(), router, port['network_id'],
                     port['fixed_ips'][-1]['subnet_id'])
 
@@ -349,7 +349,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             context, router_interface_info, 'remove')
         return router_interface_info
 
-    def get_snat_sync_interfaces(self, context, router_ids):
+    def _get_snat_sync_interfaces(self, context, router_ids):
         """Query router interfaces that relate to list of router_ids."""
         if not router_ids:
             return []
@@ -399,7 +399,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             routers_dict[router['id']] = router
             router_ids = [router['id']]
             if router['gw_port_id']:
-                snat_router_intfs = self.get_snat_sync_interfaces(context,
+                snat_router_intfs = self._get_snat_sync_interfaces(context,
                                                                   router_ids)
                 LOG.debug("SNAT ports returned: %s ", snat_router_intfs)
                 router[SNAT_ROUTER_INTF_KEY] = snat_router_intfs
@@ -420,13 +420,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 router_floatingips.append(floating_ip)
                 router[l3_const.FLOATINGIP_KEY] = router_floatingips
                 if not fip_sync_interfaces:
-                    fip_sync_interfaces = self.get_fip_sync_interfaces(
+                    fip_sync_interfaces = self._get_fip_sync_interfaces(
                         context, agent.id)
                     LOG.debug("FIP Agent ports: %s", fip_sync_interfaces)
                 router[l3_const.FLOATINGIP_AGENT_INTF_KEY] = (
                     fip_sync_interfaces)
 
-    def get_fip_sync_interfaces(self, context, fip_agent_id):
+    def _get_fip_sync_interfaces(self, context, fip_agent_id):
         """Query router interfaces that relate to list of router_ids."""
         if not fip_agent_id:
             return []
@@ -436,7 +436,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         LOG.debug("Return the FIP ports: %s ", interfaces)
         return interfaces
 
-    def get_dvr_sync_data(self, context, host, agent, router_ids=None,
+    def _get_dvr_sync_data(self, context, host, agent, router_ids=None,
                           active=None):
         routers, interfaces, floating_ips = self._get_router_info_list(
             context, router_ids=router_ids, active=active,
@@ -448,7 +448,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         for fip in floating_ips:
             vm_port = port_dict.get(fip['port_id'], None)
             if vm_port:
-                fip['host'] = self.get_vm_port_hostid(context, fip['port_id'],
+                fip['host'] = self._get_vm_port_hostid(context, fip['port_id'],
                                                       port=vm_port)
         routers_dict = self._process_routers(context, routers)
         self._process_floating_ips_dvr(context, routers_dict,
@@ -466,7 +466,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         self._process_interfaces(routers_dict, interfaces)
         return routers_dict.values()
 
-    def get_vm_port_hostid(self, context, port_id, port=None):
+    def _get_vm_port_hostid(self, context, port_id, port=None):
         """Return the portbinding host_id."""
         vm_port_db = port or self._core_plugin.get_port(context, port_id)
         device_owner = vm_port_db['device_owner'] if vm_port_db else ""
@@ -474,7 +474,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             device_owner == DEVICE_OWNER_AGENT_GW):
             return vm_port_db[portbindings.HOST_ID]
 
-    def get_agent_gw_ports_exist_for_network(
+    def _get_agent_gw_ports_exist_for_network(
             self, context, network_id, host, agent_id):
         """Return agent gw port if exist, or None otherwise."""
         if not network_id:
@@ -490,7 +490,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if ports:
             return ports[0]
 
-    def check_fips_availability_on_host_ext_net(
+    def _check_fips_availability_on_host_ext_net(
         self, context, host_id, fip_ext_net_id):
         """Query all floating_ips and filter on host and external net."""
         fip_count_on_host = 0
@@ -500,7 +500,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             floating_ips = self._get_sync_floating_ips(context, router_ids)
             # Check for the active floatingip in the host
             for fip in floating_ips:
-                f_host = self.get_vm_port_hostid(context, fip['port_id'])
+                f_host = self._get_vm_port_hostid(context, fip['port_id'])
                 if (f_host == host_id and
                     (fip['floating_network_id'] == fip_ext_net_id)):
                     fip_count_on_host += 1
@@ -511,7 +511,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 return True
             return False
 
-    def delete_floatingip_agent_gateway_port(
+    def _delete_floatingip_agent_gateway_port(
         self, context, host_id, ext_net_id):
         """Function to delete FIP gateway port with given ext_net_id."""
         # delete any fip agent gw port
@@ -520,7 +520,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         ports = self._core_plugin.get_ports(context,
                                             filters=device_filter)
         for p in ports:
-            if self.get_vm_port_hostid(context, p['id'], p) == host_id:
+            if self._get_vm_port_hostid(context, p['id'], p) == host_id:
                 self._core_plugin._delete_port(context, p['id'])
                 return
 
@@ -537,7 +537,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             context, l3_const.AGENT_TYPE_L3, host)
         if l3_agent_db:
             LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
-            f_port = self.get_agent_gw_ports_exist_for_network(
+            f_port = self._get_agent_gw_ports_exist_for_network(
                 context, network_id, host, l3_agent_db['id'])
             if not f_port:
                 LOG.info(_LI('Agent Gateway port does not exist,'
@@ -562,7 +562,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 self._populate_subnets_for_ports(context, [f_port])
                 return f_port
 
-    def get_snat_interface_ports_for_router(self, context, router_id):
+    def _get_snat_interface_ports_for_router(self, context, router_id):
         """Return all existing snat_router_interface ports."""
         qry = context.session.query(l3_db.RouterPort)
         qry = qry.filter_by(
@@ -574,7 +574,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                  for rp in qry]
         return ports
 
-    def add_csnat_router_interface_port(
+    def _add_csnat_router_interface_port(
             self, context, router, network_id, subnet_id, do_pop=True):
         """Add SNAT interface to the specified router and subnet."""
         snat_port = self._core_plugin.create_port(
@@ -603,14 +603,14 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return self._populate_subnets_for_ports(context, [snat_port])
         return snat_port
 
-    def create_snat_intf_ports_if_not_exists(self, context, router):
+    def _create_snat_intf_ports_if_not_exists(self, context, router):
         """Function to return the snat interface port list.
 
         This function will return the snat interface port list
         if it exists. If the port does not exist it will create
         new ports and then return the list.
         """
-        port_list = self.get_snat_interface_ports_for_router(
+        port_list = self._get_snat_interface_ports_for_router(
             context, router.id)
         if port_list:
             self._populate_subnets_for_ports(context, port_list)
@@ -630,7 +630,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 # Passing the subnet for the port to make sure the IP's
                 # are assigned on the right subnet if multiple subnet
                 # exists
-                snat_port = self.add_csnat_router_interface_port(
+                snat_port = self._add_csnat_router_interface_port(
                     context, router, intf['network_id'],
                     intf['fixed_ips'][0]['subnet_id'], do_pop=False)
                 port_list.append(snat_port)
