@@ -1092,6 +1092,7 @@ class TestDvrRouter(L3AgentTestFramework):
         )
         if gateway_expected_in_snat_namespace:
             self._assert_dvr_snat_gateway(router)
+            self._assert_removal_of_already_deleted_gateway_device(router)
 
         snat_namespace_should_not_exist = (
             self.agent.conf.agent_mode == 'dvr'
@@ -1111,6 +1112,16 @@ class TestDvrRouter(L3AgentTestFramework):
             external_device.route.get_gateway().get('gateway'))
         expected_gateway = external_port['subnets'][0]['gateway_ip']
         self.assertEqual(expected_gateway, existing_gateway)
+
+    def _assert_removal_of_already_deleted_gateway_device(self, router):
+        namespace = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
+            router.router_id)
+        device = ip_lib.IPDevice("fakedevice",
+                                 namespace=namespace)
+
+        # Assert that no exception is thrown for this case
+        self.assertIsNone(router._snat_delete_device_gateway(
+                          device, "192.168.0.1", 0))
 
     def _assert_snat_namespace_does_not_exist(self, router):
         namespace = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
