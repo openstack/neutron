@@ -142,6 +142,11 @@ class CallBacksManagerTestCase(base.BaseTestCase):
         self.assertEqual(0, callback_1.counter)
         self.assertEqual(0, callback_2.counter)
 
+    def test_feebly_referenced_callback(self):
+        self.manager.subscribe(lambda *x, **y: None, resources.PORT,
+                               events.BEFORE_CREATE)
+        self.manager.notify(resources.PORT, events.BEFORE_CREATE, mock.ANY)
+
     def test_notify_with_exception(self):
         with mock.patch.object(self.manager, '_notify_loop') as n:
             n.return_value = ['error']
