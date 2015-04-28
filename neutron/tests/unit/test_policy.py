@@ -217,8 +217,6 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def setUp(self):
         super(NeutronPolicyTestCase, self).setUp()
         policy.refresh()
-        self.admin_only_legacy = "role:admin"
-        self.admin_or_owner_legacy = "role:admin or tenant_id:%(tenant_id)s"
         # Add Fake resources to RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCES)
         self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
@@ -340,6 +338,34 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_nonadmin_read_on_shared_succeeds(self):
         self._test_nonadmin_action_on_attr('get', 'shared', True)
 
+    def test_check_is_admin_with_admin_context_succeeds(self):
+        admin_context = context.get_admin_context()
+        self.assertTrue(policy.check_is_admin(admin_context))
+
+    def test_check_is_admin_with_user_context_fails(self):
+        self.assertFalse(policy.check_is_admin(self.context))
+
+    def test_check_is_admin_with_no_admin_policy_fails(self):
+        del self.rules[policy.ADMIN_CTX_POLICY]
+        admin_context = context.get_admin_context()
+        self.assertFalse(policy.check_is_admin(admin_context))
+
+    def test_check_is_advsvc_with_admin_context_fails(self):
+        admin_context = context.get_admin_context()
+        self.assertFalse(policy.check_is_advsvc(admin_context))
+
+    def test_check_is_advsvc_with_svc_context_suceeds(self):
+        svc_context = context.Context('', 'svc', roles=['advsvc'])
+        self.assertTrue(policy.check_is_advsvc(svc_context))
+
+    def test_check_is_advsvc_with_no_advsvc_policy_fails(self):
+        del self.rules[policy.ADVSVC_CTX_POLICY]
+        svc_context = context.Context('', 'svc', roles=['advsvc'])
+        self.assertFalse(policy.check_is_advsvc(svc_context))
+
+    def test_check_is_advsvc_with_user_context_fails(self):
+        self.assertFalse(policy.check_is_advsvc(self.context))
+
     def _test_enforce_adminonly_attribute(self, action, **kwargs):
         admin_context = context.get_admin_context()
         target = {'shared': True}
@@ -361,26 +387,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                            common_policy.PolicyNotAuthorized,
                                            **kwargs)
 
-    def test_enforce_adminonly_attribute_no_context_is_admin_policy(self):
-        del self.rules[policy.ADMIN_CTX_POLICY]
-        self.rules['admin_only'] = common_policy.parse_rule(
-            self.admin_only_legacy)
-        self.rules['admin_or_owner'] = common_policy.parse_rule(
-            self.admin_or_owner_legacy)
-        self._test_enforce_adminonly_attribute('create_network')
-
     def test_enforce_adminonly_attribute_nonadminctx_returns_403(self):
-        action = "create_network"
-        target = {'shared': True, 'tenant_id': 'somebody_else'}
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
-                          self.context, action, target)
-
-    def test_enforce_adminonly_nonadminctx_no_ctx_is_admin_policy_403(self):
-        del self.rules[policy.ADMIN_CTX_POLICY]
-        self.rules['admin_only'] = common_policy.parse_rule(
-            self.admin_only_legacy)
-        self.rules['admin_or_owner'] = common_policy.parse_rule(
-            self.admin_or_owner_legacy)
         action = "create_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
         self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,

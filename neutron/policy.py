@@ -435,12 +435,9 @@ def check_is_admin(context):
     init()
     # the target is user-self
     credentials = context.to_dict()
-    target = credentials
-    # Backward compatibility: if ADMIN_CTX_POLICY is not
-    # found, default to validating role:admin
-    admin_policy = (ADMIN_CTX_POLICY if ADMIN_CTX_POLICY in _ENFORCER.rules
-                    else 'role:admin')
-    return _ENFORCER.enforce(admin_policy, target, credentials)
+    if ADMIN_CTX_POLICY not in _ENFORCER.rules:
+        return False
+    return _ENFORCER.enforce(ADMIN_CTX_POLICY, credentials, credentials)
 
 
 def check_is_advsvc(context):
@@ -448,12 +445,9 @@ def check_is_advsvc(context):
     init()
     # the target is user-self
     credentials = context.to_dict()
-    target = credentials
-    # Backward compatibility: if ADVSVC_CTX_POLICY is not
-    # found, default to validating role:advsvc
-    advsvc_policy = (ADVSVC_CTX_POLICY in _ENFORCER.rules
-                    and ADVSVC_CTX_POLICY or 'role:advsvc')
-    return _ENFORCER.enforce(advsvc_policy, target, credentials)
+    if ADVSVC_CTX_POLICY not in _ENFORCER.rules:
+        return False
+    return _ENFORCER.enforce(ADVSVC_CTX_POLICY, credentials, credentials)
 
 
 def _extract_roles(rule, roles):
