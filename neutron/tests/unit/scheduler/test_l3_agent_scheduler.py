@@ -27,7 +27,6 @@ from oslo_utils import timeutils
 from sqlalchemy.orm import query
 
 from neutron.common import constants
-from neutron.common import topics
 from neutron import context as q_context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
@@ -41,6 +40,7 @@ from neutron.extensions import l3agentscheduler as l3agent
 from neutron import manager
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
+from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit import testlib_api
@@ -54,24 +54,7 @@ from neutron.tests.unit import testlib_api
 load_tests = testscenarios.load_tests_apply_scenarios
 
 HOST_DVR = 'my_l3_host_dvr'
-DVR_L3_AGENT = {
-    'binary': 'neutron-l3-agent',
-    'host': HOST_DVR,
-    'topic': topics.L3_AGENT,
-    'configurations': {'agent_mode': 'dvr'},
-    'agent_type': constants.AGENT_TYPE_L3,
-    'start_flag': True
-}
-
 HOST_DVR_SNAT = 'my_l3_host_dvr_snat'
-DVR_SNAT_L3_AGENT = {
-    'binary': 'neutron-l3-agent',
-    'host': HOST_DVR_SNAT,
-    'topic': topics.L3_AGENT,
-    'configurations': {'agent_mode': 'dvr_snat'},
-    'agent_type': constants.AGENT_TYPE_L3,
-    'start_flag': True
-}
 
 
 class FakeL3Scheduler(l3_agent_scheduler.L3Scheduler):
@@ -287,49 +270,21 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
 class L3SchedulerBaseMixin(object):
 
-    def _register_l3_agent(self, host, agent_mode='legacy', plugin=None):
-        if not plugin:
-            plugin = self.plugin
-
-        agent = {
-            'binary': 'neutron-l3-agent',
-            'host': host,
-            'topic': topics.L3_AGENT,
-            'configurations': {'agent_mode': agent_mode},
-            'agent_type': constants.AGENT_TYPE_L3,
-            'start_flag': True
-        }
-        callback = agents_db.AgentExtRpcCallback()
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': agent},
-                              time=timeutils.strtime())
-        agent_db = plugin.get_agents_db(self.adminContext,
-                                        filters={'host': [agent['host']]})
-        return agent_db[0]
-
     def _register_l3_agents(self, plugin=None):
-        self.agent1 = self._register_l3_agent('host_1', plugin=plugin)
+        self.agent1 = helpers.register_l3_agent(
+            'host_1', constants.L3_AGENT_MODE_LEGACY)
         self.agent_id1 = self.agent1.id
-
-        self.agent2 = self._register_l3_agent('host_2', plugin=plugin)
+        self.agent2 = helpers.register_l3_agent(
+            'host_2', constants.L3_AGENT_MODE_LEGACY)
         self.agent_id2 = self.agent2.id
 
     def _register_l3_dvr_agents(self):
-        callback = agents_db.AgentExtRpcCallback()
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': DVR_L3_AGENT},
-                              time=timeutils.strtime())
-        agent_db = self.plugin.get_agents_db(self.adminContext,
-                                             filters={'host': [HOST_DVR]})
-        self.l3_dvr_agent = agent_db[0]
-        self.l3_dvr_agent_id = agent_db[0].id
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': DVR_SNAT_L3_AGENT},
-                              time=timeutils.strtime())
-        agent_db = self.plugin.get_agents_db(self.adminContext,
-                                             filters={'host': [HOST_DVR_SNAT]})
-        self.l3_dvr_snat_id = agent_db[0].id
-        self.l3_dvr_snat_agent = agent_db[0]
+        self.l3_dvr_agent = helpers.register_l3_agent(
+            HOST_DVR, constants.L3_AGENT_MODE_DVR)
+        self.l3_dvr_agent_id = self.l3_dvr_agent.id
+        self.l3_dvr_snat_agent = helpers.register_l3_agent(
+            HOST_DVR_SNAT, constants.L3_AGENT_MODE_DVR_SNAT)
+        self.l3_dvr_snat_id = self.l3_dvr_snat_agent.id
 
     def _set_l3_agent_admin_state(self, context, agent_id, state=True):
         update = {'agent': {'admin_state_up': state}}
@@ -458,7 +413,6 @@ class L3SchedulerTestBaseMixin(object):
         }
         self._register_l3_dvr_agents()
         agent_id = self.l3_dvr_snat_id
-        agent = self.l3_dvr_snat_agent
         router = self._create_router_for_l3_agent_dvr_test(
             distributed=True,
             external_gw=external_gw_info)
@@ -472,7 +426,7 @@ class L3SchedulerTestBaseMixin(object):
             self.add_router_to_l3_agent(self.adminContext, agent_id,
                                         router['router']['id'])
             rtr_agent_binding.assert_called_once_with(
-                self.adminContext, agent, router['router'])
+                self.adminContext, mock.ANY, router['router'])
 
     def test_add_router_to_l3_agent(self):
         self._test_add_router_to_l3_agent()
@@ -639,9 +593,8 @@ class L3SchedulerTestBaseMixin(object):
         agent_list = [self.agent1, self.l3_dvr_agent]
         # test dvr agent_mode case only dvr agent should be candidate
         router['distributed'] = True
-        exp_host = DVR_L3_AGENT.get('host')
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=True)
-        self._check_get_l3_agent_candidates(router, agent_list, exp_host)
+        self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR)
 
     def test_get_l3_agent_candidates_dvr_no_vms(self):
         self._register_l3_dvr_agents()
@@ -651,12 +604,11 @@ class L3SchedulerTestBaseMixin(object):
         router['external_gateway_info'] = None
         router['id'] = str(uuid.uuid4())
         agent_list = [self.agent1, self.l3_dvr_agent]
-        exp_host = DVR_L3_AGENT.get('host')
         router['distributed'] = True
         # Test no VMs present case
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=False)
         self._check_get_l3_agent_candidates(
-            router, agent_list, exp_host, count=0)
+            router, agent_list, HOST_DVR, count=0)
 
     def test_get_l3_agent_candidates_dvr_snat(self):
         self._register_l3_dvr_agents()
@@ -668,9 +620,8 @@ class L3SchedulerTestBaseMixin(object):
         router['distributed'] = True
 
         agent_list = [self.l3_dvr_snat_agent]
-        exp_host = DVR_SNAT_L3_AGENT.get('host')
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=True)
-        self._check_get_l3_agent_candidates(router, agent_list, exp_host)
+        self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR_SNAT)
 
     def test_get_l3_agent_candidates_dvr_snat_no_vms(self):
         self._register_l3_dvr_agents()
@@ -682,12 +633,11 @@ class L3SchedulerTestBaseMixin(object):
         router['distributed'] = True
 
         agent_list = [self.l3_dvr_snat_agent]
-        exp_host = DVR_SNAT_L3_AGENT.get('host')
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=False)
         # Test no VMs present case
         self.check_ports_exist_on_l3agent.return_value = False
         self._check_get_l3_agent_candidates(
-            router, agent_list, exp_host, count=0)
+            router, agent_list, HOST_DVR_SNAT, count=0)
 
     def test_get_l3_agent_candidates_centralized(self):
         self._register_l3_dvr_agents()
@@ -698,9 +648,8 @@ class L3SchedulerTestBaseMixin(object):
         router['id'] = str(uuid.uuid4())
         # check centralized test case
         router['distributed'] = False
-        exp_host = DVR_SNAT_L3_AGENT.get('host')
         agent_list = [self.l3_dvr_snat_agent]
-        self._check_get_l3_agent_candidates(router, agent_list, exp_host)
+        self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR_SNAT)
 
     def _prepare_check_ports_exist_tests(self):
         l3_agent = agents_db.Agent()
@@ -783,7 +732,7 @@ class L3SchedulerTestBaseMixin(object):
         self.assertTrue(val)
 
     def test_get_l3_agents_hosting_routers(self):
-        agent = self._register_l3_agent('host_6')
+        agent = helpers.register_l3_agent('host_6')
         router = self._make_router(self.fmt,
                                    tenant_id=str(uuid.uuid4()),
                                    name='r1')
@@ -1482,10 +1431,10 @@ class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
         super(L3_HA_scheduler_db_mixinTestCase,
               self)._register_l3_agents(plugin=plugin)
 
-        self.agent3 = self._register_l3_agent('host_3', plugin=plugin)
+        self.agent3 = helpers.register_l3_agent(host='host_3')
         self.agent_id3 = self.agent3.id
 
-        self.agent4 = self._register_l3_agent('host_4', plugin=plugin)
+        self.agent4 = helpers.register_l3_agent(host='host_4')
         self.agent_id4 = self.agent4.id
 
     def test_get_ha_routers_l3_agents_count(self):
@@ -1620,7 +1569,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
         self.assertIn(self.agent_id1, agent_ids)
         self.assertIn(self.agent_id2, agent_ids)
 
-        agent = self._register_l3_agent('host_3')
+        agent = helpers.register_l3_agent(host='host_3')
         self.agent_id3 = agent.id
         routers_to_auto_schedule = [router['id']] if specific_router else []
         self.plugin.auto_schedule_routers(self.adminContext,
@@ -1665,10 +1614,10 @@ class L3HALeastRoutersSchedulerTestCase(L3HATestCaseMixin):
         super(L3HALeastRoutersSchedulerTestCase,
               self)._register_l3_agents(plugin=plugin)
 
-        agent = self._register_l3_agent('host_3', plugin=plugin)
+        agent = helpers.register_l3_agent(host='host_3')
         self.agent_id3 = agent.id
 
-        agent = self._register_l3_agent('host_4', plugin=plugin)
+        agent = helpers.register_l3_agent(host='host_4')
         self.agent_id4 = agent.id
 
     def setUp(self):
@@ -1772,7 +1721,7 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
         hosts = ['host_1', 'host_2', 'host_3', 'host_4', 'host_5']
         agent_modes = ['legacy', 'dvr_snat', 'dvr', 'fake_mode', 'legacy']
         for host, agent_mode in zip(hosts, agent_modes):
-            self._register_l3_agent(host, agent_mode, self.plugin)
+            helpers.register_l3_agent(host, agent_mode)
 
     def _get_agent_mode(self, agent):
         agent_conf = self.plugin.get_configuration_dict(agent)

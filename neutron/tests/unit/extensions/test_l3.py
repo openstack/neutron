@@ -46,6 +46,7 @@ from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.tests import base
+from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -2502,10 +2503,10 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
                                self.subnet()) as (r, s1, s2):
             self._set_net_external(s1['subnet']['network_id'])
             l3_rpc_cb = l3_rpc.L3RpcCallback()
-            self._register_one_l3_agent(
+            helpers.register_l3_agent(
                 host='host1',
                 ext_net_id=s1['subnet']['network_id'])
-            self._register_one_l3_agent(
+            helpers.register_l3_agent(
                 host='host2', internal_only=False,
                 ext_net_id=s2['subnet']['network_id'])
             l3_rpc_cb.sync_routers(self.adminContext,
@@ -2529,10 +2530,10 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
                                self.subnet()) as (r, s1, s2):
             self._set_net_external(s1['subnet']['network_id'])
             l3_rpc_cb = l3_rpc.L3RpcCallback()
-            self._register_one_l3_agent(
+            helpers.register_l3_agent(
                 host='host1',
                 ext_net_id=s1['subnet']['network_id'])
-            self._register_one_l3_agent(
+            helpers.register_l3_agent(
                 host='host2', internal_only=False,
                 ext_net_id='', ext_bridge='')
             l3_rpc_cb.sync_routers(self.adminContext,

@@ -13,11 +13,8 @@
 # under the License.
 
 import mock
-from oslo_utils import timeutils
 
 from neutron.api.v2 import attributes as attr
-from neutron.common import constants as n_constants
-from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db
@@ -27,6 +24,7 @@ from neutron.extensions import metering as ext_metering
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
+from neutron.tests.common import helpers
 from neutron.tests.unit.db.metering import test_metering_db
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
@@ -428,21 +426,7 @@ class TestMeteringPluginRpcFromL3Agent(
         self.tenant_id_2 = 'tenant_id_2'
 
         self.adminContext = context.get_admin_context()
-        self._register_l3_agent('agent1')
-
-    def _register_l3_agent(self, host):
-        agent = {
-            'binary': 'neutron-l3-agent',
-            'host': host,
-            'topic': topics.L3_AGENT,
-            'configurations': {},
-            'agent_type': n_constants.AGENT_TYPE_L3,
-            'start_flag': True
-        }
-        callback = agents_db.AgentExtRpcCallback()
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': agent},
-                              time=timeutils.strtime())
+        helpers.register_l3_agent(host='agent1')
 
     def test_get_sync_data_metering(self):
         with self.subnet() as subnet:
@@ -458,7 +442,7 @@ class TestMeteringPluginRpcFromL3Agent(
                                                             host='agent1')
                     self.assertEqual('router1', data[0]['name'])
 
-                    self._register_l3_agent('agent2')
+                    helpers.register_l3_agent(host='agent2')
                     data = callbacks.get_sync_data_metering(self.adminContext,
                                                             host='agent2')
                     self.assertFalse(data)

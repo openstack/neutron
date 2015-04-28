@@ -40,6 +40,7 @@ from neutron.extensions import l3agentscheduler
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
+from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
@@ -879,29 +880,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
     def test_router_auto_schedule_with_hosted_2(self):
         # one agent hosts one router
         l3_rpc_cb = l3_rpc.L3RpcCallback()
-        l3_hosta = {
-            'binary': 'neutron-l3-agent',
-            'host': L3_HOSTA,
-            'topic': 'L3_AGENT',
-            'configurations': {'use_namespaces': True,
-                               'router_id': None,
-                               'handle_internal_only_routers':
-                               True,
-                               'gateway_external_network_id':
-                               None,
-                               'interface_driver': 'interface_driver',
-                               },
-            'agent_type': constants.AGENT_TYPE_L3}
-        l3_hostb = copy.deepcopy(l3_hosta)
-        l3_hostb['host'] = L3_HOSTB
         with self.router() as router1:
-            self._register_one_agent_state(l3_hosta)
+            hosta_id = helpers.register_l3_agent(host=L3_HOSTA).id
             l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
-            hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
-                                          L3_HOSTA)
             self._disable_agent(hosta_id, admin_state_up=False)
             with self.router() as router2:
-                self._register_one_agent_state(l3_hostb)
+                hostb_id = helpers.register_l3_agent(host=L3_HOSTB).id
                 l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
                 l3_agents_1 = self._list_l3_agents_hosting_router(
                     router1['router']['id'])
@@ -909,9 +893,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     router2['router']['id'])
                 hosta_routers = self._list_routers_hosted_by_l3_agent(hosta_id)
                 num_hosta_routers = len(hosta_routers['routers'])
-                hostb_id = self._get_agent_id(
-                    constants.AGENT_TYPE_L3,
-                    L3_HOSTB)
                 hostb_routers = self._list_routers_hosted_by_l3_agent(hostb_id)
                 num_hostb_routers = len(hostb_routers['routers'])
 
@@ -944,28 +925,13 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(0, num_hosta_routers)
 
     def test_router_auto_schedule_with_candidates(self):
-        l3_hosta = {
-            'binary': 'neutron-l3-agent',
-            'host': L3_HOSTA,
-            'topic': 'L3_AGENT',
-            'configurations': {'use_namespaces': False,
-                               'router_id': None,
-                               'handle_internal_only_routers':
-                               True,
-                               'gateway_external_network_id':
-                               None,
-                               'interface_driver': 'interface_driver',
-                               },
-            'agent_type': constants.AGENT_TYPE_L3}
         with contextlib.nested(self.router(),
                                self.router()) as (router1, router2):
             l3_rpc_cb = l3_rpc.L3RpcCallback()
-            l3_hosta['configurations']['router_id'] = router1['router']['id']
-            self._register_one_agent_state(l3_hosta)
-            hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
-                                          L3_HOSTA)
+            agent = helpers.register_l3_agent(
+                host=L3_HOSTA, router_id=router1['router']['id'])
             l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
-            hosta_routers = self._list_routers_hosted_by_l3_agent(hosta_id)
+            hosta_routers = self._list_routers_hosted_by_l3_agent(agent.id)
             num_hosta_routers = len(hosta_routers['routers'])
             l3_agents_1 = self._list_l3_agents_hosting_router(
                 router1['router']['id'])
@@ -1046,19 +1012,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             _sync_router_with_ids(router_ids, 4, 4, hosta_id)
 
     def test_router_schedule_with_candidates(self):
-        l3_hosta = {
-            'binary': 'neutron-l3-agent',
-            'host': L3_HOSTA,
-            'topic': 'L3_AGENT',
-            'configurations': {'use_namespaces': False,
-                               'router_id': None,
-                               'handle_internal_only_routers':
-                               True,
-                               'gateway_external_network_id':
-                               None,
-                               'interface_driver': 'interface_driver',
-                               },
-            'agent_type': constants.AGENT_TYPE_L3}
         with contextlib.nested(self.router(),
                                self.router(),
                                self.subnet(),
@@ -1066,10 +1019,8 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                                                     router2,
                                                                     subnet1,
                                                                     subnet2):
-            l3_hosta['configurations']['router_id'] = router1['router']['id']
-            self._register_one_agent_state(l3_hosta)
-            hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
-                                          L3_HOSTA)
+            agent = helpers.register_l3_agent(
+                host=L3_HOSTA, router_id=router1['router']['id'])
             self._router_interface_action('add',
                                           router1['router']['id'],
                                           subnet1['subnet']['id'],
@@ -1078,7 +1029,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           router2['router']['id'],
                                           subnet2['subnet']['id'],
                                           None)
-            hosta_routers = self._list_routers_hosted_by_l3_agent(hosta_id)
+            hosta_routers = self._list_routers_hosted_by_l3_agent(agent.id)
             num_hosta_routers = len(hosta_routers['routers'])
             l3_agents_1 = self._list_l3_agents_hosting_router(
                 router1['router']['id'])
