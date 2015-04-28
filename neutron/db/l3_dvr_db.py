@@ -459,6 +459,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 ports_to_populate.append(router['gw_port'])
             if router.get(l3_const.FLOATINGIP_AGENT_INTF_KEY):
                 ports_to_populate += router[l3_const.FLOATINGIP_AGENT_INTF_KEY]
+            if router.get(SNAT_ROUTER_INTF_KEY):
+                ports_to_populate += router[SNAT_ROUTER_INTF_KEY]
         ports_to_populate += interfaces
         self._populate_subnets_for_ports(context, ports_to_populate)
         self._process_interfaces(routers_dict, interfaces)
