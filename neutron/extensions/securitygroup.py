@@ -72,8 +72,8 @@ class SecurityGroupDefaultAlreadyExists(nexception.InUse):
 
 class SecurityGroupRuleInvalidProtocol(nexception.InvalidInput):
     message = _("Security group rule protocol %(protocol)s not supported. "
-                "Only protocol values %(values)s and their integer "
-                "representation (0 to 255) are supported.")
+                "Only protocol values %(values)s and integer representations "
+                "[0 to 255] are supported.")
 
 
 class SecurityGroupRulesNotSingleTenant(nexception.InvalidInput):
@@ -198,8 +198,8 @@ def _validate_name_not_default(data, valid_values=None):
 
 attr.validators['type:name_not_default'] = _validate_name_not_default
 
-sg_supported_protocols = [None, const.PROTO_NAME_TCP,
-                          const.PROTO_NAME_UDP, const.PROTO_NAME_ICMP]
+sg_supported_protocols = [None, const.PROTO_NAME_TCP, const.PROTO_NAME_UDP,
+                          const.PROTO_NAME_ICMP, const.PROTO_NAME_ICMP_V6]
 sg_supported_ethertypes = ['IPv4', 'IPv6']
 
 # Attribute Map

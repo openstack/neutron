@@ -812,6 +812,35 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 for k, v, in keys:
                     self.assertEqual(rule['security_group_rule'][k], v)
 
+    def test_create_security_group_rule_icmpv6_with_type_only(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            direction = "ingress"
+            ethertype = const.IPv6
+            remote_ip_prefix = "2001::f401:56ff:fefe:d3dc/128"
+            protocol = const.PROTO_NAME_ICMP_V6
+            # ICMPV6 type
+            port_range_min = const.ICMPV6_TYPE_RA
+            # ICMPV6 code
+            port_range_max = None
+            keys = [('remote_ip_prefix', remote_ip_prefix),
+                    ('security_group_id', security_group_id),
+                    ('direction', direction),
+                    ('ethertype', ethertype),
+                    ('protocol', protocol),
+                    ('port_range_min', port_range_min),
+                    ('port_range_max', port_range_max)]
+            with self.security_group_rule(security_group_id, direction,
+                                          protocol, port_range_min,
+                                          port_range_max,
+                                          remote_ip_prefix,
+                                          None, None,
+                                          ethertype) as rule:
+                for k, v, in keys:
+                    self.assertEqual(rule['security_group_rule'][k], v)
+
     def test_create_security_group_source_group_ip_and_ip_prefix(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         direction = "ingress"
