@@ -14,6 +14,7 @@
 #
 
 import fixtures
+import netaddr
 
 from neutron.agent.linux import ip_lib
 from neutron.tests.common import net_helpers
@@ -28,7 +29,9 @@ class Pinger(object):
 
     def _ping_destination(self, dest_address):
         ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        ns_ip_wrapper.netns.execute(['ping', '-c', self._max_attempts,
+        ipversion = netaddr.IPAddress(dest_address).version
+        ping_command = 'ping' if ipversion == 4 else 'ping6'
+        ns_ip_wrapper.netns.execute([ping_command, '-c', self._max_attempts,
                                      '-W', self._timeout, dest_address])
 
     def assert_ping(self, dst_ip):

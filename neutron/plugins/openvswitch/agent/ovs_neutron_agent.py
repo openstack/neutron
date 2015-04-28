@@ -729,6 +729,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # allow ARP replies as long as they match addresses that actually
         # belong to the port.
         for ip in addresses:
+            if netaddr.IPNetwork(ip).version != 4:
+                continue
             bridge.add_flow(
                 table=constants.ARP_SPOOF_TABLE, priority=2,
                 proto='arp', arp_op=constants.ARP_REPLY, arp_spa=ip,
