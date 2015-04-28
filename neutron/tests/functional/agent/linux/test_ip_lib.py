@@ -25,13 +25,14 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.tests.functional.agent.linux import base
+from neutron.tests.functional import base as functional_base
 
 LOG = logging.getLogger(__name__)
 Device = collections.namedtuple('Device',
                                 'name ip_cidrs mac_address namespace')
 
 
-class IpLibTestFramework(base.BaseLinuxTestCase):
+class IpLibTestFramework(functional_base.BaseSudoTestCase):
     def setUp(self):
         super(IpLibTestFramework, self).setUp()
         self._configure()

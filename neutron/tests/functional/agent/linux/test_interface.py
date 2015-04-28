@@ -44,7 +44,7 @@ class OVSInterfaceDriverTestCase(base.BaseOVSLinuxTestCase):
     def test_plug_succeeds(self):
         device_name = tests_base.get_rand_name()
         mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
-        namespace = self._create_namespace()
+        namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
         self.assertFalse(bridge.get_port_name_list())
@@ -53,6 +53,6 @@ class OVSInterfaceDriverTestCase(base.BaseOVSLinuxTestCase):
                             device_name=device_name,
                             mac_address=mac_address,
                             bridge=bridge.br_name,
-                            namespace=namespace.namespace)
+                            namespace=namespace)
         self.assertIn(device_name, bridge.get_port_name_list())
-        self.assertTrue(ip_lib.device_exists(device_name, namespace.namespace))
+        self.assertTrue(ip_lib.device_exists(device_name, namespace))

@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
+from neutron.tests.functional import base
 
 
-class TestRootHelperProcess(base.BaseLinuxTestCase):
+class TestRootHelperProcess(base.BaseSudoTestCase):
 
     def test_process_read_write(self):
         proc = helpers.RootHelperProcess(['tee'], run_as_root=True)

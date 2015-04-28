@@ -46,8 +46,8 @@ from neutron.common import utils as common_utils
 from neutron.openstack.common import uuidutils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
-from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
+from neutron.tests.functional import base
 from neutron.tests.unit.agent.l3 import test_agent as test_l3_agent
 
 LOG = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def get_ovs_bridge(br_name):
     return ovs_lib.OVSBridge(br_name)
 
 
-class L3AgentTestFramework(base.BaseLinuxTestCase):
+class L3AgentTestFramework(base.BaseSudoTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
         mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
@@ -709,7 +709,7 @@ class L3HATestFramework(L3AgentTestFramework):
         br_int_2 = get_ovs_bridge(
             self.failover_agent.conf.ovs_integration_bridge)
 
-        veth1, veth2 = self.create_veth()
+        veth1, veth2 = self.useFixture(net_helpers.VethFixture()).ports
         br_int_1.add_port(veth1.name)
         br_int_2.add_port(veth2.name)
 
