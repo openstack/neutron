@@ -1120,7 +1120,7 @@ class TestDvrRouter(L3AgentTestFramework):
                                  namespace=namespace)
 
         # Assert that no exception is thrown for this case
-        self.assertIsNone(router._snat_delete_device_gateway(
+        self.assertIsNone(router._delete_gateway_device_if_exists(
                           device, "192.168.0.1", 0))
 
     def _assert_snat_namespace_does_not_exist(self, router):
