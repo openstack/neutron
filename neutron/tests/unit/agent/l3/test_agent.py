@@ -1217,7 +1217,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                              agent_gateway_port[0])
             self.assertTrue(ri.rtr_fip_subnet)
 
-    def test_create_dvr_fip_interfaces_for_restart_l3agent_case(self):
+    @mock.patch.object(lla.LinkLocalAllocator, '_write')
+    def test_create_dvr_fip_interfaces_for_restart_l3agent_case(self,
+                                                                lla_write):
         fake_floatingips = {'floatingips': [
             {'id': _uuid(),
              'floating_ip_address': '20.0.0.3',
