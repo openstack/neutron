@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-24 06:13+0000\n"
-"PO-Revision-Date: 2015-04-23 18:15+0000\n"
+"POT-Creation-Date: 2015-04-29 06:13+0000\n"
+"PO-Revision-Date: 2015-04-28 07:35+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
 "es/)\n"
@@ -51,27 +51,27 @@ msgstr ""
 msgid "Loaded quota_driver: %s."
 msgstr ""
 
-#: neutron/service.py:178
+#: neutron/service.py:179
 #, python-format
 msgid "Neutron service started, listening on %(host)s:%(port)s"
 msgstr ""
 
-#: neutron/wsgi.py:778
+#: neutron/wsgi.py:781
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
-#: neutron/wsgi.py:795
+#: neutron/wsgi.py:798
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr "Excepción de HTTP emitida: %s"
 
-#: neutron/wsgi.py:811
+#: neutron/wsgi.py:814
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr "Se ha devuelto %(url)s con HTTP %(status)d"
 
-#: neutron/wsgi.py:814
+#: neutron/wsgi.py:817
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s ha devuelto un error: %(exception)s"
@@ -123,24 +123,24 @@ msgstr "Renovar reglas de cortafuegos"
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:414
+#: neutron/agent/common/ovs_lib.py:416
 #, python-format
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:93 neutron/agent/dhcp/agent.py:589
+#: neutron/agent/dhcp/agent.py:93 neutron/agent/dhcp/agent.py:594
 msgid "DHCP agent started"
 msgstr "Se ha iniciado al agente DHCP"
 
-#: neutron/agent/dhcp/agent.py:144
+#: neutron/agent/dhcp/agent.py:149
 msgid "Synchronizing state"
 msgstr "Sincronizando estado"
 
-#: neutron/agent/dhcp/agent.py:165
+#: neutron/agent/dhcp/agent.py:170
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:586 neutron/agent/l3/agent.py:619
+#: neutron/agent/dhcp/agent.py:591 neutron/agent/l3/agent.py:619
 #: neutron/services/metering/agents/metering_agent.py:286
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -155,7 +155,7 @@ msgstr "Se ha iniciado al agente L3"
 msgid "Router %(router_id)s transitioned to %(state)s"
 msgstr ""
 
-#: neutron/agent/l3/ha.py:123
+#: neutron/agent/l3/ha.py:120
 #, python-format
 msgid ""
 "Router %s is not managed by this agent. It was possibly deleted concurrently."
@@ -313,7 +313,7 @@ msgstr ""
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "Rangos de solapamiento encontrados: %(l_range)s y %(r_range)s"
 
-#: neutron/db/db_base_plugin_v2.py:1594 neutron/plugins/ml2/plugin.py:889
+#: neutron/db/db_base_plugin_v2.py:1603 neutron/plugins/ml2/plugin.py:889
 #, python-format
 msgid ""
 "Found port (%(port_id)s, %(ip)s) having IP allocation on subnet %(subnet)s, "
@@ -336,12 +336,12 @@ msgstr "Saltando el puerto %s, ya que no hay ninguna IP configurada en él"
 msgid "Centralizing distributed router %s is not supported"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:541
+#: neutron/db/l3_dvr_db.py:543
 #, python-format
 msgid "Agent Gateway port does not exist, so create one: %s"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:624
+#: neutron/db/l3_dvr_db.py:626
 #, python-format
 msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
@@ -360,7 +360,7 @@ msgstr ""
 #: neutron/db/l3_hamode_db.py:271
 #, python-format
 msgid ""
-"Number of available agents lower than max_l3_agents_per_router. L3 agents "
+"Number of active agents lower than max_l3_agents_per_router. L3 agents "
 "available: %s"
 msgstr ""
 
