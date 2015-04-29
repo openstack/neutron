@@ -247,13 +247,12 @@ class DvrRouter(router.RouterInfo):
             snat_idx = net.value
         return snat_idx
 
-    def _snat_delete_device_gateway(self, ns_ip_device, gw_ip_addr,
-                                    snat_idx):
+    def _delete_gateway_device_if_exists(self, ns_ip_device, gw_ip_addr,
+                                         snat_idx):
         try:
             ns_ip_device.route.delete_gateway(gw_ip_addr,
                                         table=snat_idx)
         except exceptions.DeviceNotFoundError:
-            # Suppress device not exist exception
             pass
 
     def _snat_redirect_modify(self, gateway, sn_port, sn_int, is_add):
@@ -281,9 +280,9 @@ class DvrRouter(router.RouterInfo):
                                 ['sysctl', '-w',
                                  'net.ipv4.conf.%s.send_redirects=0' % sn_int])
                         else:
-                            self._snat_delete_device_gateway(ns_ipd,
-                                                             gw_ip_addr,
-                                                             snat_idx)
+                            self._delete_gateway_device_if_exists(ns_ipd,
+                                                                  gw_ip_addr,
+                                                                  snat_idx)
                             ns_ipr.rule.delete(sn_port_cidr, snat_idx,
                                                snat_idx)
                         break
