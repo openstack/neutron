@@ -456,4 +456,4 @@ class SubnetPoolQuotaExceeded(OverQuota):
 
 
 class DeviceNotFoundError(NeutronException):
-    message = _("IP Device '%(device_name)s' does not exist")
+    message = _("Device '%(device_name)s' does not exist")
