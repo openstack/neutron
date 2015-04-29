@@ -598,11 +598,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         while True:
             try:
-                # REVISIT(rkukura): Its not clear that
-                # with_lockmode('update') is really needed in this
-                # transaction, and if not, the semaphore can also be
-                # removed.
-                #
                 # REVISIT: Serialize this operation with a semaphore
                 # to prevent deadlock waiting to acquire a DB lock
                 # held by another thread in the same process, leading
@@ -614,13 +609,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # Additionally, a rollback may not be enough to undo the
                 # deletion of a floating IP with certain L3 backends.
                 self._process_l3_delete(context, id)
+                # Using query().with_lockmode isn't necessary. Foreign-key
+                # constraints prevent deletion if concurrent creation happens.
                 with contextlib.nested(lockutils.lock('db-access'),
                                        session.begin(subtransactions=True)):
                     # Get ports to auto-delete.
                     ports = (session.query(models_v2.Port).
                              enable_eagerloads(False).
-                             filter_by(network_id=id).
-                             with_lockmode('update').all())
+                             filter_by(network_id=id).all())
                     LOG.debug(_("Ports to auto-delete: %s"), ports)
                     only_auto_del = all(p.device_owner
                                         in db_base_plugin_v2.
@@ -633,8 +629,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     # Get subnets to auto-delete.
                     subnets = (session.query(models_v2.Subnet).
                                enable_eagerloads(False).
-                               filter_by(network_id=id).
-                               with_lockmode('update').all())
+                               filter_by(network_id=id).all())
                     LOG.debug(_("Subnets to auto-delete: %s"), subnets)
 
                     if not (ports or subnets):
@@ -729,22 +724,33 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                    session.begin(subtransactions=True)):
                 record = self._get_subnet(context, id)
                 subnet = self._make_subnet_dict(record, None)
-                # Get ports to auto-deallocate
-                allocated = (session.query(models_v2.IPAllocation).
-                             filter_by(subnet_id=id).
-                             join(models_v2.Port).
-                             filter_by(network_id=subnet['network_id']).
-                             with_lockmode('update').all())
+                qry_allocated = (session.query(models_v2.IPAllocation).
+                                 filter_by(subnet_id=id).
+                                 join(models_v2.Port))
+                is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
+                # Remove network owned ports, and delete IP allocations
+                # for IPv6 addresses which were automatically generated
+                # via SLAAC
+                if not is_auto_addr_subnet:
+                    qry_allocated = (
+                        qry_allocated.filter(models_v2.Port.device_owner.
+                        in_(db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS)))
+                allocated = qry_allocated.all()
+                # Delete all the IPAllocation that can be auto-deleted
+                if allocated:
+                    map(session.delete, allocated)
                 LOG.debug(_("Ports to auto-deallocate: %s"), allocated)
-                only_auto_del = (
-                    ipv6_utils.is_auto_address_subnet(subnet) or
-                    all(not a.port_id or
-                        a.ports.device_owner in db_base_plugin_v2.
-                        AUTO_DELETE_PORT_OWNERS for a in allocated))
-                if not only_auto_del:
+                # Check if there are tenant owned ports
+                tenant_port = (session.query(models_v2.IPAllocation).
+                               filter_by(subnet_id=id).
+                               join(models_v2.Port).
+                               first())
+                if tenant_port:
                     LOG.debug(_("Tenant-owned ports exist"))
                     raise exc.SubnetInUse(subnet_id=id)
 
+                # If allocated is None, then all the IPAllocation were
+                # correctly deleted during the previous pass.
                 if not allocated:
                     mech_context = driver_context.SubnetContext(self, context,
                                                                 subnet)
@@ -772,7 +778,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         with excutils.save_and_reraise_exception():
                             LOG.exception(_("Exception deleting fixed_ip from "
                                             "port %s"), a.port_id)
-                session.delete(a)
 
         try:
             self.mechanism_manager.delete_subnet_postcommit(mech_context)
