@@ -1032,7 +1032,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent.tunnel_delete(context=None, **kwargs)
             self.assertTrue(clean_tun_fn.called)
 
-    def test_ovs_status(self):
+    def _test_ovs_status(self, *args):
         reply2 = {'current': set(['tap0']),
                   'added': set(['tap2']),
                   'removed': set([])}
@@ -1065,11 +1065,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             scan_ports.side_effect = [reply2, reply3]
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
-            check_ovs_status.side_effect = [constants.OVS_NORMAL,
-                                            constants.OVS_DEAD,
-                                            constants.OVS_RESTARTED]
-
-            # This will exit after the third loop
+            check_ovs_status.side_effect = args
             try:
                 self.agent.daemon_loop()
             except Exception:
@@ -1080,18 +1076,22 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.call(set(), set())
         ])
         process_network_ports.assert_has_calls([
-            mock.call({'current': set(['tap0']),
-                       'removed': set([]),
-                       'added': set(['tap2'])}, False),
-            mock.call({'current': set(['tap2']),
-                       'removed': set(['tap0']),
-                       'added': set([])}, True)
+            mock.call(reply2, False),
+            mock.call(reply3, True)
         ])
         self.assertTrue(update_stale.called)
-        # Verify the second time through the loop we triggered an
-        # OVS restart and re-setup the bridges
+        # Verify the OVS restart we triggered in the loop
+        # re-setup the bridges
         setup_int_br.assert_has_calls([mock.call()])
         setup_phys_br.assert_has_calls([mock.call({})])
+
+    def test_ovs_status(self):
+        self._test_ovs_status(constants.OVS_NORMAL,
+                              constants.OVS_DEAD,
+                              constants.OVS_RESTARTED)
+        # OVS will not DEAD in some exception, like DBConnectionError.
+        self._test_ovs_status(constants.OVS_NORMAL,
+                              constants.OVS_RESTARTED)
 
     def test_set_rpc_timeout(self):
         self.agent._handle_sigterm(None, None)
