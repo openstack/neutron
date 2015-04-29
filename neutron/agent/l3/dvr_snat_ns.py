@@ -14,10 +14,11 @@ from oslo_log import log as logging
 
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
+from neutron.common import constants
 
 LOG = logging.getLogger(__name__)
 SNAT_NS_PREFIX = 'snat-'
-SNAT_INT_DEV_PREFIX = 'sg-'
+SNAT_INT_DEV_PREFIX = constants.SNAT_INT_DEV_PREFIX
 
 
 class SnatNamespace(namespaces.Namespace):
