@@ -373,8 +373,8 @@ class OVSDVRNeutronAgent(object):
                 return
         else:
             # set up LocalDVRSubnetMapping available for this subnet
-            subnet_info = self.plugin_rpc.get_subnet_for_dvr(self.context,
-                                                             subnet_uuid)
+            subnet_info = self.plugin_rpc.get_subnet_for_dvr(
+                self.context, subnet_uuid, fixed_ips=fixed_ips)
             if not subnet_info:
                 LOG.error(_LE("DVR: Unable to retrieve subnet information "
                               "for subnet_id %s"), subnet_uuid)
@@ -525,8 +525,8 @@ class OVSDVRNeutronAgent(object):
         if subnet_uuid not in self.local_dvr_map:
             # no csnat ports seen on this subnet - create csnat state
             # for this subnet
-            subnet_info = self.plugin_rpc.get_subnet_for_dvr(self.context,
-                                                             subnet_uuid)
+            subnet_info = self.plugin_rpc.get_subnet_for_dvr(
+                self.context, subnet_uuid, fixed_ips=fixed_ips)
             ldm = LocalDVRSubnetMapping(subnet_info, port.ofport)
             self.local_dvr_map[subnet_uuid] = ldm
         else:
