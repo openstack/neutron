@@ -518,13 +518,13 @@ class Dnsmasq(DhcpLocalProcess):
         filename = self.get_conf_file_name('host')
 
         LOG.debug(_('Building host file: %s'), filename)
+        # NOTE(ihrachyshka): the loop should not log anything inside it, to
+        # avoid potential performance drop when lots of hosts are dumped
         for (port, alloc, hostname, name) in self._iter_hosts():
             if not alloc:
                 if getattr(port, 'extra_dhcp_opts', False):
                     buf.write('%s,%s%s\n' %
                               (port.mac_address, 'set:', port.id))
-                LOG.debug('Adding %(mac)s : set:%(tag)s',
-                          {"mac": port.mac_address, "tag": port.id})
                 continue
 
             # (dzyu) Check if it is legal ipv6 address, if so, need wrap
@@ -538,16 +538,9 @@ class Dnsmasq(DhcpLocalProcess):
                 buf.write('%s,%s,%s,%s%s\n' %
                           (port.mac_address, name, ip_address,
                            'set:', port.id))
-                LOG.debug('Adding %(mac)s : %(name)s : %(ip)s : '
-                          'set:%(tag)s',
-                          {"mac": port.mac_address, "name": name,
-                           "ip": ip_address, "tag": port.id})
             else:
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
-                LOG.debug('Adding %(mac)s : %(name)s : %(ip)s',
-                          {"mac": port.mac_address, "name": name,
-                           "ip": ip_address})
 
         utils.replace_file(filename, buf.getvalue())
         LOG.debug('Done building host file %s with contents:\n%s', filename,
