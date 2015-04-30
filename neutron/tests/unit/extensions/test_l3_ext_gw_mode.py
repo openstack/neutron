@@ -209,7 +209,14 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.context.session.add(self.router)
         self.context.session.flush()
 
-    def _test_update_router_gw(self, gw_info, expected_enable_snat):
+    def _test_update_router_gw(self, current_enable_snat, gw_info=None,
+                               expected_enable_snat=True):
+        if not current_enable_snat:
+            previous_gw_info = {'network_id': self.ext_net_id,
+                                'enable_snat': current_enable_snat}
+            self.target_object._update_router_gw_info(
+                self.context, self.router.id, previous_gw_info)
+
         self.target_object._update_router_gw_info(
             self.context, self.router.id, gw_info)
         router = self.target_object._get_router(
@@ -224,16 +231,29 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.assertEqual(expected_enable_snat, router.enable_snat)
 
     def test_update_router_gw_with_gw_info_none(self):
-        self._test_update_router_gw(None, True)
+        self._test_update_router_gw(current_enable_snat=True)
+
+    def test_update_router_gw_without_info_and_snat_disabled_previously(self):
+        self._test_update_router_gw(current_enable_snat=False)
 
     def test_update_router_gw_with_network_only(self):
         info = {'network_id': self.ext_net_id}
-        self._test_update_router_gw(info, True)
+        self._test_update_router_gw(current_enable_snat=True, gw_info=info)
+
+    def test_update_router_gw_with_network_and_snat_disabled_previously(self):
+        info = {'network_id': self.ext_net_id}
+        self._test_update_router_gw(current_enable_snat=False, gw_info=info)
 
     def test_update_router_gw_with_snat_disabled(self):
         info = {'network_id': self.ext_net_id,
                 'enable_snat': False}
-        self._test_update_router_gw(info, False)
+        self._test_update_router_gw(
+            current_enable_snat=True, gw_info=info, expected_enable_snat=False)
+
+    def test_update_router_gw_with_snat_enabled(self):
+        info = {'network_id': self.ext_net_id,
+                'enable_snat': True}
+        self._test_update_router_gw(current_enable_snat=False, gw_info=info)
 
     def test_make_router_dict_no_ext_gw(self):
         self._reset_ext_gw()

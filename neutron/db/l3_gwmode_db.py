@@ -55,9 +55,8 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         # Load the router only if necessary
         if not router:
             router = self._get_router(context, router_id)
-        # if enable_snat is not specified use the value
-        # stored in the database (default:True)
-        enable_snat = not info or info.get('enable_snat', router.enable_snat)
+        # if enable_snat is not specified then use the default value (True)
+        enable_snat = not info or info.get('enable_snat', True)
         with context.session.begin(subtransactions=True):
             router.enable_snat = enable_snat
 
