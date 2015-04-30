@@ -158,7 +158,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
             # configuring external gw port
-            router_db = Router(id=uuidutils.generate_uuid(),
+            router_db = Router(id=(router.get('id') or
+                                   uuidutils.generate_uuid()),
                                tenant_id=tenant_id,
                                name=router['name'],
                                admin_state_up=router['admin_state_up'],
