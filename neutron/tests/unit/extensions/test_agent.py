@@ -23,12 +23,12 @@ from webob import exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import agent
 from neutron.openstack.common import uuidutils
+from neutron.tests.common import helpers
 from neutron.tests import tools
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -85,21 +85,10 @@ class AgentDBTestMixIn(object):
 
     def _register_agent_states(self, lbaas_agents=False):
         """Register two L3 agents and two DHCP agents."""
-        l3_hosta = {
-            'binary': 'neutron-l3-agent',
-            'host': L3_HOSTA,
-            'topic': topics.L3_AGENT,
-            'configurations': {'use_namespaces': True,
-                               'router_id': None,
-                               'handle_internal_only_routers':
-                               True,
-                               'gateway_external_network_id':
-                               None,
-                               'interface_driver': 'interface_driver',
-                               },
-            'agent_type': constants.AGENT_TYPE_L3}
-        l3_hostb = copy.deepcopy(l3_hosta)
-        l3_hostb['host'] = L3_HOSTB
+        l3_hosta = helpers._get_l3_agent_dict(
+            L3_HOSTA, constants.L3_AGENT_MODE_LEGACY)
+        l3_hostb = helpers._get_l3_agent_dict(
+            L3_HOSTB, constants.L3_AGENT_MODE_LEGACY)
         dhcp_hosta = {
             'binary': 'neutron-dhcp-agent',
             'host': DHCP_HOSTA,
@@ -119,12 +108,8 @@ class AgentDBTestMixIn(object):
         lbaas_hostb = copy.deepcopy(lbaas_hosta)
         lbaas_hostb['host'] = LBAAS_HOSTB
         callback = agents_db.AgentExtRpcCallback()
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': l3_hosta},
-                              time=timeutils.strtime())
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': l3_hostb},
-                              time=timeutils.strtime())
+        helpers.register_l3_agent(host=L3_HOSTA)
+        helpers.register_l3_agent(host=L3_HOSTB)
         callback.report_state(self.adminContext,
                               agent_state={'agent_state': dhcp_hosta},
                               time=timeutils.strtime())
@@ -159,25 +144,6 @@ class AgentDBTestMixIn(object):
                               agent_state={'agent_state': dhcp_host},
                               time=timeutils.strtime())
         return [dhcp_host]
-
-    def _register_one_l3_agent(self, host=L3_HOSTA, internal_only=True,
-                               ext_net_id='', ext_bridge=''):
-        l3 = {
-            'binary': 'neutron-l3-agent',
-            'host': host,
-            'topic': topics.L3_AGENT,
-            'configurations': {'use_namespaces': True,
-                               'router_id': None,
-                               'handle_internal_only_routers': internal_only,
-                               'external_network_bridge': ext_bridge,
-                               'gateway_external_network_id': ext_net_id,
-                               'interface_driver': 'interface_driver',
-                               },
-            'agent_type': constants.AGENT_TYPE_L3}
-        callback = agents_db.AgentExtRpcCallback()
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': l3},
-                              time=timeutils.strtime())
 
 
 class AgentDBTestCase(AgentDBTestMixIn,
