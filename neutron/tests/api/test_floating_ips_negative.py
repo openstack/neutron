@@ -32,6 +32,8 @@ class FloatingIPNegativeTestJSON(base.BaseNetworkTest):
         Create floatingip with a port that is unreachable to external network
         Create floatingip in private network
         Associate floatingip with port that is unreachable to external network
+        Associate floating ip to port that has already another floating ip
+        Associate floating ip with port from another tenant
     """
 
     @classmethod
@@ -80,3 +82,30 @@ class FloatingIPNegativeTestJSON(base.BaseNetworkTest):
                           floating_ip['id'], port_id=self.port['id'],
                           fixed_ip_address=self.port['fixed_ips'][0]
                           ['ip_address'])
+
+    @test.attr(type=['negative', 'smoke'])
+    @test.idempotent_id('0b5b8797-6de7-4191-905c-a48b888eb429')
+    def test_associate_floatingip_with_port_with_floatingip(self):
+        net = self.create_network()
+        subnet = self.create_subnet(net)
+        r = self.create_router('test')
+        self.create_router_interface(r['id'], subnet['id'])
+        self.client.update_router(
+            r['id'],
+            external_gateway_info={
+                'network_id': self.ext_net_id})
+        self.addCleanup(self.client.update_router, self.router['id'],
+                        external_gateway_info={})
+        port = self.create_port(net)
+        body1 = self.client.create_floatingip(
+            floating_network_id=self.ext_net_id)
+        floating_ip1 = body1['floatingip']
+        self.addCleanup(self.client.delete_floatingip, floating_ip1['id'])
+        body2 = self.client.create_floatingip(
+            floating_network_id=self.ext_net_id)
+        floating_ip2 = body2['floatingip']
+        self.addCleanup(self.client.delete_floatingip, floating_ip2['id'])
+        self.client.update_floatingip(floating_ip1['id'],
+                                      port_id=port['id'])
+        self.assertRaises(lib_exc.Conflict, self.client.update_floatingip,
+                          floating_ip2['id'], port_id=port['id'])
