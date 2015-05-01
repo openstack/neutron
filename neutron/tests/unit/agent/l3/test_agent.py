@@ -1941,6 +1941,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.mock_ip.del_veth.assert_called_once_with('rfp-aaaa')
 
     def test_destroy_router_namespace_skips_ns_removal(self):
+        self.conf.set_override('router_delete_namespaces', False)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ns = namespaces.Namespace(
             'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
@@ -1949,7 +1950,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(self.mock_ip.netns.delete.call_count, 0)
 
     def test_destroy_router_namespace_removes_ns(self):
-        self.conf.set_override('router_delete_namespaces', True)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ns = namespaces.Namespace(
             'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
@@ -2149,7 +2149,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                 other_namespaces,
                                 mock_snat_ns,
                                 mock_router_ns):
-        self.conf.set_override('router_delete_namespaces', True)
 
         good_namespace_list = [namespaces.NS_PREFIX + r['id']
                                for r in router_list]
@@ -2281,7 +2280,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_external_gateway_removed_ext_gw_port_and_fip(self, fip_ns=False):
         self.conf.set_override('state_path', '/tmp')
-        self.conf.set_override('router_delete_namespaces', True)
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.conf.agent_mode = 'dvr_snat'

@@ -76,7 +76,7 @@ OPTS = [
                       "to the network and not through this parameter. ")),
     cfg.BoolOpt('enable_metadata_proxy', default=True,
                 help=_("Allow running metadata proxy.")),
-    cfg.BoolOpt('router_delete_namespaces', default=False,
+    cfg.BoolOpt('router_delete_namespaces', default=True,
                 help=_("Delete namespace after removing a router.")),
     cfg.StrOpt('metadata_access_mark',
                default='0x1',

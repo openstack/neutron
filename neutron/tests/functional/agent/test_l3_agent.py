@@ -83,7 +83,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         conf.set_override(
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
-        conf.set_override('router_delete_namespaces', True)
 
         br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         br_ex = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
