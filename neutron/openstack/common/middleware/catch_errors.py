@@ -12,7 +12,7 @@
 
 """Compatibility shim for Kilo, while operators migrate to oslo.middleware."""
 
-from oslo.middleware import catch_errors
+from oslo_middleware import catch_errors
 
 from neutron.openstack.common import versionutils
 

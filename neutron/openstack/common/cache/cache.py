@@ -45,7 +45,7 @@ def _get_oslo_configs():
     # at the top of this file, lets import cfg
     # here and assume that the caller of this
     # function already took care of this dependency.
-    from oslo.config import cfg
+    from oslo_config import cfg
 
     return [
         cfg.StrOpt('cache_url', default='memory://',
