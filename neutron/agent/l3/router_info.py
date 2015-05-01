@@ -353,6 +353,10 @@ class RouterInfo(object):
                   self.router_id)
         self.radvd.disable()
 
+    def internal_network_updated(self, interface_name, ip_cidrs):
+        self.driver.init_l3(interface_name, ip_cidrs=ip_cidrs,
+            namespace=self.ns_name)
+
     def _process_internal_ports(self):
         existing_port_ids = set(p['id'] for p in self.internal_ports)
 
@@ -385,8 +389,7 @@ class RouterInfo(object):
                 self.internal_ports[index] = updated_ports[p['id']]
                 interface_name = self.get_internal_device_name(p['id'])
                 ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
-                self.driver.init_l3(interface_name, ip_cidrs=ip_cidrs,
-                        namespace=self.ns_name)
+                self.internal_network_updated(interface_name, ip_cidrs)
                 enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
         # Enable RA

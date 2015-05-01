@@ -766,6 +766,54 @@ class L3HATestFramework(L3AgentTestFramework):
         utils.wait_until_true(lambda: not router1.radvd.enabled, timeout=10)
         _check_lla_status(router1, False)
 
+    def test_ha_router_process_ipv6_subnets_to_existing_port(self):
+        router_info = self.generate_router_info(enable_ha=True, ip_version=6)
+        router = self.manage_router(self.agent, router_info)
+
+        def verify_ip_in_keepalived_config(router, iface):
+            config = router.keepalived_manager.config.get_config_str()
+            ip_cidrs = common_utils.fixed_ip_cidrs(iface['fixed_ips'])
+            for ip_addr in ip_cidrs:
+                self.assertIn(ip_addr, config)
+
+        interface_id = router.router[l3_constants.INTERFACE_KEY][0]['id']
+        slaac = l3_constants.IPV6_SLAAC
+        slaac_mode = {'ra_mode': slaac, 'address_mode': slaac}
+
+        # Add a second IPv6 subnet to the router internal interface.
+        self._add_internal_interface_by_subnet(router.router, count=1,
+                ip_version=6, ipv6_subnet_modes=[slaac_mode],
+                interface_id=interface_id)
+        router.process(self.agent)
+        utils.wait_until_true(lambda: router.ha_state == 'master')
+
+        # Verify that router internal interface is present and is configured
+        # with IP address from both the subnets.
+        internal_iface = router.router[l3_constants.INTERFACE_KEY][0]
+        self.assertEqual(2, len(internal_iface['fixed_ips']))
+        self._assert_internal_devices(router)
+
+        # Verify that keepalived config is properly updated.
+        verify_ip_in_keepalived_config(router, internal_iface)
+
+        # Remove one subnet from the router internal iface
+        interfaces = copy.deepcopy(router.router.get(
+            l3_constants.INTERFACE_KEY, []))
+        fixed_ips, subnets = [], []
+        fixed_ips.append(interfaces[0]['fixed_ips'][0])
+        subnets.append(interfaces[0]['subnets'][0])
+        interfaces[0].update({'fixed_ips': fixed_ips, 'subnets': subnets})
+        router.router[l3_constants.INTERFACE_KEY] = interfaces
+        router.process(self.agent)
+
+        # Verify that router internal interface has a single ipaddress
+        internal_iface = router.router[l3_constants.INTERFACE_KEY][0]
+        self.assertEqual(1, len(internal_iface['fixed_ips']))
+        self._assert_internal_devices(router)
+
+        # Verify that keepalived config is properly updated.
+        verify_ip_in_keepalived_config(router, internal_iface)
+
 
 class MetadataFakeProxyHandler(object):
 
