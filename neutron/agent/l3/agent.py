@@ -331,7 +331,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
         if ri is None:
-            LOG.warn(_LW("Info for router %s were not found. "
+            LOG.warn(_LW("Info for router %s was not found. "
                          "Skipping router removal"), router_id)
             return
 
