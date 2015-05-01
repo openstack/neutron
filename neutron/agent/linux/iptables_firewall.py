@@ -37,7 +37,7 @@ DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
 IPSET_DIRECTION = {INGRESS_DIRECTION: 'src',
                    EGRESS_DIRECTION: 'dst'}
 LINUX_DEV_LEN = 14
-IPSET_CHAIN_LEN = 20
+IPSET_CHAIN_LEN = 17
 IPSET_CHANGE_BULK_THRESHOLD = 10
 IPSET_ADD_BULK_THRESHOLD = 5
 
@@ -384,7 +384,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 add_ips = self._get_new_sg_member_ips(sg_id, ethertype)
                 del_ips = self._get_deleted_sg_member_ips(sg_id, ethertype)
                 cur_member_ips = self._get_cur_sg_member_ips(sg_id, ethertype)
-                chain_name = ethertype + sg_id[:IPSET_CHAIN_LEN]
+                chain_name = 'NET' + ethertype + sg_id[:IPSET_CHAIN_LEN]
                 if chain_name not in self.ipset_chains and cur_member_ips:
                     self.ipset_chains[chain_name] = []
                     self.ipset.create_ipset_chain(
@@ -414,7 +414,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ethertype = sg_rule.get('ethertype')
         # the length of ipset chain name require less than 31
         # characters
-        ipset_chain_name = (ethertype + remote_gid[:IPSET_CHAIN_LEN])
+        ipset_chain_name = ('NET' + ethertype + remote_gid[:IPSET_CHAIN_LEN])
         if ipset_chain_name in self.ipset_chains:
             args += ['-m set', '--match-set',
                      ipset_chain_name,
@@ -539,7 +539,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             if self.enable_ipset:
                 for ethertype in ['IPv4', 'IPv6']:
                     removed_chain = (
-                        ethertype + remove_chain_id[:IPSET_CHAIN_LEN])
+                        'NET' + ethertype + remove_chain_id[:IPSET_CHAIN_LEN])
                     if removed_chain in self.ipset_chains:
                         self.ipset.destroy_ipset_chain_by_name(removed_chain)
                         self.ipset_chains.pop(removed_chain, None)
