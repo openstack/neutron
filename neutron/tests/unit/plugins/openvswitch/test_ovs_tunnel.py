@@ -443,10 +443,12 @@ class TunnelTest(object):
 
     def test_port_dead(self):
         self.mock_int_bridge_expected += [
-            mock.call.db_get_val('Port', VIF_PORT.port_name, 'tag'),
+            mock.call.db_get_val('Port', VIF_PORT.port_name, 'tag',
+                                 log_errors=True),
             mock.call.set_db_attribute(
                 'Port', VIF_PORT.port_name,
-                'tag', self.mod_agent.DEAD_VLAN_TAG),
+                'tag', self.mod_agent.DEAD_VLAN_TAG,
+                log_errors=True),
             mock.call.drop_port(in_port=VIF_PORT.ofport),
         ]
 
