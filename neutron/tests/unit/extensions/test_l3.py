@@ -2570,6 +2570,11 @@ class L3RpcCallbackTestCase(base.BaseTestCase):
             'l3plugin', new_callable=mock.PropertyMock).start()
         self.l3_rpc_cb = l3_rpc.L3RpcCallback()
 
+    def test__ensure_host_set_on_port_host_id_none(self):
+        port = {'id': 'id', portbindings.HOST_ID: 'somehost'}
+        self.l3_rpc_cb._ensure_host_set_on_port(None, None, port)
+        self.assertFalse(self.l3_rpc_cb.plugin.update_port.called)
+
     def test__ensure_host_set_on_port_update_on_concurrent_delete(self):
         port_id = 'foo_port_id'
         port = {

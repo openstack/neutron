@@ -115,7 +115,7 @@ class L3RpcCallback(object):
                                               router['id'])
 
     def _ensure_host_set_on_port(self, context, host, port, router_id=None):
-        if (port and
+        if (port and host is not None and
             (port.get('device_owner') !=
              constants.DEVICE_OWNER_DVR_INTERFACE and
              port.get(portbindings.HOST_ID) != host or
