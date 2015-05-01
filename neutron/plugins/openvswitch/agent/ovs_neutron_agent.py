@@ -1186,7 +1186,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ofports = _ofport_set_to_str(self.tun_br_ofports[tunnel_type].values())
         if ofports and not self.l2_pop:
             # Update flooding flows to include the new tunnel
-            for network_id, vlan_mapping in self.local_vlan_map.iteritems():
+            for vlan_mapping in list(self.local_vlan_map.values()):
                 if vlan_mapping.network_type == tunnel_type:
                     br.mod_flow(table=constants.FLOOD_TO_TUN,
                                 dl_vlan=vlan_mapping.vlan,
