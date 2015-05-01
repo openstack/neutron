@@ -12,13 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
 import os
+
+from oslo_utils import timeutils
 
 import neutron
 from neutron.common import constants
 from neutron.common import topics
 from neutron import context
-from neutron import manager
+from neutron.db import agents_db
+from neutron.db import common_db_mixin
 
 HOST = 'localhost'
 
@@ -37,6 +41,11 @@ def find_sample_file(filename):
         path=os.path.join(neutron.__path__[0], '..', 'etc'))
 
 
+class FakePlugin(common_db_mixin.CommonDbMixin,
+                 agents_db.AgentDbMixin):
+    pass
+
+
 def _get_l3_agent_dict(host, agent_mode, internal_only=True,
                        ext_net_id='', ext_bridge='', router_id=None):
     return {
@@ -53,13 +62,11 @@ def _get_l3_agent_dict(host, agent_mode, internal_only=True,
 
 
 def _register_agent(agent):
-    core_plugin = manager.NeutronManager.get_plugin()
+    plugin = FakePlugin()
     admin_context = context.get_admin_context()
-    core_plugin.create_or_update_agent(admin_context, agent)
-    return core_plugin.get_agents_db(
-        admin_context,
-        filters={'host': [agent['host']],
-                 'agent_type': [agent['agent_type']]})[0]
+    plugin.create_or_update_agent(admin_context, agent)
+    return plugin._get_agent_by_type_and_host(
+        admin_context, agent['agent_type'], agent['host'])
 
 
 def register_l3_agent(host=HOST, agent_mode=constants.L3_AGENT_MODE_LEGACY,
@@ -68,3 +75,46 @@ def register_l3_agent(host=HOST, agent_mode=constants.L3_AGENT_MODE_LEGACY,
     agent = _get_l3_agent_dict(host, agent_mode, internal_only, ext_net_id,
                                ext_bridge, router_id)
     return _register_agent(agent)
+
+
+def _get_dhcp_agent_dict(host, networks=0):
+    agent = {
+        'binary': 'neutron-dhcp-agent',
+        'host': host,
+        'topic': topics.DHCP_AGENT,
+        'agent_type': constants.AGENT_TYPE_DHCP,
+        'configurations': {'dhcp_driver': 'dhcp_driver',
+                           'use_namespaces': True,
+                           'networks': networks}}
+    return agent
+
+
+def register_dhcp_agent(host=HOST, networks=0, admin_state_up=True,
+                        alive=True):
+    agent = _register_agent(
+        _get_dhcp_agent_dict(host, networks))
+
+    if not admin_state_up:
+        set_agent_admin_state(agent['id'])
+    if not alive:
+        kill_agent(agent['id'])
+
+    return FakePlugin()._get_agent_by_type_and_host(
+        context.get_admin_context(), agent['agent_type'], agent['host'])
+
+
+def kill_agent(agent_id):
+    hour_ago = timeutils.utcnow() - datetime.timedelta(hours=1)
+    FakePlugin().update_agent(
+        context.get_admin_context(),
+        agent_id,
+        {'agent': {
+            'started_at': hour_ago,
+            'heartbeat_timestamp': hour_ago}})
+
+
+def set_agent_admin_state(agent_id, admin_state_up=False):
+    FakePlugin().update_agent(
+        context.get_admin_context(),
+        agent_id,
+        {'agent': {'admin_state_up': admin_state_up}})
