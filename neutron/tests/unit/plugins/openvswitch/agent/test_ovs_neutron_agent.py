@@ -212,13 +212,15 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(self.agent.int_br, 'add_flow')
         ) as (set_ovs_db_func, get_ovs_db_func, add_flow_func):
             self.agent.port_dead(port)
-        get_ovs_db_func.assert_called_once_with("Port", mock.ANY, "tag")
+        get_ovs_db_func.assert_called_once_with("Port", mock.ANY, "tag",
+                                                log_errors=True)
         if cur_tag == ovs_neutron_agent.DEAD_VLAN_TAG:
             self.assertFalse(set_ovs_db_func.called)
             self.assertFalse(add_flow_func.called)
         else:
             set_ovs_db_func.assert_called_once_with(
-                "Port", mock.ANY, "tag", ovs_neutron_agent.DEAD_VLAN_TAG)
+                "Port", mock.ANY, "tag", ovs_neutron_agent.DEAD_VLAN_TAG,
+                log_errors=True)
             add_flow_func.assert_called_once_with(
                 priority=2, in_port=port.ofport, actions="drop")
 
@@ -523,18 +525,21 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self.assertEqual(set(['123']), self.agent.updated_ports)
 
     def test_port_delete(self):
-        port_id = "123"
-        port_name = "foo"
-        with contextlib.nested(
-            mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
-                              return_value=mock.MagicMock(
-                                      port_name=port_name)),
-            mock.patch.object(self.agent.int_br, "delete_port")
-        ) as (get_vif_func, del_port_func):
+        vif = FakeVif()
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            int_br.get_vif_by_port_id.return_value = vif.port_name
+            int_br.get_vif_port_by_id.return_value = vif
             self.agent.port_delete("unused_context",
-                                   port_id=port_id)
-            self.assertTrue(get_vif_func.called)
-            del_port_func.assert_called_once_with(port_name)
+                                   port_id='id')
+            self.agent.process_deleted_ports()
+            # the main things we care about are that it gets put in the
+            # dead vlan and gets blocked
+            int_br.set_db_attribute.assert_any_call(
+                'Port', vif.port_name, 'tag', ovs_neutron_agent.DEAD_VLAN_TAG,
+                log_errors=False)
+            int_br.add_flow.assert_any_call(priority=mock.ANY,
+                                            in_port=vif.ofport,
+                                            actions='drop')
 
     def test_setup_physical_bridges(self):
         with contextlib.nested(

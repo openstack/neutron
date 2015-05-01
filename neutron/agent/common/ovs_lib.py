@@ -127,16 +127,17 @@ class BaseOVS(object):
         return self.ovsdb.br_get_external_id(bridge, 'bridge-id').execute()
 
     def set_db_attribute(self, table_name, record, column, value,
-                         check_error=False):
+                         check_error=False, log_errors=True):
         self.ovsdb.db_set(table_name, record, (column, value)).execute(
-            check_error=check_error)
+            check_error=check_error, log_errors=log_errors)
 
     def clear_db_attribute(self, table_name, record, column):
         self.ovsdb.db_clear(table_name, record, column).execute()
 
-    def db_get_val(self, table, record, column, check_error=False):
+    def db_get_val(self, table, record, column, check_error=False,
+                   log_errors=True):
         return self.ovsdb.db_get(table, record, column).execute(
-            check_error=check_error)
+            check_error=check_error, log_errors=log_errors)
 
 
 class OVSBridge(BaseOVS):
