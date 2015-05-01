@@ -15,6 +15,14 @@ to both the PTL and the core reviewer team during each weekly Neutron meeting.
 
 The current Neutron bug czar is Eugene Nikanorov (IRC nick enikanorov).
 
+Plugin and Driver Repositories
+------------------------------
+
+Many plugins and drivers have backend code that exists in another repository.
+These repositories have their own launchpad projects for bugs.  The teams
+working on the code in these repos assume full responsibility for bug handling
+in those projects.
+
 Bug Triage Process
 ------------------
 
