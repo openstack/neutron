@@ -65,7 +65,7 @@ class ContextBase(oslo_context.RequestContext):
         self.timestamp = timestamp
         self._session = None
         self.roles = roles or []
-        self.is_advsvc = policy.check_is_advsvc(self)
+        self.is_advsvc = self.is_admin or policy.check_is_advsvc(self)
         if self.is_admin is None:
             self.is_admin = policy.check_is_admin(self)
         elif self.is_admin and load_admin_roles:
