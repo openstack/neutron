@@ -15,6 +15,7 @@
 
 import mock
 import netaddr
+import testtools
 
 from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
@@ -80,6 +81,10 @@ ADDR_SAMPLE = ("""
     inet 172.16.77.240/24 brd 172.16.77.255 scope global eth0
     inet6 2001:470:9:1224:5595:dd51:6ba2:e788/64 scope global temporary dynamic
        valid_lft 14187sec preferred_lft 3387sec
+    inet6 fe80::3023:39ff:febc:22ae/64 scope link tentative
+        valid_lft forever preferred_lft forever
+    inet6 fe80::3023:39ff:febc:22af/64 scope link tentative dadfailed
+        valid_lft forever preferred_lft forever
     inet6 2001:470:9:1224:fd91:272:581e:3a32/64 scope global temporary """
                """deprecated dynamic
        valid_lft 14187sec preferred_lft 0sec
@@ -98,6 +103,10 @@ ADDR_SAMPLE2 = ("""
     inet 172.16.77.240/24 scope global eth0
     inet6 2001:470:9:1224:5595:dd51:6ba2:e788/64 scope global temporary dynamic
        valid_lft 14187sec preferred_lft 3387sec
+    inet6 fe80::3023:39ff:febc:22ae/64 scope link tentative
+        valid_lft forever preferred_lft forever
+    inet6 fe80::3023:39ff:febc:22af/64 scope link tentative dadfailed
+        valid_lft forever preferred_lft forever
     inet6 2001:470:9:1224:fd91:272:581e:3a32/64 scope global temporary """
                 """deprecated dynamic
        valid_lft 14187sec preferred_lft 0sec
@@ -687,29 +696,53 @@ class TestIpAddrCommand(TestIPCmdBase):
 
     def test_list(self):
         expected = [
-            dict(scope='global',
+            dict(scope='global', dadfailed=False, tentative=False,
                  dynamic=False, cidr='172.16.77.240/24'),
-            dict(scope='global',
+            dict(scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:5595:dd51:6ba2:e788/64'),
-            dict(scope='global',
+            dict(scope='link', dadfailed=False, tentative=True,
+                 dynamic=False, cidr='fe80::3023:39ff:febc:22ae/64'),
+            dict(scope='link', dadfailed=True, tentative=True,
+                 dynamic=False, cidr='fe80::3023:39ff:febc:22af/64'),
+            dict(scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:fd91:272:581e:3a32/64'),
-            dict(scope='global',
+            dict(scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:4508:b885:5fb:740b/64'),
-            dict(scope='global',
+            dict(scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:dfcc:aaff:feb9:76ce/64'),
-            dict(scope='link',
+            dict(scope='link', dadfailed=False, tentative=False,
                  dynamic=False, cidr='fe80::dfcc:aaff:feb9:76ce/64')]
 
         test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
 
         for test_case in test_cases:
             self.parent._run = mock.Mock(return_value=test_case)
-            self.assertEqual(self.addr_cmd.list(), expected)
+            self.assertEqual(expected, self.addr_cmd.list())
             self._assert_call([], ('show', 'tap0'))
+
+    def test_wait_until_address_ready(self):
+        self.parent._run.return_value = ADDR_SAMPLE
+        # this address is not tentative or failed so it should return
+        self.assertIsNone(self.addr_cmd.wait_until_address_ready(
+            '2001:470:9:1224:fd91:272:581e:3a32'))
+
+    def test_wait_until_address_ready_non_existent_address(self):
+        self.addr_cmd.list = mock.Mock(return_value=[])
+        with testtools.ExpectedException(ip_lib.AddressNotReady):
+            self.addr_cmd.wait_until_address_ready('abcd::1234')
+
+    def test_wait_until_address_ready_timeout(self):
+        tentative_address = 'fe80::3023:39ff:febc:22ae'
+        self.addr_cmd.list = mock.Mock(return_value=[
+            dict(scope='link', dadfailed=False, tentative=True, dynamic=False,
+                 cidr=tentative_address + '/64')])
+        with testtools.ExpectedException(ip_lib.AddressNotReady):
+            self.addr_cmd.wait_until_address_ready(tentative_address,
+                                                   wait_time=1)
 
     def test_list_filtered(self):
         expected = [
-            dict(scope='global',
+            dict(scope='global', tentative=False, dadfailed=False,
                  dynamic=False, cidr='172.16.77.240/24')]
 
         test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
