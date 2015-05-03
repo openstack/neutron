@@ -344,8 +344,8 @@ vSphere
 
 .. _vmware-nsx:
 
-VMware
-------
+VMware NSX
+----------
 
 * Git: https://github.com/stackforge/vmware-nsx
 * Launchpad: https://launchpad.net/vmware-nsx
