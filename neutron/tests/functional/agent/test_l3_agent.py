@@ -178,9 +178,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         return device.link.mtu
 
     def get_expected_keepalive_configuration(self, router):
-        router_id = router.router_id
         ha_device_name = router.get_ha_device_name()
-        ha_device_cidr = self._port_first_ip_cidr(router.ha_port)
         external_port = router.get_ex_gw_port()
         ex_port_ipv6 = ip_lib.get_ipv6_lladdr(external_port['mac_address'])
         external_device_name = router.get_external_device_name(
@@ -220,9 +218,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         8.8.8.0/24 via 19.4.4.4
     }
 }""" % {
-            'router_id': router_id,
             'ha_device_name': ha_device_name,
-            'ha_device_cidr': ha_device_cidr,
             'external_device_name': external_device_name,
             'external_device_cidr': external_device_cidr,
             'internal_device_name': internal_device_name,
