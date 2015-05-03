@@ -102,6 +102,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         self.monitor.start(block=True, timeout=timeout)
 
     def test_has_updates(self):
+        utils.wait_until_true(lambda: self.monitor.data_received is True)
         self.assertTrue(self.monitor.has_updates,
                         'Initial call should always be true')
         self.assertFalse(self.monitor.has_updates,

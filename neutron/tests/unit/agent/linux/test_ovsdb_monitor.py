@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet.event
 import mock
 
 from neutron.agent.linux import ovsdb_monitor
@@ -56,22 +55,13 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
         super(TestSimpleInterfaceMonitor, self).setUp()
         self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
 
-    def test_is_active_is_false_by_default(self):
-        self.assertFalse(self.monitor.is_active)
-
-    def test_is_active_can_be_true(self):
-        self.monitor.data_received = True
-        self.monitor._kill_event = eventlet.event.Event()
-        self.assertTrue(self.monitor.is_active)
-
     def test_has_updates_is_true_by_default(self):
         self.assertTrue(self.monitor.has_updates)
 
     def test_has_updates_is_false_if_active_with_no_output(self):
         target = ('neutron.agent.linux.ovsdb_monitor.SimpleInterfaceMonitor'
                   '.is_active')
-        with mock.patch(target,
-                        new_callable=mock.PropertyMock(return_value=True)):
+        with mock.patch(target, return_value=True):
             self.assertFalse(self.monitor.has_updates)
 
     def test__kill_sets_data_received_to_false(self):

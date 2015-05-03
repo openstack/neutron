@@ -70,12 +70,6 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
         self.data_received = False
 
     @property
-    def is_active(self):
-        return (self.data_received and
-                self._kill_event and
-                not self._kill_event.ready())
-
-    @property
     def has_updates(self):
         """Indicate whether the ovsdb Interface table has been updated.
 
@@ -84,13 +78,13 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
         the absence of updates at the expense of potential false
         positives.
         """
-        return bool(list(self.iter_stdout())) or not self.is_active
+        return bool(list(self.iter_stdout())) or not self.is_active()
 
     def start(self, block=False, timeout=5):
         super(SimpleInterfaceMonitor, self).start()
         if block:
             with eventlet.timeout.Timeout(timeout):
-                while not self.is_active:
+                while not self.is_active():
                     eventlet.sleep()
 
     def _kill(self, *args, **kwargs):
