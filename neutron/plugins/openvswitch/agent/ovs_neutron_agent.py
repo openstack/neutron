@@ -733,7 +733,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def _bind_devices(self, need_binding_ports):
         for port_detail in need_binding_ports:
-            lvm = self.local_vlan_map[port_detail['network_id']]
+            lvm = self.local_vlan_map.get(port_detail['network_id'])
+            if not lvm:
+                # network for port was deleted. skip this port since it
+                # will need to be handled as a DEAD port in the next scan
+                continue
             port = port_detail['vif_port']
             device = port_detail['device']
             # Do not bind a port if it's already bound

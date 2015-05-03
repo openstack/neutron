@@ -431,6 +431,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
     def test_treat_devices_removed_ignores_missing_port(self):
         self._mock_treat_devices_removed(False)
 
+    def test_bind_port_with_missing_network(self):
+        self.agent._bind_devices([{'network_id': 'non-existent'}])
+
     def _test_process_network_ports(self, port_info):
         with contextlib.nested(
             mock.patch.object(self.agent.sg_agent, "setup_port_filters"),
