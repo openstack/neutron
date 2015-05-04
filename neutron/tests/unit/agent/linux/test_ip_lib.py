@@ -788,10 +788,10 @@ class TestIpRouteCommand(TestIPCmdBase):
             return result
 
         self.parent._run = mock.Mock(side_effect=pullup_side_effect)
-        self.route_cmd.pullup_route('tap1d7888a7-10')
-        self._assert_sudo([], ('del', '10.0.0.0/24', 'dev', 'qr-23380d11-d2'))
-        self._assert_sudo([], ('append', '10.0.0.0/24', 'proto', 'kernel',
-                               'src', '10.0.0.1', 'dev', 'qr-23380d11-d2'))
+        self.route_cmd.pullup_route('tap1d7888a7-10', ip_version=4)
+        self._assert_sudo([4], ('del', '10.0.0.0/24', 'dev', 'qr-23380d11-d2'))
+        self._assert_sudo([4], ('append', '10.0.0.0/24', 'proto', 'kernel',
+                                'src', '10.0.0.1', 'dev', 'qr-23380d11-d2'))
 
     def test_pullup_route_first(self):
         # NOTE(brian-haley) Currently we do not have any IPv6-specific usecase
@@ -806,7 +806,7 @@ class TestIpRouteCommand(TestIPCmdBase):
             return result
 
         self.parent._run = mock.Mock(side_effect=pullup_side_effect)
-        self.route_cmd.pullup_route('tap1d7888a7-10')
+        self.route_cmd.pullup_route('tap1d7888a7-10', ip_version=4)
         # Check two calls - device get and subnet get
         self.assertEqual(len(self.parent._run.mock_calls), 2)
 

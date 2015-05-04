@@ -469,12 +469,13 @@ class IpRouteCommand(IpDeviceCommandBase):
 
         return retval
 
-    def pullup_route(self, interface_name):
+    def pullup_route(self, interface_name, ip_version):
         """Ensures that the route entry for the interface is before all
         others on the same subnet.
         """
+        options = [ip_version]
         device_list = []
-        device_route_list_lines = self._run([],
+        device_route_list_lines = self._run(options,
                                             ('list',
                                              'proto', 'kernel',
                                              'dev', interface_name)
@@ -484,7 +485,7 @@ class IpRouteCommand(IpDeviceCommandBase):
                 subnet = device_route_line.split()[0]
             except Exception:
                 continue
-            subnet_route_list_lines = self._run([],
+            subnet_route_list_lines = self._run(options,
                                                 ('list',
                                                  'proto', 'kernel',
                                                  'match', subnet)
@@ -506,15 +507,15 @@ class IpRouteCommand(IpDeviceCommandBase):
                     break
 
             for (device, src) in device_list:
-                self._as_root([], ('del', subnet, 'dev', device))
+                self._as_root(options, ('del', subnet, 'dev', device))
                 if (src != ''):
-                    self._as_root([],
+                    self._as_root(options,
                                   ('append', subnet,
                                    'proto', 'kernel',
                                    'src', src,
                                    'dev', device))
                 else:
-                    self._as_root([],
+                    self._as_root(options,
                                   ('append', subnet,
                                    'proto', 'kernel',
                                    'dev', device))
@@ -552,10 +553,11 @@ class IpNeighCommand(IpDeviceCommandBase):
                        'lladdr', mac_address,
                        'dev', self.name))
 
-    def show(self):
-        return self._as_root([],
-                      ('show',
-                       'dev', self.name))
+    def show(self, ip_version):
+        options = [ip_version]
+        return self._as_root(options,
+                             ('show',
+                              'dev', self.name))
 
 
 class IpNetnsCommand(IpCommandBase):
