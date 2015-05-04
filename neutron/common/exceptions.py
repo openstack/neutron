@@ -453,3 +453,8 @@ class SubnetPoolDeleteError(BadRequest):
 
 class SubnetPoolQuotaExceeded(OverQuota):
     message = _("Per-tenant subnet pool prefix quota exceeded")
+
+
+class NetworkSubnetPoolAffinityError(BadRequest):
+    message = _("Subnets hosted on the same network must be allocated from "
+                "the same subnet pool")

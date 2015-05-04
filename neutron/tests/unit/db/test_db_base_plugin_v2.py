@@ -5531,6 +5531,15 @@ class NeutronDbPluginV2AsMixinTestCase(testlib_api.SqlTestCase):
         net = self.plugin.create_network(self.context, self.net_data)
         self.assertEqual(net['status'], 'BUILD')
 
+    def test__validate_network_subnetpools(self):
+        network = models_v2.Network()
+        network.subnets = [models_v2.Subnet(subnetpool_id='test_id',
+                                            ip_version=4)]
+        new_subnetpool_id = None
+        self.assertRaises(n_exc.NetworkSubnetPoolAffinityError,
+                          self.plugin._validate_network_subnetpools,
+                          network, new_subnetpool_id, 4)
+
 
 class TestNetworks(testlib_api.SqlTestCase):
     def setUp(self):

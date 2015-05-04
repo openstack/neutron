@@ -118,3 +118,24 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
         self.assertRaises(lib_exc.BadRequest,
                           self.client.update_subnetpool,
                           pool_id, subnetpool_data)
+
+    @test.attr(type=['negative', 'smoke'])
+    @test.idempotent_id('fc011824-153e-4469-97ad-9808eb88cae1')
+    def test_create_subnet_different_pools_same_network(self):
+        network = self.create_network(network_name='smoke-network')
+        subnetpool_data = {'prefixes': ['192.168.0.0/16'],
+                           'name': 'test-pool'}
+        pool_id = self._create_subnetpool(self.admin_client, subnetpool_data)
+        subnet = self.admin_client.create_subnet(
+                    network_id=network['id'],
+                    cidr='10.10.10.0/24',
+                    ip_version=4,
+                    gateway_ip=None)
+        subnet_id = subnet['subnet']['id']
+        self.addCleanup(self.admin_client.delete_subnet, subnet_id)
+        self.addCleanup(self.admin_client.delete_subnetpool, pool_id)
+        self.assertRaises(lib_exc.BadRequest,
+                          self.admin_client.create_subnet,
+                          network_id=network['id'],
+                          ip_version=4,
+                          subnetpool_id=pool_id)
