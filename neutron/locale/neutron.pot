@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.2.dev227\n"
+"Project-Id-Version: neutron 2015.2.0.dev268\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-29 06:13+0000\n"
+"POT-Creation-Date: 2015-05-04 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1824,7 +1824,7 @@ msgstr ""
 
 #: neutron/common/exceptions.py:459
 #, python-format
-msgid "IP Device '%(device_name)s' does not exist"
+msgid "Device '%(device_name)s' does not exist"
 msgstr ""
 
 #: neutron/common/ipv6_utils.py:36
@@ -2086,42 +2086,42 @@ msgid ""
 "agents."
 msgstr ""
 
-#: neutron/db/l3_db.py:270
+#: neutron/db/l3_db.py:271
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr ""
 
-#: neutron/db/l3_db.py:308
+#: neutron/db/l3_db.py:309
 #, python-format
 msgid "Network %s is not an external network"
 msgstr ""
 
-#: neutron/db/l3_db.py:318
+#: neutron/db/l3_db.py:319
 #, python-format
 msgid "External IP %s is the same as the gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:468
+#: neutron/db/l3_db.py:469
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:482
+#: neutron/db/l3_db.py:483
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:498 neutron/plugins/opencontrail/contrail_plugin.py:499
+#: neutron/db/l3_db.py:499 neutron/plugins/opencontrail/contrail_plugin.py:499
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
-#: neutron/db/l3_db.py:502 neutron/plugins/opencontrail/contrail_plugin.py:509
+#: neutron/db/l3_db.py:503 neutron/plugins/opencontrail/contrail_plugin.py:509
 msgid "Cannot specify both subnet-id and port-id"
 msgstr ""
 
-#: neutron/db/l3_db.py:519
+#: neutron/db/l3_db.py:520
 #, python-format
 msgid ""
 "Cannot have multiple router ports with the same network id if both "
@@ -2129,78 +2129,78 @@ msgid ""
 "id %(nid)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:561
+#: neutron/db/l3_db.py:562
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:565
+#: neutron/db/l3_db.py:566
 #, python-format
 msgid ""
 "IPv6 subnet %s configured to receive RAs from an external router cannot "
 "be added to Neutron Router."
 msgstr ""
 
-#: neutron/db/l3_db.py:777
+#: neutron/db/l3_db.py:778
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: neutron/db/l3_db.py:818
+#: neutron/db/l3_db.py:819
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: neutron/db/l3_db.py:822
+#: neutron/db/l3_db.py:823
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: neutron/db/l3_db.py:834
+#: neutron/db/l3_db.py:835
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:841
+#: neutron/db/l3_db.py:842
 #, python-format
 msgid "Cannot add floating IP to port %s that has no fixed IP addresses"
 msgstr ""
 
-#: neutron/db/l3_db.py:845
+#: neutron/db/l3_db.py:846
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:874
+#: neutron/db/l3_db.py:875
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: neutron/db/l3_db.py:914
+#: neutron/db/l3_db.py:915
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
 
-#: neutron/db/l3_db.py:1058
+#: neutron/db/l3_db.py:1059
 #, python-format
 msgid "has device owner %s"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:50
+#: neutron/db/l3_dvr_db.py:51
 msgid ""
 "System-wide flag to determine the type of router that tenants can create."
 " Only admin can override."
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:559
+#: neutron/db/l3_dvr_db.py:565
 msgid "Unable to create the Agent Gateway Port"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:591
+#: neutron/db/l3_dvr_db.py:597
 msgid "Unable to create the SNAT Interface Port"
 msgstr ""
 
@@ -4663,23 +4663,23 @@ msgid ""
 "error: %(error)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1652
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1657
 msgid ""
 "DVR deployments for VXLAN/GRE underlays require L2-pop to be enabled, in "
 "both the Agent and Server side."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1670
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1675
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1692
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1697
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1695
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1700
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -5104,12 +5104,12 @@ msgid ""
 "operation."
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:416
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:417
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:417
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:418
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""

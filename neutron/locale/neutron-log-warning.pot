@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.2.dev178\n"
+"Project-Id-Version: neutron 2015.2.0.dev268\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-24 06:13+0000\n"
+"POT-Creation-Date: 2015-05-04 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -53,17 +53,17 @@ msgid ""
 "falling back to old security_group_rules_for_devices which scales worse."
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:360
+#: neutron/agent/common/ovs_lib.py:361
 #, python-format
 msgid "Found not yet ready openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:363
+#: neutron/agent/common/ovs_lib.py:364
 #, python-format
 msgid "Found failed openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:408
+#: neutron/agent/common/ovs_lib.py:410
 #, python-format
 msgid "ofport: %(ofport)s for VIF: %(vif)s is not a positive integer"
 msgstr ""
@@ -76,26 +76,26 @@ msgid ""
 "exist."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:127 neutron/agent/dhcp/agent.py:196
+#: neutron/agent/dhcp/agent.py:132 neutron/agent/dhcp/agent.py:201
 #, python-format
 msgid "Network %s has been deleted."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:213
+#: neutron/agent/dhcp/agent.py:218
 #, python-format
 msgid ""
 "Network %s may have been deleted and its resources may have already been "
 "disposed."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:362
+#: neutron/agent/dhcp/agent.py:367
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:571 neutron/agent/l3/agent.py:609
+#: neutron/agent/dhcp/agent.py:576 neutron/agent/l3/agent.py:609
 #: neutron/agent/metadata/agent.py:306
 #: neutron/services/metering/agents/metering_agent.py:278
 msgid ""
@@ -121,7 +121,7 @@ msgstr ""
 
 #: neutron/agent/l3/agent.py:334
 #, python-format
-msgid "Info for router %s were not found. Skipping router removal"
+msgid "Info for router %s was not found. Skipping router removal"
 msgstr ""
 
 #: neutron/agent/l3/router_info.py:206
