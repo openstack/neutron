@@ -35,10 +35,15 @@ def is_valid_vxlan_vni(vni):
     return p_const.MIN_VXLAN_VNI <= vni <= p_const.MAX_VXLAN_VNI
 
 
+def is_valid_geneve_vni(vni):
+    return p_const.MIN_GENEVE_VNI <= vni <= p_const.MAX_GENEVE_VNI
+
+
 def verify_tunnel_range(tunnel_range, tunnel_type):
     """Raise an exception for invalid tunnel range or malformed range."""
     mappings = {p_const.TYPE_GRE: is_valid_gre_id,
-                p_const.TYPE_VXLAN: is_valid_vxlan_vni}
+                p_const.TYPE_VXLAN: is_valid_vxlan_vni,
+                p_const.TYPE_GENEVE: is_valid_geneve_vni}
     if tunnel_type in mappings:
         for ident in tunnel_range:
             if not mappings[tunnel_type](ident):

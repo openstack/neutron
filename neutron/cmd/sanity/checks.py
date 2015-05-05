@@ -52,6 +52,13 @@ def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
         return port != ovs_lib.INVALID_OFPORT
 
 
+def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
+    name = "genevetest-" + utils.get_random_string(6)
+    with ovs_lib.OVSBridge(name) as br:
+        port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_GENEVE)
+        return port != ovs_lib.INVALID_OFPORT
+
+
 def iproute2_vxlan_supported():
     ip = ip_lib.IPWrapper()
     name = "vxlantest-" + utils.get_random_string(4)

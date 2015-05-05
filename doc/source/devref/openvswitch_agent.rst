@@ -26,7 +26,6 @@ GRE Tunneling is documented in depth in the `Networking in too much
 detail <http://openstack.redhat.com/Networking_in_too_much_detail>`_
 by RedHat.
 
-
 VXLAN Tunnels
 -------------
 
@@ -34,6 +33,16 @@ VXLAN is an overlay technology which encapsulates MAC frames
 at layer 2 into a UDP header.
 More information can be found in `The VXLAN wiki page.
 <http://en.wikipedia.org/wiki/Virtual_Extensible_LAN>`_
+
+Geneve Tunnels
+--------------
+
+Geneve uses UDP as its transport protocol and is dynamic
+in size using extensible option headers.
+It is important to note that currently it is only supported in
+newer kernels. (kernel >= 3.18, OVS version >=2.4)
+More information can be found in the `Geneve RFC document.
+<https://tools.ietf.org/html/draft-ietf-nvo3-geneve-00>`_
 
 
 Bridge Management
@@ -70,6 +79,7 @@ Bear in mind, that this design decision may be overhauled in the
 future to support existing VLAN-tagged traffic (coming from NFV VMs
 for instance) and/or to deal with potential QinQ support natively
 available in the Open vSwitch.
+
 
 Further Reading
 ---------------

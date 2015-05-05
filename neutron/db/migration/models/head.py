@@ -56,6 +56,7 @@ from neutron.plugins.cisco.db import network_models_v2  # noqa
 from neutron.plugins.ml2.drivers.brocade.db import (  # noqa
     models as ml2_brocade_models)
 from neutron.plugins.ml2.drivers import type_flat  # noqa
+from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron.plugins.ml2.drivers import type_gre  # noqa
 from neutron.plugins.ml2.drivers import type_vlan  # noqa
 from neutron.plugins.ml2.drivers import type_vxlan  # noqa

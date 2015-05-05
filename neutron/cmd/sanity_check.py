@@ -56,6 +56,15 @@ def check_ovs_vxlan():
     return result
 
 
+def check_ovs_geneve():
+    result = checks.ovs_geneve_supported()
+    if not result:
+        LOG.error(_LE('Check for Open vSwitch Geneve support failed. '
+                      'Please ensure that the version of openvswitch '
+                      'and kernel being used has Geneve support.'))
+    return result
+
+
 def check_iproute2_vxlan():
     result = checks.iproute2_vxlan_supported()
     if not result:
@@ -181,6 +190,8 @@ def check_ebtables():
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
                     help=_('Check for OVS vxlan support')),
+    BoolOptCallback('ovs_geneve', check_ovs_geneve, default=False,
+                    help=_('Check for OVS Geneve support')),
     BoolOptCallback('iproute2_vxlan', check_iproute2_vxlan, default=False,
                     help=_('Check for iproute2 vxlan support')),
     BoolOptCallback('ovs_patch', check_ovs_patch, default=False,
@@ -216,6 +227,8 @@ def enable_tests_from_config():
 
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_override('ovs_vxlan', True)
+    if 'geneve' in cfg.CONF.AGENT.tunnel_types:
+        cfg.CONF.set_override('ovs_geneve', True)
     if ('vxlan' in cfg.CONF.ml2.type_drivers or
             cfg.CONF.VXLAN.enable_vxlan):
         cfg.CONF.set_override('iproute2_vxlan', True)
