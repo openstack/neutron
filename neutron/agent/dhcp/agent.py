@@ -548,7 +548,8 @@ class DhcpAgentWithStateReport(DhcpAgent):
             'configurations': {
                 'dhcp_driver': cfg.CONF.dhcp_driver,
                 'use_namespaces': cfg.CONF.use_namespaces,
-                'dhcp_lease_duration': cfg.CONF.dhcp_lease_duration},
+                'dhcp_lease_duration': cfg.CONF.dhcp_lease_duration,
+                'log_agent_heartbeats': cfg.CONF.AGENT.log_agent_heartbeats},
             'start_flag': True,
             'agent_type': constants.AGENT_TYPE_DHCP}
         report_interval = cfg.CONF.AGENT.report_interval

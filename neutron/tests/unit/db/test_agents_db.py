@@ -127,6 +127,18 @@ class TestAgentsDbMixin(TestAgentsDbBase):
         agent = agents[0]
         self._assert_ref_fields_are_equal(self.agent_status, agent)
 
+    def test_create_or_update_agent_logs_heartbeat(self):
+        status = self.agent_status.copy()
+        status['configurations'] = {'log_agent_heartbeats': True}
+
+        with mock.patch.object(agents_db.LOG, 'info') as info:
+            self.plugin.create_or_update_agent(self.context, status)
+            self.assertTrue(info.called)
+            status['configurations'] = {'log_agent_heartbeats': False}
+            info.reset_mock()
+            self.plugin.create_or_update_agent(self.context, status)
+            self.assertFalse(info.called)
+
     def test_create_or_update_agent_concurrent_insert(self):
         # NOTE(rpodolyaka): emulate violation of the unique constraint caused
         #                   by a concurrent insert. Ensure we make another

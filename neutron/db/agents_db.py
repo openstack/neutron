@@ -29,7 +29,7 @@ from neutron.common import constants
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
-from neutron.i18n import _LE, _LW
+from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 
 LOG = logging.getLogger(__name__)
@@ -203,22 +203,33 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
         agent = self._get_agent(context, id)
         return self._make_agent_dict(agent, fields)
 
-    def _create_or_update_agent(self, context, agent):
+    def _log_heartbeat(self, state, agent_db, agent_conf):
+        if agent_conf.get('log_agent_heartbeats'):
+            delta = timeutils.utcnow() - agent_db.heartbeat_timestamp
+            LOG.info(_LI("Heartbeat received from %(type)s agent on "
+                         "host %(host)s, uuid %(uuid)s after %(delta)s"),
+                     {'type': agent_db.agent_type,
+                      'host': agent_db.host,
+                      'uuid': state.get('uuid'),
+                      'delta': delta})
+
+    def _create_or_update_agent(self, context, agent_state):
         with context.session.begin(subtransactions=True):
             res_keys = ['agent_type', 'binary', 'host', 'topic']
-            res = dict((k, agent[k]) for k in res_keys)
+            res = dict((k, agent_state[k]) for k in res_keys)
 
-            configurations_dict = agent.get('configurations', {})
+            configurations_dict = agent_state.get('configurations', {})
             res['configurations'] = jsonutils.dumps(configurations_dict)
-            res['load'] = self._get_agent_load(agent)
+            res['load'] = self._get_agent_load(agent_state)
             current_time = timeutils.utcnow()
             try:
                 agent_db = self._get_agent_by_type_and_host(
-                    context, agent['agent_type'], agent['host'])
+                    context, agent_state['agent_type'], agent_state['host'])
                 res['heartbeat_timestamp'] = current_time
-                if agent.get('start_flag'):
+                if agent_state.get('start_flag'):
                     res['started_at'] = current_time
                 greenthread.sleep(0)
+                self._log_heartbeat(agent_state, agent_db, configurations_dict)
                 agent_db.update(res)
             except ext_agent.AgentNotFoundByTypeHost:
                 greenthread.sleep(0)
@@ -229,6 +240,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
                 agent_db = Agent(**res)
                 greenthread.sleep(0)
                 context.session.add(agent_db)
+                self._log_heartbeat(agent_state, agent_db, configurations_dict)
             greenthread.sleep(0)
 
     def create_or_update_agent(self, context, agent):

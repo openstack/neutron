@@ -595,7 +595,8 @@ class L3NATAgentWithStateReport(L3NATAgent):
                 'external_network_bridge': self.conf.external_network_bridge,
                 'gateway_external_network_id':
                 self.conf.gateway_external_network_id,
-                'interface_driver': self.conf.interface_driver},
+                'interface_driver': self.conf.interface_driver,
+                'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats},
             'start_flag': True,
             'agent_type': l3_constants.AGENT_TYPE_L3}
         report_interval = self.conf.AGENT.report_interval

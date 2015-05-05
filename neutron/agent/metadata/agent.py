@@ -289,6 +289,7 @@ class UnixDomainMetadataProxy(object):
                 'metadata_proxy_socket': cfg.CONF.metadata_proxy_socket,
                 'nova_metadata_ip': cfg.CONF.nova_metadata_ip,
                 'nova_metadata_port': cfg.CONF.nova_metadata_port,
+                'log_agent_heartbeats': cfg.CONF.AGENT.log_agent_heartbeats,
             },
             'start_flag': True,
             'agent_type': n_const.AGENT_TYPE_METADATA}
