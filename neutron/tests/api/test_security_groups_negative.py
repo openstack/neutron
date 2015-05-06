@@ -202,6 +202,14 @@ class NegativeSecGroupTest(base.BaseSecGroupTest):
                           security_group_id=non_existent_sg,
                           direction='ingress', ethertype=self.ethertype)
 
+    @test.attr(type=['negative', 'smoke'])
+    @test.idempotent_id('55100aa8-b24f-333c-0bef-64eefd85f15c')
+    def test_update_default_security_group_name(self):
+        sg_list = self.client.list_security_groups(name='default')
+        sg = sg_list['security_groups'][0]
+        self.assertRaises(lib_exc.Conflict, self.client.update_security_group,
+                          sg['id'], name='test')
+
 
 class NegativeSecGroupIPv6Test(NegativeSecGroupTest):
     _ip_version = 6
