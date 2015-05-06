@@ -342,6 +342,32 @@ class RoutersTest(base.BaseRouterTest):
         self.assertEqual(subnet_id,
                          interface_port['fixed_ips'][0]['subnet_id'])
 
+    @test.attr(type='smoke')
+    @test.idempotent_id('01f185d1-d1a6-4cf9-abf7-e0e1384c169c')
+    def test_network_attached_with_two_routers(self):
+        network = self.create_network(data_utils.rand_name('network1'))
+        self.create_subnet(network)
+        port1 = self.create_port(network)
+        port2 = self.create_port(network)
+        router1 = self._create_router(data_utils.rand_name('router1'))
+        router2 = self._create_router(data_utils.rand_name('router2'))
+        self.client.add_router_interface_with_port_id(
+            router1['id'], port1['id'])
+        self.client.add_router_interface_with_port_id(
+            router2['id'], port2['id'])
+        self.addCleanup(self.client.remove_router_interface_with_port_id,
+                        router1['id'], port1['id'])
+        self.addCleanup(self.client.remove_router_interface_with_port_id,
+                        router2['id'], port2['id'])
+        body = self.client.show_port(port1['id'])
+        port_show1 = body['port']
+        body = self.client.show_port(port2['id'])
+        port_show2 = body['port']
+        self.assertEqual(port_show1['network_id'], network['id'])
+        self.assertEqual(port_show2['network_id'], network['id'])
+        self.assertEqual(port_show1['device_id'], router1['id'])
+        self.assertEqual(port_show2['device_id'], router2['id'])
+
 
 class RoutersIpV6Test(RoutersTest):
     _ip_version = 6
