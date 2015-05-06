@@ -6,6 +6,7 @@
 [Filters]
 # enable ping from namespace
 ping_filter: CommandFilter, ping, root
+ping6_filter: CommandFilter, ping6, root
 
 # enable curl from namespace
 curl_filter: CommandFilter, curl, root
