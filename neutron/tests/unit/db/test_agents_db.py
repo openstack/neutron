@@ -161,6 +161,27 @@ class TestAgentsDbMixin(TestAgentsDbBase):
         agent = self.plugin.get_agents(self.context)[0]
         self.assertFalse(agent['admin_state_up'])
 
+    def test_agent_health_check(self):
+        agents = [{'agent_type': "DHCP Agent",
+                   'heartbeat_timestamp': '2015-05-06 22:40:40.432295',
+                   'host': 'some.node',
+                   'alive': True}]
+        with mock.patch.object(self.plugin, 'get_agents',
+                               return_value=agents),\
+                mock.patch.object(agents_db.LOG, 'warn') as warn,\
+                mock.patch.object(agents_db.LOG, 'debug') as debug:
+            self.plugin.agent_health_check()
+            self.assertTrue(debug.called)
+            self.assertFalse(warn.called)
+            agents[0]['alive'] = False
+            self.plugin.agent_health_check()
+            warn.assert_called_once_with(
+                mock.ANY,
+                {'count': 1, 'total': 1,
+                 'data': "                Type       Last heartbeat host\n"
+                 "          DHCP Agent 2015-05-06 22:40:40.432295 some.node"}
+            )
+
 
 class TestAgentsDbGetAgents(TestAgentsDbBase):
     scenarios = [

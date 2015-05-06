@@ -26,6 +26,7 @@ from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
+from neutron import context
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
@@ -190,6 +191,26 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
             alive = attributes.convert_to_boolean(alive[0])
             agents = [agent for agent in agents if agent['alive'] == alive]
         return agents
+
+    def agent_health_check(self):
+        """Scan agents and log if some are considered dead."""
+        agents = self.get_agents(context.get_admin_context(),
+                                 filters={'admin_state_up': [True]})
+        dead_agents = [agent for agent in agents if not agent['alive']]
+        if dead_agents:
+            data = '%20s %20s %s\n' % ('Type', 'Last heartbeat', "host")
+            data += '\n'.join(['%20s %20s %s' %
+                               (agent['agent_type'],
+                                agent['heartbeat_timestamp'],
+                                agent['host']) for agent in dead_agents])
+            LOG.warn(_LW("Agent healthcheck: found %(count)s dead agents "
+                         "out of %(total)s:\n%(data)s"),
+                     {'count': len(dead_agents),
+                      'total': len(agents),
+                      'data': data})
+        else:
+            LOG.debug("Agent healthcheck: found %s active agents",
+                      len(agents))
 
     def _get_agent_by_type_and_host(self, context, agent_type, host):
         query = self._model_query(context, Agent)

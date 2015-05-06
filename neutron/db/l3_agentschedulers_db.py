@@ -82,7 +82,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                          "automatic router rescheduling is disabled."))
             return
 
-        self.setup_agent_status_check(
+        self.add_agent_status_check(
             self.reschedule_routers_from_down_agents)
 
     def reschedule_routers_from_down_agents(self):
