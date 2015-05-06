@@ -462,7 +462,8 @@ class RouterInfo(object):
                             gateway_ips=gateway_ips,
                             extra_subnets=ex_gw_port.get('extra_subnets', []),
                             preserve_ips=preserve_ips,
-                            enable_ra_on_gw=enable_ra_on_gw)
+                            enable_ra_on_gw=enable_ra_on_gw,
+                            clean_connections=True)
         for fixed_ip in ex_gw_port['fixed_ips']:
             ip_lib.send_gratuitous_arp(ns_name,
                                        interface_name,
