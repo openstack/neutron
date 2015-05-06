@@ -991,6 +991,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 cur_binding.driver = new_binding.driver
                 cur_binding.segment = new_binding.segment
 
+    @db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                          retry_on_deadlock=True)
     def delete_port(self, context, id, l3_port_check=True):
         LOG.debug(_("Deleting port %s"), id)
         removed_routers = []
