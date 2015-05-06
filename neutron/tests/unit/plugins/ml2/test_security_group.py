@@ -141,10 +141,11 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
             mock.patch('neutron.plugins.ml2.db.or_'),
             mock.patch('neutron.plugins.ml2.db.db_api.get_session')
         ) as (or_mock, sess_mock):
-            fmock = sess_mock.query.return_value.outerjoin.return_value.filter
+            qmock = sess_mock.return_value.query
+            fmock = qmock.return_value.outerjoin.return_value.filter
             # return no ports to exit the method early since we are mocking
             # the query
-            fmock.return_value.all.return_value = []
+            fmock.return_value = []
             plugin.get_ports_from_devices([test_base._uuid(),
                                            test_base._uuid()])
             # the or_ function should only have one argument
