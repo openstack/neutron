@@ -23,6 +23,8 @@ import webob
 
 from neutron.common import exceptions
 from neutron.i18n import _LI, _LW
+from neutron.openstack.common import versionutils
+
 
 LOG = logging.getLogger(__name__)
 QUOTA_DB_MODULE = 'neutron.db.quota_db'
@@ -216,6 +218,12 @@ class QuotaEngine(object):
                              "loaded plugin does not support 'quotas' table."))
             if isinstance(_driver_class, basestring):
                 _driver_class = importutils.import_object(_driver_class)
+            if isinstance(_driver_class, ConfDriver):
+                versionutils.report_deprecated_feature(
+                    LOG, _LW("The quota driver neutron.quota.ConfDriver is "
+                             "deprecated as of Liberty. "
+                             "neutron.db.quota_db.DbQuotaDriver should be "
+                             "used in its place"))
             self._driver = _driver_class
             LOG.info(_LI('Loaded quota_driver: %s.'), _driver_class)
         return self._driver
