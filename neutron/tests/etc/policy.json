@@ -102,6 +102,9 @@
     "update_firewall_policy": "rule:admin_or_owner",
     "delete_firewall_policy": "rule:admin_or_owner",
 
+    "insert_rule": "rule:admin_or_owner",
+    "remove_rule": "rule:admin_or_owner",
+
     "create_firewall_rule": "",
     "get_firewall_rule": "rule:admin_or_owner or rule:shared_firewalls",
     "update_firewall_rule": "rule:admin_or_owner",

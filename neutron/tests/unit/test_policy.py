@@ -253,7 +253,10 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "get_firewall_policy": "rule:admin_or_owner or "
                             "rule:shared",
             "get_firewall_rule": "rule:admin_or_owner or "
-                            "rule:shared"
+                            "rule:shared",
+
+            "insert_rule": "rule:admin_or_owner",
+            "remove_rule": "rule:admin_or_owner",
         }.items())
 
         def remove_fake_resource():
@@ -271,6 +274,26 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         fake_manager = self.manager_patcher.start()
         fake_manager_instance = fake_manager.return_value
         fake_manager_instance.plugin = plugin_klass()
+
+    def test_firewall_policy_insert_rule_with_admin_context(self):
+        action = "insert_rule"
+        target = {}
+        result = policy.check(context.get_admin_context(), action, target)
+        self.assertTrue(result)
+
+    def test_firewall_policy_insert_rule_with_owner(self):
+        action = "insert_rule"
+        target = {"tenant_id": "own_tenant"}
+        user_context = context.Context('', "own_tenant", roles=['user'])
+        result = policy.check(user_context, action, target)
+        self.assertTrue(result)
+
+    def test_firewall_policy_remove_rule_without_admin_or_owner(self):
+        action = "remove_rule"
+        target = {"firewall_rule_id": "rule_id", "tenant_id": "tenantA"}
+        user_context = context.Context('', "another_tenant", roles=['user'])
+        result = policy.check(user_context, action, target)
+        self.assertFalse(result)
 
     def _test_action_on_attr(self, context, action, obj, attr, value,
                              exception=None, **kwargs):
