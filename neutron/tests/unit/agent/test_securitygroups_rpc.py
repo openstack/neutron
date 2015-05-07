@@ -2483,6 +2483,9 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
         cfg.CONF.set_override('comment_iptables_rules', False, group='AGENT')
 
+        self.utils_exec = mock.patch(
+            'neutron.agent.linux.utils.execute').start()
+
         self.rpc = mock.Mock()
         self._init_agent(defer_refresh_firewall)
 
@@ -2606,6 +2609,13 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             kwargs = self.iptables_execute.call_args_list[i][1]
             self.assertThat(kwargs['process_input'],
                             matchers.MatchesRegex(expected_regex))
+
+        expected = ['net.bridge.bridge-nf-call-arptables=1',
+                    'net.bridge.bridge-nf-call-ip6tables=1',
+                    'net.bridge.bridge-nf-call-iptables=1']
+        for e in expected:
+            self.utils_exec.assert_any_call(['sysctl', '-w', e],
+                                            run_as_root=True)
 
     def _replay_iptables(self, v4_filter, v6_filter, raw):
         self._register_mock_call(
