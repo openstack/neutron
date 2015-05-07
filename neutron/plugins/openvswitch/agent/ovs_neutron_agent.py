@@ -254,9 +254,14 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
 
+        # In order to keep existed device's local vlan unchanged,
+        # restore local vlan mapping at start
+        self._restore_local_vlan_map()
+
         # Security group agent support
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc, defer_refresh_firewall=True)
+                self.sg_plugin_rpc, self.local_vlan_map,
+                defer_refresh_firewall=True)
 
         # Initialize iteration counter
         self.iter_num = 0
@@ -282,6 +287,21 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.agent_state.pop('start_flag', None)
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
+
+    def _restore_local_vlan_map(self):
+        cur_ports = self.int_br.get_vif_ports()
+        for port in cur_ports:
+            local_vlan_map = self.int_br.db_get_val("Port", port.port_name,
+                                                    "other_config")
+            local_vlan = self.int_br.db_get_val("Port", port.port_name, "tag")
+            net_uuid = local_vlan_map.get('net_uuid')
+            if (net_uuid and net_uuid not in self.local_vlan_map
+                and local_vlan != DEAD_VLAN_TAG):
+                self.provision_local_vlan(local_vlan_map['net_uuid'],
+                                          local_vlan_map['network_type'],
+                                          local_vlan_map['physical_network'],
+                                          local_vlan_map['segmentation_id'],
+                                          local_vlan)
 
     def setup_rpc(self):
         self.agent_id = 'ovs-agent-%s' % cfg.CONF.host
@@ -496,7 +516,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             LOG.warning(_LW('Action %s not supported'), action)
 
     def provision_local_vlan(self, net_uuid, network_type, physical_network,
-                             segmentation_id):
+                             segmentation_id, local_vlan=None):
         '''Provisions a local VLAN.
 
         :param net_uuid: the uuid of the network associated with this vlan.
@@ -513,11 +533,15 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if lvm:
             lvid = lvm.vlan
         else:
-            if not self.available_local_vlans:
-                LOG.error(_LE("No local VLAN available for net-id=%s"),
-                          net_uuid)
-                return
-            lvid = self.available_local_vlans.pop()
+            if local_vlan in self.available_local_vlans:
+                lvid = local_vlan
+                self.available_local_vlans.remove(local_vlan)
+            else:
+                if not self.available_local_vlans:
+                    LOG.error(_LE("No local VLAN available for net-id=%s"),
+                              net_uuid)
+                    return
+                lvid = self.available_local_vlans.pop()
             self.local_vlan_map[net_uuid] = LocalVLANMapping(lvid,
                                                              network_type,
                                                              physical_network,
@@ -697,14 +721,43 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.dvr_agent.bind_port_to_dvr(port, lvm,
                                         fixed_ips,
                                         device_owner)
+        port_other_config = self.int_br.db_get_val("Port", port.port_name,
+                                                   "other_config")
+        vlan_mapping = {'net_uuid': net_uuid,
+                        'network_type': network_type,
+                        'physical_network': physical_network,
+                        'segmentation_id': segmentation_id}
+        port_other_config.update(vlan_mapping)
+        self.int_br.set_db_attribute("Port", port.port_name, "other_config",
+                                     port_other_config)
 
-        # Do not bind a port if it's already bound
-        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
-        if cur_tag != lvm.vlan:
-            self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                         lvm.vlan)
-            if port.ofport != -1:
-                self.int_br.delete_flows(in_port=port.ofport)
+    def _bind_devices(self, need_binding_ports):
+        for port_detail in need_binding_ports:
+            lvm = self.local_vlan_map[port_detail['network_id']]
+            port = port_detail['vif_port']
+            device = port_detail['device']
+            # Do not bind a port if it's already bound
+            cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+            if cur_tag != lvm.vlan:
+                self.int_br.set_db_attribute(
+                    "Port", port.port_name, "tag", lvm.vlan)
+                if port.ofport != -1:
+                    self.int_br.delete_flows(in_port=port.ofport)
+
+            # update plugin about port status
+            # FIXME(salv-orlando): Failures while updating device status
+            # must be handled appropriately. Otherwise this might prevent
+            # neutron server from sending network-vif-* events to the nova
+            # API server, thus possibly preventing instance spawn.
+            if port_detail.get('admin_state_up'):
+                LOG.debug("Setting status for %s to UP", device)
+                self.plugin_rpc.update_device_up(
+                    self.context, device, self.agent_id, cfg.CONF.host)
+            else:
+                LOG.debug("Setting status for %s to DOWN", device)
+                self.plugin_rpc.update_device_down(
+                    self.context, device, self.agent_id, cfg.CONF.host)
+            LOG.info(_LI("Configuration for device %s completed."), device)
 
     @staticmethod
     def setup_arp_spoofing_protection(bridge, vif, port_details):
@@ -1152,6 +1205,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # an OVS ofport configured, as only these ports were considered
         # for being treated. If that does not happen, it is a potential
         # error condition of which operators should be aware
+        port_needs_binding = True
         if not vif_port.ofport:
             LOG.warn(_LW("VIF port: %s has no ofport configured, "
                          "and might not be able to transmit"), vif_port.vif_id)
@@ -1162,8 +1216,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                 fixed_ips, device_owner, ovs_restarted)
             else:
                 self.port_dead(vif_port)
+                port_needs_binding = False
         else:
             LOG.debug("No VIF port for port %s defined on agent.", port_id)
+        return port_needs_binding
 
     def _setup_tunnel_port(self, br, port_name, remote_ip, tunnel_type):
         ofport = br.add_tunnel_port(port_name,
@@ -1224,6 +1280,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def treat_devices_added_or_updated(self, devices, ovs_restarted):
         skipped_devices = []
+        need_binding_devices = []
         try:
             devices_details_list = self.plugin_rpc.get_devices_details_list(
                 self.context,
@@ -1246,37 +1303,26 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if 'port_id' in details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': details})
-                self.treat_vif_port(port, details['port_id'],
-                                    details['network_id'],
-                                    details['network_type'],
-                                    details['physical_network'],
-                                    details['segmentation_id'],
-                                    details['admin_state_up'],
-                                    details['fixed_ips'],
-                                    details['device_owner'],
-                                    ovs_restarted)
+                need_binding = self.treat_vif_port(port, details['port_id'],
+                                                   details['network_id'],
+                                                   details['network_type'],
+                                                   details['physical_network'],
+                                                   details['segmentation_id'],
+                                                   details['admin_state_up'],
+                                                   details['fixed_ips'],
+                                                   details['device_owner'],
+                                                   ovs_restarted)
                 if self.prevent_arp_spoofing:
                     self.setup_arp_spoofing_protection(self.int_br,
                                                        port, details)
-                # update plugin about port status
-                # FIXME(salv-orlando): Failures while updating device status
-                # must be handled appropriately. Otherwise this might prevent
-                # neutron server from sending network-vif-* events to the nova
-                # API server, thus possibly preventing instance spawn.
-                if details.get('admin_state_up'):
-                    LOG.debug("Setting status for %s to UP", device)
-                    self.plugin_rpc.update_device_up(
-                        self.context, device, self.agent_id, cfg.CONF.host)
-                else:
-                    LOG.debug("Setting status for %s to DOWN", device)
-                    self.plugin_rpc.update_device_down(
-                        self.context, device, self.agent_id, cfg.CONF.host)
-                LOG.info(_LI("Configuration for device %s completed."), device)
+                if need_binding:
+                    details['vif_port'] = port
+                    need_binding_devices.append(details)
             else:
                 LOG.warn(_LW("Device %s not defined on plugin"), device)
                 if (port and port.ofport != -1):
                     self.port_dead(port)
-        return skipped_devices
+        return skipped_devices, need_binding_devices
 
     def treat_ancillary_devices_added(self, devices):
         try:
@@ -1346,10 +1392,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # sources: the neutron server, and the ovs db monitor process
         # If there is an exception while processing security groups ports
         # will not be wired anyway, and a resync will be triggered
-        # TODO(salv-orlando): Optimize avoiding applying filters unnecessarily
-        # (eg: when there are no IP address changes)
-        self.sg_agent.setup_port_filters(port_info.get('added', set()),
-                                         port_info.get('updated', set()))
         # VIF wiring needs to be performed always for 'new' devices.
         # For updated ports, re-wiring is not needed in most cases, but needs
         # to be performed anyway when the admin state of a device is changed.
@@ -1360,8 +1402,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if devices_added_updated:
             start = time.time()
             try:
-                skipped_devices = self.treat_devices_added_or_updated(
-                    devices_added_updated, ovs_restarted)
+                skipped_devices, need_binding_devices = (
+                    self.treat_devices_added_or_updated(
+                        devices_added_updated, ovs_restarted))
                 LOG.debug("process_network_ports - iteration:%(iter_num)d - "
                           "treat_devices_added_or_updated completed. "
                           "Skipped %(num_skipped)d devices of "
@@ -1371,6 +1414,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                            'num_skipped': len(skipped_devices),
                            'num_current': len(port_info['current']),
                            'elapsed': time.time() - start})
+                # TODO(salv-orlando): Optimize avoiding applying filters
+                # unnecessarily, (eg: when there are no IP address changes)
+                self.sg_agent.setup_port_filters(
+                    port_info.get('added', set()),
+                    port_info.get('updated', set()))
+                self._bind_devices(need_binding_devices)
                 # Update the list of current ports storing only those which
                 # have been actually processed.
                 port_info['current'] = (port_info['current'] -

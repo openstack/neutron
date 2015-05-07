@@ -193,9 +193,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.ipv6['filter'].add_rule('sg-fallback', '-j DROP',
                                               comment=ic.UNMATCH_DROP)
 
+    def _add_raw_chain(self, chain_name):
+        self.iptables.ipv4['raw'].add_chain(chain_name)
+        self.iptables.ipv6['raw'].add_chain(chain_name)
+
     def _add_chain_by_name_v4v6(self, chain_name):
-        self.iptables.ipv6['filter'].add_chain(chain_name)
         self.iptables.ipv4['filter'].add_chain(chain_name)
+        self.iptables.ipv6['filter'].add_chain(chain_name)
+
+    def _remove_raw_chain(self, chain_name):
+        self.iptables.ipv4['raw'].remove_chain(chain_name)
+        self.iptables.ipv6['raw'].remove_chain(chain_name)
 
     def _remove_chain_by_name_v4v6(self, chain_name):
         self.iptables.ipv4['filter'].remove_chain(chain_name)
@@ -676,3 +684,39 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
 
     def _get_device_name(self, port):
         return (self.OVS_HYBRID_TAP_PREFIX + port['device'])[:LINUX_DEV_LEN]
+
+    def _get_br_device_name(self, port):
+        return ('qvb' + port['device'])[:LINUX_DEV_LEN]
+
+    def _get_jump_rule(self, port, direction):
+        if direction == INGRESS_DIRECTION:
+            device = self._get_br_device_name(port)
+        else:
+            device = self._get_device_name(port)
+        jump_rule = '-m physdev --physdev-in %s -j CT --zone %s' % (
+            device, port['zone_id'])
+        return jump_rule
+
+    def _add_raw_chain_rules(self, port, direction):
+        if port['zone_id']:
+            jump_rule = self._get_jump_rule(port, direction)
+            self.iptables.ipv4['raw'].add_rule('PREROUTING', jump_rule)
+            self.iptables.ipv6['raw'].add_rule('PREROUTING', jump_rule)
+
+    def _remove_raw_chain_rules(self, port, direction):
+        if port['zone_id']:
+            jump_rule = self._get_jump_rule(port, direction)
+            self.iptables.ipv4['raw'].remove_rule('PREROUTING', jump_rule)
+            self.iptables.ipv6['raw'].remove_rule('PREROUTING', jump_rule)
+
+    def _add_chain(self, port, direction):
+        super(OVSHybridIptablesFirewallDriver, self)._add_chain(port,
+                                                                direction)
+        if direction in [INGRESS_DIRECTION, EGRESS_DIRECTION]:
+            self._add_raw_chain_rules(port, direction)
+
+    def _remove_chain(self, port, direction):
+        super(OVSHybridIptablesFirewallDriver, self)._remove_chain(port,
+                                                                   direction)
+        if direction in [INGRESS_DIRECTION, EGRESS_DIRECTION]:
+            self._remove_raw_chain_rules(port, direction)

@@ -106,6 +106,8 @@ class TunnelTest(base.BaseTestCase):
         self.mock_int_bridge.add_port.return_value = self.MAP_TUN_INT_OFPORT
         self.mock_int_bridge.add_patch_port.side_effect = (
             lambda tap, peer: self.ovs_int_ofports[tap])
+        self.mock_int_bridge.get_vif_ports.return_value = []
+        self.mock_int_bridge.db_get_val.return_value = {}
 
         self.mock_map_tun_bridge = self.ovs_bridges[self.MAP_TUN_BRIDGE]
         self.mock_map_tun_bridge.br_name = self.MAP_TUN_BRIDGE
@@ -190,7 +192,10 @@ class TunnelTest(base.BaseTestCase):
             mock.call.add_patch_port('patch-int', 'patch-tun'),
         ]
         self.mock_int_bridge_expected += [
-            mock.call.add_patch_port('patch-tun', 'patch-int')
+            mock.call.add_patch_port('patch-tun', 'patch-int'),
+        ]
+        self.mock_int_bridge_expected += [
+            mock.call.get_vif_ports(),
         ]
 
         self.mock_tun_bridge_expected += [
@@ -437,12 +442,15 @@ class TunnelTest(base.BaseTestCase):
         self._verify_mock_calls()
 
     def test_port_bound(self):
+        vlan_mapping = {'segmentation_id': LS_ID,
+                        'physical_network': None,
+                        'net_uuid': NET_UUID,
+                        'network_type': 'gre'}
         self.mock_int_bridge_expected += [
-            mock.call.db_get_val('Port', VIF_PORT.port_name, 'tag'),
+            mock.call.db_get_val('Port', 'port', 'other_config'),
             mock.call.set_db_attribute('Port', VIF_PORT.port_name,
-                                       'tag', LVM.vlan),
-            mock.call.delete_flows(in_port=VIF_PORT.ofport)
-        ]
+                                       'other_config',
+                                       vlan_mapping)]
 
         a = self._build_agent()
         a.local_vlan_map[NET_UUID] = LVM
@@ -610,7 +618,9 @@ class TunnelTestUseVethInterco(TunnelTest):
         self.mock_int_bridge_expected += [
             mock.call.add_patch_port('patch-tun', 'patch-int')
         ]
-
+        self.mock_int_bridge_expected += [
+            mock.call.get_vif_ports(),
+        ]
         self.mock_tun_bridge_expected += [
             mock.call.remove_all_flows(),
             mock.call.add_flow(priority=1,
