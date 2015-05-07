@@ -16,6 +16,7 @@
 
 import mock
 from oslo_config import cfg
+import testscenarios
 from webob import exc
 
 from neutron.common import constants
@@ -27,6 +28,7 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
 from neutron.openstack.common import uuidutils
+from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit import testlib_api
@@ -72,6 +74,33 @@ class TestDbSepPlugin(test_l3.TestL3NatServicePlugin,
                       l3_gwmode_db.L3_NAT_db_mixin):
 
     supported_extension_aliases = ["router", "ext-gw-mode"]
+
+
+class TestGetEnableSnat(testscenarios.WithScenarios, base.BaseTestCase):
+    scenarios = [
+        ('enabled', {'enable_snat_by_default': True}),
+        ('disabled', {'enable_snat_by_default': False})]
+
+    def setUp(self):
+        super(TestGetEnableSnat, self).setUp()
+        self.config(enable_snat_by_default=self.enable_snat_by_default)
+
+    def _test_get_enable_snat(self, expected, info):
+        observed = l3_gwmode_db.L3_NAT_dbonly_mixin._get_enable_snat(info)
+        self.assertEqual(expected, observed)
+
+    def test_get_enable_snat_without_gw_info(self):
+        self._test_get_enable_snat(self.enable_snat_by_default, {})
+
+    def test_get_enable_snat_without_enable_snat(self):
+        info = {'network_id': _uuid()}
+        self._test_get_enable_snat(self.enable_snat_by_default, info)
+
+    def test_get_enable_snat_with_snat_enabled(self):
+        self._test_get_enable_snat(True, {'enable_snat': True})
+
+    def test_get_enable_snat_with_snat_disabled(self):
+        self._test_get_enable_snat(False, {'enable_snat': False})
 
 
 class TestL3GwModeMixin(testlib_api.SqlTestCase):
