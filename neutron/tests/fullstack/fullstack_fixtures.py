@@ -64,15 +64,39 @@ class ProcessFixture(fixtures.Fixture):
         super(ProcessFixture, self).cleanUp(*args, **kwargs)
 
 
-class EnvironmentFixture(fixtures.Fixture):
+class RabbitmqEnvironmentFixture(fixtures.Fixture):
+    def setUp(self):
+        super(RabbitmqEnvironmentFixture, self).setUp()
+
+        self.user = base.get_rand_name(prefix='user')
+        self.password = base.get_rand_name(prefix='pass')
+        self.vhost = base.get_rand_name(prefix='vhost')
+
+        self._execute('add_user', self.user, self.password)
+        self.addCleanup(self._execute, 'delete_user', self.user)
+
+        self._execute('add_vhost', self.vhost)
+        self.addCleanup(self._execute, 'delete_vhost', self.vhost)
+
+        self._execute('set_permissions', '-p', self.vhost, self.user,
+                      '.*', '.*', '.*')
+
+    def _execute(self, *args):
+        cmd = ['rabbitmqctl']
+        cmd.extend(args)
+        utils.execute(cmd, run_as_root=True)
+
+
+class FullstackFixture(fixtures.Fixture):
 
     def setUp(self):
-        super(EnvironmentFixture, self).setUp()
+        super(FullstackFixture, self).setUp()
 
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
+        rabbitmq_environment = self.useFixture(RabbitmqEnvironmentFixture())
 
         self.neutron_server = self.useFixture(
-            NeutronServerFixture(self.temp_dir))
+            NeutronServerFixture(self.temp_dir, rabbitmq_environment))
 
     def wait_until_env_is_up(self, agents_count=0):
         utils.wait_until_true(
@@ -92,14 +116,16 @@ class NeutronServerFixture(fixtures.Fixture):
 
     NEUTRON_SERVER = "neutron-server"
 
-    def __init__(self, temp_dir):
+    def __init__(self, temp_dir, rabbitmq_environment):
         self.temp_dir = temp_dir
+        self.rabbitmq_environment = rabbitmq_environment
 
     def setUp(self):
         super(NeutronServerFixture, self).setUp()
 
         self.neutron_cfg_fixture = config_fixtures.NeutronConfigFixture(
-            self.temp_dir, cfg.CONF.database.connection)
+            self.temp_dir, cfg.CONF.database.connection,
+            self.rabbitmq_environment)
         self.plugin_cfg_fixture = config_fixtures.ML2ConfigFixture(
             self.temp_dir)
 

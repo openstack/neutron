@@ -21,7 +21,7 @@ from neutron.tests.fullstack import base
 from neutron.tests.fullstack import fullstack_fixtures as f_fixtures
 
 
-class SingleNodeEnvironment(f_fixtures.EnvironmentFixture):
+class SingleNodeEnvironment(f_fixtures.FullstackFixture):
     def setUp(self):
         super(SingleNodeEnvironment, self).setUp()
 
