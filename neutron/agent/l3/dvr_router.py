@@ -46,6 +46,7 @@ class DvrRouter(router.RouterInfo):
         self.rtr_fip_subnet = None
         self.dist_fip_count = None
         self.snat_namespace = None
+        self.fip_ns = None
 
     def get_floating_ips(self):
         """Filter Floating IPs to be hosted on this agent."""
