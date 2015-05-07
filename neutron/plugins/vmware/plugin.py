@@ -16,8 +16,12 @@
 #
 
 from vmware_nsx.neutron.plugins.vmware.plugins import base as nsx_mh
+from vmware_nsx.neutron.plugins.vmware.plugins import dvs
+from vmware_nsx.neutron.plugins.vmware.plugins import nsx_v
 
 NsxMhPlugin = nsx_mh.NsxPluginV2
 # The 'NsxPlugin' name will be deprecated in Liberty
 # and replaced by the 'NsxMhPlugin' name
 NsxPlugin = NsxMhPlugin
+NsxVPlugin = nsx_v.NsxVPluginV2
+NsxDvsPlugin = dvs.NsxDvsV2
