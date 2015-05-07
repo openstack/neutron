@@ -1,0 +1,12 @@
+---
+prelude: >
+    The internal pluggable IPAM implementation -- added in the Liberty release
+    -- is now the default for both old and new deployments. Old deployments
+    are unconditionally switched to pluggable IPAM during upgrade.
+    Old non-pluggable IPAM is deprecated and removed from code base.
+upgrade:
+  - During upgrade 'internal' ipam driver becomes default for 'ipam_driver'
+    config option and data is migrated to new tables using alembic migration.
+deprecations:
+  - The non-pluggable ipam implementatios is deprecated and will be removed in
+    Newton release cycle.
