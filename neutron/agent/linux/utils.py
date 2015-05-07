@@ -16,7 +16,6 @@
 import fcntl
 import glob
 import grp
-import httplib
 import os
 import pwd
 import shlex
@@ -33,6 +32,7 @@ from oslo_log import log as logging
 from oslo_log import loggers
 from oslo_rootwrap import client
 from oslo_utils import excutils
+from six.moves import http_client as httplib
 
 from neutron.agent.common import config
 from neutron.common import constants

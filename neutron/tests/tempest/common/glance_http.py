@@ -17,7 +17,7 @@
 
 import copy
 import hashlib
-import httplib
+from six.moves import http_client as httplib
 import json
 import posixpath
 import re

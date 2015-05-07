@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ConfigParser
 import importlib
 import os
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from six.moves import configparser as ConfigParser
 
 LOG = logging.getLogger(__name__)
 

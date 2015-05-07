@@ -14,7 +14,7 @@
 #
 
 import datetime
-import Queue
+from six.moves import queue as Queue
 
 from oslo_utils import timeutils
 

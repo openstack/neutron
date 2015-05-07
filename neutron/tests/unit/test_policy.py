@@ -15,9 +15,6 @@
 
 """Test of Policy Engine For Neutron"""
 
-import StringIO
-import urllib2
-
 import mock
 from oslo_config import cfg
 from oslo_serialization import jsonutils
@@ -112,7 +109,7 @@ class PolicyTestCase(base.BaseTestCase):
         self.assertEqual(result, True)
 
     @mock.patch.object(urlrequest, 'urlopen',
-                       return_value=StringIO.StringIO("True"))
+                       return_value=six.StringIO("True"))
     def test_enforce_http_true(self, mock_urlrequest):
         action = "example:get_http"
         target = {}
@@ -124,7 +121,7 @@ class PolicyTestCase(base.BaseTestCase):
         def fakeurlopen(url, post_data):
             return six.StringIO("False")
 
-        with mock.patch.object(urllib2, 'urlopen', new=fakeurlopen):
+        with mock.patch.object(urlrequest, 'urlopen', new=fakeurlopen):
             action = "example:get_http"
             target = {}
             self.assertRaises(common_policy.PolicyNotAuthorized,

@@ -13,7 +13,7 @@
 #    under the License.
 
 import os
-import Queue
+from six.moves import queue as Queue
 import threading
 import traceback
 
