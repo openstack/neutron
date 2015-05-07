@@ -43,6 +43,7 @@ BR_PREFIX = 'test-br'
 PORT_PREFIX = 'test-port'
 VETH0_PREFIX = 'test-veth0'
 VETH1_PREFIX = 'test-veth1'
+PATCH_PREFIX = 'patch'
 
 SS_SOURCE_PORT_PATTERN = re.compile(
     r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[0-9:].*')
@@ -53,11 +54,6 @@ CHILD_PROCESS_TIMEOUT = os.environ.get('OS_TEST_CHILD_PROCESS_TIMEOUT', 20)
 CHILD_PROCESS_SLEEP = os.environ.get('OS_TEST_CHILD_PROCESS_SLEEP', 0.5)
 
 TRANSPORT_PROTOCOLS = (n_const.PROTO_NAME_TCP, n_const.PROTO_NAME_UDP)
-
-
-def get_rand_port_name():
-    return tests_base.get_rand_name(max_length=n_const.DEVICE_NAME_MAX_LEN,
-                                    prefix=PORT_PREFIX)
 
 
 def increment_ip_cidr(ip_cidr, offset=1):
@@ -163,6 +159,27 @@ def get_free_namespace_port(protocol, namespace=None):
     used_ports = _get_source_ports_from_ss_output(output)
 
     return get_unused_port(used_ports)
+
+
+def create_patch_ports(source, destination):
+    """Hook up two OVS bridges.
+
+    The result is two patch ports, each end connected to a bridge.
+    The two patch port names will start with 'patch-', followed by identical
+    four characters. For example patch-xyzw-fedora, and patch-xyzw-ubuntu,
+    where fedora and ubuntu are random strings.
+
+    :param source: Instance of OVSBridge
+    :param destination: Instance of OVSBridge
+    """
+    common = tests_base.get_rand_name(max_length=4, prefix='')
+    prefix = '%s-%s-' % (PATCH_PREFIX, common)
+
+    source_name = tests_base.get_rand_device_name(prefix=prefix)
+    destination_name = tests_base.get_rand_device_name(prefix=prefix)
+
+    source.add_patch_port(source_name, destination_name)
+    destination.add_patch_port(destination_name, source_name)
 
 
 class RootHelperProcess(subprocess.Popen):

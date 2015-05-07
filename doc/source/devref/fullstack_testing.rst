@@ -62,17 +62,14 @@ Short Term Goals
 ================
 
 * Multinode & Stability:
-    - Interconnect the internal and external bridges
     - Convert the L3 HA failover functional test to a full stack test
     - Write a test for DHCP HA / Multiple DHCP agents per network
 * Write DVR tests
-* Write L3 HA tests
+* Write additional L3 HA tests
 * Write a test that validates L3 HA + l2pop integration after
   https://bugs.launchpad.net/neutron/+bug/1365476 is fixed.
 * Write a test that validates DVR + L3 HA integration after
   https://bugs.launchpad.net/neutron/+bug/1365473 is fixed.
-
-None of these tasks currently have owners. Feel free to send patches!
 
 After these tests are merged, it should be fair to start asking contributors to
 add full stack tests when appropriate in the patches themselves and not after
