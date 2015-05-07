@@ -30,10 +30,11 @@ class SingleNodeEnvironment(f_fixtures.FullstackFixture):
 
         self.ovs_agent = self.useFixture(
             f_fixtures.OVSAgentFixture(
-                neutron_config, ml2_config))
+                self.test_name, neutron_config, ml2_config))
 
         self.l3_agent = self.useFixture(
             f_fixtures.L3AgentFixture(
+                self.test_name,
                 self.temp_dir,
                 neutron_config,
                 self.ovs_agent._get_br_int_name()))
