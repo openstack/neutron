@@ -39,3 +39,9 @@ class BridgeDevice(ip_lib.IPDevice):
 
     def delif(self, interface):
         return self._brctl(['delif', self.name, interface])
+
+    def setfd(self, fd):
+        return self._brctl(['setfd', self.name, str(fd)])
+
+    def disable_stp(self):
+        return self._brctl(['stp', self.name, 'off'])

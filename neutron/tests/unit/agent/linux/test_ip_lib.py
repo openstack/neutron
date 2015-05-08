@@ -619,11 +619,13 @@ class TestIpLinkCommand(TestIPCmdBase):
         self._assert_sudo([], ('set', 'eth0', 'mtu', 1500))
 
     def test_set_up(self):
-        self.link_cmd.set_up()
+        observed = self.link_cmd.set_up()
+        self.assertEqual(self.parent._as_root.return_value, observed)
         self._assert_sudo([], ('set', 'eth0', 'up'))
 
     def test_set_down(self):
-        self.link_cmd.set_down()
+        observed = self.link_cmd.set_down()
+        self.assertEqual(self.parent._as_root.return_value, observed)
         self._assert_sudo([], ('set', 'eth0', 'down'))
 
     def test_set_netns(self):
