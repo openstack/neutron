@@ -384,11 +384,14 @@ class LinuxBridgeManager(object):
         bridge_name = self.get_bridge_name(network_id)
         if network_type == p_const.TYPE_LOCAL:
             self.ensure_local_bridge(network_id)
-        elif not self.ensure_physical_in_bridge(network_id,
-                                                network_type,
-                                                physical_network,
-                                                segmentation_id):
-            return False
+        else:
+            phy_dev_name = self.ensure_physical_in_bridge(network_id,
+                                                          network_type,
+                                                          physical_network,
+                                                          segmentation_id)
+            if not phy_dev_name:
+                return False
+            self.ensure_tap_mtu(tap_device_name, phy_dev_name)
 
         # Check if device needs to be added to bridge
         tap_device_in_bridge = self.get_bridge_for_tap_device(tap_device_name)
@@ -406,6 +409,11 @@ class LinuxBridgeManager(object):
             LOG.debug("%(tap_device_name)s already exists on bridge "
                       "%(bridge_name)s", data)
         return True
+
+    def ensure_tap_mtu(self, tap_dev_name, phy_dev_name):
+        """Ensure the MTU on the tap is the same as the physical device."""
+        phy_dev_mtu = ip_lib.IPDevice(phy_dev_name).link.mtu
+        ip_lib.IPDevice(tap_dev_name).link.set_mtu(phy_dev_mtu)
 
     def add_interface(self, network_id, network_type, physical_network,
                       segmentation_id, port_id):
