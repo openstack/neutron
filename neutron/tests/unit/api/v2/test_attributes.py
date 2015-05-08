@@ -328,6 +328,12 @@ class TestAttributes(base.BaseTestCase):
         ns_pools = [['1.1.1.2', '1.1.1.2'],
                     ['www.hostname.com', 'www.hostname.com'],
                     ['1000.0.0.1'],
+                    ['www.hostname.com'],
+                    ['www.great.marathons.to.travel'],
+                    ['valid'],
+                    ['77.hostname.com'],
+                    ['1' * 59],
+                    ['www.internal.hostname.com'],
                     None]
 
         for ns in ns_pools:
@@ -335,12 +341,7 @@ class TestAttributes(base.BaseTestCase):
             self.assertIsNotNone(msg)
 
         ns_pools = [['100.0.0.2'],
-                    ['www.hostname.com'],
-                    ['www.great.marathons.to.travel'],
-                    ['valid'],
-                    ['77.hostname.com'],
-                    ['1' * 59],
-                    ['www.internal.hostname.com']]
+                    ['1.1.1.1', '1.1.1.2']]
 
         for ns in ns_pools:
             msg = attributes._validate_nameservers(ns, None)
@@ -388,21 +389,6 @@ class TestAttributes(base.BaseTestCase):
         ip_addr = '1111.1.1.1'
         msg = attributes._validate_ip_address_or_none(ip_addr)
         self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
-
-    def test_hostname_pattern(self):
-        bad_values = ['@openstack', 'ffff.abcdefg' * 26, 'f' * 80, '-hello',
-                      'goodbye-', 'example..org']
-        for data in bad_values:
-            msg = attributes._validate_hostname(data)
-            self.assertIsNotNone(msg)
-
-        # All numeric hostnames are allowed per RFC 1123 section 2.1
-        good_values = ['www.openstack.org', '1234x', '1234',
-                       'openstack-1', 'v.xyz', '1' * 50, 'a1a',
-                       'x.x1x', 'x.yz', 'example.org.']
-        for data in good_values:
-            msg = attributes._validate_hostname(data)
-            self.assertIsNone(msg)
 
     def test_uuid_pattern(self):
         data = 'garbage'
