@@ -14,7 +14,6 @@
 #    under the License.
 
 
-import contextlib
 import os
 import sys
 
@@ -70,33 +69,32 @@ class TestPrivileges(base.BaseTestCase):
                                   daemon.setgid, '321')
                 log_critical.assert_once_with(mock.ANY)
 
-    def test_drop_no_privileges(self):
-        with contextlib.nested(
-                mock.patch.object(os, 'setgroups'),
-                mock.patch.object(daemon, 'setgid'),
-                mock.patch.object(daemon, 'setuid')) as mocks:
-            daemon.drop_privileges()
-            for cursor in mocks:
-                self.assertFalse(cursor.called)
+    @mock.patch.object(os, 'setgroups')
+    @mock.patch.object(daemon, 'setgid')
+    @mock.patch.object(daemon, 'setuid')
+    def test_drop_no_privileges(self, mock_setuid, mock_setgid,
+                                mock_setgroups):
+        daemon.drop_privileges()
+        for cursor in (mock_setuid, mock_setgid, mock_setgroups):
+            self.assertFalse(cursor.called)
 
-    def _test_drop_privileges(self, user=None, group=None):
-        with contextlib.nested(
-                mock.patch.object(os, 'geteuid', return_value=0),
-                mock.patch.object(os, 'setgroups'),
-                mock.patch.object(daemon, 'setgid'),
-                mock.patch.object(daemon, 'setuid')) as (
-                    geteuid, setgroups, setgid, setuid):
-            daemon.drop_privileges(user=user, group=group)
-            if user:
-                setuid.assert_called_once_with(user)
-            else:
-                self.assertFalse(setuid.called)
-            if group:
-                setgroups.assert_called_once_with([])
-                setgid.assert_called_once_with(group)
-            else:
-                self.assertFalse(setgroups.called)
-                self.assertFalse(setgid.called)
+    @mock.patch.object(os, 'geteuid', return_value=0)
+    @mock.patch.object(os, 'setgroups')
+    @mock.patch.object(daemon, 'setgid')
+    @mock.patch.object(daemon, 'setuid')
+    def _test_drop_privileges(self, setuid, setgid, setgroups,
+                              geteuid, user=None, group=None):
+        daemon.drop_privileges(user=user, group=group)
+        if user:
+            setuid.assert_called_once_with(user)
+        else:
+            self.assertFalse(setuid.called)
+        if group:
+            setgroups.assert_called_once_with([])
+            setgid.assert_called_once_with(group)
+        else:
+            self.assertFalse(setgroups.called)
+            self.assertFalse(setgid.called)
 
     def test_drop_user_privileges(self):
         self._test_drop_privileges(user='user')

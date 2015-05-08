@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 import eventlet.event
 import eventlet.queue
 import eventlet.timeout
@@ -156,16 +154,13 @@ class TestAsyncProcess(base.BaseTestCase):
         self._test_iter_output_calls_iter_queue_on_output_queue('stderr')
 
     def _test__kill(self, respawning, pid=None):
-        with contextlib.nested(
-                mock.patch.object(self.proc, '_kill_event'),
+        with mock.patch.object(self.proc, '_kill_event'
+                               ) as mock_kill_event,\
                 mock.patch.object(utils, 'get_root_helper_child_pid',
-                                  return_value=pid),
-                mock.patch.object(self.proc, '_kill_process'),
-                mock.patch.object(self.proc, '_process')) as (
-                    mock_kill_event,
-                    mock_get_child_pid,
-                    mock_kill_process,
-                    mock_process):
+                                  return_value=pid),\
+                mock.patch.object(self.proc, '_kill_process'
+                                  ) as mock_kill_process,\
+                mock.patch.object(self.proc, '_process'):
             self.proc._kill(respawning)
 
             if respawning:

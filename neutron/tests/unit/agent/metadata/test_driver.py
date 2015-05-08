@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 import mock
 
 from oslo_config import cfg
@@ -96,13 +94,11 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         cfg.CONF.set_override('debug', True)
 
         agent = l3_agent.L3NATAgent('localhost')
-        with contextlib.nested(
-                mock.patch('os.geteuid', return_value=self.EUID),
-                mock.patch('os.getegid', return_value=self.EGID),
+        with mock.patch('os.geteuid', return_value=self.EUID),\
+                mock.patch('os.getegid', return_value=self.EGID),\
                 mock.patch(is_effective_user,
-                           side_effect=fake_is_effective_user),
-                mock.patch(ip_class_path)) as (
-                    geteuid, getegid, is_effective_user, ip_mock):
+                           side_effect=fake_is_effective_user),\
+                mock.patch(ip_class_path) as ip_mock:
             agent.metadata_driver.spawn_monitored_metadata_proxy(
                 agent.process_monitor,
                 router_ns,

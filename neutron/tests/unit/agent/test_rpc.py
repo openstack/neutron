@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 import mock
 from oslo_context import context as oslo_context
 import oslo_messaging
@@ -28,12 +26,8 @@ class AgentRPCPluginApi(base.BaseTestCase):
         agent = rpc.PluginApi('fake_topic')
         ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
         expect_val = 'foo'
-        with contextlib.nested(
-            mock.patch.object(agent.client, 'call'),
-            mock.patch.object(agent.client, 'prepare'),
-        ) as (
-            mock_call, mock_prepare
-        ):
+        with mock.patch.object(agent.client, 'call') as mock_call,\
+                mock.patch.object(agent.client, 'prepare') as mock_prepare:
             mock_prepare.return_value = agent.client
             mock_call.return_value = expect_val
             func_obj = getattr(agent, method)
@@ -54,12 +48,8 @@ class AgentRPCPluginApi(base.BaseTestCase):
         ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
         expect_val_get_device_details = 'foo'
         expect_val = [expect_val_get_device_details]
-        with contextlib.nested(
-            mock.patch.object(agent.client, 'call'),
-            mock.patch.object(agent.client, 'prepare'),
-        ) as (
-            mock_call, mock_prepare
-        ):
+        with mock.patch.object(agent.client, 'call') as mock_call, \
+                mock.patch.object(agent.client, 'prepare') as mock_prepare:
             mock_prepare.return_value = agent.client
             mock_call.side_effect = [oslo_messaging.UnsupportedVersion('1.2'),
                                     expect_val_get_device_details]
@@ -79,13 +69,10 @@ class AgentPluginReportState(base.BaseTestCase):
         topic = 'test'
         reportStateAPI = rpc.PluginReportStateAPI(topic)
         expected_agent_state = {'agent': 'test'}
-        with contextlib.nested(
-            mock.patch.object(reportStateAPI.client, 'call'),
-            mock.patch.object(reportStateAPI.client, 'cast'),
-            mock.patch.object(reportStateAPI.client, 'prepare'),
-        ) as (
-            mock_call, mock_cast, mock_prepare
-        ):
+        with mock.patch.object(reportStateAPI.client, 'call') as mock_call, \
+                mock.patch.object(reportStateAPI.client, 'cast'), \
+                mock.patch.object(reportStateAPI.client, 'prepare'
+                                  ) as mock_prepare:
             mock_prepare.return_value = reportStateAPI.client
             ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
             reportStateAPI.report_state(ctxt, expected_agent_state,
@@ -100,13 +87,11 @@ class AgentPluginReportState(base.BaseTestCase):
         topic = 'test'
         reportStateAPI = rpc.PluginReportStateAPI(topic)
         expected_agent_state = {'agent': 'test'}
-        with contextlib.nested(
-            mock.patch.object(reportStateAPI.client, 'call'),
-            mock.patch.object(reportStateAPI.client, 'cast'),
-            mock.patch.object(reportStateAPI.client, 'prepare'),
-        ) as (
-            mock_call, mock_cast, mock_prepare
-        ):
+        with mock.patch.object(reportStateAPI.client, 'call'), \
+                mock.patch.object(reportStateAPI.client, 'cast'
+                                  ) as mock_cast, \
+                mock.patch.object(reportStateAPI.client, 'prepare'
+                                  ) as mock_prepare:
             mock_prepare.return_value = reportStateAPI.client
             ctxt = oslo_context.RequestContext('fake_user', 'fake_project')
             reportStateAPI.report_state(ctxt, expected_agent_state)

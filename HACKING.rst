@@ -13,6 +13,7 @@ Neutron Specific Commandments
 - [N321] Validate that jsonutils module is used instead of json
 - [N322] Detect common errors with assert_called_once_with
 - [N323] Enforce namespace-less imports for oslo libraries
+- [N324] Prevent use of deprecated contextlib.nested.
 
 Creating Unit Tests
 -------------------

@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import copy
 
 import eventlet
@@ -1202,12 +1201,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.fip_ns.subscribe = mock.Mock()
         ri.fip_ns.agent_router_gateway = mock.Mock()
 
-        with contextlib.nested(mock.patch.object(ri,
-                                                 'get_floating_ips'),
-                               mock.patch.object(
-                                   ri, 'get_floating_agent_gw_interface')
-                               ) as (fips,
-                                     fip_gw_port):
+        with mock.patch.object(ri, 'get_floating_ips') as fips,\
+                mock.patch.object(ri, 'get_floating_agent_gw_interface'
+                                  ) as fip_gw_port:
             fips.return_value = fake_floatingips
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_fip_interfaces(ext_gw_port)
@@ -1254,12 +1250,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.rtr_fip_subnet = None
         ri.dist_fip_count = 1
 
-        with contextlib.nested(mock.patch.object(
-                                   ri, 'get_floating_ips'),
-                               mock.patch.object(
-                                   ri, 'get_floating_agent_gw_interface')
-                               ) as (fips,
-                                     fip_gw_port):
+        with mock.patch.object(ri, 'get_floating_ips') as fips,\
+                mock.patch.object(ri, 'get_floating_agent_gw_interface'
+                                  ) as fip_gw_port:
             fips.return_value = fake_floatingips
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_fip_interfaces(ext_gw_port)
@@ -1850,18 +1843,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(len(internal_ports), 1)
         internal_port = internal_ports[0]
 
-        with contextlib.nested(mock.patch.object(ri,
-                                                 'internal_network_removed'),
-                               mock.patch.object(ri,
-                                                 'internal_network_added'),
-                               mock.patch.object(ri,
-                                                 'external_gateway_removed'),
-                               mock.patch.object(ri,
-                                                 'external_gateway_added')
-                               ) as (internal_network_removed,
-                                     internal_network_added,
-                                     external_gateway_removed,
-                                     external_gateway_added):
+        with mock.patch.object(ri, 'internal_network_removed'
+                               ) as internal_network_removed,\
+                mock.patch.object(ri, 'internal_network_added'
+                                  ) as internal_network_added,\
+                mock.patch.object(ri, 'external_gateway_removed'
+                                  ) as external_gateway_removed,\
+                mock.patch.object(ri, 'external_gateway_added'
+                                  ) as external_gateway_added:
 
             ri.process(agent)
 

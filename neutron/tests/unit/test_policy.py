@@ -15,7 +15,6 @@
 
 """Test of Policy Engine For Neutron"""
 
-import contextlib
 import StringIO
 import urllib2
 
@@ -654,11 +653,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                           'create_fake_resource:fake_resources',
                           'create_fake_resource:attr:sub_attr_1'], rules)
 
-    def test_log_rule_list(self):
-        with contextlib.nested(
-            mock.patch.object(policy.LOG, 'isEnabledFor', return_value=True),
-            mock.patch.object(policy.LOG, 'debug')
-        ) as (is_e, dbg):
-            policy.log_rule_list(common_policy.RuleCheck('rule', 'create_'))
-            self.assertTrue(is_e.called)
-            self.assertTrue(dbg.called)
+    @mock.patch.object(policy.LOG, 'isEnabledFor', return_value=True)
+    @mock.patch.object(policy.LOG, 'debug')
+    def test_log_rule_list(self, mock_debug, mock_is_e):
+        policy.log_rule_list(common_policy.RuleCheck('rule', 'create_'))
+        self.assertTrue(mock_is_e.called)
+        self.assertTrue(mock_debug.called)

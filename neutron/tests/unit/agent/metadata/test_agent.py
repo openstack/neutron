@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 import mock
 import testtools
 import webob
@@ -204,10 +202,12 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
         remote_address = 'remote-address'
         expected = ['port1']
         networks = (network_id,)
-        with contextlib.nested(
-            mock.patch.object(self.handler, '_get_ports_for_remote_address'),
-            mock.patch.object(self.handler, '_get_router_networks')
-        ) as (mock_get_ip_addr, mock_get_router_networks):
+        with mock.patch.object(self.handler,
+                               '_get_ports_for_remote_address'
+                               ) as mock_get_ip_addr,\
+                mock.patch.object(self.handler,
+                                  '_get_router_networks'
+                                  ) as mock_get_router_networks:
             mock_get_ip_addr.return_value = expected
             ports = self.handler._get_ports(remote_address, network_id,
                                             router_id)
@@ -221,14 +221,14 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
         remote_address = 'remote-address'
         expected = ['port1']
         networks = ('network1', 'network2')
-        with contextlib.nested(
-            mock.patch.object(self.handler,
-                              '_get_ports_for_remote_address',
-                              return_value=expected),
-            mock.patch.object(self.handler,
-                              '_get_router_networks',
-                              return_value=networks)
-        ) as (mock_get_ip_addr, mock_get_router_networks):
+        with mock.patch.object(self.handler,
+                               '_get_ports_for_remote_address',
+                               return_value=expected
+                               ) as mock_get_ip_addr,\
+                mock.patch.object(self.handler,
+                                  '_get_router_networks',
+                                  return_value=networks
+                                  ) as mock_get_router_networks:
             ports = self.handler._get_ports(remote_address,
                                             router_id=router_id)
             mock_get_router_networks.called_once_with(router_id)

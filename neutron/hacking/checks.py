@@ -53,6 +53,7 @@ log_translation_hint = re.compile(
 oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
 oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
 oslo_namespace_imports_from_root = re.compile(r"from[\s]+oslo[\s]+import[\s]+")
+contextlib_nested = re.compile(r"^with (contextlib\.)?nested\(")
 
 
 def validate_log_translations(logical_line, physical_line, filename):
@@ -134,9 +135,36 @@ def check_oslo_namespace_imports(logical_line):
         yield(0, msg)
 
 
+def check_no_contextlib_nested(logical_line, filename):
+    msg = ("N324: contextlib.nested is deprecated. With Python 2.7 and later "
+           "the with-statement supports multiple nested objects. See https://"
+           "docs.python.org/2/library/contextlib.html#contextlib.nested for "
+           "more information.")
+
+    # TODO(ankit): The following check is temporary.
+    # A series of patches will be submitted to address
+    # these issues. It should be removed completely
+    # when bug 1428424 is closed.
+    ignore_dirs = [
+        "neutron/plugins/ml2",
+        "neutron/tests/unit/agent/test_securitygroups_rpc.py",
+        "neutron/tests/unit/api",
+        "neutron/tests/unit/db",
+        "neutron/tests/unit/extensions",
+        "neutron/tests/unit/plugins",
+        "neutron/tests/unit/scheduler"]
+    for directory in ignore_dirs:
+        if directory in filename:
+            return
+
+    if contextlib_nested.match(logical_line):
+        yield(0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
     register(check_assert_called_once_with)
     register(no_translate_debug_logs)
     register(check_oslo_namespace_imports)
+    register(check_no_contextlib_nested)
