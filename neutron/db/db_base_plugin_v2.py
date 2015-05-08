@@ -1143,19 +1143,32 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     pool=pool_range,
                     ip_address=gateway_ip)
 
-    def _update_router_gw_ports(self, context, subnet_id, network_id):
+    def _update_router_gw_ports(self, context, network, subnet):
         l3plugin = manager.NeutronManager.get_service_plugins().get(
                 service_constants.L3_ROUTER_NAT)
         if l3plugin:
             gw_ports = self._get_router_gw_ports_by_network(context,
-                    network_id)
+                    network['id'])
             router_ids = [p['device_id'] for p in gw_ports]
             ctx_admin = ctx.get_admin_context()
+            ext_subnets_dict = {s['id']: s for s in network['subnets']}
             for id in router_ids:
                 router = l3plugin.get_router(ctx_admin, id)
                 external_gateway_info = router['external_gateway_info']
+                # Get all stateful (i.e. non-SLAAC/DHCPv6-stateless) fixed ips
+                fips = [f for f in external_gateway_info['external_fixed_ips']
+                        if not ipv6_utils.is_auto_address_subnet(
+                            ext_subnets_dict[f['subnet_id']])]
+                num_fips = len(fips)
+                # Don't add the fixed IP to the port if it already
+                # has a stateful fixed IP of the same IP version
+                if num_fips > 1:
+                    continue
+                if num_fips == 1 and netaddr.IPAddress(
+                        fips[0]['ip_address']).version == subnet['ip_version']:
+                    continue
                 external_gateway_info['external_fixed_ips'].append(
-                                             {'subnet_id': subnet_id})
+                                             {'subnet_id': subnet['id']})
                 info = {'router': {'external_gateway_info':
                     external_gateway_info}}
                 l3plugin.update_router(context, id, info)
@@ -1295,8 +1308,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                        s['allocation_pools'])
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
-                                         subnet['id'],
-                                         subnet['network_id'])
+                                         network,
+                                         subnet)
         return self._make_subnet_dict(subnet)
 
     def _create_subnet_from_implicit_pool(self, context, subnet):
@@ -1321,8 +1334,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                        s['allocation_pools'])
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
-                                         subnet['id'],
-                                         subnet['network_id'])
+                                         network,
+                                         subnet)
         return self._make_subnet_dict(subnet)
 
     def _get_subnetpool_id(self, subnet):

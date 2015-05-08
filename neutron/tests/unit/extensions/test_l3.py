@@ -871,6 +871,56 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertNotEqual(fip1['subnet_id'], fip2['subnet_id'])
                 self.assertNotEqual(fip1['ip_address'], fip2['ip_address'])
 
+    def test_router_update_gateway_upon_subnet_create_max_ips_ipv6(self):
+        """Create subnet should not cause excess fixed IPs on router gw
+
+        If a router gateway port has the maximum of one IPv4 and one IPv6
+        fixed, create subnet should not add any more IP addresses to the port
+        (unless this is the subnet is a SLAAC/DHCPv6-stateless subnet in which
+        case the addresses are added automatically)
+
+        """
+        with self.router() as r, self.network() as n:
+            with self.subnet(cidr='10.0.0.0/24', network=n) as s1, (
+                    self.subnet(ip_version=6, cidr='2001:db8::/64',
+                        network=n)) as s2:
+                self._set_net_external(n['network']['id'])
+                self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        n['network']['id'],
+                        ext_ips=[{'subnet_id': s1['subnet']['id']},
+                                 {'subnet_id': s2['subnet']['id']}],
+                        expected_code=exc.HTTPOk.code)
+                res1 = self._show('routers', r['router']['id'])
+                original_fips = (res1['router']['external_gateway_info']
+                                 ['external_fixed_ips'])
+                # Add another IPv4 subnet - a fip SHOULD NOT be added
+                # to the external gateway port as it already has a v4 address
+                self._create_subnet(self.fmt, net_id=n['network']['id'],
+                                    cidr='10.0.1.0/24')
+                res2 = self._show('routers', r['router']['id'])
+                self.assertEqual(original_fips,
+                                 res2['router']['external_gateway_info']
+                                 ['external_fixed_ips'])
+                # Add a SLAAC subnet - a fip from this subnet SHOULD be added
+                # to the external gateway port
+                s3 = self.deserialize(self.fmt,
+                        self._create_subnet(self.fmt,
+                            net_id=n['network']['id'],
+                            ip_version=6, cidr='2001:db8:1::/64',
+                            ipv6_ra_mode=l3_constants.IPV6_SLAAC,
+                            ipv6_address_mode=l3_constants.IPV6_SLAAC))
+                res3 = self._show('routers', r['router']['id'])
+                fips = (res3['router']['external_gateway_info']
+                        ['external_fixed_ips'])
+                fip_subnet_ids = [fip['subnet_id'] for fip in fips]
+                self.assertIn(s1['subnet']['id'], fip_subnet_ids)
+                self.assertIn(s2['subnet']['id'], fip_subnet_ids)
+                self.assertIn(s3['subnet']['id'], fip_subnet_ids)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    n['network']['id'])
+
     def _test_router_add_interface_subnet(self, router, subnet, msg=None):
         exp_notifications = ['router.create.start',
                              'router.create.end',
@@ -1358,6 +1408,52 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               None,
                                               expected_code=exc.
                                               HTTPBadRequest.code)
+
+    def test_router_add_gateway_multiple_subnets_ipv6(self):
+        """Ensure external gateway set doesn't add excess IPs on router gw
+
+        Setting the gateway of a router to an external network with more than
+        one IPv4 and one IPv6 subnet should only add an address from the first
+        IPv4 subnet, an address from the first IPv6-stateful subnet, and an
+        address from each IPv6-stateless (SLAAC and DHCPv6-stateless) subnet
+
+        """
+        with self.router() as r, self.network() as n:
+            with self.subnet(
+                    cidr='10.0.0.0/24', network=n) as s1, (
+                 self.subnet(
+                    cidr='10.0.1.0/24', network=n)) as s2, (
+                 self.subnet(
+                    cidr='2001:db8::/64', network=n,
+                    ip_version=6,
+                    ipv6_ra_mode=l3_constants.IPV6_SLAAC,
+                    ipv6_address_mode=l3_constants.IPV6_SLAAC)) as s3, (
+                 self.subnet(
+                    cidr='2001:db8:1::/64', network=n,
+                    ip_version=6,
+                    ipv6_ra_mode=l3_constants.DHCPV6_STATEFUL,
+                    ipv6_address_mode=l3_constants.DHCPV6_STATEFUL)) as s4, (
+                 self.subnet(
+                    cidr='2001:db8:2::/64', network=n,
+                    ip_version=6,
+                    ipv6_ra_mode=l3_constants.DHCPV6_STATELESS,
+                    ipv6_address_mode=l3_constants.DHCPV6_STATELESS)) as s5:
+                self._set_net_external(n['network']['id'])
+                self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        n['network']['id'])
+                res = self._show('routers', r['router']['id'])
+                fips = (res['router']['external_gateway_info']
+                        ['external_fixed_ips'])
+                fip_subnet_ids = [fip['subnet_id'] for fip in fips]
+                self.assertIn(s1['subnet']['id'], fip_subnet_ids)
+                self.assertNotIn(s2['subnet']['id'], fip_subnet_ids)
+                self.assertIn(s3['subnet']['id'], fip_subnet_ids)
+                self.assertIn(s4['subnet']['id'], fip_subnet_ids)
+                self.assertIn(s5['subnet']['id'], fip_subnet_ids)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    n['network']['id'])
 
     def test_router_add_and_remove_gateway(self):
         with self.router() as r:
