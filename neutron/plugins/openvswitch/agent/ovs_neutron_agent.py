@@ -1403,6 +1403,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # list at the same time; avoid processing it twice.
         devices_added_updated = (port_info.get('added', set()) |
                                  port_info.get('updated', set()))
+        need_binding_devices = []
         if devices_added_updated:
             start = time.time()
             try:
@@ -1418,12 +1419,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                            'num_skipped': len(skipped_devices),
                            'num_current': len(port_info['current']),
                            'elapsed': time.time() - start})
-                # TODO(salv-orlando): Optimize avoiding applying filters
-                # unnecessarily, (eg: when there are no IP address changes)
-                self.sg_agent.setup_port_filters(
-                    port_info.get('added', set()),
-                    port_info.get('updated', set()))
-                self._bind_devices(need_binding_devices)
                 # Update the list of current ports storing only those which
                 # have been actually processed.
                 port_info['current'] = (port_info['current'] -
@@ -1435,6 +1430,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                   "failure while retrieving port details "
                                   "from server"), self.iter_num)
                 resync_a = True
+
+        # TODO(salv-orlando): Optimize avoiding applying filters
+        # unnecessarily, (eg: when there are no IP address changes)
+        self.sg_agent.setup_port_filters(port_info.get('added', set()),
+                                         port_info.get('updated', set()))
+        self._bind_devices(need_binding_devices)
+
         if 'removed' in port_info:
             start = time.time()
             resync_b = self.treat_devices_removed(port_info['removed'])

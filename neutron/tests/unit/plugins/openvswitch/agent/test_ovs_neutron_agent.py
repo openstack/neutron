@@ -445,10 +445,15 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertFalse(self.agent.process_network_ports(port_info,
                                                               False))
             setup_port_filters.assert_called_once_with(
-                port_info['added'], port_info.get('updated', set()))
-            device_added_updated.assert_called_once_with(
-                port_info['added'] | port_info.get('updated', set()), False)
-            device_removed.assert_called_once_with(port_info['removed'])
+                port_info.get('added', set()),
+                port_info.get('updated', set()))
+            devices_added_updated = (port_info.get('added', set()) |
+                                     port_info.get('updated', set()))
+            if devices_added_updated:
+                device_added_updated.assert_called_once_with(
+                    devices_added_updated, False)
+            if port_info.get('removed', set()):
+                device_removed.assert_called_once_with(port_info['removed'])
 
     def test_process_network_ports(self):
         self._test_process_network_ports(
@@ -462,6 +467,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
              'updated': set(['tap1', 'eth1']),
              'removed': set(['eth0']),
              'added': set(['eth1'])})
+
+    def test_process_network_port_with_empty_port(self):
+        self._test_process_network_ports({})
 
     def test_report_state(self):
         with mock.patch.object(self.agent.state_rpc,
