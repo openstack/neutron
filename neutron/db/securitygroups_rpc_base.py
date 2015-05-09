@@ -321,8 +321,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def _select_ra_ips_for_network_ids(self, context, network_ids):
         """Select IP addresses to allow sending router advertisement from.
 
-        If OpenStack dnsmasq sends RA, get link local address of
-        gateway and allow RA from this Link Local address.
+        If the OpenStack managed radvd process sends an RA, get link local
+        address of gateway and allow RA from this Link Local address.
         The gateway port link local address will only be obtained
         when router is created before VM instance is booted and
         subnet is attached to router.
