@@ -33,7 +33,7 @@ with mock.patch.dict(sys.modules,
 
 
 class MlnxMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_MLNX_DIRECT
+    VIF_TYPE = portbindings.VIF_TYPE_MLNX_HOSTDEV
     CAP_PORT_FILTER = False
     AGENT_TYPE = constants.AGENT_TYPE_MLNX
 
@@ -60,8 +60,6 @@ class MlnxMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
         super(MlnxMechanismBaseTestCase, self).setUp()
         self.driver = mech_mlnx.MlnxMechanismDriver()
         self.driver.initialize()
-        m_const_mock.constants.VNIC_TO_VIF_MAPPING.get.return_value = (
-            self.driver.vif_type)
 
 
 class MlnxMechanismGenericTestCase(MlnxMechanismBaseTestCase,
@@ -92,17 +90,8 @@ class MlnxMechanismVnicTypeTestCase(MlnxMechanismBaseTestCase,
         self.assertEqual(expected_vif_type, context._bound_vif_type)
 
     def test_vnic_type_direct(self):
-        m_const_mock.constants.VNIC_TO_VIF_MAPPING.get.return_value = (
-            portbindings.VIF_TYPE_MLNX_HOSTDEV)
         self._check_vif_type_for_vnic_type(portbindings.VNIC_DIRECT,
                                            portbindings.VIF_TYPE_MLNX_HOSTDEV)
-
-    def test_vnic_type_macvtap(self):
-        m_const_mock.constants.VNIC_TO_VIF_MAPPING.get.return_value = (
-            portbindings.VIF_TYPE_MLNX_DIRECT)
-
-        self._check_vif_type_for_vnic_type(portbindings.VNIC_MACVTAP,
-                                           portbindings.VIF_TYPE_MLNX_DIRECT)
 
     def test_vnic_type_normal(self):
         self._check_vif_type_for_vnic_type(portbindings.VNIC_NORMAL,
