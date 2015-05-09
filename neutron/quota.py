@@ -30,12 +30,15 @@ LOG = logging.getLogger(__name__)
 QUOTA_DB_MODULE = 'neutron.db.quota_db'
 QUOTA_DB_DRIVER = 'neutron.db.quota_db.DbQuotaDriver'
 QUOTA_CONF_DRIVER = 'neutron.quota.ConfDriver'
+default_quota_items = ['network', 'subnet', 'port']
 
 quota_opts = [
     cfg.ListOpt('quota_items',
-                default=['network', 'subnet', 'port'],
+                default=default_quota_items,
+                deprecated_for_removal=True,
                 help=_('Resource name(s) that are supported in quota '
-                       'features')),
+                       'features. This option is now deprecated for '
+                       'removal.')),
     cfg.IntOpt('default_quota',
                default=-1,
                help=_('Default number of resource allowed per tenant. '
@@ -330,8 +333,17 @@ def _count_resource(context, plugin, resources, tenant_id):
 
 
 def register_resources_from_config():
+    # This operation is now deprecated. All the neutron core and extended
+    # resource for which  quota limits are enforced explicitly register
+    # themselves with the quota engine.
+    versionutils.report_deprecated_feature(
+        LOG, _LW("Registering resources to apply quota limits to using the "
+                 "quota_items option is deprecated as of Liberty."
+                 "Resource REST controllers should take care of registering "
+                 "resources with the quota engine."))
     resources = []
-    for resource_item in cfg.CONF.QUOTAS.quota_items:
+    for resource_item in (set(cfg.CONF.QUOTAS.quota_items) -
+                          set(default_quota_items)):
         resources.append(CountableResource(resource_item, _count_resource,
                                            'quota_' + resource_item))
     QUOTAS.register_resources(resources)
