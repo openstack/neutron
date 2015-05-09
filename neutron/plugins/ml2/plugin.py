@@ -679,7 +679,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         for port in ports:
             try:
                 self.delete_port(context, port.id)
-            except exc.PortNotFound:
+            except (exc.PortNotFound, sa_exc.ObjectDeletedError):
+                context.session.expunge(port)
                 # concurrent port deletion can be performed by
                 # release_dhcp_port caused by concurrent subnet_delete
                 LOG.info(_LI("Port %s was deleted concurrently"), port.id)
@@ -692,7 +693,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         for subnet in subnets:
             try:
                 self.delete_subnet(context, subnet.id)
-            except exc.SubnetNotFound:
+            except (exc.SubnetNotFound, sa_exc.ObjectDeletedError):
+                context.session.expunge(subnet)
                 LOG.info(_LI("Subnet %s was deleted concurrently"),
                          subnet.id)
             except Exception:
