@@ -80,6 +80,17 @@ class OVSBridgeTestBase(ovs_test_base.OVSOFCtlTestBase):
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
+    def test_dump_flows_for_table(self):
+        table = 23
+        with mock.patch.object(self.br, 'run_ofctl') as run_ofctl:
+            self.br.dump_flows(table)
+            run_ofctl.assert_has_calls([mock.call("dump-flows", mock.ANY)])
+
+    def test_dump_all_flows(self):
+        with mock.patch.object(self.br, 'run_ofctl') as run_ofctl:
+            self.br.dump_flows_all_tables()
+            run_ofctl.assert_has_calls([mock.call("dump-flows", [])])
+
 
 class OVSDVRProcessTestMixin(object):
     def test_install_dvr_process_ipv4(self):

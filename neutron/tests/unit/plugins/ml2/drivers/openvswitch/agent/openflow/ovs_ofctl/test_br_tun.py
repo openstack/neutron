@@ -54,7 +54,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                      {'priority': 0, 'table': 3, 'actions': 'drop'},
                      {'priority': 0, 'table': 4, 'actions': 'drop'},
                      {'priority': 1, 'table': 10,
-                      'actions': 'learn(table=20,priority=1,'
+                      'actions': 'learn(cookie=0x0,table=20,priority=1,'
                       'hard_timeout=300,NXM_OF_VLAN_TCI[0..11],'
                       'NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],'
                       'load:0->NXM_OF_VLAN_TCI[],'
@@ -88,7 +88,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                      {'priority': 0, 'table': 3, 'actions': 'drop'},
                      {'priority': 0, 'table': 4, 'actions': 'drop'},
                      {'priority': 1, 'table': 10,
-                      'actions': 'learn(table=20,priority=1,'
+                      'actions': 'learn(cookie=0x0,table=20,priority=1,'
                       'hard_timeout=300,NXM_OF_VLAN_TCI[0..11],'
                       'NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],'
                       'load:0->NXM_OF_VLAN_TCI[],'

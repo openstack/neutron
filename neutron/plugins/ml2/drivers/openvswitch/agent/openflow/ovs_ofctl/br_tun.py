@@ -98,7 +98,8 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
             # to dynamically set-up flows in UCAST_TO_TUN corresponding to
             # remote mac addresses (assumes that lvid has already been set by
             # a previous flow)
-            learned_flow = ("table=%s,"
+            learned_flow = ("cookie=%(cookie)s,"
+                            "table=%(table)s,"
                             "priority=1,"
                             "hard_timeout=300,"
                             "NXM_OF_VLAN_TCI[0..11],"
@@ -106,7 +107,8 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                             "load:0->NXM_OF_VLAN_TCI[],"
                             "load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],"
                             "output:NXM_OF_IN_PORT[]" %
-                            constants.UCAST_TO_TUN)
+                            {'cookie': self.agent_uuid_stamp,
+                             'table': constants.UCAST_TO_TUN})
             # Once remote mac addresses are learnt, output packet to patch_int
             deferred_br.add_flow(table=constants.LEARN_FROM_TUN,
                                  priority=1,

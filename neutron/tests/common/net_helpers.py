@@ -14,6 +14,8 @@
 #
 
 import abc
+from concurrent import futures
+import contextlib
 import functools
 import os
 import random
@@ -84,6 +86,17 @@ def assert_ping(src_namespace, dst_ip, timeout=1, count=1):
     ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
     ns_ip_wrapper.netns.execute([ping_command, '-c', count, '-W', timeout,
                                  dst_ip])
+
+
+@contextlib.contextmanager
+def async_ping(namespace, ips):
+    with futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
+        fs = [executor.submit(assert_ping, namespace, ip, count=10)
+              for ip in ips]
+        yield lambda: all(f.done() for f in fs)
+        futures.wait(fs)
+        for f in fs:
+            f.result()
 
 
 def assert_no_ping(src_namespace, dst_ip, timeout=1, count=1):

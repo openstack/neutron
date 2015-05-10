@@ -43,6 +43,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
     import br_tun
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
     as ovs_agent
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
 LOG = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.ovs = ovs_lib.BaseOVS()
         self.config = self._configure_agent()
         self.driver = interface.OVSInterfaceDriver(self.config)
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
 
     def _get_config_opts(self):
         config = cfg.ConfigOpts()
@@ -169,10 +171,11 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             self.driver.plug(
                 network.get('id'), port.get('id'), port.get('vif_name'),
                 port.get('mac_address'),
-                agent.int_br.br_name, namespace=None)
+                agent.int_br.br_name, namespace=self.namespace)
             ip_cidrs = ["%s/%s" % (port.get('fixed_ips')[0][
                 'ip_address'], ip_len)]
-            self.driver.init_l3(port.get('vif_name'), ip_cidrs, namespace=None)
+            self.driver.init_l3(port.get('vif_name'), ip_cidrs,
+                                namespace=self.namespace)
 
     def _get_device_details(self, port, network):
         dev = {'device': port['id'],
@@ -276,8 +279,9 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             lambda: self._expected_plugin_rpc_call(
                 self.agent.plugin_rpc.update_device_list, port_ids, up))
 
-    def setup_agent_and_ports(self, port_dicts, trigger_resync=False):
-        self.agent = self.create_agent()
+    def setup_agent_and_ports(self, port_dicts, create_tunnels=True,
+                              trigger_resync=False):
+        self.agent = self.create_agent(create_tunnels=create_tunnels)
         self.start_agent(self.agent)
         self.network = self._create_test_network_dict()
         self.ports = port_dicts
