@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.2.0.dev268\n"
+"Project-Id-Version: neutron 2015.2.0.dev319\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-04 06:08+0000\n"
+"POT-Creation-Date: 2015-05-10 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,13 @@ msgstr ""
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr ""
 
-#: neutron/quota.py:229
+#: neutron/quota.py:223
+msgid ""
+"The quota driver neutron.quota.ConfDriver is deprecated as of Liberty. "
+"neutron.db.quota_db.DbQuotaDriver should be used in its place"
+msgstr ""
+
+#: neutron/quota.py:237
 #, python-format
 msgid "%s is already registered."
 msgstr ""
@@ -43,11 +49,11 @@ msgid "Tunnel synchronization requires a server upgrade."
 msgstr ""
 
 #: neutron/agent/securitygroups_rpc.py:65
-#: neutron/agent/securitygroups_rpc.py:96
+#: neutron/agent/securitygroups_rpc.py:98
 msgid "Driver configuration doesn't match with enable_security_group"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:123
+#: neutron/agent/securitygroups_rpc.py:142
 msgid ""
 "security_group_info_for_devices rpc call not supported by the server, "
 "falling back to old security_group_rules_for_devices which scales worse."
@@ -146,7 +152,7 @@ msgid ""
 "%(top)r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:688
+#: neutron/agent/linux/iptables_manager.py:689
 #, python-format
 msgid "Attempted to get traffic counters of chain %s which does not exist"
 msgstr ""
@@ -365,15 +371,15 @@ msgstr ""
 msgid "Invalid Segmentation ID: %s, will lead to incorrect vxlan device name"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:518
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:554
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:526
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:562
 #, python-format
 msgid ""
 "Option \"%(option)s\" must be supported by command \"%(command)s\" to "
 "enable %(mode)s mode"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:548
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:556
 msgid ""
 "VXLAN muticast group must be provided in vxlan_group option to enable "
 "VXLAN MCAST mode"
@@ -517,38 +523,38 @@ msgid ""
 "message: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:496
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:516
 #, python-format
 msgid "Action %s not supported"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:954
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1013
 #, python-format
 msgid ""
 "Creating an interface named %(name)s exceeds the %(limit)d character "
 "limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1154
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1214
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1274
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1326
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1429
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1484
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1472
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1527
 msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1476
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1531
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
 "periodically."

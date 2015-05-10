@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-04 06:08+0000\n"
+"POT-Creation-Date: 2015-05-10 06:14+0000\n"
 "PO-Revision-Date: 2015-04-28 07:50+0000\n"
 "Last-Translator: 汪军 <wwyyzz08@sina.com>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
@@ -434,12 +434,12 @@ msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "正在从网络标识 %(net_uuid)s 恢复 vlan %(vlan_id)s"
 
 #, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr "正在将物理网络 %(physical_network)s 映射至网桥 %(bridge)s"
-
-#, python-format
 msgid "Configuration for device %s completed."
 msgstr "设备 %s 的配置已完成。"
+
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "正在将物理网络 %(physical_network)s 映射至网桥 %(bridge)s"
 
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "代理隧道与插件不同步！"
