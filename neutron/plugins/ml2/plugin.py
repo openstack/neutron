@@ -207,7 +207,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port_id = port['id']
         changes = False
 
-        host = attrs and attrs.get(portbindings.HOST_ID)
+        host = attributes.ATTR_NOT_SPECIFIED
+        if attrs and portbindings.HOST_ID in attrs:
+            host = attrs.get(portbindings.HOST_ID) or ''
+
         original_host = binding.host
         if (attributes.is_attr_set(host) and
             original_host != host):
