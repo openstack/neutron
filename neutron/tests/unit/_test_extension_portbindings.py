@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import httplib
+from six.moves import http_client as httplib
 
 from oslo_config import cfg
 from webob import exc

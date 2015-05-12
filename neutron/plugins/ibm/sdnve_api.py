@@ -15,7 +15,7 @@
 #    under the License.
 
 
-import httplib
+from six.moves import http_client as httplib
 import urllib
 
 import httplib2
