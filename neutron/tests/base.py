@@ -266,6 +266,10 @@ class BaseTestCase(DietTestCase):
             'neutron.common.exceptions.NeutronException.use_fatal_exceptions',
             fake_use_fatal_exceptions))
 
+        self.useFixture(fixtures.MonkeyPatch(
+            'oslo_config.cfg.find_config_files',
+            lambda project=None, prog=None, extension=None: []))
+
         self.setup_rpc_mocks()
         self.setup_config()
         self.setup_test_registry_instance()
