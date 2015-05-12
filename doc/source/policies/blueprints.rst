@@ -39,7 +39,7 @@ Neutron Feature Requests
 ------------------------
 
 We are introducing the concept of feature requests. Feature requests are
-tracked as Launchpad bugs, tagged with the new 'RFE' tag, and allow for
+tracked as Launchpad bugs, tagged with the new 'rfe' tag, and allow for
 the submission and review of these feature requests before code is submitted.
 This allows the team to verify the validity of a feature request before the
 process of submitting a neutron-spec is undertaken, or code is written.  It
