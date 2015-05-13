@@ -70,6 +70,11 @@ class TestBase(base.BaseTestCase):
 
 
 class TestABCDriver(TestBase):
+    def setUp(self):
+        super(TestABCDriver, self).setUp()
+        mock_link_addr = mock.PropertyMock(return_value='aa:bb:cc:dd:ee:ff')
+        type(self.ip_dev().link).address = mock_link_addr
+
     def test_get_device_name(self):
         bc = BaseChild(self.conf)
         device_name = bc.get_device_name(FakePort())
@@ -87,7 +92,7 @@ class TestABCDriver(TestBase):
                    extra_subnets=[{'cidr': '172.20.0.0/24'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24'),
              mock.call().addr.delete('172.16.77.240/24'),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
@@ -119,7 +124,7 @@ class TestABCDriver(TestBase):
                    preserve_ips=['192.168.1.3/32'])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24')])
         self.assertFalse(self.ip_dev().addr.delete.called)
 
@@ -140,7 +145,7 @@ class TestABCDriver(TestBase):
         bc.init_l3('tap0', [new_cidr], **kwargs)
         expected_calls = (
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('2001:db8:a::124/64'),
              mock.call().addr.delete('2001:db8:a::123/64')])
         if include_gw_ip:
@@ -172,7 +177,7 @@ class TestABCDriver(TestBase):
                    extra_subnets=[{'cidr': '172.20.0.0/24'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24'),
              mock.call().addr.add('2001:db8:a::124/64'),
              mock.call().addr.delete('172.16.77.240/24'),
