@@ -32,6 +32,7 @@ revision = '2b801560a332'
 down_revision = '2d2a8a565438'
 
 from alembic import op
+import sqlalchemy as sa
 from sqlalchemy.sql import expression as sa_expr
 
 from neutron.extensions import portbindings
@@ -119,8 +120,9 @@ def _migrate_port_bindings(engine):
         if segment:
             binding['segment'] = segment
     if ml2_bindings:
-        ml2_port_bindings = sa_expr.table('ml2_port_bindings')
-        op.execute(ml2_port_bindings.insert(), ml2_bindings)
+        md = sa.MetaData()
+        sa.Table('ml2_port_bindings', md, autoload=True, autoload_with=engine)
+        op.bulk_insert(md.tables['ml2_port_bindings'], ml2_bindings)
 
 
 def upgrade():
