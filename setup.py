@@ -27,4 +27,9 @@ except ImportError:
 
 setuptools.setup(
     setup_requires=['pbr'],
-    pbr=True)
+    pbr=True,
+    # TODO(lifeless): Once pbr supports markers in requirements.txt, move this
+    # there, so that update.py can see it.
+    extras_require={
+        ':sys_platform=="win32"': ['pywin32', 'wmi']
+    })
