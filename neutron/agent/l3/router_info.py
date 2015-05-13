@@ -274,7 +274,7 @@ class RouterInfo(object):
         self.router[l3_constants.INTERFACE_KEY] = []
         self.router[l3_constants.FLOATINGIP_KEY] = []
         self.process(agent)
-        self.radvd.disable()
+        self.disable_radvd()
         if self.router_namespace:
             self.router_namespace.delete()
 
@@ -342,6 +342,17 @@ class RouterInfo(object):
                 if netaddr.IPNetwork(subnet['cidr']).version == 6:
                     return True
 
+    def enable_radvd(self, internal_ports=None):
+        LOG.debug('Spawning radvd daemon in router device: %s', self.router_id)
+        if not internal_ports:
+            internal_ports = self.internal_ports
+        self.radvd.enable(internal_ports)
+
+    def disable_radvd(self):
+        LOG.debug('Terminating radvd daemon in router device: %s',
+                  self.router_id)
+        self.radvd.disable()
+
     def _process_internal_ports(self):
         existing_port_ids = set(p['id'] for p in self.internal_ports)
 
@@ -380,7 +391,7 @@ class RouterInfo(object):
 
         # Enable RA
         if enable_ra:
-            self.radvd.enable(internal_ports)
+            self.enable_radvd(internal_ports)
 
         existing_devices = self._get_existing_devices()
         current_internal_devs = set(n for n in existing_devices
