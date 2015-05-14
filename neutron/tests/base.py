@@ -159,9 +159,13 @@ class DietTestCase(testtools.TestCase):
             self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
 
         self.addOnException(self.check_for_systemexit)
+        self.orig_pid = os.getpid()
 
     def check_for_systemexit(self, exc_info):
         if isinstance(exc_info[1], SystemExit):
+            if os.getpid() != self.orig_pid:
+                # Subprocess - let it just exit
+                raise
             self.fail("A SystemExit was raised during the test. %s"
                       % traceback.format_exception(*exc_info))
 
