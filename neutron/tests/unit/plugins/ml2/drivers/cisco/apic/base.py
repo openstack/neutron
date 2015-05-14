@@ -90,6 +90,9 @@ SERVICE_PEER_PORT_DESC = ('topology/pod-1/paths-%s/pathep-[%s]' %
                           (APIC_EXT_SWITCH, SERVICE_PEER_PORT_LOCAL.lower()))
 
 
+cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
+
+
 class ControllerMixin(object):
 
     """Mock the controller for APIC driver and service unit tests."""

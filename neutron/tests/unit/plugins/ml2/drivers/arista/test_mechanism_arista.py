@@ -18,12 +18,13 @@ import sys
 import mock
 
 from neutron.extensions import portbindings
+from neutron.tests.unit import testlib_api
+
 with mock.patch.dict(sys.modules,
                      {'networking_arista': mock.Mock(),
                       'networking_arista.ml2': mock.Mock(),
                       'networking_arista.common': mock.Mock()}):
     from neutron.plugins.ml2.drivers.arista import mechanism_arista
-from neutron.tests.unit import testlib_api
 
 
 class AristaDriverTestCase(testlib_api.SqlTestCase):
