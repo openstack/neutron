@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
+
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
@@ -23,6 +25,8 @@ from neutron.plugins.ml2 import driver_api as api
 
 
 LOG = log.getLogger(__name__)
+
+IDPOOL_SELECT_SIZE = 100
 
 
 class BaseTypeDriver(api.TypeDriver):
@@ -121,12 +125,13 @@ class SegmentTypeDriver(BaseTypeDriver):
                       filter_by(allocated=False, **filters))
 
             # Selected segment can be allocated before update by someone else,
-            alloc = select.first()
+            allocs = select.limit(IDPOOL_SELECT_SIZE).all()
 
-            if not alloc:
+            if not allocs:
                 # No resource available
                 return
 
+            alloc = random.choice(allocs)
             raw_segment = dict((k, alloc[k]) for k in self.primary_keys)
             LOG.debug("%(type)s segment allocate from pool "
                       "started with %(segment)s ",
