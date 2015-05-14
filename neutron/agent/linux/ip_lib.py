@@ -38,6 +38,11 @@ LOOPBACK_DEVNAME = 'lo'
 SYS_NET_PATH = '/sys/class/net'
 
 
+class AddressNotReady(exceptions.NeutronException):
+    message = _("Failure waiting for address %(address)s to "
+                "become ready: %(reason)s")
+
+
 class SubProcessBase(object):
     def __init__(self, namespace=None,
                  log_fail_as_error=True):
@@ -383,8 +388,33 @@ class IpAddrCommand(IpDeviceCommandBase):
 
             retval.append(dict(cidr=parts[1],
                                scope=scope,
-                               dynamic=('dynamic' == parts[-1])))
+                               dynamic=('dynamic' == parts[-1]),
+                               tentative=('tentative' in line),
+                               dadfailed=('dadfailed' == parts[-1])))
         return retval
+
+    def wait_until_address_ready(self, address, wait_time=30):
+        """Wait until an address is no longer marked 'tentative'
+
+        raises AddressNotReady if times out or address not present on interface
+        """
+        def is_address_ready():
+            try:
+                addr_info = self.list(to=address)[0]
+            except IndexError:
+                raise AddressNotReady(
+                    address=address,
+                    reason=_LE('Address not present on interface'))
+            if not addr_info['tentative']:
+                return True
+            if addr_info['dadfailed']:
+                raise AddressNotReady(
+                    address=address, reason=_LE('Duplicate adddress detected'))
+        errmsg = _LE("Exceeded %s second limit waiting for "
+                     "address to leave the tentative state.") % wait_time
+        utils.utils.wait_until_true(
+            is_address_ready, timeout=wait_time, sleep=0.20,
+            exception=AddressNotReady(address=address, reason=errmsg))
 
 
 class IpRouteCommand(IpDeviceCommandBase):
