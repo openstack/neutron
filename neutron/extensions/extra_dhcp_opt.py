@@ -46,6 +46,8 @@ EXTRADHCPOPTS = 'extra_dhcp_opts'
 DHCP_OPT_NAME_MAX_LEN = 64
 DHCP_OPT_VALUE_MAX_LEN = 255
 
+CLIENT_ID = "client-id"
+
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         EXTRADHCPOPTS:

@@ -33,6 +33,7 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
+from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import uuidutils
 
@@ -281,6 +282,8 @@ class Dnsmasq(DhcpLocalProcess):
 
     _TAG_PREFIX = 'tag%d'
 
+    _ID = 'id:'
+
     @classmethod
     def check_version(cls):
         pass
@@ -399,9 +402,11 @@ class Dnsmasq(DhcpLocalProcess):
                                       service_name=DNSMASQ_SERVICE_NAME,
                                       monitored_process=pm)
 
-    def _release_lease(self, mac_address, ip):
+    def _release_lease(self, mac_address, ip, client_id):
         """Release a DHCP lease."""
         cmd = ['dhcp_release', self.interface_name, ip, mac_address]
+        if client_id:
+            cmd.append(client_id)
         ip_wrapper = ip_lib.IPWrapper(namespace=self.network.namespace)
         ip_wrapper.netns.execute(cmd, run_as_root=True)
 
@@ -461,6 +466,9 @@ class Dnsmasq(DhcpLocalProcess):
                     fqdn = '%s.%s' % (fqdn, self.conf.dhcp_domain)
                 yield (port, alloc, hostname, fqdn)
 
+    def _get_port_extra_dhcp_opts(self, port):
+        return getattr(port, edo_ext.EXTRADHCPOPTS, False)
+
     def _output_hosts_file(self):
         """Writes a dnsmasq compatible dhcp hosts file.
 
@@ -487,7 +495,7 @@ class Dnsmasq(DhcpLocalProcess):
         # avoid potential performance drop when lots of hosts are dumped
         for (port, alloc, hostname, name) in self._iter_hosts():
             if not alloc:
-                if getattr(port, 'extra_dhcp_opts', False):
+                if self._get_port_extra_dhcp_opts(port):
                     buf.write('%s,%s%s\n' %
                               (port.mac_address, 'set:', port.id))
                 continue
@@ -503,10 +511,20 @@ class Dnsmasq(DhcpLocalProcess):
             if netaddr.valid_ipv6(ip_address):
                 ip_address = '[%s]' % ip_address
 
-            if getattr(port, 'extra_dhcp_opts', False):
-                buf.write('%s,%s,%s,%s%s\n' %
-                          (port.mac_address, name, ip_address,
-                           'set:', port.id))
+            if self._get_port_extra_dhcp_opts(port):
+                client_id = self._get_client_id(port)
+                if client_id and len(port.extra_dhcp_opts) > 1:
+                    buf.write('%s,%s%s,%s,%s,%s%s\n' %
+                              (port.mac_address, self._ID, client_id, name,
+                               ip_address, 'set:', port.id))
+                elif client_id and len(port.extra_dhcp_opts) == 1:
+                    buf.write('%s,%s%s,%s,%s\n' %
+                          (port.mac_address, self._ID, client_id, name,
+                           ip_address))
+                else:
+                    buf.write('%s,%s,%s,%s%s\n' %
+                              (port.mac_address, name, ip_address,
+                               'set:', port.id))
             else:
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
@@ -516,13 +534,28 @@ class Dnsmasq(DhcpLocalProcess):
                   buf.getvalue())
         return filename
 
+    def _get_client_id(self, port):
+        if self._get_port_extra_dhcp_opts(port):
+            for opt in port.extra_dhcp_opts:
+                if opt.opt_name == edo_ext.CLIENT_ID:
+                    return opt.opt_value
+
     def _read_hosts_file_leases(self, filename):
         leases = set()
-        if os.path.exists(filename):
+        try:
             with open(filename) as f:
                 for l in f.readlines():
                     host = l.strip().split(',')
-                    leases.add((host[2].strip('[]'), host[0]))
+                    mac = host[0]
+                    client_id = None
+                    if host[1].startswith(self._ID):
+                        ip = host[3].strip('[]')
+                        client_id = host[1][len(self._ID):]
+                    else:
+                        ip = host[2].strip('[]')
+                    leases.add((ip, mac, client_id))
+        except (OSError, IOError):
+            LOG.debug('Error while reading hosts file %s', filename)
         return leases
 
     def _release_unused_leases(self):
@@ -531,11 +564,12 @@ class Dnsmasq(DhcpLocalProcess):
 
         new_leases = set()
         for port in self.network.ports:
+            client_id = self._get_client_id(port)
             for alloc in port.fixed_ips:
-                new_leases.add((alloc.ip_address, port.mac_address))
+                new_leases.add((alloc.ip_address, port.mac_address, client_id))
 
-        for ip, mac in old_leases - new_leases:
-            self._release_lease(mac, ip)
+        for ip, mac, client_id in old_leases - new_leases:
+            self._release_lease(mac, ip, client_id)
 
     def _output_addn_hosts_file(self):
         """Writes a dnsmasq compatible additional hosts file.
@@ -645,11 +679,13 @@ class Dnsmasq(DhcpLocalProcess):
         options = []
         dhcp_ips = collections.defaultdict(list)
         for port in self.network.ports:
-            if getattr(port, 'extra_dhcp_opts', False):
+            if self._get_port_extra_dhcp_opts(port):
                 port_ip_versions = set(
                     [netaddr.IPAddress(ip.ip_address).version
                      for ip in port.fixed_ips])
                 for opt in port.extra_dhcp_opts:
+                    if opt.opt_name == edo_ext.CLIENT_ID:
+                        continue
                     opt_ip_version = opt.ip_version
                     if opt_ip_version in port_ip_versions:
                         options.append(
