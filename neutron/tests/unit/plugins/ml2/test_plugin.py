@@ -806,6 +806,40 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             port = self._show('ports', port_id)['port']
             self._check_port_binding_profile(port, profile)
 
+    def test_update_port_binding_host_id_none(self):
+        with self.port() as port:
+            plugin = manager.NeutronManager.get_plugin()
+            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+                                                         port['port']['id'])[1]
+            binding['host'] = 'test'
+            mech_context = driver_context.PortContext(
+                plugin, self.context, port['port'],
+                plugin.get_network(self.context, port['port']['network_id']),
+                binding, None)
+        with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                        '_update_port_dict_binding') as update_mock:
+            attrs = {portbindings.HOST_ID: None}
+            plugin._process_port_binding(mech_context, attrs)
+            self.assertTrue(update_mock.mock_calls)
+            self.assertEqual('', binding.host)
+
+    def test_update_port_binding_host_id_not_changed(self):
+        with self.port() as port:
+            plugin = manager.NeutronManager.get_plugin()
+            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+                                                         port['port']['id'])[1]
+            binding['host'] = 'test'
+            mech_context = driver_context.PortContext(
+                plugin, self.context, port['port'],
+                plugin.get_network(self.context, port['port']['network_id']),
+                binding, None)
+        with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                        '_update_port_dict_binding') as update_mock:
+            attrs = {portbindings.PROFILE: {'e': 5}}
+            plugin._process_port_binding(mech_context, attrs)
+            self.assertTrue(update_mock.mock_calls)
+            self.assertEqual('test', binding.host)
+
     def test_process_dvr_port_binding_update_router_id(self):
         host_id = 'host'
         binding = models.DVRPortBinding(
