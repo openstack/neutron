@@ -281,11 +281,9 @@ class RouterInfo(object):
     def _internal_network_added(self, ns_name, network_id, port_id,
                                 fixed_ips, mac_address,
                                 interface_name, prefix):
-        if not ip_lib.device_exists(interface_name,
-                                    namespace=ns_name):
-            self.driver.plug(network_id, port_id, interface_name, mac_address,
-                             namespace=ns_name,
-                             prefix=prefix)
+        self.driver.plug(network_id, port_id, interface_name, mac_address,
+                         namespace=ns_name,
+                         prefix=prefix)
 
         ip_cidrs = common_utils.fixed_ip_cidrs(fixed_ips)
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name)
@@ -418,14 +416,13 @@ class RouterInfo(object):
                 for ip in floating_ips]
 
     def _plug_external_gateway(self, ex_gw_port, interface_name, ns_name):
-        if not ip_lib.device_exists(interface_name, namespace=ns_name):
-            self.driver.plug(ex_gw_port['network_id'],
-                             ex_gw_port['id'],
-                             interface_name,
-                             ex_gw_port['mac_address'],
-                             bridge=self.agent_conf.external_network_bridge,
-                             namespace=ns_name,
-                             prefix=EXTERNAL_DEV_PREFIX)
+        self.driver.plug(ex_gw_port['network_id'],
+                         ex_gw_port['id'],
+                         interface_name,
+                         ex_gw_port['mac_address'],
+                         bridge=self.agent_conf.external_network_bridge,
+                         namespace=ns_name,
+                         prefix=EXTERNAL_DEV_PREFIX)
 
     def _get_external_gw_ips(self, ex_gw_port):
         gateway_ips = []

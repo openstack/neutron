@@ -27,7 +27,7 @@ from neutron.tests import base
 
 
 class BaseChild(interface.LinuxInterfaceDriver):
-    def plug(*args):
+    def plug_new(*args):
         pass
 
     def unplug(*args):
