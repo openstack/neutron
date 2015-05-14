@@ -116,19 +116,21 @@ class MetadataDriver(object):
         uuid = network_id or router_id
         callback = cls._get_metadata_proxy_callback(
             port, conf, network_id=network_id, router_id=router_id)
-        pm = cls._get_metadata_proxy_process_manager(uuid, ns_name, conf,
+        pm = cls._get_metadata_proxy_process_manager(uuid, conf,
+                                                     ns_name=ns_name,
                                                      callback=callback)
         pm.enable()
         monitor.register(uuid, METADATA_SERVICE_NAME, pm)
 
     @classmethod
-    def destroy_monitored_metadata_proxy(cls, monitor, uuid, ns_name, conf):
+    def destroy_monitored_metadata_proxy(cls, monitor, uuid, conf):
         monitor.unregister(uuid, METADATA_SERVICE_NAME)
-        pm = cls._get_metadata_proxy_process_manager(uuid, ns_name, conf)
+        # No need to pass ns name as it's not needed for disable()
+        pm = cls._get_metadata_proxy_process_manager(uuid, conf)
         pm.disable()
 
     @classmethod
-    def _get_metadata_proxy_process_manager(cls, router_id, ns_name, conf,
+    def _get_metadata_proxy_process_manager(cls, router_id, conf, ns_name=None,
                                             callback=None):
         return external_process.ProcessManager(
             conf=conf,
@@ -172,5 +174,4 @@ def before_router_removed(resource, event, l3_agent, **kwargs):
 
     proxy.destroy_monitored_metadata_proxy(l3_agent.process_monitor,
                                           router.router['id'],
-                                          router.ns_name,
                                           l3_agent.conf)

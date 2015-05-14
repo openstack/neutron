@@ -1974,7 +1974,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 if enableflag:
                     destroy_proxy.assert_called_with(mock.ANY,
                                                      router_id,
-                                                     mock.ANY,
                                                      mock.ANY)
                 else:
                     self.assertFalse(destroy_proxy.call_count)
