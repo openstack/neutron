@@ -208,19 +208,21 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                         continue
             break
 
+        self.metadata_driver = None
+        if self.conf.enable_metadata_proxy:
+            self.metadata_driver = metadata_driver.MetadataDriver(self)
+
         self.namespaces_manager = namespace_manager.NamespaceManager(
             self.conf,
             self.driver,
-            self.conf.use_namespaces)
+            self.conf.use_namespaces,
+            self.metadata_driver)
 
         self._queue = queue.RouterProcessingQueue()
         super(L3NATAgent, self).__init__(conf=self.conf)
 
         self.target_ex_net_id = None
         self.use_ipv6 = ipv6_utils.is_enabled()
-
-        if self.conf.enable_metadata_proxy:
-            self.metadata_driver = metadata_driver.MetadataDriver(self)
 
     def _check_config_params(self):
         """Check items in configuration files.
