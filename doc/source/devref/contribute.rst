@@ -361,7 +361,7 @@ be the bare minimum you have to complete in order to get you off the ground.
 * Define an entry point for your plugin or driver in setup.cfg
 * Create 3rd Party CI account: if you do not already have one, follow
   instructions for
-  `3rd Party CI <http://ci.openstack.org/third_party.html>`_ to get one.
+  `3rd Party CI <http://docs.openstack.org/infra/system-config/third_party.html>`_ to get one.
 * TODO(armax): ...
 
 
