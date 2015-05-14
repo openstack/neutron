@@ -14,7 +14,6 @@
 #    under the License.
 
 import netaddr
-from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import and_
@@ -29,7 +28,6 @@ from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
-from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -242,49 +240,17 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         """
         fixed_ip_set = []
         for fixed in fixed_ips:
-            found = False
-            if 'subnet_id' not in fixed:
-                if 'ip_address' not in fixed:
-                    msg = _('IP allocation requires subnet_id or ip_address')
-                    raise n_exc.InvalidInput(error_message=msg)
-
-                filter = {'network_id': [network_id]}
-                subnets = self._get_subnets(context, filters=filter)
-                for subnet in subnets:
-                    if ipam_utils.check_subnet_ip(subnet['cidr'],
-                                                  fixed['ip_address']):
-                        found = True
-                        subnet_id = subnet['id']
-                        break
-                if not found:
-                    raise n_exc.InvalidIpForNetwork(
-                        ip_address=fixed['ip_address'])
-            else:
-                subnet = self._get_subnet(context, fixed['subnet_id'])
-                if subnet['network_id'] != network_id:
-                    msg = (_("Failed to create port on network %(network_id)s"
-                             ", because fixed_ips included invalid subnet "
-                             "%(subnet_id)s") %
-                           {'network_id': network_id,
-                            'subnet_id': fixed['subnet_id']})
-                    raise n_exc.InvalidInput(error_message=msg)
-                subnet_id = subnet['id']
+            subnet = self._get_subnet_for_fixed_ip(context, fixed, network_id)
 
             is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
             if 'ip_address' in fixed:
                 # Ensure that the IP's are unique
                 if not IpamNonPluggableBackend._check_unique_ip(
                         context, network_id,
-                        subnet_id, fixed['ip_address']):
+                        subnet['id'], fixed['ip_address']):
                     raise n_exc.IpAddressInUse(net_id=network_id,
                                                ip_address=fixed['ip_address'])
 
-                # Ensure that the IP is valid on the subnet
-                if (not found and
-                    not ipam_utils.check_subnet_ip(subnet['cidr'],
-                                                   fixed['ip_address'])):
-                    raise n_exc.InvalidIpForSubnet(
-                        ip_address=fixed['ip_address'])
                 if (is_auto_addr_subnet and
                     device_owner not in
                         constants.ROUTER_INTERFACE_OWNERS):
@@ -292,23 +258,20 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                             "assigned to a port on subnet %(id)s since the "
                             "subnet is configured for automatic addresses") %
                            {'address': fixed['ip_address'],
-                            'id': subnet_id})
+                            'id': subnet['id']})
                     raise n_exc.InvalidInput(error_message=msg)
-                fixed_ip_set.append({'subnet_id': subnet_id,
+                fixed_ip_set.append({'subnet_id': subnet['id'],
                                      'ip_address': fixed['ip_address']})
             else:
                 # A scan for auto-address subnets on the network is done
                 # separately so that all such subnets (not just those
                 # listed explicitly here by subnet ID) are associated
                 # with the port.
-                if (device_owner in constants.ROUTER_INTERFACE_OWNERS or
-                    device_owner == constants.DEVICE_OWNER_ROUTER_SNAT or
+                if (device_owner in constants.ROUTER_INTERFACE_OWNERS_SNAT or
                     not is_auto_addr_subnet):
-                    fixed_ip_set.append({'subnet_id': subnet_id})
+                    fixed_ip_set.append({'subnet_id': subnet['id']})
 
-        if len(fixed_ip_set) > cfg.CONF.max_fixed_ips_per_port:
-            msg = _('Exceeded maximim amount of fixed ips per port')
-            raise n_exc.InvalidInput(error_message=msg)
+        self._validate_max_ips_per_port(fixed_ip_set)
         return fixed_ip_set
 
     def _allocate_fixed_ips(self, context, fixed_ips, mac_address):
@@ -382,8 +345,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         net_id_filter = {'network_id': [p['network_id']]}
         subnets = self._get_subnets(context, filters=net_id_filter)
         is_router_port = (
-            p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS or
-            p['device_owner'] == constants.DEVICE_OWNER_ROUTER_SNAT)
+            p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS_SNAT)
 
         fixed_configured = p['fixed_ips'] is not attributes.ATTR_NOT_SPECIFIED
         if fixed_configured:
@@ -431,17 +393,16 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
         return ips
 
-    def add_auto_addrs_on_network_ports(self, context, subnet):
+    def add_auto_addrs_on_network_ports(self, context, subnet, ipam_subnet):
         """For an auto-address subnet, add addrs for ports on the net."""
         with context.session.begin(subtransactions=True):
             network_id = subnet['network_id']
             port_qry = context.session.query(models_v2.Port)
-            for port in port_qry.filter(
+            ports = port_qry.filter(
                 and_(models_v2.Port.network_id == network_id,
-                     models_v2.Port.device_owner !=
-                     constants.DEVICE_OWNER_ROUTER_SNAT,
                      ~models_v2.Port.device_owner.in_(
-                         constants.ROUTER_INTERFACE_OWNERS))):
+                         constants.ROUTER_INTERFACE_OWNERS_SNAT)))
+            for port in ports:
                 ip_address = self._calculate_ipv6_eui64_addr(
                     context, subnet, port['mac_address'])
                 allocated = models_v2.IPAllocation(network_id=network_id,
@@ -505,4 +466,6 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                    subnet['dns_nameservers'],
                                    subnet['host_routes'],
                                    subnet_request)
-        return subnet
+        # ipam_subnet is not expected to be allocated for non pluggable ipam,
+        # so just return None for it (second element in returned tuple)
+        return subnet, None

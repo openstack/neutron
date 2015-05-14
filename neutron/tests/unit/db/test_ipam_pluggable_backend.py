@@ -15,18 +15,49 @@
 
 import mock
 import netaddr
+import webob.exc
 
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
+from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
 from neutron.ipam import requests as ipam_req
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_base
 
 
+class UseIpamMixin(object):
+
+    def setUp(self):
+        cfg.CONF.set_override("ipam_driver", 'internal')
+        super(UseIpamMixin, self).setUp()
+
+
+class TestIpamHTTPResponse(UseIpamMixin, test_db_base.TestV2HTTPResponse):
+    pass
+
+
+class TestIpamPorts(UseIpamMixin, test_db_base.TestPortsV2):
+    pass
+
+
+class TestIpamNetworks(UseIpamMixin, test_db_base.TestNetworksV2):
+    pass
+
+
+class TestIpamSubnets(UseIpamMixin, test_db_base.TestSubnetsV2):
+    pass
+
+
+class TestIpamSubnetPool(UseIpamMixin, test_db_base.TestSubnetPoolsV2):
+    pass
+
+
 class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     def setUp(self):
+        cfg.CONF.set_override("ipam_driver", 'internal')
         super(TestDbBasePluginIpam, self).setUp()
         self.tenant_id = uuidutils.generate_uuid()
         self.subnet_id = uuidutils.generate_uuid()
@@ -54,6 +85,11 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     def _prepare_ipam(self):
         mocks = self._prepare_mocks()
         mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
+        return mocks
+
+    def _prepare_mocks_with_pool_mock(self, pool_mock):
+        mocks = self._prepare_mocks()
+        pool_mock.get_instance.return_value = mocks['driver']
         return mocks
 
     def _get_allocate_mock(self, auto_ip='10.0.0.2',
@@ -233,3 +269,225 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         self._validate_allocate_calls(ips[:-1], mocks)
         # Deallocate should be called for the first ip only
         mocks['subnet'].deallocate.assert_called_once_with(auto_ip)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_create_subnet_over_ipam(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        cidr = '192.168.0.0/24'
+        allocation_pools = [{'start': '192.168.0.2', 'end': '192.168.0.254'}]
+        with self.subnet(allocation_pools=allocation_pools,
+                         cidr=cidr):
+            pool_mock.get_instance.assert_called_once_with(None, mock.ANY)
+            assert mocks['driver'].allocate_subnet.called
+            request = mocks['driver'].allocate_subnet.call_args[0][0]
+            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_create_subnet_over_ipam_with_rollback(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        mocks['driver'].allocate_subnet.side_effect = ValueError
+        cidr = '10.0.2.0/24'
+        with self.network() as network:
+            self._create_subnet(self.fmt, network['network']['id'],
+                                cidr, expected_res_status=500)
+
+            pool_mock.get_instance.assert_called_once_with(None, mock.ANY)
+            assert mocks['driver'].allocate_subnet.called
+            request = mocks['driver'].allocate_subnet.call_args[0][0]
+            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
+            # Verify no subnet was created for network
+            req = self.new_show_request('networks', network['network']['id'])
+            res = req.get_response(self.api)
+            net = self.deserialize(self.fmt, res)
+            self.assertEqual(0, len(net['network']['subnets']))
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_ipam_subnet_deallocated_if_create_fails(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        cidr = '10.0.2.0/24'
+        with mock.patch.object(
+                ipam_backend_mixin.IpamBackendMixin, '_save_subnet',
+                side_effect=ValueError), self.network() as network:
+            self._create_subnet(self.fmt, network['network']['id'],
+                                cidr, expected_res_status=500)
+            pool_mock.get_instance.assert_any_call(None, mock.ANY)
+            self.assertEqual(2, pool_mock.get_instance.call_count)
+            assert mocks['driver'].allocate_subnet.called
+            request = mocks['driver'].allocate_subnet.call_args[0][0]
+            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
+            # Verify remove ipam subnet was called
+            mocks['driver'].remove_subnet.assert_called_once_with(
+                self.subnet_id)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_subnet_over_ipam(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.254'}]
+        with self.subnet(allocation_pools=allocation_pools,
+                         cidr=cidr) as subnet:
+            data = {'subnet': {'allocation_pools': [
+                    {'start': '10.0.0.10', 'end': '10.0.0.20'},
+                    {'start': '10.0.0.30', 'end': '10.0.0.40'}]}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_code, 200)
+
+            pool_mock.get_instance.assert_any_call(None, mock.ANY)
+            self.assertEqual(2, pool_mock.get_instance.call_count)
+            assert mocks['driver'].update_subnet.called
+            request = mocks['driver'].update_subnet.call_args[0][0]
+            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
+
+            ip_ranges = [netaddr.IPRange(p['start'],
+                p['end']) for p in data['subnet']['allocation_pools']]
+            self.assertEqual(ip_ranges, request.allocation_pools)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_delete_subnet_over_ipam(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
+                                   cidr, ip_version=4)
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+
+        pool_mock.get_instance.assert_any_call(None, mock.ANY)
+        self.assertEqual(2, pool_mock.get_instance.call_count)
+        mocks['driver'].remove_subnet.assert_called_once_with(
+            subnet['subnet']['id'])
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_delete_subnet_over_ipam_with_rollback(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        mocks['driver'].remove_subnet.side_effect = ValueError
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
+                                   cidr, ip_version=4)
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, webob.exc.HTTPServerError.code)
+
+        pool_mock.get_instance.assert_any_call(None, mock.ANY)
+        self.assertEqual(2, pool_mock.get_instance.call_count)
+        mocks['driver'].remove_subnet.assert_called_once_with(
+            subnet['subnet']['id'])
+        # Verify subnet was recreated after failed ipam call
+        subnet_req = self.new_show_request('subnets',
+                                           subnet['subnet']['id'])
+        raw_res = subnet_req.get_response(self.api)
+        sub_res = self.deserialize(self.fmt, raw_res)
+        self.assertIn(sub_res['subnet']['cidr'], cidr)
+        self.assertIn(sub_res['subnet']['gateway_ip'],
+                      gateway_ip)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_create_port_ipam(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        auto_ip = '10.0.0.2'
+        expected_calls = [{'ip_address': ''}]
+        mocks['subnet'].allocate.side_effect = self._get_allocate_mock(
+            auto_ip=auto_ip)
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEqual(1, len(ips))
+                self.assertEqual(ips[0]['ip_address'], auto_ip)
+                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
+                self._validate_allocate_calls(expected_calls, mocks)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_create_port_ipam_with_rollback(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        mocks['subnet'].allocate.side_effect = ValueError
+        with self.network() as network:
+            with self.subnet(network=network):
+                net_id = network['network']['id']
+                data = {
+                    'port': {'network_id': net_id,
+                             'tenant_id': network['network']['tenant_id']}}
+                port_req = self.new_create_request('ports', data)
+                res = port_req.get_response(self.api)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPServerError.code)
+
+                # verify no port left after failure
+                req = self.new_list_request('ports', self.fmt,
+                                            "network_id=%s" % net_id)
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                self.assertEqual(0, len(res['ports']))
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_port_ipam(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        auto_ip = '10.0.0.2'
+        new_ip = '10.0.0.15'
+        expected_calls = [{'ip_address': ip} for ip in ['', new_ip]]
+        mocks['subnet'].allocate.side_effect = self._get_allocate_mock(
+            auto_ip=auto_ip)
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEqual(1, len(ips))
+                self.assertEqual(ips[0]['ip_address'], auto_ip)
+                # Update port with another new ip
+                data = {"port": {"fixed_ips": [{
+                        'subnet_id': subnet['subnet']['id'],
+                        'ip_address': new_ip}]}}
+                req = self.new_update_request('ports', data,
+                                              port['port']['id'])
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                ips = res['port']['fixed_ips']
+                self.assertEqual(1, len(ips))
+                self.assertEqual(new_ip, ips[0]['ip_address'])
+
+                # Allocate should be called for the first two networks
+                self._validate_allocate_calls(expected_calls, mocks)
+                # Deallocate should be called for the first ip only
+                mocks['subnet'].deallocate.assert_called_once_with(auto_ip)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_delete_port_ipam(self, pool_mock):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        auto_ip = '10.0.0.2'
+        mocks['subnet'].allocate.side_effect = self._get_allocate_mock(
+            auto_ip=auto_ip)
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEqual(1, len(ips))
+                self.assertEqual(ips[0]['ip_address'], auto_ip)
+                req = self.new_delete_request('ports', port['port']['id'])
+                res = req.get_response(self.api)
+
+                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+                mocks['subnet'].deallocate.assert_called_once_with(auto_ip)
+
+    def test_recreate_port_ipam(self):
+        ip = '10.0.0.2'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEqual(1, len(ips))
+                self.assertEqual(ips[0]['ip_address'], ip)
+                req = self.new_delete_request('ports', port['port']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+                with self.port(subnet=subnet, fixed_ips=ips) as port:
+                    ips = port['port']['fixed_ips']
+                    self.assertEqual(1, len(ips))
+                    self.assertEqual(ips[0]['ip_address'], ip)

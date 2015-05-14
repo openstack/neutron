@@ -24,6 +24,7 @@ from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.ipam.drivers.neutrondb_ipam import db_models as ipam_models
 from neutron.tests import base
 from neutron.tests.common import base as common_base
 
@@ -47,9 +48,13 @@ class IpamTestCase(object):
     Base class for tests that aim to test ip allocation.
     """
 
-    def configure_test(self):
+    def configure_test(self, use_pluggable_ipam=False):
         model_base.BASEV2.metadata.create_all(self.engine)
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
+        if use_pluggable_ipam:
+            self._turn_on_pluggable_ipam()
+        else:
+            self._turn_off_pluggable_ipam()
         self.plugin = base_plugin.NeutronDbPluginV2()
         self.cxt = get_admin_test_context(self.engine.url)
         self.addCleanup(self.cxt._session.close)
@@ -59,6 +64,16 @@ class IpamTestCase(object):
         self.port_id = 'test_p_id'
         self._create_network()
         self._create_subnet()
+
+    def _turn_off_pluggable_ipam(self):
+        cfg.CONF.set_override('ipam_driver', None)
+        self.ip_availability_range = models_v2.IPAvailabilityRange
+
+    def _turn_on_pluggable_ipam(self):
+        cfg.CONF.set_override('ipam_driver', 'internal')
+        DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+        self.setup_coreplugin(DB_PLUGIN_KLASS)
+        self.ip_availability_range = ipam_models.IpamAvailabilityRange
 
     def result_set_to_dicts(self, resultset, keys):
         dicts = []
@@ -75,7 +90,7 @@ class IpamTestCase(object):
 
     def assert_ip_avail_range_matches(self, expected):
         result_set = self.cxt.session.query(
-            models_v2.IPAvailabilityRange).all()
+            self.ip_availability_range).all()
         keys = ['first_ip', 'last_ip']
         actual = self.result_set_to_dicts(result_set, keys)
         self.assertEqual(expected, actual)
@@ -218,3 +233,19 @@ class TestIpamPsql(common_base.PostgreSQLTestCase,
     def setUp(self):
         super(TestIpamPsql, self).setUp()
         self.configure_test()
+
+
+class TestPluggableIpamMySql(common_base.MySQLTestCase,
+                             base.BaseTestCase, IpamTestCase):
+
+    def setUp(self):
+        super(TestPluggableIpamMySql, self).setUp()
+        self.configure_test(use_pluggable_ipam=True)
+
+
+class TestPluggableIpamPsql(common_base.PostgreSQLTestCase,
+                            base.BaseTestCase, IpamTestCase):
+
+    def setUp(self):
+        super(TestPluggableIpamPsql, self).setUp()
+        self.configure_test(use_pluggable_ipam=True)

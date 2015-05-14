@@ -3278,6 +3278,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 [{'start': '10.0.0.2', 'end': '10.0.0.254'},
                                  {'end': '10.0.0.254'}],
                                 None,
+                                [{'start': '10.0.0.200', 'end': '10.0.3.20'}],
+                                [{'start': '10.0.2.250', 'end': '10.0.3.5'}],
+                                [{'start': '10.0.2.10', 'end': '10.0.2.5'}],
                                 [{'start': '10.0.0.2', 'end': '10.0.0.3'},
                                  {'start': '10.0.0.2', 'end': '10.0.0.3'}]]
             tenant_id = network['network']['tenant_id']
@@ -3816,7 +3819,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     return orig(s, instance)
                 mock.patch.object(orm.Session, 'add',
                                   new=db_ref_err_for_ipalloc).start()
-                mock.patch.object(non_ipam.IpamNonPluggableBackend,
+                mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
                                   '_get_subnet',
                                   return_value=mock.Mock()).start()
             # Add an IPv6 auto-address subnet to the network

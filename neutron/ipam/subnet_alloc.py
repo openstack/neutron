@@ -193,9 +193,6 @@ class IpamSubnet(driver.Subnet):
     def get_details(self):
         return self._req
 
-    def associate_neutron_subnet(self, subnet_id):
-        pass
-
 
 class SubnetPoolReader(object):
     '''Class to assist with reading a subnetpool, loading defaults, and
