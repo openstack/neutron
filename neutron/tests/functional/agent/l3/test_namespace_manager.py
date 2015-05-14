@@ -31,8 +31,10 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
         super(NamespaceManagerTestFramework, self).setUp()
         self.agent_conf = mock.MagicMock()
         self.agent_conf.router_delete_namespaces = True
+        self.metadata_driver_mock = mock.Mock()
         self.namespace_manager = namespace_manager.NamespaceManager(
-            self.agent_conf, driver=None, clean_stale=True)
+            self.agent_conf, driver=None, clean_stale=True,
+            metadata_driver=self.metadata_driver_mock)
 
     def _create_namespace(self, router_id, ns_class):
         namespace = ns_class(router_id, self.agent_conf, driver=None,
@@ -59,6 +61,7 @@ class NamespaceManagerTestCase(NamespaceManagerTestFramework):
 
     def test_namespace_manager(self):
         router_id = _uuid()
+        router_id_to_delete = _uuid()
         to_keep = set()
         to_delete = set()
         to_retrieve = set()
@@ -66,7 +69,7 @@ class NamespaceManagerTestCase(NamespaceManagerTestFramework):
                                            namespaces.RouterNamespace))
         to_keep.add(self._create_namespace(router_id,
                                            dvr_snat_ns.SnatNamespace))
-        to_delete.add(self._create_namespace(_uuid(),
+        to_delete.add(self._create_namespace(router_id_to_delete,
                                              dvr_snat_ns.SnatNamespace))
         to_retrieve = to_keep | to_delete
 
@@ -80,4 +83,9 @@ class NamespaceManagerTestCase(NamespaceManagerTestFramework):
         for ns_name in to_keep:
             self.assertTrue(self._namespace_exists(ns_name))
         for ns_name in to_delete:
+            (self.metadata_driver_mock.destroy_monitored_metadata_proxy.
+             assert_called_once_with(mock.ANY,
+                                     router_id_to_delete,
+                                     ns_name,
+                                     self.agent_conf))
             self.assertFalse(self._namespace_exists(ns_name))
