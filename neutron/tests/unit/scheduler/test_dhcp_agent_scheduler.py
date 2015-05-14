@@ -14,26 +14,26 @@
 # limitations under the License.
 
 import contextlib
-import datetime
 
 import mock
 from oslo_config import cfg
 from oslo_utils import importutils
-from oslo_utils import timeutils
 import testscenarios
 
 from neutron.common import constants
-from neutron.common import topics
 from neutron import context
-from neutron.db import agents_db
 from neutron.db import agentschedulers_db as sched_db
 from neutron.db import models_v2
 from neutron.extensions import dhcpagentscheduler
 from neutron.scheduler import dhcp_agent_scheduler
+from neutron.tests.common import helpers
 from neutron.tests.unit import testlib_api
 
 # Required to generate tests from scenarios. Not compatible with nose.
 load_tests = testscenarios.load_tests_apply_scenarios
+
+HOST_C = 'host-c'
+HOST_D = 'host-d'
 
 
 class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
@@ -45,37 +45,16 @@ class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
         self.network_id = 'foo_network_id'
         self._save_networks([self.network_id])
 
-    def _get_agents(self, hosts):
-        return [
-            agents_db.Agent(
-                binary='neutron-dhcp-agent',
-                host=host,
-                topic=topics.DHCP_AGENT,
-                configurations="",
-                agent_type=constants.AGENT_TYPE_DHCP,
-                created_at=timeutils.utcnow(),
-                started_at=timeutils.utcnow(),
-                heartbeat_timestamp=timeutils.utcnow())
-            for host in hosts
-        ]
-
-    def _save_agents(self, agents):
-        for agent in agents:
-            with self.ctx.session.begin(subtransactions=True):
-                self.ctx.session.add(agent)
-
-    def _create_and_set_agents_down(self, hosts, down_agent_count=0, **kwargs):
-        dhcp_agents = self._get_agents(hosts)
-        # bring down the specified agents
-        for agent in dhcp_agents[:down_agent_count]:
-            old_time = agent['heartbeat_timestamp']
-            hour_old = old_time - datetime.timedelta(hours=1)
-            agent['heartbeat_timestamp'] = hour_old
-            agent['started_at'] = hour_old
-        for agent in dhcp_agents:
-            agent.update(kwargs)
-        self._save_agents(dhcp_agents)
-        return dhcp_agents
+    def _create_and_set_agents_down(self, hosts, down_agent_count=0,
+                                    admin_state_up=True):
+        agents = []
+        for i, host in enumerate(hosts):
+            is_alive = i >= down_agent_count
+            agents.append(helpers.register_dhcp_agent(
+                host,
+                admin_state_up=admin_state_up,
+                alive=is_alive))
+        return agents
 
     def _save_networks(self, networks):
         for network_id in networks:
@@ -273,26 +252,6 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
 class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     """Unit test scenarios for WeightScheduler.schedule."""
 
-    hostc = {
-            'binary': 'neutron-dhcp-agent',
-            'host': 'host-c',
-            'topic': 'DHCP_AGENT',
-            'configurations': {'dhcp_driver': 'dhcp_driver',
-                               'networks': 0,
-                               'use_namespaces': True,
-                               },
-            'agent_type': constants.AGENT_TYPE_DHCP}
-
-    hostd = {
-            'binary': 'neutron-dhcp-agent',
-            'host': 'host-d',
-            'topic': 'DHCP_AGENT',
-            'configurations': {'dhcp_driver': 'dhcp_driver',
-                               'networks': 1,
-                               'use_namespaces': True,
-                               },
-            'agent_type': constants.AGENT_TYPE_DHCP}
-
     def setUp(self):
         super(DHCPAgentWeightSchedulerTestCase, self).setUp()
         DB_PLUGIN_KLASS = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -313,10 +272,9 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
         cfg.CONF.set_override("dhcp_load_type", "networks")
 
     def test_scheduler_one_agents_per_network(self):
-        cfg.CONF.set_override('dhcp_agents_per_network', 1)
         self._save_networks(['1111'])
-        agents = self._get_agents(['host-c', 'host-d'])
-        self._save_agents(agents)
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_C)
         self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
                                                {'id': '1111'})
         agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
@@ -326,8 +284,8 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     def test_scheduler_two_agents_per_network(self):
         cfg.CONF.set_override('dhcp_agents_per_network', 2)
         self._save_networks(['1111'])
-        agents = self._get_agents(['host-c', 'host-d'])
-        self._save_agents(agents)
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_D)
         self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
                                                {'id': '1111'})
         agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
@@ -343,37 +301,23 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
         self.assertEqual(0, len(agents))
 
     def test_scheduler_equal_distribution(self):
-        cfg.CONF.set_override('dhcp_agents_per_network', 1)
         self._save_networks(['1111', '2222', '3333'])
-        agents = self._get_agents(['host-c', 'host-d'])
-        self._save_agents(agents)
-        callback = agents_db.AgentExtRpcCallback()
-        callback.report_state(self.ctx,
-                              agent_state={'agent_state': self.hostc},
-                              time=timeutils.strtime())
-        callback.report_state(self.ctx,
-                              agent_state={'agent_state': self.hostd},
-                              time=timeutils.strtime())
-        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
-                                               {'id': '1111'})
-        agent1 = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
-                                                              ['1111'])
-        self.hostd['configurations']['networks'] = 2
-        callback.report_state(self.ctx,
-                              agent_state={'agent_state': self.hostd},
-                              time=timeutils.strtime())
-        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
-                                               {'id': '2222'})
-        agent2 = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
-                                                              ['2222'])
-        self.hostc['configurations']['networks'] = 4
-        callback.report_state(self.ctx,
-                              agent_state={'agent_state': self.hostc},
-                              time=timeutils.strtime())
-        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
-                                               {'id': '3333'})
-        agent3 = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
-                                                              ['3333'])
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_D, networks=1)
+        self.plugin.network_scheduler.schedule(
+            self.plugin, context.get_admin_context(), {'id': '1111'})
+        helpers.register_dhcp_agent(HOST_D, networks=2)
+        self.plugin.network_scheduler.schedule(
+            self.plugin, context.get_admin_context(), {'id': '2222'})
+        helpers.register_dhcp_agent(HOST_C, networks=4)
+        self.plugin.network_scheduler.schedule(
+            self.plugin, context.get_admin_context(), {'id': '3333'})
+        agent1 = self.plugin.get_dhcp_agents_hosting_networks(
+            self.ctx, ['1111'])
+        agent2 = self.plugin.get_dhcp_agents_hosting_networks(
+            self.ctx, ['2222'])
+        agent3 = self.plugin.get_dhcp_agents_hosting_networks(
+            self.ctx, ['3333'])
         self.assertEqual('host-c', agent1[0]['host'])
         self.assertEqual('host-c', agent2[0]['host'])
         self.assertEqual('host-d', agent3[0]['host'])

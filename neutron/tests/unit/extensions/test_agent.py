@@ -42,7 +42,6 @@ L3_HOSTA = 'hosta'
 DHCP_HOSTA = 'hosta'
 L3_HOSTB = 'hostb'
 DHCP_HOSTC = 'hostc'
-DHCP_HOST1 = 'host1'
 LBAAS_HOSTA = 'hosta'
 LBAAS_HOSTB = 'hostb'
 
@@ -89,36 +88,24 @@ class AgentDBTestMixIn(object):
             L3_HOSTA, constants.L3_AGENT_MODE_LEGACY)
         l3_hostb = helpers._get_l3_agent_dict(
             L3_HOSTB, constants.L3_AGENT_MODE_LEGACY)
-        dhcp_hosta = {
-            'binary': 'neutron-dhcp-agent',
-            'host': DHCP_HOSTA,
-            'topic': 'DHCP_AGENT',
-            'configurations': {'dhcp_driver': 'dhcp_driver',
-                               'use_namespaces': True,
-                               },
-            'agent_type': constants.AGENT_TYPE_DHCP}
-        dhcp_hostc = copy.deepcopy(dhcp_hosta)
-        dhcp_hostc['host'] = DHCP_HOSTC
-        lbaas_hosta = {
-            'binary': 'neutron-loadbalancer-agent',
-            'host': LBAAS_HOSTA,
-            'topic': 'LOADBALANCER_AGENT',
-            'configurations': {'device_drivers': ['haproxy_ns']},
-            'agent_type': constants.AGENT_TYPE_LOADBALANCER}
-        lbaas_hostb = copy.deepcopy(lbaas_hosta)
-        lbaas_hostb['host'] = LBAAS_HOSTB
-        callback = agents_db.AgentExtRpcCallback()
+        dhcp_hosta = helpers._get_dhcp_agent_dict(DHCP_HOSTA)
+        dhcp_hostc = helpers._get_dhcp_agent_dict(DHCP_HOSTC)
         helpers.register_l3_agent(host=L3_HOSTA)
         helpers.register_l3_agent(host=L3_HOSTB)
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': dhcp_hosta},
-                              time=timeutils.strtime())
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': dhcp_hostc},
-                              time=timeutils.strtime())
+        helpers.register_dhcp_agent(host=DHCP_HOSTA)
+        helpers.register_dhcp_agent(host=DHCP_HOSTC)
 
         res = [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
         if lbaas_agents:
+            lbaas_hosta = {
+                'binary': 'neutron-loadbalancer-agent',
+                'host': LBAAS_HOSTA,
+                'topic': 'LOADBALANCER_AGENT',
+                'configurations': {'device_drivers': ['haproxy_ns']},
+                'agent_type': constants.AGENT_TYPE_LOADBALANCER}
+            lbaas_hostb = copy.deepcopy(lbaas_hosta)
+            lbaas_hostb['host'] = LBAAS_HOSTB
+            callback = agents_db.AgentExtRpcCallback()
             callback.report_state(self.adminContext,
                                   agent_state={'agent_state': lbaas_hosta},
                                   time=timeutils.strtime())
@@ -128,22 +115,6 @@ class AgentDBTestMixIn(object):
             res += [lbaas_hosta, lbaas_hostb]
 
         return res
-
-    def _register_one_dhcp_agent(self):
-        """Register one DHCP agent."""
-        dhcp_host = {
-            'binary': 'neutron-dhcp-agent',
-            'host': DHCP_HOST1,
-            'topic': 'DHCP_AGENT',
-            'configurations': {'dhcp_driver': 'dhcp_driver',
-                               'use_namespaces': True,
-                               },
-            'agent_type': constants.AGENT_TYPE_DHCP}
-        callback = agents_db.AgentExtRpcCallback()
-        callback.report_state(self.adminContext,
-                              agent_state={'agent_state': dhcp_host},
-                              time=timeutils.strtime())
-        return [dhcp_host]
 
 
 class AgentDBTestCase(AgentDBTestMixIn,
@@ -170,13 +141,6 @@ class AgentDBTestCase(AgentDBTestMixIn,
     def test_list_agent(self):
         agents = self._register_agent_states()
         res = self._list('agents')
-        for agt in res['agents']:
-            if (agt['host'] == DHCP_HOSTA and
-                agt['agent_type'] == constants.AGENT_TYPE_DHCP):
-                self.assertEqual(
-                    'dhcp_driver',
-                    agt['configurations']['dhcp_driver'])
-                break
         self.assertEqual(len(agents), len(res['agents']))
 
     def test_show_agent(self):
