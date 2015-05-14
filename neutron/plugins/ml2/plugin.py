@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 from eventlet import greenthread
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -353,8 +351,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # prevent deadlock waiting to acquire a DB lock held by
         # another thread in the same process, leading to 'lock wait
         # timeout' errors.
-        with contextlib.nested(lockutils.lock('db-access'),
-                               session.begin(subtransactions=True)):
+        with lockutils.lock('db-access'),\
+                session.begin(subtransactions=True):
             # Get the current port state and build a new PortContext
             # reflecting this state as original state for subsequent
             # mechanism driver update_port_*commit() calls.
@@ -740,8 +738,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self._process_l3_delete(context, id)
                 # Using query().with_lockmode isn't necessary. Foreign-key
                 # constraints prevent deletion if concurrent creation happens.
-                with contextlib.nested(lockutils.lock('db-access'),
-                                       session.begin(subtransactions=True)):
+                with lockutils.lock('db-access'),\
+                        session.begin(subtransactions=True):
                     # Get ports to auto-delete.
                     ports = (session.query(models_v2.Port).
                              enable_eagerloads(False).
@@ -860,8 +858,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # prevent deadlock waiting to acquire a DB lock held by
             # another thread in the same process, leading to 'lock
             # wait timeout' errors.
-            with contextlib.nested(lockutils.lock('db-access'),
-                                   session.begin(subtransactions=True)):
+            with lockutils.lock('db-access'),\
+                    session.begin(subtransactions=True):
                 record = self._get_subnet(context, id)
                 subnet = self._make_subnet_dict(record, None)
                 qry_allocated = (session.query(models_v2.IPAllocation).
@@ -1107,8 +1105,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # prevent deadlock waiting to acquire a DB lock held by
         # another thread in the same process, leading to 'lock wait
         # timeout' errors.
-        with contextlib.nested(lockutils.lock('db-access'),
-                               session.begin(subtransactions=True)):
+        with lockutils.lock('db-access'),\
+                session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 raise exc.PortNotFound(port_id=id)
@@ -1259,8 +1257,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # prevent deadlock waiting to acquire a DB lock held by
         # another thread in the same process, leading to 'lock wait
         # timeout' errors.
-        with contextlib.nested(lockutils.lock('db-access'),
-                               session.begin(subtransactions=True)):
+        with lockutils.lock('db-access'),\
+                session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 LOG.debug("The port '%s' was deleted", id)
@@ -1386,8 +1384,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # prevent deadlock waiting to acquire a DB lock held by
         # another thread in the same process, leading to 'lock wait
         # timeout' errors.
-        with contextlib.nested(lockutils.lock('db-access'),
-                               session.begin(subtransactions=True)):
+        with lockutils.lock('db-access'),\
+                session.begin(subtransactions=True):
             port = db.get_port(session, port_id)
             if not port:
                 LOG.warning(_LW("Port %(port)s updated up by agent not found"),
@@ -1418,8 +1416,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if (updated and
             port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
-            with contextlib.nested(lockutils.lock('db-access'),
-                                   session.begin(subtransactions=True)):
+            with lockutils.lock('db-access'),\
+                    session.begin(subtransactions=True):
                 port = db.get_port(session, port_id)
                 if not port:
                     LOG.warning(_LW("Port %s not found during update"),
