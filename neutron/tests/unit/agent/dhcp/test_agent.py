@@ -567,10 +567,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         )
         self.external_process = self.external_process_p.start()
 
-    def _process_manager_constructor_call(self):
+    def _process_manager_constructor_call(self, ns=FAKE_NETWORK_DHCP_NS):
         return mock.call(conf=cfg.CONF,
                          uuid=FAKE_NETWORK_UUID,
-                         namespace=FAKE_NETWORK_DHCP_NS,
+                         namespace=ns,
                          default_cmd_callback=mock.ANY)
 
     def _enable_dhcp_helper(self, network, enable_isolated_metadata=False,
@@ -709,7 +709,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_called_once_with('disable', fake_network)
         if isolated_metadata:
             self.external_process.assert_has_calls([
-                self._process_manager_constructor_call(),
+                self._process_manager_constructor_call(ns=None),
                 mock.call().disable()])
         else:
             self.assertFalse(self.external_process.call_count)
@@ -741,7 +741,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             [mock.call.get_network_by_id(fake_network.id)])
         if isolated_metadata:
             self.external_process.assert_has_calls([
-                self._process_manager_constructor_call(),
+                self._process_manager_constructor_call(ns=None),
                 mock.call().disable()
             ])
         else:
@@ -768,7 +768,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp.disable_isolated_metadata_proxy(fake_network)
             destroy.assert_called_once_with(self.dhcp._process_monitor,
                                             fake_network.id,
-                                            fake_network.namespace,
                                             cfg.CONF)
 
     def _test_metadata_network(self, network):
