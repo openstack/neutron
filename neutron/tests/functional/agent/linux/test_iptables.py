@@ -16,7 +16,6 @@ import os.path
 
 import testtools
 
-from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils
 from neutron.tests import base
@@ -80,8 +79,7 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
 
     def _test_with_nc(self, fw_manager, direction, port, udp):
         netcat = helpers.NetcatTester(
-            ip_lib.IPWrapper(self.client.namespace),
-            ip_lib.IPWrapper(self.server.namespace),
+            self.client.namespace, self.server.namespace,
             self.server.ip, self.port, run_as_root=True, udp=udp)
         self.addCleanup(netcat.stop_processes)
         protocol = 'tcp'

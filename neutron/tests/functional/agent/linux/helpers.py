@@ -171,7 +171,7 @@ class NetcatTester(object):
             if not self._server_process:
                 self._spawn_server_process()
             self._client_process = self._spawn_nc_in_namespace(
-                self.client_namespace.namespace,
+                self.client_namespace,
                 address=self.client_address)
         return self._client_process
 
@@ -183,7 +183,7 @@ class NetcatTester(object):
 
     def _spawn_server_process(self):
         self._server_process = self._spawn_nc_in_namespace(
-            self.server_namespace.namespace,
+            self.server_namespace,
             address=self.server_address,
             listen=True)
 

@@ -409,7 +409,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         router.process(self.agent)
 
         router_ns = ip_lib.IPWrapper(namespace=router.ns_name)
-        netcat = helpers.NetcatTester(router_ns, router_ns,
+        netcat = helpers.NetcatTester(router.ns_name, router.ns_name,
                                       server_address, port,
                                       client_address=client_address,
                                       run_as_root=True,
@@ -708,8 +708,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         protocol_port = helpers.get_free_namespace_port(dst_machine.namespace)
         # client sends to fip
         netcat = helpers.NetcatTester(
-            ip_lib.IPWrapper(src_machine.namespace),
-            ip_lib.IPWrapper(dst_machine.namespace),
+            src_machine.namespace, dst_machine.namespace,
             dst_machine.ip, protocol_port, client_address=dst_fip,
             run_as_root=True, udp=False)
         self.addCleanup(netcat.stop_processes)
