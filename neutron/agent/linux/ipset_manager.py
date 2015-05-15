@@ -25,7 +25,7 @@ class IpsetManager(object):
 
     @utils.synchronized('ipset', external=True)
     def create_ipset_chain(self, chain_name, ethertype):
-        cmd = ['ipset', 'create', '-exist', chain_name, 'hash:ip', 'family',
+        cmd = ['ipset', 'create', '-exist', chain_name, 'hash:net', 'family',
                self._get_ipset_chain_type(ethertype)]
         self._apply(cmd)
 
@@ -38,8 +38,8 @@ class IpsetManager(object):
     def refresh_ipset_chain_by_name(self, chain_name, member_ips, ethertype):
         new_chain_name = chain_name + '-new'
         chain_type = self._get_ipset_chain_type(ethertype)
-        process_input = ["create %s hash:ip family %s" % (new_chain_name,
-                                                          chain_type)]
+        process_input = ["create %s hash:net family %s" % (new_chain_name,
+                                                           chain_type)]
         for ip in member_ips:
             process_input.append("add %s %s" % (new_chain_name, ip))
 
