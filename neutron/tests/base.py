@@ -22,7 +22,6 @@ import logging as std_logging
 import os
 import os.path
 import random
-import traceback
 import weakref
 
 import eventlet.timeout
@@ -171,8 +170,8 @@ class DietTestCase(testtools.TestCase):
             if os.getpid() != self.orig_pid:
                 # Subprocess - let it just exit
                 raise
-            self.fail("A SystemExit was raised during the test. %s"
-                      % traceback.format_exception(*exc_info))
+            # This makes sys.exit(0) still a failure
+            self.force_failure = True
 
     @contextlib.contextmanager
     def assert_max_execution_time(self, max_execution_time=5):
