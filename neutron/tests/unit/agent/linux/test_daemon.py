@@ -225,9 +225,9 @@ class TestDaemon(base.BaseTestCase):
 
     def test_fork_parent(self):
         self.os.fork.return_value = 1
-        with testtools.ExpectedException(SystemExit):
-            d = daemon.Daemon('pidfile')
-            d._fork()
+        d = daemon.Daemon('pidfile')
+        d._fork()
+        self.os._exit.assert_called_once_with(mock.ANY)
 
     def test_fork_child(self):
         self.os.fork.return_value = 0
