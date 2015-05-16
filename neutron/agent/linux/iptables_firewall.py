@@ -222,11 +222,11 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     # of the list after the allowed_address_pair rules.
                     table.add_rule(chain_name,
                                    '-m mac --mac-source %s -j RETURN'
-                                   % mac)
+                                   % mac.upper())
                 else:
                     table.add_rule(chain_name,
-                                   '-m mac --mac-source %s -s %s -j RETURN'
-                                   % (mac, ip))
+                                   '-s %s -m mac --mac-source %s -j RETURN'
+                                   % (ip, mac.upper()))
             table.add_rule(chain_name, '-j DROP')
             rules.append('-j $%s' % chain_name)
 
