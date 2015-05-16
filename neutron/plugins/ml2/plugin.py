@@ -680,7 +680,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.type_manager.extend_network_dict_provider(context, net)
 
             nets = self._filter_nets_provider(context, nets, filters)
-            nets = self._filter_nets_l3(context, nets, filters)
 
         return [self._fields(net, fields) for net in nets]
 
