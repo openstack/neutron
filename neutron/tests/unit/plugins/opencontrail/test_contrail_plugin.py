@@ -14,9 +14,6 @@
 # limitations under the License.
 
 
-import datetime
-import uuid
-
 import mock
 import netaddr
 from oslo_config import cfg
@@ -180,21 +177,6 @@ class FakeServer(db_base_plugin_v2.NeutronDbPluginV2,
 
 
 FAKE_SERVER = FakeServer()
-
-
-class Context(object):
-    def __init__(self, tenant_id=''):
-        self.read_only = False
-        self.show_deleted = False
-        self.roles = [u'admin', u'KeystoneServiceAdmin', u'KeystoneAdmin']
-        self._read_deleted = 'no'
-        self.timestamp = datetime.datetime.now()
-        self.auth_token = None
-        self._session = None
-        self._is_admin = True
-        self.admin = uuid.uuid4().hex.decode()
-        self.request_id = 'req-' + str(uuid.uuid4())
-        self.tenant = tenant_id
 
 
 class KeyStoneInfo(object):
