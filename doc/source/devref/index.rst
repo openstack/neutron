@@ -54,6 +54,7 @@ Neutron Internals
 
    services_and_agents
    api_layer
+   quota
    api_extensions
    plugin-api
    db_layer
