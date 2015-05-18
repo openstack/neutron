@@ -1143,13 +1143,11 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         # make sure redirect into spoof table is installed
         int_br.add_flow.assert_any_call(
             table=constants.LOCAL_SWITCHING, in_port=vif.ofport,
-            arp_op=constants.ARP_REPLY, proto='arp', actions=mock.ANY,
-            priority=10)
+            proto='arp', actions=mock.ANY, priority=10)
         # make sure drop rule for replies is installed
         int_br.add_flow.assert_any_call(
             table=constants.ARP_SPOOF_TABLE,
-            proto='arp', arp_op=constants.ARP_REPLY, actions='DROP',
-            priority=mock.ANY)
+            proto='arp', actions='DROP', priority=mock.ANY)
 
     def test_arp_spoofing_fixed_and_allowed_addresses(self):
         vif = FakeVif()
@@ -1167,8 +1165,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                      '192.168.44.103/32'):
             int_br.add_flow.assert_any_call(
                 table=constants.ARP_SPOOF_TABLE, in_port=vif.ofport,
-                proto='arp', arp_op=constants.ARP_REPLY, actions='NORMAL',
-                arp_spa=addr, priority=mock.ANY)
+                proto='arp', actions='NORMAL', arp_spa=addr, priority=mock.ANY)
 
     def test__get_ofport_moves(self):
         previous = {'port1': 1, 'port2': 2}

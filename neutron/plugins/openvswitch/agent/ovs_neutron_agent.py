@@ -783,20 +783,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             addresses += [p['ip_address']
                           for p in port_details['allowed_address_pairs']]
 
-        # allow ARP replies as long as they match addresses that actually
+        # allow ARPs as long as they match addresses that actually
         # belong to the port.
         for ip in addresses:
             if netaddr.IPNetwork(ip).version != 4:
                 continue
-            bridge.add_flow(
-                table=constants.ARP_SPOOF_TABLE, priority=2,
-                proto='arp', arp_op=constants.ARP_REPLY, arp_spa=ip,
-                in_port=vif.ofport, actions="NORMAL")
+            bridge.add_flow(table=constants.ARP_SPOOF_TABLE, priority=2,
+                            proto='arp', arp_spa=ip, in_port=vif.ofport,
+                            actions="NORMAL")
 
-        # drop any ARP replies in this table that aren't explicitly allowed
-        bridge.add_flow(
-            table=constants.ARP_SPOOF_TABLE, priority=1, proto='arp',
-            arp_op=constants.ARP_REPLY, actions="DROP")
+        # drop any ARPs in this table that aren't explicitly allowed
+        bridge.add_flow(table=constants.ARP_SPOOF_TABLE, priority=1,
+                        proto='arp', actions="DROP")
 
         # Now that the rules are ready, direct ARP traffic from the port into
         # the anti-spoof table.
@@ -804,7 +802,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # on ARP headers will just process traffic normally.
         bridge.add_flow(table=constants.LOCAL_SWITCHING,
                         priority=10, proto='arp', in_port=vif.ofport,
-                        arp_op=constants.ARP_REPLY,
                         actions=("resubmit(,%s)" % constants.ARP_SPOOF_TABLE))
 
     def port_unbound(self, vif_id, net_uuid=None):
