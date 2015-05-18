@@ -13,12 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent as ovsagt
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional.agent import test_ovs_lib
+from neutron.tests import tools
 
 
 class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
@@ -69,6 +71,21 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         self.dst_p.addr.add('%s/24' % self.dst_addr)
         pinger = helpers.Pinger(self.src_ns)
         pinger.assert_no_ping(self.dst_addr)
+
+    def test_arp_spoof_blocks_request(self):
+        # this will prevent the source from sending an ARP
+        # request with its own address
+        self._setup_arp_spoof_for_port(self.src_p.name, ['192.168.0.3'])
+        self.src_p.addr.add('%s/24' % self.src_addr)
+        self.dst_p.addr.add('%s/24' % self.dst_addr)
+        ns_ip_wrapper = ip_lib.IPWrapper(self.src_ns)
+        try:
+            ns_ip_wrapper.netns.execute(['arping', '-I', self.src_p.name,
+                                         '-c1', self.dst_addr])
+            tools.fail("arping should have failed. The arp request should "
+                       "have been blocked.")
+        except RuntimeError:
+            pass
 
     def test_arp_spoof_allowed_address_pairs(self):
         self._setup_arp_spoof_for_port(self.dst_p.name, ['192.168.0.3',
