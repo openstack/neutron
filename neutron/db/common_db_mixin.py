@@ -22,6 +22,25 @@ from neutron.common import exceptions as n_exc
 from neutron.db import sqlalchemyutils
 
 
+def model_query_scope(context, model):
+    # Unless a context has 'admin' or 'advanced-service' rights the
+    # query will be scoped to a single tenant_id
+    return ((not context.is_admin and hasattr(model, 'tenant_id')) and
+            (not context.is_advsvc and hasattr(model, 'tenant_id')))
+
+
+def model_query(context, model):
+    query = context.session.query(model)
+    # define basic filter condition for model query
+    query_filter = None
+    if model_query_scope(context, model):
+        query_filter = (model.tenant_id == context.tenant_id)
+
+    if query_filter is not None:
+        query = query.filter(query_filter)
+    return query
+
+
 class CommonDbMixin(object):
     """Common methods used in core and service plugins."""
     # Plugins, mixin classes implementing extension will register
@@ -72,11 +91,7 @@ class CommonDbMixin(object):
         return weakref.proxy(self)
 
     def model_query_scope(self, context, model):
-        # NOTE(jkoelker) non-admin queries are scoped to their tenant_id
-        # NOTE(salvatore-orlando): unless the model allows for shared objects
-        # NOTE(mestery): Or the user has the advsvc role
-        return ((not context.is_admin and hasattr(model, 'tenant_id')) and
-                (not context.is_advsvc and hasattr(model, 'tenant_id')))
+        return model_query_scope(context, model)
 
     def _model_query(self, context, model):
         query = context.session.query(model)
