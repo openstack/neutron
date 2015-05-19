@@ -139,7 +139,7 @@ class TunnelTypeTestMixin(object):
                  api.PHYSICAL_NETWORK: 'None',
                  api.SEGMENTATION_ID: None}
 
-        for x in moves.xrange(TUN_MIN, TUN_MAX + 1):
+        for x in moves.range(TUN_MIN, TUN_MAX + 1):
             segment = self.driver.reserve_provider_segment(self.session,
                                                            specs)
             self.assertEqual(self.TYPE, segment[api.NETWORK_TYPE])
@@ -170,7 +170,7 @@ class TunnelTypeTestMixin(object):
 
     def test_allocate_tenant_segment(self):
         tunnel_ids = set()
-        for x in moves.xrange(TUN_MIN, TUN_MAX + 1):
+        for x in moves.range(TUN_MIN, TUN_MAX + 1):
             segment = self.driver.allocate_tenant_segment(self.session)
             self.assertThat(segment[api.SEGMENTATION_ID],
                             matchers.GreaterThan(TUN_MIN - 1))

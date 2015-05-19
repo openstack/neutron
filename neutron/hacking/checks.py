@@ -160,6 +160,12 @@ def check_no_contextlib_nested(logical_line, filename):
         yield(0, msg)
 
 
+def check_python3_xrange(logical_line):
+    if re.search(r"\bxrange\s*\(", logical_line):
+        yield(0, "N325: Do not use xrange. Use range, or six.moves.range for "
+                 "large loops.")
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -167,3 +173,4 @@ def factory(register):
     register(no_translate_debug_logs)
     register(check_oslo_namespace_imports)
     register(check_no_contextlib_nested)
+    register(check_python3_xrange)

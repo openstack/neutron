@@ -56,7 +56,7 @@ class BaseTestProcessMonitor(base.BaseTestCase):
 
     def spawn_n_children(self, n, service=None):
         self._child_processes = []
-        for child_number in moves.xrange(n):
+        for child_number in moves.range(n):
             uuid = self._child_uuid(child_number)
             _callback = self._make_cmdline_callback(uuid)
             pm = external_process.ProcessManager(

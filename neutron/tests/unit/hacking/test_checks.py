@@ -18,6 +18,13 @@ from neutron.tests import base
 
 class HackingTestCase(base.BaseTestCase):
 
+    def assertLinePasses(self, func, line):
+        with testtools.ExpectedException(StopIteration):
+            next(func(line))
+
+    def assertLineFails(self, func, line):
+        self.assertIsInstance(next(func(line)), tuple)
+
     def test_log_translations(self):
         expected_marks = {
             'error': '_LE',
@@ -108,16 +115,17 @@ class HackingTestCase(base.BaseTestCase):
                                             "neutron/tests/test_assert.py"))))
 
     def test_check_oslo_namespace_imports(self):
-        def check(s, fail=True):
-            func = checks.check_oslo_namespace_imports
-            if fail:
-                self.assertIsInstance(next(func(s)), tuple)
-            else:
-                with testtools.ExpectedException(StopIteration):
-                    next(func(s))
+        f = checks.check_oslo_namespace_imports
+        self.assertLinePasses(f, 'from oslo_utils import importutils')
+        self.assertLinePasses(f, 'import oslo_messaging')
+        self.assertLineFails(f, 'from oslo.utils import importutils')
+        self.assertLineFails(f, 'from oslo import messaging')
+        self.assertLineFails(f, 'import oslo.messaging')
 
-        check('from oslo_utils import importutils', fail=False)
-        check('import oslo_messaging', fail=False)
-        check('from oslo.utils import importutils')
-        check('from oslo import messaging')
-        check('import oslo.messaging')
+    def test_check_python3_xrange(self):
+        f = checks.check_python3_xrange
+        self.assertLineFails(f, 'a = xrange(1000)')
+        self.assertLineFails(f, 'b =xrange   (   42 )')
+        self.assertLineFails(f, 'c = xrange(1, 10, 2)')
+        self.assertLinePasses(f, 'd = range(1000)')
+        self.assertLinePasses(f, 'e = six.moves.range(1337)')

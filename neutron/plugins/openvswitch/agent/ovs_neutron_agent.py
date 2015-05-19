@@ -161,8 +161,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         super(OVSNeutronAgent, self).__init__()
         self.use_veth_interconnection = use_veth_interconnection
         self.veth_mtu = veth_mtu
-        self.available_local_vlans = set(moves.xrange(p_const.MIN_VLAN_TAG,
-                                                      p_const.MAX_VLAN_TAG))
+        self.available_local_vlans = set(moves.range(p_const.MIN_VLAN_TAG,
+                                                     p_const.MAX_VLAN_TAG))
         self.use_call = True
         self.tunnel_types = tunnel_types or []
         self.l2_pop = l2_population

@@ -531,7 +531,7 @@ class LinuxBridgeManager(object):
             return False
 
         test_iface = None
-        for seg_id in moves.xrange(1, p_const.MAX_VXLAN_VNI + 1):
+        for seg_id in moves.range(1, p_const.MAX_VXLAN_VNI + 1):
             if not ip_lib.device_exists(
                     self.get_vxlan_device_name(seg_id)):
                 test_iface = self.ensure_vxlan(seg_id)

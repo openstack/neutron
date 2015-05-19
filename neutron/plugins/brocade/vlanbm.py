@@ -42,7 +42,7 @@ class VlanBitmap(object):
         min_vlan_search = vlan_id or MIN_VLAN
         max_vlan_search = (vlan_id + 1) if vlan_id else MAX_VLAN
 
-        for vlan in moves.xrange(min_vlan_search, max_vlan_search):
+        for vlan in moves.range(min_vlan_search, max_vlan_search):
             if vlan not in self.vlans:
                 self.vlans.add(vlan)
                 return vlan

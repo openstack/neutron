@@ -14,6 +14,7 @@ Neutron Specific Commandments
 - [N322] Detect common errors with assert_called_once_with
 - [N323] Enforce namespace-less imports for oslo libraries
 - [N324] Prevent use of deprecated contextlib.nested.
+- [N325] Python 3: Do not use xrange.
 
 Creating Unit Tests
 -------------------

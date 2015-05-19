@@ -22,6 +22,7 @@ import mock
 import netaddr
 from oslo_log import log
 import oslo_messaging
+from six import moves
 from testtools import matchers
 
 from neutron.agent.common import config as agent_config
@@ -115,7 +116,8 @@ def router_append_subnet(router, count=1, ip_version=4,
             ipv6_subnet_modes = [subnet_mode_none] * count
         elif len(ipv6_subnet_modes) != count:
             ipv6_subnet_modes.extend([subnet_mode_none for i in
-                                      xrange(len(ipv6_subnet_modes), count)])
+                                      moves.range(len(ipv6_subnet_modes),
+                                                  count)])
 
     if ip_version == 4:
         ip_pool = '35.4.%i.4'
@@ -144,7 +146,7 @@ def router_append_subnet(router, count=1, ip_version=4,
         fixed_ips, subnets = [], []
 
     num_existing_subnets = len(subnets)
-    for i in xrange(count):
+    for i in moves.range(count):
         subnet_id = _uuid()
         fixed_ips.append(
                 {'ip_address': ip_pool % (i + num_existing_subnets),
