@@ -93,7 +93,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                         {'device': device,
                          'agent_id': agent_id,
                          'network_id': port['network_id'],
-                         'vif_type': port[portbindings.VIF_TYPE]})
+                         'vif_type': port_context.vif_type})
             return {'device': device}
 
         if (not host or host == port_context.host):

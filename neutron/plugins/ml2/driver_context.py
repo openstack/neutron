@@ -89,8 +89,12 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._new_bound_segment = None
         self._next_segments_to_bind = None
         if original_port:
+            self._original_vif_type = binding.vif_type
+            self._original_vif_details = self._plugin._get_vif_details(binding)
             self._original_binding_levels = self._binding_levels
         else:
+            self._original_vif_type = None
+            self._original_vif_details = None
             self._original_binding_levels = None
         self._new_port_status = None
 
@@ -133,7 +137,10 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     @property
     def original_status(self):
-        return self._original_port['status']
+        # REVISIT(rkukura): Should return host-specific status for DVR
+        # ports. Fix as part of resolving bug 1367391.
+        if self._original_port:
+            return self._original_port['status']
 
     @property
     def network(self):
@@ -195,7 +202,29 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     @property
     def original_host(self):
-        return self._original_port.get(portbindings.HOST_ID)
+        # REVISIT(rkukura): Eliminate special DVR case as part of
+        # resolving bug 1367391?
+        if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
+            return self._original_port and self._binding.host
+        else:
+            return (self._original_port and
+                    self._original_port.get(portbindings.HOST_ID))
+
+    @property
+    def vif_type(self):
+        return self._binding.vif_type
+
+    @property
+    def original_vif_type(self):
+        return self._original_vif_type
+
+    @property
+    def vif_details(self):
+        return self._plugin._get_vif_details(self._binding)
+
+    @property
+    def original_vif_details(self):
+        return self._original_vif_details
 
     @property
     def segments_to_bind(self):
