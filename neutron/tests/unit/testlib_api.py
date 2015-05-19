@@ -75,6 +75,14 @@ class SqlFixture(fixtures.Fixture):
         self.addCleanup(clear_tables)
 
 
+class SqlTestCaseLight(base.DietTestCase):
+    """All SQL taste, zero plugin/rpc sugar"""
+
+    def setUp(self):
+        super(SqlTestCaseLight, self).setUp()
+        self.useFixture(SqlFixture())
+
+
 class SqlTestCase(base.BaseTestCase):
 
     def setUp(self):
