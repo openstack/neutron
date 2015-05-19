@@ -506,9 +506,8 @@ class IptablesManager(object):
     def _find_last_entry(self, filter_list, match_str):
         # find a matching entry, starting from the bottom
         for s in reversed(filter_list):
-            s = s.strip()
             if match_str in s:
-                return s
+                return s.strip()
 
     def _modify_rules(self, current_lines, table, table_name):
         # Chains are stored as sets to avoid duplicates.
