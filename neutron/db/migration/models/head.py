@@ -41,7 +41,7 @@ from neutron.db import model_base
 from neutron.db import models_v2  # noqa
 from neutron.db import portbindings_db  # noqa
 from neutron.db import portsecurity_db  # noqa
-from neutron.db import quota_db  # noqa
+from neutron.db.quota import models  # noqa
 from neutron.db import rbac_db_models  # noqa
 from neutron.db import securitygroups_db  # noqa
 from neutron.db import servicetype_db  # noqa
