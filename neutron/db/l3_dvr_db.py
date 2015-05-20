@@ -16,6 +16,7 @@ import collections
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -165,7 +166,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _get_device_owner(self, context, router=None):
         """Get device_owner for the specified router."""
-        router_is_uuid = isinstance(router, basestring)
+        router_is_uuid = isinstance(router, six.string_types)
         if router_is_uuid:
             router = self._get_router(context, router)
         if is_distributed_router(router):

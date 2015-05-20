@@ -20,6 +20,7 @@ from alembic import autogenerate as autogen
 from alembic import context
 from alembic import op
 
+import six
 import sqlalchemy
 from sqlalchemy import schema as sa_schema
 import sqlalchemy.sql.expression as expr
@@ -113,12 +114,12 @@ def parse_modify_command(command):
                 return
         elif modified.endswith('default'):
             modified = 'server_default'
-        if isinstance(new, basestring):
+        if isinstance(new, six.string_types):
             new = text(new)
         kwargs = {modified: new, 'schema': schema}
         default = existing.get('existing_server_default')
         if default and isinstance(default, sa_schema.DefaultClause):
-            if isinstance(default.arg, basestring):
+            if isinstance(default.arg, six.string_types):
                 existing['existing_server_default'] = default.arg
             else:
                 existing['existing_server_default'] = default.arg.text

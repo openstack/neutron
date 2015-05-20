@@ -151,7 +151,7 @@ def convert_protocol(value):
 
 
 def convert_ethertype_to_case_insensitive(value):
-    if isinstance(value, basestring):
+    if isinstance(value, six.string_types):
         for ethertype in sg_supported_ethertypes:
             if ethertype.lower() == value.lower():
                 return ethertype

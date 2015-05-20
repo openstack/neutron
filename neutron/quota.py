@@ -19,6 +19,7 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+import six
 import webob
 
 from neutron.common import exceptions
@@ -219,7 +220,7 @@ class QuotaEngine(object):
                 _driver_class = QUOTA_CONF_DRIVER
                 LOG.info(_LI("ConfDriver is used as quota_driver because the "
                              "loaded plugin does not support 'quotas' table."))
-            if isinstance(_driver_class, basestring):
+            if isinstance(_driver_class, six.string_types):
                 _driver_class = importutils.import_object(_driver_class)
             if isinstance(_driver_class, ConfDriver):
                 versionutils.report_deprecated_feature(
