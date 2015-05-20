@@ -52,10 +52,11 @@ class BaseFullStackTestCase(test_base.MySQLOpportunisticTestCase):
         we only support MySQL for now, but the groundwork for adding Postgres
         is already laid.
         """
-        conn = "mysql://%(username)s:%(password)s@127.0.0.1/%(db_name)s" % {
-            'username': test_base.DbFixture.USERNAME,
-            'password': test_base.DbFixture.PASSWORD,
-            'db_name': self.engine.url.database}
+        conn = ("mysql+pymysql://%(username)s:%(password)s"
+                "@127.0.0.1/%(db_name)s" % {
+                    'username': test_base.DbFixture.USERNAME,
+                    'password': test_base.DbFixture.PASSWORD,
+                    'db_name': self.engine.url.database})
 
         self.original_conn = cfg.CONF.database.connection
         self.addCleanup(self._revert_connection_address)

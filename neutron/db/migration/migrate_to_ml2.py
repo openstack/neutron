@@ -32,7 +32,7 @@ Known Limitations:
 Example usage:
 
   python -m neutron.db.migration.migrate_to_ml2 openvswitch \
-      mysql://login:pass@127.0.0.1/neutron
+      mysql+pymysql://login:pass@127.0.0.1/neutron
 
 Note that migration of tunneling state will only be attempted if the
 --tunnel-type parameter is provided.
