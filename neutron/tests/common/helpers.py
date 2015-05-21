@@ -118,3 +118,34 @@ def set_agent_admin_state(agent_id, admin_state_up=False):
         context.get_admin_context(),
         agent_id,
         {'agent': {'admin_state_up': admin_state_up}})
+
+
+def _get_ovs_agent_dict(host, agent_type, binary, tunnel_types,
+                        tunneling_ip='20.0.0.1', interface_mappings=None,
+                        l2pop_network_types=None):
+    agent = {
+        'binary': binary,
+        'host': host,
+        'topic': constants.L2_AGENT_TOPIC,
+        'configurations': {'tunneling_ip': tunneling_ip,
+                           'tunnel_types': tunnel_types},
+        'agent_type': agent_type,
+        'tunnel_type': [],
+        'start_flag': True}
+
+    if interface_mappings is not None:
+        agent['configurations']['interface_mappings'] = interface_mappings
+    if l2pop_network_types is not None:
+        agent['configurations']['l2pop_network_types'] = l2pop_network_types
+    return agent
+
+
+def register_ovs_agent(host=HOST, agent_type=constants.AGENT_TYPE_OVS,
+                       binary='neutron-openvswitch-agent',
+                       tunnel_types=['vxlan'], tunneling_ip='20.0.0.1',
+                       interface_mappings=None,
+                       l2pop_network_types=None):
+    agent = _get_ovs_agent_dict(host, agent_type, binary, tunnel_types,
+                                tunneling_ip, interface_mappings,
+                                l2pop_network_types)
+    return _register_agent(agent)
