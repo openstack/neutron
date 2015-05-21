@@ -310,7 +310,7 @@ class HyperVNeutronAgent(n_rpc.RpcCallback):
             self._utils.enable_port_metrics_collection(port_id)
             self._port_metric_retries[port_id] = CONF.AGENT.metrics_max_retries
 
-    def _port_unbound(self, port_id):
+    def _port_unbound(self, port_id, vnic_deleted=False):
         (net_uuid, map) = self._get_network_vswitch_map_by_port_id(port_id)
         if net_uuid not in self._network_vswitch_map:
             LOG.info(_('Network %s is not avalailable on this agent'),
@@ -318,7 +318,8 @@ class HyperVNeutronAgent(n_rpc.RpcCallback):
             return
 
         LOG.debug(_("Unbinding port %s"), port_id)
-        self._utils.disconnect_switch_port(map['vswitch_name'], port_id, True)
+        self._utils.disconnect_switch_port(map['vswitch_name'], port_id,
+                                           vnic_deleted, True)
 
         if not map['ports']:
             self._reclaim_local_network(net_uuid)
@@ -417,7 +418,7 @@ class HyperVNeutronAgent(n_rpc.RpcCallback):
                     dict(device=device, e=e))
                 resync = True
                 continue
-            self._port_unbound(device)
+            self._port_unbound(device, vnic_deleted=True)
         return resync
 
     def _process_network_ports(self, port_info):

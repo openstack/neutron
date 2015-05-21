@@ -173,7 +173,7 @@ class HyperVUtils(object):
         pass
 
     def disconnect_switch_port(
-            self, vswitch_name, switch_port_name, delete_port):
+            self, vswitch_name, switch_port_name, vnic_deleted, delete_port):
         """Disconnects the switch port."""
         switch_svc = self._conn.Msvm_VirtualSwitchManagementService()[0]
         switch_port_path = self._get_switch_port_path_by_name(
@@ -182,16 +182,17 @@ class HyperVUtils(object):
             # Port not found. It happens when the VM was already deleted.
             return
 
-        (ret_val, ) = switch_svc.DisconnectSwitchPort(
-            SwitchPort=switch_port_path)
-        if ret_val != 0:
-            data = {'switch_port_name': switch_port_name,
-                    'vswitch_name': vswitch_name,
-                    'ret_val': ret_val}
-            raise HyperVException(
-                msg=_('Failed to disconnect port %(switch_port_name)s '
-                      'from switch %(vswitch_name)s '
-                      'with error %(ret_val)s') % data)
+        if not vnic_deleted:
+            (ret_val, ) = switch_svc.DisconnectSwitchPort(
+                SwitchPort=switch_port_path)
+            if ret_val != 0:
+                data = {'switch_port_name': switch_port_name,
+                        'vswitch_name': vswitch_name,
+                        'ret_val': ret_val}
+                raise HyperVException(
+                    msg=_('Failed to disconnect port %(switch_port_name)s '
+                          'from switch %(vswitch_name)s '
+                          'with error %(ret_val)s') % data)
         if delete_port:
             (ret_val, ) = switch_svc.DeleteSwitchPort(
                 SwitchPort=switch_port_path)
