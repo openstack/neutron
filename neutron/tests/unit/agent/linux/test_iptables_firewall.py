@@ -122,8 +122,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=ic.INPUT_TO_SG),
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
-                     'sfake_dev', '-m mac --mac-source ff:ff:ff:ff:ff:ff '
-                     '-s 10.0.0.1 -j RETURN',
+                     'sfake_dev',
+                     '-s 10.0.0.1 -m mac --mac-source FF:FF:FF:FF:FF:FF '
+                     '-j RETURN',
                      comment=ic.PAIR_ALLOW),
                  mock.call.add_rule(
                      'sfake_dev', '-j DROP',
@@ -967,7 +968,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                   mock.call.add_chain('sfake_dev'),
                   mock.call.add_rule(
                       'sfake_dev',
-                      '-m mac --mac-source ff:ff:ff:ff:ff:ff -s %s -j RETURN'
+                      '-s %s -m mac --mac-source FF:FF:FF:FF:FF:FF -j RETURN'
                       % prefix,
                       comment=ic.PAIR_ALLOW),
                   mock.call.add_rule(
@@ -1066,7 +1067,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.1 '
+                     '-s 10.0.0.1 -m mac --mac-source FF:FF:FF:FF:FF:FF '
                      '-j RETURN',
                      comment=ic.PAIR_ALLOW),
                  mock.call.add_rule(
@@ -1138,7 +1139,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.1 '
+                     '-s 10.0.0.1 -m mac --mac-source FF:FF:FF:FF:FF:FF '
                      '-j RETURN',
                      comment=ic.PAIR_ALLOW),
                  mock.call.add_rule(
@@ -1308,12 +1309,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.1 '
+                     '-s 10.0.0.1 -m mac --mac-source FF:FF:FF:FF:FF:FF '
                      '-j RETURN',
                      comment=ic.PAIR_ALLOW),
                  mock.call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.2 '
+                     '-s 10.0.0.2 -m mac --mac-source FF:FF:FF:FF:FF:FF '
                      '-j RETURN',
                      comment=ic.PAIR_ALLOW),
                  mock.call.add_rule(
@@ -1388,7 +1389,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -j RETURN',
+                     '-m mac --mac-source FF:FF:FF:FF:FF:FF -j RETURN',
                      comment=ic.PAIR_ALLOW),
                  mock.call.add_rule(
                      'sfake_dev', '-j DROP',

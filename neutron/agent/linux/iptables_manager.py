@@ -63,7 +63,15 @@ IPTABLES_ERROR_LINES_OF_CONTEXT = 5
 def comment_rule(rule, comment):
     if not cfg.CONF.AGENT.comment_iptables_rules or not comment:
         return rule
-    return '%s -m comment --comment "%s"' % (rule, comment)
+    # iptables-save outputs the comment before the jump so we need to match
+    # that order so _find_last_entry works
+    try:
+        start_of_jump = rule.index(' -j ')
+    except ValueError:
+        return '%s -m comment --comment "%s"' % (rule, comment)
+    return ' '.join([rule[0:start_of_jump],
+                     '-m comment --comment "%s"' % comment,
+                     rule[start_of_jump + 1:]])
 
 
 def get_chain_name(chain_name, wrap=True):
