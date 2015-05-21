@@ -17,6 +17,7 @@ import re
 
 import netaddr
 from oslo_log import log as logging
+import six
 
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -105,7 +106,7 @@ def _validate_string_or_none(data, max_len=None):
 
 
 def _validate_string(data, max_len=None):
-    if not isinstance(data, basestring):
+    if not isinstance(data, six.string_types):
         msg = _("'%s' is not a valid string") % data
         LOG.debug(msg)
         return msg
@@ -481,7 +482,7 @@ def _validate_non_negative(data, valid_values=None):
 
 
 def convert_to_boolean(data):
-    if isinstance(data, basestring):
+    if isinstance(data, six.string_types):
         val = data.lower()
         if val == "true" or val == "1":
             return True

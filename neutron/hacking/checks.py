@@ -166,6 +166,13 @@ def check_python3_xrange(logical_line):
                  "large loops.")
 
 
+def check_no_basestring(logical_line):
+    if re.search(r"\bbasestring\b", logical_line):
+        msg = ("N326: basestring is not Python3-compatible, use "
+               "six.string_types instead.")
+        yield(0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -174,3 +181,4 @@ def factory(register):
     register(check_oslo_namespace_imports)
     register(check_no_contextlib_nested)
     register(check_python3_xrange)
+    register(check_no_basestring)

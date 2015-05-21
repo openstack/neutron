@@ -129,3 +129,7 @@ class HackingTestCase(base.BaseTestCase):
         self.assertLineFails(f, 'c = xrange(1, 10, 2)')
         self.assertLinePasses(f, 'd = range(1000)')
         self.assertLinePasses(f, 'e = six.moves.range(1337)')
+
+    def test_no_basestring(self):
+        self.assertEqual(1,
+            len(list(checks.check_no_basestring("isinstance(x, basestring)"))))

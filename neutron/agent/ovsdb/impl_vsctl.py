@@ -19,6 +19,7 @@ import uuid
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
+import six
 
 from neutron.agent.common import utils
 from neutron.agent.ovsdb import api as ovsdb
@@ -255,7 +256,7 @@ def _set_colval_args(*col_values):
             args += ["%s:%s%s%s" % (
                 col, k, op, _py_to_val(v)) for k, v in val.items()]
         elif (isinstance(val, collections.Sequence)
-                and not isinstance(val, basestring)):
+                and not isinstance(val, six.string_types)):
             args.append("%s%s%s" % (col, op, ",".join(map(_py_to_val, val))))
         else:
             args.append("%s%s%s" % (col, op, _py_to_val(val)))
