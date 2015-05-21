@@ -1460,11 +1460,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port_host = db.get_port_binding_host(context.session, port_id)
             return (port_host == host)
 
-    def get_ports_from_devices(self, devices):
-        port_ids_to_devices = dict((self._device_to_port_id(device), device)
-                                   for device in devices)
+    def get_ports_from_devices(self, context, devices):
+        port_ids_to_devices = dict(
+            (self._device_to_port_id(context, device), device)
+            for device in devices)
         port_ids = port_ids_to_devices.keys()
-        ports = db.get_ports_and_sgs(port_ids)
+        ports = db.get_ports_and_sgs(context, port_ids)
         for port in ports:
             # map back to original requested id
             port_id = next((port_id for port_id in port_ids
@@ -1474,7 +1475,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return ports
 
     @staticmethod
-    def _device_to_port_id(device):
+    def _device_to_port_id(context, device):
         # REVISIT(rkukura): Consider calling into MechanismDrivers to
         # process device names, or having MechanismDrivers supply list
         # of device prefixes to strip.
@@ -1484,7 +1485,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # REVISIT(irenab): Consider calling into bound MD to
         # handle the get_device_details RPC
         if not uuidutils.is_uuid_like(device):
-            port = db.get_port_from_device_mac(device)
+            port = db.get_port_from_device_mac(context, device)
             if port:
                 return port.id
         return device

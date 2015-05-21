@@ -56,7 +56,7 @@ IPv6 = 6
 class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
 
     @staticmethod
-    def get_port_from_device(device):
+    def get_port_from_device(context, device):
         port = nvsd_db.get_port_from_device(device)
         if port:
             port['device'] = device

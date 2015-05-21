@@ -621,23 +621,26 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
                         ('qvo567890', '567890')]
         for device, expected in input_output:
             self.assertEqual(expected,
-                             ml2_plugin.Ml2Plugin._device_to_port_id(device))
+                             ml2_plugin.Ml2Plugin._device_to_port_id(
+                                 self.context, device))
 
     def test__device_to_port_id_mac_address(self):
         with self.port() as p:
             mac = p['port']['mac_address']
             port_id = p['port']['id']
             self.assertEqual(port_id,
-                             ml2_plugin.Ml2Plugin._device_to_port_id(mac))
+                             ml2_plugin.Ml2Plugin._device_to_port_id(
+                                 self.context, mac))
 
     def test__device_to_port_id_not_uuid_not_mac(self):
         dev = '1234567'
-        self.assertEqual(dev, ml2_plugin.Ml2Plugin._device_to_port_id(dev))
+        self.assertEqual(dev, ml2_plugin.Ml2Plugin._device_to_port_id(
+            self.context, dev))
 
     def test__device_to_port_id_UUID(self):
         port_id = uuidutils.generate_uuid()
-        self.assertEqual(port_id,
-                         ml2_plugin.Ml2Plugin._device_to_port_id(port_id))
+        self.assertEqual(port_id, ml2_plugin.Ml2Plugin._device_to_port_id(
+            self.context, port_id))
 
 
 class TestMl2DvrPortsV2(TestMl2PortsV2):

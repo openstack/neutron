@@ -201,7 +201,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_network(network_id)
         port = self._setup_neutron_port(network_id, port_id)
 
-        observed_port = ml2_db.get_port_from_device_mac(port['mac_address'])
+        observed_port = ml2_db.get_port_from_device_mac(self.ctx,
+                                                        port['mac_address'])
         self.assertEqual(port_id, observed_port.id)
 
     def test_get_locked_port_and_binding(self):

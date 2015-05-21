@@ -38,7 +38,7 @@ DHCP_RULE_PORT = {4: (67, 68, q_const.IPv4), 6: (547, 546, q_const.IPv6)}
 class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     """Mixin class to add agent-based security group implementation."""
 
-    def get_port_from_device(self, device):
+    def get_port_from_device(self, context, device):
         """Get port dict from device name on an agent.
 
         Subclass must provide this method or get_ports_from_devices.
@@ -59,13 +59,14 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                                     "or get_ports_from_devices.")
                                   % self.__class__.__name__)
 
-    def get_ports_from_devices(self, devices):
+    def get_ports_from_devices(self, context, devices):
         """Bulk method of get_port_from_device.
 
         Subclasses may override this to provide better performance for DB
         queries, backend calls, etc.
         """
-        return [self.get_port_from_device(device) for device in devices]
+        return [self.get_port_from_device(context, device)
+                for device in devices]
 
     def create_security_group_rule(self, context, security_group_rule):
         bulk_rule = {'security_group_rules': [security_group_rule]}

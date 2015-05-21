@@ -76,10 +76,10 @@ class SecurityGroupServerRpcCallback(object):
     def plugin(self):
         return manager.NeutronManager.get_plugin()
 
-    def _get_devices_info(self, devices):
+    def _get_devices_info(self, context, devices):
         return dict(
             (port['id'], port)
-            for port in self.plugin.get_ports_from_devices(devices)
+            for port in self.plugin.get_ports_from_devices(context, devices)
             if port and not port['device_owner'].startswith('network:')
         )
 
@@ -93,7 +93,7 @@ class SecurityGroupServerRpcCallback(object):
         :returns: port correspond to the devices with security group rules
         """
         devices_info = kwargs.get('devices')
-        ports = self._get_devices_info(devices_info)
+        ports = self._get_devices_info(context, devices_info)
         return self.plugin.security_group_rules_for_ports(context, ports)
 
     def security_group_info_for_devices(self, context, **kwargs):
@@ -110,7 +110,7 @@ class SecurityGroupServerRpcCallback(object):
         Note that sets are serialized into lists by rpc code.
         """
         devices_info = kwargs.get('devices')
-        ports = self._get_devices_info(devices_info)
+        ports = self._get_devices_info(context, devices_info)
         return self.plugin.security_group_info_for_ports(context, ports)
 
 
