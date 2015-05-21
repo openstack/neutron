@@ -248,5 +248,21 @@ class SriovSwitchMechConfigTestCase(SriovNicSwitchMechanismBaseTestCase):
                          self.driver.pci_vendor_info)
 
     def test_pci_vendor_config_wrong_entry(self):
-        self._set_config('wrong_entry')
+        self._set_config(['wrong_entry'])
+        self.assertRaises(cfg.Error, self.driver.initialize)
+
+    def test_initialize_missing_product_id(self):
+        self._set_config(['vendor_id:'])
+        self.assertRaises(cfg.Error, self.driver.initialize)
+
+    def test_initialize_missing_vendor_id(self):
+        self._set_config([':product_id'])
+        self.assertRaises(cfg.Error, self.driver.initialize)
+
+    def test_initialize_multiple_colons(self):
+        self._set_config(['foo:bar:baz'])
+        self.assertRaises(cfg.Error, self.driver.initialize)
+
+    def test_initialize_empty_string(self):
+        self._set_config([''])
         self.assertRaises(cfg.Error, self.driver.initialize)
