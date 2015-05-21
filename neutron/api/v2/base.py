@@ -595,21 +595,24 @@ class Controller(object):
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
         LOG.debug("Request body: %(body)s", {'body': body})
-        if collection in body:
-            if not allow_bulk:
-                raise webob.exc.HTTPBadRequest(_("Bulk operation "
-                                                 "not supported"))
-            if not body[collection]:
-                raise webob.exc.HTTPBadRequest(_("Resources required"))
-            bulk_body = [
-                Controller.prepare_request_body(
-                    context, item if resource in item else {resource: item},
-                    is_create, resource, attr_info, allow_bulk
-                ) for item in body[collection]
-            ]
-            return {collection: bulk_body}
-
-        res_dict = body.get(resource)
+        try:
+            if collection in body:
+                if not allow_bulk:
+                    raise webob.exc.HTTPBadRequest(_("Bulk operation "
+                                                     "not supported"))
+                if not body[collection]:
+                    raise webob.exc.HTTPBadRequest(_("Resources required"))
+                bulk_body = [
+                    Controller.prepare_request_body(
+                        context, item if resource in item
+                        else {resource: item}, is_create, resource, attr_info,
+                        allow_bulk) for item in body[collection]
+                ]
+                return {collection: bulk_body}
+            res_dict = body.get(resource)
+        except (AttributeError, TypeError):
+            msg = _("Body contains invalid data")
+            raise webob.exc.HTTPBadRequest(msg)
         if res_dict is None:
             msg = _("Unable to find '%s' in request body") % resource
             raise webob.exc.HTTPBadRequest(msg)

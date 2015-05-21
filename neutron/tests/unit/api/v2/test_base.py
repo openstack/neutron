@@ -832,6 +832,14 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         data = {'whoa': None}
         self._test_create_failure_bad_request('networks', data)
 
+    def test_create_body_string_not_json(self):
+        data = 'a string'
+        self._test_create_failure_bad_request('networks', data)
+
+    def test_create_body_boolean_not_json(self):
+        data = True
+        self._test_create_failure_bad_request('networks', data)
+
     def test_create_no_resource(self):
         data = {}
         self._test_create_failure_bad_request('networks', data)
