@@ -96,7 +96,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
                               "%(tun_min)s:%(tun_max)s"),
                           {'tun_min': tun_min, 'tun_max': tun_max})
             else:
-                vxlan_vnis |= set(moves.xrange(tun_min, tun_max + 1))
+                vxlan_vnis |= set(moves.range(tun_min, tun_max + 1))
 
         session = db_api.get_session()
         with session.begin(subtransactions=True):

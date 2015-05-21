@@ -93,7 +93,7 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
                               "%(tun_min)s:%(tun_max)s"),
                           {'tun_min': tun_min, 'tun_max': tun_max})
             else:
-                gre_ids |= set(moves.xrange(tun_min, tun_max + 1))
+                gre_ids |= set(moves.range(tun_min, tun_max + 1))
 
         session = db_api.get_session()
         try:

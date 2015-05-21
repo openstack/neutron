@@ -115,7 +115,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 # this physical network
                 vlan_ids = set()
                 for vlan_min, vlan_max in vlan_ranges:
-                    vlan_ids |= set(moves.xrange(vlan_min, vlan_max + 1))
+                    vlan_ids |= set(moves.range(vlan_min, vlan_max + 1))
 
                 # remove from table unallocated vlans not currently
                 # allocatable

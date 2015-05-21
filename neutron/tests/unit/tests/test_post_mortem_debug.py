@@ -77,7 +77,7 @@ class TestGetIgnoredTraceback(base.BaseTestCase):
 
         tb = root_tb
         tracebacks = [tb]
-        for x in moves.xrange(len(ignored_bit_array) - 1):
+        for x in moves.range(len(ignored_bit_array) - 1):
             tb.tb_next = mock.Mock()
             tb = tb.tb_next
             tracebacks.append(tb)

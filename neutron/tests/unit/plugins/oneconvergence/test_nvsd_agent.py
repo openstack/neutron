@@ -17,6 +17,7 @@ import time
 
 import mock
 from oslo_config import cfg
+from six import moves
 import testtools
 
 from neutron.agent.common import ovs_lib
@@ -125,8 +126,8 @@ class TestNVSDAgent(TestOneConvergenceAgentBase):
         # Ensure vif_ports_scenario is longer than DAEMON_LOOP_COUNT
         if len(self.vif_ports_scenario) < DAEMON_LOOP_COUNT:
             self.vif_ports_scenario.extend(
-                [] for _i in xrange(DAEMON_LOOP_COUNT -
-                                    len(self.vif_ports_scenario)))
+                [] for _i in moves.range(DAEMON_LOOP_COUNT -
+                                         len(self.vif_ports_scenario)))
 
         with contextlib.nested(
             mock.patch.object(time, 'sleep', side_effect=sleep_mock),

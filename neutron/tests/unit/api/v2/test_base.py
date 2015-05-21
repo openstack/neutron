@@ -17,6 +17,7 @@ import os
 
 import mock
 from oslo_config import cfg
+from six import moves
 import six.moves.urllib.parse as urlparse
 import webob
 from webob import exc
@@ -1302,7 +1303,7 @@ class DHCPNotificationTest(APIv2TestBase):
                 resource += 's'
             num = len(initial_input[resource]) if initial_input and isinstance(
                 initial_input[resource], list) else 1
-            expected = [expected_item for x in xrange(num)]
+            expected = [expected_item for x in moves.range(num)]
             self.assertEqual(expected, dhcp_notifier.call_args_list)
             self.assertEqual(num, dhcp_notifier.call_count)
         self.assertEqual(expected_code, res.status_int)

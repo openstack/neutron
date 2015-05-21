@@ -17,7 +17,6 @@
 
 import copy
 import hashlib
-from six.moves import http_client as httplib
 import json
 import posixpath
 import re
@@ -30,6 +29,7 @@ import urlparse
 import OpenSSL
 from oslo_log import log as logging
 from six import moves
+from six.moves import http_client as httplib
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.tempest import exceptions as exc
@@ -260,7 +260,7 @@ class VerifiedHTTPSConnection(httplib.HTTPSConnection):
 
         # Also try Subject Alternative Names for a match
         san_list = None
-        for i in moves.xrange(x509.get_extension_count()):
+        for i in moves.range(x509.get_extension_count()):
             ext = x509.get_extension(i)
             if ext.get_short_name() == 'subjectAltName':
                 san_list = str(ext)
