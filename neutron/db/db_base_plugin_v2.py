@@ -641,6 +641,16 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                           'cidr': subnet.cidr})
                 raise n_exc.InvalidInput(error_message=err_msg)
 
+    def _validate_network_subnetpools(self, network,
+                                      new_subnetpool_id, ip_version):
+        """Validate all subnets on the given network have been allocated from
+           the same subnet pool as new_subnetpool_id
+        """
+        for subnet in network.subnets:
+            if (subnet.ip_version == ip_version and
+               new_subnetpool_id != subnet.subnetpool_id):
+                raise n_exc.NetworkSubnetPoolAffinityError()
+
     def _validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
 
@@ -1191,6 +1201,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                                allocation_pools)
 
         self._validate_subnet_cidr(context, network, subnet_args['cidr'])
+        self._validate_network_subnetpools(network,
+                                           subnet_args['subnetpool_id'],
+                                           subnet_args['ip_version'])
 
         subnet = models_v2.Subnet(**subnet_args)
         context.session.add(subnet)

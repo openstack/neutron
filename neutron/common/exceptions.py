@@ -457,3 +457,8 @@ class SubnetPoolQuotaExceeded(OverQuota):
 
 class DeviceNotFoundError(NeutronException):
     message = _("Device '%(device_name)s' does not exist")
+
+
+class NetworkSubnetPoolAffinityError(BadRequest):
+    message = _("Subnets hosted on the same network must be allocated from "
+                "the same subnet pool")

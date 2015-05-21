@@ -256,3 +256,20 @@ class SubnetPoolsTestV6(SubnetPoolsTest):
         prefixes = [u'2001:db8:3::/48']
         cls._subnetpool_data = {'subnetpool': {'min_prefixlen': min_prefixlen,
                                                'prefixes': prefixes}}
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('f62d73dc-cf6f-4879-b94b-dab53982bf3b')
+    def test_create_dual_stack_subnets_from_subnetpools(self):
+        pool_id_v6, subnet_v6 = self._create_subnet_from_pool()
+        self.addCleanup(self.client.delete_subnet, subnet_v6['id'])
+        pool_values_v4 = {'prefixes': ['192.168.0.0/16'],
+                          'min_prefixlen': 21,
+                          'max_prefixlen': 32}
+        pool_name_v4, pool_id_v4 = self._create_subnetpool(self.client,
+                                                  pool_values=pool_values_v4)
+        subnet_v4 = self.client.create_subnet(
+                                network_id=subnet_v6['network_id'],
+                                ip_version=4,
+                                subnetpool_id=pool_id_v4)['subnet']
+        self.addCleanup(self.client.delete_subnet, subnet_v4['id'])
+        self.assertEqual(subnet_v4['network_id'], subnet_v6['network_id'])
