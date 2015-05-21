@@ -39,6 +39,7 @@ DEVICE_OWNER_DVR_INTERFACE = "network:router_interface_distributed"
 DEVICE_OWNER_AGENT_GW = "network:floatingip_agent_gateway"
 DEVICE_OWNER_ROUTER_SNAT = "network:router_centralized_snat"
 DEVICE_OWNER_LOADBALANCER = "neutron:LOADBALANCER"
+DEVICE_OWNER_LOADBALANCERV2 = "neutron:LOADBALANCERV2"
 
 # Collection used to identify devices owned by router interfaces.
 # DEVICE_OWNER_ROUTER_HA_INTF is a special case and so is not included.
