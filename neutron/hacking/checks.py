@@ -146,7 +146,6 @@ def check_no_contextlib_nested(logical_line, filename):
     # these issues. It should be removed completely
     # when bug 1428424 is closed.
     ignore_dirs = [
-        "neutron/plugins/ml2",
         "neutron/tests/unit/api",
         "neutron/tests/unit/db",
         "neutron/tests/unit/extensions",
