@@ -1674,3 +1674,23 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
                          [dict(rule.items() +
                                [('source_ip_prefix', '%s/32' % ip)])
                           for ip in other_ips])
+
+    def test_build_ipv4v6_mac_ip_list(self):
+        mac_oth = 'ffff-ffff-ffff'
+        mac_unix = 'ff:ff:ff:ff:ff:ff'
+        ipv4 = FAKE_IP['IPv4']
+        ipv6 = FAKE_IP['IPv6']
+        fake_ipv4_pair = []
+        fake_ipv4_pair.append((mac_unix, ipv4))
+        fake_ipv6_pair = []
+        fake_ipv6_pair.append((mac_unix, ipv6))
+
+        mac_ipv4_pairs = []
+        mac_ipv6_pairs = []
+
+        self.firewall._build_ipv4v6_mac_ip_list(mac_oth, ipv4,
+                                                mac_ipv4_pairs, mac_ipv6_pairs)
+        self.assertEqual(fake_ipv4_pair, mac_ipv4_pairs)
+        self.firewall._build_ipv4v6_mac_ip_list(mac_oth, ipv6,
+                                                mac_ipv4_pairs, mac_ipv6_pairs)
+        self.assertEqual(fake_ipv6_pair, mac_ipv6_pairs)
