@@ -124,3 +124,29 @@ class TestIsAutoAddressSubnet(base.BaseTestCase):
             self.subnet['ipv6_ra_mode'] = subnet.ra_mode
             self.assertEqual(subnet.is_auto_address,
                              ipv6_utils.is_auto_address_subnet(self.subnet))
+
+
+class TestIsEui64Address(base.BaseTestCase):
+
+    def _test_eui_64(self, ips, expected):
+        for ip in ips:
+            self.assertEqual(expected, ipv6_utils.is_eui64_address(ip),
+                             "Error on %s" % ip)
+
+    def test_valid_eui64_addresses(self):
+        ips = ('fffe::0cad:12ff:fe44:5566',
+               ipv6_utils.get_ipv6_addr_by_EUI64('2001:db8::',
+                                                 '00:16:3e:33:44:55'))
+        self._test_eui_64(ips, True)
+
+    def test_invalid_eui64_addresses(self):
+        ips = ('192.168.1.1',
+               '192.168.1.0',
+               '255.255.255.255',
+               '0.0.0.0',
+               'fffe::',
+               'ff80::1',
+               'fffe::0cad:12ff:ff44:5566',
+               'fffe::0cad:12fe:fe44:5566',
+               'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff')
+        self._test_eui_64(ips, False)

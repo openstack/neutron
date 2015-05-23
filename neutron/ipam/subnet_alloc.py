@@ -23,6 +23,7 @@ from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 import neutron.ipam as ipam
 from neutron.ipam import driver
+from neutron.ipam import utils as ipam_utils
 from neutron.openstack.common import uuidutils
 
 
@@ -33,19 +34,19 @@ class SubnetAllocator(driver.Pool):
        make merging into IPAM framework easier in future cycles.
     """
 
-    def __init__(self, subnetpool):
-        self._subnetpool = subnetpool
+    def __init__(self, subnetpool, context):
+        super(SubnetAllocator, self).__init__(subnetpool, context)
         self._sp_helper = SubnetPoolHelper()
 
-    def _get_allocated_cidrs(self, session):
-        query = session.query(
+    def _get_allocated_cidrs(self):
+        query = self._context.session.query(
             models_v2.Subnet).with_lockmode('update')
         subnets = query.filter_by(subnetpool_id=self._subnetpool['id'])
         return (x.cidr for x in subnets)
 
-    def _get_available_prefix_list(self, session):
+    def _get_available_prefix_list(self):
         prefixes = (x.cidr for x in self._subnetpool.prefixes)
-        allocations = self._get_allocated_cidrs(session)
+        allocations = self._get_allocated_cidrs()
         prefix_set = netaddr.IPSet(iterable=prefixes)
         allocation_set = netaddr.IPSet(iterable=allocations)
         available_set = prefix_set.difference(allocation_set)
@@ -57,11 +58,11 @@ class SubnetAllocator(driver.Pool):
     def _num_quota_units_in_prefixlen(self, prefixlen, quota_unit):
         return math.pow(2, quota_unit - prefixlen)
 
-    def _allocations_used_by_tenant(self, session, quota_unit):
+    def _allocations_used_by_tenant(self, quota_unit):
         subnetpool_id = self._subnetpool['id']
         tenant_id = self._subnetpool['tenant_id']
-        with session.begin(subtransactions=True):
-            qry = session.query(
+        with self._context.session.begin(subtransactions=True):
+            qry = self._context.session.query(
                  models_v2.Subnet).with_lockmode('update')
             allocations = qry.filter_by(subnetpool_id=subnetpool_id,
                                         tenant_id=tenant_id)
@@ -72,60 +73,60 @@ class SubnetAllocator(driver.Pool):
                                                             quota_unit)
             return value
 
-    def _check_subnetpool_tenant_quota(self, session, tenant_id, prefixlen):
+    def _check_subnetpool_tenant_quota(self, tenant_id, prefixlen):
         quota_unit = self._sp_helper.ip_version_subnetpool_quota_unit(
                                                self._subnetpool['ip_version'])
         quota = self._subnetpool.get('default_quota')
 
         if quota:
-            used = self._allocations_used_by_tenant(session, quota_unit)
+            used = self._allocations_used_by_tenant(quota_unit)
             requested_units = self._num_quota_units_in_prefixlen(prefixlen,
                                                                  quota_unit)
 
             if used + requested_units > quota:
                 raise n_exc.SubnetPoolQuotaExceeded()
 
-    def _allocate_any_subnet(self, session, request):
-        with session.begin(subtransactions=True):
-            self._check_subnetpool_tenant_quota(session,
-                                                request.tenant_id,
+    def _allocate_any_subnet(self, request):
+        with self._context.session.begin(subtransactions=True):
+            self._check_subnetpool_tenant_quota(request.tenant_id,
                                                 request.prefixlen)
-            prefix_pool = self._get_available_prefix_list(session)
+            prefix_pool = self._get_available_prefix_list()
             for prefix in prefix_pool:
                 if request.prefixlen >= prefix.prefixlen:
                     subnet = prefix.subnet(request.prefixlen).next()
                     gateway_ip = request.gateway_ip
                     if not gateway_ip:
                         gateway_ip = subnet.network + 1
+                    pools = ipam_utils.generate_pools(subnet.cidr,
+                                                      gateway_ip)
 
                     return IpamSubnet(request.tenant_id,
                                       request.subnet_id,
                                       subnet.cidr,
                                       gateway_ip=gateway_ip,
-                                      allocation_pools=None)
+                                      allocation_pools=pools)
             msg = _("Insufficient prefix space to allocate subnet size /%s")
             raise n_exc.SubnetAllocationError(reason=msg %
                                               str(request.prefixlen))
 
-    def _allocate_specific_subnet(self, session, request):
-        with session.begin(subtransactions=True):
-            self._check_subnetpool_tenant_quota(session,
-                                                request.tenant_id,
+    def _allocate_specific_subnet(self, request):
+        with self._context.session.begin(subtransactions=True):
+            self._check_subnetpool_tenant_quota(request.tenant_id,
                                                 request.prefixlen)
-            subnet = request.subnet
-            available = self._get_available_prefix_list(session)
-            matched = netaddr.all_matching_cidrs(subnet, available)
-            if len(matched) is 1 and matched[0].prefixlen <= subnet.prefixlen:
+            cidr = request.subnet_cidr
+            available = self._get_available_prefix_list()
+            matched = netaddr.all_matching_cidrs(cidr, available)
+            if len(matched) is 1 and matched[0].prefixlen <= cidr.prefixlen:
                 return IpamSubnet(request.tenant_id,
                                   request.subnet_id,
-                                  subnet.cidr,
+                                  cidr,
                                   gateway_ip=request.gateway_ip,
                                   allocation_pools=request.allocation_pools)
             msg = _("Cannot allocate requested subnet from the available "
                     "set of prefixes")
             raise n_exc.SubnetAllocationError(reason=msg)
 
-    def allocate_subnet(self, session, request):
+    def allocate_subnet(self, request):
         max_prefixlen = int(self._subnetpool['max_prefixlen'])
         min_prefixlen = int(self._subnetpool['min_prefixlen'])
         if request.prefixlen > max_prefixlen:
@@ -138,20 +139,20 @@ class SubnetAllocator(driver.Pool):
                               min_prefixlen=min_prefixlen)
 
         if isinstance(request, ipam.AnySubnetRequest):
-            return self._allocate_any_subnet(session, request)
+            return self._allocate_any_subnet(request)
         elif isinstance(request, ipam.SpecificSubnetRequest):
-            return self._allocate_specific_subnet(session, request)
+            return self._allocate_specific_subnet(request)
         else:
             msg = _("Unsupported request type")
             raise n_exc.SubnetAllocationError(reason=msg)
 
-    def get_subnet(self, subnet, subnet_id):
+    def get_subnet(self, subnet_id):
         raise NotImplementedError()
 
     def update_subnet(self, request):
         raise NotImplementedError()
 
-    def remove_subnet(self, subnet, subnet_id):
+    def remove_subnet(self, subnet_id):
         raise NotImplementedError()
 
 
@@ -163,11 +164,12 @@ class IpamSubnet(driver.Subnet):
                  cidr,
                  gateway_ip=None,
                  allocation_pools=None):
-        self._req = ipam.SpecificSubnetRequest(tenant_id,
-                                               subnet_id,
-                                               cidr,
-                                               gateway_ip=gateway_ip,
-                                               allocation_pools=None)
+        self._req = ipam.SpecificSubnetRequest(
+            tenant_id,
+            subnet_id,
+            cidr,
+            gateway_ip=gateway_ip,
+            allocation_pools=allocation_pools)
 
     def allocate(self, address_request):
         raise NotImplementedError()
@@ -177,6 +179,9 @@ class IpamSubnet(driver.Subnet):
 
     def get_details(self):
         return self._req
+
+    def associate_neutron_subnet(self, subnet_id):
+        pass
 
 
 class SubnetPoolReader(object):

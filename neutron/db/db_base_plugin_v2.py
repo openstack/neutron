@@ -38,6 +38,7 @@ from neutron.extensions import l3
 from neutron.i18n import _LE, _LI
 from neutron import ipam
 from neutron.ipam import subnet_alloc
+from neutron.ipam import utils as ipam_utils
 from neutron import manager
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import uuidutils
@@ -332,21 +333,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         """Validate that the gateway is on the subnet."""
         ip = netaddr.IPAddress(gateway)
         if ip.version == 4 or (ip.version == 6 and not ip.is_link_local()):
-            return cls._check_subnet_ip(cidr, gateway)
+            return ipam_utils.check_subnet_ip(cidr, gateway)
         return True
-
-    @classmethod
-    def _check_subnet_ip(cls, cidr, ip_address):
-        """Validate that the IP address is on the subnet."""
-        ip = netaddr.IPAddress(ip_address)
-        net = netaddr.IPNetwork(cidr)
-        # Check that the IP is valid on subnet. This cannot be the
-        # network or the broadcast address
-        if (ip != net.network and
-                ip != net.broadcast and
-                net.netmask & ip == net.network):
-            return True
-        return False
 
     @staticmethod
     def _check_ip_in_allocation_pool(context, subnet_id, gateway_ip,
@@ -395,8 +383,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 filter = {'network_id': [network_id]}
                 subnets = self.get_subnets(context, filters=filter)
                 for subnet in subnets:
-                    if self._check_subnet_ip(subnet['cidr'],
-                                             fixed['ip_address']):
+                    if ipam_utils.check_subnet_ip(subnet['cidr'],
+                                                  fixed['ip_address']):
                         found = True
                         subnet_id = subnet['id']
                         break
@@ -425,8 +413,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
                 # Ensure that the IP is valid on the subnet
                 if (not found and
-                    not self._check_subnet_ip(subnet['cidr'],
-                                              fixed['ip_address'])):
+                    not ipam_utils.check_subnet_ip(subnet['cidr'],
+                                                   fixed['ip_address'])):
                     raise n_exc.InvalidIpForSubnet(
                         ip_address=fixed['ip_address'])
                 if (is_auto_addr_subnet and
@@ -1241,10 +1229,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 'name': subnet['name'],
                 'network_id': subnet['network_id'],
                 'ip_version': subnet['ip_version'],
-                'cidr': str(detail.subnet.cidr),
+                'cidr': str(detail.subnet_cidr),
                 'subnetpool_id': subnetpool_id,
                 'enable_dhcp': subnet['enable_dhcp'],
-                'gateway_ip': self._gateway_ip_str(subnet, detail.subnet),
+                'gateway_ip': self._gateway_ip_str(subnet, detail.subnet_cidr),
                 'shared': shared}
         if subnet['ip_version'] == 6 and subnet['enable_dhcp']:
             if attributes.is_attr_set(subnet['ipv6_ra_mode']):
@@ -1303,10 +1291,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 raise n_exc.BadRequest(resource='subnets', msg=reason)
 
             network = self._get_network(context, s["network_id"])
-            allocator = subnet_alloc.SubnetAllocator(subnetpool)
+            allocator = subnet_alloc.SubnetAllocator(subnetpool, context)
             req = self._make_subnet_request(tenant_id, s, subnetpool)
 
-            ipam_subnet = allocator.allocate_subnet(context.session, req)
+            ipam_subnet = allocator.allocate_subnet(req)
             detail = ipam_subnet.get_details()
             subnet = self._save_subnet(context,
                                        network,
