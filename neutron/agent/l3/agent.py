@@ -23,7 +23,8 @@ from oslo_utils import importutils
 from oslo_utils import timeutils
 
 from neutron.agent.l3 import dvr
-from neutron.agent.l3 import dvr_router
+from neutron.agent.l3 import dvr_edge_router as dvr_router
+from neutron.agent.l3 import dvr_local_router as dvr_local_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import legacy_router
@@ -300,7 +301,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if router.get('distributed'):
             kwargs['agent'] = self
             kwargs['host'] = self.host
-            return dvr_router.DvrRouter(*args, **kwargs)
+            if self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT:
+                return dvr_router.DvrEdgeRouter(*args, **kwargs)
+            else:
+                return dvr_local_router.DvrLocalRouter(*args, **kwargs)
 
         if router.get('ha'):
             kwargs['state_change_callback'] = self.enqueue_state_change
