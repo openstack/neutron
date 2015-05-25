@@ -97,7 +97,7 @@ class ConfigFixture(fixtures.Fixture):
 
 class NeutronConfigFixture(ConfigFixture):
 
-    def __init__(self, temp_dir, connection):
+    def __init__(self, temp_dir, connection, rabbitmq_environment):
         super(NeutronConfigFixture, self).__init__(
             temp_dir, base_filename='neutron.conf')
 
@@ -112,9 +112,10 @@ class NeutronConfigFixture(ConfigFixture):
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
                 'service_plugins': ('neutron.services.l3_router.'
                                     'l3_router_plugin.L3RouterPlugin'),
-                'rabbit_userid': 'stackrabbit',
-                'rabbit_password': '127.0.0.1',
+                'rabbit_userid': rabbitmq_environment.user,
+                'rabbit_password': rabbitmq_environment.password,
                 'rabbit_hosts': '127.0.0.1',
+                'rabbit_virtual_host': rabbitmq_environment.vhost,
                 'auth_strategy': 'noauth',
                 'verbose': 'True',
                 'debug': 'True',
