@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
+# Andre Campos Bezerra <andrecbezerra@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-04 06:08+0000\n"
-"PO-Revision-Date: 2015-04-28 07:35+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"POT-Creation-Date: 2015-05-25 06:15+0000\n"
+"PO-Revision-Date: 2015-05-22 16:09+0000\n"
+"Last-Translator: Andre Campos Bezerra <andrecbezerra@gmail.com>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
 "neutron/language/pt_BR/)\n"
 "Language: pt_BR\n"
@@ -88,6 +89,9 @@ msgstr "Agente DHCP iniciado"
 msgid "Synchronizing state"
 msgstr "Sincronizando estado"
 
+msgid "Synchronizing state complete"
+msgstr "Sincronizando estado finalizado"
+
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "agent_updated por lado do servidor %s!"
@@ -119,6 +123,10 @@ msgid ""
 msgstr ""
 "Permitir que a classificação seja ativada porque a paginação nativa requer "
 "classificação nativa"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "Deletando porta: %s"
 
 msgid "OVS cleanup completed successfully"
 msgstr "Limpeza de OVS concluída com êxito"
@@ -163,6 +171,9 @@ msgstr "Localizados intervalos de sobreposição: %(l_range)s e %(r_range)s"
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "Ignorando a porta %s porque nenhum IP está configurado nela"
+
+msgid "SNAT already bound to a service node."
+msgstr "SNAT já conectado a um nó de serviço."
 
 #, python-format
 msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
@@ -209,6 +220,9 @@ msgstr "Filho %(pid)s encerrando com status %(code)d"
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr "%s capturado, parando filhos"
+
+msgid "Wait called after thread killed. Cleaning up."
+msgstr "Espera requisitada depois que thread foi morta.  Limpando."
 
 #, python-format
 msgid "Waiting on %d children to exit"

@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2015.2.0.dev319\n"
+"Project-Id-Version: neutron 2015.2.0.dev422\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-10 06:14+0000\n"
+"POT-Creation-Date: 2015-05-25 06:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,15 +29,22 @@ msgstr ""
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr ""
 
-#: neutron/quota.py:223
+#: neutron/quota.py:227
 msgid ""
 "The quota driver neutron.quota.ConfDriver is deprecated as of Liberty. "
 "neutron.db.quota_db.DbQuotaDriver should be used in its place"
 msgstr ""
 
-#: neutron/quota.py:237
+#: neutron/quota.py:241
 #, python-format
 msgid "%s is already registered."
+msgstr ""
+
+#: neutron/quota.py:341
+msgid ""
+"Registering resources to apply quota limits to using the quota_items "
+"option is deprecated as of Liberty.Resource REST controllers should take "
+"care of registering resources with the quota engine."
 msgstr ""
 
 #: neutron/agent/rpc.py:113
@@ -135,24 +142,30 @@ msgstr ""
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:226
+#: neutron/agent/linux/dhcp.py:227
 #, python-format
 msgid "Failed trying to delete interface: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:234
+#: neutron/agent/linux/dhcp.py:235
 #, python-format
 msgid "Failed trying to delete namespace: %s"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:239
+#: neutron/agent/linux/ebtables_manager.py:168
+#, python-format
+msgid "Attempted to remove chain %s which does not exist"
+msgstr ""
+
+#: neutron/agent/linux/ebtables_manager.py:237
+#: neutron/agent/linux/iptables_manager.py:247
 #, python-format
 msgid ""
 "Tried to remove rule that was not there: %(chain)r %(rule)r %(wrap)r "
 "%(top)r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:689
+#: neutron/agent/linux/iptables_manager.py:696
 #, python-format
 msgid "Attempted to get traffic counters of chain %s which does not exist"
 msgstr ""
@@ -276,12 +289,12 @@ msgstr ""
 msgid "No active L3 agents found for SNAT"
 msgstr ""
 
-#: neutron/db/securitygroups_rpc_base.py:371
+#: neutron/db/securitygroups_rpc_base.py:372
 #, python-format
 msgid "No valid gateway port on subnet %s is found for IPv6 RA"
 msgstr ""
 
-#: neutron/db/migration/alembic_migrations/heal_script.py:90
+#: neutron/db/migration/alembic_migrations/heal_script.py:91
 #, python-format
 msgid "Ignoring alembic command %s"
 msgstr ""
@@ -385,28 +398,28 @@ msgid ""
 "VXLAN MCAST mode"
 msgstr ""
 
-#: neutron/plugins/ml2/driver_context.py:184
+#: neutron/plugins/ml2/driver_context.py:191
 #, python-format
 msgid "Could not expand segment %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:526
+#: neutron/plugins/ml2/plugin.py:532
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:776
+#: neutron/plugins/ml2/plugin.py:783
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1384
+#: neutron/plugins/ml2/plugin.py:1391
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1416
+#: neutron/plugins/ml2/plugin.py:1423
 #, python-format
 msgid "Port %s not found during update"
 msgstr ""
@@ -528,33 +541,33 @@ msgstr ""
 msgid "Action %s not supported"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1013
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1010
 #, python-format
 msgid ""
 "Creating an interface named %(name)s exceeds the %(limit)d character "
 "limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1214
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1211
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1326
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1323
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1484
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1483
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1527
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1526
 msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1531
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1530
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
 "periodically."
