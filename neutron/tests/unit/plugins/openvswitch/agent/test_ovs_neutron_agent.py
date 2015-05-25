@@ -350,7 +350,7 @@ class TestOvsNeutronAgent(object):
                 self.agent.treat_devices_added_or_updated([{}], False))
             # The function should not raise
             self.assertFalse(skip_devs)
-        return func.called
+            return func.called
 
     def test_treat_devices_added_updated_ignores_invalid_ofport(self):
         port = mock.Mock()
@@ -1003,19 +1003,19 @@ class TestOvsNeutronAgent(object):
             except Exception:
                 pass
 
-        scan_ports.assert_has_calls([
-            mock.call(set(), set()),
-            mock.call(set(), set())
-        ])
-        process_network_ports.assert_has_calls([
-            mock.call(reply2, False),
-            mock.call(reply3, True)
-        ])
-        self.assertTrue(update_stale.called)
-        # Verify the OVS restart we triggered in the loop
-        # re-setup the bridges
-        setup_int_br.assert_has_calls([mock.call()])
-        setup_phys_br.assert_has_calls([mock.call({})])
+            scan_ports.assert_has_calls([
+                mock.call(set(), set()),
+                mock.call(set(), set())
+            ])
+            process_network_ports.assert_has_calls([
+                mock.call(reply2, False),
+                mock.call(reply3, True)
+            ])
+            self.assertTrue(update_stale.called)
+            # Verify the OVS restart we triggered in the loop
+            # re-setup the bridges
+            setup_int_br.assert_has_calls([mock.call()])
+            setup_phys_br.assert_has_calls([mock.call({})])
 
     def test_ovs_status(self):
         self._test_ovs_status(constants.OVS_NORMAL,
@@ -1652,26 +1652,26 @@ class TestOvsDvrNeutronAgent(object):
             mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),
             mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br),
         ) as (reclaim_vlan_fn, update_dev_down_fn, _, _, _, _):
-                self.agent.treat_devices_removed([self._port.vif_id])
-                if ip_version == 4:
-                    expected = [
-                        mock.call.delete_dvr_process_ipv4(
-                            vlan_tag=lvid,
-                            gateway_ip=gateway_ip),
-                    ]
-                else:
-                    expected = [
-                        mock.call.delete_dvr_process_ipv6(
-                            vlan_tag=lvid,
-                            gateway_mac=gateway_mac),
-                    ]
-                expected.extend([
-                    mock.call.delete_dvr_process(
+            self.agent.treat_devices_removed([self._port.vif_id])
+            if ip_version == 4:
+                expected = [
+                    mock.call.delete_dvr_process_ipv4(
                         vlan_tag=lvid,
-                        vif_mac=self._port.vif_mac),
-                ])
-                self.assertEqual([], int_br.mock_calls)
-                self.assertEqual(expected, tun_br.mock_calls)
+                        gateway_ip=gateway_ip),
+                ]
+            else:
+                expected = [
+                    mock.call.delete_dvr_process_ipv6(
+                        vlan_tag=lvid,
+                        gateway_mac=gateway_mac),
+                ]
+            expected.extend([
+                mock.call.delete_dvr_process(
+                    vlan_tag=lvid,
+                    vif_mac=self._port.vif_mac),
+            ])
+            self.assertEqual([], int_br.mock_calls)
+            self.assertEqual(expected, tun_br.mock_calls)
 
     def _test_treat_devices_removed_for_dvr(self, device_owner, ip_version=4):
         self._setup_for_dvr_test()
@@ -1757,15 +1757,15 @@ class TestOvsDvrNeutronAgent(object):
             mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),
             mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br),
         ) as (reclaim_vlan_fn, update_dev_down_fn, _, _, _, _):
-                self.agent.treat_devices_removed([self._compute_port.vif_id])
-                int_br.assert_has_calls([
-                    mock.call.delete_dvr_to_src_mac(
-                        network_type='vxlan',
-                        vlan_tag=lvid,
-                        dst_mac=self._compute_port.vif_mac,
-                    ),
-                ])
-                self.assertEqual([], tun_br.mock_calls)
+            self.agent.treat_devices_removed([self._compute_port.vif_id])
+            int_br.assert_has_calls([
+                mock.call.delete_dvr_to_src_mac(
+                    network_type='vxlan',
+                    vlan_tag=lvid,
+                    dst_mac=self._compute_port.vif_mac,
+                ),
+            ])
+            self.assertEqual([], tun_br.mock_calls)
 
     def test_treat_devices_removed_for_dvr_with_compute_ports(self):
         self._test_treat_devices_removed_for_dvr(
@@ -1847,17 +1847,17 @@ class TestOvsDvrNeutronAgent(object):
             mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),
             mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br),
         ) as (reclaim_vlan_fn, update_dev_down_fn, _, _, _, _):
-                self.agent.treat_devices_removed([self._port.vif_id])
-                expected_on_int_br = [
-                    mock.call.delete_dvr_to_src_mac(
-                        network_type='vxlan',
-                        dst_mac=self._port.vif_mac,
-                        vlan_tag=lvid,
-                    ),
-                ]
-                self.assertEqual(expected_on_int_br, int_br.mock_calls)
-                expected_on_tun_br = []
-                self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
+            self.agent.treat_devices_removed([self._port.vif_id])
+            expected_on_int_br = [
+                mock.call.delete_dvr_to_src_mac(
+                    network_type='vxlan',
+                    dst_mac=self._port.vif_mac,
+                    vlan_tag=lvid,
+                ),
+            ]
+            self.assertEqual(expected_on_int_br, int_br.mock_calls)
+            expected_on_tun_br = []
+            self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
 
     def test_setup_dvr_flows_on_int_br(self):
         self._setup_for_dvr_test()

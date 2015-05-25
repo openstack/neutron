@@ -28,10 +28,10 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
             prepare_mock.return_value = rpcapi.client
             rpcapi.security_group_rules_for_devices('context', ['fake_device'])
 
-        rpc_mock.assert_called_once_with(
-                'context',
-                'security_group_rules_for_devices',
-                devices=['fake_device'])
+            rpc_mock.assert_called_once_with(
+                    'context',
+                    'security_group_rules_for_devices',
+                    devices=['fake_device'])
 
 
 class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
