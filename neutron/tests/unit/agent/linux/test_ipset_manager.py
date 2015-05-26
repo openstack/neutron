@@ -36,8 +36,8 @@ class BaseIpsetManagerTest(base.BaseTestCase):
         self.execute.assert_has_calls(self.expected_calls, any_order=False)
 
     def expect_set(self, addresses):
-        temp_input = ['create NETIPv4fake_sgid-new hash:net family inet']
-        temp_input.extend('add NETIPv4fake_sgid-new %s' % ip
+        temp_input = ['create %s hash:net family inet' % TEST_SET_NAME_NEW]
+        temp_input.extend('add %s %s' % (TEST_SET_NAME_NEW, ip)
                           for ip in addresses)
         input = '\n'.join(temp_input)
         self.expected_calls.extend([
