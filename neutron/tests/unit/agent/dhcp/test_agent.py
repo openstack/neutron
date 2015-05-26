@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import copy
 import sys
 import uuid
@@ -404,7 +405,8 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_periodoc_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            dhcp.needs_resync_reasons = {'a': 'reason1', 'b': 'reason2'}
+            dhcp.needs_resync_reasons = collections.OrderedDict(
+                (('a', 'reason1'), ('b', 'reason2')))
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
                 with testtools.ExpectedException(RuntimeError):
