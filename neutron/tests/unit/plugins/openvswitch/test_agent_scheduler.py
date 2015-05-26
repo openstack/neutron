@@ -733,17 +733,14 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     db_exc.DBError(), oslo_messaging.RemoteError(),
                     l3agentscheduler.RouterReschedulingFailed(router_id='f',
                                                               agent_id='f'),
-                    ValueError('this raises')
+                    ValueError('this raises'),
+                    Exception()
                 ]).start()
-            # these first three should not raise any errors
             self._take_down_agent_and_run_reschedule(L3_HOSTA)  # DBError
             self._take_down_agent_and_run_reschedule(L3_HOSTA)  # RemoteError
             self._take_down_agent_and_run_reschedule(L3_HOSTA)  # schedule err
-
-            # ValueError is not caught so it should raise
-            self.assertRaises(ValueError,
-                              self._take_down_agent_and_run_reschedule,
-                              L3_HOSTA)
+            self._take_down_agent_and_run_reschedule(L3_HOSTA)  # Value error
+            self._take_down_agent_and_run_reschedule(L3_HOSTA)  # Exception
 
     def test_router_rescheduler_iterates_after_reschedule_failure(self):
         plugin = manager.NeutronManager.get_service_plugins().get(
