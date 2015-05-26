@@ -18,6 +18,7 @@ import collections
 import os
 import re
 import shutil
+import time
 
 import netaddr
 from oslo_config import cfg
@@ -310,8 +311,7 @@ class Dnsmasq(DhcpLocalProcess):
             '--dhcp-hostsfile=%s' % self.get_conf_file_name('host'),
             '--addn-hosts=%s' % self.get_conf_file_name('addn_hosts'),
             '--dhcp-optsfile=%s' % self.get_conf_file_name('opts'),
-            '--leasefile-ro',
-            '--dhcp-authoritative',
+            '--dhcp-leasefile=%s' % self.get_conf_file_name('leases'),
         ]
 
         possible_leases = 0
@@ -379,6 +379,9 @@ class Dnsmasq(DhcpLocalProcess):
 
     def spawn_process(self):
         """Spawn the process, if it's not spawned already."""
+        # we only need to generate the lease file the first time dnsmasq starts
+        # rather than on every reload since dnsmasq will keep the file current
+        self._output_init_lease_file()
         self._spawn_or_reload_process(reload_with_HUP=False)
 
     def _spawn_or_reload_process(self, reload_with_HUP):
@@ -461,6 +464,58 @@ class Dnsmasq(DhcpLocalProcess):
                     fqdn = '%s.%s' % (fqdn, self.conf.dhcp_domain)
                 yield (port, alloc, hostname, fqdn)
 
+    def _output_init_lease_file(self):
+        """Write a fake lease file to bootstrap dnsmasq.
+
+        The generated file is passed to the --dhcp-leasefile option of dnsmasq.
+        This is used as a bootstrapping mechanism to avoid NAKing active leases
+        when a dhcp server is scheduled to another agent. Using a leasefile
+        will also prevent dnsmasq from NAKing or ignoring renewals after a
+        restart.
+
+        Format is as follows:
+        epoch-timestamp mac_addr ip_addr hostname client-ID
+        """
+        filename = self.get_conf_file_name('leases')
+        buf = six.StringIO()
+
+        LOG.debug('Building initial lease file: %s', filename)
+        # we make up a lease time for the database entry
+        if self.conf.dhcp_lease_duration == -1:
+            # Even with an infinite lease, a client may choose to renew a
+            # previous lease on reboot or interface bounce so we should have
+            # an entry for it.
+            # Dnsmasq timestamp format for an infinite lease is  is 0.
+            timestamp = 0
+        else:
+            timestamp = int(time.time()) + self.conf.dhcp_lease_duration
+        dhcp_enabled_subnet_ids = [s.id for s in self.network.subnets
+                                   if s.enable_dhcp]
+        for (port, alloc, hostname, name) in self._iter_hosts():
+            # don't write ip address which belongs to a dhcp disabled subnet.
+            if not alloc or alloc.subnet_id not in dhcp_enabled_subnet_ids:
+                continue
+
+            ip_address = self._format_address_for_dnsmasq(alloc.ip_address)
+            # all that matters is the mac address and IP. the hostname and
+            # client ID will be overwritten on the next renewal.
+            buf.write('%s %s %s * *\n' %
+                      (timestamp, port.mac_address, ip_address))
+        contents = buf.getvalue()
+        utils.replace_file(filename, contents)
+        LOG.debug('Done building initial lease file %s with contents:\n%s',
+                  filename, contents)
+        return filename
+
+    @staticmethod
+    def _format_address_for_dnsmasq(address):
+        # (dzyu) Check if it is legal ipv6 address, if so, need wrap
+        # it with '[]' to let dnsmasq to distinguish MAC address from
+        # IPv6 address.
+        if netaddr.valid_ipv6(address):
+            return '[%s]' % address
+        return address
+
     def _output_hosts_file(self):
         """Writes a dnsmasq compatible dhcp hosts file.
 
@@ -496,12 +551,7 @@ class Dnsmasq(DhcpLocalProcess):
             if alloc.subnet_id not in dhcp_enabled_subnet_ids:
                 continue
 
-            # (dzyu) Check if it is legal ipv6 address, if so, need wrap
-            # it with '[]' to let dnsmasq to distinguish MAC address from
-            # IPv6 address.
-            ip_address = alloc.ip_address
-            if netaddr.valid_ipv6(ip_address):
-                ip_address = '[%s]' % ip_address
+            ip_address = self._format_address_for_dnsmasq(alloc.ip_address)
 
             if getattr(port, 'extra_dhcp_opts', False):
                 buf.write('%s,%s,%s,%s%s\n' %
