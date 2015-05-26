@@ -44,6 +44,8 @@ ovs_opts = [
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 help=_("Use veths instead of patch ports to interconnect the "
                        "integration bridge to physical bridges.")),
+    cfg.StrOpt('of_interface', default='ovs-ofctl', choices=['ovs-ofctl'],
+               help=_("OpenFlow interface to use.")),
 ]
 
 agent_opts = [
