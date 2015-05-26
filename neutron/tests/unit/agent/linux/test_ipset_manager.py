@@ -31,6 +31,30 @@ class BaseIpsetManagerTest(base.BaseTestCase):
         self.execute = mock.patch.object(self.ipset, "execute").start()
         self.expected_calls = []
         self.expect_create()
+        self.force_sorted_get_set_ips()
+
+    def force_sorted_get_set_ips(self):
+        """Force sorted responses by self.ipset._get_new/deleted_set_ips.
+
+        _get_new/deleted_set_ips use internally sets and return randomly
+        ordered responses. This method ensures sorted responses from them
+        in order to guarantee call order in self.ipset.set_members.
+        """
+        original_get_new_set_ips = self.ipset._get_new_set_ips
+        original_get_deleted_set_ips = self.ipset._get_deleted_set_ips
+
+        def sorted_get_new_set_ips(set_name, expected_ips):
+            unsorted = original_get_new_set_ips(set_name, expected_ips)
+            return sorted(unsorted)
+
+        def sorted_get_deleted_set_ips(set_name, expected_ips):
+            unsorted = original_get_deleted_set_ips(set_name, expected_ips)
+            return sorted(unsorted)
+
+        mock.patch.object(self.ipset, '_get_new_set_ips',
+                          side_effect=sorted_get_new_set_ips).start()
+        mock.patch.object(self.ipset, '_get_deleted_set_ips',
+                          side_effect=sorted_get_deleted_set_ips).start()
 
     def verify_mock_calls(self):
         self.execute.assert_has_calls(self.expected_calls, any_order=False)
@@ -97,13 +121,13 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
 
     def test_set_members_adding_less_than_5(self):
         self.add_first_ip()
-        self.expect_add(reversed(FAKE_IPS[1:5]))
+        self.expect_add(FAKE_IPS[1:5])
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE, FAKE_IPS[0:5])
         self.verify_mock_calls()
 
     def test_set_members_deleting_less_than_5(self):
         self.add_all_ips()
-        self.expect_del(reversed(FAKE_IPS[4:5]))
+        self.expect_del(FAKE_IPS[3:4])
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE, FAKE_IPS[0:3])
         self.verify_mock_calls()
 
