@@ -116,9 +116,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                     # so one broken one doesn't stop the iteration.
                     LOG.exception(_LE("Failed to reschedule router %s"),
                                   binding.router_id)
-        except db_exc.DBError:
-            # Catch DB errors here so a transient DB connectivity issue
-            # doesn't stop the loopingcall.
+        except Exception:
+            # we want to be thorough and catch whatever is raised
+            # to avoid loop abortion
             LOG.exception(_LE("Exception encountered during router "
                               "rescheduling."))
 

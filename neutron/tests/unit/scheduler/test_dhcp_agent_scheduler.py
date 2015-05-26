@@ -248,6 +248,15 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             self.assertIn('foo3', res_ids)
             self.assertIn('foo4', res_ids)
 
+    def test_reschedule_network_from_down_agent_failed_on_unexpected(self):
+        agents = self._create_and_set_agents_down(['host-a'], 1)
+        self._test_schedule_bind_network([agents[0]], self.network_id)
+        with mock.patch.object(
+            self, '_filter_bindings',
+            side_effect=Exception()):
+            # just make sure that no exception is raised
+            self.remove_networks_from_down_agents()
+
 
 class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     """Unit test scenarios for WeightScheduler.schedule."""
