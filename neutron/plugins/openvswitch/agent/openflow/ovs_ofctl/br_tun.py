@@ -225,8 +225,8 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
         self.delete_flows(table_id=constants.DVR_NOT_LEARN,
                           eth_src=mac)
 
-    def deferred(self, **kwargs):
-        return DeferredOVSTunnelBridge(self, **kwargs)
+    def deferred(self):
+        return DeferredOVSTunnelBridge(self)
 
 
 class DeferredOVSTunnelBridge(ovs_lib.DeferredOVSBridge):
