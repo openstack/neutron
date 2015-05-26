@@ -300,6 +300,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             local_vlan_map = self.int_br.db_get_val("Port", port.port_name,
                                                     "other_config")
             local_vlan = self.int_br.db_get_val("Port", port.port_name, "tag")
+            if not local_vlan:
+                continue
             net_uuid = local_vlan_map.get('net_uuid')
             if (net_uuid and net_uuid not in self.local_vlan_map
                 and local_vlan != DEAD_VLAN_TAG):
