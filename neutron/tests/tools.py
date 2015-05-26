@@ -89,3 +89,15 @@ def fail(msg=None):
     testcase instance (usefully for reducing coupling).
     """
     raise unittest.TestCase.failureException(msg)
+
+
+class UnorderedList(list):
+    """A list that is equals to any permutation of itself."""
+
+    def __eq__(self, other):
+        if not isinstance(other, list):
+            return False
+        return sorted(self) == sorted(other)
+
+    def __neq__(self, other):
+        return not self == other

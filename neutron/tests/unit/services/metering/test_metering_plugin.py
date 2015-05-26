@@ -25,6 +25,7 @@ from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests.common import helpers
+from neutron.tests import tools
 from neutron.tests.unit.db.metering import test_metering_db
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
@@ -371,7 +372,8 @@ class TestMeteringPluginL3AgentScheduler(
                              set_context=True):
                 with self.metering_label(tenant_id=self.tenant_id,
                                          set_context=True):
-                    self.mock_add.assert_called_with(self.ctx, expected)
+                    self.mock_add.assert_called_with(
+                        self.ctx, tools.UnorderedList(expected))
 
 
 class TestMeteringPluginL3AgentSchedulerServicePlugin(
