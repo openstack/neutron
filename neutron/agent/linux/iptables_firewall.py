@@ -313,6 +313,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _build_ipv4v6_mac_ip_list(self, mac, ip_address, mac_ipv4_pairs,
                                   mac_ipv6_pairs):
+        mac = str(netaddr.EUI(mac, dialect=netaddr.mac_unix))
         if netaddr.IPNetwork(ip_address).version == 4:
             mac_ipv4_pairs.append((mac, ip_address))
         else:
