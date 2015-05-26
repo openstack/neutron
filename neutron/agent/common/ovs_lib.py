@@ -40,6 +40,7 @@ UNASSIGNED_OFPORT = []
 
 # OVS bridge fail modes
 FAILMODE_SECURE = 'secure'
+FAILMODE_STANDALONE = 'standalone'
 
 OPTS = [
     cfg.IntOpt('ovs_vsctl_timeout',
@@ -158,6 +159,10 @@ class OVSBridge(BaseOVS):
 
     def set_secure_mode(self):
         self.ovsdb.set_fail_mode(self.br_name, FAILMODE_SECURE).execute(
+            check_error=True)
+
+    def set_standalone_mode(self):
+        self.ovsdb.set_fail_mode(self.br_name, FAILMODE_STANDALONE).execute(
             check_error=True)
 
     def set_protocols(self, protocols):

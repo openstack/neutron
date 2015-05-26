@@ -130,6 +130,10 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.set_secure_mode()
         self._verify_vsctl_mock('set-fail-mode', self.BR_NAME, 'secure')
 
+    def test_set_standalone_mode(self):
+        self.br.set_standalone_mode()
+        self._verify_vsctl_mock('set-fail-mode', self.BR_NAME, 'standalone')
+
     def test_set_protocols(self):
         protocols = 'OpenFlow13'
         self.br.set_protocols(protocols)
