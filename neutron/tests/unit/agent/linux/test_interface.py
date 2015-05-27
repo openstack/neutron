@@ -184,7 +184,8 @@ class TestABCDriver(TestBase):
              mock.call().addr.delete('2001:db8:a::123/64'),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
-             mock.call().route.add_onlink_route('172.20.0.0/24')])
+             mock.call().route.add_onlink_route('172.20.0.0/24')],
+            any_order=True)
 
     def test_l3_init_with_ipv6_delete_onlink_routes(self):
         addresses = [dict(scope='global',
