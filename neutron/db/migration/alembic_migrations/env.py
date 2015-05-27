@@ -20,6 +20,7 @@ from oslo_db.sqlalchemy import session
 import sqlalchemy as sa
 from sqlalchemy import event
 
+from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
 
@@ -57,6 +58,13 @@ def set_mysql_engine():
                     model_base.BASEV2.__table_args__['mysql_engine'])
 
 
+def include_object(object, name, type_, reflected, compare_to):
+    if type_ == 'table' and name in external.TABLES:
+        return False
+    else:
+        return True
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -74,6 +82,7 @@ def run_migrations_offline():
         kwargs['url'] = neutron_config.database.connection
     else:
         kwargs['dialect_name'] = neutron_config.database.engine
+    kwargs['include_object'] = include_object
     context.configure(**kwargs)
 
     with context.begin_transaction():
@@ -99,7 +108,8 @@ def run_migrations_online():
     connection = engine.connect()
     context.configure(
         connection=connection,
-        target_metadata=target_metadata
+        target_metadata=target_metadata,
+        include_object=include_object
     )
 
     try:

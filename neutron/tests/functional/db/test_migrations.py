@@ -27,6 +27,7 @@ from oslo_db.sqlalchemy import test_base
 from oslo_db.sqlalchemy import test_migrations
 import sqlalchemy
 
+from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
 
@@ -36,26 +37,6 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
 
 CORE_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-
-# These tables are still in the neutron database, but their models have moved
-# to the separate advanced services repositories. We skip the migration checks
-# for these tables for now. The checks will be re-instated soon in the tests
-# for each separate repository.
-# TODO(akamyshnikova): delete these lists when the tables are removed from
-# neutron database.
-EXTERNAL_VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
-                          'ipsec_site_connections', 'cisco_csr_identifier_map',
-                          'ikepolicies']
-
-EXTERNAL_LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools',
-                         'healthmonitors', 'poolstatisticss', 'members',
-                         'poolloadbalanceragentbindings', 'embrane_pool_port',
-                         'poolmonitorassociations']
-
-EXTERNAL_FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
-
-EXTERNAL_TABLES = (EXTERNAL_FWAAS_TABLES + EXTERNAL_LBAAS_TABLES +
-                   EXTERNAL_VPNAAS_TABLES)
 
 
 class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
@@ -150,7 +131,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def include_object(self, object_, name, type_, reflected, compare_to):
         if type_ == 'table' and (name == 'alembic_version'
-                                 or name in EXTERNAL_TABLES):
+                                 or name in external.TABLES):
                 return False
 
         return super(_TestModelsMigrations, self).include_object(
