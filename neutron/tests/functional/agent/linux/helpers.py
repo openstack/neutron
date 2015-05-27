@@ -96,21 +96,18 @@ class RootHelperProcess(subprocess.Popen):
         for arg in ('stdin', 'stdout', 'stderr'):
             kwargs.setdefault(arg, subprocess.PIPE)
         self.namespace = kwargs.pop('namespace', None)
-        self.run_as_root = kwargs.pop('run_as_root', False)
         self.cmd = cmd
         if self.namespace is not None:
             cmd = ['ip', 'netns', 'exec', self.namespace] + cmd
-        if self.run_as_root:
-            root_helper = config.get_root_helper(utils.cfg.CONF)
-            cmd = shlex.split(root_helper) + cmd
+        root_helper = config.get_root_helper(utils.cfg.CONF)
+        cmd = shlex.split(root_helper) + cmd
         self.child_pid = None
         super(RootHelperProcess, self).__init__(cmd, *args, **kwargs)
-        if self.run_as_root:
-            self._wait_for_child_process()
+        self._wait_for_child_process()
 
     def kill(self):
         pid = self.child_pid or str(self.pid)
-        utils.execute(['kill', '-9', pid], run_as_root=self.run_as_root)
+        utils.execute(['kill', '-9', pid], run_as_root=True)
 
     def read_stdout(self, timeout=None):
         return self._read_stream(self.stdout, timeout)
@@ -134,7 +131,7 @@ class RootHelperProcess(subprocess.Popen):
                                 sleep=CHILD_PROCESS_SLEEP):
         def child_is_running():
             child_pid = utils.get_root_helper_child_pid(
-                self.pid, run_as_root=self.run_as_root)
+                self.pid, run_as_root=True)
             if utils.pid_invoked_with_cmdline(child_pid, self.cmd):
                 return True
 
@@ -144,14 +141,14 @@ class RootHelperProcess(subprocess.Popen):
             exception=RuntimeError("Process %s hasn't been spawned "
                                    "in %d seconds" % (self.cmd, timeout)))
         self.child_pid = utils.get_root_helper_child_pid(
-            self.pid, run_as_root=self.run_as_root)
+            self.pid, run_as_root=True)
 
 
 class NetcatTester(object):
     TESTING_STRING = 'foo'
 
     def __init__(self, client_namespace, server_namespace, server_address,
-                 port, client_address=None, run_as_root=False, udp=False):
+                 port, client_address=None, udp=False):
         self.client_namespace = client_namespace
         self.server_namespace = server_namespace
         self._client_process = None
@@ -162,7 +159,6 @@ class NetcatTester(object):
         self.client_address = client_address or server_address
         self.server_address = server_address
         self.port = str(port)
-        self.run_as_root = run_as_root
         self.udp = udp
 
     @property
@@ -210,8 +206,7 @@ class NetcatTester(object):
                 cmd.append('-k')
         else:
             cmd.extend(['-w', '20'])
-        proc = RootHelperProcess(cmd, namespace=namespace,
-                                 run_as_root=self.run_as_root)
+        proc = RootHelperProcess(cmd, namespace=namespace)
         return proc
 
     def stop_processes(self):
