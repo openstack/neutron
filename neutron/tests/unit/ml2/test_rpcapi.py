@@ -97,6 +97,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
     def test_get_device_details_port_status_equal_new_status(self):
         port = collections.defaultdict(lambda: 'fake')
         self.plugin.get_bound_port_context().current = port
+        self.plugin.port_bound_to_host = mock.MagicMock(return_value=True)
         for admin_state_up in (True, False):
             new_status = (constants.PORT_STATUS_BUILD if admin_state_up
                           else constants.PORT_STATUS_DOWN)
@@ -107,10 +108,27 @@ class RpcCallbacksTestCase(base.BaseTestCase):
                 port['admin_state_up'] = admin_state_up
                 port['status'] = status
                 self.plugin.update_port_status.reset_mock()
-                self.callbacks.get_device_details('fake_context',
-                                                  host='fake_host')
+                self.callbacks.get_device_details('fake_context')
                 self.assertEqual(status == new_status,
                                  not self.plugin.update_port_status.called)
+
+    def test_get_device_details_wrong_host(self):
+        port = collections.defaultdict(lambda: 'fake')
+        port_context = self.plugin.get_bound_port_context()
+        port_context.current = port
+        port_context.host = 'fake'
+        self.plugin.update_port_status.reset_mock()
+        self.callbacks.get_device_details('fake_context',
+                                          host='fake_host')
+        self.assertFalse(self.plugin.update_port_status.called)
+
+    def test_get_device_details_port_no_host(self):
+        port = collections.defaultdict(lambda: 'fake')
+        port_context = self.plugin.get_bound_port_context()
+        port_context.current = port
+        self.plugin.update_port_status.reset_mock()
+        self.callbacks.get_device_details('fake_context')
+        self.assertTrue(self.plugin.update_port_status.called)
 
     def test_get_devices_details_list(self):
         devices = [1, 2, 3, 4, 5]
