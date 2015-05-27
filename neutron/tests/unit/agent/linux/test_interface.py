@@ -94,7 +94,7 @@ class TestABCDriver(TestBase):
             [mock.call('tap0', namespace=ns),
              mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24'),
-             mock.call().addr.delete('172.16.77.240/24'),
+             mock.call().delete_addr_and_conntrack_state('172.16.77.240/24'),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
              mock.call().route.add_onlink_route('172.20.0.0/24')])
@@ -127,6 +127,7 @@ class TestABCDriver(TestBase):
              mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24')])
         self.assertFalse(self.ip_dev().addr.delete.called)
+        self.assertFalse(self.ip_dev().delete_addr_and_conntrack_state.called)
 
     def _test_l3_init_with_ipv6(self, include_gw_ip):
         addresses = [dict(scope='global',
@@ -147,7 +148,8 @@ class TestABCDriver(TestBase):
             [mock.call('tap0', namespace=ns),
              mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('2001:db8:a::124/64'),
-             mock.call().addr.delete('2001:db8:a::123/64')])
+             mock.call().delete_addr_and_conntrack_state(
+                 '2001:db8:a::123/64')])
         if include_gw_ip:
             expected_calls += (
                 [mock.call().route.add_gateway('2001:db8:a::1')])
@@ -180,8 +182,8 @@ class TestABCDriver(TestBase):
              mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24'),
              mock.call().addr.add('2001:db8:a::124/64'),
-             mock.call().addr.delete('172.16.77.240/24'),
-             mock.call().addr.delete('2001:db8:a::123/64'),
+             mock.call().delete_addr_and_conntrack_state('172.16.77.240/24'),
+             mock.call().delete_addr_and_conntrack_state('2001:db8:a::123/64'),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
              mock.call().route.add_onlink_route('172.20.0.0/24')],
