@@ -297,16 +297,17 @@ class AgentExtRpcCallback(object):
             diff = abs((time_server_now - agent_time).seconds)
             if diff > cfg.CONF.agent_down_time:
                 agent_name = agent_state['agent_type']
-                time_agent = timeutils.isotime(agent_time)
                 host = agent_state['host']
                 log_dict = {'host': host,
                             'agent_name': agent_name,
-                            'agent_time': time_agent,
+                            'agent_time': agent_time,
                             'threshold': cfg.CONF.agent_down_time,
-                            'serv_time': timeutils.isotime(time_server_now)}
+                            'serv_time': time_server_now,
+                            'diff': diff}
                 LOG.error(_LE("Message received from the host: %(host)s "
                               "during the registration of %(agent_name)s has "
                               "a timestamp: %(agent_time)s. This differs from "
                               "the current server timestamp: %(serv_time)s by "
-                              "more than the threshold agent down"
+                              "%(diff)s seconds, which is more than the "
+                              "threshold agent down"
                               "time: %(threshold)s."), log_dict)
