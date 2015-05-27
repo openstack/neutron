@@ -21,6 +21,7 @@ import mock
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron.tests import base
+from neutron.tests import tools
 
 
 class TestAttributes(base.BaseTestCase):
@@ -807,7 +808,8 @@ class TestConvertKvp(base.BaseTestCase):
     def test_convert_kvp_list_to_dict_succeeds_for_multiple_values(self):
         result = attributes.convert_kvp_list_to_dict(
             ['a=b', 'a=c', 'a=c', 'b=a'])
-        self.assertEqual({'a': ['c', 'b'], 'b': ['a']}, result)
+        expected = {'a': tools.UnorderedList(['c', 'b']), 'b': ['a']}
+        self.assertEqual(expected, result)
 
     def test_convert_kvp_list_to_dict_succeeds_for_values(self):
         result = attributes.convert_kvp_list_to_dict(['a=b', 'c=d'])
