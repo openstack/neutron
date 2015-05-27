@@ -1465,7 +1465,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
             mock.call.set_members('fake_sgid', 'IPv6',
                                   ['fe80::1'])
         ]
-        self.firewall.ipset.assert_has_calls(calls)
+        self.firewall.ipset.assert_has_calls(calls, any_order=True)
 
     def _setup_fake_firewall_members_and_rules(self, firewall):
         firewall.sg_rules = self._fake_sg_rules()
@@ -1615,7 +1615,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
             mock.call.destroy('fake_sgid', 'IPv4'),
             mock.call.destroy('fake_sgid', 'IPv6')]
 
-        self.firewall.ipset.assert_has_calls(calls)
+        self.firewall.ipset.assert_has_calls(calls, any_order=True)
 
     def test_prepare_port_filter_with_sg_no_member(self):
         self.firewall.sg_rules = self._fake_sg_rules()
@@ -1633,7 +1633,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
                                        ['10.0.0.1', '10.0.0.2']),
                  mock.call.set_members('fake_sgid', 'IPv6', ['fe80::1'])]
 
-        self.firewall.ipset.assert_has_calls(calls)
+        self.firewall.ipset.assert_has_calls(calls, any_order=True)
 
     def test_filter_defer_apply_off_with_sg_only_ipv6_rule(self):
         self.firewall.sg_rules = self._fake_sg_rules()
