@@ -213,7 +213,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                 return
             for agent in agents:
                 LOG.info(_LI("Adding network %(net)s to agent "
-                             "%(agent)%s on host %(host)s"),
+                             "%(agent)s on host %(host)s"),
                          {'net': network_id,
                           'agent': agent.id,
                           'host': agent.host})
