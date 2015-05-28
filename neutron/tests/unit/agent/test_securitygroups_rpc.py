@@ -36,6 +36,7 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
 from neutron.tests import base
+from neutron.tests import tools
 from neutron.tests.unit.extensions import test_securitygroup as test_sg
 
 FAKE_PREFIX = {const.IPv4: '10.0.0.0/24',
@@ -321,6 +322,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'port_range_min': 23,
                          'source_ip_prefix': fake_prefix},
                         ]
+            expected = tools.UnorderedList(expected)
             self.assertEqual(expected,
                              port_rpc['security_group_rules'])
             self.assertEqual(port['port']['allowed_address_pairs'],
