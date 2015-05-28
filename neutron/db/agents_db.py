@@ -294,15 +294,16 @@ class AgentExtRpcCallback(object):
         """
         if agent_state.get('start_flag'):
             time_server_now = timeutils.utcnow()
-            diff = abs((time_server_now - agent_time).seconds)
+            diff = abs(timeutils.delta_seconds(time_server_now, agent_time))
             if diff > cfg.CONF.agent_down_time:
                 agent_name = agent_state['agent_type']
+                time_agent = timeutils.isotime(agent_time)
                 host = agent_state['host']
                 log_dict = {'host': host,
                             'agent_name': agent_name,
-                            'agent_time': agent_time,
+                            'agent_time': time_agent,
                             'threshold': cfg.CONF.agent_down_time,
-                            'serv_time': time_server_now,
+                            'serv_time': timeutils.isotime(time_server_now),
                             'diff': diff}
                 LOG.error(_LE("Message received from the host: %(host)s "
                               "during the registration of %(agent_name)s has "
