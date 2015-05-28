@@ -35,8 +35,8 @@ The specs which are moved in this way can be fast-tracked into the next
 release. Please note that it is required to re-propose the spec for the new
 release however.
 
-Neutron Feature Requests
-------------------------
+Neutron Request for Feature Enhancements
+----------------------------------------
 
 We are introducing the concept of feature requests. Feature requests are
 tracked as Launchpad bugs, tagged with the new 'rfe' tag, and allow for
@@ -99,4 +99,46 @@ and anything new will follow the new RFE process fully.
 RFE Submission Guidelines
 -------------------------
 
-#TODO(marun)
+Before we dive into the guidelines for writing a good RFE, it is worth mentioning
+that depending on your level of engagement with the Neutron project and your role
+(user, developer, deployer, operator, etc.), you are more than welcome to have
+a preliminary discussion of a potential RFE by reaching out to other people involved
+in the project. This usually happens by posting mails on the relevant mailing
+lists (e.g. `openstack-dev <http://lists.openstack.org>`_ - include [neutron] in
+the subject) or on #openstack-neutron IRC channel on Freenode. If current ongoing
+code reviews are related to your feature, posting comments/questions on gerrit
+may also be a way to engage. Some amount of interaction with Neutron developers
+will give you an idea of the plausibility and form of your RFE before you submit
+it. That said, this is not mandatory.
+
+When you submit a bug report on https://bugs.launchpad.net/neutron/+filebug,
+there are two fields that must be filled: 'summary' and 'further information'.
+The 'summary' must be brief enough to fit in one line: if you can't describe it
+in a few words it may mean that you are either trying to capture more than one
+RFE at once, or that you are having a hard time defining what you are trying to
+solve at all.
+
+The 'further information' section must be a description of what you would like
+to see implemented in Neutron. The description should provide enough details for
+a knowledgeable developer to understand what is the existing problem in the
+current platform that needs to be addressed, or what is the enhancement that
+would make the platform more capable, both for a functional and a non-functional
+standpoint. To this aim it is important to describe 'why' you believe the RFE
+should be accepted, and motivate the reason why without it Neutron is a poorer
+platform. The description should be self contained, and no external references
+should be necessary to further explain the RFE.
+
+In other words, when you write an RFE you should ask yourself the following
+questions:
+
+* What is that I (specify what user - a user can be a human or another system)
+  cannot do today when interacting with Neutron? On the other hand, is there a
+  Neutron component X that is unable to accomplish something?
+* Is there something that you would like Neutron handle better, ie. in a more
+  scalable, or in a more reliable way?
+* What is that I would like to see happen after the RFE is accepted and
+  implemented?
+* Why do you think it is important?
+
+Once you are happy with what you wrote, add 'rfe' as tag, and submit. Do not
+worry, we are here to help you get it right! Happy hacking.
