@@ -358,9 +358,10 @@ class OVSDVRNeutronAgent(object):
 
     def _bind_distributed_router_interface_port(self, port, lvm,
                                                 fixed_ips, device_owner):
-        # since router port must have only one fixed IP, directly
-        # use fixed_ips[0]
-        subnet_uuid = fixed_ips[0]['subnet_id']
+        # since distributed router port must have only one fixed
+        # IP, directly use fixed_ips[0]
+        fixed_ip = fixed_ips[0]
+        subnet_uuid = fixed_ip['subnet_id']
         csnat_ofport = constants.OFPORT_INVALID
         ldm = None
         if subnet_uuid in self.local_dvr_map:
@@ -498,24 +499,25 @@ class OVSDVRNeutronAgent(object):
 
     def _bind_centralized_snat_port_on_dvr_subnet(self, port, lvm,
                                                   fixed_ips, device_owner):
+        # since centralized-SNAT (CSNAT) port must have only one fixed
+        # IP, directly use fixed_ips[0]
+        fixed_ip = fixed_ips[0]
         if port.vif_id in self.local_ports:
             # throw an error if CSNAT port is already on a different
             # dvr routed subnet
             ovsport = self.local_ports[port.vif_id]
             subs = list(ovsport.get_subnets())
-            if subs[0] == fixed_ips[0]['subnet_id']:
+            if subs[0] == fixed_ip['subnet_id']:
                 return
             LOG.error(_LE("Centralized-SNAT port %(port)s on subnet "
                           "%(port_subnet)s already seen on a different "
                           "subnet %(orig_subnet)s"), {
                 "port": port.vif_id,
-                "port_subnet": fixed_ips[0]['subnet_id'],
+                "port_subnet": fixed_ip['subnet_id'],
                 "orig_subnet": subs[0],
             })
             return
-        # since centralized-SNAT (CSNAT) port must have only one fixed
-        # IP, directly use fixed_ips[0]
-        subnet_uuid = fixed_ips[0]['subnet_id']
+        subnet_uuid = fixed_ip['subnet_id']
         ldm = None
         subnet_info = None
         if subnet_uuid not in self.local_dvr_map:
