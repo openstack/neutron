@@ -903,6 +903,16 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 self.assertIn('mac_address', port['port'])
                 self._delete('ports', port['port']['id'])
 
+    def test_create_port_anticipating_allocation(self):
+        with self.network(shared=True) as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
+                fixed_ips = [{'subnet_id': subnet['subnet']['id']},
+                             {'subnet_id': subnet['subnet']['id'],
+                              'ip_address': '10.0.0.2'}]
+                self._create_port(self.fmt, network['network']['id'],
+                                  webob.exc.HTTPCreated.code,
+                                  fixed_ips=fixed_ips)
+
     def test_create_port_public_network_with_invalid_ip_no_subnet_id(self,
             expected_error='InvalidIpForNetwork'):
         with self.network(shared=True) as network:
