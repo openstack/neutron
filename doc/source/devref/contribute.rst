@@ -347,7 +347,7 @@ be the bare minimum you have to complete in order to get you off the ground.
   the previous step. In the latter case, you can do so by specifying the
   upstream section for your project in project-config/gerrit/project.yaml.
   Steps are documented on the
-  `Project Creators Manual <http://docs.openstack.org/infra/manual/creators.html>`_.
+  `Repository Creator's Guide <http://docs.openstack.org/infra/manual/creators.html>`_.
 * Ask for a Launchpad user to be assigned to the core team created. Steps are
   documented in
   `this section <http://docs.openstack.org/infra/manual/creators.html#update-the-gerrit-group-members>`_.
