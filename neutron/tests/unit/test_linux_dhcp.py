@@ -815,8 +815,7 @@ class TestDnsmasq(TestBase):
             '--dhcp-hostsfile=/dhcp/%s/host' % network.id,
             '--addn-hosts=/dhcp/%s/addn_hosts' % network.id,
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
-            '--leasefile-ro',
-            '--dhcp-authoritative']
+            '--dhcp-leasefile=/dhcp/%s/leases' % network.id]
 
         seconds = ''
         if lease_duration == -1:
@@ -889,7 +888,8 @@ class TestDnsmasq(TestBase):
         self.conf.set_override('dhcp_domain', '')
         self._test_spawn(['--conf-file='])
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
-                                    mock.call(exp_addn_name, exp_addn_data)])
+                                    mock.call(exp_addn_name, exp_addn_data),
+                                    mock.call(mock.ANY, mock.ANY)])
 
     def test_spawn_no_dhcp_range(self):
         network = FakeV6Network()
@@ -917,6 +917,35 @@ class TestDnsmasq(TestBase):
             ['--conf-file=', '--domain=openstacklocal'],
             network=FakeV4Network(),
             max_leases=256)
+
+    def _test_output_init_lease_file(self, timestamp):
+        expected = [
+            '00:00:80:aa:bb:cc 192.168.0.2 * *',
+            '00:00:f3:aa:bb:cc [fdca:3ba5:a17a:4ba3::2] * *',
+            '00:00:0f:aa:bb:cc 192.168.0.3 * *',
+            '00:00:0f:aa:bb:cc [fdca:3ba5:a17a:4ba3::3] * *',
+            '00:00:0f:rr:rr:rr 192.168.0.1 * *\n']
+        expected = "\n".join(['%s %s' % (timestamp, l) for l in expected])
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/leases'
+            dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
+                              version=dhcp.Dnsmasq.MINIMUM_VERSION)
+            dm._output_init_lease_file()
+        self.safe.assert_called_once_with('/foo/leases', expected)
+
+    @mock.patch('time.time')
+    def test_output_init_lease_file(self, tmock):
+        self.conf.set_override('dhcp_lease_duration', 500)
+        tmock.return_value = 1000000
+        # lease duration should be added to current time
+        timestamp = 1000000 + 500
+        self._test_output_init_lease_file(timestamp)
+
+    def test_output_init_lease_file_infinite_duration(self):
+        self.conf.set_override('dhcp_lease_duration', -1)
+        # when duration is infinite, lease db timestamp should be 0
+        timestamp = 0
+        self._test_output_init_lease_file(timestamp)
 
     def test_output_opts_file(self):
         fake_v6 = '2001:0200:feed:7ac0::1'
