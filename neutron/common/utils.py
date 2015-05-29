@@ -357,3 +357,20 @@ def is_dvr_serviced(device_owner):
                                       q_const.DEVICE_OWNER_DHCP)
         return (device_owner.startswith('compute:') or
                 device_owner in dvr_serviced_device_owners)
+
+
+class DelayedStringRenderer(object):
+    """Takes a callable and its args and calls when __str__ is called
+
+    Useful for when an argument to a logging statement is expensive to
+    create. This will prevent the callable from being called if it's
+    never converted to a string.
+    """
+
+    def __init__(self, function, *args, **kwargs):
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return str(self.function(*self.args, **self.kwargs))
