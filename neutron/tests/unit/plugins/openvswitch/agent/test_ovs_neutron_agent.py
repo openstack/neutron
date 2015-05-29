@@ -159,6 +159,30 @@ class TestOvsNeutronAgent(object):
         int_br.set_db_attribute.assert_called_once_with(
             "Port", mock.ANY, "other_config", vlan_mapping)
 
+    def _test_restore_local_vlan_maps(self, tag):
+        port = mock.Mock()
+        port.port_name = 'fake_port'
+        local_vlan_map = {'net_uuid': 'fake_network_id',
+                          'network_type': 'vlan',
+                          'physical_network': 'fake_network',
+                          'segmentation_id': 1}
+        with mock.patch.object(self.agent, 'int_br') as int_br, \
+            mock.patch.object(self.agent, 'provision_local_vlan') as \
+                provision_local_vlan:
+            int_br.get_vif_ports.return_value = [port]
+            int_br.db_get_val.side_effect = [local_vlan_map, tag]
+            self.agent._restore_local_vlan_map()
+            if tag:
+                self.assertTrue(provision_local_vlan.called)
+            else:
+                self.assertFalse(provision_local_vlan.called)
+
+    def test_restore_local_vlan_map_with_device_has_tag(self):
+        self._test_restore_local_vlan_maps(2)
+
+    def test_restore_local_vlan_map_with_device_no_tag(self):
+        self._test_restore_local_vlan_maps([])
+
     def test_check_agent_configurations_for_dvr_raises(self):
         self.agent.enable_distributed_routing = True
         self.agent.enable_tunneling = True
