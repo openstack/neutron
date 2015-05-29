@@ -338,9 +338,6 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=port),\
-                mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),\
-                mock.patch.object(self.agent.plugin_rpc,
-                                  'update_device_down'),\
                 mock.patch.object(self.agent, func_name) as func:
             skip_devs, need_bound_devices = (
                 self.agent.treat_devices_added_or_updated([{}], False))
