@@ -278,8 +278,3 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                         LOG.error(_LE("Error Adding interface %(subnet_id)s "
                                       "to router %(router_id)s on Arista HW"),
                                   {'subnet_id': subnet_id, 'router_id': r})
-
-    def _validate_interface_info(self, interface_info):
-        port_id_specified = interface_info and 'port_id' in interface_info
-        subnet_id_specified = interface_info and 'subnet_id' in interface_info
-        return port_id_specified, subnet_id_specified
