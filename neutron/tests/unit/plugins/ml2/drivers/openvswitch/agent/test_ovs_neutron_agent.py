@@ -114,6 +114,8 @@ class TestOvsNeutronAgent(object):
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         cfg.CONF.set_default('prevent_arp_spoofing', False, 'AGENT')
         kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
+        mock.patch('neutron.agent.common.ovs_lib.OVSBridge.db_list',
+                   return_value=[]).start()
 
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'setup_integration_br'),\
@@ -172,7 +174,10 @@ class TestOvsNeutronAgent(object):
             mock.patch.object(self.agent, 'provision_local_vlan') as \
                 provision_local_vlan:
             int_br.get_vif_ports.return_value = [port]
-            int_br.db_get_val.side_effect = [local_vlan_map, tag]
+            int_br.db_list.return_value = [{
+                'name': port.port_name, 'other_config': local_vlan_map,
+                'tag': tag
+            }]
             self.agent._restore_local_vlan_map()
             if tag:
                 self.assertTrue(provision_local_vlan.called)
@@ -341,8 +346,8 @@ class TestOvsNeutronAgent(object):
                                'get_devices_details_list',
                                return_value=[details]),\
                 mock.patch.object(self.agent.int_br,
-                                  'get_vif_port_by_id',
-                                  return_value=port),\
+                                  'get_vifs_by_ids',
+                                  return_value={details['device']: port}),\
                 mock.patch.object(self.agent, func_name) as func:
             skip_devs, need_bound_devices = (
                 self.agent.treat_devices_added_or_updated([{}], False))
@@ -383,8 +388,8 @@ class TestOvsNeutronAgent(object):
                                'get_devices_details_list',
                                return_value=[dev_mock]),\
                 mock.patch.object(self.agent.int_br,
-                                  'get_vif_port_by_id',
-                                  return_value=None),\
+                                  'get_vifs_by_ids',
+                                  return_value={}),\
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
             skip_devs = self.agent.treat_devices_added_or_updated([{}], False)
@@ -410,8 +415,8 @@ class TestOvsNeutronAgent(object):
                                'get_devices_details_list',
                                return_value=[fake_details_dict]),\
                 mock.patch.object(self.agent.int_br,
-                                  'get_vif_port_by_id',
-                                  return_value=mock.MagicMock()),\
+                                  'get_vifs_by_ids',
+                                  return_value={'xxx': mock.MagicMock()}),\
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
             skip_devs, need_bound_devices = (
@@ -449,6 +454,8 @@ class TestOvsNeutronAgent(object):
                     self.agent,
                     "treat_devices_added_or_updated",
                     return_value=([], [])) as device_added_updated,\
+                mock.patch.object(self.agent.int_br, "db_list",
+                                  return_value=[]),\
                 mock.patch.object(self.agent,
                                   "treat_devices_removed",
                                   return_value=False) as device_removed:
@@ -1180,6 +1187,9 @@ class AncillaryBridgesTest(object):
                            'get_bridge_external_bridge_id',
                            side_effect=pullup_side_effect),\
                 mock.patch(
+                    'neutron.agent.common.ovs_lib.OVSBridge.' 'db_list',
+                    return_value=[]),\
+                mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
@@ -1268,6 +1278,9 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch('neutron.openstack.common.loopingcall.'
                            'FixedIntervalLoopingCall',
                            new=MockFixedIntervalLoopingCall),\
+                mock.patch(
+                    'neutron.agent.common.ovs_lib.OVSBridge.' 'db_list',
+                    return_value=[]),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
