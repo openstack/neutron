@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-04 06:08+0000\n"
-"PO-Revision-Date: 2015-04-28 07:35+0000\n"
+"POT-Creation-Date: 2015-05-29 06:16+0000\n"
+"PO-Revision-Date: 2015-05-28 20:54+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (Taiwan) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_TW/)\n"
@@ -20,154 +20,61 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #, python-format
-msgid "Loading Plugin: %s"
-msgstr "正在載入外掛程式：%s"
-
-#, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
 #, python-format
-msgid "HTTP exception thrown: %s"
-msgstr "已擲出 HTTP 異常狀況：%s"
-
-#, python-format
-msgid "%(url)s returned with HTTP %(status)d"
-msgstr "%(url)s 傳回了 HTTP %(status)d"
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr "%(plugin_key)s：已忽略帶有引數 %(args)s 的 %(function_name)s"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s 傳回了錯誤：%(exception)s"
 
-msgid "Disabled security-group extension."
-msgstr "已停用安全群組延伸。"
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s 傳回了 HTTP %(status)d"
+
+msgid "Agent initialized successfully, now running... "
+msgstr "已順利地起始設定代理程式，現正在執行中..."
+
+msgid "Agent out of sync with plugin!"
+msgstr "代理程式與外掛程式不同步！"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "代理程式通道與外掛程式不同步！"
 
 #, python-format
-msgid "Preparing filters for devices %s"
-msgstr "正在準備裝置 %s 的過濾器"
+msgid "Allocated vlan (%d) from the pool"
+msgstr "已從儲存區配置 VLAN (%d)"
+
+msgid ""
+"Allow sorting is enabled because native pagination requires native sorting"
+msgstr "已啟用容許排序，因為原生分頁需要原生排序"
 
 #, python-format
-msgid "Security group rule updated %r"
-msgstr "安全群組規則已更新 %r"
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr "正在將 %(vlan_id)s 指派為 net-id = %(net_uuid)s 的本端 VLAN"
 
 #, python-format
-msgid "Security group member updated %r"
-msgstr "安全群組成員已更新 %r"
-
-msgid "Provider rule updated"
-msgstr "已更新提供者規則"
+msgid "Attachment %s removed"
+msgstr "已移除連接裝置 %s"
 
 #, python-format
-msgid "Remove device filter for %r"
-msgstr "移除 %r 的裝置過濾器"
-
-msgid "Refresh firewall rules"
-msgstr "重新整理防火牆規則"
-
-msgid "DHCP agent started"
-msgstr "已啟動 DHCP 代理程式"
-
-msgid "Synchronizing state"
-msgstr "正在同步化狀態"
-
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr "agent_updated 是由伺服器端 %s 執行！"
-
-msgid "L3 agent started"
-msgstr "已啟動 L3 代理程式"
-
-#, python-format
-msgid "Device %s already exists"
-msgstr "裝置 %s 已存在"
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "已嘗試移除未過濾的埠過濾器 %r"
 
 #, python-format
 msgid "Attempted to update port filter which is not filtered %s"
 msgstr "已嘗試更新未過濾的埠過濾器 %s"
 
 #, python-format
-msgid "Attempted to remove port filter which is not filtered %r"
-msgstr "已嘗試移除未過濾的埠過濾器 %r"
-
-msgid "Initializing extension manager."
-msgstr "正在起始設定延伸管理程式。"
-
-#, python-format
-msgid "Loaded extension: %s"
-msgstr "已載入延伸：%s"
-
-msgid ""
-"Allow sorting is enabled because native pagination requires native sorting"
-msgstr "已啟用容許排序，因為原生分頁需要原生排序"
-
-msgid "OVS cleanup completed successfully"
-msgstr "已順利完成 OVS 清理"
-
-msgid "Agent initialized successfully, now running... "
-msgstr "已順利地起始設定代理程式，現正在執行中..."
-
-msgid "Logging enabled!"
-msgstr "已啟用記載！"
-
-#, python-format
-msgid "Config paste file: %s"
-msgstr "配置貼上檔案：%s"
-
-#, python-format
-msgid ""
-"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
-"%(subnet_id)s (CIDR: %(cidr)s)"
-msgstr ""
-"驗證 CIDR %(new_cidr)s 失敗 - 與子網路 %(subnet_id)s (CIDR %(cidr)s) 重疊"
-
-#, python-format
-msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
-msgstr "在儲存區中發現無效的 IP 位址：%(start)s - %(end)s："
-
-msgid "Specified IP addresses do not match the subnet IP version"
-msgstr "指定的 IP 位址與子網路 IP 版本不符"
-
-#, python-format
-msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
-msgstr "起始 IP (%(start)s) 大於結尾 IP (%(end)s)"
-
-#, python-format
-msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
-msgstr "找到的儲存區大於子網路 CIDR：%(start)s - %(end)s"
-
-#, python-format
-msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
-msgstr "發現重疊的範圍：%(l_range)s 及 %(r_range)s"
-
-#, python-format
-msgid "Skipping port %s as no IP is configure on it"
-msgstr "正在跳過埠 %s，因為其上沒有配置 IP"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "正在跳過定期作業 %(task)s，因為其間隔為負數"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "正在跳過定期作業 %(task)s，因為它已停用"
-
-#, python-format
 msgid "Caught %s, exiting"
 msgstr "已捕捉到 %s，正在結束"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "母程序已非預期地當掉，正在結束"
-
-msgid "Forking too fast, sleeping"
-msgstr "分岔太快，正在休眠"
-
 #, python-format
-msgid "Started child %d"
-msgstr "已開始子行程 %d"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "正在啟動 %d 個工作程式"
+msgid "Caught %s, stopping children"
+msgstr "已捕捉到 %s，正在停止子項"
 
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
@@ -178,24 +85,65 @@ msgid "Child %(pid)s exited with status %(code)d"
 msgstr "子項 %(pid)s 已結束，狀態為 %(code)d"
 
 #, python-format
-msgid "Caught %s, stopping children"
-msgstr "已捕捉到 %s，正在停止子項"
+msgid "Config paste file: %s"
+msgstr "配置貼上檔案：%s"
+
+msgid "DHCP agent started"
+msgstr "已啟動 DHCP 代理程式"
 
 #, python-format
-msgid "Waiting on %d children to exit"
-msgstr "正在等待 %d 個子項結束"
+msgid "Device %s already exists"
+msgstr "裝置 %s 已存在"
 
 #, python-format
-msgid "Allocated vlan (%d) from the pool"
-msgstr "已從儲存區配置 VLAN (%d)"
+msgid "Device %s not defined on plugin"
+msgstr "外掛程式上未定義裝置 %s"
+
+msgid "Disabled security-group extension."
+msgstr "已停用安全群組延伸。"
+
+msgid "Forking too fast, sleeping"
+msgstr "分岔太快，正在休眠"
 
 #, python-format
-msgid "No %s Plugin loaded"
-msgstr "未載入 %s 外掛程式"
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "在儲存區中發現無效的 IP 位址：%(start)s - %(end)s："
 
 #, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s：已忽略帶有引數 %(args)s 的 %(function_name)s"
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "發現重疊的範圍：%(l_range)s 及 %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "找到的儲存區大於子網路 CIDR：%(start)s - %(end)s"
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "已擲出 HTTP 異常狀況：%s"
+
+msgid "Initializing extension manager."
+msgstr "正在起始設定延伸管理程式。"
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "介面對映：%s"
+
+msgid "L3 agent started"
+msgstr "已啟動 L3 代理程式"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "已啟動「LinuxBridge 代理程式 RPC 常駐程式」！"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "已載入延伸：%s"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "正在載入外掛程式：%s"
+
+msgid "Logging enabled!"
+msgstr "已啟用記載！"
 
 #, python-format
 msgid ""
@@ -203,50 +151,102 @@ msgid ""
 msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s）！"
 
 #, python-format
-msgid "RPC agent_id: %s"
-msgstr "RPC agent_id：%s"
-
-#, python-format
-msgid "Port %(device)s updated. Details: %(details)s"
-msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
-
-#, python-format
-msgid "Device %s not defined on plugin"
-msgstr "外掛程式上未定義裝置 %s"
-
-#, python-format
-msgid "Attachment %s removed"
-msgstr "已移除連接裝置 %s"
-
-#, python-format
-msgid "Port %s updated."
-msgstr "已更新埠 %s。"
-
-msgid "LinuxBridge Agent RPC Daemon Started!"
-msgstr "已啟動「LinuxBridge 代理程式 RPC 常駐程式」！"
-
-msgid "Agent out of sync with plugin!"
-msgstr "代理程式與外掛程式不同步！"
-
-#, python-format
-msgid "Interface mappings: %s"
-msgstr "介面對映：%s"
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "正在將實體網路 %(physical_network)s 對映到橋接器 %(bridge)s"
 
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "網路 VLAN 範圍：%s"
 
 #, python-format
-msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
-msgstr "正在將 %(vlan_id)s 指派為 net-id = %(net_uuid)s 的本端 VLAN"
+msgid "No %s Plugin loaded"
+msgstr "未載入 %s 外掛程式"
+
+msgid "OVS cleanup completed successfully"
+msgstr "已順利完成 OVS 清理"
+
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "母程序已非預期地當掉，正在結束"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "已更新埠 %s。"
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "正在準備裝置 %s 的過濾器"
+
+msgid "Provider rule updated"
+msgstr "已更新提供者規則"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "RPC agent_id：%s"
 
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "正在從 net-id = %(net_uuid)s 收回 VLAN = %(vlan_id)s"
 
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr "正在將實體網路 %(physical_network)s 對映到橋接器 %(bridge)s"
+msgid "Refresh firewall rules"
+msgstr "重新整理防火牆規則"
 
-msgid "Agent tunnel out of sync with plugin!"
-msgstr "代理程式通道與外掛程式不同步！"
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "移除 %r 的裝置過濾器"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "安全群組成員已更新 %r"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "安全群組規則已更新 %r"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr "正在跳過定期作業 %(task)s，因為它已停用"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr "正在跳過定期作業 %(task)s，因為其間隔為負數"
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "正在跳過埠 %s，因為其上沒有配置 IP"
+
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr "指定的 IP 位址與子網路 IP 版本不符"
+
+#, python-format
+msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
+msgstr "起始 IP (%(start)s) 大於結尾 IP (%(end)s)"
+
+#, python-format
+msgid "Started child %d"
+msgstr "已開始子行程 %d"
+
+#, python-format
+msgid "Starting %d workers"
+msgstr "正在啟動 %d 個工作程式"
+
+msgid "Synchronizing state"
+msgstr "正在同步化狀態"
+
+#, python-format
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"驗證 CIDR %(new_cidr)s 失敗 - 與子網路 %(subnet_id)s (CIDR %(cidr)s) 重疊"
+
+#, python-format
+msgid "Waiting on %d children to exit"
+msgstr "正在等待 %d 個子項結束"
+
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr "agent_updated 是由伺服器端 %s 執行！"
