@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-04 06:08+0000\n"
-"PO-Revision-Date: 2015-04-28 07:35+0000\n"
+"POT-Creation-Date: 2015-05-29 06:16+0000\n"
+"PO-Revision-Date: 2015-05-28 20:54+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
 "it/)\n"
@@ -21,81 +21,33 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #, python-format
-msgid "Loading Plugin: %s"
-msgstr "Caricamento plugin: %s"
-
-#, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
 #, python-format
-msgid "HTTP exception thrown: %s"
-msgstr "Generata eccezione HTTP: %s"
-
-#, python-format
-msgid "%(url)s returned with HTTP %(status)d"
-msgstr "%(url)s restituito con HTTP %(status)d"
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr "%(plugin_key)s: %(function_name)s con argomenti %(args)s ignorato"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s ha restituito un errore: %(exception)s"
 
-msgid "Disabled security-group extension."
-msgstr "Estensione di security-group disabilitata."
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s restituito con HTTP %(status)d"
+
+msgid "Agent initialized successfully, now running... "
+msgstr "Agent inizializzato correttamente, ora in esecuzione... "
+
+msgid "Agent out of sync with plugin!"
+msgstr "Agent non sincronizzato con il plugin!"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "Il tunnel agent non è sincronizzato con il plugin!"
 
 #, python-format
-msgid "Preparing filters for devices %s"
-msgstr "Preparazione filtri per i dispositivi %s"
-
-#, python-format
-msgid "Security group rule updated %r"
-msgstr "Regola gruppo di sicurezza aggiornata %r"
-
-#, python-format
-msgid "Security group member updated %r"
-msgstr "Membro gruppo di sicurezza aggiornato %r"
-
-msgid "Provider rule updated"
-msgstr "Provider regola aggiornato"
-
-#, python-format
-msgid "Remove device filter for %r"
-msgstr "Rimuovi filtro dispositivo per %r"
-
-msgid "Refresh firewall rules"
-msgstr "Aggiorna regole firewall"
-
-msgid "DHCP agent started"
-msgstr "Agent DHCP avviato"
-
-msgid "Synchronizing state"
-msgstr "Stato sincronizzazione"
-
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr "agent_updated dal lato server %s!"
-
-msgid "L3 agent started"
-msgstr "Agent L3 avviato"
-
-#, python-format
-msgid "Device %s already exists"
-msgstr "L'unità %s già esiste"
-
-#, python-format
-msgid "Attempted to update port filter which is not filtered %s"
-msgstr "Tentativo di aggiornare il filtro della porta che non è filtrata %s"
-
-#, python-format
-msgid "Attempted to remove port filter which is not filtered %r"
-msgstr "Tentativo di rimuovere il filtro della porta che non è filtrata %r"
-
-msgid "Initializing extension manager."
-msgstr "Inizializzazione gestore estensioni."
-
-#, python-format
-msgid "Loaded extension: %s"
-msgstr "Estensione caricata: %s"
+msgid "Allocated vlan (%d) from the pool"
+msgstr "vlan (%d) allocata dal pool"
 
 msgid ""
 "Allow sorting is enabled because native pagination requires native sorting"
@@ -103,30 +55,181 @@ msgstr ""
 "Consenti ordinamento è abilitato in quanto la paginaziona nativa richiede "
 "l'ordinamento nativo"
 
-msgid "OVS cleanup completed successfully"
-msgstr "Ripulitura di OVS completata correttamente"
+#, python-format
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr "Assegnazione %(vlan_id)s come vlan locale per net-id=%(net_uuid)s"
 
-msgid "Agent initialized successfully, now running... "
-msgstr "Agent inizializzato correttamente, ora in esecuzione... "
+#, python-format
+msgid "Attachment %s removed"
+msgstr "Collegamento %s rimosso"
 
-msgid "Logging enabled!"
-msgstr "Accesso abilitato!"
+#, python-format
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "Tentativo di rimuovere il filtro della porta che non è filtrata %r"
+
+#, python-format
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "Tentativo di aggiornare il filtro della porta che non è filtrata %s"
+
+#, python-format
+msgid "Caught %s, exiting"
+msgstr "Rilevato %s, esistente"
+
+#, python-format
+msgid "Caught %s, stopping children"
+msgstr "Intercettato %s, arresto in corso dei children"
+
+#, python-format
+msgid "Child %(pid)d killed by signal %(sig)d"
+msgstr "Child %(pid)d interrotto dal segnale %(sig)d"
+
+#, python-format
+msgid "Child %(pid)s exited with status %(code)d"
+msgstr "Child %(pid)s terminato con stato %(code)d"
+
+#, python-format
+msgid "Child caught %s, exiting"
+msgstr "Cogliere Child %s, uscendo"
 
 #, python-format
 msgid "Config paste file: %s"
 msgstr "Configurazione file paste: %s"
 
+msgid "DHCP agent started"
+msgstr "Agent DHCP avviato"
+
 #, python-format
-msgid ""
-"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
-"%(subnet_id)s (CIDR: %(cidr)s)"
-msgstr ""
-"Convalida per CIDR: %(new_cidr)s non riuscita - si sovrappone con la "
-"sottorete %(subnet_id)s (CIDR: %(cidr)s)"
+msgid "Device %s already exists"
+msgstr "L'unità %s già esiste"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "Unità %s non definita nel plugin"
+
+msgid "Disabled security-group extension."
+msgstr "Estensione di security-group disabilitata."
+
+#, python-format
+msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
+msgstr "Ascolto di eventlet backdoor su %(port)s per il processo %(pid)d"
+
+msgid "Forking too fast, sleeping"
+msgstr "Sblocco troppo veloce, attendere"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr "Trovato un indirizzo IP invalido nel pool: %(start)s - %(end)s:"
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "Trovati gli intervalli di sovrapposizione: %(l_range)s e %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "Trovato un pool più grande della sottorete CIDR:%(start)s - %(end)s"
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "Generata eccezione HTTP: %s"
+
+msgid "Initializing extension manager."
+msgstr "Inizializzazione gestore estensioni."
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "Associazioni interfaccia: %s"
+
+msgid "L3 agent started"
+msgstr "Agent L3 avviato"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "LinuxBridge Agent RPC Daemon avviato!"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "Estensione caricata: %s"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "Caricamento plugin: %s"
+
+msgid "Logging enabled!"
+msgstr "Accesso abilitato!"
+
+#, python-format
+msgid ""
+"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
+msgstr ""
+"L'iterazione loop supera l'intervallo (%(polling_interval)s vs. %(elapsed)s)!"
+
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "Associazione rete fisica %(physical_network)s al bridge %(bridge)s"
+
+#, python-format
+msgid "Network VLAN ranges: %s"
+msgstr "Intervalli di rete VLAN: %s"
+
+#, python-format
+msgid "No %s Plugin loaded"
+msgstr "Nessun plugin %s caricato"
+
+msgid "OVS cleanup completed successfully"
+msgstr "Ripulitura di OVS completata correttamente"
+
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "Il processo principale è stato interrotto inaspettatamente, uscire"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "Porta %(device)s aggiornata. Dettagli: %(details)s"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "Porta %s aggiornata."
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "Preparazione filtri per i dispositivi %s"
+
+msgid "Provider rule updated"
+msgstr "Provider regola aggiornato"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "agent-id RPC: %s"
+
+#, python-format
+msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
+msgstr "Recupero vlan = %(vlan_id)s da net-id = %(net_uuid)s"
+
+msgid "Refresh firewall rules"
+msgstr "Aggiorna regole firewall"
+
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "Rimuovi filtro dispositivo per %r"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "Membro gruppo di sicurezza aggiornato %r"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "Regola gruppo di sicurezza aggiornata %r"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr "Abbadono dell'attività periodica %(task)s perché è disabilitata"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr ""
+"Abbadono dell'attività periodica %(task)s perché l'intervalo è negativo"
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "La porta %s viene ignorata in quanto non ha nessun IP configurato"
 
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
@@ -138,45 +241,6 @@ msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "L'IP iniziale (%(start)s) è superiore all'IP finale (%(end)s)"
 
 #, python-format
-msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
-msgstr "Trovato un pool più grande della sottorete CIDR:%(start)s - %(end)s"
-
-#, python-format
-msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
-msgstr "Trovati gli intervalli di sovrapposizione: %(l_range)s e %(r_range)s"
-
-#, python-format
-msgid "Skipping port %s as no IP is configure on it"
-msgstr "La porta %s viene ignorata in quanto non ha nessun IP configurato"
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Ascolto di eventlet backdoor su %(port)s per il processo %(pid)d"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr ""
-"Abbadono dell'attività periodica %(task)s perché l'intervalo è negativo"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "Abbadono dell'attività periodica %(task)s perché è disabilitata"
-
-#, python-format
-msgid "Caught %s, exiting"
-msgstr "Rilevato %s, esistente"
-
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "Il processo principale è stato interrotto inaspettatamente, uscire"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "Cogliere Child %s, uscendo"
-
-msgid "Forking too fast, sleeping"
-msgstr "Sblocco troppo veloce, attendere"
-
-#, python-format
 msgid "Started child %d"
 msgstr "Child avviato %d"
 
@@ -184,85 +248,21 @@ msgstr "Child avviato %d"
 msgid "Starting %d workers"
 msgstr "Avvio %d operatori"
 
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "Child %(pid)d interrotto dal segnale %(sig)d"
+msgid "Synchronizing state"
+msgstr "Stato sincronizzazione"
 
 #, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "Child %(pid)s terminato con stato %(code)d"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "Intercettato %s, arresto in corso dei children"
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"Convalida per CIDR: %(new_cidr)s non riuscita - si sovrappone con la "
+"sottorete %(subnet_id)s (CIDR: %(cidr)s)"
 
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "In attesa %d degli elementi secondari per uscire"
 
 #, python-format
-msgid "Allocated vlan (%d) from the pool"
-msgstr "vlan (%d) allocata dal pool"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "Nessun plugin %s caricato"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s: %(function_name)s con argomenti %(args)s ignorato"
-
-#, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr ""
-"L'iterazione loop supera l'intervallo (%(polling_interval)s vs. %(elapsed)s)!"
-
-#, python-format
-msgid "RPC agent_id: %s"
-msgstr "agent-id RPC: %s"
-
-#, python-format
-msgid "Port %(device)s updated. Details: %(details)s"
-msgstr "Porta %(device)s aggiornata. Dettagli: %(details)s"
-
-#, python-format
-msgid "Device %s not defined on plugin"
-msgstr "Unità %s non definita nel plugin"
-
-#, python-format
-msgid "Attachment %s removed"
-msgstr "Collegamento %s rimosso"
-
-#, python-format
-msgid "Port %s updated."
-msgstr "Porta %s aggiornata."
-
-msgid "LinuxBridge Agent RPC Daemon Started!"
-msgstr "LinuxBridge Agent RPC Daemon avviato!"
-
-msgid "Agent out of sync with plugin!"
-msgstr "Agent non sincronizzato con il plugin!"
-
-#, python-format
-msgid "Interface mappings: %s"
-msgstr "Associazioni interfaccia: %s"
-
-#, python-format
-msgid "Network VLAN ranges: %s"
-msgstr "Intervalli di rete VLAN: %s"
-
-#, python-format
-msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
-msgstr "Assegnazione %(vlan_id)s come vlan locale per net-id=%(net_uuid)s"
-
-#, python-format
-msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
-msgstr "Recupero vlan = %(vlan_id)s da net-id = %(net_uuid)s"
-
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr "Associazione rete fisica %(physical_network)s al bridge %(bridge)s"
-
-msgid "Agent tunnel out of sync with plugin!"
-msgstr "Il tunnel agent non è sincronizzato con il plugin!"
+msgid "agent_updated by server side %s!"
+msgstr "agent_updated dal lato server %s!"

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-04 06:08+0000\n"
-"PO-Revision-Date: 2015-04-28 07:35+0000\n"
+"POT-Creation-Date: 2015-05-29 06:16+0000\n"
+"PO-Revision-Date: 2015-05-28 20:54+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Japanese (http://www.transifex.com/projects/p/neutron/"
 "language/ja/)\n"
@@ -21,81 +21,34 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #, python-format
-msgid "Loading Plugin: %s"
-msgstr "プラグインの読み込み中: %s"
-
-#, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
 #, python-format
-msgid "HTTP exception thrown: %s"
-msgstr "HTTP 例外がスローされました: %s"
-
-#, python-format
-msgid "%(url)s returned with HTTP %(status)d"
-msgstr "HTTP %(status)d の %(url)s が返されました"
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr ""
+"%(plugin_key)s: 引数 %(args)s が指定された %(function_name)s は無視されます"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s が障害を返しました: %(exception)s"
 
-msgid "Disabled security-group extension."
-msgstr "security-group 拡張を無効にしました。"
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "HTTP %(status)d の %(url)s が返されました"
+
+msgid "Agent initialized successfully, now running... "
+msgstr "エージェントが正常に初期化されました。現在実行中です... "
+
+msgid "Agent out of sync with plugin!"
+msgstr "エージェントがプラグインと非同期です。"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "エージェント・トンネルがプラグインと非同期です"
 
 #, python-format
-msgid "Preparing filters for devices %s"
-msgstr "デバイス %s のフィルターを準備中"
-
-#, python-format
-msgid "Security group rule updated %r"
-msgstr "セキュリティー・グループ・ルールが %r を更新しました"
-
-#, python-format
-msgid "Security group member updated %r"
-msgstr "セキュリティー・グループ・メンバーが %r を更新しました"
-
-msgid "Provider rule updated"
-msgstr "プロバイダー・ルールが更新されました"
-
-#, python-format
-msgid "Remove device filter for %r"
-msgstr "%r のデバイス・フィルターを削除"
-
-msgid "Refresh firewall rules"
-msgstr "ファイアウォール・ルールの最新表示"
-
-msgid "DHCP agent started"
-msgstr "DHCP エージェントが始動しました"
-
-msgid "Synchronizing state"
-msgstr "状態の同期中"
-
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr "サーバー・サイド %s による agent_updated!"
-
-msgid "L3 agent started"
-msgstr "L3 エージェントが始動しました"
-
-#, python-format
-msgid "Device %s already exists"
-msgstr "デバイス %s は既に存在します"
-
-#, python-format
-msgid "Attempted to update port filter which is not filtered %s"
-msgstr "フィルター処理されていないポート・フィルター %s を更新しようとしました"
-
-#, python-format
-msgid "Attempted to remove port filter which is not filtered %r"
-msgstr "フィルター処理されていないポート・フィルター %r を削除しようとしました"
-
-msgid "Initializing extension manager."
-msgstr "拡張マネージャーを初期化しています。"
-
-#, python-format
-msgid "Loaded extension: %s"
-msgstr "拡張をロードしました: %s"
+msgid "Allocated vlan (%d) from the pool"
+msgstr "プールからの割り振り済み VLAN (%d)"
 
 msgid ""
 "Allow sorting is enabled because native pagination requires native sorting"
@@ -103,83 +56,30 @@ msgstr ""
 "ネイティブ・ページ編集にはネイティブ・ソートが必要なため、ソートの許可が有効"
 "になっています"
 
-msgid "OVS cleanup completed successfully"
-msgstr "OVS のクリーンアップが正常に完了しました"
-
-msgid "Agent initialized successfully, now running... "
-msgstr "エージェントが正常に初期化されました。現在実行中です... "
-
-msgid "Logging enabled!"
-msgstr "ロギングは有効です"
-
 #, python-format
-msgid "Config paste file: %s"
-msgstr "構成貼り付けファイル: %s"
-
-msgid "IPv6 is not enabled on this system."
-msgstr " このシステムでは、 IPｖ6が有効ではありません。"
-
-#, python-format
-msgid ""
-"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
-"%(subnet_id)s (CIDR: %(cidr)s)"
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr ""
-"CIDR %(new_cidr)s の検証が失敗しました。サブネット %(subnet_id)s (CIDR: "
-"%(cidr)s) とオーバーラップしています"
+"%(vlan_id)s を net-id=%(net_uuid)s のローカル VLAN として割り当てています"
 
 #, python-format
-msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
-msgstr "プールで無効な IP アドレスが見つかりました: %(start)s から %(end)s:"
-
-msgid "Specified IP addresses do not match the subnet IP version"
-msgstr "指定された IP アドレスが、サブネット IP バージョンと一致しません"
+msgid "Attachment %s removed"
+msgstr "接続機構 %s が削除されました"
 
 #, python-format
-msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
-msgstr "開始 IP (%(start)s) が終了 IP (%(end)s) より大きくなっています"
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "フィルター処理されていないポート・フィルター %r を削除しようとしました"
 
 #, python-format
-msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
-msgstr ""
-"サブネット CIDR より大きいプールが見つかりました: %(start)s から %(end)s"
-
-#, python-format
-msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
-msgstr "オーバーラップする範囲が見つかりました: %(l_range)s から %(r_range)s"
-
-#, python-format
-msgid "Skipping port %s as no IP is configure on it"
-msgstr "ポート %s には IP が構成されていないため、このポートをスキップします"
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet backdoorは、プロセス%(pid)dの%(port)sをリスニングしています。"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "タスクの間隔が負であるため、定期タスク %(task)s をスキップしています"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "タスクが使用不可であるため、定期タスク %(task)s をスキップしています"
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "フィルター処理されていないポート・フィルター %s を更新しようとしました"
 
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "%s が見つかりました。終了しています"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "親プロセスが予期せずに停止しました。終了しています"
-
-msgid "Forking too fast, sleeping"
-msgstr "fork が早すぎます。スリープ状態にしています"
-
 #, python-format
-msgid "Started child %d"
-msgstr "子 %d を開始しました"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "%d ワーカーを開始しています"
+msgid "Caught %s, stopping children"
+msgstr "%s が見つかりました。子を停止しています"
 
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
@@ -190,25 +90,73 @@ msgid "Child %(pid)s exited with status %(code)d"
 msgstr "子 %(pid)s が状況 %(code)d で終了しました"
 
 #, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s が見つかりました。子を停止しています"
+msgid "Config paste file: %s"
+msgstr "構成貼り付けファイル: %s"
+
+msgid "DHCP agent started"
+msgstr "DHCP エージェントが始動しました"
 
 #, python-format
-msgid "Waiting on %d children to exit"
-msgstr "%d 個の子で終了を待機しています"
+msgid "Device %s already exists"
+msgstr "デバイス %s は既に存在します"
 
 #, python-format
-msgid "Allocated vlan (%d) from the pool"
-msgstr "プールからの割り振り済み VLAN (%d)"
+msgid "Device %s not defined on plugin"
+msgstr "デバイス %s がプラグインで定義されていません"
+
+msgid "Disabled security-group extension."
+msgstr "security-group 拡張を無効にしました。"
 
 #, python-format
-msgid "No %s Plugin loaded"
-msgstr "%s プラグインはロードされませんでした"
+msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
+msgstr "Eventlet backdoorは、プロセス%(pid)dの%(port)sをリスニングしています。"
+
+msgid "Forking too fast, sleeping"
+msgstr "fork が早すぎます。スリープ状態にしています"
 
 #, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "プールで無効な IP アドレスが見つかりました: %(start)s から %(end)s:"
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "オーバーラップする範囲が見つかりました: %(l_range)s から %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
-"%(plugin_key)s: 引数 %(args)s が指定された %(function_name)s は無視されます"
+"サブネット CIDR より大きいプールが見つかりました: %(start)s から %(end)s"
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "HTTP 例外がスローされました: %s"
+
+msgid "IPv6 is not enabled on this system."
+msgstr " このシステムでは、 IPｖ6が有効ではありません。"
+
+msgid "Initializing extension manager."
+msgstr "拡張マネージャーを初期化しています。"
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "インターフェース・マッピング: %s"
+
+msgid "L3 agent started"
+msgstr "L3 エージェントが始動しました"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "LinuxBridge Agent RPC デーモンが開始しました。"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "拡張をロードしました: %s"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "プラグインの読み込み中: %s"
+
+msgid "Logging enabled!"
+msgstr "ロギングは有効です"
 
 #, python-format
 msgid ""
@@ -217,53 +165,105 @@ msgstr ""
 "ループ反復が間隔を超えました (%(polling_interval)s に対して %(elapsed)s)。"
 
 #, python-format
-msgid "RPC agent_id: %s"
-msgstr "RPC agent_id: %s"
-
-#, python-format
-msgid "Port %(device)s updated. Details: %(details)s"
-msgstr "ポート %(device)s が更新されました。詳細: %(details)s"
-
-#, python-format
-msgid "Device %s not defined on plugin"
-msgstr "デバイス %s がプラグインで定義されていません"
-
-#, python-format
-msgid "Attachment %s removed"
-msgstr "接続機構 %s が削除されました"
-
-#, python-format
-msgid "Port %s updated."
-msgstr "ポート %s が更新されました。"
-
-msgid "LinuxBridge Agent RPC Daemon Started!"
-msgstr "LinuxBridge Agent RPC デーモンが開始しました。"
-
-msgid "Agent out of sync with plugin!"
-msgstr "エージェントがプラグインと非同期です。"
-
-#, python-format
-msgid "Interface mappings: %s"
-msgstr "インターフェース・マッピング: %s"
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr ""
+"物理ネットワーク %(physical_network)s をブリッジ %(bridge)s にマップしていま"
+"す"
 
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "ネットワーク VLAN の範囲: %s"
 
 #, python-format
-msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
-msgstr ""
-"%(vlan_id)s を net-id=%(net_uuid)s のローカル VLAN として割り当てています"
+msgid "No %s Plugin loaded"
+msgstr "%s プラグインはロードされませんでした"
+
+msgid "OVS cleanup completed successfully"
+msgstr "OVS のクリーンアップが正常に完了しました"
+
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "親プロセスが予期せずに停止しました。終了しています"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "ポート %(device)s が更新されました。詳細: %(details)s"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "ポート %s が更新されました。"
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "デバイス %s のフィルターを準備中"
+
+msgid "Provider rule updated"
+msgstr "プロバイダー・ルールが更新されました"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "RPC agent_id: %s"
 
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "VLAN = %(vlan_id)s を net-id = %(net_uuid)s から再利用中"
 
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr ""
-"物理ネットワーク %(physical_network)s をブリッジ %(bridge)s にマップしていま"
-"す"
+msgid "Refresh firewall rules"
+msgstr "ファイアウォール・ルールの最新表示"
 
-msgid "Agent tunnel out of sync with plugin!"
-msgstr "エージェント・トンネルがプラグインと非同期です"
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "%r のデバイス・フィルターを削除"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "セキュリティー・グループ・メンバーが %r を更新しました"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "セキュリティー・グループ・ルールが %r を更新しました"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr "タスクが使用不可であるため、定期タスク %(task)s をスキップしています"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr "タスクの間隔が負であるため、定期タスク %(task)s をスキップしています"
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "ポート %s には IP が構成されていないため、このポートをスキップします"
+
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr "指定された IP アドレスが、サブネット IP バージョンと一致しません"
+
+#, python-format
+msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
+msgstr "開始 IP (%(start)s) が終了 IP (%(end)s) より大きくなっています"
+
+#, python-format
+msgid "Started child %d"
+msgstr "子 %d を開始しました"
+
+#, python-format
+msgid "Starting %d workers"
+msgstr "%d ワーカーを開始しています"
+
+msgid "Synchronizing state"
+msgstr "状態の同期中"
+
+#, python-format
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"CIDR %(new_cidr)s の検証が失敗しました。サブネット %(subnet_id)s (CIDR: "
+"%(cidr)s) とオーバーラップしています"
+
+#, python-format
+msgid "Waiting on %d children to exit"
+msgstr "%d 個の子で終了を待機しています"
+
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr "サーバー・サイド %s による agent_updated!"
