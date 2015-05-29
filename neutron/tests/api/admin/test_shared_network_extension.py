@@ -14,6 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest_lib import exceptions as lib_exc
+import testtools
+
 from neutron.tests.api import base
 from neutron.tests.tempest import config
 from neutron.tests.tempest import test
@@ -94,3 +97,35 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         # shared network extension attribute is returned.
         self._show_shared_network(self.admin_client)
         self._show_shared_network(self.client)
+
+
+class AllowedAddressPairSharedNetworkTest(base.BaseAdminNetworkTest):
+    allowed_address_pairs = [{'ip_address': '1.1.1.1'}]
+
+    @classmethod
+    def skip_checks(cls):
+        super(AllowedAddressPairSharedNetworkTest, cls).skip_checks()
+        if not test.is_extension_enabled('allowed-address-pairs', 'network'):
+            msg = "Allowed Address Pairs extension not enabled."
+            raise cls.skipException(msg)
+
+    @classmethod
+    def resource_setup(cls):
+        super(AllowedAddressPairSharedNetworkTest, cls).resource_setup()
+        cls.network = cls.create_shared_network()
+        cls.create_subnet(cls.network, client=cls.admin_client)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('86c3529b-1231-40de-803c-ffffffff1fff')
+    def test_create_with_address_pair_blocked_on_other_network(self):
+        with testtools.ExpectedException(lib_exc.Forbidden):
+            self.create_port(self.network,
+                             allowed_address_pairs=self.allowed_address_pairs)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('86c3529b-1231-40de-803c-ffffffff2fff')
+    def test_update_with_address_pair_blocked_on_other_network(self):
+        port = self.create_port(self.network)
+        with testtools.ExpectedException(lib_exc.Forbidden):
+            self.update_port(
+                port, allowed_address_pairs=self.allowed_address_pairs)
