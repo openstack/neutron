@@ -99,10 +99,20 @@ class HackingTestCase(base.BaseTestCase):
                mock.method(1, 2, 3, test='wow')
                mock.method.assertCalledOnceWith()
                """
+        fail_code3 = """
+               mock = Mock()
+               mock.method(1, 2, 3, test='wow')
+               mock.method.assert_has_called()
+               """
         pass_code = """
                mock = Mock()
                mock.method(1, 2, 3, test='wow')
                mock.method.assert_called_once_with()
+               """
+        pass_code2 = """
+               mock = Mock()
+               mock.method(1, 2, 3, test='wow')
+               mock.method.assert_has_calls()
                """
         self.assertEqual(
             1, len(list(checks.check_assert_called_once_with(fail_code1,
@@ -112,6 +122,12 @@ class HackingTestCase(base.BaseTestCase):
                                             "neutron/tests/test_assert.py"))))
         self.assertEqual(
             0, len(list(checks.check_assert_called_once_with(pass_code,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            1, len(list(checks.check_assert_called_once_with(fail_code3,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            0, len(list(checks.check_assert_called_once_with(pass_code2,
                                             "neutron/tests/test_assert.py"))))
 
     def test_check_oslo_namespace_imports(self):
