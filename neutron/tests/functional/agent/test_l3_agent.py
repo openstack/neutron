@@ -63,7 +63,8 @@ def get_ovs_bridge(br_name):
 class L3AgentTestFramework(base.BaseSudoTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
-        mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
+        self.mock_plugin_api = mock.patch(
+            'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
         self.agent = self._configure_agent('agent1')
 
@@ -500,23 +501,23 @@ class L3AgentTestCase(L3AgentTestFramework):
         routers_to_keep = []
         routers_to_delete = []
         ns_names_to_retrieve = set()
+        routers_info_to_delete = []
         for i in range(2):
             routers_to_keep.append(self.generate_router_info(False))
-            self.manage_router(self.agent, routers_to_keep[i])
-            ns_names_to_retrieve.add(namespaces.NS_PREFIX +
-                                     routers_to_keep[i]['id'])
+            ri = self.manage_router(self.agent, routers_to_keep[i])
+            ns_names_to_retrieve.add(ri.ns_name)
         for i in range(2):
             routers_to_delete.append(self.generate_router_info(False))
-            self.manage_router(self.agent, routers_to_delete[i])
-            ns_names_to_retrieve.add(namespaces.NS_PREFIX +
-                                     routers_to_delete[i]['id'])
+            ri = self.manage_router(self.agent, routers_to_delete[i])
+            routers_info_to_delete.append(ri)
+            ns_names_to_retrieve.add(ri.ns_name)
 
         # Mock the plugin RPC API to Simulate a situation where the agent
         # was handling the 4 routers created above, it went down and after
         # starting up again, two of the routers were deleted via the API
-        mocked_get_routers = (
-            neutron_l3_agent.L3PluginApi.return_value.get_routers)
-        mocked_get_routers.return_value = routers_to_keep
+        self.mock_plugin_api.get_routers.return_value = routers_to_keep
+        # also clear agent router_info as it will be after restart
+        self.agent.router_info = {}
 
         # Synchonize the agent with the plug-in
         with mock.patch.object(namespace_manager.NamespaceManager, 'list_all',
@@ -526,9 +527,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         # Mock the plugin RPC API so a known external network id is returned
         # when the router updates are processed by the agent
         external_network_id = _uuid()
-        mocked_get_external_network_id = (
-            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
-        mocked_get_external_network_id.return_value = external_network_id
+        self.mock_plugin_api.get_external_network_id.return_value = (
+            external_network_id)
 
         # Plug external_gateway_info in the routers that are not going to be
         # deleted by the agent when it processes the updates. Otherwise,
@@ -539,7 +539,7 @@ class L3AgentTestCase(L3AgentTestFramework):
 
         # Have the agent process the update from the plug-in and verify
         # expected behavior
-        for _ in routers_to_keep + routers_to_delete:
+        for _ in routers_to_keep:
             self.agent._process_router_update()
 
         for i in range(2):
@@ -547,10 +547,9 @@ class L3AgentTestCase(L3AgentTestFramework):
             self.assertTrue(self._namespace_exists(namespaces.NS_PREFIX +
                                                    routers_to_keep[i]['id']))
         for i in range(2):
-            self.assertNotIn(routers_to_delete[i]['id'],
+            self.assertNotIn(routers_info_to_delete[i].router_id,
                              self.agent.router_info)
-            self.assertFalse(self._namespace_exists(
-                namespaces.NS_PREFIX + routers_to_delete[i]['id']))
+            self._assert_router_does_not_exist(routers_info_to_delete[i])
 
     def _router_lifecycle(self, enable_ha, ip_version=4,
                           dual_stack=False, v6_ext_gw_with_sub=True):
@@ -948,9 +947,7 @@ class TestDvrRouter(L3AgentTestFramework):
             self, agent_mode, **dvr_router_kwargs):
         self.agent.conf.agent_mode = agent_mode
         router_info = self.generate_dvr_router_info(**dvr_router_kwargs)
-        mocked_ext_net_id = (
-            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
-        mocked_ext_net_id.return_value = (
+        self.mock_plugin_api.get_external_network_id.return_value = (
             router_info['_floatingips'][0]['floating_network_id'])
         router = self.manage_router(self.agent, router_info)
         fip_ns = router.fip_ns.get_name()
@@ -1010,15 +1007,12 @@ class TestDvrRouter(L3AgentTestFramework):
         # gateway_port information before the l3_agent will create it.
         # The port returned needs to have the same information as
         # router_info['gw_port']
-        mocked_gw_port = (
-            neutron_l3_agent.L3PluginApi.return_value.get_agent_gateway_port)
-        mocked_gw_port.return_value = router_info['gw_port']
+        self.mock_plugin_api.get_agent_gateway_port.return_value = router_info[
+            'gw_port']
 
         # We also need to mock the get_external_network_id method to
         # get the correct fip namespace.
-        mocked_ext_net_id = (
-            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
-        mocked_ext_net_id.return_value = (
+        self.mock_plugin_api.get_external_network_id.return_value = (
             router_info['_floatingips'][0]['floating_network_id'])
 
         # With all that set we can now ask the l3_agent to
