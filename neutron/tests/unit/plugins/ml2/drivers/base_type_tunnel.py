@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
 import mock
 from six import moves
 import testtools
@@ -237,10 +236,10 @@ class TunnelRpcCallbackTestMixin(object):
         self.driver = self.DRIVER_CLASS()
 
     def _test_tunnel_sync(self, kwargs, delete_tunnel=False):
-        with contextlib.nested(
-            mock.patch.object(self.notifier, 'tunnel_update'),
-            mock.patch.object(self.notifier, 'tunnel_delete')
-        ) as (tunnel_update, tunnel_delete):
+        with mock.patch.object(self.notifier,
+                               'tunnel_update') as tunnel_update,\
+                mock.patch.object(self.notifier,
+                                  'tunnel_delete') as tunnel_delete:
             details = self.callbacks.tunnel_sync('fake_context', **kwargs)
             tunnels = details['tunnels']
             for tunnel in tunnels:
@@ -253,10 +252,10 @@ class TunnelRpcCallbackTestMixin(object):
                 self.assertFalse(tunnel_delete.called)
 
     def _test_tunnel_sync_raises(self, kwargs):
-        with contextlib.nested(
-            mock.patch.object(self.notifier, 'tunnel_update'),
-            mock.patch.object(self.notifier, 'tunnel_delete')
-        ) as (tunnel_update, tunnel_delete):
+        with mock.patch.object(self.notifier,
+                               'tunnel_update') as tunnel_update,\
+                mock.patch.object(self.notifier,
+                                  'tunnel_delete') as tunnel_delete:
             self.assertRaises(exc.InvalidInput,
                               self.callbacks.tunnel_sync,
                               'fake_context', **kwargs)

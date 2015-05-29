@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import os
 
 import mock
@@ -106,10 +105,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
     def test_treat_devices_removed_with_existed_device(self):
         agent = self.agent
         devices = [DEVICE_1]
-        with contextlib.nested(
-            mock.patch.object(agent.plugin_rpc, "update_device_down"),
-            mock.patch.object(agent.sg_agent, "remove_devices_filter")
-        ) as (fn_udd, fn_rdf):
+        with mock.patch.object(agent.plugin_rpc,
+                               "update_device_down") as fn_udd,\
+                mock.patch.object(agent.sg_agent,
+                                  "remove_devices_filter") as fn_rdf:
             fn_udd.return_value = {'device': DEVICE_1,
                                    'exists': True}
             with mock.patch.object(linuxbridge_neutron_agent.LOG,
@@ -123,10 +122,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
     def test_treat_devices_removed_with_not_existed_device(self):
         agent = self.agent
         devices = [DEVICE_1]
-        with contextlib.nested(
-            mock.patch.object(agent.plugin_rpc, "update_device_down"),
-            mock.patch.object(agent.sg_agent, "remove_devices_filter")
-        ) as (fn_udd, fn_rdf):
+        with mock.patch.object(agent.plugin_rpc,
+                               "update_device_down") as fn_udd,\
+                mock.patch.object(agent.sg_agent,
+                                  "remove_devices_filter") as fn_rdf:
             fn_udd.return_value = {'device': DEVICE_1,
                                    'exists': False}
             with mock.patch.object(linuxbridge_neutron_agent.LOG,
@@ -140,10 +139,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
     def test_treat_devices_removed_failed(self):
         agent = self.agent
         devices = [DEVICE_1]
-        with contextlib.nested(
-            mock.patch.object(agent.plugin_rpc, "update_device_down"),
-            mock.patch.object(agent.sg_agent, "remove_devices_filter")
-        ) as (fn_udd, fn_rdf):
+        with mock.patch.object(agent.plugin_rpc,
+                               "update_device_down") as fn_udd,\
+                mock.patch.object(agent.sg_agent,
+                                  "remove_devices_filter") as fn_rdf:
             fn_udd.side_effect = Exception()
             with mock.patch.object(linuxbridge_neutron_agent.LOG,
                                    'debug') as log:
@@ -387,11 +386,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertTrue(listdir_fn.called)
 
     def test_get_interfaces_on_bridge(self):
-        with contextlib.nested(
-            mock.patch.object(utils, 'execute'),
-            mock.patch.object(os, 'listdir'),
-            mock.patch.object(ip_lib, 'device_exists', return_value=True)
-        ) as (exec_fn, listdir_fn, dev_exists_fn):
+        with mock.patch.object(utils, 'execute'),\
+                mock.patch.object(os, 'listdir') as listdir_fn,\
+                mock.patch.object(ip_lib, 'device_exists', return_value=True):
             listdir_fn.return_value = ["qbr1"]
             self.assertEqual(self.lbm.get_interfaces_on_bridge("br0"),
                              ["qbr1"])
@@ -408,10 +405,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(self.lbm.get_tap_devices_count('br0'), 0)
 
     def test_get_interface_by_ip(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib.IPWrapper, 'get_devices'),
-            mock.patch.object(ip_lib.IpAddrCommand, 'list')
-        ) as (get_dev_fn, ip_list_fn):
+        with mock.patch.object(ip_lib.IPWrapper, 'get_devices') as get_dev_fn,\
+                mock.patch.object(ip_lib.IpAddrCommand, 'list') as ip_list_fn:
             device = mock.Mock()
             device.name = 'dev_name'
             get_dev_fn.return_value = [device]
@@ -420,10 +415,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                              'dev_name')
 
     def test_get_bridge_for_tap_device(self):
-        with contextlib.nested(
-            mock.patch.object(self.lbm, "get_all_neutron_bridges"),
-            mock.patch.object(self.lbm, "get_interfaces_on_bridge")
-        ) as (get_all_qbr_fn, get_if_fn):
+        with mock.patch.object(self.lbm,
+                               "get_all_neutron_bridges") as get_all_qbr_fn,\
+                mock.patch.object(self.lbm,
+                                  "get_interfaces_on_bridge") as get_if_fn:
             get_all_qbr_fn.return_value = ["br-int", "br-ex"]
             get_if_fn.return_value = ["tap1", "tap2", "tap3"]
             self.assertEqual(self.lbm.get_bridge_for_tap_device("tap1"),
@@ -440,10 +435,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             )
 
     def test_get_interface_details(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib.IpAddrCommand, 'list'),
-            mock.patch.object(ip_lib.IpRouteCommand, 'get_gateway')
-        ) as (list_fn, getgw_fn):
+        with mock.patch.object(ip_lib.IpAddrCommand, 'list') as list_fn,\
+                mock.patch.object(ip_lib.IpRouteCommand,
+                                  'get_gateway') as getgw_fn:
             gwdict = dict(gateway='1.1.1.1')
             getgw_fn.return_value = gwdict
             ipdict = dict(cidr='1.1.1.1/24',
@@ -459,10 +453,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(ret, (ipdict, gwdict))
 
     def test_ensure_flat_bridge(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib.IpAddrCommand, 'list'),
-            mock.patch.object(ip_lib.IpRouteCommand, 'get_gateway')
-        ) as (list_fn, getgw_fn):
+        with mock.patch.object(ip_lib.IpAddrCommand, 'list') as list_fn,\
+                mock.patch.object(ip_lib.IpRouteCommand,
+                                  'get_gateway') as getgw_fn:
             gwdict = dict(gateway='1.1.1.1')
             getgw_fn.return_value = gwdict
             ipdict = dict(cidr='1.1.1.1/24',
@@ -482,11 +475,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                             ipdict, gwdict)
 
     def test_ensure_vlan_bridge(self):
-        with contextlib.nested(
-            mock.patch.object(self.lbm, 'ensure_vlan'),
-            mock.patch.object(self.lbm, 'ensure_bridge'),
-            mock.patch.object(self.lbm, 'get_interface_details'),
-        ) as (ens_vl_fn, ens, get_int_det_fn):
+        with mock.patch.object(self.lbm, 'ensure_vlan') as ens_vl_fn,\
+                mock.patch.object(self.lbm, 'ensure_bridge') as ens,\
+                mock.patch.object(self.lbm,
+                                  'get_interface_details') as get_int_det_fn:
             ens_vl_fn.return_value = "eth0.1"
             get_int_det_fn.return_value = (None, None)
             self.assertEqual(self.lbm.ensure_vlan_bridge("123", "eth0", "1"),
@@ -549,19 +541,17 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                       scope='global',
                       ip_version=4,
                       dynamic=False)
-        with contextlib.nested(
-            mock.patch.object(ip_lib.IpAddrCommand, 'add'),
-            mock.patch.object(ip_lib.IpAddrCommand, 'delete')
-        ) as (add_fn, del_fn):
+        with mock.patch.object(ip_lib.IpAddrCommand, 'add') as add_fn,\
+                mock.patch.object(ip_lib.IpAddrCommand, 'delete') as del_fn:
             self.lbm.update_interface_ip_details("br0", "eth0",
                                                  [ipdict], None)
             self.assertTrue(add_fn.called)
             self.assertTrue(del_fn.called)
 
-        with contextlib.nested(
-            mock.patch.object(ip_lib.IpRouteCommand, 'add_gateway'),
-            mock.patch.object(ip_lib.IpRouteCommand, 'delete_gateway')
-        ) as (addgw_fn, delgw_fn):
+        with mock.patch.object(ip_lib.IpRouteCommand,
+                               'add_gateway') as addgw_fn,\
+                mock.patch.object(ip_lib.IpRouteCommand,
+                                  'delete_gateway') as delgw_fn:
             self.lbm.update_interface_ip_details("br0", "eth0",
                                                  None, gwdict)
             self.assertTrue(addgw_fn.called)
@@ -578,14 +568,16 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertFalse(self.lbm._bridge_exists_and_ensure_up("br0"))
 
     def test_ensure_bridge(self):
-        with contextlib.nested(
-            mock.patch.object(self.lbm, '_bridge_exists_and_ensure_up'),
-            mock.patch.object(utils, 'execute'),
-            mock.patch.object(self.lbm, 'update_interface_ip_details'),
-            mock.patch.object(self.lbm, 'interface_exists_on_bridge'),
-            mock.patch.object(self.lbm, 'is_device_on_bridge'),
-            mock.patch.object(self.lbm, 'get_bridge_for_tap_device'),
-        ) as (de_fn, exec_fn, upd_fn, ie_fn, if_br_fn, get_if_br_fn):
+        with mock.patch.object(self.lbm,
+                               '_bridge_exists_and_ensure_up') as de_fn,\
+                mock.patch.object(utils, 'execute') as exec_fn,\
+                mock.patch.object(self.lbm,
+                                  'update_interface_ip_details') as upd_fn,\
+                mock.patch.object(self.lbm,
+                                  'interface_exists_on_bridge') as ie_fn,\
+                mock.patch.object(self.lbm, 'is_device_on_bridge'),\
+                mock.patch.object(self.lbm,
+                                  'get_bridge_for_tap_device') as get_if_br_fn:
             de_fn.return_value = False
             exec_fn.return_value = False
             self.assertEqual(self.lbm.ensure_bridge("br0", None), "br0")
@@ -652,11 +644,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             )
 
             de_fn.return_value = True
-            with contextlib.nested(
-                mock.patch.object(self.lbm, "ensure_local_bridge"),
-                mock.patch.object(utils, "execute"),
-                mock.patch.object(self.lbm, "get_bridge_for_tap_device")
-            ) as (en_fn, exec_fn, get_br):
+            with mock.patch.object(self.lbm, "ensure_local_bridge") as en_fn,\
+                    mock.patch.object(utils, "execute") as exec_fn,\
+                    mock.patch.object(self.lbm,
+                                      "get_bridge_for_tap_device") as get_br:
                 exec_fn.return_value = False
                 get_br.return_value = True
                 self.assertTrue(self.lbm.add_tap_interface("123",
@@ -672,11 +663,12 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                             "physnet1", None,
                                                             "tap1"))
 
-            with contextlib.nested(
-                mock.patch.object(self.lbm, "ensure_physical_in_bridge"),
-                mock.patch.object(self.lbm, "ensure_tap_mtu"),
-                mock.patch.object(self.lbm, "get_bridge_for_tap_device")
-            ) as (ens_fn, en_mtu_fn, get_br):
+            with mock.patch.object(self.lbm,
+                                   "ensure_physical_in_bridge") as ens_fn,\
+                    mock.patch.object(self.lbm,
+                                      "ensure_tap_mtu") as en_mtu_fn,\
+                    mock.patch.object(self.lbm,
+                                      "get_bridge_for_tap_device") as get_br:
                 ens_fn.return_value = False
                 self.assertFalse(self.lbm.add_tap_interface("123",
                                                             p_const.TYPE_VLAN,
@@ -697,16 +689,16 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                        "1", "tap234")
 
     def test_delete_vlan_bridge(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib, "device_exists"),
-            mock.patch.object(self.lbm, "get_interfaces_on_bridge"),
-            mock.patch.object(self.lbm, "remove_interface"),
-            mock.patch.object(self.lbm, "get_interface_details"),
-            mock.patch.object(self.lbm, "update_interface_ip_details"),
-            mock.patch.object(self.lbm, "delete_vxlan"),
-            mock.patch.object(utils, "execute")
-        ) as (de_fn, getif_fn, remif_fn, if_det_fn,
-              updif_fn, del_vxlan, exec_fn):
+        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+                mock.patch.object(self.lbm,
+                                  "get_interfaces_on_bridge") as getif_fn,\
+                mock.patch.object(self.lbm, "remove_interface"),\
+                mock.patch.object(self.lbm,
+                                  "get_interface_details") as if_det_fn,\
+                mock.patch.object(self.lbm,
+                                  "update_interface_ip_details") as updif_fn,\
+                mock.patch.object(self.lbm, "delete_vxlan") as del_vxlan,\
+                mock.patch.object(utils, "execute") as exec_fn:
             de_fn.return_value = False
             self.lbm.delete_vlan_bridge("br0")
             self.assertFalse(getif_fn.called)
@@ -720,16 +712,16 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             del_vxlan.assert_called_with("vxlan-1002")
 
     def test_delete_vlan_bridge_with_ip(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib, "device_exists"),
-            mock.patch.object(self.lbm, "get_interfaces_on_bridge"),
-            mock.patch.object(self.lbm, "remove_interface"),
-            mock.patch.object(self.lbm, "get_interface_details"),
-            mock.patch.object(self.lbm, "update_interface_ip_details"),
-            mock.patch.object(self.lbm, "delete_vlan"),
-            mock.patch.object(utils, "execute")
-        ) as (de_fn, getif_fn, remif_fn, if_det_fn,
-              updif_fn, del_vlan, exec_fn):
+        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+                mock.patch.object(self.lbm,
+                                  "get_interfaces_on_bridge") as getif_fn,\
+                mock.patch.object(self.lbm, "remove_interface"),\
+                mock.patch.object(self.lbm,
+                                  "get_interface_details") as if_det_fn,\
+                mock.patch.object(self.lbm,
+                                  "update_interface_ip_details") as updif_fn,\
+                mock.patch.object(self.lbm, "delete_vlan") as del_vlan,\
+                mock.patch.object(utils, "execute") as exec_fn:
             de_fn.return_value = True
             getif_fn.return_value = ["eth0", "eth1.1"]
             if_det_fn.return_value = ("ips", "gateway")
@@ -739,16 +731,16 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertFalse(del_vlan.called)
 
     def test_delete_vlan_bridge_no_ip(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib, "device_exists"),
-            mock.patch.object(self.lbm, "get_interfaces_on_bridge"),
-            mock.patch.object(self.lbm, "remove_interface"),
-            mock.patch.object(self.lbm, "get_interface_details"),
-            mock.patch.object(self.lbm, "update_interface_ip_details"),
-            mock.patch.object(self.lbm, "delete_vlan"),
-            mock.patch.object(utils, "execute")
-        ) as (de_fn, getif_fn, remif_fn, if_det_fn,
-              updif_fn, del_vlan, exec_fn):
+        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+                mock.patch.object(self.lbm,
+                                  "get_interfaces_on_bridge") as getif_fn,\
+                mock.patch.object(self.lbm, "remove_interface"),\
+                mock.patch.object(self.lbm,
+                                  "get_interface_details") as if_det_fn,\
+                mock.patch.object(self.lbm,
+                                  "update_interface_ip_details") as updif_fn,\
+                mock.patch.object(self.lbm, "delete_vlan") as del_vlan,\
+                mock.patch.object(utils, "execute") as exec_fn:
             de_fn.return_value = True
             getif_fn.return_value = ["eth0", "eth1.1"]
             exec_fn.return_value = False
@@ -764,13 +756,12 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 interface_mappings)
 
-        with contextlib.nested(
-            mock.patch.object(ip_lib, "device_exists"),
-            mock.patch.object(lbm, "get_interfaces_on_bridge"),
-            mock.patch.object(lbm, "remove_interface"),
-            mock.patch.object(lbm, "delete_vxlan"),
-            mock.patch.object(utils, "execute")
-        ) as (de_fn, getif_fn, remif_fn, del_vxlan, exec_fn):
+        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+                mock.patch.object(lbm,
+                                  "get_interfaces_on_bridge") as getif_fn,\
+                mock.patch.object(lbm, "remove_interface"),\
+                mock.patch.object(lbm, "delete_vxlan") as del_vxlan,\
+                mock.patch.object(utils, "execute") as exec_fn:
             de_fn.return_value = False
             lbm.delete_vlan_bridge("br0")
             self.assertFalse(getif_fn.called)
@@ -787,20 +778,18 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         def tap_count_side_effect(*args):
             return 0 if args[0] == 'brqnet1' else 1
 
-        with contextlib.nested(
-            mock.patch.object(self.lbm, "delete_vlan_bridge"),
-            mock.patch.object(self.lbm, "get_tap_devices_count",
-                              side_effect=tap_count_side_effect),
-        ) as (del_br_fn, count_tap_fn):
+        with mock.patch.object(self.lbm, "delete_vlan_bridge") as del_br_fn,\
+                mock.patch.object(self.lbm,
+                                  "get_tap_devices_count",
+                                  side_effect=tap_count_side_effect):
             self.lbm.remove_empty_bridges()
             del_br_fn.assert_called_once_with('brqnet1')
 
     def test_remove_interface(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib, "device_exists"),
-            mock.patch.object(self.lbm, "is_device_on_bridge"),
-            mock.patch.object(utils, "execute")
-        ) as (de_fn, isdev_fn, exec_fn):
+        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+                mock.patch.object(self.lbm,
+                                  "is_device_on_bridge") as isdev_fn,\
+                mock.patch.object(utils, "execute") as exec_fn:
             de_fn.return_value = False
             self.assertFalse(self.lbm.remove_interface("br0", "eth0"))
             self.assertFalse(isdev_fn.called)
@@ -817,10 +806,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertTrue(self.lbm.remove_interface("br0", "eth0"))
 
     def test_delete_vlan(self):
-        with contextlib.nested(
-            mock.patch.object(ip_lib, "device_exists"),
-            mock.patch.object(utils, "execute")
-        ) as (de_fn, exec_fn):
+        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+                mock.patch.object(utils, "execute") as exec_fn:
             de_fn.return_value = False
             self.lbm.delete_vlan("eth1.1")
             self.assertFalse(exec_fn.called)
@@ -832,11 +819,12 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def _check_vxlan_support(self, expected, vxlan_ucast_supported,
                              vxlan_mcast_supported):
-        with contextlib.nested(
-            mock.patch.object(self.lbm, 'vxlan_ucast_supported',
-                              return_value=vxlan_ucast_supported),
-            mock.patch.object(self.lbm, 'vxlan_mcast_supported',
-                              return_value=vxlan_mcast_supported)):
+        with mock.patch.object(self.lbm,
+                               'vxlan_ucast_supported',
+                               return_value=vxlan_ucast_supported),\
+                mock.patch.object(self.lbm,
+                                  'vxlan_mcast_supported',
+                                  return_value=vxlan_mcast_supported):
             if expected == lconst.VXLAN_NONE:
                 self.assertRaises(exceptions.VxlanNetworkUnsupported,
                                   self.lbm.check_vxlan_support)
@@ -863,17 +851,20 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def _check_vxlan_ucast_supported(
             self, expected, l2_population, iproute_arg_supported, fdb_append):
         cfg.CONF.set_override('l2_population', l2_population, 'VXLAN')
-        with contextlib.nested(
+        with mock.patch.object(ip_lib, 'device_exists', return_value=False),\
+                mock.patch.object(self.lbm,
+                                  'delete_vxlan',
+                                  return_value=None),\
+                mock.patch.object(self.lbm,
+                                  'ensure_vxlan',
+                                  return_value=None),\
                 mock.patch.object(
-                    ip_lib, 'device_exists', return_value=False),
-                mock.patch.object(self.lbm, 'delete_vxlan', return_value=None),
-                mock.patch.object(self.lbm, 'ensure_vxlan', return_value=None),
-                mock.patch.object(
-                    utils, 'execute',
-                    side_effect=None if fdb_append else RuntimeError()),
-                mock.patch.object(
-                    ip_lib, 'iproute_arg_supported',
-                    return_value=iproute_arg_supported)):
+                    utils,
+                    'execute',
+                    side_effect=None if fdb_append else RuntimeError()),\
+                mock.patch.object(ip_lib,
+                                  'iproute_arg_supported',
+                                  return_value=iproute_arg_supported):
             self.assertEqual(expected, self.lbm.vxlan_ucast_supported())
 
     def test_vxlan_ucast_supported(self):
@@ -940,10 +931,10 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         )
 
     def test_network_delete(self):
-        with contextlib.nested(
-            mock.patch.object(self.lb_rpc.agent.br_mgr, "get_bridge_name"),
-            mock.patch.object(self.lb_rpc.agent.br_mgr, "delete_vlan_bridge")
-        ) as (get_br_fn, del_fn):
+        with mock.patch.object(self.lb_rpc.agent.br_mgr,
+                               "get_bridge_name") as get_br_fn,\
+                mock.patch.object(self.lb_rpc.agent.br_mgr,
+                                  "delete_vlan_bridge") as del_fn:
             get_br_fn.return_value = "br0"
             self.lb_rpc.network_delete("anycontext", network_id="123")
             get_br_fn.assert_called_with("123")

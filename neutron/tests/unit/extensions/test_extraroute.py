@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 from oslo_config import cfg
 from oslo_log import log as logging
 from webob import exc
@@ -146,13 +144,10 @@ class ExtraRouteDBTestCaseBase(object):
                    'nexthop': '10.0.0.3'}]
         routes2 = [{'destination': '12.0.0.0/8',
                    'nexthop': '10.0.0.4'}]
-        with contextlib.nested(
-                self.router(),
-                self.router(),
-                self.subnet(cidr='10.0.0.0/24')) as (r1, r2, s):
-            with contextlib.nested(
-                    self.port(subnet=s),
-                    self.port(subnet=s)) as (p1, p2):
+        with self.router() as r1,\
+                self.router() as r2,\
+                self.subnet(cidr='10.0.0.0/24') as s:
+            with self.port(subnet=s) as p1, self.port(subnet=s) as p2:
                 body = self._routes_update_prepare(r1['router']['id'],
                                                    None, p1['port']['id'],
                                                    routes1)
@@ -427,27 +422,24 @@ class ExtraRouteDBTestCaseBase(object):
                 self.assertIsNone(gw_info)
 
     def test_router_list_with_sort(self):
-        with contextlib.nested(self.router(name='router1'),
-                               self.router(name='router2'),
-                               self.router(name='router3')
-                               ) as (router1, router2, router3):
+        with self.router(name='router1') as router1,\
+                self.router(name='router2') as router2,\
+                self.router(name='router3') as router3:
             self._test_list_with_sort('router', (router3, router2, router1),
                                       [('name', 'desc')])
 
     def test_router_list_with_pagination(self):
-        with contextlib.nested(self.router(name='router1'),
-                               self.router(name='router2'),
-                               self.router(name='router3')
-                               ) as (router1, router2, router3):
+        with self.router(name='router1') as router1,\
+                self.router(name='router2') as router2,\
+                self.router(name='router3') as router3:
             self._test_list_with_pagination('router',
                                             (router1, router2, router3),
                                             ('name', 'asc'), 2, 2)
 
     def test_router_list_with_pagination_reverse(self):
-        with contextlib.nested(self.router(name='router1'),
-                               self.router(name='router2'),
-                               self.router(name='router3')
-                               ) as (router1, router2, router3):
+        with self.router(name='router1') as router1,\
+                self.router(name='router2') as router2,\
+                self.router(name='router3') as router3:
             self._test_list_with_pagination_reverse('router',
                                                     (router1, router2,
                                                      router3),

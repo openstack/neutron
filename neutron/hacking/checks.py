@@ -149,19 +149,6 @@ def check_no_contextlib_nested(logical_line, filename):
            "docs.python.org/2/library/contextlib.html#contextlib.nested for "
            "more information.")
 
-    # TODO(ankit): The following check is temporary.
-    # A series of patches will be submitted to address
-    # these issues. It should be removed completely
-    # when bug 1428424 is closed.
-    ignore_dirs = [
-        "neutron/tests/unit/db",
-        "neutron/tests/unit/extensions",
-        "neutron/tests/unit/plugins",
-        "neutron/tests/unit/scheduler"]
-    for directory in ignore_dirs:
-        if directory in filename:
-            return
-
     if contextlib_nested.match(logical_line):
         yield(0, msg)
 

@@ -620,11 +620,10 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_create_with_gwinfo_ext_ip_subnet(self):
         with self.network() as n:
-            with contextlib.nested(
-                self.subnet(network=n),
-                self.subnet(network=n, cidr='1.0.0.0/24'),
-                self.subnet(network=n, cidr='2.0.0.0/24'),
-            ) as subnets:
+            with self.subnet(network=n) as v1,\
+                    self.subnet(network=n, cidr='1.0.0.0/24') as v2,\
+                    self.subnet(network=n, cidr='2.0.0.0/24') as v3:
+                subnets = (v1, v2, v3)
                 self._set_net_external(n['network']['id'])
                 for s in subnets:
                     ext_info = {
@@ -658,16 +657,13 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.assertEqual(res.status_int, exc.HTTPForbidden.code)
 
     def test_router_list(self):
-        with contextlib.nested(self.router(),
-                               self.router(),
-                               self.router()
-                               ) as routers:
+        with self.router() as v1, self.router() as v2, self.router() as v3:
+            routers = (v1, v2, v3)
             self._test_list_resources('router', routers)
 
     def test_router_list_with_parameters(self):
-        with contextlib.nested(self.router(name='router1'),
-                               self.router(name='router2'),
-                               ) as (router1, router2):
+        with self.router(name='router1') as router1,\
+                self.router(name='router2') as router2:
             query_params = 'name=router1'
             self._test_list_resources('router', [router1],
                                       query_params=query_params)
@@ -679,27 +675,24 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                       query_params=query_params)
 
     def test_router_list_with_sort(self):
-        with contextlib.nested(self.router(name='router1'),
-                               self.router(name='router2'),
-                               self.router(name='router3')
-                               ) as (router1, router2, router3):
+        with self.router(name='router1') as router1,\
+                self.router(name='router2') as router2,\
+                self.router(name='router3') as router3:
             self._test_list_with_sort('router', (router3, router2, router1),
                                       [('name', 'desc')])
 
     def test_router_list_with_pagination(self):
-        with contextlib.nested(self.router(name='router1'),
-                               self.router(name='router2'),
-                               self.router(name='router3')
-                               ) as (router1, router2, router3):
+        with self.router(name='router1') as router1,\
+                self.router(name='router2') as router2,\
+                self.router(name='router3') as router3:
             self._test_list_with_pagination('router',
                                             (router1, router2, router3),
                                             ('name', 'asc'), 2, 2)
 
     def test_router_list_with_pagination_reverse(self):
-        with contextlib.nested(self.router(name='router1'),
-                               self.router(name='router2'),
-                               self.router(name='router3')
-                               ) as (router1, router2, router3):
+        with self.router(name='router1') as router1,\
+                self.router(name='router2') as router2,\
+                self.router(name='router3') as router3:
             self._test_list_with_pagination_reverse('router',
                                                     (router1, router2,
                                                      router3),
@@ -767,11 +760,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     expected_code=exc.HTTPBadRequest.code)
 
     def test_router_update_gateway_with_invalid_external_subnet(self):
-        with contextlib.nested(
-            self.subnet(),
-            self.subnet(cidr='1.0.0.0/24'),
-            self.router()
-        ) as (s1, s2, r):
+        with self.subnet() as s1,\
+                self.subnet(cidr='1.0.0.0/24') as s2,\
+                self.router() as r:
             self._set_net_external(s1['subnet']['network_id'])
             self._add_external_gateway_to_router(
                 r['router']['id'],
@@ -782,11 +773,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_update_gateway_with_different_external_subnet(self):
         with self.network() as n:
-            with contextlib.nested(
-                self.subnet(network=n),
-                self.subnet(network=n, cidr='1.0.0.0/24'),
-                self.router()
-            ) as (s1, s2, r):
+            with self.subnet(network=n) as s1,\
+                    self.subnet(network=n, cidr='1.0.0.0/24') as s2,\
+                    self.router() as r:
                 self._set_net_external(n['network']['id'])
                 res1 = self._add_external_gateway_to_router(
                     r['router']['id'],
@@ -998,7 +987,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                       'address_mode': stateless}]
         for uc in use_cases:
             fake_notifier.reset()
-            with contextlib.nested(self.router(), self.network()) as (r, n):
+            with self.router() as r, self.network() as n:
                 with self.subnet(network=n, cidr='fd00::1/64',
                                  gateway_ip='fd00::1', ip_version=6,
                                  ipv6_ra_mode=uc['ra_mode'],
@@ -1106,7 +1095,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                       'ra_mode': None,
                       'address_mode': l3_constants.DHCPV6_STATELESS}]
         for uc in use_cases:
-            with contextlib.nested(self.router(), self.network()) as (r, n):
+            with self.router() as r, self.network() as n:
                 with self.subnet(network=n, cidr='fd00::1/64',
                                  gateway_ip='fd00::1', ip_version=6,
                                  ipv6_ra_mode=uc['ra_mode'],
@@ -1163,13 +1152,11 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_add_interface_subnet_with_port_from_other_tenant(self):
         tenant_id = _uuid()
         other_tenant_id = _uuid()
-        with contextlib.nested(
-            self.router(tenant_id=tenant_id),
-            self.network(tenant_id=tenant_id),
-            self.network(tenant_id=other_tenant_id)) as (r, n1, n2):
-            with contextlib.nested(
-                self.subnet(network=n1, cidr='10.0.0.0/24'),
-                self.subnet(network=n2, cidr='10.1.0.0/24')) as (s1, s2):
+        with self.router(tenant_id=tenant_id) as r,\
+                self.network(tenant_id=tenant_id) as n1,\
+                self.network(tenant_id=other_tenant_id) as n2:
+            with self.subnet(network=n1, cidr='10.0.0.0/24') as s1,\
+                    self.subnet(network=n2, cidr='10.1.0.0/24') as s2:
                 body = self._router_interface_action(
                     'add',
                     r['router']['id'],
@@ -1594,10 +1581,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                              expected_code=exc.HTTPConflict.code)
 
     def test_router_remove_interface_callback_failure_returns_409(self):
-        with contextlib.nested(
-            self.router(),
-            self.subnet(),
-            mock.patch.object(registry, 'notify')) as (r, s, notify):
+        with self.router() as r,\
+                self.subnet() as s,\
+                mock.patch.object(registry, 'notify') as notify:
             errors = [
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
@@ -1619,10 +1605,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 exc.HTTPConflict.code)
 
     def test_router_clear_gateway_callback_failure_returns_409(self):
-        with contextlib.nested(
-            self.router(),
-            self.subnet(),
-            mock.patch.object(registry, 'notify')) as (r, s, notify):
+        with self.router() as r,\
+                self.subnet() as s,\
+                mock.patch.object(registry, 'notify') as notify:
             errors = [
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
@@ -1980,11 +1965,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_floatingip_update_different_router(self):
         # Create subnet with different CIDRs to account for plugins which
         # do not support overlapping IPs
-        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
-                               self.subnet(cidr='10.0.1.0/24')) as (
-                                   s1, s2):
-            with contextlib.nested(self.port(subnet=s1),
-                                   self.port(subnet=s2)) as (p1, p2):
+        with self.subnet(cidr='10.0.0.0/24') as s1,\
+                self.subnet(cidr='10.0.1.0/24') as s2:
+            with self.port(subnet=s1) as p1, self.port(subnet=s2) as p2:
                 private_sub1 = {'subnet':
                                 {'id':
                                  p1['port']['fixed_ips'][0]['subnet_id']}}
@@ -1992,12 +1975,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                 {'id':
                                  p2['port']['fixed_ips'][0]['subnet_id']}}
                 with self.subnet(cidr='12.0.0.0/24') as public_sub:
-                    with contextlib.nested(
+                    with self.floatingip_no_assoc_with_public_sub(
+                        private_sub1,
+                        public_sub=public_sub) as (fip1, r1),\
                             self.floatingip_no_assoc_with_public_sub(
-                                private_sub1, public_sub=public_sub),
-                            self.floatingip_no_assoc_with_public_sub(
-                                private_sub2, public_sub=public_sub)) as (
-                                    (fip1, r1), (fip2, r2)):
+                                private_sub2,
+                                public_sub=public_sub) as (fip2, r2):
 
                         def assert_no_assoc(fip):
                             body = self._show('floatingips',
@@ -2160,10 +2143,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         self.assertEqual(res.status_int, 400)
 
     def test_floatingip_list_with_sort(self):
-        with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
-                               self.subnet(cidr="11.0.0.0/24"),
-                               self.subnet(cidr="12.0.0.0/24")
-                               ) as (s1, s2, s3):
+        with self.subnet(cidr="10.0.0.0/24") as s1,\
+                self.subnet(cidr="11.0.0.0/24") as s2,\
+                self.subnet(cidr="12.0.0.0/24") as s3:
             network_id1 = s1['subnet']['network_id']
             network_id2 = s2['subnet']['network_id']
             network_id3 = s3['subnet']['network_id']
@@ -2186,10 +2168,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.assertEqual(len(res['floatingips']), 0)
 
     def test_floatingip_list_with_pagination(self):
-        with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
-                               self.subnet(cidr="11.0.0.0/24"),
-                               self.subnet(cidr="12.0.0.0/24")
-                               ) as (s1, s2, s3):
+        with self.subnet(cidr="10.0.0.0/24") as s1,\
+                self.subnet(cidr="11.0.0.0/24") as s2,\
+                self.subnet(cidr="12.0.0.0/24") as s3:
             network_id1 = s1['subnet']['network_id']
             network_id2 = s2['subnet']['network_id']
             network_id3 = s3['subnet']['network_id']
@@ -2204,10 +2185,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 ('floating_ip_address', 'asc'), 2, 2)
 
     def test_floatingip_list_with_pagination_reverse(self):
-        with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
-                               self.subnet(cidr="11.0.0.0/24"),
-                               self.subnet(cidr="12.0.0.0/24")
-                               ) as (s1, s2, s3):
+        with self.subnet(cidr="10.0.0.0/24") as s1,\
+                self.subnet(cidr="11.0.0.0/24") as s2,\
+                self.subnet(cidr="12.0.0.0/24") as s3:
             network_id1 = s1['subnet']['network_id']
             network_id2 = s2['subnet']['network_id']
             network_id3 = s3['subnet']['network_id']
@@ -2222,21 +2202,19 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 ('floating_ip_address', 'asc'), 2, 2)
 
     def test_floatingip_multi_external_one_internal(self):
-        with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
-                               self.subnet(cidr="11.0.0.0/24"),
-                               self.subnet(cidr="12.0.0.0/24")
-                               ) as (exs1, exs2, ins1):
+        with self.subnet(cidr="10.0.0.0/24") as exs1,\
+                self.subnet(cidr="11.0.0.0/24") as exs2,\
+                self.subnet(cidr="12.0.0.0/24") as ins1:
             network_ex_id1 = exs1['subnet']['network_id']
             network_ex_id2 = exs2['subnet']['network_id']
             self._set_net_external(network_ex_id1)
             self._set_net_external(network_ex_id2)
 
             r2i_fixed_ips = [{'ip_address': '12.0.0.2'}]
-            with contextlib.nested(self.router(no_delete=True),
-                                   self.router(no_delete=True),
-                                   self.port(subnet=ins1,
-                                             fixed_ips=r2i_fixed_ips)
-                                   ) as (r1, r2, r2i_port):
+            with self.router(no_delete=True) as r1,\
+                    self.router(no_delete=True) as r2,\
+                    self.port(subnet=ins1,
+                              fixed_ips=r2i_fixed_ips) as r2i_port:
                 self._add_external_gateway_to_router(
                     r1['router']['id'],
                     network_ex_id1)
@@ -2589,9 +2567,7 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
         self.assertEqual(agents[0]['host'], agent_host)
 
     def test_update_gateway_agent_exists_supporting_network(self):
-        with contextlib.nested(self.router(),
-                               self.subnet(),
-                               self.subnet()) as (r, s1, s2):
+        with self.router() as r, self.subnet() as s1, self.subnet() as s2:
             self._set_net_external(s1['subnet']['network_id'])
             l3_rpc_cb = l3_rpc.L3RpcCallback()
             helpers.register_l3_agent(
@@ -2616,9 +2592,7 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
             self._assert_router_on_agent(r['router']['id'], 'host2')
 
     def test_update_gateway_agent_exists_supporting_multiple_network(self):
-        with contextlib.nested(self.router(),
-                               self.subnet(),
-                               self.subnet()) as (r, s1, s2):
+        with self.router() as r, self.subnet() as s1, self.subnet() as s2:
             self._set_net_external(s1['subnet']['network_id'])
             l3_rpc_cb = l3_rpc.L3RpcCallback()
             helpers.register_l3_agent(

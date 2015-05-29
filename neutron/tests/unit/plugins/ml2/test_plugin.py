@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import functools
 import mock
 import six
@@ -461,13 +460,11 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_create_ports_bulk_with_sec_grp(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
-        with contextlib.nested(
-            self.network(),
-            mock.patch.object(plugin.notifier,
-                              'security_groups_member_updated'),
-            mock.patch.object(plugin.notifier,
-                              'security_groups_provider_updated')
-        ) as (net, m_upd, p_upd):
+        with self.network() as net,\
+                mock.patch.object(plugin.notifier,
+                                  'security_groups_member_updated') as m_upd,\
+                mock.patch.object(plugin.notifier,
+                                  'security_groups_provider_updated') as p_upd:
 
             res = self._create_port_bulk(self.fmt, 3, net['network']['id'],
                                          'test', True, context=ctx)
@@ -479,13 +476,11 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_create_ports_bulk_with_sec_grp_member_provider_update(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
-        with contextlib.nested(
-            self.network(),
-            mock.patch.object(plugin.notifier,
-                              'security_groups_member_updated'),
-            mock.patch.object(plugin.notifier,
-                              'security_groups_provider_updated')
-        ) as (net, m_upd, p_upd):
+        with self.network() as net,\
+                mock.patch.object(plugin.notifier,
+                                  'security_groups_member_updated') as m_upd,\
+                mock.patch.object(plugin.notifier,
+                                  'security_groups_provider_updated') as p_upd:
 
             net_id = net['network']['id']
             data = [{
@@ -520,14 +515,16 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         fake_prefix = '2001:db8::/64'
         fake_gateway = 'fe80::1'
         with self.network() as net:
-            with contextlib.nested(
-                self.subnet(net, gateway_ip=fake_gateway,
-                            cidr=fake_prefix, ip_version=6),
-                mock.patch.object(
-                    plugin.notifier, 'security_groups_member_updated'),
-                mock.patch.object(
-                    plugin.notifier, 'security_groups_provider_updated')
-            ) as (snet_v6, m_upd, p_upd):
+            with self.subnet(net,
+                             gateway_ip=fake_gateway,
+                             cidr=fake_prefix,
+                             ip_version=6) as snet_v6,\
+                    mock.patch.object(
+                        plugin.notifier,
+                        'security_groups_member_updated') as m_upd,\
+                    mock.patch.object(
+                        plugin.notifier,
+                        'security_groups_provider_updated') as p_upd:
 
                 net_id = net['network']['id']
                 data = [{
@@ -547,11 +544,11 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         plugin = manager.NeutronManager.get_plugin()
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             p_const.L3_ROUTER_NAT)
-        with contextlib.nested(
-            self.port(),
-            mock.patch.object(l3plugin, 'disassociate_floatingips'),
-            mock.patch.object(registry, 'notify')
-        ) as (port, disassociate_floatingips, notify):
+        with self.port() as port,\
+                mock.patch.object(
+                    l3plugin,
+                    'disassociate_floatingips') as disassociate_floatingips,\
+                mock.patch.object(registry, 'notify') as notify:
 
             port_id = port['port']['id']
             plugin.delete_port(ctx, port_id)
@@ -662,18 +659,18 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
         if floating_ip:
             fip_set.add(ns_to_delete['router_id'])
 
-        with contextlib.nested(
-            mock.patch.object(manager.NeutronManager,
-                              'get_service_plugins',
-                              return_value=self.service_plugins),
-            self.port(device_owner=device_owner),
-            mock.patch.object(registry, 'notify'),
-            mock.patch.object(self.l3plugin, 'disassociate_floatingips',
-                              return_value=fip_set),
-            mock.patch.object(self.l3plugin, 'dvr_deletens_if_no_port',
-                              return_value=[ns_to_delete]),
-        ) as (get_service_plugin, port, notify, disassociate_floatingips,
-              dvr_delns_ifno_port):
+        with mock.patch.object(manager.NeutronManager,
+                               'get_service_plugins',
+                               return_value=self.service_plugins),\
+                self.port(device_owner=device_owner) as port,\
+                mock.patch.object(registry, 'notify') as notify,\
+                mock.patch.object(self.l3plugin,
+                                  'disassociate_floatingips',
+                                  return_value=fip_set),\
+                mock.patch.object(
+                    self.l3plugin,
+                    'dvr_deletens_if_no_port',
+                    return_value=[ns_to_delete]) as dvr_delns_ifno_port:
 
             port_id = port['port']['id']
             self.plugin.delete_port(self.context, port_id)
@@ -790,12 +787,11 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
                 binding, None)
-        with contextlib.nested(
-            mock.patch('neutron.plugins.ml2.plugin.'
-                       'db.get_locked_port_and_binding',
-                       return_value=(None, None)),
-            mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin._make_port_dict')
-        ) as (glpab_mock, mpd_mock):
+        with mock.patch(
+            'neutron.plugins.ml2.plugin.' 'db.get_locked_port_and_binding',
+            return_value=(None, None)) as glpab_mock,\
+                mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                           '_make_port_dict') as mpd_mock:
             plugin._bind_port_if_needed(mech_context)
             # called during deletion to get port
             self.assertTrue(glpab_mock.mock_calls)
@@ -1489,10 +1485,9 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
         return plugin
 
     def test_create_port_rpc_outside_transaction(self):
-        with contextlib.nested(
-            mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
-            mock.patch.object(base_plugin.NeutronDbPluginV2, 'create_port'),
-        ) as (init, super_create_port):
+        with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
+                mock.patch.object(base_plugin.NeutronDbPluginV2,
+                                  'create_port'):
             init.return_value = None
 
             new_host_port = mock.Mock()
@@ -1505,10 +1500,9 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                 plugin, **kwargs)
 
     def test_update_port_rpc_outside_transaction(self):
-        with contextlib.nested(
-            mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
-            mock.patch.object(base_plugin.NeutronDbPluginV2, 'update_port'),
-        ) as (init, super_update_port):
+        with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
+                mock.patch.object(base_plugin.NeutronDbPluginV2,
+                                  'update_port'):
             init.return_value = None
             new_host_port = mock.Mock()
             plugin = self._create_plugin_for_create_update_port(new_host_port)
@@ -1531,13 +1525,12 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
             'router', constants.L3_AGENT_SCHEDULER_EXT_ALIAS,
             constants.L3_DISTRIBUTED_EXT_ALIAS
         ]
-        with contextlib.nested(
-            mock.patch.object(ml2_plugin.Ml2Plugin, '__init__',
-                              return_value=None),
-            mock.patch.object(manager.NeutronManager,
-                              'get_service_plugins',
-                              return_value={'L3_ROUTER_NAT': l3plugin}),
-        ):
+        with mock.patch.object(ml2_plugin.Ml2Plugin,
+                               '__init__',
+                               return_value=None),\
+                mock.patch.object(manager.NeutronManager,
+                                  'get_service_plugins',
+                                  return_value={'L3_ROUTER_NAT': l3plugin}):
             plugin = self._create_plugin_for_create_update_port(mock.Mock())
             # deleting the port will call registry.notify, which will
             # run the transaction balancing function defined in this test

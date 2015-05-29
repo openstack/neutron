@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import time
 
 import mock
@@ -37,10 +36,8 @@ class TestOneConvergenceAgentBase(base.BaseTestCase):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        with contextlib.nested(
-            mock.patch('neutron.openstack.common.loopingcall.'
-                       'FixedIntervalLoopingCall'),
-        ) as (loopingcall):
+        with mock.patch('neutron.openstack.common.loopingcall.'
+                        'FixedIntervalLoopingCall') as loopingcall:
             kwargs = {'integ_br': 'integration_bridge',
                       'polling_interval': 5}
             context = mock.Mock()
@@ -56,10 +53,10 @@ class TestOneConvergenceAgentBase(base.BaseTestCase):
 class TestOneConvergenceAgentCallback(TestOneConvergenceAgentBase):
 
     def test_port_update(self):
-        with contextlib.nested(
-            mock.patch.object(ovs_lib.OVSBridge, 'get_vif_port_by_id'),
-            mock.patch.object(self.sg_agent, 'refresh_firewall')
-        ) as (get_vif_port_by_id, refresh_firewall):
+        with mock.patch.object(ovs_lib.OVSBridge,
+                               'get_vif_port_by_id') as get_vif_port_by_id,\
+                mock.patch.object(self.sg_agent,
+                                  'refresh_firewall') as refresh_firewall:
             context = mock.Mock()
             vifport = ovs_lib.VifPort('port1', '1', 'id-1', 'mac-1',
                                       self.agent.int_br)
@@ -129,13 +126,17 @@ class TestNVSDAgent(TestOneConvergenceAgentBase):
                 [] for _i in moves.range(DAEMON_LOOP_COUNT -
                                          len(self.vif_ports_scenario)))
 
-        with contextlib.nested(
-            mock.patch.object(time, 'sleep', side_effect=sleep_mock),
-            mock.patch.object(ovs_lib.OVSBridge, 'get_vif_port_set'),
-            mock.patch.object(self.agent.sg_agent, 'prepare_devices_filter'),
-            mock.patch.object(self.agent.sg_agent, 'remove_devices_filter')
-        ) as (sleep, get_vif_port_set, prepare_devices_filter,
-              remove_devices_filter):
+        with mock.patch.object(time,
+                               'sleep',
+                               side_effect=sleep_mock) as sleep,\
+                mock.patch.object(ovs_lib.OVSBridge,
+                                  'get_vif_port_set') as get_vif_port_set,\
+                mock.patch.object(
+                    self.agent.sg_agent,
+                    'prepare_devices_filter') as prepare_devices_filter,\
+                mock.patch.object(
+                    self.agent.sg_agent,
+                    'remove_devices_filter') as remove_devices_filter:
             get_vif_port_set.side_effect = self.vif_ports_scenario
 
             with testtools.ExpectedException(RuntimeError):
@@ -158,11 +159,11 @@ class TestNVSDAgent(TestOneConvergenceAgentBase):
 
 class TestOneConvergenceAgentMain(base.BaseTestCase):
     def test_main(self):
-        with contextlib.nested(
-            mock.patch.object(nvsd_neutron_agent, 'NVSDNeutronAgent'),
-            mock.patch.object(nvsd_neutron_agent, 'common_config'),
-            mock.patch.object(nvsd_neutron_agent, 'config')
-        ) as (agent, common_config, config):
+        with mock.patch.object(nvsd_neutron_agent,
+                               'NVSDNeutronAgent') as agent,\
+                mock.patch.object(nvsd_neutron_agent,
+                                  'common_config') as common_config,\
+                mock.patch.object(nvsd_neutron_agent, 'config') as config:
             config.AGENT.integration_bridge = 'br-int-dummy'
             config.AGENT.polling_interval = 5
 

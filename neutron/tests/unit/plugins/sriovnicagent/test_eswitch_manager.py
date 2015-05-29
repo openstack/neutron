@@ -14,7 +14,6 @@
 # limitations under the License.
 
 
-import contextlib
 import os
 
 import mock
@@ -33,28 +32,23 @@ class TestCreateESwitchManager(base.BaseTestCase):
 
     def test_create_eswitch_mgr_fail(self):
         device_mappings = {'physnet1': 'p6p1'}
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.scan_vf_devices",
-                       side_effect=exc.InvalidDeviceError(dev_name="p6p1",
-                                                          reason="device"
-                                                          " not found")),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.is_assigned_vf",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "PciOsWrapper.scan_vf_devices",
+                        side_effect=exc.InvalidDeviceError(
+                            dev_name="p6p1", reason="device" " not found")),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "PciOsWrapper.is_assigned_vf", return_value=True):
 
             with testtools.ExpectedException(exc.InvalidDeviceError):
                 esm.ESwitchManager(device_mappings, None)
 
     def test_create_eswitch_mgr_ok(self):
         device_mappings = {'physnet1': 'p6p1'}
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.scan_vf_devices",
-                       return_value=self.SCANNED_DEVICES),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.is_assigned_vf",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "PciOsWrapper.scan_vf_devices",
+                        return_value=self.SCANNED_DEVICES),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "PciOsWrapper.is_assigned_vf", return_value=True):
 
             esm.ESwitchManager(device_mappings, None)
 
@@ -72,13 +66,11 @@ class TestESwitchManagerApi(base.BaseTestCase):
     def setUp(self):
         super(TestESwitchManagerApi, self).setUp()
         device_mappings = {'physnet1': 'p6p1'}
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.scan_vf_devices",
-                       return_value=self.SCANNED_DEVICES),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.is_assigned_vf",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "PciOsWrapper.scan_vf_devices",
+                        return_value=self.SCANNED_DEVICES),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "PciOsWrapper.is_assigned_vf", return_value=True):
             self.eswitch_mgr = esm.ESwitchManager(device_mappings, None)
 
     def test_get_assigned_devices(self):
@@ -89,37 +81,32 @@ class TestESwitchManagerApi(base.BaseTestCase):
             self.assertEqual(set([self.ASSIGNED_MAC]), result)
 
     def test_get_device_status_true(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_pci_device",
-                       return_value=self.ASSIGNED_MAC),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_device_state",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "EmbSwitch.get_pci_device",
+                        return_value=self.ASSIGNED_MAC),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "EmbSwitch.get_device_state", return_value=True):
             result = self.eswitch_mgr.get_device_state(self.ASSIGNED_MAC,
                                                        self.PCI_SLOT)
             self.assertTrue(result)
 
     def test_get_device_status_false(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_pci_device",
-                       return_value=self.ASSIGNED_MAC),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_device_state",
-                       return_value=False)):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "EmbSwitch.get_pci_device",
+                        return_value=self.ASSIGNED_MAC),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "EmbSwitch.get_device_state",
+                           return_value=False):
             result = self.eswitch_mgr.get_device_state(self.ASSIGNED_MAC,
                                                        self.PCI_SLOT)
             self.assertFalse(result)
 
     def test_get_device_status_mismatch(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_pci_device",
-                       return_value=self.ASSIGNED_MAC),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_device_state",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "EmbSwitch.get_pci_device",
+                        return_value=self.ASSIGNED_MAC),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "EmbSwitch.get_device_state", return_value=True):
             with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
                             "LOG.warning") as log_mock:
                 result = self.eswitch_mgr.get_device_state(self.WRONG_MAC,
@@ -131,22 +118,20 @@ class TestESwitchManagerApi(base.BaseTestCase):
                 self.assertFalse(result)
 
     def test_set_device_status(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_pci_device",
-                       return_value=self.ASSIGNED_MAC),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.set_device_state")):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "EmbSwitch.get_pci_device",
+                        return_value=self.ASSIGNED_MAC),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "EmbSwitch.set_device_state"):
             self.eswitch_mgr.set_device_state(self.ASSIGNED_MAC,
                                               self.PCI_SLOT, True)
 
     def test_set_device_status_mismatch(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.get_pci_device",
-                       return_value=self.ASSIGNED_MAC),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "EmbSwitch.set_device_state")):
+        with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                        "EmbSwitch.get_pci_device",
+                        return_value=self.ASSIGNED_MAC),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "EmbSwitch.set_device_state"):
             with mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
                             "LOG.warning") as log_mock:
                 self.eswitch_mgr.set_device_state(self.WRONG_MAC,
@@ -209,13 +194,11 @@ class TestEmbSwitch(base.BaseTestCase):
                                             exclude_devices)
 
     def test_get_assigned_devices(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.pci_lib."
-                       "PciDeviceIPWrapper.get_assigned_macs",
-                       return_value=[self.ASSIGNED_MAC]),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.is_assigned_vf",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.pci_lib."
+                        "PciDeviceIPWrapper.get_assigned_macs",
+                        return_value=[self.ASSIGNED_MAC]),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "PciOsWrapper.is_assigned_vf", return_value=True):
             result = self.emb_switch.get_assigned_devices()
             self.assertEqual([self.ASSIGNED_MAC], result)
 
@@ -257,24 +240,20 @@ class TestEmbSwitch(base.BaseTestCase):
                               self.WRONG_PCI_SLOT, True)
 
     def test_get_pci_device(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.pci_lib."
-                       "PciDeviceIPWrapper.get_assigned_macs",
-                       return_value=[self.ASSIGNED_MAC]),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.is_assigned_vf",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.pci_lib."
+                        "PciDeviceIPWrapper.get_assigned_macs",
+                        return_value=[self.ASSIGNED_MAC]),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "PciOsWrapper.is_assigned_vf", return_value=True):
             result = self.emb_switch.get_pci_device(self.PCI_SLOT)
             self.assertEqual(self.ASSIGNED_MAC, result)
 
     def test_get_pci_device_fail(self):
-        with contextlib.nested(
-            mock.patch("neutron.plugins.sriovnicagent.pci_lib."
-                       "PciDeviceIPWrapper.get_assigned_macs",
-                       return_value=[self.ASSIGNED_MAC]),
-            mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
-                       "PciOsWrapper.is_assigned_vf",
-                       return_value=True)):
+        with mock.patch("neutron.plugins.sriovnicagent.pci_lib."
+                        "PciDeviceIPWrapper.get_assigned_macs",
+                        return_value=[self.ASSIGNED_MAC]),\
+                mock.patch("neutron.plugins.sriovnicagent.eswitch_manager."
+                           "PciOsWrapper.is_assigned_vf", return_value=True):
             result = self.emb_switch.get_pci_device(self.WRONG_PCI_SLOT)
             self.assertIsNone(result)
 
@@ -313,15 +292,10 @@ class TestPciOsWrapper(base.BaseTestCase):
             file_name = os.path.basename(file_path)
             return self.LINKS[file_name]
 
-        with contextlib.nested(
-            mock.patch("os.path.isdir",
-                       return_value=True),
-            mock.patch("os.listdir",
-                       return_value=self.DIR_CONTENTS),
-            mock.patch("os.path.islink",
-                       return_value=True),
-            mock.patch("os.readlink",
-                       side_effect=_get_link),):
+        with mock.patch("os.path.isdir", return_value=True),\
+                mock.patch("os.listdir", return_value=self.DIR_CONTENTS),\
+                mock.patch("os.path.islink", return_value=True),\
+                mock.patch("os.readlink", side_effect=_get_link):
             result = esm.PciOsWrapper.scan_vf_devices(self.DEV_NAME)
             self.assertEqual(self.PCI_SLOTS, result)
 
@@ -332,21 +306,16 @@ class TestPciOsWrapper(base.BaseTestCase):
                               self.DEV_NAME)
 
     def test_scan_vf_devices_no_content(self):
-        with contextlib.nested(
-            mock.patch("os.path.isdir",
-                       return_value=True),
-            mock.patch("os.listdir",
-                       return_value=[])):
+        with mock.patch("os.path.isdir", return_value=True),\
+                mock.patch("os.listdir", return_value=[]):
             self.assertRaises(exc.InvalidDeviceError,
                               esm.PciOsWrapper.scan_vf_devices,
                               self.DEV_NAME)
 
     def test_scan_vf_devices_no_match(self):
-        with contextlib.nested(
-            mock.patch("os.path.isdir",
-                       return_value=True),
-            mock.patch("os.listdir",
-                       return_value=self.DIR_CONTENTS_NO_MATCH)):
+        with mock.patch("os.path.isdir", return_value=True),\
+                mock.patch("os.listdir",
+                           return_value=self.DIR_CONTENTS_NO_MATCH):
             self.assertRaises(exc.InvalidDeviceError,
                               esm.PciOsWrapper.scan_vf_devices,
                               self.DEV_NAME)
@@ -368,11 +337,8 @@ class TestPciOsWrapper(base.BaseTestCase):
         def _glob(file_path):
             return ["upper_macvtap0"] if macvtap_exists else []
 
-        with contextlib.nested(
-            mock.patch("os.path.isdir",
-                       return_value=True),
-            mock.patch("glob.glob",
-                       side_effect=_glob)):
+        with mock.patch("os.path.isdir", return_value=True),\
+                mock.patch("glob.glob", side_effect=_glob):
             result = esm.PciOsWrapper.is_assigned_vf(self.DEV_NAME,
                                                      self.VF_INDEX)
             self.assertEqual(macvtap_exists, result)

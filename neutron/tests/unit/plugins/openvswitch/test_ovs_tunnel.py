@@ -14,7 +14,6 @@
 #    under the License.
 #
 
-import contextlib
 import time
 
 import mock
@@ -495,19 +494,18 @@ class TunnelTest(object):
 
         self.ovs_bridges[self.INT_BRIDGE].check_canary_table.return_value = \
             constants.OVS_NORMAL
-        with contextlib.nested(
-            mock.patch.object(log.KeywordArgumentAdapter, 'exception'),
-            mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                              'scan_ports'),
-            mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                              'process_network_ports'),
-            mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                              'tunnel_sync'),
-            mock.patch.object(time, 'sleep'),
-            mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                              'update_stale_ofport_rules')
-        ) as (log_exception, scan_ports, process_network_ports,
-              ts, time_sleep, update_stale):
+        with mock.patch.object(log.KeywordArgumentAdapter,
+                               'exception') as log_exception,\
+                mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                                  'scan_ports') as scan_ports,\
+                mock.patch.object(
+                    self.mod_agent.OVSNeutronAgent,
+                    'process_network_ports') as process_network_ports,\
+                mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                                  'tunnel_sync'),\
+                mock.patch.object(time, 'sleep'),\
+                mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                                  'update_stale_ofport_rules') as update_stale:
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]

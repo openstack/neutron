@@ -167,9 +167,9 @@ class TestMetering(MeteringPluginDbTestCase):
         name = 'my label'
         description = 'my metering label'
 
-        with contextlib.nested(
-                self.metering_label(name, description),
-                self.metering_label(name, description)) as metering_label:
+        with self.metering_label(name, description) as v1,\
+                self.metering_label(name, description) as v2:
+            metering_label = (v1, v2)
 
             self._test_list_resources('metering-label', metering_label)
 
@@ -224,15 +224,15 @@ class TestMetering(MeteringPluginDbTestCase):
             remote_ip_prefix = '192.168.0.0/24'
             excluded = True
 
-            with contextlib.nested(
-                self.metering_label_rule(metering_label_id,
-                                         direction,
-                                         remote_ip_prefix,
-                                         excluded),
-                self.metering_label_rule(metering_label_id,
-                                         'ingress',
-                                         remote_ip_prefix,
-                                         excluded)) as metering_label_rule:
+            with self.metering_label_rule(metering_label_id,
+                                          direction,
+                                          remote_ip_prefix,
+                                          excluded) as v1,\
+                    self.metering_label_rule(metering_label_id,
+                                             'ingress',
+                                             remote_ip_prefix,
+                                             excluded) as v2:
+                metering_label_rule = (v1, v2)
 
                 self._test_list_resources('metering-label-rule',
                                           metering_label_rule)
@@ -248,15 +248,15 @@ class TestMetering(MeteringPluginDbTestCase):
             remote_ip_prefix = '192.168.0.0/24'
             excluded = True
 
-            with contextlib.nested(
-                self.metering_label_rule(metering_label_id,
-                                         direction,
-                                         remote_ip_prefix,
-                                         excluded),
-                self.metering_label_rule(metering_label_id,
-                                         direction,
-                                         n_consts.IPv4_ANY,
-                                         False)) as metering_label_rule:
+            with self.metering_label_rule(metering_label_id,
+                                          direction,
+                                          remote_ip_prefix,
+                                          excluded) as v1,\
+                    self.metering_label_rule(metering_label_id,
+                                             direction,
+                                             n_consts.IPv4_ANY,
+                                             False) as v2:
+                metering_label_rule = (v1, v2)
 
                 self._test_list_resources('metering-label-rule',
                                           metering_label_rule)
@@ -299,15 +299,15 @@ class TestMetering(MeteringPluginDbTestCase):
                 remote_ip_prefix = '192.168.0.0/24'
                 excluded = True
 
-                with contextlib.nested(
-                    self.metering_label_rule(metering_label_id1,
-                                             direction,
-                                             remote_ip_prefix,
-                                             excluded),
-                    self.metering_label_rule(metering_label_id2,
-                                             direction,
-                                             remote_ip_prefix,
-                                             excluded)) as metering_label_rule:
+                with self.metering_label_rule(metering_label_id1,
+                                              direction,
+                                              remote_ip_prefix,
+                                              excluded) as v1,\
+                        self.metering_label_rule(metering_label_id2,
+                                                 direction,
+                                                 remote_ip_prefix,
+                                                 excluded) as v2:
+                    metering_label_rule = (v1, v2)
 
                     self._test_list_resources('metering-label-rule',
                                               metering_label_rule)

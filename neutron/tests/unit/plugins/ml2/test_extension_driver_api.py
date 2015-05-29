@@ -10,7 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import mock
 
 from neutron import context
@@ -86,13 +85,11 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual('Test_Port_Extension_Update_update', val)
 
     def test_extend_network_dict(self):
-        with contextlib.nested(
-            mock.patch.object(ext_test.TestExtensionDriver,
-                              'process_update_network'),
-            mock.patch.object(ext_test.TestExtensionDriver,
-                              'extend_network_dict'),
-            self.network()
-        ) as (ext_update_net, ext_net_dict, network):
+        with mock.patch.object(ext_test.TestExtensionDriver,
+                               'process_update_network') as ext_update_net,\
+                mock.patch.object(ext_test.TestExtensionDriver,
+                                  'extend_network_dict') as ext_net_dict,\
+                self.network() as network:
             net_id = network['network']['id']
             net_data = {'network': {'id': net_id}}
             self._plugin.update_network(self._ctxt, net_id, net_data)
@@ -100,13 +97,11 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertTrue(ext_net_dict.called)
 
     def test_extend_subnet_dict(self):
-        with contextlib.nested(
-            mock.patch.object(ext_test.TestExtensionDriver,
-                              'process_update_subnet'),
-            mock.patch.object(ext_test.TestExtensionDriver,
-                              'extend_subnet_dict'),
-            self.subnet()
-        ) as (ext_update_subnet, ext_subnet_dict, subnet):
+        with mock.patch.object(ext_test.TestExtensionDriver,
+                               'process_update_subnet') as ext_update_subnet,\
+                mock.patch.object(ext_test.TestExtensionDriver,
+                                  'extend_subnet_dict') as ext_subnet_dict,\
+                self.subnet() as subnet:
             subnet_id = subnet['subnet']['id']
             subnet_data = {'subnet': {'id': subnet_id}}
             self._plugin.update_subnet(self._ctxt, subnet_id, subnet_data)
@@ -114,13 +109,11 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertTrue(ext_subnet_dict.called)
 
     def test_extend_port_dict(self):
-        with contextlib.nested(
-            mock.patch.object(ext_test.TestExtensionDriver,
-                              'process_update_port'),
-            mock.patch.object(ext_test.TestExtensionDriver,
-                              'extend_port_dict'),
-            self.port()
-        ) as (ext_update_port, ext_port_dict, port):
+        with mock.patch.object(ext_test.TestExtensionDriver,
+                               'process_update_port') as ext_update_port,\
+                mock.patch.object(ext_test.TestExtensionDriver,
+                                  'extend_port_dict') as ext_port_dict,\
+                self.port() as port:
             port_id = port['port']['id']
             port_data = {'port': {'id': port_id}}
             self._plugin.update_port(self._ctxt, port_id, port_data)

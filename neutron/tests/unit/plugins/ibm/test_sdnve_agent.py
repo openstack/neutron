@@ -14,8 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 import mock
 from oslo_config import cfg
 
@@ -67,13 +65,12 @@ class TestSdnveNeutronAgent(base.BaseTestCase):
             def start(self, interval=0):
                 self.f()
 
-        with contextlib.nested(
-            mock.patch('neutron.plugins.ibm.agent.sdnve_neutron_agent.'
-                       'SdnveNeutronAgent.setup_integration_br',
-                       return_value=mock.Mock()),
-            mock.patch('neutron.openstack.common.loopingcall.'
-                       'FixedIntervalLoopingCall',
-                       new=MockFixedIntervalLoopingCall)):
+        with mock.patch('neutron.plugins.ibm.agent.sdnve_neutron_agent.'
+                        'SdnveNeutronAgent.setup_integration_br',
+                        return_value=mock.Mock()),\
+                mock.patch('neutron.openstack.common.loopingcall.'
+                           'FixedIntervalLoopingCall',
+                           new=MockFixedIntervalLoopingCall):
             self.agent = sdnve_neutron_agent.SdnveNeutronAgent(**kwargs)
 
     def test_setup_physical_interfaces(self):
