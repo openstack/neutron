@@ -235,7 +235,7 @@ class TestDaemon(base.BaseTestCase):
         self.assertIsNone(d._fork())
 
     def test_fork_error(self):
-        self.os.fork.side_effect = lambda: OSError(1)
+        self.os.fork.side_effect = OSError(1)
         with mock.patch.object(daemon.sys, 'stderr'):
             with testtools.ExpectedException(SystemExit):
                 d = daemon.Daemon('pidfile', 'stdin')
