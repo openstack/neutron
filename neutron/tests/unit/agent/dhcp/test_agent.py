@@ -390,7 +390,7 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.periodic_resync()
             spawn.assert_called_once_with(dhcp._periodic_resync_helper)
 
-    def test_periodoc_resync_helper(self):
+    def test_periodic_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             dhcp.needs_resync_reasons = collections.OrderedDict(
