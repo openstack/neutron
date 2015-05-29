@@ -341,7 +341,11 @@ class OVSBridge(BaseOVS):
         for r in results:
             # fall back to basic interface name
             key = self.portid_from_external_ids(r['external_ids']) or r['name']
-            port_map[key] = r['ofport']
+            try:
+                port_map[key] = int(r['ofport'])
+            except TypeError:
+                # port doesn't yet have an ofport entry so we ignore it
+                pass
         return port_map
 
     def get_vif_port_set(self):
