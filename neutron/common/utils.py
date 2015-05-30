@@ -418,3 +418,20 @@ def ip_version_from_int(ip_version_int):
     if ip_version_int == 6:
         return q_const.IPv6
     raise ValueError(_('Illegal IP version number'))
+
+
+class DelayedStringRenderer(object):
+    """Takes a callable and its args and calls when __str__ is called
+
+    Useful for when an argument to a logging statement is expensive to
+    create. This will prevent the callable from being called if it's
+    never converted to a string.
+    """
+
+    def __init__(self, function, *args, **kwargs):
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return str(self.function(*self.args, **self.kwargs))
