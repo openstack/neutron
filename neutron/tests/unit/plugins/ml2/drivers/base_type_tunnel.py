@@ -21,6 +21,7 @@ from testtools import matchers
 from neutron.common import exceptions as exc
 from neutron.db import api as db
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import type_tunnel
 
 TUNNEL_IP_ONE = "10.10.10.10"
 TUNNEL_IP_TWO = "10.10.10.20"
@@ -33,7 +34,6 @@ UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
 
 
 class TunnelTypeTestMixin(object):
-    DRIVER_MODULE = None
     DRIVER_CLASS = None
     TYPE = None
 
@@ -208,8 +208,7 @@ class TunnelTypeTestMixin(object):
     def test_add_endpoint_for_existing_tunnel_ip(self):
         self.add_endpoint()
 
-        log = getattr(self.DRIVER_MODULE, 'LOG')
-        with mock.patch.object(log, 'warning') as log_warn:
+        with mock.patch.object(type_tunnel.LOG, 'warning') as log_warn:
             self.add_endpoint()
             log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
 
