@@ -157,13 +157,14 @@ class OVSBridge(BaseOVS):
         return self.ovsdb.get_controller(self.br_name).execute(
             check_error=True)
 
+    def _set_bridge_fail_mode(self, mode):
+        self.ovsdb.set_fail_mode(self.br_name, mode).execute(check_error=True)
+
     def set_secure_mode(self):
-        self.ovsdb.set_fail_mode(self.br_name, FAILMODE_SECURE).execute(
-            check_error=True)
+        self._set_bridge_fail_mode(FAILMODE_SECURE)
 
     def set_standalone_mode(self):
-        self.ovsdb.set_fail_mode(self.br_name, FAILMODE_STANDALONE).execute(
-            check_error=True)
+        self._set_bridge_fail_mode(FAILMODE_STANDALONE)
 
     def set_protocols(self, protocols):
         self.set_db_attribute('Bridge', self.br_name, 'protocols', protocols,
