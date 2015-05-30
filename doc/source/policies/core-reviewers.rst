@@ -81,6 +81,7 @@ The following are the current Neutron Lieutenants.
 +------------------------+---------------------------+----------------------+
 
 Some notes on the above:
+
 * "Built-In Control Plane" means the L2 agents, DHCP agents, SGs, metadata
   agents and the portion of ML2 which communicates with the agents.
 * The client includes commands installed server side.
@@ -124,6 +125,7 @@ responsibility over the areas of code listed below:
 Neutron Core Reviewer Team
 --------------------------
 Neutron core reviewers have merge rights to the following git repositories:
+
 * `openstack/neutron <https://git.openstack.org/cgit/openstack/neutron/>`_
 * `openstack/python-neutronclient <https://git.openstack.org/cgit/openstack/python-neutronclient/>`_
 
@@ -135,18 +137,21 @@ Neutron FWaaS Core Reviewer Team
 --------------------------------
 Neutron FWaaS core reviewers have merge rights to the following git
 repositories:
+
 * `openstack/neutron-fwaas <https://git.openstack.org/cgit/openstack/neutron-fwaas/>`_
 
 Neutron LBaaS Core Reviewer Team
 --------------------------------
 Neutron LBaaS core reviewers have merge rights to the following git
 repositories:
+
 * `openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas/>`_
 
 Neutron VPNaaS Core Reviewer Team
 ---------------------------------
 Neutron VPNaaS core reviewers have merge rights to the following git
 repositories:
+
 * `openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas/>`_
 
 Neutron Core Reviewer Teams for Plugins and Drivers
@@ -155,6 +160,7 @@ The plugin decomposition effort has led to having many drivers with code in
 separate repositories with their own core reviewer teams. For each one of
 these repositories in the following repository list, there is a core team
 associated with it:
+
 * `Neutron project team <http://governance.openstack.org/reference/projects/neutron.html>`_
 
 These teams are also responsible for handling their own specs/RFEs/features if
@@ -166,6 +172,7 @@ Neutron Specs Core Reviewer Team
 --------------------------------
 Neutron specs core reviewers have merge rights to the following git
 repositories:
+
 * `openstack/neutron-specs <https://git.openstack.org/cgit/openstack/neutron-specs/>`_
 
 The Neutron specs core reviewer team is responsible for reviewing and merging
