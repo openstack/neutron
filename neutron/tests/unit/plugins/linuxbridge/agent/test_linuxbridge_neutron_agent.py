@@ -874,7 +874,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 mock.patch.object(
                     ip_lib, 'iproute_arg_supported',
                     return_value=iproute_arg_supported)):
-                self.assertEqual(expected, self.lbm.vxlan_ucast_supported())
+            self.assertEqual(expected, self.lbm.vxlan_ucast_supported())
 
     def test_vxlan_ucast_supported(self):
         self._check_vxlan_ucast_supported(

@@ -524,23 +524,24 @@ class TunnelTest(object):
             except Exception:
                 pass
 
-        # FIXME(salv-orlando): There should not be assertions on log messages
-        log_exception.assert_called_once_with(
-            "Error while processing VIF ports")
-        scan_ports.assert_has_calls([
-            mock.call(set(), set()),
-            mock.call(set(['tap0']), set())
-        ])
-        process_network_ports.assert_has_calls([
-            mock.call({'current': set(['tap0']),
-                       'removed': set([]),
-                       'added': set(['tap2'])}, False),
-            mock.call({'current': set(['tap2']),
-                       'removed': set(['tap0']),
-                       'added': set([])}, False)
-        ])
-        self.assertTrue(update_stale.called)
-        self._verify_mock_calls()
+            # FIXME(salv-orlando): There should not be assertions on log
+            # messages
+            log_exception.assert_called_once_with(
+                "Error while processing VIF ports")
+            scan_ports.assert_has_calls([
+                mock.call(set(), set()),
+                mock.call(set(['tap0']), set())
+            ])
+            process_network_ports.assert_has_calls([
+                mock.call({'current': set(['tap0']),
+                        'removed': set([]),
+                        'added': set(['tap2'])}, False),
+                mock.call({'current': set(['tap2']),
+                        'removed': set(['tap0']),
+                        'added': set([])}, False)
+            ])
+            self.assertTrue(update_stale.called)
+            self._verify_mock_calls()
 
 
 class TunnelTestOFCtl(TunnelTest, ovs_test_base.OVSOFCtlTestBase):

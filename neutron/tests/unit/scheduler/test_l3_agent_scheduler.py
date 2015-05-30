@@ -134,10 +134,10 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         ) as (gs, gr):
             result = self.scheduler.auto_schedule_routers(
                 self.plugin, mock.ANY, mock.ANY, mock.ANY)
-        self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
-        self.assertTrue(result)
-        self.assertTrue(gs.called)
-        self.assertTrue(gr.called)
+            self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
+            self.assertTrue(result)
+            self.assertTrue(gs.called)
+            self.assertTrue(gr.called)
 
     def test_auto_schedule_routers_no_agents(self):
         self.plugin.get_enabled_agent_on_host.return_value = None
@@ -257,9 +257,9 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         ) as (
                 mock_has_binding, mock_bind):
             self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, agent)
-        mock_has_binding.assert_called_once_with(mock.ANY, 'foo_router',
-                                                 'foo_agent')
-        self.assertEqual(not has_binding, mock_bind.called)
+            mock_has_binding.assert_called_once_with(mock.ANY, 'foo_router',
+                                                     'foo_agent')
+            self.assertEqual(not has_binding, mock_bind.called)
 
     def test__bind_routers_ha_has_binding(self):
         self._test__bind_routers_ha(has_binding=True)
@@ -473,10 +473,9 @@ class L3SchedulerTestBaseMixin(object):
         with contextlib.nested(
             mock.patch.object(scheduler, 'bind_router'),
             mock.patch.object(
-                plugin, 'get_snat_bindings', return_value=False)
-        ):
-                scheduler._schedule_router(
-                    plugin, self.adminContext, 'foo_router_id', None)
+                plugin, 'get_snat_bindings', return_value=False)):
+            scheduler._schedule_router(
+                plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
             mock.call.get_l3_agents_hosting_routers(
@@ -1308,8 +1307,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             mock.patch.object(self.dut, 'bind_dvr_router_servicenode')
         ) as (mock_gl3, mock_snat_canidates, mock_bind_snat, mock_bind_dvr):
             self.dut.schedule_snat_router(self.adminContext, 'foo', 'bar')
-        self.assertTrue(mock_bind_snat.called)
-        self.assertFalse(mock_bind_dvr.called)
+            self.assertTrue(mock_bind_snat.called)
+            self.assertFalse(mock_bind_dvr.called)
 
     def test_schedule_snat_router_return_value(self):
         agent, router = self._prepare_schedule_snat_tests()
@@ -1340,7 +1339,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             mock_snat_bind.return_value = False
             self.dut.schedule_snat_router(
                 self.adminContext, 'foo_router_id', router)
-        self.assertFalse(mock_unbind.called)
+            self.assertFalse(mock_unbind.called)
 
     def test_schedule_snat_router_with_snat_candidates(self):
         agent, router = self._prepare_schedule_snat_tests()
@@ -1359,8 +1358,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             mock_candidates.return_value = [agent]
             self.dut.schedule_snat_router(
                 self.adminContext, 'foo_router_id', mock.ANY)
-        mock_bind.assert_called_once_with(
-            self.adminContext, 'foo_router_id', [agent])
+            mock_bind.assert_called_once_with(
+                self.adminContext, 'foo_router_id', [agent])
 
     def test_unbind_snat_servicenode(self):
         router_id = 'foo_router_id'
@@ -1383,9 +1382,9 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             mock_query.return_value = binding
             mock_get_subnets.return_value = ['foo_subnet_id']
             self.dut.unbind_snat_servicenode(self.adminContext, router_id)
-        mock_get_subnets.assert_called_with(self.adminContext, router_id)
-        self.assertTrue(mock_session.call_count)
-        self.assertTrue(mock_delete.call_count)
+            mock_get_subnets.assert_called_with(self.adminContext, router_id)
+            self.assertTrue(mock_session.call_count)
+            self.assertTrue(mock_delete.call_count)
         core_plugin.assert_called_once_with()
         l3_notifier.assert_called_once_with()
 

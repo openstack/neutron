@@ -1170,19 +1170,19 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with contextlib.nested(
                 self.subnet(network=n1, cidr='10.0.0.0/24'),
                 self.subnet(network=n2, cidr='10.1.0.0/24')) as (s1, s2):
-                    body = self._router_interface_action(
-                        'add',
-                        r['router']['id'],
-                        s2['subnet']['id'],
-                        None)
-                    self.assertIn('port_id', body)
-                    self._router_interface_action(
-                        'add',
-                        r['router']['id'],
-                        s1['subnet']['id'],
-                        None,
-                        tenant_id=tenant_id)
-                    self.assertIn('port_id', body)
+                body = self._router_interface_action(
+                    'add',
+                    r['router']['id'],
+                    s2['subnet']['id'],
+                    None)
+                self.assertIn('port_id', body)
+                self._router_interface_action(
+                    'add',
+                    r['router']['id'],
+                    s1['subnet']['id'],
+                    None,
+                    tenant_id=tenant_id)
+                self.assertIn('port_id', body)
 
     def test_router_add_interface_port(self):
         with self.router() as r:
@@ -1598,45 +1598,45 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.router(),
             self.subnet(),
             mock.patch.object(registry, 'notify')) as (r, s, notify):
-                errors = [
-                    exceptions.NotificationError(
-                        'foo_callback_id', n_exc.InUse()),
-                ]
-                # we fail the first time, but not the second, when
-                # the clean-up takes place
-                notify.side_effect = [
-                    exceptions.CallbackFailure(errors=errors), None
-                ]
-                self._router_interface_action('add',
-                                              r['router']['id'],
-                                              s['subnet']['id'],
-                                              None)
-                self._router_interface_action(
-                    'remove',
-                    r['router']['id'],
-                    s['subnet']['id'],
-                    None,
-                    exc.HTTPConflict.code)
+            errors = [
+                exceptions.NotificationError(
+                    'foo_callback_id', n_exc.InUse()),
+            ]
+            # we fail the first time, but not the second, when
+            # the clean-up takes place
+            notify.side_effect = [
+                exceptions.CallbackFailure(errors=errors), None
+            ]
+            self._router_interface_action('add',
+                                          r['router']['id'],
+                                          s['subnet']['id'],
+                                          None)
+            self._router_interface_action(
+                'remove',
+                r['router']['id'],
+                s['subnet']['id'],
+                None,
+                exc.HTTPConflict.code)
 
     def test_router_clear_gateway_callback_failure_returns_409(self):
         with contextlib.nested(
             self.router(),
             self.subnet(),
             mock.patch.object(registry, 'notify')) as (r, s, notify):
-                errors = [
-                    exceptions.NotificationError(
-                        'foo_callback_id', n_exc.InUse()),
-                ]
-                notify.side_effect = exceptions.CallbackFailure(errors=errors)
-                self._set_net_external(s['subnet']['network_id'])
-                self._add_external_gateway_to_router(
-                       r['router']['id'],
-                       s['subnet']['network_id'])
-                self._remove_external_gateway_from_router(
+            errors = [
+                exceptions.NotificationError(
+                    'foo_callback_id', n_exc.InUse()),
+            ]
+            notify.side_effect = exceptions.CallbackFailure(errors=errors)
+            self._set_net_external(s['subnet']['network_id'])
+            self._add_external_gateway_to_router(
                     r['router']['id'],
-                    s['subnet']['network_id'],
-                    external_gw_info={},
-                    expected_code=exc.HTTPConflict.code)
+                    s['subnet']['network_id'])
+            self._remove_external_gateway_from_router(
+                r['router']['id'],
+                s['subnet']['network_id'],
+                external_gw_info={},
+                expected_code=exc.HTTPConflict.code)
 
     def test_router_remove_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
