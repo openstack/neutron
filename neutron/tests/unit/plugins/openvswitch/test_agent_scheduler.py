@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
 import datetime
 
 import mock
@@ -272,8 +271,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_network_auto_schedule_with_disabled(self):
         cfg.CONF.set_override('allow_overlapping_ips', True)
-        with contextlib.nested(self.subnet(),
-                               self.subnet()):
+        with self.subnet(), self.subnet():
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -293,8 +291,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_network_auto_schedule_with_no_dhcp(self):
         cfg.CONF.set_override('allow_overlapping_ips', True)
-        with contextlib.nested(self.subnet(enable_dhcp=False),
-                               self.subnet(enable_dhcp=False)):
+        with self.subnet(enable_dhcp=False), self.subnet(enable_dhcp=False):
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -314,8 +311,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
     def test_network_auto_schedule_with_multiple_agents(self):
         cfg.CONF.set_override('dhcp_agents_per_network', 2)
         cfg.CONF.set_override('allow_overlapping_ips', True)
-        with contextlib.nested(self.subnet(),
-                               self.subnet()):
+        with self.subnet(), self.subnet():
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -345,8 +341,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
     def test_network_auto_schedule_with_hosted(self):
         # one agent hosts all the networks, other hosts none
         cfg.CONF.set_override('allow_overlapping_ips', True)
-        with contextlib.nested(self.subnet(),
-                               self.subnet()) as (sub1, sub2):
+        with self.subnet() as sub1, self.subnet():
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
             dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
@@ -474,10 +469,8 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         is_eligible_agent = ('neutron.db.agentschedulers_db.'
                              'AgentSchedulerDbMixin.is_eligible_agent')
         dhcp_mixin = agentschedulers_db.DhcpAgentSchedulerDbMixin()
-        with contextlib.nested(
-            mock.patch(agent_startup),
-            mock.patch(is_eligible_agent)
-        ) as (startup, elig):
+        with mock.patch(agent_startup) as startup,\
+                mock.patch(is_eligible_agent) as elig:
             tests = [(True, True),
                      (True, False),
                      (False, True),
@@ -698,7 +691,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             service_constants.L3_ROUTER_NAT)
         l3_rpc_cb = l3_rpc.L3RpcCallback()
         self._register_agent_states()
-        with contextlib.nested(self.router(), self.router()) as (r1, r2):
+        with self.router() as r1, self.router() as r2:
             # schedule the routers to host A
             l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
 
@@ -823,8 +816,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(L3_HOSTB, l3_agents_2['agents'][0]['host'])
 
     def test_router_auto_schedule_with_disabled(self):
-        with contextlib.nested(self.router(),
-                               self.router()):
+        with self.router(), self.router():
             l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
@@ -844,8 +836,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(0, num_hosta_routers)
 
     def test_router_auto_schedule_with_candidates(self):
-        with contextlib.nested(self.router(),
-                               self.router()) as (router1, router2):
+        with self.router() as router1, self.router() as router2:
             l3_rpc_cb = l3_rpc.L3RpcCallback()
             agent = helpers.register_l3_agent(
                 host=L3_HOSTA, router_id=router1['router']['id'])
@@ -869,9 +860,8 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
         self.assertEqual(0, len(ret_a))
 
-        with contextlib.nested(self.router(),
-                               self.router(),
-                               self.router()) as routers:
+        with self.router() as v1, self.router() as v2, self.router() as v3:
+            routers = (v1, v2, v3)
             router_ids = [r['router']['id'] for r in routers]
 
             # Get all routers
@@ -915,8 +905,11 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self._register_agent_states()
         hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3, L3_HOSTA)
 
-        with contextlib.nested(self.router(), self.router(),
-                               self.router(), self.router()) as routers:
+        with self.router() as v1,\
+                self.router() as v2,\
+                self.router() as v3,\
+                self.router() as v4:
+            routers = (v1, v2, v3, v4)
             router_ids = [r['router']['id'] for r in routers]
             # Sync router1 (router1 is scheduled)
             _sync_router_with_ids([router_ids[0]], 1, 1, hosta_id)
@@ -931,13 +924,10 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             _sync_router_with_ids(router_ids, 4, 4, hosta_id)
 
     def test_router_schedule_with_candidates(self):
-        with contextlib.nested(self.router(),
-                               self.router(),
-                               self.subnet(),
-                               self.subnet(cidr='10.0.3.0/24')) as (router1,
-                                                                    router2,
-                                                                    subnet1,
-                                                                    subnet2):
+        with self.router() as router1,\
+                self.router() as router2,\
+                self.subnet() as subnet1,\
+                self.subnet(cidr='10.0.3.0/24') as subnet2:
             agent = helpers.register_l3_agent(
                 host=L3_HOSTA, router_id=router1['router']['id'])
             self._router_interface_action('add',
@@ -986,11 +976,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(0, len(l3agents))
 
     def test_router_sync_data(self):
-        with contextlib.nested(
-            self.subnet(),
-            self.subnet(cidr='10.0.2.0/24'),
-            self.subnet(cidr='10.0.3.0/24')
-        ) as (s1, s2, s3):
+        with self.subnet() as s1,\
+                self.subnet(cidr='10.0.2.0/24') as s2,\
+                self.subnet(cidr='10.0.3.0/24') as s3:
             self._register_agent_states()
             self._set_net_external(s1['subnet']['network_id'])
             data = {'router': {'tenant_id': uuidutils.generate_uuid()}}
@@ -1287,15 +1275,13 @@ class OvsDhcpAgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
     def _is_schedule_network_called(self, device_id):
         plugin = manager.NeutronManager.get_plugin()
         notifier = plugin.agent_notifiers[constants.AGENT_TYPE_DHCP]
-        with contextlib.nested(
-            self.subnet(),
-            mock.patch.object(plugin,
-                              'get_dhcp_agents_hosting_networks',
-                              return_value=[]),
-            mock.patch.object(notifier,
-                              '_schedule_network',
-                              return_value=[])
-                              ) as (subnet, _, mock_sched):
+        with self.subnet() as subnet,\
+                mock.patch.object(plugin,
+                                  'get_dhcp_agents_hosting_networks',
+                                  return_value=[]),\
+                mock.patch.object(notifier,
+                                  '_schedule_network',
+                                  return_value=[]) as mock_sched:
             with self.port(subnet=subnet, device_id=device_id):
                 return mock_sched.called
 
@@ -1347,14 +1333,12 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         l3_plugin = (manager.NeutronManager.get_service_plugins()
                      [service_constants.L3_ROUTER_NAT])
         l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
-        with contextlib.nested(
-            mock.patch.object(l3_notifier.client, 'prepare',
-                              return_value=l3_notifier.client),
-            mock.patch.object(l3_notifier.client, 'cast'),
-            self.router(),
-        ) as (
-            mock_prepare, mock_cast, router1
-        ):
+        with mock.patch.object(
+            l3_notifier.client,
+            'prepare',
+            return_value=l3_notifier.client) as mock_prepare,\
+                mock.patch.object(l3_notifier.client, 'cast') as mock_cast,\
+                self.router() as router1:
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
@@ -1372,14 +1356,12 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         l3_plugin = (manager.NeutronManager.get_service_plugins()
                      [service_constants.L3_ROUTER_NAT])
         l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
-        with contextlib.nested(
-            mock.patch.object(l3_notifier.client, 'prepare',
-                              return_value=l3_notifier.client),
-            mock.patch.object(l3_notifier.client, 'cast'),
-            self.router(),
-        ) as (
-            mock_prepare, mock_cast, router1
-        ):
+        with mock.patch.object(
+            l3_notifier.client,
+            'prepare',
+            return_value=l3_notifier.client) as mock_prepare,\
+                mock.patch.object(l3_notifier.client, 'cast') as mock_cast,\
+                self.router() as router1:
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
@@ -1399,13 +1381,11 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         l3_plugin = (manager.NeutronManager.get_service_plugins()
                      [service_constants.L3_ROUTER_NAT])
         l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
-        with contextlib.nested(
-            mock.patch.object(l3_notifier.client, 'prepare',
-                              return_value=l3_notifier.client),
-            mock.patch.object(l3_notifier.client, 'cast'),
-        ) as (
-            mock_prepare, mock_cast
-        ):
+        with mock.patch.object(
+            l3_notifier.client,
+            'prepare',
+            return_value=l3_notifier.client) as mock_prepare,\
+                mock.patch.object(l3_notifier.client, 'cast') as mock_cast:
             agent_id = helpers.register_l3_agent(L3_HOSTA).id
             self._disable_agent(agent_id, admin_state_up=False)
 

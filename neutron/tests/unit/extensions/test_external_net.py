@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import itertools
 
 import mock
@@ -90,8 +89,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test_list_nets_external_pagination(self):
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
-        with contextlib.nested(self.network(name='net1'),
-                               self.network(name='net3')) as (n1, n3):
+        with self.network(name='net1') as n1, self.network(name='net3') as n3:
             self._set_net_external(n1['network']['id'])
             self._set_net_external(n3['network']['id'])
             with self.network(name='net2') as n2:

@@ -15,7 +15,6 @@
 #    under the License.
 
 
-import contextlib
 import mock
 
 from neutron.extensions import portbindings
@@ -71,13 +70,10 @@ class MockKeystoneClient(object):
 
 class IBMPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
-        with contextlib.nested(
-            mock.patch('neutron.plugins.ibm.sdnve_api.'
-                       'KeystoneClient',
-                       new=MockKeystoneClient),
-            mock.patch('neutron.plugins.ibm.sdnve_api.'
-                       'Client',
-                       new=MockClient)):
+        with mock.patch('neutron.plugins.ibm.sdnve_api.' 'KeystoneClient',
+                        new=MockKeystoneClient),\
+                mock.patch('neutron.plugins.ibm.sdnve_api.' 'Client',
+                           new=MockClient):
             super(IBMPluginV2TestCase, self).setUp(plugin=_plugin_name)
 
 
@@ -114,13 +110,10 @@ class TestIBMPortBinding(IBMPluginV2TestCase,
 class IBMPluginRouterTestCase(test_l3.L3NatDBIntTestCase):
 
     def setUp(self):
-        with contextlib.nested(
-            mock.patch('neutron.plugins.ibm.sdnve_api.'
-                       'KeystoneClient',
-                       new=MockKeystoneClient),
-            mock.patch('neutron.plugins.ibm.sdnve_api.'
-                       'Client',
-                       new=MockClient)):
+        with mock.patch('neutron.plugins.ibm.sdnve_api.' 'KeystoneClient',
+                        new=MockKeystoneClient),\
+                mock.patch('neutron.plugins.ibm.sdnve_api.' 'Client',
+                           new=MockClient):
             super(IBMPluginRouterTestCase, self).setUp(plugin=_plugin_name)
 
     def test_floating_port_status_not_applicable(self):

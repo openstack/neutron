@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
-
 import mock
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -185,13 +183,14 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
         self._test_schedule_bind_network([agents[0]], self.network_id)
         self._save_networks(["foo-network-2"])
         self._test_schedule_bind_network([agents[1]], "foo-network-2")
-        with contextlib.nested(
-            mock.patch.object(self, 'remove_network_from_dhcp_agent'),
-            mock.patch.object(self, 'schedule_network',
-                              return_value=[agents[1]]),
-            mock.patch.object(self, 'get_network', create=True,
-                              return_value={'id': self.network_id})
-        ) as (rn, sch, getn):
+        with mock.patch.object(self, 'remove_network_from_dhcp_agent') as rn,\
+                mock.patch.object(self,
+                                  'schedule_network',
+                                  return_value=[agents[1]]) as sch,\
+                mock.patch.object(self,
+                                  'get_network',
+                                  create=True,
+                                  return_value={'id': self.network_id}):
             notifier = mock.MagicMock()
             self.agent_notifiers[constants.AGENT_TYPE_DHCP] = notifier
             self.remove_networks_from_down_agents()
@@ -204,15 +203,16 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
     def _test_failed_rescheduling(self, rn_side_effect=None):
         agents = self._create_and_set_agents_down(['host-a'], 1)
         self._test_schedule_bind_network([agents[0]], self.network_id)
-        with contextlib.nested(
-            mock.patch.object(
-                self, 'remove_network_from_dhcp_agent',
-                side_effect=rn_side_effect),
-            mock.patch.object(self, 'schedule_network',
-                              return_value=None),
-            mock.patch.object(self, 'get_network', create=True,
-                              return_value={'id': self.network_id})
-        ) as (rn, sch, getn):
+        with mock.patch.object(self,
+                               'remove_network_from_dhcp_agent',
+                               side_effect=rn_side_effect) as rn,\
+                mock.patch.object(self,
+                                  'schedule_network',
+                                  return_value=None) as sch,\
+                mock.patch.object(self,
+                                  'get_network',
+                                  create=True,
+                                  return_value={'id': self.network_id}):
             notifier = mock.MagicMock()
             self.agent_notifiers[constants.AGENT_TYPE_DHCP] = notifier
             self.remove_networks_from_down_agents()
