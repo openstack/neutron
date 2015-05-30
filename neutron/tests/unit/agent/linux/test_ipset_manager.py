@@ -127,7 +127,7 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
 
     def test_set_members_deleting_less_than_5(self):
         self.add_all_ips()
-        self.expect_del(FAKE_IPS[3:4])
+        self.expect_del(FAKE_IPS[3:])
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE, FAKE_IPS[0:3])
         self.verify_mock_calls()
 
