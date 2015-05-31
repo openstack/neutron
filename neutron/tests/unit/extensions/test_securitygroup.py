@@ -79,8 +79,7 @@ class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                         'direction': direction,
                                         'protocol': proto,
                                         'ethertype': ethertype,
-                                        'tenant_id': tenant_id,
-                                        'ethertype': ethertype}}
+                                        'tenant_id': tenant_id}}
         if port_range_min:
             data['security_group_rule']['port_range_min'] = port_range_min
 
@@ -439,14 +438,12 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_rule_invalid_ethertype_for_prefix(self):
         name = 'webservers'
         description = 'my webservers'
-        test_addr = {'192.168.1.1/24': 'ipv4', '192.168.1.1/24': 'IPv6',
-                     '2001:db8:1234::/48': 'ipv6',
-                     '2001:db8:1234::/48': 'IPv4'}
-        for prefix, ether in test_addr.iteritems():
+        test_addr = {'192.168.1.1/24': 'IPv6',
+                     '2001:db8:1234::/48': 'IPv4',
+                     '192.168.2.1/24': 'BadEthertype'}
+        for remote_ip_prefix, ethertype in test_addr.iteritems():
             with self.security_group(name, description) as sg:
                 sg_id = sg['security_group']['id']
-                ethertype = ether
-                remote_ip_prefix = prefix
                 rule = self._build_security_group_rule(
                     sg_id,
                     'ingress',
