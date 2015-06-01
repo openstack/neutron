@@ -92,6 +92,8 @@ capabilities of Neutron, the Neutron API, or a combination of both.
 +-------------------------------+-----------------------+
 | networking-brocade_           |        ml2,l3         |
 +-------------------------------+-----------------------+
+| networking-cisco_             |  core,ml2,l3,fw,vpn   |
++-------------------------------+-----------------------+
 | networking-edge-vpn_          |          vpn          |
 +-------------------------------+-----------------------+
 | networking-hyperv_            |          ml2          |
@@ -184,6 +186,17 @@ Brocade
 * Git: https://github.com/stackforge/networking-brocade
 * Launchpad: https://launchpad.net/networking-brocade
 * PyPI: https://pypi.python.org/pypi/networking-brocade
+
+.. _networking-cisco:
+
+Cisco
+-----
+
+* Git: https://github.com/stackforge/networking-cisco
+* Launchpad: https://launchpad.net/networking-cisco
+* PyPI: https://pypi.python.org/pypi/networking-cisco
+
+.. _dragonflow:
 
 DragonFlow
 ----------
