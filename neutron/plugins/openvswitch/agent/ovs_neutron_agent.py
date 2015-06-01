@@ -22,6 +22,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+import six
 from six import moves
 
 from neutron.agent.common import ovs_lib
@@ -340,7 +341,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      start_listening=False)
 
     def get_net_uuid(self, vif_id):
-        for network_id, vlan_mapping in self.local_vlan_map.iteritems():
+        for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):
             if vif_id in vlan_mapping.vif_ports:
                 return network_id
 
@@ -917,7 +918,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ip_wrapper = ip_lib.IPWrapper()
         ovs = ovs_lib.BaseOVS()
         ovs_bridges = ovs.get_bridges()
-        for physical_network, bridge in bridge_mappings.iteritems():
+        for physical_network, bridge in six.iteritems(bridge_mappings):
             LOG.info(_LI("Mapping physical network %(physical_network)s to "
                          "bridge %(bridge)s"),
                      {'physical_network': physical_network,

@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_serialization import jsonutils
 import requests
+import six
 
 from neutron.plugins.ml2 import driver_api as api
 
@@ -173,7 +174,7 @@ class NCSMechanismDriver(api.MechanismDriver):
         """
         if isinstance(obj, dict):
             obj = dict((self.escape(k), self.escape_keys(v))
-                       for k, v in obj.iteritems())
+                       for k, v in six.iteritems(obj))
         if isinstance(obj, list):
             obj = [self.escape_keys(x) for x in obj]
         return obj

@@ -18,6 +18,7 @@ import os
 import re
 
 from oslo_log import log as logging
+import six
 
 from neutron.i18n import _LE, _LW
 from neutron.plugins.sriovnicagent.common import exceptions as exc
@@ -259,7 +260,7 @@ class ESwitchManager(object):
         """
         if exclude_devices is None:
             exclude_devices = {}
-        for phys_net, dev_name in device_mappings.iteritems():
+        for phys_net, dev_name in six.iteritems(device_mappings):
             self._create_emb_switch(phys_net, dev_name,
                                     exclude_devices.get(dev_name, set()))
 

@@ -25,6 +25,7 @@ eventlet.monkey_patch()
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
@@ -185,7 +186,7 @@ class SdnveNeutronAgent(object):
         :param interface_mappings: map physical net names to interface names.
         '''
 
-        for physical_network, interface in interface_mappings.iteritems():
+        for physical_network, interface in six.iteritems(interface_mappings):
             LOG.info(_LI("Mapping physical network %(physical_network)s to "
                          "interface %(interface)s"),
                      {'physical_network': physical_network,

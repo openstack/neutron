@@ -25,6 +25,7 @@ import re
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
+import six
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
@@ -146,7 +147,7 @@ def _should_validate_sub_attributes(attribute, sub_attr):
     validate = attribute.get('validate')
     return (validate and isinstance(sub_attr, collections.Iterable) and
             any([k.startswith('type:dict') and
-                 v for (k, v) in validate.iteritems()]))
+                 v for (k, v) in six.iteritems(validate)]))
 
 
 def _build_subattr_match_rule(attr_name, attr, action, target):

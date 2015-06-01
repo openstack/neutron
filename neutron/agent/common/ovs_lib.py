@@ -555,7 +555,7 @@ def _build_flow_expr_str(flow_dict, cmd):
             raise exceptions.InvalidInput(error_message=msg)
         actions = "actions=%s" % flow_dict.pop('actions')
 
-    for key, value in flow_dict.iteritems():
+    for key, value in six.iteritems(flow_dict):
         if key == 'proto':
             flow_expr_arr.append(value)
         else:

@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+import six
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base_routers as base
@@ -173,7 +174,7 @@ class RoutersTest(base.BaseRouterTest):
             self.assertIsNone(actual_ext_gw_info)
             return
         # Verify only keys passed in exp_ext_gw_info
-        for k, v in exp_ext_gw_info.iteritems():
+        for k, v in six.iteritems(exp_ext_gw_info):
             self.assertEqual(v, actual_ext_gw_info[k])
 
     def _verify_gateway_port(self, router_id):

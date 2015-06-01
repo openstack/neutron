@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import importutils
+import six
 
 from neutron.common import utils
 from neutron.i18n import _LE, _LI
@@ -224,5 +225,6 @@ class NeutronManager(object):
     @classmethod
     def get_service_plugins(cls):
         # Return weakrefs to minimize gc-preventing references.
+        service_plugins = cls.get_instance().service_plugins
         return dict((x, weakref.proxy(y))
-                    for x, y in cls.get_instance().service_plugins.iteritems())
+                    for x, y in six.iteritems(service_plugins))

@@ -149,3 +149,8 @@ class HackingTestCase(base.BaseTestCase):
     def test_no_basestring(self):
         self.assertEqual(1,
             len(list(checks.check_no_basestring("isinstance(x, basestring)"))))
+
+    def test_check_python3_iteritems(self):
+        f = checks.check_python3_no_iteritems
+        self.assertLineFails(f, "d.iteritems()")
+        self.assertLinePasses(f, "six.iteritems(d)")

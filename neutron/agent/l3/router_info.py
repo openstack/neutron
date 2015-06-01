@@ -15,6 +15,7 @@
 import netaddr
 
 from oslo_log import log as logging
+import six
 
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -499,7 +500,7 @@ class RouterInfo(object):
         if ex_gw_port:
             def _gateway_ports_equal(port1, port2):
                 def _get_filtered_dict(d, ignore):
-                    return dict((k, v) for k, v in d.iteritems()
+                    return dict((k, v) for k, v in six.iteritems(d)
                                 if k not in ignore)
 
                 keys_to_ignore = set(['binding:host_id'])

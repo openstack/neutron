@@ -21,6 +21,7 @@ import mock
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+import six
 import testtools
 import webob
 import webob.dec
@@ -326,7 +327,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         # Get the last state reported for each router
         actual_router_states = {}
         for call in calls:
-            for router_id, state in call.iteritems():
+            for router_id, state in six.iteritems(call):
                 actual_router_states[router_id] = state
 
         return actual_router_states == expected

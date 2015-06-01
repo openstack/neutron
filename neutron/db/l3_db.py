@@ -19,6 +19,7 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from oslo_utils import excutils
+import six
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
@@ -1013,7 +1014,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         marker_obj = self._get_marker_obj(context, 'floatingip', limit,
                                           marker)
         if filters is not None:
-            for key, val in API_TO_DB_COLUMN_MAP.iteritems():
+            for key, val in six.iteritems(API_TO_DB_COLUMN_MAP):
                 if key in filters:
                     filters[val] = filters.pop(key)
 

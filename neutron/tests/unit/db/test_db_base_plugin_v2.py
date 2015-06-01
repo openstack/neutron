@@ -22,6 +22,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import importutils
+import six
 from sqlalchemy import orm
 from testtools import matchers
 import webob.exc
@@ -107,7 +108,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override(
             'service_plugins',
             [test_lib.test_config.get(key, default)
-             for key, default in (service_plugins or {}).iteritems()]
+             for key, default in six.iteritems(service_plugins or {})]
         )
 
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")

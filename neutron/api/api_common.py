@@ -17,6 +17,7 @@ import urllib
 
 from oslo_config import cfg
 from oslo_log import log as logging
+import six
 from webob import exc
 
 from neutron.common import constants
@@ -36,7 +37,7 @@ def get_filters(request, attr_info, skips=[]):
     {'check': [u'a', u'b'], 'name': [u'Bob']}
     """
     res = {}
-    for key, values in request.GET.dict_of_lists().iteritems():
+    for key, values in six.iteritems(request.GET.dict_of_lists()):
         if key in skips:
             continue
         values = [v for v in values if v]

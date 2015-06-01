@@ -32,6 +32,7 @@ from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
 from oslo_utils import strutils
+import six
 import testtools
 
 from neutron.agent.linux import external_process
@@ -182,7 +183,7 @@ class DietTestCase(testtools.TestCase):
         self.assertEqual(expect_val, actual_val)
 
     def sort_dict_lists(self, dic):
-        for key, value in dic.iteritems():
+        for key, value in six.iteritems(dic):
             if isinstance(value, list):
                 dic[key] = sorted(value)
             elif isinstance(value, dict):
@@ -361,7 +362,7 @@ class BaseTestCase(DietTestCase):
         test by the fixtures cleanup process.
         """
         group = kw.pop('group', None)
-        for k, v in kw.iteritems():
+        for k, v in six.iteritems(kw):
             CONF.set_override(k, v, group)
 
     def setup_coreplugin(self, core_plugin=None):

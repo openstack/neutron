@@ -17,6 +17,7 @@ import collections
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+import six
 
 from neutron.agent import firewall
 from neutron.agent.linux import ipset_manager
@@ -591,7 +592,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_sgs_to_remove = self._determine_remote_sgs_to_remove(
             filtered_ports)
 
-        for ip_version, remote_sg_ids in remote_sgs_to_remove.iteritems():
+        for ip_version, remote_sg_ids in six.iteritems(remote_sgs_to_remove):
             self._clear_sg_members(ip_version, remote_sg_ids)
             if self.enable_ipset:
                 self._remove_ipsets_for_remote_sgs(ip_version, remote_sg_ids)
@@ -613,7 +614,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_group_id_sets = self._get_remote_sg_ids_sets_by_ipversion(
             filtered_ports)
         for ip_version, remote_group_id_set in (
-                remote_group_id_sets.iteritems()):
+                six.iteritems(remote_group_id_sets)):
             sgs_to_remove_per_ipversion[ip_version].update(
                 set(self.pre_sg_members) - remote_group_id_set)
         return sgs_to_remove_per_ipversion
@@ -623,8 +624,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_group_id_sets = {constants.IPv4: set(),
                                 constants.IPv6: set()}
         for port in filtered_ports:
-            for ip_version, sg_ids in self._get_remote_sg_ids(
-                    port).iteritems():
+            remote_sg_ids = self._get_remote_sg_ids(port)
+            for ip_version, sg_ids in six.iteritems(remote_sg_ids):
                 remote_group_id_sets[ip_version].update(sg_ids)
         return remote_group_id_sets
 
