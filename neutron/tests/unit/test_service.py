@@ -16,18 +16,12 @@
 import mock
 
 from neutron import service
-from neutron.tests import base
+from neutron.tests.unit import test_wsgi
 
 
-class TestRpcWorker(base.BaseTestCase):
+class TestRpcWorker(test_wsgi.TestServiceBase):
 
-    @mock.patch("neutron.policy.refresh")
-    @mock.patch("neutron.common.config.setup_logging")
-    def test_reset(self, setup_logging_mock, refresh_mock):
+    def test_reset(self):
         _plugin = mock.Mock()
-
         rpc_worker = service.RpcWorker(_plugin)
-        rpc_worker.reset()
-
-        setup_logging_mock.assert_called_once_with()
-        refresh_mock.assert_called_once_with()
+        self._test_reset(rpc_worker)

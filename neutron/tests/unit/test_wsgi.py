@@ -50,7 +50,19 @@ def open_no_proxy(*args, **kwargs):
     return opener.open(*args, **kwargs)
 
 
-class TestWorkerService(base.BaseTestCase):
+class TestServiceBase(base.BaseTestCase):
+    """Service tests base."""
+
+    @mock.patch("neutron.policy.refresh")
+    @mock.patch("neutron.common.config.setup_logging")
+    def _test_reset(self, worker_service, setup_logging_mock, refresh_mock):
+        worker_service.reset()
+
+        setup_logging_mock.assert_called_once_with()
+        refresh_mock.assert_called_once_with()
+
+
+class TestWorkerService(TestServiceBase):
     """WorkerService tests."""
 
     @mock.patch('neutron.db.api.get_engine')
@@ -65,17 +77,12 @@ class TestWorkerService(base.BaseTestCase):
         workerservice.start()
         self.assertFalse(apimock.called)
 
-    @mock.patch("neutron.policy.refresh")
-    @mock.patch("neutron.common.config.setup_logging")
-    def test_reset(self, setup_logging_mock, refresh_mock):
+    def test_reset(self):
         _service = mock.Mock()
         _app = mock.Mock()
 
         worker_service = wsgi.WorkerService(_service, _app)
-        worker_service.reset()
-
-        setup_logging_mock.assert_called_once_with()
-        refresh_mock.assert_called_once_with()
+        self._test_reset(worker_service)
 
 
 class TestWSGIServer(base.BaseTestCase):
