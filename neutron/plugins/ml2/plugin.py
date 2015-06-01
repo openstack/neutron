@@ -253,7 +253,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _bind_port_if_needed(self, context, allow_notify=False,
                              need_notify=False):
         plugin_context = context._plugin_context
-        port_id = context._port['id']
+        port_id = context.current['id']
 
         # Since the mechanism driver bind_port() calls must be made
         # outside a DB transaction locking the port state, it is
@@ -318,7 +318,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _bind_port(self, orig_context):
         # Construct a new PortContext from the one from the previous
         # transaction.
-        port = orig_context._port
+        port = orig_context.current
         orig_binding = orig_context._binding
         new_binding = models.PortBinding(
             host=orig_binding.host,
@@ -330,7 +330,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._update_port_dict_binding(port, new_binding)
         new_context = driver_context.PortContext(
             self, orig_context._plugin_context, port,
-            orig_context._network_context._network, new_binding, None)
+            orig_context.network.current, new_binding, None)
 
         # Attempt to bind the port and return the context with the
         # result.
@@ -523,7 +523,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         '_ml2_port_result_filter_hook')
 
     def _notify_port_updated(self, mech_context):
-        port = mech_context._port
+        port = mech_context.current
         segment = mech_context.bottom_bound_segment
         if not segment:
             # REVISIT(rkukura): This should notify agent to unplug port
@@ -1024,7 +1024,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.error(_LE("_bind_port_if_needed "
                               "failed, deleting port '%s'"), result['id'])
                 self.delete_port(context, result['id'])
-        return bound_context._port
+
+        return bound_context.current
 
     def create_port_bulk(self, context, ports):
         objects = self._create_bulk_ml2(attributes.PORT, context, ports)
@@ -1047,7 +1048,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             for obj in objects:
                 obj['bound_context'] = self._bind_port_if_needed(
                     obj['mech_context'])
-            return [obj['bound_context']._port for obj in objects]
+            return [obj['bound_context'].current for obj in objects]
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
                 resource_ids = [res['result']['id'] for res in objects]
@@ -1170,7 +1171,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context,
             allow_notify=True,
             need_notify=need_port_update_notify)
-        return bound_context._port
+        return bound_context.current
 
     def _process_dvr_port_binding(self, mech_context, context, attrs):
         session = mech_context._plugin_context.session
