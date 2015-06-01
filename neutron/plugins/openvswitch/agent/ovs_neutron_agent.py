@@ -14,6 +14,7 @@
 #    under the License.
 
 import hashlib
+import logging as std_logging
 import signal
 import sys
 import time
@@ -33,6 +34,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dvr_rpc
+from neutron.common import config
 from neutron.common import constants as q_const
 from neutron.common import exceptions
 from neutron.common import topics
@@ -1591,6 +1593,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Start everything.
         LOG.info(_LI("Agent initialized successfully, now running... "))
         signal.signal(signal.SIGTERM, self._handle_sigterm)
+        signal.signal(signal.SIGHUP, self._handle_sighup)
         with polling.get_polling_manager(
             self.minimize_polling,
             self.ovsdb_monitor_respawn_interval) as pm:
@@ -1598,10 +1601,17 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.rpc_loop(polling_manager=pm)
 
     def _handle_sigterm(self, signum, frame):
-        LOG.debug("Agent caught SIGTERM, quitting daemon loop.")
+        LOG.info(_LI("Agent caught SIGTERM, quitting daemon loop."))
         self.run_daemon_loop = False
         if self.quitting_rpc_timeout:
             self.set_rpc_timeout(self.quitting_rpc_timeout)
+
+    def _handle_sighup(self, signum, frame):
+        LOG.info(_LI("Agent caught SIGHUP, resetting."))
+        cfg.CONF.reload_config_files()
+        config.setup_logging()
+        LOG.debug('Full set of CONF:')
+        cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
 
     def set_rpc_timeout(self, timeout):
         for rpc_api in (self.plugin_rpc, self.sg_plugin_rpc,
