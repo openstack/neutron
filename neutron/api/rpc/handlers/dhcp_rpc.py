@@ -47,9 +47,15 @@ class DhcpRpcCallback(object):
     #     1.0 - Initial version.
     #     1.1 - Added get_active_networks_info, create_dhcp_port,
     #           and update_dhcp_port methods.
+    #     1.2 - Removed get_dhcp_port. When removing a method (Making a
+    #           backwards incompatible change) you would normally bump the
+    #           major version. However, since the method was unused in the
+    #           RPC client for many releases, it should be OK to bump the
+    #           minor release instead and claim RPC compatibility with the
+    #           last few client versions.
     target = oslo_messaging.Target(
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.1')
+        version='1.2')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -150,88 +156,6 @@ class DhcpRpcCallback(object):
         network['subnets'] = plugin.get_subnets(context, filters=filters)
         network['ports'] = plugin.get_ports(context, filters=filters)
         return network
-
-    def get_dhcp_port(self, context, **kwargs):
-        """Allocate a DHCP port for the host and return port information.
-
-        This method will re-use an existing port if one already exists.  When a
-        port is re-used, the fixed_ip allocation will be updated to the current
-        network state. If an expected failure occurs, a None port is returned.
-
-        """
-        host = kwargs.get('host')
-        network_id = kwargs.get('network_id')
-        device_id = kwargs.get('device_id')
-        # There could be more than one dhcp server per network, so create
-        # a device id that combines host and network ids
-
-        LOG.debug('Port %(device_id)s for %(network_id)s requested from '
-                  '%(host)s', {'device_id': device_id,
-                               'network_id': network_id,
-                               'host': host})
-        plugin = manager.NeutronManager.get_plugin()
-        retval = None
-
-        filters = dict(network_id=[network_id])
-        subnets = dict([(s['id'], s) for s in
-                        plugin.get_subnets(context, filters=filters)])
-
-        dhcp_enabled_subnet_ids = [s['id'] for s in
-                                   subnets.values() if s['enable_dhcp']]
-
-        try:
-            filters = dict(network_id=[network_id], device_id=[device_id])
-            ports = plugin.get_ports(context, filters=filters)
-            if ports:
-                # Ensure that fixed_ips cover all dhcp_enabled subnets.
-                port = ports[0]
-                for fixed_ip in port['fixed_ips']:
-                    if fixed_ip['subnet_id'] in dhcp_enabled_subnet_ids:
-                        dhcp_enabled_subnet_ids.remove(fixed_ip['subnet_id'])
-                port['fixed_ips'].extend(
-                    [dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
-
-                retval = plugin.update_port(context, port['id'],
-                                            dict(port=port))
-
-        except n_exc.NotFound as e:
-            LOG.warning(e)
-
-        if retval is None:
-            # No previous port exists, so create a new one.
-            LOG.debug('DHCP port %(device_id)s on network %(network_id)s '
-                      'does not exist on %(host)s',
-                      {'device_id': device_id,
-                       'network_id': network_id,
-                       'host': host})
-            try:
-                network = plugin.get_network(context, network_id)
-            except n_exc.NetworkNotFound:
-                LOG.warn(_LW("Network %s could not be found, it might have "
-                             "been deleted concurrently."), network_id)
-                return
-
-            port_dict = dict(
-                admin_state_up=True,
-                device_id=device_id,
-                network_id=network_id,
-                tenant_id=network['tenant_id'],
-                mac_address=attributes.ATTR_NOT_SPECIFIED,
-                name='',
-                device_owner=constants.DEVICE_OWNER_DHCP,
-                fixed_ips=[dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
-
-            retval = self._port_action(plugin, context, {'port': port_dict},
-                                       'create_port')
-            if not retval:
-                return
-
-        # Convert subnet_id to subnet dict
-        for fixed_ip in retval['fixed_ips']:
-            subnet_id = fixed_ip.pop('subnet_id')
-            fixed_ip['subnet'] = subnets[subnet_id]
-
-        return retval
 
     def release_dhcp_port(self, context, **kwargs):
         """Release the port currently being used by a DHCP agent."""

@@ -993,10 +993,6 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
         self._test_dhcp_api('get_network_info', network_id='fake_id',
                             return_value=None)
 
-    def test_get_dhcp_port(self):
-        self._test_dhcp_api('get_dhcp_port', network_id='fake_id',
-                            device_id='fake_id_2', return_value=None)
-
     def test_create_dhcp_port(self):
         self._test_dhcp_api('create_dhcp_port', port='fake_port',
                             return_value=None, version='1.1')
@@ -1203,7 +1199,6 @@ class TestDeviceManager(base.BaseTestCase):
         port = port or fake_port1
         plugin = mock.Mock()
         plugin.create_dhcp_port.return_value = port or fake_port1
-        plugin.get_dhcp_port.return_value = port or fake_port1
         self.ensure_device_is_ready.return_value = device_is_ready
         self.mock_driver.get_device_name.return_value = 'tap12345678-12'
 
@@ -1328,17 +1323,12 @@ class TestDeviceManager(base.BaseTestCase):
             True, dict(id=FAKE_NETWORK_UUID,
                        tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'))
 
-        fake_port = dhcp.DictModel(
-            dict(id='12345678-1234-aaaa-1234567890ab',
-                 mac_address='aa:bb:cc:dd:ee:ff'))
-
         with mock.patch('neutron.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
             mock_driver.get_device_name.return_value = 'tap12345678-12'
             dvr_cls.return_value = mock_driver
 
             plugin = mock.Mock()
-            plugin.get_dhcp_port.return_value = fake_port
 
             dh = dhcp.DeviceManager(cfg.CONF, plugin)
             dh.destroy(fake_net, 'tap12345678-12')
@@ -1365,7 +1355,6 @@ class TestDeviceManager(base.BaseTestCase):
             dvr_cls.return_value = mock_driver
 
             plugin = mock.Mock()
-            plugin.get_dhcp_port.return_value = fake_port
 
             dh = dhcp.DeviceManager(cfg.CONF, plugin)
             dh.get_interface_name(fake_net, fake_port)
