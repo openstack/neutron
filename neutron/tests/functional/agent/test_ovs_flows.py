@@ -23,6 +23,7 @@ from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent as ovsagt
 from neutron.plugins.openvswitch.common import constants
+from neutron.tests.common import base as common_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent import test_ovs_lib
 from neutron.tests.functional import base
@@ -85,12 +86,11 @@ class _OVSAgentOFCtlTestBase(_OVSAgentTestBase):
 
 class _ARPSpoofTestCase(object):
     def setUp(self):
-        if not checks.arp_header_match_supported():
-            self.skipTest("ARP header matching not supported")
         # NOTE(kevinbenton): it would be way cooler to use scapy for
         # these but scapy requires the python process to be running as
         # root to bind to the ports.
         super(_ARPSpoofTestCase, self).setUp()
+        self.skip_without_arp_support()
         self.src_addr = '192.168.0.1'
         self.dst_addr = '192.168.0.2'
         self.src_namespace = self.useFixture(
@@ -103,6 +103,11 @@ class _ARPSpoofTestCase(object):
             net_helpers.OVSPortFixture(self.br, self.dst_namespace)).port
         # wait to add IPs until after anti-spoof rules to ensure ARP doesn't
         # happen before
+
+    @common_base.no_skip_on_missing_deps
+    def skip_without_arp_support(self):
+        if not checks.arp_header_match_supported():
+            self.skipTest("ARP header matching not supported")
 
     def test_arp_spoof_doesnt_block_normal_traffic(self):
         self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr])
