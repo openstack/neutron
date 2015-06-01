@@ -131,6 +131,8 @@ core_opts = [
                 help=_('If True, effort is made to advertise MTU settings '
                        'to VMs via network methods (DHCP and RA MTU options) '
                        'when the network\'s preferred MTU is known.')),
+    cfg.StrOpt('ipam_driver', default=None,
+               help=_('IPAM driver to use.')),
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),

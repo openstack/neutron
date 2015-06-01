@@ -10,14 +10,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import types
+
+import mock
 import netaddr
+from oslo_config import cfg
 
 from neutron.common import constants
 from neutron.common import ipv6_utils
+from neutron import context
 from neutron import ipam
+from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
+from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
+from neutron.tests.unit.ipam import fake_driver
+
+FAKE_IPAM_CLASS = 'neutron.tests.unit.ipam.fake_driver.FakeDriver'
 
 
 class IpamSubnetRequestTestCase(base.BaseTestCase):
@@ -224,3 +234,54 @@ class TestAddressRequest(base.BaseTestCase):
                           mac='meh',
                           alien='et',
                           prefix='meh')
+
+
+class TestIpamDriverLoader(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestIpamDriverLoader, self).setUp()
+        self.ctx = context.get_admin_context()
+
+    def _verify_fake_ipam_driver_is_loaded(self, driver_name):
+        mgr = manager.NeutronManager
+        ipam_driver = mgr.load_class_for_provider('neutron.ipam_drivers',
+                                                  driver_name)
+
+        self.assertEqual(
+            fake_driver.FakeDriver, ipam_driver,
+            "loaded ipam driver should be FakeDriver")
+
+    def _verify_import_error_is_generated(self, driver_name):
+        mgr = manager.NeutronManager
+        self.assertRaises(ImportError, mgr.load_class_for_provider,
+                          'neutron.ipam_drivers',
+                          driver_name)
+
+    def test_ipam_driver_is_loaded_by_class(self):
+        self._verify_fake_ipam_driver_is_loaded(FAKE_IPAM_CLASS)
+
+    def test_ipam_driver_is_loaded_by_name(self):
+        self._verify_fake_ipam_driver_is_loaded('fake')
+
+    def test_ipam_driver_raises_import_error(self):
+        self._verify_import_error_is_generated(
+            'neutron.tests.unit.ipam.SomeNonExistentClass')
+
+    def test_ipam_driver_raises_import_error_for_none(self):
+        self._verify_import_error_is_generated(None)
+
+    def _load_ipam_driver(self, driver_name, subnet_pool_id):
+        cfg.CONF.set_override("ipam_driver", driver_name)
+        return driver.Pool.get_instance(subnet_pool_id, self.ctx)
+
+    def test_ipam_driver_is_loaded_from_ipam_driver_config_value(self):
+        ipam_driver = self._load_ipam_driver('fake', None)
+        self.assertIsInstance(
+            ipam_driver, (fake_driver.FakeDriver, types.ClassType),
+            "loaded ipam driver should be of type FakeDriver")
+
+    @mock.patch(FAKE_IPAM_CLASS)
+    def test_ipam_driver_is_loaded_with_subnet_pool_id(self, ipam_mock):
+        subnet_pool_id = 'SomePoolID'
+        self._load_ipam_driver('fake', subnet_pool_id)
+        ipam_mock.assert_called_once_with(subnet_pool_id, self.ctx)

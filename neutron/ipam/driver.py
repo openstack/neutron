@@ -12,9 +12,11 @@
 
 import abc
 
+from oslo_config import cfg
+from oslo_log import log
 import six
 
-from oslo_log import log
+from neutron import manager
 
 LOG = log.getLogger(__name__)
 
@@ -43,7 +45,12 @@ class Pool(object):
         :type subnet_pool: dict
         :returns: An instance of Driver for the given subnet pool
         """
-        raise NotImplementedError
+        ipam_driver_name = cfg.CONF.ipam_driver
+        mgr = manager.NeutronManager
+        LOG.debug("Loading ipam driver: %s", ipam_driver_name)
+        driver_class = mgr.load_class_for_provider('neutron.ipam_drivers',
+                                                   ipam_driver_name)
+        return driver_class(subnet_pool, context)
 
     @abc.abstractmethod
     def allocate_subnet(self, request):

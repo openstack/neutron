@@ -127,7 +127,11 @@ class NeutronManager(object):
         self.service_plugins = {constants.CORE: self.plugin}
         self._load_service_plugins()
 
-    def _get_plugin_instance(self, namespace, plugin_provider):
+    @staticmethod
+    def load_class_for_provider(namespace, plugin_provider):
+        if not plugin_provider:
+            LOG.exception(_LE("Error, plugin is not set"))
+            raise ImportError(_("Plugin not found."))
         try:
             # Try to resolve plugin by name
             mgr = driver.DriverManager(namespace, plugin_provider)
@@ -140,6 +144,10 @@ class NeutronManager(object):
                 LOG.exception(_LE("Error loading plugin by name, %s"), e1)
                 LOG.exception(_LE("Error loading plugin by class, %s"), e2)
                 raise ImportError(_("Plugin not found."))
+        return plugin_class
+
+    def _get_plugin_instance(self, namespace, plugin_provider):
+        plugin_class = self.load_class_for_provider(namespace, plugin_provider)
         return plugin_class()
 
     def _load_services_from_core_plugin(self):
