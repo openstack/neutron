@@ -48,7 +48,7 @@ from neutron.openstack.common import uuidutils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional.agent.linux import helpers
-from neutron.tests.unit import test_l3_agent
+from neutron.tests.unit.agent.l3 import test_agent as test_l3_agent
 
 LOG = logging.getLogger(__name__)
 _uuid = uuidutils.generate_uuid
