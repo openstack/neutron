@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
-# Maxime COQUEREL <max.coquerel@gmail.com>, 2014
+# Maxime COQUEREL <max.coquerel@gmail.com>, 2014-2015
 # Patte D <pattedeph@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"POT-Creation-Date: 2015-06-02 06:15+0000\n"
+"PO-Revision-Date: 2015-06-01 16:41+0000\n"
+"Last-Translator: Maxime COQUEREL <max.coquerel@gmail.com>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -32,6 +32,10 @@ msgstr "%(method)s %(url)s"
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr "%(plugin_key)s : %(function_name)s avec les arguments %(args)s ignoré"
+
+#, python-format
+msgid "%(prog)s version %(version)s"
+msgstr "%(prog)s version %(version)s"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
@@ -132,6 +136,10 @@ msgid "Child caught %s, exiting"
 msgstr "L'enfant a reçu %s, sortie"
 
 #, python-format
+msgid "Cleaning bridge: %s"
+msgstr "Supprimer le pont: %s"
+
+#, python-format
 msgid "Config paste file: %s"
 msgstr "Config du fichier de collage : %s"
 
@@ -146,6 +154,10 @@ msgstr "Agent DHCP démarré"
 msgid "Default provider is not specified for service type %s"
 msgstr ""
 "Le fournisseur par défaut n'est pas spécifié pour le type de service %s"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "Supprimer le port: %s"
 
 #, python-format
 msgid "Device %s already exists"
