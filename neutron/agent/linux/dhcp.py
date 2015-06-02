@@ -696,6 +696,10 @@ class Dnsmasq(DhcpLocalProcess):
                 host_routes.append(
                     '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
                 )
+            elif not isolated_subnets[subnet.id] and gateway:
+                host_routes.append(
+                    '%s/32,%s' % (METADATA_DEFAULT_IP, gateway)
+                )
 
             if subnet.ip_version == 4:
                 host_routes.extend(["%s,0.0.0.0" % (s.cidr) for s in
