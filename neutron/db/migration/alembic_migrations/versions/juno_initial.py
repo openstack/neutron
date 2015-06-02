@@ -13,15 +13,15 @@
 #    under the License.
 #
 
-"""havana_initial
+"""juno_initial
 
-Revision ID: havana
+Revision ID: juno
 Revises: None
 
 """
 
 # revision identifiers, used by Alembic.
-revision = 'havana'
+revision = 'juno'
 down_revision = None
 
 
@@ -29,6 +29,7 @@ from neutron.db.migration.alembic_migrations import agent_init_ops
 from neutron.db.migration.alembic_migrations import brocade_init_ops
 from neutron.db.migration.alembic_migrations import cisco_init_ops
 from neutron.db.migration.alembic_migrations import core_init_ops
+from neutron.db.migration.alembic_migrations import dvr_init_opts
 from neutron.db.migration.alembic_migrations import firewall_init_ops
 from neutron.db.migration.alembic_migrations import l3_init_ops
 from neutron.db.migration.alembic_migrations import lb_init_ops
@@ -37,6 +38,7 @@ from neutron.db.migration.alembic_migrations import metering_init_ops
 from neutron.db.migration.alembic_migrations import ml2_init_ops
 from neutron.db.migration.alembic_migrations import mlnx_init_ops
 from neutron.db.migration.alembic_migrations import nec_init_ops
+from neutron.db.migration.alembic_migrations import nuage_init_opts
 from neutron.db.migration.alembic_migrations import other_extensions_init_ops
 from neutron.db.migration.alembic_migrations import other_plugins_init_ops
 from neutron.db.migration.alembic_migrations import ovs_init_ops
@@ -57,6 +59,7 @@ def upgrade():
     lb_init_ops.upgrade()
     ovs_init_ops.upgrade()
     ml2_init_ops.upgrade()
+    dvr_init_opts.upgrade()
     firewall_init_ops.upgrade()
     loadbalancer_init_ops.upgrade()
     vpn_init_ops.upgrade()
@@ -68,3 +71,4 @@ def upgrade():
     other_plugins_init_ops.upgrade()
     ryu_init_ops.upgrade()
     vmware_init_ops.upgrade()
+    nuage_init_opts.upgrade()

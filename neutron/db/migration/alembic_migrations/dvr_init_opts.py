@@ -1,4 +1,4 @@
-# Copyright 2014 OpenStack Foundation
+# Copyright 2015 OpenStack Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,18 +13,7 @@
 #    under the License.
 #
 
-"""L2 models to support DVR
-
-Revision ID: 2026156eab2f
-Revises: 3927f7f7c456
-Create Date: 2014-06-23 19:12:43.392912
-
-"""
-
-# revision identifiers, used by Alembic.
-revision = '2026156eab2f'
-down_revision = '3927f7f7c456'
-
+# Initial operations for dvr
 
 from alembic import op
 import sqlalchemy as sa
@@ -59,4 +48,18 @@ def upgrade():
         sa.ForeignKeyConstraint(['segment'], ['ml2_network_segments.id'],
                                 ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('port_id', 'host')
+    )
+    op.create_table(
+        'csnat_l3_agent_bindings',
+        sa.Column('router_id', sa.String(length=36), nullable=False),
+        sa.Column('l3_agent_id', sa.String(length=36), nullable=False),
+        sa.Column('host_id', sa.String(length=255), nullable=True),
+        sa.Column('csnat_gw_port_id', sa.String(length=36), nullable=True),
+        sa.ForeignKeyConstraint(['l3_agent_id'], ['agents.id'],
+                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
+                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['csnat_gw_port_id'], ['ports.id'],
+                                ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('router_id')
     )

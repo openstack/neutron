@@ -54,6 +54,14 @@ def upgrade():
         sa.Column('gateway_ip', sa.String(length=64), nullable=True),
         sa.Column('enable_dhcp', sa.Boolean(), nullable=True),
         sa.Column('shared', sa.Boolean(), nullable=True),
+        sa.Column('ipv6_ra_mode',
+                  sa.Enum('slaac', 'dhcpv6-stateful', 'dhcpv6-stateless',
+                          name='ipv6_ra_modes'),
+                  nullable=True),
+        sa.Column('ipv6_address_mode',
+                  sa.Enum('slaac', 'dhcpv6-stateful', 'dhcpv6-stateless',
+                          name='ipv6_address_modes'),
+                  nullable=True),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'], ),
         sa.PrimaryKeyConstraint('id'))
 

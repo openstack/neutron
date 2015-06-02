@@ -24,15 +24,15 @@ def upgrade():
     op.create_table(
         'ofcportmappings',
         sa.Column('ofc_id', sa.String(length=255), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('quantum_id'),
+        sa.Column('neutron_id', sa.String(length=36), nullable=False),
+        sa.PrimaryKeyConstraint('neutron_id'),
         sa.UniqueConstraint('ofc_id'))
 
     op.create_table(
         'ofcroutermappings',
         sa.Column('ofc_id', sa.String(length=255), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('quantum_id'),
+        sa.Column('neutron_id', sa.String(length=36), nullable=False),
+        sa.PrimaryKeyConstraint('neutron_id'),
         sa.UniqueConstraint('ofc_id'))
 
     op.create_table(
@@ -44,49 +44,25 @@ def upgrade():
         sa.PrimaryKeyConstraint('router_id'))
 
     op.create_table(
-        'ofcnetworks',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id'))
-
-    op.create_table(
         'ofctenantmappings',
         sa.Column('ofc_id', sa.String(length=255), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('quantum_id'),
+        sa.Column('neutron_id', sa.String(length=36), nullable=False),
+        sa.PrimaryKeyConstraint('neutron_id'),
         sa.UniqueConstraint('ofc_id'))
 
     op.create_table(
         'ofcfiltermappings',
         sa.Column('ofc_id', sa.String(length=255), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('quantum_id'),
+        sa.Column('neutron_id', sa.String(length=36), nullable=False),
+        sa.PrimaryKeyConstraint('neutron_id'),
         sa.UniqueConstraint('ofc_id'))
 
     op.create_table(
         'ofcnetworkmappings',
         sa.Column('ofc_id', sa.String(length=255), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('quantum_id'),
+        sa.Column('neutron_id', sa.String(length=36), nullable=False),
+        sa.PrimaryKeyConstraint('neutron_id'),
         sa.UniqueConstraint('ofc_id'))
-
-    op.create_table(
-        'ofcfilters',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id'))
-
-    op.create_table(
-        'ofcports',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id'))
-
-    op.create_table(
-        'ofctenants',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('quantum_id', sa.String(length=36), nullable=False),
-        sa.PrimaryKeyConstraint('id'))
 
     op.create_table(
         'packetfilters',

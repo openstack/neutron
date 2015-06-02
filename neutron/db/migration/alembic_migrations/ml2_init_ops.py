@@ -20,18 +20,6 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def create_cisco_ml2_credentials():
-    op.create_table(
-        'cisco_ml2_credentials',
-        sa.Column('credential_id', sa.String(length=255), nullable=True),
-        sa.Column('tenant_id', sa.String(length=255), nullable=False),
-        sa.Column('credential_name', sa.String(length=255), nullable=False),
-        sa.Column('user_name', sa.String(length=255), nullable=True),
-        sa.Column('password', sa.String(length=255), nullable=True),
-        sa.PrimaryKeyConstraint('tenant_id', 'credential_name'),
-    )
-
-
 def upgrade():
     op.create_table(
         'ml2_vlan_allocations',
@@ -46,7 +34,7 @@ def upgrade():
         sa.Column('ip_address', sa.String(length=64), nullable=False),
         sa.Column('udp_port', sa.Integer(), autoincrement=False,
                   nullable=False),
-        sa.PrimaryKeyConstraint('ip_address', 'udp_port'))
+        sa.PrimaryKeyConstraint('ip_address'))
 
     op.create_table(
         'ml2_gre_endpoints',
@@ -57,14 +45,16 @@ def upgrade():
         'ml2_vxlan_allocations',
         sa.Column('vxlan_vni', sa.Integer(), autoincrement=False,
                   nullable=False),
-        sa.Column('allocated', sa.Boolean(), nullable=False),
+        sa.Column('allocated', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
         sa.PrimaryKeyConstraint('vxlan_vni'))
 
     op.create_table(
         'ml2_gre_allocations',
         sa.Column('gre_id', sa.Integer(), autoincrement=False,
                   nullable=False),
-        sa.Column('allocated', sa.Boolean(), nullable=False),
+        sa.Column('allocated', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
         sa.PrimaryKeyConstraint('gre_id'))
 
     op.create_table(
@@ -79,6 +69,8 @@ def upgrade():
         sa.Column('network_type', sa.String(length=32), nullable=False),
         sa.Column('physical_network', sa.String(length=64), nullable=True),
         sa.Column('segmentation_id', sa.Integer(), nullable=True),
+        sa.Column('is_dynamic', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'))
@@ -86,11 +78,17 @@ def upgrade():
     op.create_table(
         'ml2_port_bindings',
         sa.Column('port_id', sa.String(length=36), nullable=False),
-        sa.Column('host', sa.String(length=255), nullable=False),
+        sa.Column('host', sa.String(length=255), nullable=False,
+                  server_default=''),
         sa.Column('vif_type', sa.String(length=64), nullable=False),
-        sa.Column('cap_port_filter', sa.Boolean(), nullable=False),
         sa.Column('driver', sa.String(length=64), nullable=True),
         sa.Column('segment', sa.String(length=36), nullable=True),
+        sa.Column('vnic_type', sa.String(length=64), nullable=False,
+                  server_default='normal'),
+        sa.Column('profile', sa.String(length=4095), nullable=False,
+                  server_default=''),
+        sa.Column('vif_details', sa.String(length=4095), nullable=False,
+                  server_default=''),
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
                                 ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['segment'], ['ml2_network_segments.id'],
@@ -107,8 +105,6 @@ def upgrade():
         sa.Column('instance_id', sa.String(length=255), nullable=True),
         sa.PrimaryKeyConstraint('binding_id'),
     )
-
-    create_cisco_ml2_credentials()
 
     op.create_table(
         'arista_provisioned_nets',
