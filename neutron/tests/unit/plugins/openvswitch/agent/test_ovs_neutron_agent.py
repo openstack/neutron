@@ -221,7 +221,8 @@ class TestOvsNeutronAgent(object):
         else:
             int_br.assert_has_calls([
                 mock.call.set_db_attribute("Port", mock.ANY, "tag",
-                                           self.mod_agent.DEAD_VLAN_TAG),
+                                           self.mod_agent.DEAD_VLAN_TAG,
+                                           log_errors=True),
                 mock.call.drop_port(in_port=port.ofport),
             ])
 
@@ -529,18 +530,19 @@ class TestOvsNeutronAgent(object):
         self.assertEqual(set(['123']), self.agent.updated_ports)
 
     def test_port_delete(self):
-        port_id = "123"
-        port_name = "foo"
-        with mock.patch.object(
-            self.agent.int_br,
-            'get_vif_port_by_id',
-            return_value=mock.MagicMock(port_name=port_name)) as get_vif_func,\
-                mock.patch.object(self.agent.int_br,
-                                  "delete_port") as del_port_func:
+        vif = FakeVif()
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            int_br.get_vif_by_port_id.return_value = vif.port_name
+            int_br.get_vif_port_by_id.return_value = vif
             self.agent.port_delete("unused_context",
-                                   port_id=port_id)
-            self.assertTrue(get_vif_func.called)
-            del_port_func.assert_called_once_with(port_name)
+                                   port_id='id')
+            self.agent.process_deleted_ports()
+            # the main things we care about are that it gets put in the
+            # dead vlan and gets blocked
+            int_br.set_db_attribute.assert_any_call(
+                'Port', vif.port_name, 'tag', self.mod_agent.DEAD_VLAN_TAG,
+                log_errors=False)
+            int_br.drop_port.assert_called_once_with(in_port=vif.ofport)
 
     def test_setup_physical_bridges(self):
         with mock.patch.object(ip_lib, "device_exists") as devex_fn,\
