@@ -90,6 +90,33 @@ Some notes on the above:
 * Note these areas may change as the project evolves due to code refactoring,
   new feature areas, and libification of certain pieces of code.
 
+Neutron also consists of several plugins, drivers, and agents that are developed
+effectively as sub-projects within Neutron in their own git repositories.
+Lieutenants are also named for these sub-projects to identify a clear point of
+contact and leader for that area.  The Lieutenant is also responsible for
+updating the core review team for the sub-project's repositories.
+
++------------------------+---------------------------+----------------------+
+| Area                   | Lieutenant                | IRC nick             |
++========================+===========================+======================+
+| dragonflow             | Eran Gampel               | gampel               |
++------------------------+---------------------------+----------------------+
+| networking-l2gw        | Sukhdev Kapur             | sukhdev              |
++------------------------+---------------------------+----------------------+
+| networking-odl         | Flavio Fernandes          | flaviof              |
+|                        | Kyle Mestery              | mestery              |
++------------------------+---------------------------+----------------------+
+| networking-ofagent     | YAMAMOTO Takashi          | yamamoto             |
++------------------------+---------------------------+----------------------+
+| networking-ovn         | Russell Bryant            | russellb             |
++------------------------+---------------------------+----------------------+
+| networking-vshpere     | Vivekanandan Narasimhan   | viveknarasimhan      |
++------------------------+---------------------------+----------------------+
+| octavia                | German Eichberger         | xgerman              |
++------------------------+---------------------------+----------------------+
+| vmware-nsx             | Gary Kotton               | garyk                |
++------------------------+---------------------------+----------------------+
+
 Existing Core Reviewers
 -----------------------
 
