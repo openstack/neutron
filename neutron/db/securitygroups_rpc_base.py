@@ -69,18 +69,17 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                 for device in devices]
 
     def create_security_group_rule(self, context, security_group_rule):
-        bulk_rule = {'security_group_rules': [security_group_rule]}
-        rule = self.create_security_group_rule_bulk_native(context,
-                                                           bulk_rule)[0]
+        rule = super(SecurityGroupServerRpcMixin,
+                     self).create_security_group_rule(context,
+                                                      security_group_rule)
         sgids = [rule['security_group_id']]
         self.notifier.security_groups_rule_updated(context, sgids)
         return rule
 
-    def create_security_group_rule_bulk(self, context,
-                                        security_group_rule):
+    def create_security_group_rule_bulk(self, context, security_group_rules):
         rules = super(SecurityGroupServerRpcMixin,
                       self).create_security_group_rule_bulk_native(
-                          context, security_group_rule)
+                          context, security_group_rules)
         sgids = set([r['security_group_id'] for r in rules])
         self.notifier.security_groups_rule_updated(context, list(sgids))
         return rules
