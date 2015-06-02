@@ -31,7 +31,6 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_gwmode_db
 from neutron.db import portbindings_db
-from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.ibm.common import config  # noqa

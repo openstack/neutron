@@ -28,8 +28,8 @@ from neutron.i18n import _LI, _LW
 
 
 LOG = logging.getLogger(__name__)
-QUOTA_DB_MODULE = 'neutron.db.quota_db'
-QUOTA_DB_DRIVER = 'neutron.db.quota_db.DbQuotaDriver'
+QUOTA_DB_MODULE = 'neutron.db.quota.driver'
+QUOTA_DB_DRIVER = '%s.DbQuotaDriver' % QUOTA_DB_MODULE
 QUOTA_CONF_DRIVER = 'neutron.quota.ConfDriver'
 default_quota_items = ['network', 'subnet', 'port']
 
@@ -226,8 +226,8 @@ class QuotaEngine(object):
                 versionutils.report_deprecated_feature(
                     LOG, _LW("The quota driver neutron.quota.ConfDriver is "
                              "deprecated as of Liberty. "
-                             "neutron.db.quota_db.DbQuotaDriver should be "
-                             "used in its place"))
+                             "neutron.db.quota.driver.DbQuotaDriver should "
+                             "be used in its place"))
             self._driver = _driver_class
             LOG.info(_LI('Loaded quota_driver: %s.'), _driver_class)
         return self._driver

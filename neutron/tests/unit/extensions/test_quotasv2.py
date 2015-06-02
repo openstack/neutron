@@ -27,7 +27,7 @@ from neutron.common import config
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron import context
-from neutron.db import quota_db
+from neutron.db.quota import driver
 from neutron import quota
 from neutron.tests import base
 from neutron.tests import tools
@@ -95,7 +95,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
     def setUp(self):
         cfg.CONF.set_override(
             'quota_driver',
-            'neutron.db.quota_db.DbQuotaDriver',
+            'neutron.db.quota.driver.DbQuotaDriver',
             group='QUOTAS')
         super(QuotaExtensionDbTestCase, self).setUp()
 
@@ -404,25 +404,25 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
 
 
 class TestDbQuotaDriver(base.BaseTestCase):
-    """Test for neutron.db.quota_db.DbQuotaDriver."""
+    """Test for neutron.db.quota.driver.DbQuotaDriver."""
 
     def test_get_tenant_quotas_arg(self):
-        """Call neutron.db.quota_db.DbQuotaDriver._get_quotas."""
+        """Call neutron.db.quota.driver.DbQuotaDriver._get_quotas."""
 
-        driver = quota_db.DbQuotaDriver()
+        quota_driver = driver.DbQuotaDriver()
         ctx = context.Context('', 'bar')
 
         foo_quotas = {'network': 5}
         default_quotas = {'network': 10}
         target_tenant = 'foo'
 
-        with mock.patch.object(quota_db.DbQuotaDriver,
+        with mock.patch.object(driver.DbQuotaDriver,
                                'get_tenant_quotas',
                                return_value=foo_quotas) as get_tenant_quotas:
 
-            quotas = driver._get_quotas(ctx,
-                                        target_tenant,
-                                        default_quotas)
+            quotas = quota_driver._get_quotas(ctx,
+                                              target_tenant,
+                                              default_quotas)
 
             self.assertEqual(quotas, foo_quotas)
             get_tenant_quotas.assert_called_once_with(ctx,
@@ -441,17 +441,17 @@ class TestQuotaDriverLoad(base.BaseTestCase):
         cfg.CONF.set_override('quota_driver', cfg_driver, group='QUOTAS')
         with mock.patch.dict(sys.modules, {}):
             if (not with_quota_db_module and
-                    'neutron.db.quota_db' in sys.modules):
-                del sys.modules['neutron.db.quota_db']
+                    'neutron.db.quota.driver' in sys.modules):
+                del sys.modules['neutron.db.quota.driver']
             driver = quota.QUOTAS.get_driver()
             self.assertEqual(loaded_driver, driver.__class__.__name__)
 
     def test_quota_db_driver_with_quotas_table(self):
-        self._test_quota_driver('neutron.db.quota_db.DbQuotaDriver',
+        self._test_quota_driver('neutron.db.quota.driver.DbQuotaDriver',
                                 'DbQuotaDriver', True)
 
     def test_quota_db_driver_fallback_conf_driver(self):
-        self._test_quota_driver('neutron.db.quota_db.DbQuotaDriver',
+        self._test_quota_driver('neutron.db.quota.driver.DbQuotaDriver',
                                 'ConfDriver', False)
 
     def test_quota_conf_driver(self):

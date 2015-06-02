@@ -35,7 +35,7 @@ class QuotasTest(base.BaseAdminNetworkTest):
     It is also assumed that the per-tenant quota extension API is configured
     in /etc/neutron/neutron.conf as follows:
 
-        quota_driver = neutron.db.quota_db.DbQuotaDriver
+        quota_driver = neutron.db.driver.DbQuotaDriver
     """
 
     @classmethod

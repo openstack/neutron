@@ -16,11 +16,11 @@
 from neutron.common import exceptions
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.db import quota_db
+from neutron.db.quota import driver
 from neutron.tests.unit import testlib_api
 
 
-class FakePlugin(base_plugin.NeutronDbPluginV2, quota_db.DbQuotaDriver):
+class FakePlugin(base_plugin.NeutronDbPluginV2, driver.DbQuotaDriver):
     """A fake plugin class containing all DB methods."""
 
 
