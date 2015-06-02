@@ -33,6 +33,7 @@ UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
 
 
 class TunnelTypeTestMixin(object):
+    DRIVER_MODULE = None
     DRIVER_CLASS = None
     TYPE = None
 
@@ -194,6 +195,53 @@ class TunnelTypeTestMixin(object):
         for tunnel_id in tunnel_ids:
             segment[api.SEGMENTATION_ID] = tunnel_id
             self.driver.release_segment(self.session, segment)
+
+    def add_endpoint(self, ip=TUNNEL_IP_ONE, host=HOST_ONE):
+        return self.driver.add_endpoint(ip, host)
+
+    def test_add_endpoint(self):
+        endpoint = self.add_endpoint()
+        self.assertEqual(TUNNEL_IP_ONE, endpoint.ip_address)
+        self.assertEqual(HOST_ONE, endpoint.host)
+        return endpoint
+
+    def test_add_endpoint_for_existing_tunnel_ip(self):
+        self.add_endpoint()
+
+        log = getattr(self.DRIVER_MODULE, 'LOG')
+        with mock.patch.object(log, 'warning') as log_warn:
+            self.add_endpoint()
+            log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
+
+    def test_get_endpoint_by_host(self):
+        self.add_endpoint()
+
+        host_endpoint = self.driver.get_endpoint_by_host(HOST_ONE)
+        self.assertEqual(TUNNEL_IP_ONE, host_endpoint.ip_address)
+        return host_endpoint
+
+    def test_get_endpoint_by_host_for_not_existing_host(self):
+        ip_endpoint = self.driver.get_endpoint_by_host(HOST_TWO)
+        self.assertIsNone(ip_endpoint)
+
+    def test_get_endpoint_by_ip(self):
+        self.add_endpoint()
+
+        ip_endpoint = self.driver.get_endpoint_by_ip(TUNNEL_IP_ONE)
+        self.assertEqual(HOST_ONE, ip_endpoint.host)
+        return ip_endpoint
+
+    def test_get_endpoint_by_ip_for_not_existing_tunnel_ip(self):
+        ip_endpoint = self.driver.get_endpoint_by_ip(TUNNEL_IP_TWO)
+        self.assertIsNone(ip_endpoint)
+
+    def test_delete_endpoint(self):
+        self.add_endpoint()
+
+        self.assertIsNone(self.driver.delete_endpoint(TUNNEL_IP_ONE))
+        # Get all the endpoints and verify its empty
+        endpoints = self.driver.get_endpoints()
+        self.assertNotIn(TUNNEL_IP_ONE, endpoints)
 
 
 class TunnelTypeMultiRangeTestMixin(object):
