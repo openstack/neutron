@@ -231,6 +231,7 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
         router[l3_constants.FLOATINGIP_KEY] = [{
             'id': _uuid(),
             'port_id': _uuid(),
+            'status': 'DOWN',
             'floating_ip_address': '19.4.4.2',
             'fixed_ip_address': '10.0.0.1'}]
 
@@ -1288,6 +1289,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             {'id': _uuid(),
              'floating_ip_address': '15.1.2.3',
              'fixed_ip_address': '192.168.0.1',
+             'status': 'DOWN',
              'floating_network_id': _uuid(),
              'port_id': _uuid(),
              'host': HOSTNAME}]}
@@ -1704,6 +1706,27 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertNotIn(
                 router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
 
+    def test_process_router_floatingip_nochange(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        with mock.patch.object(
+            agent.plugin_rpc, 'update_floatingip_statuses'
+        ) as mock_update_fip_status:
+            router = prepare_router_data(num_internal_ports=1)
+            fip1 = {'id': _uuid(), 'floating_ip_address': '8.8.8.8',
+                    'fixed_ip_address': '7.7.7.7', 'status': 'ACTIVE',
+                    'port_id': router[l3_constants.INTERFACE_KEY][0]['id']}
+            fip2 = copy.copy(fip1)
+            fip2.update({'id': _uuid(), 'status': 'DOWN'})
+            router[l3_constants.FLOATINGIP_KEY] = [fip1, fip2]
+
+            ri = legacy_router.LegacyRouter(router['id'], router,
+                                            **self.ri_kwargs)
+            ri.external_gateway_added = mock.Mock()
+            ri.process(agent)
+            # make sure only the one that went from DOWN->ACTIVE was sent
+            mock_update_fip_status.assert_called_once_with(
+                mock.ANY, ri.router_id, {fip2['id']: 'ACTIVE'})
+
     def test_process_router_floatingip_disabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         with mock.patch.object(
@@ -1715,6 +1738,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 {'id': fip_id,
                  'floating_ip_address': '8.8.8.8',
                  'fixed_ip_address': '7.7.7.7',
+                 'status': 'DOWN',
                  'port_id': router[l3_constants.INTERFACE_KEY][0]['id']}]
 
             ri = legacy_router.LegacyRouter(router['id'],
