@@ -422,15 +422,6 @@ class DhcpPluginApi(object):
         if network:
             return dhcp.NetModel(self.use_namespaces, network)
 
-    def get_dhcp_port(self, network_id, device_id):
-        """Make a remote process call to get the dhcp port."""
-        cctxt = self.client.prepare()
-        port = cctxt.call(self.context, 'get_dhcp_port',
-                          network_id=network_id, device_id=device_id,
-                          host=self.host)
-        if port:
-            return dhcp.DictModel(port)
-
     def create_dhcp_port(self, port):
         """Make a remote process call to create the dhcp port."""
         cctxt = self.client.prepare(version='1.1')

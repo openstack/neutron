@@ -152,37 +152,6 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.assertEqual(retval['subnets'], subnet_retval)
         self.assertEqual(retval['ports'], port_retval)
 
-    def _test_get_dhcp_port_helper(self, port_retval, other_expectations=[],
-                                   update_port=None, create_port=None):
-        subnets_retval = [dict(id='a', enable_dhcp=True),
-                          dict(id='b', enable_dhcp=False)]
-
-        self.plugin.get_subnets.return_value = subnets_retval
-        if port_retval:
-            self.plugin.get_ports.return_value = [port_retval]
-        else:
-            self.plugin.get_ports.return_value = []
-        if isinstance(update_port, n_exc.NotFound):
-            self.plugin.update_port.side_effect = update_port
-        else:
-            self.plugin.update_port.return_value = update_port
-        self.plugin.create_port.return_value = create_port
-
-        retval = self.callbacks.get_dhcp_port(mock.Mock(),
-                                              network_id='netid',
-                                              device_id='devid',
-                                              host='host')
-
-        expected = [mock.call.get_subnets(mock.ANY,
-                                          filters=dict(network_id=['netid'])),
-                    mock.call.get_ports(mock.ANY,
-                                        filters=dict(network_id=['netid'],
-                                                     device_id=['devid']))]
-
-        expected.extend(other_expectations)
-        self.plugin.assert_has_calls(expected)
-        return retval
-
     def test_update_dhcp_port_verify_port_action_port_dict(self):
         port = {'port': {'network_id': 'foo_network_id',
                          'device_owner': constants.DEVICE_OWNER_DHCP,
@@ -221,45 +190,6 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                                         port=port)
         self.plugin.assert_has_calls(
             mock.call.update_port(mock.ANY, 'foo_port_id', expected_port))
-
-    def test_get_dhcp_port_existing(self):
-        port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])
-        expectations = [
-            mock.call.update_port(mock.ANY, 'port_id', dict(port=port_retval))]
-
-        self._test_get_dhcp_port_helper(port_retval, expectations,
-                                        update_port=port_retval)
-        self.assertEqual(len(self.log.mock_calls), 1)
-
-    def _test_get_dhcp_port_create_new(self, update_port=None):
-        self.plugin.get_network.return_value = dict(tenant_id='tenantid')
-        create_spec = dict(tenant_id='tenantid', device_id='devid',
-                           network_id='netid', name='',
-                           admin_state_up=True,
-                           device_owner=constants.DEVICE_OWNER_DHCP,
-                           mac_address=mock.ANY)
-        create_retval = create_spec.copy()
-        create_retval['id'] = 'port_id'
-        create_retval['fixed_ips'] = [dict(subnet_id='a', enable_dhcp=True)]
-
-        create_spec['fixed_ips'] = [dict(subnet_id='a')]
-
-        expectations = [
-            mock.call.get_network(mock.ANY, 'netid'),
-            mock.call.create_port(mock.ANY, dict(port=create_spec))]
-
-        retval = self._test_get_dhcp_port_helper(None, expectations,
-                                                 update_port=update_port,
-                                                 create_port=create_retval)
-        self.assertEqual(create_retval, retval)
-        self.assertEqual(len(self.log.mock_calls), 2)
-
-    def test_get_dhcp_port_create_new(self):
-        self._test_get_dhcp_port_create_new()
-
-    def test_get_dhcp_port_create_new_with_failure_on_port_update(self):
-        self._test_get_dhcp_port_create_new(
-            update_port=n_exc.PortNotFound(port_id='foo'))
 
     def test_release_dhcp_port(self):
         port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])
