@@ -592,6 +592,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     def _allocate_fixed_ips(self, context, network, fixed_ips):
         """Allocate IP addresses according to the configured fixed_ips."""
         ips = []
+
+        # we need to start with entries that asked for a specific IP in case
+        # those IPs happen to be next in the line for allocation for ones that
+        # didn't ask for a specific IP
+        fixed_ips.sort(key=lambda x: 'ip_address' not in x)
         for fixed in fixed_ips:
             if 'ip_address' in fixed:
                 # Remove the IP address from the allocation pool
