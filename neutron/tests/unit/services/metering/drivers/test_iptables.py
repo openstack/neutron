@@ -19,9 +19,6 @@ from oslo_config import cfg
 
 from neutron.services.metering.drivers.iptables import iptables_driver
 from neutron.tests import base
-from neutron.tests.unit.api.v2 import test_base
-
-_uuid = test_base._uuid
 
 
 TEST_ROUTERS = [
