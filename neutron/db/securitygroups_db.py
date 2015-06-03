@@ -342,9 +342,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             for binding in bindings:
                 context.session.delete(binding)
 
-    def create_security_group_rule_bulk(self, context, security_group_rule):
+    def create_security_group_rule_bulk(self, context, security_group_rules):
         return self._create_bulk('security_group_rule', context,
-                                 security_group_rule)
+                                 security_group_rules)
 
     def create_security_group_rule_bulk_native(self, context,
                                                security_group_rule):
@@ -436,7 +436,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 raise ext_sg.SecurityGroupMissingIcmpType(
                     value=rule['port_range_max'])
 
-    def _validate_security_group_rules(self, context, security_group_rule):
+    def _validate_security_group_rules(self, context, security_group_rules):
         """Check that rules being installed.
 
         Check that all rules belong to the same security
@@ -445,8 +445,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         """
         new_rules = set()
         tenant_ids = set()
-        for rules in security_group_rule['security_group_rules']:
-            rule = rules.get('security_group_rule')
+        for rule_dict in security_group_rules['security_group_rules']:
+            rule = rule_dict.get('security_group_rule')
             new_rules.add(rule['security_group_id'])
 
             self._validate_port_range(rule)
