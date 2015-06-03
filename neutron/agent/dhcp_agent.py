@@ -351,8 +351,9 @@ class DhcpAgent(manager.Manager):
         # be started for the router attached to the network
         if self.conf.enable_metadata_network:
             router_ports = [port for port in network.ports
-                            if (port.device_owner ==
-                                constants.DEVICE_OWNER_ROUTER_INTF)]
+                            if (port.device_owner in
+                                (constants.DEVICE_OWNER_ROUTER_INTF,
+                                 constants.DEVICE_OWNER_DVR_INTERFACE))]
             if router_ports:
                 # Multiple router ports should not be allowed
                 if len(router_ports) > 1:
