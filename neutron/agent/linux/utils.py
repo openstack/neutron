@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
 import fcntl
 import glob
 import grp
@@ -191,7 +192,13 @@ def find_child_pids(pid):
 def ensure_dir(dir_path):
     """Ensure a directory with 755 permissions mode."""
     if not os.path.isdir(dir_path):
-        os.makedirs(dir_path, 0o755)
+        try:
+            os.makedirs(dir_path, 0o755)
+        except OSError as e:
+            # Make sure that the error was that the directory was created
+            # by a different (concurrent) worker. If not, raise the error.
+            if e.errno != errno.EEXIST:
+                raise
 
 
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
