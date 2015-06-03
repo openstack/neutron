@@ -121,5 +121,5 @@ class GreTypeMultiRangeTest(base_type_tunnel.TunnelTypeMultiRangeTestMixin,
 class GreTypeRpcCallbackTest(base_type_tunnel.TunnelRpcCallbackTestMixin,
                              test_rpc.RpcCallbacksTestCase,
                              testlib_api.SqlTestCase):
-        DRIVER_CLASS = type_gre.GreTypeDriver
-        TYPE = p_const.TYPE_GRE
+    DRIVER_CLASS = type_gre.GreTypeDriver
+    TYPE = p_const.TYPE_GRE
