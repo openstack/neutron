@@ -33,9 +33,14 @@ class BaseFullStackTestCase(test_base.MySQLOpportunisticTestCase):
         self.create_db_tables()
 
         if self.environment:
+            self.environment.test_name = self.get_name()
             self.useFixture(self.environment)
 
         self.client = self.environment.neutron_server.client
+
+    def get_name(self):
+        class_name, test_name = self.id().split(".")[-2:]
+        return "%s.%s" % (class_name, test_name)
 
     def create_db_tables(self):
         """Populate the new database.

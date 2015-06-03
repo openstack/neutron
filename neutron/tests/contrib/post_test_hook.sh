@@ -19,6 +19,15 @@ function generate_testr_results {
         gzip -9 ./testr_results.html
         sudo mv ./*.gz /opt/stack/logs/
     fi
+
+    # Compress all /tmp/fullstack-*/*.txt files and move the directories
+    # holding those files to /opt/stack/logs. Files with .log suffix have their
+    # suffix changed to .txt (so browsers will know to open the compressed
+    # files and not download them).
+    if [ -d /tmp/fullstack-logs/ ]; then
+        sudo find /tmp/fullstack-logs -iname "*.log" -type f -exec mv {} {}.txt \; -exec gzip -9 {}.txt \;
+        sudo mv /tmp/fullstack-logs/* /opt/stack/logs/
+    fi
 }
 
 if [ "$venv" == "dsvm-functional" ]
