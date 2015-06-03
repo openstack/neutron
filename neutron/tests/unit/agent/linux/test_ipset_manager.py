@@ -62,7 +62,7 @@ class BaseIpsetManagerTest(base.BaseTestCase):
     def expect_set(self, addresses):
         temp_input = ['create %s hash:net family inet' % TEST_SET_NAME_NEW]
         temp_input.extend('add %s %s' % (TEST_SET_NAME_NEW, ip)
-                          for ip in addresses)
+                          for ip in self.ipset._sanitize_addresses(addresses))
         input = '\n'.join(temp_input)
         self.expected_calls.extend([
             mock.call(['ipset', 'restore', '-exist'],
@@ -79,13 +79,16 @@ class BaseIpsetManagerTest(base.BaseTestCase):
         self.expected_calls.extend(
             mock.call(['ipset', 'add', '-exist', TEST_SET_NAME, ip],
                       process_input=None,
-                      run_as_root=True) for ip in addresses)
+                      run_as_root=True)
+            for ip in self.ipset._sanitize_addresses(addresses))
 
     def expect_del(self, addresses):
+
         self.expected_calls.extend(
             mock.call(['ipset', 'del', TEST_SET_NAME, ip],
                       process_input=None,
-                      run_as_root=True) for ip in addresses)
+                      run_as_root=True)
+            for ip in self.ipset._sanitize_addresses(addresses))
 
     def expect_create(self):
         self.expected_calls.append(
@@ -135,6 +138,16 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
         self.add_first_ip()
         self.expect_set(FAKE_IPS)
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE, FAKE_IPS)
+        self.verify_mock_calls()
+
+    def test_set_members_adding_all_zero_ipv4(self):
+        self.expect_set(['0.0.0.0/0'])
+        self.ipset.set_members(TEST_SET_ID, ETHERTYPE, ['0.0.0.0/0'])
+        self.verify_mock_calls()
+
+    def test_set_members_adding_all_zero_ipv6(self):
+        self.expect_set(['::/0'])
+        self.ipset.set_members(TEST_SET_ID, ETHERTYPE, ['::/0'])
         self.verify_mock_calls()
 
     def test_destroy(self):
