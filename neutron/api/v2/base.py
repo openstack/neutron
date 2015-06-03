@@ -19,6 +19,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 import webob.exc
 
 from neutron.api import api_common
@@ -109,7 +110,7 @@ class Controller(object):
                                                          self._resource)
 
     def _get_primary_key(self, default_primary_key='id'):
-        for key, value in self._attr_info.iteritems():
+        for key, value in six.iteritems(self._attr_info):
             if value.get('primary_key', False):
                 return key
         return default_primary_key
@@ -170,7 +171,7 @@ class Controller(object):
     def _filter_attributes(self, context, data, fields_to_strip=None):
         if not fields_to_strip:
             return data
-        return dict(item for item in data.iteritems()
+        return dict(item for item in six.iteritems(data)
                     if (item[0] not in fields_to_strip))
 
     def _do_field_list(self, original_fields):
@@ -517,7 +518,7 @@ class Controller(object):
         # Load object to check authz
         # but pass only attributes in the original body and required
         # by the policy engine to the policy 'brain'
-        field_list = [name for (name, value) in self._attr_info.iteritems()
+        field_list = [name for (name, value) in six.iteritems(self._attr_info)
                       if (value.get('required_by_policy') or
                           value.get('primary_key') or
                           'default' not in value)]
@@ -621,7 +622,7 @@ class Controller(object):
         Controller._verify_attributes(res_dict, attr_info)
 
         if is_create:  # POST
-            for attr, attr_vals in attr_info.iteritems():
+            for attr, attr_vals in six.iteritems(attr_info):
                 if attr_vals['allow_post']:
                     if ('default' not in attr_vals and
                         attr not in res_dict):
@@ -635,12 +636,12 @@ class Controller(object):
                         msg = _("Attribute '%s' not allowed in POST") % attr
                         raise webob.exc.HTTPBadRequest(msg)
         else:  # PUT
-            for attr, attr_vals in attr_info.iteritems():
+            for attr, attr_vals in six.iteritems(attr_info):
                 if attr in res_dict and not attr_vals['allow_put']:
                     msg = _("Cannot update read-only attribute %s") % attr
                     raise webob.exc.HTTPBadRequest(msg)
 
-        for attr, attr_vals in attr_info.iteritems():
+        for attr, attr_vals in six.iteritems(attr_info):
             if (attr not in res_dict or
                 res_dict[attr] is attributes.ATTR_NOT_SPECIFIED):
                 continue

@@ -17,6 +17,7 @@ import contextlib
 
 import mock
 import oslo_db.exception as exc
+import six
 import testtools
 import webob.exc
 
@@ -160,7 +161,7 @@ class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         """Asserts that the sg rule has expected key/value pairs passed
            in as expected_kvs dictionary
         """
-        for k, v in expected_kvs.iteritems():
+        for k, v in six.iteritems(expected_kvs):
             self.assertEqual(security_group_rule[k], v)
 
 
@@ -441,7 +442,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         test_addr = {'192.168.1.1/24': 'IPv6',
                      '2001:db8:1234::/48': 'IPv4',
                      '192.168.2.1/24': 'BadEthertype'}
-        for remote_ip_prefix, ethertype in test_addr.iteritems():
+        for remote_ip_prefix, ethertype in six.iteritems(test_addr):
             with self.security_group(name, description) as sg:
                 sg_id = sg['security_group']['id']
                 rule = self._build_security_group_rule(
@@ -1501,7 +1502,7 @@ class TestConvertIPPrefixToCIDR(base.BaseTestCase):
 
     def test_convert_ip_prefix_no_netmask_to_cidr(self):
         addr = {'10.1.2.3': '32', 'fe80::2677:3ff:fe7d:4c': '128'}
-        for k, v in addr.iteritems():
+        for k, v in six.iteritems(addr):
             self.assertEqual(ext_sg.convert_ip_prefix_to_cidr(k),
                              '%s/%s' % (k, v))
 

@@ -15,6 +15,7 @@
 import re
 
 import pep8
+import six
 
 # Guidelines for writing new hacking checks
 #
@@ -48,7 +49,7 @@ def _regex_for_level(level, hint):
 
 log_translation_hint = re.compile(
     '|'.join('(?:%s)' % _regex_for_level(level, hint)
-             for level, hint in _all_log_levels.iteritems()))
+             for level, hint in six.iteritems(_all_log_levels)))
 
 oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
 oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
@@ -166,6 +167,12 @@ def check_no_basestring(logical_line):
         yield(0, msg)
 
 
+def check_python3_no_iteritems(logical_line):
+    if re.search(r".*\.iteritems\(\)", logical_line):
+        msg = ("N327: Use six.iteritems() instead of dict.iteritems().")
+        yield(0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -175,3 +182,4 @@ def factory(register):
     register(check_no_contextlib_nested)
     register(check_python3_xrange)
     register(check_no_basestring)
+    register(check_python3_no_iteritems)

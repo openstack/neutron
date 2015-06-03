@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 import routes
+import six
 import webob
 import webob.exc as webexc
 import webtest
@@ -743,8 +744,8 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         self._tenant_id = "8c70909f-b081-452d-872b-df48e6c355d1"
         # Save the global RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+        for res, attrs in six.iteritems(attributes.RESOURCE_ATTRIBUTE_MAP):
+            self.saved_attr_map[res] = attrs.copy()
         # Add the resources to the global attribute map
         # This is done here as the setup process won't
         # initialize the main API router which extends

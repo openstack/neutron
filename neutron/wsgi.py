@@ -33,6 +33,7 @@ from oslo_log import loggers
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
 import routes.middleware
+import six
 import webob.dec
 import webob.exc
 
@@ -666,7 +667,7 @@ class Debug(Middleware):
         resp = req.get_response(self.application)
 
         print(("*" * 40) + " RESPONSE HEADERS")
-        for (key, value) in resp.headers.iteritems():
+        for (key, value) in six.iteritems(resp.headers):
             print(key, "=", value)
         print()
 

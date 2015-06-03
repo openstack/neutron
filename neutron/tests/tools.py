@@ -14,6 +14,7 @@
 #    under the License.
 
 import fixtures
+import six
 
 from neutron.api.v2 import attributes
 
@@ -40,8 +41,8 @@ class AttributeMapMemento(fixtures.Fixture):
         # deeper than a shallow copy.
         super(AttributeMapMemento, self).setUp()
         self.contents_backup = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.contents_backup[resource] = attrs.copy()
+        for res, attrs in six.iteritems(attributes.RESOURCE_ATTRIBUTE_MAP):
+            self.contents_backup[res] = attrs.copy()
         self.addCleanup(self.restore)
 
     def restore(self):

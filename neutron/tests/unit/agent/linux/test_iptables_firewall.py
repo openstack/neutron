@@ -17,6 +17,7 @@ import copy
 
 import mock
 from oslo_config import cfg
+import six
 
 from neutron.agent.common import config as a_cfg
 from neutron.agent.linux import ipset_manager
@@ -1443,7 +1444,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         remote_groups = remote_groups or {_IPv4: [FAKE_SGID],
                                           _IPv6: [FAKE_SGID]}
         rules = []
-        for ip_version, remote_group_list in remote_groups.iteritems():
+        for ip_version, remote_group_list in six.iteritems(remote_groups):
             for remote_group in remote_group_list:
                 rules.append(self._fake_sg_rule_for_ethertype(ip_version,
                                                               remote_group))

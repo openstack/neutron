@@ -35,6 +35,7 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 
 from neutron.common import constants as q_const
 
@@ -235,7 +236,7 @@ def compare_elements(a, b):
 
 def dict2str(dic):
     return ','.join("%s=%s" % (key, val)
-                    for key, val in sorted(dic.iteritems()))
+                    for key, val in sorted(six.iteritems(dic)))
 
 
 def str2dict(string):

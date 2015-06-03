@@ -16,6 +16,7 @@ Neutron Specific Commandments
 - [N324] Prevent use of deprecated contextlib.nested.
 - [N325] Python 3: Do not use xrange.
 - [N326] Python 3: do not use basestring.
+- [N327] Python 3: do not use dict.iteritems.
 
 Creating Unit Tests
 -------------------

@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo_log import log
+import six
 
 from neutron.common import exceptions as exc
 from neutron.i18n import _LI
@@ -46,7 +47,7 @@ class LocalTypeDriver(api.TypeDriver):
         return False
 
     def validate_provider_segment(self, segment):
-        for key, value in segment.iteritems():
+        for key, value in six.iteritems(segment):
             if value and key != api.NETWORK_TYPE:
                 msg = _("%s prohibited for local provider network") % key
                 raise exc.InvalidInput(error_message=msg)

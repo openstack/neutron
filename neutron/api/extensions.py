@@ -170,7 +170,7 @@ class ExtensionDescriptor(object):
         if not extension_attrs_map:
             return
 
-        for resource, attrs in extension_attrs_map.iteritems():
+        for resource, attrs in six.iteritems(extension_attrs_map):
             extended_attrs = extended_attributes.get(resource)
             if extended_attrs:
                 attrs.update(extended_attrs)
@@ -200,7 +200,7 @@ class ActionExtensionController(wsgi.Controller):
     def action(self, request, id):
         input_dict = self._deserialize(request.body,
                                        request.get_content_type())
-        for action_name, handler in self.action_handlers.iteritems():
+        for action_name, handler in six.iteritems(self.action_handlers):
             if action_name in input_dict:
                 return handler(input_dict, request, id)
         # no action handler found (bump to downstream application)
@@ -242,7 +242,7 @@ class ExtensionController(wsgi.Controller):
 
     def index(self, request):
         extensions = []
-        for _alias, ext in self.extension_manager.extensions.iteritems():
+        for _alias, ext in six.iteritems(self.extension_manager.extensions):
             extensions.append(self._translate(ext))
         return dict(extensions=extensions)
 
@@ -283,7 +283,7 @@ class ExtensionMiddleware(wsgi.Middleware):
 
             LOG.debug('Extended resource: %s',
                       resource.collection)
-            for action, method in resource.collection_actions.iteritems():
+            for action, method in six.iteritems(resource.collection_actions):
                 conditions = dict(method=[method])
                 path = "/%s/%s" % (resource.collection, action)
                 with mapper.submapper(controller=resource.controller,
@@ -474,11 +474,11 @@ class ExtensionManager(object):
                         continue
                 try:
                     extended_attrs = ext.get_extended_resources(version)
-                    for resource, resource_attrs in extended_attrs.iteritems():
-                        if attr_map.get(resource, None):
-                            attr_map[resource].update(resource_attrs)
+                    for res, resource_attrs in six.iteritems(extended_attrs):
+                        if attr_map.get(res, None):
+                            attr_map[res].update(resource_attrs)
                         else:
-                            attr_map[resource] = resource_attrs
+                            attr_map[res] = resource_attrs
                 except AttributeError:
                     LOG.exception(_LE("Error fetching extended attributes for "
                                       "extension '%s'"), ext.get_name())

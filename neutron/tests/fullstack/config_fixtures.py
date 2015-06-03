@@ -34,7 +34,7 @@ class ConfigDict(base.AttributeDict):
 
         :param other: dictionary to be directly modified.
         """
-        for key, value in other.iteritems():
+        for key, value in six.iteritems(other):
             if isinstance(value, dict):
                 if not isinstance(value, base.AttributeDict):
                     other[key] = base.AttributeDict(value)
