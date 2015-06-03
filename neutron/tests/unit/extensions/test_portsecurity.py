@@ -23,6 +23,7 @@ from neutron.db import securitygroups_db
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
+from neutron.plugins.ml2.extensions import port_security
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_securitygroup
 
@@ -399,3 +400,15 @@ class TestPortSecurity(PortSecurityDBTestCase):
                     '', 'not_network_owner')
                 res = req.get_response(self.api)
                 self.assertEqual(res.status_int, exc.HTTPForbidden.code)
+
+    def test_extend_port_dict_no_port_security(self):
+        """Test _extend_port_security_dict won't crash
+        if port_security item is None
+        """
+        for db_data in ({'port_security': None, 'name': 'net1'}, {}):
+            response_data = {}
+
+            driver = port_security.PortSecurityExtensionDriver()
+            driver._extend_port_security_dict(response_data, db_data)
+
+            self.assertTrue(response_data[psec.PORTSECURITY])

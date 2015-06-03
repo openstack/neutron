@@ -13,7 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron import context
 from neutron.extensions import portsecurity as psec
+from neutron import manager
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.extensions import test_portsecurity as test_psec
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -28,6 +30,25 @@ class PSExtDriverTestCase(test_plugin.Ml2PluginV2TestCase,
                                      self._extension_drivers,
                                      group='ml2')
         super(PSExtDriverTestCase, self).setUp()
+
+    def test_create_net_port_security_default(self):
+        _core_plugin = manager.NeutronManager.get_plugin()
+        admin_ctx = context.get_admin_context()
+        _default_value = (psec.EXTENDED_ATTRIBUTES_2_0['networks']
+                          [psec.PORTSECURITY]['default'])
+        args = {'network':
+                {'name': 'test',
+                 'tenant_id': '',
+                 'shared': False,
+                 'admin_state_up': True,
+                 'status': 'ACTIVE'}}
+        try:
+            network = _core_plugin.create_network(admin_ctx, args)
+            _value = network[psec.PORTSECURITY]
+        finally:
+            if network:
+                _core_plugin.delete_network(admin_ctx, network['id'])
+        self.assertEqual(_default_value, _value)
 
     def test_create_port_with_secgroup_none_and_port_security_false(self):
         if self._skip_security_group:
