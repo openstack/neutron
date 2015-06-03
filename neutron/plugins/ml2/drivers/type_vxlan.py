@@ -14,7 +14,6 @@
 #    under the License.
 
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log
 from six import moves
 import sqlalchemy as sa
@@ -23,7 +22,7 @@ from sqlalchemy import sql
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import model_base
-from neutron.i18n import _LE, _LW
+from neutron.i18n import _LE
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
 
@@ -70,10 +69,11 @@ class VxlanEndpoints(model_base.BASEV2):
         return "<VxlanTunnelEndpoint(%s)>" % self.ip_address
 
 
-class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
+class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
 
     def __init__(self):
-        super(VxlanTypeDriver, self).__init__(VxlanAllocation)
+        super(VxlanTypeDriver, self).__init__(
+            VxlanAllocation, VxlanEndpoints)
 
     def get_type(self):
         return p_const.TYPE_VXLAN
@@ -132,48 +132,14 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def get_endpoints(self):
         """Get every vxlan endpoints from database."""
-
-        LOG.debug("get_vxlan_endpoints() called")
-        session = db_api.get_session()
-
-        vxlan_endpoints = session.query(VxlanEndpoints)
+        vxlan_endpoints = self._get_endpoints()
         return [{'ip_address': vxlan_endpoint.ip_address,
                  'udp_port': vxlan_endpoint.udp_port,
                  'host': vxlan_endpoint.host}
                 for vxlan_endpoint in vxlan_endpoints]
 
-    def get_endpoint_by_host(self, host):
-        LOG.debug("get_endpoint_by_host() called for host %s", host)
-        session = db_api.get_session()
-        return (session.query(VxlanEndpoints).
-                filter_by(host=host).first())
-
-    def get_endpoint_by_ip(self, ip):
-        LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
-        session = db_api.get_session()
-        return (session.query(VxlanEndpoints).
-                filter_by(ip_address=ip).first())
-
     def add_endpoint(self, ip, host, udp_port=p_const.VXLAN_UDP_PORT):
-        LOG.debug("add_vxlan_endpoint() called for ip %s", ip)
-        session = db_api.get_session()
-        try:
-            vxlan_endpoint = VxlanEndpoints(ip_address=ip,
-                                            udp_port=udp_port,
-                                            host=host)
-            vxlan_endpoint.save(session)
-        except db_exc.DBDuplicateEntry:
-            vxlan_endpoint = (session.query(VxlanEndpoints).
-                              filter_by(ip_address=ip).one())
-            LOG.warning(_LW("Vxlan endpoint with ip %s already exists"), ip)
-        return vxlan_endpoint
-
-    def delete_endpoint(self, ip):
-        LOG.debug("delete_vxlan_endpoint() called for ip %s", ip)
-        session = db_api.get_session()
-
-        with session.begin(subtransactions=True):
-            session.query(VxlanEndpoints).filter_by(ip_address=ip).delete()
+        return self._add_endpoint(ip, host, udp_port=udp_port)
 
     def get_mtu(self, physical_network=None):
         mtu = super(VxlanTypeDriver, self).get_mtu()
