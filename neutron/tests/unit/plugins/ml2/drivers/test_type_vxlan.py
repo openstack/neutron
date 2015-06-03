@@ -98,5 +98,5 @@ class VxlanTypeMultiRangeTest(base_type_tunnel.TunnelTypeMultiRangeTestMixin,
 class VxlanTypeRpcCallbackTest(base_type_tunnel.TunnelRpcCallbackTestMixin,
                                test_rpc.RpcCallbacksTestCase,
                                testlib_api.SqlTestCase):
-        DRIVER_CLASS = type_vxlan.VxlanTypeDriver
-        TYPE = p_const.TYPE_VXLAN
+    DRIVER_CLASS = type_vxlan.VxlanTypeDriver
+    TYPE = p_const.TYPE_VXLAN
