@@ -1244,6 +1244,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 raise e.errors[0].error
             raise exc.ServicePortInUse(port_id=port_id, reason=e)
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_deadlock=True)
     def delete_port(self, context, id, l3_port_check=True):
         self._pre_delete_port(context, id, l3_port_check)
         # TODO(armax): get rid of the l3 dependency in the with block
