@@ -1432,12 +1432,20 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 res = self._show('routers', r['router']['id'])
                 fips = (res['router']['external_gateway_info']
                         ['external_fixed_ips'])
-                fip_subnet_ids = [fip['subnet_id'] for fip in fips]
-                self.assertIn(s1['subnet']['id'], fip_subnet_ids)
-                self.assertNotIn(s2['subnet']['id'], fip_subnet_ids)
-                self.assertIn(s3['subnet']['id'], fip_subnet_ids)
-                self.assertIn(s4['subnet']['id'], fip_subnet_ids)
-                self.assertIn(s5['subnet']['id'], fip_subnet_ids)
+                fip_subnet_ids = {fip['subnet_id'] for fip in fips}
+                # one of s1 or s2 should be in the list.
+                if s1['subnet']['id'] in fip_subnet_ids:
+                    self.assertEqual({s1['subnet']['id'],
+                                      s3['subnet']['id'],
+                                      s4['subnet']['id'],
+                                      s5['subnet']['id']},
+                                     fip_subnet_ids)
+                else:
+                    self.assertEqual({s2['subnet']['id'],
+                                      s3['subnet']['id'],
+                                      s4['subnet']['id'],
+                                      s5['subnet']['id']},
+                                     fip_subnet_ids)
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
                     n['network']['id'])
