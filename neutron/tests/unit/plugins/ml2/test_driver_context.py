@@ -37,13 +37,12 @@ class TestPortContext(base.BaseTestCase):
         port = {'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE}
         binding.host = 'foohost'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
-            ctx = driver_context.PortContext(plugin,
-                                             plugin_context,
-                                             port,
-                                             network,
-                                             binding,
-                                             None)
+        ctx = driver_context.PortContext(plugin,
+                                         plugin_context,
+                                         port,
+                                         network,
+                                         binding,
+                                         None)
         self.assertEqual('foohost', ctx.host)
 
     def test_host_super(self):
@@ -56,13 +55,12 @@ class TestPortContext(base.BaseTestCase):
                 portbindings.HOST_ID: 'host'}
         binding.host = 'foohost'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
-            ctx = driver_context.PortContext(plugin,
-                                             plugin_context,
-                                             port,
-                                             network,
-                                             binding,
-                                             None)
+        ctx = driver_context.PortContext(plugin,
+                                         plugin_context,
+                                         port,
+                                         network,
+                                         binding,
+                                         None)
         self.assertEqual('host', ctx.host)
 
     def test_status(self):
@@ -74,13 +72,12 @@ class TestPortContext(base.BaseTestCase):
         port = {'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE}
         binding.status = 'foostatus'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
-            ctx = driver_context.PortContext(plugin,
-                                             plugin_context,
-                                             port,
-                                             network,
-                                             binding,
-                                             None)
+        ctx = driver_context.PortContext(plugin,
+                                         plugin_context,
+                                         port,
+                                         network,
+                                         binding,
+                                         None)
         self.assertEqual('foostatus', ctx.status)
 
     def test_status_super(self):
@@ -93,11 +90,37 @@ class TestPortContext(base.BaseTestCase):
                 'status': 'status'}
         binding.status = 'foostatus'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
+        ctx = driver_context.PortContext(plugin,
+                                         plugin_context,
+                                         port,
+                                         network,
+                                         binding,
+                                         None)
+        self.assertEqual('status', ctx.status)
+
+    def test_segments_lazy_lookup(self):
+        plugin = mock.Mock()
+        plugin_context = mock.Mock()
+        network = mock.MagicMock()
+        binding = mock.Mock()
+
+        port = {'device_owner': 'compute',
+                'status': 'status'}
+        binding.status = 'foostatus'
+
+        with mock.patch.object(driver_context.db,
+                               'get_network_segments') as gs:
             ctx = driver_context.PortContext(plugin,
                                              plugin_context,
                                              port,
                                              network,
                                              binding,
                                              None)
-        self.assertEqual('status', ctx.status)
+            self.assertFalse(gs.called)
+            # accessing the network_segments property should trigger
+            # a lookup the first time
+            seg = ctx.network.network_segments
+            self.assertTrue(gs.called)
+            gs.reset_mock()
+            self.assertEqual(seg, ctx.network.network_segments)
+            self.assertFalse(gs.called)
