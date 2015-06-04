@@ -1868,7 +1868,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                         ip_version=6,
                                         ipv6_ra_mode=constants.IPV6_SLAAC)
         port = self._make_port(self.fmt, network['network']['id'])
-        self.assertEqual(len(port['port']['fixed_ips']), 2)
         port_mac = port['port']['mac_address']
         cidr_1 = v6_subnet_1['subnet']['cidr']
         cidr_2 = v6_subnet_2['subnet']['cidr']
@@ -1876,10 +1875,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                                            port_mac))
         eui_addr_2 = str(ipv6_utils.get_ipv6_addr_by_EUI64(cidr_2,
                                                            port_mac))
-        self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
-                         eui_addr_1)
-        self.assertEqual(port['port']['fixed_ips'][1]['ip_address'],
-                         eui_addr_2)
+        self.assertEqual({eui_addr_1, eui_addr_2},
+                         {fixed_ip['ip_address'] for fixed_ip in
+                          port['port']['fixed_ips']})
 
     def test_range_allocation(self):
         with self.subnet(gateway_ip='10.0.0.3',
