@@ -257,3 +257,54 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
             call.delete_flows(eth_src=mac, table_id=9),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
+
+    def _mock_add_tunnel_port(self, deferred_br=False):
+        port_name = 'fake_port'
+        remote_ip = '192.168.1.3'
+        local_ip = '192.168.1.2'
+        tunnel_type = 'vxlan'
+        vxlan_udp_port = '4789'
+        dont_fragment = True
+        if deferred_br:
+            with mock.patch('neutron.agent.common.ovs_lib.OVSBridge.add_port',
+                            return_value=9999) as add_port, \
+                    self.br.deferred() as deferred_br:
+                ofport = deferred_br.add_tunnel_port(port_name, remote_ip,
+                                                     local_ip, tunnel_type,
+                                                     vxlan_udp_port,
+                                                     dont_fragment)
+        else:
+            with mock.patch('neutron.agent.common.ovs_lib.OVSBridge.add_port',
+                            return_value=9999) as add_port:
+                ofport = self.br.add_tunnel_port(port_name, remote_ip,
+                                                 local_ip, tunnel_type,
+                                                 vxlan_udp_port,
+                                                 dont_fragment)
+        self.assertEqual(9999, ofport)
+        self.assertEqual(1, add_port.call_count)
+        self.assertEqual(port_name, add_port.call_args[0][0])
+
+    def _mock_delete_port(self, deferred_br=False):
+        port_name = 'fake_port'
+        if deferred_br:
+            with mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
+                            'delete_port') as delete_port, \
+                    self.br.deferred() as deferred_br:
+                deferred_br.delete_port(port_name)
+        else:
+            with mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
+                            'delete_port') as delete_port:
+                self.br.delete_port(port_name)
+        self.assertEqual([call(port_name)], delete_port.mock_calls)
+
+    def test_add_tunnel_port(self):
+        self._mock_add_tunnel_port()
+
+    def test_delete_port(self):
+        self._mock_delete_port()
+
+    def test_deferred_br_add_tunnel_port(self):
+        self._mock_add_tunnel_port(True)
+
+    def test_deferred_br_delete_port(self):
+        self._mock_delete_port(True)
