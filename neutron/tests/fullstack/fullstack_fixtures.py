@@ -13,7 +13,6 @@
 #    under the License.
 
 from distutils import spawn
-import errno
 import functools
 import os
 
@@ -51,14 +50,7 @@ class ProcessFixture(fixtures.Fixture):
     def start(self):
         fmt = self.process_name + "--%Y-%m-%d--%H%M%S.log"
         log_dir = os.path.join(DEFAULT_LOG_DIR, self.test_name)
-        if not os.path.exists(log_dir):
-            try:
-                os.makedirs(log_dir)
-            except OSError as e:
-                # Make sure that the error was that the directory was created
-                # by a different (concurrent) worker. If not, raise the error.
-                if e.errno != errno.EEXIST:
-                    raise
+        utils.ensure_dir(log_dir)
 
         cmd = [spawn.find_executable(self.exec_name),
                '--log-dir', log_dir,
