@@ -1375,10 +1375,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return self._bind_port_if_needed(port_context)
 
-    def update_port_status(self, context, port_id, status, host=None):
+    def update_port_status(self, context, port_id, status, host=None,
+                           network=None):
         """
         Returns port_id (non-truncated uuid) if the port exists.
         Otherwise returns None.
+        network can be passed in to avoid another get_network call if
+        one was already performed by the caller.
         """
         updated = False
         session = context.session
@@ -1398,8 +1401,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 original_port = self._make_port_dict(port)
                 port.status = status
                 updated_port = self._make_port_dict(port)
-                network = self.get_network(context,
-                                           original_port['network_id'])
+                network = network or self.get_network(
+                    context, original_port['network_id'])
                 levels = db.get_binding_levels(session, port.id,
                                                port.port_binding.host)
                 mech_context = driver_context.PortContext(
@@ -1426,8 +1429,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                 port_id)
                     return
                 original_port = self._make_port_dict(port)
-                network = self.get_network(context,
-                                           original_port['network_id'])
+                network = network or self.get_network(
+                    context, original_port['network_id'])
                 port.status = db.generate_dvr_port_status(session, port['id'])
                 updated_port = self._make_port_dict(port)
                 levels = db.get_binding_levels(session, port_id, host)
