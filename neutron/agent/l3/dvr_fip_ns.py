@@ -126,6 +126,10 @@ class FipNamespace(namespaces.Namespace):
     def create(self):
         # TODO(Carl) Get this functionality from mlavelle's namespace baseclass
         ip_wrapper_root = ip_lib.IPWrapper()
+        ip_wrapper_root.netns.execute(['sysctl',
+                                       '-w',
+                                       'net.ipv4.ip_nonlocal_bind=1'],
+                                      run_as_root=True)
         ip_wrapper = ip_wrapper_root.ensure_namespace(self.get_name())
         ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
         if self.use_ipv6:

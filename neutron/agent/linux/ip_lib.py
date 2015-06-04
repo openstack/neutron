@@ -767,30 +767,6 @@ def send_gratuitous_arp(ns_name, iface_name, address, count):
         eventlet.spawn_n(arping)
 
 
-def send_garp_for_proxyarp(ns_name, iface_name, address, count):
-    """
-    Send a gratuitous arp using given namespace, interface, and address
-
-    This version should be used when proxy arp is in use since the interface
-    won't actually have the address configured.  We actually need to configure
-    the address on the interface and then remove it when the proxy arp has been
-    sent.
-    """
-    def arping_with_temporary_address():
-        # Configure the address on the interface
-        device = IPDevice(iface_name, namespace=ns_name)
-        net = netaddr.IPNetwork(str(address))
-        device.addr.add(str(net))
-
-        _arping(ns_name, iface_name, address, count)
-
-        # Delete the address from the interface
-        device.addr.delete(str(net))
-
-    if count > 0:
-        eventlet.spawn_n(arping_with_temporary_address)
-
-
 def add_namespace_to_cmd(cmd, namespace=None):
     """Add an optional namespace to the command."""
 

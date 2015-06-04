@@ -100,10 +100,10 @@ class DvrRouter(router.RouterInfo):
         interface_name = (
             self.fip_ns.get_ext_device_name(
                 self.fip_ns.agent_gateway_port['id']))
-        ip_lib.send_garp_for_proxyarp(fip_ns_name,
-                                      interface_name,
-                                      floating_ip,
-                                      self.agent_conf.send_arp_for_ha)
+        ip_lib.send_gratuitous_arp(fip_ns_name,
+                                   interface_name,
+                                   floating_ip,
+                                   self.agent_conf.send_arp_for_ha)
         # update internal structures
         self.dist_fip_count = self.dist_fip_count + 1
 
