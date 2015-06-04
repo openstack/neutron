@@ -30,6 +30,7 @@ from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.plugins.common import constants
+from neutron.quota import resource_registry
 
 
 class L3RouterPlugin(common_db_mixin.CommonDbMixin,
@@ -52,6 +53,8 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
                                    "extraroute", "l3_agent_scheduler",
                                    "l3-ha"]
 
+    @resource_registry.tracked_resources(router=l3_db.Router,
+                                         floatingip=l3_db.FloatingIP)
     def __init__(self):
         self.setup_rpc()
         self.router_scheduler = importutils.import_object(

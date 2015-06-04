@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as oslo_db_exception
 from oslo_log import log
+from oslo_utils import excutils
 from sqlalchemy import event
 
 from neutron.db import api as db_api
@@ -191,14 +192,12 @@ class TrackedResource(BaseResource):
 
     @lockutils.synchronized('dirty_tenants')
     def _db_event_handler(self, mapper, _conn, target):
-        tenant_id = target.get('tenant_id')
-        if not tenant_id:
-            # NOTE: This is an unexpected error condition. Log anomaly but do
-            # not raise as this might have unexpected effects on other
-            # operations
-            LOG.error(_LE("Model class %s does not have tenant_id attribute"),
-                      target)
-            return
+        try:
+            tenant_id = target['tenant_id']
+        except AttributeError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_LE("Model class %s does not have a tenant_id "
+                              "attribute"), target)
         self._dirty_tenants.add(tenant_id)
 
     # Retry the operation if a duplicate entry exception is raised. This

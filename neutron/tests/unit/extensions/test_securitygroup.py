@@ -452,8 +452,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     '22', '22',
                     remote_ip_prefix,
                     None,
-                    None,
-                    ethertype)
+                    ethertype=ethertype)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
 
@@ -474,8 +473,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     '22', '22',
                     remote_ip_prefix,
                     None,
-                    None,
-                    ethertype)
+                    ethertype=ethertype)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.assertEqual(res.status_int, 201)
                 res_sg = self.deserialize(self.fmt, res)

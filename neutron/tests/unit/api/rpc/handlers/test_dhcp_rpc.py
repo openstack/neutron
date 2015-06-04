@@ -33,6 +33,9 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.callbacks = dhcp_rpc.DhcpRpcCallback()
         self.log_p = mock.patch('neutron.api.rpc.handlers.dhcp_rpc.LOG')
         self.log = self.log_p.start()
+        set_dirty_p = mock.patch('neutron.quota.resource_registry.'
+                                 'set_resources_dirty')
+        self.mock_set_dirty = set_dirty_p.start()
 
     def test_get_active_networks(self):
         plugin_retval = [dict(id='a'), dict(id='b')]
