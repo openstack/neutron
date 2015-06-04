@@ -542,6 +542,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._queue.add(update)
 
     def after_start(self):
+        # Note: the FWaaS' vArmourL3NATAgent is a subclass of L3NATAgent. It
+        # calls this method here. So Removing this after_start() would break
+        # vArmourL3NATAgent. We need to find out whether vArmourL3NATAgent
+        # can have L3NATAgentWithStateReport as its base class instead of
+        # L3NATAgent.
         eventlet.spawn_n(self._process_routers_loop)
         LOG.info(_LI("L3 agent started"))
         # When L3 agent is ready, we immediately do a full sync
@@ -551,6 +556,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 class L3NATAgentWithStateReport(L3NATAgent):
 
     def __init__(self, host, conf=None):
+        self.use_call = True
         super(L3NATAgentWithStateReport, self).__init__(host=host, conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         self.agent_state = {
@@ -570,7 +576,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
             'start_flag': True,
             'agent_type': l3_constants.AGENT_TYPE_L3}
         report_interval = self.conf.AGENT.report_interval
-        self.use_call = True
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
                 self._report_state)
@@ -610,6 +615,15 @@ class L3NATAgentWithStateReport(L3NATAgent):
             return
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
+
+    def after_start(self):
+        eventlet.spawn_n(self._process_routers_loop)
+        LOG.info(_LI("L3 agent started"))
+        # Do the report state before we do the first full sync.
+        self._report_state()
+
+        # When L3 agent is ready, we immediately do a full sync
+        self.periodic_sync_routers_task(self.context)
 
     def agent_updated(self, context, payload):
         """Handle the agent_updated notification event."""
