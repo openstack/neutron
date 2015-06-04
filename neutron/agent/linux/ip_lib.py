@@ -211,6 +211,41 @@ class IPDevice(SubProcessBase):
     def __str__(self):
         return self.name
 
+    def delete_addr_and_conntrack_state(self, cidr):
+        """Delete an address along with its conntrack state
+
+        This terminates any active connections through an IP.
+
+        cidr: the IP address for which state should be removed.  This can be
+            passed as a string with or without /NN.  A netaddr.IPAddress or
+            netaddr.Network representing the IP address can also be passed.
+        """
+        self.addr.delete(cidr)
+
+        ip_str = str(netaddr.IPNetwork(cidr).ip)
+        ip_wrapper = IPWrapper(namespace=self.namespace)
+
+        # Delete conntrack state for ingress traffic
+        # If 0 flow entries have been deleted
+        # conntrack -D will return 1
+        try:
+            ip_wrapper.netns.execute(["conntrack", "-D", "-d", ip_str],
+                                     check_exit_code=True,
+                                     extra_ok_codes=[1])
+
+        except RuntimeError:
+            LOG.exception(_LE("Failed deleting ingress connection state of"
+                              " floatingip %s"), ip_str)
+
+        # Delete conntrack state for egress traffic
+        try:
+            ip_wrapper.netns.execute(["conntrack", "-D", "-q", ip_str],
+                                     check_exit_code=True,
+                                     extra_ok_codes=[1])
+        except RuntimeError:
+            LOG.exception(_LE("Failed deleting egress connection state of"
+                              " floatingip %s"), ip_str)
+
 
 class IpCommandBase(object):
     COMMAND = ''

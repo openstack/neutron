@@ -212,8 +212,7 @@ class RouterInfo(object):
         raise NotImplementedError()
 
     def remove_floating_ip(self, device, ip_cidr):
-        device.addr.delete(ip_cidr)
-        self.driver.delete_conntrack_state(namespace=self.ns_name, ip=ip_cidr)
+        device.delete_addr_and_conntrack_state(ip_cidr)
 
     def get_router_cidrs(self, device):
         return set([addr['cidr'] for addr in device.addr.list()])

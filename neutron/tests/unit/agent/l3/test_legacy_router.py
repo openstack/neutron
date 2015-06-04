@@ -46,10 +46,7 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
 
         ri.remove_floating_ip(device, cidr)
 
-        device.addr.delete.assert_called_once_with(cidr)
-        self.driver.delete_conntrack_state.assert_called_once_with(
-            ip=cidr,
-            namespace=ri.ns_name)
+        device.delete_addr_and_conntrack_state.assert_called_once_with(cidr)
 
 
 @mock.patch.object(ip_lib, 'send_gratuitous_arp')
