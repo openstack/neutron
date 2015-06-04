@@ -849,33 +849,28 @@ class DeviceManager(object):
         """Create/update DHCP port for the host if needed and return port."""
 
         device_id = self.get_device_id(network)
-        subnets = {}
-        dhcp_enabled_subnet_ids = []
-        for subnet in network.subnets:
-            if subnet.enable_dhcp:
-                dhcp_enabled_subnet_ids.append(subnet.id)
-                subnets[subnet.id] = subnet
+        subnets = {subnet.id: subnet for subnet in network.subnets
+                   if subnet.enable_dhcp}
 
         dhcp_port = None
         for port in network.ports:
             port_device_id = getattr(port, 'device_id', None)
             if port_device_id == device_id:
+                dhcp_enabled_subnet_ids = set(subnets)
                 port_fixed_ips = []
-                ips_needs_removal = False
                 for fixed_ip in port.fixed_ips:
                     if fixed_ip.subnet_id in dhcp_enabled_subnet_ids:
                         port_fixed_ips.append(
                             {'subnet_id': fixed_ip.subnet_id,
                              'ip_address': fixed_ip.ip_address})
-                        dhcp_enabled_subnet_ids.remove(fixed_ip.subnet_id)
-                    else:
-                        ips_needs_removal = True
 
-                # If there are dhcp_enabled_subnet_ids here that means that
-                # we need to add those to the port and call update.
-                if dhcp_enabled_subnet_ids or ips_needs_removal:
+                port_subnet_ids = set(ip.subnet_id for ip in port.fixed_ips)
+                # If there is a new dhcp enabled subnet or a port that is no
+                # longer on a dhcp enabled subnet, we need to call update.
+                if dhcp_enabled_subnet_ids != port_subnet_ids:
                     port_fixed_ips.extend(
-                        [dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
+                        dict(subnet_id=s)
+                        for s in dhcp_enabled_subnet_ids - port_subnet_ids)
                     dhcp_port = self.plugin.update_dhcp_port(
                         port.id, {'port': {'network_id': network.id,
                                            'fixed_ips': port_fixed_ips}})
@@ -911,7 +906,7 @@ class DeviceManager(object):
                 device_id=device_id,
                 network_id=network.id,
                 tenant_id=network.tenant_id,
-                fixed_ips=[dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
+                fixed_ips=[dict(subnet_id=s) for s in subnets])
             dhcp_port = self.plugin.create_dhcp_port({'port': port_dict})
 
         if not dhcp_port:
