@@ -271,7 +271,16 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
 
         try:
-            for binding in self._filter_bindings(context, down_bindings):
+            dead_bindings = [b for b in
+                             self._filter_bindings(context, down_bindings)]
+            dead_agents = set([b.dhcp_agent_id for b in dead_bindings])
+            agents = self.get_agents_db(
+                context, {'agent_type': [constants.AGENT_TYPE_DHCP]})
+            if len(agents) == len(dead_agents):
+                LOG.warn(_LW("No DHCP agents available, "
+                             "skipping rescheduling"))
+                return
+            for binding in dead_bindings:
                 LOG.warn(_LW("Removing network %(network)s from agent "
                              "%(agent)s because the agent did not report "
                              "to the server in the last %(dead_time)s "
