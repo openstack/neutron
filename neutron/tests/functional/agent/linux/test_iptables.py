@@ -80,7 +80,7 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
     def _test_with_nc(self, fw_manager, direction, port, udp):
         netcat = helpers.NetcatTester(
             self.client.namespace, self.server.namespace,
-            self.server.ip, self.port, run_as_root=True, udp=udp)
+            self.server.ip, self.port, udp=udp)
         self.addCleanup(netcat.stop_processes)
         protocol = 'tcp'
         if udp:

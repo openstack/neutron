@@ -414,7 +414,6 @@ class L3AgentTestCase(L3AgentTestFramework):
         netcat = helpers.NetcatTester(router.ns_name, router.ns_name,
                                       server_address, port,
                                       client_address=client_address,
-                                      run_as_root=True,
                                       udp=False)
         self.addCleanup(netcat.stop_processes)
 
@@ -710,7 +709,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         netcat = helpers.NetcatTester(
             src_machine.namespace, dst_machine.namespace,
             dst_machine.ip, protocol_port, client_address=dst_fip,
-            run_as_root=True, udp=False)
+            udp=False)
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
 
