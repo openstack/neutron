@@ -402,14 +402,3 @@ will be removed. The following aspects are captured:
 +===============================+=======================+===========+==================+=========+==============+
 | freescale-nscs                |         ml2,fw        |    no     |       no         |   [D]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-cisco_             |  core,ml2,l3,fw,vpn   |    yes    |       yes        |   [B]   |              |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-
-.. _networking-cisco:
-
-Cisco
------
-
-* Git: https://git.openstack.org/stackforge/networking-cisco
-* Launchpad: https://launchpad.net/networking-cisco
-* PyPI: https://pypi.python.org/pypi/networking-cisco
