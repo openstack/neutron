@@ -1,0 +1,154 @@
+Subnet Pools and Address Scopes
+===============================
+
+This page discusses subnet pools and address scopes
+
+Subnet Pools
+------------
+
+Learn about subnet pools by watching the summit talk given in Vancouver [#]_.
+
+.. [#] http://www.youtube.com/watch?v=QqP8yBUUXBM&t=6m12s
+
+Subnet pools were added in Kilo.  They are relatively simple.  A SubnetPool has
+any number of SubnetPoolPrefix objects associated to it.  These prefixes are in
+CIDR format.  Each CIDR is a piece of the address space that is available for
+allocation.
+
+Subnet Pools support IPv6 just as well as IPv4.
+
+The Subnet model object now has a subnetpool_id attribute whose default is null
+for backward compatibility.  The subnetpool_id attribute stores the UUID of the
+subnet pool that acted as the source for the address range of a particular
+subnet.
+
+When creating a subnet, the subnetpool_id can be optionally specified.  If it
+is, the 'cidr' field is not required.  If 'cidr' is specified, it will be
+allocated from the pool assuming the pool includes it and hasn't already
+allocated any part of it.  If 'cidr' is left out, then the prefixlen attribute
+can be specified.  If it is not, the default prefix length will be taken from
+the subnet pool.  Think of it this way, the allocation logic always needs to
+know the size of the subnet desired.  It can pull it from a specific CIDR,
+prefixlen, or default.  A specific CIDR is optional and the allocation will try
+to honor it if provided.  The request will fail if it can't honor it.
+
+Subnet pools do not allow overlap of subnets.
+
+Subnet Pool Quotas
+~~~~~~~~~~~~~~~~~~
+
+A quota mechanism was provided for subnet pools.  It is different than other
+quota mechanisms in Neutron because it doesn't count instances of first class
+objects.  Instead it counts how much of the address space is used.
+
+For IPv4, it made reasonable sense to count quota in terms of individual
+addresses.  So, if you're allowed exactly one /24, your quota should be set to
+256.  Three /26s would be 192.  This mechanism encourages more efficient use of
+the IPv4 space which will be increasingly important when working with globally
+routable addresses.
+
+For IPv6, the smallest viable subnet in Neutron is a /64.  There is no reason
+to allocate a subnet of any other size for use on a Neutron network.  It would
+look pretty funny to set a quota of 4611686018427387904 to allow one /64
+subnet.  To avoid this, we count IPv6 quota in terms of /64s.  So, a quota of 3
+allows three /64 subnets.  When we need to allocate something smaller in the
+future, we will need to ensure that the code can handle non-integer quota
+consumption.
+
+Allocation
+~~~~~~~~~~
+
+Allocation is done in a way that aims to minimize fragmentation of the pool.
+The relevant code is here [#]_.  First, the available prefixes are computed
+using a set difference:  pool - allocations.  The result is compacted [#]_ and
+then sorted by size.  The subnet is then allocated from the smallest available
+prefix that is large enough to accommodate the request.
+
+.. [#] neutron/ipam/subnet_alloc.py (_allocate_any_subnet)
+.. [#] http://pythonhosted.org/netaddr/api.html#netaddr.IPSet.compact
+
+Address Scopes
+--------------
+
+Before subnet pools or address scopes, it was impossible to tell if a network
+address was routable in a certain context because the address was given
+explicitly on subnet create and wasn't validated against any other addresses.
+Address scopes are meant to solve this by putting control over the address
+space in the hands of an authority:  the address scope owner.  It makes use of
+the already existing SubnetPool concept for allocation.
+
+Address scopes are "the thing within which address overlap is not allowed" and
+thus provide more flexible control as well as decoupling of address overlap
+from tenancy.
+
+Prior to the Mitaka release, there was implicitly only a single 'shared'
+address scope.  Arbitrary address overlap was allowed making it pretty much a
+"free for all".  To make things seem somewhat sane, normal tenants are not able
+to use routers to cross-plug networks from different tenants and NAT was used
+between internal networks and external networks.  It was almost as if each
+tenant had a private address scope.
+
+The problem is that this model cannot support use cases where NAT is not
+desired or supported (e.g. IPv6) or we want to allow different tenants to
+cross-plug their networks.
+
+An AddressScope covers only one address family.  But, they work equally well
+for IPv4 and IPv6.
+
+Routing
+~~~~~~~
+
+The reference implementation honors address scopes.  Within an address scope,
+addresses route freely (barring any FW rules or other external restrictions).
+Between scopes, routed is prevented unless address translation is used.  Future
+patches will expand on this.
+
+.. TODO (Carl) Implement NAT for floating ips crossing scopes
+.. TODO (Carl) Implement SNAT for crossing scopes
+
+RPC
+~~~
+
+The L3 agent in the reference implementation needs to know the address scope
+for each port on each router in order to map ingress traffic correctly.
+
+Each subnet from the same address family on a network is required to be from
+the same subnet pool.  Therefore, the address scope will also be the same.  If
+this were not the case, it would be more difficult to match ingress traffic on
+a port with the appropriate scope.  It may be counter-intuitive but L3 address
+scopes need to be anchored to some sort of non-L3 thing (e.g. an L2 interface)
+in the topology in order to determine the scope of ingress traffic.  For now,
+we use ports/networks.  In the future, we may be able to distinguish by
+something else like the remote MAC address or something.
+
+The address scope id is set on each port in a dict under the 'address_scopes'
+attribute.  The scope is distinct per address family.  If the attribute does
+not appear, it is assumed to be null for both families.  A value of null means
+that the addresses are in the "implicit" address scope which holds all
+addresses that don't have an explicit one.  All subnets that existed in Neutron
+before address scopes existed fall here.
+
+Here is an example of how the json will look in the context of a router port::
+
+    "address_scopes": {
+        "4": "d010a0ea-660e-4df4-86ca-ae2ed96da5c1",
+        "6": null
+    },
+
+Model
+~~~~~
+
+The model for subnet pools and address scopes can be found in
+neutron/db/models_v2.py and neutron/db/address_scope_db.py.  This document
+won't go over all of the details.  It is worth noting how they relate to
+existing Neutron objects.  The existing Neutron subnet now optionally
+references a single subnet pool::
+
+    +----------------+        +------------------+        +--------------+
+    | Subnet         |        | SubnetPool       |        | AddressScope |
+    +----------------+        +------------------+        +--------------+
+    | subnet_pool_id +------> | address_scope_id +------> |              |
+    |                |        |                  |        |              |
+    |                |        |                  |        |              |
+    |                |        |                  |        |              |
+    +----------------+        +------------------+        +--------------+

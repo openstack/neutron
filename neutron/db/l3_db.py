@@ -1218,12 +1218,25 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         if not network_ids:
             return {}
 
-        filters = {'network_id': [id for id in network_ids]}
+        query = context.session.query(models_v2.Subnet,
+                                      models_v2.SubnetPool.address_scope_id)
+        query = query.outerjoin(
+            models_v2.SubnetPool,
+            models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id)
+        query = query.filter(models_v2.Subnet.network_id.in_(network_ids))
+
         fields = ['id', 'cidr', 'gateway_ip', 'dns_nameservers',
                   'network_id', 'ipv6_ra_mode', 'subnetpool_id']
 
+        def make_subnet_dict_with_scope(row):
+            subnet_db, address_scope_id = row
+            subnet = self._core_plugin._make_subnet_dict(
+                subnet_db, fields, context=context)
+            subnet['address_scope_id'] = address_scope_id
+            return subnet
+
         subnets_by_network = dict((id, []) for id in network_ids)
-        for subnet in self._core_plugin.get_subnets(context, filters, fields):
+        for subnet in (make_subnet_dict_with_scope(row) for row in query):
             subnets_by_network[subnet['network_id']].append(subnet)
         return subnets_by_network
 
@@ -1242,7 +1255,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
             port['subnets'] = []
             port['extra_subnets'] = []
+            port['address_scopes'] = {l3_constants.IP_VERSION_4: None,
+                                      l3_constants.IP_VERSION_6: None}
+
+            scopes = {}
             for subnet in subnets_by_network[port['network_id']]:
+                scope = subnet['address_scope_id']
+                cidr = netaddr.IPNetwork(subnet['cidr'])
+                scopes[cidr.version] = scope
+
                 # If this subnet is used by the port (has a matching entry
                 # in the port's fixed_ips), then add this subnet to the
                 # port's subnets list, and populate the fixed_ips entry
@@ -1256,13 +1277,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 for fixed_ip in port['fixed_ips']:
                     if fixed_ip['subnet_id'] == subnet['id']:
                         port['subnets'].append(subnet_info)
-                        prefixlen = netaddr.IPNetwork(
-                            subnet['cidr']).prefixlen
+                        prefixlen = cidr.prefixlen
                         fixed_ip['prefixlen'] = prefixlen
                         break
                 else:
                     # This subnet is not used by the port.
                     port['extra_subnets'].append(subnet_info)
+
+            port['address_scopes'].update(scopes)
 
     def _process_floating_ips(self, context, routers_dict, floating_ips):
         for floating_ip in floating_ips:

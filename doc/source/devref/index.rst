@@ -72,6 +72,7 @@ Neutron Internals
    upgrade
    i18n
    instrumentation
+   address_scopes
 
 Testing
 -------
