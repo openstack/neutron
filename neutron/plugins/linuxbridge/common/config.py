@@ -62,6 +62,10 @@ agent_opts = [
                       "polling for local device changes.")),
     cfg.BoolOpt('rpc_support_old_agents', default=False,
                 help=_("Enable server RPC compatibility with old agents")),
+    cfg.IntOpt('quitting_rpc_timeout', default=10,
+               help=_("Set new timeout in seconds for new rpc calls after "
+                      "agent receives SIGTERM. If value is set to 0, rpc "
+                      "timeout won't be changed")),
 ]
 
 

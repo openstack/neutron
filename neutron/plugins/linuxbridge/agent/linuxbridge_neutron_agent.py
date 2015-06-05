@@ -44,6 +44,7 @@ from neutron.common import utils as q_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import loopingcall
+from neutron.openstack.common import service
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.linuxbridge.common import config  # noqa
 from neutron.plugins.linuxbridge.common import constants as lconst
@@ -749,12 +750,26 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             getattr(self, method)(context, values)
 
 
-class LinuxBridgeNeutronAgentRPC(object):
+class LinuxBridgeNeutronAgentRPC(service.Service):
 
-    def __init__(self, interface_mappings, polling_interval):
+    def __init__(self, interface_mappings, polling_interval,
+                 quitting_rpc_timeout):
+        """Constructor.
+
+        :param interface_mappings: dict mapping physical_networks to
+               physical_interfaces.
+        :param polling_interval: interval (secs) to poll DB.
+        :param quitting_rpc_timeout: timeout in seconds for rpc calls after
+               stop is called.
+        """
+        super(LinuxBridgeNeutronAgentRPC, self).__init__()
+        self.interface_mappings = interface_mappings
         self.polling_interval = polling_interval
-        self.setup_linux_bridge(interface_mappings)
-        configurations = {'interface_mappings': interface_mappings}
+        self.quitting_rpc_timeout = quitting_rpc_timeout
+
+    def start(self):
+        self.setup_linux_bridge(self.interface_mappings)
+        configurations = {'interface_mappings': self.interface_mappings}
         if self.br_mgr.vxlan_mode != lconst.VXLAN_NONE:
             configurations['tunneling_ip'] = self.br_mgr.local_ip
             configurations['tunnel_types'] = [p_const.TYPE_VXLAN]
@@ -774,7 +789,17 @@ class LinuxBridgeNeutronAgentRPC(object):
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
                 self.sg_plugin_rpc)
-        self.setup_rpc(interface_mappings.values())
+        self.setup_rpc(self.interface_mappings.values())
+        self.daemon_loop()
+
+    def stop(self, graceful=True):
+        LOG.info(_LI("Stopping linuxbridge agent."))
+        if graceful and self.quitting_rpc_timeout:
+            self.set_rpc_timeout(self.quitting_rpc_timeout)
+        super(LinuxBridgeNeutronAgentRPC, self).stop(graceful)
+
+    def reset(self):
+        common_config.setup_logging()
 
     def _report_state(self):
         try:
@@ -1005,6 +1030,11 @@ class LinuxBridgeNeutronAgentRPC(object):
                           {'polling_interval': self.polling_interval,
                            'elapsed': elapsed})
 
+    def set_rpc_timeout(self, timeout):
+        for rpc_api in (self.plugin_rpc, self.sg_plugin_rpc,
+                        self.state_rpc):
+            rpc_api.client.timeout = timeout
+
 
 def main():
     common_config.init(sys.argv[1:])
@@ -1020,11 +1050,13 @@ def main():
     LOG.info(_LI("Interface mappings: %s"), interface_mappings)
 
     polling_interval = cfg.CONF.AGENT.polling_interval
+    quitting_rpc_timeout = cfg.CONF.AGENT.quitting_rpc_timeout
     agent = LinuxBridgeNeutronAgentRPC(interface_mappings,
-                                       polling_interval)
+                                       polling_interval,
+                                       quitting_rpc_timeout)
     LOG.info(_LI("Agent initialized successfully, now running... "))
-    agent.daemon_loop()
-    sys.exit(0)
+    launcher = service.launch(agent)
+    launcher.wait()
 
 
 if __name__ == "__main__":

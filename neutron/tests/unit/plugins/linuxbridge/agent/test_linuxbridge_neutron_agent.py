@@ -90,6 +90,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
+        cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         self.get_devices_p = mock.patch.object(ip_lib.IPWrapper, 'get_devices')
         self.get_devices = self.get_devices_p.start()
         self.get_devices.return_value = [ip_lib.IPDevice('eth77')]
@@ -100,7 +101,9 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
                                'get_interface_by_ip', return_value=None):
             self.agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC(
-                {}, 0)
+                {}, 0, cfg.CONF.AGENT.quitting_rpc_timeout)
+            with mock.patch.object(self.agent, "daemon_loop"):
+                self.agent.start()
 
     def test_treat_devices_removed_with_existed_device(self):
         agent = self.agent
@@ -327,6 +330,20 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self.assertFalse(resync_needed)
         agent.remove_port_binding.assert_called_with('net123', 'port123')
         self.assertFalse(agent.plugin_rpc.update_device_up.called)
+
+    def test_set_rpc_timeout(self):
+        self.agent.stop()
+        for rpc_client in (self.agent.plugin_rpc.client,
+                           self.agent.sg_plugin_rpc.client,
+                           self.agent.state_rpc.client):
+            self.assertEqual(cfg.CONF.AGENT.quitting_rpc_timeout,
+                             rpc_client.timeout)
+
+    def test_set_rpc_timeout_no_value(self):
+        self.agent.quitting_rpc_timeout = None
+        with mock.patch.object(self.agent, 'set_rpc_timeout') as mock_set_rpc:
+            self.agent.stop()
+            self.assertFalse(mock_set_rpc.called)
 
 
 class TestLinuxBridgeManager(base.BaseTestCase):
