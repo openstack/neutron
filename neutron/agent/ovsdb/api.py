@@ -13,6 +13,8 @@
 #    under the License.
 
 import abc
+import collections
+import uuid
 
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -312,3 +314,25 @@ class API(object):
         :type bridge:  string
         :returns:      :class:`Command` with list of port names result
         """
+
+
+def val_to_py(val):
+    """Convert a json ovsdb return value to native python object"""
+    if isinstance(val, collections.Sequence) and len(val) == 2:
+        if val[0] == "uuid":
+            return uuid.UUID(val[1])
+        elif val[0] == "set":
+            return [val_to_py(x) for x in val[1]]
+        elif val[0] == "map":
+            return {val_to_py(x): val_to_py(y) for x, y in val[1]}
+    return val
+
+
+def py_to_val(pyval):
+    """Convert python value to ovs-vsctl value argument"""
+    if isinstance(pyval, bool):
+        return 'true' if pyval is True else 'false'
+    elif pyval == '':
+        return '""'
+    else:
+        return pyval
