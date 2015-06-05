@@ -661,8 +661,6 @@ class TestBase(base.BaseTestCase):
         self.execute = self.execute_p.start()
 
         self.makedirs = mock.patch('os.makedirs').start()
-        self.isdir = mock.patch('os.path.isdir').start()
-        self.isdir.return_value = False
         self.rmtree = mock.patch('shutil.rmtree').start()
 
         self.external_process = mock.patch(
