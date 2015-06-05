@@ -40,6 +40,7 @@ from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
+from neutron.db import ipam_non_pluggable_backend as non_ipam
 from neutron.db import models_v2
 from neutron import manager
 from neutron.tests import base
@@ -5306,26 +5307,26 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
     """Unit Tests for NeutronDbPluginV2 IPAM Logic."""
 
     def test_generate_ip(self):
-        with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+        with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                '_try_generate_ip') as generate:
-            with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+            with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                    '_rebuild_availability_ranges') as rebuild:
 
-                db_base_plugin_v2.NeutronDbPluginV2._generate_ip('c', 's')
+                non_ipam.IpamNonPluggableBackend._generate_ip('c', 's')
 
         generate.assert_called_once_with('c', 's')
         self.assertEqual(0, rebuild.call_count)
 
     def test_generate_ip_exhausted_pool(self):
-        with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+        with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                '_try_generate_ip') as generate:
-            with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+            with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                    '_rebuild_availability_ranges') as rebuild:
 
                 exception = n_exc.IpAddressGenerationFailure(net_id='n')
                 # fail first call but not second
                 generate.side_effect = [exception, None]
-                db_base_plugin_v2.NeutronDbPluginV2._generate_ip('c', 's')
+                non_ipam.IpamNonPluggableBackend._generate_ip('c', 's')
 
         self.assertEqual(2, generate.call_count)
         rebuild.assert_called_once_with('c', 's')
