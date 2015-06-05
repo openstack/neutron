@@ -636,7 +636,7 @@ class TestIpVersionFromInt(base.BaseTestCase):
                           8)
 
 
-class TestDelayedStringRederer(base.BaseTestCase):
+class TestDelayedStringRenderer(base.BaseTestCase):
     def test_call_deferred_until_str(self):
         my_func = mock.MagicMock(return_value='Brie cheese!')
         delayed = utils.DelayedStringRenderer(my_func, 1, 2, key_arg=44)
