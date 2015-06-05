@@ -1318,6 +1318,15 @@ class TestDeviceManager(base.BaseTestCase):
         self.assertFalse(plugin.setup_dhcp_port.called)
         self.assertFalse(plugin.update_dhcp_port.called)
 
+    def test_setup_dhcp_port_with_non_enable_dhcp_subnet(self):
+        plugin = mock.Mock()
+        dh = dhcp.DeviceManager(cfg.CONF, plugin)
+        fake_network_copy = copy.deepcopy(fake_network)
+        fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
+        plugin.update_dhcp_port.return_value = fake_port1
+        self.assertEqual(fake_subnet1.id,
+                dh.setup_dhcp_port(fake_network_copy).fixed_ips[0].subnet_id)
+
     def test_destroy(self):
         fake_net = dhcp.NetModel(
             True, dict(id=FAKE_NETWORK_UUID,
