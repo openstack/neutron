@@ -18,13 +18,13 @@ import sys
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_log import versionutils
 from oslo_utils import importutils
 import six
 import webob
 
 from neutron.common import exceptions
 from neutron.i18n import _LI, _LW
-from neutron.openstack.common import versionutils
 
 
 LOG = logging.getLogger(__name__)
