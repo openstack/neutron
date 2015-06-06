@@ -1251,9 +1251,9 @@ class TestOvsDvrNeutronAgent(object):
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
         self.agent.sg_agent = mock.Mock()
 
-    def _setup_for_dvr_test(self, ofport=10):
+    def _setup_for_dvr_test(self):
         self._port = mock.Mock()
-        self._port.ofport = ofport
+        self._port.ofport = 10
         self._port.vif_id = "1234-5678-90"
         self._physical_network = 'physeth1'
         self._old_local_vlan = None
@@ -1518,7 +1518,7 @@ class TestOvsDvrNeutronAgent(object):
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=n_const.DEVICE_OWNER_DHCP, ip_version=6)
 
-    def test_port_bound_for_dvr_with_csnat_ports(self, ofport=10):
+    def test_port_bound_for_dvr_with_csnat_ports(self):
         self._setup_for_dvr_test()
         int_br = mock.create_autospec(self.agent.int_br)
         tun_br = mock.create_autospec(self.agent.tun_br)
@@ -1566,13 +1566,11 @@ class TestOvsDvrNeutronAgent(object):
             ]
             self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
 
-    def test_treat_devices_removed_for_dvr_interface(self, ofport=10):
-        self._test_treat_devices_removed_for_dvr_interface(ofport)
-        self._test_treat_devices_removed_for_dvr_interface(
-            ofport, ip_version=6)
+    def test_treat_devices_removed_for_dvr_interface(self):
+        self._test_treat_devices_removed_for_dvr_interface()
+        self._test_treat_devices_removed_for_dvr_interface(ip_version=6)
 
-    def _test_treat_devices_removed_for_dvr_interface(self, ofport=10,
-                                                      ip_version=4):
+    def _test_treat_devices_removed_for_dvr_interface(self, ip_version=4):
         self._setup_for_dvr_test()
         if ip_version == 4:
             gateway_ip = '1.1.1.1'
@@ -1760,7 +1758,7 @@ class TestOvsDvrNeutronAgent(object):
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_DHCP, ip_version=6)
 
-    def test_treat_devices_removed_for_dvr_csnat_port(self, ofport=10):
+    def test_treat_devices_removed_for_dvr_csnat_port(self):
         self._setup_for_dvr_test()
         gateway_mac = 'aa:bb:cc:11:22:33'
         int_br = mock.create_autospec(self.agent.int_br)
