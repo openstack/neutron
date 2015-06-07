@@ -188,11 +188,11 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             pass
 
     @classmethod
-    def create_network(cls, network_name=None):
+    def create_network(cls, network_name=None, **kwargs):
         """Wrapper utility that returns a test network."""
         network_name = network_name or data_utils.rand_name('test-network-')
 
-        body = cls.client.create_network(name=network_name)
+        body = cls.client.create_network(name=network_name, **kwargs)
         network = body['network']
         cls.networks.append(network)
         return network
