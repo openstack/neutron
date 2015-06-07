@@ -79,10 +79,6 @@ LOG = log.getLogger(__name__)
 
 MAX_BIND_TRIES = 10
 
-# REVISIT(rkukura): Move this and other network_type constants to
-# providernet.py?
-TYPE_MULTI_SEGMENT = 'multi-segment'
-
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 dvr_mac_db.DVRDbMixin,
