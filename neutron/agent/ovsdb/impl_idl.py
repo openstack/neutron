@@ -134,7 +134,7 @@ class OvsdbIdl(api.API):
 
     @property
     def _ovs(self):
-        return self._tables['Open_vSwitch'].rows.values()[0]
+        return list(self._tables['Open_vSwitch'].rows.values())[0]
 
     def transaction(self, check_error=False, log_errors=True, **kwargs):
         return Transaction(self, OvsdbIdl.ovsdb_connection,

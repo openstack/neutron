@@ -143,7 +143,7 @@ class DbGetCommand(DbCommand):
         DbCommand.result.fset(self, val)
         # DbCommand will return [{'column': value}] and we just want value.
         if self._result:
-            self._result = self._result[0].values()[0]
+            self._result = list(self._result[0].values())[0]
 
 
 class BrExistsCommand(DbCommand):
