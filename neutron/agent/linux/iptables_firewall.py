@@ -458,8 +458,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         for ip_version, sg_ids in security_group_ids.items():
             for sg_id in sg_ids:
                 current_ips = self.sg_members[sg_id][ip_version]
-                if current_ips:
-                    self.ipset.set_members(sg_id, ip_version, current_ips)
+                self.ipset.set_members(sg_id, ip_version, current_ips)
 
     def _generate_ipset_rule_args(self, sg_rule, remote_gid):
         ethertype = sg_rule.get('ethertype')
