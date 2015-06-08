@@ -631,7 +631,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           'gateway_ips': gateway_ips,
                           'namespace': 'qrouter-' + router['id'],
                           'extra_subnets': [],
-                          'enable_ra_on_gw': enable_ra_on_gw}
+                          'enable_ra_on_gw': enable_ra_on_gw,
+                          'clean_connections': True}
             else:
                 exp_arp_calls = [mock.call(ri.ns_name, interface_name,
                                            '20.0.0.30', mock.ANY)]
@@ -652,7 +653,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           'gateway_ips': gateway_ips,
                           'namespace': 'qrouter-' + router['id'],
                           'extra_subnets': [{'cidr': '172.16.0.0/24'}],
-                          'enable_ra_on_gw': enable_ra_on_gw}
+                          'enable_ra_on_gw': enable_ra_on_gw,
+                          'clean_connections': True}
             self.mock_driver.init_l3.assert_called_with(interface_name,
                                                         ip_cidrs,
                                                         **kwargs)
@@ -819,7 +821,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'gateway_ips': gateway_ips,
                   'namespace': 'qrouter-' + router['id'],
                   'extra_subnets': [{'cidr': '172.16.0.0/24'}],
-                  'enable_ra_on_gw': False}
+                  'enable_ra_on_gw': False,
+                  'clean_connections': True}
         self.mock_driver.init_l3.assert_called_with(interface_name,
                                                     ip_cidrs,
                                                     **kwargs)

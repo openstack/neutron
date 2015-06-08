@@ -79,13 +79,15 @@ class LinuxInterfaceDriver(object):
 
     def init_l3(self, device_name, ip_cidrs, namespace=None,
                 preserve_ips=[], gateway_ips=None, extra_subnets=[],
-                enable_ra_on_gw=False):
+                enable_ra_on_gw=False, clean_connections=False):
         """Set the L3 settings for the interface using data from the port.
 
         ip_cidrs: list of 'X.X.X.X/YY' strings
         preserve_ips: list of ip cidrs that should not be removed from device
         gateway_ips: For gateway ports, list of external gateway ip addresses
         enable_ra_on_gw: Boolean to indicate configuring acceptance of IPv6 RA
+        clean_connections: Boolean to indicate if we should cleanup connections
+          associated to removed ips
         """
         device = ip_lib.IPDevice(device_name, namespace=namespace)
 
@@ -113,7 +115,10 @@ class LinuxInterfaceDriver(object):
         # clean up any old addresses
         for ip_cidr in previous:
             if ip_cidr not in preserve_ips:
-                device.delete_addr_and_conntrack_state(ip_cidr)
+                if clean_connections:
+                    device.delete_addr_and_conntrack_state(ip_cidr)
+                else:
+                    device.addr.delete(ip_cidr)
 
         for gateway_ip in gateway_ips or []:
             device.route.add_gateway(gateway_ip)
