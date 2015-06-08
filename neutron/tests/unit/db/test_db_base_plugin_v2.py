@@ -5422,7 +5422,7 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
     def _test__allocate_ips_for_port(self, subnets, port, expected):
         plugin = db_base_plugin_v2.NeutronDbPluginV2()
         with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
-                               'get_subnets') as get_subnets:
+                               '_get_subnets') as get_subnets:
             with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
                                    '_check_unique_ip') as check_unique:
                 context = mock.Mock()
