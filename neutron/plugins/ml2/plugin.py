@@ -1157,6 +1157,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # either undo/retry the operation or delete the resource.
         self.mechanism_manager.update_port_postcommit(mech_context)
 
+        self.check_and_notify_security_group_member_changed(
+            context, original_port, updated_port)
         need_port_update_notify |= self.is_security_group_member_updated(
             context, original_port, updated_port)
 

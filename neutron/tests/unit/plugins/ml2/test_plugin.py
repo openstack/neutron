@@ -402,6 +402,16 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 plugin.update_port_status(ctx, short_id, 'UP')
                 mock_gbl.assert_called_once_with(mock.ANY, port_id, mock.ANY)
 
+    def test_update_port_fixed_ip_changed(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        with self.port() as port, mock.patch.object(
+                plugin.notifier,
+                'security_groups_member_updated') as sg_member_update:
+            port['port']['fixed_ips'][0]['ip_address'] = '10.0.0.3'
+            plugin.update_port(ctx, port['port']['id'], port)
+            self.assertTrue(sg_member_update.called)
+
     def test_update_port_mac(self):
         self.check_update_port_mac(
             host_arg={portbindings.HOST_ID: HOST},
