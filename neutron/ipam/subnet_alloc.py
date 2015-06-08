@@ -93,7 +93,7 @@ class SubnetAllocator(driver.Pool):
             prefix_pool = self._get_available_prefix_list()
             for prefix in prefix_pool:
                 if request.prefixlen >= prefix.prefixlen:
-                    subnet = prefix.subnet(request.prefixlen).next()
+                    subnet = next(prefix.subnet(request.prefixlen))
                     gateway_ip = request.gateway_ip
                     if not gateway_ip:
                         gateway_ip = subnet.network + 1
