@@ -105,17 +105,15 @@ class FullstackFixture(fixtures.Fixture):
             NeutronServerFixture(
                 self.test_name, self.temp_dir, rabbitmq_environment))
 
-    def wait_until_env_is_up(self, agents_count=0):
+    def wait_until_env_is_up(self, agents_count):
         utils.wait_until_true(
             functools.partial(self._processes_are_ready, agents_count))
 
     def _processes_are_ready(self, agents_count):
         try:
             running_agents = self.neutron_server.client.list_agents()['agents']
-            LOG.warn("There are %d agents running!", len(running_agents))
             return len(running_agents) == agents_count
         except nc_exc.NeutronClientException:
-            LOG.warn("neutron-server isn't up yet (cannot contact REST API).")
             return False
 
 
@@ -159,7 +157,6 @@ class NeutronServerFixture(fixtures.Fixture):
             self.client.list_networks()
             return True
         except nc_exc.NeutronClientException:
-            LOG.warn("neutron-server isn't up yet (cannot contact REST API).")
             return False
 
     @property
