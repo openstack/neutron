@@ -204,7 +204,7 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
         subnets.append({'id': subnet_id,
                         'cidr': subnet_cidr,
                         'gateway_ip': gateway_ip})
-    if not fixed_ips:
+    if not fixed_ips and v6_ext_gw_with_sub:
         raise ValueError("Invalid ip_version: %s" % ip_version)
 
     router_id = _uuid()
