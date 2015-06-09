@@ -391,7 +391,7 @@ will be removed. The following aspects are captured:
     effort is not considered justified. Assessment may change in the
     future.
 
-  Absense of an entry for an existing plugin or driver means no active effort
+  Absence of an entry for an existing plugin or driver means no active effort
   has been observed or potentially not required.
 * Completed in: the release in which the effort is considered completed. Code
   completion can be deemed as such, if there is no overlap/duplication between
