@@ -214,7 +214,7 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
 
 
 class TestModelsMigrationsPsql(_TestModelsMigrations,
-                               test_base.PostgreSQLOpportunisticTestCase):
+                               base.PostgreSQLTestCase):
     pass
 
 
