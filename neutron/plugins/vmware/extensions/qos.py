@@ -145,7 +145,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                       'is_visible': False,
                       'default': 1,
                       'enforce_policy': True,
-                      'convert_to': convert_to_unsigned_int_or_none},
+                      'convert_to': attr.convert_to_positive_float_or_none},
 
         QUEUE: {'allow_post': False,
                 'allow_put': False,
