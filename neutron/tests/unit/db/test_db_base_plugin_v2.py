@@ -164,7 +164,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def setup_config(self):
         # Create the default configurations
-        args = ['--config-file', base.etcdir('neutron.conf.test')]
+        args = ['--config-file', base.etcdir('neutron.conf')]
         # If test_config specifies some config-file, use it, as well
         for config_file in test_lib.test_config.get('config_files', []):
             args.extend(['--config-file', config_file])
