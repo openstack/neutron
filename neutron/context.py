@@ -18,6 +18,7 @@
 import copy
 import datetime
 
+from debtcollector import removals
 from oslo_context import context as oslo_context
 from oslo_log import log as logging
 
@@ -36,9 +37,8 @@ class ContextBase(oslo_context.RequestContext):
     """
 
     def __init__(self, user_id, tenant_id, is_admin=None, read_deleted="no",
-                 roles=None, timestamp=None, load_admin_roles=True,
-                 request_id=None, tenant_name=None, user_name=None,
-                 overwrite=True, auth_token=None, **kwargs):
+                 roles=None, timestamp=None, request_id=None, tenant_name=None,
+                 user_name=None, overwrite=True, auth_token=None, **kwargs):
         """Object initialization.
 
         :param read_deleted: 'no' indicates deleted records are hidden, 'yes'
@@ -68,11 +68,6 @@ class ContextBase(oslo_context.RequestContext):
         self.is_advsvc = self.is_admin or policy.check_is_advsvc(self)
         if self.is_admin is None:
             self.is_admin = policy.check_is_admin(self)
-        elif self.is_admin and load_admin_roles:
-            # Ensure context is populated with admin roles
-            admin_roles = policy.get_admin_roles()
-            if admin_roles:
-                self.roles = list(set(self.roles) | set(admin_roles))
 
     @property
     def project_id(self):
@@ -150,12 +145,12 @@ class Context(ContextBase):
         return self._session
 
 
+@removals.removed_kwarg('load_admin_roles')
 def get_admin_context(read_deleted="no", load_admin_roles=True):
     return Context(user_id=None,
                    tenant_id=None,
                    is_admin=True,
                    read_deleted=read_deleted,
-                   load_admin_roles=load_admin_roles,
                    overwrite=False)
 
 

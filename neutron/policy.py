@@ -384,6 +384,10 @@ def check(context, action, target, plugin=None, might_not_exist=False,
 
     :return: Returns True if access is permitted else False.
     """
+    # If we already know the context has admin rights do not perform an
+    # additional check and authorize the operation
+    if context.is_admin:
+        return True
     if might_not_exist and not (_ENFORCER.rules and action in _ENFORCER.rules):
         return True
     match_rule, target, credentials = _prepare_check(context,
@@ -417,6 +421,10 @@ def enforce(context, action, target, plugin=None, pluralized=None):
     :raises neutron.openstack.common.policy.PolicyNotAuthorized:
             if verification fails.
     """
+    # If we already know the context has admin rights do not perform an
+    # additional check and authorize the operation
+    if context.is_admin:
+        return True
     rule, target, credentials = _prepare_check(context,
                                                action,
                                                target,
@@ -459,25 +467,3 @@ def _extract_roles(rule, roles):
     elif hasattr(rule, 'rules'):
         for rule in rule.rules:
             _extract_roles(rule, roles)
-
-
-def get_admin_roles():
-    """Return a list of roles which are granted admin rights according
-    to policy settings.
-    """
-    # NOTE(salvatore-orlando): This function provides a solution for
-    # populating implicit contexts with the appropriate roles so that
-    # they correctly pass policy checks, and will become superseded
-    # once all explicit policy checks are removed from db logic and
-    # plugin modules. For backward compatibility it returns the literal
-    # admin if ADMIN_CTX_POLICY is not defined
-    init()
-    if not _ENFORCER.rules or ADMIN_CTX_POLICY not in _ENFORCER.rules:
-        return ['admin']
-    try:
-        admin_ctx_rule = _ENFORCER.rules[ADMIN_CTX_POLICY]
-    except (KeyError, TypeError):
-        return
-    roles = []
-    _extract_roles(admin_ctx_rule, roles)
-    return roles

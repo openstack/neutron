@@ -359,6 +359,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_check_is_admin_with_admin_context_succeeds(self):
         admin_context = context.get_admin_context()
+        # explicitly set roles as this test verifies user credentials
+        # with the policy engine
+        admin_context.roles = ['admin']
         self.assertTrue(policy.check_is_admin(admin_context))
 
     def test_check_is_admin_with_user_context_fails(self):
@@ -558,44 +561,6 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_enforce_tenant_id_check_invalid_parent_resource_raises(self):
         self._test_enforce_tenant_id_raises('tenant_id:%(foobaz_tenant_id)s')
-
-    def test_get_roles_context_is_admin_rule_missing(self):
-        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            "some_other_rule": "role:admin",
-        }.items())
-        policy.set_rules(common_policy.Rules(rules))
-        # 'admin' role is expected for bw compatibility
-        self.assertEqual(['admin'], policy.get_admin_roles())
-
-    def test_get_roles_with_role_check(self):
-        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "role:admin",
-        }.items())
-        policy.set_rules(common_policy.Rules(rules))
-        self.assertEqual(['admin'], policy.get_admin_roles())
-
-    def test_get_roles_with_rule_check(self):
-        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "rule:some_other_rule",
-            "some_other_rule": "role:admin",
-        }.items())
-        policy.set_rules(common_policy.Rules(rules))
-        self.assertEqual(['admin'], policy.get_admin_roles())
-
-    def test_get_roles_with_or_check(self):
-        self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "rule:rule1 or rule:rule2",
-            "rule1": "role:admin_1",
-            "rule2": "role:admin_2"
-        }.items())
-        self.assertEqual(['admin_1', 'admin_2'],
-                         policy.get_admin_roles())
-
-    def test_get_roles_with_other_rules(self):
-        self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "role:xxx or other:value",
-        }.items())
-        self.assertEqual(['xxx'], policy.get_admin_roles())
 
     def _test_set_rules_with_deprecated_policy(self, input_rules,
                                                expected_rules):

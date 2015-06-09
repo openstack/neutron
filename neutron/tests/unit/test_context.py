@@ -105,14 +105,6 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertIsNone(ctx_dict['auth_token'])
         self.assertFalse(hasattr(ctx, 'session'))
 
-    def test_neutron_context_with_load_roles_true(self):
-        ctx = context.get_admin_context()
-        self.assertIn('admin', ctx.roles)
-
-    def test_neutron_context_with_load_roles_false(self):
-        ctx = context.get_admin_context(load_admin_roles=False)
-        self.assertFalse(ctx.roles)
-
     def test_neutron_context_elevated_retains_request_id(self):
         ctx = context.Context('user_id', 'tenant_id')
         self.assertFalse(ctx.is_admin)
