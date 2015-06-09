@@ -463,10 +463,12 @@ class TunnelTest(base.BaseTestCase):
 
     def test_port_dead(self):
         self.mock_int_bridge_expected += [
-            mock.call.db_get_val('Port', VIF_PORT.port_name, 'tag'),
+            mock.call.db_get_val('Port', VIF_PORT.port_name, 'tag',
+                                 log_errors=True),
             mock.call.set_db_attribute(
                 'Port', VIF_PORT.port_name,
-                'tag', ovs_neutron_agent.DEAD_VLAN_TAG),
+                'tag', ovs_neutron_agent.DEAD_VLAN_TAG,
+                log_errors=True),
             mock.call.add_flow(priority=2, in_port=VIF_PORT.ofport,
                                actions='drop')
         ]

@@ -201,6 +201,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.setup_integration_br()
         # Stores port update notifications for processing in main rpc loop
         self.updated_ports = set()
+        # Stores port delete notifications
+        self.deleted_ports = set()
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
@@ -338,10 +340,21 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def port_delete(self, context, **kwargs):
         port_id = kwargs.get('port_id')
-        port = self.int_br.get_vif_port_by_id(port_id)
-        # If port exists, delete it
-        if port:
-            self.int_br.delete_port(port.port_name)
+        self.deleted_ports.add(port_id)
+        LOG.debug("port_delete message processed for port %s", port_id)
+
+    def process_deleted_ports(self):
+        while self.deleted_ports:
+            port_id = self.deleted_ports.pop()
+            # Flush firewall rules and move to dead VLAN so deleted ports no
+            # longer have access to the network
+            self.sg_agent.remove_devices_filter([port_id])
+            port = self.int_br.get_vif_port_by_id(port_id)
+            if port:
+                # don't log errors since there is a chance someone will be
+                # removing the port from the bridge at the same time
+                self.port_dead(port, log_errors=False)
+            self.port_unbound(port_id)
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug("tunnel_update received")
@@ -774,16 +787,17 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if not lvm.vif_ports:
             self.reclaim_local_vlan(net_uuid)
 
-    def port_dead(self, port):
+    def port_dead(self, port, log_errors=True):
         '''Once a port has no binding, put it on the "dead vlan".
 
         :param port: a ovs_lib.VifPort object.
         '''
         # Don't kill a port if it's already dead
-        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag",
+                                         log_errors=log_errors)
         if cur_tag != DEAD_VLAN_TAG:
             self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                         DEAD_VLAN_TAG)
+                                         DEAD_VLAN_TAG, log_errors=log_errors)
             self.int_br.add_flow(priority=2, in_port=port.ofport,
                                  actions="drop")
 
@@ -1568,6 +1582,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     self.updated_ports = set()
                     reg_ports = (set() if ovs_restarted else ports)
                     port_info = self.scan_ports(reg_ports, updated_ports_copy)
+                    # don't try to process removed ports as deleted ports since
+                    # they are already gone
+                    self.deleted_ports -= port_info['removed']
+                    self.process_deleted_ports()
                     self.update_stale_ofport_rules()
                     LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
                               "port information retrieved. "
