@@ -19,6 +19,10 @@ import contextlib
 import six
 
 
+INGRESS_DIRECTION = 'ingress'
+EGRESS_DIRECTION = 'egress'
+
+
 @six.add_metaclass(abc.ABCMeta)
 class FirewallDriver(object):
     """Firewall Driver base class.

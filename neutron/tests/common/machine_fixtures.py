@@ -38,8 +38,7 @@ class FakeMachine(tools.SafeFixture):
     def __init__(self, bridge, ip_cidr, gateway_ip=None):
         super(FakeMachine, self).__init__()
         self.bridge = bridge
-        self.ip_cidr = ip_cidr
-        self.ip = self.ip_cidr.partition('/')[0]
+        self._ip_cidr = ip_cidr
         self.gateway_ip = gateway_ip
 
     def setUp(self):
@@ -50,10 +49,34 @@ class FakeMachine(tools.SafeFixture):
 
         self.port = self.useFixture(
             net_helpers.PortFixture.get(self.bridge, self.namespace)).port
-        self.port.addr.add(self.ip_cidr)
+        self.port.addr.add(self._ip_cidr)
 
         if self.gateway_ip:
             net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
+
+    @property
+    def ip(self):
+        return self._ip_cidr.partition('/')[0]
+
+    @property
+    def ip_cidr(self):
+        return self._ip_cidr
+
+    @ip_cidr.setter
+    def ip_cidr(self, ip_cidr):
+        self.port.addr.add(ip_cidr)
+        self.port.addr.delete(self._ip_cidr)
+        self._ip_cidr = ip_cidr
+
+    @property
+    def mac_address(self):
+        return self.port.link.address
+
+    @mac_address.setter
+    def mac_address(self, mac_address):
+        self.port.link.set_down()
+        self.port.link.set_address(mac_address)
+        self.port.link.set_up()
 
     def execute(self, *args, **kwargs):
         ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)

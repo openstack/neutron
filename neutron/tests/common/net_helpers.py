@@ -274,6 +274,10 @@ class NetcatTester(object):
             address=self.server_address,
             listen=True)
 
+    @property
+    def is_established(self):
+        return bool(self._client_process and not self._client_process.poll())
+
     def establish_connection(self):
         if self._client_process:
             raise RuntimeError('%(proto)s connection to $(ip_addr)s is already'
