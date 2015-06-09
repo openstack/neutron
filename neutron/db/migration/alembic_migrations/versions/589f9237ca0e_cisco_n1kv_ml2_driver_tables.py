@@ -31,7 +31,6 @@ import sqlalchemy as sa
 
 network_profile_type = sa.Enum('vlan', 'vxlan',
                                name='network_profile_type')
-profile_type = sa.Enum('network', 'policy', name='profile_type')
 
 
 def upgrade():
@@ -103,7 +102,15 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('physical_network', 'vlan_id')
     )
-
+    # Bugfix for 1463301: PostgreSQL creates type when Enum assigned to column,
+    # but type profile_type was already created in cisco_init_opts, so it needs
+    # to be reused. MySQL do not create type for Enums.
+    if op.get_context().dialect.name == 'postgresql':
+        profile_type = sa.dialects.postgresql.ENUM('network', 'policy',
+                                                   name='profile_type',
+                                                   create_type=False)
+    else:
+        profile_type = sa.Enum('network', 'policy', name='profile_type')
     op.create_table(
         'cisco_ml2_n1kv_profile_bindings',
         sa.Column('profile_type', profile_type, nullable=True),
