@@ -236,7 +236,7 @@ class TestDhcpAgent(base.BaseTestCase):
                     with mock.patch.object(sys, 'argv') as sys_argv:
                         sys_argv.return_value = [
                             'dhcp', '--config-file',
-                            base.etcdir('neutron.conf.test')]
+                            base.etcdir('neutron.conf')]
                         cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
                         config.register_interface_driver_opts_helper(cfg.CONF)
                         config.register_agent_state_opts_helper(cfg.CONF)
@@ -260,7 +260,7 @@ class TestDhcpAgent(base.BaseTestCase):
             with mock.patch.object(sys, 'argv') as sys_argv:
                 with mock.patch(launcher_str) as launcher:
                     sys_argv.return_value = ['dhcp', '--config-file',
-                                             base.etcdir('neutron.conf.test')]
+                                             base.etcdir('neutron.conf')]
                     entry.main()
                     launcher.assert_has_calls(
                         [mock.call(), mock.call().launch_service(mock.ANY),

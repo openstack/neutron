@@ -238,10 +238,10 @@ class BaseTestCase(DietTestCase):
     @staticmethod
     def config_parse(conf=None, args=None):
         """Create the default configurations."""
-        # neutron.conf.test includes rpc_backend which needs to be cleaned up
+        # neutron.conf includes rpc_backend which needs to be cleaned up
         if args is None:
             args = []
-        args += ['--config-file', etcdir('neutron.conf.test')]
+        args += ['--config-file', etcdir('neutron.conf')]
         if conf is None:
             config.init(args=args)
         else:

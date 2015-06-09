@@ -726,7 +726,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
             "ExtensionExtendedAttributeTestPlugin"
         )
 
-        # point config file to: neutron/tests/etc/neutron.conf.test
+        # point config file to: neutron/tests/etc/neutron.conf
         self.config_parse()
 
         self.setup_coreplugin(plugin)
