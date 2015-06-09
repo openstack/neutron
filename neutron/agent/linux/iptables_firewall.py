@@ -638,11 +638,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             filtered_ports)
 
         for ip_version, remote_sg_ids in six.iteritems(remote_sgs_to_remove):
-            self._clear_sg_members(ip_version, remote_sg_ids)
             if self.enable_ipset:
                 self._remove_ipsets_for_remote_sgs(ip_version, remote_sg_ids)
 
-        self._remove_unused_sg_members()
+        self._remove_sg_members(remote_sgs_to_remove)
 
         # Remove unused security group rules
         for remove_group_id in self._determine_sg_rules_to_remove(
@@ -690,23 +689,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             port_group_ids.update(port.get('security_groups', []))
         return port_group_ids
 
-    def _clear_sg_members(self, ip_version, remote_sg_ids):
-        """Clear our internal cache of sg members matching the parameters."""
-        for remote_sg_id in remote_sg_ids:
-            if self.sg_members[remote_sg_id][ip_version]:
-                self.sg_members[remote_sg_id][ip_version] = []
-
     def _remove_ipsets_for_remote_sgs(self, ip_version, remote_sg_ids):
         """Remove system ipsets matching the provided parameters."""
         for remote_sg_id in remote_sg_ids:
             self.ipset.destroy(remote_sg_id, ip_version)
 
-    def _remove_unused_sg_members(self):
-        """Remove sg_member entries where no IPv4 or IPv6 is associated."""
-        for sg_id in list(self.sg_members.keys()):
-            sg_has_members = (self.sg_members[sg_id][constants.IPv4] or
-                              self.sg_members[sg_id][constants.IPv6])
-            if not sg_has_members:
+    def _remove_sg_members(self, remote_sgs_to_remove):
+        """Remove sg_member entries."""
+        ipv4_sec_group_set = remote_sgs_to_remove.get(constants.IPv4)
+        ipv6_sec_group_set = remote_sgs_to_remove.get(constants.IPv6)
+        for sg_id in (ipv4_sec_group_set & ipv6_sec_group_set):
+            if sg_id in self.sg_members:
                 del self.sg_members[sg_id]
 
     def _find_deleted_sg_rules(self, sg_id):

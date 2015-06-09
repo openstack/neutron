@@ -1620,20 +1620,12 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.assertEqual(sg_ids,
                          self.firewall._get_sg_ids_set_for_ports(ports))
 
-    def test_clear_sg_members(self):
-        self.firewall.sg_members = self._fake_sg_members(
-            sg_ids=[FAKE_SGID, OTHER_SGID])
-        self.firewall._clear_sg_members(_IPv4, [OTHER_SGID])
-
-        self.assertEqual(0, len(self.firewall.sg_members[OTHER_SGID][_IPv4]))
-
-    def test_remove_unused_sg_members(self):
+    def test_remove_sg_members(self):
         self.firewall.sg_members = self._fake_sg_members([FAKE_SGID,
                                                           OTHER_SGID])
-        self.firewall.sg_members[FAKE_SGID][_IPv4] = []
-        self.firewall.sg_members[FAKE_SGID][_IPv6] = []
-        self.firewall.sg_members[OTHER_SGID][_IPv6] = []
-        self.firewall._remove_unused_sg_members()
+        remote_sgs_to_remove = {_IPv4: set([FAKE_SGID]),
+                                _IPv6: set([FAKE_SGID, OTHER_SGID])}
+        self.firewall._remove_sg_members(remote_sgs_to_remove)
 
         self.assertIn(OTHER_SGID, self.firewall.sg_members)
         self.assertNotIn(FAKE_SGID, self.firewall.sg_members)
@@ -1652,13 +1644,26 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.assertNotIn(OTHER_SGID, self.firewall.sg_rules)
 
     def test_remove_unused_security_group_info(self):
-        self._setup_fake_firewall_members_and_rules(self.firewall)
-        # no filtered ports in 'fake_sgid', so all rules and members
-        # are not needed and we expect them to be cleaned up
-        self.firewall.prepare_port_filter(self._fake_port(OTHER_SGID))
+        self.firewall.sg_members = {OTHER_SGID: {_IPv4: [], _IPv6: []}}
+        self.firewall.pre_sg_members = self.firewall.sg_members
+        self.firewall.sg_rules = self._fake_sg_rules(
+            remote_groups={_IPv4: [FAKE_SGID], _IPv6: [FAKE_SGID]})
+        self.firewall.pre_sg_rules = self.firewall.sg_rules
+        port = self._fake_port()
+        self.firewall.filtered_ports['tapfake_dev'] = port
         self.firewall._remove_unused_security_group_info()
+        self.assertNotIn(OTHER_SGID, self.firewall.sg_members)
 
-        self.assertNotIn(FAKE_SGID, self.firewall.sg_members)
+    def test_not_remove_used_security_group_info(self):
+        self.firewall.sg_members = {OTHER_SGID: {_IPv4: [], _IPv6: []}}
+        self.firewall.pre_sg_members = self.firewall.sg_members
+        self.firewall.sg_rules = self._fake_sg_rules(
+            remote_groups={_IPv4: [OTHER_SGID], _IPv6: [OTHER_SGID]})
+        self.firewall.pre_sg_rules = self.firewall.sg_rules
+        port = self._fake_port()
+        self.firewall.filtered_ports['tapfake_dev'] = port
+        self.firewall._remove_unused_security_group_info()
+        self.assertIn(OTHER_SGID, self.firewall.sg_members)
 
     def test_remove_all_unused_info(self):
         self._setup_fake_firewall_members_and_rules(self.firewall)
