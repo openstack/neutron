@@ -44,6 +44,7 @@ from neutron.common import log as neutron_log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.db import address_scope_db
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
@@ -88,7 +89,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 addr_pair_db.AllowedAddressPairsMixin,
                 vlantransparent_db.Vlantransparent_db_mixin,
                 extradhcpopt_db.ExtraDhcpOptMixin,
-                netmtu_db.Netmtu_db_mixin):
+                netmtu_db.Netmtu_db_mixin,
+                address_scope_db.AddressScopeDbMixin):
 
     """Implement the Neutron L2 abstractions using modules.
 
@@ -112,7 +114,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "dhcp_agent_scheduler",
                                     "multi-provider", "allowed-address-pairs",
                                     "extra_dhcp_opt", "subnet_allocation",
-                                    "net-mtu", "vlan-transparent"]
+                                    "net-mtu", "vlan-transparent",
+                                    "address-scope"]
 
     @property
     def supported_extension_aliases(self):
