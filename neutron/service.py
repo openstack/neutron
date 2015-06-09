@@ -116,10 +116,6 @@ class RpcWorker(object):
         self._servers = []
 
     def start(self):
-        # We may have just forked from parent process.  A quick disposal of the
-        # existing sql connections avoids producing errors later when they are
-        # discovered to be broken.
-        session.get_engine().pool.dispose()
         self._servers = self._plugin.start_rpc_listeners()
 
     def wait(self):
@@ -156,6 +152,10 @@ def serve_rpc():
             rpc.start()
             return rpc
         else:
+            # dispose the whole pool before os.fork, otherwise there will
+            # be shared DB connections in child processes which may cause
+            # DB errors.
+            session.get_engine().pool.dispose()
             launcher = common_service.ProcessLauncher(wait_interval=1.0)
             launcher.launch_service(rpc, workers=cfg.CONF.rpc_workers)
             return launcher
