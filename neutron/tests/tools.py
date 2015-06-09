@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import warnings
+
 import fixtures
 import six
 
@@ -47,6 +49,21 @@ class AttributeMapMemento(fixtures.Fixture):
 
     def restore(self):
         attributes.RESOURCE_ATTRIBUTE_MAP = self.contents_backup
+
+
+class WarningsFixture(fixtures.Fixture):
+    """Filters out warnings during test runs."""
+
+    warning_types = (
+        DeprecationWarning, PendingDeprecationWarning, ImportWarning
+    )
+
+    def setUp(self):
+        super(WarningsFixture, self).setUp()
+        for wtype in self.warning_types:
+            warnings.filterwarnings(
+                "always", category=wtype, module='^neutron\\.')
+        self.addCleanup(warnings.resetwarnings)
 
 
 """setup_mock_calls and verify_mock_calls are convenient methods
