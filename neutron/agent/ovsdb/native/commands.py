@@ -332,6 +332,17 @@ class ListPortsCommand(BaseCommand):
         self.result = [p.name for p in br.ports if p.name != self.bridge]
 
 
+class ListIfacesCommand(BaseCommand):
+    def __init__(self, api, bridge):
+        super(ListIfacesCommand, self).__init__(api)
+        self.bridge = bridge
+
+    def run_idl(self, txn):
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
+        self.result = [i.name for p in br.ports if p.name != self.bridge
+                       for i in p.interfaces]
+
+
 class PortToBridgeCommand(BaseCommand):
     def __init__(self, api, name):
         super(PortToBridgeCommand, self).__init__(api)
@@ -340,12 +351,28 @@ class PortToBridgeCommand(BaseCommand):
     def run_idl(self, txn):
         # TODO(twilson) This is expensive!
         # This traversal of all ports could be eliminated by caching the bridge
-        # name on the Port's (or Interface's for iface_to_br) external_id field
+        # name on the Port's external_id field
         # In fact, if we did that, the only place that uses to_br functions
         # could just add the external_id field to the conditions passed to find
         port = idlutils.row_by_value(self.api.idl, 'Port', 'name', self.name)
         bridges = self.api._tables['Bridge'].rows.values()
         self.result = next(br.name for br in bridges if port in br.ports)
+
+
+class InterfaceToBridgeCommand(BaseCommand):
+    def __init__(self, api, name):
+        super(InterfaceToBridgeCommand, self).__init__(api)
+        self.name = name
+
+    def run_idl(self, txn):
+        interface = idlutils.row_by_value(self.api.idl, 'Interface', 'name',
+                                          self.name)
+        ports = self.api._tables['Port'].rows.values()
+        pname = next(
+                port for port in ports if interface in port.interfaces)
+
+        bridges = self.api._tables['Bridge'].rows.values()
+        self.result = next(br.name for br in bridges if pname in br.ports)
 
 
 class DbListCommand(BaseCommand):
