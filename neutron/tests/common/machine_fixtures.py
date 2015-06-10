@@ -12,39 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-
 import fixtures
-import netaddr
 
 from neutron.agent.linux import ip_lib
 from neutron.tests.common import net_helpers
-from neutron.tests import tools
-
-
-class Pinger(object):
-    def __init__(self, namespace, timeout=1, max_attempts=1):
-        self.namespace = namespace
-        self._timeout = timeout
-        self._max_attempts = max_attempts
-
-    def _ping_destination(self, dest_address):
-        ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        ipversion = netaddr.IPAddress(dest_address).version
-        ping_command = 'ping' if ipversion == 4 else 'ping6'
-        ns_ip_wrapper.netns.execute([ping_command, '-c', self._max_attempts,
-                                     '-W', self._timeout, dest_address])
-
-    def assert_ping(self, dst_ip):
-        self._ping_destination(dst_ip)
-
-    def assert_no_ping(self, dst_ip):
-        try:
-            self._ping_destination(dst_ip)
-            tools.fail("destination ip %(dst_ip)s is replying to ping "
-                       "from namespace %(ns)s, but it shouldn't" %
-                       {'ns': self.namespace, 'dst_ip': dst_ip})
-        except RuntimeError:
-            pass
 
 
 class FakeMachine(fixtures.Fixture):
@@ -89,12 +60,10 @@ class FakeMachine(fixtures.Fixture):
         return ns_ip_wrapper.netns.execute(*args, **kwargs)
 
     def assert_ping(self, dst_ip):
-        pinger = Pinger(self.namespace)
-        pinger.assert_ping(dst_ip)
+        net_helpers.assert_ping(self.namespace, dst_ip)
 
     def assert_no_ping(self, dst_ip):
-        pinger = Pinger(self.namespace)
-        pinger.assert_no_ping(dst_ip)
+        net_helpers.assert_no_ping(self.namespace, dst_ip)
 
 
 class PeerMachines(fixtures.Fixture):
