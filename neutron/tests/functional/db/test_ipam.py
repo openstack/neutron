@@ -26,6 +26,7 @@ from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.tests import base
+from neutron.tests.common import base as common_base
 
 
 def get_admin_test_context(db_url):
@@ -205,7 +206,7 @@ class IpamTestCase(object):
             ip_avail_ranges_expected)
 
 
-class TestIpamMySql(test_base.MySQLOpportunisticTestCase, base.BaseTestCase,
+class TestIpamMySql(common_base.MySQLTestCase, base.BaseTestCase,
                     IpamTestCase):
 
     def setUp(self):
