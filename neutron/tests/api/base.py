@@ -545,3 +545,41 @@ class BaseAdminNetworkTest(BaseNetworkTest):
         service_profile = body['service_profile']
         cls.service_profiles.append(service_profile)
         return service_profile
+
+    @classmethod
+    def get_unused_ip(cls, net_id):
+        """Get an unused ip address in a allocaion pool of net"""
+        body = cls.admin_client.list_ports(network_id=net_id)
+        ports = body['ports']
+        used_ips = []
+        for port in ports:
+            used_ips.extend(
+                [fixed_ip['ip_address'] for fixed_ip in port['fixed_ips']])
+        body = cls.admin_client.list_subnets(network_id=net_id)
+        subnets = body['subnets']
+
+        for subnet in subnets:
+            cidr = subnet['cidr']
+            allocation_pools = subnet['allocation_pools']
+            iterators = []
+            if allocation_pools:
+                for allocation_pool in allocation_pools:
+                    iterators.append(netaddr.iter_iprange(
+                        allocation_pool['start'], allocation_pool['end']))
+            else:
+                net = netaddr.IPNetwork(cidr)
+
+                def _iterip():
+                    for ip in net:
+                        if ip not in (net.network, net.broadcast):
+                            yield ip
+                iterators.append(_iterip)
+
+            for iterator in iterators:
+                for ip in iterator:
+                    if str(ip) not in used_ips:
+                        return str(ip)
+
+        message = (
+            "net(%s) has no usable IP address in allocation pools" % net_id)
+        raise exceptions.InvalidConfiguration(message)

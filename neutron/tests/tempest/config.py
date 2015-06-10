@@ -480,6 +480,10 @@ NetworkFeaturesGroup = [
                      "the extended IPv6 attributes ipv6_ra_mode "
                      "and ipv6_address_mode"
                 ),
+    cfg.BoolOpt('specify_floating_ip_address_available',
+                default=True,
+                help='Allow passing an IP Address of the floating ip when '
+                     'creating the floating ip'),
 ]
 
 messaging_group = cfg.OptGroup(name='messaging',
