@@ -562,36 +562,6 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_enforce_tenant_id_check_invalid_parent_resource_raises(self):
         self._test_enforce_tenant_id_raises('tenant_id:%(foobaz_tenant_id)s')
 
-    def _test_set_rules_with_deprecated_policy(self, input_rules,
-                                               expected_rules):
-        policy.set_rules(input_rules.copy())
-        # verify deprecated policy has been removed
-        for pol in input_rules.keys():
-            self.assertNotIn(pol, policy._ENFORCER.rules)
-        # verify deprecated policy was correctly translated. Iterate
-        # over items for compatibility with unittest2 in python 2.6
-        for rule in expected_rules:
-            self.assertIn(rule, policy._ENFORCER.rules)
-            self.assertEqual(str(policy._ENFORCER.rules[rule]),
-                             expected_rules[rule])
-
-    def test_set_rules_with_deprecated_view_policy(self):
-        self._test_set_rules_with_deprecated_policy(
-            {'extension:router:view': 'rule:admin_or_owner'},
-            {'get_network:router:external': 'rule:admin_or_owner'})
-
-    def test_set_rules_with_deprecated_set_policy(self):
-        expected_policies = ['create_network:provider:network_type',
-                             'create_network:provider:physical_network',
-                             'create_network:provider:segmentation_id',
-                             'update_network:provider:network_type',
-                             'update_network:provider:physical_network',
-                             'update_network:provider:segmentation_id']
-        self._test_set_rules_with_deprecated_policy(
-            {'extension:provider_network:set': 'rule:admin_only'},
-            dict((policy, 'rule:admin_only') for policy in
-                 expected_policies))
-
     def test_process_rules(self):
         action = "create_" + FAKE_RESOURCE_NAME
         # Construct RuleChecks for an action, attribute and subattribute
