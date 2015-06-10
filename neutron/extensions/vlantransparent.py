@@ -15,6 +15,7 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as nexception
 from neutron.i18n import _LI
@@ -45,7 +46,7 @@ def disable_extension_by_config(aliases):
         LOG.info(_LI('Disabled vlantransparent extension.'))
 
 
-class Vlantransparent(object):
+class Vlantransparent(extensions.ExtensionDescriptor):
     """Extension class supporting vlan transparent networks."""
 
     @classmethod
