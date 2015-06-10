@@ -709,8 +709,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         return False
 
     def _check_update_has_security_groups(self, port):
-        """Return True if port has as a security group and False if the
-        security_group field is is_attr_set or [].
+        """Return True if port has security_groups attribute set and
+        its not empty, or False otherwise.
+        This method is called both for port create and port update.
         """
         if (ext_sg.SECURITYGROUPS in port['port'] and
             (attributes.is_attr_set(port['port'][ext_sg.SECURITYGROUPS]) and
