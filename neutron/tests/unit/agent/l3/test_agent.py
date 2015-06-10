@@ -136,8 +136,8 @@ def router_append_subnet(router, count=1, ip_version=4,
     interfaces = copy.deepcopy(router.get(l3_constants.INTERFACE_KEY, []))
     if interface_id:
         try:
-            interface = (i for i in interfaces
-                         if i['id'] == interface_id).next()
+            interface = next(i for i in interfaces
+                         if i['id'] == interface_id)
         except StopIteration:
             raise ValueError("interface_id not found")
 

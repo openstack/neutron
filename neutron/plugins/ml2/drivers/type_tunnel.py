@@ -40,7 +40,7 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
 
     def __init__(self, model):
         super(TunnelTypeDriver, self).__init__(model)
-        self.segmentation_key = iter(self.primary_keys).next()
+        self.segmentation_key = next(iter(self.primary_keys))
 
     @abc.abstractmethod
     def sync_allocations(self):
@@ -203,7 +203,7 @@ class EndpointTunnelTypeDriver(TunnelTypeDriver):
     def __init__(self, segment_model, endpoint_model):
         super(EndpointTunnelTypeDriver, self).__init__(segment_model)
         self.endpoint_model = endpoint_model
-        self.segmentation_key = iter(self.primary_keys).next()
+        self.segmentation_key = next(iter(self.primary_keys))
 
     def get_endpoint_by_host(self, host):
         LOG.debug("get_endpoint_by_host() called for host %s", host)
