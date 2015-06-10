@@ -54,10 +54,6 @@ class Flavor(extensions.ExtensionDescriptor):
         return "Flavor"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/flavor/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-07-20T10:00:00-00:00"
 

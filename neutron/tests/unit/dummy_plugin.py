@@ -64,10 +64,6 @@ class Dummy(object):
         return "Dummy stuff"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/dummy/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-11-20T10:00:00-00:00"
 

@@ -125,10 +125,6 @@ class Portbindings(extensions.ExtensionDescriptor):
         return "Expose port bindings of a virtual port to external application"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/binding/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2014-02-03T10:00:00-00:00"
 

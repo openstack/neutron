@@ -53,10 +53,6 @@ class Lsn(object):
         return "Enables configuration of NSX Logical Services Node."
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/%s/api/v2.0" % EXT_ALIAS
-
-    @classmethod
     def get_updated(cls):
         return "2013-10-05T10:00:00-00:00"
 

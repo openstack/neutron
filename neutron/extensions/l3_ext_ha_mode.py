@@ -83,10 +83,6 @@ class L3_ext_ha_mode(extensions.ExtensionDescriptor):
         return "Add HA capability to routers."
 
     @classmethod
-    def get_namespace(cls):
-        return ""
-
-    @classmethod
     def get_updated(cls):
         return "2014-04-26T00:00:00-00:00"
 

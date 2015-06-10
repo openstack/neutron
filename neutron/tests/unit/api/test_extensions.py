@@ -474,7 +474,7 @@ class ExtensionManagerTest(base.BaseTestCase):
             """Invalid extension.
 
             This Extension doesn't implement extension methods :
-            get_name, get_description, get_namespace and get_updated
+            get_name, get_description and get_updated
             """
             def get_alias(self):
                 return "invalid_extension"
@@ -621,16 +621,12 @@ class ExtensionControllerTest(testlib_api.WebTestCase):
         foxnsox = res_body["extensions"][0]
 
         self.assertEqual(foxnsox["alias"], "FOXNSOX")
-        self.assertEqual(foxnsox["namespace"],
-                         "http://www.fox.in.socks/api/ext/pie/v1.0")
 
     def test_extension_can_be_accessed_by_alias(self):
         response = self.test_app.get("/extensions/FOXNSOX." + self.fmt)
         foxnsox_extension = self.deserialize(response)
         foxnsox_extension = foxnsox_extension['extension']
         self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
-        self.assertEqual(foxnsox_extension["namespace"],
-                         "http://www.fox.in.socks/api/ext/pie/v1.0")
 
     def test_show_returns_not_found_for_non_existent_extension(self):
         response = self.test_app.get("/extensions/non_existent" + self.fmt,

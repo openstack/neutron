@@ -91,13 +91,6 @@ class ExtensionDescriptor(object):
         """
         raise NotImplementedError()
 
-    def get_namespace(self):
-        """The XML namespace for the extension.
-
-        e.g. 'http://www.fox.in.socks/api/ext/pie/v1.0'
-        """
-        raise NotImplementedError()
-
     def get_updated(self):
         """The timestamp when the extension was last updated.
 
@@ -175,18 +168,6 @@ class ExtensionDescriptor(object):
             if extended_attrs:
                 attrs.update(extended_attrs)
 
-    def get_alias_namespace_compatibility_map(self):
-        """Returns mappings between extension aliases and XML namespaces.
-
-        The mappings are XML namespaces that should, for backward compatibility
-        reasons, be added to the XML serialization of extended attributes.
-        This allows an established extended attribute to be provided by
-        another extension than the original one while keeping its old alias
-        in the name.
-        :return: A dictionary of extension_aliases and namespace strings.
-        """
-        return {}
-
 
 class ActionExtensionController(wsgi.Controller):
 
@@ -235,7 +216,6 @@ class ExtensionController(wsgi.Controller):
         ext_data['name'] = ext.get_name()
         ext_data['alias'] = ext.get_alias()
         ext_data['description'] = ext.get_description()
-        ext_data['namespace'] = ext.get_namespace()
         ext_data['updated'] = ext.get_updated()
         ext_data['links'] = []  # TODO(dprince): implement extension links
         return ext_data
@@ -503,7 +483,6 @@ class ExtensionManager(object):
             LOG.debug('Ext name: %s', extension.get_name())
             LOG.debug('Ext alias: %s', extension.get_alias())
             LOG.debug('Ext description: %s', extension.get_description())
-            LOG.debug('Ext namespace: %s', extension.get_namespace())
             LOG.debug('Ext updated: %s', extension.get_updated())
         except AttributeError as ex:
             LOG.exception(_LE("Exception loading extension: %s"), unicode(ex))

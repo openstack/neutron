@@ -39,10 +39,6 @@ class Routerservicetype(object):
         return "Provides router service type"
 
     @classmethod
-    def get_namespace(cls):
-        return ""
-
-    @classmethod
     def get_updated(cls):
         return "2013-01-29T00:00:00-00:00"
 

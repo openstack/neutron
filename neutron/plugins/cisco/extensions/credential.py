@@ -56,11 +56,6 @@ class Credential(extensions.ExtensionDescriptor):
         return "Credential include username and password"
 
     @classmethod
-    def get_namespace(cls):
-        """Returns Extended Resource Namespace."""
-        return "http://docs.ciscocloud.com/api/ext/credential/v2.0"
-
-    @classmethod
     def get_updated(cls):
         """Returns Extended Resource Update Time."""
         return "2011-07-25T13:25:27-06:00"

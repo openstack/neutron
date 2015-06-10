@@ -58,11 +58,6 @@ class Dvr(object):
         return "Enables configuration of Distributed Virtual Routers."
 
     @classmethod
-    def get_namespace(cls):
-        return ("http://docs.openstack.org/ext/"
-                "%s/api/v1.0" % constants.L3_DISTRIBUTED_EXT_ALIAS)
-
-    @classmethod
     def get_updated(cls):
         return "2014-06-1T10:00:00-00:00"
 

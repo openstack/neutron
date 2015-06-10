@@ -54,11 +54,6 @@ class Fake_extension(extensions.ExtensionDescriptor):
         return _("Adds test attributes to core resources.")
 
     @classmethod
-    def get_namespace(cls):
-        return ("http://docs.openstack.org/ext/neutron/ml2/test/"
-                "fake_extension/api/v1.0")
-
-    @classmethod
     def get_updated(cls):
         return "2014-07-16T10:00:00-00:00"
 

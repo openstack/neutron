@@ -55,10 +55,6 @@ class L3_ext_gw_mode(extensions.ExtensionDescriptor):
                 "SNAT should occur on the external gateway")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/ext-gw-mode/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-03-28T10:00:00-00:00"
 
