@@ -299,6 +299,29 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                 'subnet_id': result['subnet_id']})
         return ips
 
+    def _update_ips_for_port(self, context, network_id, original_ips,
+                             new_ips, mac_address, device_owner):
+        """Add or remove IPs from the port."""
+        added = []
+        changes = self._get_changed_ips_for_port(context, original_ips,
+                                                 new_ips, device_owner)
+        # Check if the IP's to add are OK
+        to_add = self._test_fixed_ips_for_port(context, network_id,
+                                               changes.add, device_owner)
+        for ip in changes.remove:
+            LOG.debug("Port update. Hold %s", ip)
+            IpamNonPluggableBackend._delete_ip_allocation(context,
+                                                          network_id,
+                                                          ip['subnet_id'],
+                                                          ip['ip_address'])
+
+        if to_add:
+            LOG.debug("Port update. Adding %s", to_add)
+            added = self._allocate_fixed_ips(context, to_add, mac_address)
+        return self.Changes(add=added,
+                            original=changes.original,
+                            remove=changes.remove)
+
     def _allocate_ips_for_port(self, context, port):
         """Allocate IP addresses for the port.
 

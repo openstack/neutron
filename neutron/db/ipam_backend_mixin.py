@@ -13,11 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
+import collections
 
+import netaddr
+from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
+from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
 from neutron.i18n import _LI
@@ -28,6 +32,9 @@ LOG = logging.getLogger(__name__)
 class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     """Contains IPAM specific code which is common for both backends.
     """
+
+    # Tracks changes in ip allocation for port using namedtuple
+    Changes = collections.namedtuple('Changes', 'add original remove')
 
     def _update_subnet_host_routes(self, context, id, s):
 
@@ -157,3 +164,36 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 raise n_exc.GatewayConflictWithAllocationPools(
                     pool=pool_range,
                     ip_address=gateway_ip)
+
+    def _get_changed_ips_for_port(self, context, original_ips,
+                                  new_ips, device_owner):
+        """Calculate changes in IPs for the port."""
+        # the new_ips contain all of the fixed_ips that are to be updated
+        if len(new_ips) > cfg.CONF.max_fixed_ips_per_port:
+            msg = _('Exceeded maximum amount of fixed ips per port')
+            raise n_exc.InvalidInput(error_message=msg)
+
+        # These ips are still on the port and haven't been removed
+        prev_ips = []
+
+        # Remove all of the intersecting elements
+        for original_ip in original_ips[:]:
+            for new_ip in new_ips[:]:
+                if ('ip_address' in new_ip and
+                    original_ip['ip_address'] == new_ip['ip_address']):
+                    original_ips.remove(original_ip)
+                    new_ips.remove(new_ip)
+                    prev_ips.append(original_ip)
+                    break
+            else:
+                # For ports that are not router ports, retain any automatic
+                # (non-optional, e.g. IPv6 SLAAC) addresses.
+                if device_owner not in constants.ROUTER_INTERFACE_OWNERS:
+                    subnet = self._get_subnet(context,
+                                              original_ip['subnet_id'])
+                    if (ipv6_utils.is_auto_address_subnet(subnet)):
+                        original_ips.remove(original_ip)
+                        prev_ips.append(original_ip)
+        return self.Changes(add=new_ips,
+                            original=prev_ips,
+                            remove=original_ips)
