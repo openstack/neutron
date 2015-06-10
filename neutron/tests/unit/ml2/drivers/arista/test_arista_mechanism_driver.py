@@ -220,24 +220,6 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
     def test_no_exception_on_correct_configuration(self):
         self.assertIsNotNone(self.drv)
 
-    def test_sync_start(self):
-        self.drv.sync_start()
-        cmds = ['enable', 'configure', 'cvx', 'service openstack',
-                'region RegionOne',
-                'sync start',
-                'exit', 'exit', 'exit']
-
-        self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
-
-    def test_sync_end(self):
-        self.drv.sync_end()
-        cmds = ['enable', 'configure', 'cvx', 'service openstack',
-                'region RegionOne',
-                'sync end',
-                'exit', 'exit', 'exit']
-
-        self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
-
     def test_plug_host_into_network(self):
         tenant_id = 'ten-1'
         vm_id = 'vm-1'
@@ -311,7 +293,8 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         network = {
             'network_id': 'net-id',
             'network_name': 'net-name',
-            'segmentation_id': 123}
+            'segmentation_id': 123,
+        }
         self.drv.create_network(tenant_id, network)
         cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
@@ -326,7 +309,8 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         networks = [{
             'network_id': 'net-id-%d' % net_id,
             'network_name': 'net-name-%d' % net_id,
-            'segmentation_id': net_id} for net_id in range(1, num_networks)
+            'segmentation_id': net_id,
+        } for net_id in range(1, num_networks)
         ]
 
         self.drv.create_network_bulk(tenant_id, networks)
@@ -769,3 +753,234 @@ class FakePortContext(object):
     @property
     def original_host(self):
         return self._original_port.get(portbindings.HOST_ID)
+
+
+class SyncServiceTest(base.BaseTestCase):
+    """Test cases for the sync service."""
+
+    def setUp(self):
+        super(SyncServiceTest, self).setUp()
+        self.rpc = mock.MagicMock()
+        ndb = db.NeutronNets()
+        self.sync_service = arista.SyncService(self.rpc, ndb)
+        self.sync_service._force_sync = False
+
+    def test_region_in_sync(self):
+        """Tests whether the region_in_sync() behaves as expected."""
+        region_updated_time = {
+            'regionName': 'RegionOne',
+            'regionTimestamp': '12345'
+        }
+        self.rpc.get_region_updated_time.return_value = region_updated_time
+        self.sync_service._region_updated_time = None
+        assert not self.sync_service._region_in_sync()
+        self.sync_service._region_updated_time = region_updated_time
+        assert self.sync_service._region_in_sync()
+
+    def test_synchronize_required(self):
+        """Tests whether synchronize() sends the right commands.
+
+           This test verifies a scenario when the sync is required.
+        """
+        region_updated_time = {
+            'regionName': 'RegionOne',
+            'regionTimestamp': '12345'
+        }
+        self.rpc.get_region_updated_time.return_value = region_updated_time
+        self.sync_service._region_updated_time = {
+            'regionName': 'RegionOne',
+            'regionTimestamp': '0',
+        }
+
+        tenant_id = 'tenant-1'
+        network_id = 'net-1'
+        segmentation_id = 42
+        db.remember_tenant(tenant_id)
+        db.remember_network(tenant_id, network_id, segmentation_id)
+
+        self.rpc.get_tenants.return_value = {}
+
+        self.sync_service.do_synchronize()
+
+        expected_calls = [
+            mock.call.get_region_updated_time(),
+            mock.call._run_openstack_cmds(['sync start']),
+            mock.call.register_with_eos(),
+            mock.call.get_tenants(),
+            mock.call.create_network_bulk(
+                tenant_id,
+                [{'network_id': network_id,
+                  'segmentation_id': segmentation_id,
+                  'network_name': ''}]),
+            mock.call._run_openstack_cmds(['sync end']),
+            mock.call.get_region_updated_time()
+        ]
+        assert self.rpc.mock_calls == expected_calls
+
+        db.forget_network(tenant_id, network_id)
+        db.forget_tenant(tenant_id)
+
+    def test_synchronize_not_required(self):
+        """Tests whether synchronize() sends the right commands.
+
+           This test verifies a scenario when the sync is not required.
+        """
+        region_updated_time = {
+            'regionName': 'RegionOne',
+            'regionTimestamp': '424242'
+        }
+        self.rpc.get_region_updated_time.return_value = region_updated_time
+        self.sync_service._region_updated_time = {
+            'regionName': 'RegionOne',
+            'regionTimestamp': '424242',
+        }
+
+        self.sync_service.do_synchronize()
+
+        # If the timestamps do match, then the sync should not be executed.
+        expected_calls = [
+            mock.call.get_region_updated_time(),
+            mock.call._run_openstack_cmds(['sync end']),
+        ]
+        assert self.rpc.mock_calls == expected_calls
+
+    def test_synchronize_one_network(self):
+        """Test to ensure that only the required resources are sent to EOS."""
+
+        # Store two tenants in a db and a single tenant in EOS.
+        # The sync should send details of the second tenant to EOS
+        tenant_1_id = 'tenant-1'
+        tenant_1_net_1_id = 'ten-1-net-1'
+        tenant_1_net_1_seg_id = 11
+        db.remember_tenant(tenant_1_id)
+        db.remember_network(tenant_1_id, tenant_1_net_1_id,
+                            tenant_1_net_1_seg_id)
+
+        tenant_2_id = 'tenant-2'
+        tenant_2_net_1_id = 'ten-2-net-1'
+        tenant_2_net_1_seg_id = 21
+        db.remember_tenant(tenant_2_id)
+        db.remember_network(tenant_2_id, tenant_2_net_1_id,
+                            tenant_2_net_1_seg_id)
+
+        self.rpc.get_tenants.return_value = {
+            tenant_1_id: {
+                'tenantVmInstances': {},
+                'tenantNetworks': {
+                    tenant_1_net_1_id: {
+                        'networkId': tenant_1_net_1_id,
+                        'networkName': 'Net1',
+                        'segmenationType': 'vlan',
+                        'segmentationTypeId': tenant_1_net_1_seg_id,
+                    }
+                }
+            }
+        }
+
+        self.sync_service.do_synchronize()
+
+        expected_calls = [
+            mock.call.get_region_updated_time(),
+            mock.call._run_openstack_cmds(['sync start']),
+            mock.call.register_with_eos(),
+            mock.call.get_tenants(),
+            mock.call.create_network_bulk(
+                tenant_2_id,
+                [{'network_id': tenant_2_net_1_id,
+                  'segmentation_id': tenant_2_net_1_seg_id,
+                  'network_name': ''}]),
+            mock.call._run_openstack_cmds(['sync end']),
+            mock.call.get_region_updated_time()
+        ]
+
+        self.assertTrue(self.rpc.mock_calls == expected_calls,
+                        "Seen: %s\nExpected: %s" % (
+                            self.rpc.mock_calls,
+                            expected_calls,
+                        )
+                        )
+
+        db.forget_network(tenant_1_id, tenant_1_net_1_id)
+        db.forget_network(tenant_2_id, tenant_2_net_1_id)
+        db.forget_tenant(tenant_1_id)
+        db.forget_tenant(tenant_2_id)
+
+    def test_synchronize_all_networks(self):
+        """Test to ensure that only the required resources are sent to EOS."""
+
+        # Store two tenants in a db and none on EOS.
+        # The sync should send details of all tenants to EOS
+        tenant_1_id = u'tenant-1'
+        tenant_1_net_1_id = u'ten-1-net-1'
+        tenant_1_net_1_seg_id = 11
+        db.remember_tenant(tenant_1_id)
+        db.remember_network(tenant_1_id, tenant_1_net_1_id,
+                            tenant_1_net_1_seg_id)
+
+        tenant_2_id = u'tenant-2'
+        tenant_2_net_1_id = u'ten-2-net-1'
+        tenant_2_net_1_seg_id = 21
+        db.remember_tenant(tenant_2_id)
+        db.remember_network(tenant_2_id, tenant_2_net_1_id,
+                            tenant_2_net_1_seg_id)
+
+        self.rpc.get_tenants.return_value = {}
+
+        self.sync_service.do_synchronize()
+
+        expected_calls = [
+            mock.call.get_region_updated_time(),
+            mock.call._run_openstack_cmds(['sync start']),
+            mock.call.register_with_eos(),
+            mock.call.get_tenants(),
+            mock.call.create_network_bulk(
+                tenant_1_id,
+                [{'network_id': tenant_1_net_1_id,
+                  'segmentation_id': tenant_1_net_1_seg_id,
+                  'network_name': ''}]),
+            mock.call.create_network_bulk(
+                tenant_2_id,
+                [{'network_id': tenant_2_net_1_id,
+                  'segmentation_id': tenant_2_net_1_seg_id,
+                  'network_name': ''}]),
+            mock.call._run_openstack_cmds(['sync end']),
+            mock.call.get_region_updated_time()
+        ]
+
+        # The create_network_bulk() can be called in different order. So split
+        # it up. The first part checks if the initial set of methods are
+        # invoked.
+        self.assertTrue(self.rpc.mock_calls[:4] == expected_calls[:4],
+                        "Seen: %s\nExpected: %s" % (
+                            self.rpc.mock_calls,
+                            expected_calls,
+                        )
+                        )
+        # Check if tenant 1 networks are created. It must be one of the two
+        # methods.
+        self.assertTrue(self.rpc.mock_calls[4] in expected_calls[4:6],
+                        "Seen: %s\nExpected: %s" % (
+                            self.rpc.mock_calls,
+                            expected_calls,
+                        )
+                        )
+        # Check if tenant 2 networks are created. It must be one of the two
+        # methods.
+        self.assertTrue(self.rpc.mock_calls[5] in expected_calls[4:6],
+                        "Seen: %s\nExpected: %s" % (
+                            self.rpc.mock_calls,
+                            expected_calls,
+                        )
+                        )
+        # Check if the sync end methods are invoked.
+        self.assertTrue(self.rpc.mock_calls[6:8] == expected_calls[6:8],
+                        "Seen: %s\nExpected: %s" % (
+                            self.rpc.mock_calls,
+                            expected_calls,
+                        )
+                        )
+
+        db.forget_network(tenant_1_id, tenant_1_net_1_id)
+        db.forget_network(tenant_2_id, tenant_2_net_1_id)
+        db.forget_tenant(tenant_1_id)
+        db.forget_tenant(tenant_2_id)
