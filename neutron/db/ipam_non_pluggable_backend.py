@@ -182,6 +182,25 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             return True
         return False
 
+    def _update_port_with_ips(self, context, db_port, new_port, new_mac):
+        changes = self.Changes(add=[], original=[], remove=[])
+        # Check if the IPs need to be updated
+        network_id = db_port['network_id']
+        if 'fixed_ips' in new_port:
+            original = self._make_port_dict(db_port, process_extensions=False)
+            changes = self._update_ips_for_port(
+                context, network_id,
+                original["fixed_ips"], new_port['fixed_ips'],
+                original['mac_address'], db_port['device_owner'])
+
+            # Update ips if necessary
+            for ip in changes.add:
+                IpamNonPluggableBackend._store_ip_allocation(
+                    context, ip['ip_address'], network_id,
+                    ip['subnet_id'], db_port.id)
+        self._update_db_port(context, db_port, new_port, network_id, new_mac)
+        return changes
+
     def _test_fixed_ips_for_port(self, context, network_id, fixed_ips,
                                  device_owner):
         """Test fixed IPs for port.
