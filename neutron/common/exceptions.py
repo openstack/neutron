@@ -18,6 +18,7 @@ Neutron base exception handling.
 """
 
 from oslo_utils import excutils
+import six
 
 
 class NeutronException(Exception):
@@ -40,8 +41,9 @@ class NeutronException(Exception):
                     # at least get the core message out if something happened
                     super(NeutronException, self).__init__(self.message)
 
-    def __unicode__(self):
-        return unicode(self.msg)
+    if six.PY2:
+        def __unicode__(self):
+            return unicode(self.msg)
 
     def use_fatal_exceptions(self):
         return False
