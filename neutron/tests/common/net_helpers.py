@@ -81,6 +81,31 @@ def assert_no_ping(src_namespace, dst_ip, timeout=1, count=1):
                    {'ns': src_namespace, 'destination': dst_ip})
 
 
+def assert_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
+    """Send arp request using arping executable.
+
+    NOTE: ARP protocol is used in IPv4 only. IPv6 uses Neighbour Discovery
+    Protocol instead.
+    """
+    ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
+    arping_cmd = ['arping', '-c', count, '-w', timeout]
+    if source:
+        arping_cmd.extend(['-s', source])
+    arping_cmd.append(dst_ip)
+    ns_ip_wrapper.netns.execute(arping_cmd)
+
+
+def assert_no_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
+    try:
+        assert_arping(src_namespace, dst_ip, source, timeout, count)
+    except RuntimeError:
+        pass
+    else:
+        tools.fail("destination ip %(destination)s is replying to arp from "
+                   "namespace %(ns)s, but it shouldn't" %
+                   {'ns': src_namespace, 'destination': dst_ip})
+
+
 class NamespaceFixture(fixtures.Fixture):
     """Create a namespace.
 
