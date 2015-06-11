@@ -35,7 +35,8 @@ class ResourceIdentifierHook(hooks.PecanHook):
             url_type = state.request.path.split('/')[2].rsplit('.', 1)[0]
         except IndexError:
             return
-
+        if url_type == 'extensions':
+            return
         for plural, single in attributes.PLURALS.items():
             if plural == url_type:
                 state.request.resource_type = single

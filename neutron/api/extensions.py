@@ -208,7 +208,8 @@ class ExtensionController(wsgi.Controller):
     def __init__(self, extension_manager):
         self.extension_manager = extension_manager
 
-    def _translate(self, ext):
+    @staticmethod
+    def _translate(ext):
         ext_data = {}
         ext_data['name'] = ext.get_name()
         ext_data['alias'] = ext.get_alias()

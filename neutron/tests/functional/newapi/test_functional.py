@@ -91,6 +91,14 @@ class TestV2Controller(PecanFunctionalTest):
     def test_plugin_initialized(self):
         self.assertIsNotNone(manager.NeutronManager._instance)
 
+    def test_get_extensions(self):
+        response = self.app.get('/v2.0/extensions.json')
+        self.assertEqual(response.status_int, 200)
+
+    def test_get_specific_extension(self):
+        response = self.app.get('/v2.0/extensions/allowed-address-pairs.json')
+        self.assertEqual(response.status_int, 200)
+
 
 class TestErrors(PecanFunctionalTest):
 

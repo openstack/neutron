@@ -16,6 +16,8 @@
 
 import pecan
 
+from neutron.api import extensions
+
 
 def expose(*args, **kwargs):
     """Helper function so we don't have to specify json for everything."""
@@ -48,7 +50,39 @@ class V2Controller(object):
 
     @expose()
     def _lookup(self, endpoint, *remainder):
+        if endpoint == 'extensions':
+            return ExtensionsController(), remainder
         return GeneralController(endpoint), remainder
+
+
+class ExtensionsController(object):
+
+    @expose()
+    def _lookup(self, alias, *remainder):
+        return ExtensionController(alias), remainder
+
+    @expose()
+    def index(self):
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        exts = [extensions.ExtensionController._translate(ext)
+                for ext in ext_mgr.extensions.values()]
+        return {'extensions': exts}
+
+
+class ExtensionController(object):
+
+    def __init__(self, alias):
+        self.alias = alias
+
+    @expose()
+    def index(self):
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        ext = ext_mgr.extensions.get(self.alias, None)
+        if not ext:
+            pecan.abort(
+                404, detail=_("Extension with alias %s "
+                              "does not exist") % self.alias)
+        return {'extension': extensions.ExtensionController._translate(ext)}
 
 
 class GeneralController(object):
