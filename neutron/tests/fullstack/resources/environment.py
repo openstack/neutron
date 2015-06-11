@@ -34,8 +34,9 @@ class EnvironmentDescription(object):
 
     Does the setup, as a whole, support tunneling? How about l2pop?
     """
-    def __init__(self, network_type='vxlan'):
+    def __init__(self, network_type='vxlan', l2_pop=True):
         self.network_type = network_type
+        self.l2_pop = l2_pop
 
     @property
     def tunneling_enabled(self):

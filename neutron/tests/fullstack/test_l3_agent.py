@@ -29,7 +29,8 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
     def setUp(self):
         host_descriptions = [environment.HostDescription(l3_agent=True)]
         env = environment.Environment(
-            environment.EnvironmentDescription(network_type='vlan'),
+            environment.EnvironmentDescription(
+                network_type='vlan', l2_pop=False),
             host_descriptions)
         super(TestLegacyL3Agent, self).setUp(env)
 
@@ -61,7 +62,8 @@ class TestHAL3Agent(base.BaseFullStackTestCase):
         host_descriptions = [
             environment.HostDescription(l3_agent=True) for _ in range(2)]
         env = environment.Environment(
-            environment.EnvironmentDescription(network_type='vxlan'),
+            environment.EnvironmentDescription(
+                network_type='vxlan', l2_pop=True),
             host_descriptions)
         super(TestHAL3Agent, self).setUp(env)
 
