@@ -15,10 +15,13 @@
 
 import os
 
+from oslo_config import cfg
 from oslo_utils import uuidutils
 from pecan import set_config
 from pecan.testing import load_test_app
+import testtools
 
+from neutron.common import exceptions as n_exc
 from neutron.tests.unit import testlib_api
 
 
@@ -28,10 +31,17 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
         self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
         super(PecanFunctionalTest, self).setUp()
         self.addCleanup(set_config, {}, overwrite=True)
+        self.set_config_overrides()
+        self.setup_app()
+
+    def setup_app(self):
         self.app = load_test_app(os.path.join(
             os.path.dirname(__file__),
             'config.py'
         ))
+
+    def set_config_overrides(self):
+        cfg.CONF.set_override('auth_strategy', 'noauth')
 
 
 class TestV2Controller(PecanFunctionalTest):
@@ -76,3 +86,25 @@ class TestRequestID(PecanFunctionalTest):
             response.headers['x-openstack-request-id'].startswith('req-'))
         id_part = response.headers['x-openstack-request-id'].split('req-')[1]
         self.assertTrue(uuidutils.is_uuid_like(id_part))
+
+
+class TestKeystoneAuth(PecanFunctionalTest):
+
+    def set_config_overrides(self):
+        # default auth strategy is keystone so we pass
+        pass
+
+    def test_auth_enforced(self):
+        response = self.app.get('/', expect_errors=True)
+        self.assertEqual(response.status_int, 401)
+
+
+class TestInvalidAuth(PecanFunctionalTest):
+    def setup_app(self):
+        # disable normal app setup since it will fail
+        pass
+
+    def test_invalid_auth_strategy(self):
+        cfg.CONF.set_override('auth_strategy', 'badvalue')
+        with testtools.ExpectedException(n_exc.InvalidConfigurationOption):
+            load_test_app(os.path.join(os.path.dirname(__file__), 'config.py'))

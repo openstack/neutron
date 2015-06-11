@@ -13,9 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from keystonemiddleware import auth_token
 from oslo_config import cfg
 from oslo_middleware import request_id
 import pecan
+
+from neutron.common import exceptions as n_exc
+
 
 CONF = cfg.CONF
 CONF.import_opt('bind_host', 'neutron.common.config')
@@ -52,4 +56,11 @@ def setup_app(*args, **kwargs):
 
 def _wrap_app(app):
     app = request_id.RequestId(app)
+    if cfg.CONF.auth_strategy == 'noauth':
+        pass
+    elif cfg.CONF.auth_strategy == 'keystone':
+        app = auth_token.AuthProtocol(app, {})
+    else:
+        raise n_exc.InvalidConfigurationOption(
+            opt_name='auth_strategy', opt_value=cfg.CONF.auth_strategy)
     return app
