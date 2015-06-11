@@ -78,7 +78,7 @@ class TestErrors(PecanFunctionalTest):
         self.assertEqual(response.status_int, 404)
 
     def test_bad_method(self):
-        response = self.app.patch('/v2.0/',
+        response = self.app.patch('/v2.0/ports/44.json',
                                   expect_errors=True)
         self.assertEqual(response.status_int, 405)
 
@@ -136,19 +136,46 @@ class TestExceptionTranslationHook(PecanFunctionalTest):
             self.assertEqual(response.status_int, 500)
 
 
-class TestContextHook(PecanFunctionalTest):
+class TestRequestPopulatingHooks(PecanFunctionalTest):
 
-    # TODO(kevinbenton): add tests for X-Roles etc
+    def setUp(self):
+        super(TestRequestPopulatingHooks, self).setUp()
 
-    def test_context_set_in_request(self):
-        request_stash = []
         # request.context is thread-local storage so it has to be accessed by
         # the controller. We can capture it into a list here to assert on after
         # the request finishes.
-        with mock.patch(
+
+        def capture_request_details(*args, **kwargs):
+            self.req_stash = {
+                'context': request.context,
+                'resource_type': request.resource_type,
+                'plugin': request.plugin
+            }
+        mock.patch(
             'neutron.newapi.controllers.root.GeneralController.get',
-            side_effect=lambda *x, **y: request_stash.append(request.context)
-        ):
-            self.app.get('/v2.0/ports.json',
-                         headers={'X-Tenant-Id': 'tenant_id'})
-            self.assertEqual('tenant_id', request_stash[0].tenant_id)
+            side_effect=capture_request_details
+        ).start()
+
+    # TODO(kevinbenton): add context tests for X-Roles etc
+
+    def test_context_set_in_request(self):
+        self.app.get('/v2.0/ports.json',
+                     headers={'X-Tenant-Id': 'tenant_id'})
+        self.assertEqual('tenant_id', self.req_stash['context'].tenant_id)
+
+    def test_core_resource_identified(self):
+        self.app.get('/v2.0/ports.json')
+        self.assertEqual('port', self.req_stash['resource_type'])
+        # make sure the core plugin was identified as the handler for ports
+        self.assertEqual(manager.NeutronManager.get_plugin(),
+                         self.req_stash['plugin'])
+
+    def test_service_plugin_identified(self):
+        # TODO(kevinbenton): fix the unit test setup to include an l3 plugin
+        self.skipTest("A dummy l3 plugin needs to be setup")
+        self.app.get('/v2.0/routers.json')
+        self.assertEqual('router', self.req_stash['resource_type'])
+        # make sure the core plugin was identified as the handler for ports
+        self.assertEqual(
+            manager.NeutronManager.get_service_plugins()['L3_ROUTER_NAT'],
+            self.req_stash['plugin'])

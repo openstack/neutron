@@ -14,8 +14,10 @@
 #    under the License.
 
 from neutron.newapi.hooks import context
+from neutron.newapi.hooks import resource_identifier
 from neutron.newapi.hooks import translation
 
 
 ExceptionTranslationHook = translation.ExceptionTranslationHook
 ContextHook = context.ContextHook
+ResourceIdentifierHook = resource_identifier.ResourceIdentifierHook
