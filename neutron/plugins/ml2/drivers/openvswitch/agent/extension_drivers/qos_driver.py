@@ -17,7 +17,7 @@ from oslo_log import log as logging
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l2.extensions import qos_agent
-from neutron.extensions import qos
+from neutron.services.qos import qos_consts
 
 LOG = logging.getLogger(__name__)
 
@@ -33,11 +33,11 @@ class QosOVSAgentDriver(qos_agent.QosAgentDriver):
         self.handlers = {}
 
     def initialize(self):
-        self.handlers[('update', qos.RULE_TYPE_BANDWIDTH_LIMIT)] = (
+        self.handlers[('update', qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)] = (
             self._update_bw_limit_rule)
-        self.handlers[('create', qos.RULE_TYPE_BANDWIDTH_LIMIT)] = (
+        self.handlers[('create', qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)] = (
             self._update_bw_limit_rule)
-        self.handlers[('delete', qos.RULE_TYPE_BANDWIDTH_LIMIT)] = (
+        self.handlers[('delete', qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)] = (
             self._delete_bw_limit_rule)
 
         self.br_int = ovs_lib.OVSBridge(self.br_int_name)

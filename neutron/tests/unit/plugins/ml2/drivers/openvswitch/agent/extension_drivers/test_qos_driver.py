@@ -12,9 +12,9 @@
 
 import mock
 
-from neutron.extensions import qos
 from neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers import (
     qos_driver)
+from neutron.services.qos import qos_consts
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent import (
     ovs_test_base)
 
@@ -37,7 +37,7 @@ class OVSQoSAgentDriverBwLimitRule(ovs_test_base.OVSAgentConfigTestBase):
         self.port = self._create_fake_port()
 
     def _create_bw_limit_rule(self):
-        return {'type': qos.RULE_TYPE_BANDWIDTH_LIMIT,
+        return {'type': qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
                 'max_kbps': '200',
                 'max_burst_kbps': '2'}
 

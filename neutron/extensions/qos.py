@@ -28,9 +28,6 @@ from neutron.services import service_base
 
 QOS_PREFIX = "/qos"
 
-RULE_TYPE_BANDWIDTH_LIMIT = 'bandwidth_limit'
-VALID_RULE_TYPES = [RULE_TYPE_BANDWIDTH_LIMIT]
-
 # Attribute Map
 QOS_RULE_COMMON_FIELDS = {
     'id': {'allow_post': False, 'allow_put': False,
