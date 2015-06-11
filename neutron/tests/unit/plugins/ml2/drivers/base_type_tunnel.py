@@ -369,20 +369,20 @@ class TunnelRpcCallbackTestMixin(object):
                   'host': HOST_ONE}
         self._test_tunnel_sync(kwargs, True)
 
-    def test_tunnel_sync_called_with_used_tunnel_ip_case_one(self):
+    def test_tunnel_sync_called_with_used_tunnel_ip_host_roaming(self):
         self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
 
         kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
                   'host': HOST_TWO}
-        self._test_tunnel_sync_raises(kwargs)
+        self._test_tunnel_sync(kwargs, False)
 
-    def test_tunnel_sync_called_with_used_tunnel_ip_case_two(self):
+    def test_tunnel_sync_called_with_used_tunnel_ip_roaming_case_two(self):
         self.driver.add_endpoint(TUNNEL_IP_ONE, None)
         self.driver.add_endpoint(TUNNEL_IP_TWO, HOST_TWO)
 
         kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
                   'host': HOST_TWO}
-        self._test_tunnel_sync_raises(kwargs)
+        self._test_tunnel_sync(kwargs, False)
 
     def test_tunnel_sync_called_without_tunnel_ip(self):
         kwargs = {'tunnel_type': self.TYPE, 'host': None}
