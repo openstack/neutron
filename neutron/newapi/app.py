@@ -45,6 +45,7 @@ def setup_app(*args, **kwargs):
         hooks.ExceptionTranslationHook(),  # priority 100
         hooks.ContextHook(),  # priority 95
         hooks.ResourceIdentifierHook(),  # priority 95
+        hooks.AttributePopulationHook(),  # priority 120 (depends on 2 above)
     ]
 
     app = pecan.make_app(

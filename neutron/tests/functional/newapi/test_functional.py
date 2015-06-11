@@ -23,7 +23,9 @@ from pecan import set_config
 from pecan.testing import load_test_app
 import testtools
 
+from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
+from neutron import context
 from neutron import manager
 from neutron.tests.unit import testlib_api
 
@@ -42,6 +44,21 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
             os.path.dirname(__file__),
             'config.py'
         ))
+        self._gen_port()
+
+    def _gen_port(self):
+        pl = manager.NeutronManager.get_plugin()
+        network_id = pl.create_network(context.get_admin_context(), {
+            'network':
+            {'name': 'pecannet', 'tenant_id': 'tenid', 'shared': False,
+             'admin_state_up': True, 'status': 'ACTIVE'}})['id']
+        self.port = pl.create_port(context.get_admin_context(), {
+            'port':
+            {'tenant_id': 'tenid', 'network_id': network_id,
+             'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+             'mac_address': '00:11:22:33:44:55',
+             'admin_state_up': True, 'device_id': 'FF',
+             'device_owner': 'pecan', 'name': 'pecan'}})
 
     def set_config_overrides(self):
         cfg.CONF.set_override('auth_strategy', 'noauth')
@@ -55,16 +72,20 @@ class TestV2Controller(PecanFunctionalTest):
 
     def test_post(self):
         response = self.app.post_json('/v2.0/ports.json',
-                                      params={'port': {'name': 'test'}})
+            params={'port': {'network_id': self.port['network_id'],
+                             'admin_state_up': True,
+                             'tenant_id': 'tenid'}},
+            headers={'X-Tenant-Id': 'tenid'})
         self.assertEqual(response.status_int, 200)
 
     def test_put(self):
-        response = self.app.put_json('/v2.0/ports/44.json',
-                                     params={'port': {'name': 'test'}})
+        response = self.app.put_json('/v2.0/ports/%s.json' % self.port['id'],
+                                     params={'port': {'name': 'test'}},
+                                     headers={'X-Tenant-Id': 'tenid'})
         self.assertEqual(response.status_int, 200)
 
     def test_delete(self):
-        response = self.app.delete('/v2.0/ports/44.json')
+        response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'])
         self.assertEqual(response.status_int, 200)
 
     def test_plugin_initialized(self):
