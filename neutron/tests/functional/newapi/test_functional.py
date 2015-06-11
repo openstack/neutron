@@ -200,3 +200,16 @@ class TestRequestPopulatingHooks(PecanFunctionalTest):
         self.assertEqual(
             manager.NeutronManager.get_service_plugins()['L3_ROUTER_NAT'],
             self.req_stash['plugin'])
+
+
+class TestEnforcementHooks(PecanFunctionalTest):
+
+    def test_network_ownership_check(self):
+        # TODO(kevinbenton): get a scenario that passes attribute population
+        self.skipTest("Attribute population blocks this test as-is")
+        response = self.app.post_json('/v2.0/ports.json',
+            params={'port': {'network_id': self.port['network_id'],
+                             'admin_state_up': True,
+                             'tenant_id': 'tenid2'}},
+            headers={'X-Tenant-Id': 'tenid'})
+        self.assertEqual(response.status_int, 200)
