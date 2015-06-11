@@ -32,6 +32,7 @@ Policies
    core-reviewers
    gate-failure-triage
    code-reviews
+   office-hours
 
 Indices and tables
 ------------------
