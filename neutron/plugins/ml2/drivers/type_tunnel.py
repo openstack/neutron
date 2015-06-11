@@ -53,7 +53,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         param ip: the IP address of the endpoint
         param host: the Host name of the endpoint
         """
-        pass
 
     @abc.abstractmethod
     def get_endpoints(self):
@@ -62,7 +61,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         :returns a list of dict [{ip_address:endpoint_ip, host:endpoint_host},
         ..]
         """
-        pass
 
     @abc.abstractmethod
     def get_endpoint_by_host(self, host):
@@ -75,7 +73,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         else
            :returns None
         """
-        pass
 
     @abc.abstractmethod
     def get_endpoint_by_ip(self, ip):
@@ -88,7 +85,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         else
            :returns None
         """
-        pass
 
     @abc.abstractmethod
     def delete_endpoint(self, ip):
@@ -96,7 +92,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
 
         param ip: the IP address of the endpoint
         """
-        pass
 
     def _initialize(self, raw_tunnel_ranges):
         self.tunnel_ranges = []
