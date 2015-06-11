@@ -28,6 +28,7 @@ from neutron.agent.linux import utils
 from neutron.tests import base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import config_fixtures
+from neutron.tests import tools
 
 LOG = logging.getLogger(__name__)
 
@@ -35,8 +36,9 @@ LOG = logging.getLogger(__name__)
 DEFAULT_LOG_DIR = '/tmp/fullstack-logs/'
 
 
-class ProcessFixture(fixtures.Fixture):
+class ProcessFixture(tools.SafeFixture):
     def __init__(self, test_name, process_name, exec_name, config_filenames):
+        super(ProcessFixture, self).__init__()
         self.test_name = test_name
         self.process_name = process_name
         self.exec_name = exec_name
@@ -68,7 +70,7 @@ class ProcessFixture(fixtures.Fixture):
         super(ProcessFixture, self).cleanUp(*args, **kwargs)
 
 
-class RabbitmqEnvironmentFixture(fixtures.Fixture):
+class RabbitmqEnvironmentFixture(tools.SafeFixture):
     def setUp(self):
         super(RabbitmqEnvironmentFixture, self).setUp()
 
@@ -91,8 +93,9 @@ class RabbitmqEnvironmentFixture(fixtures.Fixture):
         utils.execute(cmd, run_as_root=True)
 
 
-class FullstackFixture(fixtures.Fixture):
+class FullstackFixture(tools.SafeFixture):
     def __init__(self):
+        super(FullstackFixture, self).__init__()
         self.test_name = None
 
     def setUp(self):
@@ -117,11 +120,12 @@ class FullstackFixture(fixtures.Fixture):
             return False
 
 
-class NeutronServerFixture(fixtures.Fixture):
+class NeutronServerFixture(tools.SafeFixture):
 
     NEUTRON_SERVER = "neutron-server"
 
     def __init__(self, test_name, temp_dir, rabbitmq_environment):
+        super(NeutronServerFixture, self).__init__()
         self.test_name = test_name
         self.temp_dir = temp_dir
         self.rabbitmq_environment = rabbitmq_environment
@@ -165,11 +169,12 @@ class NeutronServerFixture(fixtures.Fixture):
         return client.Client(auth_strategy="noauth", endpoint_url=url)
 
 
-class OVSAgentFixture(fixtures.Fixture):
+class OVSAgentFixture(tools.SafeFixture):
 
     NEUTRON_OVS_AGENT = "neutron-openvswitch-agent"
 
     def __init__(self, test_name, neutron_cfg_fixture, ml2_cfg_fixture):
+        super(OVSAgentFixture, self).__init__()
         self.test_name = test_name
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.plugin_cfg_fixture = ml2_cfg_fixture
@@ -199,12 +204,13 @@ class OVSAgentFixture(fixtures.Fixture):
         return self.plugin_config.ovs.bridge_mappings.split(':')[1]
 
 
-class L3AgentFixture(fixtures.Fixture):
+class L3AgentFixture(tools.SafeFixture):
 
     NEUTRON_L3_AGENT = "neutron-l3-agent"
 
     def __init__(self, test_name, temp_dir,
                  neutron_cfg_fixture, integration_bridge_name):
+        super(L3AgentFixture, self).__init__()
         self.test_name = test_name
         self.temp_dir = temp_dir
         self.neutron_cfg_fixture = neutron_cfg_fixture

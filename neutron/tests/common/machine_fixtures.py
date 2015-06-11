@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-import fixtures
 
 from neutron.agent.linux import ip_lib
 from neutron.tests.common import net_helpers
+from neutron.tests import tools
 
 
-class FakeMachine(fixtures.Fixture):
+class FakeMachine(tools.SafeFixture):
     """Create a fake machine.
 
     :ivar bridge: bridge on which the fake machine is bound
@@ -66,7 +66,7 @@ class FakeMachine(fixtures.Fixture):
         net_helpers.assert_no_ping(self.namespace, dst_ip)
 
 
-class PeerMachines(fixtures.Fixture):
+class PeerMachines(tools.SafeFixture):
     """Create 'amount' peered machines on an ip_cidr.
 
     :ivar bridge: bridge on which peer machines are bound

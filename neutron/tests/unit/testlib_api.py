@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fixtures
 import six
 import testtools
 
@@ -22,6 +21,7 @@ from neutron.db import api as db_api
 from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
 from neutron.tests import base
+from neutron.tests import tools
 from neutron import wsgi
 
 
@@ -57,7 +57,7 @@ def create_request(path, body, content_type, method='GET',
     return req
 
 
-class SqlFixture(fixtures.Fixture):
+class SqlFixture(tools.SafeFixture):
 
     # flag to indicate that the models have been loaded
     _TABLES_ESTABLISHED = False

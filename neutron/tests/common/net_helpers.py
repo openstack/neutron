@@ -15,7 +15,6 @@
 
 import abc
 
-import fixtures
 import netaddr
 import six
 
@@ -106,7 +105,7 @@ def assert_no_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
                    {'ns': src_namespace, 'destination': dst_ip})
 
 
-class NamespaceFixture(fixtures.Fixture):
+class NamespaceFixture(tools.SafeFixture):
     """Create a namespace.
 
     :ivar ip_wrapper: created namespace
@@ -131,7 +130,7 @@ class NamespaceFixture(fixtures.Fixture):
             self.ip_wrapper.netns.delete(self.name)
 
 
-class VethFixture(fixtures.Fixture):
+class VethFixture(tools.SafeFixture):
     """Create a veth.
 
     :ivar ports: created veth ports
@@ -170,7 +169,7 @@ class VethFixture(fixtures.Fixture):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class PortFixture(fixtures.Fixture):
+class PortFixture(tools.SafeFixture):
     """Create a port.
 
     :ivar port: created port
@@ -179,6 +178,7 @@ class PortFixture(fixtures.Fixture):
     """
 
     def __init__(self, bridge=None, namespace=None):
+        super(PortFixture, self).__init__()
         self.bridge = bridge
         self.namespace = namespace
 
@@ -204,7 +204,7 @@ class PortFixture(fixtures.Fixture):
         tools.fail('Unexpected bridge type: %s' % type(bridge))
 
 
-class OVSBridgeFixture(fixtures.Fixture):
+class OVSBridgeFixture(tools.SafeFixture):
     """Create an OVS bridge.
 
     :ivar prefix: bridge name prefix
@@ -214,6 +214,7 @@ class OVSBridgeFixture(fixtures.Fixture):
     """
 
     def __init__(self, prefix=BR_PREFIX):
+        super(OVSBridgeFixture, self).__init__()
         self.prefix = prefix
 
     def setUp(self):
@@ -251,7 +252,7 @@ class OVSPortFixture(PortFixture):
         return name
 
 
-class LinuxBridgeFixture(fixtures.Fixture):
+class LinuxBridgeFixture(tools.SafeFixture):
     """Create a linux bridge.
 
     :ivar bridge: created bridge
@@ -315,7 +316,7 @@ class VethBridge(object):
                        len(self.ports))
 
 
-class VethBridgeFixture(fixtures.Fixture):
+class VethBridgeFixture(tools.SafeFixture):
     """Simulate a bridge with a veth.
 
     :ivar bridge: created bridge

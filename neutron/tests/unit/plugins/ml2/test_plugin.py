@@ -20,7 +20,6 @@ import testtools
 import uuid
 import webob
 
-import fixtures
 from oslo_db import exception as db_exc
 from sqlalchemy.orm import exc as sqla_exc
 
@@ -49,6 +48,7 @@ from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests import base
+from neutron.tests import tools
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
 from neutron.tests.unit.db import test_allowedaddresspairs_db as test_pair
@@ -71,10 +71,11 @@ HOST = 'fake_host'
 
 
 # TODO(marun) - Move to somewhere common for reuse
-class PluginConfFixture(fixtures.Fixture):
+class PluginConfFixture(tools.SafeFixture):
     """Plugin configuration shared across the unit and functional tests."""
 
     def __init__(self, plugin_name, parent_setup=None):
+        super(PluginConfFixture, self).__init__()
         self.plugin_name = plugin_name
         self.parent_setup = parent_setup
 
