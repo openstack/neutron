@@ -412,6 +412,16 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             plugin.update_port(ctx, port['port']['id'], port)
             self.assertTrue(sg_member_update.called)
 
+    def test_update_port_status_with_network(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        with self.port() as port:
+            net = plugin.get_network(ctx, port['port']['network_id'])
+            with mock.patch.object(plugin, 'get_network') as get_net:
+                plugin.update_port_status(ctx, port['port']['id'], 'UP',
+                                          network=net)
+                self.assertFalse(get_net.called)
+
     def test_update_port_mac(self):
         self.check_update_port_mac(
             host_arg={portbindings.HOST_ID: HOST},
