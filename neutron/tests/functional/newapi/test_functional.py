@@ -213,3 +213,7 @@ class TestEnforcementHooks(PecanFunctionalTest):
                              'tenant_id': 'tenid2'}},
             headers={'X-Tenant-Id': 'tenid'})
         self.assertEqual(response.status_int, 200)
+
+    def test_quota_enforcement(self):
+        # TODO(kevinbenton): this test should do something
+        pass
