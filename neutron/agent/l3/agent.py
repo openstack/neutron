@@ -441,7 +441,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():
-            LOG.debug("Starting router update for %s", update.id)
+            LOG.debug("Starting router update for %s, action %s, priority %s",
+                      update.id, update.action, update.priority)
             router = update.router
             if update.action != queue.DELETE_ROUTER and not router:
                 try:
@@ -464,6 +465,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     # one router by sticking the update at the end of the queue
                     # at a lower priority.
                     self.fullsync = True
+                else:
+                    # need to update timestamp of removed router in case
+                    # there are older events for the same router in the
+                    # processing queue (like events from fullsync) in order to
+                    # prevent deleted router re-creation
+                    rp.fetched_and_processed(update.timestamp)
                 continue
 
             try:
