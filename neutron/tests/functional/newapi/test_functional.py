@@ -85,7 +85,8 @@ class TestV2Controller(PecanFunctionalTest):
         self.assertEqual(response.status_int, 200)
 
     def test_delete(self):
-        response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'])
+        response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'],
+                                   headers={'X-Tenant-Id': 'tenid'})
         self.assertEqual(response.status_int, 200)
 
     def test_plugin_initialized(self):
@@ -151,14 +152,14 @@ class TestExceptionTranslationHook(PecanFunctionalTest):
         # this endpoint raises a Neutron notfound exception. make sure it gets
         # translated into a 404 error
         with mock.patch(
-                'neutron.newapi.controllers.root.GeneralController.get',
+                'neutron.newapi.controllers.root.CollectionsController.get',
                 side_effect=n_exc.NotFound()):
             response = self.app.get('/v2.0/ports.json', expect_errors=True)
             self.assertEqual(response.status_int, 404)
 
     def test_unexpected_exception(self):
         with mock.patch(
-                'neutron.newapi.controllers.root.GeneralController.get',
+                'neutron.newapi.controllers.root.CollectionsController.get',
                 side_effect=ValueError('secretpassword')):
             response = self.app.get('/v2.0/ports.json', expect_errors=True)
             self.assertNotIn(response.body, 'secretpassword')
@@ -181,7 +182,7 @@ class TestRequestPopulatingHooks(PecanFunctionalTest):
                 'plugin': request.plugin
             }
         mock.patch(
-            'neutron.newapi.controllers.root.GeneralController.get',
+            'neutron.newapi.controllers.root.CollectionsController.get',
             side_effect=capture_request_details
         ).start()
 

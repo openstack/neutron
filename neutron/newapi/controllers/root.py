@@ -15,6 +15,7 @@
 #    under the License.
 
 import pecan
+from pecan import request
 
 from neutron.api import extensions
 
@@ -52,7 +53,7 @@ class V2Controller(object):
     def _lookup(self, endpoint, *remainder):
         if endpoint == 'extensions':
             return ExtensionsController(), remainder
-        return GeneralController(endpoint), remainder
+        return CollectionsController(endpoint), remainder
 
 
 class ExtensionsController(object):
@@ -85,30 +86,57 @@ class ExtensionController(object):
         return {'extension': extensions.ExtensionController._translate(ext)}
 
 
-class GeneralController(object):
+class CollectionsController(object):
 
-    def __init__(self, token):
-        self.token = token
+    def __init__(self, collection):
+        self.collection = collection
 
     @expose()
-    def _lookup(self, token, *remainder):
-        return GeneralController(token), remainder
+    def _lookup(self, item, *remainder):
+        return ItemController(item), remainder
 
     @expose(generic=True)
-    def index(self):
-        return self.get()
+    def index(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
 
-    def get(self):
-        return {'message': 'GET'}
-
-    @when(index, method='PUT')
-    def put(self, **kw):
-        return {'message': 'PUT'}
+    def get(self, *args, **kwargs):
+        # list request
+        # TODO(kevinbenton): allow fields after policy enforced fields present
+        kwargs.pop('fields', None)
+        _listify = lambda x: x if isinstance(x, list) else [x]
+        filters = {k: _listify(v) for k, v in kwargs.items()}
+        lister = getattr(request.plugin, 'get_%s' % self.collection)
+        return {self.collection: lister(request.context, filters=filters)}
 
     @when(index, method='POST')
-    def post(self, **kw):
-        return {'message': 'POST'}
+    def post(self, *args, **kwargs):
+        # TODO(kevinbenton): bulk!
+        creator = getattr(request.plugin, 'create_%s' % request.resource_type)
+        return {request.resource_type: creator(request.context,
+                                               request.prepared_data)}
+
+
+class ItemController(object):
+
+    def __init__(self, item):
+        self.item = item
+
+    @expose(generic=True)
+    def index(self, *args, **kwargs):
+        return self.get()
+
+    def get(self, *args, **kwargs):
+        getter = getattr(request.plugin, 'get_%s' % request.resource_type)
+        return {request.resource_type: getter(request.context, self.item)}
+
+    @when(index, method='PUT')
+    def put(self, *args, **kwargs):
+        # TODO(kevinbenton): bulk?
+        updater = getattr(request.plugin, 'update_%s' % request.resource_type)
+        return updater(request.context, self.item, request.prepared_data)
 
     @when(index, method='DELETE')
     def delete(self):
-        return {'message': 'DELETE'}
+        # TODO(kevinbenton): bulk?
+        deleter = getattr(request.plugin, 'delete_%s' % request.resource_type)
+        return deleter(request.context, self.item)
