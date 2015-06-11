@@ -17,6 +17,7 @@ import os
 
 import mock
 from oslo_config import cfg
+from oslo_policy import policy as oslo_policy
 import six
 from six import moves
 import six.moves.urllib.parse as urlparse
@@ -33,7 +34,6 @@ from neutron.api.v2 import router
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
-from neutron.openstack.common import policy as common_policy
 from neutron.openstack.common import uuidutils
 from neutron import policy
 from neutron import quota
@@ -1047,8 +1047,8 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_get_keystone_strip_admin_only_attribute(self):
         tenant_id = _uuid()
         # Inject rule in policy engine
-        rules = {'get_network:name': common_policy.parse_rule(
-            "rule:admin_only")}
+        rules = oslo_policy.Rules.from_dict(
+            {'get_network:name': "rule:admin_only"})
         policy.set_rules(rules, overwrite=False)
         res = self._test_get(tenant_id, tenant_id, 200)
         res = self.deserialize(res)

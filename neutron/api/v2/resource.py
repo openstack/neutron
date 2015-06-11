@@ -22,13 +22,13 @@ import sys
 import netaddr
 import oslo_i18n
 from oslo_log import log as logging
+from oslo_policy import policy as oslo_policy
 import six
 import webob.dec
 import webob.exc
 
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import policy as common_policy
 from neutron import wsgi
 
 
@@ -83,7 +83,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             result = method(request=request, **args)
         except (exceptions.NeutronException,
                 netaddr.AddrFormatError,
-                common_policy.PolicyNotAuthorized) as e:
+                oslo_policy.PolicyNotAuthorized) as e:
             for fault in faults:
                 if isinstance(e, fault):
                     mapped_exc = faults[fault]
