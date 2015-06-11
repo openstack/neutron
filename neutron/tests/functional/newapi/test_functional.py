@@ -217,3 +217,7 @@ class TestEnforcementHooks(PecanFunctionalTest):
     def test_quota_enforcement(self):
         # TODO(kevinbenton): this test should do something
         pass
+
+    def test_policy_enforcement(self):
+        # TODO(kevinbenton): this test should do something
+        pass

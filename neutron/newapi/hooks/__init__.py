@@ -16,6 +16,7 @@
 from neutron.newapi.hooks import attribute_population
 from neutron.newapi.hooks import context
 from neutron.newapi.hooks import ownership_validation
+from neutron.newapi.hooks import policy_enforcement
 from neutron.newapi.hooks import quota_enforcement
 from neutron.newapi.hooks import resource_identifier
 from neutron.newapi.hooks import translation
@@ -26,4 +27,5 @@ ContextHook = context.ContextHook
 ResourceIdentifierHook = resource_identifier.ResourceIdentifierHook
 AttributePopulationHook = attribute_population.AttributePopulationHook
 OwnershipValidationHook = ownership_validation.OwnershipValidationHook
+PolicyHook = policy_enforcement.PolicyHook
 QuotaEnforcementHook = quota_enforcement.QuotaEnforcementHook

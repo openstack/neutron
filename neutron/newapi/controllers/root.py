@@ -62,8 +62,6 @@ class GeneralController(object):
 
     @expose(generic=True)
     def index(self):
-        if pecan.request.method != 'GET':
-            pecan.abort(405)
         return self.get()
 
     def get(self):
