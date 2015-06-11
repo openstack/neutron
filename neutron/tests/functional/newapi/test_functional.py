@@ -22,6 +22,7 @@ from pecan.testing import load_test_app
 import testtools
 
 from neutron.common import exceptions as n_exc
+from neutron import manager
 from neutron.tests.unit import testlib_api
 
 
@@ -63,6 +64,9 @@ class TestV2Controller(PecanFunctionalTest):
     def test_delete(self):
         response = self.app.delete('/v2.0/ports/44.json')
         self.assertEqual(response.status_int, 200)
+
+    def test_plugin_initialized(self):
+        self.assertIsNotNone(manager.NeutronManager._instance)
 
 
 class TestErrors(PecanFunctionalTest):

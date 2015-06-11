@@ -19,7 +19,7 @@ from oslo_middleware import request_id
 import pecan
 
 from neutron.common import exceptions as n_exc
-
+from neutron.newapi import startup
 
 CONF = cfg.CONF
 CONF.import_opt('bind_host', 'neutron.common.config')
@@ -50,6 +50,7 @@ def setup_app(*args, **kwargs):
         hooks=app_hooks,
         guess_content_type_from_ext=True
     )
+    startup.initialize_all()
 
     return app
 
