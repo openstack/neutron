@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 import webob.exc
 
 from neutron.api.v2 import attributes as attr
@@ -46,6 +47,10 @@ class AllowedAddressPairExhausted(nexception.BadRequest):
                 "exceeds the maximum %(quota)s.")
 
 
+class AllowedAddressPairsZeroPrefixNotAllowed(nexception.InvalidInput):
+    message = _("AllowedAddressPair CIDR cannot have prefix length zero")
+
+
 def _validate_allowed_address_pairs(address_pairs, valid_values=None):
     unique_check = {}
     if len(address_pairs) > cfg.CONF.max_allowed_address_pair:
@@ -77,7 +82,9 @@ def _validate_allowed_address_pairs(address_pairs, valid_values=None):
                              set(['mac_address', 'ip_address'])))
             raise webob.exc.HTTPBadRequest(msg)
 
-        if '/' in ip_address:
+        if (netaddr.IPNetwork(ip_address).prefixlen == 0):
+            raise AllowedAddressPairsZeroPrefixNotAllowed()
+        elif '/' in ip_address:
             msg = attr._validate_subnet(ip_address)
         else:
             msg = attr._validate_ip_address(ip_address)

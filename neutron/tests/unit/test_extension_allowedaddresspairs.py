@@ -140,6 +140,11 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 409)
 
+    def test_create_port_zero_prefix_ip(self):
+        address_pairs = [{'mac_address': 'invalid_mac',
+                          'ip_address': '0.0.0.0/0'}]
+        self._create_port_with_address_pairs(address_pairs, 400)
+
     def test_create_port_bad_mac(self):
         address_pairs = [{'mac_address': 'invalid_mac',
                           'ip_address': '10.0.0.1'}]
