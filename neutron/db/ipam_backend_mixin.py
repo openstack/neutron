@@ -37,6 +37,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     # Tracks changes in ip allocation for port using namedtuple
     Changes = collections.namedtuple('Changes', 'add original remove')
 
+    @staticmethod
+    def _rebuild_availability_ranges(context, subnets):
+        """Should be redefined for non-ipam backend only
+        """
+        pass
+
     def _update_db_port(self, context, db_port, new_port, network_id, new_mac):
         # Remove all attributes in new_port which are not in the port DB model
         # and then update the port
@@ -98,6 +104,24 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             context.session.add(dns)
         del s["dns_nameservers"]
         return new_dns
+
+    def _update_subnet_allocation_pools(self, context, id, s):
+        context.session.query(models_v2.IPAllocationPool).filter_by(
+            subnet_id=id).delete()
+        new_pools = [models_v2.IPAllocationPool(first_ip=p['start'],
+                                                last_ip=p['end'],
+                                                subnet_id=id)
+                     for p in s['allocation_pools']]
+        context.session.add_all(new_pools)
+        # Call static method with self to redefine in child
+        # (non-pluggable backend)
+        self._rebuild_availability_ranges(context, [s])
+        # Gather new pools for result:
+        result_pools = [{'start': pool['start'],
+                         'end': pool['end']}
+                        for pool in s['allocation_pools']]
+        del s['allocation_pools']
+        return result_pools
 
     def _validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
