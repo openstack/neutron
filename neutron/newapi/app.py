@@ -49,6 +49,7 @@ def setup_app(*args, **kwargs):
         hooks.OwnershipValidationHook(),  # priority 125
         hooks.QuotaEnforcementHook(),  # priority 130
         hooks.PolicyHook(),  # priority 135
+        hooks.NotifierHook(),  # priority 140
     ]
 
     app = pecan.make_app(
