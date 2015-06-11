@@ -42,7 +42,8 @@ def setup_app(*args, **kwargs):
     pecan_config = pecan.configuration.conf_from_dict(config)
 
     app_hooks = [
-        hooks.ExceptionTranslationHook(),
+        hooks.ExceptionTranslationHook(),  # priority 100
+        hooks.ContextHook(),  # priority 95
     ]
 
     app = pecan.make_app(

@@ -18,6 +18,7 @@ import os
 import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
+from pecan import request
 from pecan import set_config
 from pecan.testing import load_test_app
 import testtools
@@ -133,3 +134,21 @@ class TestExceptionTranslationHook(PecanFunctionalTest):
             response = self.app.get('/v2.0/ports.json', expect_errors=True)
             self.assertNotIn(response.body, 'secretpassword')
             self.assertEqual(response.status_int, 500)
+
+
+class TestContextHook(PecanFunctionalTest):
+
+    # TODO(kevinbenton): add tests for X-Roles etc
+
+    def test_context_set_in_request(self):
+        request_stash = []
+        # request.context is thread-local storage so it has to be accessed by
+        # the controller. We can capture it into a list here to assert on after
+        # the request finishes.
+        with mock.patch(
+            'neutron.newapi.controllers.root.GeneralController.get',
+            side_effect=lambda *x, **y: request_stash.append(request.context)
+        ):
+            self.app.get('/v2.0/ports.json',
+                         headers={'X-Tenant-Id': 'tenant_id'})
+            self.assertEqual('tenant_id', request_stash[0].tenant_id)

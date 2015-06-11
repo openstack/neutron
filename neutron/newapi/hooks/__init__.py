@@ -13,7 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.newapi.hooks import context
 from neutron.newapi.hooks import translation
 
 
 ExceptionTranslationHook = translation.ExceptionTranslationHook
+ContextHook = context.ContextHook
