@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
+"POT-Creation-Date: 2015-06-11 06:02+0000\n"
+"PO-Revision-Date: 2015-06-10 23:52+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
 "neutron/language/pt_BR/)\n"
@@ -184,13 +184,6 @@ msgstr "Inicializando o Extension Manager."
 #, python-format
 msgid "Initializing mechanism driver '%s'"
 msgstr "Inicializando driver de mecanismo '%s'"
-
-#, python-format
-msgid ""
-"Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
-msgstr ""
-"Inserindo política: %(new_policy)s no lugar de política deprecada: "
-"%(old_policy)s"
 
 #, python-format
 msgid "Interface mappings: %s"
