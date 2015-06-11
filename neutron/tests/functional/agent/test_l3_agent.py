@@ -497,26 +497,24 @@ class L3AgentTestCase(L3AgentTestFramework):
                       (new_external_device_ip, external_device_name),
                       new_config)
 
-    def test_periodic_sync_routers_task(self):
-        routers_to_keep = []
-        routers_to_delete = []
+    def _test_periodic_sync_routers_task(self,
+                                         routers_to_keep,
+                                         routers_deleted,
+                                         routers_deleted_during_resync):
         ns_names_to_retrieve = set()
-        routers_info_to_delete = []
-        for i in range(2):
-            routers_to_keep.append(self.generate_router_info(False))
-            ri = self.manage_router(self.agent, routers_to_keep[i])
+        deleted_routers_info = []
+        for r in routers_to_keep:
+            ri = self.manage_router(self.agent, r)
             ns_names_to_retrieve.add(ri.ns_name)
-        for i in range(2):
-            routers_to_delete.append(self.generate_router_info(False))
-            ri = self.manage_router(self.agent, routers_to_delete[i])
-            routers_info_to_delete.append(ri)
+        for r in routers_deleted + routers_deleted_during_resync:
+            ri = self.manage_router(self.agent, r)
+            deleted_routers_info.append(ri)
             ns_names_to_retrieve.add(ri.ns_name)
 
-        # Mock the plugin RPC API to Simulate a situation where the agent
-        # was handling the 4 routers created above, it went down and after
-        # starting up again, two of the routers were deleted via the API
-        self.mock_plugin_api.get_routers.return_value = routers_to_keep
-        # also clear agent router_info as it will be after restart
+        mocked_get_routers = self.mock_plugin_api.get_routers
+        mocked_get_routers.return_value = (routers_to_keep +
+                                           routers_deleted_during_resync)
+        # clear agent router_info as it will be after restart
         self.agent.router_info = {}
 
         # Synchonize the agent with the plug-in
@@ -533,23 +531,58 @@ class L3AgentTestCase(L3AgentTestFramework):
         # Plug external_gateway_info in the routers that are not going to be
         # deleted by the agent when it processes the updates. Otherwise,
         # _process_router_if_compatible in the agent fails
-        for i in range(2):
-            routers_to_keep[i]['external_gateway_info'] = {'network_id':
-                                                           external_network_id}
+        for r in routers_to_keep:
+            r['external_gateway_info'] = {'network_id': external_network_id}
 
-        # Have the agent process the update from the plug-in and verify
-        # expected behavior
-        for _ in routers_to_keep:
+        # while sync updates are still in the queue, higher priority
+        # router_deleted events may be added there as well
+        for r in routers_deleted_during_resync:
+            self.agent.router_deleted(self.agent.context, r['id'])
+
+        # make sure all events are processed
+        while not self.agent._queue._queue.empty():
             self.agent._process_router_update()
 
-        for i in range(2):
-            self.assertIn(routers_to_keep[i]['id'], self.agent.router_info)
+        for r in routers_to_keep:
+            self.assertIn(r['id'], self.agent.router_info)
             self.assertTrue(self._namespace_exists(namespaces.NS_PREFIX +
-                                                   routers_to_keep[i]['id']))
-        for i in range(2):
-            self.assertNotIn(routers_info_to_delete[i].router_id,
+                                                   r['id']))
+        for ri in deleted_routers_info:
+            self.assertNotIn(ri.router_id,
                              self.agent.router_info)
-            self._assert_router_does_not_exist(routers_info_to_delete[i])
+            self._assert_router_does_not_exist(ri)
+
+    def test_periodic_sync_routers_task(self):
+        routers_to_keep = []
+        for i in range(2):
+            routers_to_keep.append(self.generate_router_info(False))
+        self._test_periodic_sync_routers_task(routers_to_keep,
+                                              routers_deleted=[],
+                                              routers_deleted_during_resync=[])
+
+    def test_periodic_sync_routers_task_routers_deleted_while_agent_down(self):
+        routers_to_keep = []
+        routers_deleted = []
+        for i in range(2):
+            routers_to_keep.append(self.generate_router_info(False))
+        for i in range(2):
+            routers_deleted.append(self.generate_router_info(False))
+        self._test_periodic_sync_routers_task(routers_to_keep,
+                                              routers_deleted,
+                                              routers_deleted_during_resync=[])
+
+    def test_periodic_sync_routers_task_routers_deleted_while_agent_sync(self):
+        routers_to_keep = []
+        routers_deleted_during_resync = []
+        for i in range(2):
+            routers_to_keep.append(self.generate_router_info(False))
+        for i in range(2):
+            routers_deleted_during_resync.append(
+                self.generate_router_info(False))
+        self._test_periodic_sync_routers_task(
+            routers_to_keep,
+            routers_deleted=[],
+            routers_deleted_during_resync=routers_deleted_during_resync)
 
     def _router_lifecycle(self, enable_ha, ip_version=4,
                           dual_stack=False, v6_ext_gw_with_sub=True):

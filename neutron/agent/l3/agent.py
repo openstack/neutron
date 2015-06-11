@@ -335,7 +335,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri = self.router_info.get(router_id)
         if ri is None:
             LOG.warn(_LW("Info for router %s was not found. "
-                         "Skipping router removal"), router_id)
+                         "Performing router cleanup"), router_id)
+            self.namespaces_manager.ensure_router_cleanup(router_id)
             return
 
         registry.notify(resources.ROUTER, events.BEFORE_DELETE,
