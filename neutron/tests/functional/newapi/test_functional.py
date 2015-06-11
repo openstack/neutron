@@ -15,6 +15,7 @@
 
 import os
 
+import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from pecan import set_config
@@ -112,3 +113,23 @@ class TestInvalidAuth(PecanFunctionalTest):
         cfg.CONF.set_override('auth_strategy', 'badvalue')
         with testtools.ExpectedException(n_exc.InvalidConfigurationOption):
             load_test_app(os.path.join(os.path.dirname(__file__), 'config.py'))
+
+
+class TestExceptionTranslationHook(PecanFunctionalTest):
+
+    def test_neutron_nonfound_to_webob_exception(self):
+        # this endpoint raises a Neutron notfound exception. make sure it gets
+        # translated into a 404 error
+        with mock.patch(
+                'neutron.newapi.controllers.root.GeneralController.get',
+                side_effect=n_exc.NotFound()):
+            response = self.app.get('/v2.0/ports.json', expect_errors=True)
+            self.assertEqual(response.status_int, 404)
+
+    def test_unexpected_exception(self):
+        with mock.patch(
+                'neutron.newapi.controllers.root.GeneralController.get',
+                side_effect=ValueError('secretpassword')):
+            response = self.app.get('/v2.0/ports.json', expect_errors=True)
+            self.assertNotIn(response.body, 'secretpassword')
+            self.assertEqual(response.status_int, 500)

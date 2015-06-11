@@ -64,6 +64,9 @@ class GeneralController(object):
     def index(self):
         if pecan.request.method != 'GET':
             pecan.abort(405)
+        return self.get()
+
+    def get(self):
         return {'message': 'GET'}
 
     @when(index, method='PUT')

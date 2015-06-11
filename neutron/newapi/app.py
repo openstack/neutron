@@ -19,6 +19,7 @@ from oslo_middleware import request_id
 import pecan
 
 from neutron.common import exceptions as n_exc
+from neutron.newapi import hooks
 from neutron.newapi import startup
 
 CONF = cfg.CONF
@@ -40,7 +41,9 @@ def setup_app(*args, **kwargs):
     }
     pecan_config = pecan.configuration.conf_from_dict(config)
 
-    app_hooks = []
+    app_hooks = [
+        hooks.ExceptionTranslationHook(),
+    ]
 
     app = pecan.make_app(
         pecan_config.app.root,
