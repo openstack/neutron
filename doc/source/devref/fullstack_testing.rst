@@ -55,10 +55,10 @@ through the API and then assert that a namespace was created for it.
 
 Full stack tests run in the Neutron tree with Neutron resources alone. You
 may use the Neutron API (The Neutron server is set to NOAUTH so that Keystone
-is out of the picture). instances may be simulated with a helper class that
-contains a container-like object in its own namespace and IP address. It has
-helper methods to send different kinds of traffic. The "instance" may be
-connected to br-int or br-ex, to simulate internal or external traffic.
+is out of the picture). VMs may be simulated with a container-like class:
+neutron.tests.fullstack.resources.machine.FakeFullstackMachine.
+An example of its usage may be found at:
+neutron/tests/fullstack/test_connectivity.py.
 
 Full stack testing can simulate multi node testing by starting an agent
 multiple times. Specifically, each node would have its own copy of the

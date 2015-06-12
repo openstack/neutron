@@ -26,10 +26,9 @@ from neutron.tests.fullstack.resources import environment
 
 class TestLegacyL3Agent(base.BaseFullStackTestCase):
     def __init__(self, *args, **kwargs):
-        super(TestLegacyL3Agent, self).__init__(
-            environment.Environment(
-                [environment.HostDescription(l3_agent=True)]),
-            *args, **kwargs)
+        host_descriptions = [environment.HostDescription(l3_agent=True)]
+        env = environment.Environment(host_descriptions)
+        super(TestLegacyL3Agent, self).__init__(env, *args, **kwargs)
 
     def _get_namespace(self, router_id):
         return namespaces.build_ns_name(l3_agent.NS_PREFIX, router_id)

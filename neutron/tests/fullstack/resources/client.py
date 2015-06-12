@@ -65,6 +65,13 @@ class ClientFixture(fixtures.Fixture):
 
         return self._create_resource(resource_type, spec)
 
+    def create_port(self, tenant_id, network_id, hostname):
+        return self._create_resource(
+            'port',
+            {'network_id': network_id,
+             'tenant_id': tenant_id,
+             'binding:host_id': hostname})
+
     def add_router_interface(self, router_id, subnet_id):
         body = {'subnet_id': subnet_id}
         self.client.add_interface_router(router=router_id, body=body)

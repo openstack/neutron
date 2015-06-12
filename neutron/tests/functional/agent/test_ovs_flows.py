@@ -179,19 +179,15 @@ class _ARPSpoofTestCase(object):
         net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
     def _setup_arp_spoof_for_port(self, port, addrs, psec=True):
-        of_port_map = self.br.get_vif_port_to_ofport_map()
-
-        class VifPort(object):
-            ofport = of_port_map[port]
-            port_name = port
-
+        vif = next(
+            vif for vif in self.br.get_vif_ports() if vif.port_name == port)
         ip_addr = addrs.pop()
         details = {'port_security_enabled': psec,
                    'fixed_ips': [{'ip_address': ip_addr}],
                    'allowed_address_pairs': [
                         dict(ip_address=ip) for ip in addrs]}
         ovsagt.OVSNeutronAgent.setup_arp_spoofing_protection(
-            self.br_int, VifPort(), details)
+            self.br_int, vif, details)
 
 
 class ARPSpoofOFCtlTestCase(_ARPSpoofTestCase, _OVSAgentOFCtlTestBase):
