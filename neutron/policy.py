@@ -268,7 +268,7 @@ class OwnerCheck(policy.Check):
                                   f)
         match = self.match % target
         if self.kind in creds:
-            return match == unicode(creds[self.kind])
+            return match == six.text_type(creds[self.kind])
         return False
 
 

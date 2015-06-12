@@ -422,7 +422,7 @@ class JSONDictSerializer(DictSerializer):
 
     def default(self, data):
         def sanitizer(obj):
-            return unicode(obj)
+            return six.text_type(obj)
         return jsonutils.dumps(data, default=sanitizer)
 
 

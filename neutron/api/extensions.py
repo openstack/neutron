@@ -506,7 +506,8 @@ class ExtensionManager(object):
             LOG.debug('Ext namespace: %s', extension.get_namespace())
             LOG.debug('Ext updated: %s', extension.get_updated())
         except AttributeError as ex:
-            LOG.exception(_LE("Exception loading extension: %s"), unicode(ex))
+            LOG.exception(_LE("Exception loading extension: %s"),
+                          six.text_type(ex))
             return False
         return True
 
