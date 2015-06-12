@@ -39,6 +39,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent import rpc as agent_rpc
 from neutron.callbacks import manager
 from neutron.callbacks import registry
 from neutron.common import config as base_config
@@ -282,6 +283,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         log.register_options(self.conf)
+        self.conf.register_opts(agent_config.AGENT_STATE_OPTS, 'AGENT')
         self.conf.register_opts(l3_config.OPTS)
         self.conf.register_opts(ha.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
@@ -418,6 +420,24 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
                 agent.after_start()
                 router_sync.assert_called_once_with(agent.context)
+
+    def test_l3_initial_report_state_done(self):
+        with mock.patch.object(l3_agent.L3NATAgentWithStateReport,
+                               'periodic_sync_routers_task'),\
+                mock.patch.object(agent_rpc.PluginReportStateAPI,
+                                  'report_state') as report_state,\
+                mock.patch.object(eventlet, 'spawn_n'):
+
+            agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
+                                                       conf=self.conf)
+
+            self.assertEqual(agent.agent_state['start_flag'], True)
+            use_call_arg = agent.use_call
+            agent.after_start()
+            report_state.assert_called_once_with(agent.context,
+                                                 agent.agent_state,
+                                                 use_call_arg)
+            self.assertTrue(agent.agent_state.get('start_flag') is None)
 
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
