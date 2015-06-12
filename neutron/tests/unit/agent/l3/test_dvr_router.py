@@ -56,10 +56,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
         self.assertEqual([{'host': mock.sentinel.myhost}], fips)
 
-    @mock.patch.object(ip_lib, 'send_gratuitous_arp')
+    @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
     @mock.patch.object(ip_lib, 'IPDevice')
     @mock.patch.object(ip_lib, 'IPRule')
-    def test_floating_ip_added_dist(self, mIPRule, mIPDevice, mock_arp):
+    def test_floating_ip_added_dist(self, mIPRule, mIPDevice, mock_adv_notif):
         router = mock.MagicMock()
         ri = self._create_router(router)
         ext_net_id = _uuid()

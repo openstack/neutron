@@ -107,10 +107,10 @@ class FipNamespace(namespaces.Namespace):
                             clean_connections=True)
 
         for fixed_ip in ex_gw_port['fixed_ips']:
-            ip_lib.send_gratuitous_arp(ns_name,
-                                       interface_name,
-                                       fixed_ip['ip_address'],
-                                       self.agent_conf.send_arp_for_ha)
+            ip_lib.send_ip_addr_adv_notif(ns_name,
+                                          interface_name,
+                                          fixed_ip['ip_address'],
+                                          self.agent_conf)
 
         for subnet in ex_gw_port['subnets']:
             gw_ip = subnet.get('gateway_ip')

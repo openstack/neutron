@@ -24,8 +24,8 @@ class LegacyRouter(router.RouterInfo):
 
         # As GARP is processed in a distinct thread the call below
         # won't raise an exception to be handled.
-        ip_lib.send_gratuitous_arp(self.ns_name,
-                                   interface_name,
-                                   fip['floating_ip_address'],
-                                   self.agent_conf.send_arp_for_ha)
+        ip_lib.send_ip_addr_adv_notif(self.ns_name,
+                                      interface_name,
+                                      fip['floating_ip_address'],
+                                      self.agent_conf)
         return l3_constants.FLOATINGIP_STATUS_ACTIVE
