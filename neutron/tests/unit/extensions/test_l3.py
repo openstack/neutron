@@ -2213,8 +2213,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self._set_net_external(network_ex_id2)
 
             r2i_fixed_ips = [{'ip_address': '12.0.0.2'}]
-            with self.router(no_delete=True) as r1,\
-                    self.router(no_delete=True) as r2,\
+            with self.router() as r1,\
+                    self.router() as r2,\
                     self.port(subnet=ins1,
                               fixed_ips=r2i_fixed_ips) as r2i_port:
                 self._add_external_gateway_to_router(
