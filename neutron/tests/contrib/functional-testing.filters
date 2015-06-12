@@ -7,6 +7,7 @@
 # enable ping from namespace
 ping_filter: CommandFilter, ping, root
 ping6_filter: CommandFilter, ping6, root
+ping_kill: KillFilter, root, ping, -2
 
 # enable curl from namespace
 curl_filter: RegExpFilter, /usr/bin/curl, root, curl, --max-time, \d+, -D-, http://[0-9a-z:./-]+
