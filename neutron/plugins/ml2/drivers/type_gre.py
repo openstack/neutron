@@ -89,12 +89,7 @@ class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         gre_ids = set()
         for gre_id_range in self.tunnel_ranges:
             tun_min, tun_max = gre_id_range
-            if tun_max + 1 - tun_min > 1000000:
-                LOG.error(_LE("Skipping unreasonable gre ID range "
-                              "%(tun_min)s:%(tun_max)s"),
-                          {'tun_min': tun_min, 'tun_max': tun_max})
-            else:
-                gre_ids |= set(moves.range(tun_min, tun_max + 1))
+            gre_ids |= set(moves.range(tun_min, tun_max + 1))
 
         session = db_api.get_session()
         try:
