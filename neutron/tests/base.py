@@ -45,6 +45,7 @@ from neutron import manager
 from neutron import policy
 from neutron.tests import fake_notifier
 from neutron.tests import post_mortem_debug
+from neutron.tests import tools
 
 
 CONF = cfg.CONF
@@ -125,6 +126,9 @@ class DietTestCase(testtools.TestCase):
         if debugger:
             self.addOnException(post_mortem_debug.get_exception_handler(
                 debugger))
+
+        # Make sure we see all relevant deprecation warnings when running tests
+        self.useFixture(tools.WarningsFixture())
 
         if bool_from_env('OS_DEBUG'):
             _level = std_logging.DEBUG
