@@ -203,14 +203,16 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                             dl_vlan=vlan,
                             nw_dst='%s' % ip)
 
-    def setup_tunnel_port(self, network_type, port):
-        self.add_flow(priority=1,
-                      in_port=port,
-                      actions="resubmit(,%s)" %
-                      constants.TUN_TABLE[network_type])
+    def setup_tunnel_port(self, network_type, port, deferred_br=None):
+        br = deferred_br if deferred_br else self
+        br.add_flow(priority=1,
+                    in_port=port,
+                    actions="resubmit(,%s)" %
+                    constants.TUN_TABLE[network_type])
 
-    def cleanup_tunnel_port(self, port):
-        self.delete_flows(in_port=port)
+    def cleanup_tunnel_port(self, port, deferred_br=None):
+        br = deferred_br if deferred_br else self
+        br.delete_flows(in_port=port)
 
     def add_dvr_mac_tun(self, mac, port):
         # Table DVR_NOT_LEARN ensures unique dvr macs in the cloud
@@ -237,10 +239,12 @@ class DeferredOVSTunnelBridge(ovs_lib.DeferredOVSBridge):
         'delete_flood_to_tun',
         'install_arp_responder',
         'delete_arp_responder',
+        'setup_tunnel_port',
+        'cleanup_tunnel_port',
     ]
 
     def __getattr__(self, name):
         if name in self._METHODS:
             m = getattr(self.br, name)
             return functools.partial(m, deferred_br=self)
-        raise AttributeError(name)
+        return super(DeferredOVSTunnelBridge, self).__getattr__(name)
