@@ -17,6 +17,7 @@ import copy
 
 import netaddr
 from oslo_config import cfg
+from oslo_db import api as oslo_db_api
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
@@ -30,6 +31,7 @@ from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
+from neutron.db import api as db_api
 from neutron.i18n import _LE, _LI
 from neutron import policy
 from neutron import quota
@@ -381,6 +383,8 @@ class Controller(object):
                 # We need a way for ensuring that if it has been created,
                 # it is then deleted
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_deadlock=True)
     def create(self, request, body=None, **kwargs):
         """Creates a new instance of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
@@ -465,6 +469,8 @@ class Controller(object):
                 return notify({self._resource: self._view(request.context,
                                                           obj)})
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_deadlock=True)
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
         self._notifier.info(request.context,
@@ -499,6 +505,8 @@ class Controller(object):
                                      result,
                                      notifier_method)
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_deadlock=True)
     def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes."""
         parent_id = kwargs.get(self._parent_id_name)
