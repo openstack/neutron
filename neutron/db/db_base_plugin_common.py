@@ -245,6 +245,12 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 args['ipv6_address_mode'] = subnet['ipv6_address_mode']
         return args
 
+    def _make_fixed_ip_dict(self, ips):
+        # Excludes from dict all keys except subnet_id and ip_address
+        return [{'subnet_id': ip["subnet_id"],
+                 'ip_address': ip["ip_address"]}
+                for ip in ips]
+
     def _gateway_ip_str(self, subnet, cidr_net):
         if subnet.get('gateway_ip') is attributes.ATTR_NOT_SPECIFIED:
                 return str(cidr_net.network + 1)

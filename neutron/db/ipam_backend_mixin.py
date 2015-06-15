@@ -17,6 +17,7 @@ import collections
 
 import netaddr
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
 from neutron.common import constants
@@ -35,6 +36,16 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
     # Tracks changes in ip allocation for port using namedtuple
     Changes = collections.namedtuple('Changes', 'add original remove')
+
+    def _update_db_port(self, context, db_port, new_port, network_id, new_mac):
+        # Remove all attributes in new_port which are not in the port DB model
+        # and then update the port
+        try:
+            db_port.update(self._filter_non_model_columns(new_port,
+                                                          models_v2.Port))
+            context.session.flush()
+        except db_exc.DBDuplicateEntry:
+            raise n_exc.MacAddressInUse(net_id=network_id, mac=new_mac)
 
     def _update_subnet_host_routes(self, context, id, s):
 

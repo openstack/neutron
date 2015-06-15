@@ -1139,54 +1139,36 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
 
         return self._make_port_dict(db_port, process_extensions=False)
 
-    def update_port(self, context, id, port):
-        p = port['port']
+    def _validate_port_for_update(self, context, db_port, new_port, new_mac):
+        changed_owner = 'device_owner' in new_port
+        current_owner = (new_port.get('device_owner') or
+                         db_port['device_owner'])
+        changed_device_id = new_port.get('device_id') != db_port['device_id']
+        current_device_id = new_port.get('device_id') or db_port['device_id']
 
-        changed_ips = False
+        if current_owner and changed_device_id or changed_owner:
+            self._enforce_device_owner_not_router_intf_or_device_id(
+                context, current_owner, current_device_id,
+                db_port['tenant_id'])
+
+        if new_mac and new_mac != db_port['mac_address']:
+            self._check_mac_addr_update(context, db_port,
+                                        new_mac, current_owner)
+
+    def update_port(self, context, id, port):
+        new_port = port['port']
+
         with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
-            changed_owner = 'device_owner' in p
-            current_owner = p.get('device_owner') or port['device_owner']
-            changed_device_id = p.get('device_id') != port['device_id']
-            current_device_id = p.get('device_id') or port['device_id']
-
-            if current_owner and changed_device_id or changed_owner:
-                self._enforce_device_owner_not_router_intf_or_device_id(
-                    context, current_owner, current_device_id,
-                    port['tenant_id'])
-
-            new_mac = p.get('mac_address')
-            if new_mac and new_mac != port['mac_address']:
-                self._check_mac_addr_update(
-                    context, port, new_mac, current_owner)
-
-            # Check if the IPs need to be updated
-            network_id = port['network_id']
-            if 'fixed_ips' in p:
-                changed_ips = True
-                original = self._make_port_dict(port, process_extensions=False)
-                changes = self._update_ips_for_port(
-                    context, network_id,
-                    original["fixed_ips"], p['fixed_ips'],
-                    original['mac_address'], port['device_owner'])
-
-                # Update ips if necessary
-                for ip in changes.add:
-                    NeutronDbPluginV2._store_ip_allocation(
-                        context, ip['ip_address'], network_id,
-                        ip['subnet_id'], port.id)
-                # Remove all attributes in p which are not in the port DB model
-                # and then update the port
-            try:
-                port.update(self._filter_non_model_columns(p, models_v2.Port))
-                context.session.flush()
-            except db_exc.DBDuplicateEntry:
-                raise n_exc.MacAddressInUse(net_id=network_id, mac=new_mac)
-
+            new_mac = new_port.get('mac_address')
+            self._validate_port_for_update(context, port, new_port, new_mac)
+            changes = self._update_port_with_ips(context, port,
+                                                 new_port, new_mac)
         result = self._make_port_dict(port)
         # Keep up with fields that changed
-        if changed_ips:
-            result['fixed_ips'] = changes.original + changes.add
+        if changes.original or changes.add or changes.remove:
+            result['fixed_ips'] = self._make_fixed_ip_dict(
+                changes.original + changes.add)
         return result
 
     def delete_port(self, context, id):
