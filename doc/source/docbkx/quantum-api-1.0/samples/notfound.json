@@ -1,7 +1,0 @@
-{
-    "itemNotFound" : {
-        "code" : 404,
-        "message" : "Not Found",
-        "details" : "Error Details..." 
-    }
-}

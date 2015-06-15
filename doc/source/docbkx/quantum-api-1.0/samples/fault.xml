@@ -1,8 +1,0 @@
-<networkNotFound code="420" xmlns="http://netstack.org/quantum/api/v1.0">
-   <message>
-       Unable to find a network with the specified identifier.
-   </message>
-   <detail>
-       Network 8de6af7c-ef95-4ac1-9d37-172f8df33a1f could not be found
-   </detail>
-</networkNotFound
