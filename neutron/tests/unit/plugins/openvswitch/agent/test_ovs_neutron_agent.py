@@ -531,7 +531,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             int_br.get_vif_port_by_id.return_value = vif
             self.agent.port_delete("unused_context",
                                    port_id='id')
-            self.agent.process_deleted_ports()
+            self.agent.process_deleted_ports(port_info={})
             # the main things we care about are that it gets put in the
             # dead vlan and gets blocked
             int_br.set_db_attribute.assert_any_call(
@@ -540,6 +540,15 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             int_br.add_flow.assert_any_call(priority=mock.ANY,
                                             in_port=vif.ofport,
                                             actions='drop')
+
+    def test_port_delete_removed_port(self):
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            self.agent.port_delete("unused_context",
+                                   port_id='id')
+            # if it was removed from the bridge, we shouldn't be processing it
+            self.agent.process_deleted_ports(port_info={'removed': {'id', }})
+            self.assertFalse(int_br.set_db_attribute.called)
+            self.assertFalse(int_br.drop_port.called)
 
     def test_setup_physical_bridges(self):
         with contextlib.nested(
