@@ -122,52 +122,6 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                 return True
         return False
 
-    def _update_ips_for_port(self, context, network_id, port_id, original_ips,
-                             new_ips, mac_address, device_owner):
-        """Add or remove IPs from the port."""
-        ips = []
-        # These ips are still on the port and haven't been removed
-        prev_ips = []
-
-        # the new_ips contain all of the fixed_ips that are to be updated
-        if len(new_ips) > cfg.CONF.max_fixed_ips_per_port:
-            msg = _('Exceeded maximim amount of fixed ips per port')
-            raise n_exc.InvalidInput(error_message=msg)
-
-        # Remove all of the intersecting elements
-        for original_ip in original_ips[:]:
-            for new_ip in new_ips[:]:
-                if ('ip_address' in new_ip and
-                    original_ip['ip_address'] == new_ip['ip_address']):
-                    original_ips.remove(original_ip)
-                    new_ips.remove(new_ip)
-                    prev_ips.append(original_ip)
-                    break
-            else:
-                # For ports that are not router ports, retain any automatic
-                # (non-optional, e.g. IPv6 SLAAC) addresses.
-                if device_owner not in constants.ROUTER_INTERFACE_OWNERS:
-                    subnet = self._get_subnet(context,
-                                              original_ip['subnet_id'])
-                    if (ipv6_utils.is_auto_address_subnet(subnet)):
-                        original_ips.remove(original_ip)
-                        prev_ips.append(original_ip)
-
-        # Check if the IP's to add are OK
-        to_add = self._test_fixed_ips_for_port(context, network_id, new_ips,
-                                               device_owner)
-        for ip in original_ips:
-            LOG.debug("Port update. Hold %s", ip)
-            NeutronDbPluginV2._delete_ip_allocation(context,
-                                                    network_id,
-                                                    ip['subnet_id'],
-                                                    ip['ip_address'])
-
-        if to_add:
-            LOG.debug("Port update. Adding %s", to_add)
-            ips = self._allocate_fixed_ips(context, to_add, mac_address)
-        return ips, prev_ips
-
     def _validate_subnet_cidr(self, context, network, new_subnet_cidr):
         """Validate the CIDR for a subnet.
 
@@ -1211,13 +1165,13 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
             if 'fixed_ips' in p:
                 changed_ips = True
                 original = self._make_port_dict(port, process_extensions=False)
-                added_ips, prev_ips = self._update_ips_for_port(
-                    context, network_id, id,
+                changes = self._update_ips_for_port(
+                    context, network_id,
                     original["fixed_ips"], p['fixed_ips'],
                     original['mac_address'], port['device_owner'])
 
                 # Update ips if necessary
-                for ip in added_ips:
+                for ip in changes.add:
                     NeutronDbPluginV2._store_ip_allocation(
                         context, ip['ip_address'], network_id,
                         ip['subnet_id'], port.id)
@@ -1232,7 +1186,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
         result = self._make_port_dict(port)
         # Keep up with fields that changed
         if changed_ips:
-            result['fixed_ips'] = prev_ips + added_ips
+            result['fixed_ips'] = changes.original + changes.add
         return result
 
     def delete_port(self, context, id):
