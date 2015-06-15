@@ -150,7 +150,7 @@ Functionality legend
 Arista
 ------
 
-* Git: https://github.com/stackforge/networking-arista
+* Git: https://git.openstack.org/cgit/stackforge/networking-arista
 * Launchpad: https://launchpad.net/networking-arista
 * Pypi: https://pypi.python.org/pypi/networking-arista
 
@@ -159,7 +159,7 @@ Arista
 BaGPipe
 -------
 
-* Git: https://github.com/stackforge/networking-bagpipe-l2
+* Git: https://git.openstack.org/cgit/stackforge/networking-bagpipe-l2
 * Launchpad: https://launchpad.net/bagpipe-l2
 * Pypi: https://pypi.python.org/pypi/bagpipe-l2
 
@@ -168,14 +168,14 @@ BaGPipe
 BGPVPN
 -------
 
-* Git: https://github.com/stackforge/networking-bgpvpn
+* Git: https://git.openstack.org/cgit/openstack/networking-bgpvpn
 
 .. _networking-bigswitch:
 
 Big Switch Networks
 -------------------
 
-* Git: https://git.openstack.org/stackforge/networking-bigswitch
+* Git: https://git.openstack.org/cgit/stackforge/networking-bigswitch
 * Pypi: https://pypi.python.org/pypi/bsnstacklib
 
 .. _networking-brocade:
@@ -183,7 +183,7 @@ Big Switch Networks
 Brocade
 -------
 
-* Git: https://github.com/stackforge/networking-brocade
+* Git: https://git.openstack.org/cgit/stackforge/networking-brocade
 * Launchpad: https://launchpad.net/networking-brocade
 * PyPI: https://pypi.python.org/pypi/networking-brocade
 
@@ -192,7 +192,7 @@ Brocade
 Cisco
 -----
 
-* Git: https://github.com/stackforge/networking-cisco
+* Git: https://git.openstack.org/cgit/stackforge/networking-cisco
 * Launchpad: https://launchpad.net/networking-cisco
 * PyPI: https://pypi.python.org/pypi/networking-cisco
 
@@ -201,7 +201,7 @@ Cisco
 DragonFlow
 ----------
 
-* Git: https://github.com/stackforge/dragonflow
+* Git: https://git.openstack.org/cgit/openstack/dragonflow
 * Launchpad: https://launchpad.net/dragonflow
 * PyPi: https://pypi.python.org/pypi/DragonFlow
 
@@ -210,7 +210,7 @@ DragonFlow
 Edge VPN
 --------
 
-* Git: https://git.openstack.org/stackforge/networking-edge-vpn
+* Git: https://git.openstack.org/cgit/stackforge/networking-edge-vpn
 * Launchpad: https://launchpad.net/edge-vpn
 
 .. _networking-hyperv:
@@ -218,7 +218,7 @@ Edge VPN
 Hyper-V
 -------
 
-* Git: https://github.com/stackforge/networking-hyperv
+* Git: https://git.openstack.org/cgit/stackforge/networking-hyperv
 * Launchpad: https://launchpad.net/networking-hyperv
 * PyPi: https://pypi.python.org/pypi/networking-hyperv
 
@@ -227,7 +227,7 @@ Hyper-V
 Group Based Policy
 ------------------
 
-* Git: https://github.com/stackforge/group-based-policy
+* Git: https://git.openstack.org/cgit/stackforge/group-based-policy
 * Launchpad: https://launchpad.net/group-based-policy
 * PyPi: https://pypi.python.org/pypi/group-based-policy
 
@@ -236,7 +236,7 @@ Group Based Policy
 IBM SDNVE
 ---------
 
-* Git: https://github.com/stackforge/networking-ibm
+* Git: https://git.openstack.org/cgit/stackforge/networking-ibm
 * Launchpad: https://launchpad.net/networking-ibm
 
 .. _networking-l2gw:
@@ -244,7 +244,7 @@ IBM SDNVE
 L2 Gateway
 ----------
 
-* Git: https://github.com/stackforge/networking-l2gw
+* Git: https://git.openstack.org/cgit/openstack/networking-l2gw
 * Launchpad: https://launchpad.net/networking-l2gw
 
 .. _networking-metaplugin:
@@ -259,7 +259,7 @@ Metaplugin
 MidoNet
 -------
 
-* Git: https://github.com/stackforge/networking-midonet
+* Git: https://git.openstack.org/cgit/openstack/networking-midonet
 * Launchpad: https://launchpad.net/networking-midonet
 * PyPI: https://pypi.python.org/pypi/networking-midonet
 
@@ -268,7 +268,7 @@ MidoNet
 Mellanox
 --------
 
-* Git: https://github.com/stackforge/networking-mlnx
+* Git: https://git.openstack.org/cgit/stackforge/networking-mlnx
 * Launchpad: https://launchpad.net/networking-mlnx
 
 .. _networking-nec:
@@ -276,7 +276,7 @@ Mellanox
 NEC
 ---
 
-* Git: https://github.com/stackforge/networking-nec
+* Git: https://git.openstack.org/cgit/stackforge/networking-nec
 * Launchpad: https://launchpad.net/networking-nec
 * PyPI: https://pypi.python.org/pypi/networking-nec
 
@@ -292,7 +292,7 @@ Nuage
 OpenDayLight
 ------------
 
-* Git: https://github.com/stackforge/networking-odl
+* Git: https://git.openstack.org/cgit/openstack/networking-odl
 * Launchpad: https://launchpad.net/networking-odl
 
 .. _networking-ofagent:
@@ -300,7 +300,7 @@ OpenDayLight
 OpenFlow Agent (ofagent)
 ------------------------
 
-* Git: https://github.com/stackforge/networking-ofagent
+* Git: https://git.openstack.org/cgit/openstack/networking-ofagent
 * Launchpad: https://launchpad.net/networking-ofagent
 * PyPI: https://pypi.python.org/pypi/networking-ofagent
 
@@ -309,7 +309,7 @@ OpenFlow Agent (ofagent)
 Open Virtual Network
 --------------------
 
-* Git: https://github.com/stackforge/networking-ovn
+* Git: https://git.openstack.org/cgit/openstack/networking-ovn
 * Launchpad: https://launchpad.net/networking-ovn
 * PyPI: https://pypi.python.org/pypi/networking-ovn
 
@@ -318,7 +318,7 @@ Open Virtual Network
 Open DPDK
 ---------
 
-* Git: https://github.com/stackforge/networking-ovs-dpdk
+* Git: https://git.openstack.org/cgit/stackforge/networking-ovs-dpdk
 * Launchpad: https://launchpad.net/networking-ovs-dpdk
 
 .. _networking-plumgrid:
@@ -326,7 +326,7 @@ Open DPDK
 PLUMgrid
 --------
 
-* Git: https://github.com/stackforge/networking-plumgrid
+* Git: https://git.openstack.org/cgit/stackforge/networking-plumgrid
 * Launchpad: https://launchpad.net/networking-plumgrid
 * PyPI: https://pypi.python.org/pypi/networking-plumgrid
 
@@ -335,7 +335,7 @@ PLUMgrid
 PowerVM
 -------
 
-* Git: https://github.com/stackforge/neutron-powervm
+* Git: https://git.openstack.org/cgit/stackforge/neutron-powervm
 * Launchpad: https://launchpad.net/neutron-powervm
 * PyPI: https://pypi.python.org/pypi/neutron-powervm
 
@@ -344,7 +344,7 @@ PowerVM
 PortForwarding
 --------------
 
-* Git: https://github.com/stackforge/networking-portforwarding
+* Git: https://git.openstack.org/cgit/stackforge/networking-portforwarding
 * Launchpad: https://launchpad.net/networking-portforwarding
 
 .. _networking-vsphere:
@@ -352,7 +352,7 @@ PortForwarding
 vSphere
 -------
 
-* Git: https://github.com/stackforge/networking-vsphere
+* Git: https://git.openstack.org/cgit/stackforge/networking-vsphere
 * Launchpad: https://launchpad.net/networking-vsphere
 
 .. _vmware-nsx:
@@ -360,7 +360,7 @@ vSphere
 VMware NSX
 ----------
 
-* Git: https://github.com/stackforge/vmware-nsx
+* Git: https://git.openstack.org/cgit/openstack/vmware-nsx
 * Launchpad: https://launchpad.net/vmware-nsx
 * PyPI: https://pypi.python.org/pypi/vmware-nsx
 
@@ -369,5 +369,5 @@ VMware NSX
 Octavia
 -------
 
-* Git: https://github.com/stackforge/octavia
+* Git: https://git.openstack.org/cgit/openstack/octavia
 * Launchpad: https://launchpad.net/octavia

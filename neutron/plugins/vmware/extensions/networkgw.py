@@ -31,7 +31,7 @@ IFACE_NAME_ATTR = 'interface_name'
 
 
 # TODO(salv-orlando): This type definition is duplicated into
-# stackforge/vmware-nsx. This temporary duplication should be removed once the
+# openstack/vmware-nsx. This temporary duplication should be removed once the
 # plugin decomposition is finished.
 # Allowed network types for the NSX Plugin
 class NetworkTypes(object):
