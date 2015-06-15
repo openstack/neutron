@@ -436,7 +436,7 @@ class LinuxBridgeManager(object):
                     self.delete_vxlan(interface)
                     continue
 
-                for physical_interface in self.interface_mappings.itervalues():
+                for physical_interface in self.interface_mappings.values():
                     if (interface.startswith(physical_interface)):
                         ips, gateway = self.get_interface_details(bridge_name)
                         if ips:
