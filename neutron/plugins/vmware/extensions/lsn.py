@@ -37,7 +37,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Lsn(object):
+class Lsn(extensions.ExtensionDescriptor):
     """Enable LSN configuration for Neutron NSX networks."""
 
     @classmethod

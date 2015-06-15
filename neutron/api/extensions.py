@@ -63,12 +63,9 @@ class PluginInterface(object):
         return True
 
 
+@six.add_metaclass(abc.ABCMeta)
 class ExtensionDescriptor(object):
-    """Base class that defines the contract for extensions.
-
-    Note that you don't have to derive from this class to have a valid
-    extension; it is purely a convenience.
-    """
+    """Base class that defines the contract for extensions."""
 
     def get_name(self):
         """The name of the extension.

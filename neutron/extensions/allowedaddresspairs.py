@@ -14,6 +14,7 @@
 
 import webob.exc
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as nexception
 from oslo_config import cfg
@@ -102,7 +103,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Allowedaddresspairs(object):
+class Allowedaddresspairs(extensions.ExtensionDescriptor):
     """Extension class supporting allowed address pairs."""
 
     @classmethod

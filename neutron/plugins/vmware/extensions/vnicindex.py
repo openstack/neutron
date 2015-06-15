@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 # Attribute Map
@@ -28,7 +29,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
          'convert_to': attributes.convert_to_int_if_not_none}}}
 
 
-class Vnicindex(object):
+class Vnicindex(extensions.ExtensionDescriptor):
     @classmethod
     def get_name(cls):
         return "VNIC Index"

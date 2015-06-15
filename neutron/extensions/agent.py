@@ -71,7 +71,7 @@ class MultipleAgentFoundByTypeHost(exceptions.Conflict):
                 "host=%(host)s found")
 
 
-class Agent(object):
+class Agent(extensions.ExtensionDescriptor):
     """Agent management extension."""
 
     @classmethod

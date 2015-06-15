@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 
 # Attribute Map
 ADV_SERVICE_PROVIDERS = 'advanced_service_providers'
@@ -26,7 +27,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
          'default': None}}}
 
 
-class Advancedserviceproviders(object):
+class Advancedserviceproviders(extensions.ExtensionDescriptor):
     @classmethod
     def get_name(cls):
         return "Advanced Service Providers"

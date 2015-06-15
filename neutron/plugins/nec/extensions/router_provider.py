@@ -14,6 +14,7 @@
 
 from oslo_log import log as logging
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 
@@ -31,7 +32,7 @@ ROUTER_PROVIDER_ATTRIBUTE = {
 }
 
 
-class Router_provider(object):
+class Router_provider(extensions.ExtensionDescriptor):
     @classmethod
     def get_name(cls):
         return "Router Provider"
