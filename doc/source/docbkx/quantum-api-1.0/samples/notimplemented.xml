@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<notImplemented xmlns="http://docs.openstack.org/compute/api/v1.1" code="501">
-  <message>Not Implemented</message>
-  <details>Error Details...</details>
-</notImplemented>
