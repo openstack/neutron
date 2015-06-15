@@ -499,7 +499,6 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         subnet = self._save_subnet(context,
                                    network,
                                    self._make_subnet_args(
-                                       network.shared,
                                        subnet_request,
                                        subnet,
                                        subnetpool_id),

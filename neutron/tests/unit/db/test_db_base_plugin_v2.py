@@ -2293,7 +2293,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 # must query db to see whether subnet's shared attribute
                 # has been updated or not
                 ctx = context.Context('', '', is_admin=True)
-                subnet_db = manager.NeutronManager.get_plugin()._get_subnet(
+                subnet_db = manager.NeutronManager.get_plugin().get_subnet(
                     ctx, subnet['subnet']['id'])
                 self.assertEqual(subnet_db['shared'], True)
 
@@ -3806,13 +3806,16 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.subnet(network=network) as v4_subnet,\
             self.port(subnet=v4_subnet, device_owner=device_owner) as port:
             if insert_db_reference_error:
-                def db_ref_err_for_ipalloc(instance):
+                orig = orm.Session.add
+
+                def db_ref_err_for_ipalloc(s, instance):
                     if instance.__class__.__name__ == 'IPAllocation':
                         raise db_exc.DBReferenceError(
                             'dummy_table', 'dummy_constraint',
                             'dummy_key', 'dummy_key_table')
+                    return orig(s, instance)
                 mock.patch.object(orm.Session, 'add',
-                                  side_effect=db_ref_err_for_ipalloc).start()
+                                  new=db_ref_err_for_ipalloc).start()
                 mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                   '_get_subnet',
                                   return_value=mock.Mock()).start()
@@ -5323,8 +5326,8 @@ class DbModelTestCase(base.BaseTestCase):
         exp_middle = "[object at %x]" % id(network)
         exp_end_with = (" {tenant_id=None, id=None, "
                         "name='net_net', status='OK', "
-                        "admin_state_up=True, shared=None, "
-                        "mtu=None, vlan_transparent=None}>")
+                        "admin_state_up=True, mtu=None, "
+                        "vlan_transparent=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
         self.assertEqual(actual_repr_output, final_exp)
 

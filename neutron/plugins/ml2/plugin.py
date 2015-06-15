@@ -846,7 +846,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         while True:
             with session.begin(subtransactions=True):
                 record = self._get_subnet(context, id)
-                subnet = self._make_subnet_dict(record, None)
+                subnet = self._make_subnet_dict(record, None, context=context)
                 qry_allocated = (session.query(models_v2.IPAllocation).
                                  filter_by(subnet_id=id).
                                  join(models_v2.Port))

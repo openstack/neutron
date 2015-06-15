@@ -16,6 +16,8 @@
 import weakref
 
 import six
+from sqlalchemy import and_
+from sqlalchemy import or_
 from sqlalchemy import sql
 
 from neutron.common import exceptions as n_exc
@@ -98,7 +100,15 @@ class CommonDbMixin(object):
         # define basic filter condition for model query
         query_filter = None
         if self.model_query_scope(context, model):
-            if hasattr(model, 'shared'):
+            if hasattr(model, 'rbac_entries'):
+                rbac_model, join_params = self._get_rbac_query_params(model)
+                query = query.outerjoin(*join_params)
+                query_filter = (
+                    (model.tenant_id == context.tenant_id) |
+                    ((rbac_model.action == 'access_as_shared') &
+                     ((rbac_model.target_tenant == context.tenant_id) |
+                      (rbac_model.target_tenant == '*'))))
+            elif hasattr(model, 'shared'):
                 query_filter = ((model.tenant_id == context.tenant_id) |
                                 (model.shared == sql.true()))
             else:
@@ -145,15 +155,47 @@ class CommonDbMixin(object):
         query = self._model_query(context, model)
         return query.filter(model.id == id).one()
 
-    def _apply_filters_to_query(self, query, model, filters):
+    @staticmethod
+    def _get_rbac_query_params(model):
+        """Return the class and join params for the rbac relationship."""
+        try:
+            cls = model.rbac_entries.property.mapper.class_
+            return (cls, (cls, ))
+        except AttributeError:
+            # an association proxy is being used (e.g. subnets
+            # depends on network's rbac entries)
+            rbac_model = (model.rbac_entries.target_class.
+                          rbac_entries.property.mapper.class_)
+            return (rbac_model, model.rbac_entries.attr)
+
+    def _apply_filters_to_query(self, query, model, filters, context=None):
         if filters:
             for key, value in six.iteritems(filters):
                 column = getattr(model, key, None)
-                if column:
+                # NOTE(kevinbenton): if column is a hybrid property that
+                # references another expression, attempting to convert to
+                # a boolean will fail so we must compare to None.
+                # See "An Important Expression Language Gotcha" in:
+                # docs.sqlalchemy.org/en/rel_0_9/changelog/migration_06.html
+                if column is not None:
                     if not value:
                         query = query.filter(sql.false())
                         return query
                     query = query.filter(column.in_(value))
+                elif key == 'shared' and hasattr(model, 'rbac_entries'):
+                    # translate a filter on shared into a query against the
+                    # object's rbac entries
+                    rbac, join_params = self._get_rbac_query_params(model)
+                    query = query.outerjoin(*join_params, aliased=True)
+                    matches = [rbac.target_tenant == '*']
+                    if context:
+                        matches.append(rbac.target_tenant == context.tenant_id)
+                    is_shared = and_(
+                        ~rbac.object_id.is_(None),
+                        rbac.action == 'access_as_shared',
+                        or_(*matches)
+                    )
+                    query = query.filter(is_shared if value[0] else ~is_shared)
             for _nam, hooks in six.iteritems(self._model_query_hooks.get(model,
                                                                          {})):
                 result_filter = hooks.get('result_filters', None)
@@ -181,7 +223,8 @@ class CommonDbMixin(object):
                               sorts=None, limit=None, marker_obj=None,
                               page_reverse=False):
         collection = self._model_query(context, model)
-        collection = self._apply_filters_to_query(collection, model, filters)
+        collection = self._apply_filters_to_query(collection, model, filters,
+                                                  context)
         if limit and page_reverse and sorts:
             sorts = [(s[0], not s[1]) for s in sorts]
         collection = sqlalchemyutils.paginate_query(collection, model, limit,
