@@ -463,7 +463,7 @@ class LinuxBridgeManager(object):
                       bridge_name)
 
     def remove_empty_bridges(self):
-        for network_id in self.network_map.keys():
+        for network_id in list(self.network_map.keys()):
             bridge_name = self.get_bridge_name(network_id)
             if not self.get_tap_devices_count(bridge_name):
                 self.delete_vlan_bridge(bridge_name)

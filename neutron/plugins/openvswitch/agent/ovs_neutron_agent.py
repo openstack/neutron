@@ -1182,7 +1182,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 break
         # If not, remove it
         else:
-            for remote_ip, ofport in self.tun_br_ofports[tunnel_type].items():
+            items = list(self.tun_br_ofports[tunnel_type].items())
+            for remote_ip, ofport in items:
                 if ofport == tun_ofport:
                     port_name = '%s-%s' % (tunnel_type,
                                            self.get_ip_in_hex(remote_ip))

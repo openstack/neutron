@@ -460,7 +460,7 @@ class ExtensionManager(object):
         # is made in a whole iteration
         while exts_to_process:
             processed_ext_count = len(processed_exts)
-            for ext_name, ext in exts_to_process.items():
+            for ext_name, ext in list(exts_to_process.items()):
                 if not hasattr(ext, 'get_extended_resources'):
                     del exts_to_process[ext_name]
                     continue
