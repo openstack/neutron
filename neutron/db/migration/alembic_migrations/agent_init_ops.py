@@ -30,10 +30,13 @@ def upgrade():
         sa.Column('binary', sa.String(length=255), nullable=False),
         sa.Column('topic', sa.String(length=255), nullable=False),
         sa.Column('host', sa.String(length=255), nullable=False),
-        sa.Column('admin_state_up', sa.Boolean(), nullable=False),
+        sa.Column('admin_state_up', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.true()),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('started_at', sa.DateTime(), nullable=False),
         sa.Column('heartbeat_timestamp', sa.DateTime(), nullable=False),
         sa.Column('description', sa.String(length=255), nullable=True),
         sa.Column('configurations', sa.String(length=4095), nullable=False),
-        sa.PrimaryKeyConstraint('id'))
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('agent_type', 'host',
+                            name='uniq_agents0agent_type0host'))

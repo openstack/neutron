@@ -108,12 +108,13 @@ def upgrade():
         sa.Column('weight', sa.Integer(), nullable=False),
         sa.Column('admin_state_up', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(['pool_id'], ['pools.id'], ),
-        sa.PrimaryKeyConstraint('id'))
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('pool_id', 'address', 'protocol_port',
+                            name='uniq_member0pool_id0address0port'))
 
     op.create_table(
         'poolmonitorassociations',
-        sa.Column('status', sa.String(length=16), nullable=False,
-                  server_default=''),
+        sa.Column('status', sa.String(length=16), nullable=False),
         sa.Column('status_description', sa.String(length=255), nullable=True),
         sa.Column('pool_id', sa.String(length=36), nullable=False),
         sa.Column('monitor_id', sa.String(length=36), nullable=False),
@@ -124,9 +125,19 @@ def upgrade():
     op.create_table(
         'poolstatisticss',
         sa.Column('pool_id', sa.String(length=36), nullable=False),
-        sa.Column('bytes_in', sa.Integer(), nullable=False),
-        sa.Column('bytes_out', sa.Integer(), nullable=False),
-        sa.Column('active_connections', sa.Integer(), nullable=False),
-        sa.Column('total_connections', sa.Integer(), nullable=False),
+        sa.Column('bytes_in', sa.BigInteger(), nullable=False),
+        sa.Column('bytes_out', sa.BigInteger(), nullable=False),
+        sa.Column('active_connections', sa.BigInteger(), nullable=False),
+        sa.Column('total_connections', sa.BigInteger(), nullable=False),
         sa.ForeignKeyConstraint(['pool_id'], ['pools.id'], ),
         sa.PrimaryKeyConstraint('pool_id'))
+
+    op.create_table(
+        u'embrane_pool_port',
+        sa.Column(u'pool_id', sa.String(length=36), nullable=False),
+        sa.Column(u'port_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['pool_id'], [u'pools.id'],
+                                name=u'embrane_pool_port_ibfk_1'),
+        sa.ForeignKeyConstraint(['port_id'], [u'ports.id'],
+                                name=u'embrane_pool_port_ibfk_2'),
+        sa.PrimaryKeyConstraint(u'pool_id'))
