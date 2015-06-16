@@ -32,6 +32,7 @@ from neutron import context
 from neutron.db import api as session
 from neutron.i18n import _LE, _LI
 from neutron import manager
+from neutron import worker
 from neutron import wsgi
 
 
@@ -44,7 +45,7 @@ service_opts = [
                       'If not specified, the default is equal to the number '
                       'of CPUs available for best performance.')),
     cfg.IntOpt('rpc_workers',
-               default=0,
+               default=1,
                help=_('Number of RPC worker processes for service')),
     cfg.IntOpt('periodic_fuzzy_delay',
                default=5,
@@ -108,13 +109,28 @@ def serve_wsgi(cls):
     return service
 
 
-class RpcWorker(common_service.ServiceBase):
+def start_plugin_workers():
+    launchers = []
+    # NOTE(twilson) get_service_plugins also returns the core plugin
+    for plugin in manager.NeutronManager.get_unique_service_plugins():
+        # TODO(twilson) Instead of defaulting here, come up with a good way to
+        # share a common get_workers default between NeutronPluginBaseV2 and
+        # ServicePluginBase
+        for plugin_worker in getattr(plugin, 'get_workers', tuple)():
+            launcher = common_service.ProcessLauncher(cfg.CONF)
+            launcher.launch_service(plugin_worker)
+            launchers.append(launcher)
+    return launchers
+
+
+class RpcWorker(worker.NeutronWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, plugin):
         self._plugin = plugin
         self._servers = []
 
     def start(self):
+        super(RpcWorker, self).start()
         self._servers = self._plugin.start_rpc_listeners()
 
     def wait(self):
@@ -149,6 +165,9 @@ class RpcWorker(common_service.ServiceBase):
 def serve_rpc():
     plugin = manager.NeutronManager.get_plugin()
 
+    if cfg.CONF.rpc_workers < 1:
+        cfg.CONF.set_override('rpc_workers', 1)
+
     # If 0 < rpc_workers then start_rpc_listeners would be called in a
     # subprocess and we cannot simply catch the NotImplementedError.  It is
     # simpler to check this up front by testing whether the plugin supports
@@ -164,22 +183,14 @@ def serve_rpc():
     try:
         rpc = RpcWorker(plugin)
 
-        if cfg.CONF.rpc_workers < 1:
-            LOG.debug('starting rpc directly, workers=%s',
-                      cfg.CONF.rpc_workers)
-            rpc.start()
-            return rpc
-        else:
-            # dispose the whole pool before os.fork, otherwise there will
-            # be shared DB connections in child processes which may cause
-            # DB errors.
-            LOG.debug('using launcher for rpc, workers=%s',
-                      cfg.CONF.rpc_workers)
-            session.dispose()
-            launcher = common_service.ProcessLauncher(cfg.CONF,
-                                                      wait_interval=1.0)
-            launcher.launch_service(rpc, workers=cfg.CONF.rpc_workers)
-            return launcher
+        # dispose the whole pool before os.fork, otherwise there will
+        # be shared DB connections in child processes which may cause
+        # DB errors.
+        LOG.debug('using launcher for rpc, workers=%s', cfg.CONF.rpc_workers)
+        session.dispose()
+        launcher = common_service.ProcessLauncher(cfg.CONF, wait_interval=1.0)
+        launcher.launch_service(rpc, workers=cfg.CONF.rpc_workers)
+        return launcher
     except Exception:
         with excutils.save_and_reraise_exception():
             LOG.exception(_LE('Unrecoverable error: please check log for '
@@ -188,7 +199,7 @@ def serve_rpc():
 
 def _get_api_workers():
     workers = cfg.CONF.api_workers
-    if workers is None:
+    if not workers:
         workers = processutils.get_worker_count()
     return workers
 

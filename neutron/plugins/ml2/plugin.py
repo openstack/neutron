@@ -1539,3 +1539,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if port:
                 return port.id
         return device
+
+    def get_workers(self):
+        return self.mechanism_manager.get_workers()

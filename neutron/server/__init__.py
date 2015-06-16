@@ -50,6 +50,10 @@ def main():
         else:
             rpc_thread = pool.spawn(neutron_rpc.wait)
 
+            plugin_workers = service.start_plugin_workers()
+            for worker in plugin_workers:
+                pool.spawn(worker.wait)
+
             # api and rpc should die together.  When one dies, kill the other.
             rpc_thread.link(lambda gt: api_thread.kill())
             api_thread.link(lambda gt: rpc_thread.kill())

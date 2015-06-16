@@ -46,6 +46,10 @@ class ServicePluginBase(extensions.PluginInterface):
         """Return string description of the plugin."""
         pass
 
+    def get_workers(self):
+        """Returns a collection of NeutronWorkers"""
+        return ()
+
 
 def load_drivers(service_type, plugin):
     """Loads drivers for specific service.
