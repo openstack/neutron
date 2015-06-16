@@ -1031,6 +1031,10 @@ class TestIpNeighCommand(TestIPCmdBase):
                            'lladdr', 'cc:dd:ee:ff:ab:cd',
                            'dev', 'tap0'))
 
+    def test_flush(self):
+        self.neigh_cmd.flush(4, '192.168.0.1')
+        self._assert_sudo([4], ('flush', 'to', '192.168.0.1'))
+
 
 class TestArpPing(TestIPCmdBase):
     @mock.patch.object(ip_lib, 'IPWrapper')

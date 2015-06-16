@@ -634,6 +634,17 @@ class IpNeighCommand(IpDeviceCommandBase):
                              ('show',
                               'dev', self.name))
 
+    def flush(self, ip_version, ip_address):
+        """Flush neighbour entries
+
+        Given address entry is removed from neighbour cache (ARP or NDP). To
+        flush all entries pass string 'all' as an address.
+
+        :param ip_version: Either 4 or 6 for IPv4 or IPv6 respectively
+        :param ip_address: The prefix selecting the neighbours to flush
+        """
+        self._as_root([ip_version], ('flush', 'to', ip_address))
+
 
 class IpNetnsCommand(IpCommandBase):
     COMMAND = 'netns'
