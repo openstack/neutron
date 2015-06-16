@@ -1211,6 +1211,41 @@ class AncillaryBridgesTest(object):
         bridges = ['br-int', 'br-ex1', 'br-ex2']
         self._test_ancillary_bridges(bridges, ['br-ex1', 'br-ex2'])
 
+    def mock_scan_ancillary_ports(self, vif_port_set=None,
+                                  registered_ports=None):
+        bridges = ['br-int', 'br-ex']
+        ancillary = ['br-ex']
+
+        with mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                               'setup_integration_br'), \
+                mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                                  '_restore_local_vlan_map'), \
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
+                           return_value=bridges), \
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.'
+                           'get_bridge_external_bridge_id',
+                           side_effect=ancillary), \
+                mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
+                           'get_vif_port_set',
+                           return_value=vif_port_set):
+            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
+                                                        **self.kwargs)
+            return self.agent.scan_ancillary_ports(registered_ports)
+
+    def test_scan_ancillary_ports_returns_cur_only_for_unchanged_ports(self):
+        vif_port_set = set([1, 2])
+        registered_ports = set([1, 2])
+        expected = dict(current=vif_port_set)
+        actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
+        self.assertEqual(expected, actual)
+
+    def test_scan_ancillary_ports_returns_port_changes(self):
+        vif_port_set = set([1, 3])
+        registered_ports = set([1, 2])
+        expected = dict(current=vif_port_set, added=set([3]), removed=set([2]))
+        actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
+        self.assertEqual(expected, actual)
+
 
 class AncillaryBridgesTestOFCtl(AncillaryBridgesTest,
                                 ovs_test_base.OVSOFCtlTestBase):

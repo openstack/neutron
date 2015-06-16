@@ -1050,10 +1050,22 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 port_moves.append(name)
         return port_moves
 
+    def _get_port_info(self, registered_ports, cur_ports):
+        port_info = {'current': cur_ports}
+        # FIXME(salv-orlando): It's not really necessary to return early
+        # if nothing has changed.
+        if cur_ports == registered_ports:
+            # No added or removed ports to set, just return here
+            return port_info
+        port_info['added'] = cur_ports - registered_ports
+        # Remove all the known ports not found on the integration bridge
+        port_info['removed'] = registered_ports - cur_ports
+        return port_info
+
     def scan_ports(self, registered_ports, updated_ports=None):
         cur_ports = self.int_br.get_vif_port_set()
         self.int_br_device_count = len(cur_ports)
-        port_info = {'current': cur_ports}
+        port_info = self._get_port_info(registered_ports, cur_ports)
         if updated_ports is None:
             updated_ports = set()
         updated_ports.update(self.check_changed_vlans(registered_ports))
@@ -1065,17 +1077,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             updated_ports &= cur_ports
             if updated_ports:
                 port_info['updated'] = updated_ports
-
-        # FIXME(salv-orlando): It's not really necessary to return early
-        # if nothing has changed.
-        if cur_ports == registered_ports:
-            # No added or removed ports to set, just return here
-            return port_info
-
-        port_info['added'] = cur_ports - registered_ports
-        # Remove all the known ports not found on the integration bridge
-        port_info['removed'] = registered_ports - cur_ports
         return port_info
+
+    def scan_ancillary_ports(self, registered_ports):
+        cur_ports = set()
+        for bridge in self.ancillary_brs:
+            cur_ports |= bridge.get_vif_port_set()
+        return self._get_port_info(registered_ports, cur_ports)
 
     def check_changed_vlans(self, registered_ports):
         """Return ports which have lost their vlan tag.
@@ -1100,19 +1108,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     )
                     changed_ports.add(port)
         return changed_ports
-
-    def update_ancillary_ports(self, registered_ports):
-        ports = set()
-        for bridge in self.ancillary_brs:
-            ports |= bridge.get_vif_port_set()
-
-        if ports == registered_ports:
-            return
-        added = ports - registered_ports
-        removed = registered_ports - ports
-        return {'current': ports,
-                'added': added,
-                'removed': removed}
 
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
                        physical_network, segmentation_id, admin_state_up,
@@ -1559,7 +1554,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     ports = port_info['current']
                     # Treat ancillary devices if they exist
                     if self.ancillary_brs:
-                        port_info = self.update_ancillary_ports(
+                        port_info = self.scan_ancillary_ports(
                             ancillary_ports)
                         LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
                                   "ancillary port info retrieved. "
@@ -1567,20 +1562,19 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                   {'iter_num': self.iter_num,
                                    'elapsed': time.time() - start})
 
-                        if port_info:
-                            rc = self.process_ancillary_network_ports(
-                                port_info)
-                            LOG.debug("Agent rpc_loop - iteration: "
-                                      "%(iter_num)d - ancillary ports "
-                                      "processed. Elapsed:%(elapsed).3f",
-                                      {'iter_num': self.iter_num,
-                                       'elapsed': time.time() - start})
-                            ancillary_ports = port_info['current']
-                            port_stats['ancillary']['added'] = (
-                                len(port_info.get('added', [])))
-                            port_stats['ancillary']['removed'] = (
-                                len(port_info.get('removed', [])))
-                            sync = sync | rc
+                        rc = self.process_ancillary_network_ports(
+                            port_info)
+                        LOG.debug("Agent rpc_loop - iteration: "
+                                  "%(iter_num)d - ancillary ports "
+                                  "processed. Elapsed:%(elapsed).3f",
+                                  {'iter_num': self.iter_num,
+                                   'elapsed': time.time() - start})
+                        ancillary_ports = port_info['current']
+                        port_stats['ancillary']['added'] = (
+                            len(port_info.get('added', [])))
+                        port_stats['ancillary']['removed'] = (
+                            len(port_info.get('removed', [])))
+                        sync = sync | rc
 
                     polling_manager.polling_completed()
                     # Keep this flag in the last line of "try" block,
