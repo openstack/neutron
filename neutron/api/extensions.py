@@ -411,7 +411,7 @@ class ExtensionManager(object):
         resources = []
         resources.append(ResourceExtension('extensions',
                                            ExtensionController(self)))
-        for ext in self.extensions.itervalues():
+        for ext in self.extensions.values():
             try:
                 resources.extend(ext.get_resources())
             except AttributeError:
@@ -423,7 +423,7 @@ class ExtensionManager(object):
     def get_actions(self):
         """Returns a list of ActionExtension objects."""
         actions = []
-        for ext in self.extensions.itervalues():
+        for ext in self.extensions.values():
             try:
                 actions.extend(ext.get_actions())
             except AttributeError:
@@ -435,7 +435,7 @@ class ExtensionManager(object):
     def get_request_extensions(self):
         """Returns a list of RequestExtension objects."""
         request_exts = []
-        for ext in self.extensions.itervalues():
+        for ext in self.extensions.values():
             try:
                 request_exts.extend(ext.get_request_extensions())
             except AttributeError:
