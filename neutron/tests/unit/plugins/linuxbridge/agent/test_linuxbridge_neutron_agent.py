@@ -46,8 +46,8 @@ class TestLinuxBridge(base.BaseTestCase):
         super(TestLinuxBridge, self).setUp()
         interface_mappings = {'physnet1': 'eth1'}
 
-        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
-                               'get_interface_by_ip', return_value=None):
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_device_by_ip', return_value=None):
             self.linux_bridge = linuxbridge_neutron_agent.LinuxBridgeManager(
                 interface_mappings)
 
@@ -98,8 +98,8 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                                     'get_interface_mac')
         self.get_mac = self.get_mac_p.start()
         self.get_mac.return_value = '00:00:00:00:00:01'
-        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
-                               'get_interface_by_ip', return_value=None):
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_device_by_ip', return_value=None):
             self.agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC(
                 {}, 0, cfg.CONF.AGENT.quitting_rpc_timeout)
             with mock.patch.object(self.agent, "daemon_loop"):
@@ -351,8 +351,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         super(TestLinuxBridgeManager, self).setUp()
         self.interface_mappings = {'physnet1': 'eth1'}
 
-        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
-                               'get_interface_by_ip', return_value=None):
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_device_by_ip', return_value=None):
             self.lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 self.interface_mappings)
 
@@ -420,16 +420,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(self.lbm.get_tap_devices_count('br0'), 1)
             listdir_fn.side_effect = OSError()
             self.assertEqual(self.lbm.get_tap_devices_count('br0'), 0)
-
-    def test_get_interface_by_ip(self):
-        with mock.patch.object(ip_lib.IPWrapper, 'get_devices') as get_dev_fn,\
-                mock.patch.object(ip_lib.IpAddrCommand, 'list') as ip_list_fn:
-            device = mock.Mock()
-            device.name = 'dev_name'
-            get_dev_fn.return_value = [device]
-            ip_list_fn.returnvalue = mock.Mock()
-            self.assertEqual(self.lbm.get_interface_by_ip(LOCAL_IP),
-                             'dev_name')
 
     def test_get_bridge_for_tap_device(self):
         with mock.patch.object(self.lbm,
@@ -768,8 +758,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_delete_vxlan_bridge_no_int_mappings(self):
         interface_mappings = {}
-        with mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
-                               'get_interface_by_ip', return_value=None):
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_device_by_ip', return_value=None):
             lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 interface_mappings)
 
@@ -930,8 +920,8 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             def __init__(self):
                 self.agent_id = 1
                 with mock.patch.object(
-                        linuxbridge_neutron_agent.LinuxBridgeManager,
-                        'get_interface_by_ip', return_value=None):
+                        ip_lib.IPWrapper,
+                        'get_device_by_ip', return_value=None):
                     self.br_mgr = (linuxbridge_neutron_agent.
                                    LinuxBridgeManager({'physnet1': 'eth1'}))
 

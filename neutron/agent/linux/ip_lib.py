@@ -120,6 +120,12 @@ class IPWrapper(SubProcessBase):
 
         return retval
 
+    def get_device_by_ip(self, ip):
+        """Get the IPDevice from system which has ip configured."""
+        for device in self.get_devices():
+            if device.addr.list(to=ip):
+                return device
+
     def add_tuntap(self, name, mode='tap'):
         self._as_root([], 'tuntap', ('add', name, 'mode', mode))
         return IPDevice(name, namespace=self.namespace)

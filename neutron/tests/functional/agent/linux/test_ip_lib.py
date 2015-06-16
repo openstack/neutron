@@ -31,6 +31,9 @@ LOG = logging.getLogger(__name__)
 Device = collections.namedtuple('Device',
                                 'name ip_cidrs mac_address namespace')
 
+WRONG_IP = '0.0.0.0'
+TEST_IP = '240.0.0.1'
+
 
 class IpLibTestFramework(functional_base.BaseSudoTestCase):
     def setUp(self):
@@ -50,7 +53,7 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
     def generate_device_details(self, name=None, ip_cidrs=None,
                                 mac_address=None, namespace=None):
         return Device(name or base.get_rand_name(),
-                      ip_cidrs or ['240.0.0.1/24'],
+                      ip_cidrs or ["%s/24" % TEST_IP],
                       mac_address or
                       utils.get_random_mac('fa:16:3e:00:00:00'.split(':')),
                       namespace or base.get_rand_name())
@@ -97,6 +100,13 @@ class IpLibTestCase(IpLibTestFramework):
 
         self.assertFalse(
             ip_lib.device_exists(attr.name, namespace=attr.namespace))
+
+    def test_ipwrapper_get_device_by_ip(self):
+        attr = self.generate_device_details()
+        self.manage_device(attr)
+        ip_wrapper = ip_lib.IPWrapper(namespace=attr.namespace)
+        self.assertEqual(attr.name, ip_wrapper.get_device_by_ip(TEST_IP).name)
+        self.assertIsNone(ip_wrapper.get_device_by_ip(WRONG_IP))
 
     def test_device_exists_with_ips_and_mac(self):
         attr = self.generate_device_details()
