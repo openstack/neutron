@@ -104,7 +104,7 @@ def get_test_timeout(default=0):
 
 
 def sanitize_log_path(path):
-    # Sanitize the string so that it's log path is shell friendly
+    # Sanitize the string so that its log path is shell friendly
     return path.replace(' ', '-').replace('(', '_').replace(')', '_')
 
 

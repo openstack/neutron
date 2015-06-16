@@ -178,16 +178,16 @@ class ML2ConfigFixture(ConfigFixture):
 
 class OVSConfigFixture(ConfigFixture):
 
-    def __init__(self, env_desc, host_desc, temp_dir):
+    def __init__(self, env_desc, host_desc, temp_dir, local_ip):
         super(OVSConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir,
             base_filename='openvswitch_agent.ini')
 
+        self.tunneling_enabled = self.env_desc.tunneling_enabled
         self.config.update({
             'ovs': {
-                'enable_tunneling': 'False',
-                'local_ip': '127.0.0.1',
-                'bridge_mappings': self._generate_bridge_mappings(),
+                'enable_tunneling': str(self.tunneling_enabled),
+                'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
             },
             'securitygroup': {
@@ -196,17 +196,40 @@ class OVSConfigFixture(ConfigFixture):
             }
         })
 
+        if self.tunneling_enabled:
+            self.config['agent'] = {
+                'tunnel_types': self.env_desc.network_type}
+            self.config['ovs'].update({
+                'tunnel_bridge': self._generate_tunnel_bridge(),
+                'int_peer_patch_port': self._generate_int_peer(),
+                'tun_peer_patch_port': self._generate_tun_peer()})
+        else:
+            self.config['ovs']['bridge_mappings'] = (
+                self._generate_bridge_mappings())
+
     def _generate_bridge_mappings(self):
         return 'physnet1:%s' % base.get_rand_device_name(prefix='br-eth')
 
     def _generate_integration_bridge(self):
         return base.get_rand_device_name(prefix='br-int')
 
+    def _generate_tunnel_bridge(self):
+        return base.get_rand_device_name(prefix='br-tun')
+
+    def _generate_int_peer(self):
+        return base.get_rand_device_name(prefix='patch-tun')
+
+    def _generate_tun_peer(self):
+        return base.get_rand_device_name(prefix='patch-int')
+
     def get_br_int_name(self):
         return self.config.ovs.integration_bridge
 
     def get_br_phys_name(self):
         return self.config.ovs.bridge_mappings.split(':')[1]
+
+    def get_br_tun_name(self):
+        return self.config.ovs.tunnel_bridge
 
 
 class L3ConfigFixture(ConfigFixture):
