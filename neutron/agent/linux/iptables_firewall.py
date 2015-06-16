@@ -657,7 +657,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _remove_unused_sg_members(self):
         """Remove sg_member entries where no IPv4 or IPv6 is associated."""
-        for sg_id in self.sg_members.keys():
+        for sg_id in list(self.sg_members.keys()):
             sg_has_members = (self.sg_members[sg_id][constants.IPv4] or
                               self.sg_members[sg_id][constants.IPv6])
             if not sg_has_members:
