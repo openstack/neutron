@@ -17,6 +17,7 @@ import itertools
 import operator
 
 from oslo_config import cfg
+from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log
 from six import moves
@@ -122,6 +123,8 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         LOG.info(_LI("%(type)s ID ranges: %(range)s"),
                  {'type': self.get_type(), 'range': current_range})
 
+    @oslo_db_api.wrap_db_retry(
+        max_retries=db_api.MAX_RETRIES, retry_on_deadlock=True)
     def sync_allocations(self):
         # determine current configured allocatable tunnel ids
         tunnel_ids = set()
