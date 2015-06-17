@@ -781,21 +781,6 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                     LOG.debug("Port %s was deleted while updating it with an "
                               "IPv6 auto-address. Ignoring.", port['id'])
 
-    def _update_subnet_allocation_pools(self, context, id, s):
-        context.session.query(models_v2.IPAllocationPool).filter_by(
-            subnet_id=id).delete()
-        new_pools = [models_v2.IPAllocationPool(
-            first_ip=p['start'], last_ip=p['end'],
-            subnet_id=id) for p in s['allocation_pools']]
-        context.session.add_all(new_pools)
-        NeutronDbPluginV2._rebuild_availability_ranges(context, [s])
-        #Gather new pools for result:
-        result_pools = [{'start': pool['start'],
-                         'end': pool['end']}
-                        for pool in s['allocation_pools']]
-        del s['allocation_pools']
-        return result_pools
-
     def update_subnet(self, context, id, subnet):
         """Update the subnet with new info.
 
