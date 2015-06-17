@@ -1531,6 +1531,16 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                               "Elapsed:%(elapsed).3f",
                               {'iter_num': self.iter_num,
                                'elapsed': time.time() - start})
+
+                    # Treat ancillary devices if they exist
+                    if self.ancillary_brs:
+                        ancillary_port_info = self.scan_ancillary_ports(
+                            ancillary_ports)
+                        LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
+                                  "ancillary port info retrieved. "
+                                  "Elapsed:%(elapsed).3f",
+                                  {'iter_num': self.iter_num,
+                                   'elapsed': time.time() - start})
                     # Secure and wire/unwire VIFs and update their status
                     # on Neutron server
                     if (self._port_info_has_changes(port_info) or
@@ -1552,29 +1562,20 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                         port_stats['regular']['removed'] = (
                             len(port_info.get('removed', [])))
                     ports = port_info['current']
-                    # Treat ancillary devices if they exist
-                    if self.ancillary_brs:
-                        port_info = self.scan_ancillary_ports(
-                            ancillary_ports)
-                        LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
-                                  "ancillary port info retrieved. "
-                                  "Elapsed:%(elapsed).3f",
-                                  {'iter_num': self.iter_num,
-                                   'elapsed': time.time() - start})
 
-                        rc = self.process_ancillary_network_ports(
-                            port_info)
+                    if self.ancillary_brs:
+                        sync |= self.process_ancillary_network_ports(
+                            ancillary_port_info)
                         LOG.debug("Agent rpc_loop - iteration: "
                                   "%(iter_num)d - ancillary ports "
                                   "processed. Elapsed:%(elapsed).3f",
                                   {'iter_num': self.iter_num,
                                    'elapsed': time.time() - start})
-                        ancillary_ports = port_info['current']
+                        ancillary_ports = ancillary_port_info['current']
                         port_stats['ancillary']['added'] = (
-                            len(port_info.get('added', [])))
+                            len(ancillary_port_info.get('added', [])))
                         port_stats['ancillary']['removed'] = (
-                            len(port_info.get('removed', [])))
-                        sync = sync | rc
+                            len(ancillary_port_info.get('removed', [])))
 
                     polling_manager.polling_completed()
                     # Keep this flag in the last line of "try" block,
