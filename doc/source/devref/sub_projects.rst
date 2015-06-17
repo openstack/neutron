@@ -116,6 +116,8 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | neutron-powervm_              |          ml2          |
 +-------------------------------+-----------------------+
+| networking-sfc_               |  service composition  |
++-------------------------------+-----------------------+
 | networking-vsphere_           |          ml2          |
 +-------------------------------+-----------------------+
 | vmware-nsx_                   |          core         |
@@ -336,6 +338,13 @@ PortForwarding
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-portforwarding
 * Launchpad: https://launchpad.net/networking-portforwarding
+
+.. _networking-sfc:
+
+SFC
+---
+
+* Git: https://git.openstack.org/cgit/openstack/networking-sfc
 
 .. _networking-vsphere:
 
