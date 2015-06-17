@@ -23,6 +23,7 @@ from neutron.agent import firewall
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.extensions import portsecurity as psec
@@ -72,6 +73,32 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             lambda: collections.defaultdict(list))
         self.pre_sg_members = None
         self.enable_ipset = cfg.CONF.SECURITYGROUP.enable_ipset
+        self._enabled_netfilter_for_bridges = False
+
+    def _enable_netfilter_for_bridges(self):
+        # we only need to set these values once, but it has to be when
+        # we create a bridge; before that the bridge module might not
+        # be loaded and the proc values aren't there.
+        if self._enabled_netfilter_for_bridges:
+            return
+        else:
+            self._enabled_netfilter_for_bridges = True
+
+        # These proc values ensure that netfilter is enabled on
+        # bridges; essential for enforcing security groups rules with
+        # OVS Hybrid.  Distributions can differ on whether this is
+        # enabled by default or not (Ubuntu - yes, Redhat - no, for
+        # example).
+        LOG.debug("Enabling netfilter for bridges")
+        utils.execute(['sysctl', '-w',
+                       'net.bridge.bridge-nf-call-arptables=1'],
+                      run_as_root=True)
+        utils.execute(['sysctl', '-w',
+                       'net.bridge.bridge-nf-call-ip6tables=1'],
+                      run_as_root=True)
+        utils.execute(['sysctl', '-w',
+                       'net.bridge.bridge-nf-call-iptables=1'],
+                      run_as_root=True)
 
     @property
     def ports(self):
@@ -104,7 +131,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         LOG.debug("Preparing device (%s) filter", port['device'])
         self._remove_chains()
         self._set_ports(port)
-
+        self._enable_netfilter_for_bridges()
         # each security group has it own chains
         self._setup_chains()
         self.iptables.apply()
