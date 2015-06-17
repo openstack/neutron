@@ -56,24 +56,14 @@ The official source of all repositories that exist under the Neutron project is:
 
     http://governance.openstack.org/reference/projects/neutron.html
 
-The sub-projects are also listed here for convenience and as a place to provide
-some additional metadata about them:
-
-+-------------------------------+-----------------------+
-| Name                          |    Functionality      |
-+===============================+=======================+
-|                               |                       |
-+-------------------------------+-----------------------+
-
 Affiliated projects
 ===================
 
-Affiliated projects are related to Neutron in some way, but are not official
-sub-projects of Neutron.
-
-This table shows the unofficial affiliated projects that integrate with Neutron,
-in one form or another. These projects typically leverage the pluggable
+This table shows the affiliated projects that integrate with Neutron,
+in one form or another.  These projects typically leverage the pluggable
 capabilities of Neutron, the Neutron API, or a combination of both.
+This list may contain projects that are already listed in the governance
+repo but are summarized here to describe the functionality they provide.
 
 +-------------------------------+-----------------------+
 | Name                          |    Functionality      |
