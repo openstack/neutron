@@ -71,6 +71,7 @@ class NetworkClientJSON(service_client.ServiceClient):
             'policies': 'qos',
             'bandwidth_limit_rules': 'qos',
             'rule_types': 'qos',
+            'rbac-policies': '',
         }
         service_prefix = service_resource_prefix_map.get(
             plural_name)
@@ -96,7 +97,8 @@ class NetworkClientJSON(service_client.ServiceClient):
             'ipsec_site_connection': 'ipsec-site-connections',
             'quotas': 'quotas',
             'firewall_policy': 'firewall_policies',
-            'qos_policy': 'policies'
+            'qos_policy': 'policies',
+            'rbac_policy': 'rbac_policies',
         }
         return resource_plural_map.get(resource_name, resource_name + 's')
 

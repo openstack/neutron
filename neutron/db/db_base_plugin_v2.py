@@ -34,11 +34,13 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
+from neutron import context as ctx
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_non_pluggable_backend
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
+from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import sqlalchemyutils
 from neutron.extensions import l3
@@ -72,7 +74,8 @@ def _check_subnet_not_used(context, subnet_id):
 
 
 class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
-                        neutron_plugin_base_v2.NeutronPluginBaseV2):
+                        neutron_plugin_base_v2.NeutronPluginBaseV2,
+                        rbac_mixin.RbacPluginMixin):
     """V2 Neutron plugin interface implementation using SQLAlchemy models.
 
     Whenever a non-read call happens the plugin will call an event handler
@@ -101,6 +104,79 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          self.nova_notifier.send_port_status)
             event.listen(models_v2.Port.status, 'set',
                          self.nova_notifier.record_port_status_changed)
+        for e in (events.BEFORE_CREATE, events.BEFORE_UPDATE,
+                  events.BEFORE_DELETE):
+            registry.subscribe(self.validate_network_rbac_policy_change,
+                               rbac_mixin.RBAC_POLICY, e)
+
+    def validate_network_rbac_policy_change(self, resource, event, trigger,
+                                            context, object_type, policy,
+                                            **kwargs):
+        """Validates network RBAC policy changes.
+
+        On creation, verify that the creator is an admin or that it owns the
+        network it is sharing.
+
+        On update and delete, make sure the tenant losing access does not have
+        resources that depend on that access.
+        """
+        if object_type != 'network':
+            # we only care about network policies
+            return
+        # The object a policy targets cannot be changed so we can look
+        # at the original network for the update event as well.
+        net = self._get_network(context, policy['object_id'])
+        if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
+            # we still have to verify that the caller owns the network because
+            # _get_network will succeed on a shared network
+            if not context.is_admin and net['tenant_id'] != context.tenant_id:
+                msg = _("Only admins can manipulate policies on networks "
+                        "they do not own.")
+                raise n_exc.InvalidInput(error_message=msg)
+
+        tenant_to_check = None
+        if event == events.BEFORE_UPDATE:
+            new_tenant = kwargs['policy_update']['target_tenant']
+            if policy['target_tenant'] != new_tenant:
+                tenant_to_check = policy['target_tenant']
+
+        if event == events.BEFORE_DELETE:
+            tenant_to_check = policy['target_tenant']
+
+        if tenant_to_check:
+            self.ensure_no_tenant_ports_on_network(net['id'], net['tenant_id'],
+                                                   tenant_to_check)
+
+    def ensure_no_tenant_ports_on_network(self, network_id, net_tenant_id,
+                                          tenant_id):
+        ctx_admin = ctx.get_admin_context()
+        rb_model = rbac_db.NetworkRBAC
+        other_rbac_entries = self._model_query(ctx_admin, rb_model).filter(
+            and_(rb_model.object_id == network_id,
+                 rb_model.action == 'access_as_shared'))
+        ports = self._model_query(ctx_admin, models_v2.Port).filter(
+            models_v2.Port.network_id == network_id)
+        if tenant_id == '*':
+            # for the wildcard we need to get all of the rbac entries to
+            # see if any allow the remaining ports on the network.
+            other_rbac_entries = other_rbac_entries.filter(
+                rb_model.target_tenant != tenant_id)
+            # any port with another RBAC entry covering it or one belonging to
+            # the same tenant as the network owner is ok
+            allowed_tenants = [entry['target_tenant']
+                               for entry in other_rbac_entries]
+            allowed_tenants.append(net_tenant_id)
+            ports = ports.filter(
+                ~models_v2.Port.tenant_id.in_(allowed_tenants))
+        else:
+            # if there is a wildcard rule, we can return early because it
+            # allows any ports
+            query = other_rbac_entries.filter(rb_model.target_tenant == '*')
+            if query.count():
+                return
+            ports = ports.filter(models_v2.Port.tenant_id == tenant_id)
+        if ports.count():
+            raise n_exc.InvalidSharedSetting(network=network_id)
 
     def set_ipam_backend(self):
         if cfg.CONF.ipam_driver:
