@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 
 SERVICE_TYPE_ID = 'service_type_id'
 EXTENDED_ATTRIBUTES_2_0 = {
@@ -23,7 +24,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Routerservicetype(object):
+class Routerservicetype(extensions.ExtensionDescriptor):
     """Extension class supporting router service type."""
 
     @classmethod

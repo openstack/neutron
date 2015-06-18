@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as nexception
 
@@ -44,7 +44,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Extraroute(object):
+class Extraroute(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
