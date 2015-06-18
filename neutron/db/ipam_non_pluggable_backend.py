@@ -184,6 +184,28 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             return True
         return False
 
+    def _save_allocation_pools(self, context, subnet, allocation_pools):
+        for pool in allocation_pools:
+            ip_pool = models_v2.IPAllocationPool(subnet=subnet,
+                                                 first_ip=pool['start'],
+                                                 last_ip=pool['end'])
+            context.session.add(ip_pool)
+            ip_range = models_v2.IPAvailabilityRange(
+                ipallocationpool=ip_pool,
+                first_ip=pool['start'],
+                last_ip=pool['end'])
+            context.session.add(ip_range)
+
+    def _allocate_ips_for_port_and_store(self, context, port, port_id):
+        network_id = port['port']['network_id']
+        ips = self._allocate_ips_for_port(context, port)
+        if ips:
+            for ip in ips:
+                ip_address = ip['ip_address']
+                subnet_id = ip['subnet_id']
+                self._store_ip_allocation(context, ip_address, network_id,
+                                          subnet_id, port_id)
+
     def _update_port_with_ips(self, context, db_port, new_port, new_mac):
         changes = self.Changes(add=[], original=[], remove=[])
         # Check if the IPs need to be updated

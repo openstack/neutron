@@ -552,16 +552,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                     nexthop=rt['nexthop'])
                 context.session.add(route)
 
-        for pool in allocation_pools:
-            ip_pool = models_v2.IPAllocationPool(subnet=subnet,
-                                                 first_ip=pool['start'],
-                                                 last_ip=pool['end'])
-            context.session.add(ip_pool)
-            ip_range = models_v2.IPAvailabilityRange(
-                ipallocationpool=ip_pool,
-                first_ip=pool['start'],
-                last_ip=pool['end'])
-            context.session.add(ip_range)
+        self._save_allocation_pools(context, subnet, allocation_pools)
 
         return subnet
 
@@ -1031,14 +1022,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                 db_port = self._create_port_with_mac(
                     context, network_id, port_data, p['mac_address'])
 
-            # Update the IP's for the port
-            ips = self._allocate_ips_for_port(context, port)
-            if ips:
-                for ip in ips:
-                    ip_address = ip['ip_address']
-                    subnet_id = ip['subnet_id']
-                    NeutronDbPluginV2._store_ip_allocation(
-                        context, ip_address, network_id, subnet_id, port_id)
+            self._allocate_ips_for_port_and_store(context, port, port_id)
 
         return self._make_port_dict(db_port, process_extensions=False)
 
