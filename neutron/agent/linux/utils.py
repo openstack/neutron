@@ -182,7 +182,7 @@ def find_child_pids(pid):
         # Unexpected errors are the responsibility of the caller
         with excutils.save_and_reraise_exception() as ctxt:
             # Exception has already been logged by execute
-            no_children_found = 'Exit code: 1' in e.message
+            no_children_found = 'Exit code: 1' in str(e)
             if no_children_found:
                 ctxt.reraise = False
                 return []

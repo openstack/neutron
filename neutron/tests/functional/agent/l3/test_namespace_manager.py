@@ -49,7 +49,7 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
         except RuntimeError as e:
             # If the namespace didn't exist when delete was attempted, mission
             # accomplished. Otherwise, re-raise the exception
-            if 'No such file or directory' not in e.message:
+            if 'No such file or directory' not in str(e):
                 raise e
 
     def _namespace_exists(self, namespace):

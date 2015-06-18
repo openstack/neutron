@@ -793,13 +793,27 @@ class TestIpRouteCommand(TestIPCmdBase):
                            'dev', self.parent.name,
                            'table', self.table))
 
-    def test_del_gateway(self):
+    def test_del_gateway_success(self):
         self.route_cmd.delete_gateway(self.gateway, table=self.table)
         self._assert_sudo([self.ip_version],
                           ('del', 'default',
                            'via', self.gateway,
                            'dev', self.parent.name,
                            'table', self.table))
+
+    def test_del_gateway_cannot_find_device(self):
+        self.parent._as_root.side_effect = RuntimeError("Cannot find device")
+
+        exc = self.assertRaises(exceptions.DeviceNotFoundError,
+                          self.route_cmd.delete_gateway,
+                          self.gateway, table=self.table)
+        self.assertIn(self.parent.name, str(exc))
+
+    def test_del_gateway_other_error(self):
+        self.parent._as_root.side_effect = RuntimeError()
+
+        self.assertRaises(RuntimeError, self.route_cmd.delete_gateway,
+                          self.gateway, table=self.table)
 
     def test_get_gateway(self):
         for test_case in self.test_cases:
