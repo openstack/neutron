@@ -132,7 +132,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         l3pluginApi_cls.return_value = self.plugin_api
 
         self.looping_call_p = mock.patch(
-            'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
+            'oslo_service.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()
 
         subnet_id_1 = _uuid()

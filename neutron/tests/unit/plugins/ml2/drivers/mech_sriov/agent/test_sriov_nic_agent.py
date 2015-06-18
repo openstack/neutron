@@ -43,7 +43,7 @@ class TestSriovAgent(base.BaseTestCase):
             def start(self, interval=0):
                 self.f()
 
-        mock.patch('neutron.openstack.common.loopingcall.'
+        mock.patch('oslo_service.loopingcall.'
                    'FixedIntervalLoopingCall',
                    new=MockFixedIntervalLoopingCall)
 

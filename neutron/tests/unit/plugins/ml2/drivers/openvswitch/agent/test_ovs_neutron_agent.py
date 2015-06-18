@@ -124,8 +124,7 @@ class TestOvsNeutronAgent(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
-                mock.patch('neutron.openstack.common.loopingcall.'
-                           'FixedIntervalLoopingCall',
+                mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
                            new=MockFixedIntervalLoopingCall),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
@@ -1292,7 +1291,7 @@ class TestOvsDvrNeutronAgent(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
-                mock.patch('neutron.openstack.common.loopingcall.'
+                mock.patch('oslo_service.loopingcall.'
                            'FixedIntervalLoopingCall',
                            new=MockFixedIntervalLoopingCall),\
                 mock.patch(

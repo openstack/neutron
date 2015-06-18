@@ -18,6 +18,8 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
+from oslo_service import periodic_task
 from oslo_utils import excutils
 from oslo_utils import importutils
 from oslo_utils import timeutils
@@ -47,8 +49,6 @@ from neutron.common import topics
 from neutron import context as n_context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import loopingcall
-from neutron.openstack.common import periodic_task
 
 try:
     from neutron_fwaas.services.firewall.agents.l3reference \

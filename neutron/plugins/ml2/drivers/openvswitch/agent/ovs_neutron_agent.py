@@ -23,6 +23,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
 import six
 from six import moves
 
@@ -40,7 +41,6 @@ from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
