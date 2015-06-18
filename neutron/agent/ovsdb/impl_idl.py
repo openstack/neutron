@@ -93,9 +93,6 @@ class Transaction(api.Transaction):
             status = txn.commit_block()
             if status == txn.TRY_AGAIN:
                 LOG.debug("OVSDB transaction returned TRY_AGAIN, retrying")
-                if self.api.idl._session.rpc.status != 0:
-                    LOG.debug("Lost connection to OVSDB, reconnecting!")
-                    self.api.idl.force_reconnect()
                 idlutils.wait_for_change(
                     self.api.idl, self.timeout - elapsed_time,
                     seqno)
