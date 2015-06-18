@@ -33,7 +33,7 @@ VXLAN Tunnels
 VXLAN is an overlay technology which encapsulates MAC frames
 at layer 2 into a UDP header.
 More information can be found in `The VXLAN wiki page.
- <http://en.wikipedia.org/wiki/Virtual_Extensible_LAN>`_
+<http://en.wikipedia.org/wiki/Virtual_Extensible_LAN>`_
 
 
 Bridge Management
