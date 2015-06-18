@@ -14,7 +14,6 @@
 import functools
 import unittest.case
 
-from oslo_db.sqlalchemy import provision
 from oslo_db.sqlalchemy import test_base
 import testtools.testcase
 
@@ -71,49 +70,12 @@ def no_skip_on_missing_deps(wrapped):
     return wrapper
 
 
-# NOTE(cbrandily): Define mysql+pymysql backend implementation
-@provision.BackendImpl.impl.dispatch_for("mysql+pymysql")
-class PyMySQLBackendImpl(provision.BackendImpl):
-
-    default_engine_kwargs = {'mysql_sql_mode': 'TRADITIONAL'}
-
-    def create_opportunistic_driver_url(self):
-        return "mysql+pymysql://openstack_citest:openstack_citest@localhost/"
-
-    def create_named_database(self, engine, ident, conditional=False):
-        with engine.connect() as conn:
-            if not conditional or not self.database_exists(conn, ident):
-                conn.execute("CREATE DATABASE %s" % ident)
-
-    def drop_named_database(self, engine, ident, conditional=False):
-        with engine.connect() as conn:
-            if not conditional or self.database_exists(conn, ident):
-                conn.execute("DROP DATABASE %s" % ident)
-
-    def database_exists(self, engine, ident):
-        return bool(engine.scalar("SHOW DATABASES LIKE '%s'" % ident))
-
-
-impl = provision.BackendImpl.impl("mysql+pymysql")
-url = impl.create_opportunistic_driver_url()
-# NOTE(cbrandily): Declare mysql+pymysql backend implementation
-provision.Backend("mysql+pymysql", url)
-
-
-# NOTE(cbrandily): Define mysql+pymysql db fixture
-class PyMySQLFixture(test_base.DbFixture):
-    DRIVER = 'mysql+pymysql'
-
-
-# NOTE(cbrandily): Define mysql+pymysql base testcase
-class MySQLTestCase(test_base.DbTestCase):
+class MySQLTestCase(test_base.MySQLOpportunisticTestCase):
     """Base test class for MySQL tests.
 
-    Enforce the supported driver, which is PyMySQL.
     If the MySQL db is unavailable then this test is skipped, unless
     OS_FAIL_ON_MISSING_DEPS is enabled.
     """
-    FIXTURE = PyMySQLFixture
     SKIP_ON_UNAVAILABLE_DB = not base.bool_from_env('OS_FAIL_ON_MISSING_DEPS')
 
 
