@@ -728,34 +728,6 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
 
         return created_subnet
 
-    def _add_auto_addrs_on_network_ports(self, context, subnet):
-        """For an auto-address subnet, add addrs for ports on the net."""
-        with context.session.begin(subtransactions=True):
-            network_id = subnet['network_id']
-            port_qry = context.session.query(models_v2.Port)
-            for port in port_qry.filter(
-                and_(models_v2.Port.network_id == network_id,
-                     models_v2.Port.device_owner !=
-                     constants.DEVICE_OWNER_ROUTER_SNAT,
-                     ~models_v2.Port.device_owner.in_(
-                         constants.ROUTER_INTERFACE_OWNERS))):
-                ip_address = self._calculate_ipv6_eui64_addr(
-                    context, subnet, port['mac_address'])
-                allocated = models_v2.IPAllocation(network_id=network_id,
-                                                   port_id=port['id'],
-                                                   ip_address=ip_address,
-                                                   subnet_id=subnet['id'])
-                try:
-                    # Do the insertion of each IP allocation entry within
-                    # the context of a nested transaction, so that the entry
-                    # is rolled back independently of other entries whenever
-                    # the corresponding port has been deleted.
-                    with context.session.begin_nested():
-                        context.session.add(allocated)
-                except db_exc.DBReferenceError:
-                    LOG.debug("Port %s was deleted while updating it with an "
-                              "IPv6 auto-address. Ignoring.", port['id'])
-
     def update_subnet(self, context, id, subnet):
         """Update the subnet with new info.
 
