@@ -1495,6 +1495,17 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
             {_IPv4: set([FAKE_SGID]), _IPv6: set([OTHER_SGID])},
             self.firewall._get_remote_sg_ids_sets_by_ipversion(ports))
 
+    def test_get_remote_sg_ids(self):
+        self.firewall.sg_rules = self._fake_sg_rules(
+            remote_groups={_IPv4: [FAKE_SGID, FAKE_SGID, FAKE_SGID],
+                           _IPv6: [OTHER_SGID, OTHER_SGID, OTHER_SGID]})
+
+        port = self._fake_port()
+
+        self.assertEqual(
+            {_IPv4: set([FAKE_SGID]), _IPv6: set([OTHER_SGID])},
+            self.firewall._get_remote_sg_ids(port))
+
     def test_determine_sg_rules_to_remove(self):
         self.firewall.pre_sg_rules = self._fake_sg_rules(sg_id=OTHER_SGID)
         ports = [self._fake_port()]
