@@ -598,6 +598,8 @@ class Dnsmasq(DhcpLocalProcess):
                     host = l.strip().split(',')
                     mac = host[0]
                     client_id = None
+                    if host[1].startswith('set:'):
+                        continue
                     if host[1].startswith(self._ID):
                         ip = host[3].strip('[]')
                         client_id = host[1][len(self._ID):]
