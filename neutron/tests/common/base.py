@@ -110,5 +110,17 @@ class MySQLTestCase(test_base.DbTestCase):
     """Base test class for MySQL tests.
 
     Enforce the supported driver, which is PyMySQL.
+    If the MySQL db is unavailable then this test is skipped, unless
+    OS_FAIL_ON_MISSING_DEPS is enabled.
     """
     FIXTURE = PyMySQLFixture
+    SKIP_ON_UNAVAILABLE_DB = not base.bool_from_env('OS_FAIL_ON_MISSING_DEPS')
+
+
+class PostgreSQLTestCase(test_base.PostgreSQLOpportunisticTestCase):
+    """Base test class for PostgreSQL tests.
+
+    If the PostgreSQL db is unavailable then this test is skipped, unless
+    OS_FAIL_ON_MISSING_DEPS is enabled.
+    """
+    SKIP_ON_UNAVAILABLE_DB = not base.bool_from_env('OS_FAIL_ON_MISSING_DEPS')

@@ -15,7 +15,6 @@
 
 from oslo_config import cfg
 from oslo_db.sqlalchemy import session
-from oslo_db.sqlalchemy import test_base
 import testtools
 
 from neutron.api.v2 import attributes
@@ -213,7 +212,7 @@ class TestIpamMySql(common_base.MySQLTestCase, base.BaseTestCase,
         self.configure_test()
 
 
-class TestIpamPsql(test_base.PostgreSQLOpportunisticTestCase,
+class TestIpamPsql(common_base.PostgreSQLTestCase,
                    base.BaseTestCase, IpamTestCase):
 
     def setUp(self):
