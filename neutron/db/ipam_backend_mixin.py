@@ -252,3 +252,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return self.Changes(add=new_ips,
                             original=prev_ips,
                             remove=original_ips)
+
+    def _delete_port(self, context, port_id):
+        query = (context.session.query(models_v2.Port).
+                 enable_eagerloads(False).filter_by(id=port_id))
+        if not context.is_admin:
+            query = query.filter_by(tenant_id=context.tenant_id)
+        query.delete()
