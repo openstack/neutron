@@ -24,4 +24,12 @@ LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools', 'healthmonitors',
 
 FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
 
-TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES)
+DRIVER_TABLES = [
+    # Models moved to openstack/networking-cisco
+    'cisco_ml2_apic_contracts',
+    'cisco_ml2_apic_names',
+    'cisco_ml2_apic_host_links',
+    # Add your tables with moved models here^. Please end with a comma.
+]
+
+TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES + DRIVER_TABLES)
