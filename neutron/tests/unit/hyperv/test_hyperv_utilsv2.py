@@ -346,7 +346,8 @@ class TestHyperVUtilsV2(base.BaseTestCase):
             for acl_type, address in [ipv4_pair, ipv6_pair]:
                 for protocol in [self._utils._TCP_PROTOCOL,
                                  self._utils._UDP_PROTOCOL,
-                                 self._utils._ICMP_PROTOCOL]:
+                                 self._utils._ICMP_PROTOCOL,
+                                 self._utils._ICMPV6_PROTOCOL]:
                     calls.append(mock.call(m_port, direction, acl_type,
                                            self._utils._ACL_ACTION_DENY,
                                            self._utils._ACL_DEFAULT,
@@ -453,6 +454,7 @@ class TestHyperVUtilsV2R2(base.BaseTestCase):
         if is_any_protocol:
             protocol = self._utils._ACL_DEFAULT
             expected_proto = [self._utils._ICMP_PROTOCOL,
+                              self._utils._ICMPV6_PROTOCOL,
                               self._utils._TCP_PROTOCOL,
                               self._utils._UDP_PROTOCOL]
         else:
@@ -510,6 +512,11 @@ class TestHyperVUtilsV2R2(base.BaseTestCase):
                                         action=self._utils._ACL_ACTION_ALLOW,
                                         expected_local_port='')
 
+    def test_create_security_acl_icmpV6(self):
+        self._check_create_security_acl(protocol=self._utils._ICMPV6_PROTOCOL,
+                                        action=self._utils._ACL_ACTION_ALLOW,
+                                        expected_local_port='')
+
     def test_create_security_acl_allow_tcp(self):
         self._check_create_security_acl(protocol=self._utils._TCP_PROTOCOL,
                                         action=self._utils._ACL_ACTION_ALLOW,
@@ -521,6 +528,7 @@ class TestHyperVUtilsV2R2(base.BaseTestCase):
         if is_any_protocol:
             protocol = self._utils._ACL_DEFAULT
             expected_proto = [self._utils._ICMP_PROTOCOL,
+                              self._utils._ICMPV6_PROTOCOL,
                               self._utils._TCP_PROTOCOL,
                               self._utils._UDP_PROTOCOL]
         else:
