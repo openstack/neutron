@@ -222,15 +222,15 @@ class SecurityGroupAgentRpc(object):
             else:
                 self.refresh_firewall(devices)
 
-    def security_groups_provider_updated(self):
+    def security_groups_provider_updated(self, devices_to_update):
         LOG.info(_LI("Provider rule updated"))
         if self.defer_refresh_firewall:
-            # NOTE(salv-orlando): A 'global refresh' might not be
-            # necessary if the subnet for which the provider rules
-            # were updated is known
-            self.global_refresh_firewall = True
+            if devices_to_update is None:
+                self.global_refresh_firewall = True
+            else:
+                self.devices_to_refilter |= set(devices_to_update)
         else:
-            self.refresh_firewall()
+            self.refresh_firewall(devices_to_update)
 
     def remove_devices_filter(self, device_ids):
         if not device_ids:
