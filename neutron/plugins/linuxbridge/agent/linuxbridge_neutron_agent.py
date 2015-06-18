@@ -78,10 +78,12 @@ class LinuxBridgeManager(object):
         self.local_ip = cfg.CONF.VXLAN.local_ip
         self.vxlan_mode = lconst.VXLAN_NONE
         if cfg.CONF.VXLAN.enable_vxlan:
-            self.local_int = self.get_interface_by_ip(self.local_ip)
-            if self.local_int:
+            device = self.ip.get_device_by_ip(self.local_ip)
+            if device:
+                self.local_int = device.name
                 self.check_vxlan_support()
             else:
+                self.local_int = None
                 LOG.warning(_LW('VXLAN is enabled, a valid local_ip '
                                 'must be provided'))
         # Store network mapping to segments
@@ -147,11 +149,6 @@ class LinuxBridgeManager(object):
                             interface.startswith(constants.TAP_DEVICE_PREFIX)])
             except OSError:
                 return 0
-
-    def get_interface_by_ip(self, ip):
-        for device in self.ip.get_devices():
-            if device.addr.list(to=ip):
-                return device.name
 
     def get_bridge_for_tap_device(self, tap_device_name):
         bridges = self.get_all_neutron_bridges()
