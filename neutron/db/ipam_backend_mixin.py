@@ -105,12 +105,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         del s["dns_nameservers"]
         return new_dns
 
-    def _update_subnet_allocation_pools(self, context, id, s):
+    def _update_subnet_allocation_pools(self, context, subnet_id, s):
         context.session.query(models_v2.IPAllocationPool).filter_by(
-            subnet_id=id).delete()
+            subnet_id=subnet_id).delete()
         new_pools = [models_v2.IPAllocationPool(first_ip=p['start'],
                                                 last_ip=p['end'],
-                                                subnet_id=id)
+                                                subnet_id=subnet_id)
                      for p in s['allocation_pools']]
         context.session.add_all(new_pools)
         # Call static method with self to redefine in child
@@ -122,6 +122,26 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         for pool in s['allocation_pools']]
         del s['allocation_pools']
         return result_pools
+
+    def _update_db_subnet(self, context, subnet_id, s):
+        changes = {}
+        if "dns_nameservers" in s:
+            changes['dns_nameservers'] = (
+                self._update_subnet_dns_nameservers(context, subnet_id, s))
+
+        if "host_routes" in s:
+            changes['host_routes'] = self._update_subnet_host_routes(
+                context, subnet_id, s)
+
+        if "allocation_pools" in s:
+            self._validate_allocation_pools(s['allocation_pools'],
+                                            s['cidr'])
+            changes['allocation_pools'] = (
+                self._update_subnet_allocation_pools(context, subnet_id, s))
+
+        subnet = self._get_subnet(context, subnet_id)
+        subnet.update(s)
+        return subnet, changes
 
     def _validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.

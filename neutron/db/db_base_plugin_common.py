@@ -203,6 +203,18 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         # a lot of stress on the db. Consider adding a cache layer
         return context.session.query(models_v2.Subnet).all()
 
+    def _get_subnets(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None,
+                     page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'subnet', limit, marker)
+        return self._get_collection(context, models_v2.Subnet,
+                                    self._make_subnet_dict,
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
+
     def _make_network_dict(self, network, fields=None,
                            process_extensions=True):
         res = {'id': network['id'],

@@ -788,9 +788,6 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
         dns lease or we support gratuitous DHCP offers
         """
         s = subnet['subnet']
-        changed_host_routes = False
-        changed_dns = False
-        changed_allocation_pools = False
         db_subnet = self._get_subnet(context, id)
         # Fill 'ip_version' and 'allocation_pools' fields with the current
         # value since _validate_subnet() expects subnet spec has 'ip_version'
@@ -806,30 +803,10 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
             self._validate_gw_out_of_pools(s["gateway_ip"], allocation_pools)
 
         with context.session.begin(subtransactions=True):
-            if "dns_nameservers" in s:
-                changed_dns = True
-                new_dns = self._update_subnet_dns_nameservers(context, id, s)
-
-            if "host_routes" in s:
-                changed_host_routes = True
-                new_routes = self._update_subnet_host_routes(context, id, s)
-
-            if "allocation_pools" in s:
-                self._validate_allocation_pools(s['allocation_pools'],
-                                                s['cidr'])
-                changed_allocation_pools = True
-                new_pools = self._update_subnet_allocation_pools(context,
-                                                                 id, s)
-            subnet = self._get_subnet(context, id)
-            subnet.update(s)
+            subnet, changes = self._update_db_subnet(context, id, s)
         result = self._make_subnet_dict(subnet)
         # Keep up with fields that changed
-        if changed_dns:
-            result['dns_nameservers'] = new_dns
-        if changed_host_routes:
-            result['host_routes'] = new_routes
-        if changed_allocation_pools:
-            result['allocation_pools'] = new_pools
+        result.update(changes)
         return result
 
     def _subnet_check_ip_allocations(self, context, subnet_id):
@@ -912,14 +889,8 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
     def get_subnets(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'subnet', limit, marker)
-        return self._get_collection(context, models_v2.Subnet,
-                                    self._make_subnet_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
+        return self._get_subnets(context, filters, fields, sorts, limit,
+                                 marker, page_reverse)
 
     def get_subnets_count(self, context, filters=None):
         return self._get_collection_count(context, models_v2.Subnet,

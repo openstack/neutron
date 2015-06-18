@@ -221,7 +221,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     raise n_exc.InvalidInput(error_message=msg)
 
                 filter = {'network_id': [network_id]}
-                subnets = self.get_subnets(context, filters=filter)
+                subnets = self._get_subnets(context, filters=filter)
                 for subnet in subnets:
                     if ipam_utils.check_subnet_ip(subnet['cidr'],
                                                   fixed['ip_address']):
@@ -352,7 +352,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         ips = []
         v6_stateless = []
         net_id_filter = {'network_id': [p['network_id']]}
-        subnets = self.get_subnets(context, filters=net_id_filter)
+        subnets = self._get_subnets(context, filters=net_id_filter)
         is_router_port = (
             p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS or
             p['device_owner'] == constants.DEVICE_OWNER_ROUTER_SNAT)
