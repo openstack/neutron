@@ -22,7 +22,7 @@ FIREWALL = "FIREWALL"
 VPN = "VPN"
 METERING = "METERING"
 L3_ROUTER_NAT = "L3_ROUTER_NAT"
-
+QOS = "QOS"
 
 # Maps extension alias to service type
 EXT_TO_SERVICE_MAPPING = {
