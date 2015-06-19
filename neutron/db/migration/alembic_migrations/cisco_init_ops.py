@@ -162,7 +162,7 @@ def upgrade():
     op.create_table(
         'cisco_csr_identifier_map',
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
-        sa.Column('ipsec_site_conn_id', sa.String(length=64),
+        sa.Column('ipsec_site_conn_id', sa.String(length=36),
                   primary_key=True),
         sa.Column('csr_tunnel_id', sa.Integer(), nullable=False),
         sa.Column('csr_ike_policy_id', sa.Integer(), nullable=False),
