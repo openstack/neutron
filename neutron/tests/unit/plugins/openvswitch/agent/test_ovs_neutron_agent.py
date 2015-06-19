@@ -1246,6 +1246,32 @@ class AncillaryBridgesTest(object):
         actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
         self.assertEqual(expected, actual)
 
+    def _test_ancillary_bridges_external(self, external_bridge_id=None):
+        bridges = ['br-int', 'br-tun', 'br-ex']
+        with mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                               'setup_integration_br'),\
+                mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                           return_value='00:00:00:00:00:01'),\
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
+                           return_value=bridges),\
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.'
+                           'get_bridge_external_bridge_id',
+                           return_value=external_bridge_id),\
+                mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
+                           'get_vif_ports', return_value=[]):
+            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
+                                                        **self.kwargs)
+            self.agent.enable_tunneling = True
+            ancillary_bridges = self.agent.setup_ancillary_bridges(
+                'br-int', 'br-tun')
+            self.assertEqual(1, len(ancillary_bridges))
+
+    def test_ancillary_bridges_external_bridge_id(self):
+        self._test_ancillary_bridges_external('br-ex')
+
+    def test_ancillary_bridges_external_bridge_id_none(self):
+        self._test_ancillary_bridges_external()
+
 
 class AncillaryBridgesTestOFCtl(AncillaryBridgesTest,
                                 ovs_test_base.OVSOFCtlTestBase):
