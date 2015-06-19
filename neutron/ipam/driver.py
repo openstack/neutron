@@ -16,6 +16,7 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
+from neutron import ipam
 from neutron import manager
 
 LOG = log.getLogger(__name__)
@@ -94,6 +95,20 @@ class Pool(object):
         :type subnet_id: str uuid
         :raises: IPAMAllocationNotFound
         """
+
+    def get_subnet_request_factory(self):
+        """Returns default SubnetRequestFactory
+
+        Can be overridden on driver level to return custom factory
+        """
+        return ipam.SubnetRequestFactory
+
+    def get_address_request_factory(self):
+        """Returns default AddressRequestFactory
+
+        Can be overridden on driver level to return custom factory
+        """
+        return ipam.AddressRequestFactory
 
 
 @six.add_metaclass(abc.ABCMeta)

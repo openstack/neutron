@@ -241,3 +241,30 @@ class AutomaticAddressRequest(SpecificAddressRequest):
 
 class RouterGatewayAddressRequest(AddressRequest):
     """Used to request allocating the special router gateway address."""
+
+
+class BaseRequestFactory(object):
+    """Factory class to create right request based on input"""
+    any_request = None
+    specific_request = None
+    address_index = 0
+
+    @classmethod
+    def get_request(cls, *args, **kwargs):
+        args_list = [a for a in args]
+        address = args_list.pop(cls.address_index)
+        if not address:
+            return cls.any_request(*args_list, **kwargs)
+        else:
+            return cls.specific_request(*args, **kwargs)
+
+
+class AddressRequestFactory(BaseRequestFactory):
+    any_request = AnyAddressRequest
+    specific_request = SpecificAddressRequest
+
+
+class SubnetRequestFactory(BaseRequestFactory):
+    any_request = AnySubnetRequest
+    specific_request = SpecificSubnetRequest
+    address_index = 2
