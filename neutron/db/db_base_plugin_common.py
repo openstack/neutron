@@ -18,9 +18,14 @@ from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import exceptions
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
+from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 
@@ -115,6 +120,19 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'default_quota': subnetpool['default_quota']}
         return self._fields(res, fields)
 
+    def _extend_resource(self, resource_type, event_type, resource):
+        # TODO(QoS): Once its available, use the new API for the callback
+        # registry (enroll, receive).
+        try:
+            # TODO(QoS): Figure out what to send as context
+            ctx = context.get_admin_context()
+            kwargs = {'context': ctx, resource_type: resource}
+            registry.notify(
+                resource_type, event_type, None, **kwargs)
+        except exceptions.CallbackFailure:
+            # TODO(QoS): Decide what to actually do here
+            pass
+
     def _make_port_dict(self, port, fields=None,
                         process_extensions=True):
         res = {"id": port["id"],
@@ -133,6 +151,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         if process_extensions:
             self._apply_dict_extend_functions(
                 attributes.PORTS, res, port)
+            self._extend_resource(resources.PORT, events.AFTER_READ, res)
         return self._fields(res, fields)
 
     def _get_network(self, context, id):
@@ -225,6 +244,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         if process_extensions:
             self._apply_dict_extend_functions(
                 attributes.NETWORKS, res, network)
+            self._extend_resource(resources.NETWORK, events.AFTER_READ, res)
+
         return self._fields(res, fields)
 
     def _make_subnet_args(self, context, shared, detail,
