@@ -935,13 +935,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                 if device_details['admin_state_up']:
                     # create the networking for the port
                     network_type = device_details.get('network_type')
-                    if network_type:
-                        segmentation_id = device_details.get('segmentation_id')
-                    else:
-                        # compatibility with pre-Havana RPC vlan_id encoding
-                        vlan_id = device_details.get('vlan_id')
-                        (network_type,
-                         segmentation_id) = lconst.interpret_vlan_id(vlan_id)
+                    segmentation_id = device_details.get('segmentation_id')
                     if self.br_mgr.add_interface(
                         device_details['network_id'],
                         network_type,
