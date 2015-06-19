@@ -74,7 +74,7 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-arista_            |         ml2,l3        |
 +-------------------------------+-----------------------+
-| networking-bagpipe-l2_        |          vpn          |
+| networking-bagpipe-l2_        |          ml2          |
 +-------------------------------+-----------------------+
 | networking-bgpvpn_            |          vpn          |
 +-------------------------------+-----------------------+
