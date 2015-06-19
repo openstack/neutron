@@ -97,31 +97,6 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
             event.listen(models_v2.Port.status, 'set',
                          self.nova_notifier.record_port_status_changed)
 
-    @staticmethod
-    def _check_ip_in_allocation_pool(context, subnet_id, gateway_ip,
-                                     ip_address):
-        """Validate IP in allocation pool.
-
-        Validates that the IP address is either the default gateway or
-        in the allocation pools of the subnet.
-        """
-        # Check if the IP is the gateway
-        if ip_address == gateway_ip:
-            # Gateway is not in allocation pool
-            return False
-
-        # Check if the requested IP is in a defined allocation pool
-        pool_qry = context.session.query(models_v2.IPAllocationPool)
-        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id)
-        ip = netaddr.IPAddress(ip_address)
-        for allocation_pool in allocation_pools:
-            allocation_pool_range = netaddr.IPRange(
-                allocation_pool['first_ip'],
-                allocation_pool['last_ip'])
-            if ip in allocation_pool_range:
-                return True
-        return False
-
     def _validate_subnet_cidr(self, context, network, new_subnet_cidr):
         """Validate the CIDR for a subnet.
 
