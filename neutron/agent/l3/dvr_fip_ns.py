@@ -14,13 +14,13 @@
 
 import os
 
-from oslo_log import log as logging
-
+from neutron.agent.l3 import fip_rule_priority_allocator as frpa
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
+from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
@@ -49,7 +49,10 @@ class FipNamespace(namespaces.Namespace):
         self.use_ipv6 = use_ipv6
         self.agent_gateway_port = None
         self._subscribers = set()
-        self._rule_priorities = set(range(FIP_PR_START, FIP_PR_END))
+        path = os.path.join(agent_conf.state_path, 'fip-priorities')
+        self._rule_priorities = frpa.FipRulePriorityAllocator(path,
+                                                              FIP_PR_START,
+                                                              FIP_PR_END)
         self._iptables_manager = iptables_manager.IptablesManager(
             namespace=self.get_name(),
             use_ipv6=self.use_ipv6)
@@ -85,11 +88,11 @@ class FipNamespace(namespaces.Namespace):
         self._subscribers.discard(router_id)
         return not self.has_subscribers()
 
-    def allocate_rule_priority(self):
-        return self._rule_priorities.pop()
+    def allocate_rule_priority(self, floating_ip):
+        return self._rule_priorities.allocate(floating_ip)
 
-    def deallocate_rule_priority(self, rule_pr):
-        self._rule_priorities.add(rule_pr)
+    def deallocate_rule_priority(self, floating_ip):
+        self._rule_priorities.release(floating_ip)
 
     def _gateway_added(self, ex_gw_port, interface_name):
         """Add Floating IP gateway port."""
@@ -232,4 +235,8 @@ class FipNamespace(namespaces.Namespace):
             existing_cidrs = [addr['cidr'] for addr in device.addr.list()]
             fip_cidrs = [c for c in existing_cidrs if
                          common_utils.is_cidr_host(c)]
+            for fip_cidr in fip_cidrs:
+                fip_ip = fip_cidr.split('/')[0]
+                rule_pr = self._rule_priorities.allocate(fip_ip)
+                ri.floating_ips_dict[fip_ip] = rule_pr
             ri.dist_fip_count = len(fip_cidrs)

@@ -74,7 +74,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         """Add floating IP to FIP namespace."""
         floating_ip = fip['floating_ip_address']
         fixed_ip = fip['fixed_ip_address']
-        rule_pr = self.fip_ns.allocate_rule_priority()
+        rule_pr = self.fip_ns.allocate_rule_priority(floating_ip)
         self.floating_ips_dict[floating_ip] = rule_pr
         fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
         ip_rule = ip_lib.IPRule(namespace=self.ns_name)
@@ -113,7 +113,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             ip_rule.rule.delete(ip=floating_ip,
                                 table=dvr_fip_ns.FIP_RT_TBL,
                                 priority=rule_pr)
-            self.fip_ns.deallocate_rule_priority(rule_pr)
+            self.fip_ns.deallocate_rule_priority(floating_ip)
             #TODO(rajeev): Handle else case - exception/log?
 
         device = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
