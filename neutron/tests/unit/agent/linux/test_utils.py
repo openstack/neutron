@@ -283,12 +283,16 @@ class TestBaseOSUtils(base.BaseTestCase):
         getgrgid.assert_called_once_with(self.EGID)
 
     @mock.patch('os.makedirs')
-    @mock.patch('os.path.exists', return_value=False)
-    def test_ensure_dir_no_fail_if_exists(self, path_exists, makedirs):
+    def test_ensure_dir_no_fail_if_exists(self, makedirs):
         error = OSError()
         error.errno = errno.EEXIST
         makedirs.side_effect = error
         utils.ensure_dir("/etc/create/concurrently")
+
+    @mock.patch('os.makedirs')
+    def test_ensure_dir_calls_makedirs(self, makedirs):
+        utils.ensure_dir("/etc/create/directory")
+        makedirs.assert_called_once_with("/etc/create/directory", 0o755)
 
 
 class TestUnixDomainHttpConnection(base.BaseTestCase):
