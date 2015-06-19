@@ -48,7 +48,7 @@ class QuotaSetsController(wsgi.Controller):
         self._update_extended_attributes = True
 
     def _update_attributes(self):
-        for quota_resource in QUOTAS.resources.iterkeys():
+        for quota_resource in QUOTAS.resources.keys():
             attr_dict = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
             attr_dict[quota_resource] = {
                 'allow_post': False,
