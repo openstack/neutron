@@ -32,12 +32,13 @@ EXT_TO_SERVICE_MAPPING = {
     'fwaas': FIREWALL,
     'vpnaas': VPN,
     'metering': METERING,
-    'router': L3_ROUTER_NAT
+    'router': L3_ROUTER_NAT,
+    'qos': QOS,
 }
 
 # TODO(salvatore-orlando): Move these (or derive them) from conf file
 ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER, FIREWALL, VPN, METERING,
-                    L3_ROUTER_NAT, LOADBALANCERV2]
+                    L3_ROUTER_NAT, LOADBALANCERV2, QOS]
 
 COMMON_PREFIXES = {
     CORE: "",
@@ -48,6 +49,7 @@ COMMON_PREFIXES = {
     VPN: "/vpn",
     METERING: "/metering",
     L3_ROUTER_NAT: "",
+    QOS: "/qos",
 }
 
 # Service operation status constants
