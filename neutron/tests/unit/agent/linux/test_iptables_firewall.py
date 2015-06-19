@@ -1672,7 +1672,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         rules = self.firewall._expand_sg_rule_with_remote_ips(
             rule, port, 'ingress')
         self.assertEqual(list(rules),
-                         [dict(rule.items() +
+                         [dict(list(rule.items()) +
                                [('source_ip_prefix', '%s/32' % ip)])
                           for ip in other_ips])
 
