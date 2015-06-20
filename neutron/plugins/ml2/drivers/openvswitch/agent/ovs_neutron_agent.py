@@ -451,9 +451,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if not self.enable_tunneling:
             return
         tunnel_ip = kwargs.get('tunnel_ip')
-        tunnel_ip_hex = self.get_ip_in_hex(tunnel_ip)
-        if not tunnel_ip_hex:
-            return
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
             LOG.error(_LE("No tunnel_type specified, cannot create tunnels"))
@@ -464,7 +461,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             return
         if tunnel_ip == self.local_ip:
             return
-        tun_name = '%s-%s' % (tunnel_type, tunnel_ip_hex)
+        tun_name = self.get_tunnel_name(tunnel_type, self.local_ip, tunnel_ip)
+        if tun_name is None:
+            return
         if not self.l2_pop:
             self._setup_tunnel_port(self.tun_br, tun_name, tunnel_ip,
                                     tunnel_type)
@@ -1388,10 +1387,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         return ofport
 
     def setup_tunnel_port(self, br, remote_ip, network_type):
-        remote_ip_hex = self.get_ip_in_hex(remote_ip)
-        if not remote_ip_hex:
+        port_name = self.get_tunnel_name(
+            network_type, self.local_ip, remote_ip)
+        if port_name is None:
             return 0
-        port_name = '%s-%s' % (network_type, remote_ip_hex)
         ofport = self._setup_tunnel_port(br,
                                          port_name,
                                          remote_ip,
@@ -1408,8 +1407,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             items = list(self.tun_br_ofports[tunnel_type].items())
             for remote_ip, ofport in items:
                 if ofport == tun_ofport:
-                    port_name = '%s-%s' % (tunnel_type,
-                                           self.get_ip_in_hex(remote_ip))
+                    port_name = self.get_tunnel_name(
+                        tunnel_type, self.local_ip, remote_ip)
                     br.delete_port(port_name)
                     br.cleanup_tunnel_port(ofport)
                     self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
@@ -1613,7 +1612,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                        'elapsed': time.time() - start})
         return failed_devices
 
-    def get_ip_in_hex(self, ip_address):
+    @classmethod
+    def get_ip_in_hex(cls, ip_address):
         try:
             return '%08x' % netaddr.IPAddress(ip_address, version=4)
         except Exception:
@@ -1632,10 +1632,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     for tunnel in tunnels:
                         if self.local_ip != tunnel['ip_address']:
                             remote_ip = tunnel['ip_address']
-                            remote_ip_hex = self.get_ip_in_hex(remote_ip)
-                            if not remote_ip_hex:
+                            tun_name = self.get_tunnel_name(
+                                tunnel_type, self.local_ip, remote_ip)
+                            if tun_name is None:
                                 continue
-                            tun_name = '%s-%s' % (tunnel_type, remote_ip_hex)
                             self._setup_tunnel_port(self.tun_br,
                                                     tun_name,
                                                     tunnel['ip_address'],
@@ -1645,6 +1645,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                       {'local_ip': self.local_ip, 'e': e})
             return True
         return False
+
+    @classmethod
+    def get_tunnel_name(cls, network_type, local_ip, remote_ip):
+        remote_ip_hex = cls.get_ip_in_hex(remote_ip)
+        if not remote_ip_hex:
+            return None
+        return '%s-%s' % (network_type, remote_ip_hex)
 
     def _agent_has_updates(self, polling_manager):
         return (polling_manager.is_polling_required or

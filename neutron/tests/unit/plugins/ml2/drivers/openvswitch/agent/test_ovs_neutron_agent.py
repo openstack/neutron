@@ -107,6 +107,7 @@ class TestOvsNeutronAgent(object):
                              group='SECURITYGROUP')
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         cfg.CONF.set_default('prevent_arp_spoofing', False, 'AGENT')
+        cfg.CONF.set_default('local_ip', '127.0.0.1', 'OVS')
         mock.patch(
             'neutron.agent.common.ovs_lib.OVSBridge.get_ports_attributes',
             return_value=[]).start()
@@ -2910,3 +2911,21 @@ class TestValidateTunnelLocalIP(base.BaseTestCase):
         with testtools.ExpectedException(SystemExit):
             ovs_agent.validate_local_ip(FAKE_IP1)
         mock_get_device_by_ip.assert_called_once_with(FAKE_IP1)
+
+
+class TestOvsAgentTunnelName(base.BaseTestCase):
+    def test_get_ip_in_hex_invalid_address(self):
+        self.assertIsNone(
+            ovs_agent.OVSNeutronAgent.get_ip_in_hex('a.b.c.d'))
+
+    def test_get_tunnel_name_vxlan(self):
+        self.assertEqual(
+            'vxlan-7f000002',
+            ovs_agent.OVSNeutronAgent.get_tunnel_name(
+                'vxlan', '127.0.0.1', '127.0.0.2'))
+
+    def test_get_tunnel_name_gre(self):
+        self.assertEqual(
+            'gre-7f000002',
+            ovs_agent.OVSNeutronAgent.get_tunnel_name(
+                'gre', '127.0.0.1', '127.0.0.2'))

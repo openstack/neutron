@@ -45,7 +45,7 @@ class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
             # agent types present on machines.
             environment.HostDescription(
                 l3_agent=self.l2_pop,
-                of_interface=self.of_interface) for _ in range(2)]
+                of_interface=self.of_interface) for _ in range(3)]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type=self.network_type,
@@ -67,9 +67,11 @@ class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
                     network['id'],
                     tenant_uuid,
                     self.safe_client))
-            for i in range(2)]
+            for i in range(3)]
 
         for vm in vms:
             vm.block_until_boot()
 
         vms[0].block_until_ping(vms[1].ip)
+        vms[0].block_until_ping(vms[2].ip)
+        vms[1].block_until_ping(vms[2].ip)

@@ -151,7 +151,9 @@ class OVSAgentFixture(fixtures.Fixture):
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
             process_name=self.NEUTRON_OVS_AGENT,
-            exec_name=self.NEUTRON_OVS_AGENT,
+            exec_name=spawn.find_executable(
+                'ovs_agent.py',
+                path=os.path.join(base.ROOTDIR, 'common', 'agents')),
             config_filenames=config_filenames))
 
 
@@ -173,7 +175,6 @@ class L3AgentFixture(fixtures.Fixture):
 
         config_filenames = [self.neutron_cfg_fixture.filename,
                             self.l3_agent_cfg_fixture.filename]
-
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
             process_name=self.NEUTRON_L3_AGENT,
