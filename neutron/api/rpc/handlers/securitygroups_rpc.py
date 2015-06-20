@@ -156,7 +156,7 @@ class SecurityGroupAgentRpcApiMixin(object):
     def security_groups_provider_updated(self, context,
                                          devices_to_update=None):
         """Notify provider updated security groups."""
-        cctxt = self.client.prepare(version=1.3,
+        cctxt = self.client.prepare(version='1.3',
                                     topic=self._get_security_group_topic(),
                                     fanout=True)
         cctxt.cast(context, 'security_groups_provider_updated',
