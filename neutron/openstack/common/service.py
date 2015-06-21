@@ -18,20 +18,13 @@
 """Generic Node base class for all workers that run on hosts."""
 
 import errno
+import io
 import logging
 import os
 import random
 import signal
 import sys
 import time
-
-try:
-    # Importing just the symbol here because the io module does not
-    # exist in Python 2.6.
-    from io import UnsupportedOperation  # noqa
-except ImportError:
-    # Python 2.6
-    UnsupportedOperation = None
 
 import eventlet
 from eventlet import event
@@ -59,15 +52,15 @@ def _is_daemon():
     # http://www.gnu.org/software/bash/manual/bashref.html#Job-Control-Basics
     try:
         is_daemon = os.getpgrp() != os.tcgetpgrp(sys.stdout.fileno())
+    except io.UnsupportedOperation:
+        # Could not get the fileno for stdout, so we must be a daemon.
+        is_daemon = True
     except OSError as err:
         if err.errno == errno.ENOTTY:
             # Assume we are a daemon because there is no terminal.
             is_daemon = True
         else:
             raise
-    except UnsupportedOperation:
-        # Could not get the fileno for stdout, so we must be a daemon.
-        is_daemon = True
     return is_daemon
 
 
@@ -234,7 +227,7 @@ class ProcessLauncher(object):
     def _pipe_watcher(self):
         # This will block until the write end is closed when the parent
         # dies unexpectedly
-        self.readpipe.read()
+        self.readpipe.read(1)
 
         LOG.info(_LI('Parent process has died unexpectedly, exiting'))
 
@@ -242,15 +235,12 @@ class ProcessLauncher(object):
 
     def _child_process_handle_signal(self):
         # Setup child signal handlers differently
-        def _sigterm(*args):
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            raise SignalExit(signal.SIGTERM)
-
         def _sighup(*args):
             signal.signal(signal.SIGHUP, signal.SIG_DFL)
             raise SignalExit(signal.SIGHUP)
 
-        signal.signal(signal.SIGTERM, _sigterm)
+        # Parent signals with SIGTERM when it wants us to go away.
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
         if _sighup_supported():
             signal.signal(signal.SIGHUP, _sighup)
         # Block SIGINT and let the parent send us a SIGTERM
