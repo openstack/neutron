@@ -19,10 +19,8 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.agent.l3 import dvr_fip_ns
-from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import iptables_manager
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
@@ -33,9 +31,9 @@ LOG = logging.getLogger(__name__)
 MASK_30 = 0x3fffffff
 
 
-class DvrRouter(router.RouterInfo):
+class DvrLocalRouter(router.RouterInfo):
     def __init__(self, agent, host, *args, **kwargs):
-        super(DvrRouter, self).__init__(*args, **kwargs)
+        super(DvrLocalRouter, self).__init__(*args, **kwargs)
 
         self.agent = agent
         self.host = host
@@ -45,20 +43,15 @@ class DvrRouter(router.RouterInfo):
         # Linklocal subnet for router and floating IP namespace link
         self.rtr_fip_subnet = None
         self.dist_fip_count = None
-        self.snat_namespace = None
         self.fip_ns = None
 
     def get_floating_ips(self):
         """Filter Floating IPs to be hosted on this agent."""
-        floating_ips = super(DvrRouter, self).get_floating_ips()
+        floating_ips = super(DvrLocalRouter, self).get_floating_ips()
         return [i for i in floating_ips if i['host'] == self.host]
 
     def get_snat_interfaces(self):
         return self.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
-
-    def get_snat_int_device_name(self, port_id):
-        long_name = dvr_snat_ns.SNAT_INT_DEV_PREFIX + port_id
-        return long_name[:self.driver.DEV_NAME_LEN]
 
     def _handle_fip_nat_rules(self, interface_name, action):
         """Configures NAT rules for Floating IPs for DVR.
@@ -159,19 +152,8 @@ class DvrRouter(router.RouterInfo):
         return l3_constants.FLOATINGIP_STATUS_ACTIVE
 
     def remove_floating_ip(self, device, ip_cidr):
-        super(DvrRouter, self).remove_floating_ip(device, ip_cidr)
+        super(DvrLocalRouter, self).remove_floating_ip(device, ip_cidr)
         self.floating_ip_removed_dist(ip_cidr)
-
-    def create_snat_namespace(self):
-        # TODO(mlavalle): in the near future, this method should contain the
-        # code in the L3 agent that creates a gateway for a dvr. The first step
-        # is to move the creation of the snat namespace here
-        self.snat_namespace = dvr_snat_ns.SnatNamespace(self.router['id'],
-                                                        self.agent_conf,
-                                                        self.driver,
-                                                        self.use_ipv6)
-        self.snat_namespace.create()
-        return self.snat_namespace
 
     def _get_internal_port(self, subnet_id):
         """Return internal router port based on subnet_id."""
@@ -309,14 +291,8 @@ class DvrRouter(router.RouterInfo):
                       self.router['id'])
         return host
 
-    def _is_this_snat_host(self):
-        # TODO(Carl) This is a sign that dvr needs two router classes.
-        mode = self.agent_conf.agent_mode
-        return (mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
-                and self.get_gw_port_host() == self.host)
-
     def internal_network_added(self, port):
-        super(DvrRouter, self).internal_network_added(port)
+        super(DvrLocalRouter, self).internal_network_added(port)
 
         # NOTE: The following function _set_subnet_arp_info
         # should be called to dynamically populate the arp
@@ -338,20 +314,6 @@ class DvrRouter(router.RouterInfo):
         interface_name = self.get_internal_device_name(port['id'])
         self._snat_redirect_add(sn_port, port, interface_name)
 
-        if not self._is_this_snat_host():
-            return
-
-        ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(self.router['id'])
-        interface_name = self.get_snat_int_device_name(sn_port['id'])
-        self._internal_network_added(
-            ns_name,
-            sn_port['network_id'],
-            sn_port['id'],
-            sn_port['fixed_ips'],
-            sn_port['mac_address'],
-            interface_name,
-            dvr_snat_ns.SNAT_INT_DEV_PREFIX)
-
     def _dvr_internal_network_removed(self, port):
         if not self.ex_gw_port:
             return
@@ -364,23 +326,9 @@ class DvrRouter(router.RouterInfo):
         interface_name = self.get_internal_device_name(port['id'])
         self._snat_redirect_remove(sn_port, port, interface_name)
 
-        mode = self.agent_conf.agent_mode
-        is_this_snat_host = (mode == l3_constants.L3_AGENT_MODE_DVR_SNAT
-            and self.ex_gw_port['binding:host_id'] == self.host)
-        if not is_this_snat_host:
-            return
-
-        snat_interface = (
-            self.get_snat_int_device_name(sn_port['id']))
-        ns_name = self.snat_namespace.name
-        prefix = dvr_snat_ns.SNAT_INT_DEV_PREFIX
-        if ip_lib.device_exists(snat_interface, namespace=ns_name):
-            self.driver.unplug(snat_interface, namespace=ns_name,
-                               prefix=prefix)
-
     def internal_network_removed(self, port):
         self._dvr_internal_network_removed(port)
-        super(DvrRouter, self).internal_network_removed(port)
+        super(DvrLocalRouter, self).internal_network_removed(port)
 
     def get_floating_agent_gw_interface(self, ext_net_id):
         """Filter Floating Agent GW port for the external network."""
@@ -392,26 +340,6 @@ class DvrRouter(router.RouterInfo):
         fip_int = self.fip_ns.get_int_device_name(self.router_id)
         if ip_lib.device_exists(fip_int, namespace=self.fip_ns.get_name()):
             return self.fip_ns.get_rtr_ext_device_name(self.router_id)
-
-    def _create_dvr_gateway(self, ex_gw_port, gw_interface_name,
-                            snat_ports):
-        """Create SNAT namespace."""
-        snat_ns = self.create_snat_namespace()
-        # connect snat_ports to br_int from SNAT namespace
-        for port in snat_ports:
-            # create interface_name
-            interface_name = self.get_snat_int_device_name(port['id'])
-            self._internal_network_added(snat_ns.name, port['network_id'],
-                                         port['id'], port['fixed_ips'],
-                                         port['mac_address'], interface_name,
-                                         dvr_snat_ns.SNAT_INT_DEV_PREFIX)
-        self._external_gateway_added(ex_gw_port, gw_interface_name,
-                                     snat_ns.name, preserve_ips=[])
-        self.snat_iptables_manager = iptables_manager.IptablesManager(
-            namespace=snat_ns.name,
-            use_ipv6=self.use_ipv6)
-        # kicks the FW Agent to add rules for the snat namespace
-        self.agent.process_router_add(self)
 
     def external_gateway_added(self, ex_gw_port, interface_name):
         # TODO(Carl) Refactor external_gateway_added/updated/removed to use
@@ -427,9 +355,6 @@ class DvrRouter(router.RouterInfo):
             if gateway:
                 self._snat_redirect_add(gateway, p, id_name)
 
-        if self._is_this_snat_host():
-            self._create_dvr_gateway(ex_gw_port, interface_name, snat_ports)
-
         for port in snat_ports:
             for ip in port['fixed_ips']:
                 self._update_arp_entry(ip['ip_address'],
@@ -438,15 +363,7 @@ class DvrRouter(router.RouterInfo):
                                        'add')
 
     def external_gateway_updated(self, ex_gw_port, interface_name):
-        if not self._is_this_snat_host():
-            # no centralized SNAT gateway for this node/agent
-            LOG.debug("not hosting snat for router: %s", self.router['id'])
-            return
-
-        self._external_gateway_added(ex_gw_port,
-                                     interface_name,
-                                     self.snat_namespace.name,
-                                     preserve_ips=[])
+        pass
 
     def external_gateway_removed(self, ex_gw_port, interface_name):
         # TODO(Carl) Should this be calling process_snat_dnat_for_fip?
@@ -460,19 +377,6 @@ class DvrRouter(router.RouterInfo):
             gateway = self._map_internal_interfaces(p, snat_ports)
             internal_interface = self.get_internal_device_name(p['id'])
             self._snat_redirect_remove(gateway, p, internal_interface)
-
-        if not self._is_this_snat_host():
-            # no centralized SNAT gateway for this node/agent
-            LOG.debug("not hosting snat for router: %s", self.router['id'])
-            return
-
-        self.driver.unplug(interface_name,
-                           bridge=self.agent_conf.external_network_bridge,
-                           namespace=self.snat_namespace.name,
-                           prefix=router.EXTERNAL_DEV_PREFIX)
-
-        self.snat_namespace.delete()
-        self.snat_namespace = None
 
     def _handle_router_snat_rules(self, ex_gw_port,
                                   interface_name, action):
@@ -495,13 +399,14 @@ class DvrRouter(router.RouterInfo):
         if self.get_gw_port_host() != self.host:
             return
 
-        super(DvrRouter, self).perform_snat_action(snat_callback, *args)
+        super(DvrLocalRouter,
+              self).perform_snat_action(snat_callback, *args)
 
     def process_external(self, agent):
         ex_gw_port = self.get_ex_gw_port()
         if ex_gw_port:
             self.create_dvr_fip_interfaces(ex_gw_port)
-        super(DvrRouter, self).process_external(agent)
+        super(DvrLocalRouter, self).process_external(agent)
 
     def create_dvr_fip_interfaces(self, ex_gw_port):
         floating_ips = self.get_floating_ips()
@@ -532,4 +437,4 @@ class DvrRouter(router.RouterInfo):
             self.fip_ns = agent.get_fip_ns(ex_gw_port['network_id'])
             self.fip_ns.scan_fip_ports(self)
 
-        super(DvrRouter, self).process(agent)
+        super(DvrLocalRouter, self).process(agent)
