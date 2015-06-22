@@ -142,7 +142,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         network_id, port = (
             self.setup_create_agent_gw_port_for_network())
 
-        self.l3_plugin._delete_floatingip_agent_gateway_port(
+        self.l3_plugin.delete_floatingip_agent_gateway_port(
             self.context, "", network_id)
         self.assertIsNone(
             self.l3_plugin._get_agent_gw_ports_exist_for_network(

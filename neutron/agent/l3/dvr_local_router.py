@@ -137,6 +137,17 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 # destroying it.  The two could end up conflicting on
                 # creating/destroying interfaces and such.  I think I'd like a
                 # semaphore to sync creation/deletion of this namespace.
+
+                # NOTE (Swami): Since we are deleting the namespace here we
+                # should be able to delete the floatingip agent gateway port
+                # for the provided external net since we don't need it anymore.
+                if self.fip_ns.agent_gateway_port:
+                    LOG.debug('Removed last floatingip, so requesting the '
+                              'server to delete Floatingip Agent Gateway port:'
+                              '%s', self.fip_ns.agent_gateway_port)
+                    self.agent.plugin_rpc.delete_agent_gateway_port(
+                        self.agent.context,
+                        self.fip_ns.agent_gateway_port['network_id'])
                 self.fip_ns.delete()
                 self.fip_ns = None
 
