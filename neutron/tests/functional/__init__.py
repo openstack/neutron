@@ -27,7 +27,6 @@ def load_tests(loader, tests, pattern):
     target_dirs = [
         this_dir,
         os.path.join(parent_dir, 'retargetable'),
-        os.path.join(parent_dir, 'fullstack'),
     ]
     for start_dir in target_dirs:
         new_tests = loader.discover(start_dir=start_dir, pattern=pattern)

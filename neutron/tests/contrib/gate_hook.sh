@@ -7,7 +7,7 @@ set -ex
 VENV=${1:-"dsvm-functional"}
 
 
-if [ "$VENV" == "dsvm-functional" ]
+if [ "$VENV" == "dsvm-functional" ] || [ "$VENV" == "dsvm-fullstack" ]
 then
     # The following need to be set before sourcing
     # configure_for_func_testing.
