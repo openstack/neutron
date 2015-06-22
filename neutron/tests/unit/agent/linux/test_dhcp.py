@@ -1505,6 +1505,23 @@ class TestDnsmasq(TestBase):
                                'client2')]), leases)
         mock_open.assert_called_once_with(filename)
 
+    def test_read_hosts_file_leases_with_stateless_IPv6_tag(self):
+        filename = self.get_temp_file_path('leases')
+        with open(filename, "w") as leasesfile:
+            lines = [
+                "00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1\n",
+                "00:00:80:aa:bb:cc,set:ccccccccc-cccc-cccc-cccc-cccccccc\n",
+                "00:00:80:aa:bb:cc,id:client2,inst-name,[fdca:3ba5:a17a::1]\n"]
+            for line in lines:
+                leasesfile.write(line)
+
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+        leases = dnsmasq._read_hosts_file_leases(filename)
+
+        self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc", 'client1'),
+                              ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",
+                              'client2')]), leases)
+
     def test_make_subnet_interface_ip_map(self):
         with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ip_dev:
             ip_dev.return_value.addr.list.return_value = [
