@@ -288,26 +288,101 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertTrue(result)
         self.assertTrue(pv6.called)
 
-    def test__delete_floatingip_agent_gateway_port(self):
-        port = {
+    def _helper_delete_floatingip_agent_gateway_port(self, port_host):
+        ports = [{
             'id': 'my_port_id',
             'binding:host_id': 'foo_host',
             'network_id': 'ext_network_id',
-            'device_owner': l3_const.DEVICE_OWNER_AGENT_GW
-        }
-        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp,\
-                mock.patch.object(self.mixin,
-                                  '_get_vm_port_hostid') as vm_host:
+            'device_owner': l3_const.DEVICE_OWNER_ROUTER_GW
+        },
+                {
+            'id': 'my_new_port_id',
+            'binding:host_id': 'my_foo_host',
+            'network_id': 'ext_network_id',
+            'device_owner': l3_const.DEVICE_OWNER_ROUTER_GW
+        }]
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp:
             plugin = mock.Mock()
             gp.return_value = plugin
-            plugin.get_ports.return_value = [port]
-            vm_host.return_value = 'foo_host'
+            plugin.get_ports.return_value = ports
             self.mixin._delete_floatingip_agent_gateway_port(
-                self.ctx, 'foo_host', 'network_id')
+                self.ctx, port_host, 'ext_network_id')
         plugin.get_ports.assert_called_with(self.ctx, filters={
-            'network_id': ['network_id'],
+            'network_id': ['ext_network_id'],
             'device_owner': [l3_const.DEVICE_OWNER_AGENT_GW]})
-        plugin.ipam.delete_port.assert_called_with(self.ctx, 'my_port_id')
+        if port_host:
+            plugin.ipam.delete_port.assert_called_once_with(
+                self.ctx, 'my_port_id')
+        else:
+            plugin.ipam.delete_port.assert_called_with(
+                self.ctx, 'my_new_port_id')
+
+    def test__delete_floatingip_agent_gateway_port_without_host_id(self):
+        self._helper_delete_floatingip_agent_gateway_port(None)
+
+    def test__delete_floatingip_agent_gateway_port_with_host_id(self):
+        self._helper_delete_floatingip_agent_gateway_port(
+            'foo_host')
+
+    def _setup_delete_current_gw_port_deletes_fip_agent_gw_port(
+        self, port=None):
+        gw_port_db = {
+            'id': 'my_gw_id',
+            'network_id': 'ext_net_id',
+            'device_owner': l3_const.DEVICE_OWNER_ROUTER_GW
+        }
+        router = mock.MagicMock()
+        router.extra_attributes.distributed = True
+        router['gw_port_id'] = gw_port_db['id']
+        router.gw_port = gw_port_db
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp,\
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              '_delete_current_gw_port'),\
+            mock.patch.object(
+                self.mixin,
+                '_get_router') as grtr,\
+            mock.patch.object(
+                self.mixin,
+                'delete_csnat_router_interface_ports') as del_csnat_port,\
+            mock.patch.object(
+                self.mixin,
+                '_delete_floatingip_agent_gateway_port') as del_agent_gw_port:
+            plugin = mock.Mock()
+            gp.return_value = plugin
+            plugin.get_ports.return_value = port
+            grtr.return_value = router
+            self.mixin._delete_current_gw_port(
+                self.ctx, router['id'], router, 'ext_network_id')
+            return router, plugin, del_csnat_port, del_agent_gw_port
+
+    def test_delete_current_gw_port_deletes_fip_agent_gw_port(self):
+        rtr, plugin, d_csnat_port, d_agent_gw_port = (
+            self._setup_delete_current_gw_port_deletes_fip_agent_gw_port())
+        self.assertTrue(d_csnat_port.called)
+        self.assertTrue(d_agent_gw_port.called)
+        d_csnat_port.assert_called_once_with(
+            mock.ANY, rtr)
+        d_agent_gw_port.assert_called_once_with(
+            mock.ANY, None, 'ext_net_id')
+
+    def test_delete_current_gw_port_never_calls_delete_fip_agent_gw_port(self):
+        port = [{
+            'id': 'my_port_id',
+            'network_id': 'ext_net_id',
+            'device_owner': l3_const.DEVICE_OWNER_ROUTER_GW
+        },
+                {
+            'id': 'my_new_port_id',
+            'network_id': 'ext_net_id',
+            'device_owner': l3_const.DEVICE_OWNER_ROUTER_GW
+        }]
+        rtr, plugin, d_csnat_port, d_agent_gw_port = (
+            self._setup_delete_current_gw_port_deletes_fip_agent_gw_port(
+                port=port))
+        self.assertTrue(d_csnat_port.called)
+        self.assertFalse(d_agent_gw_port.called)
+        d_csnat_port.assert_called_once_with(
+            mock.ANY, rtr)
 
     def _delete_floatingip_test_setup(self, floatingip):
         fip_id = floatingip['id']
