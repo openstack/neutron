@@ -358,14 +358,14 @@ class RequestTest(base.BaseTestCase):
 
     def test_content_type_missing(self):
         request = wsgi.Request.blank('/tests/123', method='POST')
-        request.body = "<body />"
+        request.body = b"<body />"
 
         self.assertIsNone(request.get_content_type())
 
     def test_content_type_unsupported(self):
         request = wsgi.Request.blank('/tests/123', method='POST')
         request.headers["Content-Type"] = "text/html"
-        request.body = "fake<br />"
+        request.body = b"fake<br />"
 
         self.assertIsNone(request.get_content_type())
 
@@ -618,7 +618,7 @@ class ResourceTest(base.BaseTestCase):
     def test_malformed_request_body_throws_bad_request(self):
         resource = wsgi.Resource(None, self.my_fault_body_function)
         request = wsgi.Request.blank(
-            "/", body="{mal:formed", method='POST',
+            "/", body=b"{mal:formed", method='POST',
             headers={'Content-Type': "application/json"})
 
         response = resource(request)
@@ -627,7 +627,7 @@ class ResourceTest(base.BaseTestCase):
     def test_wrong_content_type_throws_unsupported_media_type_error(self):
         resource = wsgi.Resource(None, self.my_fault_body_function)
         request = wsgi.Request.blank(
-            "/", body="{some:json}", method='POST',
+            "/", body=b"{some:json}", method='POST',
             headers={'Content-Type': "xxx"})
 
         response = resource(request)
