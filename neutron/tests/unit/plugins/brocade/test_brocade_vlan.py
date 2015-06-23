@@ -18,9 +18,7 @@
 Test vlans alloc/dealloc.
 """
 
-from oslo_context import context as oslo_context
-
-from neutron.db import api as db
+from neutron import context as n_context
 from neutron.plugins.brocade import vlanbm as vlan_bitmap
 from neutron.tests.unit import testlib_api
 
@@ -30,8 +28,7 @@ class TestVlanBitmap(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestVlanBitmap, self).setUp()
-        self.context = oslo_context.get_admin_context()
-        self.context.session = db.get_session()
+        self.context = n_context.get_admin_context()
 
     def test_vlan(self):
         """test vlan allocation/de-alloc."""
