@@ -167,6 +167,80 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         subnet.update(s)
         return subnet, changes
 
+    def _allocate_pools_for_subnet(self, context, subnet):
+        """Create IP allocation pools for a given subnet
+
+        Pools are defined by the 'allocation_pools' attribute,
+        a list of dict objects with 'start' and 'end' keys for
+        defining the pool range.
+        """
+        pools = []
+        # Auto allocate the pool around gateway_ip
+        net = netaddr.IPNetwork(subnet['cidr'])
+        first_ip = net.first + 1
+        last_ip = net.last - 1
+        gw_ip = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
+        # Use the gw_ip to find a point for splitting allocation pools
+        # for this subnet
+        split_ip = min(max(gw_ip, net.first), net.last)
+        if split_ip > first_ip:
+            pools.append({'start': str(netaddr.IPAddress(first_ip)),
+                          'end': str(netaddr.IPAddress(split_ip - 1))})
+        if split_ip < last_ip:
+            pools.append({'start': str(netaddr.IPAddress(split_ip + 1)),
+                          'end': str(netaddr.IPAddress(last_ip))})
+        # return auto-generated pools
+        # no need to check for their validity
+        return pools
+
+    def _validate_subnet_cidr(self, context, network, new_subnet_cidr):
+        """Validate the CIDR for a subnet.
+
+        Verifies the specified CIDR does not overlap with the ones defined
+        for the other subnets specified for this network, or with any other
+        CIDR if overlapping IPs are disabled.
+        """
+        new_subnet_ipset = netaddr.IPSet([new_subnet_cidr])
+        # Disallow subnets with prefix length 0 as they will lead to
+        # dnsmasq failures (see bug 1362651).
+        # This is not a discrimination against /0 subnets.
+        # A /0 subnet is conceptually possible but hardly a practical
+        # scenario for neutron's use cases.
+        for cidr in new_subnet_ipset.iter_cidrs():
+            if cidr.prefixlen == 0:
+                err_msg = _("0 is not allowed as CIDR prefix length")
+                raise n_exc.InvalidInput(error_message=err_msg)
+
+        if cfg.CONF.allow_overlapping_ips:
+            subnet_list = network.subnets
+        else:
+            subnet_list = self._get_all_subnets(context)
+        for subnet in subnet_list:
+            if (netaddr.IPSet([subnet.cidr]) & new_subnet_ipset):
+                # don't give out details of the overlapping subnet
+                err_msg = (_("Requested subnet with cidr: %(cidr)s for "
+                             "network: %(network_id)s overlaps with another "
+                             "subnet") %
+                           {'cidr': new_subnet_cidr,
+                            'network_id': network.id})
+                LOG.info(_LI("Validation for CIDR: %(new_cidr)s failed - "
+                             "overlaps with subnet %(subnet_id)s "
+                             "(CIDR: %(cidr)s)"),
+                         {'new_cidr': new_subnet_cidr,
+                          'subnet_id': subnet.id,
+                          'cidr': subnet.cidr})
+                raise n_exc.InvalidInput(error_message=err_msg)
+
+    def _validate_network_subnetpools(self, network,
+                                      new_subnetpool_id, ip_version):
+        """Validate all subnets on the given network have been allocated from
+           the same subnet pool as new_subnetpool_id
+        """
+        for subnet in network.subnets:
+            if (subnet.ip_version == ip_version and
+               new_subnetpool_id != subnet.subnetpool_id):
+                raise n_exc.NetworkSubnetPoolAffinityError()
+
     def _validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
 
@@ -283,3 +357,45 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if not context.is_admin:
             query = query.filter_by(tenant_id=context.tenant_id)
         query.delete()
+
+    def _save_subnet(self, context,
+                     network,
+                     subnet_args,
+                     dns_nameservers,
+                     host_routes,
+                     allocation_pools):
+
+        if not attributes.is_attr_set(allocation_pools):
+            allocation_pools = self._allocate_pools_for_subnet(context,
+                                                               subnet_args)
+        else:
+            self._validate_allocation_pools(allocation_pools,
+                                            subnet_args['cidr'])
+            if subnet_args['gateway_ip']:
+                self._validate_gw_out_of_pools(subnet_args['gateway_ip'],
+                                               allocation_pools)
+
+        self._validate_subnet_cidr(context, network, subnet_args['cidr'])
+        self._validate_network_subnetpools(network,
+                                           subnet_args['subnetpool_id'],
+                                           subnet_args['ip_version'])
+
+        subnet = models_v2.Subnet(**subnet_args)
+        context.session.add(subnet)
+        if attributes.is_attr_set(dns_nameservers):
+            for addr in dns_nameservers:
+                ns = models_v2.DNSNameServer(address=addr,
+                                             subnet_id=subnet.id)
+                context.session.add(ns)
+
+        if attributes.is_attr_set(host_routes):
+            for rt in host_routes:
+                route = models_v2.SubnetRoute(
+                    subnet_id=subnet.id,
+                    destination=rt['destination'],
+                    nexthop=rt['nexthop'])
+                context.session.add(route)
+
+        self._save_allocation_pools(context, subnet, allocation_pools)
+
+        return subnet
