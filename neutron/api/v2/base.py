@@ -431,8 +431,7 @@ class Controller(object):
             try:
                 tenant_id = item[self._resource]['tenant_id']
                 count = quota.QUOTAS.count(request.context, self._resource,
-                                           self._plugin, self._collection,
-                                           tenant_id)
+                                           self._plugin, tenant_id)
                 if bulk:
                     delta = deltas.get(tenant_id, 0) + 1
                     deltas[tenant_id] = delta
