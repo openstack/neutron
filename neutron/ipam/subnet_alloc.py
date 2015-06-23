@@ -126,13 +126,19 @@ class SubnetAllocator(driver.Pool):
             self._check_subnetpool_tenant_quota(request.tenant_id,
                                                 request.prefixlen)
             cidr = request.subnet_cidr
+            gateway = request.gateway_ip
+            if gateway and not ipam_utils.check_subnet_ip(cidr, gateway):
+                msg = _("Cannot allocate requested subnet due to bad gateway "
+                        "address")
+                raise n_exc.SubnetAllocationError(reason=msg)
+
             available = self._get_available_prefix_list()
             matched = netaddr.all_matching_cidrs(cidr, available)
             if len(matched) is 1 and matched[0].prefixlen <= cidr.prefixlen:
                 return IpamSubnet(request.tenant_id,
                                   request.subnet_id,
                                   cidr,
-                                  gateway_ip=request.gateway_ip,
+                                  gateway_ip=gateway,
                                   allocation_pools=request.allocation_pools)
             msg = _("Cannot allocate requested subnet from the available "
                     "set of prefixes")
