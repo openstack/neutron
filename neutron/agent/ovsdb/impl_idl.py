@@ -23,6 +23,7 @@ from ovs.db import idl
 from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import commands as cmd
 from neutron.agent.ovsdb.native import connection
+from neutron.agent.ovsdb.native import helpers
 from neutron.agent.ovsdb.native import idlutils
 from neutron.i18n import _LE
 
@@ -122,6 +123,11 @@ class OvsdbIdl(api.API):
 
     def __init__(self, context):
         super(OvsdbIdl, self).__init__(context)
+        # it's a chicken and egg problem: by default, the manager that
+        # corresponds to the connection URI is in most cases not enabled in
+        # local ovsdb, so we still need ovs-vsctl to set it to allow
+        # connections
+        helpers.enable_connection_uri(self.ovsdb_connection.connection)
         OvsdbIdl.ovsdb_connection.start()
         self.idl = OvsdbIdl.ovsdb_connection.idl
 
