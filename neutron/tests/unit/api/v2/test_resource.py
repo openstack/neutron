@@ -32,7 +32,7 @@ class RequestTestCase(base.BaseTestCase):
 
     def test_content_type_missing(self):
         request = wsgi.Request.blank('/tests/123', method='POST')
-        request.body = "<body />"
+        request.body = b"<body />"
         self.assertIsNone(request.get_content_type())
 
     def test_content_type_with_charset(self):
