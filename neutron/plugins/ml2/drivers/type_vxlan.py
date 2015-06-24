@@ -91,12 +91,7 @@ class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         # determine current configured allocatable vnis
         vxlan_vnis = set()
         for tun_min, tun_max in self.tunnel_ranges:
-            if tun_max + 1 - tun_min > p_const.MAX_VXLAN_VNI:
-                LOG.error(_LE("Skipping unreasonable VXLAN VNI range "
-                              "%(tun_min)s:%(tun_max)s"),
-                          {'tun_min': tun_min, 'tun_max': tun_max})
-            else:
-                vxlan_vnis |= set(moves.range(tun_min, tun_max + 1))
+            vxlan_vnis |= set(moves.range(tun_min, tun_max + 1))
 
         session = db_api.get_session()
         with session.begin(subtransactions=True):
