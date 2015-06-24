@@ -59,10 +59,6 @@ class Servicetype(extensions.ExtensionDescriptor):
                  "Neutron advanced services")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/service-type/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-01-20T00:00:00-00:00"
 

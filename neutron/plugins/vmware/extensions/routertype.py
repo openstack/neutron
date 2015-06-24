@@ -43,10 +43,6 @@ class Routertype(extensions.ExtensionDescriptor):
         return "Enables configuration of NSXv router type."
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/router-type/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2015-1-12T10:00:00-00:00"
 

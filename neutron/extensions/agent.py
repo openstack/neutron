@@ -88,10 +88,6 @@ class Agent(extensions.ExtensionDescriptor):
         return "The agent management extension."
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/agent/api/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-02-03T10:00:00-00:00"
 

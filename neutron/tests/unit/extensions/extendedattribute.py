@@ -40,10 +40,6 @@ class Extendedattribute(extensions.ExtensionDescriptor):
         return "Provides extended_attr attribute to router"
 
     @classmethod
-    def get_namespace(cls):
-        return ""
-
-    @classmethod
     def get_updated(cls):
         return "2013-02-05T00:00:00-00:00"
 

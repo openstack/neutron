@@ -33,11 +33,6 @@ class Subnetallocation(extensions.ExtensionDescriptor):
         return "Enables allocation of subnets from a subnet pool"
 
     @classmethod
-    def get_namespace(cls):
-        return ("http://docs.openstack.org/ext/"
-                "%s/api/v1.0" % constants.SUBNET_ALLOCATION_EXT_ALIAS)
-
-    @classmethod
     def get_updated(cls):
         return "2015-03-30T10:00:00-00:00"
 

@@ -62,10 +62,6 @@ class Vlantransparent(extensions.ExtensionDescriptor):
         return "Provides Vlan Transparent Networks"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/vlantransparent/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2015-03-23T09:00:00-00:00"
 

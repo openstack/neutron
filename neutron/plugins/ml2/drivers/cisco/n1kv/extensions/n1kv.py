@@ -43,10 +43,6 @@ class N1kv(extensions.ExtensionDescriptor):
         return _("Add new policy profile attribute to port resource.")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/n1kv/api/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2014-11-23T13:33:25-00:00"
 

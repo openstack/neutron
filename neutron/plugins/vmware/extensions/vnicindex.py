@@ -43,10 +43,6 @@ class Vnicindex(extensions.ExtensionDescriptor):
         return ("Enable a port to be associated with a VNIC index")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/vnic_index/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2014-09-15T12:00:00-00:00"
 

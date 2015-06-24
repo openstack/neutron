@@ -85,10 +85,6 @@ class Extra_dhcp_opt(extensions.ExtensionDescriptor):
                 "bootfile-name)")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/extra_dhcp_opt/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-03-17T12:00:00-00:00"
 

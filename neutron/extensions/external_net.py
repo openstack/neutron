@@ -16,7 +16,6 @@
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as nexception
-from neutron.extensions import l3
 
 
 class ExternalNetworkInUse(nexception.InUse):
@@ -51,10 +50,6 @@ class External_net(extensions.ExtensionDescriptor):
         return _("Adds external network attribute to network resource.")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/external_net/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-01-14T10:00:00-00:00"
 
@@ -63,6 +58,3 @@ class External_net(extensions.ExtensionDescriptor):
             return EXTENDED_ATTRIBUTES_2_0
         else:
             return {}
-
-    def get_alias_namespace_compatibility_map(self):
-        return {l3.L3.get_alias(): l3.L3.get_namespace()}

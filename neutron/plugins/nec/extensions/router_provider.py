@@ -46,10 +46,6 @@ class Router_provider(extensions.ExtensionDescriptor):
         return "Router Provider Support"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/router_provider/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-08-20T10:00:00-00:00"
 

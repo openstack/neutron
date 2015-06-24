@@ -65,10 +65,6 @@ class Portsecurity(extensions.ExtensionDescriptor):
         return "Provides port security"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/portsecurity/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-07-23T10:00:00-00:00"
 

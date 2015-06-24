@@ -292,11 +292,6 @@ class Securitygroup(extensions.ExtensionDescriptor):
         return "The security groups extension."
 
     @classmethod
-    def get_namespace(cls):
-        # todo
-        return "http://docs.openstack.org/ext/securitygroups/api/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-10-05T10:00:00-00:00"
 

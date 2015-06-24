@@ -41,12 +41,6 @@ class Advancedserviceproviders(extensions.ExtensionDescriptor):
         return "Id of the advanced service providers attached to the subnet"
 
     @classmethod
-    def get_namespace(cls):
-        return(
-            "http://docs.openstack.org/ext/neutron/"
-            "advanced_service_providers/api/v1.0")
-
-    @classmethod
     def get_updated(cls):
         return "2014-12-11T12:00:00-00:00"
 

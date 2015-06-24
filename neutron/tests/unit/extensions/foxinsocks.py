@@ -51,9 +51,6 @@ class Foxinsocks(object):
     def get_description(self):
         return "The Fox In Socks Extension"
 
-    def get_namespace(self):
-        return "http://www.fox.in.socks/api/ext/pie/v1.0"
-
     def get_updated(self):
         return "2011-01-22T13:25:27-06:00"
 

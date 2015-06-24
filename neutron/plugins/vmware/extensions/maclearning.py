@@ -43,10 +43,6 @@ class Maclearning(extensions.ExtensionDescriptor):
         return "Provides MAC learning capabilities."
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/maclearning/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-05-1T10:00:00-00:00"
 

@@ -177,10 +177,6 @@ class Qos(extensions.ExtensionDescriptor):
         return "NSX QoS extension."
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/qos-queue/api/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2014-01-01T00:00:00-00:00"
 

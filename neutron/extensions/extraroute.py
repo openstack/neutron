@@ -59,10 +59,6 @@ class Extraroute(extensions.ExtensionDescriptor):
         return "Extra routes configuration for L3 router"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/extraroutes/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-02-01T10:00:00-00:00"
 

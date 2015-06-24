@@ -108,10 +108,6 @@ class Multiprovidernet(extensions.ExtensionDescriptor):
                 "networks")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/multi-provider/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-06-27T10:00:00-00:00"
 

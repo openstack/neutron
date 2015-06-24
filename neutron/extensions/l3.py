@@ -176,10 +176,6 @@ class L3(extensions.ExtensionDescriptor):
                 " networks via a NAT gateway.")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/router/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-07-20T10:00:00-00:00"
 
