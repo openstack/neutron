@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
-
 from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc
@@ -25,7 +23,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
-from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -74,14 +71,6 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
             subnet_id=subnet_id
         )
         context.session.add(allocated)
-
-    @classmethod
-    def _check_gateway_in_subnet(cls, cidr, gateway):
-        """Validate that the gateway is on the subnet."""
-        ip = netaddr.IPAddress(gateway)
-        if ip.version == 4 or (ip.version == 6 and not ip.is_link_local()):
-            return ipam_utils.check_subnet_ip(cidr, gateway)
-        return True
 
     def _make_subnet_dict(self, subnet, fields=None):
         res = {'id': subnet['id'],

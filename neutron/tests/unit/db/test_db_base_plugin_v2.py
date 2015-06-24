@@ -1344,7 +1344,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  data['port']['fixed_ips'])
 
     def test_no_more_port_exception(self):
-        with self.subnet(cidr='10.0.0.0/32', enable_dhcp=False) as subnet:
+        with self.subnet(cidr='10.0.0.0/31', enable_dhcp=False) as subnet:
             id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, id)
             data = self.deserialize(self.fmt, res)
@@ -3366,9 +3366,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_ipv6_gw_values(self):
         cidr = '2001::/64'
         # Gateway is last IP in IPv6 DHCPv6 stateful subnet
-        gateway = '2001::ffff:ffff:ffff:fffe'
+        gateway = '2001::ffff:ffff:ffff:ffff'
         allocation_pools = [{'start': '2001::1',
-                             'end': '2001::ffff:ffff:ffff:fffd'}]
+                             'end': '2001::ffff:ffff:ffff:fffe'}]
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
@@ -3379,7 +3379,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         # Gateway is first IP in IPv6 DHCPv6 stateful subnet
         gateway = '2001::1'
         allocation_pools = [{'start': '2001::2',
-                             'end': '2001::ffff:ffff:ffff:fffe'}]
+                             'end': '2001::ffff:ffff:ffff:ffff'}]
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
