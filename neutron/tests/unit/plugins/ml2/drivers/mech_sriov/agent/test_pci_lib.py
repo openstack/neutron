@@ -131,3 +131,13 @@ class TestPciLib(base.BaseTestCase):
                               self.pci_wrapper.set_vf_max_rate,
                               self.VF_INDEX,
                               1000)
+
+    def test_set_vf_state_not_supported(self):
+        with mock.patch.object(self.pci_wrapper,
+                               "_execute") as mock_exec:
+            mock_exec.side_effect = Exception(
+                pci_lib.PciDeviceIPWrapper.IP_LINK_OP_NOT_SUPPORTED)
+            self.assertRaises(exc.IpCommandOperationNotSupportedError,
+                              self.pci_wrapper.set_vf_state,
+                              self.VF_INDEX,
+                              state=True)

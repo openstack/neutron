@@ -38,6 +38,8 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
     VF_LINE_FORMAT = VF_PATTERN + MAC_PATTERN + ANY_PATTERN + STATE_PATTERN
     VF_DETAILS_REG_EX = re.compile(VF_LINE_FORMAT)
 
+    IP_LINK_OP_NOT_SUPPORTED = 'RTNETLINK answers: Operation not supported'
+
     class LinkState(object):
         ENABLE = "enable"
         DISABLE = "disable"
@@ -45,6 +47,29 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
     def __init__(self, dev_name):
         super(PciDeviceIPWrapper, self).__init__()
         self.dev_name = dev_name
+
+    def _set_feature(self, vf_index, feature, value):
+        """Sets vf feature
+
+        Checks if the feature is not supported or there's some
+        general error during ip link invocation and raises
+        exception accordingly.
+
+        :param vf_index: vf index
+        :param feature: name of a feature to be passed to ip link,
+                        such as 'state' or 'spoofchk'
+        :param value: value of the feature setting
+        """
+        try:
+            self._as_root([], "link", ("set", self.dev_name, "vf",
+                                       str(vf_index), feature, value))
+        except Exception as e:
+            if self.IP_LINK_OP_NOT_SUPPORTED in str(e):
+                raise exc.IpCommandOperationNotSupportedError(
+                    dev_name=self.dev_name)
+            else:
+                raise exc.IpCommandError(dev_name=self.dev_name,
+                                         reason=str(e))
 
     def get_assigned_macs(self, vf_list):
         """Get assigned mac addresses for vf list.
@@ -97,14 +122,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         """
         status_str = self.LinkState.ENABLE if state else \
             self.LinkState.DISABLE
-
-        try:
-            self._as_root([], "link", ("set", self.dev_name, "vf",
-                                       str(vf_index), "state", status_str))
-        except Exception as e:
-            LOG.exception(_LE("Failed executing ip command"))
-            raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=e)
+        self._set_feature(vf_index, "state", status_str)
 
     def set_vf_spoofcheck(self, vf_index, enabled):
         """sets vf spoofcheck
@@ -114,13 +132,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
                         False to disable
         """
         setting = "on" if enabled else "off"
-
-        try:
-            self._as_root('', "link", ("set", self.dev_name, "vf",
-                                       str(vf_index), "spoofchk", setting))
-        except Exception as e:
-            raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=str(e))
+        self._set_feature(vf_index, "spoofchk", setting)
 
     def set_vf_max_rate(self, vf_index, max_tx_rate):
         """sets vf max rate.
@@ -128,14 +140,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         @param vf_index: vf index
         @param max_tx_rate: vf max tx rate in Mbps
         """
-        try:
-            self._as_root([], "link", ("set", self.dev_name, "vf",
-                                       str(vf_index), "rate",
-                                       str(max_tx_rate)))
-        except Exception as e:
-            LOG.exception(_LE("Failed executing ip command"))
-            raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=e)
+        self._set_feature(vf_index, "rate", str(max_tx_rate))
 
     def _get_vf_link_show(self, vf_list, link_show_out):
         """Get link show output for VFs
