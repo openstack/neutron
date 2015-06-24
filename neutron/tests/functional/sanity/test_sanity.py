@@ -35,6 +35,9 @@ class SanityTestCase(base.BaseTestCase):
     def test_dnsmasq_version(self):
         checks.dnsmasq_version_supported()
 
+    def test_dibbler_version(self):
+        checks.dibbler_version_supported()
+
 
 class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
     """Sanity checks that require root access.

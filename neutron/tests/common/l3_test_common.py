@@ -244,6 +244,34 @@ def router_append_subnet(router, count=1, ip_version=4,
     router[l3_constants.INTERFACE_KEY] = interfaces
 
 
+def router_append_pd_enabled_subnet(router, count=1):
+    interfaces = router[l3_constants.INTERFACE_KEY]
+    current = sum(netaddr.IPNetwork(subnet['cidr']).version == 6
+                  for p in interfaces for subnet in p['subnets'])
+
+    mac_address = netaddr.EUI('ca:fe:de:ad:be:ef')
+    mac_address.dialect = netaddr.mac_unix
+    pd_intfs = []
+    for i in range(current, current + count):
+        subnet_id = _uuid()
+        intf = {'id': _uuid(),
+                'network_id': _uuid(),
+                'admin_state_up': True,
+                'fixed_ips': [{'ip_address': '::1',
+                               'prefixlen': 64,
+                               'subnet_id': subnet_id}],
+                'mac_address': str(mac_address),
+                'subnets': [{'id': subnet_id,
+                             'cidr': l3_constants.PROVISIONAL_IPV6_PD_PREFIX,
+                             'gateway_ip': '::1',
+                             'ipv6_ra_mode': l3_constants.IPV6_SLAAC,
+                             'subnetpool_id': l3_constants.IPV6_PD_POOL_ID}]}
+        interfaces.append(intf)
+        pd_intfs.append(intf)
+        mac_address.value += 1
+    return pd_intfs
+
+
 def prepare_ext_gw_test(context, ri, dual_stack=False):
     subnet_id = _uuid()
     fixed_ips = [{'subnet_id': subnet_id,

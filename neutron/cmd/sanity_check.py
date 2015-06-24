@@ -116,6 +116,15 @@ def check_keepalived_ipv6_support():
     return result
 
 
+def check_dibbler_version():
+    result = checks.dibbler_version_supported()
+    if not result:
+        LOG.error(_LE('The installed version of dibbler-client is too old. '
+                      'Please update to at least version %s.'),
+                  checks.get_minimal_dibbler_version_supported())
+    return result
+
+
 def check_nova_notify():
     result = checks.nova_notify_supported()
     if not result:
@@ -194,6 +203,8 @@ OPTS = [
                     help=_('Check ebtables installation')),
     BoolOptCallback('keepalived_ipv6_support', check_keepalived_ipv6_support,
                     help=_('Check keepalived IPv6 support')),
+    BoolOptCallback('dibbler_version', check_dibbler_version,
+                    help=_('Check minimal dibbler version')),
 ]
 
 

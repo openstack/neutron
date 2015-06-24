@@ -249,6 +249,85 @@ class TestABCDriver(TestBase):
                    namespace=ns)
         self.assertFalse(self.ip_dev().addr.add.called)
 
+    def test_add_ipv6_addr(self):
+        device_name = 'tap0'
+        cidr = '2001:db8::/64'
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc = BaseChild(self.conf)
+
+        bc.add_ipv6_addr(device_name, cidr, ns)
+
+        self.ip_dev.assert_has_calls(
+            [mock.call(device_name, namespace=ns),
+             mock.call().addr.add(cidr, 'global')])
+
+    def test_delete_ipv6_addr(self):
+        device_name = 'tap0'
+        cidr = '2001:db8::/64'
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc = BaseChild(self.conf)
+
+        bc.delete_ipv6_addr(device_name, cidr, ns)
+
+        self.ip_dev.assert_has_calls(
+            [mock.call(device_name, namespace=ns),
+             mock.call().delete_addr_and_conntrack_state(cidr)])
+
+    def test_delete_ipv6_addr_with_prefix(self):
+        device_name = 'tap0'
+        prefix = '2001:db8::/48'
+        in_cidr = '2001:db8::/64'
+        out_cidr = '2001:db7::/64'
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        in_addresses = [dict(scope='global',
+                        dynamic=False,
+                        cidr=in_cidr)]
+        out_addresses = [dict(scope='global',
+                         dynamic=False,
+                         cidr=out_cidr)]
+        # Initially set the address list to be empty
+        self.ip_dev().addr.list = mock.Mock(return_value=[])
+
+        bc = BaseChild(self.conf)
+
+        # Call delete_v6addr_with_prefix when the address list is empty
+        bc.delete_ipv6_addr_with_prefix(device_name, prefix, ns)
+        # Assert that delete isn't called
+        self.assertFalse(self.ip_dev().delete_addr_and_conntrack_state.called)
+
+        # Set the address list to contain only an address outside of the range
+        # of the given prefix
+        self.ip_dev().addr.list = mock.Mock(return_value=out_addresses)
+        bc.delete_ipv6_addr_with_prefix(device_name, prefix, ns)
+        # Assert that delete isn't called
+        self.assertFalse(self.ip_dev().delete_addr_and_conntrack_state.called)
+
+        # Set the address list to contain only an address inside of the range
+        # of the given prefix
+        self.ip_dev().addr.list = mock.Mock(return_value=in_addresses)
+        bc.delete_ipv6_addr_with_prefix(device_name, prefix, ns)
+        # Assert that delete is called
+        self.ip_dev.assert_has_calls(
+            [mock.call(device_name, namespace=ns),
+             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().delete_addr_and_conntrack_state(in_cidr)])
+
+    def test_get_ipv6_llas(self):
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        addresses = [dict(scope='link',
+                          dynamic=False,
+                          cidr='fe80:cafe::/64')]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        device_name = self.ip_dev().name
+        bc = BaseChild(self.conf)
+
+        llas = bc.get_ipv6_llas(device_name, ns)
+
+        self.assertEqual(addresses, llas)
+        self.ip_dev.assert_has_calls(
+            [mock.call(device_name, namespace=ns),
+             mock.call().addr.list(scope='link', ip_version=6)])
+
 
 class TestOVSInterfaceDriver(TestBase):
 

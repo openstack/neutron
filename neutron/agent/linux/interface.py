@@ -142,6 +142,35 @@ class LinuxInterfaceDriver(object):
             LOG.debug("deleting onlink route(%s)", route)
             device.route.delete_onlink_route(route)
 
+    def add_ipv6_addr(self, device_name, v6addr, namespace, scope='global'):
+        device = ip_lib.IPDevice(device_name,
+                                 namespace=namespace)
+        net = netaddr.IPNetwork(v6addr)
+        device.addr.add(str(net), scope)
+
+    def delete_ipv6_addr(self, device_name, v6addr, namespace):
+        device = ip_lib.IPDevice(device_name,
+                                 namespace=namespace)
+        device.delete_addr_and_conntrack_state(v6addr)
+
+    def delete_ipv6_addr_with_prefix(self, device_name, prefix, namespace):
+        """Delete the first listed IPv6 address that falls within a given
+        prefix.
+        """
+        device = ip_lib.IPDevice(device_name, namespace=namespace)
+        net = netaddr.IPNetwork(prefix)
+        for address in device.addr.list(scope='global', filters=['permanent']):
+            ip_address = netaddr.IPNetwork(address['cidr'])
+            if ip_address in net:
+                device.delete_addr_and_conntrack_state(address['cidr'])
+                break
+
+    def get_ipv6_llas(self, device_name, namespace):
+        device = ip_lib.IPDevice(device_name,
+                                 namespace=namespace)
+
+        return device.addr.list(scope='link', ip_version=6)
+
     def check_bridge_exists(self, bridge):
         if not ip_lib.device_exists(bridge):
             raise exceptions.BridgeDoesNotExist(bridge=bridge)

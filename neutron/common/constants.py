@@ -148,6 +148,9 @@ IPV6_PD_POOL_ID = 'prefix_delegation'
 # Special provisional prefix for IPv6 Prefix Delegation
 PROVISIONAL_IPV6_PD_PREFIX = '::/64'
 
+# Timeout in seconds for getting an IPv6 LLA
+LLA_TASK_TIMEOUT = 40
+
 # Linux interface max length
 DEVICE_NAME_MAX_LEN = 15
 
