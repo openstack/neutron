@@ -121,10 +121,12 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
     def try_to_bind(self, context, agent=None):
         for segment in context.segments_to_bind:
             if self.check_segment(segment, agent):
+                port_status = (constants.PORT_STATUS_ACTIVE if agent is None
+                    else constants.PORT_STATUS_DOWN)
                 context.set_binding(segment[api.ID],
                                     self.vif_type,
                                     self._get_vif_details(segment),
-                                    constants.PORT_STATUS_ACTIVE)
+                                    port_status)
                 LOG.debug("Bound using segment: %s", segment)
                 return True
         return False
