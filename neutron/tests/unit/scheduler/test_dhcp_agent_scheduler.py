@@ -88,6 +88,79 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
             self._test_schedule_bind_network(agents, self.network_id)
             self.assertEqual(1, fake_log.call_count)
 
+    def _test_get_agents_and_scheduler_for_dead_agent(self):
+        agents = self._create_and_set_agents_down(['dead_host', 'alive_host'],
+                                                  1)
+        dead_agent = [agents[0]]
+        alive_agent = [agents[1]]
+        self._test_schedule_bind_network(dead_agent, self.network_id)
+        scheduler = dhcp_agent_scheduler.ChanceScheduler()
+        return dead_agent, alive_agent, scheduler
+
+    def _test_reschedule_vs_network_on_dead_agent(self,
+                                                  active_hosts_only):
+        dead_agent, alive_agent, scheduler = (
+            self._test_get_agents_and_scheduler_for_dead_agent())
+        network = {'id': self.network_id}
+        plugin = mock.Mock()
+        plugin.get_subnets.return_value = [{"network_id": self.network_id,
+                                            "enable_dhcp": True}]
+        plugin.get_agents_db.return_value = dead_agent + alive_agent
+        if active_hosts_only:
+            plugin.get_dhcp_agents_hosting_networks.return_value = []
+            self.assertTrue(
+                scheduler.schedule(
+                    plugin, self.ctx, network))
+        else:
+            plugin.get_dhcp_agents_hosting_networks.return_value = dead_agent
+            self.assertFalse(
+                scheduler.schedule(
+                    plugin, self.ctx, network))
+
+    def test_network_rescheduled_when_db_returns_active_hosts(self):
+        self._test_reschedule_vs_network_on_dead_agent(True)
+
+    def test_network_not_rescheduled_when_db_returns_all_hosts(self):
+        self._test_reschedule_vs_network_on_dead_agent(False)
+
+    def _get_agent_binding_from_db(self, agent):
+        return self.ctx.session.query(
+            sched_db.NetworkDhcpAgentBinding
+        ).filter_by(dhcp_agent_id=agent[0].id).all()
+
+    def _test_auto_reschedule_vs_network_on_dead_agent(self,
+                                                       active_hosts_only):
+        dead_agent, alive_agent, scheduler = (
+            self._test_get_agents_and_scheduler_for_dead_agent())
+        plugin = mock.Mock()
+        plugin.get_subnets.return_value = [{"network_id": self.network_id,
+                                            "enable_dhcp": True}]
+        if active_hosts_only:
+            plugin.get_dhcp_agents_hosting_networks.return_value = []
+        else:
+            plugin.get_dhcp_agents_hosting_networks.return_value = dead_agent
+        network_assigned_to_dead_agent = (
+            self._get_agent_binding_from_db(dead_agent))
+        self.assertEqual(1, len(network_assigned_to_dead_agent))
+        self.assertTrue(
+            scheduler.auto_schedule_networks(
+                plugin, self.ctx, "alive_host"))
+        network_assigned_to_dead_agent = (
+            self._get_agent_binding_from_db(dead_agent))
+        network_assigned_to_alive_agent = (
+            self._get_agent_binding_from_db(alive_agent))
+        self.assertEqual(1, len(network_assigned_to_dead_agent))
+        if active_hosts_only:
+            self.assertEqual(1, len(network_assigned_to_alive_agent))
+        else:
+            self.assertEqual(0, len(network_assigned_to_alive_agent))
+
+    def test_network_auto_rescheduled_when_db_returns_active_hosts(self):
+        self._test_auto_reschedule_vs_network_on_dead_agent(True)
+
+    def test_network_not_auto_rescheduled_when_db_returns_all_hosts(self):
+        self._test_auto_reschedule_vs_network_on_dead_agent(False)
+
 
 class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
     """Unit test scenarios for ChanceScheduler.auto_schedule_networks.

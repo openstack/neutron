@@ -59,7 +59,7 @@ class AutoScheduler(object):
                     continue
                 for net_id in net_ids:
                     agents = plugin.get_dhcp_agents_hosting_networks(
-                        context, [net_id], active=True)
+                        context, [net_id])
                     if len(agents) >= agents_per_network:
                         continue
                     if any(dhcp_agent.id == agent.id for agent in agents):
@@ -131,7 +131,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         # subnets whose enable_dhcp is false
         with context.session.begin(subtransactions=True):
             network_hosted_agents = plugin.get_dhcp_agents_hosting_networks(
-                context, [network['id']], active=True)
+                context, [network['id']])
             if len(network_hosted_agents) >= agents_per_network:
                 LOG.debug('Network %s is already hosted by enough agents.',
                           network['id'])
