@@ -137,9 +137,6 @@ class Metering(extensions.ExtensionDescriptor):
 @six.add_metaclass(abc.ABCMeta)
 class MeteringPluginBase(service_base.ServicePluginBase):
 
-    def get_plugin_name(self):
-        return constants.METERING
-
     def get_plugin_description(self):
         return constants.METERING
 

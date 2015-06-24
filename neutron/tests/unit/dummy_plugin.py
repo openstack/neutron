@@ -24,7 +24,6 @@ from neutron.plugins.common import constants
 from neutron.services import service_base
 
 
-DUMMY_PLUGIN_NAME = "dummy_plugin"
 RESOURCE_NAME = "dummy"
 COLLECTION_NAME = "%ss" % RESOURCE_NAME
 
@@ -100,9 +99,6 @@ class DummyServicePlugin(service_base.ServicePluginBase):
 
     def get_plugin_type(self):
         return constants.DUMMY
-
-    def get_plugin_name(self):
-        return DUMMY_PLUGIN_NAME
 
     def get_plugin_description(self):
         return "Neutron Dummy Service Plugin"
