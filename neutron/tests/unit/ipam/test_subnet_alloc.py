@@ -146,37 +146,6 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
             self.assertEqual(detail.gateway_ip,
                              netaddr.IPAddress('10.1.2.254'))
 
-    def test_allocate_specific_ipv6_subnet_specific_gateway(self):
-        # Same scenario as described in bug #1466322
-        sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
-                                      ['2210::/64'],
-                                      64, 6)
-        sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
-        with self.ctx.session.begin(subtransactions=True):
-            sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-            req = ipam.SpecificSubnetRequest(self._tenant_id,
-                                             uuidutils.generate_uuid(),
-                                             '2210::/64',
-                                             '2210::ffff:ffff:ffff:ffff')
-            res = sa.allocate_subnet(req)
-            detail = res.get_details()
-            self.assertEqual(detail.gateway_ip,
-                             netaddr.IPAddress('2210::ffff:ffff:ffff:ffff'))
-
-    def test_allocate_specific_ipv4_subnet_specific_broadcast_gateway(self):
-        # Valid failure in subnet creation due to gateway==broadcast ip
-        sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
-                                      ['10.1.0.0/24'],
-                                      24, 4)
-        sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-        req = ipam.SpecificSubnetRequest(self._tenant_id,
-                                         uuidutils.generate_uuid(),
-                                         '10.1.0.0/24',
-                                         gateway_ip='10.1.0.255')
-        self.assertRaises(n_exc.SubnetAllocationError,
-                          sa.allocate_subnet,
-                          req)
-
     def test__allocation_value_for_tenant_no_allocations(self):
         sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
                                       ['10.1.0.0/16', '192.168.1.0/24'],
