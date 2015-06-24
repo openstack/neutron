@@ -160,7 +160,7 @@ class ResourceExtensionTest(base.BaseTestCase):
             # Shouldn't be reached
             self.assertTrue(False)
         except webtest.AppError as e:
-            self.assertIn('501', e.message)
+            self.assertIn('501', str(e))
 
     def test_resource_can_be_added_as_extension(self):
         res_ext = extensions.ResourceExtension(

@@ -179,7 +179,7 @@ def translate(translatable, locale):
     elif isinstance(translatable, webob.exc.HTTPError):
         translatable.detail = localize(translatable.detail, locale)
     elif isinstance(translatable, Exception):
-        translatable.message = localize(translatable.message, locale)
+        translatable.message = localize(translatable, locale)
     else:
         return localize(translatable, locale)
     return translatable

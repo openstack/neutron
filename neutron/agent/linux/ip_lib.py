@@ -482,7 +482,7 @@ class IpRouteCommand(IpDeviceCommandBase):
             self._as_root([ip_version], tuple(args))
         except RuntimeError as rte:
             with (excutils.save_and_reraise_exception()) as ctx:
-                if "Cannot find device" in rte.message:
+                if "Cannot find device" in str(rte):
                     ctx.reraise = False
                     raise exceptions.DeviceNotFoundError(
                         device_name=self.name)

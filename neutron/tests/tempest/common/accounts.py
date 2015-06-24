@@ -271,7 +271,7 @@ class NotLockingAccounts(Accounts):
                 return getattr(user, cred_arg) != getattr(alt_user, cred_arg)
             except exceptions.InvalidCredentials as ic:
                 msg = "At least one of the configured credentials is " \
-                      "not valid: %s" % ic.message
+                      "not valid: %s" % ic
                 raise exceptions.InvalidConfiguration(msg)
         else:
             # TODO(andreaf) Add a uniqueness check here
