@@ -1016,11 +1016,11 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             self.assertEqual(sub_ids.pop(),
                             dvr_port.get('fixed_ips').pop(0).get('subnet_id'))
 
-    def test_check_ports_active_on_host_and_subnet(self):
+    def _test_check_ports_on_host_and_subnet_base(self, port_status):
         dvr_port = {
-                'id': 'dvr_port1',
+                'id': 'fake_id',
                 'device_id': 'r1',
-                'status': 'ACTIVE',
+                'status': port_status,
                 'binding:host_id': 'thisHost',
                 'device_owner': 'compute:nova',
                 'fixed_ips': [
@@ -1046,16 +1046,25 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                            '.L3AgentNotifyAPI'):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
-            result = self.dut.check_ports_active_on_host_and_subnet(
+            result = self.dut.check_ports_on_host_and_subnet(
                                                     self.adminContext,
                                                     'thisHost', 'dvr_port1',
                                                     sub_ids)
-            self.assertFalse(result)
+            self.assertTrue(result)
+
+    def test_check_ports_on_host_and_subnet_with_active_port(self):
+        self._test_check_ports_on_host_and_subnet_base('ACTIVE')
+
+    def test_check_ports_on_host_and_subnet_with_build_port(self):
+        self._test_check_ports_on_host_and_subnet_base('BUILD')
+
+    def test_check_ports_on_host_and_subnet_with_down_port(self):
+        self._test_check_ports_on_host_and_subnet_base('DOWN')
 
     def _test_dvr_serviced_port_exists_on_subnet(self, port):
         with mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
                         'get_ports', return_value=[port]):
-            result = self.dut.check_ports_active_on_host_and_subnet(
+            result = self.dut.check_ports_on_host_and_subnet(
                                                     self.adminContext,
                                                     'thisHost',
                                                     'dvr1-intf-id',
