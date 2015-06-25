@@ -222,9 +222,6 @@ function _install_post_devstack {
     # NOTE: the package name 'python-openvswitch' is common across
     # supported distros.
     install_package python-openvswitch
-
-    # Configure ovs-vsctl to be reachable via the standard ovsdb port.
-    sudo ovs-vsctl set-manager ptcp:6640:127.0.0.1
 }
 
 
