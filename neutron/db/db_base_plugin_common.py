@@ -227,7 +227,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 attributes.NETWORKS, res, network)
         return self._fields(res, fields)
 
-    def _make_subnet_args(self, context, shared, detail,
+    def _make_subnet_args(self, shared, detail,
                           subnet, subnetpool_id=None):
         args = {'tenant_id': detail.tenant_id,
                 'id': detail.subnet_id,
