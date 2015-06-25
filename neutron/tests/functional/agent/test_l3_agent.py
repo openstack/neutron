@@ -192,7 +192,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         floating_ip_cidr = common_utils.ip_to_cidr(
             router.get_floating_ips()[0]['floating_ip_address'])
         default_gateway_ip = external_port['subnets'][0].get('gateway_ip')
-
+        extra_subnet_cidr = external_port['extra_subnets'][0].get('cidr')
         return """vrrp_instance VR_1 {
     state BACKUP
     interface %(ha_device_name)s
@@ -216,6 +216,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     virtual_routes {
         0.0.0.0/0 via %(default_gateway_ip)s dev %(external_device_name)s
         8.8.8.0/24 via 19.4.4.4
+        %(extra_subnet_cidr)s dev %(external_device_name)s scope link
     }
 }""" % {
             'ha_device_name': ha_device_name,
@@ -226,7 +227,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             'floating_ip_cidr': floating_ip_cidr,
             'default_gateway_ip': default_gateway_ip,
             'int_port_ipv6': int_port_ipv6,
-            'ex_port_ipv6': ex_port_ipv6
+            'ex_port_ipv6': ex_port_ipv6,
+            'extra_subnet_cidr': extra_subnet_cidr,
         }
 
     def _get_rule(self, iptables_manager, table, chain, predicate):
@@ -272,12 +274,23 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 device, router.get_internal_device_name, router.ns_name))
 
     def _assert_extra_routes(self, router):
-        routes = ip_lib.get_routing_table(namespace=router.ns_name)
+        routes = ip_lib.get_routing_table(4, namespace=router.ns_name)
         routes = [{'nexthop': route['nexthop'],
                    'destination': route['destination']} for route in routes]
 
         for extra_route in router.router['routes']:
             self.assertIn(extra_route, routes)
+
+    def _assert_onlink_subnet_routes(self, router, ip_versions):
+        routes = []
+        for ip_version in ip_versions:
+            _routes = ip_lib.get_routing_table(ip_version,
+                                               namespace=router.ns_name)
+            routes.extend(_routes)
+        routes = set(route['destination'] for route in routes)
+        extra_subnets = router.get_ex_gw_port()['extra_subnets']
+        for extra_subnet in (route['cidr'] for route in extra_subnets):
+            self.assertIn(extra_subnet, routes)
 
     def _assert_interfaces_deleted_from_ovs(self):
         def assert_ovs_bridge_empty(bridge_name):
@@ -635,6 +648,8 @@ class L3AgentTestCase(L3AgentTestFramework):
             self._assert_snat_chains(router)
             self._assert_floating_ip_chains(router)
             self._assert_extra_routes(router)
+            ip_versions = [4, 6] if (ip_version == 6 or dual_stack) else [4]
+            self._assert_onlink_subnet_routes(router, ip_versions)
         self._assert_metadata_chains(router)
 
         # Verify router gateway interface is configured to receive Router Advts

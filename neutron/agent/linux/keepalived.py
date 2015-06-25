@@ -95,15 +95,21 @@ class KeepalivedVipAddress(object):
 class KeepalivedVirtualRoute(object):
     """A virtual route entry of a keepalived configuration."""
 
-    def __init__(self, destination, nexthop, interface_name=None):
+    def __init__(self, destination, nexthop, interface_name=None,
+                 scope=None):
         self.destination = destination
         self.nexthop = nexthop
         self.interface_name = interface_name
+        self.scope = scope
 
     def build_config(self):
-        output = '%s via %s' % (self.destination, self.nexthop)
+        output = self.destination
+        if self.nexthop:
+            output += ' via %s' % self.nexthop
         if self.interface_name:
             output += ' dev %s' % self.interface_name
+        if self.scope:
+            output += ' scope %s' % self.scope
         return output
 
 
@@ -111,6 +117,7 @@ class KeepalivedInstanceRoutes(object):
     def __init__(self):
         self.gateway_routes = []
         self.extra_routes = []
+        self.extra_subnets = []
 
     def remove_routes_on_interface(self, interface_name):
         self.gateway_routes = [gw_rt for gw_rt in self.gateway_routes
@@ -118,10 +125,12 @@ class KeepalivedInstanceRoutes(object):
         # NOTE(amuller): extra_routes are initialized from the router's
         # 'routes' attribute. These routes do not have an interface
         # parameter and so cannot be removed via an interface_name lookup.
+        self.extra_subnets = [route for route in self.extra_subnets if
+                              route.interface_name != interface_name]
 
     @property
     def routes(self):
-        return self.gateway_routes + self.extra_routes
+        return self.gateway_routes + self.extra_routes + self.extra_subnets
 
     def __len__(self):
         return len(self.routes)

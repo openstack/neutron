@@ -141,11 +141,13 @@ class IpLibTestCase(IpLibTestFramework):
 
         expected_routes = [{'nexthop': device_ip,
                             'device': attr.name,
-                            'destination': destination},
+                            'destination': destination,
+                            'scope': None},
                            {'nexthop': None,
                             'device': attr.name,
                             'destination': str(
-                                netaddr.IPNetwork(attr.ip_cidrs[0]).cidr)}]
+                                netaddr.IPNetwork(attr.ip_cidrs[0]).cidr),
+                            'scope': 'link'}]
 
-        routes = ip_lib.get_routing_table(namespace=attr.namespace)
+        routes = ip_lib.get_routing_table(4, namespace=attr.namespace)
         self.assertEqual(expected_routes, routes)

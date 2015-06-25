@@ -739,16 +739,22 @@ def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
         return True
 
 
-def get_routing_table(namespace=None):
+def get_routing_table(ip_version, namespace=None):
     """Return a list of dictionaries, each representing a route.
 
+    @param ip_version: the routes of version to return, for example 4
+    @param namespace
+    @return: a list of dictionaries, each representing a route.
     The dictionary format is: {'destination': cidr,
                                'nexthop': ip,
-                               'device': device_name}
+                               'device': device_name,
+                               'scope': scope}
     """
 
     ip_wrapper = IPWrapper(namespace=namespace)
-    table = ip_wrapper.netns.execute(['ip', 'route'], check_exit_code=True)
+    table = ip_wrapper.netns.execute(
+        ['ip', '-%s' % ip_version, 'route'],
+        check_exit_code=True)
 
     routes = []
     # Example for route_lines:
@@ -765,7 +771,8 @@ def get_routing_table(namespace=None):
         data = dict(route[i:i + 2] for i in range(1, len(route), 2))
         routes.append({'destination': network,
                        'nexthop': data.get('via'),
-                       'device': data.get('dev')})
+                       'device': data.get('dev'),
+                       'scope': data.get('scope')})
     return routes
 
 
