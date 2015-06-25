@@ -59,7 +59,6 @@ class ContextBase(oslo_context.RequestContext):
         if not timestamp:
             timestamp = datetime.datetime.utcnow()
         self.timestamp = timestamp
-        self._session = None
         self.roles = roles or []
         self.is_advsvc = self.is_admin or policy.check_is_advsvc(self)
         if self.is_admin is None:
@@ -116,6 +115,10 @@ class ContextBase(oslo_context.RequestContext):
 
 
 class Context(ContextBase):
+    def __init__(self, *args, **kwargs):
+        super(Context, self).__init__(*args, **kwargs)
+        self._session = None
+
     @property
     def session(self):
         if self._session is None:
