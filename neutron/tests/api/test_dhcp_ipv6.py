@@ -340,13 +340,13 @@ class NetworksTestDHCPv6(base.BaseNetworkTest):
         subnet = self.create_subnet(self.network, **kwargs)
         ip_range = netaddr.IPRange(subnet["allocation_pools"][0]["start"],
                                    subnet["allocation_pools"][0]["end"])
-        ip = netaddr.IPAddress(random.randrange(
-            ip_range.last + 1, ip_range.last + 10)).format()
-        self.assertRaises(lib_exc.BadRequest,
-                          self.create_port,
-                          self.network,
-                          fixed_ips=[{'subnet_id': subnet['id'],
-                                      'ip_address': ip}])
+        for i in range(1, 3):
+            ip = netaddr.IPAddress(ip_range.last + i).format()
+            self.assertRaises(lib_exc.BadRequest,
+                              self.create_port,
+                              self.network,
+                              fixed_ips=[{'subnet_id': subnet['id'],
+                                          'ip_address': ip}])
 
     @test.idempotent_id('57b8302b-cba9-4fbb-8835-9168df029051')
     def test_dhcp_stateful_fixedips_duplicate(self):
