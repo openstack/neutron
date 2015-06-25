@@ -123,7 +123,9 @@ class TestOvsNeutronAgent(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
-                mock.patch('neutron.openstack.common.loopingcall.' 'FixedIntervalLoopingCall', new=MockFixedIntervalLoopingCall),\
+                mock.patch('neutron.openstack.common.loopingcall.'
+                           'FixedIntervalLoopingCall',
+                           new=MockFixedIntervalLoopingCall),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
@@ -1187,7 +1189,9 @@ class AncillaryBridgesTest(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
                            return_value=bridges),\
-                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.' 'get_bridge_external_bridge_id', side_effect=pullup_side_effect),\
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.'
+                           'get_bridge_external_bridge_id',
+                           side_effect=pullup_side_effect),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
@@ -1300,7 +1304,9 @@ class TestOvsDvrNeutronAgent(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
-                mock.patch('neutron.openstack.common.loopingcall.' 'FixedIntervalLoopingCall', new=MockFixedIntervalLoopingCall),\
+                mock.patch('neutron.openstack.common.loopingcall.'
+                           'FixedIntervalLoopingCall',
+                           new=MockFixedIntervalLoopingCall),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
