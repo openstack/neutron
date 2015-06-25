@@ -31,7 +31,6 @@ from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
-from neutron.common import utils
 from neutron import context as ctx
 from neutron.db import api as db_api
 from neutron.db import ipam_non_pluggable_backend
@@ -440,32 +439,11 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                     external_gateway_info}}
                 l3plugin.update_router(context, id, info)
 
-    def _make_subnet_request(self, tenant_id, subnet, subnetpool):
-        cidr = subnet.get('cidr')
-        subnet_id = subnet.get('id', uuidutils.generate_uuid())
-        is_any_subnetpool_request = not attributes.is_attr_set(cidr)
-
-        if is_any_subnetpool_request:
-            prefixlen = subnet['prefixlen']
-            if not attributes.is_attr_set(prefixlen):
-                prefixlen = int(subnetpool['default_prefixlen'])
-
-            return ipam.AnySubnetRequest(
-                          tenant_id,
-                          subnet_id,
-                          utils.ip_version_from_int(subnetpool['ip_version']),
-                          prefixlen)
-        else:
-            return ipam.SpecificSubnetRequest(tenant_id,
-                                              subnet_id,
-                                              cidr)
-
     @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
                                retry_on_request=True,
                                retry_on_deadlock=True)
     def _create_subnet_from_pool(self, context, subnet, subnetpool_id):
         s = subnet['subnet']
-        tenant_id = self._get_tenant_id_for_create(context, s)
         self._validate_pools_with_subnetpool(s)
 
         with context.session.begin(subtransactions=True):
@@ -474,7 +452,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
 
             network = self._get_network(context, s["network_id"])
             allocator = subnet_alloc.SubnetAllocator(subnetpool, context)
-            req = self._make_subnet_request(tenant_id, s, subnetpool)
+            req = ipam.SubnetRequestFactory.get_request(context, s, subnetpool)
 
             ipam_subnet = allocator.allocate_subnet(req)
             detail = ipam_subnet.get_details()
@@ -498,9 +476,8 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
     def _create_subnet_from_implicit_pool(self, context, subnet):
         s = subnet['subnet']
         self._validate_subnet(context, s)
-        tenant_id = self._get_tenant_id_for_create(context, s)
         id = s.get('id', uuidutils.generate_uuid())
-        detail = ipam.SpecificSubnetRequest(tenant_id,
+        detail = ipam.SpecificSubnetRequest(s['tenant_id'],
                                             id,
                                             s['cidr'])
         with context.session.begin(subtransactions=True):
@@ -571,6 +548,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
             net = netaddr.IPNetwork(s['cidr'])
             subnet['subnet']['cidr'] = '%s/%s' % (net.network, net.prefixlen)
 
+        s['tenant_id'] = self._get_tenant_id_for_create(context, s)
         subnetpool_id = self._get_subnetpool_id(s)
         if not subnetpool_id:
             if not has_cidr:
