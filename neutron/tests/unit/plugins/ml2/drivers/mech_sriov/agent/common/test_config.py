@@ -17,8 +17,9 @@
 from oslo_config import cfg
 
 from neutron.common import utils as q_utils
-from neutron.plugins.sriovnicagent.common import config
-from neutron.plugins.sriovnicagent import sriov_nic_agent as agent
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
+from neutron.plugins.ml2.drivers.mech_sriov.agent \
+    import sriov_nic_agent as agent
 from neutron.tests import base
 
 

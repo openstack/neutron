@@ -19,7 +19,8 @@ from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
 from neutron.i18n import _LE, _LW
-from neutron.plugins.sriovnicagent.common import exceptions as exc
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
+    import exceptions as exc
 
 LOG = logging.getLogger(__name__)
 

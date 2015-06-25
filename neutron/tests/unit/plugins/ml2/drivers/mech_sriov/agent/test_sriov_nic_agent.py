@@ -17,8 +17,8 @@
 import mock
 from oslo_config import cfg
 
-from neutron.plugins.sriovnicagent.common import config  # noqa
-from neutron.plugins.sriovnicagent import sriov_nic_agent
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
+from neutron.plugins.ml2.drivers.mech_sriov.agent import sriov_nic_agent
 from neutron.tests import base
 
 DEVICE_MAC = '11:22:33:44:55:66'

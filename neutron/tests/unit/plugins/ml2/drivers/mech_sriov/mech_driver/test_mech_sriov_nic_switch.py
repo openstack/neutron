@@ -22,8 +22,9 @@ from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.ml2.drivers.mech_sriov import exceptions as exc
-from neutron.plugins.ml2.drivers.mech_sriov import mech_driver
+from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
+    import exceptions as exc
+from neutron.plugins.ml2.drivers.mech_sriov.mech_driver import mech_driver
 from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
 MELLANOX_CONNECTX3_PCI_INFO = '15b3:1004'
@@ -165,7 +166,7 @@ class SriovSwitchMechProfileTestCase(SriovNicSwitchMechanismBaseTestCase):
 
     def test_profile_unsupported_pci_info(self):
         with mock.patch('neutron.plugins.ml2.drivers.mech_sriov.'
-                        'mech_driver.LOG') as log_mock:
+                        'mech_driver.mech_driver.LOG') as log_mock:
             self._check_vif_for_pci_info('xxxx:yyyy', None)
             log_mock.debug.assert_called_with('Refusing to bind due to '
                                               'unsupported pci_vendor device')
@@ -182,14 +183,14 @@ class SriovSwitchMechProfileFailTestCase(SriovNicSwitchMechanismBaseTestCase):
 
     def test_profile_missing_profile(self):
         with mock.patch('neutron.plugins.ml2.drivers.mech_sriov.'
-                        'mech_driver.LOG') as log_mock:
+                        'mech_driver.mech_driver.LOG') as log_mock:
             self._check_for_pci_vendor_info({})
             log_mock.debug.assert_called_with("Missing profile in port"
                                               " binding")
 
     def test_profile_missing_pci_vendor_info(self):
         with mock.patch('neutron.plugins.ml2.drivers.mech_sriov.'
-                        'mech_driver.LOG') as log_mock:
+                        'mech_driver.mech_driver.LOG') as log_mock:
             self._check_for_pci_vendor_info({'aa': 'bb'})
             log_mock.debug.assert_called_with("Missing pci vendor"
                                               " info in profile")
