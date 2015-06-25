@@ -55,7 +55,7 @@ def device_id_to_vm_id(device_id, obfuscate=False):
     if len(device_id) > MAX_DISPLAY_NAME_LEN or obfuscate:
         return hashlib.sha1(device_id).hexdigest()
     else:
-        return device_id
+        return device_id or "N/A"
 
 
 def check_and_truncate(display_name):
