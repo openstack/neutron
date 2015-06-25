@@ -22,6 +22,7 @@ import webob
 
 import fixtures
 from oslo_db import exception as db_exc
+from oslo_utils import uuidutils
 from sqlalchemy.orm import exc as sqla_exc
 
 from neutron.callbacks import registry
@@ -38,7 +39,6 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config

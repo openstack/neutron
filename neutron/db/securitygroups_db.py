@@ -15,6 +15,7 @@
 import netaddr
 from oslo_db import exception
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -31,7 +32,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import securitygroup as ext_sg
-from neutron.openstack.common import uuidutils
+
 
 LOG = logging.getLogger(__name__)
 

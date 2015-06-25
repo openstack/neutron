@@ -17,6 +17,7 @@ import abc
 import netaddr
 
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import six
 
 from neutron.api import extensions
@@ -25,7 +26,6 @@ from neutron.api.v2 import base
 from neutron.common import constants as const
 from neutron.common import exceptions as nexception
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron import quota
 
 

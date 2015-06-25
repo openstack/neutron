@@ -17,6 +17,7 @@
 
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import uuidutils
 
 from networking_cisco.plugins.ml2.drivers.cisco.n1kv import (
     constants)
@@ -28,7 +29,6 @@ from networking_cisco.plugins.ml2.drivers.cisco.n1kv import (
 from neutron.api import extensions as api_extensions
 from neutron.api.v2 import attributes
 from neutron.i18n import _LE
-from neutron.openstack.common import uuidutils
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.cisco.n1kv import extensions

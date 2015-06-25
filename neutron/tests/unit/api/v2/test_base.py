@@ -18,6 +18,7 @@ import os
 import mock
 from oslo_config import cfg
 from oslo_policy import policy as oslo_policy
+from oslo_utils import uuidutils
 import six
 from six import moves
 import six.moves.urllib.parse as urlparse
@@ -34,7 +35,6 @@ from neutron.api.v2 import router
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron import policy
 from neutron import quota
 from neutron.tests import base

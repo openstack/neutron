@@ -22,6 +22,7 @@ import mock
 import netaddr
 from oslo_log import log
 import oslo_messaging
+from oslo_utils import uuidutils
 from testtools import matchers
 
 from neutron.agent.common import config as agent_config
@@ -46,7 +47,6 @@ from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.i18n import _LE
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
 from neutron.tests.common import l3_test_common

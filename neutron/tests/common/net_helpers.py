@@ -17,13 +17,13 @@ import abc
 
 import fixtures
 import netaddr
+from oslo_utils import uuidutils
 import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
-from neutron.openstack.common import uuidutils
 from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests import tools

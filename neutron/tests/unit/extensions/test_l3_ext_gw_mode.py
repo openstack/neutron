@@ -16,6 +16,7 @@
 
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import testscenarios
 from webob import exc
 
@@ -27,7 +28,6 @@ from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3

@@ -32,11 +32,11 @@ revision = '2b801560a332'
 down_revision = '2d2a8a565438'
 
 from alembic import op
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy.sql import expression as sa_expr
 
 from neutron.extensions import portbindings
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 
 FLAT_VLAN_ID = -1

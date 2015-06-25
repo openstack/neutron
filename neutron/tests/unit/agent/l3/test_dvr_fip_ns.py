@@ -13,11 +13,11 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.linux import ip_lib
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid

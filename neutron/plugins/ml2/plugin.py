@@ -22,6 +22,7 @@ from oslo_log import log
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 
@@ -64,7 +65,6 @@ from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa

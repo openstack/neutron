@@ -14,10 +14,10 @@
 
 import copy
 import netaddr
+from oslo_utils import uuidutils
 from six import moves
 
 from neutron.common import constants as l3_constants
-from neutron.openstack.common import uuidutils
 
 _uuid = uuidutils.generate_uuid
 

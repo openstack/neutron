@@ -24,6 +24,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 import six
 
 from neutron.agent.linux import external_process
@@ -36,7 +37,6 @@ from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 

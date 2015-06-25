@@ -15,6 +15,7 @@
 
 import netaddr
 from oslo_log import log
+from oslo_utils import uuidutils
 
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -27,7 +28,6 @@ from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import subnet_alloc
 from neutron.ipam import utils as ipam_utils
 from neutron import manager
-from neutron.openstack.common import uuidutils
 
 
 LOG = log.getLogger(__name__)

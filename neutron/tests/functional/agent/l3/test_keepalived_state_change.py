@@ -16,9 +16,9 @@ import os
 
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.agent.l3 import keepalived_state_change
-from neutron.openstack.common import uuidutils
 from neutron.tests.functional import base
 
 

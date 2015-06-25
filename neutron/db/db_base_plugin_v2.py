@@ -19,6 +19,7 @@ from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
+from oslo_utils import uuidutils
 from sqlalchemy import and_
 from sqlalchemy import event
 
@@ -42,7 +43,6 @@ from neutron import ipam
 from neutron.ipam import subnet_alloc
 from neutron import manager
 from neutron import neutron_plugin_base_v2
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 
 
