@@ -370,7 +370,9 @@ class BaseTestCase(DietTestCase):
             CONF.set_override(k, v, group)
 
     def setup_coreplugin(self, core_plugin=None):
-        self.useFixture(PluginFixture(core_plugin))
+        cp = PluginFixture(core_plugin)
+        self.useFixture(cp)
+        self.patched_dhcp_periodic = cp.patched_dhcp_periodic
 
     def setup_notification_driver(self, notification_driver=None):
         self.addCleanup(fake_notifier.reset)
