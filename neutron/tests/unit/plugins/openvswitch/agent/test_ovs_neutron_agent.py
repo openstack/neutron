@@ -508,19 +508,6 @@ class TestOvsNeutronAgent(object):
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
 
-    def test_network_delete(self):
-        with mock.patch.object(self.agent, "reclaim_local_vlan") as recl_fn,\
-                mock.patch.object(self.agent.tun_br,
-                                  "cleanup_tunnel_port") as clean_tun_fn:
-            self.agent.network_delete("unused_context",
-                                      network_id="123")
-            self.assertFalse(recl_fn.called)
-            self.agent.local_vlan_map["123"] = "LVM object"
-            self.agent.network_delete("unused_context",
-                                      network_id="123")
-            self.assertFalse(clean_tun_fn.called)
-            recl_fn.assert_called_with("123")
-
     def test_port_update(self):
         port = {"id": "123",
                 "network_id": "124",
