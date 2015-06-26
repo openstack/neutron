@@ -14,10 +14,13 @@ import abc
 import netaddr
 
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import six
 
+from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import ipv6_utils
+from neutron.common import utils as common_utils
 from neutron.ipam import exceptions as ipam_exc
 
 
@@ -243,28 +246,42 @@ class RouterGatewayAddressRequest(AddressRequest):
     """Used to request allocating the special router gateway address."""
 
 
-class BaseRequestFactory(object):
-    """Factory class to create right request based on input"""
-    any_request = None
-    specific_request = None
-    address_index = 0
+class AddressRequestFactory(object):
+    """Builds request using ip info
+
+    Additional parameters(port and context) are not used in default
+    implementation, but planned to be used in sub-classes
+    provided by specific ipam driver,
+    """
 
     @classmethod
-    def get_request(cls, *args, **kwargs):
-        args_list = [a for a in args]
-        address = args_list.pop(cls.address_index)
-        if not address:
-            return cls.any_request(*args_list, **kwargs)
+    def get_request(cls, context, port, ip):
+        if not ip:
+            return AnyAddressRequest()
         else:
-            return cls.specific_request(*args, **kwargs)
+            return SpecificAddressRequest(ip)
 
 
-class AddressRequestFactory(BaseRequestFactory):
-    any_request = AnyAddressRequest
-    specific_request = SpecificAddressRequest
+class SubnetRequestFactory(object):
+    """Builds request using subnet info"""
 
+    @classmethod
+    def get_request(cls, context, subnet, subnetpool):
+        cidr = subnet.get('cidr')
+        subnet_id = subnet.get('id', uuidutils.generate_uuid())
+        is_any_subnetpool_request = not attributes.is_attr_set(cidr)
 
-class SubnetRequestFactory(BaseRequestFactory):
-    any_request = AnySubnetRequest
-    specific_request = SpecificSubnetRequest
-    address_index = 2
+        if is_any_subnetpool_request:
+            prefixlen = subnet['prefixlen']
+            if not attributes.is_attr_set(prefixlen):
+                prefixlen = int(subnetpool['default_prefixlen'])
+
+            return AnySubnetRequest(
+                subnet['tenant_id'],
+                subnet_id,
+                common_utils.ip_version_from_int(subnetpool['ip_version']),
+                prefixlen)
+        else:
+            return SpecificSubnetRequest(subnet['tenant_id'],
+                                         subnet_id,
+                                         cidr)
