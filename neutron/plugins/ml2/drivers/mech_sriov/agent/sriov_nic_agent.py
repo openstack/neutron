@@ -34,9 +34,10 @@ from neutron.common import utils as q_utils
 from neutron import context
 from neutron.i18n import _LE, _LI
 from neutron.openstack.common import loopingcall
-from neutron.plugins.sriovnicagent.common import config  # noqa
-from neutron.plugins.sriovnicagent.common import exceptions as exc
-from neutron.plugins.sriovnicagent import eswitch_manager as esm
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
+    import exceptions as exc
+from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
 
 
 LOG = logging.getLogger(__name__)

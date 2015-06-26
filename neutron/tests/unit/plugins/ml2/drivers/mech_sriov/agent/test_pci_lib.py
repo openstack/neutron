@@ -16,8 +16,9 @@
 
 import mock
 
-from neutron.plugins.sriovnicagent.common import exceptions as exc
-from neutron.plugins.sriovnicagent import pci_lib
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
+    import exceptions as exc
+from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib
 from neutron.tests import base
 
 
