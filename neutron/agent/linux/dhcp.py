@@ -911,7 +911,7 @@ class DeviceManager(object):
         device = ip_lib.IPDevice(device_name, namespace=network.namespace)
         gateway = device.route.get_gateway()
         if gateway:
-            gateway = gateway['gateway']
+            gateway = gateway.get('gateway')
 
         for subnet in network.subnets:
             skip_subnet = (

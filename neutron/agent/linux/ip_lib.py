@@ -19,6 +19,7 @@ import os
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+import re
 
 from neutron.agent.common import utils
 from neutron.common import exceptions
@@ -36,6 +37,8 @@ OPTS = [
 LOOPBACK_DEVNAME = 'lo'
 
 SYS_NET_PATH = '/sys/class/net'
+DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
+METRIC_PATTERN = re.compile(r"metric (\S+)")
 
 
 class AddressNotReady(exceptions.NeutronException):
@@ -531,12 +534,13 @@ class IpRouteCommand(IpDeviceCommandBase):
                                    route_list_lines if
                                    x.strip().startswith('default')), None)
         if default_route_line:
-            gateway_index = 2
-            parts = default_route_line.split()
-            retval = dict(gateway=parts[gateway_index])
-            if 'metric' in parts:
-                metric_index = parts.index('metric') + 1
-                retval.update(metric=int(parts[metric_index]))
+            retval = dict()
+            gateway = DEFAULT_GW_PATTERN.search(default_route_line)
+            if gateway:
+                retval.update(gateway=gateway.group(1))
+            metric = METRIC_PATTERN.search(default_route_line)
+            if metric:
+                retval.update(metric=int(metric.group(1)))
 
         return retval
 
