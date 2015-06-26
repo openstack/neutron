@@ -400,8 +400,10 @@ class OVSDVRNeutronAgent(object):
         LOG.debug("DVR: List of ports received from "
                   "get_ports_on_host_by_subnet %s",
                   local_compute_ports)
+        vif_by_id = self.int_br.get_vifs_by_ids(
+            [prt['id'] for prt in local_compute_ports])
         for prt in local_compute_ports:
-            vif = self.int_br.get_vif_port_by_id(prt['id'])
+            vif = vif_by_id.get(prt['id'])
             if not vif:
                 continue
             ldm.add_compute_ofport(vif.vif_id, vif.ofport)
