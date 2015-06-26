@@ -18,7 +18,7 @@ changes to the infrastructure documentation using this url[2] (and please
 review the patches) and check this doc on a regular basis for updates.
 
 [1] http://ci.openstack.org/third_party.html
-[2] https://review.openstack.org/#/q/status:open+project:openstack-infra/config+branch:master+topic:third-party,n,z
+[2] https://review.openstack.org/#/q/status:open+project:openstack-infra/system-config+branch:master+topic:third-party,n,z
 
 What Changes to Run Against
 ---------------------------
