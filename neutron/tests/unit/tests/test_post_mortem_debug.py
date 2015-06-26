@@ -48,7 +48,8 @@ class TestTesttoolsExceptionHandler(base.BaseTestCase):
             mod_mock.post_mortem = mock.Mock()
             return mod_mock
 
-        with mock.patch('__builtin__.__import__', side_effect=import_mock):
+        with mock.patch('six.moves.builtins.__import__',
+                        side_effect=import_mock):
                 pdb_debugger = post_mortem_debug._get_debugger('pdb')
                 pudb_debugger = post_mortem_debug._get_debugger('pudb')
                 self.assertEqual('pdb', pdb_debugger.__name__)

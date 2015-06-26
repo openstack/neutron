@@ -65,7 +65,7 @@ class TestIsEnabled(base.BaseTestCase):
         self.addCleanup(reset_detection_flag)
         self.mock_exists = mock.patch("os.path.exists",
                                       return_value=True).start()
-        mock_open = mock.patch("__builtin__.open").start()
+        mock_open = mock.patch("six.moves.builtins.open").start()
         self.mock_read = mock_open.return_value.__enter__.return_value.read
 
     def test_enabled(self):

@@ -1292,7 +1292,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             with self.security_group() as sg:
                 rule1 = self._build_security_group_rule(
@@ -1363,7 +1363,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
 
             with self.security_group() as sg:
@@ -1400,7 +1400,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             with self.security_group() as sg:
                 rule = self._build_security_group_rule(
