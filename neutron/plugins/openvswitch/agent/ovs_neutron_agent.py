@@ -1687,7 +1687,7 @@ def main(bridge_classes):
     prepare_xen_compute()
     try:
         agent = OVSNeutronAgent(bridge_classes, **agent_config)
-    except RuntimeError as e:
+    except (RuntimeError, ValueError) as e:
         LOG.error(_LE("%s Agent terminated!"), e)
         sys.exit(1)
     agent.daemon_loop()
