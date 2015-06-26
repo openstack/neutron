@@ -773,6 +773,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         addresses = {ip for ip in addresses
                      if netaddr.IPNetwork(ip).version == 4}
+        if any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in addresses):
+            # don't try to install protection because a /0 prefix allows any
+            # address anyway and the ARP_SPA can only match on /1 or more.
+            return
 
         bridge.install_arp_spoofing_protection(port=vif.ofport,
                                                ip_addresses=addresses)
