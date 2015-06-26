@@ -710,16 +710,10 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 p1['status'] = 'ACTIVE'
                 self.mock_fanout.reset_mock()
 
-                fanout = ('neutron.plugins.ml2.drivers.l2pop.rpc.'
-                          'L2populationAgentNotifyAPI._notification_fanout')
-                fanout_patch = mock.patch(fanout)
-                mock_fanout = fanout_patch.start()
-
                 plugin = manager.NeutronManager.get_plugin()
                 plugin.update_port(self.adminContext, p1['id'], port1)
 
-                self.assertFalse(mock_fanout.called)
-                fanout_patch.stop()
+                self.assertFalse(self.mock_fanout.called)
 
     def test_get_device_details_port_id(self):
         self._register_ml2_agents()
