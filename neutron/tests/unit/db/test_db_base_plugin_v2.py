@@ -22,7 +22,6 @@ import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import importutils
-import six
 from sqlalchemy import orm
 from testtools import matchers
 import webob.exc
@@ -37,7 +36,6 @@ from neutron.callbacks import registry
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
-from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
@@ -106,11 +104,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
         # Update the plugin
         self.setup_coreplugin(plugin)
-        cfg.CONF.set_override(
-            'service_plugins',
-            [test_lib.test_config.get(key, default)
-             for key, default in six.iteritems(service_plugins or {})]
-        )
+        service_plugins = (service_plugins or {}).values()
+        cfg.CONF.set_override('service_plugins', list(service_plugins))
 
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
         cfg.CONF.set_override('max_dns_nameservers', 2)
@@ -161,14 +156,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._skip_native_sortin = None
         self.ext_api = None
         super(NeutronDbPluginV2TestCase, self).tearDown()
-
-    def setup_config(self):
-        # Create the default configurations
-        args = ['--config-file', base.etcdir('neutron.conf')]
-        # If test_config specifies some config-file, use it, as well
-        for config_file in test_lib.test_config.get('config_files', []):
-            args.extend(['--config-file', config_file])
-        super(NeutronDbPluginV2TestCase, self).setup_config(args=args)
 
     def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
              action=None, subresource=None, sub_id=None, context=None):
