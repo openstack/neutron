@@ -21,10 +21,10 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import api as db_api
 from neutron.i18n import _LE
-from neutron import ipam
 from neutron.ipam import driver as ipam_base
 from neutron.ipam.drivers.neutrondb_ipam import db_api as ipam_db_api
 from neutron.ipam import exceptions as ipam_exc
+from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
 from neutron.ipam import utils as ipam_utils
 from neutron import manager
@@ -319,7 +319,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         # NOTE(salv-orlando): It would probably better to have a simpler
         # model for address requests and just check whether there is a
         # specific IP address specified in address_request
-        if isinstance(address_request, ipam.SpecificAddressRequest):
+        if isinstance(address_request, ipam_req.SpecificAddressRequest):
             # This handles both specific and automatic address requests
             # Check availability of requested IP
             ip_address = str(address_request.address)
@@ -359,7 +359,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
     def get_details(self):
         """Return subnet data as a SpecificSubnetRequest"""
-        return ipam.SpecificSubnetRequest(
+        return ipam_req.SpecificSubnetRequest(
             self._tenant_id, self.subnet_manager.neutron_id,
             self._cidr, self._gateway_ip, self._pools)
 
@@ -404,7 +404,7 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
             subnet_request = subnet.get_details()
 
         # SubnetRequest must be an instance of SpecificSubnet
-        if not isinstance(subnet_request, ipam.SpecificSubnetRequest):
+        if not isinstance(subnet_request, ipam_req.SpecificSubnetRequest):
             raise ipam_exc.InvalidSubnetRequestType(
                 subnet_type=type(subnet_request))
         return NeutronDbSubnet.create_from_subnet_request(subnet_request,

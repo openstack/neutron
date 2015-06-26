@@ -16,7 +16,7 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
-from neutron import ipam
+from neutron.ipam import requests as ipam_req
 from neutron import manager
 
 LOG = log.getLogger(__name__)
@@ -101,14 +101,14 @@ class Pool(object):
 
         Can be overridden on driver level to return custom factory
         """
-        return ipam.SubnetRequestFactory
+        return ipam_req.SubnetRequestFactory
 
     def get_address_request_factory(self):
         """Returns default AddressRequestFactory
 
         Can be overridden on driver level to return custom factory
         """
-        return ipam.AddressRequestFactory
+        return ipam_req.AddressRequestFactory
 
 
 @six.add_metaclass(abc.ABCMeta)

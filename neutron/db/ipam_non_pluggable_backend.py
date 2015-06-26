@@ -27,7 +27,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
-from neutron import ipam
+from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
 from neutron.ipam import utils as ipam_utils
 
@@ -486,9 +486,10 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 subnet['allocation_pools'],
                 subnet['cidr'],
                 subnet['gateway_ip'])
-        subnet_request = ipam.SubnetRequestFactory.get_request(context,
-                                                               subnet,
-                                                               subnetpool)
+
+        subnet_request = ipam_req.SubnetRequestFactory.get_request(context,
+                                                                   subnet,
+                                                                   subnetpool)
 
         if subnetpool_id:
             driver = subnet_alloc.SubnetAllocator(subnetpool, context)
