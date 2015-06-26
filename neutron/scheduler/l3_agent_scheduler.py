@@ -14,7 +14,6 @@
 #    under the License.
 
 import abc
-import itertools
 import random
 
 from oslo_config import cfg
@@ -328,8 +327,7 @@ class L3Scheduler(object):
                                  chosen_agents):
         port_bindings = plugin.get_ha_router_port_bindings(context,
                                                            [router_id])
-        for port_binding, agent in itertools.izip(port_bindings,
-                                                  chosen_agents):
+        for port_binding, agent in zip(port_bindings, chosen_agents):
             port_binding.l3_agent_id = agent.id
             self.bind_router(context, router_id, agent)
 
