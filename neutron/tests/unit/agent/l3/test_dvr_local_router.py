@@ -28,8 +28,6 @@ from neutron.agent.l3 import router_info
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.callbacks import manager
-from neutron.callbacks import registry
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
@@ -146,10 +144,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
         self.ri_kwargs = {'agent_conf': self.conf,
                           'interface_driver': self.mock_driver}
-
-        self._callback_manager = manager.CallbacksManager()
-        mock.patch.object(registry, '_get_callback_manager',
-                          return_value=self._callback_manager).start()
 
     def _create_router(self, router=None, **kwargs):
         agent_conf = mock.Mock()

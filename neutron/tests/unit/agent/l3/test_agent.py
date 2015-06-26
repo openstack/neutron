@@ -41,8 +41,6 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.callbacks import manager
-from neutron.callbacks import registry
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
@@ -162,10 +160,6 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
 
         self.ri_kwargs = {'agent_conf': self.conf,
                           'interface_driver': self.mock_driver}
-
-        self._callback_manager = manager.CallbacksManager()
-        mock.patch.object(registry, '_get_callback_manager',
-                          return_value=self._callback_manager).start()
 
     def _process_router_instance_for_agent(self, agent, ri, router):
         ri.router = router
