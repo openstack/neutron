@@ -71,6 +71,8 @@ class AristaDriver(driver_api.MechanismDriver):
         segments = context.network_segments
         network_id = network['id']
         tenant_id = network['tenant_id']
+        if not tenant_id:
+            tenant_id = context._plugin_context.tenant_id
         segmentation_id = segments[0]['segmentation_id']
         with self.eos_sync_lock:
             db_lib.remember_tenant(tenant_id)
@@ -85,6 +87,8 @@ class AristaDriver(driver_api.MechanismDriver):
         network_id = network['id']
         network_name = network['name']
         tenant_id = network['tenant_id']
+        if not tenant_id:
+            tenant_id = context._plugin_context.tenant_id
         segments = context.network_segments
         vlan_id = segments[0]['segmentation_id']
         shared_net = network['shared']
@@ -129,6 +133,8 @@ class AristaDriver(driver_api.MechanismDriver):
             network_id = new_network['id']
             network_name = new_network['name']
             tenant_id = new_network['tenant_id']
+            if not tenant_id:
+                tenant_id = context._plugin_context.tenant_id
             vlan_id = new_network['provider:segmentation_id']
             shared_net = new_network['shared']
             with self.eos_sync_lock:
@@ -161,6 +167,8 @@ class AristaDriver(driver_api.MechanismDriver):
         network = context.current
         network_id = network['id']
         tenant_id = network['tenant_id']
+        if not tenant_id:
+            tenant_id = context._plugin_context.tenant_id
         with self.eos_sync_lock:
 
             # Succeed deleting network in case EOS is not accessible.
@@ -191,6 +199,8 @@ class AristaDriver(driver_api.MechanismDriver):
             port_id = port['id']
             network_id = port['network_id']
             tenant_id = port['tenant_id']
+            if not tenant_id:
+                tenant_id = context._plugin_context.tenant_id
             with self.eos_sync_lock:
                 db_lib.remember_tenant(tenant_id)
                 db_lib.remember_vm(device_id, host, port_id,
@@ -214,6 +224,8 @@ class AristaDriver(driver_api.MechanismDriver):
             port_name = port['name']
             network_id = port['network_id']
             tenant_id = port['tenant_id']
+            if not tenant_id:
+                tenant_id = context._plugin_context.tenant_id
             with self.eos_sync_lock:
                 hostname = self._host_name(host)
                 vm_provisioned = db_lib.is_vm_provisioned(device_id,
@@ -278,6 +290,8 @@ class AristaDriver(driver_api.MechanismDriver):
             port_name = port['name']
             network_id = port['network_id']
             tenant_id = port['tenant_id']
+            if not tenant_id:
+                tenant_id = context._plugin_context.tenant_id
             with self.eos_sync_lock:
                 hostname = self._host_name(host)
                 segmentation_id = db_lib.get_segmentation_id(tenant_id,
@@ -317,6 +331,8 @@ class AristaDriver(driver_api.MechanismDriver):
         host_id = context.host
         device_id = port['device_id']
         tenant_id = port['tenant_id']
+        if not tenant_id:
+            tenant_id = context._plugin_context.tenant_id
         network_id = port['network_id']
         port_id = port['id']
         with self.eos_sync_lock:
@@ -337,6 +353,8 @@ class AristaDriver(driver_api.MechanismDriver):
         port_id = port['id']
         network_id = port['network_id']
         tenant_id = port['tenant_id']
+        if not tenant_id:
+            tenant_id = context._plugin_context.tenant_id
         device_owner = port['device_owner']
 
         try:
