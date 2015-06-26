@@ -68,6 +68,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.mock_plugin_api = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+        mock.patch.object(ip_lib, '_arping').start()
         self.agent = self._configure_agent('agent1')
 
     def _get_config_opts(self):
@@ -104,7 +105,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                           get_temp_file_path('external/pids'))
         conf.set_override('host', host)
         agent = neutron_l3_agent.L3NATAgentWithStateReport(host, conf)
-        mock.patch.object(ip_lib, '_arping').start()
 
         return agent
 
