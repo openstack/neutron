@@ -50,10 +50,11 @@ class BaseCommand(api.Command):
 
 
 class AddBridgeCommand(BaseCommand):
-    def __init__(self, api, name, may_exist):
+    def __init__(self, api, name, may_exist, datapath_type):
         super(AddBridgeCommand, self).__init__(api)
         self.name = name
         self.may_exist = may_exist
+        self.datapath_type = datapath_type
 
     def run_idl(self, txn):
         if self.may_exist:
@@ -63,6 +64,8 @@ class AddBridgeCommand(BaseCommand):
                 return
         row = txn.insert(self.api._tables['Bridge'])
         row.name = self.name
+        if self.datapath_type:
+            row.datapath_type = self.datapath_type
         self.api._ovs.verify('bridges')
         self.api._ovs.bridges = self.api._ovs.bridges + [row]
 

@@ -95,14 +95,16 @@ class API(object):
         """
 
     @abc.abstractmethod
-    def add_br(self, name, may_exist=True):
+    def add_br(self, name, may_exist=True, datapath_type=None):
         """Create an command to add an OVS bridge
 
-        :param name:      The name of the bridge
-        :type name:       string
-        :param may_exist: Do not fail if bridge already exists
-        :type may_exist:  bool
-        :returns:        :class:`Command` with no result
+        :param name:            The name of the bridge
+        :type name:             string
+        :param may_exist:       Do not fail if bridge already exists
+        :type may_exist:        bool
+        :param datapath_type:   The datapath_type of the bridge
+        :type datapath_type:    string
+        :returns:               :class:`Command` with no result
         """
 
     @abc.abstractmethod

@@ -160,9 +160,13 @@ class OvsdbVsctl(ovsdb.API):
     def transaction(self, check_error=False, log_errors=True, **kwargs):
         return Transaction(self.context, check_error, log_errors, **kwargs)
 
-    def add_br(self, name, may_exist=True):
+    def add_br(self, name, may_exist=True, datapath_type=None):
         opts = ['--may-exist'] if may_exist else None
-        return BaseCommand(self.context, 'add-br', opts, [name])
+        params = [name]
+        if datapath_type:
+            params += ['--', 'set', 'Bridge', name,
+                       'datapath_type=%s' % datapath_type]
+        return BaseCommand(self.context, 'add-br', opts, params)
 
     def del_br(self, name, if_exists=True):
         opts = ['--if-exists'] if if_exists else None
