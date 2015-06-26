@@ -60,7 +60,6 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             self.saved_attr_map[res] = attrs.copy()
 
         # Update the plugin and extensions path
-        self.setup_coreplugin(plugin)
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
         ext_mgr = VlanTransparentExtensionManager()

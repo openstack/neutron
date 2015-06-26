@@ -210,7 +210,7 @@ def parse_mappings(mapping_list, unique_values=True):
         if key in mappings:
             raise ValueError(_("Key %(key)s in mapping: '%(mapping)s' not "
                                "unique") % {'key': key, 'mapping': mapping})
-        if unique_values and value in mappings.itervalues():
+        if unique_values and value in mappings.values():
             raise ValueError(_("Value %(value)s in mapping: '%(mapping)s' "
                                "not unique") % {'value': value,
                                                 'mapping': mapping})

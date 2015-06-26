@@ -43,11 +43,6 @@ class Qos(extensions.ExtensionDescriptor):
         return "qos includes qos_name and qos_desc"
 
     @classmethod
-    def get_namespace(cls):
-        """Returns Ext Resource Namespace."""
-        return "http://docs.ciscocloud.com/api/ext/qos/v1.0"
-
-    @classmethod
     def get_updated(cls):
         """Returns Ext Resource update."""
         return "2011-07-25T13:25:27-06:00"

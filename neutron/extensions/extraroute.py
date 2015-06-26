@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as nexception
 
@@ -44,7 +44,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Extraroute(object):
+class Extraroute(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
@@ -57,10 +57,6 @@ class Extraroute(object):
     @classmethod
     def get_description(cls):
         return "Extra routes configuration for L3 router"
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/extraroutes/api/v1.0"
 
     @classmethod
     def get_updated(cls):

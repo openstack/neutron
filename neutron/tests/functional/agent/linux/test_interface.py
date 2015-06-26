@@ -13,13 +13,13 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import testtools
 
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
 from neutron.common import utils
-from neutron.openstack.common import uuidutils
 from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base

@@ -120,6 +120,12 @@ class IPWrapper(SubProcessBase):
 
         return retval
 
+    def get_device_by_ip(self, ip):
+        """Get the IPDevice from system which has ip configured."""
+        for device in self.get_devices():
+            if device.addr.list(to=ip):
+                return device
+
     def add_tuntap(self, name, mode='tap'):
         self._as_root([], 'tuntap', ('add', name, 'mode', mode))
         return IPDevice(name, namespace=self.namespace)
@@ -476,7 +482,7 @@ class IpRouteCommand(IpDeviceCommandBase):
             self._as_root([ip_version], tuple(args))
         except RuntimeError as rte:
             with (excutils.save_and_reraise_exception()) as ctx:
-                if "Cannot find device" in rte.message:
+                if "Cannot find device" in str(rte):
                     ctx.reraise = False
                     raise exceptions.DeviceNotFoundError(
                         device_name=self.name)
@@ -557,13 +563,13 @@ class IpRouteCommand(IpDeviceCommandBase):
                                                 ).split('\n')
             for subnet_route_line in subnet_route_list_lines:
                 i = iter(subnet_route_line.split())
-                while(i.next() != 'dev'):
+                while(next(i) != 'dev'):
                     pass
-                device = i.next()
+                device = next(i)
                 try:
-                    while(i.next() != 'src'):
+                    while(next(i) != 'src'):
                         pass
-                    src = i.next()
+                    src = next(i)
                 except Exception:
                     src = ''
                 if device != interface_name:
@@ -757,13 +763,23 @@ def _arping(ns_name, iface_name, address, count):
                             'ns': ns_name})
 
 
-def send_gratuitous_arp(ns_name, iface_name, address, count):
-    """Send a gratuitous arp using given namespace, interface, and address."""
+def send_ip_addr_adv_notif(ns_name, iface_name, address, config):
+    """Send advance notification of an IP address assignment.
+
+    If the address is in the IPv4 family, send gratuitous ARP.
+
+    If the address is in the IPv6 family, no advance notification is
+    necessary, since the Neighbor Discovery Protocol (NDP), Duplicate
+    Address Discovery (DAD), and (for stateless addresses) router
+    advertisements (RAs) are sufficient for address resolution and
+    duplicate address detection.
+    """
+    count = config.send_arp_for_ha
 
     def arping():
         _arping(ns_name, iface_name, address, count)
 
-    if count > 0:
+    if count > 0 and netaddr.IPAddress(address).version == 4:
         eventlet.spawn_n(arping)
 
 

@@ -22,6 +22,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
@@ -43,7 +44,6 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -1120,34 +1120,28 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               expected_code=error_code)
 
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):
-        with mock.patch('neutron.context.Context.to_dict') as tdict:
-            tenant_id = _uuid()
-            admin_context = {'roles': ['admin']}
-            tenant_context = {'tenant_id': 'bad_tenant',
-                              'roles': []}
-            tdict.return_value = admin_context
-            with self.router(tenant_id=tenant_id) as r:
-                with self.network(tenant_id=tenant_id) as n:
-                    with self.subnet(network=n) as s:
-                        tdict.return_value = tenant_context
-                        err_code = exc.HTTPNotFound.code
-                        self._router_interface_action('add',
-                                                      r['router']['id'],
-                                                      s['subnet']['id'],
-                                                      None,
-                                                      err_code)
-                        tdict.return_value = admin_context
-                        body = self._router_interface_action('add',
-                                                             r['router']['id'],
-                                                             s['subnet']['id'],
-                                                             None)
-                        self.assertIn('port_id', body)
-                        tdict.return_value = tenant_context
-                        self._router_interface_action('remove',
-                                                      r['router']['id'],
-                                                      s['subnet']['id'],
-                                                      None,
-                                                      err_code)
+        tenant_id = _uuid()
+        with self.router(tenant_id=tenant_id, set_context=True) as r:
+            with self.network(tenant_id=tenant_id, set_context=True) as n:
+                with self.subnet(network=n, set_context=True) as s:
+                    err_code = exc.HTTPNotFound.code
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  s['subnet']['id'],
+                                                  None,
+                                                  expected_code=err_code,
+                                                  tenant_id='bad_tenant')
+                    body = self._router_interface_action('add',
+                                                         r['router']['id'],
+                                                         s['subnet']['id'],
+                                                         None)
+                    self.assertIn('port_id', body)
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  s['subnet']['id'],
+                                                  None,
+                                                  expected_code=err_code,
+                                                  tenant_id='bad_tenant')
 
     def test_router_add_interface_subnet_with_port_from_other_tenant(self):
         tenant_id = _uuid()
@@ -1270,33 +1264,33 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                           HTTPBadRequest.code)
 
     def test_router_add_interface_port_bad_tenant_returns_404(self):
-        with mock.patch('neutron.context.Context.to_dict') as tdict:
-            admin_context = {'roles': ['admin']}
-            tenant_context = {'tenant_id': 'bad_tenant',
-                              'roles': []}
-            tdict.return_value = admin_context
-            with self.router() as r:
-                with self.port() as p:
-                    tdict.return_value = tenant_context
-                    err_code = exc.HTTPNotFound.code
-                    self._router_interface_action('add',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'],
-                                                  err_code)
-                    tdict.return_value = admin_context
-                    self._router_interface_action('add',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
+        tenant_id = _uuid()
+        with self.router(tenant_id=tenant_id, set_context=True) as r:
+            with self.network(tenant_id=tenant_id, set_context=True) as n:
+                with self.subnet(tenant_id=tenant_id, network=n,
+                                 set_context=True) as s:
+                    with self.port(tenant_id=tenant_id, subnet=s,
+                                   set_context=True) as p:
+                        err_code = exc.HTTPNotFound.code
+                        self._router_interface_action('add',
+                                                    r['router']['id'],
+                                                    None,
+                                                    p['port']['id'],
+                                                    expected_code=err_code,
+                                                    tenant_id='bad_tenant')
+                        self._router_interface_action('add',
+                                                    r['router']['id'],
+                                                    None,
+                                                    p['port']['id'],
+                                                    tenant_id=tenant_id)
 
-                    tdict.return_value = tenant_context
-                    # clean-up
-                    self._router_interface_action('remove',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'],
-                                                  err_code)
+                        # clean-up should fail as well
+                        self._router_interface_action('remove',
+                                                    r['router']['id'],
+                                                    None,
+                                                    p['port']['id'],
+                                                    expected_code=err_code,
+                                                    tenant_id='bad_tenant')
 
     def test_router_add_interface_dup_subnet1_returns_400(self):
         with self.router() as r:
@@ -2219,8 +2213,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self._set_net_external(network_ex_id2)
 
             r2i_fixed_ips = [{'ip_address': '12.0.0.2'}]
-            with self.router(no_delete=True) as r1,\
-                    self.router(no_delete=True) as r2,\
+            with self.router() as r1,\
+                    self.router() as r2,\
                     self.port(subnet=ins1,
                               fixed_ips=r2i_fixed_ips) as r2i_port:
                 self._add_external_gateway_to_router(

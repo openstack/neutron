@@ -123,7 +123,9 @@ class TestOvsNeutronAgent(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
-                mock.patch('neutron.openstack.common.loopingcall.' 'FixedIntervalLoopingCall', new=MockFixedIntervalLoopingCall),\
+                mock.patch('neutron.openstack.common.loopingcall.'
+                           'FixedIntervalLoopingCall',
+                           new=MockFixedIntervalLoopingCall),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
@@ -505,19 +507,6 @@ class TestOvsNeutronAgent(object):
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
-
-    def test_network_delete(self):
-        with mock.patch.object(self.agent, "reclaim_local_vlan") as recl_fn,\
-                mock.patch.object(self.agent.tun_br,
-                                  "cleanup_tunnel_port") as clean_tun_fn:
-            self.agent.network_delete("unused_context",
-                                      network_id="123")
-            self.assertFalse(recl_fn.called)
-            self.agent.local_vlan_map["123"] = "LVM object"
-            self.agent.network_delete("unused_context",
-                                      network_id="123")
-            self.assertFalse(clean_tun_fn.called)
-            recl_fn.assert_called_with("123")
 
     def test_port_update(self):
         port = {"id": "123",
@@ -1187,7 +1176,9 @@ class AncillaryBridgesTest(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
                            return_value=bridges),\
-                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.' 'get_bridge_external_bridge_id', side_effect=pullup_side_effect),\
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.'
+                           'get_bridge_external_bridge_id',
+                           side_effect=pullup_side_effect),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
@@ -1210,6 +1201,67 @@ class AncillaryBridgesTest(object):
     def test_ancillary_bridges_multiple(self):
         bridges = ['br-int', 'br-ex1', 'br-ex2']
         self._test_ancillary_bridges(bridges, ['br-ex1', 'br-ex2'])
+
+    def mock_scan_ancillary_ports(self, vif_port_set=None,
+                                  registered_ports=None):
+        bridges = ['br-int', 'br-ex']
+        ancillary = ['br-ex']
+
+        with mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                               'setup_integration_br'), \
+                mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                                  '_restore_local_vlan_map'), \
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
+                           return_value=bridges), \
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.'
+                           'get_bridge_external_bridge_id',
+                           side_effect=ancillary), \
+                mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
+                           'get_vif_port_set',
+                           return_value=vif_port_set):
+            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
+                                                        **self.kwargs)
+            return self.agent.scan_ancillary_ports(registered_ports)
+
+    def test_scan_ancillary_ports_returns_cur_only_for_unchanged_ports(self):
+        vif_port_set = set([1, 2])
+        registered_ports = set([1, 2])
+        expected = dict(current=vif_port_set)
+        actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
+        self.assertEqual(expected, actual)
+
+    def test_scan_ancillary_ports_returns_port_changes(self):
+        vif_port_set = set([1, 3])
+        registered_ports = set([1, 2])
+        expected = dict(current=vif_port_set, added=set([3]), removed=set([2]))
+        actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
+        self.assertEqual(expected, actual)
+
+    def _test_ancillary_bridges_external(self, external_bridge_id=None):
+        bridges = ['br-int', 'br-tun', 'br-ex']
+        with mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                               'setup_integration_br'),\
+                mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                           return_value='00:00:00:00:00:01'),\
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
+                           return_value=bridges),\
+                mock.patch('neutron.agent.common.ovs_lib.BaseOVS.'
+                           'get_bridge_external_bridge_id',
+                           return_value=external_bridge_id),\
+                mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
+                           'get_vif_ports', return_value=[]):
+            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
+                                                        **self.kwargs)
+            self.agent.enable_tunneling = True
+            ancillary_bridges = self.agent.setup_ancillary_bridges(
+                'br-int', 'br-tun')
+            self.assertEqual(1, len(ancillary_bridges))
+
+    def test_ancillary_bridges_external_bridge_id(self):
+        self._test_ancillary_bridges_external('br-ex')
+
+    def test_ancillary_bridges_external_bridge_id_none(self):
+        self._test_ancillary_bridges_external()
 
 
 class AncillaryBridgesTestOFCtl(AncillaryBridgesTest,
@@ -1239,7 +1291,9 @@ class TestOvsDvrNeutronAgent(object):
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
-                mock.patch('neutron.openstack.common.loopingcall.' 'FixedIntervalLoopingCall', new=MockFixedIntervalLoopingCall),\
+                mock.patch('neutron.openstack.common.loopingcall.'
+                           'FixedIntervalLoopingCall',
+                           new=MockFixedIntervalLoopingCall),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):

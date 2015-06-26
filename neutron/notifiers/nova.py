@@ -21,6 +21,7 @@ from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
 from neutron.common import constants
@@ -28,7 +29,6 @@ from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 from neutron.notifiers import batch_notifier
-from neutron.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)

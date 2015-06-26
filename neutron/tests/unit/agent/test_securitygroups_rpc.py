@@ -1163,9 +1163,9 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
 
     def test_security_groups_provider_updated(self):
         self.agent.refresh_firewall = mock.Mock()
-        self.agent.security_groups_provider_updated()
+        self.agent.security_groups_provider_updated(None)
         self.agent.refresh_firewall.assert_has_calls(
-            [mock.call.refresh_firewall()])
+            [mock.call.refresh_firewall(None)])
 
     def test_refresh_firewall(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
@@ -1281,9 +1281,9 @@ class SecurityGroupAgentEnhancedRpcTestCase(
 
     def test_security_groups_provider_updated_enhanced_rpc(self):
         self.agent.refresh_firewall = mock.Mock()
-        self.agent.security_groups_provider_updated()
+        self.agent.security_groups_provider_updated(None)
         self.agent.refresh_firewall.assert_has_calls(
-            [mock.call.refresh_firewall()])
+            [mock.call.refresh_firewall(None)])
 
     def test_refresh_firewall_enhanced_rpc(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
@@ -1415,8 +1415,15 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
             self.assertIn('fake_device_2', self.agent.devices_to_refilter)
 
     def test_security_groups_provider_updated(self):
-        self.agent.security_groups_provider_updated()
+        self.agent.security_groups_provider_updated(None)
         self.assertTrue(self.agent.global_refresh_firewall)
+
+    def test_security_groups_provider_updated_devices_specified(self):
+        self.agent.security_groups_provider_updated(
+            ['fake_device_1', 'fake_device_2'])
+        self.assertFalse(self.agent.global_refresh_firewall)
+        self.assertIn('fake_device_1', self.agent.devices_to_refilter)
+        self.assertIn('fake_device_2', self.agent.devices_to_refilter)
 
     def test_setup_port_filters_new_ports_only(self):
         self.agent.prepare_devices_filter = mock.Mock()
@@ -1570,7 +1577,8 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
     def test_security_groups_provider_updated(self):
         self.notifier.security_groups_provider_updated(None)
         self.mock_cast.assert_has_calls(
-            [mock.call(None, 'security_groups_provider_updated')])
+            [mock.call(None, 'security_groups_provider_updated',
+                       devices_to_update=None)])
 
     def test_security_groups_rule_updated(self):
         self.notifier.security_groups_rule_updated(
@@ -2488,6 +2496,9 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
         cfg.CONF.set_override('comment_iptables_rules', False, group='AGENT')
 
+        self.utils_exec = mock.patch(
+            'neutron.agent.linux.utils.execute').start()
+
         self.rpc = mock.Mock()
         self._init_agent(defer_refresh_firewall)
 
@@ -2611,6 +2622,13 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             kwargs = self.iptables_execute.call_args_list[i][1]
             self.assertThat(kwargs['process_input'],
                             matchers.MatchesRegex(expected_regex))
+
+        expected = ['net.bridge.bridge-nf-call-arptables=1',
+                    'net.bridge.bridge-nf-call-ip6tables=1',
+                    'net.bridge.bridge-nf-call-iptables=1']
+        for e in expected:
+            self.utils_exec.assert_any_call(['sysctl', '-w', e],
+                                            run_as_root=True)
 
     def _replay_iptables(self, v4_filter, v6_filter, raw):
         self._register_mock_call(

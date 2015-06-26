@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 
@@ -26,7 +27,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Routertype(object):
+class Routertype(extensions.ExtensionDescriptor):
     """Extension class supporting router type."""
 
     @classmethod
@@ -40,10 +41,6 @@ class Routertype(object):
     @classmethod
     def get_description(cls):
         return "Enables configuration of NSXv router type."
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/router-type/api/v1.0"
 
     @classmethod
     def get_updated(cls):

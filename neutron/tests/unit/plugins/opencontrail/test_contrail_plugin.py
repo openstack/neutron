@@ -231,8 +231,7 @@ class TestContrailSubnetsV2(test_plugin.TestSubnetsV2,
                                        'nexthop': '1.2.3.4'}]}
             error = self.assertRaises(exception,
                                       FAKE_SERVER._validate_subnet,
-                                      neutron_context.get_admin_context(
-                                          load_admin_roles=False),
+                                      neutron_context.get_admin_context(),
                                       subnet)
             self.assertThat(
                 str(error),

@@ -103,7 +103,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 plugin.update_port_status(rpc_context,
                                           port_id,
                                           new_status,
-                                          host)
+                                          host,
+                                          port_context.network.current)
 
         entry = {'device': device,
                  'network_id': port['network_id'],

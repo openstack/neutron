@@ -76,7 +76,7 @@ the configuration file specified in the brocade.ini files:
         ostype   = NOS
 
         [database]
-        connection = mysql://root:pass@localhost/brocade_neutron?charset=utf8
+        connection = mysql+pymysql://root:pass@localhost/brocade_neutron?charset=utf8
 
         (please see list of more configuration parameters in the brocade.ini file)
 

@@ -122,7 +122,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
     #   1.2 Support DVR (Distributed Virtual Router) RPC
-    target = oslo_messaging.Target(version='1.2')
+    #   1.3 Added param devices_to_update to security_groups_provider_updated
+    target = oslo_messaging.Target(version='1.3')
 
     def __init__(self, bridge_classes, integ_br, tun_br, local_ip,
                  bridge_mappings, polling_interval, tunnel_types=None,
@@ -134,7 +135,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                  arp_responder=False,
                  prevent_arp_spoofing=True,
                  use_veth_interconnection=False,
-                 quitting_rpc_timeout=None):
+                 quitting_rpc_timeout=None,
+                 conf=None):
         '''Constructor.
 
         :param bridge_classes: a dict for bridge classes.
@@ -163,6 +165,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                interconnect the integration bridge to physical bridges.
         :param quitting_rpc_timeout: timeout in seconds for rpc calls after
                SIGTERM is received
+        :param conf: an instance of ConfigOpts
         '''
         super(OVSNeutronAgent, self).__init__()
         self.br_int_cls = bridge_classes['br_int']
@@ -180,9 +183,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.enable_distributed_routing = enable_distributed_routing
         self.arp_responder_enabled = arp_responder and self.l2_pop
         self.prevent_arp_spoofing = prevent_arp_spoofing
+        self.conf = conf or cfg.CONF
+
         self.agent_state = {
             'binary': 'neutron-openvswitch-agent',
-            'host': cfg.CONF.host,
+            'host': self.conf.host,
             'topic': q_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': bridge_mappings,
                                'tunnel_types': self.tunnel_types,
@@ -226,8 +231,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.ovsdb_monitor_respawn_interval = ovsdb_monitor_respawn_interval
         self.local_ip = local_ip
         self.tunnel_count = 0
-        self.vxlan_udp_port = cfg.CONF.AGENT.vxlan_udp_port
-        self.dont_fragment = cfg.CONF.AGENT.dont_fragment
+        self.vxlan_udp_port = self.conf.AGENT.vxlan_udp_port
+        self.dont_fragment = self.conf.AGENT.dont_fragment
         self.tun_br = None
         self.patch_int_ofport = constants.OFPORT_INVALID
         self.patch_tun_ofport = constants.OFPORT_INVALID
@@ -247,11 +252,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.phys_ofports,
             self.patch_int_ofport,
             self.patch_tun_ofport,
-            cfg.CONF.host,
+            self.conf.host,
             self.enable_tunneling,
             self.enable_distributed_routing)
 
-        report_interval = cfg.CONF.AGENT.report_interval
+        report_interval = self.conf.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
                 self._report_state)
@@ -317,7 +322,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                           local_vlan)
 
     def setup_rpc(self):
-        self.agent_id = 'ovs-agent-%s' % cfg.CONF.host
+        self.agent_id = 'ovs-agent-%s' % self.conf.host
         self.topic = topics.AGENT
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
@@ -331,14 +336,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.PORT, topics.DELETE],
-                     [topics.NETWORK, topics.DELETE],
                      [constants.TUNNEL, topics.UPDATE],
                      [constants.TUNNEL, topics.DELETE],
                      [topics.SECURITY_GROUP, topics.UPDATE],
                      [topics.DVR, topics.UPDATE]]
         if self.l2_pop:
             consumers.append([topics.L2POPULATION,
-                              topics.UPDATE, cfg.CONF.host])
+                              topics.UPDATE, self.conf.host])
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers,
@@ -348,17 +352,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):
             if vif_id in vlan_mapping.vif_ports:
                 return network_id
-
-    def network_delete(self, context, **kwargs):
-        LOG.debug("network_delete received")
-        network_id = kwargs.get('network_id')
-        LOG.debug("Delete %s", network_id)
-        # The network may not be defined on this agent
-        lvm = self.local_vlan_map.get(network_id)
-        if lvm:
-            self.reclaim_local_vlan(network_id)
-        else:
-            LOG.debug("Network %s not used on agent.", network_id)
 
     def port_update(self, context, **kwargs):
         port = kwargs.get('port')
@@ -757,11 +750,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if port_detail.get('admin_state_up'):
                 LOG.debug("Setting status for %s to UP", device)
                 self.plugin_rpc.update_device_up(
-                    self.context, device, self.agent_id, cfg.CONF.host)
+                    self.context, device, self.agent_id, self.conf.host)
             else:
                 LOG.debug("Setting status for %s to DOWN", device)
                 self.plugin_rpc.update_device_down(
-                    self.context, device, self.agent_id, cfg.CONF.host)
+                    self.context, device, self.agent_id, self.conf.host)
             LOG.info(_LI("Configuration for device %s completed."), device)
 
     @staticmethod
@@ -780,6 +773,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         addresses = {ip for ip in addresses
                      if netaddr.IPNetwork(ip).version == 4}
+        if any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in addresses):
+            # don't try to install protection because a /0 prefix allows any
+            # address anyway and the ARP_SPA can only match on /1 or more.
+            return
 
         bridge.install_arp_spoofing_protection(port=vif.ofport,
                                                ip_addresses=addresses)
@@ -835,9 +832,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # which does nothing if bridge already exists.
         self.int_br.create()
         self.int_br.set_secure_mode()
-        self.int_br.setup_controllers(cfg.CONF)
+        self.int_br.setup_controllers(self.conf)
 
-        self.int_br.delete_port(cfg.CONF.OVS.int_peer_patch_port)
+        self.int_br.delete_port(self.conf.OVS.int_peer_patch_port)
 
         self.int_br.setup_default_table()
 
@@ -857,7 +854,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         br_names = []
         for bridge in ovs_bridges:
             bridge_id = ovs.get_bridge_external_bridge_id(bridge)
-            if bridge_id != bridge:
+            if bridge_id and bridge_id != bridge:
                 br_names.append(bridge)
         ovs_bridges.difference_update(br_names)
         ancillary_bridges = []
@@ -879,11 +876,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.tun_br = self.br_tun_cls(tun_br_name)
 
         self.tun_br.reset_bridge(secure_mode=True)
-        self.tun_br.setup_controllers(cfg.CONF)
+        self.tun_br.setup_controllers(self.conf)
         self.patch_tun_ofport = self.int_br.add_patch_port(
-            cfg.CONF.OVS.int_peer_patch_port, cfg.CONF.OVS.tun_peer_patch_port)
+            self.conf.OVS.int_peer_patch_port,
+            self.conf.OVS.tun_peer_patch_port)
         self.patch_int_ofport = self.tun_br.add_patch_port(
-            cfg.CONF.OVS.tun_peer_patch_port, cfg.CONF.OVS.int_peer_patch_port)
+            self.conf.OVS.tun_peer_patch_port,
+            self.conf.OVS.int_peer_patch_port)
         if ovs_lib.INVALID_OFPORT in (self.patch_tun_ofport,
                                       self.patch_int_ofport):
             LOG.error(_LE("Failed to create OVS patch port. Cannot have "
@@ -952,7 +951,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                            'bridge': bridge})
                 sys.exit(1)
             br = self.br_phys_cls(bridge)
-            br.setup_controllers(cfg.CONF)
+            br.setup_controllers(self.conf)
             br.setup_default_table()
             self.phys_brs[physical_network] = br
 
@@ -1044,10 +1043,22 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 port_moves.append(name)
         return port_moves
 
+    def _get_port_info(self, registered_ports, cur_ports):
+        port_info = {'current': cur_ports}
+        # FIXME(salv-orlando): It's not really necessary to return early
+        # if nothing has changed.
+        if cur_ports == registered_ports:
+            # No added or removed ports to set, just return here
+            return port_info
+        port_info['added'] = cur_ports - registered_ports
+        # Remove all the known ports not found on the integration bridge
+        port_info['removed'] = registered_ports - cur_ports
+        return port_info
+
     def scan_ports(self, registered_ports, updated_ports=None):
         cur_ports = self.int_br.get_vif_port_set()
         self.int_br_device_count = len(cur_ports)
-        port_info = {'current': cur_ports}
+        port_info = self._get_port_info(registered_ports, cur_ports)
         if updated_ports is None:
             updated_ports = set()
         updated_ports.update(self.check_changed_vlans(registered_ports))
@@ -1059,17 +1070,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             updated_ports &= cur_ports
             if updated_ports:
                 port_info['updated'] = updated_ports
-
-        # FIXME(salv-orlando): It's not really necessary to return early
-        # if nothing has changed.
-        if cur_ports == registered_ports:
-            # No added or removed ports to set, just return here
-            return port_info
-
-        port_info['added'] = cur_ports - registered_ports
-        # Remove all the known ports not found on the integration bridge
-        port_info['removed'] = registered_ports - cur_ports
         return port_info
+
+    def scan_ancillary_ports(self, registered_ports):
+        cur_ports = set()
+        for bridge in self.ancillary_brs:
+            cur_ports |= bridge.get_vif_port_set()
+        return self._get_port_info(registered_ports, cur_ports)
 
     def check_changed_vlans(self, registered_ports):
         """Return ports which have lost their vlan tag.
@@ -1094,19 +1101,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     )
                     changed_ports.add(port)
         return changed_ports
-
-    def update_ancillary_ports(self, registered_ports):
-        ports = set()
-        for bridge in self.ancillary_brs:
-            ports |= bridge.get_vif_port_set()
-
-        if ports == registered_ports:
-            return
-        added = ports - registered_ports
-        removed = registered_ports - ports
-        return {'current': ports,
-                'added': added,
-                'removed': removed}
 
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
                        physical_network, segmentation_id, admin_state_up,
@@ -1176,7 +1170,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 break
         # If not, remove it
         else:
-            for remote_ip, ofport in self.tun_br_ofports[tunnel_type].items():
+            items = list(self.tun_br_ofports[tunnel_type].items())
+            for remote_ip, ofport in items:
                 if ofport == tun_ofport:
                     port_name = '%s-%s' % (tunnel_type,
                                            self.get_ip_in_hex(remote_ip))
@@ -1192,7 +1187,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.context,
                 devices,
                 self.agent_id,
-                cfg.CONF.host)
+                self.conf.host)
         except Exception as e:
             raise DeviceListRetrievalError(devices=devices, error=e)
         for details in devices_details_list:
@@ -1236,7 +1231,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.context,
                 devices,
                 self.agent_id,
-                cfg.CONF.host)
+                self.conf.host)
         except Exception as e:
             raise DeviceListRetrievalError(devices=devices, error=e)
 
@@ -1248,7 +1243,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.plugin_rpc.update_device_up(self.context,
                                              device,
                                              self.agent_id,
-                                             cfg.CONF.host)
+                                             self.conf.host)
 
     def treat_devices_removed(self, devices):
         resync = False
@@ -1259,7 +1254,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.plugin_rpc.update_device_down(self.context,
                                                    device,
                                                    self.agent_id,
-                                                   cfg.CONF.host)
+                                                   self.conf.host)
             except Exception as e:
                 LOG.debug("port_removed failed for %(device)s: %(e)s",
                           {'device': device, 'e': e})
@@ -1276,7 +1271,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 details = self.plugin_rpc.update_device_down(self.context,
                                                              device,
                                                              self.agent_id,
-                                                             cfg.CONF.host)
+                                                             self.conf.host)
             except Exception as e:
                 LOG.debug("port_removed failed for %(device)s: %(e)s",
                           {'device': device, 'e': e})
@@ -1394,7 +1389,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 details = self.plugin_rpc.tunnel_sync(self.context,
                                                       self.local_ip,
                                                       tunnel_type,
-                                                      cfg.CONF.host)
+                                                      self.conf.host)
                 if not self.l2_pop:
                     tunnels = details['tunnels']
                     for tunnel in tunnels:
@@ -1530,6 +1525,16 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                               "Elapsed:%(elapsed).3f",
                               {'iter_num': self.iter_num,
                                'elapsed': time.time() - start})
+
+                    # Treat ancillary devices if they exist
+                    if self.ancillary_brs:
+                        ancillary_port_info = self.scan_ancillary_ports(
+                            ancillary_ports)
+                        LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
+                                  "ancillary port info retrieved. "
+                                  "Elapsed:%(elapsed).3f",
+                                  {'iter_num': self.iter_num,
+                                   'elapsed': time.time() - start})
                     # Secure and wire/unwire VIFs and update their status
                     # on Neutron server
                     if (self._port_info_has_changes(port_info) or
@@ -1551,30 +1556,20 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                         port_stats['regular']['removed'] = (
                             len(port_info.get('removed', [])))
                     ports = port_info['current']
-                    # Treat ancillary devices if they exist
+
                     if self.ancillary_brs:
-                        port_info = self.update_ancillary_ports(
-                            ancillary_ports)
-                        LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
-                                  "ancillary port info retrieved. "
-                                  "Elapsed:%(elapsed).3f",
+                        sync |= self.process_ancillary_network_ports(
+                            ancillary_port_info)
+                        LOG.debug("Agent rpc_loop - iteration: "
+                                  "%(iter_num)d - ancillary ports "
+                                  "processed. Elapsed:%(elapsed).3f",
                                   {'iter_num': self.iter_num,
                                    'elapsed': time.time() - start})
-
-                        if port_info:
-                            rc = self.process_ancillary_network_ports(
-                                port_info)
-                            LOG.debug("Agent rpc_loop - iteration: "
-                                      "%(iter_num)d - ancillary ports "
-                                      "processed. Elapsed:%(elapsed).3f",
-                                      {'iter_num': self.iter_num,
-                                       'elapsed': time.time() - start})
-                            ancillary_ports = port_info['current']
-                            port_stats['ancillary']['added'] = (
-                                len(port_info.get('added', [])))
-                            port_stats['ancillary']['removed'] = (
-                                len(port_info.get('removed', [])))
-                            sync = sync | rc
+                        ancillary_ports = ancillary_port_info['current']
+                        port_stats['ancillary']['added'] = (
+                            len(ancillary_port_info.get('added', [])))
+                        port_stats['ancillary']['removed'] = (
+                            len(ancillary_port_info.get('removed', [])))
 
                     polling_manager.polling_completed()
                     # Keep this flag in the last line of "try" block,
@@ -1608,10 +1603,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def _handle_sighup(self, signum, frame):
         LOG.info(_LI("Agent caught SIGHUP, resetting."))
-        cfg.CONF.reload_config_files()
+        self.conf.reload_config_files()
         config.setup_logging()
         LOG.debug('Full set of CONF:')
-        cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
+        self.conf.log_opt_values(LOG, std_logging.DEBUG)
 
     def set_rpc_timeout(self, timeout):
         for rpc_api in (self.plugin_rpc, self.sg_plugin_rpc,
@@ -1684,7 +1679,7 @@ def main(bridge_classes):
     prepare_xen_compute()
     try:
         agent = OVSNeutronAgent(bridge_classes, **agent_config)
-    except RuntimeError as e:
+    except (RuntimeError, ValueError) as e:
         LOG.error(_LE("%s Agent terminated!"), e)
         sys.exit(1)
     agent.daemon_loop()

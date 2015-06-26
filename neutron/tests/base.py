@@ -45,6 +45,7 @@ from neutron import manager
 from neutron import policy
 from neutron.tests import fake_notifier
 from neutron.tests import post_mortem_debug
+from neutron.tests import tools
 
 
 CONF = cfg.CONF
@@ -125,6 +126,9 @@ class DietTestCase(testtools.TestCase):
         if debugger:
             self.addOnException(post_mortem_debug.get_exception_handler(
                 debugger))
+
+        # Make sure we see all relevant deprecation warnings when running tests
+        self.useFixture(tools.WarningsFixture())
 
         if bool_from_env('OS_DEBUG'):
             _level = std_logging.DEBUG
@@ -238,10 +242,10 @@ class BaseTestCase(DietTestCase):
     @staticmethod
     def config_parse(conf=None, args=None):
         """Create the default configurations."""
-        # neutron.conf.test includes rpc_backend which needs to be cleaned up
+        # neutron.conf includes rpc_backend which needs to be cleaned up
         if args is None:
             args = []
-        args += ['--config-file', etcdir('neutron.conf.test')]
+        args += ['--config-file', etcdir('neutron.conf')]
         if conf is None:
             config.init(args=args)
         else:
@@ -366,7 +370,9 @@ class BaseTestCase(DietTestCase):
             CONF.set_override(k, v, group)
 
     def setup_coreplugin(self, core_plugin=None):
-        self.useFixture(PluginFixture(core_plugin))
+        cp = PluginFixture(core_plugin)
+        self.useFixture(cp)
+        self.patched_dhcp_periodic = cp.patched_dhcp_periodic
 
     def setup_notification_driver(self, notification_driver=None):
         self.addCleanup(fake_notifier.reset)

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import urllib
 
 from oslo_config import cfg
@@ -272,11 +273,11 @@ class SortingEmulatedHelper(SortingHelper):
     def sort(self, items):
         def cmp_func(obj1, obj2):
             for key, direction in self.sort_dict:
-                ret = cmp(obj1[key], obj2[key])
+                ret = (obj1[key] > obj2[key]) - (obj1[key] < obj2[key])
                 if ret:
                     return ret * (1 if direction else -1)
             return 0
-        return sorted(items, cmp=cmp_func)
+        return sorted(items, key=functools.cmp_to_key(cmp_func))
 
 
 class SortingNativeHelper(SortingHelper):

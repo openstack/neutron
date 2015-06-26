@@ -13,6 +13,8 @@
 
 import copy
 
+import netaddr
+
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 
@@ -34,6 +36,27 @@ class IpsetManager(object):
         self.namespace = namespace
         self.ipset_sets = {}
 
+    def _sanitize_addresses(self, addresses):
+        """This method converts any address to ipset format.
+
+        If an address has a mask of /0 we need to cover to it to a mask of
+        /1 as ipset does not support /0 length addresses. Instead we use two
+        /1's to represent the /0.
+        """
+        sanitized_addresses = []
+        for ip in addresses:
+            ip = netaddr.IPNetwork(ip)
+            if (ip.prefixlen == 0):
+                if(ip.version == 4):
+                    sanitized_addresses.append('0.0.0.0/1')
+                    sanitized_addresses.append('128.0.0.0/1')
+                elif (ip.version == 6):
+                    sanitized_addresses.append('::/1')
+                    sanitized_addresses.append('8000::/1')
+            else:
+                sanitized_addresses.append(str(ip))
+        return sanitized_addresses
+
     @staticmethod
     def get_name(id, ethertype):
         """Returns the given ipset name for an id+ethertype pair.
@@ -54,6 +77,7 @@ class IpsetManager(object):
         add / remove new members, or swapped atomically if
         that's faster.
         """
+        member_ips = self._sanitize_addresses(member_ips)
         set_name = self.get_name(id, ethertype)
         if not self.set_exists(id, ethertype):
             # The initial creation is handled with create/refresh to

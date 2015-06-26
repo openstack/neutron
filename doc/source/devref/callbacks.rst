@@ -223,7 +223,7 @@ There are a few options to unsubscribe registered callbacks:
   resource R, any notification of events related to resource R will no longer be handed
   over to C, after the unsubscribe_by_resource() invocation.
 * unsubscribe_all(): say that callback C has subscribed to events A, B for resource R1,
-  and events C, D for resource R2, any notification of events pertaining resouces R1 and
+  and events C, D for resource R2, any notification of events pertaining resources R1 and
   R2 will no longer be handed over to C, after the unsubscribe_all() invocation.
 
 The snippet below shows these concepts in action:

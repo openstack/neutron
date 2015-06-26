@@ -14,9 +14,9 @@
 #    under the License.
 
 from oslo_log import log
+from oslo_utils import uuidutils
 
 from neutron.ipam.drivers.neutrondb_ipam import db_models
-from neutron.openstack.common import uuidutils
 
 LOG = log.getLogger(__name__)
 # Database operations for Neutron's DB-backed IPAM driver

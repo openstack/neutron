@@ -242,10 +242,7 @@ dependencies as the functional tests, using the configuration script
 tools/configure_for_func_testing.sh is advised (as described above).
 When running full-stack tests on a clean VM for the first time, we
 advise to run ./stack.sh successfully to make sure all Neutron's
-dependencies are met.  Also note that in order to preserve resources
-on the gate, running the dsvm-functional suite will also run all
-full-stack tests (and a new worker won't be assigned specifically for
-dsvm-fullstack).  Full-stack based Neutron daemons produce logs to a
+dependencies are met. Full-stack based Neutron daemons produce logs to a
 sub-folder in /tmp/fullstack-logs (for example, a test named
 "test_example" will produce logs to /tmp/fullstack-logs/test_example/),
 so that will be a good place to look if your test is failing.

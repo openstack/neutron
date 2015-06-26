@@ -418,7 +418,7 @@ class TestCachingDecorator(base.BaseTestCase):
         self.func_name = '%(module)s._CachingDecorator.func' % {
             'module': self.__module__
         }
-        self.not_cached = self.decor.func.func.im_self._not_cached
+        self.not_cached = self.decor.func.func.__self__._not_cached
 
     def test_cache_miss(self):
         expected_key = (self.func_name, 1, 2, ('foo', 'bar'))
@@ -636,7 +636,7 @@ class TestIpVersionFromInt(base.BaseTestCase):
                           8)
 
 
-class TestDelayedStringRederer(base.BaseTestCase):
+class TestDelayedStringRenderer(base.BaseTestCase):
     def test_call_deferred_until_str(self):
         my_func = mock.MagicMock(return_value='Brie cheese!')
         delayed = utils.DelayedStringRenderer(my_func, 1, 2, key_arg=44)

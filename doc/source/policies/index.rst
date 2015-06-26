@@ -32,6 +32,8 @@ Policies
    core-reviewers
    gate-failure-triage
    code-reviews
+   thirdparty-ci
+   office-hours
 
 Indices and tables
 ------------------

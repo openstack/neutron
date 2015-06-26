@@ -22,6 +22,7 @@ from oslo_log import log
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 
@@ -64,7 +65,6 @@ from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa
@@ -1375,10 +1375,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return self._bind_port_if_needed(port_context)
 
-    def update_port_status(self, context, port_id, status, host=None):
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_deadlock=True)
+    def update_port_status(self, context, port_id, status, host=None,
+                           network=None):
         """
         Returns port_id (non-truncated uuid) if the port exists.
         Otherwise returns None.
+        network can be passed in to avoid another get_network call if
+        one was already performed by the caller.
         """
         updated = False
         session = context.session
@@ -1398,8 +1403,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 original_port = self._make_port_dict(port)
                 port.status = status
                 updated_port = self._make_port_dict(port)
-                network = self.get_network(context,
-                                           original_port['network_id'])
+                network = network or self.get_network(
+                    context, original_port['network_id'])
                 levels = db.get_binding_levels(session, port.id,
                                                port.port_binding.host)
                 mech_context = driver_context.PortContext(
@@ -1426,8 +1431,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                 port_id)
                     return
                 original_port = self._make_port_dict(port)
-                network = self.get_network(context,
-                                           original_port['network_id'])
+                network = network or self.get_network(
+                    context, original_port['network_id'])
                 port.status = db.generate_dvr_port_status(session, port['id'])
                 updated_port = self._make_port_dict(port)
                 levels = db.get_binding_levels(session, port_id, host)

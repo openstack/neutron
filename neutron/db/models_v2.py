@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants
 from neutron.db import model_base
-from neutron.openstack.common import uuidutils
 
 
 class HasTenant(object):

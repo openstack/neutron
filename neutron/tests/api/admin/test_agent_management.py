@@ -84,7 +84,7 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
         """
         Restore the agent description after update test.
         """
-        description = self.agent['description'] or ''
+        description = self.dyn_agent['description']
         origin_agent = {'description': description}
-        self.admin_client.update_agent(agent_id=self.agent['id'],
+        self.admin_client.update_agent(agent_id=self.dyn_agent['id'],
                                        agent_info=origin_agent)

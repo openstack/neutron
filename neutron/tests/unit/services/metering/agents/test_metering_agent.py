@@ -14,8 +14,8 @@
 
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
-from neutron.openstack.common import uuidutils
 from neutron.services.metering.agents import metering_agent
 from neutron.tests import base
 from neutron.tests import fake_notifier

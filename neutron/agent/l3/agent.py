@@ -23,7 +23,8 @@ from oslo_utils import importutils
 from oslo_utils import timeutils
 
 from neutron.agent.l3 import dvr
-from neutron.agent.l3 import dvr_router
+from neutron.agent.l3 import dvr_edge_router as dvr_router
+from neutron.agent.l3 import dvr_local_router as dvr_local_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import legacy_router
@@ -300,7 +301,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if router.get('distributed'):
             kwargs['agent'] = self
             kwargs['host'] = self.host
-            return dvr_router.DvrRouter(*args, **kwargs)
+            if self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT:
+                return dvr_router.DvrEdgeRouter(*args, **kwargs)
+            else:
+                return dvr_local_router.DvrLocalRouter(*args, **kwargs)
 
         if router.get('ha'):
             kwargs['state_change_callback'] = self.enqueue_state_change
@@ -441,7 +445,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():
-            LOG.debug("Starting router update for %s", update.id)
+            LOG.debug("Starting router update for %s, action %s, priority %s",
+                      update.id, update.action, update.priority)
             router = update.router
             if update.action != queue.DELETE_ROUTER and not router:
                 try:
@@ -464,6 +469,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     # one router by sticking the update at the end of the queue
                     # at a lower priority.
                     self.fullsync = True
+                else:
+                    # need to update timestamp of removed router in case
+                    # there are older events for the same router in the
+                    # processing queue (like events from fullsync) in order to
+                    # prevent deleted router re-creation
+                    rp.fetched_and_processed(update.timestamp)
                 continue
 
             try:

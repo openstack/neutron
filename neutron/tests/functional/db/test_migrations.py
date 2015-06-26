@@ -30,6 +30,7 @@ import sqlalchemy
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
+from neutron.tests.common import base
 
 LOG = logging.getLogger(__name__)
 
@@ -208,12 +209,12 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
 
 class TestModelsMigrationsMysql(_TestModelsMigrations,
-                                test_base.MySQLOpportunisticTestCase):
+                                base.MySQLTestCase):
     pass
 
 
 class TestModelsMigrationsPsql(_TestModelsMigrations,
-                               test_base.PostgreSQLOpportunisticTestCase):
+                               base.PostgreSQLTestCase):
     pass
 
 

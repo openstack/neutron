@@ -423,12 +423,8 @@ class IptablesManager(object):
         if self.namespace:
             lock_name += '-' + self.namespace
 
-        try:
-            with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
-                LOG.debug('Got semaphore / lock "%s"', lock_name)
-                return self._apply_synchronized()
-        finally:
-            LOG.debug('Semaphore / lock released "%s"', lock_name)
+        with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
+            return self._apply_synchronized()
 
     def _apply_synchronized(self):
         """Apply the current in-memory set of iptables rules.

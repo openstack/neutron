@@ -16,6 +16,7 @@ import abc
 
 import six
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions
@@ -42,7 +43,7 @@ class MacAddressGenerationFailure(exceptions.ServiceUnavailable):
     message = _("Unable to generate unique DVR mac for host %(host)s.")
 
 
-class Dvr(object):
+class Dvr(extensions.ExtensionDescriptor):
     """Extension class supporting distributed virtual router."""
 
     @classmethod
@@ -56,11 +57,6 @@ class Dvr(object):
     @classmethod
     def get_description(cls):
         return "Enables configuration of Distributed Virtual Routers."
-
-    @classmethod
-    def get_namespace(cls):
-        return ("http://docs.openstack.org/ext/"
-                "%s/api/v1.0" % constants.L3_DISTRIBUTED_EXT_ALIAS)
 
     @classmethod
     def get_updated(cls):

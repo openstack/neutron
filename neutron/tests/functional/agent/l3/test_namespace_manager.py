@@ -14,12 +14,12 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
-from neutron.openstack.common import uuidutils
 from neutron.tests.functional import base
 
 _uuid = uuidutils.generate_uuid
@@ -48,8 +48,8 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
             namespace.delete()
         except RuntimeError as e:
             # If the namespace didn't exist when delete was attempted, mission
-            # acomplished. Otherwise, re-raise the exception
-            if 'No such file or directory' not in e.message:
+            # accomplished. Otherwise, re-raise the exception
+            if 'No such file or directory' not in str(e):
                 raise e
 
     def _namespace_exists(self, namespace):

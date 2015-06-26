@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as nexception
 
@@ -48,7 +49,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Portsecurity(object):
+class Portsecurity(extensions.ExtensionDescriptor):
     """Extension class supporting port security."""
 
     @classmethod
@@ -62,10 +63,6 @@ class Portsecurity(object):
     @classmethod
     def get_description(cls):
         return "Provides port security"
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/portsecurity/api/v1.0"
 
     @classmethod
     def get_updated(cls):

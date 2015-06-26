@@ -18,7 +18,6 @@
 import mock
 
 from neutron.agent.linux import bridge_lib
-from neutron.agent.linux import utils
 from neutron.tests import base
 
 
@@ -30,30 +29,28 @@ class BridgeLibTest(base.BaseTestCase):
 
     def setUp(self):
         super(BridgeLibTest, self).setUp()
-        self.execute = mock.patch.object(
-            utils, "execute", spec=utils.execute).start()
+        ip_wrapper = mock.patch('neutron.agent.linux.ip_lib.IPWrapper').start()
+        self.execute = ip_wrapper.return_value.netns.execute
 
-    def _verify_bridge_mock(self, cmd, namespace=None):
-        if namespace is not None:
-            cmd = ['ip', 'netns', 'exec', namespace] + cmd
-        self.execute.assert_called_once_with(cmd, run_as_root=True,
-                                             log_fail_as_error=True)
+    def _verify_bridge_mock(self, cmd):
+        self.execute.assert_called_once_with(cmd, run_as_root=True)
         self.execute.reset_mock()
 
     def _test_br(self, namespace=None):
         br = bridge_lib.BridgeDevice.addbr(self._BR_NAME, namespace)
-        self._verify_bridge_mock(['brctl', 'addbr', self._BR_NAME], namespace)
+        self.assertEqual(namespace, br.namespace)
+        self._verify_bridge_mock(['brctl', 'addbr', self._BR_NAME])
 
         br.addif(self._IF_NAME)
         self._verify_bridge_mock(
-            ['brctl', 'addif', self._BR_NAME, self._IF_NAME], namespace)
+            ['brctl', 'addif', self._BR_NAME, self._IF_NAME])
 
         br.delif(self._IF_NAME)
         self._verify_bridge_mock(
-            ['brctl', 'delif', self._BR_NAME, self._IF_NAME], namespace)
+            ['brctl', 'delif', self._BR_NAME, self._IF_NAME])
 
         br.delbr()
-        self._verify_bridge_mock(['brctl', 'delbr', self._BR_NAME], namespace)
+        self._verify_bridge_mock(['brctl', 'delbr', self._BR_NAME])
 
     def test_addbr_with_namespace(self):
         self._test_br(self._NAMESPACE)

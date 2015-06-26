@@ -14,6 +14,7 @@
 
 import netaddr
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -37,7 +38,6 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.i18n import _LI, _LE
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 
 LOG = logging.getLogger(__name__)

@@ -29,7 +29,7 @@ class TestCallLog(base.BaseTestCase):
     def setUp(self):
         super(TestCallLog, self).setUp()
         self.klass = TargetKlass()
-        logger = self.klass.test_method.im_func.func_closure[0].cell_contents
+        logger = self.klass.test_method.__func__.__closure__[0].cell_contents
         self.log_debug = mock.patch.object(logger, 'debug').start()
 
     def _test_call_log(self, *args, **kwargs):

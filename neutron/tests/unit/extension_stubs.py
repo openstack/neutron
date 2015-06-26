@@ -33,9 +33,6 @@ class StubExtension(object):
     def get_description(self):
         return ""
 
-    def get_namespace(self):
-        return ""
-
     def get_updated(self):
         return ""
 

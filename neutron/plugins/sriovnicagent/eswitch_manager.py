@@ -130,7 +130,7 @@ class EmbSwitch(object):
         """
         vf_list = []
         assigned_macs = []
-        for vf_index in self.pci_slot_map.itervalues():
+        for vf_index in self.pci_slot_map.values():
             if not PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
                 continue
             vf_list.append(vf_index)

@@ -15,7 +15,9 @@
 
 import netaddr
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from sqlalchemy import and_
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
@@ -182,6 +184,47 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             return True
         return False
 
+    def _save_allocation_pools(self, context, subnet, allocation_pools):
+        for pool in allocation_pools:
+            ip_pool = models_v2.IPAllocationPool(subnet=subnet,
+                                                 first_ip=pool['start'],
+                                                 last_ip=pool['end'])
+            context.session.add(ip_pool)
+            ip_range = models_v2.IPAvailabilityRange(
+                ipallocationpool=ip_pool,
+                first_ip=pool['start'],
+                last_ip=pool['end'])
+            context.session.add(ip_range)
+
+    def _allocate_ips_for_port_and_store(self, context, port, port_id):
+        network_id = port['port']['network_id']
+        ips = self._allocate_ips_for_port(context, port)
+        if ips:
+            for ip in ips:
+                ip_address = ip['ip_address']
+                subnet_id = ip['subnet_id']
+                self._store_ip_allocation(context, ip_address, network_id,
+                                          subnet_id, port_id)
+
+    def _update_port_with_ips(self, context, db_port, new_port, new_mac):
+        changes = self.Changes(add=[], original=[], remove=[])
+        # Check if the IPs need to be updated
+        network_id = db_port['network_id']
+        if 'fixed_ips' in new_port:
+            original = self._make_port_dict(db_port, process_extensions=False)
+            changes = self._update_ips_for_port(
+                context, network_id,
+                original["fixed_ips"], new_port['fixed_ips'],
+                original['mac_address'], db_port['device_owner'])
+
+            # Update ips if necessary
+            for ip in changes.add:
+                IpamNonPluggableBackend._store_ip_allocation(
+                    context, ip['ip_address'], network_id,
+                    ip['subnet_id'], db_port.id)
+        self._update_db_port(context, db_port, new_port, network_id, new_mac)
+        return changes
+
     def _test_fixed_ips_for_port(self, context, network_id, fixed_ips,
                                  device_owner):
         """Test fixed IPs for port.
@@ -202,7 +245,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     raise n_exc.InvalidInput(error_message=msg)
 
                 filter = {'network_id': [network_id]}
-                subnets = self.get_subnets(context, filters=filter)
+                subnets = self._get_subnets(context, filters=filter)
                 for subnet in subnets:
                     if ipam_utils.check_subnet_ip(subnet['cidr'],
                                                   fixed['ip_address']):
@@ -299,6 +342,29 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                 'subnet_id': result['subnet_id']})
         return ips
 
+    def _update_ips_for_port(self, context, network_id, original_ips,
+                             new_ips, mac_address, device_owner):
+        """Add or remove IPs from the port."""
+        added = []
+        changes = self._get_changed_ips_for_port(context, original_ips,
+                                                 new_ips, device_owner)
+        # Check if the IP's to add are OK
+        to_add = self._test_fixed_ips_for_port(context, network_id,
+                                               changes.add, device_owner)
+        for ip in changes.remove:
+            LOG.debug("Port update. Hold %s", ip)
+            IpamNonPluggableBackend._delete_ip_allocation(context,
+                                                          network_id,
+                                                          ip['subnet_id'],
+                                                          ip['ip_address'])
+
+        if to_add:
+            LOG.debug("Port update. Adding %s", to_add)
+            added = self._allocate_fixed_ips(context, to_add, mac_address)
+        return self.Changes(add=added,
+                            original=changes.original,
+                            remove=changes.remove)
+
     def _allocate_ips_for_port(self, context, port):
         """Allocate IP addresses for the port.
 
@@ -310,7 +376,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         ips = []
         v6_stateless = []
         net_id_filter = {'network_id': [p['network_id']]}
-        subnets = self.get_subnets(context, filters=net_id_filter)
+        subnets = self._get_subnets(context, filters=net_id_filter)
         is_router_port = (
             p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS or
             p['device_owner'] == constants.DEVICE_OWNER_ROUTER_SNAT)
@@ -360,6 +426,34 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                         'subnet_id': subnet['id']})
 
         return ips
+
+    def _add_auto_addrs_on_network_ports(self, context, subnet):
+        """For an auto-address subnet, add addrs for ports on the net."""
+        with context.session.begin(subtransactions=True):
+            network_id = subnet['network_id']
+            port_qry = context.session.query(models_v2.Port)
+            for port in port_qry.filter(
+                and_(models_v2.Port.network_id == network_id,
+                     models_v2.Port.device_owner !=
+                     constants.DEVICE_OWNER_ROUTER_SNAT,
+                     ~models_v2.Port.device_owner.in_(
+                         constants.ROUTER_INTERFACE_OWNERS))):
+                ip_address = self._calculate_ipv6_eui64_addr(
+                    context, subnet, port['mac_address'])
+                allocated = models_v2.IPAllocation(network_id=network_id,
+                                                   port_id=port['id'],
+                                                   ip_address=ip_address,
+                                                   subnet_id=subnet['id'])
+                try:
+                    # Do the insertion of each IP allocation entry within
+                    # the context of a nested transaction, so that the entry
+                    # is rolled back independently of other entries whenever
+                    # the corresponding port has been deleted.
+                    with context.session.begin_nested():
+                        context.session.add(allocated)
+                except db_exc.DBReferenceError:
+                    LOG.debug("Port %s was deleted while updating it with an "
+                              "IPv6 auto-address. Ignoring.", port['id'])
 
     def _calculate_ipv6_eui64_addr(self, context, subnet, mac_addr):
         prefix = subnet['cidr']

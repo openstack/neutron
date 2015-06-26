@@ -23,7 +23,7 @@ from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent as ovsagt
 from neutron.plugins.openvswitch.common import constants
-from neutron.tests.common import machine_fixtures
+from neutron.tests.common import base as common_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent import test_ovs_lib
 from neutron.tests.functional import base
@@ -86,20 +86,17 @@ class _OVSAgentOFCtlTestBase(_OVSAgentTestBase):
 
 class _ARPSpoofTestCase(object):
     def setUp(self):
-        if not checks.arp_header_match_supported():
-            self.skipTest("ARP header matching not supported")
         # NOTE(kevinbenton): it would be way cooler to use scapy for
         # these but scapy requires the python process to be running as
         # root to bind to the ports.
         super(_ARPSpoofTestCase, self).setUp()
+        self.skip_without_arp_support()
         self.src_addr = '192.168.0.1'
         self.dst_addr = '192.168.0.2'
         self.src_namespace = self.useFixture(
             net_helpers.NamespaceFixture()).name
         self.dst_namespace = self.useFixture(
             net_helpers.NamespaceFixture()).name
-        self.pinger = machine_fixtures.Pinger(
-            self.src_namespace, max_attempts=2)
         self.src_p = self.useFixture(
             net_helpers.OVSPortFixture(self.br, self.src_namespace)).port
         self.dst_p = self.useFixture(
@@ -107,12 +104,17 @@ class _ARPSpoofTestCase(object):
         # wait to add IPs until after anti-spoof rules to ensure ARP doesn't
         # happen before
 
+    @common_base.no_skip_on_missing_deps
+    def skip_without_arp_support(self):
+        if not checks.arp_header_match_supported():
+            self.skipTest("ARP header matching not supported")
+
     def test_arp_spoof_doesnt_block_normal_traffic(self):
         self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr])
         self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        self.pinger.assert_ping(self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
     def test_arp_spoof_doesnt_block_ipv6(self):
         self.src_addr = '2000::1'
@@ -124,7 +126,7 @@ class _ARPSpoofTestCase(object):
         # make sure the IPv6 addresses are ready before pinging
         self.src_p.addr.wait_until_address_ready(self.src_addr)
         self.dst_p.addr.wait_until_address_ready(self.dst_addr)
-        self.pinger.assert_ping(self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
     def test_arp_spoof_blocks_response(self):
         # this will prevent the destination from responding to the ARP
@@ -132,7 +134,7 @@ class _ARPSpoofTestCase(object):
         self._setup_arp_spoof_for_port(self.dst_p.name, ['192.168.0.3'])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        self.pinger.assert_no_ping(self.dst_addr)
+        net_helpers.assert_no_ping(self.src_namespace, self.dst_addr, count=2)
 
     def test_arp_spoof_blocks_request(self):
         # this will prevent the source from sending an ARP
@@ -154,7 +156,14 @@ class _ARPSpoofTestCase(object):
                                                          self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        self.pinger.assert_ping(self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+
+    def test_arp_spoof_allowed_address_pairs_0cidr(self):
+        self._setup_arp_spoof_for_port(self.dst_p.name, ['9.9.9.9/0',
+                                                         '1.2.3.4'])
+        self.src_p.addr.add('%s/24' % self.src_addr)
+        self.dst_p.addr.add('%s/24' % self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def test_arp_spoof_disable_port_security(self):
         # block first and then disable port security to make sure old rules
@@ -164,7 +173,7 @@ class _ARPSpoofTestCase(object):
                                        psec=False)
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        self.pinger.assert_ping(self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
     def _setup_arp_spoof_for_port(self, port, addrs, psec=True):
         of_port_map = self.br.get_vif_port_to_ofport_map()

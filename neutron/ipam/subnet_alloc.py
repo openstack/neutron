@@ -17,6 +17,8 @@ import math
 import operator
 
 import netaddr
+from oslo_utils import uuidutils
+
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -24,7 +26,6 @@ from neutron.db import models_v2
 import neutron.ipam as ipam
 from neutron.ipam import driver
 from neutron.ipam import utils as ipam_utils
-from neutron.openstack.common import uuidutils
 
 
 class SubnetAllocator(driver.Pool):
@@ -38,9 +39,20 @@ class SubnetAllocator(driver.Pool):
         super(SubnetAllocator, self).__init__(subnetpool, context)
         self._sp_helper = SubnetPoolHelper()
 
+    def _lock_subnetpool(self):
+        """Lock subnetpool associated row.
+
+        This method disallows to allocate concurrently 2 subnets in the same
+        subnetpool, it's required to ensure non-overlapping cidrs in the same
+        subnetpool.
+        """
+        # FIXME(cbrandily): not working with Galera
+        (self._context.session.query(models_v2.SubnetPool.id).
+         filter_by(id=self._subnetpool['id']).
+         with_lockmode('update').first())
+
     def _get_allocated_cidrs(self):
-        query = self._context.session.query(
-            models_v2.Subnet).with_lockmode('update')
+        query = self._context.session.query(models_v2.Subnet)
         subnets = query.filter_by(subnetpool_id=self._subnetpool['id'])
         return (x.cidr for x in subnets)
 
@@ -62,8 +74,7 @@ class SubnetAllocator(driver.Pool):
         subnetpool_id = self._subnetpool['id']
         tenant_id = self._subnetpool['tenant_id']
         with self._context.session.begin(subtransactions=True):
-            qry = self._context.session.query(
-                 models_v2.Subnet).with_lockmode('update')
+            qry = self._context.session.query(models_v2.Subnet)
             allocations = qry.filter_by(subnetpool_id=subnetpool_id,
                                         tenant_id=tenant_id)
             value = 0
@@ -88,12 +99,13 @@ class SubnetAllocator(driver.Pool):
 
     def _allocate_any_subnet(self, request):
         with self._context.session.begin(subtransactions=True):
+            self._lock_subnetpool()
             self._check_subnetpool_tenant_quota(request.tenant_id,
                                                 request.prefixlen)
             prefix_pool = self._get_available_prefix_list()
             for prefix in prefix_pool:
                 if request.prefixlen >= prefix.prefixlen:
-                    subnet = prefix.subnet(request.prefixlen).next()
+                    subnet = next(prefix.subnet(request.prefixlen))
                     gateway_ip = request.gateway_ip
                     if not gateway_ip:
                         gateway_ip = subnet.network + 1
@@ -111,6 +123,7 @@ class SubnetAllocator(driver.Pool):
 
     def _allocate_specific_subnet(self, request):
         with self._context.session.begin(subtransactions=True):
+            self._lock_subnetpool()
             self._check_subnetpool_tenant_quota(request.tenant_id,
                                                 request.prefixlen)
             cidr = request.subnet_cidr

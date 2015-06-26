@@ -53,10 +53,6 @@ class Extensionattribute(extensions.ExtensionDescriptor):
         return "Extension Test Resource"
 
     @classmethod
-    def get_namespace(cls):
-        return ""
-
-    @classmethod
     def get_updated(cls):
         return "2013-02-05T10:00:00-00:00"
 

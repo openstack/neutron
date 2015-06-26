@@ -31,6 +31,8 @@ def create_meteringlabels():
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('description', sa.String(length=1024), nullable=True),
+        sa.Column('shared', sa.Boolean(), server_default=sa.sql.false(),
+                  nullable=True),
         sa.PrimaryKeyConstraint('id'))
 
 
@@ -43,7 +45,8 @@ def upgrade():
         sa.Column('direction', direction, nullable=True),
         sa.Column('remote_ip_prefix', sa.String(length=64), nullable=True),
         sa.Column('metering_label_id', sa.String(length=36), nullable=False),
-        sa.Column('excluded', sa.Boolean(), nullable=True),
+        sa.Column('excluded', sa.Boolean(), nullable=True,
+                  server_default=sa.sql.false()),
         sa.ForeignKeyConstraint(['metering_label_id'],
                                 ['meteringlabels.id'],
                                 ondelete='CASCADE'),

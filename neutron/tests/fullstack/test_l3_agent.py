@@ -12,11 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
+
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.openstack.common import uuidutils
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack import fullstack_fixtures as f_fixtures
 

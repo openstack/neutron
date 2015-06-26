@@ -61,7 +61,6 @@ class ExtensionsTestJSON(base.BaseNetworkTest):
             self.assertIn('updated', ext_details.keys())
             self.assertIn('name', ext_details.keys())
             self.assertIn('description', ext_details.keys())
-            self.assertIn('namespace', ext_details.keys())
             self.assertIn('links', ext_details.keys())
             self.assertIn('alias', ext_details.keys())
             self.assertEqual(ext_details['name'], ext_name)

@@ -11,8 +11,15 @@
 #    under the License.
 #
 
+import functools
+import unittest.case
+
+from oslo_db.sqlalchemy import test_base
+import testtools.testcase
+
 from neutron.common import constants as n_const
 from neutron.tests import base
+from neutron.tests import tools
 
 
 def create_resource(prefix, creation_func, *args, **kwargs):
@@ -40,3 +47,42 @@ def create_resource(prefix, creation_func, *args, **kwargs):
             return creation_func(name, *args, **kwargs)
         except RuntimeError:
             pass
+
+
+def no_skip_on_missing_deps(wrapped):
+    """Do not allow a method/test to skip on missing dependencies.
+
+    This decorator raises an error if a skip is raised by wrapped method when
+    OS_FAIL_ON_MISSING_DEPS is evaluated to True. This decorator should be used
+    only for missing dependencies (including missing system requirements).
+    """
+
+    @functools.wraps(wrapped)
+    def wrapper(*args, **kwargs):
+        try:
+            return wrapped(*args, **kwargs)
+        except (testtools.TestCase.skipException, unittest.case.SkipTest) as e:
+            if base.bool_from_env('OS_FAIL_ON_MISSING_DEPS'):
+                tools.fail(
+                    '%s cannot be skipped because OS_FAIL_ON_MISSING_DEPS '
+                    'is enabled, skip reason: %s' % (wrapped.__name__, e))
+            raise
+    return wrapper
+
+
+class MySQLTestCase(test_base.MySQLOpportunisticTestCase):
+    """Base test class for MySQL tests.
+
+    If the MySQL db is unavailable then this test is skipped, unless
+    OS_FAIL_ON_MISSING_DEPS is enabled.
+    """
+    SKIP_ON_UNAVAILABLE_DB = not base.bool_from_env('OS_FAIL_ON_MISSING_DEPS')
+
+
+class PostgreSQLTestCase(test_base.PostgreSQLOpportunisticTestCase):
+    """Base test class for PostgreSQL tests.
+
+    If the PostgreSQL db is unavailable then this test is skipped, unless
+    OS_FAIL_ON_MISSING_DEPS is enabled.
+    """
+    SKIP_ON_UNAVAILABLE_DB = not base.bool_from_env('OS_FAIL_ON_MISSING_DEPS')

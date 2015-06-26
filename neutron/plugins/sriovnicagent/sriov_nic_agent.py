@@ -308,8 +308,8 @@ class SriovNicAgentConfigParser(object):
         Validate that network_device in excluded_device
         exists in device mappings
         """
-        dev_net_set = set(self.device_mappings.itervalues())
-        for dev_name in self.exclude_devices.iterkeys():
+        dev_net_set = set(self.device_mappings.values())
+        for dev_name in self.exclude_devices.keys():
             if dev_name not in dev_net_set:
                 raise ValueError(_("Device name %(dev_name)s is missing from "
                                    "physical_device_mappings") % {'dev_name':

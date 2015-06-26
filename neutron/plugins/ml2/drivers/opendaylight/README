@@ -9,7 +9,7 @@ contains more information on the capabilities OpenDaylight provides:
 The networking-odl project provides a thin layer sitting between this
 driver and OpenDaylight. The code can be downloaded from:
 
-    https://git.openstack.org/cgit/stackforge/networking-odl
+    https://git.openstack.org/cgit/openstack/networking-odl
 
 Theory of operation
 ===================

@@ -37,7 +37,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Lsn(object):
+class Lsn(extensions.ExtensionDescriptor):
     """Enable LSN configuration for Neutron NSX networks."""
 
     @classmethod
@@ -51,10 +51,6 @@ class Lsn(object):
     @classmethod
     def get_description(cls):
         return "Enables configuration of NSX Logical Services Node."
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/%s/api/v2.0" % EXT_ALIAS
 
     @classmethod
     def get_updated(cls):

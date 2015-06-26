@@ -13,10 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
-
 import mock
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import testtools
 from webob import exc
 
@@ -24,7 +23,6 @@ from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -53,9 +51,8 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         """Override the routine for allowing the router:external attribute."""
         # attributes containing a colon should be passed with
         # a double underscore
-        new_args = dict(itertools.izip(map(lambda x: x.replace('__', ':'),
-                                           kwargs),
-                                       kwargs.values()))
+        new_args = dict(zip(map(lambda x: x.replace('__', ':'), kwargs),
+                            kwargs.values()))
         arg_list = new_args.pop('arg_list', ()) + (external_net.EXTERNAL,)
         return super(ExtNetDBTestCase, self)._create_network(
             fmt, name, admin_state_up, arg_list=arg_list, **new_args)

@@ -222,6 +222,12 @@ class TestDhcpAgent(base.BaseTestCase):
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
 
+    def test_init_host(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(dhcp, 'sync_state') as sync_state:
+            dhcp.init_host()
+            sync_state.assert_called_once_with()
+
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
         # sync_state is needed for this test
@@ -236,7 +242,7 @@ class TestDhcpAgent(base.BaseTestCase):
                     with mock.patch.object(sys, 'argv') as sys_argv:
                         sys_argv.return_value = [
                             'dhcp', '--config-file',
-                            base.etcdir('neutron.conf.test')]
+                            base.etcdir('neutron.conf')]
                         cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
                         config.register_interface_driver_opts_helper(cfg.CONF)
                         config.register_agent_state_opts_helper(cfg.CONF)
@@ -260,7 +266,7 @@ class TestDhcpAgent(base.BaseTestCase):
             with mock.patch.object(sys, 'argv') as sys_argv:
                 with mock.patch(launcher_str) as launcher:
                     sys_argv.return_value = ['dhcp', '--config-file',
-                                             base.etcdir('neutron.conf.test')]
+                                             base.etcdir('neutron.conf')]
                     entry.main()
                     launcher.assert_has_calls(
                         [mock.call(), mock.call().launch_service(mock.ANY),

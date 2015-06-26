@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
+"POT-Creation-Date: 2015-06-11 06:02+0000\n"
+"PO-Revision-Date: 2015-06-10 23:52+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
@@ -208,11 +208,6 @@ msgstr "初始化扩展驱动 '%s'"
 
 msgid "Initializing extension manager."
 msgstr "正在初始化扩展管理员。"
-
-#, python-format
-msgid ""
-"Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
-msgstr "在被废弃的策略:%(old_policy)s位置上插入策略:%(new_policy)s "
 
 #, python-format
 msgid "Interface mappings: %s"

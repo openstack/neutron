@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.common import constants as l3_const
 from neutron.common import exceptions
@@ -21,7 +22,6 @@ from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as plugin_const
 from neutron.tests.unit import testlib_api
 

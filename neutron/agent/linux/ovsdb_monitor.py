@@ -14,12 +14,18 @@
 
 import eventlet
 from oslo_log import log as logging
+from oslo_serialization import jsonutils
 
 from neutron.agent.linux import async_process
+from neutron.agent.ovsdb import api as ovsdb
 from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)
+
+OVSDB_ACTION_INITIAL = 'initial'
+OVSDB_ACTION_INSERT = 'insert'
+OVSDB_ACTION_DELETE = 'delete'
 
 
 class OvsdbMonitor(async_process.AsyncProcess):
@@ -63,22 +69,50 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
     def __init__(self, respawn_interval=None):
         super(SimpleInterfaceMonitor, self).__init__(
             'Interface',
-            columns=['name', 'ofport'],
+            columns=['name', 'ofport', 'external_ids'],
             format='json',
             respawn_interval=respawn_interval,
         )
         self.data_received = False
+        self.new_events = {'added': [], 'removed': []}
 
     @property
     def has_updates(self):
         """Indicate whether the ovsdb Interface table has been updated.
 
-        True will be returned if the monitor process is not active.
-        This 'failing open' minimizes the risk of falsely indicating
-        the absence of updates at the expense of potential false
-        positives.
+        If the monitor process is not active an error will be logged since
+        it won't be able to communicate any update. This situation should be
+        temporary if respawn_interval is set.
         """
-        return bool(list(self.iter_stdout())) or not self.is_active()
+        if not self.is_active():
+            LOG.error(_LE("Interface monitor is not active"))
+        else:
+            self.process_events()
+        return bool(self.new_events['added'] or self.new_events['removed'])
+
+    def get_events(self):
+        self.process_events()
+        events = self.new_events
+        self.new_events = {'added': [], 'removed': []}
+        return events
+
+    def process_events(self):
+        devices_added = []
+        devices_removed = []
+        for row in self.iter_stdout():
+            json = jsonutils.loads(row).get('data')
+            for ovs_id, action, name, ofport, external_ids in json:
+                if external_ids:
+                    external_ids = ovsdb.val_to_py(external_ids)
+                device = {'name': name,
+                          'ofport': ofport,
+                          'external_ids': external_ids}
+                if action in (OVSDB_ACTION_INITIAL, OVSDB_ACTION_INSERT):
+                    devices_added.append(device)
+                elif action == OVSDB_ACTION_DELETE:
+                    devices_removed.append(device)
+        self.new_events['added'].extend(devices_added)
+        self.new_events['removed'].extend(devices_removed)
 
     def start(self, block=False, timeout=5):
         super(SimpleInterfaceMonitor, self).start()

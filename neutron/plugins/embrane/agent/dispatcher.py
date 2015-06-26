@@ -108,10 +108,10 @@ class Dispatcher(object):
                         h_exc.BrokenInterface, h_exc.DvaCreationFailed,
                         h_exc.DvaCreationPending, h_exc.BrokenDva,
                         h_exc.ConfigurationFailed) as ex:
-                    LOG.warning(p_con.error_map[type(ex)], ex.message)
+                    LOG.warning(p_con.error_map[type(ex)], ex)
                     transient_state = p_con.Status.ERROR
                 except h_exc.DvaDeleteFailed as ex:
-                    LOG.warning(p_con.error_map[type(ex)], ex.message)
+                    LOG.warning(p_con.error_map[type(ex)], ex)
                     transient_state = p_con.Status.DELETED
                 finally:
                     # if the returned transient state is None, no operations

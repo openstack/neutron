@@ -15,6 +15,7 @@ import types
 import mock
 import netaddr
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.common import constants
 from neutron.common import ipv6_utils
@@ -23,7 +24,6 @@ from neutron import ipam
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 from neutron.tests.unit.ipam import fake_driver
 
@@ -285,3 +285,82 @@ class TestIpamDriverLoader(base.BaseTestCase):
         subnet_pool_id = 'SomePoolID'
         self._load_ipam_driver('fake', subnet_pool_id)
         ipam_mock.assert_called_once_with(subnet_pool_id, self.ctx)
+
+
+class TestAddressRequestFactory(base.BaseTestCase):
+
+    def test_specific_address_request_is_loaded(self):
+        for address in ('10.12.0.15', 'fffe::1'):
+            self.assertIsInstance(
+                ipam.AddressRequestFactory.get_request(address),
+                ipam.SpecificAddressRequest)
+
+    def test_any_address_request_is_loaded(self):
+        for addr in [None, '']:
+            self.assertIsInstance(
+                ipam.AddressRequestFactory.get_request(addr),
+                ipam.AnyAddressRequest)
+
+
+class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
+
+    def test_specific_subnet_request_is_loaded(self):
+        addresses = [
+            '10.12.0.15/24',
+            '10.12.0.0/24',
+            'fffe::1/64',
+            'fffe::/64']
+        for address in addresses:
+            self.assertIsInstance(
+                ipam.SubnetRequestFactory.get_request(self.tenant_id,
+                                                      self.subnet_id,
+                                                      address),
+                ipam.SpecificSubnetRequest)
+
+    def test_any_address_request_is_loaded_for_ipv4(self):
+        self.assertIsInstance(
+            ipam.SubnetRequestFactory.get_request(self.tenant_id,
+                                                  self.subnet_id,
+                                                  None,
+                                                  constants.IPv4,
+                                                  8),
+            ipam.AnySubnetRequest)
+
+    def test_any_address_request_is_loaded_for_ipv6(self):
+        self.assertIsInstance(
+            ipam.SubnetRequestFactory.get_request(self.tenant_id,
+                                                  self.subnet_id,
+                                                  None,
+                                                  constants.IPv6,
+                                                  64),
+            ipam.AnySubnetRequest)
+
+    def test_args_are_passed_to_specific_request(self):
+        request = ipam.SubnetRequestFactory.get_request(
+            self.tenant_id,
+            self.subnet_id,
+            '192.168.1.0/24')
+        self.assertIsInstance(request,
+                              ipam.SpecificSubnetRequest)
+        self.assertEqual(self.tenant_id, request.tenant_id)
+        self.assertEqual(self.subnet_id, request.subnet_id)
+        self.assertEqual(None, request.gateway_ip)
+        self.assertEqual(None, request.allocation_pools)
+
+
+class TestGetRequestFactory(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestGetRequestFactory, self).setUp()
+        cfg.CONF.set_override('ipam_driver', 'fake')
+        self.driver = driver.Pool.get_instance(None, None)
+
+    def test_get_subnet_request_factory(self):
+        self.assertEqual(
+            self.driver.get_subnet_request_factory(),
+            ipam.SubnetRequestFactory)
+
+    def test_get_address_request_factory(self):
+        self.assertEqual(
+            self.driver.get_address_request_factory(),
+            ipam.AddressRequestFactory)

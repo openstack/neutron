@@ -8,7 +8,7 @@ Neutron plugins for VMware NSX family products
   https://wiki.openstack.org/wiki/Neutron/VMware_NSX_plugins
 
 * Full plugin code available at:
-  * http://git.openstack.org/cgit/stackforge/vmware-nsx
-  * https://github.com/stackforge/vmware-nsx
+  * http://git.openstack.org/cgit/openstack/vmware-nsx
+  * https://github.com/openstack/vmware-nsx
 
 * Pypi location: https://pypi.python.org/pypi/vmware-nsx

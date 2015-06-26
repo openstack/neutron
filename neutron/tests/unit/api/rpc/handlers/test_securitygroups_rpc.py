@@ -56,4 +56,4 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
     def test_security_groups_provider_updated(self):
         self.rpc.security_groups_provider_updated(None)
         self.rpc.sg_agent.assert_has_calls(
-            [mock.call.security_groups_provider_updated()])
+            [mock.call.security_groups_provider_updated(None)])

@@ -145,7 +145,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                       'is_visible': False,
                       'default': 1,
                       'enforce_policy': True,
-                      'convert_to': convert_to_unsigned_int_or_none},
+                      'convert_to': attr.convert_to_positive_float_or_none},
 
         QUEUE: {'allow_post': False,
                 'allow_put': False,
@@ -161,7 +161,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Qos(object):
+class Qos(extensions.ExtensionDescriptor):
     """Port Queue extension."""
 
     @classmethod
@@ -175,10 +175,6 @@ class Qos(object):
     @classmethod
     def get_description(cls):
         return "NSX QoS extension."
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/qos-queue/api/v2.0"
 
     @classmethod
     def get_updated(cls):

@@ -35,9 +35,6 @@ class V2attributes(object):
     def get_description(self):
         return "Demonstrates extended attributes on V2 core resources"
 
-    def get_namespace(self):
-        return "http://docs.openstack.org/ext/examples/v2attributes/api/v1.0"
-
     def get_updated(self):
         return "2012-07-18T10:00:00-00:00"
 

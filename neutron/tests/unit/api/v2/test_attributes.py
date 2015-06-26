@@ -799,6 +799,35 @@ class TestConvertToInt(base.BaseTestCase):
                 value, attributes.convert_none_to_empty_list(value))
 
 
+class TestConvertToFloat(base.BaseTestCase):
+    # NOTE: the routine being tested here is a plugin-specific extension
+    # module. As the plugin split proceed towards its second phase this
+    # test should either be remove, or the validation routine moved into
+    # neutron.api.v2.attributes
+
+    def test_convert_to_float_positve_value(self):
+        self.assertEqual(
+            1.111, attributes.convert_to_positive_float_or_none(1.111))
+        self.assertEqual(1, attributes.convert_to_positive_float_or_none(1))
+        self.assertEqual(0, attributes.convert_to_positive_float_or_none(0))
+
+    def test_convert_to_float_negative_value(self):
+        self.assertRaises(n_exc.InvalidInput,
+                          attributes.convert_to_positive_float_or_none,
+                          -1.11)
+
+    def test_convert_to_float_string(self):
+        self.assertEqual(4, attributes.convert_to_positive_float_or_none('4'))
+        self.assertEqual(
+            4.44, attributes.convert_to_positive_float_or_none('4.44'))
+        self.assertRaises(n_exc.InvalidInput,
+                          attributes.convert_to_positive_float_or_none,
+                          'garbage')
+
+    def test_convert_to_float_none_value(self):
+        self.assertIsNone(attributes.convert_to_positive_float_or_none(None))
+
+
 class TestConvertKvp(base.BaseTestCase):
 
     def test_convert_kvp_list_to_dict_succeeds_for_missing_values(self):

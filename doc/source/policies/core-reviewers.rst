@@ -83,7 +83,7 @@ The following are the current Neutron Lieutenants.
 Some notes on the above:
 
 * "Built-In Control Plane" means the L2 agents, DHCP agents, SGs, metadata
-  agents and the portion of ML2 which communicates with the agents.
+  agents and ML2.
 * The client includes commands installed server side.
 * L3 includes the L3 agent, DVR, and IPAM.
 * Services includes FWaaS, LBaaS, and VPNaaS.

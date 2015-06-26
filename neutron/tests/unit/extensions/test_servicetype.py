@@ -32,9 +32,6 @@ from neutron.tests.unit import dummy_plugin as dp
 from neutron.tests.unit import testlib_api
 
 
-DEFAULT_SERVICE_DEFS = [{'service_class': constants.DUMMY,
-                         'plugin': dp.DUMMY_PLUGIN_NAME}]
-
 _uuid = test_base._uuid
 _get_path = test_base._get_path
 

@@ -32,7 +32,7 @@ Known Limitations:
 Example usage:
 
   python -m neutron.db.migration.migrate_to_ml2 openvswitch \
-      mysql://login:pass@127.0.0.1/neutron
+      mysql+pymysql://login:pass@127.0.0.1/neutron
 
 Note that migration of tunneling state will only be attempted if the
 --tunnel-type parameter is provided.
@@ -61,10 +61,10 @@ To manually test migration from ovs to ml2 with devstack:
 import argparse
 
 from oslo_db.sqlalchemy import session
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 
 from neutron.extensions import portbindings
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
 
 

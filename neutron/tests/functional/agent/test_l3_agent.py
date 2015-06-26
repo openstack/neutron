@@ -21,6 +21,7 @@ import mock
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import six
 import testtools
 import webob
@@ -44,12 +45,12 @@ from neutron.callbacks import resources
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
-from neutron.openstack.common import uuidutils
+from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
-from neutron.tests.unit.agent.l3 import test_agent as test_l3_agent
+
 
 LOG = logging.getLogger(__name__)
 _uuid = uuidutils.generate_uuid
@@ -115,7 +116,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             enable_fip = False
             extra_routes = False
 
-        return test_l3_agent.prepare_router_data(ip_version=ip_version,
+        return l3_test_common.prepare_router_data(ip_version=ip_version,
                                                  enable_snat=enable_snat,
                                                  enable_floating_ip=enable_fip,
                                                  enable_ha=enable_ha,
@@ -145,7 +146,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                           ip_version=4,
                                           ipv6_subnet_modes=None,
                                           interface_id=None):
-        return test_l3_agent.router_append_subnet(router, count,
+        return l3_test_common.router_append_subnet(router, count,
                 ip_version, ipv6_subnet_modes, interface_id)
 
     def _namespace_exists(self, namespace):
@@ -741,8 +742,8 @@ class L3HATestFramework(L3AgentTestFramework):
 
         router_info_2 = copy.deepcopy(router_info)
         router_info_2[l3_constants.HA_INTERFACE_KEY] = (
-            test_l3_agent.get_ha_interface(ip='169.254.192.2',
-                                           mac='22:22:22:22:22:22'))
+            l3_test_common.get_ha_interface(ip='169.254.192.2',
+                                            mac='22:22:22:22:22:22'))
 
         get_ns_name.return_value = "%s%s%s" % (
             namespaces.RouterNamespace._get_ns_name(router_info_2['id']),
@@ -1038,7 +1039,7 @@ class TestDvrRouter(L3AgentTestFramework):
 
     def generate_dvr_router_info(
         self, enable_ha=False, enable_snat=False, **kwargs):
-        router = test_l3_agent.prepare_router_data(
+        router = l3_test_common.prepare_router_data(
             enable_snat=enable_snat,
             enable_floating_ip=True,
             enable_ha=enable_ha,
@@ -1239,7 +1240,7 @@ class TestDvrRouter(L3AgentTestFramework):
         # existing ports on the the uplinked subnet, the ARP
         # cache is properly populated.
         self.agent.conf.agent_mode = 'dvr_snat'
-        router_info = test_l3_agent.prepare_router_data()
+        router_info = l3_test_common.prepare_router_data()
         router_info['distributed'] = True
         expected_neighbor = '35.4.1.10'
         port_data = {
