@@ -15,6 +15,7 @@
 from oslo_config import cfg
 
 from neutron.agent.common import config
+from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
@@ -122,8 +123,10 @@ agent_opts = [
                        "cause brief traffic interruption.")),
     cfg.BoolOpt('tunnel_csum', default=False,
                 help=_("Set or un-set the tunnel header checksum  on "
-                       "outgoing IP packet carrying GRE/VXLAN tunnel."))
-
+                       "outgoing IP packet carrying GRE/VXLAN tunnel.")),
+    cfg.StrOpt('agent_type', default=n_const.AGENT_TYPE_OVS,
+               deprecated_for_removal=True,
+               help=_("Selects the Agent Type reported"))
 ]
 
 

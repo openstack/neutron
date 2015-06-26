@@ -226,6 +226,38 @@ class TestOvsNeutronAgent(object):
                 **kwargs)
             self.assertEqual(expected, self.agent.int_br.datapath_type)
 
+    def test_agent_type_ovs(self):
+        # verify agent_type is default
+        expected = n_const.AGENT_TYPE_OVS
+        self.assertEqual(expected,
+                         self.agent.agent_state['agent_type'])
+
+    def test_agent_type_alt(self):
+        with mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                               'setup_integration_br'),\
+            mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                              'setup_ancillary_bridges',
+                              return_value=[]), \
+            mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                       return_value='00:00:00:00:00:01'), \
+            mock.patch(
+                'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'), \
+            mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
+                       new=MockFixedIntervalLoopingCall), \
+            mock.patch(
+                'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
+                return_value=[]):
+            # validate setting non default agent_type
+            expected = 'alt agent type'
+            cfg.CONF.set_override('agent_type',
+                                  expected,
+                                  group='AGENT')
+            kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
+            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
+                **kwargs)
+            self.assertEqual(expected,
+                             self.agent.agent_state['agent_type'])
+
     def test_restore_local_vlan_map_with_device_has_tag(self):
         self._test_restore_local_vlan_maps(2)
 
