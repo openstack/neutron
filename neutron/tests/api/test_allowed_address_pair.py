@@ -26,7 +26,7 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
 
     """
     Tests the Neutron Allowed Address Pair API extension using the Tempest
-    ReST client. The following API operations are tested with this extension:
+    REST client. The following API operations are tested with this extension:
 
         create port
         list ports
