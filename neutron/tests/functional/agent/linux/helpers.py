@@ -20,11 +20,10 @@ import select
 import shlex
 import subprocess
 
-import fixtures
-
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.tests import tools
 
 CHILD_PROCESS_TIMEOUT = os.environ.get('OS_TEST_CHILD_PROCESS_TIMEOUT', 20)
 CHILD_PROCESS_SLEEP = os.environ.get('OS_TEST_CHILD_PROCESS_SLEEP', 0.5)
@@ -34,7 +33,7 @@ SS_SOURCE_PORT_PATTERN = re.compile(
     r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[0-9:].*')
 
 
-class RecursivePermDirFixture(fixtures.Fixture):
+class RecursivePermDirFixture(tools.SafeFixture):
     """Ensure at least perms permissions on directory and ancestors."""
 
     def __init__(self, directory, perms):

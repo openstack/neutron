@@ -244,7 +244,7 @@ class DietTestCase(testtools.TestCase):
                              {'key': k, 'exp': v, 'act': actual_superset[k]})
 
 
-class ProcessMonitorFixture(fixtures.Fixture):
+class ProcessMonitorFixture(tools.SafeFixture):
     """Test fixture to capture and cleanup any spawn process monitor."""
     def setUp(self):
         super(ProcessMonitorFixture, self).setUp()
@@ -410,9 +410,10 @@ class BaseTestCase(DietTestCase):
         cfg.CONF.set_override("notification_driver", notification_driver)
 
 
-class PluginFixture(fixtures.Fixture):
+class PluginFixture(tools.SafeFixture):
 
     def __init__(self, core_plugin=None):
+        super(PluginFixture, self).__init__()
         self.core_plugin = core_plugin
 
     def setUp(self):
