@@ -586,8 +586,13 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
         self._validate_subnet(context, s, cur_subnet=db_subnet)
 
         if s.get('gateway_ip') is not None:
-            allocation_pools = [{'start': p['first_ip'], 'end': p['last_ip']}
-                                for p in db_subnet.allocation_pools]
+            if s.get('allocation_pools') is not None:
+                allocation_pools = [{'start': p['start'], 'end': p['end']}
+                                    for p in s['allocation_pools']]
+            else:
+                allocation_pools = [{'start': p['first_ip'],
+                                     'end': p['last_ip']}
+                                    for p in db_subnet.allocation_pools]
             self._validate_gw_out_of_pools(s["gateway_ip"], allocation_pools)
 
         with context.session.begin(subtransactions=True):
