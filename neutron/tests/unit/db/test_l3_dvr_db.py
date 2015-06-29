@@ -244,6 +244,31 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             self.assertTrue(cfips.called)
             self.assertTrue(gvm.called)
 
+    def setup_port_has_ipv6_address(self, port):
+        with mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                               '_port_has_ipv6_address') as pv6:
+            pv6.return_value = True
+            result = self.mixin._port_has_ipv6_address(port)
+            return result, pv6
+
+    def test__port_has_ipv6_address_for_dvr_snat_port(self):
+        port = {
+            'id': 'my_port_id',
+            'device_owner': l3_const.DEVICE_OWNER_ROUTER_SNAT,
+        }
+        result, pv6 = self.setup_port_has_ipv6_address(port)
+        self.assertFalse(result)
+        self.assertFalse(pv6.called)
+
+    def test__port_has_ipv6_address_for_non_snat_ports(self):
+        port = {
+            'id': 'my_port_id',
+            'device_owner': l3_const.DEVICE_OWNER_DVR_INTERFACE,
+        }
+        result, pv6 = self.setup_port_has_ipv6_address(port)
+        self.assertTrue(result)
+        self.assertTrue(pv6.called)
+
     def test__delete_floatingip_agent_gateway_port(self):
         port = {
             'id': 'my_port_id',
