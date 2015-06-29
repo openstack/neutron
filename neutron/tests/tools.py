@@ -16,52 +16,12 @@
 import warnings
 
 import fixtures
-from oslo_utils import excutils
 import six
 
 from neutron.api.v2 import attributes
 
 
-class SafeFixture(fixtures.Fixture):
-    """Base Fixture ensuring cleanups are done even if setUp fails.
-
-    Required until testtools/fixtures bugs #1456353 #1456370 are solved.
-    """
-
-    def __init__(self):
-        unsafe_setup = self.setUp
-        self.setUp = lambda: self.safe_setUp(unsafe_setup)
-        self.initialized = True
-
-    def setUp(self):
-        assert getattr(self, 'initialized', True)
-        super(SafeFixture, self).setUp()
-
-    def safe_setUp(self, unsafe_setup):
-        """Ensure cleanup is done even if setUp fails."""
-        try:
-            unsafe_setup()
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                self.safe_cleanUp()
-
-    def safe_cleanUp(self):
-        """Perform cleanUp if required.
-
-        Fixture.addCleanup/cleanUp can be called only after Fixture.setUp
-        successful call. It implies we cannot and don't need to call cleanUp
-        if Fixture.setUp fails or is not called.
-
-        This method assumes Fixture.setUp was called successfully if
-        self._detail_sources is defined (Fixture.setUp last action).
-        """
-        root_setup_succeed = hasattr(self, '_detail_sources')
-
-        if root_setup_succeed:
-            self.cleanUp()
-
-
-class AttributeMapMemento(SafeFixture):
+class AttributeMapMemento(fixtures.Fixture):
     """Create a copy of the resource attribute map so it can be restored during
     test cleanup.
 
@@ -75,13 +35,13 @@ class AttributeMapMemento(SafeFixture):
         - Inheritance is a bit of overkill for this facility and it's a
         stretch to rationalize the "is a" criteria.
     """
-    def setUp(self):
+
+    def _setUp(self):
         # Shallow copy is not a proper choice for keeping a backup copy as
         # the RESOURCE_ATTRIBUTE_MAP map is modified in place through the
         # 0th level keys. Ideally deepcopy() would be used but this seems
         # to result in test failures. A compromise is to copy one level
         # deeper than a shallow copy.
-        super(AttributeMapMemento, self).setUp()
         self.contents_backup = {}
         for res, attrs in six.iteritems(attributes.RESOURCE_ATTRIBUTE_MAP):
             self.contents_backup[res] = attrs.copy()
@@ -91,19 +51,18 @@ class AttributeMapMemento(SafeFixture):
         attributes.RESOURCE_ATTRIBUTE_MAP = self.contents_backup
 
 
-class WarningsFixture(SafeFixture):
+class WarningsFixture(fixtures.Fixture):
     """Filters out warnings during test runs."""
 
     warning_types = (
         DeprecationWarning, PendingDeprecationWarning, ImportWarning
     )
 
-    def setUp(self):
-        super(WarningsFixture, self).setUp()
+    def _setUp(self):
+        self.addCleanup(warnings.resetwarnings)
         for wtype in self.warning_types:
             warnings.filterwarnings(
                 "always", category=wtype, module='^neutron\\.')
-        self.addCleanup(warnings.resetwarnings)
 
 
 """setup_mock_calls and verify_mock_calls are convenient methods

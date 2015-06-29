@@ -28,7 +28,6 @@ from neutron.agent.linux import utils
 from neutron.tests import base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import config_fixtures
-from neutron.tests import tools
 
 LOG = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ LOG = logging.getLogger(__name__)
 DEFAULT_LOG_DIR = '/tmp/fullstack-logs/'
 
 
-class ProcessFixture(tools.SafeFixture):
+class ProcessFixture(fixtures.Fixture):
     def __init__(self, test_name, process_name, exec_name, config_filenames):
         super(ProcessFixture, self).__init__()
         self.test_name = test_name
@@ -45,8 +44,8 @@ class ProcessFixture(tools.SafeFixture):
         self.config_filenames = config_filenames
         self.process = None
 
-    def setUp(self):
-        super(ProcessFixture, self).setUp()
+    def _setUp(self):
+        self.addCleanup(self.stop)
         self.start()
 
     def start(self):
@@ -65,15 +64,10 @@ class ProcessFixture(tools.SafeFixture):
     def stop(self):
         self.process.stop(block=True)
 
-    def cleanUp(self, *args, **kwargs):
-        self.stop()
-        super(ProcessFixture, self).cleanUp(*args, **kwargs)
 
+class RabbitmqEnvironmentFixture(fixtures.Fixture):
 
-class RabbitmqEnvironmentFixture(tools.SafeFixture):
-    def setUp(self):
-        super(RabbitmqEnvironmentFixture, self).setUp()
-
+    def _setUp(self):
         self.user = base.get_rand_name(prefix='user')
         self.password = base.get_rand_name(prefix='pass')
         self.vhost = base.get_rand_name(prefix='vhost')
@@ -93,14 +87,12 @@ class RabbitmqEnvironmentFixture(tools.SafeFixture):
         utils.execute(cmd, run_as_root=True)
 
 
-class FullstackFixture(tools.SafeFixture):
+class FullstackFixture(fixtures.Fixture):
     def __init__(self):
         super(FullstackFixture, self).__init__()
         self.test_name = None
 
-    def setUp(self):
-        super(FullstackFixture, self).setUp()
-
+    def _setUp(self):
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
         rabbitmq_environment = self.useFixture(RabbitmqEnvironmentFixture())
 
@@ -120,7 +112,7 @@ class FullstackFixture(tools.SafeFixture):
             return False
 
 
-class NeutronServerFixture(tools.SafeFixture):
+class NeutronServerFixture(fixtures.Fixture):
 
     NEUTRON_SERVER = "neutron-server"
 
@@ -130,9 +122,7 @@ class NeutronServerFixture(tools.SafeFixture):
         self.temp_dir = temp_dir
         self.rabbitmq_environment = rabbitmq_environment
 
-    def setUp(self):
-        super(NeutronServerFixture, self).setUp()
-
+    def _setUp(self):
         self.neutron_cfg_fixture = config_fixtures.NeutronConfigFixture(
             self.temp_dir, cfg.CONF.database.connection,
             self.rabbitmq_environment)
@@ -169,7 +159,7 @@ class NeutronServerFixture(tools.SafeFixture):
         return client.Client(auth_strategy="noauth", endpoint_url=url)
 
 
-class OVSAgentFixture(tools.SafeFixture):
+class OVSAgentFixture(fixtures.Fixture):
 
     NEUTRON_OVS_AGENT = "neutron-openvswitch-agent"
 
@@ -182,9 +172,7 @@ class OVSAgentFixture(tools.SafeFixture):
         self.neutron_config = self.neutron_cfg_fixture.config
         self.plugin_config = self.plugin_cfg_fixture.config
 
-    def setUp(self):
-        super(OVSAgentFixture, self).setUp()
-
+    def _setUp(self):
         self.useFixture(net_helpers.OVSBridgeFixture(self._get_br_int_name()))
         self.useFixture(net_helpers.OVSBridgeFixture(self._get_br_phys_name()))
 
@@ -204,7 +192,7 @@ class OVSAgentFixture(tools.SafeFixture):
         return self.plugin_config.ovs.bridge_mappings.split(':')[1]
 
 
-class L3AgentFixture(tools.SafeFixture):
+class L3AgentFixture(fixtures.Fixture):
 
     NEUTRON_L3_AGENT = "neutron-l3-agent"
 
@@ -217,9 +205,7 @@ class L3AgentFixture(tools.SafeFixture):
         self.neutron_config = self.neutron_cfg_fixture.config
         self.integration_bridge_name = integration_bridge_name
 
-    def setUp(self):
-        super(L3AgentFixture, self).setUp()
-
+    def _setUp(self):
         self.plugin_cfg_fixture = config_fixtures.L3ConfigFixture(
             self.temp_dir, self.integration_bridge_name)
         self.useFixture(self.plugin_cfg_fixture)
