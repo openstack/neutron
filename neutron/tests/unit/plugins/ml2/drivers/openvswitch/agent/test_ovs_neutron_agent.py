@@ -668,7 +668,6 @@ class TestOvsNeutronAgent(object):
             self.agent.local_vlan_map["netuid12345"] = lvm
             self.agent.port_unbound("vif1", "netuid12345")
             self.assertTrue(reclvl_fn.called)
-            reclvl_fn.called = False
 
             lvm.vif_ports = {}
             self.agent.port_unbound("vif1", "netuid12345")
