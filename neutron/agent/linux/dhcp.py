@@ -657,13 +657,22 @@ class Dnsmasq(DhcpLocalProcess):
         old_leases = self._read_hosts_file_leases(filename)
 
         new_leases = set()
+        dhcp_port_exists = False
+        dhcp_port_on_this_host = self.device_manager.get_device_id(
+            self.network)
         for port in self.network.ports:
             client_id = self._get_client_id(port)
             for alloc in port.fixed_ips:
                 new_leases.add((alloc.ip_address, port.mac_address, client_id))
+            if port.device_id == dhcp_port_on_this_host:
+                dhcp_port_exists = True
 
         for ip, mac, client_id in old_leases - new_leases:
             self._release_lease(mac, ip, client_id)
+
+        if not dhcp_port_exists:
+            self.device_manager.driver.unplug(
+                self.interface_name, namespace=self.network.namespace)
 
     def _output_addn_hosts_file(self):
         """Writes a dnsmasq compatible additional hosts file.
