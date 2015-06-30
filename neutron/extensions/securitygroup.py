@@ -17,6 +17,7 @@ import abc
 import netaddr
 
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import six
 
 from neutron.api import extensions
@@ -25,7 +26,6 @@ from neutron.api.v2 import base
 from neutron.common import constants as const
 from neutron.common import exceptions as nexception
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron import quota
 
 
@@ -292,11 +292,6 @@ class Securitygroup(extensions.ExtensionDescriptor):
         return "The security groups extension."
 
     @classmethod
-    def get_namespace(cls):
-        # todo
-        return "http://docs.openstack.org/ext/securitygroups/api/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-10-05T10:00:00-00:00"
 
@@ -326,8 +321,8 @@ class Securitygroup(extensions.ExtensionDescriptor):
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            return dict(EXTENDED_ATTRIBUTES_2_0.items() +
-                        RESOURCE_ATTRIBUTE_MAP.items())
+            return dict(list(EXTENDED_ATTRIBUTES_2_0.items()) +
+                        list(RESOURCE_ATTRIBUTE_MAP.items()))
         else:
             return {}
 

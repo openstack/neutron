@@ -12,7 +12,14 @@
 
 import abc
 
+from oslo_config import cfg
+from oslo_log import log
 import six
+
+from neutron import ipam
+from neutron import manager
+
+LOG = log.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -22,23 +29,29 @@ class Pool(object):
     There should be an instance of the driver for every subnet pool.
     """
 
-    def __init__(self, subnet_pool_id):
+    def __init__(self, subnetpool, context):
         """Initialize pool
 
-        :param subnet_pool_id: SubnetPool ID of the address space to use.
-        :type subnet_pool_id: str uuid
+        :param subnetpool: SubnetPool of the address space to use.
+        :type subnetpool: dict
         """
-        self._subnet_pool_id = subnet_pool_id
+        self._subnetpool = subnetpool
+        self._context = context
 
     @classmethod
-    def get_instance(cls, subnet_pool_id):
+    def get_instance(cls, subnet_pool, context):
         """Returns an instance of the configured IPAM driver
 
-        :param subnet_pool_id: Subnet pool ID of the address space to use.
-        :type subnet_pool_id: str uuid
+        :param subnet_pool: Subnet pool of the address space to use.
+        :type subnet_pool: dict
         :returns: An instance of Driver for the given subnet pool
         """
-        raise NotImplementedError
+        ipam_driver_name = cfg.CONF.ipam_driver
+        mgr = manager.NeutronManager
+        LOG.debug("Loading ipam driver: %s", ipam_driver_name)
+        driver_class = mgr.load_class_for_provider('neutron.ipam_drivers',
+                                                   ipam_driver_name)
+        return driver_class(subnet_pool, context)
 
     @abc.abstractmethod
     def allocate_subnet(self, request):
@@ -83,6 +96,20 @@ class Pool(object):
         :raises: IPAMAllocationNotFound
         """
 
+    def get_subnet_request_factory(self):
+        """Returns default SubnetRequestFactory
+
+        Can be overridden on driver level to return custom factory
+        """
+        return ipam.SubnetRequestFactory
+
+    def get_address_request_factory(self):
+        """Returns default AddressRequestFactory
+
+        Can be overridden on driver level to return custom factory
+        """
+        return ipam.AddressRequestFactory
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Subnet(object):
@@ -120,4 +147,15 @@ class Subnet(object):
         """Returns the details of the subnet
 
         :returns: An instance of SpecificSubnetRequest with the subnet detail.
+        """
+
+    @abc.abstractmethod
+    def associate_neutron_subnet(self, subnet_id):
+        """Associate the IPAM subnet with a neutron subnet.
+
+        This operation should be performed to attach a neutron subnet to the
+        current subnet instance. In some cases IPAM subnets may be created
+        independently of neutron subnets and associated at a later stage.
+
+        :param subnet_id: neutron subnet identifier.
         """

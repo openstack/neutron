@@ -48,7 +48,7 @@ class QuotaSetsController(wsgi.Controller):
         self._update_extended_attributes = True
 
     def _update_attributes(self):
-        for quota_resource in QUOTAS.resources.iterkeys():
+        for quota_resource in QUOTAS.resources.keys():
             attr_dict = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
             attr_dict[quota_resource] = {
                 'allow_post': False,
@@ -124,10 +124,6 @@ class Quotasv2(extensions.ExtensionDescriptor):
         if cfg.CONF.QUOTAS.quota_driver == DB_QUOTA_DRIVER:
             description += ' per tenant'
         return description
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/network/ext/quotas-sets/api/v2.0"
 
     @classmethod
     def get_updated(cls):

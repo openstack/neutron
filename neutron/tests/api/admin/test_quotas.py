@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import six
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base
@@ -59,7 +60,7 @@ class QuotasTest(base.BaseAdminNetworkTest):
         quota_set = self.admin_client.update_quotas(tenant_id,
                                                     **new_quotas)
         self.addCleanup(self.admin_client.reset_quotas, tenant_id)
-        for key, value in new_quotas.iteritems():
+        for key, value in six.iteritems(new_quotas):
             self.assertEqual(value, quota_set[key])
 
         # Confirm our tenant is listed among tenants with non default quotas
@@ -73,7 +74,7 @@ class QuotasTest(base.BaseAdminNetworkTest):
         # Confirm from API quotas were changed as requested for tenant
         quota_set = self.admin_client.show_quotas(tenant_id)
         quota_set = quota_set['quota']
-        for key, value in new_quotas.iteritems():
+        for key, value in six.iteritems(new_quotas):
             self.assertEqual(value, quota_set[key])
 
         # Reset quotas to default and confirm

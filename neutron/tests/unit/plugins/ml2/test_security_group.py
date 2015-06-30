@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import math
 import mock
 
@@ -110,12 +109,11 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
         max_ports_per_query = 5
         ports_to_query = 73
         for max_ports_per_query in (1, 2, 5, 7, 9, 31):
-            with contextlib.nested(
-                mock.patch('neutron.plugins.ml2.db.MAX_PORTS_PER_QUERY',
-                           new=max_ports_per_query),
-                mock.patch('neutron.plugins.ml2.db.get_sg_ids_grouped_by_port',
-                           return_value={}),
-            ) as (max_mock, get_mock):
+            with mock.patch('neutron.plugins.ml2.db.MAX_PORTS_PER_QUERY',
+                            new=max_ports_per_query),\
+                    mock.patch(
+                        'neutron.plugins.ml2.db.get_sg_ids_grouped_by_port',
+                        return_value={}) as get_mock:
                 plugin.get_ports_from_devices(self.ctx,
                     ['%s%s' % (const.TAP_DEVICE_PREFIX, i)
                      for i in range(ports_to_query)])
@@ -139,10 +137,8 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
         plugin = manager.NeutronManager.get_plugin()
         # when full UUIDs are provided, the _or statement should only
         # have one matching 'IN' critiera for all of the IDs
-        with contextlib.nested(
-            mock.patch('neutron.plugins.ml2.db.or_'),
-            mock.patch('sqlalchemy.orm.Session.query')
-        ) as (or_mock, qmock):
+        with mock.patch('neutron.plugins.ml2.db.or_') as or_mock,\
+                mock.patch('sqlalchemy.orm.Session.query') as qmock:
             fmock = qmock.return_value.outerjoin.return_value.filter
             # return no ports to exit the method early since we are mocking
             # the query

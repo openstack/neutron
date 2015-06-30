@@ -37,7 +37,8 @@ def upgrade():
     op.create_table(
         'quotas',
         sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('resource', sa.String(length=255), nullable=True),
         sa.Column('limit', sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint('id'))

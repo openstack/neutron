@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import mock
 
 from neutron.api.rpc.handlers import securitygroups_rpc
@@ -24,19 +23,15 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
     def test_security_group_rules_for_devices(self):
         rpcapi = securitygroups_rpc.SecurityGroupServerRpcApi('fake_topic')
 
-        with contextlib.nested(
-            mock.patch.object(rpcapi.client, 'call'),
-            mock.patch.object(rpcapi.client, 'prepare'),
-        ) as (
-            rpc_mock, prepare_mock
-        ):
+        with mock.patch.object(rpcapi.client, 'call') as rpc_mock,\
+                mock.patch.object(rpcapi.client, 'prepare') as prepare_mock:
             prepare_mock.return_value = rpcapi.client
             rpcapi.security_group_rules_for_devices('context', ['fake_device'])
 
-        rpc_mock.assert_called_once_with(
-                'context',
-                'security_group_rules_for_devices',
-                devices=['fake_device'])
+            rpc_mock.assert_called_once_with(
+                    'context',
+                    'security_group_rules_for_devices',
+                    devices=['fake_device'])
 
 
 class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
@@ -61,4 +56,4 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
     def test_security_groups_provider_updated(self):
         self.rpc.security_groups_provider_updated(None)
         self.rpc.sg_agent.assert_has_calls(
-            [mock.call.security_groups_provider_updated()])
+            [mock.call.security_groups_provider_updated(None)])

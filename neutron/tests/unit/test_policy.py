@@ -16,7 +16,7 @@
 """Test of Policy Engine For Neutron"""
 
 import mock
-from oslo_config import cfg
+from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
 import six
@@ -28,7 +28,6 @@ from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron import context
 from neutron import manager
-from neutron.openstack.common import policy as common_policy
 from neutron import policy
 from neutron.tests import base
 
@@ -44,14 +43,13 @@ class PolicyFileTestCase(base.BaseTestCase):
         action = "example:test"
         with open(tmpfilename, "w") as policyfile:
             policyfile.write("""{"example:test": ""}""")
-        cfg.CONF.set_override('policy_file', tmpfilename)
-        policy.refresh()
+        policy.refresh(policy_file=tmpfilename)
         policy.enforce(self.context, action, self.target)
         with open(tmpfilename, "w") as policyfile:
             policyfile.write("""{"example:test": "!"}""")
-        policy.refresh()
+        policy.refresh(policy_file=tmpfilename)
         self.target = {'tenant_id': 'fake_tenant'}
-        self.assertRaises(common_policy.PolicyNotAuthorized,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized,
                           policy.enforce,
                           self.context,
                           action,
@@ -75,19 +73,18 @@ class PolicyTestCase(base.BaseTestCase):
         }
         policy.refresh()
         # NOTE(vish): then overload underlying rules
-        policy.set_rules(dict((k, common_policy.parse_rule(v))
-                              for k, v in rules.items()))
+        policy.set_rules(oslo_policy.Rules.from_dict(rules))
         self.context = context.Context('fake', 'fake', roles=['member'])
         self.target = {}
 
     def test_enforce_nonexistent_action_throws(self):
         action = "example:noexist"
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, self.target)
 
     def test_enforce_bad_action_throws(self):
         action = "example:denied"
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, self.target)
 
     def test_check_bad_action_noraise(self):
@@ -124,7 +121,7 @@ class PolicyTestCase(base.BaseTestCase):
         with mock.patch.object(urlrequest, 'urlopen', new=fakeurlopen):
             action = "example:get_http"
             target = {}
-            self.assertRaises(common_policy.PolicyNotAuthorized,
+            self.assertRaises(oslo_policy.PolicyNotAuthorized,
                               policy.enforce, self.context,
                               action, target)
 
@@ -133,12 +130,12 @@ class PolicyTestCase(base.BaseTestCase):
         target_not_mine = {'tenant_id': 'another'}
         action = "example:my_file"
         policy.enforce(self.context, action, target_mine)
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target_not_mine)
 
     def test_early_AND_enforcement(self):
         action = "example:early_and_fail"
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, self.target)
 
     def test_early_OR_enforcement(self):
@@ -166,13 +163,12 @@ class DefaultPolicyTestCase(base.BaseTestCase):
         }
         with open(tmpfilename, "w") as policyfile:
             jsonutils.dump(self.rules, policyfile)
-        cfg.CONF.set_override('policy_file', tmpfilename)
-        policy.refresh()
+        policy.refresh(policy_file=tmpfilename)
 
         self.context = context.Context('fake', 'fake')
 
     def test_policy_called(self):
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, "example:exist", {})
 
     def test_not_found_policy_calls_default(self):
@@ -208,14 +204,33 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def fakepolicyinit(self, **kwargs):
         enf = policy._ENFORCER
-        enf.set_rules(common_policy.Rules(self.rules))
+        enf.set_rules(oslo_policy.Rules(self.rules))
 
     def setUp(self):
         super(NeutronPolicyTestCase, self).setUp()
         policy.refresh()
         # Add Fake resources to RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCES)
-        self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
+        self._set_rules()
+
+        def remove_fake_resource():
+            del attributes.RESOURCE_ATTRIBUTE_MAP["%ss" % FAKE_RESOURCE_NAME]
+
+        self.patcher = mock.patch.object(neutron.policy,
+                                         'init',
+                                         new=self.fakepolicyinit)
+        self.patcher.start()
+        self.addCleanup(remove_fake_resource)
+        self.context = context.Context('fake', 'fake', roles=['user'])
+        plugin_klass = importutils.import_class(
+            "neutron.db.db_base_plugin_v2.NeutronDbPluginV2")
+        self.manager_patcher = mock.patch('neutron.manager.NeutronManager')
+        fake_manager = self.manager_patcher.start()
+        fake_manager_instance = fake_manager.return_value
+        fake_manager_instance.plugin = plugin_klass()
+
+    def _set_rules(self, **kwargs):
+        rules_dict = {
             "context_is_admin": "role:admin",
             "context_is_advsvc": "role:advsvc",
             "admin_or_network_owner": "rule:context_is_admin or "
@@ -253,23 +268,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
             "insert_rule": "rule:admin_or_owner",
             "remove_rule": "rule:admin_or_owner",
-        }.items())
-
-        def remove_fake_resource():
-            del attributes.RESOURCE_ATTRIBUTE_MAP["%ss" % FAKE_RESOURCE_NAME]
-
-        self.patcher = mock.patch.object(neutron.policy,
-                                         'init',
-                                         new=self.fakepolicyinit)
-        self.patcher.start()
-        self.addCleanup(remove_fake_resource)
-        self.context = context.Context('fake', 'fake', roles=['user'])
-        plugin_klass = importutils.import_class(
-            "neutron.db.db_base_plugin_v2.NeutronDbPluginV2")
-        self.manager_patcher = mock.patch('neutron.manager.NeutronManager')
-        fake_manager = self.manager_patcher.start()
-        fake_manager_instance = fake_manager.return_value
-        fake_manager_instance.plugin = plugin_klass()
+        }
+        rules_dict.update(**kwargs)
+        self.rules = oslo_policy.Rules.from_dict(rules_dict)
 
     def test_firewall_policy_insert_rule_with_admin_context(self):
         action = "insert_rule"
@@ -319,22 +320,22 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_nonadmin_write_on_private_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', False,
-                                           common_policy.PolicyNotAuthorized)
+                                           oslo_policy.PolicyNotAuthorized)
 
     def test_nonadmin_read_on_private_fails(self):
         self._test_nonadmin_action_on_attr('get', 'shared', False,
-                                           common_policy.PolicyNotAuthorized)
+                                           oslo_policy.PolicyNotAuthorized)
 
     def test_nonadmin_write_on_shared_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', True,
-                                           common_policy.PolicyNotAuthorized)
+                                           oslo_policy.PolicyNotAuthorized)
 
     def test_advsvc_get_network_works(self):
         self._test_advsvc_action_on_attr('get', 'network', 'shared', False)
 
     def test_advsvc_create_network_fails(self):
         self._test_advsvc_action_on_attr('create', 'network', 'shared', False,
-                                         common_policy.PolicyNotAuthorized)
+                                         oslo_policy.PolicyNotAuthorized)
 
     def test_advsvc_create_port_works(self):
         self._test_advsvc_action_on_attr('create', 'port:mac', 'shared', False)
@@ -352,13 +353,16 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_advsvc_create_subnet_fails(self):
         self._test_advsvc_action_on_attr('create', 'subnet', 'shared', False,
-                                         common_policy.PolicyNotAuthorized)
+                                         oslo_policy.PolicyNotAuthorized)
 
     def test_nonadmin_read_on_shared_succeeds(self):
         self._test_nonadmin_action_on_attr('get', 'shared', True)
 
     def test_check_is_admin_with_admin_context_succeeds(self):
         admin_context = context.get_admin_context()
+        # explicitly set roles as this test verifies user credentials
+        # with the policy engine
+        admin_context.roles = ['admin']
         self.assertTrue(policy.check_is_admin(admin_context))
 
     def test_check_is_admin_with_user_context_fails(self):
@@ -403,13 +407,13 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_reset_adminonly_attr_to_default_fails(self):
         kwargs = {const.ATTRIBUTES_TO_UPDATE: ['shared']}
         self._test_nonadmin_action_on_attr('update', 'shared', False,
-                                           common_policy.PolicyNotAuthorized,
+                                           oslo_policy.PolicyNotAuthorized,
                                            **kwargs)
 
     def test_enforce_adminonly_attribute_nonadminctx_returns_403(self):
         action = "create_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
     def _test_build_subattribute_match_rule(self, validate_value):
@@ -463,7 +467,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         action = "create_" + FAKE_RESOURCE_NAME
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
                                                 'sub_attr_2': 'y'}}
-        self.assertRaises(common_policy.PolicyNotAuthorized, policy.enforce,
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target, None)
 
     def test_enforce_regularuser_on_read(self):
@@ -526,9 +530,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         def fakegetnetwork(*args, **kwargs):
             return {'tenant_id': 'fake'}
 
-        del self.rules['admin_or_network_owner']
-        self.rules['admin_or_network_owner'] = common_policy.parse_rule(
-            "role:admin or tenant_id:%(network_tenant_id)s")
+        self._set_rules(
+            admin_or_network_owner="role:admin or "
+                                   "tenant_id:%(network_tenant_id)s")
         action = "create_port:mac"
         with mock.patch.object(manager.NeutronManager.get_instance().plugin,
                                'get_network', new=fakegetnetwork):
@@ -540,11 +544,11 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         # Try and add a bad rule
         self.assertRaises(
             exceptions.PolicyInitError,
-            common_policy.parse_rule,
-            'tenant_id:(wrong_stuff)')
+            oslo_policy.Rules.from_dict,
+            {'test_policy': 'tenant_id:(wrong_stuff)'})
 
     def _test_enforce_tenant_id_raises(self, bad_rule):
-        self.rules['admin_or_owner'] = common_policy.parse_rule(bad_rule)
+        self._set_rules(admin_or_owner=bad_rule)
         # Trigger a policy with rule admin_or_owner
         action = "create_network"
         target = {'tenant_id': 'fake'}
@@ -559,91 +563,21 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_enforce_tenant_id_check_invalid_parent_resource_raises(self):
         self._test_enforce_tenant_id_raises('tenant_id:%(foobaz_tenant_id)s')
 
-    def test_get_roles_context_is_admin_rule_missing(self):
-        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            "some_other_rule": "role:admin",
-        }.items())
-        policy.set_rules(common_policy.Rules(rules))
-        # 'admin' role is expected for bw compatibility
-        self.assertEqual(['admin'], policy.get_admin_roles())
-
-    def test_get_roles_with_role_check(self):
-        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "role:admin",
-        }.items())
-        policy.set_rules(common_policy.Rules(rules))
-        self.assertEqual(['admin'], policy.get_admin_roles())
-
-    def test_get_roles_with_rule_check(self):
-        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "rule:some_other_rule",
-            "some_other_rule": "role:admin",
-        }.items())
-        policy.set_rules(common_policy.Rules(rules))
-        self.assertEqual(['admin'], policy.get_admin_roles())
-
-    def test_get_roles_with_or_check(self):
-        self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "rule:rule1 or rule:rule2",
-            "rule1": "role:admin_1",
-            "rule2": "role:admin_2"
-        }.items())
-        self.assertEqual(['admin_1', 'admin_2'],
-                         policy.get_admin_roles())
-
-    def test_get_roles_with_other_rules(self):
-        self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            policy.ADMIN_CTX_POLICY: "role:xxx or other:value",
-        }.items())
-        self.assertEqual(['xxx'], policy.get_admin_roles())
-
-    def _test_set_rules_with_deprecated_policy(self, input_rules,
-                                               expected_rules):
-        policy.set_rules(input_rules.copy())
-        # verify deprecated policy has been removed
-        for pol in input_rules.keys():
-            self.assertNotIn(pol, policy._ENFORCER.rules)
-        # verify deprecated policy was correctly translated. Iterate
-        # over items for compatibility with unittest2 in python 2.6
-        for rule in expected_rules:
-            self.assertIn(rule, policy._ENFORCER.rules)
-            self.assertEqual(str(policy._ENFORCER.rules[rule]),
-                             expected_rules[rule])
-
-    def test_set_rules_with_deprecated_view_policy(self):
-        self._test_set_rules_with_deprecated_policy(
-            {'extension:router:view': 'rule:admin_or_owner'},
-            {'get_network:router:external': 'rule:admin_or_owner'})
-
-    def test_set_rules_with_deprecated_set_policy(self):
-        expected_policies = ['create_network:provider:network_type',
-                             'create_network:provider:physical_network',
-                             'create_network:provider:segmentation_id',
-                             'update_network:provider:network_type',
-                             'update_network:provider:physical_network',
-                             'update_network:provider:segmentation_id']
-        self._test_set_rules_with_deprecated_policy(
-            {'extension:provider_network:set': 'rule:admin_only'},
-            dict((policy, 'rule:admin_only') for policy in
-                 expected_policies))
-
     def test_process_rules(self):
         action = "create_" + FAKE_RESOURCE_NAME
         # Construct RuleChecks for an action, attribute and subattribute
-        match_rule = common_policy.RuleCheck('rule', action)
-        attr_rule = common_policy.RuleCheck('rule', '%s:%ss' %
-                                                    (action,
-                                                     FAKE_RESOURCE_NAME))
-        sub_attr_rules = [common_policy.RuleCheck('rule', '%s:%s:%s' %
-                                                          (action, 'attr',
-                                                           'sub_attr_1'))]
+        match_rule = oslo_policy.RuleCheck('rule', action)
+        attr_rule = oslo_policy.RuleCheck(
+            'rule', '%s:%ss' % (action, FAKE_RESOURCE_NAME))
+        sub_attr_rules = [oslo_policy.RuleCheck(
+            'rule', '%s:%s:%s' % (action, 'attr', 'sub_attr_1'))]
         # Build an AndCheck from the given RuleChecks
         # Make the checks nested to better check the recursion
-        sub_attr_rules = common_policy.AndCheck(sub_attr_rules)
-        attr_rule = common_policy.AndCheck(
+        sub_attr_rules = oslo_policy.AndCheck(sub_attr_rules)
+        attr_rule = oslo_policy.AndCheck(
             [attr_rule, sub_attr_rules])
 
-        match_rule = common_policy.AndCheck([match_rule, attr_rule])
+        match_rule = oslo_policy.AndCheck([match_rule, attr_rule])
         # Assert that the rules are correctly extracted from the match_rule
         rules = policy._process_rules_list([], match_rule)
         self.assertEqual(['create_fake_resource',
@@ -653,6 +587,6 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     @mock.patch.object(policy.LOG, 'isEnabledFor', return_value=True)
     @mock.patch.object(policy.LOG, 'debug')
     def test_log_rule_list(self, mock_debug, mock_is_e):
-        policy.log_rule_list(common_policy.RuleCheck('rule', 'create_'))
+        policy.log_rule_list(oslo_policy.RuleCheck('rule', 'create_'))
         self.assertTrue(mock_is_e.called)
         self.assertTrue(mock_debug.called)

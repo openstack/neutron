@@ -175,10 +175,6 @@ class Packetfilter(extensions.ExtensionDescriptor):
         return "PacketFilters on OFC"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://www.nec.co.jp/api/ext/packet_filter/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-07-16T00:00:00+09:00"
 

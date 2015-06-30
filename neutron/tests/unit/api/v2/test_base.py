@@ -17,6 +17,9 @@ import os
 
 import mock
 from oslo_config import cfg
+from oslo_policy import policy as oslo_policy
+from oslo_utils import uuidutils
+import six
 from six import moves
 import six.moves.urllib.parse as urlparse
 import webob
@@ -32,8 +35,6 @@ from neutron.api.v2 import router
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
-from neutron.openstack.common import policy as common_policy
-from neutron.openstack.common import uuidutils
 from neutron import policy
 from neutron import quota
 from neutron.tests import base
@@ -547,7 +548,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
             output_dict = res['networks'][0]
             input_dict['shared'] = False
             self.assertEqual(len(input_dict), len(output_dict))
-            for k, v in input_dict.iteritems():
+            for k, v in six.iteritems(input_dict):
                 self.assertEqual(v, output_dict[k])
         else:
             # expect no results
@@ -928,7 +929,9 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         return_value.update(initial_input['port'])
 
         instance = self.plugin.return_value
-        instance.get_network.return_value = {'tenant_id': unicode(tenant_id)}
+        instance.get_network.return_value = {
+            'tenant_id': six.text_type(tenant_id)
+        }
         instance.get_ports_count.return_value = 1
         instance.create_port.return_value = return_value
         res = self.api.post(_get_path('ports', fmt=self.fmt),
@@ -1046,8 +1049,8 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_get_keystone_strip_admin_only_attribute(self):
         tenant_id = _uuid()
         # Inject rule in policy engine
-        rules = {'get_network:name': common_policy.parse_rule(
-            "rule:admin_only")}
+        rules = oslo_policy.Rules.from_dict(
+            {'get_network:name': "rule:admin_only"})
         policy.set_rules(rules, overwrite=False)
         res = self._test_get(tenant_id, tenant_id, 200)
         res = self.deserialize(res)

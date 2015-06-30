@@ -50,7 +50,10 @@ DNSMASQ_OPTS = [
                        'used as forwarders.'),
                 deprecated_name='dnsmasq_dns_server'),
     cfg.BoolOpt('dhcp_delete_namespaces', default=True,
-                help=_("Delete namespace after removing a dhcp server.")),
+                help=_("Delete namespace after removing a dhcp server."
+                       "This option is deprecated and "
+                       "will be removed in a future release."),
+                deprecated_for_removal=True),
     cfg.IntOpt(
         'dnsmasq_lease_max',
         default=(2 ** 24),

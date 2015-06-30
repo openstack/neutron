@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo_log import log as logging
+import six
 
 import neutron.tests.tempest.common.generator.base_generator as base
 
@@ -51,7 +52,7 @@ class ValidTestGenerator(base.BasicGeneratorSet):
     @base.simple_generator
     def generate_valid_object(self, schema):
         obj = {}
-        for k, v in schema["properties"].iteritems():
+        for k, v in six.iteritems(schema["properties"]):
             obj[k] = self.generate_valid(v)
         return obj
 

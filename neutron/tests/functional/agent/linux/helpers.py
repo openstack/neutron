@@ -20,11 +20,11 @@ import select
 import shlex
 import subprocess
 
-import fixtures
-
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import constants
+from neutron.tests import tools
 
 CHILD_PROCESS_TIMEOUT = os.environ.get('OS_TEST_CHILD_PROCESS_TIMEOUT', 20)
 CHILD_PROCESS_SLEEP = os.environ.get('OS_TEST_CHILD_PROCESS_SLEEP', 0.5)
@@ -33,8 +33,10 @@ READ_TIMEOUT = os.environ.get('OS_TEST_READ_TIMEOUT', 5)
 SS_SOURCE_PORT_PATTERN = re.compile(
     r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[0-9:].*')
 
+TRANSPORT_PROTOCOLS = (constants.PROTO_NAME_TCP, constants.PROTO_NAME_UDP)
 
-class RecursivePermDirFixture(fixtures.Fixture):
+
+class RecursivePermDirFixture(tools.SafeFixture):
     """Ensure at least perms permissions on directory and ancestors."""
 
     def __init__(self, directory, perms):
@@ -54,7 +56,7 @@ class RecursivePermDirFixture(fixtures.Fixture):
             current_directory = os.path.dirname(current_directory)
 
 
-def get_free_namespace_port(tcp=True, namespace=None):
+def get_free_namespace_port(protocol, namespace=None):
     """Return an unused port from given namespace
 
     WARNING: This function returns a port that is free at the execution time of
@@ -62,13 +64,15 @@ def get_free_namespace_port(tcp=True, namespace=None):
              is a potential danger that port will be no longer free. It's up to
              the programmer to handle error if port is already in use.
 
-    :param tcp: Return free port for TCP protocol if set to True, return free
-                port for UDP protocol if set to False
+    :param protocol: Return free port for given protocol. Supported protocols
+                     are 'tcp' and 'udp'.
     """
-    if tcp:
+    if protocol == constants.PROTO_NAME_TCP:
         param = '-tna'
-    else:
+    elif protocol == constants.PROTO_NAME_UDP:
         param = '-una'
+    else:
+        raise ValueError("Unsupported procotol %s" % protocol)
 
     ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
     output = ip_wrapper.netns.execute(['ss', param])
@@ -96,21 +100,18 @@ class RootHelperProcess(subprocess.Popen):
         for arg in ('stdin', 'stdout', 'stderr'):
             kwargs.setdefault(arg, subprocess.PIPE)
         self.namespace = kwargs.pop('namespace', None)
-        self.run_as_root = kwargs.pop('run_as_root', False)
         self.cmd = cmd
         if self.namespace is not None:
             cmd = ['ip', 'netns', 'exec', self.namespace] + cmd
-        if self.run_as_root:
-            root_helper = config.get_root_helper(utils.cfg.CONF)
-            cmd = shlex.split(root_helper) + cmd
+        root_helper = config.get_root_helper(utils.cfg.CONF)
+        cmd = shlex.split(root_helper) + cmd
         self.child_pid = None
         super(RootHelperProcess, self).__init__(cmd, *args, **kwargs)
-        if self.run_as_root:
-            self._wait_for_child_process()
+        self._wait_for_child_process()
 
     def kill(self):
         pid = self.child_pid or str(self.pid)
-        utils.execute(['kill', '-9', pid], run_as_root=self.run_as_root)
+        utils.execute(['kill', '-9', pid], run_as_root=True)
 
     def read_stdout(self, timeout=None):
         return self._read_stream(self.stdout, timeout)
@@ -134,7 +135,7 @@ class RootHelperProcess(subprocess.Popen):
                                 sleep=CHILD_PROCESS_SLEEP):
         def child_is_running():
             child_pid = utils.get_root_helper_child_pid(
-                self.pid, run_as_root=self.run_as_root)
+                self.pid, run_as_root=True)
             if utils.pid_invoked_with_cmdline(child_pid, self.cmd):
                 return True
 
@@ -144,35 +145,52 @@ class RootHelperProcess(subprocess.Popen):
             exception=RuntimeError("Process %s hasn't been spawned "
                                    "in %d seconds" % (self.cmd, timeout)))
         self.child_pid = utils.get_root_helper_child_pid(
-            self.pid, run_as_root=self.run_as_root)
+            self.pid, run_as_root=True)
 
 
 class NetcatTester(object):
     TESTING_STRING = 'foo'
+    TCP = constants.PROTO_NAME_TCP
+    UDP = constants.PROTO_NAME_UDP
 
-    def __init__(self, client_namespace, server_namespace, server_address,
-                 port, client_address=None, run_as_root=False, udp=False):
+    def __init__(self, client_namespace, server_namespace, address,
+                 dst_port, protocol, server_address='0.0.0.0', src_port=None):
+        """
+        Tool for testing connectivity on transport layer using netcat
+        executable.
+
+        The processes are spawned lazily.
+
+        :param client_namespace: Namespace in which netcat process that
+                                 connects to other netcat will be spawned
+        :param server_namespace: Namespace in which listening netcat process
+                                 will be spawned
+        :param address: Server address from client point of view
+        :param dst_port: Port on which netcat listens
+        :param protocol: Transport protocol, either 'tcp' or 'udp'
+        :param server_address: Address in server namespace on which netcat
+                               should listen
+        :param src_port: Source port of netcat process spawned in client
+                         namespace - packet will have src_port in TCP/UDP
+                         header with this value
+
+        """
         self.client_namespace = client_namespace
         self.server_namespace = server_namespace
         self._client_process = None
         self._server_process = None
-        # Use client_address to specify an address to connect client to that is
-        # different from the one that server side is going to listen on (useful
-        # when testing floating IPs)
-        self.client_address = client_address or server_address
+        self.address = address
         self.server_address = server_address
-        self.port = str(port)
-        self.run_as_root = run_as_root
-        self.udp = udp
+        self.dst_port = str(dst_port)
+        self.src_port = str(src_port) if src_port else None
+        if protocol not in TRANSPORT_PROTOCOLS:
+            raise ValueError("Unsupported protocol %s" % protocol)
+        self.protocol = protocol
 
     @property
     def client_process(self):
         if not self._client_process:
-            if not self._server_process:
-                self._spawn_server_process()
-            self._client_process = self._spawn_nc_in_namespace(
-                self.client_namespace.namespace,
-                address=self.client_address)
+            self.establish_connection()
         return self._client_process
 
     @property
@@ -183,9 +201,25 @@ class NetcatTester(object):
 
     def _spawn_server_process(self):
         self._server_process = self._spawn_nc_in_namespace(
-            self.server_namespace.namespace,
+            self.server_namespace,
             address=self.server_address,
             listen=True)
+
+    def establish_connection(self):
+        if self._client_process:
+            raise RuntimeError('%(proto)s connection to $(ip_addr)s is already'
+                               ' established' %
+                               {'proto': self.protocol,
+                                'ip_addr': self.address})
+
+        if not self._server_process:
+            self._spawn_server_process()
+        self._client_process = self._spawn_nc_in_namespace(
+            self.client_namespace,
+            address=self.address)
+        if self.protocol == self.UDP:
+            # Create an entry in conntrack table for UDP packets
+            self.client_process.writeline(self.TESTING_STRING)
 
     def test_connectivity(self, respawn=False):
         stop_required = (respawn and self._client_process and
@@ -201,17 +235,18 @@ class NetcatTester(object):
         return message == self.TESTING_STRING
 
     def _spawn_nc_in_namespace(self, namespace, address, listen=False):
-        cmd = ['nc', address, self.port]
-        if self.udp:
+        cmd = ['nc', address, self.dst_port]
+        if self.protocol == self.UDP:
             cmd.append('-u')
         if listen:
             cmd.append('-l')
-            if not self.udp:
+            if self.protocol == self.TCP:
                 cmd.append('-k')
         else:
             cmd.extend(['-w', '20'])
-        proc = RootHelperProcess(cmd, namespace=namespace,
-                                 run_as_root=self.run_as_root)
+            if self.src_port:
+                cmd.extend(['-p', self.src_port])
+        proc = RootHelperProcess(cmd, namespace=namespace)
         return proc
 
     def stop_processes(self):

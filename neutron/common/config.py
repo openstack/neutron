@@ -31,6 +31,7 @@ from paste import deploy
 from neutron.api.v2 import attributes
 from neutron.common import utils
 from neutron.i18n import _LI
+from neutron import policy
 from neutron import version
 
 
@@ -131,6 +132,8 @@ core_opts = [
                 help=_('If True, effort is made to advertise MTU settings '
                        'to VMs via network methods (DHCP and RA MTU options) '
                        'when the network\'s preferred MTU is known.')),
+    cfg.StrOpt('ipam_driver', default=None,
+               help=_('IPAM driver to use.')),
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
@@ -206,6 +209,14 @@ def setup_logging():
              {'prog': sys.argv[0],
               'version': version.version_info.release_string()})
     LOG.debug("command line: %s", " ".join(sys.argv))
+
+
+def reset_service():
+    # Reset worker in case SIGHUP is called.
+    # Note that this is called only in case a service is running in
+    # daemon mode.
+    setup_logging()
+    policy.refresh()
 
 
 def load_paste_app(app_name):

@@ -16,6 +16,7 @@ ROUTER_GATEWAY = 'router_gateway'
 ROUTER_INTERFACE = 'router_interface'
 SECURITY_GROUP = 'security_group'
 SECURITY_GROUP_RULE = 'security_group_rule'
+SUBNET = 'subnet'
 
 VALID = (
     PORT,
@@ -24,4 +25,5 @@ VALID = (
     ROUTER_INTERFACE,
     SECURITY_GROUP,
     SECURITY_GROUP_RULE,
+    SUBNET,
 )

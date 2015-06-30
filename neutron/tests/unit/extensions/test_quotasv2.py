@@ -322,7 +322,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         tenant_id = 'tenant_id1'
         self.assertRaises(exceptions.QuotaResourceUnknown,
                           quota.QUOTAS.limit_check,
-                          context.get_admin_context(load_admin_roles=False),
+                          context.get_admin_context(),
                           tenant_id,
                           foobar=1)
 

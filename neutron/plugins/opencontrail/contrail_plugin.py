@@ -20,6 +20,7 @@ import requests
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as exc
+from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_base
 from neutron.extensions import external_net
 from neutron.extensions import portbindings
@@ -345,6 +346,7 @@ class NeutronPluginContrailCoreV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         belonging to the specified tenant.
         """
 
+        db_base_plugin_v2._check_subnet_not_used(context, subnet_id)
         self._delete_resource('subnet', context, subnet_id)
 
     def get_subnets(self, context, filters=None, fields=None):

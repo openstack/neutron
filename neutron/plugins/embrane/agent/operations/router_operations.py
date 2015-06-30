@@ -60,7 +60,7 @@ def _create_dva_and_assign_address(api, tenant_id, neutron_router,
                                        neutron_router["admin_state_up"],
                                        ip_allocation_info)
     except h_exc.PreliminaryOperationsFailed as ex:
-        raise h_exc.BrokenInterface(err_msg=ex.message)
+        raise h_exc.BrokenInterface(err_msg=str(ex))
 
     state = api.extract_dva_state(dva)
     return state
@@ -110,7 +110,7 @@ def _grow_dva_iface_and_assign_address(api, tenant_id, neutron_router,
                                        neutron_router["admin_state_up"],
                                        ip_allocation_info)
     except h_exc.PreliminaryOperationsFailed as ex:
-        raise h_exc.BrokenInterface(err_msg=ex.message)
+        raise h_exc.BrokenInterface(err_msg=str(ex))
 
     state = api.extract_dva_state(dva)
     return state
@@ -127,7 +127,7 @@ def _shrink_dva_iface(api, tenant_id, neutron_router, port_id):
         return (p_con.Status.ACTIVE if neutron_router["admin_state_up"] else
                 p_con.Status.READY)
     except h_exc.PreliminaryOperationsFailed as ex:
-        raise h_exc.BrokenInterface(err_msg=ex.message)
+        raise h_exc.BrokenInterface(err_msg=str(ex))
     state = api.extract_dva_state(dva)
     return state
 

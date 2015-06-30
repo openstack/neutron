@@ -85,8 +85,8 @@ class HackingTestCase(base.BaseTestCase):
             self.assertEqual(0,
                 len(list(checks.use_jsonutils(
                     "json.%s" % method,
-                    "./neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/"
-                    "plugins/netwrap"))))
+                    "./neutron/plugins/ml2/drivers/openvswitch/agent/xenapi/"
+                    "etc/xapi.d/plugins/netwrap"))))
 
     def test_assert_called_once_with(self):
         fail_code1 = """
@@ -99,10 +99,20 @@ class HackingTestCase(base.BaseTestCase):
                mock.method(1, 2, 3, test='wow')
                mock.method.assertCalledOnceWith()
                """
+        fail_code3 = """
+               mock = Mock()
+               mock.method(1, 2, 3, test='wow')
+               mock.method.assert_has_called()
+               """
         pass_code = """
                mock = Mock()
                mock.method(1, 2, 3, test='wow')
                mock.method.assert_called_once_with()
+               """
+        pass_code2 = """
+               mock = Mock()
+               mock.method(1, 2, 3, test='wow')
+               mock.method.assert_has_calls()
                """
         self.assertEqual(
             1, len(list(checks.check_assert_called_once_with(fail_code1,
@@ -112,6 +122,12 @@ class HackingTestCase(base.BaseTestCase):
                                             "neutron/tests/test_assert.py"))))
         self.assertEqual(
             0, len(list(checks.check_assert_called_once_with(pass_code,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            1, len(list(checks.check_assert_called_once_with(fail_code3,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            0, len(list(checks.check_assert_called_once_with(pass_code2,
                                             "neutron/tests/test_assert.py"))))
 
     def test_check_oslo_namespace_imports(self):
@@ -133,3 +149,8 @@ class HackingTestCase(base.BaseTestCase):
     def test_no_basestring(self):
         self.assertEqual(1,
             len(list(checks.check_no_basestring("isinstance(x, basestring)"))))
+
+    def test_check_python3_iteritems(self):
+        f = checks.check_python3_no_iteritems
+        self.assertLineFails(f, "d.iteritems()")
+        self.assertLinePasses(f, "six.iteritems(d)")

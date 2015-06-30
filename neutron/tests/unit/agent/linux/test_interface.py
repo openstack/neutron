@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
@@ -22,7 +23,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.extensions import flavor
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 
@@ -127,6 +127,30 @@ class TestABCDriver(TestBase):
              mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24')])
         self.assertFalse(self.ip_dev().addr.delete.called)
+        self.assertFalse(self.ip_dev().delete_addr_and_conntrack_state.called)
+
+    def _test_l3_init_clean_connections(self, clean_connections):
+        addresses = [
+            dict(scope='global', dynamic=False, cidr='10.0.0.1/24'),
+            dict(scope='global', dynamic=False, cidr='10.0.0.3/32')]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+
+        bc = BaseChild(self.conf)
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc.init_l3('tap0', ['10.0.0.1/24'], namespace=ns,
+                   clean_connections=clean_connections)
+
+        delete = self.ip_dev().delete_addr_and_conntrack_state
+        if clean_connections:
+            delete.assert_called_once_with('10.0.0.3/32')
+        else:
+            self.assertFalse(delete.called)
+
+    def test_l3_init_with_clean_connections(self):
+        self._test_l3_init_clean_connections(True)
+
+    def test_l3_init_without_clean_connections(self):
+        self._test_l3_init_clean_connections(False)
 
     def _test_l3_init_with_ipv6(self, include_gw_ip):
         addresses = [dict(scope='global',
@@ -184,7 +208,8 @@ class TestABCDriver(TestBase):
              mock.call().addr.delete('2001:db8:a::123/64'),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
-             mock.call().route.add_onlink_route('172.20.0.0/24')])
+             mock.call().route.add_onlink_route('172.20.0.0/24')],
+            any_order=True)
 
     def test_l3_init_with_ipv6_delete_onlink_routes(self):
         addresses = [dict(scope='global',

@@ -63,12 +63,9 @@ class PluginInterface(object):
         return True
 
 
+@six.add_metaclass(abc.ABCMeta)
 class ExtensionDescriptor(object):
-    """Base class that defines the contract for extensions.
-
-    Note that you don't have to derive from this class to have a valid
-    extension; it is purely a convenience.
-    """
+    """Base class that defines the contract for extensions."""
 
     def get_name(self):
         """The name of the extension.
@@ -88,13 +85,6 @@ class ExtensionDescriptor(object):
         """Friendly description for the extension.
 
         e.g. 'The Fox In Socks Extension'
-        """
-        raise NotImplementedError()
-
-    def get_namespace(self):
-        """The XML namespace for the extension.
-
-        e.g. 'http://www.fox.in.socks/api/ext/pie/v1.0'
         """
         raise NotImplementedError()
 
@@ -170,22 +160,10 @@ class ExtensionDescriptor(object):
         if not extension_attrs_map:
             return
 
-        for resource, attrs in extension_attrs_map.iteritems():
+        for resource, attrs in six.iteritems(extension_attrs_map):
             extended_attrs = extended_attributes.get(resource)
             if extended_attrs:
                 attrs.update(extended_attrs)
-
-    def get_alias_namespace_compatibility_map(self):
-        """Returns mappings between extension aliases and XML namespaces.
-
-        The mappings are XML namespaces that should, for backward compatibility
-        reasons, be added to the XML serialization of extended attributes.
-        This allows an established extended attribute to be provided by
-        another extension than the original one while keeping its old alias
-        in the name.
-        :return: A dictionary of extension_aliases and namespace strings.
-        """
-        return {}
 
 
 class ActionExtensionController(wsgi.Controller):
@@ -200,7 +178,7 @@ class ActionExtensionController(wsgi.Controller):
     def action(self, request, id):
         input_dict = self._deserialize(request.body,
                                        request.get_content_type())
-        for action_name, handler in self.action_handlers.iteritems():
+        for action_name, handler in six.iteritems(self.action_handlers):
             if action_name in input_dict:
                 return handler(input_dict, request, id)
         # no action handler found (bump to downstream application)
@@ -235,14 +213,13 @@ class ExtensionController(wsgi.Controller):
         ext_data['name'] = ext.get_name()
         ext_data['alias'] = ext.get_alias()
         ext_data['description'] = ext.get_description()
-        ext_data['namespace'] = ext.get_namespace()
         ext_data['updated'] = ext.get_updated()
         ext_data['links'] = []  # TODO(dprince): implement extension links
         return ext_data
 
     def index(self, request):
         extensions = []
-        for _alias, ext in self.extension_manager.extensions.iteritems():
+        for _alias, ext in six.iteritems(self.extension_manager.extensions):
             extensions.append(self._translate(ext))
         return dict(extensions=extensions)
 
@@ -283,7 +260,7 @@ class ExtensionMiddleware(wsgi.Middleware):
 
             LOG.debug('Extended resource: %s',
                       resource.collection)
-            for action, method in resource.collection_actions.iteritems():
+            for action, method in six.iteritems(resource.collection_actions):
                 conditions = dict(method=[method])
                 path = "/%s/%s" % (resource.collection, action)
                 with mapper.submapper(controller=resource.controller,
@@ -411,7 +388,7 @@ class ExtensionManager(object):
         resources = []
         resources.append(ResourceExtension('extensions',
                                            ExtensionController(self)))
-        for ext in self.extensions.itervalues():
+        for ext in self.extensions.values():
             try:
                 resources.extend(ext.get_resources())
             except AttributeError:
@@ -423,7 +400,7 @@ class ExtensionManager(object):
     def get_actions(self):
         """Returns a list of ActionExtension objects."""
         actions = []
-        for ext in self.extensions.itervalues():
+        for ext in self.extensions.values():
             try:
                 actions.extend(ext.get_actions())
             except AttributeError:
@@ -435,7 +412,7 @@ class ExtensionManager(object):
     def get_request_extensions(self):
         """Returns a list of RequestExtension objects."""
         request_exts = []
-        for ext in self.extensions.itervalues():
+        for ext in self.extensions.values():
             try:
                 request_exts.extend(ext.get_request_extensions())
             except AttributeError:
@@ -460,7 +437,7 @@ class ExtensionManager(object):
         # is made in a whole iteration
         while exts_to_process:
             processed_ext_count = len(processed_exts)
-            for ext_name, ext in exts_to_process.items():
+            for ext_name, ext in list(exts_to_process.items()):
                 if not hasattr(ext, 'get_extended_resources'):
                     del exts_to_process[ext_name]
                     continue
@@ -474,11 +451,11 @@ class ExtensionManager(object):
                         continue
                 try:
                     extended_attrs = ext.get_extended_resources(version)
-                    for resource, resource_attrs in extended_attrs.iteritems():
-                        if attr_map.get(resource, None):
-                            attr_map[resource].update(resource_attrs)
+                    for res, resource_attrs in six.iteritems(extended_attrs):
+                        if attr_map.get(res, None):
+                            attr_map[res].update(resource_attrs)
                         else:
-                            attr_map[resource] = resource_attrs
+                            attr_map[res] = resource_attrs
                 except AttributeError:
                     LOG.exception(_LE("Error fetching extended attributes for "
                                       "extension '%s'"), ext.get_name())
@@ -503,10 +480,10 @@ class ExtensionManager(object):
             LOG.debug('Ext name: %s', extension.get_name())
             LOG.debug('Ext alias: %s', extension.get_alias())
             LOG.debug('Ext description: %s', extension.get_description())
-            LOG.debug('Ext namespace: %s', extension.get_namespace())
             LOG.debug('Ext updated: %s', extension.get_updated())
         except AttributeError as ex:
-            LOG.exception(_LE("Exception loading extension: %s"), unicode(ex))
+            LOG.exception(_LE("Exception loading extension: %s"),
+                          six.text_type(ex))
             return False
         return True
 

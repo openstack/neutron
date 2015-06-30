@@ -22,6 +22,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import importutils
+import six
 from sqlalchemy import orm
 from testtools import matchers
 import webob.exc
@@ -31,6 +32,8 @@ from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import router
+from neutron.callbacks import exceptions
+from neutron.callbacks import registry
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -38,6 +41,7 @@ from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
+from neutron.db import ipam_non_pluggable_backend as non_ipam
 from neutron.db import models_v2
 from neutron import manager
 from neutron.tests import base
@@ -105,7 +109,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override(
             'service_plugins',
             [test_lib.test_config.get(key, default)
-             for key, default in (service_plugins or {}).iteritems()]
+             for key, default in six.iteritems(service_plugins or {})]
         )
 
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
@@ -160,7 +164,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def setup_config(self):
         # Create the default configurations
-        args = ['--config-file', base.etcdir('neutron.conf.test')]
+        args = ['--config-file', base.etcdir('neutron.conf')]
         # If test_config specifies some config-file, use it, as well
         for config_file in test_lib.test_config.get('config_files', []):
             args.extend(['--config-file', config_file])
@@ -433,12 +437,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4, enable_dhcp=True,
                      dns_nameservers=None, host_routes=None, shared=None,
-                     ipv6_ra_mode=None, ipv6_address_mode=None):
+                     ipv6_ra_mode=None, ipv6_address_mode=None,
+                     tenant_id=None, set_context=False):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
                                   gateway_ip=gateway,
-                                  tenant_id=network['network']['tenant_id'],
+                                  tenant_id=(tenant_id or
+                                             network['network']['tenant_id']),
                                   allocation_pools=allocation_pools,
                                   ip_version=ip_version,
                                   enable_dhcp=enable_dhcp,
@@ -446,7 +452,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   host_routes=host_routes,
                                   shared=shared,
                                   ipv6_ra_mode=ipv6_ra_mode,
-                                  ipv6_address_mode=ipv6_address_mode)
+                                  ipv6_address_mode=ipv6_address_mode,
+                                  set_context=set_context)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= webob.exc.HTTPClientError.code:
@@ -580,7 +587,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                host_routes=None,
                shared=None,
                ipv6_ra_mode=None,
-               ipv6_address_mode=None):
+               ipv6_address_mode=None,
+               tenant_id=None,
+               set_context=False):
         with optional_ctx(network, self.network) as network_to_use:
             subnet = self._make_subnet(fmt or self.fmt,
                                        network_to_use,
@@ -593,7 +602,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                        host_routes,
                                        shared=shared,
                                        ipv6_ra_mode=ipv6_ra_mode,
-                                       ipv6_address_mode=ipv6_address_mode)
+                                       ipv6_address_mode=ipv6_address_mode,
+                                       tenant_id=tenant_id,
+                                       set_context=set_context)
             yield subnet
 
     @contextlib.contextmanager
@@ -901,6 +912,16 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 self.assertIn('mac_address', port['port'])
                 self._delete('ports', port['port']['id'])
 
+    def test_create_port_anticipating_allocation(self):
+        with self.network(shared=True) as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
+                fixed_ips = [{'subnet_id': subnet['subnet']['id']},
+                             {'subnet_id': subnet['subnet']['id'],
+                              'ip_address': '10.0.0.2'}]
+                self._create_port(self.fmt, network['network']['id'],
+                                  webob.exc.HTTPCreated.code,
+                                  fixed_ips=fixed_ips)
+
     def test_create_port_public_network_with_invalid_ip_no_subnet_id(self,
             expected_error='InvalidIpForNetwork'):
         with self.network(shared=True) as network:
@@ -951,7 +972,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             with self.network() as net:
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
@@ -982,7 +1003,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             orig = manager.NeutronManager.get_plugin().create_port
             method_to_patch = _get_create_db_method('port')
@@ -1028,15 +1049,14 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
     def test_list_ports(self):
         # for this test we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(),
-                               self.port(),
-                               self.port()) as ports:
+        with self.port() as v1, self.port() as v2, self.port() as v3:
+            ports = (v1, v2, v3)
             self._test_list_resources('port', ports)
 
     def test_list_ports_filtered_by_fixed_ip(self):
         # for this test we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(), self.port()) as (port1, port2):
+        with self.port() as port1, self.port():
             fixed_ips = port1['port']['fixed_ips'][0]
             query_params = """
 fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
@@ -1049,9 +1069,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_list_ports_public_network(self):
         with self.network(shared=True) as network:
             with self.subnet(network) as subnet:
-                with contextlib.nested(self.port(subnet, tenant_id='tenant_1'),
-                                       self.port(subnet, tenant_id='tenant_2')
-                                       ) as (port1, port2):
+                with self.port(subnet, tenant_id='tenant_1') as port1,\
+                        self.port(subnet, tenant_id='tenant_2') as port2:
                     # Admin request - must return both ports
                     self._test_list_resources('port', [port1, port2])
                     # Tenant_1 request - must return single port
@@ -1067,13 +1086,12 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(admin_state_up='True',
-                                         mac_address='00:00:00:00:00:01'),
-                               self.port(admin_state_up='False',
-                                         mac_address='00:00:00:00:00:02'),
-                               self.port(admin_state_up='False',
-                                         mac_address='00:00:00:00:00:03')
-                               ) as (port1, port2, port3):
+        with self.port(admin_state_up='True',
+                       mac_address='00:00:00:00:00:01') as port1,\
+                self.port(admin_state_up='False',
+                          mac_address='00:00:00:00:00:02') as port2,\
+                self.port(admin_state_up='False',
+                          mac_address='00:00:00:00:00:03') as port3:
             self._test_list_with_sort('port', (port3, port2, port1),
                                       [('admin_state_up', 'asc'),
                                        ('mac_address', 'desc')])
@@ -1084,13 +1102,12 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             new=_fake_get_sorting_helper)
         helper_patcher.start()
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(admin_state_up='True',
-                                         mac_address='00:00:00:00:00:01'),
-                               self.port(admin_state_up='False',
-                                         mac_address='00:00:00:00:00:02'),
-                               self.port(admin_state_up='False',
-                                         mac_address='00:00:00:00:00:03')
-                               ) as (port1, port2, port3):
+        with self.port(admin_state_up='True',
+                       mac_address='00:00:00:00:00:01') as port1,\
+                self.port(admin_state_up='False',
+                          mac_address='00:00:00:00:00:02') as port2,\
+                self.port(admin_state_up='False',
+                          mac_address='00:00:00:00:00:03') as port3:
             self._test_list_with_sort('port', (port3, port2, port1),
                                       [('admin_state_up', 'asc'),
                                        ('mac_address', 'desc')])
@@ -1099,10 +1116,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
-                               self.port(mac_address='00:00:00:00:00:02'),
-                               self.port(mac_address='00:00:00:00:00:03')
-                               ) as (port1, port2, port3):
+        with self.port(mac_address='00:00:00:00:00:01') as port1,\
+                self.port(mac_address='00:00:00:00:00:02') as port2,\
+                self.port(mac_address='00:00:00:00:00:03') as port3:
             self._test_list_with_pagination('port',
                                             (port1, port2, port3),
                                             ('mac_address', 'asc'), 2, 2)
@@ -1113,10 +1129,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             new=_fake_get_pagination_helper)
         helper_patcher.start()
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
-                               self.port(mac_address='00:00:00:00:00:02'),
-                               self.port(mac_address='00:00:00:00:00:03')
-                               ) as (port1, port2, port3):
+        with self.port(mac_address='00:00:00:00:00:01') as port1,\
+                self.port(mac_address='00:00:00:00:00:02') as port2,\
+                self.port(mac_address='00:00:00:00:00:03') as port3:
             self._test_list_with_pagination('port',
                                             (port1, port2, port3),
                                             ('mac_address', 'asc'), 2, 2)
@@ -1125,10 +1140,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
-                               self.port(mac_address='00:00:00:00:00:02'),
-                               self.port(mac_address='00:00:00:00:00:03')
-                               ) as (port1, port2, port3):
+        with self.port(mac_address='00:00:00:00:00:01') as port1,\
+                self.port(mac_address='00:00:00:00:00:02') as port2,\
+                self.port(mac_address='00:00:00:00:00:03') as port3:
             self._test_list_with_pagination_reverse('port',
                                                     (port1, port2, port3),
                                                     ('mac_address', 'asc'),
@@ -1140,10 +1154,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             new=_fake_get_pagination_helper)
         helper_patcher.start()
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
-                               self.port(mac_address='00:00:00:00:00:02'),
-                               self.port(mac_address='00:00:00:00:00:03')
-                               ) as (port1, port2, port3):
+        with self.port(mac_address='00:00:00:00:00:01') as port1,\
+                self.port(mac_address='00:00:00:00:00:02') as port2,\
+                self.port(mac_address='00:00:00:00:00:03') as port3:
             self._test_list_with_pagination_reverse('port',
                                                     (port1, port2, port3),
                                                     ('mac_address', 'asc'),
@@ -1331,7 +1344,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  data['port']['fixed_ips'])
 
     def test_no_more_port_exception(self):
-        with self.subnet(cidr='10.0.0.0/32', enable_dhcp=False) as subnet:
+        with self.subnet(cidr='10.0.0.0/31', enable_dhcp=False) as subnet:
             id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, id)
             data = self.deserialize(self.fmt, res)
@@ -1650,14 +1663,13 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
     def test_requested_subnet_id_v4_and_v6_slaac(self):
         with self.network() as network:
-            with contextlib.nested(
-                self.subnet(network),
-                self.subnet(network,
-                            cidr='2607:f0d0:1002:51::/64',
-                            ip_version=6,
-                            gateway_ip='fe80::1',
-                            ipv6_address_mode=constants.IPV6_SLAAC)
-            ) as (subnet, subnet2):
+            with self.subnet(network) as subnet,\
+                    self.subnet(
+                        network,
+                        cidr='2607:f0d0:1002:51::/64',
+                        ip_version=6,
+                        gateway_ip='fe80::1',
+                        ipv6_address_mode=constants.IPV6_SLAAC) as subnet2:
                 with self.port(
                     subnet,
                     fixed_ips=[{'subnet_id': subnet['subnet']['id']},
@@ -1677,13 +1689,12 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_create_router_port_ipv4_and_ipv6_slaac_no_fixed_ips(self):
         with self.network() as network:
             # Create an IPv4 and an IPv6 SLAAC subnet on the network
-            with contextlib.nested(
-                self.subnet(network),
-                self.subnet(network,
-                            cidr='2607:f0d0:1002:51::/64',
-                            ip_version=6,
-                            gateway_ip='fe80::1',
-                            ipv6_address_mode=constants.IPV6_SLAAC)):
+            with self.subnet(network),\
+                    self.subnet(network,
+                                cidr='2607:f0d0:1002:51::/64',
+                                ip_version=6,
+                                gateway_ip='fe80::1',
+                                ipv6_address_mode=constants.IPV6_SLAAC):
                 # Create a router port without specifying fixed_ips
                 port = self._make_port(
                     self.fmt, network['network']['id'],
@@ -1865,7 +1876,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                         ip_version=6,
                                         ipv6_ra_mode=constants.IPV6_SLAAC)
         port = self._make_port(self.fmt, network['network']['id'])
-        self.assertEqual(len(port['port']['fixed_ips']), 2)
         port_mac = port['port']['mac_address']
         cidr_1 = v6_subnet_1['subnet']['cidr']
         cidr_2 = v6_subnet_2['subnet']['cidr']
@@ -1873,10 +1883,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                                            port_mac))
         eui_addr_2 = str(ipv6_utils.get_ipv6_addr_by_EUI64(cidr_2,
                                                            port_mac))
-        self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
-                         eui_addr_1)
-        self.assertEqual(port['port']['fixed_ips'][1]['ip_address'],
-                         eui_addr_2)
+        self.assertEqual({eui_addr_1, eui_addr_2},
+                         {fixed_ip['ip_address'] for fixed_ip in
+                          port['port']['fixed_ips']})
 
     def test_range_allocation(self):
         with self.subnet(gateway_ip='10.0.0.3',
@@ -2132,11 +2141,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         plugin = manager.NeutronManager.get_plugin()
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
-            with contextlib.nested(
-                self.port(subnet=subnet, device_id='owner1'),
-                self.port(subnet=subnet, device_id='owner1'),
-                self.port(subnet=subnet, device_id='owner2'),
-            ) as (p1, p2, p3):
+            with self.port(subnet=subnet, device_id='owner1') as p1,\
+                    self.port(subnet=subnet, device_id='owner1') as p2,\
+                    self.port(subnet=subnet, device_id='owner2') as p3:
                 network_id = subnet['subnet']['network_id']
                 plugin.delete_ports_by_device_id(ctx, 'owner1',
                                                  network_id)
@@ -2150,11 +2157,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def _test_delete_ports_by_device_id_second_call_failure(self, plugin):
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
-            with contextlib.nested(
-                self.port(subnet=subnet, device_id='owner1'),
-                self.port(subnet=subnet, device_id='owner1'),
-                self.port(subnet=subnet, device_id='owner2'),
-            ) as (p1, p2, p3):
+            with self.port(subnet=subnet, device_id='owner1') as p1,\
+                    self.port(subnet=subnet, device_id='owner1') as p2,\
+                    self.port(subnet=subnet, device_id='owner2') as p3:
                 orig = plugin.delete_port
                 with mock.patch.object(plugin, 'delete_port') as del_port:
 
@@ -2182,10 +2187,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def _test_delete_ports_ignores_port_not_found(self, plugin):
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
-            with contextlib.nested(
-                self.port(subnet=subnet, device_id='owner1'),
-                mock.patch.object(plugin, 'delete_port')
-            ) as (p, del_port):
+            with self.port(subnet=subnet, device_id='owner1') as p,\
+                    mock.patch.object(plugin, 'delete_port') as del_port:
                 del_port.side_effect = n_exc.PortNotFound(
                     port_id=p['port']['id']
                 )
@@ -2432,7 +2435,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             res = self._create_network_bulk(self.fmt, 2, 'test', True)
             self._validate_behavior_on_bulk_success(res, 'networks')
@@ -2458,7 +2461,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
 
         orig = manager.NeutronManager.get_plugin().create_network
         #ensures the API choose the emulation code path
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             method_to_patch = _get_create_db_method('network')
             with mock.patch.object(manager.NeutronManager.get_plugin(),
@@ -2495,21 +2498,16 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             )
 
     def test_list_networks(self):
-        with contextlib.nested(self.network(),
-                               self.network(),
-                               self.network()) as networks:
+        with self.network() as v1, self.network() as v2, self.network() as v3:
+            networks = (v1, v2, v3)
             self._test_list_resources('network', networks)
 
     def test_list_networks_with_sort_native(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with contextlib.nested(self.network(admin_status_up=True,
-                                            name='net1'),
-                               self.network(admin_status_up=False,
-                                            name='net2'),
-                               self.network(admin_status_up=False,
-                                            name='net3')
-                               ) as (net1, net2, net3):
+        with self.network(admin_status_up=True, name='net1') as net1,\
+                self.network(admin_status_up=False, name='net2') as net2,\
+                self.network(admin_status_up=False, name='net3') as net3:
             self._test_list_with_sort('network', (net3, net2, net1),
                                       [('admin_state_up', 'asc'),
                                        ('name', 'desc')])
@@ -2517,13 +2515,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_with_sort_extended_attr_native_returns_400(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with contextlib.nested(self.network(admin_status_up=True,
-                                            name='net1'),
-                               self.network(admin_status_up=False,
-                                            name='net2'),
-                               self.network(admin_status_up=False,
-                                            name='net3')
-                               ):
+        with self.network(admin_status_up=True, name='net1'),\
+                self.network(admin_status_up=False, name='net2'),\
+                self.network(admin_status_up=False, name='net3'):
             req = self.new_list_request(
                 'networks',
                 params='sort_key=provider:segmentation_id&sort_dir=asc')
@@ -2533,13 +2527,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_with_sort_remote_key_native_returns_400(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with contextlib.nested(self.network(admin_status_up=True,
-                                            name='net1'),
-                               self.network(admin_status_up=False,
-                                            name='net2'),
-                               self.network(admin_status_up=False,
-                                            name='net3')
-                               ):
+        with self.network(admin_status_up=True, name='net1'),\
+                self.network(admin_status_up=False, name='net2'),\
+                self.network(admin_status_up=False, name='net3'):
             req = self.new_list_request(
                 'networks', params='sort_key=subnets&sort_dir=asc')
             res = req.get_response(self.api)
@@ -2550,13 +2540,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_sorting_helper',
             new=_fake_get_sorting_helper)
         helper_patcher.start()
-        with contextlib.nested(self.network(admin_status_up=True,
-                                            name='net1'),
-                               self.network(admin_status_up=False,
-                                            name='net2'),
-                               self.network(admin_status_up=False,
-                                            name='net3')
-                               ) as (net1, net2, net3):
+        with self.network(admin_status_up=True, name='net1') as net1,\
+                self.network(admin_status_up=False, name='net2') as net2,\
+                self.network(admin_status_up=False, name='net3') as net3:
             self._test_list_with_sort('network', (net3, net2, net1),
                                       [('admin_state_up', 'asc'),
                                        ('name', 'desc')])
@@ -2564,10 +2550,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_with_pagination_native(self):
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
-        with contextlib.nested(self.network(name='net1'),
-                               self.network(name='net2'),
-                               self.network(name='net3')
-                               ) as (net1, net2, net3):
+        with self.network(name='net1') as net1,\
+                self.network(name='net2') as net2,\
+                self.network(name='net3') as net3:
             self._test_list_with_pagination('network',
                                             (net1, net2, net3),
                                             ('name', 'asc'), 2, 2)
@@ -2577,10 +2562,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        with contextlib.nested(self.network(name='net1'),
-                               self.network(name='net2'),
-                               self.network(name='net3')
-                               ) as (net1, net2, net3):
+        with self.network(name='net1') as net1,\
+                self.network(name='net2') as net2,\
+                self.network(name='net3') as net3:
             self._test_list_with_pagination('network',
                                             (net1, net2, net3),
                                             ('name', 'asc'), 2, 2)
@@ -2590,13 +2574,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        with contextlib.nested(self.network(name='net1',
-                                            shared=True),
-                               self.network(name='net2',
-                                            shared=False),
-                               self.network(name='net3',
-                                            shared=True)
-                               ) as (net1, net2, net3):
+        with self.network(name='net1', shared=True) as net1,\
+                self.network(name='net2', shared=False) as net2,\
+                self.network(name='net3', shared=True) as net3:
             self._test_list_with_pagination('network',
                                             (net1, net2, net3),
                                             ('name', 'asc'), 2, 2,
@@ -2606,10 +2586,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_without_pk_in_fields_pagination_native(self):
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
-        with contextlib.nested(self.network(name='net1'),
-                               self.network(name='net2'),
-                               self.network(name='net3')
-                               ) as (net1, net2, net3):
+        with self.network(name='net1') as net1,\
+                self.network(name='net2') as net2,\
+                self.network(name='net3') as net3:
             self._test_list_with_pagination('network',
                                             (net1, net2, net3),
                                             ('name', 'asc'), 2, 2,
@@ -2619,10 +2598,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_with_pagination_reverse_native(self):
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
-        with contextlib.nested(self.network(name='net1'),
-                               self.network(name='net2'),
-                               self.network(name='net3')
-                               ) as (net1, net2, net3):
+        with self.network(name='net1') as net1,\
+                self.network(name='net2') as net2,\
+                self.network(name='net3') as net3:
             self._test_list_with_pagination_reverse('network',
                                                     (net1, net2, net3),
                                                     ('name', 'asc'), 2, 2)
@@ -2632,18 +2610,16 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        with contextlib.nested(self.network(name='net1'),
-                               self.network(name='net2'),
-                               self.network(name='net3')
-                               ) as (net1, net2, net3):
+        with self.network(name='net1') as net1,\
+                self.network(name='net2') as net2,\
+                self.network(name='net3') as net3:
             self._test_list_with_pagination_reverse('network',
                                                     (net1, net2, net3),
                                                     ('name', 'asc'), 2, 2)
 
     def test_list_networks_with_parameters(self):
-        with contextlib.nested(self.network(name='net1',
-                                            admin_state_up=False),
-                               self.network(name='net2')) as (net1, net2):
+        with self.network(name='net1', admin_state_up=False) as net1,\
+                self.network(name='net2') as net2:
             query_params = 'admin_state_up=False'
             self._test_list_resources('network', [net1],
                                       query_params=query_params)
@@ -2662,25 +2638,23 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             self.assertIsNone(res['networks'][0].get('id'))
 
     def test_list_networks_with_parameters_invalid_values(self):
-        with contextlib.nested(self.network(name='net1',
-                                            admin_state_up=False),
-                               self.network(name='net2')) as (net1, net2):
+        with self.network(name='net1', admin_state_up=False),\
+                self.network(name='net2'):
             req = self.new_list_request('networks',
                                         params='admin_state_up=fake')
             res = req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
     def test_list_shared_networks_with_non_admin_user(self):
-        with contextlib.nested(self.network(shared=False,
-                                            name='net1',
-                                            tenant_id='tenant1'),
-                               self.network(shared=True,
-                                            name='net2',
-                                            tenant_id='another_tenant'),
-                               self.network(shared=False,
-                                            name='net3',
-                                            tenant_id='another_tenant')
-                               ) as (net1, net2, net3):
+        with self.network(shared=False,
+                          name='net1',
+                          tenant_id='tenant1') as net1,\
+                self.network(shared=True,
+                             name='net2',
+                             tenant_id='another_tenant') as net2,\
+                self.network(shared=False,
+                             name='net3',
+                             tenant_id='another_tenant'):
             ctx = context.Context(user_id='non_admin',
                                   tenant_id='tenant1',
                                   is_admin=False)
@@ -2919,8 +2893,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         cidr_2 = '10.0.0.0/24'
         cfg.CONF.set_override('allow_overlapping_ips', True)
 
-        with contextlib.nested(self.subnet(cidr=cidr_1),
-                               self.subnet(cidr=cidr_2)):
+        with self.subnet(cidr=cidr_1), self.subnet(cidr=cidr_2):
             pass
 
     def test_create_2_subnets_overlapping_cidr_not_allowed_returns_400(self):
@@ -2929,8 +2902,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('allow_overlapping_ips', False)
         with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
-            with contextlib.nested(self.subnet(cidr=cidr_1),
-                                   self.subnet(cidr=cidr_2)):
+            with self.subnet(cidr=cidr_1), self.subnet(cidr=cidr_2):
                 pass
         self.assertEqual(ctx_manager.exception.code,
                          webob.exc.HTTPClientError.code)
@@ -2952,7 +2924,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             with self.network() as net:
                 res = self._create_subnet_bulk(self.fmt, 2,
@@ -2969,7 +2941,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             orig = manager.NeutronManager.get_plugin().create_subnet
             method_to_patch = _get_create_db_method('subnet')
@@ -3088,10 +3060,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_delete_subnet_with_other_subnet_on_network_still_in_use(self):
         with self.network() as network:
-            with contextlib.nested(
-                self.subnet(network=network),
-                self.subnet(network=network, cidr='10.0.1.0/24'),
-            ) as (subnet1, subnet2):
+            with self.subnet(network=network) as subnet1,\
+                    self.subnet(network=network,
+                                cidr='10.0.1.0/24') as subnet2:
                 subnet1_id = subnet1['subnet']['id']
                 subnet2_id = subnet2['subnet']['id']
                 with self.port(
@@ -3207,16 +3178,15 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 set_context=False)
 
     def test_create_subnet_nonzero_cidr(self):
-        with contextlib.nested(
-            self.subnet(cidr='10.129.122.5/8'),
-            self.subnet(cidr='11.129.122.5/15'),
-            self.subnet(cidr='12.129.122.5/16'),
-            self.subnet(cidr='13.129.122.5/18'),
-            self.subnet(cidr='14.129.122.5/22'),
-            self.subnet(cidr='15.129.122.5/24'),
-            self.subnet(cidr='16.129.122.5/28'),
-            self.subnet(cidr='17.129.122.5/32', enable_dhcp=False)
-        ) as subs:
+        with self.subnet(cidr='10.129.122.5/8') as v1,\
+                self.subnet(cidr='11.129.122.5/15') as v2,\
+                self.subnet(cidr='12.129.122.5/16') as v3,\
+                self.subnet(cidr='13.129.122.5/18') as v4,\
+                self.subnet(cidr='14.129.122.5/22') as v5,\
+                self.subnet(cidr='15.129.122.5/24') as v6,\
+                self.subnet(cidr='16.129.122.5/28') as v7,\
+                self.subnet(cidr='17.129.122.5/32', enable_dhcp=False) as v8:
+            subs = (v1, v2, v3, v4, v5, v6, v7, v8)
             # the API should accept and correct these for users
             self.assertEqual(subs[0]['subnet']['cidr'], '10.0.0.0/8')
             self.assertEqual(subs[1]['subnet']['cidr'], '11.128.0.0/15')
@@ -3396,9 +3366,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_ipv6_gw_values(self):
         cidr = '2001::/64'
         # Gateway is last IP in IPv6 DHCPv6 stateful subnet
-        gateway = '2001::ffff:ffff:ffff:fffe'
+        gateway = '2001::ffff:ffff:ffff:ffff'
         allocation_pools = [{'start': '2001::1',
-                             'end': '2001::ffff:ffff:ffff:fffd'}]
+                             'end': '2001::ffff:ffff:ffff:fffe'}]
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
@@ -3409,7 +3379,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         # Gateway is first IP in IPv6 DHCPv6 stateful subnet
         gateway = '2001::1'
         allocation_pools = [{'start': '2001::2',
-                             'end': '2001::ffff:ffff:ffff:fffe'}]
+                             'end': '2001::ffff:ffff:ffff:ffff'}]
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
@@ -3702,7 +3672,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def _test_validate_subnet_ipv6_modes(self, cur_subnet=None,
                                          expect_success=True, **modes):
         plugin = manager.NeutronManager.get_plugin()
-        ctx = context.get_admin_context(load_admin_roles=False)
+        ctx = context.get_admin_context()
         new_subnet = {'ip_version': 6,
                       'cidr': 'fe80::/64',
                       'enable_dhcp': True,
@@ -4206,15 +4176,16 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_list_subnets(self):
         with self.network() as network:
-            with contextlib.nested(self.subnet(network=network,
-                                               gateway_ip='10.0.0.1',
-                                               cidr='10.0.0.0/24'),
-                                   self.subnet(network=network,
-                                               gateway_ip='10.0.1.1',
-                                               cidr='10.0.1.0/24'),
-                                   self.subnet(network=network,
-                                               gateway_ip='10.0.2.1',
-                                               cidr='10.0.2.0/24')) as subnets:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24') as v1,\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.0/24') as v2,\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.2.1',
+                                cidr='10.0.2.0/24') as v3:
+                subnets = (v1, v2, v3)
                 self._test_list_resources('subnet', subnets)
 
     def test_list_subnets_shared(self):
@@ -4241,13 +4212,13 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_list_subnets_with_parameter(self):
         with self.network() as network:
-            with contextlib.nested(self.subnet(network=network,
-                                               gateway_ip='10.0.0.1',
-                                               cidr='10.0.0.0/24'),
-                                   self.subnet(network=network,
-                                               gateway_ip='10.0.1.1',
-                                               cidr='10.0.1.0/24')
-                                   ) as subnets:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24') as v1,\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.0/24') as v2:
+                subnets = (v1, v2)
                 query_params = 'ip_version=4&ip_version=6'
                 self._test_list_resources('subnet', subnets,
                                           query_params=query_params)
@@ -4258,13 +4229,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_list_subnets_with_sort_native(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with contextlib.nested(self.subnet(enable_dhcp=True,
-                                           cidr='10.0.0.0/24'),
-                               self.subnet(enable_dhcp=False,
-                                           cidr='11.0.0.0/24'),
-                               self.subnet(enable_dhcp=False,
-                                           cidr='12.0.0.0/24')
-                               ) as (subnet1, subnet2, subnet3):
+        with self.subnet(enable_dhcp=True, cidr='10.0.0.0/24') as subnet1,\
+                self.subnet(enable_dhcp=False, cidr='11.0.0.0/24') as subnet2,\
+                self.subnet(enable_dhcp=False, cidr='12.0.0.0/24') as subnet3:
             self._test_list_with_sort('subnet', (subnet3, subnet2, subnet1),
                                       [('enable_dhcp', 'asc'),
                                        ('cidr', 'desc')])
@@ -4274,13 +4241,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_sorting_helper',
             new=_fake_get_sorting_helper)
         helper_patcher.start()
-        with contextlib.nested(self.subnet(enable_dhcp=True,
-                                           cidr='10.0.0.0/24'),
-                               self.subnet(enable_dhcp=False,
-                                           cidr='11.0.0.0/24'),
-                               self.subnet(enable_dhcp=False,
-                                           cidr='12.0.0.0/24')
-                               ) as (subnet1, subnet2, subnet3):
+        with self.subnet(enable_dhcp=True, cidr='10.0.0.0/24') as subnet1,\
+                self.subnet(enable_dhcp=False, cidr='11.0.0.0/24') as subnet2,\
+                self.subnet(enable_dhcp=False, cidr='12.0.0.0/24') as subnet3:
             self._test_list_with_sort('subnet', (subnet3,
                                                  subnet2,
                                                  subnet1),
@@ -4290,10 +4253,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_list_subnets_with_pagination_native(self):
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented sorting feature")
-        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
-                               self.subnet(cidr='11.0.0.0/24'),
-                               self.subnet(cidr='12.0.0.0/24')
-                               ) as (subnet1, subnet2, subnet3):
+        with self.subnet(cidr='10.0.0.0/24') as subnet1,\
+                self.subnet(cidr='11.0.0.0/24') as subnet2,\
+                self.subnet(cidr='12.0.0.0/24') as subnet3:
             self._test_list_with_pagination('subnet',
                                             (subnet1, subnet2, subnet3),
                                             ('cidr', 'asc'), 2, 2)
@@ -4303,10 +4265,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
-                               self.subnet(cidr='11.0.0.0/24'),
-                               self.subnet(cidr='12.0.0.0/24')
-                               ) as (subnet1, subnet2, subnet3):
+        with self.subnet(cidr='10.0.0.0/24') as subnet1,\
+                self.subnet(cidr='11.0.0.0/24') as subnet2,\
+                self.subnet(cidr='12.0.0.0/24') as subnet3:
             self._test_list_with_pagination('subnet',
                                             (subnet1, subnet2, subnet3),
                                             ('cidr', 'asc'), 2, 2)
@@ -4314,10 +4275,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_list_subnets_with_pagination_reverse_native(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
-                               self.subnet(cidr='11.0.0.0/24'),
-                               self.subnet(cidr='12.0.0.0/24')
-                               ) as (subnet1, subnet2, subnet3):
+        with self.subnet(cidr='10.0.0.0/24') as subnet1,\
+                self.subnet(cidr='11.0.0.0/24') as subnet2,\
+                self.subnet(cidr='12.0.0.0/24') as subnet3:
             self._test_list_with_pagination_reverse('subnet',
                                                     (subnet1, subnet2,
                                                      subnet3),
@@ -4328,10 +4288,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
-                               self.subnet(cidr='11.0.0.0/24'),
-                               self.subnet(cidr='12.0.0.0/24')
-                               ) as (subnet1, subnet2, subnet3):
+        with self.subnet(cidr='10.0.0.0/24') as subnet1,\
+                self.subnet(cidr='11.0.0.0/24') as subnet2,\
+                self.subnet(cidr='12.0.0.0/24') as subnet3:
             self._test_list_with_pagination_reverse('subnet',
                                                     (subnet1, subnet2,
                                                      subnet3),
@@ -4586,6 +4545,34 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
+    def test_delete_subnet_with_callback(self):
+        with self.subnet() as subnet,\
+                mock.patch.object(registry, 'notify') as notify:
+
+            errors = [
+                exceptions.NotificationError(
+                    'fake_id', n_exc.NeutronException()),
+            ]
+            notify.side_effect = [
+                exceptions.CallbackFailure(errors=errors), None
+            ]
+
+            # Make sure the delete request fails
+            delete_request = self.new_delete_request('subnets',
+                                                     subnet['subnet']['id'])
+            delete_response = delete_request.get_response(self.api)
+
+            self.assertTrue('NeutronError' in delete_response.json)
+            self.assertEqual('SubnetInUse',
+                             delete_response.json['NeutronError']['type'])
+
+            # Make sure the subnet wasn't deleted
+            list_request = self.new_list_request(
+                'subnets', params="id=%s" % subnet['subnet']['id'])
+            list_response = list_request.get_response(self.api)
+            self.assertEqual(subnet['subnet']['id'],
+                             list_response.json['subnets'][0]['id'])
+
     def _helper_test_validate_subnet(self, option, exception):
         cfg.CONF.set_override(option, 0)
         with self.network() as network:
@@ -4600,8 +4587,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             plugin = manager.NeutronManager.get_plugin()
             e = self.assertRaises(exception,
                                   plugin._validate_subnet,
-                                  context.get_admin_context(
-                                      load_admin_roles=False),
+                                  context.get_admin_context(),
                                   subnet)
             self.assertThat(
                 str(e),
@@ -5326,26 +5312,26 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
     """Unit Tests for NeutronDbPluginV2 IPAM Logic."""
 
     def test_generate_ip(self):
-        with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+        with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                '_try_generate_ip') as generate:
-            with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+            with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                    '_rebuild_availability_ranges') as rebuild:
 
-                db_base_plugin_v2.NeutronDbPluginV2._generate_ip('c', 's')
+                non_ipam.IpamNonPluggableBackend._generate_ip('c', 's')
 
         generate.assert_called_once_with('c', 's')
         self.assertEqual(0, rebuild.call_count)
 
     def test_generate_ip_exhausted_pool(self):
-        with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+        with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                '_try_generate_ip') as generate:
-            with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+            with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                    '_rebuild_availability_ranges') as rebuild:
 
                 exception = n_exc.IpAddressGenerationFailure(net_id='n')
                 # fail first call but not second
                 generate.side_effect = [exception, None]
-                db_base_plugin_v2.NeutronDbPluginV2._generate_ip('c', 's')
+                non_ipam.IpamNonPluggableBackend._generate_ip('c', 's')
 
         self.assertEqual(2, generate.call_count)
         rebuild.assert_called_once_with('c', 's')
@@ -5436,7 +5422,7 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
     def _test__allocate_ips_for_port(self, subnets, port, expected):
         plugin = db_base_plugin_v2.NeutronDbPluginV2()
         with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
-                               'get_subnets') as get_subnets:
+                               '_get_subnets') as get_subnets:
             with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
                                    '_check_unique_ip') as check_unique:
                 context = mock.Mock()
@@ -5516,18 +5502,11 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
 
     def test_get_user_allocation_for_dhcp_port_returns_none(self):
         plugin = manager.NeutronManager.get_plugin()
-        with contextlib.nested(
-            self.network(),
-            self.network()
-        ) as (net, net1):
-            with contextlib.nested(
-                self.subnet(network=net, cidr='10.0.0.0/24'),
-                self.subnet(network=net1, cidr='10.0.1.0/24')
-            ) as (subnet, subnet1):
-                with contextlib.nested(
-                    self.port(subnet=subnet, device_owner='network:dhcp'),
-                    self.port(subnet=subnet1)
-                ) as (p, p2):
+        with self.network() as net, self.network() as net1:
+            with self.subnet(network=net, cidr='10.0.0.0/24') as subnet,\
+                    self.subnet(network=net1, cidr='10.0.1.0/24') as subnet1:
+                with self.port(subnet=subnet, device_owner='network:dhcp'),\
+                        self.port(subnet=subnet1):
                     # check that user allocations on another network don't
                     # affect _subnet_get_user_allocation method
                     res = plugin._subnet_get_user_allocation(

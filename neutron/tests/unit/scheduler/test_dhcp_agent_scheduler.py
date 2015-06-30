@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
-
 import mock
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -23,6 +21,7 @@ import testscenarios
 from neutron.common import constants
 from neutron import context
 from neutron.db import agentschedulers_db as sched_db
+from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.extensions import dhcpagentscheduler
 from neutron.scheduler import dhcp_agent_scheduler
@@ -179,19 +178,21 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
 
 
 class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
-                           sched_db.DhcpAgentSchedulerDbMixin):
+                           sched_db.DhcpAgentSchedulerDbMixin,
+                           common_db_mixin.CommonDbMixin):
     def test_reschedule_network_from_down_agent(self):
         agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)
         self._test_schedule_bind_network([agents[0]], self.network_id)
         self._save_networks(["foo-network-2"])
         self._test_schedule_bind_network([agents[1]], "foo-network-2")
-        with contextlib.nested(
-            mock.patch.object(self, 'remove_network_from_dhcp_agent'),
-            mock.patch.object(self, 'schedule_network',
-                              return_value=[agents[1]]),
-            mock.patch.object(self, 'get_network', create=True,
-                              return_value={'id': self.network_id})
-        ) as (rn, sch, getn):
+        with mock.patch.object(self, 'remove_network_from_dhcp_agent') as rn,\
+                mock.patch.object(self,
+                                  'schedule_network',
+                                  return_value=[agents[1]]) as sch,\
+                mock.patch.object(self,
+                                  'get_network',
+                                  create=True,
+                                  return_value={'id': self.network_id}):
             notifier = mock.MagicMock()
             self.agent_notifiers[constants.AGENT_TYPE_DHCP] = notifier
             self.remove_networks_from_down_agents()
@@ -202,17 +203,18 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
                 mock.ANY, self.network_id, agents[1].host)
 
     def _test_failed_rescheduling(self, rn_side_effect=None):
-        agents = self._create_and_set_agents_down(['host-a'], 1)
+        agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)
         self._test_schedule_bind_network([agents[0]], self.network_id)
-        with contextlib.nested(
-            mock.patch.object(
-                self, 'remove_network_from_dhcp_agent',
-                side_effect=rn_side_effect),
-            mock.patch.object(self, 'schedule_network',
-                              return_value=None),
-            mock.patch.object(self, 'get_network', create=True,
-                              return_value={'id': self.network_id})
-        ) as (rn, sch, getn):
+        with mock.patch.object(self,
+                               'remove_network_from_dhcp_agent',
+                               side_effect=rn_side_effect) as rn,\
+                mock.patch.object(self,
+                                  'schedule_network',
+                                  return_value=None) as sch,\
+                mock.patch.object(self,
+                                  'get_network',
+                                  create=True,
+                                  return_value={'id': self.network_id}):
             notifier = mock.MagicMock()
             self.agent_notifiers[constants.AGENT_TYPE_DHCP] = notifier
             self.remove_networks_from_down_agents()
@@ -248,6 +250,23 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             self.assertIn('foo3', res_ids)
             self.assertIn('foo4', res_ids)
 
+    def test_reschedule_network_from_down_agent_failed_on_unexpected(self):
+        agents = self._create_and_set_agents_down(['host-a'], 1)
+        self._test_schedule_bind_network([agents[0]], self.network_id)
+        with mock.patch.object(
+            self, '_filter_bindings',
+            side_effect=Exception()):
+            # just make sure that no exception is raised
+            self.remove_networks_from_down_agents()
+
+    def test_reschedule_doesnt_occur_if_no_agents(self):
+        agents = self._create_and_set_agents_down(['host-a'], 1)
+        self._test_schedule_bind_network([agents[0]], self.network_id)
+        with mock.patch.object(
+            self, 'remove_network_from_dhcp_agent') as rn:
+            self.remove_networks_from_down_agents()
+            self.assertFalse(rn.called)
+
 
 class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     """Unit test scenarios for WeightScheduler.schedule."""
@@ -258,10 +277,6 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         cfg.CONF.set_override("network_scheduler_driver",
             'neutron.scheduler.dhcp_agent_scheduler.WeightScheduler')
-        self.dhcp_periodic_p = mock.patch(
-            'neutron.db.agentschedulers_db.DhcpAgentSchedulerDbMixin.'
-            'start_periodic_dhcp_agent_status_check')
-        self.patched_dhcp_periodic = self.dhcp_periodic_p.start()
         self.plugin = importutils.import_object('neutron.plugins.ml2.plugin.'
                                                 'Ml2Plugin')
         self.assertEqual(1, self.patched_dhcp_periodic.call_count)

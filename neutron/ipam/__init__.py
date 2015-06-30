@@ -13,9 +13,15 @@
 import abc
 import netaddr
 
+from oslo_config import cfg
+from oslo_utils import uuidutils
 import six
 
+from neutron.api.v2 import attributes
 from neutron.common import constants
+from neutron.common import ipv6_utils
+from neutron.common import utils as common_utils
+from neutron.ipam import exceptions as ipam_exc
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -37,8 +43,8 @@ class SubnetRequest(object):
 
         :param tenant_id: The tenant id who will own the subnet
         :type tenant_id: str uuid
-        :param subnet_id: Neutron's subnet id
-        :type subnet_id: str uuid
+        :param subnet_id: Neutron's subnet ID
+        :type subnet_id: srt uuid
         :param gateway_ip: An IP to reserve for the subnet gateway.
         :type gateway_ip: None or convertible to netaddr.IPAddress
         :param allocation_pools: The pool from which IPAM should allocate
@@ -96,16 +102,19 @@ class SubnetRequest(object):
     def allocation_pools(self):
         return self._allocation_pools
 
-    def _validate_with_subnet(self, subnet):
-        if self.gateway_ip:
-            if self.gateway_ip not in subnet:
-                raise ValueError("gateway_ip is not in the subnet")
+    def _validate_with_subnet(self, subnet_cidr):
+        if self.gateway_ip and cfg.CONF.force_gateway_on_subnet:
+            gw_ip = netaddr.IPAddress(self.gateway_ip)
+            if (gw_ip.version == 4 or (gw_ip.version == 6
+                                       and not gw_ip.is_link_local())):
+                if self.gateway_ip not in subnet_cidr:
+                    raise ValueError("gateway_ip is not in the subnet")
 
         if self.allocation_pools:
-            if subnet.version != self.allocation_pools[0].version:
+            if subnet_cidr.version != self.allocation_pools[0].version:
                 raise ValueError("allocation_pools use the wrong ip version")
             for pool in self.allocation_pools:
-                if pool not in subnet:
+                if pool not in subnet_cidr:
                     raise ValueError("allocation_pools are not in the subnet")
 
 
@@ -151,7 +160,7 @@ class SpecificSubnetRequest(SubnetRequest):
     allocation, even overlapping ones.  This can be expanded on by future
     blueprints.
     """
-    def __init__(self, tenant_id, subnet_id, subnet,
+    def __init__(self, tenant_id, subnet_id, subnet_cidr,
                  gateway_ip=None, allocation_pools=None):
         """
         :param subnet: The subnet requested.  Can be IPv4 or IPv6.  However,
@@ -165,16 +174,16 @@ class SpecificSubnetRequest(SubnetRequest):
             gateway_ip=gateway_ip,
             allocation_pools=allocation_pools)
 
-        self._subnet = netaddr.IPNetwork(subnet)
-        self._validate_with_subnet(self._subnet)
+        self._subnet_cidr = netaddr.IPNetwork(subnet_cidr)
+        self._validate_with_subnet(self._subnet_cidr)
 
     @property
-    def subnet(self):
-        return self._subnet
+    def subnet_cidr(self):
+        return self._subnet_cidr
 
     @property
     def prefixlen(self):
-        return self._subnet.prefixlen
+        return self._subnet_cidr.prefixlen
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -201,5 +210,78 @@ class AnyAddressRequest(AddressRequest):
     """Used to request any available address from the pool."""
 
 
+class AutomaticAddressRequest(SpecificAddressRequest):
+    """Used to create auto generated addresses, such as EUI64"""
+    EUI64 = 'eui64'
+
+    def _generate_eui64_address(self, **kwargs):
+        if set(kwargs) != set(['prefix', 'mac']):
+            raise ipam_exc.AddressCalculationFailure(
+                address_type='eui-64',
+                reason='must provide exactly 2 arguments - cidr and MAC')
+        prefix = kwargs['prefix']
+        mac_address = kwargs['mac']
+        return ipv6_utils.get_ipv6_addr_by_EUI64(prefix, mac_address)
+
+    _address_generators = {EUI64: _generate_eui64_address}
+
+    def __init__(self, address_type=EUI64, **kwargs):
+        """
+        This constructor builds an automatic IP address. Parameter needed for
+        generating it can be passed as optional keyword arguments.
+
+        :param address_type: the type of address to generate.
+            It could be a eui-64 address, a random IPv6 address, or
+            a ipv4 link-local address.
+            For the Kilo release only eui-64 addresses will be supported.
+        """
+        address_generator = self._address_generators.get(address_type)
+        if not address_generator:
+            raise ipam_exc.InvalidAddressType(address_type=address_type)
+        address = address_generator(self, **kwargs)
+        super(AutomaticAddressRequest, self).__init__(address)
+
+
 class RouterGatewayAddressRequest(AddressRequest):
     """Used to request allocating the special router gateway address."""
+
+
+class AddressRequestFactory(object):
+    """Builds request using ip info
+
+    Additional parameters(port and context) are not used in default
+    implementation, but planned to be used in sub-classes
+    provided by specific ipam driver,
+    """
+
+    @classmethod
+    def get_request(cls, context, port, ip):
+        if not ip:
+            return AnyAddressRequest()
+        else:
+            return SpecificAddressRequest(ip)
+
+
+class SubnetRequestFactory(object):
+    """Builds request using subnet info"""
+
+    @classmethod
+    def get_request(cls, context, subnet, subnetpool):
+        cidr = subnet.get('cidr')
+        subnet_id = subnet.get('id', uuidutils.generate_uuid())
+        is_any_subnetpool_request = not attributes.is_attr_set(cidr)
+
+        if is_any_subnetpool_request:
+            prefixlen = subnet['prefixlen']
+            if not attributes.is_attr_set(prefixlen):
+                prefixlen = int(subnetpool['default_prefixlen'])
+
+            return AnySubnetRequest(
+                subnet['tenant_id'],
+                subnet_id,
+                common_utils.ip_version_from_int(subnetpool['ip_version']),
+                prefixlen)
+        else:
+            return SpecificSubnetRequest(subnet['tenant_id'],
+                                         subnet_id,
+                                         cidr)

@@ -25,9 +25,12 @@ from neutron.i18n import _LE, _LW
 
 
 LOG = logging.getLogger(__name__)
-cfg.CONF.import_group('AGENT', 'neutron.plugins.openvswitch.common.config')
-cfg.CONF.import_group('OVS', 'neutron.plugins.openvswitch.common.config')
-cfg.CONF.import_group('VXLAN', 'neutron.plugins.linuxbridge.common.config')
+cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
+                      'agent.common.config')
+cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.'
+                      'agent.common.config')
+cfg.CONF.import_group('VXLAN', 'neutron.plugins.ml2.drivers.linuxbridge.'
+                      'agent.common.config')
 cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
 cfg.CONF.import_group('ml2_sriov',
                       'neutron.plugins.ml2.drivers.mech_sriov.mech_driver')

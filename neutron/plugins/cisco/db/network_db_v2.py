@@ -13,10 +13,10 @@
 #    under the License.
 
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 
 from neutron.db import api as db
-from neutron.openstack.common import uuidutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_models_v2

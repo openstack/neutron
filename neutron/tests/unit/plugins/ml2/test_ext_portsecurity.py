@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.extensions import portsecurity as psec
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.extensions import test_portsecurity as test_psec
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -27,3 +28,18 @@ class PSExtDriverTestCase(test_plugin.Ml2PluginV2TestCase,
                                      self._extension_drivers,
                                      group='ml2')
         super(PSExtDriverTestCase, self).setUp()
+
+    def test_create_port_with_secgroup_none_and_port_security_false(self):
+        if self._skip_security_group:
+            self.skipTest("Plugin does not support security groups")
+        with self.network() as net:
+            with self.subnet(network=net):
+                res = self._create_port('json', net['network']['id'],
+                                        arg_list=('security_groups',
+                                                  'port_security_enabled'),
+                                        security_groups=[],
+                                        port_security_enabled=False)
+                self.assertEqual(res.status_int, 201)
+                port = self.deserialize('json', res)
+                self.assertFalse(port['port'][psec.PORTSECURITY])
+                self.assertEqual(port['port']['security_groups'], [])

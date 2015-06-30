@@ -15,12 +15,12 @@
 import collections
 import mock
 from oslo_serialization import jsonutils
+from oslo_utils import uuidutils
 import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.common import exceptions
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests import base
 from neutron.tests import tools
@@ -129,6 +129,10 @@ class OVS_Lib_Test(base.BaseTestCase):
     def test_set_secure_mode(self):
         self.br.set_secure_mode()
         self._verify_vsctl_mock('set-fail-mode', self.BR_NAME, 'secure')
+
+    def test_set_standalone_mode(self):
+        self.br.set_standalone_mode()
+        self._verify_vsctl_mock('set-fail-mode', self.BR_NAME, 'standalone')
 
     def test_set_protocols(self):
         protocols = 'OpenFlow13'

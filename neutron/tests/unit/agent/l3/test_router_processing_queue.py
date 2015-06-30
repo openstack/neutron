@@ -15,8 +15,9 @@
 
 import datetime
 
+from oslo_utils import uuidutils
+
 from neutron.agent.l3 import router_processing_queue as l3_queue
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid

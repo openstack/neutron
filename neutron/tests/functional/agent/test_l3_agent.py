@@ -21,6 +21,8 @@ import mock
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
+import six
 import testtools
 import webob
 import webob.dec
@@ -43,12 +45,12 @@ from neutron.callbacks import resources
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
-from neutron.openstack.common import uuidutils
+from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
-from neutron.tests.unit.agent.l3 import test_agent as test_l3_agent
+
 
 LOG = logging.getLogger(__name__)
 _uuid = uuidutils.generate_uuid
@@ -63,8 +65,10 @@ def get_ovs_bridge(br_name):
 class L3AgentTestFramework(base.BaseSudoTestCase):
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
-        mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
+        self.mock_plugin_api = mock.patch(
+            'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+        mock.patch.object(ip_lib, '_arping').start()
         self.agent = self._configure_agent('agent1')
 
     def _get_config_opts(self):
@@ -101,7 +105,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                           get_temp_file_path('external/pids'))
         conf.set_override('host', host)
         agent = neutron_l3_agent.L3NATAgentWithStateReport(host, conf)
-        mock.patch.object(ip_lib, '_arping').start()
 
         return agent
 
@@ -113,7 +116,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             enable_fip = False
             extra_routes = False
 
-        return test_l3_agent.prepare_router_data(ip_version=ip_version,
+        return l3_test_common.prepare_router_data(ip_version=ip_version,
                                                  enable_snat=enable_snat,
                                                  enable_floating_ip=enable_fip,
                                                  enable_ha=enable_ha,
@@ -143,7 +146,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                           ip_version=4,
                                           ipv6_subnet_modes=None,
                                           interface_id=None):
-        return test_l3_agent.router_append_subnet(router, count,
+        return l3_test_common.router_append_subnet(router, count,
                 ip_version, ipv6_subnet_modes, interface_id)
 
     def _namespace_exists(self, namespace):
@@ -325,7 +328,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         # Get the last state reported for each router
         actual_router_states = {}
         for call in calls:
-            for router_id, state in call.iteritems():
+            for router_id, state in six.iteritems(call):
                 actual_router_states[router_id] = state
 
         return actual_router_states == expected
@@ -397,7 +400,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         router_info = self.generate_router_info(enable_ha=False)
         router = self.manage_router(self.agent, router_info)
 
-        port = helpers.get_free_namespace_port(router.ns_name)
+        port = helpers.get_free_namespace_port(l3_constants.PROTO_NAME_TCP,
+                                               router.ns_name)
         client_address = '19.4.4.3'
         server_address = '35.4.0.4'
 
@@ -409,11 +413,9 @@ class L3AgentTestCase(L3AgentTestFramework):
         router.process(self.agent)
 
         router_ns = ip_lib.IPWrapper(namespace=router.ns_name)
-        netcat = helpers.NetcatTester(router_ns, router_ns,
-                                      server_address, port,
-                                      client_address=client_address,
-                                      run_as_root=True,
-                                      udp=False)
+        netcat = helpers.NetcatTester(router.ns_name, router.ns_name,
+                                      client_address, port,
+                                      protocol=helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
 
         def assert_num_of_conntrack_rules(n):
@@ -500,23 +502,23 @@ class L3AgentTestCase(L3AgentTestFramework):
         routers_to_keep = []
         routers_to_delete = []
         ns_names_to_retrieve = set()
+        routers_info_to_delete = []
         for i in range(2):
             routers_to_keep.append(self.generate_router_info(False))
-            self.manage_router(self.agent, routers_to_keep[i])
-            ns_names_to_retrieve.add(namespaces.NS_PREFIX +
-                                     routers_to_keep[i]['id'])
+            ri = self.manage_router(self.agent, routers_to_keep[i])
+            ns_names_to_retrieve.add(ri.ns_name)
         for i in range(2):
             routers_to_delete.append(self.generate_router_info(False))
-            self.manage_router(self.agent, routers_to_delete[i])
-            ns_names_to_retrieve.add(namespaces.NS_PREFIX +
-                                     routers_to_delete[i]['id'])
+            ri = self.manage_router(self.agent, routers_to_delete[i])
+            routers_info_to_delete.append(ri)
+            ns_names_to_retrieve.add(ri.ns_name)
 
         # Mock the plugin RPC API to Simulate a situation where the agent
         # was handling the 4 routers created above, it went down and after
         # starting up again, two of the routers were deleted via the API
-        mocked_get_routers = (
-            neutron_l3_agent.L3PluginApi.return_value.get_routers)
-        mocked_get_routers.return_value = routers_to_keep
+        self.mock_plugin_api.get_routers.return_value = routers_to_keep
+        # also clear agent router_info as it will be after restart
+        self.agent.router_info = {}
 
         # Synchonize the agent with the plug-in
         with mock.patch.object(namespace_manager.NamespaceManager, 'list_all',
@@ -526,9 +528,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         # Mock the plugin RPC API so a known external network id is returned
         # when the router updates are processed by the agent
         external_network_id = _uuid()
-        mocked_get_external_network_id = (
-            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
-        mocked_get_external_network_id.return_value = external_network_id
+        self.mock_plugin_api.get_external_network_id.return_value = (
+            external_network_id)
 
         # Plug external_gateway_info in the routers that are not going to be
         # deleted by the agent when it processes the updates. Otherwise,
@@ -539,7 +540,7 @@ class L3AgentTestCase(L3AgentTestFramework):
 
         # Have the agent process the update from the plug-in and verify
         # expected behavior
-        for _ in routers_to_keep + routers_to_delete:
+        for _ in routers_to_keep:
             self.agent._process_router_update()
 
         for i in range(2):
@@ -547,10 +548,9 @@ class L3AgentTestCase(L3AgentTestFramework):
             self.assertTrue(self._namespace_exists(namespaces.NS_PREFIX +
                                                    routers_to_keep[i]['id']))
         for i in range(2):
-            self.assertNotIn(routers_to_delete[i]['id'],
+            self.assertNotIn(routers_info_to_delete[i].router_id,
                              self.agent.router_info)
-            self.assertFalse(self._namespace_exists(
-                namespaces.NS_PREFIX + routers_to_delete[i]['id']))
+            self._assert_router_does_not_exist(routers_info_to_delete[i])
 
     def _router_lifecycle(self, enable_ha, ip_version=4,
                           dual_stack=False, v6_ext_gw_with_sub=True):
@@ -705,13 +705,13 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._add_fip(router, dst_fip, fixed_address=dst_machine.ip)
         router.process(self.agent)
 
-        protocol_port = helpers.get_free_namespace_port(dst_machine.namespace)
+        protocol_port = helpers.get_free_namespace_port(
+            l3_constants.PROTO_NAME_TCP, dst_machine.namespace)
         # client sends to fip
         netcat = helpers.NetcatTester(
-            ip_lib.IPWrapper(src_machine.namespace),
-            ip_lib.IPWrapper(dst_machine.namespace),
-            dst_machine.ip, protocol_port, client_address=dst_fip,
-            run_as_root=True, udp=False)
+            src_machine.namespace, dst_machine.namespace,
+            dst_fip, protocol_port,
+            protocol=helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
 
@@ -743,8 +743,8 @@ class L3HATestFramework(L3AgentTestFramework):
 
         router_info_2 = copy.deepcopy(router_info)
         router_info_2[l3_constants.HA_INTERFACE_KEY] = (
-            test_l3_agent.get_ha_interface(ip='169.254.192.2',
-                                           mac='22:22:22:22:22:22'))
+            l3_test_common.get_ha_interface(ip='169.254.192.2',
+                                            mac='22:22:22:22:22:22'))
 
         get_ns_name.return_value = "%s%s%s" % (
             namespaces.RouterNamespace._get_ns_name(router_info_2['id']),
@@ -949,9 +949,7 @@ class TestDvrRouter(L3AgentTestFramework):
             self, agent_mode, **dvr_router_kwargs):
         self.agent.conf.agent_mode = agent_mode
         router_info = self.generate_dvr_router_info(**dvr_router_kwargs)
-        mocked_ext_net_id = (
-            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
-        mocked_ext_net_id.return_value = (
+        self.mock_plugin_api.get_external_network_id.return_value = (
             router_info['_floatingips'][0]['floating_network_id'])
         router = self.manage_router(self.agent, router_info)
         fip_ns = router.fip_ns.get_name()
@@ -1011,15 +1009,12 @@ class TestDvrRouter(L3AgentTestFramework):
         # gateway_port information before the l3_agent will create it.
         # The port returned needs to have the same information as
         # router_info['gw_port']
-        mocked_gw_port = (
-            neutron_l3_agent.L3PluginApi.return_value.get_agent_gateway_port)
-        mocked_gw_port.return_value = router_info['gw_port']
+        self.mock_plugin_api.get_agent_gateway_port.return_value = router_info[
+            'gw_port']
 
         # We also need to mock the get_external_network_id method to
         # get the correct fip namespace.
-        mocked_ext_net_id = (
-            neutron_l3_agent.L3PluginApi.return_value.get_external_network_id)
-        mocked_ext_net_id.return_value = (
+        self.mock_plugin_api.get_external_network_id.return_value = (
             router_info['_floatingips'][0]['floating_network_id'])
 
         # With all that set we can now ask the l3_agent to
@@ -1045,7 +1040,7 @@ class TestDvrRouter(L3AgentTestFramework):
 
     def generate_dvr_router_info(
         self, enable_ha=False, enable_snat=False, **kwargs):
-        router = test_l3_agent.prepare_router_data(
+        router = l3_test_common.prepare_router_data(
             enable_snat=enable_snat,
             enable_floating_ip=True,
             enable_ha=enable_ha,
@@ -1246,7 +1241,7 @@ class TestDvrRouter(L3AgentTestFramework):
         # existing ports on the the uplinked subnet, the ARP
         # cache is properly populated.
         self.agent.conf.agent_mode = 'dvr_snat'
-        router_info = test_l3_agent.prepare_router_data()
+        router_info = l3_test_common.prepare_router_data()
         router_info['distributed'] = True
         expected_neighbor = '35.4.1.10'
         port_data = {
@@ -1271,3 +1266,47 @@ class TestDvrRouter(L3AgentTestFramework):
             router.router_id, router.fip_ns.get_int_device_name,
             router.fip_ns.get_name())
         self.assertEqual(expected_mtu, dev_mtu)
+
+    def test_dvr_router_fip_agent_mismatch(self):
+        """Test to validate the floatingip agent mismatch.
+
+        This test validates the condition where floatingip agent
+        gateway port host mismatches with the agent and so the
+        binding will not be there.
+
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        floating_ip = router_info['_floatingips'][0]
+        floating_ip['host'] = 'my_new_host'
+        # In this case the floatingip binding is different and so it
+        # should not create the floatingip namespace on the given agent.
+        # This is also like there is no current binding.
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertFalse(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_does_not_exist(router1)
+
+    def test_dvr_router_fip_late_binding(self):
+        """Test to validate the floatingip migration or latebinding.
+
+        This test validates the condition where floatingip private
+        port changes while migration or when the private port host
+        binding is done later after floatingip association.
+
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        fip_agent_gw_port = router_info[l3_constants.FLOATINGIP_AGENT_INTF_KEY]
+        # Now let us not pass the FLOATINGIP_AGENT_INTF_KEY, to emulate
+        # that the server did not create the port, since there was no valid
+        # host binding.
+        router_info[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = []
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_port[0])
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_does_not_exist(router1)

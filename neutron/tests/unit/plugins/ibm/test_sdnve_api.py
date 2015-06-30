@@ -16,8 +16,8 @@
 
 
 import mock
+from oslo_utils import uuidutils
 
-from neutron.openstack.common import uuidutils
 from neutron.plugins.ibm.common import constants
 from neutron.plugins.ibm import sdnve_api
 from neutron.tests import base

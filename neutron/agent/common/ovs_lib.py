@@ -40,6 +40,7 @@ UNASSIGNED_OFPORT = []
 
 # OVS bridge fail modes
 FAILMODE_SECURE = 'secure'
+FAILMODE_STANDALONE = 'standalone'
 
 OPTS = [
     cfg.IntOpt('ovs_vsctl_timeout',
@@ -128,16 +129,17 @@ class BaseOVS(object):
         return self.ovsdb.br_get_external_id(bridge, 'bridge-id').execute()
 
     def set_db_attribute(self, table_name, record, column, value,
-                         check_error=False):
+                         check_error=False, log_errors=True):
         self.ovsdb.db_set(table_name, record, (column, value)).execute(
-            check_error=check_error)
+            check_error=check_error, log_errors=log_errors)
 
     def clear_db_attribute(self, table_name, record, column):
         self.ovsdb.db_clear(table_name, record, column).execute()
 
-    def db_get_val(self, table, record, column, check_error=False):
+    def db_get_val(self, table, record, column, check_error=False,
+                   log_errors=True):
         return self.ovsdb.db_get(table, record, column).execute(
-            check_error=check_error)
+            check_error=check_error, log_errors=log_errors)
 
 
 class OVSBridge(BaseOVS):
@@ -156,9 +158,14 @@ class OVSBridge(BaseOVS):
         return self.ovsdb.get_controller(self.br_name).execute(
             check_error=True)
 
+    def _set_bridge_fail_mode(self, mode):
+        self.ovsdb.set_fail_mode(self.br_name, mode).execute(check_error=True)
+
     def set_secure_mode(self):
-        self.ovsdb.set_fail_mode(self.br_name, FAILMODE_SECURE).execute(
-            check_error=True)
+        self._set_bridge_fail_mode(FAILMODE_SECURE)
+
+    def set_standalone_mode(self):
+        self._set_bridge_fail_mode(FAILMODE_STANDALONE)
 
     def set_protocols(self, protocols):
         self.set_db_attribute('Bridge', self.br_name, 'protocols', protocols,
@@ -549,7 +556,7 @@ def _build_flow_expr_str(flow_dict, cmd):
             raise exceptions.InvalidInput(error_message=msg)
         actions = "actions=%s" % flow_dict.pop('actions')
 
-    for key, value in flow_dict.iteritems():
+    for key, value in six.iteritems(flow_dict):
         if key == 'proto':
             flow_expr_arr.append(value)
         else:

@@ -79,13 +79,15 @@ class LinuxInterfaceDriver(object):
 
     def init_l3(self, device_name, ip_cidrs, namespace=None,
                 preserve_ips=[], gateway_ips=None, extra_subnets=[],
-                enable_ra_on_gw=False):
+                enable_ra_on_gw=False, clean_connections=False):
         """Set the L3 settings for the interface using data from the port.
 
         ip_cidrs: list of 'X.X.X.X/YY' strings
         preserve_ips: list of ip cidrs that should not be removed from device
         gateway_ips: For gateway ports, list of external gateway ip addresses
         enable_ra_on_gw: Boolean to indicate configuring acceptance of IPv6 RA
+        clean_connections: Boolean to indicate if we should cleanup connections
+          associated to removed ips
         """
         device = ip_lib.IPDevice(device_name, namespace=namespace)
 
@@ -113,8 +115,10 @@ class LinuxInterfaceDriver(object):
         # clean up any old addresses
         for ip_cidr in previous:
             if ip_cidr not in preserve_ips:
-                device.addr.delete(ip_cidr)
-                self.delete_conntrack_state(namespace=namespace, ip=ip_cidr)
+                if clean_connections:
+                    device.delete_addr_and_conntrack_state(ip_cidr)
+                else:
+                    device.addr.delete(ip_cidr)
 
         for gateway_ip in gateway_ips or []:
             device.route.add_gateway(gateway_ip)
@@ -130,42 +134,6 @@ class LinuxInterfaceDriver(object):
             device.route.add_onlink_route(route)
         for route in existing_onlink_routes - new_onlink_routes:
             device.route.delete_onlink_route(route)
-
-    def delete_conntrack_state(self, namespace, ip):
-        """Delete conntrack state associated with an IP address.
-
-        This terminates any active connections through an IP.  Call this soon
-        after removing the IP address from an interface so that new connections
-        cannot be created before the IP address is gone.
-
-        namespace: the name of the namespace where the IP has been configured
-        ip: the IP address for which state should be removed.  This can be
-            passed as a string with or without /NN.  A netaddr.IPAddress or
-            netaddr.Network representing the IP address can also be passed.
-        """
-        ip_str = str(netaddr.IPNetwork(ip).ip)
-        ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
-
-        # Delete conntrack state for ingress traffic
-        # If 0 flow entries have been deleted
-        # conntrack -D will return 1
-        try:
-            ip_wrapper.netns.execute(["conntrack", "-D", "-d", ip_str],
-                                     check_exit_code=True,
-                                     extra_ok_codes=[1])
-
-        except RuntimeError:
-            LOG.exception(_LE("Failed deleting ingress connection state of"
-                              " floatingip %s"), ip_str)
-
-        # Delete conntrack state for egress traffic
-        try:
-            ip_wrapper.netns.execute(["conntrack", "-D", "-q", ip_str],
-                                     check_exit_code=True,
-                                     extra_ok_codes=[1])
-        except RuntimeError:
-            LOG.exception(_LE("Failed deleting egress connection state of"
-                              " floatingip %s"), ip_str)
 
     def check_bridge_exists(self, bridge):
         if not ip_lib.device_exists(bridge):

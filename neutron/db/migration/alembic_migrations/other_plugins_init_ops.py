@@ -79,3 +79,9 @@ def upgrade():
         sa.ForeignKeyConstraint(['rule_id'], ['routerrules.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('rule_id', 'nexthop'))
+
+    op.create_table(
+        'consistencyhashes',
+        sa.Column('hash_id', sa.String(255), primary_key=True),
+        sa.Column('hash', sa.String(255), nullable=False)
+    )

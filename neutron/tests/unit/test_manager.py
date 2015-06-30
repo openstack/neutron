@@ -77,7 +77,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                                "DummyServicePlugin"])
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         e = self.assertRaises(ValueError, manager.NeutronManager.get_instance)
-        self.assertIn(constants.DUMMY, e.message)
+        self.assertIn(constants.DUMMY, str(e))
 
     def test_multiple_plugins_by_name_specified_for_service_type(self):
         cfg.CONF.set_override("service_plugins", ["dummy", "dummy"])
@@ -99,7 +99,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                               "neutron.tests.unit.test_manager."
                               "MultiServiceCorePlugin")
         e = self.assertRaises(ValueError, manager.NeutronManager.get_instance)
-        self.assertIn(constants.DUMMY, e.message)
+        self.assertIn(constants.DUMMY, str(e))
 
     def test_core_plugin_supports_services(self):
         cfg.CONF.set_override("core_plugin",

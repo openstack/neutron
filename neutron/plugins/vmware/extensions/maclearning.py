@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 
@@ -26,7 +27,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Maclearning(object):
+class Maclearning(extensions.ExtensionDescriptor):
     """Extension class supporting port mac learning."""
 
     @classmethod
@@ -40,10 +41,6 @@ class Maclearning(object):
     @classmethod
     def get_description(cls):
         return "Provides MAC learning capabilities."
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/maclearning/api/v1.0"
 
     @classmethod
     def get_updated(cls):

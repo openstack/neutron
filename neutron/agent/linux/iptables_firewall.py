@@ -17,11 +17,13 @@ import collections
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+import six
 
 from neutron.agent import firewall
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.extensions import portsecurity as psec
@@ -71,6 +73,32 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             lambda: collections.defaultdict(list))
         self.pre_sg_members = None
         self.enable_ipset = cfg.CONF.SECURITYGROUP.enable_ipset
+        self._enabled_netfilter_for_bridges = False
+
+    def _enable_netfilter_for_bridges(self):
+        # we only need to set these values once, but it has to be when
+        # we create a bridge; before that the bridge module might not
+        # be loaded and the proc values aren't there.
+        if self._enabled_netfilter_for_bridges:
+            return
+        else:
+            self._enabled_netfilter_for_bridges = True
+
+        # These proc values ensure that netfilter is enabled on
+        # bridges; essential for enforcing security groups rules with
+        # OVS Hybrid.  Distributions can differ on whether this is
+        # enabled by default or not (Ubuntu - yes, Redhat - no, for
+        # example).
+        LOG.debug("Enabling netfilter for bridges")
+        utils.execute(['sysctl', '-w',
+                       'net.bridge.bridge-nf-call-arptables=1'],
+                      run_as_root=True)
+        utils.execute(['sysctl', '-w',
+                       'net.bridge.bridge-nf-call-ip6tables=1'],
+                      run_as_root=True)
+        utils.execute(['sysctl', '-w',
+                       'net.bridge.bridge-nf-call-iptables=1'],
+                      run_as_root=True)
 
     @property
     def ports(self):
@@ -103,7 +131,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         LOG.debug("Preparing device (%s) filter", port['device'])
         self._remove_chains()
         self._set_ports(port)
-
+        self._enable_netfilter_for_bridges()
         # each security group has it own chains
         self._setup_chains()
         self.iptables.apply()
@@ -313,6 +341,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _build_ipv4v6_mac_ip_list(self, mac, ip_address, mac_ipv4_pairs,
                                   mac_ipv6_pairs):
+        mac = str(netaddr.EUI(mac, dialect=netaddr.mac_unix))
         if netaddr.IPNetwork(ip_address).version == 4:
             mac_ipv4_pairs.append((mac, ip_address))
         else:
@@ -403,14 +432,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _get_remote_sg_ids(self, port, direction=None):
         sg_ids = port.get('security_groups', [])
-        remote_sg_ids = {constants.IPv4: [], constants.IPv6: []}
+        remote_sg_ids = {constants.IPv4: set(), constants.IPv6: set()}
         for sg_id in sg_ids:
             for rule in self.sg_rules.get(sg_id, []):
                 if not direction or rule['direction'] == direction:
                     remote_sg_id = rule.get('remote_group_id')
                     ether_type = rule.get('ethertype')
                     if remote_sg_id and ether_type:
-                        remote_sg_ids[ether_type].append(remote_sg_id)
+                        remote_sg_ids[ether_type].add(remote_sg_id)
         return remote_sg_ids
 
     def _add_rules_by_security_group(self, port, direction):
@@ -456,8 +485,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         for ip_version, sg_ids in security_group_ids.items():
             for sg_id in sg_ids:
                 current_ips = self.sg_members[sg_id][ip_version]
-                if current_ips:
-                    self.ipset.set_members(sg_id, ip_version, current_ips)
+                self.ipset.set_members(sg_id, ip_version, current_ips)
 
     def _generate_ipset_rule_args(self, sg_rule, remote_gid):
         ethertype = sg_rule.get('ethertype')
@@ -590,7 +618,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_sgs_to_remove = self._determine_remote_sgs_to_remove(
             filtered_ports)
 
-        for ip_version, remote_sg_ids in remote_sgs_to_remove.iteritems():
+        for ip_version, remote_sg_ids in six.iteritems(remote_sgs_to_remove):
             self._clear_sg_members(ip_version, remote_sg_ids)
             if self.enable_ipset:
                 self._remove_ipsets_for_remote_sgs(ip_version, remote_sg_ids)
@@ -612,7 +640,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_group_id_sets = self._get_remote_sg_ids_sets_by_ipversion(
             filtered_ports)
         for ip_version, remote_group_id_set in (
-                remote_group_id_sets.iteritems()):
+                six.iteritems(remote_group_id_sets)):
             sgs_to_remove_per_ipversion[ip_version].update(
                 set(self.pre_sg_members) - remote_group_id_set)
         return sgs_to_remove_per_ipversion
@@ -622,9 +650,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_group_id_sets = {constants.IPv4: set(),
                                 constants.IPv6: set()}
         for port in filtered_ports:
-            for ip_version, sg_ids in self._get_remote_sg_ids(
-                    port).iteritems():
-                remote_group_id_sets[ip_version].update(sg_ids)
+            remote_sg_ids = self._get_remote_sg_ids(port)
+            for ip_version in (constants.IPv4, constants.IPv6):
+                remote_group_id_sets[ip_version] |= remote_sg_ids[ip_version]
         return remote_group_id_sets
 
     def _determine_sg_rules_to_remove(self, filtered_ports):
@@ -656,7 +684,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _remove_unused_sg_members(self):
         """Remove sg_member entries where no IPv4 or IPv6 is associated."""
-        for sg_id in self.sg_members.keys():
+        for sg_id in list(self.sg_members.keys()):
             sg_has_members = (self.sg_members[sg_id][constants.IPv4] or
                               self.sg_members[sg_id][constants.IPv6])
             if not sg_has_members:

@@ -18,7 +18,6 @@ Unit Tests for ml2 rpc
 """
 
 import collections
-import contextlib
 
 import mock
 from oslo_config import cfg
@@ -202,12 +201,8 @@ class RpcApiTestCase(base.BaseTestCase):
         expected_version = kwargs.pop('version', None)
         fanout = kwargs.pop('fanout', False)
 
-        with contextlib.nested(
-            mock.patch.object(rpcapi.client, rpc_method),
-            mock.patch.object(rpcapi.client, 'prepare'),
-        ) as (
-            rpc_mock, prepare_mock
-        ):
+        with mock.patch.object(rpcapi.client, rpc_method) as rpc_mock,\
+                mock.patch.object(rpcapi.client, 'prepare') as prepare_mock:
             prepare_mock.return_value = rpcapi.client
             rpc_mock.return_value = expected_retval
             retval = getattr(rpcapi, method)(ctxt, **kwargs)

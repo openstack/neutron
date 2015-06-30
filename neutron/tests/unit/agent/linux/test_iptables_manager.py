@@ -1007,11 +1007,11 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        '[0:0] -A FORWARD -j neutron-filter-top',
                        '[0:0] -A OUTPUT -j neutron-filter-top'
                        % IPTABLES_ARG]
-
-        return self.iptables._find_last_entry(filter_list, find_str)
+        filter_map = iptables_manager.make_filter_map(filter_list)
+        return self.iptables._find_last_entry(filter_map, find_str)
 
     def test_find_last_entry_old_dup(self):
-        find_str = 'neutron-filter-top'
+        find_str = '-A OUTPUT -j neutron-filter-top'
         match_str = '[0:0] -A OUTPUT -j neutron-filter-top'
         ret_str = self._test_find_last_entry(find_str)
         self.assertEqual(ret_str, match_str)
@@ -1020,6 +1020,19 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         find_str = 'neutron-filter-NOTFOUND'
         ret_str = self._test_find_last_entry(find_str)
         self.assertIsNone(ret_str)
+
+    def test_make_filter_map_cidr_stripping(self):
+        filter_rules = ('[0:0] -A OUTPUT -j DROP',
+                        '[0:0] -A INPUT -d 192.168.0.2/32 -j DROP',
+                        '[0:0] -A INPUT -d 1234:31::001F/128 -j DROP',
+                        'OUTPUT - [0:0]')
+        filter_map = iptables_manager.make_filter_map(filter_rules)
+        # make sure /128 works without CIDR
+        self.assertEqual(filter_rules[2],
+                         filter_map['-A INPUT -d 1234:31::001F -j DROP'][0])
+        # make sure /32 works without CIDR
+        self.assertEqual(filter_rules[1],
+                         filter_map['-A INPUT -d 192.168.0.2 -j DROP'][0])
 
 
 class IptablesManagerStateLessTestCase(base.BaseTestCase):

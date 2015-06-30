@@ -31,7 +31,6 @@ disable=
  broad-except,
  dangerous-default-value,
  deprecated-lambda,
- duplicate-key,
  expression-not-assigned,
  fixme,
  global-statement,

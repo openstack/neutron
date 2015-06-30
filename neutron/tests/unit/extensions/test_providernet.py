@@ -15,6 +15,7 @@
 
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 from webob import exc as web_exc
 import webtest
 
@@ -23,7 +24,6 @@ from neutron.api.v2 import router
 from neutron import context
 from neutron.extensions import providernet as pnet
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron import quota
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions

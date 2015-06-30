@@ -12,16 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
+
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.openstack.common import uuidutils
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack import fullstack_fixtures as f_fixtures
 
 
-class SingleNodeEnvironment(f_fixtures.EnvironmentFixture):
+class SingleNodeEnvironment(f_fixtures.FullstackFixture):
     def setUp(self):
         super(SingleNodeEnvironment, self).setUp()
 
@@ -30,10 +31,11 @@ class SingleNodeEnvironment(f_fixtures.EnvironmentFixture):
 
         self.ovs_agent = self.useFixture(
             f_fixtures.OVSAgentFixture(
-                neutron_config, ml2_config))
+                self.test_name, neutron_config, ml2_config))
 
         self.l3_agent = self.useFixture(
             f_fixtures.L3AgentFixture(
+                self.test_name,
                 self.temp_dir,
                 neutron_config,
                 self.ovs_agent._get_br_int_name()))

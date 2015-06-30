@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
 import mock
 import socket
 import testtools
@@ -280,6 +281,18 @@ class TestBaseOSUtils(base.BaseTestCase):
         self.assertFalse(utils.is_effective_group('wrong'))
         getegid.assert_called_once_with()
         getgrgid.assert_called_once_with(self.EGID)
+
+    @mock.patch('os.makedirs')
+    def test_ensure_dir_no_fail_if_exists(self, makedirs):
+        error = OSError()
+        error.errno = errno.EEXIST
+        makedirs.side_effect = error
+        utils.ensure_dir("/etc/create/concurrently")
+
+    @mock.patch('os.makedirs')
+    def test_ensure_dir_calls_makedirs(self, makedirs):
+        utils.ensure_dir("/etc/create/directory")
+        makedirs.assert_called_once_with("/etc/create/directory", 0o755)
 
 
 class TestUnixDomainHttpConnection(base.BaseTestCase):

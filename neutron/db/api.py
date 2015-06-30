@@ -14,10 +14,13 @@
 #    under the License.
 
 import contextlib
+import six
 
 from oslo_config import cfg
+from oslo_db import exception as os_db_exception
 from oslo_db.sqlalchemy import session
 from sqlalchemy import exc
+from sqlalchemy import orm
 
 
 _FACADE = None
@@ -46,11 +49,12 @@ def dispose():
         get_engine().pool.dispose()
 
 
-def get_session(autocommit=True, expire_on_commit=False):
+def get_session(autocommit=True, expire_on_commit=False, use_slave=False):
     """Helper method to grab session."""
     facade = _create_facade_lazily()
     return facade.get_session(autocommit=autocommit,
-                              expire_on_commit=expire_on_commit)
+                              expire_on_commit=expire_on_commit,
+                              use_slave=use_slave)
 
 
 @contextlib.contextmanager
@@ -63,3 +67,21 @@ def autonested_transaction(sess):
     finally:
         with session_context as tx:
             yield tx
+
+
+class convert_db_exception_to_retry(object):
+    """Converts other types of DB exceptions into RetryRequests."""
+
+    def __init__(self, stale_data=False):
+        self.to_catch = ()
+        if stale_data:
+            self.to_catch += (orm.exc.StaleDataError, )
+
+    def __call__(self, f):
+        @six.wraps(f)
+        def wrapper(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except self.to_catch as e:
+                raise os_db_exception.RetryRequest(e)
+        return wrapper

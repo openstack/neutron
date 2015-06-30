@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
 import mock
 import testtools
 
@@ -45,11 +44,10 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 self.mixin.create_security_group(self.ctx, secgroup)
 
     def test_delete_security_group_in_use(self):
-        with contextlib.nested(
-            mock.patch.object(self.mixin, '_get_port_security_group_bindings'),
-            mock.patch.object(self.mixin, '_get_security_group'),
-            mock.patch.object(registry, "notify"),
-        ) as (_, _, mock_notify):
+        with mock.patch.object(self.mixin,
+                               '_get_port_security_group_bindings'),\
+                mock.patch.object(self.mixin, '_get_security_group'),\
+                mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(
                 securitygroup.SecurityGroupInUse):
@@ -64,11 +62,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 self.mixin.update_security_group(self.ctx, 'foo_id', secgroup)
 
     def test_create_security_group_rule_conflict(self):
-        with mock.patch.object(registry, "notify") as mock_notify:
+        with mock.patch.object(self.mixin, '_validate_security_group_rule'),\
+                mock.patch.object(self.mixin,
+                                  '_check_for_duplicate_rules_in_db'),\
+                mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(
                 securitygroup.SecurityGroupConflict):
-                self.mixin.create_security_group_rule(self.ctx, mock.ANY)
+                self.mixin.create_security_group_rule(
+                    self.ctx, mock.MagicMock())
 
     def test_delete_security_group_rule_in_use(self):
         with mock.patch.object(registry, "notify") as mock_notify:

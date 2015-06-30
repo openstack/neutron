@@ -13,12 +13,55 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import warnings
+
 import fixtures
+from oslo_utils import excutils
+import six
 
 from neutron.api.v2 import attributes
 
 
-class AttributeMapMemento(fixtures.Fixture):
+class SafeFixture(fixtures.Fixture):
+    """Base Fixture ensuring cleanups are done even if setUp fails.
+
+    Required until testtools/fixtures bugs #1456353 #1456370 are solved.
+    """
+
+    def __init__(self):
+        unsafe_setup = self.setUp
+        self.setUp = lambda: self.safe_setUp(unsafe_setup)
+        self.initialized = True
+
+    def setUp(self):
+        assert getattr(self, 'initialized', True)
+        super(SafeFixture, self).setUp()
+
+    def safe_setUp(self, unsafe_setup):
+        """Ensure cleanup is done even if setUp fails."""
+        try:
+            unsafe_setup()
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                self.safe_cleanUp()
+
+    def safe_cleanUp(self):
+        """Perform cleanUp if required.
+
+        Fixture.addCleanup/cleanUp can be called only after Fixture.setUp
+        successful call. It implies we cannot and don't need to call cleanUp
+        if Fixture.setUp fails or is not called.
+
+        This method assumes Fixture.setUp was called successfully if
+        self._detail_sources is defined (Fixture.setUp last action).
+        """
+        root_setup_succeed = hasattr(self, '_detail_sources')
+
+        if root_setup_succeed:
+            self.cleanUp()
+
+
+class AttributeMapMemento(SafeFixture):
     """Create a copy of the resource attribute map so it can be restored during
     test cleanup.
 
@@ -40,12 +83,27 @@ class AttributeMapMemento(fixtures.Fixture):
         # deeper than a shallow copy.
         super(AttributeMapMemento, self).setUp()
         self.contents_backup = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.contents_backup[resource] = attrs.copy()
+        for res, attrs in six.iteritems(attributes.RESOURCE_ATTRIBUTE_MAP):
+            self.contents_backup[res] = attrs.copy()
         self.addCleanup(self.restore)
 
     def restore(self):
         attributes.RESOURCE_ATTRIBUTE_MAP = self.contents_backup
+
+
+class WarningsFixture(SafeFixture):
+    """Filters out warnings during test runs."""
+
+    warning_types = (
+        DeprecationWarning, PendingDeprecationWarning, ImportWarning
+    )
+
+    def setUp(self):
+        super(WarningsFixture, self).setUp()
+        for wtype in self.warning_types:
+            warnings.filterwarnings(
+                "always", category=wtype, module='^neutron\\.')
+        self.addCleanup(warnings.resetwarnings)
 
 
 """setup_mock_calls and verify_mock_calls are convenient methods
@@ -89,3 +147,15 @@ def fail(msg=None):
     testcase instance (usefully for reducing coupling).
     """
     raise unittest.TestCase.failureException(msg)
+
+
+class UnorderedList(list):
+    """A list that is equals to any permutation of itself."""
+
+    def __eq__(self, other):
+        if not isinstance(other, list):
+            return False
+        return sorted(self) == sorted(other)
+
+    def __neq__(self, other):
+        return not self == other

@@ -14,11 +14,13 @@
 
 import netaddr
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from oslo_utils import excutils
+import six
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
@@ -36,7 +38,6 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.i18n import _LI, _LE
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
@@ -1013,7 +1014,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         marker_obj = self._get_marker_obj(context, 'floatingip', limit,
                                           marker)
         if filters is not None:
-            for key, val in API_TO_DB_COLUMN_MAP.iteritems():
+            for key, val in six.iteritems(API_TO_DB_COLUMN_MAP):
                 if key in filters:
                     filters[val] = filters.pop(key)
 

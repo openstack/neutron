@@ -13,12 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import testtools
 
 import mock
 
-from neutron.agent import l2population_rpc
 from neutron.common import constants
 from neutron.common import topics
 from neutron import context
@@ -30,6 +28,7 @@ from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
+from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
 from neutron.tests import base
@@ -711,16 +710,10 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 p1['status'] = 'ACTIVE'
                 self.mock_fanout.reset_mock()
 
-                fanout = ('neutron.plugins.ml2.drivers.l2pop.rpc.'
-                          'L2populationAgentNotifyAPI._notification_fanout')
-                fanout_patch = mock.patch(fanout)
-                mock_fanout = fanout_patch.start()
-
                 plugin = manager.NeutronManager.get_plugin()
                 plugin.update_port(self.adminContext, p1['id'], port1)
 
-                self.assertFalse(mock_fanout.called)
-                fanout_patch.stop()
+                self.assertFalse(self.mock_fanout.called)
 
     def test_get_device_details_port_id(self):
         self._register_ml2_agents()
@@ -791,13 +784,11 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
         l2pop_mech.L2PopulationAgentNotify = mock.Mock()
         l2pop_mech.rpc_ctx = mock.Mock()
-        with contextlib.nested(
-                mock.patch.object(l2pop_mech,
-                           '_update_port_down',
-                           return_value=None),
+        with mock.patch.object(l2pop_mech,
+                               '_update_port_down',
+                               return_value=None) as upd_port_down,\
                 mock.patch.object(l2pop_mech.L2PopulationAgentNotify,
-                                  'remove_fdb_entries')) as (upd_port_down,
-                                                             rem_fdb_entries):
+                                  'remove_fdb_entries'):
             l2pop_mech.delete_port_postcommit(mock.Mock())
             self.assertTrue(upd_port_down.called)
 
@@ -836,16 +827,15 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
         def agent_ip_side_effect(agent):
             return agent_ips[agent]
 
-        with contextlib.nested(
-                mock.patch.object(l2pop_db.L2populationDbMixin,
-                                  'get_agent_ip',
-                                  side_effect=agent_ip_side_effect),
+        with mock.patch.object(l2pop_db.L2populationDbMixin,
+                               'get_agent_ip',
+                               side_effect=agent_ip_side_effect),\
                 mock.patch.object(l2pop_db.L2populationDbMixin,
                                   'get_nondvr_active_network_ports',
-                                  new=fdb_network_ports_query),
+                                  new=fdb_network_ports_query),\
                 mock.patch.object(l2pop_db.L2populationDbMixin,
                                   'get_dvr_active_network_ports',
-                                  new=tunnel_network_ports_query)):
+                                  new=tunnel_network_ports_query):
             session = mock.Mock()
             agent = mock.Mock()
             agent.host = HOST

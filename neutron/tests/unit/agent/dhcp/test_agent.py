@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import copy
 import sys
 import uuid
@@ -221,6 +222,12 @@ class TestDhcpAgent(base.BaseTestCase):
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
 
+    def test_init_host(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(dhcp, 'sync_state') as sync_state:
+            dhcp.init_host()
+            sync_state.assert_called_once_with()
+
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
         # sync_state is needed for this test
@@ -235,7 +242,7 @@ class TestDhcpAgent(base.BaseTestCase):
                     with mock.patch.object(sys, 'argv') as sys_argv:
                         sys_argv.return_value = [
                             'dhcp', '--config-file',
-                            base.etcdir('neutron.conf.test')]
+                            base.etcdir('neutron.conf')]
                         cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
                         config.register_interface_driver_opts_helper(cfg.CONF)
                         config.register_agent_state_opts_helper(cfg.CONF)
@@ -259,7 +266,7 @@ class TestDhcpAgent(base.BaseTestCase):
             with mock.patch.object(sys, 'argv') as sys_argv:
                 with mock.patch(launcher_str) as launcher:
                     sys_argv.return_value = ['dhcp', '--config-file',
-                                             base.etcdir('neutron.conf.test')]
+                                             base.etcdir('neutron.conf')]
                     entry.main()
                     launcher.assert_has_calls(
                         [mock.call(), mock.call().launch_service(mock.ANY),
@@ -329,7 +336,9 @@ class TestDhcpAgent(base.BaseTestCase):
             trace_level='warning',
             expected_sync=False)
 
-    def _test_sync_state_helper(self, known_networks, active_networks):
+    def _test_sync_state_helper(self, known_net_ids, active_net_ids):
+        active_networks = set(mock.Mock(id=netid) for netid in active_net_ids)
+
         with mock.patch(DHCP_PLUGIN) as plug:
             mock_plugin = mock.Mock()
             mock_plugin.get_active_networks_info.return_value = active_networks
@@ -337,23 +346,18 @@ class TestDhcpAgent(base.BaseTestCase):
 
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
 
-            attrs_to_mock = dict(
-                [(a, mock.DEFAULT) for a in
-                 ['refresh_dhcp_helper', 'disable_dhcp_helper', 'cache']])
+            attrs_to_mock = dict([(a, mock.DEFAULT)
+                                 for a in ['disable_dhcp_helper', 'cache',
+                                           'safe_configure_dhcp_for_network']])
 
             with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
-                mocks['cache'].get_network_ids.return_value = known_networks
+                mocks['cache'].get_network_ids.return_value = known_net_ids
                 dhcp.sync_state()
 
-                exp_refresh = [
-                    mock.call(net_id) for net_id in active_networks]
-
-                diff = set(known_networks) - set(active_networks)
+                diff = set(known_net_ids) - set(active_net_ids)
                 exp_disable = [mock.call(net_id) for net_id in diff]
-
                 mocks['cache'].assert_has_calls([mock.call.get_network_ids()])
-                mocks['refresh_dhcp_helper'].assert_has_called(exp_refresh)
-                mocks['disable_dhcp_helper'].assert_has_called(exp_disable)
+                mocks['disable_dhcp_helper'].assert_has_calls(exp_disable)
 
     def test_sync_state_initial(self):
         self._test_sync_state_helper([], ['a'])
@@ -365,19 +369,10 @@ class TestDhcpAgent(base.BaseTestCase):
         self._test_sync_state_helper(['b'], ['a'])
 
     def test_sync_state_waitall(self):
-        class mockNetwork(object):
-            id = '0'
-            admin_state_up = True
-            subnets = []
-
-            def __init__(self, id):
-                self.id = id
         with mock.patch.object(dhcp_agent.eventlet.GreenPool, 'waitall') as w:
-            active_networks = [mockNetwork('1'), mockNetwork('2'),
-                               mockNetwork('3'), mockNetwork('4'),
-                               mockNetwork('5')]
-            known_networks = ['1', '2', '3', '4', '5']
-            self._test_sync_state_helper(known_networks, active_networks)
+            active_net_ids = ['1', '2', '3', '4', '5']
+            known_net_ids = ['1', '2', '3', '4', '5']
+            self._test_sync_state_helper(known_net_ids, active_net_ids)
             w.assert_called_once_with()
 
     def test_sync_state_plugin_error(self):
@@ -401,10 +396,11 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.periodic_resync()
             spawn.assert_called_once_with(dhcp._periodic_resync_helper)
 
-    def test_periodoc_resync_helper(self):
+    def test_periodic_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            dhcp.needs_resync_reasons = {'a': 'reason1', 'b': 'reason2'}
+            dhcp.needs_resync_reasons = collections.OrderedDict(
+                (('a', 'reason1'), ('b', 'reason2')))
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
                 with testtools.ExpectedException(RuntimeError):
@@ -1003,10 +999,6 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
         self._test_dhcp_api('get_network_info', network_id='fake_id',
                             return_value=None)
 
-    def test_get_dhcp_port(self):
-        self._test_dhcp_api('get_dhcp_port', network_id='fake_id',
-                            device_id='fake_id_2', return_value=None)
-
     def test_create_dhcp_port(self):
         self._test_dhcp_api('create_dhcp_port', port='fake_port',
                             return_value=None, version='1.1')
@@ -1213,7 +1205,6 @@ class TestDeviceManager(base.BaseTestCase):
         port = port or fake_port1
         plugin = mock.Mock()
         plugin.create_dhcp_port.return_value = port or fake_port1
-        plugin.get_dhcp_port.return_value = port or fake_port1
         self.ensure_device_is_ready.return_value = device_is_ready
         self.mock_driver.get_device_name.return_value = 'tap12345678-12'
 
@@ -1333,14 +1324,19 @@ class TestDeviceManager(base.BaseTestCase):
         self.assertFalse(plugin.setup_dhcp_port.called)
         self.assertFalse(plugin.update_dhcp_port.called)
 
+    def test_setup_dhcp_port_with_non_enable_dhcp_subnet(self):
+        plugin = mock.Mock()
+        dh = dhcp.DeviceManager(cfg.CONF, plugin)
+        fake_network_copy = copy.deepcopy(fake_network)
+        fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
+        plugin.update_dhcp_port.return_value = fake_port1
+        self.assertEqual(fake_subnet1.id,
+                dh.setup_dhcp_port(fake_network_copy).fixed_ips[0].subnet_id)
+
     def test_destroy(self):
         fake_net = dhcp.NetModel(
             True, dict(id=FAKE_NETWORK_UUID,
                        tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'))
-
-        fake_port = dhcp.DictModel(
-            dict(id='12345678-1234-aaaa-1234567890ab',
-                 mac_address='aa:bb:cc:dd:ee:ff'))
 
         with mock.patch('neutron.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
@@ -1348,7 +1344,6 @@ class TestDeviceManager(base.BaseTestCase):
             dvr_cls.return_value = mock_driver
 
             plugin = mock.Mock()
-            plugin.get_dhcp_port.return_value = fake_port
 
             dh = dhcp.DeviceManager(cfg.CONF, plugin)
             dh.destroy(fake_net, 'tap12345678-12')
@@ -1375,7 +1370,6 @@ class TestDeviceManager(base.BaseTestCase):
             dvr_cls.return_value = mock_driver
 
             plugin = mock.Mock()
-            plugin.get_dhcp_port.return_value = fake_port
 
             dh = dhcp.DeviceManager(cfg.CONF, plugin)
             dh.get_interface_name(fake_net, fake_port)

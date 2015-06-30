@@ -25,7 +25,8 @@ def upgrade():
         sa.Column('physical_network', sa.String(length=64), nullable=False),
         sa.Column('segmentation_id', sa.Integer(), autoincrement=False,
                   nullable=False),
-        sa.Column('allocated', sa.Boolean(), nullable=False),
+        sa.Column('allocated', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
         sa.PrimaryKeyConstraint('physical_network', 'segmentation_id'))
 
     op.create_table(

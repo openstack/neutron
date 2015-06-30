@@ -85,10 +85,6 @@ class N1kv(extensions.ExtensionDescriptor):
         return "Expose network profile"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/n1kv/api/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-11-15T10:00:00-00:00"
 

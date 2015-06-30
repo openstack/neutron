@@ -129,7 +129,7 @@ The testing process will be as follow:
   the vendor to choose what CI system they see fit to run them. There is no
   need or requirement to use OpenStack CI resources if they do not want to.
   Having said that, it may be useful to provide coverage for the shim layer in
-  the form of basic validation as done in `ODL <https://github.com/openstack/neutron/blob/master/neutron/tests/unit/ml2/test_mechanism_odl.py>`_ and `LBaaS A10 driver <https://github.com/openstack/neutron-lbaas/blob/master/neutron_lbaas/tests/unit/services/loadbalancer/drivers/a10networks/test_driver_v1.py>`_.
+  the form of basic validation as done in `ODL <https://git.openstack.org/cgit/openstack/networking-odl/tree/networking_odl/tests/unit/ml2/test_mechanism_odl.py>`_ and `LBaaS A10 driver <https://git.openstack.org/cgit/openstack/neutron-lbaas/tree/neutron_lbaas/tests/unit/services/loadbalancer/drivers/a10networks/test_driver_v1.py>`_.
 
 * 3rd Party CI will continue to validate vendor integration with Neutron via
   functional testing. 3rd Party CI is a communication mechanism. This objective
@@ -227,7 +227,7 @@ library, and it leads to the greatest level of flexibility when dealing with Dev
 dev/test deployments.
 
 Having said that, most Neutron plugins developed in the past likely already have
-integration with DevStack in the form of `neutron_plugins <https://github.com/openstack-dev/devstack/tree/master/lib/neutron_plugins>`_.
+integration with DevStack in the form of `neutron_plugins <https://git.openstack.org/cgit/openstack-dev/devstack/tree/lib/neutron_plugins>`_.
 If the plugin is being decomposed in vendor integration plus vendor library, it would
 be necessary to adjust the instructions provided in the neutron_plugin file to pull the
 vendor library code as a new dependency. For instance, the instructions below:
@@ -247,7 +247,7 @@ vendor library code as a new dependency. For instance, the instructions below:
 
 could be placed in 'neutron_plugin_configure_service', ahead of the service
 configuration. An alternative could be under the `third_party section
-<https://github.com/openstack-dev/devstack/tree/master/lib/neutron_thirdparty>`_,
+<https://git.openstack.org/cgit/openstack-dev/devstack/tree/lib/neutron_thirdparty>`_,
 if available. This solution can be similarly exploited for both monolithic
 plugins or ML2 mechanism drivers. The configuration of the plugin or driver itself can be
 done by leveraging the extensibility mechanisms provided by `local.conf <http://docs.openstack.org/developer/devstack/configuration.html>`_. In fact, since the .ini file for the vendor plugin or driver lives
@@ -270,9 +270,9 @@ is strongly encouraged to revise the existing DevStack integration, in order to 
 in an extras.d hooks based approach.
 
 One final consideration is worth making for 3rd party CI setups: if `Devstack Gate
-<https://github.com/openstack-infra/devstack-gate>`_ is used, it does provide hook
+<https://git.openstack.org/cgit/openstack-infra/devstack-gate>`_ is used, it does provide hook
 functions that can be executed at specific times of the devstack-gate-wrap script run.
-For example, the `Neutron Functional job <https://github.com/openstack-infra/project-config/blob/master/jenkins/jobs/neutron-functional.yaml>`_ uses them. For more details see `devstack-vm-gate-wrap.sh <https://github.com/openstack-infra/devstack-gate/blob/master/devstack-vm-gate-wrap.sh>`_.
+For example, the `Neutron Functional job <https://git.openstack.org/cgit/openstack-infra/project-config/tree/jenkins/jobs/neutron.yaml>`_ uses them. For more details see `devstack-vm-gate-wrap.sh <https://git.openstack.org/cgit/openstack-infra/devstack-gate/tree/devstack-vm-gate-wrap.sh>`_.
 
 Documentation Strategies
 ------------------------
@@ -291,12 +291,12 @@ The list of steps below are somewhat the tl;dr; version of what you can find
 on http://docs.openstack.org/infra/manual/creators.html. They are meant to
 be the bare minimum you have to complete in order to get you off the ground.
 
-* Create a public repository: this can be a personal github.com repo or any
-  publicly available git repo, e.g. https://github.com/john-doe/foo.git. This
+* Create a public repository: this can be a personal git.openstack.org repo or any
+  publicly available git repo, e.g. ``https://github.com/john-doe/foo.git``. This
   would be a temporary buffer to be used to feed the StackForge one.
 * Initialize the repository: if you are starting afresh, you may *optionally*
   want to use cookiecutter to get a skeleton project. You can learn how to use
-  cookiecutter on https://github.com/openstack-dev/cookiecutter.
+  cookiecutter on https://git.openstack.org/cgit/openstack-dev/cookiecutter.
   If you want to build the repository from an existing Neutron module, you may
   want to skip this step now, build the history first (next step), and come back
   here to initialize the remainder of the repository with other files being
@@ -312,7 +312,7 @@ be the bare minimum you have to complete in order to get you off the ground.
 
     ::
 
-        git clone https://github.com/openstack/neutron.git
+        git clone https://git.openstack.org/openstack/neutron.git
         cd neutron
         ./tools/split.sh
         # Sit and wait for a while, or grab a cup of your favorite drink
@@ -347,7 +347,7 @@ be the bare minimum you have to complete in order to get you off the ground.
   the previous step. In the latter case, you can do so by specifying the
   upstream section for your project in project-config/gerrit/project.yaml.
   Steps are documented on the
-  `Project Creators Manual <http://docs.openstack.org/infra/manual/creators.html>`_.
+  `Repository Creator's Guide <http://docs.openstack.org/infra/manual/creators.html>`_.
 * Ask for a Launchpad user to be assigned to the core team created. Steps are
   documented in
   `this section <http://docs.openstack.org/infra/manual/creators.html#update-the-gerrit-group-members>`_.
@@ -357,7 +357,7 @@ be the bare minimum you have to complete in order to get you off the ground.
   jobs that validate your patches when posted to Gerrit. For instance, one
   thing you would need to do is to define an entry point for your plugin
   or driver in your own setup.cfg similarly as to how it is done
-  `here <https://github.com/stackforge/networking-odl/blob/master/setup.cfg#L31>`_.
+  `here <https://git.openstack.org/cgit/openstack/networking-odl/tree/setup.cfg#n31>`_.
 * Define an entry point for your plugin or driver in setup.cfg
 * Create 3rd Party CI account: if you do not already have one, follow
   instructions for
@@ -391,7 +391,7 @@ will be removed. The following aspects are captured:
     effort is not considered justified. Assessment may change in the
     future.
 
-  Absense of an entry for an existing plugin or driver means no active effort
+  Absence of an entry for an existing plugin or driver means no active effort
   has been observed or potentially not required.
 * Completed in: the release in which the effort is considered completed. Code
   completion can be deemed as such, if there is no overlap/duplication between
@@ -402,14 +402,3 @@ will be removed. The following aspects are captured:
 +===============================+=======================+===========+==================+=========+==============+
 | freescale-nscs                |         ml2,fw        |    no     |       no         |   [D]   |              |
 +-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-| networking-cisco_             |  core,ml2,l3,fw,vpn   |    yes    |       yes        |   [B]   |              |
-+-------------------------------+-----------------------+-----------+------------------+---------+--------------+
-
-.. _networking-cisco:
-
-Cisco
------
-
-* Git: https://git.openstack.org/stackforge/networking-cisco
-* Launchpad: https://launchpad.net/networking-cisco
-* PyPI: https://pypi.python.org/pypi/networking-cisco

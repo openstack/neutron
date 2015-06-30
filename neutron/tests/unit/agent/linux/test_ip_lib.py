@@ -144,6 +144,10 @@ GATEWAY_SAMPLE6 = ("""
 default via 192.168.99.1 proto static metric 100
 """)
 
+GATEWAY_SAMPLE7 = ("""
+default dev qg-31cd36 metric 1
+""")
+
 IPv6_GATEWAY_SAMPLE1 = ("""
 default via 2001:470:9:1224:4508:b885:5fb:740b metric 100
 2001:db8::/64 proto kernel scope link src 2001:470:9:1224:dfcc:aaff:feb9:76ce
@@ -782,7 +786,9 @@ class TestIpRouteCommand(TestIPCmdBase):
                             'expected': {'gateway': '192.168.99.1'}},
                            {'sample': GATEWAY_SAMPLE6,
                             'expected': {'gateway': '192.168.99.1',
-                                         'metric': 100}}]
+                                         'metric': 100}},
+                           {'sample': GATEWAY_SAMPLE7,
+                            'expected': {'metric': 1}}]
 
     def test_add_gateway(self):
         self.route_cmd.add_gateway(self.gateway, self.metric, self.table)
@@ -793,13 +799,27 @@ class TestIpRouteCommand(TestIPCmdBase):
                            'dev', self.parent.name,
                            'table', self.table))
 
-    def test_del_gateway(self):
+    def test_del_gateway_success(self):
         self.route_cmd.delete_gateway(self.gateway, table=self.table)
         self._assert_sudo([self.ip_version],
                           ('del', 'default',
                            'via', self.gateway,
                            'dev', self.parent.name,
                            'table', self.table))
+
+    def test_del_gateway_cannot_find_device(self):
+        self.parent._as_root.side_effect = RuntimeError("Cannot find device")
+
+        exc = self.assertRaises(exceptions.DeviceNotFoundError,
+                          self.route_cmd.delete_gateway,
+                          self.gateway, table=self.table)
+        self.assertIn(self.parent.name, str(exc))
+
+    def test_del_gateway_other_error(self):
+        self.parent._as_root.side_effect = RuntimeError()
+
+        self.assertRaises(RuntimeError, self.route_cmd.delete_gateway,
+                          self.gateway, table=self.table)
 
     def test_get_gateway(self):
         for test_case in self.test_cases:
@@ -1013,13 +1033,18 @@ class TestIpNeighCommand(TestIPCmdBase):
 
 
 class TestArpPing(TestIPCmdBase):
-    def _test_arping(self, function, address, spawn_n, mIPWrapper):
+    @mock.patch.object(ip_lib, 'IPWrapper')
+    @mock.patch('eventlet.spawn_n')
+    def test_send_ipv4_addr_adv_notif(self, spawn_n, mIPWrapper):
         spawn_n.side_effect = lambda f: f()
         ARPING_COUNT = 3
-        function(mock.sentinel.ns_name,
-                 mock.sentinel.iface_name,
-                 address,
-                 ARPING_COUNT)
+        address = '20.0.0.1'
+        config = mock.Mock()
+        config.send_arp_for_ha = ARPING_COUNT
+        ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
+                                      mock.sentinel.iface_name,
+                                      address,
+                                      config)
 
         self.assertTrue(spawn_n.called)
         mIPWrapper.assert_called_once_with(namespace=mock.sentinel.ns_name)
@@ -1035,43 +1060,16 @@ class TestArpPing(TestIPCmdBase):
         ip_wrapper.netns.execute.assert_any_call(arping_cmd,
                                                  check_exit_code=True)
 
-    @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch('eventlet.spawn_n')
-    def test_send_gratuitous_arp(self, spawn_n, mIPWrapper):
-        self._test_arping(
-            ip_lib.send_gratuitous_arp, '20.0.0.1', spawn_n, mIPWrapper)
-
-    @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'IPWrapper')
-    @mock.patch('eventlet.spawn_n')
-    def test_send_garp_for_proxy_arp(self, spawn_n, mIPWrapper, mIPDevice):
-        addr = '20.0.0.1'
-        ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
-        mIPWrapper.reset_mock()
-        device = mIPDevice(mock.sentinel.iface_name,
-                           namespace=mock.sentinel.ns_name)
-        mIPDevice.reset_mock()
-
-        # Check that the address was added to the interface before arping
-        def check_added_address(*args, **kwargs):
-            mIPDevice.assert_called_once_with(mock.sentinel.iface_name,
-                                              namespace=mock.sentinel.ns_name)
-            device.addr.add.assert_called_once_with(addr + '/32')
-            self.assertFalse(device.addr.delete.called)
-            device.addr.reset_mock()
-
-        ip_wrapper.netns.execute.side_effect = check_added_address
-
-        self._test_arping(
-            ip_lib.send_garp_for_proxyarp, addr, spawn_n, mIPWrapper)
-
-        # Test that the address was removed after arping
-        device = mIPDevice(mock.sentinel.iface_name,
-                           namespace=mock.sentinel.ns_name)
-        device.addr.delete.assert_called_once_with(addr + '/32')
-
-        # If this was called then check_added_address probably had a assert
-        self.assertFalse(device.addr.add.called)
+    def test_no_ipv6_addr_notif(self, spawn_n):
+        ipv6_addr = 'fd00::1'
+        config = mock.Mock()
+        config.send_arp_for_ha = 3
+        ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
+                                      mock.sentinel.iface_name,
+                                      ipv6_addr,
+                                      config)
+        self.assertFalse(spawn_n.called)
 
 
 class TestAddNamespaceToCmd(base.BaseTestCase):

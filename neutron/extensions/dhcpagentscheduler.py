@@ -92,10 +92,6 @@ class Dhcpagentscheduler(extensions.ExtensionDescriptor):
         return "Schedule networks among dhcp agents"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/dhcp_agent_scheduler/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-02-07T10:00:00-00:00"
 

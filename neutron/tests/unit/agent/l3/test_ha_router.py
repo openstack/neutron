@@ -13,9 +13,9 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
-from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid

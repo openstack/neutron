@@ -58,8 +58,7 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _get_non_admin_context(self):
         return context.Context(user_id=None,
                                tenant_id=self._tenant_id,
-                               is_admin=False,
-                               read_deleted="no")
+                               is_admin=False)
 
     def test_port_vif_details(self):
         with self.port(name='name') as port:
@@ -204,8 +203,7 @@ class PortBindingsHostTestCaseMixin(object):
             # By default user is admin - now test non admin user
             ctx = context.Context(user_id=None,
                                   tenant_id=self._tenant_id,
-                                  is_admin=False,
-                                  read_deleted="no")
+                                  is_admin=False)
             non_admin_port = self._show(
                 'ports', port_id, neutron_context=ctx)['port']
             self._check_response_no_portbindings_host(non_admin_port)
@@ -227,8 +225,7 @@ class PortBindingsHostTestCaseMixin(object):
             # By default user is admin - now test non admin user
             ctx = context.Context(user_id=None,
                                   tenant_id=self._tenant_id,
-                                  is_admin=False,
-                                  read_deleted="no")
+                                  is_admin=False)
             ports = self._list('ports', neutron_context=ctx)['ports']
             self.assertEqual(2, len(ports))
             for non_admin_port in ports:
@@ -319,8 +316,7 @@ class PortBindingsVnicTestCaseMixin(object):
             # By default user is admin - now test non admin user
             ctx = context.Context(user_id=None,
                                   tenant_id=self._tenant_id,
-                                  is_admin=False,
-                                  read_deleted="no")
+                                  is_admin=False)
             non_admin_port = self._show(
                 'ports', port_id, neutron_context=ctx)['port']
             self._check_response_portbindings_vnic_type(non_admin_port)
@@ -342,8 +338,7 @@ class PortBindingsVnicTestCaseMixin(object):
             # By default user is admin - now test non admin user
             ctx = context.Context(user_id=None,
                                   tenant_id=self._tenant_id,
-                                  is_admin=False,
-                                  read_deleted="no")
+                                  is_admin=False)
             ports = self._list('ports', neutron_context=ctx)['ports']
             self.assertEqual(2, len(ports))
             for non_admin_port in ports:

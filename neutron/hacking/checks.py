@@ -15,6 +15,7 @@
 import re
 
 import pep8
+import six
 
 # Guidelines for writing new hacking checks
 #
@@ -48,7 +49,7 @@ def _regex_for_level(level, hint):
 
 log_translation_hint = re.compile(
     '|'.join('(?:%s)' % _regex_for_level(level, hint)
-             for level, hint in _all_log_levels.iteritems()))
+             for level, hint in six.iteritems(_all_log_levels)))
 
 oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
 oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
@@ -74,7 +75,8 @@ def use_jsonutils(logical_line, filename):
     # Some files in the tree are not meant to be run from inside Neutron
     # itself, so we should not complain about them not using jsonutils
     json_check_skipped_patterns = [
-        "neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/plugins/netwrap",
+        "neutron/plugins/ml2/drivers/openvswitch/agent/xenapi/etc/xapi.d/"
+        "plugins/netwrap",
     ]
 
     for pattern in json_check_skipped_patterns:
@@ -108,12 +110,20 @@ def check_assert_called_once_with(logical_line, filename):
     # Try to detect unintended calls of nonexistent mock methods like:
     #    assert_called_once
     #    assertCalledOnceWith
+    #    assert_has_called
     if 'neutron/tests/' in filename:
         if '.assert_called_once_with(' in logical_line:
             return
-        if '.assertcalledonce' in logical_line.lower().replace('_', ''):
+        uncased_line = logical_line.lower().replace('_', '')
+
+        if '.assertcalledonce' in uncased_line:
             msg = ("N322: Possible use of no-op mock method. "
                    "please use assert_called_once_with.")
+            yield (0, msg)
+
+        if '.asserthascalled' in uncased_line:
+            msg = ("N322: Possible use of no-op mock method. "
+                   "please use assert_has_calls.")
             yield (0, msg)
 
 
@@ -141,21 +151,6 @@ def check_no_contextlib_nested(logical_line, filename):
            "docs.python.org/2/library/contextlib.html#contextlib.nested for "
            "more information.")
 
-    # TODO(ankit): The following check is temporary.
-    # A series of patches will be submitted to address
-    # these issues. It should be removed completely
-    # when bug 1428424 is closed.
-    ignore_dirs = [
-        "neutron/plugins/ml2",
-        "neutron/tests/unit/api",
-        "neutron/tests/unit/db",
-        "neutron/tests/unit/extensions",
-        "neutron/tests/unit/plugins",
-        "neutron/tests/unit/scheduler"]
-    for directory in ignore_dirs:
-        if directory in filename:
-            return
-
     if contextlib_nested.match(logical_line):
         yield(0, msg)
 
@@ -173,6 +168,12 @@ def check_no_basestring(logical_line):
         yield(0, msg)
 
 
+def check_python3_no_iteritems(logical_line):
+    if re.search(r".*\.iteritems\(\)", logical_line):
+        msg = ("N327: Use six.iteritems() instead of dict.iteritems().")
+        yield(0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -182,3 +183,4 @@ def factory(register):
     register(check_no_contextlib_nested)
     register(check_python3_xrange)
     register(check_no_basestring)
+    register(check_python3_no_iteritems)

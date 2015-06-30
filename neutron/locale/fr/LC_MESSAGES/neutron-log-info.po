@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
-# Maxime COQUEREL <max.coquerel@gmail.com>, 2014
+# Maxime COQUEREL <max.coquerel@gmail.com>, 2014-2015
 # Patte D <pattedeph@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-10 06:14+0000\n"
-"PO-Revision-Date: 2015-04-28 07:35+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"POT-Creation-Date: 2015-06-02 06:15+0000\n"
+"PO-Revision-Date: 2015-06-01 16:41+0000\n"
+"Last-Translator: Maxime COQUEREL <max.coquerel@gmail.com>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -22,110 +22,58 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #, python-format
-msgid "Loading core plugin: %s"
-msgstr "Chargement du plugin core: %s"
-
-#, python-format
-msgid "Service %s is supported by the core plugin"
-msgstr "Le service %s est supporté par le core plugin"
-
-#, python-format
-msgid "Loading Plugin: %s"
-msgstr "Chargement du plug-in : %s"
-
-#, python-format
-msgid "Loaded quota_driver: %s."
-msgstr "Chargement quota_driver: %s."
-
-#, python-format
-msgid "Neutron service started, listening on %(host)s:%(port)s"
-msgstr "Service Neutron démarré, en écoute sur %(host)s:%(port)s"
+msgid "%(action)s failed (client error): %(exc)s"
+msgstr "Échec %(action)s  (Erreur client): %(exc)s"
 
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
 #, python-format
-msgid "HTTP exception thrown: %s"
-msgstr "Exception HTTP générée : %s"
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr "%(plugin_key)s : %(function_name)s avec les arguments %(args)s ignoré"
 
 #, python-format
-msgid "%(url)s returned with HTTP %(status)d"
-msgstr "%(url)s retourné avec HTTP %(status)d"
+msgid "%(prog)s version %(version)s"
+msgstr "%(prog)s version %(version)s"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s a retourné une erreur : %(exception)s."
 
-msgid "Disabled security-group extension."
-msgstr "Extension du groupe de sécurité désactivée."
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s retourné avec HTTP %(status)d"
+
+msgid "APIC service agent started"
+msgstr "service de l'agent APIC démarré"
+
+msgid "APIC service agent starting ..."
+msgstr "Démarrage du service de l'agent APIC"
 
 #, python-format
-msgid "Preparing filters for devices %s"
-msgstr "Préparation des filtres pour les unités %s"
+msgid "Adding %s to list of bridges."
+msgstr "Ajout %s à la liste de ponts."
 
 #, python-format
-msgid "Security group rule updated %r"
-msgstr "Règle de groupe de sécurité mise à jour %r"
+msgid "Agent %s already present"
+msgstr "Agent %s déjà présent"
+
+msgid "Agent initialised successfully, now running... "
+msgstr "Agent initialisé avec succès, en cours d'exécution..."
+
+msgid "Agent initialized successfully, now running... "
+msgstr "Agent initialisé avec succès, en cours d'exécution... "
+
+msgid "Agent out of sync with plugin!"
+msgstr "Agent non synchronisé avec le plug-in !"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "Tunnel d'agent désynchronisé avec le plug-in !"
 
 #, python-format
-msgid "Security group member updated %r"
-msgstr "Membre de groupe de sécurité mis à jour %r"
-
-msgid "Provider rule updated"
-msgstr "Règle de fournisseur mise à jour"
-
-#, python-format
-msgid "Remove device filter for %r"
-msgstr "Suppression du filtre d'unités pour %r"
-
-msgid "Refresh firewall rules"
-msgstr "Régénération des règles de pare-feu"
-
-#, python-format
-msgid "Port %(port_id)s not present in bridge %(br_name)s"
-msgstr "Port %(port_id)s n'est pas présent dans le pont %(br_name)s"
-
-msgid "DHCP agent started"
-msgstr "Agent DHCP démarré"
-
-msgid "Synchronizing state"
-msgstr "Etat de synchronisation"
-
-msgid "Synchronizing state complete"
-msgstr "Etat de synchronisation complet"
-
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr "agent_updated au niveau du serveur %s !"
-
-msgid "L3 agent started"
-msgstr "Agent de niveau 3 démarré"
-
-#, python-format
-msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
-msgstr "Le processus est exécuté avec uid/gid: %(uid)s/%(gid)s"
-
-#, python-format
-msgid "Device %s already exists"
-msgstr "L'unité %s existe déjà"
-
-#, python-format
-msgid "Attempted to update port filter which is not filtered %s"
-msgstr ""
-"Tentative effectuée de mise à jour du filtre de ports (sans filtrage %s)"
-
-#, python-format
-msgid "Attempted to remove port filter which is not filtered %r"
-msgstr ""
-"Tentative effectuée de suppression du filtre de ports (sans filtrage %r)"
-
-msgid "Initializing extension manager."
-msgstr "Initialisation du gestionnaire d'extension."
-
-#, python-format
-msgid "Loaded extension: %s"
-msgstr "Extension chargée : %s"
+msgid "Allocated vlan (%d) from the pool"
+msgstr "Réseau VLAN alloué (%d) depuis le pool"
 
 msgid ""
 "Allow sorting is enabled because native pagination requires native sorting"
@@ -133,36 +81,290 @@ msgstr ""
 "Autorisation de tri activée car la mise en page native nécessite le tri natif"
 
 #, python-format
-msgid "%(action)s failed (client error): %(exc)s"
-msgstr "Échec %(action)s  (Erreur client): %(exc)s"
+msgid "Ancillary Port %s added"
+msgstr "Port auxiliaire %s ajouté"
 
-msgid "OVS cleanup completed successfully"
-msgstr "Le nettoyage d'OVS s'est terminé avec succès."
+#, python-format
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr ""
+"Affectation de %(vlan_id)s comme réseau local virtuel pour net-id = "
+"%(net_uuid)s"
 
-msgid "Agent initialized successfully, now running... "
-msgstr "Agent initialisé avec succès, en cours d'exécution... "
+#, python-format
+msgid "Attachment %s removed"
+msgstr "Connexion %s retirée"
 
-msgid "Logging enabled!"
-msgstr "Consignation activée !"
+#, python-format
+msgid "Attempt %(count)s to bind port %(port)s"
+msgstr "Tentative %(count)s de liaison port %(port)s"
+
+#, python-format
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr ""
+"Tentative effectuée de suppression du filtre de ports (sans filtrage %r)"
+
+#, python-format
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr ""
+"Tentative effectuée de mise à jour du filtre de ports (sans filtrage %s)"
+
+#, python-format
+msgid ""
+"Binding info for port %s was not found, it might have been deleted already."
+msgstr ""
+"L'information de liaison pour le port %s n'a pas été trouvée, elle peut déjà "
+"avoir été effacée."
+
+#, python-format
+msgid "Caught %s, exiting"
+msgstr "%s interceptée, sortie"
+
+#, python-format
+msgid "Caught %s, stopping children"
+msgstr "%s interceptée, arrêt de l'enfant"
+
+#, python-format
+msgid "Child %(pid)d killed by signal %(sig)d"
+msgstr "Enfant %(pid)d arrêté par le signal %(sig)d"
+
+#, python-format
+msgid "Child %(pid)s exited with status %(code)d"
+msgstr "Processus fils %(pid)s terminé avec le status %(code)d"
+
+#, python-format
+msgid "Child caught %s, exiting"
+msgstr "L'enfant a reçu %s, sortie"
+
+#, python-format
+msgid "Cleaning bridge: %s"
+msgstr "Supprimer le pont: %s"
 
 #, python-format
 msgid "Config paste file: %s"
 msgstr "Config du fichier de collage : %s"
 
-msgid "IPv6 is not enabled on this system."
-msgstr "IPv6 n'est pas activé sur le système."
+#, python-format
+msgid "Configuration for device %s completed."
+msgstr "Configuration complète de l'équipement %s"
+
+msgid "DHCP agent started"
+msgstr "Agent DHCP démarré"
 
 #, python-format
-msgid ""
-"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
-"%(subnet_id)s (CIDR: %(cidr)s)"
+msgid "Default provider is not specified for service type %s"
 msgstr ""
-"La validation du routage CIDR %(new_cidr)s a échoué : il chevauche le sous-"
-"réseau %(subnet_id)s (CIDR : %(cidr)s) "
+"Le fournisseur par défaut n'est pas spécifié pour le type de service %s"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "Supprimer le port: %s"
+
+#, python-format
+msgid "Device %s already exists"
+msgstr "L'unité %s existe déjà"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "Unité %s non définie sur le plug-in"
+
+#, python-format
+msgid "Device with MAC %s not defined on plugin"
+msgstr "Appareil avec adresse MAC %s non-défini dans le plugin"
+
+msgid "Disabled security-group extension."
+msgstr "Extension du groupe de sécurité désactivée."
+
+#, python-format
+msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
+msgstr "Eventlet backdoor en écoute sur le port %(port)s for process %(pid)d"
+
+#, python-format
+msgid "Exclude Devices: %s"
+msgstr "Equipements exclus: %s"
+
+msgid "Forking too fast, sleeping"
+msgstr "Bifurcation trop rapide, pause"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr "Adresse IP non valide trouvée dans le pool : %(start)s - %(end)s :"
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "Chevauchement d'intervalles trouvés : %(l_range)s et %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr ""
+"Un pool plus volumineux que le routage CIDR de sous-réseau %(start)s - "
+"%(end)s a été trouvé."
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "Exception HTTP générée : %s"
+
+msgid "IPv6 is not enabled on this system."
+msgstr "IPv6 n'est pas activé sur le système."
+
+msgid "Initializing extension manager."
+msgstr "Initialisation du gestionnaire d'extension."
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "Mappages d'interface : %s"
+
+msgid "L3 agent started"
+msgstr "Agent de niveau 3 démarré"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "Serveur démon RPC de l'agent LinuxBridge démarré !"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "Extension chargée : %s"
+
+#, python-format
+msgid "Loaded quota_driver: %s."
+msgstr "Chargement quota_driver: %s."
+
+#, python-format
+msgid "Loading Metering driver %s"
+msgstr "Chargement du pilote de Mesures %s"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "Chargement du plug-in : %s"
+
+#, python-format
+msgid "Loading core plugin: %s"
+msgstr "Chargement du plugin core: %s"
+
+#, python-format
+msgid "Loading interface driver %s"
+msgstr "Chargement de pilote d'interface %s"
+
+msgid "Logging enabled!"
+msgstr "Consignation activée !"
+
+#, python-format
+msgid ""
+"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
+msgstr ""
+"L'itération de boucle a dépassé l'intervalle (%(polling_interval)s contre "
+"%(elapsed)s) !"
+
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "Mappage du réseau physique %(physical_network)s sur le pont %(bridge)s"
+
+#, python-format
+msgid "Network VLAN ranges: %s"
+msgstr "Plages de réseau local virtuel de réseau : %s"
+
+#, python-format
+msgid "Network name changed to %s"
+msgstr "Nom du réseau changé en %s"
+
+#, python-format
+msgid "Neutron service started, listening on %(host)s:%(port)s"
+msgstr "Service Neutron démarré, en écoute sur %(host)s:%(port)s"
+
+#, python-format
+msgid "No %s Plugin loaded"
+msgstr "Aucun plug-in %s chargé"
+
+#, python-format
+msgid "No device with MAC %s defined on agent."
+msgstr "Aucun équipement avec MAC %s défini sur l'agent."
+
+msgid "OVS cleanup completed successfully"
+msgstr "Le nettoyage d'OVS s'est terminé avec succès."
+
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "Processus parent arrêté de manière inattendue, sortie"
+
+#, python-format
+msgid "Physical Devices mappings: %s"
+msgstr "Mappages d'Équipements Physiques: %s"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "Port %(device)s mis à jour. Détails : %(details)s"
+
+#, python-format
+msgid "Port %(port_id)s not present in bridge %(br_name)s"
+msgstr "Port %(port_id)s n'est pas présent dans le pont %(br_name)s"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "Port %s mis à jour."
+
+#, python-format
+msgid "Port %s was deleted concurrently"
+msgstr "Le port %s a été effacé en même temps"
+
+#, python-format
+msgid "Port name changed to %s"
+msgstr "Nom de port changé en %s"
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "Préparation des filtres pour les unités %s"
+
+#, python-format
+msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
+msgstr "Le processus est exécuté avec uid/gid: %(uid)s/%(gid)s"
+
+msgid "Provider rule updated"
+msgstr "Règle de fournisseur mise à jour"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "agent_id RPC : %s"
+
+msgid "RPC was already started in parent process by plugin."
+msgstr "Le plugin avait déjà lancé les RPC dans le processus parent."
+
+#, python-format
+msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
+msgstr ""
+"Récupération du réseau local virtuel = %(vlan_id)s à partir de net-id = "
+"%(net_uuid)s"
+
+msgid "Refresh firewall rules"
+msgstr "Régénération des règles de pare-feu"
+
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "Suppression du filtre d'unités pour %r"
+
+#, python-format
+msgid "Removing device with mac_address %s"
+msgstr "Retrait de l'appareil ayant pour mac_address %s"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "Membre de groupe de sécurité mis à jour %r"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "Règle de groupe de sécurité mise à jour %r"
+
+#, python-format
+msgid "Service %s is supported by the core plugin"
+msgstr "Le service %s est supporté par le core plugin"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr "Tâche périodique %(task)s car elle est désactivée"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr "Tâche périodique %(task)s ignorée car son intervalle est négatif"
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "Ignorer le port %s car aucune adresse IP n'est configurée"
 
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
@@ -175,46 +377,6 @@ msgstr ""
 "(%(end)s)."
 
 #, python-format
-msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
-msgstr ""
-"Un pool plus volumineux que le routage CIDR de sous-réseau %(start)s - "
-"%(end)s a été trouvé."
-
-#, python-format
-msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
-msgstr "Chevauchement d'intervalles trouvés : %(l_range)s et %(r_range)s"
-
-#, python-format
-msgid "Skipping port %s as no IP is configure on it"
-msgstr "Ignorer le port %s car aucune adresse IP n'est configurée"
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet backdoor en écoute sur le port %(port)s for process %(pid)d"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "Tâche périodique %(task)s ignorée car son intervalle est négatif"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "Tâche périodique %(task)s car elle est désactivée"
-
-#, python-format
-msgid "Caught %s, exiting"
-msgstr "%s interceptée, sortie"
-
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "Processus parent arrêté de manière inattendue, sortie"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "L'enfant a reçu %s, sortie"
-
-msgid "Forking too fast, sleeping"
-msgstr "Bifurcation trop rapide, pause"
-
-#, python-format
 msgid "Started child %d"
 msgstr "Enfant démarré %d"
 
@@ -223,16 +385,22 @@ msgid "Starting %d workers"
 msgstr "Démarrage des travailleurs %d"
 
 #, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "Enfant %(pid)d arrêté par le signal %(sig)d"
+msgid "Subnet %s was deleted concurrently"
+msgstr "Le sous-réseau %s a été effacé en même temps"
+
+msgid "Synchronizing state"
+msgstr "Etat de synchronisation"
+
+msgid "Synchronizing state complete"
+msgstr "Etat de synchronisation complet"
 
 #, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "Processus fils %(pid)s terminé avec le status %(code)d"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s interceptée, arrêt de l'enfant"
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"La validation du routage CIDR %(new_cidr)s a échoué : il chevauche le sous-"
+"réseau %(subnet_id)s (CIDR : %(cidr)s) "
 
 msgid "Wait called after thread killed. Cleaning up."
 msgstr "Pause demandée après suppression de thread. Nettoyage."
@@ -242,161 +410,5 @@ msgid "Waiting on %d children to exit"
 msgstr "En attente %d enfants pour sortie"
 
 #, python-format
-msgid "Allocated vlan (%d) from the pool"
-msgstr "Réseau VLAN alloué (%d) depuis le pool"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "Aucun plug-in %s chargé"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s : %(function_name)s avec les arguments %(args)s ignoré"
-
-#, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr ""
-"L'itération de boucle a dépassé l'intervalle (%(polling_interval)s contre "
-"%(elapsed)s) !"
-
-#, python-format
-msgid "RPC agent_id: %s"
-msgstr "agent_id RPC : %s"
-
-#, python-format
-msgid "Port %(device)s updated. Details: %(details)s"
-msgstr "Port %(device)s mis à jour. Détails : %(details)s"
-
-#, python-format
-msgid "Device %s not defined on plugin"
-msgstr "Unité %s non définie sur le plug-in"
-
-#, python-format
-msgid "Attachment %s removed"
-msgstr "Connexion %s retirée"
-
-#, python-format
-msgid "Port %s updated."
-msgstr "Port %s mis à jour."
-
-msgid "LinuxBridge Agent RPC Daemon Started!"
-msgstr "Serveur démon RPC de l'agent LinuxBridge démarré !"
-
-msgid "Agent out of sync with plugin!"
-msgstr "Agent non synchronisé avec le plug-in !"
-
-#, python-format
-msgid "Interface mappings: %s"
-msgstr "Mappages d'interface : %s"
-
-#, python-format
-msgid "Attempt %(count)s to bind port %(port)s"
-msgstr "Tentative %(count)s de liaison port %(port)s"
-
-#, python-format
-msgid "Port %s was deleted concurrently"
-msgstr "Le port %s a été effacé en même temps"
-
-#, python-format
-msgid "Subnet %s was deleted concurrently"
-msgstr "Le sous-réseau %s a été effacé en même temps"
-
-#, python-format
-msgid ""
-"Binding info for port %s was not found, it might have been deleted already."
-msgstr ""
-"L'information de liaison pour le port %s n'a pas été trouvée, elle peut déjà "
-"avoir été effacée."
-
-#, python-format
-msgid "Network VLAN ranges: %s"
-msgstr "Plages de réseau local virtuel de réseau : %s"
-
-#, python-format
-msgid "Network name changed to %s"
-msgstr "Nom du réseau changé en %s"
-
-#, python-format
-msgid "Port name changed to %s"
-msgstr "Nom de port changé en %s"
-
-msgid "APIC service agent starting ..."
-msgstr "Démarrage du service de l'agent APIC"
-
-msgid "APIC service agent started"
-msgstr "service de l'agent APIC démarré"
-
-msgid "Agent initialised successfully, now running... "
-msgstr "Agent initialisé avec succès, en cours d'exécution..."
-
-#, python-format
-msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
-msgstr ""
-"Affectation de %(vlan_id)s comme réseau local virtuel pour net-id = "
-"%(net_uuid)s"
-
-#, python-format
-msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
-msgstr ""
-"Récupération du réseau local virtuel = %(vlan_id)s à partir de net-id = "
-"%(net_uuid)s"
-
-#, python-format
-msgid "Configuration for device %s completed."
-msgstr "Configuration complète de l'équipement %s"
-
-#, python-format
-msgid "Adding %s to list of bridges."
-msgstr "Ajout %s à la liste de ponts."
-
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr "Mappage du réseau physique %(physical_network)s sur le pont %(bridge)s"
-
-#, python-format
-msgid "Ancillary Port %s added"
-msgstr "Port auxiliaire %s ajouté"
-
-msgid "Agent tunnel out of sync with plugin!"
-msgstr "Tunnel d'agent désynchronisé avec le plug-in !"
-
-#, python-format
-msgid "No device with MAC %s defined on agent."
-msgstr "Aucun équipement avec MAC %s défini sur l'agent."
-
-#, python-format
-msgid "Device with MAC %s not defined on plugin"
-msgstr "Appareil avec adresse MAC %s non-défini dans le plugin"
-
-#, python-format
-msgid "Removing device with mac_address %s"
-msgstr "Retrait de l'appareil ayant pour mac_address %s"
-
-#, python-format
-msgid "Physical Devices mappings: %s"
-msgstr "Mappages d'Équipements Physiques: %s"
-
-#, python-format
-msgid "Exclude Devices: %s"
-msgstr "Equipements exclus: %s"
-
-#, python-format
-msgid "Agent %s already present"
-msgstr "Agent %s déjà présent"
-
-msgid "RPC was already started in parent process by plugin."
-msgstr "Le plugin avait déjà lancé les RPC dans le processus parent."
-
-#, python-format
-msgid "Default provider is not specified for service type %s"
-msgstr ""
-"Le fournisseur par défaut n'est pas spécifié pour le type de service %s"
-
-#, python-format
-msgid "Loading Metering driver %s"
-msgstr "Chargement du pilote de Mesures %s"
-
-#, python-format
-msgid "Loading interface driver %s"
-msgstr "Chargement de pilote d'interface %s"
+msgid "agent_updated by server side %s!"
+msgstr "agent_updated au niveau du serveur %s !"

@@ -70,6 +70,9 @@ class DhcpAgent(manager.Manager):
             config=self.conf,
             resource_type='dhcp')
 
+    def init_host(self):
+        self.sync_state()
+
     def _populate_networks_cache(self):
         """Populate the networks cache when the DHCP-agent starts."""
         try:
@@ -421,15 +424,6 @@ class DhcpPluginApi(object):
                              network_id=network_id, host=self.host)
         if network:
             return dhcp.NetModel(self.use_namespaces, network)
-
-    def get_dhcp_port(self, network_id, device_id):
-        """Make a remote process call to get the dhcp port."""
-        cctxt = self.client.prepare()
-        port = cctxt.call(self.context, 'get_dhcp_port',
-                          network_id=network_id, device_id=device_id,
-                          host=self.host)
-        if port:
-            return dhcp.DictModel(port)
 
     def create_dhcp_port(self, port):
         """Make a remote process call to create the dhcp port."""

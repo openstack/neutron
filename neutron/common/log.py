@@ -16,8 +16,7 @@
 import functools
 
 from oslo_log import log as logging
-
-from neutron.openstack.common import versionutils
+from oslo_log import versionutils
 
 
 @versionutils.deprecated(as_of=versionutils.deprecated.LIBERTY,

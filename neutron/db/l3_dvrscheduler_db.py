@@ -144,19 +144,19 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             subnet_ids.add(int_subnet)
         return subnet_ids
 
-    def check_ports_active_on_host_and_subnet(self, context, host,
-                                         port_id, subnet_id):
+    def check_ports_on_host_and_subnet(self, context, host,
+                                       port_id, subnet_id):
         """Check if there is any dvr serviceable port on the subnet_id."""
         filter_sub = {'fixed_ips': {'subnet_id': [subnet_id]}}
         ports = self._core_plugin.get_ports(context, filters=filter_sub)
         for port in ports:
             if (n_utils.is_dvr_serviced(port['device_owner'])
-                and port['status'] == 'ACTIVE'
                 and port['binding:host_id'] == host
                 and port['id'] != port_id):
-                LOG.debug('DVR: Active port exists for subnet %(subnet_id)s '
-                          'on host %(host)s', {'subnet_id': subnet_id,
-                                       'host': host})
+                LOG.debug('DVR: %(port_status)s port exists for subnet '
+                          '%(subnet_id)s on host %(host)s',
+                          {'port_status': port['status'],
+                           'subnet_id': subnet_id, 'host': host})
                 return True
         return False
 
@@ -177,10 +177,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                                                        router_id)
             port_exists_on_subnet = False
             for subnet in subnet_ids:
-                if self.check_ports_active_on_host_and_subnet(admin_context,
-                                                              port_host,
-                                                              port_id,
-                                                              subnet):
+                if self.check_ports_on_host_and_subnet(admin_context,
+                                                       port_host,
+                                                       port_id,
+                                                       subnet):
                     port_exists_on_subnet = True
                     break
 

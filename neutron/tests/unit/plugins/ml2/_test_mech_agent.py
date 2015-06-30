@@ -162,6 +162,7 @@ class AgentMechanismBaseTestCase(base.BaseTestCase):
     AGENTS = None
     AGENTS_DEAD = None
     AGENTS_BAD = None
+    VNIC_TYPE = portbindings.VNIC_NORMAL
 
     def _check_unbound(self, context):
         self.assertIsNone(context._bound_segment_id)
@@ -193,7 +194,8 @@ class AgentMechanismGenericTestCase(AgentMechanismBaseTestCase):
     def test_unknown_type(self):
         context = FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS,
-                                  self.UNKNOWN_TYPE_SEGMENTS)
+                                  self.UNKNOWN_TYPE_SEGMENTS,
+                                  vnic_type=self.VNIC_TYPE)
         self.driver.bind_port(context)
         self._check_unbound(context)
 
@@ -207,14 +209,16 @@ class AgentMechanismLocalTestCase(AgentMechanismBaseTestCase):
     def test_type_local(self):
         context = FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS,
-                                  self.LOCAL_SEGMENTS)
+                                  self.LOCAL_SEGMENTS,
+                                  vnic_type=self.VNIC_TYPE)
         self.driver.bind_port(context)
         self._check_bound(context, self.LOCAL_SEGMENTS[1])
 
     def test_type_local_dead(self):
         context = FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS_DEAD,
-                                  self.LOCAL_SEGMENTS)
+                                  self.LOCAL_SEGMENTS,
+                                  vnic_type=self.VNIC_TYPE)
         self.driver.bind_port(context)
         self._check_unbound(context)
 
@@ -229,14 +233,16 @@ class AgentMechanismFlatTestCase(AgentMechanismBaseTestCase):
     def test_type_flat(self):
         context = FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS,
-                                  self.FLAT_SEGMENTS)
+                                  self.FLAT_SEGMENTS,
+                                  vnic_type=self.VNIC_TYPE)
         self.driver.bind_port(context)
         self._check_bound(context, self.FLAT_SEGMENTS[1])
 
     def test_type_flat_bad(self):
         context = FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS_BAD,
-                                  self.FLAT_SEGMENTS)
+                                  self.FLAT_SEGMENTS,
+                                  vnic_type=self.VNIC_TYPE)
         self.driver.bind_port(context)
         self._check_unbound(context)
 
@@ -252,14 +258,16 @@ class AgentMechanismVlanTestCase(AgentMechanismBaseTestCase):
     def test_type_vlan(self):
         context = FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS,
-                                  self.VLAN_SEGMENTS)
+                                  self.VLAN_SEGMENTS,
+                                  vnic_type=self.VNIC_TYPE)
         self.driver.bind_port(context)
         self._check_bound(context, self.VLAN_SEGMENTS[1])
 
     def test_type_vlan_bad(self):
         context = FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS_BAD,
-                                  self.VLAN_SEGMENTS)
+                                  self.VLAN_SEGMENTS,
+                                  vnic_type=self.VNIC_TYPE)
         self.driver.bind_port(context)
         self._check_unbound(context)
 

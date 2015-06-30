@@ -14,6 +14,7 @@
 
 import webob.exc
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as nexception
 from oslo_config import cfg
@@ -102,7 +103,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Allowedaddresspairs(object):
+class Allowedaddresspairs(extensions.ExtensionDescriptor):
     """Extension class supporting allowed address pairs."""
 
     @classmethod
@@ -116,10 +117,6 @@ class Allowedaddresspairs(object):
     @classmethod
     def get_description(cls):
         return "Provides allowed address pairs"
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/allowedaddresspairs/api/v2.0"
 
     @classmethod
     def get_updated(cls):

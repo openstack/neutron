@@ -17,6 +17,7 @@ import re
 
 import netaddr
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import six
 
 from neutron.agent.common import ovs_lib
@@ -25,9 +26,9 @@ from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils
 from neutron.i18n import _LE
-from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as const
-from neutron.plugins.openvswitch.common import constants as ovs_const
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants as ovs_const
 
 LOG = logging.getLogger(__name__)
 
@@ -174,7 +175,7 @@ def ovsdb_native_supported():
     except ImportError as ex:
         LOG.error(_LE("Failed to import required modules. Ensure that the "
                       "python-openvswitch package is installed. Error: %s"),
-                  ex.message)
+                  ex)
     except Exception as ex:
         LOG.exception(six.text_type(ex))
 

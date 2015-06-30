@@ -34,7 +34,3 @@ class Nvp_qos(qos.Qos):
     @classmethod
     def get_description(cls):
         return "NVP QoS extension (deprecated)."
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/nvp-qos/api/v2.0"

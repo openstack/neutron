@@ -15,13 +15,13 @@
 import os.path
 import tempfile
 
-import fixtures
 import six
 
 from neutron.common import constants
 from neutron.tests import base
 from neutron.tests.common import helpers as c_helpers
 from neutron.tests.functional.agent.linux import helpers
+from neutron.tests import tools
 
 
 class ConfigDict(base.AttributeDict):
@@ -34,14 +34,14 @@ class ConfigDict(base.AttributeDict):
 
         :param other: dictionary to be directly modified.
         """
-        for key, value in other.iteritems():
+        for key, value in six.iteritems(other):
             if isinstance(value, dict):
                 if not isinstance(value, base.AttributeDict):
                     other[key] = base.AttributeDict(value)
                 self.convert_to_attr_dict(value)
 
 
-class ConfigFileFixture(fixtures.Fixture):
+class ConfigFileFixture(tools.SafeFixture):
     """A fixture that knows how to translate configurations to files.
 
     :param base_filename: the filename to use on disk.
@@ -74,7 +74,7 @@ class ConfigFileFixture(fixtures.Fixture):
         return config_parser
 
 
-class ConfigFixture(fixtures.Fixture):
+class ConfigFixture(tools.SafeFixture):
     """A fixture that holds an actual Neutron configuration.
 
     Note that 'self.config' is intended to only be updated once, during
@@ -83,6 +83,7 @@ class ConfigFixture(fixtures.Fixture):
     is initializing a new instance of the class.
     """
     def __init__(self, temp_dir, base_filename):
+        super(ConfigFixture, self).__init__()
         self.config = ConfigDict()
         self.temp_dir = temp_dir
         self.base_filename = base_filename
@@ -97,7 +98,7 @@ class ConfigFixture(fixtures.Fixture):
 
 class NeutronConfigFixture(ConfigFixture):
 
-    def __init__(self, temp_dir, connection):
+    def __init__(self, temp_dir, connection, rabbitmq_environment):
         super(NeutronConfigFixture, self).__init__(
             temp_dir, base_filename='neutron.conf')
 
@@ -112,9 +113,10 @@ class NeutronConfigFixture(ConfigFixture):
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
                 'service_plugins': ('neutron.services.l3_router.'
                                     'l3_router_plugin.L3RouterPlugin'),
-                'rabbit_userid': 'stackrabbit',
-                'rabbit_password': '127.0.0.1',
+                'rabbit_userid': rabbitmq_environment.user,
+                'rabbit_password': rabbitmq_environment.password,
                 'rabbit_hosts': '127.0.0.1',
+                'rabbit_virtual_host': rabbitmq_environment.vhost,
                 'auth_strategy': 'noauth',
                 'verbose': 'True',
                 'debug': 'True',
@@ -138,7 +140,7 @@ class NeutronConfigFixture(ConfigFixture):
         This might fail if some other process occupies this port after this
         function finished but before the neutron-server process started.
         """
-        return str(helpers.get_free_namespace_port())
+        return str(helpers.get_free_namespace_port(constants.PROTO_NAME_TCP))
 
     def _generate_api_paste(self):
         return c_helpers.find_sample_file('api-paste.ini')

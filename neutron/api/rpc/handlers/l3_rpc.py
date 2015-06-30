@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
+import six
 
 from neutron.common import constants
 from neutron.common import exceptions
@@ -162,7 +163,7 @@ class L3RpcCallback(object):
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Update operational status for a floating IP."""
         with context.session.begin(subtransactions=True):
-            for (floatingip_id, status) in fip_statuses.iteritems():
+            for (floatingip_id, status) in six.iteritems(fip_statuses):
                 LOG.debug("New status for floating IP %(floatingip_id)s: "
                           "%(status)s", {'floatingip_id': floatingip_id,
                                          'status': status})

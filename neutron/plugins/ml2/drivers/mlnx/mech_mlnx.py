@@ -36,18 +36,11 @@ class MlnxMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """
 
     def __init__(self):
-        # REVISIT(irenab): update supported_vnic_types to contain
-        # only VNIC_DIRECT once its possible to specify
-        # vnic_type via nova API/GUI. Currently VNIC_NORMAL is included
-        # to enable VM creation via GUI. It should be noted, that if
-        # several MDs are capable to bring bind port on chosen host, the
-        # first listed MD will bind the port for VNIC_NORMAL
         super(MlnxMechanismDriver, self).__init__(
             agent_type=n_const.AGENT_TYPE_MLNX,
-            vif_type=portbindings.VIF_TYPE_MLNX_HOSTDEV,
+            vif_type=portbindings.VIF_TYPE_IB_HOSTDEV,
             vif_details={portbindings.CAP_PORT_FILTER: False},
-            supported_vnic_types=[portbindings.VNIC_DIRECT,
-                                  portbindings.VNIC_NORMAL])
+            supported_vnic_types=[portbindings.VNIC_DIRECT])
 
     def get_allowed_network_types(self, agent=None):
         return [p_constants.TYPE_LOCAL, p_constants.TYPE_FLAT,

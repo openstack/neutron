@@ -40,10 +40,6 @@ class Netmtu(extensions.ExtensionDescriptor):
         return "Provides MTU attribute for a network resource."
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/net_mtu/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2015-03-25T10:00:00-00:00"
 

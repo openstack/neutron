@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-10 06:14+0000\n"
-"PO-Revision-Date: 2015-04-28 07:50+0000\n"
-"Last-Translator: 汪军 <wwyyzz08@sina.com>\n"
+"POT-Creation-Date: 2015-06-11 06:02+0000\n"
+"PO-Revision-Date: 2015-06-10 23:52+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
 "Language: zh_CN\n"
@@ -21,230 +21,103 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #, python-format
-msgid "Loading core plugin: %s"
-msgstr "加载核心插件: %s"
-
-#, python-format
-msgid "Service %s is supported by the core plugin"
-msgstr "服务%s由核心插件支持"
-
-#, python-format
-msgid "Loading Plugin: %s"
-msgstr "正在装入插件：%s"
-
-#, python-format
-msgid ""
-"Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
-msgstr "在被废弃的策略:%(old_policy)s位置上插入策略:%(new_policy)s "
-
-#, python-format
-msgid "Neutron service started, listening on %(host)s:%(port)s"
-msgstr "Neutron服务启动，正在%(host)s:%(port)s上监听"
+msgid "%(action)s failed (client error): %(exc)s"
+msgstr "%(action)s 失败 (客户端错误): %(exc)s"
 
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
 #, python-format
-msgid "HTTP exception thrown: %s"
-msgstr "HTTP 异常抛出：%s"
-
-#, python-format
-msgid "%(url)s returned with HTTP %(status)d"
-msgstr "%(url)s 随HTTP %(status)d返回"
-
-#, python-format
-msgid "%(url)s returned a fault: %(exception)s"
-msgstr "%(url)s 返回了故障：%(exception)s"
-
-msgid "Disabled security-group extension."
-msgstr "已禁用安全组扩展。"
-
-#, python-format
-msgid "Preparing filters for devices %s"
-msgstr "正在为设备 %s 准备过滤器"
-
-#, python-format
-msgid "Security group rule updated %r"
-msgstr "已更新安全组规则 %r"
-
-#, python-format
-msgid "Security group member updated %r"
-msgstr "已更新安全组成员 %r"
-
-msgid "Provider rule updated"
-msgstr "已更新提供程序规则"
-
-#, python-format
-msgid "Remove device filter for %r"
-msgstr "请为 %r 除去设备过滤器"
-
-msgid "Refresh firewall rules"
-msgstr "请刷新防火墙规则"
-
-#, python-format
-msgid "Port %(port_id)s not present in bridge %(br_name)s"
-msgstr "端口 %(port_id)s 在桥 %(br_name)s中不存在"
-
-msgid "DHCP agent started"
-msgstr "已启动 DHCP 代理"
-
-msgid "Synchronizing state"
-msgstr "正在使状态同步"
-
-msgid "Synchronizing state complete"
-msgstr "同步状态完成"
-
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr "服务器端 %s 已更新代理！"
-
-msgid "L3 agent started"
-msgstr "已启动 L3 代理"
-
-#, python-format
-msgid "Router %(router_id)s transitioned to %(state)s"
-msgstr "路由器%(router_id)s 转换为%(state)s"
-
-#, python-format
-msgid ""
-"Router %s is not managed by this agent. It was possibly deleted concurrently."
-msgstr "路由器%s没有被改该代理管理。可能已经被删除。"
-
-#, python-format
-msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
-msgstr "进程运行uid/gid: %(uid)s/%(gid)s"
-
-#, python-format
-msgid "Device %s already exists"
-msgstr "设备 %s 已存在"
-
-#, python-format
-msgid "Attempted to update port filter which is not filtered %s"
-msgstr "已尝试更新未过滤的端口过滤器 %s"
-
-#, python-format
-msgid "Attempted to remove port filter which is not filtered %r"
-msgstr "已尝试除去未过滤的端口过滤器 %r"
-
-msgid "Initializing extension manager."
-msgstr "正在初始化扩展管理员。"
-
-#, python-format
-msgid "Loaded extension: %s"
-msgstr "加载的扩展：%s"
-
-msgid ""
-"Allow sorting is enabled because native pagination requires native sorting"
-msgstr "已启用允许排序，因为本机分页需要本机排序"
-
-#, python-format
-msgid "%(action)s failed (client error): %(exc)s"
-msgstr "%(action)s 失败 (客户端错误): %(exc)s"
-
-#, python-format
-msgid "Deleting port: %s"
-msgstr "正在删除端口: %s"
-
-msgid "OVS cleanup completed successfully"
-msgstr "OVS 清除已成功完成"
-
-msgid "Agent initialized successfully, now running... "
-msgstr "代理已成功初始化，现在正在运行..."
-
-msgid "Logging enabled!"
-msgstr "已启用日志记录！"
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr "%(plugin_key)s：已忽略具有自变量 %(args)s 的 %(function_name)s"
 
 #, python-format
 msgid "%(prog)s version %(version)s"
 msgstr "%(prog)s 版本 %(version)s"
 
 #, python-format
-msgid "Config paste file: %s"
-msgstr "配置粘贴文件：%s"
-
-msgid "IPv6 is not enabled on this system."
-msgstr "IPv6在本系统上未使能。"
+msgid "%(type)s ID ranges: %(range)s"
+msgstr "%(type)s ID 范围: %(range)s"
 
 #, python-format
-msgid "Adding network %(net)s to agent %(agent)%s on host %(host)s"
-msgstr "在主机 %(host)s上添加网络%(net)s到代理%(agent)%s"
+msgid "%(url)s returned a fault: %(exception)s"
+msgstr "%(url)s 返回了故障：%(exception)s"
+
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s 随HTTP %(status)d返回"
+
+#, python-format
+msgid "APIC host agent: agent starting on %s"
+msgstr "APIC 主机代理: 代理正启动在 %s"
+
+#, python-format
+msgid "APIC host agent: started on %s"
+msgstr "APIC 主机代理: 已启动在 %s"
+
+msgid "APIC service agent started"
+msgstr "APIC 服务代理已启动"
+
+msgid "APIC service agent starting ..."
+msgstr "APIC 服务代理启动中 ..."
 
 #, python-format
 msgid ""
-"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
-"%(subnet_id)s (CIDR: %(cidr)s)"
-msgstr ""
-"针对 CIDR %(new_cidr)s 的验证失败 - 与子网 %(subnet_id)s（CIDR 为 %(cidr)s）"
-"重叠"
+"Added segment %(id)s of type %(network_type)s for network %(network_id)s"
+msgstr "增添segment%(id)s种类%(network_type)s在网络%(network_id)s"
+
+msgid "Agent initialized successfully, now running... "
+msgstr "代理已成功初始化，现在正在运行..."
+
+msgid "Agent out of sync with plugin!"
+msgstr "代理与插件不同步！"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "代理隧道与插件不同步！"
 
 #, python-format
-msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
-msgstr "在池中找到无效 IP 地址：%(start)s - %(end)s："
+msgid "Allocated vlan (%d) from the pool"
+msgstr "已从池分配 vlan (%d)"
 
-msgid "Specified IP addresses do not match the subnet IP version"
-msgstr "指定的 IP 地址与子网 IP 版本不匹配"
-
-#, python-format
-msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
-msgstr "起始 IP (%(start)s) 大于结束 IP (%(end)s)"
+msgid ""
+"Allow sorting is enabled because native pagination requires native sorting"
+msgstr "已启用允许排序，因为本机分页需要本机排序"
 
 #, python-format
-msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
-msgstr "找到超过子网 CIDR (%(start)s - %(end)s) 的池"
+msgid "Allowable flat physical_network names: %s"
+msgstr "可以使用的平面物理网络名字: %s"
+
+msgid "Arbitrary flat physical_network names allowed"
+msgstr "允许平面物理网络使用任意名字"
 
 #, python-format
-msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
-msgstr "找到重叠范围：%(l_range)s 和 %(r_range)s"
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr "对于网络标识 %(net_uuid)s，正在将 %(vlan_id)s 分配为本地 vlan"
 
 #, python-format
-msgid "Skipping port %s as no IP is configure on it"
-msgstr "正在跳过端口 %s，因为没有在该端口上配置任何 IP"
-
-msgid "SNAT already bound to a service node."
-msgstr "SNAT 已经绑定到服务节点。"
+msgid "Attachment %s removed"
+msgstr "已除去附件 %s"
 
 #, python-format
-msgid "Table %(old_t)r was renamed to %(new_t)r"
-msgstr "表 %(old_t)r 已经更名为 %(new_t)r"
+msgid "Attempt %(count)s to bind port %(port)s"
+msgstr "尝试 %(count)s 次绑定端口 %(port)s"
 
 #, python-format
-msgid "Nova event response: %s"
-msgstr "Nova 事件响应: %s"
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "已尝试除去未过滤的端口过滤器 %r"
 
 #, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet为进程 %(pid)d 在后台监听 %(port)s "
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "正在跳过周期性任务 %(task)s，因为其时间间隔为负"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "正在跳过周期性任务 %(task)s，因为它已禁用"
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "已尝试更新未过滤的端口过滤器 %s"
 
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "捕获到 %s，正在退出"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "父进程已意外终止，正在退出"
-
 #, python-format
-msgid "Child caught %s, exiting"
-msgstr "子代捕获 %s，正在退出"
-
-msgid "Forking too fast, sleeping"
-msgstr "派生速度太快，正在休眠"
-
-#, python-format
-msgid "Started child %d"
-msgstr "已启动子代 %d"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "正在启动 %d 工作程序"
+msgid "Caught %s, stopping children"
+msgstr "捕获到 %s，正在停止子代"
 
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
@@ -255,27 +128,290 @@ msgid "Child %(pid)s exited with status %(code)d"
 msgstr "子代 %(pid)s 已退出，状态为 %(code)d"
 
 #, python-format
-msgid "Caught %s, stopping children"
-msgstr "捕获到 %s，正在停止子代"
-
-msgid "Wait called after thread killed. Cleaning up."
-msgstr "线程结束，正在清理"
+msgid "Child caught %s, exiting"
+msgstr "子代捕获 %s，正在退出"
 
 #, python-format
-msgid "Waiting on %d children to exit"
-msgstr "正在等待 %d 个子代退出"
+msgid "Config paste file: %s"
+msgstr "配置粘贴文件：%s"
 
 #, python-format
-msgid "Allocated vlan (%d) from the pool"
-msgstr "已从池分配 vlan (%d)"
+msgid "Configuration for device %s completed."
+msgstr "设备 %s 的配置已完成。"
+
+#, python-format
+msgid "Configured mechanism driver names: %s"
+msgstr "配置装置驱动名称: %s"
+
+#, python-format
+msgid "Configured type driver names: %s"
+msgstr "配置类型驱动名字: %s"
+
+#, python-format
+msgid "Controller IPs: %s"
+msgstr "控制器IP: %s"
+
+msgid "DHCP agent started"
+msgstr "已启动 DHCP 代理"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "正在删除端口: %s"
+
+#, python-format
+msgid "Device %s already exists"
+msgstr "设备 %s 已存在"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "未在插件上定义设备 %s"
+
+msgid "Disabled security-group extension."
+msgstr "已禁用安全组扩展。"
+
+#, python-format
+msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
+msgstr "Eventlet为进程 %(pid)d 在后台监听 %(port)s "
+
+msgid "Forking too fast, sleeping"
+msgstr "派生速度太快，正在休眠"
+
+#, python-format
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "在池中找到无效 IP 地址：%(start)s - %(end)s："
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "找到重叠范围：%(l_range)s 和 %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "找到超过子网 CIDR (%(start)s - %(end)s) 的池"
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "HTTP 异常抛出：%s"
+
+msgid "IPv6 is not enabled on this system."
+msgstr "IPv6在本系统上未使能。"
+
+msgid "Initializing CRD client... "
+msgstr "正在初始化CRD客户端 ..."
+
+#, python-format
+msgid "Initializing driver for type '%s'"
+msgstr "为类型 '%s'初始化驱动"
+
+#, python-format
+msgid "Initializing extension driver '%s'"
+msgstr "初始化扩展驱动 '%s'"
+
+msgid "Initializing extension manager."
+msgstr "正在初始化扩展管理员。"
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "接口映射：%s"
+
+msgid "L3 agent started"
+msgstr "已启动 L3 代理"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "LinuxBridge 代理 RPC 守护程序已启动！"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "加载的扩展：%s"
+
+#, python-format
+msgid "Loaded mechanism driver names: %s"
+msgstr "已加载的装置驱动名称: %s"
+
+#, python-format
+msgid "Loaded type driver names: %s"
+msgstr "已加载驱动程序: %s"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "正在装入插件：%s"
+
+#, python-format
+msgid "Loading core plugin: %s"
+msgstr "加载核心插件: %s"
+
+#, python-format
+msgid "Loading interface driver %s"
+msgstr "正在加载接口驱动 %s"
+
+msgid "Logging enabled!"
+msgstr "已启用日志记录！"
+
+#, python-format
+msgid ""
+"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
+msgstr "循环迭代超过时间间隔（%(polling_interval)s 对 %(elapsed)s）！"
+
+msgid "ML2 FlatTypeDriver initialization complete"
+msgstr "完成ML2 FlatTypeDriver的初始化"
+
+msgid "ML2 LocalTypeDriver initialization complete"
+msgstr "完成L2插件模块初始化"
+
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "正在将物理网络 %(physical_network)s 映射至网桥 %(bridge)s"
+
+msgid "Modular L2 Plugin initialization complete"
+msgstr "L2插件模块初始化完成"
+
+#, python-format
+msgid "Network VLAN ranges: %s"
+msgstr "网络 VLAN 范围：%s"
+
+#, python-format
+msgid "Network name changed to %s"
+msgstr "网络名改变为 %s"
+
+#, python-format
+msgid "Neutron service started, listening on %(host)s:%(port)s"
+msgstr "Neutron服务启动，正在%(host)s:%(port)s上监听"
 
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr "未装入任何 %s 插件"
 
 #, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s：已忽略具有自变量 %(args)s 的 %(function_name)s"
+msgid "Nova event response: %s"
+msgstr "Nova 事件响应: %s"
+
+msgid "OVS cleanup completed successfully"
+msgstr "OVS 清除已成功完成"
+
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "父进程已意外终止，正在退出"
+
+#, python-format
+msgid "Physical Devices mappings: %s"
+msgstr "物理设备映射:%s"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "端口 %(device)s 已更新。详细信息：%(details)s"
+
+#, python-format
+msgid "Port %(port_id)s not present in bridge %(br_name)s"
+msgstr "端口 %(port_id)s 在桥 %(br_name)s中不存在"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "端口 %s 已更新。"
+
+#, python-format
+msgid "Port %s was deleted concurrently"
+msgstr "端口 %s 被同时删除"
+
+#, python-format
+msgid "Port name changed to %s"
+msgstr "端口名改变为 %s"
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "正在为设备 %s 准备过滤器"
+
+#, python-format
+msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
+msgstr "进程运行uid/gid: %(uid)s/%(gid)s"
+
+msgid "Provider rule updated"
+msgstr "已更新提供程序规则"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "RPC agent_id：%s"
+
+#, python-format
+msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
+msgstr "正在从网络标识 %(net_uuid)s 恢复 vlan %(vlan_id)s"
+
+msgid "Refresh firewall rules"
+msgstr "请刷新防火墙规则"
+
+#, python-format
+msgid "Registered types: %s"
+msgstr "已注册类型: %s"
+
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "请为 %r 除去设备过滤器"
+
+#, python-format
+msgid "Router %(router_id)s transitioned to %(state)s"
+msgstr "路由器%(router_id)s 转换为%(state)s"
+
+#, python-format
+msgid ""
+"Router %s is not managed by this agent. It was possibly deleted concurrently."
+msgstr "路由器%s没有被改该代理管理。可能已经被删除。"
+
+msgid "SNAT already bound to a service node."
+msgstr "SNAT 已经绑定到服务节点。"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "已更新安全组成员 %r"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "已更新安全组规则 %r"
+
+#, python-format
+msgid "Service %s is supported by the core plugin"
+msgstr "服务%s由核心插件支持"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr "正在跳过周期性任务 %(task)s，因为它已禁用"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr "正在跳过周期性任务 %(task)s，因为其时间间隔为负"
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "正在跳过端口 %s，因为没有在该端口上配置任何 IP"
+
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr "指定的 IP 地址与子网 IP 版本不匹配"
+
+#, python-format
+msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
+msgstr "起始 IP (%(start)s) 大于结束 IP (%(end)s)"
+
+#, python-format
+msgid "Started child %d"
+msgstr "已启动子代 %d"
+
+#, python-format
+msgid "Starting %d workers"
+msgstr "正在启动 %d 工作程序"
+
+#, python-format
+msgid "Subnet %s was deleted concurrently"
+msgstr "子网 %s 同时被删除 "
+
+msgid "Synchronizing state"
+msgstr "正在使状态同步"
+
+msgid "Synchronizing state complete"
+msgstr "同步状态完成"
+
+#, python-format
+msgid "Table %(old_t)r was renamed to %(new_t)r"
+msgstr "表 %(old_t)r 已经更名为 %(new_t)r"
+
+#, python-format
+msgid "Tenant network_types: %s"
+msgstr "项目网络类型: %s"
 
 #, python-format
 msgid "The IP addr of available SDN-VE controllers: %s"
@@ -287,167 +423,22 @@ msgstr "SDN-VE 控制器 IP 地址: %s"
 
 #, python-format
 msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr "循环迭代超过时间间隔（%(polling_interval)s 对 %(elapsed)s）！"
-
-#, python-format
-msgid "Controller IPs: %s"
-msgstr "控制器IP: %s"
-
-#, python-format
-msgid "RPC agent_id: %s"
-msgstr "RPC agent_id：%s"
-
-#, python-format
-msgid "Port %(device)s updated. Details: %(details)s"
-msgstr "端口 %(device)s 已更新。详细信息：%(details)s"
-
-#, python-format
-msgid "Device %s not defined on plugin"
-msgstr "未在插件上定义设备 %s"
-
-#, python-format
-msgid "Attachment %s removed"
-msgstr "已除去附件 %s"
-
-#, python-format
-msgid "Port %s updated."
-msgstr "端口 %s 已更新。"
-
-msgid "LinuxBridge Agent RPC Daemon Started!"
-msgstr "LinuxBridge 代理 RPC 守护程序已启动！"
-
-msgid "Agent out of sync with plugin!"
-msgstr "代理与插件不同步！"
-
-#, python-format
-msgid "Interface mappings: %s"
-msgstr "接口映射：%s"
-
-#, python-format
-msgid ""
-"Added segment %(id)s of type %(network_type)s for network %(network_id)s"
-msgstr "增添segment%(id)s种类%(network_type)s在网络%(network_id)s"
-
-#, python-format
-msgid "Configured type driver names: %s"
-msgstr "配置类型驱动名字: %s"
-
-#, python-format
-msgid "Loaded type driver names: %s"
-msgstr "已加载驱动程序: %s"
-
-#, python-format
-msgid "Registered types: %s"
-msgstr "已注册类型: %s"
-
-#, python-format
-msgid "Tenant network_types: %s"
-msgstr "项目网络类型: %s"
-
-#, python-format
-msgid "Initializing driver for type '%s'"
-msgstr "为类型 '%s'初始化驱动"
-
-#, python-format
-msgid "Configured mechanism driver names: %s"
-msgstr "配置装置驱动名称: %s"
-
-#, python-format
-msgid "Loaded mechanism driver names: %s"
-msgstr "已加载的装置驱动名称: %s"
-
-#, python-format
-msgid "Initializing extension driver '%s'"
-msgstr "初始化扩展驱动 '%s'"
-
-msgid "Modular L2 Plugin initialization complete"
-msgstr "L2插件模块初始化完成"
-
-#, python-format
-msgid "Attempt %(count)s to bind port %(port)s"
-msgstr "尝试 %(count)s 次绑定端口 %(port)s"
-
-#, python-format
-msgid "Port %s was deleted concurrently"
-msgstr "端口 %s 被同时删除"
-
-#, python-format
-msgid "Subnet %s was deleted concurrently"
-msgstr "子网 %s 同时被删除 "
-
-msgid "Arbitrary flat physical_network names allowed"
-msgstr "允许平面物理网络使用任意名字"
-
-#, python-format
-msgid "Allowable flat physical_network names: %s"
-msgstr "可以使用的平面物理网络名字: %s"
-
-msgid "ML2 FlatTypeDriver initialization complete"
-msgstr "完成ML2 FlatTypeDriver的初始化"
-
-msgid "ML2 LocalTypeDriver initialization complete"
-msgstr "完成L2插件模块初始化"
-
-#, python-format
-msgid "%(type)s ID ranges: %(range)s"
-msgstr "%(type)s ID 范围: %(range)s"
-
-#, python-format
-msgid "Network VLAN ranges: %s"
-msgstr "网络 VLAN 范围：%s"
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"针对 CIDR %(new_cidr)s 的验证失败 - 与子网 %(subnet_id)s（CIDR 为 %(cidr)s）"
+"重叠"
 
 msgid "VlanTypeDriver initialization complete"
 msgstr "Vlan类型驱动初始化完成"
 
-#, python-format
-msgid "Network name changed to %s"
-msgstr "网络名改变为 %s"
+msgid "Wait called after thread killed. Cleaning up."
+msgstr "线程结束，正在清理"
 
 #, python-format
-msgid "Port name changed to %s"
-msgstr "端口名改变为 %s"
-
-msgid "APIC service agent starting ..."
-msgstr "APIC 服务代理启动中 ..."
-
-msgid "APIC service agent started"
-msgstr "APIC 服务代理已启动"
+msgid "Waiting on %d children to exit"
+msgstr "正在等待 %d 个子代退出"
 
 #, python-format
-msgid "APIC host agent: agent starting on %s"
-msgstr "APIC 主机代理: 代理正启动在 %s"
-
-#, python-format
-msgid "APIC host agent: started on %s"
-msgstr "APIC 主机代理: 已启动在 %s"
-
-msgid "Initializing CRD client... "
-msgstr "正在初始化CRD客户端 ..."
-
-#, python-format
-msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
-msgstr "对于网络标识 %(net_uuid)s，正在将 %(vlan_id)s 分配为本地 vlan"
-
-#, python-format
-msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
-msgstr "正在从网络标识 %(net_uuid)s 恢复 vlan %(vlan_id)s"
-
-#, python-format
-msgid "Configuration for device %s completed."
-msgstr "设备 %s 的配置已完成。"
-
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr "正在将物理网络 %(physical_network)s 映射至网桥 %(bridge)s"
-
-msgid "Agent tunnel out of sync with plugin!"
-msgstr "代理隧道与插件不同步！"
-
-#, python-format
-msgid "Physical Devices mappings: %s"
-msgstr "物理设备映射:%s"
-
-#, python-format
-msgid "Loading interface driver %s"
-msgstr "正在加载接口驱动 %s"
+msgid "agent_updated by server side %s!"
+msgstr "服务器端 %s 已更新代理！"

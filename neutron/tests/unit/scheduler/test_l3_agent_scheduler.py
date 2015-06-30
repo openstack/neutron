@@ -128,16 +128,16 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def test_auto_schedule_routers(self):
         self.plugin.get_enabled_agent_on_host.return_value = [mock.ANY]
-        with contextlib.nested(
-            mock.patch.object(self.scheduler, '_get_routers_to_schedule'),
-            mock.patch.object(self.scheduler, '_get_routers_can_schedule')
-        ) as (gs, gr):
+        with mock.patch.object(self.scheduler,
+                               '_get_routers_to_schedule') as gs,\
+                mock.patch.object(self.scheduler,
+                                  '_get_routers_can_schedule') as gr:
             result = self.scheduler.auto_schedule_routers(
                 self.plugin, mock.ANY, mock.ANY, mock.ANY)
-        self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
-        self.assertTrue(result)
-        self.assertTrue(gs.called)
-        self.assertTrue(gr.called)
+            self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
+            self.assertTrue(result)
+            self.assertTrue(gs.called)
+            self.assertTrue(gr.called)
 
     def test_auto_schedule_routers_no_agents(self):
         self.plugin.get_enabled_agent_on_host.return_value = None
@@ -159,10 +159,12 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def test_auto_schedule_routers_no_target_routers(self):
         self.plugin.get_enabled_agent_on_host.return_value = [mock.ANY]
-        with contextlib.nested(
-            mock.patch.object(self.scheduler, '_get_routers_to_schedule'),
-            mock.patch.object(self.scheduler, '_get_routers_can_schedule')
-        ) as (mock_unscheduled_routers, mock_target_routers):
+        with mock.patch.object(
+            self.scheduler,
+            '_get_routers_to_schedule') as mock_unscheduled_routers,\
+                mock.patch.object(
+                    self.scheduler,
+                    '_get_routers_can_schedule') as mock_target_routers:
             mock_unscheduled_routers.return_value = mock.ANY
             mock_target_routers.return_value = None
             result = self.scheduler.auto_schedule_routers(
@@ -250,16 +252,15 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
     def _test__bind_routers_ha(self, has_binding):
         routers = [{'id': 'foo_router', 'ha': True, 'tenant_id': '42'}]
         agent = agents_db.Agent(id='foo_agent')
-        with contextlib.nested(
-            mock.patch.object(self.scheduler, '_router_has_binding',
-                              return_value=has_binding),
-            mock.patch.object(self.scheduler, '_create_ha_router_binding')
-        ) as (
-                mock_has_binding, mock_bind):
+        with mock.patch.object(self.scheduler,
+                               '_router_has_binding',
+                               return_value=has_binding) as mock_has_binding,\
+                mock.patch.object(self.scheduler,
+                                  '_create_ha_router_binding') as mock_bind:
             self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, agent)
-        mock_has_binding.assert_called_once_with(mock.ANY, 'foo_router',
-                                                 'foo_agent')
-        self.assertEqual(not has_binding, mock_bind.called)
+            mock_has_binding.assert_called_once_with(mock.ANY, 'foo_router',
+                                                     'foo_agent')
+            self.assertEqual(not has_binding, mock_bind.called)
 
     def test__bind_routers_ha_has_binding(self):
         self._test__bind_routers_ha(has_binding=True)
@@ -336,12 +337,11 @@ class L3SchedulerTestBaseMixin(object):
         router['router']['external_gateway_info'] = external_gw
         if already_scheduled:
             self._test_schedule_bind_router(agent, router)
-        with contextlib.nested(
-            mock.patch.object(self, "validate_agent_router_combination"),
-            mock.patch.object(self, "create_router_to_agent_binding"),
-            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                       return_value=router['router'])
-        ) as (valid, auto_s, gr):
+        with mock.patch.object(self, "validate_agent_router_combination"),\
+                mock.patch.object(self,
+                                  "create_router_to_agent_binding") as auto_s,\
+                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                           return_value=router['router']):
             self.add_router_to_l3_agent(self.adminContext, agent_id,
                                         router['router']['id'])
             self.assertNotEqual(already_scheduled, auto_s.called)
@@ -377,10 +377,9 @@ class L3SchedulerTestBaseMixin(object):
                                               expected_exception=None):
         router = self._create_router_for_l3_agent_dvr_test(
             distributed=distributed, external_gw=external_gw)
-        with contextlib.nested(
-            mock.patch.object(self, "create_router_to_agent_binding"),
-            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                       return_value=router['router'])):
+        with mock.patch.object(self, "create_router_to_agent_binding"),\
+                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                           return_value=router['router']):
             self.assertRaises(expected_exception,
                               self.add_router_to_l3_agent,
                               self.adminContext, agent_id,
@@ -416,12 +415,12 @@ class L3SchedulerTestBaseMixin(object):
         router = self._create_router_for_l3_agent_dvr_test(
             distributed=True,
             external_gw=external_gw_info)
-        with contextlib.nested(
-            mock.patch.object(self, "validate_agent_router_combination"),
-            mock.patch.object(self, "create_router_to_agent_binding"),
-            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                       return_value=router['router'])
-        ) as (valid_agent_rtr, rtr_agent_binding, get_rtr):
+        with mock.patch.object(self, "validate_agent_router_combination"),\
+                mock.patch.object(
+                    self,
+                    "create_router_to_agent_binding") as rtr_agent_binding,\
+                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                           return_value=router['router']):
 
             self.add_router_to_l3_agent(self.adminContext, agent_id,
                                         router['router']['id'])
@@ -470,13 +469,12 @@ class L3SchedulerTestBaseMixin(object):
             'distributed': True
         }
         plugin.get_router.return_value = sync_router
-        with contextlib.nested(
-            mock.patch.object(scheduler, 'bind_router'),
-            mock.patch.object(
-                plugin, 'get_snat_bindings', return_value=False)
-        ):
-                scheduler._schedule_router(
-                    plugin, self.adminContext, 'foo_router_id', None)
+        with mock.patch.object(scheduler, 'bind_router'),\
+                mock.patch.object(plugin,
+                                  'get_snat_bindings',
+                                  return_value=False):
+            scheduler._schedule_router(
+                plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
             mock.call.get_l3_agents_hosting_routers(
@@ -955,15 +953,16 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
               'distributed': True,
         }
 
-        with contextlib.nested(
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                       '.get_ports', return_value=[dvr_port]),
-            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
-                       return_value=mock.Mock()),
-            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                       return_value=r1),
-            mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
-                       '.L3AgentNotifyAPI')):
+        with mock.patch(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
+            return_value=[dvr_port]),\
+                mock.patch(
+                    'neutron.manager.NeutronManager.get_service_plugins',
+                    return_value=mock.Mock()),\
+                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                           return_value=r1),\
+                mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
+                           '.L3AgentNotifyAPI'):
             self.dut.dvr_update_router_addvm(self.adminContext, port)
 
     def test_get_dvr_routers_by_portid(self):
@@ -983,11 +982,11 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
               'distributed': True,
         }
 
-        with contextlib.nested(
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                       '.get_port', return_value=dvr_port),
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                       '.get_ports', return_value=[dvr_port])):
+        with mock.patch(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_port',
+            return_value=dvr_port),\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+                           '.get_ports', return_value=[dvr_port]):
             router_id = self.dut.get_dvr_routers_by_portid(self.adminContext,
                                                            dvr_port['id'])
             self.assertEqual(router_id.pop(), r1['id'])
@@ -1009,19 +1008,19 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
               'distributed': True,
         }
 
-        with contextlib.nested(
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                       '.get_ports', return_value=[dvr_port])):
+        with mock.patch(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
+            return_value=[dvr_port]):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
             self.assertEqual(sub_ids.pop(),
                             dvr_port.get('fixed_ips').pop(0).get('subnet_id'))
 
-    def test_check_ports_active_on_host_and_subnet(self):
+    def _test_check_ports_on_host_and_subnet_base(self, port_status):
         dvr_port = {
-                'id': 'dvr_port1',
+                'id': 'fake_id',
                 'device_id': 'r1',
-                'status': 'ACTIVE',
+                'status': port_status,
                 'binding:host_id': 'thisHost',
                 'device_owner': 'compute:nova',
                 'fixed_ips': [
@@ -1035,27 +1034,37 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
               'id': 'r1',
               'distributed': True,
         }
-        with contextlib.nested(
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                       '.get_ports', return_value=[dvr_port]),
-            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
-                       return_value=mock.Mock()),
-            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                       return_value=r1),
-            mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
-                       '.L3AgentNotifyAPI')):
+        with mock.patch(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
+            return_value=[dvr_port]),\
+                mock.patch(
+                    'neutron.manager.NeutronManager.get_service_plugins',
+                    return_value=mock.Mock()),\
+                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                           return_value=r1),\
+                mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
+                           '.L3AgentNotifyAPI'):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
-            result = self.dut.check_ports_active_on_host_and_subnet(
+            result = self.dut.check_ports_on_host_and_subnet(
                                                     self.adminContext,
                                                     'thisHost', 'dvr_port1',
                                                     sub_ids)
-            self.assertFalse(result)
+            self.assertTrue(result)
+
+    def test_check_ports_on_host_and_subnet_with_active_port(self):
+        self._test_check_ports_on_host_and_subnet_base('ACTIVE')
+
+    def test_check_ports_on_host_and_subnet_with_build_port(self):
+        self._test_check_ports_on_host_and_subnet_base('BUILD')
+
+    def test_check_ports_on_host_and_subnet_with_down_port(self):
+        self._test_check_ports_on_host_and_subnet_base('DOWN')
 
     def _test_dvr_serviced_port_exists_on_subnet(self, port):
         with mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
                         'get_ports', return_value=[port]):
-            result = self.dut.check_ports_active_on_host_and_subnet(
+            result = self.dut.check_ports_on_host_and_subnet(
                                                     self.adminContext,
                                                     'thisHost',
                                                     'dvr1-intf-id',
@@ -1110,16 +1119,16 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         vm_port_id = vm_port['id']
         fakePortDB = FakePortDB([vm_port])
 
-        with contextlib.nested(
-            mock.patch.object(my_context, 'elevated',
-                              return_value=self.adminContext),
-            mock.patch('neutron.plugins.ml2.db.'
-                       'get_port_binding_host', return_value=vm_port_host),
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                       'get_ports', side_effect=fakePortDB.get_ports),
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                       'get_port', return_value=vm_port)) as (
-                _, mock_get_port_binding_host, _, _):
+        with mock.patch.object(my_context,
+                               'elevated',
+                               return_value=self.adminContext),\
+                mock.patch(
+                    'neutron.plugins.ml2.db.get_port_binding_host',
+                    return_value=vm_port_host) as mock_get_port_binding_host,\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                           'get_ports', side_effect=fakePortDB.get_ports),\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                           'get_port', return_value=vm_port):
 
             routers = self.dut.dvr_deletens_if_no_port(my_context, vm_port_id)
             self.assertEqual([], routers)
@@ -1156,20 +1165,21 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             'host': vm_port_host
         }
 
-        with contextlib.nested(
-            mock.patch.object(my_context, 'elevated',
-                              return_value=self.adminContext),
-            mock.patch('neutron.plugins.ml2.db.get_port_binding_host',
-                       return_value=vm_port_host),
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                       'get_port', side_effect=fakePortDB.get_port),
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                       'get_ports', side_effect=fakePortDB.get_ports),
-            mock.patch('neutron.plugins.ml2.db.get_dvr_port_binding_by_host',
-                       return_value=vm_port_binding)) as (_,
-                mock_get_port_binding_host, _,
-                mock_get_ports,
-                mock_get_dvr_port_binding_by_host):
+        with mock.patch.object(my_context,
+                               'elevated',
+                               return_value=self.adminContext),\
+                mock.patch(
+                    'neutron.plugins.ml2.db.get_port_binding_host',
+                    return_value=vm_port_host) as mock_get_port_binding_host,\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                           'get_port', side_effect=fakePortDB.get_port),\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                           'get_ports', side_effect=fakePortDB.get_ports) as\
+                mock_get_ports,\
+                mock.patch('neutron.plugins.ml2.db.'
+                           'get_dvr_port_binding_by_host',
+                           return_value=vm_port_binding) as\
+                mock_get_dvr_port_binding_by_host:
 
             routers = self.dut.dvr_deletens_if_no_port(
                 my_context, deleted_vm_port_id)
@@ -1221,24 +1231,24 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                         vm_port_host,
                                         constants.AGENT_TYPE_L3)
 
-        with contextlib.nested(
-            mock.patch.object(my_context, 'elevated',
-                              return_value=self.adminContext),
-            mock.patch('neutron.plugins.ml2.db.get_port_binding_host',
-                       return_value=vm_port_host),
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                       'get_port', side_effect=fakePortDB.get_port),
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                       'get_ports', side_effect=fakePortDB.get_ports),
-            mock.patch('neutron.plugins.ml2.db.get_dvr_port_binding_by_host',
-                       return_value=dvr_port_binding),
-            mock.patch('neutron.db.agents_db.AgentDbMixin.'
-                       '_get_agent_by_type_and_host',
-                       return_value=l3_agent_on_vm_host)) as (_,
-                mock_get_port_binding_host, _,
-                mock_get_ports,
-                mock_get_dvr_port_binding_by_host,
-                mock__get_agent_by_type_and_host):
+        with mock.patch.object(my_context,
+                               'elevated',
+                               return_value=self.adminContext),\
+                mock.patch(
+                    'neutron.plugins.ml2.db.get_port_binding_host',
+                    return_value=vm_port_host) as mock_get_port_binding_host,\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                           'get_port', side_effect=fakePortDB.get_port),\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                           'get_ports', side_effect=fakePortDB.get_ports) as\
+                mock_get_ports,\
+                mock.patch('neutron.plugins.ml2.db.'
+                           'get_dvr_port_binding_by_host',
+                           return_value=dvr_port_binding) as\
+                mock_get_dvr_port_binding_by_host,\
+                mock.patch('neutron.db.agents_db.AgentDbMixin.'
+                           '_get_agent_by_type_and_host',
+                           return_value=l3_agent_on_vm_host):
 
             routers = self.dut.dvr_deletens_if_no_port(
                 my_context, deleted_vm_port_id)
@@ -1300,25 +1310,30 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
     def test_schedule_snat_router_duplicate_entry(self):
         self._prepare_schedule_snat_tests()
-        with contextlib.nested(
-            mock.patch.object(self.dut, 'get_l3_agents'),
-            mock.patch.object(self.dut, 'get_snat_candidates'),
-            mock.patch.object(self.dut, 'bind_snat_servicenode',
-                              side_effect=db_exc.DBDuplicateEntry()),
-            mock.patch.object(self.dut, 'bind_dvr_router_servicenode')
-        ) as (mock_gl3, mock_snat_canidates, mock_bind_snat, mock_bind_dvr):
+        with mock.patch.object(self.dut, 'get_l3_agents'),\
+                mock.patch.object(self.dut, 'get_snat_candidates'),\
+                mock.patch.object(
+                    self.dut,
+                    'bind_snat_servicenode',
+                    side_effect=db_exc.DBDuplicateEntry()) as mock_bind_snat,\
+                mock.patch.object(
+                    self.dut,
+                    'bind_dvr_router_servicenode') as mock_bind_dvr:
             self.dut.schedule_snat_router(self.adminContext, 'foo', 'bar')
-        self.assertTrue(mock_bind_snat.called)
-        self.assertFalse(mock_bind_dvr.called)
+            self.assertTrue(mock_bind_snat.called)
+            self.assertFalse(mock_bind_dvr.called)
 
     def test_schedule_snat_router_return_value(self):
         agent, router = self._prepare_schedule_snat_tests()
-        with contextlib.nested(
-            mock.patch.object(self.dut, 'get_l3_agents'),
-            mock.patch.object(self.dut, 'get_snat_candidates'),
-            mock.patch.object(self.dut, 'bind_snat_servicenode'),
-            mock.patch.object(self.dut, 'bind_dvr_router_servicenode')
-        ) as (mock_gl3, mock_snat_canidates, mock_bind_snat, mock_bind_dvr):
+        with mock.patch.object(self.dut, 'get_l3_agents'),\
+                mock.patch.object(
+                    self.dut,
+                    'get_snat_candidates') as mock_snat_canidates,\
+                mock.patch.object(self.dut,
+                                  'bind_snat_servicenode') as mock_bind_snat,\
+                mock.patch.object(
+                    self.dut,
+                    'bind_dvr_router_servicenode') as mock_bind_dvr:
             mock_snat_canidates.return_value = [agent]
             mock_bind_snat.return_value = [agent]
             mock_bind_dvr.return_value = [agent]
@@ -1331,36 +1346,35 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             'id': 'foo_router_id',
             'distributed': True
         }
-        with contextlib.nested(
-            mock.patch.object(self.dut, 'get_router'),
-            mock.patch.object(self.dut, 'get_snat_bindings'),
-            mock.patch.object(self.dut, 'unbind_snat_servicenode')
-        ) as (mock_rd, mock_snat_bind, mock_unbind):
+        with mock.patch.object(self.dut, 'get_router') as mock_rd,\
+                mock.patch.object(self.dut,
+                                  'get_snat_bindings') as mock_snat_bind,\
+                mock.patch.object(self.dut,
+                                  'unbind_snat_servicenode') as mock_unbind:
             mock_rd.return_value = router
             mock_snat_bind.return_value = False
             self.dut.schedule_snat_router(
                 self.adminContext, 'foo_router_id', router)
-        self.assertFalse(mock_unbind.called)
+            self.assertFalse(mock_unbind.called)
 
     def test_schedule_snat_router_with_snat_candidates(self):
         agent, router = self._prepare_schedule_snat_tests()
-        with contextlib.nested(
-            mock.patch.object(query.Query, 'first'),
-            mock.patch.object(self.dut, 'get_l3_agents'),
-            mock.patch.object(self.dut, 'get_snat_candidates'),
-            mock.patch.object(self.dut, 'get_router'),
-            mock.patch.object(self.dut, 'bind_dvr_router_servicenode'),
-            mock.patch.object(self.dut, 'bind_snat_servicenode')) as (
-                mock_query, mock_agents,
-                mock_candidates, mock_rd, mock_dvr, mock_bind):
+        with mock.patch.object(query.Query, 'first') as mock_query,\
+                mock.patch.object(self.dut, 'get_l3_agents') as mock_agents,\
+                mock.patch.object(self.dut,
+                                  'get_snat_candidates') as mock_candidates,\
+                mock.patch.object(self.dut, 'get_router') as mock_rd,\
+                mock.patch.object(self.dut, 'bind_dvr_router_servicenode'),\
+                mock.patch.object(self.dut,
+                                  'bind_snat_servicenode') as mock_bind:
             mock_rd.return_value = router
             mock_query.return_value = []
             mock_agents.return_value = [agent]
             mock_candidates.return_value = [agent]
             self.dut.schedule_snat_router(
                 self.adminContext, 'foo_router_id', mock.ANY)
-        mock_bind.assert_called_once_with(
-            self.adminContext, 'foo_router_id', [agent])
+            mock_bind.assert_called_once_with(
+                self.adminContext, 'foo_router_id', [agent])
 
     def test_unbind_snat_servicenode(self):
         router_id = 'foo_router_id'
@@ -1374,18 +1388,19 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         binding = l3_dvrscheduler_db.CentralizedSnatL3AgentBinding(
             router_id=router_id, l3_agent_id='foo_l3_agent_id',
             l3_agent=agents_db.Agent())
-        with contextlib.nested(
-            mock.patch.object(query.Query, 'one'),
-            mock.patch.object(self.adminContext.session, 'delete'),
-            mock.patch.object(query.Query, 'delete'),
-            mock.patch.object(self.dut, 'get_subnet_ids_on_router')) as (
-                mock_query, mock_session, mock_delete, mock_get_subnets):
+        with mock.patch.object(query.Query, 'one') as mock_query,\
+                mock.patch.object(self.adminContext.session,
+                                  'delete') as mock_session,\
+                mock.patch.object(query.Query, 'delete') as mock_delete,\
+                mock.patch.object(
+                    self.dut,
+                    'get_subnet_ids_on_router') as mock_get_subnets:
             mock_query.return_value = binding
             mock_get_subnets.return_value = ['foo_subnet_id']
             self.dut.unbind_snat_servicenode(self.adminContext, router_id)
-        mock_get_subnets.assert_called_with(self.adminContext, router_id)
-        self.assertTrue(mock_session.call_count)
-        self.assertTrue(mock_delete.call_count)
+            mock_get_subnets.assert_called_with(self.adminContext, router_id)
+            self.assertTrue(mock_session.call_count)
+            self.assertTrue(mock_delete.call_count)
         core_plugin.assert_called_once_with()
         l3_notifier.assert_called_once_with()
 

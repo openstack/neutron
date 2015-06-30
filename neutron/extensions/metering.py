@@ -98,10 +98,6 @@ class Metering(extensions.ExtensionDescriptor):
         return "Neutron Metering extension."
 
     @classmethod
-    def get_namespace(cls):
-        return "http://wiki.openstack.org/wiki/Neutron/Metering/Bandwidth#API"
-
-    @classmethod
     def get_updated(cls):
         return "2013-06-12T10:00:00-00:00"
 
@@ -136,9 +132,6 @@ class Metering(extensions.ExtensionDescriptor):
 
 @six.add_metaclass(abc.ABCMeta)
 class MeteringPluginBase(service_base.ServicePluginBase):
-
-    def get_plugin_name(self):
-        return constants.METERING
 
     def get_plugin_description(self):
         return constants.METERING

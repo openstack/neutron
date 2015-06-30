@@ -17,43 +17,47 @@ from oslo_db.sqlalchemy import test_base
 
 from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
-from neutron.tests.fullstack import fullstack_fixtures as f_fixtures
+from neutron.tests.common import base
 
 
-class BaseFullStackTestCase(test_base.MySQLOpportunisticTestCase):
+class BaseFullStackTestCase(base.MySQLTestCase):
     """Base test class for full-stack tests."""
 
-    def __init__(self, environment=None, *args, **kwargs):
+    def __init__(self, environment, *args, **kwargs):
         super(BaseFullStackTestCase, self).__init__(*args, **kwargs)
-        self.environment = (environment if environment
-                            else f_fixtures.EnvironmentFixture())
+        self.environment = environment
 
     def setUp(self):
         super(BaseFullStackTestCase, self).setUp()
         self.create_db_tables()
 
-        if self.environment:
-            self.useFixture(self.environment)
+        self.environment.test_name = self.get_name()
+        self.useFixture(self.environment)
 
         self.client = self.environment.neutron_server.client
+
+    def get_name(self):
+        class_name, test_name = self.id().split(".")[-2:]
+        return "%s.%s" % (class_name, test_name)
 
     def create_db_tables(self):
         """Populate the new database.
 
-        MySQLOpportunisticTestCase creates a new database for each test, but
-        these need to be populated with the appropriate tables. Before we can
-        do that, we must change the 'connection' option which the Neutron code
-        knows to look at.
+        MySQLTestCase creates a new database for each test, but these need to
+        be populated with the appropriate tables. Before we can do that, we
+        must change the 'connection' option which the Neutron code knows to
+        look at.
 
         Currently, the username and password options are hard-coded by
         oslo.db and neutron/tests/functional/contrib/gate_hook.sh. Also,
         we only support MySQL for now, but the groundwork for adding Postgres
         is already laid.
         """
-        conn = "mysql://%(username)s:%(password)s@127.0.0.1/%(db_name)s" % {
-            'username': test_base.DbFixture.USERNAME,
-            'password': test_base.DbFixture.PASSWORD,
-            'db_name': self.engine.url.database}
+        conn = ("mysql+pymysql://%(username)s:%(password)s"
+                "@127.0.0.1/%(db_name)s" % {
+                    'username': test_base.DbFixture.USERNAME,
+                    'password': test_base.DbFixture.PASSWORD,
+                    'db_name': self.engine.url.database})
 
         self.original_conn = cfg.CONF.database.connection
         self.addCleanup(self._revert_connection_address)

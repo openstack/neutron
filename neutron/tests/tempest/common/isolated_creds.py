@@ -369,7 +369,7 @@ class IsolatedCreds(cred_provider.CredentialProvider):
         if not self.isolated_creds:
             return
         self._clear_isolated_net_resources()
-        for creds in self.isolated_creds.itervalues():
+        for creds in self.isolated_creds.values():
             try:
                 self._delete_user(creds.user_id)
             except lib_exc.NotFound:

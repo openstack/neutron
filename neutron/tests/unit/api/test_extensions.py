@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 import routes
+import six
 import webob
 import webob.exc as webexc
 import webtest
@@ -159,7 +160,7 @@ class ResourceExtensionTest(base.BaseTestCase):
             # Shouldn't be reached
             self.assertTrue(False)
         except webtest.AppError as e:
-            self.assertIn('501', e.message)
+            self.assertIn('501', str(e))
 
     def test_resource_can_be_added_as_extension(self):
         res_ext = extensions.ResourceExtension(
@@ -473,7 +474,7 @@ class ExtensionManagerTest(base.BaseTestCase):
             """Invalid extension.
 
             This Extension doesn't implement extension methods :
-            get_name, get_description, get_namespace and get_updated
+            get_name, get_description and get_updated
             """
             def get_alias(self):
                 return "invalid_extension"
@@ -620,16 +621,12 @@ class ExtensionControllerTest(testlib_api.WebTestCase):
         foxnsox = res_body["extensions"][0]
 
         self.assertEqual(foxnsox["alias"], "FOXNSOX")
-        self.assertEqual(foxnsox["namespace"],
-                         "http://www.fox.in.socks/api/ext/pie/v1.0")
 
     def test_extension_can_be_accessed_by_alias(self):
         response = self.test_app.get("/extensions/FOXNSOX." + self.fmt)
         foxnsox_extension = self.deserialize(response)
         foxnsox_extension = foxnsox_extension['extension']
         self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
-        self.assertEqual(foxnsox_extension["namespace"],
-                         "http://www.fox.in.socks/api/ext/pie/v1.0")
 
     def test_show_returns_not_found_for_non_existent_extension(self):
         response = self.test_app.get("/extensions/non_existent" + self.fmt,
@@ -725,7 +722,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
             "ExtensionExtendedAttributeTestPlugin"
         )
 
-        # point config file to: neutron/tests/etc/neutron.conf.test
+        # point config file to: neutron/tests/etc/neutron.conf
         self.config_parse()
 
         self.setup_coreplugin(plugin)
@@ -743,8 +740,8 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         self._tenant_id = "8c70909f-b081-452d-872b-df48e6c355d1"
         # Save the global RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
+        for res, attrs in six.iteritems(attributes.RESOURCE_ATTRIBUTE_MAP):
+            self.saved_attr_map[res] = attrs.copy()
         # Add the resources to the global attribute map
         # This is done here as the setup process won't
         # initialize the main API router which extends

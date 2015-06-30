@@ -153,12 +153,14 @@ class SecurityGroupAgentRpcApiMixin(object):
         cctxt.cast(context, 'security_groups_member_updated',
                    security_groups=security_groups)
 
-    def security_groups_provider_updated(self, context):
+    def security_groups_provider_updated(self, context,
+                                         devices_to_update=None):
         """Notify provider updated security groups."""
-        cctxt = self.client.prepare(version=self.SG_RPC_VERSION,
+        cctxt = self.client.prepare(version='1.3',
                                     topic=self._get_security_group_topic(),
                                     fanout=True)
-        cctxt.cast(context, 'security_groups_provider_updated')
+        cctxt.cast(context, 'security_groups_provider_updated',
+                   devices_to_update=devices_to_update)
 
 
 class SecurityGroupAgentRpcCallbackMixin(object):
@@ -205,6 +207,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
     def security_groups_provider_updated(self, context, **kwargs):
         """Callback for security group provider update."""
         LOG.debug("Provider rule updated")
+        devices_to_update = kwargs.get('devices_to_update')
         if not self.sg_agent:
             return self._security_groups_agent_not_set()
-        self.sg_agent.security_groups_provider_updated()
+        self.sg_agent.security_groups_provider_updated(devices_to_update)

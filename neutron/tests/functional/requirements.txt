@@ -4,5 +4,6 @@
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
 
+psutil>=1.1.1,<2.0.0
 psycopg2
-MySQL-python
+PyMySQL>=0.6.2  # MIT License

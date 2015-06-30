@@ -15,15 +15,14 @@
 
 import abc
 
-import fixtures
 import netaddr
+from oslo_utils import uuidutils
 import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
-from neutron.openstack.common import uuidutils
 from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests import tools
@@ -62,7 +61,51 @@ def set_namespace_gateway(port_dev, gateway_ip):
     port_dev.route.add_gateway(gateway_ip)
 
 
-class NamespaceFixture(fixtures.Fixture):
+def assert_ping(src_namespace, dst_ip, timeout=1, count=1):
+    ipversion = netaddr.IPAddress(dst_ip).version
+    ping_command = 'ping' if ipversion == 4 else 'ping6'
+    ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
+    ns_ip_wrapper.netns.execute([ping_command, '-c', count, '-W', timeout,
+                                 dst_ip])
+
+
+def assert_no_ping(src_namespace, dst_ip, timeout=1, count=1):
+    try:
+        assert_ping(src_namespace, dst_ip, timeout, count)
+    except RuntimeError:
+        pass
+    else:
+        tools.fail("destination ip %(destination)s is replying to ping from "
+                   "namespace %(ns)s, but it shouldn't" %
+                   {'ns': src_namespace, 'destination': dst_ip})
+
+
+def assert_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
+    """Send arp request using arping executable.
+
+    NOTE: ARP protocol is used in IPv4 only. IPv6 uses Neighbour Discovery
+    Protocol instead.
+    """
+    ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
+    arping_cmd = ['arping', '-c', count, '-w', timeout]
+    if source:
+        arping_cmd.extend(['-s', source])
+    arping_cmd.append(dst_ip)
+    ns_ip_wrapper.netns.execute(arping_cmd)
+
+
+def assert_no_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
+    try:
+        assert_arping(src_namespace, dst_ip, source, timeout, count)
+    except RuntimeError:
+        pass
+    else:
+        tools.fail("destination ip %(destination)s is replying to arp from "
+                   "namespace %(ns)s, but it shouldn't" %
+                   {'ns': src_namespace, 'destination': dst_ip})
+
+
+class NamespaceFixture(tools.SafeFixture):
     """Create a namespace.
 
     :ivar ip_wrapper: created namespace
@@ -87,7 +130,7 @@ class NamespaceFixture(fixtures.Fixture):
             self.ip_wrapper.netns.delete(self.name)
 
 
-class VethFixture(fixtures.Fixture):
+class VethFixture(tools.SafeFixture):
     """Create a veth.
 
     :ivar ports: created veth ports
@@ -126,7 +169,7 @@ class VethFixture(fixtures.Fixture):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class PortFixture(fixtures.Fixture):
+class PortFixture(tools.SafeFixture):
     """Create a port.
 
     :ivar port: created port
@@ -135,6 +178,7 @@ class PortFixture(fixtures.Fixture):
     """
 
     def __init__(self, bridge=None, namespace=None):
+        super(PortFixture, self).__init__()
         self.bridge = bridge
         self.namespace = namespace
 
@@ -160,7 +204,7 @@ class PortFixture(fixtures.Fixture):
         tools.fail('Unexpected bridge type: %s' % type(bridge))
 
 
-class OVSBridgeFixture(fixtures.Fixture):
+class OVSBridgeFixture(tools.SafeFixture):
     """Create an OVS bridge.
 
     :ivar prefix: bridge name prefix
@@ -170,6 +214,7 @@ class OVSBridgeFixture(fixtures.Fixture):
     """
 
     def __init__(self, prefix=BR_PREFIX):
+        super(OVSBridgeFixture, self).__init__()
         self.prefix = prefix
 
     def setUp(self):
@@ -180,6 +225,12 @@ class OVSBridgeFixture(fixtures.Fixture):
 
 
 class OVSPortFixture(PortFixture):
+
+    def __init__(self, bridge=None, namespace=None, attrs=None):
+        super(OVSPortFixture, self).__init__(bridge, namespace)
+        if attrs is None:
+            attrs = []
+        self.attrs = attrs
 
     def _create_bridge_fixture(self):
         return OVSBridgeFixture()
@@ -196,11 +247,12 @@ class OVSPortFixture(PortFixture):
         self.port.link.set_up()
 
     def create_port(self, name):
-        self.bridge.add_port(name, ('type', 'internal'))
+        self.attrs.insert(0, ('type', 'internal'))
+        self.bridge.add_port(name, *self.attrs)
         return name
 
 
-class LinuxBridgeFixture(fixtures.Fixture):
+class LinuxBridgeFixture(tools.SafeFixture):
     """Create a linux bridge.
 
     :ivar bridge: created bridge
@@ -264,7 +316,7 @@ class VethBridge(object):
                        len(self.ports))
 
 
-class VethBridgeFixture(fixtures.Fixture):
+class VethBridgeFixture(tools.SafeFixture):
     """Simulate a bridge with a veth.
 
     :ivar bridge: created bridge

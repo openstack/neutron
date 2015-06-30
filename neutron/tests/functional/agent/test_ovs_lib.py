@@ -118,9 +118,13 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                          self.br.db_get_val('Controller', self.br.br_name,
                                             'connection_mode'))
 
-    def test_set_fail_mode(self):
+    def test_set_fail_mode_secure(self):
         self.br.set_secure_mode()
         self._assert_br_fail_mode(ovs_lib.FAILMODE_SECURE)
+
+    def test_set_fail_mode_standalone(self):
+        self.br.set_standalone_mode()
+        self._assert_br_fail_mode(ovs_lib.FAILMODE_STANDALONE)
 
     def _assert_br_fail_mode(self, fail_mode):
         self.assertEqual(

@@ -31,14 +31,38 @@ class BaseIpsetManagerTest(base.BaseTestCase):
         self.execute = mock.patch.object(self.ipset, "execute").start()
         self.expected_calls = []
         self.expect_create()
+        self.force_sorted_get_set_ips()
+
+    def force_sorted_get_set_ips(self):
+        """Force sorted responses by self.ipset._get_new/deleted_set_ips.
+
+        _get_new/deleted_set_ips use internally sets and return randomly
+        ordered responses. This method ensures sorted responses from them
+        in order to guarantee call order in self.ipset.set_members.
+        """
+        original_get_new_set_ips = self.ipset._get_new_set_ips
+        original_get_deleted_set_ips = self.ipset._get_deleted_set_ips
+
+        def sorted_get_new_set_ips(set_name, expected_ips):
+            unsorted = original_get_new_set_ips(set_name, expected_ips)
+            return sorted(unsorted)
+
+        def sorted_get_deleted_set_ips(set_name, expected_ips):
+            unsorted = original_get_deleted_set_ips(set_name, expected_ips)
+            return sorted(unsorted)
+
+        mock.patch.object(self.ipset, '_get_new_set_ips',
+                          side_effect=sorted_get_new_set_ips).start()
+        mock.patch.object(self.ipset, '_get_deleted_set_ips',
+                          side_effect=sorted_get_deleted_set_ips).start()
 
     def verify_mock_calls(self):
         self.execute.assert_has_calls(self.expected_calls, any_order=False)
 
     def expect_set(self, addresses):
-        temp_input = ['create NETIPv4fake_sgid-new hash:net family inet']
-        temp_input.extend('add NETIPv4fake_sgid-new %s' % ip
-                          for ip in addresses)
+        temp_input = ['create %s hash:net family inet' % TEST_SET_NAME_NEW]
+        temp_input.extend('add %s %s' % (TEST_SET_NAME_NEW, ip)
+                          for ip in self.ipset._sanitize_addresses(addresses))
         input = '\n'.join(temp_input)
         self.expected_calls.extend([
             mock.call(['ipset', 'restore', '-exist'],
@@ -55,13 +79,16 @@ class BaseIpsetManagerTest(base.BaseTestCase):
         self.expected_calls.extend(
             mock.call(['ipset', 'add', '-exist', TEST_SET_NAME, ip],
                       process_input=None,
-                      run_as_root=True) for ip in addresses)
+                      run_as_root=True)
+            for ip in self.ipset._sanitize_addresses(addresses))
 
     def expect_del(self, addresses):
+
         self.expected_calls.extend(
             mock.call(['ipset', 'del', TEST_SET_NAME, ip],
                       process_input=None,
-                      run_as_root=True) for ip in addresses)
+                      run_as_root=True)
+            for ip in self.ipset._sanitize_addresses(addresses))
 
     def expect_create(self):
         self.expected_calls.append(
@@ -97,13 +124,13 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
 
     def test_set_members_adding_less_than_5(self):
         self.add_first_ip()
-        self.expect_add(reversed(FAKE_IPS[1:5]))
+        self.expect_add(FAKE_IPS[1:5])
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE, FAKE_IPS[0:5])
         self.verify_mock_calls()
 
     def test_set_members_deleting_less_than_5(self):
         self.add_all_ips()
-        self.expect_del(reversed(FAKE_IPS[4:5]))
+        self.expect_del(FAKE_IPS[3:])
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE, FAKE_IPS[0:3])
         self.verify_mock_calls()
 
@@ -111,6 +138,16 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
         self.add_first_ip()
         self.expect_set(FAKE_IPS)
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE, FAKE_IPS)
+        self.verify_mock_calls()
+
+    def test_set_members_adding_all_zero_ipv4(self):
+        self.expect_set(['0.0.0.0/0'])
+        self.ipset.set_members(TEST_SET_ID, ETHERTYPE, ['0.0.0.0/0'])
+        self.verify_mock_calls()
+
+    def test_set_members_adding_all_zero_ipv6(self):
+        self.expect_set(['::/0'])
+        self.ipset.set_members(TEST_SET_ID, ETHERTYPE, ['::/0'])
         self.verify_mock_calls()
 
     def test_destroy(self):

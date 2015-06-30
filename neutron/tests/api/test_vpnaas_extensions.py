@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import six
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 
@@ -79,7 +80,7 @@ class VPNaaSTestJSON(base.BaseAdminNetworkTest):
 
     def _assertExpected(self, expected, actual):
         # Check if not expected keys/values exists in actual response body
-        for key, value in expected.iteritems():
+        for key, value in six.iteritems(expected):
             self.assertIn(key, actual)
             self.assertEqual(value, actual[key])
 
@@ -250,7 +251,7 @@ class VPNaaSTestJSON(base.BaseAdminNetworkTest):
         # Confirm that update was successful by verifying using 'show'
         body = self.client.show_ikepolicy(ikepolicy['id'])
         ike_policy = body['ikepolicy']
-        for key, value in new_ike.iteritems():
+        for key, value in six.iteritems(new_ike):
             self.assertIn(key, ike_policy)
             self.assertEqual(value, ike_policy[key])
 

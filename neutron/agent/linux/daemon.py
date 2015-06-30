@@ -173,7 +173,7 @@ class Daemon(object):
         try:
             pid = os.fork()
             if pid > 0:
-                sys.exit(0)
+                os._exit(0)
         except OSError:
             LOG.exception(_LE('Fork failed'))
             sys.exit(1)

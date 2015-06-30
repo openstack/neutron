@@ -142,6 +142,18 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 409)
 
+            address_pairs = []
+            res = self._create_port(self.fmt, net['network']['id'],
+                                    arg_list=('port_security_enabled',
+                                              addr_pair.ADDRESS_PAIRS,),
+                                    port_security_enabled=False,
+                                    allowed_address_pairs=address_pairs)
+            port = self.deserialize(self.fmt, res)
+            self.assertFalse(port['port'][psec.PORTSECURITY])
+            self.assertEqual(port['port'][addr_pair.ADDRESS_PAIRS],
+                             address_pairs)
+            self._delete('ports', port['port']['id'])
+
     def test_create_port_bad_mac(self):
         address_pairs = [{'mac_address': 'invalid_mac',
                           'ip_address': '10.0.0.1'}]

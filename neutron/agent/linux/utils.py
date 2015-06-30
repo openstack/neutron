@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
 import fcntl
 import glob
 import grp
@@ -181,7 +182,7 @@ def find_child_pids(pid):
         # Unexpected errors are the responsibility of the caller
         with excutils.save_and_reraise_exception() as ctxt:
             # Exception has already been logged by execute
-            no_children_found = 'Exit code: 1' in e.message
+            no_children_found = 'Exit code: 1' in str(e)
             if no_children_found:
                 ctxt.reraise = False
                 return []
@@ -190,8 +191,12 @@ def find_child_pids(pid):
 
 def ensure_dir(dir_path):
     """Ensure a directory with 755 permissions mode."""
-    if not os.path.isdir(dir_path):
+    try:
         os.makedirs(dir_path, 0o755)
+    except OSError as e:
+        # If the directory already existed, don't raise the error.
+        if e.errno != errno.EEXIST:
+            raise
 
 
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):

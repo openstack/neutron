@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-04 06:08+0000\n"
-"PO-Revision-Date: 2015-04-28 07:35+0000\n"
+"POT-Creation-Date: 2015-05-29 06:16+0000\n"
+"PO-Revision-Date: 2015-05-28 20:54+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
 "language/ko_KR/)\n"
@@ -20,81 +20,33 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #, python-format
-msgid "Loading Plugin: %s"
-msgstr "로딩 플러그인: %s"
-
-#, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
 #, python-format
-msgid "HTTP exception thrown: %s"
-msgstr "HTTP 예외 처리: %s"
-
-#, python-format
-msgid "%(url)s returned with HTTP %(status)d"
-msgstr "%(url)s이(가) HTTP %(status)d(으)로 리턴되었음"
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr "%(plugin_key)s: %(args)s 인수를 갖는 %(function_name)s이(가) 무시됨"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s이(가) 결함을 리턴함: %(exception)s"
 
-msgid "Disabled security-group extension."
-msgstr "보안 그룹 확장을 사용하지 않습니다. "
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s이(가) HTTP %(status)d(으)로 리턴되었음"
+
+msgid "Agent initialized successfully, now running... "
+msgstr "에이전트가 초기화되었으며, 지금 실행 중... "
+
+msgid "Agent out of sync with plugin!"
+msgstr "에이전트가 플러그인과 동기화되지 않았습니다!"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "에이전트 터널이 플러그인과 동기화되지 않았습니다!"
 
 #, python-format
-msgid "Preparing filters for devices %s"
-msgstr "%s 디바이스에 대한 필터 준비"
-
-#, python-format
-msgid "Security group rule updated %r"
-msgstr "보안 그룹 규칙이 %r을(를) 업데이트함"
-
-#, python-format
-msgid "Security group member updated %r"
-msgstr "보안 그룹 멤버가 %r을(를) 업데이트함"
-
-msgid "Provider rule updated"
-msgstr "제공자 규칙이 업데이트됨"
-
-#, python-format
-msgid "Remove device filter for %r"
-msgstr "%r의 디바이스 필터 제거"
-
-msgid "Refresh firewall rules"
-msgstr "방화벽 규칙 새로 고치기"
-
-msgid "DHCP agent started"
-msgstr "DHCP 에이전트가 시작됨"
-
-msgid "Synchronizing state"
-msgstr "상태 동기화 중"
-
-#, python-format
-msgid "agent_updated by server side %s!"
-msgstr "서버측 %s!에 의한 agent_updated"
-
-msgid "L3 agent started"
-msgstr "L3 에이전트가 시작됨"
-
-#, python-format
-msgid "Device %s already exists"
-msgstr "%s 디바이스가 이미 존재함"
-
-#, python-format
-msgid "Attempted to update port filter which is not filtered %s"
-msgstr "필터링된 %s이(가) 아닌 포트 필터를 업데이트하려고 시도함"
-
-#, python-format
-msgid "Attempted to remove port filter which is not filtered %r"
-msgstr "필터링된 %r이(가) 아닌 포트 필터를 제거하려고 시도함"
-
-msgid "Initializing extension manager."
-msgstr "확장기능 관리자를 초기화 중입니다. "
-
-#, python-format
-msgid "Loaded extension: %s"
-msgstr "로드된 확장: %s"
+msgid "Allocated vlan (%d) from the pool"
+msgstr "풀에서 할당된 vlan(%d)"
 
 msgid ""
 "Allow sorting is enabled because native pagination requires native sorting"
@@ -102,83 +54,29 @@ msgstr ""
 "네이티브 페이지 번호 매기기에 네이티브 정렬이 필요하므로 정렬을 사용할 수 있"
 "음"
 
-msgid "OVS cleanup completed successfully"
-msgstr "OVS 정리가 완료됨"
-
-msgid "Agent initialized successfully, now running... "
-msgstr "에이전트가 초기화되었으며, 지금 실행 중... "
-
-msgid "Logging enabled!"
-msgstr "로깅 사용!"
+#, python-format
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr "%(vlan_id)s을(를) net-id=%(net_uuid)s에 대한 로컬 vlan으로 지정 중"
 
 #, python-format
-msgid "Config paste file: %s"
-msgstr "구성 붙여넣기 파일: %s"
+msgid "Attachment %s removed"
+msgstr "첨부 %s이(가) 제거됨"
 
 #, python-format
-msgid ""
-"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
-"%(subnet_id)s (CIDR: %(cidr)s)"
-msgstr ""
-"CIDR %(new_cidr)s 유효성 검증 실패 - 서브넷 %(subnet_id)s(CIDR: %(cidr)s)과"
-"(와) 겹침"
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "필터링된 %r이(가) 아닌 포트 필터를 제거하려고 시도함"
 
 #, python-format
-msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
-msgstr "풀에서 올바르지 않은 IP 주소 발견: %(start)s - %(end)s:"
-
-msgid "Specified IP addresses do not match the subnet IP version"
-msgstr "지정된 IP 주소가 서브넷 IP 버전과 일치하지 않음"
-
-#, python-format
-msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
-msgstr "시작 IP(%(start)s)가 끝 IP(%(end)s)보다 큼"
-
-#, python-format
-msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
-msgstr "서브넷 CIDR보다 큰 풀 발견: %(start)s - %(end)s"
-
-#, python-format
-msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
-msgstr "겹치는 범위 발견: %(l_range)s 및 %(r_range)s"
-
-#, python-format
-msgid "Skipping port %s as no IP is configure on it"
-msgstr "구성된 IP가 없어서 포트 %s을(를) 건너뜀"
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet 백도어는 프로세스 %(pid)d 일 동안 %(port)s에서 수신"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "간격이 음수이기 때문에 주기적 태스크 %(task)s을(를) 건너뜀"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "사용 안하기 때문에 주기적 태스크 %(task)s을(를) 건너뜀"
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "필터링된 %s이(가) 아닌 포트 필터를 업데이트하려고 시도함"
 
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "%s 발견, 종료 중"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "상위 프로세스가 예기치 않게 정지했습니다. 종료 중"
-
 #, python-format
-msgid "Child caught %s, exiting"
-msgstr "자식으로 된 %s가 존재함."
-
-msgid "Forking too fast, sleeping"
-msgstr "포크가 너무 빠름. 정지 중"
-
-#, python-format
-msgid "Started child %d"
-msgstr "%d 하위를 시작했음"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "%d 작업자 시작 중"
+msgid "Caught %s, stopping children"
+msgstr "%s 발견, 하위 중지 중"
 
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
@@ -189,24 +87,93 @@ msgid "Child %(pid)s exited with status %(code)d"
 msgstr "%(pid)s 하위가 %(code)d 상태와 함께 종료했음"
 
 #, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s 발견, 하위 중지 중"
+msgid "Child caught %s, exiting"
+msgstr "자식으로 된 %s가 존재함."
 
 #, python-format
-msgid "Waiting on %d children to exit"
-msgstr "%d 하위에서 종료하기를 대기 중임"
+msgid "Config paste file: %s"
+msgstr "구성 붙여넣기 파일: %s"
 
 #, python-format
-msgid "Allocated vlan (%d) from the pool"
-msgstr "풀에서 할당된 vlan(%d)"
+msgid "Configured mechanism driver names: %s"
+msgstr "매커니즘 드라이버 이름을 설정했습니다: %s"
 
 #, python-format
-msgid "No %s Plugin loaded"
-msgstr "로드된 %s 플러그인이 없음"
+msgid "Configured type driver names: %s"
+msgstr "형식 드라이버 이름을 설정했습니다: %s"
+
+msgid "DHCP agent started"
+msgstr "DHCP 에이전트가 시작됨"
 
 #, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s: %(args)s 인수를 갖는 %(function_name)s이(가) 무시됨"
+msgid "Device %s already exists"
+msgstr "%s 디바이스가 이미 존재함"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "%s 디바이스가 플러그인에서 정의되지 않음"
+
+msgid "Disabled security-group extension."
+msgstr "보안 그룹 확장을 사용하지 않습니다. "
+
+#, python-format
+msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
+msgstr "Eventlet 백도어는 프로세스 %(pid)d 일 동안 %(port)s에서 수신"
+
+msgid "Forking too fast, sleeping"
+msgstr "포크가 너무 빠름. 정지 중"
+
+#, python-format
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "풀에서 올바르지 않은 IP 주소 발견: %(start)s - %(end)s:"
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "겹치는 범위 발견: %(l_range)s 및 %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "서브넷 CIDR보다 큰 풀 발견: %(start)s - %(end)s"
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "HTTP 예외 처리: %s"
+
+#, python-format
+msgid "Initializing driver for type '%s'"
+msgstr "'%s' 형식 드라이버 초기화중"
+
+msgid "Initializing extension manager."
+msgstr "확장기능 관리자를 초기화 중입니다. "
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "인터페이스 맵핑: %s"
+
+msgid "L3 agent started"
+msgstr "L3 에이전트가 시작됨"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "LinuxBridge 에이전트 RPC 디먼이 시작되었습니다!"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "로드된 확장: %s"
+
+#, python-format
+msgid "Loaded mechanism driver names: %s"
+msgstr "매커니즘 드라이버 이름을 불러왔습니다: %s"
+
+#, python-format
+msgid "Loaded type driver names: %s"
+msgstr "형식 드라이버 이름을 불러왔습니다: %s"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "로딩 플러그인: %s"
+
+msgid "Logging enabled!"
+msgstr "로깅 사용!"
 
 #, python-format
 msgid ""
@@ -214,62 +181,8 @@ msgid ""
 msgstr "루프 반복이 간격을 초과했습니다(%(polling_interval)s 대 %(elapsed)s)!"
 
 #, python-format
-msgid "RPC agent_id: %s"
-msgstr "RPC agent_id: %s"
-
-#, python-format
-msgid "Port %(device)s updated. Details: %(details)s"
-msgstr "%(device)s 포트가 업데이트되었습니다. 세부사항: %(details)s"
-
-#, python-format
-msgid "Device %s not defined on plugin"
-msgstr "%s 디바이스가 플러그인에서 정의되지 않음"
-
-#, python-format
-msgid "Attachment %s removed"
-msgstr "첨부 %s이(가) 제거됨"
-
-#, python-format
-msgid "Port %s updated."
-msgstr "%s 포트가 업데이트되었습니다. "
-
-msgid "LinuxBridge Agent RPC Daemon Started!"
-msgstr "LinuxBridge 에이전트 RPC 디먼이 시작되었습니다!"
-
-msgid "Agent out of sync with plugin!"
-msgstr "에이전트가 플러그인과 동기화되지 않았습니다!"
-
-#, python-format
-msgid "Interface mappings: %s"
-msgstr "인터페이스 맵핑: %s"
-
-#, python-format
-msgid "Configured type driver names: %s"
-msgstr "형식 드라이버 이름을 설정했습니다: %s"
-
-#, python-format
-msgid "Loaded type driver names: %s"
-msgstr "형식 드라이버 이름을 불러왔습니다: %s"
-
-#, python-format
-msgid "Registered types: %s"
-msgstr "등록된 형식: %s"
-
-#, python-format
-msgid "Tenant network_types: %s"
-msgstr "network_types를 임대합니다: %s"
-
-#, python-format
-msgid "Initializing driver for type '%s'"
-msgstr "'%s' 형식 드라이버 초기화중"
-
-#, python-format
-msgid "Configured mechanism driver names: %s"
-msgstr "매커니즘 드라이버 이름을 설정했습니다: %s"
-
-#, python-format
-msgid "Loaded mechanism driver names: %s"
-msgstr "매커니즘 드라이버 이름을 불러왔습니다: %s"
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "실제 네트워크 %(physical_network)s을(를) 브릿지 %(bridge)s에 맵핑 중"
 
 msgid "Modular L2 Plugin initialization complete"
 msgstr "모듈러 L2 플러그인 초기화를 완료했습니다"
@@ -279,16 +192,103 @@ msgid "Network VLAN ranges: %s"
 msgstr "네트워크 VLAN 범위: %s"
 
 #, python-format
-msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
-msgstr "%(vlan_id)s을(를) net-id=%(net_uuid)s에 대한 로컬 vlan으로 지정 중"
+msgid "No %s Plugin loaded"
+msgstr "로드된 %s 플러그인이 없음"
+
+msgid "OVS cleanup completed successfully"
+msgstr "OVS 정리가 완료됨"
+
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "상위 프로세스가 예기치 않게 정지했습니다. 종료 중"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "%(device)s 포트가 업데이트되었습니다. 세부사항: %(details)s"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "%s 포트가 업데이트되었습니다. "
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "%s 디바이스에 대한 필터 준비"
+
+msgid "Provider rule updated"
+msgstr "제공자 규칙이 업데이트됨"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "RPC agent_id: %s"
 
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "net-id = %(net_uuid)s에서 vlan = %(vlan_id)s 재확보 중"
 
-#, python-format
-msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
-msgstr "실제 네트워크 %(physical_network)s을(를) 브릿지 %(bridge)s에 맵핑 중"
+msgid "Refresh firewall rules"
+msgstr "방화벽 규칙 새로 고치기"
 
-msgid "Agent tunnel out of sync with plugin!"
-msgstr "에이전트 터널이 플러그인과 동기화되지 않았습니다!"
+#, python-format
+msgid "Registered types: %s"
+msgstr "등록된 형식: %s"
+
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "%r의 디바이스 필터 제거"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "보안 그룹 멤버가 %r을(를) 업데이트함"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "보안 그룹 규칙이 %r을(를) 업데이트함"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr "사용 안하기 때문에 주기적 태스크 %(task)s을(를) 건너뜀"
+
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr "간격이 음수이기 때문에 주기적 태스크 %(task)s을(를) 건너뜀"
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "구성된 IP가 없어서 포트 %s을(를) 건너뜀"
+
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr "지정된 IP 주소가 서브넷 IP 버전과 일치하지 않음"
+
+#, python-format
+msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
+msgstr "시작 IP(%(start)s)가 끝 IP(%(end)s)보다 큼"
+
+#, python-format
+msgid "Started child %d"
+msgstr "%d 하위를 시작했음"
+
+#, python-format
+msgid "Starting %d workers"
+msgstr "%d 작업자 시작 중"
+
+msgid "Synchronizing state"
+msgstr "상태 동기화 중"
+
+#, python-format
+msgid "Tenant network_types: %s"
+msgstr "network_types를 임대합니다: %s"
+
+#, python-format
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"CIDR %(new_cidr)s 유효성 검증 실패 - 서브넷 %(subnet_id)s(CIDR: %(cidr)s)과"
+"(와) 겹침"
+
+#, python-format
+msgid "Waiting on %d children to exit"
+msgstr "%d 하위에서 종료하기를 대기 중임"
+
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr "서버측 %s!에 의한 agent_updated"

@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 from networking_nec.plugins.openflow import plugin
 
 from neutron.plugins.nec import config as nec_config

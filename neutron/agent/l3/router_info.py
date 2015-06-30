@@ -15,6 +15,7 @@
 import netaddr
 
 from oslo_log import log as logging
+import six
 
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -30,6 +31,7 @@ INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
 EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 
 EXTERNAL_INGRESS_MARK_MASK = '0xffffffff'
+FLOATINGIP_STATUS_NOCHANGE = object()
 
 
 class RouterInfo(object):
@@ -210,8 +212,7 @@ class RouterInfo(object):
         raise NotImplementedError()
 
     def remove_floating_ip(self, device, ip_cidr):
-        device.addr.delete(ip_cidr)
-        self.driver.delete_conntrack_state(namespace=self.ns_name, ip=ip_cidr)
+        device.delete_addr_and_conntrack_state(ip_cidr)
 
     def get_router_cidrs(self, device):
         return set([addr['cidr'] for addr in device.addr.list()])
@@ -247,6 +248,10 @@ class RouterInfo(object):
                           {'id': fip['id'],
                            'status': fip_statuses.get(fip['id'])})
 
+                # mark the status as not changed. we can't remove it because
+                # that's how the caller determines that it was removed
+                if fip_statuses[fip['id']] == fip['status']:
+                    fip_statuses[fip['id']] = FLOATINGIP_STATUS_NOCHANGE
         fips_to_remove = (
             ip_cidr for ip_cidr in existing_cidrs - new_cidrs
             if common_utils.is_cidr_host(ip_cidr))
@@ -288,10 +293,10 @@ class RouterInfo(object):
         ip_cidrs = common_utils.fixed_ip_cidrs(fixed_ips)
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name)
         for fixed_ip in fixed_ips:
-            ip_lib.send_gratuitous_arp(ns_name,
-                                       interface_name,
-                                       fixed_ip['ip_address'],
-                                       self.agent_conf.send_arp_for_ha)
+            ip_lib.send_ip_addr_adv_notif(ns_name,
+                                          interface_name,
+                                          fixed_ip['ip_address'],
+                                          self.agent_conf)
 
     def internal_network_added(self, port):
         network_id = port['network_id']
@@ -457,12 +462,13 @@ class RouterInfo(object):
                             gateway_ips=gateway_ips,
                             extra_subnets=ex_gw_port.get('extra_subnets', []),
                             preserve_ips=preserve_ips,
-                            enable_ra_on_gw=enable_ra_on_gw)
+                            enable_ra_on_gw=enable_ra_on_gw,
+                            clean_connections=True)
         for fixed_ip in ex_gw_port['fixed_ips']:
-            ip_lib.send_gratuitous_arp(ns_name,
-                                       interface_name,
-                                       fixed_ip['ip_address'],
-                                       self.agent_conf.send_arp_for_ha)
+            ip_lib.send_ip_addr_adv_notif(ns_name,
+                                          interface_name,
+                                          fixed_ip['ip_address'],
+                                          self.agent_conf)
 
     def is_v6_gateway_set(self, gateway_ips):
         """Check to see if list of gateway_ips has an IPv6 gateway.
@@ -499,7 +505,7 @@ class RouterInfo(object):
         if ex_gw_port:
             def _gateway_ports_equal(port1, port2):
                 def _get_filtered_dict(d, ignore):
-                    return dict((k, v) for k, v in d.iteritems()
+                    return dict((k, v) for k, v in six.iteritems(d)
                                 if k not in ignore)
 
                 keys_to_ignore = set(['binding:host_id'])

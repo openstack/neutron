@@ -14,6 +14,7 @@ from oslo_log import log as logging
 
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
+from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.i18n import _LE
 
@@ -41,16 +42,22 @@ class NamespaceManager(object):
     agent restarts gracefully.
     """
 
-    def __init__(self, agent_conf, driver, clean_stale):
+    def __init__(self, agent_conf, driver, clean_stale, metadata_driver=None):
         """Initialize the NamespaceManager.
 
         :param agent_conf: configuration from l3 agent
         :param driver: to perform operations on devices
         :param clean_stale: Whether to try to clean stale namespaces
+        :param metadata_driver: used to cleanup stale metadata proxy processes
         """
         self.agent_conf = agent_conf
         self.driver = driver
         self._clean_stale = clean_stale
+        self.metadata_driver = metadata_driver
+        if metadata_driver:
+            self.process_monitor = external_process.ProcessMonitor(
+                config=agent_conf,
+                resource_type='router')
 
     def __enter__(self):
         self._all_namespaces = set()
@@ -85,6 +92,10 @@ class NamespaceManager(object):
                                                self.driver,
                                                use_ipv6=False)
             try:
+                if self.metadata_driver:
+                    # cleanup stale metadata proxy processes first
+                    self.metadata_driver.destroy_monitored_metadata_proxy(
+                        self.process_monitor, ns_id, self.agent_conf)
                 ns.delete()
             except RuntimeError:
                 LOG.exception(_LE('Failed to destroy stale namespace %s'), ns)

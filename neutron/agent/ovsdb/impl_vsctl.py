@@ -14,7 +14,6 @@
 
 import collections
 import itertools
-import uuid
 
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
@@ -132,7 +131,7 @@ class DbCommand(BaseCommand):
         for record in data:
             obj = {}
             for pos, heading in enumerate(headings):
-                obj[heading] = _val_to_py(record[pos])
+                obj[heading] = ovsdb.val_to_py(record[pos])
             results.append(obj)
         self._result = results
 
@@ -144,7 +143,7 @@ class DbGetCommand(DbCommand):
         DbCommand.result.fset(self, val)
         # DbCommand will return [{'column': value}] and we just want value.
         if self._result:
-            self._result = self._result[0].values()[0]
+            self._result = list(self._result[0].values())[0]
 
 
 class BrExistsCommand(DbCommand):
@@ -254,32 +253,11 @@ def _set_colval_args(*col_values):
             col, op, val = entry
         if isinstance(val, collections.Mapping):
             args += ["%s:%s%s%s" % (
-                col, k, op, _py_to_val(v)) for k, v in val.items()]
+                col, k, op, ovsdb.py_to_val(v)) for k, v in val.items()]
         elif (isinstance(val, collections.Sequence)
                 and not isinstance(val, six.string_types)):
-            args.append("%s%s%s" % (col, op, ",".join(map(_py_to_val, val))))
+            args.append(
+                "%s%s%s" % (col, op, ",".join(map(ovsdb.py_to_val, val))))
         else:
-            args.append("%s%s%s" % (col, op, _py_to_val(val)))
+            args.append("%s%s%s" % (col, op, ovsdb.py_to_val(val)))
     return args
-
-
-def _val_to_py(val):
-    """Convert a json ovsdb return value to native python object"""
-    if isinstance(val, collections.Sequence) and len(val) == 2:
-        if val[0] == "uuid":
-            return uuid.UUID(val[1])
-        elif val[0] == "set":
-            return [_val_to_py(x) for x in val[1]]
-        elif val[0] == "map":
-            return {_val_to_py(x): _val_to_py(y) for x, y in val[1]}
-    return val
-
-
-def _py_to_val(pyval):
-    """Convert python value to ovs-vsctl value argument"""
-    if isinstance(pyval, bool):
-        return 'true' if pyval is True else 'false'
-    elif pyval == '':
-        return '""'
-    else:
-        return pyval

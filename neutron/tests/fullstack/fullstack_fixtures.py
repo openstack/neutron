@@ -28,16 +28,19 @@ from neutron.agent.linux import utils
 from neutron.tests import base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import config_fixtures
+from neutron.tests import tools
 
 LOG = logging.getLogger(__name__)
 
 # This should correspond the directory from which infra retrieves log files
-DEFAULT_LOG_DIR = '/opt/stack/logs'
+DEFAULT_LOG_DIR = '/tmp/fullstack-logs/'
 
 
-class ProcessFixture(fixtures.Fixture):
-    def __init__(self, name, exec_name, config_filenames):
-        self.name = name
+class ProcessFixture(tools.SafeFixture):
+    def __init__(self, test_name, process_name, exec_name, config_filenames):
+        super(ProcessFixture, self).__init__()
+        self.test_name = test_name
+        self.process_name = process_name
         self.exec_name = exec_name
         self.config_filenames = config_filenames
         self.process = None
@@ -47,9 +50,12 @@ class ProcessFixture(fixtures.Fixture):
         self.start()
 
     def start(self):
-        fmt = self.name + "--%Y-%m-%d--%H%M%S.log"
+        fmt = self.process_name + "--%Y-%m-%d--%H%M%S.log"
+        log_dir = os.path.join(DEFAULT_LOG_DIR, self.test_name)
+        utils.ensure_dir(log_dir)
+
         cmd = [spawn.find_executable(self.exec_name),
-               '--log-dir', DEFAULT_LOG_DIR,
+               '--log-dir', log_dir,
                '--log-file', timeutils.strtime(fmt=fmt)]
         for filename in self.config_filenames:
             cmd += ['--config-file', filename]
@@ -64,42 +70,72 @@ class ProcessFixture(fixtures.Fixture):
         super(ProcessFixture, self).cleanUp(*args, **kwargs)
 
 
-class EnvironmentFixture(fixtures.Fixture):
+class RabbitmqEnvironmentFixture(tools.SafeFixture):
+    def setUp(self):
+        super(RabbitmqEnvironmentFixture, self).setUp()
+
+        self.user = base.get_rand_name(prefix='user')
+        self.password = base.get_rand_name(prefix='pass')
+        self.vhost = base.get_rand_name(prefix='vhost')
+
+        self._execute('add_user', self.user, self.password)
+        self.addCleanup(self._execute, 'delete_user', self.user)
+
+        self._execute('add_vhost', self.vhost)
+        self.addCleanup(self._execute, 'delete_vhost', self.vhost)
+
+        self._execute('set_permissions', '-p', self.vhost, self.user,
+                      '.*', '.*', '.*')
+
+    def _execute(self, *args):
+        cmd = ['rabbitmqctl']
+        cmd.extend(args)
+        utils.execute(cmd, run_as_root=True)
+
+
+class FullstackFixture(tools.SafeFixture):
+    def __init__(self):
+        super(FullstackFixture, self).__init__()
+        self.test_name = None
 
     def setUp(self):
-        super(EnvironmentFixture, self).setUp()
+        super(FullstackFixture, self).setUp()
 
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
+        rabbitmq_environment = self.useFixture(RabbitmqEnvironmentFixture())
 
         self.neutron_server = self.useFixture(
-            NeutronServerFixture(self.temp_dir))
+            NeutronServerFixture(
+                self.test_name, self.temp_dir, rabbitmq_environment))
 
-    def wait_until_env_is_up(self, agents_count=0):
+    def wait_until_env_is_up(self, agents_count):
         utils.wait_until_true(
             functools.partial(self._processes_are_ready, agents_count))
 
     def _processes_are_ready(self, agents_count):
         try:
             running_agents = self.neutron_server.client.list_agents()['agents']
-            LOG.warn("There are %d agents running!", len(running_agents))
             return len(running_agents) == agents_count
         except nc_exc.NeutronClientException:
-            LOG.warn("neutron-server isn't up yet (cannot contact REST API).")
             return False
 
 
-class NeutronServerFixture(fixtures.Fixture):
+class NeutronServerFixture(tools.SafeFixture):
 
     NEUTRON_SERVER = "neutron-server"
 
-    def __init__(self, temp_dir):
+    def __init__(self, test_name, temp_dir, rabbitmq_environment):
+        super(NeutronServerFixture, self).__init__()
+        self.test_name = test_name
         self.temp_dir = temp_dir
+        self.rabbitmq_environment = rabbitmq_environment
 
     def setUp(self):
         super(NeutronServerFixture, self).setUp()
 
         self.neutron_cfg_fixture = config_fixtures.NeutronConfigFixture(
-            self.temp_dir, cfg.CONF.database.connection)
+            self.temp_dir, cfg.CONF.database.connection,
+            self.rabbitmq_environment)
         self.plugin_cfg_fixture = config_fixtures.ML2ConfigFixture(
             self.temp_dir)
 
@@ -113,7 +149,8 @@ class NeutronServerFixture(fixtures.Fixture):
                             self.plugin_cfg_fixture.filename]
 
         self.process_fixture = self.useFixture(ProcessFixture(
-            name=self.NEUTRON_SERVER,
+            test_name=self.test_name,
+            process_name=self.NEUTRON_SERVER,
             exec_name=self.NEUTRON_SERVER,
             config_filenames=config_filenames))
 
@@ -124,7 +161,6 @@ class NeutronServerFixture(fixtures.Fixture):
             self.client.list_networks()
             return True
         except nc_exc.NeutronClientException:
-            LOG.warn("neutron-server isn't up yet (cannot contact REST API).")
             return False
 
     @property
@@ -133,11 +169,13 @@ class NeutronServerFixture(fixtures.Fixture):
         return client.Client(auth_strategy="noauth", endpoint_url=url)
 
 
-class OVSAgentFixture(fixtures.Fixture):
+class OVSAgentFixture(tools.SafeFixture):
 
     NEUTRON_OVS_AGENT = "neutron-openvswitch-agent"
 
-    def __init__(self, neutron_cfg_fixture, ml2_cfg_fixture):
+    def __init__(self, test_name, neutron_cfg_fixture, ml2_cfg_fixture):
+        super(OVSAgentFixture, self).__init__()
+        self.test_name = test_name
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.plugin_cfg_fixture = ml2_cfg_fixture
 
@@ -154,7 +192,8 @@ class OVSAgentFixture(fixtures.Fixture):
                             self.plugin_cfg_fixture.filename]
 
         self.process_fixture = self.useFixture(ProcessFixture(
-            name=self.NEUTRON_OVS_AGENT,
+            test_name=self.test_name,
+            process_name=self.NEUTRON_OVS_AGENT,
             exec_name=self.NEUTRON_OVS_AGENT,
             config_filenames=config_filenames))
 
@@ -165,11 +204,14 @@ class OVSAgentFixture(fixtures.Fixture):
         return self.plugin_config.ovs.bridge_mappings.split(':')[1]
 
 
-class L3AgentFixture(fixtures.Fixture):
+class L3AgentFixture(tools.SafeFixture):
 
     NEUTRON_L3_AGENT = "neutron-l3-agent"
 
-    def __init__(self, temp_dir, neutron_cfg_fixture, integration_bridge_name):
+    def __init__(self, test_name, temp_dir,
+                 neutron_cfg_fixture, integration_bridge_name):
+        super(L3AgentFixture, self).__init__()
+        self.test_name = test_name
         self.temp_dir = temp_dir
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.neutron_config = self.neutron_cfg_fixture.config
@@ -189,7 +231,8 @@ class L3AgentFixture(fixtures.Fixture):
                             self.plugin_cfg_fixture.filename]
 
         self.process_fixture = self.useFixture(ProcessFixture(
-            name=self.NEUTRON_L3_AGENT,
+            test_name=self.test_name,
+            process_name=self.NEUTRON_L3_AGENT,
             exec_name=spawn.find_executable(
                 'l3_agent.py',
                 path=os.path.join(base.ROOTDIR, 'common', 'agents')),

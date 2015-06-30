@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import oslo_messaging
+import six
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy import or_
@@ -116,9 +117,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                     # so one broken one doesn't stop the iteration.
                     LOG.exception(_LE("Failed to reschedule router %s"),
                                   binding.router_id)
-        except db_exc.DBError:
-            # Catch DB errors here so a transient DB connectivity issue
-            # doesn't stop the loopingcall.
+        except Exception:
+            # we want to be thorough and catch whatever is raised
+            # to avoid loop abortion
             LOG.exception(_LE("Exception encountered during router "
                               "rescheduling."))
 
@@ -348,7 +349,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if active is not None:
             query = (query.filter(agents_db.Agent.admin_state_up == active))
         if filters:
-            for key, value in filters.iteritems():
+            for key, value in six.iteritems(filters):
                 column = getattr(agents_db.Agent, key, None)
                 if column:
                     if not value:

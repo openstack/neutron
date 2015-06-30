@@ -173,7 +173,7 @@ class TestCli(base.BaseTestCase):
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
             fc.return_value.get_heads.return_value = heads
             fc.return_value.get_current_head.return_value = heads[0]
-            with mock.patch('__builtin__.open') as mock_open:
+            with mock.patch('six.moves.builtins.open') as mock_open:
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()
                 mock_open.return_value.read.return_value = file_content
@@ -219,7 +219,7 @@ class TestCli(base.BaseTestCase):
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
             fc.return_value.get_heads.return_value = ['a']
             fc.return_value.get_current_head.return_value = 'a'
-            with mock.patch('__builtin__.open') as mock_open:
+            with mock.patch('six.moves.builtins.open') as mock_open:
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()
 

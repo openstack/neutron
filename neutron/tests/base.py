@@ -32,6 +32,7 @@ from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
 from oslo_utils import strutils
+import six
 import testtools
 
 from neutron.agent.linux import external_process
@@ -44,6 +45,7 @@ from neutron import manager
 from neutron import policy
 from neutron.tests import fake_notifier
 from neutron.tests import post_mortem_debug
+from neutron.tests import tools
 
 
 CONF = cfg.CONF
@@ -125,6 +127,9 @@ class DietTestCase(testtools.TestCase):
             self.addOnException(post_mortem_debug.get_exception_handler(
                 debugger))
 
+        # Make sure we see all relevant deprecation warnings when running tests
+        self.useFixture(tools.WarningsFixture())
+
         if bool_from_env('OS_DEBUG'):
             _level = std_logging.DEBUG
         else:
@@ -149,6 +154,7 @@ class DietTestCase(testtools.TestCase):
         self.useFixture(fixtures.NestedTempfile())
         self.useFixture(fixtures.TempHomeDir())
 
+        self.setup_double_mock_guard()
         self.addCleanup(mock.patch.stopall)
 
         if bool_from_env('OS_STDOUT_CAPTURE'):
@@ -160,6 +166,34 @@ class DietTestCase(testtools.TestCase):
 
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
+
+    def setup_double_mock_guard(self):
+        # mock.patch.stopall() uses a set in python < 3.4 so patches may not
+        # be unwound in the same order they were applied. This can leak mocks
+        # and cause tests down the line to fail.
+        # More info: http://bugs.python.org/issue21239
+        #
+        # Use mock to patch mock.patch.start to check if a target has already
+        # been patched and fail if it has.
+        self.first_traceback = {}
+        orig_start = mock._patch.start
+
+        def new_start(mself):
+            mytarget = mself.getter()
+            myattr = mself.attribute
+            for patch in mself._active_patches:
+                if (mytarget, myattr) == (patch.target, patch.attribute):
+                    key = str((patch.target, patch.attribute))
+                    self.fail("mock.patch was setup on an already patched "
+                              "target %s.%s. Stop the original patch before "
+                              "starting a new one. Traceback of 1st patch: %s"
+                              % (mytarget, myattr,
+                                 ''.join(self.first_traceback.get(key, []))))
+            self.first_traceback[
+                str((mytarget, myattr))] = traceback.format_stack()[:-2]
+            return orig_start(mself)
+
+        mock.patch('mock._patch.start', new=new_start).start()
 
     def check_for_systemexit(self, exc_info):
         if isinstance(exc_info[1], SystemExit):
@@ -182,7 +216,7 @@ class DietTestCase(testtools.TestCase):
         self.assertEqual(expect_val, actual_val)
 
     def sort_dict_lists(self, dic):
-        for key, value in dic.iteritems():
+        for key, value in six.iteritems(dic):
             if isinstance(value, list):
                 dic[key] = sorted(value)
             elif isinstance(value, dict):
@@ -210,7 +244,7 @@ class DietTestCase(testtools.TestCase):
                              {'key': k, 'exp': v, 'act': actual_superset[k]})
 
 
-class ProcessMonitorFixture(fixtures.Fixture):
+class ProcessMonitorFixture(tools.SafeFixture):
     """Test fixture to capture and cleanup any spawn process monitor."""
     def setUp(self):
         super(ProcessMonitorFixture, self).setUp()
@@ -237,10 +271,10 @@ class BaseTestCase(DietTestCase):
     @staticmethod
     def config_parse(conf=None, args=None):
         """Create the default configurations."""
-        # neutron.conf.test includes rpc_backend which needs to be cleaned up
+        # neutron.conf includes rpc_backend which needs to be cleaned up
         if args is None:
             args = []
-        args += ['--config-file', etcdir('neutron.conf.test')]
+        args += ['--config-file', etcdir('neutron.conf')]
         if conf is None:
             config.init(args=args)
         else:
@@ -361,11 +395,13 @@ class BaseTestCase(DietTestCase):
         test by the fixtures cleanup process.
         """
         group = kw.pop('group', None)
-        for k, v in kw.iteritems():
+        for k, v in six.iteritems(kw):
             CONF.set_override(k, v, group)
 
     def setup_coreplugin(self, core_plugin=None):
-        self.useFixture(PluginFixture(core_plugin))
+        cp = PluginFixture(core_plugin)
+        self.useFixture(cp)
+        self.patched_dhcp_periodic = cp.patched_dhcp_periodic
 
     def setup_notification_driver(self, notification_driver=None):
         self.addCleanup(fake_notifier.reset)
@@ -374,9 +410,10 @@ class BaseTestCase(DietTestCase):
         cfg.CONF.set_override("notification_driver", notification_driver)
 
 
-class PluginFixture(fixtures.Fixture):
+class PluginFixture(tools.SafeFixture):
 
     def __init__(self, core_plugin=None):
+        super(PluginFixture, self).__init__()
         self.core_plugin = core_plugin
 
     def setUp(self):

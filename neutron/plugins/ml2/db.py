@@ -15,6 +15,8 @@
 
 from oslo_db import exception as db_exc
 from oslo_log import log
+from oslo_utils import uuidutils
+import six
 from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
@@ -24,7 +26,6 @@ from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import portbindings
 from neutron.i18n import _LE, _LI
 from neutron import manager
-from neutron.openstack.common import uuidutils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 
@@ -268,7 +269,7 @@ def get_ports_and_sgs(context, port_ids):
         return []
     ports_to_sg_ids = get_sg_ids_grouped_by_port(context, port_ids)
     return [make_port_dict_with_security_groups(port, sec_groups)
-            for port, sec_groups in ports_to_sg_ids.iteritems()]
+            for port, sec_groups in six.iteritems(ports_to_sg_ids)]
 
 
 def get_sg_ids_grouped_by_port(context, port_ids):

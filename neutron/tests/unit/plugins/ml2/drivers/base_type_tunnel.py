@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
 import mock
 from six import moves
 import testtools
@@ -22,6 +21,7 @@ from testtools import matchers
 from neutron.common import exceptions as exc
 from neutron.db import api as db
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import type_tunnel
 
 TUNNEL_IP_ONE = "10.10.10.10"
 TUNNEL_IP_TWO = "10.10.10.20"
@@ -196,6 +196,52 @@ class TunnelTypeTestMixin(object):
             segment[api.SEGMENTATION_ID] = tunnel_id
             self.driver.release_segment(self.session, segment)
 
+    def add_endpoint(self, ip=TUNNEL_IP_ONE, host=HOST_ONE):
+        return self.driver.add_endpoint(ip, host)
+
+    def test_add_endpoint(self):
+        endpoint = self.add_endpoint()
+        self.assertEqual(TUNNEL_IP_ONE, endpoint.ip_address)
+        self.assertEqual(HOST_ONE, endpoint.host)
+        return endpoint
+
+    def test_add_endpoint_for_existing_tunnel_ip(self):
+        self.add_endpoint()
+
+        with mock.patch.object(type_tunnel.LOG, 'warning') as log_warn:
+            self.add_endpoint()
+            log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
+
+    def test_get_endpoint_by_host(self):
+        self.add_endpoint()
+
+        host_endpoint = self.driver.get_endpoint_by_host(HOST_ONE)
+        self.assertEqual(TUNNEL_IP_ONE, host_endpoint.ip_address)
+        return host_endpoint
+
+    def test_get_endpoint_by_host_for_not_existing_host(self):
+        ip_endpoint = self.driver.get_endpoint_by_host(HOST_TWO)
+        self.assertIsNone(ip_endpoint)
+
+    def test_get_endpoint_by_ip(self):
+        self.add_endpoint()
+
+        ip_endpoint = self.driver.get_endpoint_by_ip(TUNNEL_IP_ONE)
+        self.assertEqual(HOST_ONE, ip_endpoint.host)
+        return ip_endpoint
+
+    def test_get_endpoint_by_ip_for_not_existing_tunnel_ip(self):
+        ip_endpoint = self.driver.get_endpoint_by_ip(TUNNEL_IP_TWO)
+        self.assertIsNone(ip_endpoint)
+
+    def test_delete_endpoint(self):
+        self.add_endpoint()
+
+        self.assertIsNone(self.driver.delete_endpoint(TUNNEL_IP_ONE))
+        # Get all the endpoints and verify its empty
+        endpoints = self.driver.get_endpoints()
+        self.assertNotIn(TUNNEL_IP_ONE, endpoints)
+
 
 class TunnelTypeMultiRangeTestMixin(object):
     DRIVER_CLASS = None
@@ -237,10 +283,10 @@ class TunnelRpcCallbackTestMixin(object):
         self.driver = self.DRIVER_CLASS()
 
     def _test_tunnel_sync(self, kwargs, delete_tunnel=False):
-        with contextlib.nested(
-            mock.patch.object(self.notifier, 'tunnel_update'),
-            mock.patch.object(self.notifier, 'tunnel_delete')
-        ) as (tunnel_update, tunnel_delete):
+        with mock.patch.object(self.notifier,
+                               'tunnel_update') as tunnel_update,\
+                mock.patch.object(self.notifier,
+                                  'tunnel_delete') as tunnel_delete:
             details = self.callbacks.tunnel_sync('fake_context', **kwargs)
             tunnels = details['tunnels']
             for tunnel in tunnels:
@@ -253,10 +299,10 @@ class TunnelRpcCallbackTestMixin(object):
                 self.assertFalse(tunnel_delete.called)
 
     def _test_tunnel_sync_raises(self, kwargs):
-        with contextlib.nested(
-            mock.patch.object(self.notifier, 'tunnel_update'),
-            mock.patch.object(self.notifier, 'tunnel_delete')
-        ) as (tunnel_update, tunnel_delete):
+        with mock.patch.object(self.notifier,
+                               'tunnel_update') as tunnel_update,\
+                mock.patch.object(self.notifier,
+                                  'tunnel_delete') as tunnel_delete:
             self.assertRaises(exc.InvalidInput,
                               self.callbacks.tunnel_sync,
                               'fake_context', **kwargs)

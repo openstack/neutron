@@ -20,6 +20,7 @@ from neutronclient.v2_0 import client
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+import six
 import six.moves.urllib.parse as urlparse
 import webob
 
@@ -116,7 +117,8 @@ class MetadataProxyHandler(object):
             LOG.exception(_LE("Unexpected error."))
             msg = _('An unknown error has occurred. '
                     'Please try your request again.')
-            return webob.exc.HTTPInternalServerError(explanation=unicode(msg))
+            explanation = six.text_type(msg)
+            return webob.exc.HTTPInternalServerError(explanation=explanation)
 
     def _get_ports_from_server(self, router_id=None, ip_address=None,
                                networks=None):
@@ -257,7 +259,8 @@ class MetadataProxyHandler(object):
                 'Remote metadata server experienced an internal server error.'
             )
             LOG.warn(msg)
-            return webob.exc.HTTPInternalServerError(explanation=unicode(msg))
+            explanation = six.text_type(msg)
+            return webob.exc.HTTPInternalServerError(explanation=explanation)
         else:
             raise Exception(_('Unexpected response code: %s') % resp.status)
 

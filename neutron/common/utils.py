@@ -35,6 +35,7 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 
 from neutron.common import constants as q_const
 
@@ -209,7 +210,7 @@ def parse_mappings(mapping_list, unique_values=True):
         if key in mappings:
             raise ValueError(_("Key %(key)s in mapping: '%(mapping)s' not "
                                "unique") % {'key': key, 'mapping': mapping})
-        if unique_values and value in mappings.itervalues():
+        if unique_values and value in mappings.values():
             raise ValueError(_("Value %(value)s in mapping: '%(mapping)s' "
                                "not unique") % {'value': value,
                                                 'mapping': mapping})
@@ -235,7 +236,7 @@ def compare_elements(a, b):
 
 def dict2str(dic):
     return ','.join("%s=%s" % (key, val)
-                    for key, val in sorted(dic.iteritems()))
+                    for key, val in sorted(six.iteritems(dic)))
 
 
 def str2dict(string):

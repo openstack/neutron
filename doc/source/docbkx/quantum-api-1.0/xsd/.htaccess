@@ -1,6 +1,0 @@
-<Directory />
-DirectoryIndex api.xsd
-AddType application/xml wadl
-AddType application/xml xsd
-AddType application/xml xslt
-</Directory>

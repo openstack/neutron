@@ -121,10 +121,6 @@ class L3agentscheduler(extensions.ExtensionDescriptor):
         return "Schedule routers among l3 agents"
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/l3_agent_scheduler/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-02-07T10:00:00-00:00"
 

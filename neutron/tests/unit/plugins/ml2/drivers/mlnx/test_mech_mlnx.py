@@ -33,9 +33,10 @@ with mock.patch.dict(sys.modules,
 
 
 class MlnxMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_MLNX_HOSTDEV
+    VIF_TYPE = portbindings.VIF_TYPE_IB_HOSTDEV
     CAP_PORT_FILTER = False
     AGENT_TYPE = constants.AGENT_TYPE_MLNX
+    VNIC_TYPE = portbindings.VNIC_DIRECT
 
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
     GOOD_CONFIGS = {'interface_mappings': GOOD_MAPPINGS}
@@ -77,25 +78,9 @@ class MlnxMechanismFlatTestCase(MlnxMechanismBaseTestCase,
     pass
 
 
-class MlnxMechanismVnicTypeTestCase(MlnxMechanismBaseTestCase,
-                                    base.AgentMechanismVlanTestCase):
-
-    def _check_vif_type_for_vnic_type(self, vnic_type,
-                                      expected_vif_type):
-        context = base.FakePortContext(self.AGENT_TYPE,
-                                       self.AGENTS,
-                                       self.VLAN_SEGMENTS,
-                                       vnic_type)
-        self.driver.bind_port(context)
-        self.assertEqual(expected_vif_type, context._bound_vif_type)
-
-    def test_vnic_type_direct(self):
-        self._check_vif_type_for_vnic_type(portbindings.VNIC_DIRECT,
-                                           portbindings.VIF_TYPE_MLNX_HOSTDEV)
-
-    def test_vnic_type_normal(self):
-        self._check_vif_type_for_vnic_type(portbindings.VNIC_NORMAL,
-                                           self.VIF_TYPE)
+class MlnxMechanismVlanTestCase(MlnxMechanismBaseTestCase,
+                                base.AgentMechanismVlanTestCase):
+    pass
 
 
 class MlnxMechanismVifDetailsTestCase(MlnxMechanismBaseTestCase):

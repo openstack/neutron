@@ -66,10 +66,11 @@ class GreEndpoints(model_base.BASEV2):
         return "<GreTunnelEndpoint(%s)>" % self.ip_address
 
 
-class GreTypeDriver(type_tunnel.TunnelTypeDriver):
+class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
 
     def __init__(self):
-        super(GreTypeDriver, self).__init__(GreAllocation)
+        super(GreTypeDriver, self).__init__(
+            GreAllocation, GreEndpoints)
 
     def get_type(self):
         return p_const.TYPE_GRE
@@ -88,12 +89,7 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
         gre_ids = set()
         for gre_id_range in self.tunnel_ranges:
             tun_min, tun_max = gre_id_range
-            if tun_max + 1 - tun_min > 1000000:
-                LOG.error(_LE("Skipping unreasonable gre ID range "
-                              "%(tun_min)s:%(tun_max)s"),
-                          {'tun_min': tun_min, 'tun_max': tun_max})
-            else:
-                gre_ids |= set(moves.range(tun_min, tun_max + 1))
+            gre_ids |= set(moves.range(tun_min, tun_max + 1))
 
         session = db_api.get_session()
         try:
@@ -127,45 +123,13 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def get_endpoints(self):
         """Get every gre endpoints from database."""
-
-        LOG.debug("get_gre_endpoints() called")
-        session = db_api.get_session()
-
-        gre_endpoints = session.query(GreEndpoints)
+        gre_endpoints = self._get_endpoints()
         return [{'ip_address': gre_endpoint.ip_address,
                  'host': gre_endpoint.host}
                 for gre_endpoint in gre_endpoints]
 
-    def get_endpoint_by_host(self, host):
-        LOG.debug("get_endpoint_by_host() called for host %s", host)
-        session = db_api.get_session()
-        return (session.query(GreEndpoints).
-                filter_by(host=host).first())
-
-    def get_endpoint_by_ip(self, ip):
-        LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
-        session = db_api.get_session()
-        return (session.query(GreEndpoints).
-                filter_by(ip_address=ip).first())
-
     def add_endpoint(self, ip, host):
-        LOG.debug("add_gre_endpoint() called for ip %s", ip)
-        session = db_api.get_session()
-        try:
-            gre_endpoint = GreEndpoints(ip_address=ip, host=host)
-            gre_endpoint.save(session)
-        except db_exc.DBDuplicateEntry:
-            gre_endpoint = (session.query(GreEndpoints).
-                            filter_by(ip_address=ip).one())
-            LOG.warning(_LW("Gre endpoint with ip %s already exists"), ip)
-        return gre_endpoint
-
-    def delete_endpoint(self, ip):
-        LOG.debug("delete_gre_endpoint() called for ip %s", ip)
-        session = db_api.get_session()
-
-        with session.begin(subtransactions=True):
-            session.query(GreEndpoints).filter_by(ip_address=ip).delete()
+        return self._add_endpoint(ip, host)
 
     def get_mtu(self, physical_network=None):
         mtu = super(GreTypeDriver, self).get_mtu(physical_network)

@@ -171,7 +171,7 @@ class TestPidfile(base.BaseTestCase):
         self.assertEqual(34, p.read())
 
     def test_is_running(self):
-        with mock.patch('__builtin__.open') as mock_open:
+        with mock.patch('six.moves.builtins.open') as mock_open:
             p = daemon.Pidfile('thefile', 'python')
             mock_open.return_value.__enter__ = lambda s: s
             mock_open.return_value.__exit__ = mock.Mock()
@@ -184,7 +184,7 @@ class TestPidfile(base.BaseTestCase):
             mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
     def test_is_running_uuid_true(self):
-        with mock.patch('__builtin__.open') as mock_open:
+        with mock.patch('six.moves.builtins.open') as mock_open:
             p = daemon.Pidfile('thefile', 'python', uuid='1234')
             mock_open.return_value.__enter__ = lambda s: s
             mock_open.return_value.__exit__ = mock.Mock()
@@ -197,7 +197,7 @@ class TestPidfile(base.BaseTestCase):
             mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
     def test_is_running_uuid_false(self):
-        with mock.patch('__builtin__.open') as mock_open:
+        with mock.patch('six.moves.builtins.open') as mock_open:
             p = daemon.Pidfile('thefile', 'python', uuid='6789')
             mock_open.return_value.__enter__ = lambda s: s
             mock_open.return_value.__exit__ = mock.Mock()
@@ -225,9 +225,9 @@ class TestDaemon(base.BaseTestCase):
 
     def test_fork_parent(self):
         self.os.fork.return_value = 1
-        with testtools.ExpectedException(SystemExit):
-            d = daemon.Daemon('pidfile')
-            d._fork()
+        d = daemon.Daemon('pidfile')
+        d._fork()
+        self.os._exit.assert_called_once_with(mock.ANY)
 
     def test_fork_child(self):
         self.os.fork.return_value = 0
@@ -235,7 +235,7 @@ class TestDaemon(base.BaseTestCase):
         self.assertIsNone(d._fork())
 
     def test_fork_error(self):
-        self.os.fork.side_effect = lambda: OSError(1)
+        self.os.fork.side_effect = OSError(1)
         with mock.patch.object(daemon.sys, 'stderr'):
             with testtools.ExpectedException(SystemExit):
                 d = daemon.Daemon('pidfile', 'stdin')

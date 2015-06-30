@@ -15,7 +15,6 @@
 
 """Test Library for OneConvergencePlugin."""
 
-import contextlib
 import uuid
 
 import mock
@@ -79,7 +78,7 @@ class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
     def test_ports_vif_details(self):
         cfg.CONF.set_default('allow_overlapping_ips', True)
         plugin = manager.NeutronManager.get_plugin()
-        with contextlib.nested(self.port(), self.port()) as (port1, port2):
+        with self.port(), self.port():
             ctx = context.get_admin_context()
             ports = plugin.get_ports(ctx)
             self.assertEqual(len(ports), 2)

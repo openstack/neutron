@@ -18,6 +18,8 @@
 from alembic import op
 import sqlalchemy as sa
 
+l3_ha_states = sa.Enum('active', 'standby', name='l3_ha_states')
+
 
 def create_routerroutes():
     op.create_table(
@@ -61,6 +63,8 @@ def upgrade():
         sa.Column('fixed_port_id', sa.String(length=36), nullable=True),
         sa.Column('fixed_ip_address', sa.String(length=64), nullable=True),
         sa.Column('router_id', sa.String(length=36), nullable=True),
+        sa.Column('last_known_router_id', sa.String(length=36), nullable=True),
+        sa.Column('status', sa.String(length=16), nullable=True),
         sa.ForeignKeyConstraint(['fixed_port_id'], ['ports.id'], ),
         sa.ForeignKeyConstraint(['floating_port_id'], ['ports.id'], ),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'], ),
@@ -70,11 +74,76 @@ def upgrade():
 
     op.create_table(
         'routerl3agentbindings',
-        sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('router_id', sa.String(length=36), nullable=True),
         sa.Column('l3_agent_id', sa.String(length=36), nullable=True),
         sa.ForeignKeyConstraint(['l3_agent_id'], ['agents.id'],
                                 ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id'))
+        sa.PrimaryKeyConstraint('router_id', 'l3_agent_id'))
+    op.create_table(
+        'router_extra_attributes',
+        sa.Column('router_id', sa.String(length=36), nullable=False),
+        sa.Column('distributed', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
+        sa.Column('service_router', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
+        sa.Column('ha', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
+        sa.Column('ha_vr_id', sa.Integer()),
+        sa.ForeignKeyConstraint(
+            ['router_id'], ['routers.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('router_id')
+    )
+    op.create_table('ha_router_agent_port_bindings',
+                    sa.Column('port_id', sa.String(length=36),
+                              nullable=False),
+                    sa.Column('router_id', sa.String(length=36),
+                              nullable=False),
+                    sa.Column('l3_agent_id', sa.String(length=36),
+                              nullable=True),
+                    sa.Column('state', l3_ha_states,
+                              server_default='standby'),
+                    sa.PrimaryKeyConstraint('port_id'),
+                    sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
+                                            ondelete='CASCADE'),
+                    sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
+                                            ondelete='CASCADE'),
+                    sa.ForeignKeyConstraint(['l3_agent_id'], ['agents.id'],
+                                            ondelete='CASCADE'))
+
+    op.create_table('ha_router_networks',
+                    sa.Column('tenant_id', sa.String(length=255),
+                              nullable=False, primary_key=True),
+                    sa.Column('network_id', sa.String(length=36),
+                              nullable=False,
+                              primary_key=True),
+                    sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
+                                            ondelete='CASCADE'))
+
+    op.create_table('ha_router_vrid_allocations',
+                    sa.Column('network_id', sa.String(length=36),
+                              nullable=False,
+                              primary_key=True),
+                    sa.Column('vr_id', sa.Integer(),
+                              nullable=False,
+                              primary_key=True),
+                    sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
+                                            ondelete='CASCADE'))
+    op.create_table(
+        'routerports',
+        sa.Column('router_id', sa.String(length=36), nullable=False),
+        sa.Column('port_id', sa.String(length=36), nullable=False),
+        sa.Column('port_type', sa.String(length=255)),
+        sa.PrimaryKeyConstraint('router_id', 'port_id'),
+        sa.ForeignKeyConstraint(
+            ['router_id'],
+            ['routers.id'],
+            ondelete='CASCADE'
+        ),
+        sa.ForeignKeyConstraint(
+            ['port_id'],
+            ['ports.id'],
+            ondelete='CASCADE'
+        ),
+    )

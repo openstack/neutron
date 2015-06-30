@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 # Attribute Map
@@ -28,7 +29,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
          'convert_to': attributes.convert_to_int_if_not_none}}}
 
 
-class Vnicindex(object):
+class Vnicindex(extensions.ExtensionDescriptor):
     @classmethod
     def get_name(cls):
         return "VNIC Index"
@@ -40,10 +41,6 @@ class Vnicindex(object):
     @classmethod
     def get_description(cls):
         return ("Enable a port to be associated with a VNIC index")
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/vnic_index/api/v1.0"
 
     @classmethod
     def get_updated(cls):

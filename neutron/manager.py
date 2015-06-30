@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import importutils
+import six
 
 from neutron.common import utils
 from neutron.i18n import _LE, _LI
@@ -127,7 +128,11 @@ class NeutronManager(object):
         self.service_plugins = {constants.CORE: self.plugin}
         self._load_service_plugins()
 
-    def _get_plugin_instance(self, namespace, plugin_provider):
+    @staticmethod
+    def load_class_for_provider(namespace, plugin_provider):
+        if not plugin_provider:
+            LOG.exception(_LE("Error, plugin is not set"))
+            raise ImportError(_("Plugin not found."))
         try:
             # Try to resolve plugin by name
             mgr = driver.DriverManager(namespace, plugin_provider)
@@ -140,6 +145,10 @@ class NeutronManager(object):
                 LOG.exception(_LE("Error loading plugin by name, %s"), e1)
                 LOG.exception(_LE("Error loading plugin by class, %s"), e2)
                 raise ImportError(_("Plugin not found."))
+        return plugin_class
+
+    def _get_plugin_instance(self, namespace, plugin_provider):
+        plugin_class = self.load_class_for_provider(namespace, plugin_provider)
         return plugin_class()
 
     def _load_services_from_core_plugin(self):
@@ -224,5 +233,6 @@ class NeutronManager(object):
     @classmethod
     def get_service_plugins(cls):
         # Return weakrefs to minimize gc-preventing references.
+        service_plugins = cls.get_instance().service_plugins
         return dict((x, weakref.proxy(y))
-                    for x, y in cls.get_instance().service_plugins.iteritems())
+                    for x, y in six.iteritems(service_plugins))

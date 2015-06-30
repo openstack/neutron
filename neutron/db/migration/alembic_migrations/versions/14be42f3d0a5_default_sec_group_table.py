@@ -26,6 +26,7 @@ revision = '14be42f3d0a5'
 down_revision = '26b54cf9024d'
 
 from alembic import op
+import six
 import sqlalchemy as sa
 
 from neutron.common import exceptions
@@ -69,7 +70,7 @@ def check_sanity(connection):
         raise DuplicateSecurityGroupsNamedDefault(
             duplicates='; '.join('tenant %s: %s' %
                                  (tenant_id, ', '.join(groups))
-                                 for tenant_id, groups in res.iteritems()))
+                                 for tenant_id, groups in six.iteritems(res)))
 
 
 def get_duplicate_default_security_groups(connection):

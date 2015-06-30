@@ -15,10 +15,12 @@
 import abc
 
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log
 
 from neutron.common import exceptions as exc
 from neutron.common import topics
+from neutron.db import api as db_api
 from neutron.i18n import _LI, _LW
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api
@@ -38,7 +40,7 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
 
     def __init__(self, model):
         super(TunnelTypeDriver, self).__init__(model)
-        self.segmentation_key = iter(self.primary_keys).next()
+        self.segmentation_key = next(iter(self.primary_keys))
 
     @abc.abstractmethod
     def sync_allocations(self):
@@ -51,7 +53,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         param ip: the IP address of the endpoint
         param host: the Host name of the endpoint
         """
-        pass
 
     @abc.abstractmethod
     def get_endpoints(self):
@@ -60,7 +61,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         :returns a list of dict [{ip_address:endpoint_ip, host:endpoint_host},
         ..]
         """
-        pass
 
     @abc.abstractmethod
     def get_endpoint_by_host(self, host):
@@ -73,7 +73,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         else
            :returns None
         """
-        pass
 
     @abc.abstractmethod
     def get_endpoint_by_ip(self, ip):
@@ -86,7 +85,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         else
            :returns None
         """
-        pass
 
     @abc.abstractmethod
     def delete_endpoint(self, ip):
@@ -94,7 +92,6 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
 
         param ip: the IP address of the endpoint
         """
-        pass
 
     def _initialize(self, raw_tunnel_ranges):
         self.tunnel_ranges = []
@@ -194,6 +191,50 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
         if cfg.CONF.ml2.path_mtu > 0:
             mtu.append(cfg.CONF.ml2.path_mtu)
         return min(mtu) if mtu else 0
+
+
+class EndpointTunnelTypeDriver(TunnelTypeDriver):
+
+    def __init__(self, segment_model, endpoint_model):
+        super(EndpointTunnelTypeDriver, self).__init__(segment_model)
+        self.endpoint_model = endpoint_model
+        self.segmentation_key = next(iter(self.primary_keys))
+
+    def get_endpoint_by_host(self, host):
+        LOG.debug("get_endpoint_by_host() called for host %s", host)
+        session = db_api.get_session()
+        return (session.query(self.endpoint_model).
+                filter_by(host=host).first())
+
+    def get_endpoint_by_ip(self, ip):
+        LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
+        session = db_api.get_session()
+        return (session.query(self.endpoint_model).
+                filter_by(ip_address=ip).first())
+
+    def delete_endpoint(self, ip):
+        LOG.debug("delete_endpoint() called for ip %s", ip)
+        session = db_api.get_session()
+        with session.begin(subtransactions=True):
+            (session.query(self.endpoint_model).
+             filter_by(ip_address=ip).delete())
+
+    def _get_endpoints(self):
+        LOG.debug("_get_endpoints() called")
+        session = db_api.get_session()
+        return session.query(self.endpoint_model)
+
+    def _add_endpoint(self, ip, host, **kwargs):
+        LOG.debug("_add_endpoint() called for ip %s", ip)
+        session = db_api.get_session()
+        try:
+            endpoint = self.endpoint_model(ip_address=ip, host=host, **kwargs)
+            endpoint.save(session)
+        except db_exc.DBDuplicateEntry:
+            endpoint = (session.query(self.endpoint_model).
+                        filter_by(ip_address=ip).one())
+            LOG.warning(_LW("Endpoint with ip %s already exists"), ip)
+        return endpoint
 
 
 class TunnelRpcCallbackMixin(object):

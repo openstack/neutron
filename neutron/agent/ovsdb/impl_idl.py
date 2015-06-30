@@ -23,6 +23,7 @@ from ovs.db import idl
 from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import commands as cmd
 from neutron.agent.ovsdb.native import connection
+from neutron.agent.ovsdb.native import helpers
 from neutron.agent.ovsdb.native import idlutils
 from neutron.i18n import _LE
 
@@ -93,9 +94,6 @@ class Transaction(api.Transaction):
             status = txn.commit_block()
             if status == txn.TRY_AGAIN:
                 LOG.debug("OVSDB transaction returned TRY_AGAIN, retrying")
-                if self.api.idl._session.rpc.status != 0:
-                    LOG.debug("Lost connection to OVSDB, reconnecting!")
-                    self.api.idl.force_reconnect()
                 idlutils.wait_for_change(
                     self.api.idl, self.timeout - elapsed_time,
                     seqno)
@@ -125,6 +123,11 @@ class OvsdbIdl(api.API):
 
     def __init__(self, context):
         super(OvsdbIdl, self).__init__(context)
+        # it's a chicken and egg problem: by default, the manager that
+        # corresponds to the connection URI is in most cases not enabled in
+        # local ovsdb, so we still need ovs-vsctl to set it to allow
+        # connections
+        helpers.enable_connection_uri(self.ovsdb_connection.connection)
         OvsdbIdl.ovsdb_connection.start()
         self.idl = OvsdbIdl.ovsdb_connection.idl
 
@@ -134,7 +137,7 @@ class OvsdbIdl(api.API):
 
     @property
     def _ovs(self):
-        return self._tables['Open_vSwitch'].rows.values()[0]
+        return list(self._tables['Open_vSwitch'].rows.values())[0]
 
     def transaction(self, check_error=False, log_errors=True, **kwargs):
         return Transaction(self, OvsdbIdl.ovsdb_connection,

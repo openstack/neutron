@@ -28,7 +28,8 @@ def upgrade():
 
     op.create_table(
         'brocadeports',
-        sa.Column('port_id', sa.String(length=36), nullable=False),
+        sa.Column('port_id', sa.String(length=36), nullable=False,
+                  server_default=''),
         sa.Column('network_id', sa.String(length=36), nullable=False),
         sa.Column('admin_state_up', sa.Boolean(), nullable=False),
         sa.Column('physical_interface', sa.String(length=36), nullable=True),
@@ -36,3 +37,23 @@ def upgrade():
         sa.Column('tenant_id', sa.String(length=36), nullable=True),
         sa.ForeignKeyConstraint(['network_id'], ['brocadenetworks.id'], ),
         sa.PrimaryKeyConstraint('port_id'))
+
+    op.create_table(
+        'ml2_brocadenetworks',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('vlan', sa.String(length=10), nullable=True),
+        sa.Column('segment_id', sa.String(length=36), nullable=True),
+        sa.Column('network_type', sa.String(length=10), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint('id'))
+
+    op.create_table(
+        'ml2_brocadeports',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('network_id', sa.String(length=36), nullable=False),
+        sa.Column('admin_state_up', sa.Boolean(), nullable=False),
+        sa.Column('physical_interface', sa.String(length=36), nullable=True),
+        sa.Column('vlan_id', sa.String(length=36), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint('id'),
+        sa.ForeignKeyConstraint(['network_id'], ['ml2_brocadenetworks.id']))

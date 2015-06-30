@@ -213,7 +213,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                 return
             for agent in agents:
                 LOG.info(_LI("Adding network %(net)s to agent "
-                             "%(agent)%s on host %(host)s"),
+                             "%(agent)s on host %(host)s"),
                          {'net': network_id,
                           'agent': agent.id,
                           'host': agent.host})
@@ -270,40 +270,56 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                    agents_db.Agent.admin_state_up))
         dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
 
-        for binding in self._filter_bindings(context, down_bindings):
-            LOG.warn(_LW("Removing network %(network)s from agent %(agent)s "
-                         "because the agent did not report to the server in "
-                         "the last %(dead_time)s seconds."),
-                     {'network': binding.network_id,
-                      'agent': binding.dhcp_agent_id,
-                      'dead_time': agent_dead_limit})
-            # save binding object to avoid ObjectDeletedError
-            # in case binding is concurrently deleted from the DB
-            saved_binding = {'net': binding.network_id,
-                             'agent': binding.dhcp_agent_id}
-            try:
-                # do not notify agent if it considered dead
-                # so when it is restarted it won't see network delete
-                # notifications on its queue
-                self.remove_network_from_dhcp_agent(context,
-                                                    binding.dhcp_agent_id,
-                                                    binding.network_id,
-                                                    notify=False)
-            except dhcpagentscheduler.NetworkNotHostedByDhcpAgent:
-                # measures against concurrent operation
-                LOG.debug("Network %(net)s already removed from DHCP agent "
-                          "%(agent)s",
-                          saved_binding)
-                # still continue and allow concurrent scheduling attempt
-            except Exception:
-                LOG.exception(_LE("Unexpected exception occurred while "
-                                  "removing network %(net)s from agent "
-                                  "%(agent)s"),
+        try:
+            dead_bindings = [b for b in
+                             self._filter_bindings(context, down_bindings)]
+            dead_agents = set([b.dhcp_agent_id for b in dead_bindings])
+            agents = self.get_agents_db(
+                context, {'agent_type': [constants.AGENT_TYPE_DHCP]})
+            if len(agents) == len(dead_agents):
+                LOG.warn(_LW("No DHCP agents available, "
+                             "skipping rescheduling"))
+                return
+            for binding in dead_bindings:
+                LOG.warn(_LW("Removing network %(network)s from agent "
+                             "%(agent)s because the agent did not report "
+                             "to the server in the last %(dead_time)s "
+                             "seconds."),
+                         {'network': binding.network_id,
+                          'agent': binding.dhcp_agent_id,
+                          'dead_time': agent_dead_limit})
+                # save binding object to avoid ObjectDeletedError
+                # in case binding is concurrently deleted from the DB
+                saved_binding = {'net': binding.network_id,
+                                 'agent': binding.dhcp_agent_id}
+                try:
+                    # do not notify agent if it considered dead
+                    # so when it is restarted it won't see network delete
+                    # notifications on its queue
+                    self.remove_network_from_dhcp_agent(context,
+                                                        binding.dhcp_agent_id,
+                                                        binding.network_id,
+                                                        notify=False)
+                except dhcpagentscheduler.NetworkNotHostedByDhcpAgent:
+                    # measures against concurrent operation
+                    LOG.debug("Network %(net)s already removed from DHCP "
+                              "agent %(agent)s",
                               saved_binding)
+                    # still continue and allow concurrent scheduling attempt
+                except Exception:
+                    LOG.exception(_LE("Unexpected exception occurred while "
+                                      "removing network %(net)s from agent "
+                                      "%(agent)s"),
+                                  saved_binding)
 
-            if cfg.CONF.network_auto_schedule:
-                self._schedule_network(
-                    context, saved_binding['net'], dhcp_notifier)
+                if cfg.CONF.network_auto_schedule:
+                    self._schedule_network(
+                        context, saved_binding['net'], dhcp_notifier)
+        except Exception:
+            # we want to be thorough and catch whatever is raised
+            # to avoid loop abortion
+            LOG.exception(_LE("Exception encountered during network "
+                              "rescheduling"))
 
     def get_dhcp_agents_hosting_networks(
             self, context, network_ids, active=None, admin_state_up=None):
