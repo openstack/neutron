@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import itertools
 
 import netaddr
 from oslo_config import cfg
@@ -316,6 +317,15 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     pool=pool_range,
                     ip_address=gateway_ip)
 
+    def _is_ip_required_by_subnet(self, context, subnet_id, device_owner):
+        # For ports that are not router ports, retain any automatic
+        # (non-optional, e.g. IPv6 SLAAC) addresses.
+        if device_owner in constants.ROUTER_INTERFACE_OWNERS:
+            return True
+
+        subnet = self._get_subnet(context, subnet_id)
+        return not ipv6_utils.is_auto_address_subnet(subnet)
+
     def _get_changed_ips_for_port(self, context, original_ips,
                                   new_ips, device_owner):
         """Calculate changes in IPs for the port."""
@@ -324,30 +334,44 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             msg = _('Exceeded maximum amount of fixed ips per port')
             raise n_exc.InvalidInput(error_message=msg)
 
-        # These ips are still on the port and haven't been removed
-        prev_ips = []
+        add_ips = []
+        remove_ips = []
+        ips_map = {ip['ip_address']: ip
+                   for ip in itertools.chain(new_ips, original_ips)
+                   if 'ip_address' in ip}
 
-        # Remove all of the intersecting elements
-        for original_ip in original_ips[:]:
-            for new_ip in new_ips[:]:
-                if ('ip_address' in new_ip and
-                    original_ip['ip_address'] == new_ip['ip_address']):
-                    original_ips.remove(original_ip)
-                    new_ips.remove(new_ip)
-                    prev_ips.append(original_ip)
-                    break
+        new = set()
+        for ip in new_ips:
+            if 'ip_address' in ip:
+                new.add(ip['ip_address'])
             else:
-                # For ports that are not router ports, retain any automatic
-                # (non-optional, e.g. IPv6 SLAAC) addresses.
-                if device_owner not in constants.ROUTER_INTERFACE_OWNERS:
-                    subnet = self._get_subnet(context,
-                                              original_ip['subnet_id'])
-                    if (ipv6_utils.is_auto_address_subnet(subnet)):
-                        original_ips.remove(original_ip)
-                        prev_ips.append(original_ip)
-        return self.Changes(add=new_ips,
+                add_ips.append(ip)
+
+        # Convert original ip addresses to sets
+        orig = set(ip['ip_address'] for ip in original_ips)
+
+        add = new - orig
+        unchanged = new & orig
+        remove = orig - new
+
+        # Convert results back to list of dicts
+        add_ips += [ips_map[ip] for ip in add]
+        prev_ips = [ips_map[ip] for ip in unchanged]
+
+        # Mark ip for removing if it is not found in new_ips
+        # and subnet requires ip to be set manually.
+        # For auto addresses leave ip unchanged
+        for ip in remove:
+            subnet_id = ips_map[ip]['subnet_id']
+            if self._is_ip_required_by_subnet(context, subnet_id,
+                                              device_owner):
+                remove_ips.append(ips_map[ip])
+            else:
+                prev_ips.append(ips_map[ip])
+
+        return self.Changes(add=add_ips,
                             original=prev_ips,
-                            remove=original_ips)
+                            remove=remove_ips)
 
     def _delete_port(self, context, port_id):
         query = (context.session.query(models_v2.Port).
