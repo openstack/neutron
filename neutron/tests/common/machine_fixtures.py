@@ -76,19 +76,19 @@ class PeerMachines(fixtures.Fixture):
     :type machines: FakeMachine list
     """
 
-    AMOUNT = 2
     CIDR = '192.168.0.1/24'
 
-    def __init__(self, bridge, ip_cidr=None, gateway_ip=None):
+    def __init__(self, bridge, ip_cidr=None, gateway_ip=None, amount=2):
         super(PeerMachines, self).__init__()
         self.bridge = bridge
         self.ip_cidr = ip_cidr or self.CIDR
         self.gateway_ip = gateway_ip
+        self.amount = amount
 
     def _setUp(self):
         self.machines = []
 
-        for index in range(self.AMOUNT):
+        for index in range(self.amount):
             ip_cidr = net_helpers.increment_ip_cidr(self.ip_cidr, index)
             self.machines.append(
                 self.useFixture(
