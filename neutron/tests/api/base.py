@@ -88,6 +88,8 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.fw_rules = []
         cls.fw_policies = []
         cls.ipsecpolicies = []
+        cls.qos_rules = []
+        cls.qos_policies = []
         cls.ethertype = "IPv" + str(cls._ip_version)
 
     @classmethod
@@ -105,6 +107,14 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for fw_rule in cls.fw_rules:
                 cls._try_delete_resource(cls.client.delete_firewall_rule,
                                          fw_rule['id'])
+            # Clean up QoS policies
+            for qos_policy in cls.qos_policies:
+                cls._try_delete_resource(cls.client.delete_qos_policy,
+                                         qos_policy['id'])
+            # Clean up QoS rules
+            for qos_rule in cls.qos_rules:
+                cls._try_delete_resource(cls.client.delete_qos_rule,
+                                         qos_rule['id'])
             # Clean up ike policies
             for ikepolicy in cls.ikepolicies:
                 cls._try_delete_resource(cls.client.delete_ikepolicy,
@@ -419,6 +429,24 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         fw_policy = body['firewall_policy']
         cls.fw_policies.append(fw_policy)
         return fw_policy
+
+    @classmethod
+    def create_qos_policy(cls, name, description, shared):
+        """Wrapper utility that returns a test QoS policy."""
+        body = cls.client.create_qos_policy(name, description, shared)
+        qos_policy = body['policy']
+        cls.qos_policies.append(qos_policy)
+        return qos_policy
+
+    @classmethod
+    def create_qos_bandwidth_limit_rule(cls, policy_id,
+                                       max_kbps, max_burst_kbps):
+        """Wrapper utility that returns a test QoS bandwidth limit rule."""
+        body = cls.client.create_bandwidth_limit_rule(
+            policy_id, max_kbps, max_burst_kbps)
+        qos_rule = body['bandwidth_limit_rule']
+        cls.qos_rules.append(qos_rule)
+        return qos_rule
 
     @classmethod
     def delete_router(cls, router):
