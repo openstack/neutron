@@ -45,6 +45,7 @@ from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.linuxbridge.agent import arp_protect
 from neutron.plugins.linuxbridge.common import config  # noqa
 from neutron.plugins.linuxbridge.common import constants as lconst
 
@@ -753,6 +754,7 @@ class LinuxBridgeNeutronAgentRPC(object):
 
     def __init__(self, interface_mappings, polling_interval):
         self.polling_interval = polling_interval
+        self.prevent_arp_spoofing = cfg.CONF.AGENT.prevent_arp_spoofing
         self.setup_linux_bridge(interface_mappings)
         configurations = {'interface_mappings': interface_mappings}
         if self.br_mgr.vxlan_mode != lconst.VXLAN_NONE:
@@ -870,6 +872,11 @@ class LinuxBridgeNeutronAgentRPC(object):
             if 'port_id' in device_details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': device_details})
+                if self.prevent_arp_spoofing:
+                    port = self.br_mgr.get_tap_device_name(
+                        device_details['port_id'])
+                    arp_protect.setup_arp_spoofing_protection(port,
+                                                              device_details)
                 if device_details['admin_state_up']:
                     # create the networking for the port
                     network_type = device_details.get('network_type')
@@ -923,6 +930,8 @@ class LinuxBridgeNeutronAgentRPC(object):
                 LOG.info(_LI("Port %s updated."), device)
             else:
                 LOG.debug("Device %s not defined on plugin", device)
+        if self.prevent_arp_spoofing:
+            arp_protect.delete_arp_spoofing_protection(devices)
         return resync
 
     def scan_devices(self, previous, sync):
@@ -943,6 +952,10 @@ class LinuxBridgeNeutronAgentRPC(object):
                         'current': set(),
                         'updated': set(),
                         'removed': set()}
+            # clear any orphaned ARP spoofing rules (e.g. interface was
+            # manually deleted)
+            if self.prevent_arp_spoofing:
+                arp_protect.delete_unreferenced_arp_protection(current_devices)
 
         if sync:
             # This is the first iteration, or the previous one had a problem.

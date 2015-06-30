@@ -62,6 +62,31 @@ def set_namespace_gateway(port_dev, gateway_ip):
     port_dev.route.add_gateway(gateway_ip)
 
 
+def assert_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
+    """Send arp request using arping executable.
+
+    NOTE: ARP protocol is used in IPv4 only. IPv6 uses Neighbour Discovery
+    Protocol instead.
+    """
+    ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
+    arping_cmd = ['arping', '-c', count, '-w', timeout]
+    if source:
+        arping_cmd.extend(['-s', source])
+    arping_cmd.append(dst_ip)
+    ns_ip_wrapper.netns.execute(arping_cmd)
+
+
+def assert_no_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
+    try:
+        assert_arping(src_namespace, dst_ip, source, timeout, count)
+    except RuntimeError:
+        pass
+    else:
+        tools.fail("destination ip %(destination)s is replying to arp from "
+                   "namespace %(ns)s, but it shouldn't" %
+                   {'ns': src_namespace, 'destination': dst_ip})
+
+
 class NamespaceFixture(fixtures.Fixture):
     """Create a namespace.
 
@@ -116,6 +141,15 @@ class VethFixture(fixtures.Fixture):
                 # when a namespace owning a veth endpoint is deleted.
                 pass
 
+    @staticmethod
+    def get_peer_name(name):
+        if name.startswith(VETH0_PREFIX):
+            return name.replace(VETH0_PREFIX, VETH1_PREFIX)
+        elif name.startswith(VETH1_PREFIX):
+            return name.replace(VETH1_PREFIX, VETH0_PREFIX)
+        else:
+            tools.fail('%s is not a valid VethFixture veth endpoint' % name)
+
 
 @six.add_metaclass(abc.ABCMeta)
 class PortFixture(fixtures.Fixture):
@@ -139,6 +173,17 @@ class PortFixture(fixtures.Fixture):
         super(PortFixture, self).setUp()
         if not self.bridge:
             self.bridge = self.useFixture(self._create_bridge_fixture()).bridge
+
+    @classmethod
+    def get(cls, bridge, namespace=None):
+        """Deduce PortFixture class from bridge type and instantiate it."""
+        if isinstance(bridge, ovs_lib.OVSBridge):
+            return OVSPortFixture(bridge, namespace)
+        if isinstance(bridge, bridge_lib.BridgeDevice):
+            return LinuxBridgePortFixture(bridge, namespace)
+        if isinstance(bridge, VethBridge):
+            return VethPortFixture(bridge, namespace)
+        tools.fail('Unexpected bridge type: %s' % type(bridge))
 
 
 class OVSBridgeFixture(fixtures.Fixture):
