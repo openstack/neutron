@@ -249,6 +249,11 @@ class TestContrailSubnetsV2(test_plugin.TestSubnetsV2,
 
 class TestContrailPortsV2(test_plugin.TestPortsV2,
                           ContrailPluginTestCase):
+
+    def test_create_port_with_too_many_fixed_ips(self):
+        self._test_create_port_with_too_many_fixed_ips(
+            error='ContrailBadRequestError')
+
     def test_create_port_public_network_with_invalid_ip_no_subnet_id(self):
         super(TestContrailPortsV2, self). \
             test_create_port_public_network_with_invalid_ip_no_subnet_id(

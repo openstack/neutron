@@ -20,6 +20,7 @@ import requests
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as exc
+from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_base
 from neutron.extensions import external_net
@@ -380,16 +381,18 @@ class NeutronPluginContrailCoreV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         port = self._get_resource('port', context, res_id, fields)
         return self._make_port_dict(port, fields)
 
-    def _update_ips_for_port(self, context, original_ips, new_ips):
+    def _update_ips_for_port(self, context, device_owner,
+                             original_ips, new_ips):
         """Add or remove IPs from the port."""
 
         # These ips are still on the port and haven't been removed
         prev_ips = []
 
-        # the new_ips contain all of the fixed_ips that are to be updated
-        if len(new_ips) > cfg.CONF.max_fixed_ips_per_port:
-            msg = _('Exceeded maximim amount of fixed ips per port')
-            raise exc.InvalidInput(error_message=msg)
+        if not common_utils.is_port_trusted({'device_owner': device_owner}):
+            # the new_ips contain all of the fixed_ips that are to be updated
+            if len(new_ips) > cfg.CONF.max_fixed_ips_per_port:
+                msg = _('Exceeded maximim amount of fixed ips per port')
+                raise exc.InvalidInput(error_message=msg)
 
         # Remove all of the intersecting elements
         for original_ip in original_ips[:]:
@@ -423,7 +426,8 @@ class NeutronPluginContrailCoreV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         if 'fixed_ips' in port['port']:
             original = self._get_port(context, port_id)
             added_ips, prev_ips = self._update_ips_for_port(
-                context, original['fixed_ips'], port['port']['fixed_ips'])
+                context, original['device_owner'],
+                original['fixed_ips'], port['port']['fixed_ips'])
             port['port']['fixed_ips'] = prev_ips + added_ips
 
         port = self._update_resource('port', context, port_id, port)
