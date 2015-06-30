@@ -21,9 +21,18 @@ def check_subnet_ip(cidr, ip_address):
     ip = netaddr.IPAddress(ip_address)
     net = netaddr.IPNetwork(cidr)
     # Check that the IP is valid on subnet. This cannot be the
-    # network or the broadcast address
-    return (ip != net.network and ip != net.broadcast
+    # network or the broadcast address (which exists only in IPv4)
+    return (ip != net.network
+            and (net.version == 6 or ip != net.broadcast)
             and net.netmask & ip == net.network)
+
+
+def check_gateway_in_subnet(cidr, gateway):
+    """Validate that the gateway is on the subnet."""
+    ip = netaddr.IPAddress(gateway)
+    if ip.version == 4 or (ip.version == 6 and not ip.is_link_local()):
+        return check_subnet_ip(cidr, gateway)
+    return True
 
 
 def generate_pools(cidr, gateway_ip):
@@ -32,17 +41,18 @@ def generate_pools(cidr, gateway_ip):
     The Neutron API defines a subnet's allocation pools as a list of
     IPRange objects for defining the pool range.
     """
-    pools = []
     # Auto allocate the pool around gateway_ip
     net = netaddr.IPNetwork(cidr)
+    if net.first == net.last:
+        # handle single address subnet case
+        return [netaddr.IPRange(net.first, net.last)]
     first_ip = net.first + 1
-    last_ip = net.last - 1
-    gw_ip = int(netaddr.IPAddress(gateway_ip or net.last))
-    # Use the gw_ip to find a point for splitting allocation pools
-    # for this subnet
-    split_ip = min(max(gw_ip, net.first), net.last)
-    if split_ip > first_ip:
-        pools.append(netaddr.IPRange(first_ip, split_ip - 1))
-    if split_ip < last_ip:
-        pools.append(netaddr.IPRange(split_ip + 1, last_ip))
-    return pools
+    # last address is broadcast in v4
+    last_ip = net.last - (net.version == 4)
+    if first_ip >= last_ip:
+        # /31 lands here
+        return []
+    ipset = netaddr.IPSet(netaddr.IPRange(first_ip, last_ip))
+    if gateway_ip:
+        ipset.remove(netaddr.IPAddress(gateway_ip))
+    return list(ipset.iter_ipranges())

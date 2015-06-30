@@ -27,6 +27,7 @@ from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
 from neutron.i18n import _LI
+from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -174,24 +175,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         a list of dict objects with 'start' and 'end' keys for
         defining the pool range.
         """
-        pools = []
-        # Auto allocate the pool around gateway_ip
-        net = netaddr.IPNetwork(subnet['cidr'])
-        first_ip = net.first + 1
-        last_ip = net.last - 1
-        gw_ip = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
-        # Use the gw_ip to find a point for splitting allocation pools
-        # for this subnet
-        split_ip = min(max(gw_ip, net.first), net.last)
-        if split_ip > first_ip:
-            pools.append({'start': str(netaddr.IPAddress(first_ip)),
-                          'end': str(netaddr.IPAddress(split_ip - 1))})
-        if split_ip < last_ip:
-            pools.append({'start': str(netaddr.IPAddress(split_ip + 1)),
-                          'end': str(netaddr.IPAddress(last_ip))})
-        # return auto-generated pools
-        # no need to check for their validity
-        return pools
+        pools = ipam_utils.generate_pools(subnet['cidr'], subnet['gateway_ip'])
+        return [{'start': str(netaddr.IPAddress(pool.first)),
+                 'end': str(netaddr.IPAddress(pool.last))}
+                for pool in pools]
 
     def _validate_subnet_cidr(self, context, network, new_subnet_cidr):
         """Validate the CIDR for a subnet.
@@ -251,7 +238,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         """
         subnet = netaddr.IPNetwork(subnet_cidr)
         subnet_first_ip = netaddr.IPAddress(subnet.first + 1)
-        subnet_last_ip = netaddr.IPAddress(subnet.last - 1)
+        # last address is broadcast in v4
+        subnet_last_ip = netaddr.IPAddress(subnet.last - (subnet.version == 4))
 
         LOG.debug("Performing IP validity checks on allocation pools")
         ip_sets = []
