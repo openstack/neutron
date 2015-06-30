@@ -20,6 +20,7 @@ from hyperv.neutron import hyperv_neutron_agent
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
 
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -28,7 +29,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
 from neutron.i18n import _LE
-from neutron.openstack.common import loopingcall
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF

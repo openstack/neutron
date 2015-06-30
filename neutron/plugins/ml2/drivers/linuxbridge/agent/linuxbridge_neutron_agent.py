@@ -29,6 +29,8 @@ eventlet.monkey_patch()
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
+from oslo_service import service
 from six import moves
 
 from neutron.agent.linux import ip_lib
@@ -42,8 +44,6 @@ from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import loopingcall
-from neutron.openstack.common import service
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager \
     import l2population_rpc as l2pop_rpc
@@ -1055,7 +1055,7 @@ def main():
                                        polling_interval,
                                        quitting_rpc_timeout)
     LOG.info(_LI("Agent initialized successfully, now running... "))
-    launcher = service.launch(agent)
+    launcher = service.launch(cfg.CONF, agent)
     launcher.wait()
 
 

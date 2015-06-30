@@ -21,6 +21,7 @@ import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
 from oslo_utils import importutils
 
 from neutron.agent.linux import dhcp
@@ -36,7 +37,6 @@ from neutron.common import utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import loopingcall
 
 LOG = logging.getLogger(__name__)
 

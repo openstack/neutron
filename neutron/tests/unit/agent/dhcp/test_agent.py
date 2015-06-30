@@ -261,7 +261,7 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_dhcp_agent_main_agent_manager(self):
         logging_str = 'neutron.agent.common.config.setup_logging'
-        launcher_str = 'neutron.openstack.common.service.ServiceLauncher'
+        launcher_str = 'oslo_service.service.ServiceLauncher'
         with mock.patch(logging_str):
             with mock.patch.object(sys, 'argv') as sys_argv:
                 with mock.patch(launcher_str) as launcher:
@@ -269,7 +269,8 @@ class TestDhcpAgent(base.BaseTestCase):
                                              base.etcdir('neutron.conf')]
                     entry.main()
                     launcher.assert_has_calls(
-                        [mock.call(), mock.call().launch_service(mock.ANY),
+                        [mock.call(cfg.CONF),
+                         mock.call().launch_service(mock.ANY),
                          mock.call().wait()])
 
     def test_run_completes_single_pass(self):

@@ -20,6 +20,7 @@ from neutronclient.v2_0 import client
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
 import six
 import six.moves.urllib.parse as urlparse
 import webob
@@ -34,7 +35,6 @@ from neutron.common import utils
 from neutron import context
 from neutron.i18n import _LE, _LW
 from neutron.openstack.common.cache import cache
-from neutron.openstack.common import loopingcall
 
 LOG = logging.getLogger(__name__)
 

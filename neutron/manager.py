@@ -18,12 +18,12 @@ import weakref
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import periodic_task
 from oslo_utils import importutils
 import six
 
 from neutron.common import utils
 from neutron.i18n import _LE, _LI
-from neutron.openstack.common import periodic_task
 from neutron.plugins.common import constants
 
 from stevedore import driver
@@ -43,7 +43,8 @@ class Manager(periodic_task.PeriodicTasks):
         if not host:
             host = cfg.CONF.host
         self.host = host
-        super(Manager, self).__init__()
+        conf = getattr(self, "conf", cfg.CONF)
+        super(Manager, self).__init__(conf)
 
     def periodic_tasks(self, context, raise_on_error=False):
         self.run_periodic_tasks(context, raise_on_error=raise_on_error)
