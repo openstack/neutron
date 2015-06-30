@@ -200,7 +200,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                'arp_responder_enabled':
                                self.arp_responder_enabled,
                                'enable_distributed_routing':
-                               self.enable_distributed_routing},
+                               self.enable_distributed_routing,
+                               'log_agent_heartbeats':
+                               self.conf.AGENT.log_agent_heartbeats},
             'agent_type': q_const.AGENT_TYPE_OVS,
             'start_flag': True}
 
