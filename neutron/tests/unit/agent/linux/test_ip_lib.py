@@ -551,23 +551,38 @@ class TestIpRuleCommand(TestIPCmdBase):
 
     def _test_add_rule(self, ip, table, priority):
         ip_version = netaddr.IPNetwork(ip).version
-        self.rule_cmd.add(ip, table, priority)
+        self.rule_cmd.add(ip, table=table, priority=priority)
         self._assert_sudo([ip_version], (['show']))
         self._assert_sudo([ip_version], ('add', 'from', ip,
-                                         'table', table, 'priority', priority))
+                                         'priority', priority, 'table', table))
 
     def _test_add_rule_exists(self, ip, table, priority, output):
         self.parent._as_root.return_value = output
         ip_version = netaddr.IPNetwork(ip).version
-        self.rule_cmd.add(ip, table, priority)
+        self.rule_cmd.add(ip, table=table, priority=priority)
         self._assert_sudo([ip_version], (['show']))
 
     def _test_delete_rule(self, ip, table, priority):
         ip_version = netaddr.IPNetwork(ip).version
-        self.rule_cmd.delete(ip, table, priority)
+        self.rule_cmd.delete(ip, table=table, priority=priority)
         self._assert_sudo([ip_version],
-                          ('del', 'table', table,
-                           'priority', priority))
+                          ('del', 'priority', priority,
+                           'table', table))
+
+    def test__parse_line(self):
+        def test(ip_version, line, expected):
+            actual = self.rule_cmd._parse_line(ip_version, line)
+            self.assertEqual(expected, actual)
+
+        test(4, "4030201:\tfrom 1.2.3.4/24 lookup 10203040",
+             {'from': '1.2.3.4/24',
+              'table': '10203040',
+              'priority': '4030201'})
+        test(6, "1024:    from all iif qg-c43b1928-48 lookup noscope",
+             {'priority': '1024',
+              'from': '::/0',
+              'iif': 'qg-c43b1928-48',
+              'table': 'noscope'})
 
     def test_add_rule_v4(self):
         self._test_add_rule('192.168.45.100', 2, 100)
