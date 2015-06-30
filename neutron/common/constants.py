@@ -174,6 +174,8 @@ RPC_NAMESPACE_SECGROUP = None
 RPC_NAMESPACE_DVR = None
 # RPC interface for reporting state back to the plugin
 RPC_NAMESPACE_STATE = None
+# RPC interface for agent to plugin resources API
+RPC_NAMESPACE_RESOURCES = None
 
 # Default network MTU value when not configured
 DEFAULT_NETWORK_MTU = 0

@@ -31,6 +31,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import metadata_rpc
+from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -150,7 +151,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             dvr_rpc.DVRServerRpcCallback(),
             dhcp_rpc.DhcpRpcCallback(),
             agents_db.AgentExtRpcCallback(),
-            metadata_rpc.MetadataRpcCallback()
+            metadata_rpc.MetadataRpcCallback(),
+            resources_rpc.ResourcesServerRpcCallback()
         ]
 
     def _setup_dhcp(self):
