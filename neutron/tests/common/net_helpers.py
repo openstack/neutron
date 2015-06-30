@@ -252,6 +252,75 @@ class RootHelperProcess(subprocess.Popen):
         self.child_pid = utils.get_root_helper_child_pid(
             self.pid, run_as_root=True)
 
+    @property
+    def is_running(self):
+        return self.poll() is None
+
+
+class Pinger(object):
+    """Class for sending ICMP packets asynchronously
+
+    The aim is to keep sending ICMP packets on background while executing other
+    code. After background 'ping' command is stopped, statistics are available.
+
+    Difference to assert_(no_)ping() functions located in this module is that
+    these methods send given count of ICMP packets while they wait for the
+    exit code of 'ping' command.
+
+    >>> pinger = Pinger('pinger_test', '192.168.0.2')
+
+    >>> pinger.start(); time.sleep(5); pinger.stop()
+
+    >>> pinger.sent, pinger.received
+    7 7
+
+    """
+
+    stats_pattern = re.compile(
+        r'^(?P<trans>\d+) packets transmitted,.*(?P<recv>\d+) received.*$')
+    TIMEOUT = 15
+
+    def __init__(self, namespace, address, count=None, timeout=1):
+        self.proc = None
+        self.namespace = namespace
+        self.address = address
+        self.count = count
+        self.timeout = timeout
+        self.sent = 0
+        self.received = 0
+
+    def _wait_for_death(self):
+        is_dead = lambda: self.proc.poll() is not None
+        utils.wait_until_true(
+            is_dead, timeout=self.TIMEOUT, exception=RuntimeError(
+                "Ping command hasn't ended after %d seconds." % self.TIMEOUT))
+
+    def _parse_stats(self):
+        for line in self.proc.stdout:
+            result = self.stats_pattern.match(line)
+            if result:
+                self.sent = int(result.group('trans'))
+                self.received = int(result.group('recv'))
+                break
+        else:
+            raise RuntimeError("Didn't find ping statistics.")
+
+    def start(self):
+        if self.proc and self.proc.is_running:
+            raise RuntimeError("This pinger has already a running process")
+        ip_version = ip_lib.get_ip_version(self.address)
+        ping_exec = 'ping' if ip_version == 4 else 'ping6'
+        cmd = [ping_exec, self.address, '-W', str(self.timeout)]
+        if self.count:
+            cmd.extend(['-c', str(self.count)])
+        self.proc = RootHelperProcess(cmd, namespace=self.namespace)
+
+    def stop(self):
+        if self.proc and self.proc.is_running:
+            self.proc.kill(signal.SIGINT)
+            self._wait_for_death()
+            self._parse_stats()
+
 
 class NetcatTester(object):
     TCP = n_const.PROTO_NAME_TCP
