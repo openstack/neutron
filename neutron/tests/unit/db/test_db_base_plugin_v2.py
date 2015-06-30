@@ -959,6 +959,23 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(expected_error, data['NeutronError']['type'])
                 self.assertEqual(msg, data['NeutronError']['message'])
 
+    def test_create_port_with_too_many_fixed_ips(self):
+        with self.network() as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
+                fixed_ips = [{'subnet_id': subnet['subnet']['id'],
+                              'ip_address': '10.0.0.%s' % id}
+                             for id in range(3,
+                                 cfg.CONF.max_fixed_ips_per_port + 4)]
+                res = self._create_port(self.fmt,
+                                        network['network']['id'],
+                                        webob.exc.HTTPBadRequest.code,
+                                        fixed_ips=fixed_ips,
+                                        set_context=True)
+                data = self.deserialize(self.fmt, res)
+                expected_error = 'InvalidInput'
+                self.assertEqual(expected_error,
+                                 data['NeutronError']['type'])
+
     def test_create_ports_bulk_native(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk port create")
@@ -1249,6 +1266,32 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         self.check_update_port_mac()
         # sub-classes for plugins/drivers that support mac address update
         # override this method
+
+    def test_update_dhcp_port_with_exceeding_fixed_ips(self):
+        """
+        Max fixed ips per port is configured in configuration file
+        by max_fixed_ips_per_port parameter.
+
+        DHCP port is not restricted by this parameter.
+        """
+        with self.subnet() as subnet:
+            updated_fixed_ips = [{'subnet_id': subnet['subnet']['id'],
+                                  'ip_address': '10.0.0.%s' % id}
+                                 for id in range(3,
+                                     cfg.CONF.max_fixed_ips_per_port + 4)]
+            host_arg = None or {}
+            arg_list = None or []
+            with self.port(device_owner=constants.DEVICE_OWNER_DHCP,
+                           subnet=subnet, arg_list=arg_list,
+                           **host_arg) as port:
+                data = {'port': {'fixed_ips': updated_fixed_ips}}
+                req = self.new_update_request('ports',
+                                              data, port['port']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
+                result = self.deserialize(self.fmt, res)
+                for fixed_ip in updated_fixed_ips:
+                    self.assertIn(fixed_ip, result['port']['fixed_ips'])
 
     def test_update_port_mac_ip(self):
         with self.subnet() as subnet:

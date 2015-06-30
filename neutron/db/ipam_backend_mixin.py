@@ -27,6 +27,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
+from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
 from neutron.ipam import utils as ipam_utils
@@ -297,9 +298,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         pool_2=r_range,
                         subnet_cidr=subnet_cidr)
 
-    def _validate_max_ips_per_port(self, fixed_ip_list):
+    def _validate_max_ips_per_port(self, fixed_ip_list, device_owner):
+        if common_utils.is_port_trusted({'device_owner': device_owner}):
+            return
+
         if len(fixed_ip_list) > cfg.CONF.max_fixed_ips_per_port:
-            msg = _('Exceeded maximum amount of fixed ips per port')
+            msg = _('Exceeded maximum amount of fixed ips per port.')
             raise n_exc.InvalidInput(error_message=msg)
 
     def _get_subnet_for_fixed_ip(self, context, fixed, network_id):
@@ -369,7 +373,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                   new_ips, device_owner):
         """Calculate changes in IPs for the port."""
         # the new_ips contain all of the fixed_ips that are to be updated
-        self._validate_max_ips_per_port(new_ips)
+        self._validate_max_ips_per_port(new_ips, device_owner)
 
         add_ips = []
         remove_ips = []

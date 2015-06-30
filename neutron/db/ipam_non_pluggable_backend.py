@@ -274,7 +274,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     not is_auto_addr_subnet):
                     fixed_ip_set.append({'subnet_id': subnet['id']})
 
-        self._validate_max_ips_per_port(fixed_ip_set)
+        self._validate_max_ips_per_port(fixed_ip_set, device_owner)
         return fixed_ip_set
 
     def _allocate_fixed_ips(self, context, fixed_ips, mac_address):
