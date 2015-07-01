@@ -26,7 +26,8 @@ from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services import service_base
 
-VALID_RULE_TYPES = ['bandwidth_limit']
+RULE_TYPE_BANDWIDTH_LIMIT = 'bandwidth_limit'
+VALID_RULE_TYPES = [RULE_TYPE_BANDWIDTH_LIMIT]
 
 # Attribute Map
 QOS_RULE_COMMON_FIELDS = {
