@@ -166,7 +166,7 @@ class _ARPSpoofTestCase(object):
                                                          '1.2.3.4'])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
     def test_arp_spoof_disable_port_security(self):
         # block first and then disable port security to make sure old rules
