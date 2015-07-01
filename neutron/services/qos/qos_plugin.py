@@ -12,38 +12,18 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
-from neutron import manager
-
-from neutron.api.rpc.callbacks import registry as rpc_registry
-from neutron.api.rpc.callbacks import resources as rpc_resources
-from neutron.db import db_base_plugin_common
-from neutron.extensions import qos
-from neutron.i18n import _LW
-from neutron.objects.qos import policy as policy_object
-from neutron.objects.qos import rule as rule_object
-from neutron.objects.qos import rule_type as rule_type_object
-from neutron.plugins.common import constants
-
 from oslo_log import log as logging
 
 
+from neutron.db import db_base_plugin_common
+from neutron.extensions import qos
+from neutron.objects.qos import policy as policy_object
+from neutron.objects.qos import rule as rule_object
+from neutron.objects.qos import rule_type as rule_type_object
+from neutron.services.qos.notification_drivers import message_queue
+
+
 LOG = logging.getLogger(__name__)
-
-
-def _get_qos_policy_cb(resource_type, policy_id, **kwargs):
-    qos_plugin = manager.NeutronManager.get_service_plugins().get(
-        constants.QOS)
-    context = kwargs.get('context')
-    if context is None:
-        LOG.warning(_LW(
-            'Received %(resource_type)s %(policy_id)s without context'),
-            {'resource_type': resource_type, 'policy_id': policy_id}
-        )
-        return
-
-    qos_policy = qos_plugin.get_qos_policy(context, policy_id)
-    return qos_policy
 
 
 class QoSPlugin(qos.QoSPluginBase):
@@ -58,28 +38,35 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def __init__(self):
         super(QoSPlugin, self).__init__()
-        rpc_registry.register_provider(
-            _get_qos_policy_cb,
-            rpc_resources.QOS_POLICY)
+        #TODO(QoS) load from configuration option
+        self.notification_driver = (
+            message_queue.RpcQosServiceNotificationDriver())
 
     def create_policy(self, context, policy):
         policy = policy_object.QosPolicy(context, **policy['policy'])
         policy.create()
+        self.notification_driver.create_policy(policy)
         return policy.to_dict()
 
     def update_policy(self, context, policy_id, policy):
         policy = policy_object.QosPolicy(context, **policy['policy'])
         policy.id = policy_id
         policy.update()
+        self.notification_driver.update_policy(policy)
         return policy.to_dict()
 
     def delete_policy(self, context, policy_id):
         policy = policy_object.QosPolicy(context)
         policy.id = policy_id
+        self.notification_driver.delete_policy(policy)
         policy.delete()
 
     def _get_policy_obj(self, context, policy_id):
         return policy_object.QosPolicy.get_by_id(context, policy_id)
+
+    def _update_policy_on_driver(self, context, policy_id):
+        policy = self._get_policy_obj(context, policy_id)
+        self.notification_driver.update_policy(policy)
 
     @db_base_plugin_common.filter_fields
     def get_policy(self, context, policy_id, fields=None):
@@ -107,6 +94,7 @@ class QoSPlugin(qos.QoSPluginBase):
             context, qos_policy_id=policy_id,
             **bandwidth_limit_rule['bandwidth_limit_rule'])
         rule.create()
+        self._update_policy_on_driver(context, policy_id)
         return rule.to_dict()
 
     def update_policy_bandwidth_limit_rule(self, context, rule_id, policy_id,
@@ -115,12 +103,14 @@ class QoSPlugin(qos.QoSPluginBase):
             context, **bandwidth_limit_rule['bandwidth_limit_rule'])
         rule.id = rule_id
         rule.update()
+        self._update_policy_on_driver(context, policy_id)
         return rule.to_dict()
 
     def delete_policy_bandwidth_limit_rule(self, context, rule_id, policy_id):
         rule = rule_object.QosBandwidthLimitRule(context)
         rule.id = rule_id
         rule.delete()
+        self._update_policy_on_driver(context, policy_id)
 
     @db_base_plugin_common.filter_fields
     def get_policy_bandwidth_limit_rule(self, context, rule_id,
