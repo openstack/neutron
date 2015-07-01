@@ -20,7 +20,7 @@ import six
 from neutron.common import constants
 from neutron.tests import base
 from neutron.tests.common import helpers as c_helpers
-from neutron.tests.functional.agent.linux import helpers
+from neutron.tests.common import net_helpers
 from neutron.tests import tools
 
 
@@ -140,7 +140,8 @@ class NeutronConfigFixture(ConfigFixture):
         This might fail if some other process occupies this port after this
         function finished but before the neutron-server process started.
         """
-        return str(helpers.get_free_namespace_port(constants.PROTO_NAME_TCP))
+        return str(net_helpers.get_free_namespace_port(
+            constants.PROTO_NAME_TCP))
 
     def _generate_api_paste(self):
         return c_helpers.find_sample_file('api-paste.ini')

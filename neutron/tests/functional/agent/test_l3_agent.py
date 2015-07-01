@@ -400,8 +400,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         router_info = self.generate_router_info(enable_ha=False)
         router = self.manage_router(self.agent, router_info)
 
-        port = helpers.get_free_namespace_port(l3_constants.PROTO_NAME_TCP,
-                                               router.ns_name)
+        port = net_helpers.get_free_namespace_port(l3_constants.PROTO_NAME_TCP,
+                                                   router.ns_name)
         client_address = '19.4.4.3'
         server_address = '35.4.0.4'
 
@@ -413,9 +413,9 @@ class L3AgentTestCase(L3AgentTestFramework):
         router.process(self.agent)
 
         router_ns = ip_lib.IPWrapper(namespace=router.ns_name)
-        netcat = helpers.NetcatTester(router.ns_name, router.ns_name,
-                                      client_address, port,
-                                      protocol=helpers.NetcatTester.TCP)
+        netcat = net_helpers.NetcatTester(
+            router.ns_name, router.ns_name, client_address, port,
+            protocol=net_helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
 
         def assert_num_of_conntrack_rules(n):
@@ -705,13 +705,13 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._add_fip(router, dst_fip, fixed_address=dst_machine.ip)
         router.process(self.agent)
 
-        protocol_port = helpers.get_free_namespace_port(
+        protocol_port = net_helpers.get_free_namespace_port(
             l3_constants.PROTO_NAME_TCP, dst_machine.namespace)
         # client sends to fip
-        netcat = helpers.NetcatTester(
+        netcat = net_helpers.NetcatTester(
             src_machine.namespace, dst_machine.namespace,
             dst_fip, protocol_port,
-            protocol=helpers.NetcatTester.TCP)
+            protocol=net_helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
 
