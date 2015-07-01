@@ -14,7 +14,8 @@
 #    under the License.
 
 import json
-import urllib
+
+from six.moves.urllib import parse
 
 from neutron.tests.tempest.common import service_client
 
@@ -64,7 +65,7 @@ class RegionClientJSON(service_client.ServiceClient):
         """List regions."""
         url = 'regions'
         if params:
-            url += '?%s' % urllib.urlencode(params)
+            url += '?%s' % parse.urlencode(params)
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
         body = json.loads(body)
