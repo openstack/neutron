@@ -70,6 +70,9 @@ class DhcpAgent(manager.Manager):
             config=self.conf,
             resource_type='dhcp')
 
+    def init_host(self):
+        self.sync_state()
+
     def _populate_networks_cache(self):
         """Populate the networks cache when the DHCP-agent starts."""
         try:
