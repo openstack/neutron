@@ -48,6 +48,7 @@ Neutron Internals
    rpc_api
    layer3
    l2_agents
+   quality_of_service
    advanced_services
    oslo-incubator
    callbacks
