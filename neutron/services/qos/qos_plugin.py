@@ -49,37 +49,39 @@ class QoSPlugin(qos.QoSPluginBase):
         #            extension of resources
         pass
 
-    def create_qos_policy(self, context, qos_policy):
+    def create_policy(self, context, qos_policy):
         pass
 
-    def update_qos_policy(self, context, qos_policy_id, qos_policy):
+    def update_policy(self, context, policy_id, qos_policy):
         pass
 
-    def delete_qos_policy(self, context, qos_policy_id):
+    def delete_policy(self, context, policy_id):
         pass
 
-    def get_qos_policy(self, context, qos_policy_id, fields=None):
+    def get_policy(self, context, policy_id, fields=None):
         pass
 
-    def get_qos_policies(self, context, filters=None, fields=None,
-                         sorts=None, limit=None, marker=None,
-                         page_reverse=False):
+    def get_policies(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None,
+                     page_reverse=False):
         pass
 
-    def create_qos_bandwidth_limit_rule(self, context,
-                                        qos_bandwidthlimit_rule):
+    def create_policy_bandwidth_limit_rule(self, context, policy_id, rule):
         pass
 
-    def update_qos_bandwidth_limit_rule(self, context, rule_id, rule):
+    def update_policy_bandwidth_limit_rule(self, context, rule_id,
+                                           policy_id, rule):
         pass
 
-    def get_qos_bandwidth_limit_rule(self, context, rule_id, fields=None):
+    def get_policy_bandwidth_limit_rule(self, context, rule_id,
+                                        policy_id, fields=None):
         pass
 
-    def delete_qos_bandwith_limit_rule(self, context, rule_id):
+    def delete_policy_bandwidth_limit_rule(self, context, rule_id, policy_id):
         pass
 
-    def get_qos_bandwith_limit_rules(self, context, filters=None, fields=None,
-                                    sorts=None, limit=None, marker=None,
-                                    page_reverse=False):
+    def get_policy_bandwidth_limit_rules(self, context, policy_id,
+                                         filters=None, fields=None,
+                                         sorts=None, limit=None,
+                                         marker=None, page_reverse=False):
         pass
