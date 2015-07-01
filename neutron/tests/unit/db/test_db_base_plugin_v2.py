@@ -4083,7 +4083,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPClientError.code)
 
-    def test_update_subnet_allocation_pools(self):
+    def _test_update_subnet_allocation_pools(self, with_gateway_ip=False):
         """Test that we can successfully update with sane params.
 
         This will create a subnet with specified allocation_pools
@@ -4099,6 +4099,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 data = {'subnet': {'allocation_pools': [
                         {'start': '192.168.0.10', 'end': '192.168.0.20'},
                         {'start': '192.168.0.30', 'end': '192.168.0.40'}]}}
+                if with_gateway_ip:
+                    data['subnet']['gateway_ip'] = '192.168.0.9'
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 #check res code but then do GET on subnet for verification
@@ -4112,6 +4114,15 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     res['subnet']['allocation_pools'][1].values()
                 for pool_val in ['10', '20', '30', '40']:
                     self.assertTrue('192.168.0.%s' % (pool_val) in res_vals)
+                if with_gateway_ip:
+                    self.assertEqual((res['subnet']['gateway_ip']),
+                                     '192.168.0.9')
+
+    def test_update_subnet_allocation_pools(self):
+        self._test_update_subnet_allocation_pools()
+
+    def test_update_subnet_allocation_pools_and_gateway_ip(self):
+        self._test_update_subnet_allocation_pools(with_gateway_ip=True)
 
     #updating alloc pool to something outside subnet.cidr
     def test_update_subnet_allocation_pools_invalid_pool_for_cidr(self):
