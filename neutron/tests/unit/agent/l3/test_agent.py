@@ -2025,6 +2025,23 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._process_router_update()
         self.assertTrue(agent.fullsync)
 
+    def test_process_routers_update_router_deleted(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._queue = mock.Mock()
+        update = mock.Mock()
+        update.router = None
+        update.action = 1  # ROUTER_DELETED
+        router_info = mock.MagicMock()
+        agent.router_info[update.id] = router_info
+        router_processor = mock.Mock()
+        agent._queue.each_update_to_next_router.side_effect = [
+            [(router_processor, update)]]
+        agent._process_router_update()
+        router_info.delete.assert_called_once_with(agent)
+        self.assertFalse(agent.router_info)
+        router_processor.fetched_and_processed.assert_called_once_with(
+            update.timestamp)
+
     def test_process_router_if_compatible_with_no_ext_net_in_conf(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_external_network_id.return_value = 'aaa'
