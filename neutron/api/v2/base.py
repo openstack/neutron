@@ -391,7 +391,8 @@ class Controller(object):
         self._notifier.info(request.context,
                             self._resource + '.create.start',
                             body)
-        body = Controller.prepare_request_body(request.context, body, True,
+        body = Controller.prepare_request_body(request.context,
+                                               copy.deepcopy(body), True,
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
         action = self._plugin_handlers[self.CREATE]
