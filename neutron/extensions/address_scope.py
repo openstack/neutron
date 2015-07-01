@@ -23,7 +23,7 @@ import six
 
 ADDRESS_SCOPE = 'address_scope'
 ADDRESS_SCOPES = '%ss' % ADDRESS_SCOPE
-
+ADDRESS_SCOPE_ID = 'address_scope_id'
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
@@ -50,6 +50,13 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True,
                       'required_by_policy': True,
                       'enforce_policy': True},
+    },
+    attr.SUBNETPOOLS: {
+        ADDRESS_SCOPE_ID: {'allow_post': True,
+                           'allow_put': True,
+                           'default': attr.ATTR_NOT_SPECIFIED,
+                           'validate': {'type:uuid_or_none': None},
+                           'is_visible': True}
     }
 }
 
@@ -58,9 +65,10 @@ class AddressScopeNotFound(nexception.NotFound):
     message = _("Address scope %(address_scope_id)s could not be found")
 
 
-class AddressScopeDeleteError(nexception.BadRequest):
-    message = _("Unable to delete address scope %(address_scope_id)s : "
-                "%(reason)s")
+class AddressScopeInUse(nexception.InUse):
+    message = _("Unable to complete operation on "
+                "address scope %(address_scope_id)s. There are one or more"
+                " subnet pools in use on the address scope")
 
 
 class AddressScopeUpdateError(nexception.BadRequest):

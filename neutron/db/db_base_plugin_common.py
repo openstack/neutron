@@ -116,7 +116,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'prefixes': [prefix['cidr']
                             for prefix in subnetpool['prefixes']],
                'ip_version': subnetpool['ip_version'],
-               'default_quota': subnetpool['default_quota']}
+               'default_quota': subnetpool['default_quota'],
+               'address_scope_id': subnetpool['address_scope_id']}
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,
@@ -162,6 +163,12 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     def _get_all_subnetpools(self, context):
         # NOTE(tidwellr): see note in _get_all_subnets()
         return context.session.query(models_v2.SubnetPool).all()
+
+    def _get_subnetpools_by_address_scope_id(self, context, address_scope_id):
+        # NOTE(vikram.choudhary): see note in _get_all_subnets()
+        subnetpool_qry = context.session.query(models_v2.SubnetPool)
+        return subnetpool_qry.filter_by(
+            address_scope_id=address_scope_id).all()
 
     def _get_port(self, context, id):
         try:
