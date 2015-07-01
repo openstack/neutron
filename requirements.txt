@@ -37,3 +37,7 @@ oslo.service>=0.1.0 # Apache-2.0
 oslo.utils>=1.6.0 # Apache-2.0
 
 python-novaclient>=2.22.0
+
+# Windows-only requirements
+pywin32;sys_platform=='win32'
+wmi;sys_platform=='win32'
