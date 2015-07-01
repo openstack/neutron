@@ -20,6 +20,7 @@ import random
 import re
 import select
 import shlex
+import signal
 import subprocess
 
 import netaddr
@@ -177,9 +178,9 @@ class RootHelperProcess(subprocess.Popen):
         super(RootHelperProcess, self).__init__(cmd, *args, **kwargs)
         self._wait_for_child_process()
 
-    def kill(self):
+    def kill(self, sig=signal.SIGKILL):
         pid = self.child_pid or str(self.pid)
-        utils.execute(['kill', '-9', pid], run_as_root=True)
+        utils.execute(['kill', '-%d' % sig, pid], run_as_root=True)
 
     def read_stdout(self, timeout=None):
         return self._read_stream(self.stdout, timeout)
