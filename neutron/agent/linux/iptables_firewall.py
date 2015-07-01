@@ -391,14 +391,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _get_remote_sg_ids(self, port, direction=None):
         sg_ids = port.get('security_groups', [])
-        remote_sg_ids = {constants.IPv4: [], constants.IPv6: []}
+        remote_sg_ids = {constants.IPv4: set(), constants.IPv6: set()}
         for sg_id in sg_ids:
             for rule in self.sg_rules.get(sg_id, []):
                 if not direction or rule['direction'] == direction:
                     remote_sg_id = rule.get('remote_group_id')
                     ether_type = rule.get('ethertype')
                     if remote_sg_id and ether_type:
-                        remote_sg_ids[ether_type].append(remote_sg_id)
+                        remote_sg_ids[ether_type].add(remote_sg_id)
         return remote_sg_ids
 
     def _add_rules_by_security_group(self, port, direction):
@@ -610,9 +610,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_group_id_sets = {constants.IPv4: set(),
                                 constants.IPv6: set()}
         for port in filtered_ports:
-            for ip_version, sg_ids in self._get_remote_sg_ids(
-                    port).iteritems():
-                remote_group_id_sets[ip_version].update(sg_ids)
+            remote_sg_ids = self._get_remote_sg_ids(port)
+            for ip_version in (constants.IPv4, constants.IPv6):
+                remote_group_id_sets[ip_version] |= remote_sg_ids[ip_version]
         return remote_group_id_sets
 
     def _determine_sg_rules_to_remove(self, filtered_ports):
