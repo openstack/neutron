@@ -22,6 +22,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import importutils
+import six
 from sqlalchemy import orm
 from testtools import matchers
 import webob.exc
@@ -36,6 +37,7 @@ from neutron.callbacks import registry
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
+from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
@@ -104,8 +106,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
         # Update the plugin
         self.setup_coreplugin(plugin)
-        service_plugins = (service_plugins or {}).values()
-        cfg.CONF.set_override('service_plugins', list(service_plugins))
+        cfg.CONF.set_override(
+            'service_plugins',
+            [test_lib.test_config.get(key, default)
+             for key, default in six.iteritems(service_plugins or {})]
+        )
 
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
         cfg.CONF.set_override('max_dns_nameservers', 2)
@@ -156,6 +161,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._skip_native_sortin = None
         self.ext_api = None
         super(NeutronDbPluginV2TestCase, self).tearDown()
+
+    def setup_config(self):
+        # Create the default configurations
+        args = ['--config-file', base.etcdir('neutron.conf')]
+        # If test_config specifies some config-file, use it, as well
+        for config_file in test_lib.test_config.get('config_files', []):
+            args.extend(['--config-file', config_file])
+        super(NeutronDbPluginV2TestCase, self).setup_config(args=args)
 
     def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
              action=None, subresource=None, sub_id=None, context=None):
@@ -959,7 +972,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             with self.network() as net:
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
@@ -990,7 +1003,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             orig = manager.NeutronManager.get_plugin().create_port
             method_to_patch = _get_create_db_method('port')
@@ -1331,7 +1344,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  data['port']['fixed_ips'])
 
     def test_no_more_port_exception(self):
-        with self.subnet(cidr='10.0.0.0/32', enable_dhcp=False) as subnet:
+        with self.subnet(cidr='10.0.0.0/31', enable_dhcp=False) as subnet:
             id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, id)
             data = self.deserialize(self.fmt, res)
@@ -2422,7 +2435,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             res = self._create_network_bulk(self.fmt, 2, 'test', True)
             self._validate_behavior_on_bulk_success(res, 'networks')
@@ -2448,7 +2461,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
 
         orig = manager.NeutronManager.get_plugin().create_network
         #ensures the API choose the emulation code path
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             method_to_patch = _get_create_db_method('network')
             with mock.patch.object(manager.NeutronManager.get_plugin(),
@@ -2911,7 +2924,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             with self.network() as net:
                 res = self._create_subnet_bulk(self.fmt, 2,
@@ -2928,7 +2941,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('__builtin__.hasattr',
+        with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             orig = manager.NeutronManager.get_plugin().create_subnet
             method_to_patch = _get_create_db_method('subnet')
@@ -3353,9 +3366,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_ipv6_gw_values(self):
         cidr = '2001::/64'
         # Gateway is last IP in IPv6 DHCPv6 stateful subnet
-        gateway = '2001::ffff:ffff:ffff:fffe'
+        gateway = '2001::ffff:ffff:ffff:ffff'
         allocation_pools = [{'start': '2001::1',
-                             'end': '2001::ffff:ffff:ffff:fffd'}]
+                             'end': '2001::ffff:ffff:ffff:fffe'}]
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
@@ -3366,7 +3379,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         # Gateway is first IP in IPv6 DHCPv6 stateful subnet
         gateway = '2001::1'
         allocation_pools = [{'start': '2001::2',
-                             'end': '2001::ffff:ffff:ffff:fffe'}]
+                             'end': '2001::ffff:ffff:ffff:ffff'}]
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
@@ -4070,7 +4083,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPClientError.code)
 
-    def test_update_subnet_allocation_pools(self):
+    def _test_update_subnet_allocation_pools(self, with_gateway_ip=False):
         """Test that we can successfully update with sane params.
 
         This will create a subnet with specified allocation_pools
@@ -4086,6 +4099,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 data = {'subnet': {'allocation_pools': [
                         {'start': '192.168.0.10', 'end': '192.168.0.20'},
                         {'start': '192.168.0.30', 'end': '192.168.0.40'}]}}
+                if with_gateway_ip:
+                    data['subnet']['gateway_ip'] = '192.168.0.9'
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 #check res code but then do GET on subnet for verification
@@ -4099,6 +4114,15 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     res['subnet']['allocation_pools'][1].values()
                 for pool_val in ['10', '20', '30', '40']:
                     self.assertTrue('192.168.0.%s' % (pool_val) in res_vals)
+                if with_gateway_ip:
+                    self.assertEqual((res['subnet']['gateway_ip']),
+                                     '192.168.0.9')
+
+    def test_update_subnet_allocation_pools(self):
+        self._test_update_subnet_allocation_pools()
+
+    def test_update_subnet_allocation_pools_and_gateway_ip(self):
+        self._test_update_subnet_allocation_pools(with_gateway_ip=True)
 
     #updating alloc pool to something outside subnet.cidr
     def test_update_subnet_allocation_pools_invalid_pool_for_cidr(self):

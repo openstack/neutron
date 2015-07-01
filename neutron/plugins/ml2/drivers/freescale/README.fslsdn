@@ -29,7 +29,7 @@ Basic work flow
  | |       Mechanism Driver        |
  +-+--------+----------------------+
             |
-            |  ReST API
+            |  REST API
             |
  +----------+-------------+
  |      CRD server        |

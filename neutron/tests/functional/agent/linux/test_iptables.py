@@ -18,12 +18,12 @@ import testtools
 
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils
+from neutron.common import constants
 from neutron.tests import base
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional.agent.linux.bin import ipt_binname
-from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base as functional_base
 
 
@@ -43,7 +43,8 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
         self.client_fw, self.server_fw = self.create_firewalls()
         # The port is used in isolated namespace that precludes possibility of
         # port conflicts
-        self.port = helpers.get_free_namespace_port(self.server.namespace)
+        self.port = net_helpers.get_free_namespace_port(
+            constants.PROTO_NAME_TCP, self.server.namespace)
 
     def create_firewalls(self):
         client_iptables = iptables_manager.IptablesManager(
@@ -77,14 +78,11 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
             rule = self.PROTOCOL_BLOCK_RULE % protocol
         return chain, rule
 
-    def _test_with_nc(self, fw_manager, direction, port, udp):
-        netcat = helpers.NetcatTester(
+    def _test_with_nc(self, fw_manager, direction, port, protocol):
+        netcat = net_helpers.NetcatTester(
             self.client.namespace, self.server.namespace,
-            self.server.ip, self.port, udp=udp)
+            self.server.ip, self.port, protocol)
         self.addCleanup(netcat.stop_processes)
-        protocol = 'tcp'
-        if udp:
-            protocol = 'udp'
         self.assertTrue(netcat.test_connectivity())
         self.filter_add_rule(
             fw_manager, self.server.ip, direction, protocol, port)
@@ -121,28 +119,36 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
         self.client.assert_ping(self.server.ip)
 
     def test_tcp_input_port(self):
-        self._test_with_nc(self.server_fw, 'ingress', self.port, udp=False)
+        self._test_with_nc(self.server_fw, 'ingress', self.port,
+                           protocol=net_helpers.NetcatTester.TCP)
 
     def test_tcp_output_port(self):
-        self._test_with_nc(self.client_fw, 'egress', self.port, udp=False)
+        self._test_with_nc(self.client_fw, 'egress', self.port,
+                           protocol=net_helpers.NetcatTester.TCP)
 
     def test_tcp_input(self):
-        self._test_with_nc(self.server_fw, 'ingress', port=None, udp=False)
+        self._test_with_nc(self.server_fw, 'ingress', port=None,
+                           protocol=net_helpers.NetcatTester.TCP)
 
     def test_tcp_output(self):
-        self._test_with_nc(self.client_fw, 'egress', port=None, udp=False)
+        self._test_with_nc(self.client_fw, 'egress', port=None,
+                           protocol=net_helpers.NetcatTester.TCP)
 
     def test_udp_input_port(self):
-        self._test_with_nc(self.server_fw, 'ingress', self.port, udp=True)
+        self._test_with_nc(self.server_fw, 'ingress', self.port,
+                           protocol=net_helpers.NetcatTester.UDP)
 
     def test_udp_output_port(self):
-        self._test_with_nc(self.client_fw, 'egress', self.port, udp=True)
+        self._test_with_nc(self.client_fw, 'egress', self.port,
+                           protocol=net_helpers.NetcatTester.UDP)
 
     def test_udp_input(self):
-        self._test_with_nc(self.server_fw, 'ingress', port=None, udp=True)
+        self._test_with_nc(self.server_fw, 'ingress', port=None,
+                           protocol=net_helpers.NetcatTester.UDP)
 
     def test_udp_output(self):
-        self._test_with_nc(self.client_fw, 'egress', port=None, udp=True)
+        self._test_with_nc(self.client_fw, 'egress', port=None,
+                           protocol=net_helpers.NetcatTester.UDP)
 
 
 class IptablesManagerNonRootTestCase(base.BaseTestCase):

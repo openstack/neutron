@@ -17,18 +17,18 @@ Neutron API via different methods.
 
 import abc
 
-import fixtures
 import six
 
 from neutron.common import exceptions as q_exc
 from neutron import context
 from neutron import manager
 from neutron.tests import base
+from neutron.tests import tools
 from neutron.tests.unit import testlib_api
 
 
 @six.add_metaclass(abc.ABCMeta)
-class AbstractClientFixture(fixtures.Fixture):
+class AbstractClientFixture(tools.SafeFixture):
     """
     Base class for a client that can interact the neutron api in some
     manner.
@@ -68,6 +68,7 @@ class PluginClientFixture(AbstractClientFixture):
     """Targets the Neutron API via the plugin API"""
 
     def __init__(self, plugin_conf):
+        super(PluginClientFixture, self).__init__()
         self.plugin_conf = plugin_conf
 
     def setUp(self):

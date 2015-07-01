@@ -18,7 +18,7 @@ import eventlet
 
 from neutron.agent.common import base_polling
 from neutron.agent.linux import ovsdb_monitor
-from neutron.plugins.openvswitch.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 
 @contextlib.contextmanager

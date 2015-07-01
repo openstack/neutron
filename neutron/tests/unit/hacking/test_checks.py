@@ -85,8 +85,8 @@ class HackingTestCase(base.BaseTestCase):
             self.assertEqual(0,
                 len(list(checks.use_jsonutils(
                     "json.%s" % method,
-                    "./neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/"
-                    "plugins/netwrap"))))
+                    "./neutron/plugins/ml2/drivers/openvswitch/agent/xenapi/"
+                    "etc/xapi.d/plugins/netwrap"))))
 
     def test_assert_called_once_with(self):
         fail_code1 = """

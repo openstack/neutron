@@ -19,6 +19,7 @@ import time
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_service import loopingcall
 from oslo_utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -32,7 +33,6 @@ from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import loopingcall
 
 
 LOG = logging.getLogger(__name__)

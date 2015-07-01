@@ -27,7 +27,8 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils
 from neutron.i18n import _LE
 from neutron.plugins.common import constants as const
-from neutron.plugins.openvswitch.common import constants as ovs_const
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants as ovs_const
 
 LOG = logging.getLogger(__name__)
 

@@ -434,6 +434,44 @@ class Dnsmasq(DhcpLocalProcess):
         LOG.debug('Reloading allocations for network: %s', self.network.id)
         self.device_manager.update(self.network, self.interface_name)
 
+    def _sort_fixed_ips_for_dnsmasq(self, fixed_ips, v6_nets):
+        """Sort fixed_ips so that stateless IPv6 subnets appear first.
+
+        For example, If a port with v6 extra_dhcp_opts is on a network with
+        IPv4 and IPv6 stateless subnets. Then dhcp host file will have
+        below 2 entries for same MAC,
+
+        fa:16:3e:8f:9d:65,30.0.0.5,set:aabc7d33-4874-429e-9637-436e4232d2cd
+        (entry for IPv4 dhcp)
+        fa:16:3e:8f:9d:65,set:aabc7d33-4874-429e-9637-436e4232d2cd
+        (entry for stateless IPv6 for v6 options)
+
+        dnsmasq internal details for processing host file entries
+        1) dnsmaq reads the host file from EOF.
+        2) So it first picks up stateless IPv6 entry,
+           fa:16:3e:8f:9d:65,set:aabc7d33-4874-429e-9637-436e4232d2cd
+        3) But dnsmasq doesn't have sufficient checks to skip this entry and
+           pick next entry, to process dhcp IPv4 request.
+        4) So dnsmaq uses this this entry to process dhcp IPv4 request.
+        5) As there is no ip in this entry, dnsmaq logs "no address available"
+           and fails to send DHCPOFFER message.
+
+        As we rely on internal details of dnsmasq to understand and fix the
+        issue, Ihar sent a mail to dnsmasq-discuss mailing list
+        http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2015q2/
+        009650.html
+
+        So If we reverse the order of writing entries in host file,
+        so that entry for stateless IPv6 comes first,
+        then dnsmasq can correctly fetch the IPv4 address.
+        """
+        return sorted(
+            fixed_ips,
+            key=lambda fip: ((fip.subnet_id in v6_nets) and (
+                v6_nets[fip.subnet_id].ipv6_address_mode == (
+                    constants.DHCPV6_STATELESS))),
+            reverse=True)
+
     def _iter_hosts(self):
         """Iterate over hosts.
 
@@ -449,8 +487,11 @@ class Dnsmasq(DhcpLocalProcess):
         """
         v6_nets = dict((subnet.id, subnet) for subnet in
                        self.network.subnets if subnet.ip_version == 6)
+
         for port in self.network.ports:
-            for alloc in port.fixed_ips:
+            fixed_ips = self._sort_fixed_ips_for_dnsmasq(port.fixed_ips,
+                                                         v6_nets)
+            for alloc in fixed_ips:
                 # Note(scollins) Only create entries that are
                 # associated with the subnet being managed by this
                 # dhcp agent
@@ -911,7 +952,7 @@ class DeviceManager(object):
         device = ip_lib.IPDevice(device_name, namespace=network.namespace)
         gateway = device.route.get_gateway()
         if gateway:
-            gateway = gateway['gateway']
+            gateway = gateway.get('gateway')
 
         for subnet in network.subnets:
             skip_subnet = (

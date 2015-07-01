@@ -75,7 +75,8 @@ def use_jsonutils(logical_line, filename):
     # Some files in the tree are not meant to be run from inside Neutron
     # itself, so we should not complain about them not using jsonutils
     json_check_skipped_patterns = [
-        "neutron/plugins/openvswitch/agent/xenapi/etc/xapi.d/plugins/netwrap",
+        "neutron/plugins/ml2/drivers/openvswitch/agent/xenapi/etc/xapi.d/"
+        "plugins/netwrap",
     ]
 
     for pattern in json_check_skipped_patterns:

@@ -144,6 +144,10 @@ GATEWAY_SAMPLE6 = ("""
 default via 192.168.99.1 proto static metric 100
 """)
 
+GATEWAY_SAMPLE7 = ("""
+default dev qg-31cd36 metric 1
+""")
+
 IPv6_GATEWAY_SAMPLE1 = ("""
 default via 2001:470:9:1224:4508:b885:5fb:740b metric 100
 2001:db8::/64 proto kernel scope link src 2001:470:9:1224:dfcc:aaff:feb9:76ce
@@ -782,7 +786,9 @@ class TestIpRouteCommand(TestIPCmdBase):
                             'expected': {'gateway': '192.168.99.1'}},
                            {'sample': GATEWAY_SAMPLE6,
                             'expected': {'gateway': '192.168.99.1',
-                                         'metric': 100}}]
+                                         'metric': 100}},
+                           {'sample': GATEWAY_SAMPLE7,
+                            'expected': {'metric': 1}}]
 
     def test_add_gateway(self):
         self.route_cmd.add_gateway(self.gateway, self.metric, self.table)
@@ -1024,6 +1030,10 @@ class TestIpNeighCommand(TestIPCmdBase):
                           ('del', '192.168.45.100',
                            'lladdr', 'cc:dd:ee:ff:ab:cd',
                            'dev', 'tap0'))
+
+    def test_flush(self):
+        self.neigh_cmd.flush(4, '192.168.0.1')
+        self._assert_sudo([4], ('flush', 'to', '192.168.0.1'))
 
 
 class TestArpPing(TestIPCmdBase):

@@ -13,7 +13,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import neutron.plugins.openvswitch.agent.main as agent_main
+import neutron.plugins.ml2.drivers.openvswitch.agent.main as agent_main
 
 
 def main():

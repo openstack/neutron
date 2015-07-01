@@ -160,6 +160,23 @@ class FakeV6PortExtraOpt(object):
                     ip_version=6)]
 
 
+class FakeDualPortWithV6ExtraOpt(object):
+    id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
+    admin_state_up = True
+    device_owner = 'foo3'
+    fixed_ips = [FakeIPAllocation('192.168.0.3',
+                                  'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+                 FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
+                                  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+    mac_address = '00:16:3e:c2:77:1d'
+
+    def __init__(self):
+        self.extra_dhcp_opts = [
+            DhcpOpt(opt_name='dns-server',
+                    opt_value='ffea:3ba5:a17a:4ba3::100',
+                    ip_version=6)]
+
+
 class FakeDualPort(object):
     id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
     admin_state_up = True
@@ -617,6 +634,14 @@ class FakeV6NetworkStatelessDHCP(object):
     namespace = 'qdhcp-ns'
 
 
+class FakeNetworkWithV6SatelessAndV4DHCPSubnets(object):
+    id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+
+    subnets = [FakeV6SubnetStateless(), FakeV4Subnet()]
+    ports = [FakeDualPortWithV6ExtraOpt(), FakeRouterPort()]
+    namespace = 'qdhcp-ns'
+
+
 class LocalChild(dhcp.DhcpLocalProcess):
     PORTS = {4: [4], 6: [6]}
 
@@ -824,7 +849,7 @@ class TestDhcpLocalProcess(TestBase):
         parent.assert_has_calls(expected)
 
     def test_get_interface_name(self):
-        with mock.patch('__builtin__.open') as mock_open:
+        with mock.patch('six.moves.builtins.open') as mock_open:
             mock_open.return_value.__enter__ = lambda s: s
             mock_open.return_value.__exit__ = mock.Mock()
             mock_open.return_value.read.return_value = 'tap0'
@@ -1369,7 +1394,7 @@ class TestDnsmasq(TestBase):
          exp_addn_name, exp_addn_data,
          exp_opt_name, exp_opt_data,) = self._test_reload_allocation_data
 
-        with mock.patch('__builtin__.open') as mock_open:
+        with mock.patch('six.moves.builtins.open') as mock_open:
             mock_open.return_value.__enter__ = lambda s: s
             mock_open.return_value.__exit__ = mock.Mock()
             mock_open.return_value.readline.return_value = None
@@ -1472,7 +1497,7 @@ class TestDnsmasq(TestBase):
 
     def test_read_hosts_file_leases(self):
         filename = '/path/to/file'
-        with mock.patch('__builtin__.open') as mock_open:
+        with mock.patch('six.moves.builtins.open') as mock_open:
             mock_open.return_value.__enter__ = lambda s: s
             mock_open.return_value.__exit__ = mock.Mock()
             lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1",
@@ -1489,7 +1514,7 @@ class TestDnsmasq(TestBase):
 
     def test_read_hosts_file_leases_with_client_id(self):
         filename = '/path/to/file'
-        with mock.patch('__builtin__.open') as mock_open:
+        with mock.patch('six.moves.builtins.open') as mock_open:
             mock_open.return_value.__enter__ = lambda s: s
             mock_open.return_value.__exit__ = mock.Mock()
             lines = ["00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1",
@@ -1633,6 +1658,33 @@ class TestDnsmasq(TestBase):
                         'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
                         'option6:dns-server,ffea:3ba5:a17a:4ba3::100').lstrip()
         dm = self._get_dnsmasq(FakeV6NetworkStatelessDHCP())
+        dm._output_hosts_file()
+        dm._output_opts_file()
+        self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
+                                    mock.call(exp_opt_name, exp_opt_data)])
+
+    def test_host_and_opts_file_on_net_with_V6_stateless_and_V4_subnets(
+                                                                    self):
+        exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
+        exp_host_data = (
+            '00:16:3e:c2:77:1d,set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
+            '00:16:3e:c2:77:1d,host-192-168-0-3.openstacklocal,'
+            '192.168.0.3,set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
+            '00:00:0f:rr:rr:rr,'
+            'host-192-168-0-1.openstacklocal,192.168.0.1\n').lstrip()
+        exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
+        exp_opt_data = (
+            'tag:tag0,option6:domain-search,openstacklocal\n'
+            'tag:tag1,option:dns-server,8.8.8.8\n'
+            'tag:tag1,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag1,249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,'
+            '192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag1,option:router,192.168.0.1\n'
+            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'option6:dns-server,ffea:3ba5:a17a:4ba3::100').lstrip()
+
+        dm = self._get_dnsmasq(FakeNetworkWithV6SatelessAndV4DHCPSubnets())
         dm._output_hosts_file()
         dm._output_opts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),

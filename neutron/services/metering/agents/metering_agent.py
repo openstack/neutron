@@ -18,6 +18,9 @@ import time
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
+from oslo_service import periodic_task
+from oslo_service import service
 from oslo_utils import importutils
 
 from neutron.agent.common import config
@@ -30,9 +33,6 @@ from neutron.common import utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
-from neutron.openstack.common import loopingcall
-from neutron.openstack.common import periodic_task
-from neutron.openstack.common import service
 from neutron import service as neutron_service
 
 
@@ -298,4 +298,4 @@ def main():
         report_interval=cfg.CONF.AGENT.report_interval,
         manager='neutron.services.metering.agents.'
                 'metering_agent.MeteringAgentWithStateReport')
-    service.launch(server).wait()
+    service.launch(cfg.CONF, server).wait()

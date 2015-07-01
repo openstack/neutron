@@ -101,7 +101,8 @@ def check_db_schema_version(engine, metadata):
                           )
 
 
-# Duplicated from neutron.plugins.linuxbridge.common.constants to
+# Duplicated from
+# neutron.plugins.ml2.drivers.linuxbridge.agent.common.constants to
 # avoid having any dependency on the linuxbridge plugin being
 # installed.
 def interpret_vlan_id(vlan_id):

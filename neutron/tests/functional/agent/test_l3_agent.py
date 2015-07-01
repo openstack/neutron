@@ -68,6 +68,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.mock_plugin_api = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+        mock.patch.object(ip_lib, '_arping').start()
         self.agent = self._configure_agent('agent1')
 
     def _get_config_opts(self):
@@ -104,7 +105,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                           get_temp_file_path('external/pids'))
         conf.set_override('host', host)
         agent = neutron_l3_agent.L3NATAgentWithStateReport(host, conf)
-        mock.patch.object(ip_lib, '_arping').start()
 
         return agent
 
@@ -400,7 +400,8 @@ class L3AgentTestCase(L3AgentTestFramework):
         router_info = self.generate_router_info(enable_ha=False)
         router = self.manage_router(self.agent, router_info)
 
-        port = helpers.get_free_namespace_port(router.ns_name)
+        port = net_helpers.get_free_namespace_port(l3_constants.PROTO_NAME_TCP,
+                                                   router.ns_name)
         client_address = '19.4.4.3'
         server_address = '35.4.0.4'
 
@@ -412,10 +413,9 @@ class L3AgentTestCase(L3AgentTestFramework):
         router.process(self.agent)
 
         router_ns = ip_lib.IPWrapper(namespace=router.ns_name)
-        netcat = helpers.NetcatTester(router.ns_name, router.ns_name,
-                                      server_address, port,
-                                      client_address=client_address,
-                                      udp=False)
+        netcat = net_helpers.NetcatTester(
+            router.ns_name, router.ns_name, client_address, port,
+            protocol=net_helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
 
         def assert_num_of_conntrack_rules(n):
@@ -705,12 +705,13 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._add_fip(router, dst_fip, fixed_address=dst_machine.ip)
         router.process(self.agent)
 
-        protocol_port = helpers.get_free_namespace_port(dst_machine.namespace)
+        protocol_port = net_helpers.get_free_namespace_port(
+            l3_constants.PROTO_NAME_TCP, dst_machine.namespace)
         # client sends to fip
-        netcat = helpers.NetcatTester(
+        netcat = net_helpers.NetcatTester(
             src_machine.namespace, dst_machine.namespace,
-            dst_machine.ip, protocol_port, client_address=dst_fip,
-            udp=False)
+            dst_fip, protocol_port,
+            protocol=net_helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
 
@@ -1265,3 +1266,47 @@ class TestDvrRouter(L3AgentTestFramework):
             router.router_id, router.fip_ns.get_int_device_name,
             router.fip_ns.get_name())
         self.assertEqual(expected_mtu, dev_mtu)
+
+    def test_dvr_router_fip_agent_mismatch(self):
+        """Test to validate the floatingip agent mismatch.
+
+        This test validates the condition where floatingip agent
+        gateway port host mismatches with the agent and so the
+        binding will not be there.
+
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        floating_ip = router_info['_floatingips'][0]
+        floating_ip['host'] = 'my_new_host'
+        # In this case the floatingip binding is different and so it
+        # should not create the floatingip namespace on the given agent.
+        # This is also like there is no current binding.
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertFalse(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_does_not_exist(router1)
+
+    def test_dvr_router_fip_late_binding(self):
+        """Test to validate the floatingip migration or latebinding.
+
+        This test validates the condition where floatingip private
+        port changes while migration or when the private port host
+        binding is done later after floatingip association.
+
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        fip_agent_gw_port = router_info[l3_constants.FLOATINGIP_AGENT_INTF_KEY]
+        # Now let us not pass the FLOATINGIP_AGENT_INTF_KEY, to emulate
+        # that the server did not create the port, since there was no valid
+        # host binding.
+        router_info[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = []
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_port[0])
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_does_not_exist(router1)

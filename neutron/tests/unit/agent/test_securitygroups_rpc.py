@@ -34,7 +34,7 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
-from neutron.plugins.openvswitch.agent import ovs_neutron_agent
+from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.extensions import test_securitygroup as test_sg

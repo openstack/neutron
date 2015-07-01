@@ -19,6 +19,7 @@ import os
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+import re
 
 from neutron.agent.common import utils
 from neutron.common import exceptions
@@ -36,6 +37,8 @@ OPTS = [
 LOOPBACK_DEVNAME = 'lo'
 
 SYS_NET_PATH = '/sys/class/net'
+DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
+METRIC_PATTERN = re.compile(r"metric (\S+)")
 
 
 class AddressNotReady(exceptions.NeutronException):
@@ -531,12 +534,13 @@ class IpRouteCommand(IpDeviceCommandBase):
                                    route_list_lines if
                                    x.strip().startswith('default')), None)
         if default_route_line:
-            gateway_index = 2
-            parts = default_route_line.split()
-            retval = dict(gateway=parts[gateway_index])
-            if 'metric' in parts:
-                metric_index = parts.index('metric') + 1
-                retval.update(metric=int(parts[metric_index]))
+            retval = dict()
+            gateway = DEFAULT_GW_PATTERN.search(default_route_line)
+            if gateway:
+                retval.update(gateway=gateway.group(1))
+            metric = METRIC_PATTERN.search(default_route_line)
+            if metric:
+                retval.update(metric=int(metric.group(1)))
 
         return retval
 
@@ -629,6 +633,17 @@ class IpNeighCommand(IpDeviceCommandBase):
         return self._as_root(options,
                              ('show',
                               'dev', self.name))
+
+    def flush(self, ip_version, ip_address):
+        """Flush neighbour entries
+
+        Given address entry is removed from neighbour cache (ARP or NDP). To
+        flush all entries pass string 'all' as an address.
+
+        :param ip_version: Either 4 or 6 for IPv4 or IPv6 respectively
+        :param ip_address: The prefix selecting the neighbours to flush
+        """
+        self._as_root([ip_version], ('flush', 'to', ip_address))
 
 
 class IpNetnsCommand(IpCommandBase):

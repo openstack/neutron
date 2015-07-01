@@ -23,6 +23,8 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import periodic_task
+from oslo_service import service as svc
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
@@ -33,8 +35,6 @@ from neutron.common import utils as neutron_utils
 from neutron.db import agents_db
 from neutron.i18n import _LE, _LI
 from neutron import manager
-from neutron.openstack.common import periodic_task
-from neutron.openstack.common import service as svc
 from neutron.plugins.ml2.drivers.cisco.apic import mechanism_apic as ma
 from neutron.plugins.ml2.drivers import type_vlan  # noqa
 
@@ -325,7 +325,7 @@ def launch(binary, manager, topic=None):
     server = service.Service.create(
         binary=binary, manager=manager, topic=topic,
         report_interval=report_period, periodic_interval=poll_period)
-    svc.launch(server).wait()
+    svc.launch(cfg.CONF, server).wait()
 
 
 def service_main():

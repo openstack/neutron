@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
+    import test_agent_scheduler
 from neutron.tests.unit.plugins.ml2 import test_plugin
-from neutron.tests.unit.plugins.openvswitch import test_agent_scheduler
 
 
 class Ml2AgentSchedulerTestCase(

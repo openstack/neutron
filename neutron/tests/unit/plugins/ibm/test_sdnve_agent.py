@@ -68,7 +68,7 @@ class TestSdnveNeutronAgent(base.BaseTestCase):
         with mock.patch('neutron.plugins.ibm.agent.sdnve_neutron_agent.'
                         'SdnveNeutronAgent.setup_integration_br',
                         return_value=mock.Mock()),\
-                mock.patch('neutron.openstack.common.loopingcall.'
+                mock.patch('oslo_service.loopingcall.'
                            'FixedIntervalLoopingCall',
                            new=MockFixedIntervalLoopingCall):
             self.agent = sdnve_neutron_agent.SdnveNeutronAgent(**kwargs)
