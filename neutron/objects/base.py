@@ -36,6 +36,10 @@ class NeutronObject(obj_base.VersionedObject,
                 break
         self.obj_reset_changes()
 
+    # TODO(QoS): this should be revisited on how we plan to work with dicts
+    def to_dict(self):
+        return dict(self.items())
+
     @classmethod
     def get_by_id(cls, context, id):
         db_obj = db_api.get_object(context, cls.db_model, id)

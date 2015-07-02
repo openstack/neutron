@@ -31,7 +31,6 @@ class QosRule(base.NeutronObject):
 
     fields = {
         'id': obj_fields.UUIDField(),
-        'tenant_id': obj_fields.UUIDField(),
         'type': obj_fields.StringField(),
         'qos_policy_id': obj_fields.UUIDField()
     }

@@ -61,7 +61,7 @@ class QosPortPolicyBinding(model_base.BASEV2):
                         primary_key=True)
 
 
-class QosRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class QosRule(model_base.BASEV2, models_v2.HasId):
     __tablename__ = 'qos_rules'
     type = sa.Column(sa.String(255))
     qos_policy_id = sa.Column(sa.String(36),
@@ -70,7 +70,7 @@ class QosRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                               nullable=False)
 
 
-class QosBandwidthLimitRule(QosRule):
+class QosBandwidthLimitRule(model_base.BASEV2):
     __tablename__ = 'qos_bandwidth_limit_rules'
     max_kbps = sa.Column(sa.Integer)
     max_burst_kbps = sa.Column(sa.Integer)

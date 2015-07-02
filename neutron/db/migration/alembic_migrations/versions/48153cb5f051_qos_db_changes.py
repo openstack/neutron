@@ -65,9 +65,7 @@ def upgrade():
         sa.Column('qos_policy_id', sa.String(length=36),
                   sa.ForeignKey('qos_policies.id', ondelete='CASCADE'),
                   nullable=False),
-        sa.Column('type', sa.String(length=255)),
-        sa.Column('tenant_id', sa.String(length=attrs.TENANT_ID_MAX_LEN),
-                  index=True))
+        sa.Column('type', sa.String(length=255)))
 
     op.create_table(
         'qos_bandwidth_limit_rules',
