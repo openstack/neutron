@@ -209,6 +209,15 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             self.assertEqual(self.br.get_vif_port_by_id(vif.vif_id).vif_id,
                              vif.vif_id)
 
+    def test_get_vifs_by_ids(self):
+        for i in range(2):
+            self.create_ovs_port()
+        vif_ports = [self.create_ovs_vif_port() for i in range(3)]
+        by_id = self.br.get_vifs_by_ids([v.vif_id for v in vif_ports])
+        # convert to str for comparison of VifPorts
+        by_id = {vid: str(vport) for vid, vport in by_id.items()}
+        self.assertEqual({v.vif_id: str(v) for v in vif_ports}, by_id)
+
     def test_delete_ports(self):
         # TODO(twilson) I intensely dislike the current delete_ports function
         # as the default behavior is really delete_vif_ports(), then it acts

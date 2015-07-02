@@ -312,10 +312,17 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def _restore_local_vlan_map(self):
         cur_ports = self.int_br.get_vif_ports()
+        port_info = self.int_br.db_list(
+            "Port", columns=["name", "other_config", "tag"])
+        by_name = {x['name']: x for x in port_info}
         for port in cur_ports:
-            local_vlan_map = self.int_br.db_get_val("Port", port.port_name,
-                                                    "other_config")
-            local_vlan = self.int_br.db_get_val("Port", port.port_name, "tag")
+            # if a port was deleted between get_vif_ports and db_lists, we
+            # will get a KeyError
+            try:
+                local_vlan_map = by_name[port.port_name]['other_config']
+                local_vlan = by_name[port.port_name]['tag']
+            except KeyError:
+                continue
             if not local_vlan:
                 continue
             net_uuid = local_vlan_map.get('net_uuid')
@@ -730,6 +737,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                      port_other_config)
 
     def _bind_devices(self, need_binding_ports):
+        port_info = self.int_br.db_list(
+            "Port", columns=["name", "tag"])
+        tags_by_name = {x['name']: x['tag'] for x in port_info}
         for port_detail in need_binding_ports:
             lvm = self.local_vlan_map.get(port_detail['network_id'])
             if not lvm:
@@ -739,7 +749,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             port = port_detail['vif_port']
             device = port_detail['device']
             # Do not bind a port if it's already bound
-            cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+            cur_tag = tags_by_name.get(port.port_name)
             if cur_tag != lvm.vlan:
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "tag", lvm.vlan)
@@ -1196,10 +1206,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.conf.host)
         except Exception as e:
             raise DeviceListRetrievalError(devices=devices, error=e)
+        vif_by_id = self.int_br.get_vifs_by_ids(
+            [vif['device'] for vif in devices_details_list])
         for details in devices_details_list:
             device = details['device']
             LOG.debug("Processing port: %s", device)
-            port = self.int_br.get_vif_port_by_id(device)
+            port = vif_by_id.get(device)
             if not port:
                 # The port disappeared and cannot be processed
                 LOG.info(_LI("Port %s was not found on the integration bridge "
