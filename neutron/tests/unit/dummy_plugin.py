@@ -88,6 +88,7 @@ class DummyServicePlugin(service_base.ServicePluginBase):
     """
 
     supported_extension_aliases = ['dummy', servicetype.EXT_ALIAS]
+    path_prefix = "/dummy_svc"
     agent_notifiers = {'dummy': 'dummy_agent_notifier'}
 
     def __init__(self):
