@@ -60,8 +60,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.br_tun = base.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
                                          prefix='br-tun')
         patch_name_len = n_const.DEVICE_NAME_MAX_LEN - len("-patch-tun")
-        self.patch_tun = "%s-patch-tun" % self.br_int[:patch_name_len]
-        self.patch_int = "%s-patch-int" % self.br_tun[:patch_name_len]
+        self.patch_tun = "%s-patch-tun" % self.br_int[patch_name_len:]
+        self.patch_int = "%s-patch-int" % self.br_tun[patch_name_len:]
         self.ovs = ovs_lib.BaseOVS()
         self.config = self._configure_agent()
         self.driver = interface.OVSInterfaceDriver(self.config)
