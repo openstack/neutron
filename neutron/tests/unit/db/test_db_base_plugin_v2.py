@@ -3178,6 +3178,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 set_context=False)
 
     def test_create_subnet_nonzero_cidr(self):
+        # Pass None as gateway_ip to prevent ip auto allocation for gw
+        # Previously gateway ip was allocated after validations,
+        # so no errors were raised if gw ip was out of range.
         with self.subnet(cidr='10.129.122.5/8') as v1,\
                 self.subnet(cidr='11.129.122.5/15') as v2,\
                 self.subnet(cidr='12.129.122.5/16') as v3,\
@@ -3185,7 +3188,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.subnet(cidr='14.129.122.5/22') as v5,\
                 self.subnet(cidr='15.129.122.5/24') as v6,\
                 self.subnet(cidr='16.129.122.5/28') as v7,\
-                self.subnet(cidr='17.129.122.5/32', enable_dhcp=False) as v8:
+                self.subnet(cidr='17.129.122.5/32', gateway_ip=None,
+                            enable_dhcp=False) as v8:
             subs = (v1, v2, v3, v4, v5, v6, v7, v8)
             # the API should accept and correct these for users
             self.assertEqual(subs[0]['subnet']['cidr'], '10.0.0.0/8')
