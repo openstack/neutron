@@ -82,10 +82,12 @@ def build_resource_info(plural_mappings, resource_map, which_service,
             allow_bulk=allow_bulk,
             allow_pagination=cfg.CONF.allow_pagination,
             allow_sorting=cfg.CONF.allow_sorting)
+        path_prefix = getattr(plugin, "path_prefix",
+                              constants.COMMON_PREFIXES.get(which_service, ""))
         resource = extensions.ResourceExtension(
             collection_name,
             controller,
-            path_prefix=constants.COMMON_PREFIXES[which_service],
+            path_prefix=path_prefix,
             member_actions=member_actions,
             attr_map=params)
         resources.append(resource)
