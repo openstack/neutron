@@ -54,9 +54,10 @@ class NeutronObject(obj_base.VersionedObject,
 
     def update(self):
         updates = self.obj_get_changes()
-        db_obj = db_api.update_object(self._context, self.db_model,
-                                      self.id, updates)
-        self.from_db_object(self, db_obj)
+        if updates:
+            db_obj = db_api.update_object(self._context, self.db_model,
+                                          self.id, updates)
+            self.from_db_object(self, db_obj)
 
     def delete(self):
         db_api.delete_object(self._context, self.db_model, self.id)
