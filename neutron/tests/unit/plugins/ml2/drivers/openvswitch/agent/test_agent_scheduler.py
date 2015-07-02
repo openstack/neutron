@@ -749,6 +749,30 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             ret_b = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTB)
             self.assertFalse(ret_b)
 
+    def test_router_is_not_rescheduled_from_dvr_agent(self):
+        router = {'name': 'router1',
+                  'admin_state_up': True,
+                  'distributed': True}
+        r = self.l3plugin.create_router(
+            self.adminContext, {'router': router})
+        dvr_agent = self._register_dvr_agents()[1]
+
+        with mock.patch.object(
+                self.l3plugin,
+                'check_ports_exist_on_l3agent') as port_exists:
+            port_exists.return_value = True
+            self.l3plugin.schedule_router(
+                self.adminContext, r['id'])
+            agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(2, len(agents['agents']))
+            self.assertIn(dvr_agent['host'],
+                          [a['host'] for a in agents['agents']])
+            self._take_down_agent_and_run_reschedule(dvr_agent['host'])
+            agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(2, len(agents['agents']))
+            self.assertIn(dvr_agent['host'],
+                          [a['host'] for a in agents['agents']])
+
     def test_router_auto_schedule_with_invalid_router(self):
         with self.router() as router:
             l3_rpc_cb = l3_rpc.L3RpcCallback()
