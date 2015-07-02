@@ -16,6 +16,7 @@
 import mock
 from oslo_utils import uuidutils
 
+from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
@@ -63,11 +64,15 @@ class TestNamespaceManager(NamespaceManagerTestCaseFramework):
         self.assertTrue(self.ns_manager.is_managed(router_ns_name))
         router_ns_name = dvr_snat_ns.SNAT_NS_PREFIX + router_id
         self.assertTrue(self.ns_manager.is_managed(router_ns_name))
+        router_ns_name = dvr_fip_ns.FIP_NS_PREFIX + router_id
+        self.assertTrue(self.ns_manager.is_managed(router_ns_name))
+
         self.assertFalse(self.ns_manager.is_managed('dhcp-' + router_id))
 
     def test_list_all(self):
         ns_names = [namespaces.NS_PREFIX + _uuid(),
                     dvr_snat_ns.SNAT_NS_PREFIX + _uuid(),
+                    dvr_fip_ns.FIP_NS_PREFIX + _uuid(),
                     'dhcp-' + _uuid(), ]
 
         # Test the normal path
@@ -90,12 +95,14 @@ class TestNamespaceManager(NamespaceManagerTestCaseFramework):
         ns_names = [namespaces.NS_PREFIX + _uuid() for _ in range(5)]
         ns_names += [dvr_snat_ns.SNAT_NS_PREFIX + _uuid() for _ in range(5)]
         ns_names += [namespaces.NS_PREFIX + router_id,
-                     dvr_snat_ns.SNAT_NS_PREFIX + router_id]
+                     dvr_snat_ns.SNAT_NS_PREFIX + router_id,
+                     dvr_fip_ns.FIP_NS_PREFIX + router_id]
         with mock.patch.object(ip_lib.IPWrapper, 'get_namespaces',
                                return_value=ns_names), \
                 mock.patch.object(self.ns_manager, '_cleanup') as mock_cleanup:
             self.ns_manager.ensure_router_cleanup(router_id)
             expected = [mock.call(namespaces.NS_PREFIX, router_id),
-                        mock.call(dvr_snat_ns.SNAT_NS_PREFIX, router_id)]
+                        mock.call(dvr_snat_ns.SNAT_NS_PREFIX, router_id),
+                        mock.call(dvr_fip_ns.FIP_NS_PREFIX, router_id)]
             mock_cleanup.assert_has_calls(expected, any_order=True)
-            self.assertEqual(2, mock_cleanup.call_count)
+            self.assertEqual(3, mock_cleanup.call_count)
