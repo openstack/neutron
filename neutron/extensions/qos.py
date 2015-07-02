@@ -38,7 +38,10 @@ QOS_RULE_COMMON_FIELDS = {
     'type': {'allow_post': True, 'allow_put': True, 'is_visible': True,
              'default': '',
              'validate': {'type:values': VALID_RULE_TYPES}},
-             }
+    'tenant_id': {'allow_post': True, 'allow_put': False,
+                  'required_by_policy': True,
+                  'is_visible': True},
+}
 
 RESOURCE_ATTRIBUTE_MAP = {
     'policies': {
@@ -193,11 +196,11 @@ class QoSPluginBase(service_base.ServicePluginBase):
         pass
 
     @abc.abstractmethod
-    def create_policy(self, context, qos_policy):
+    def create_policy(self, context, policy):
         pass
 
     @abc.abstractmethod
-    def update_policy(self, context, policy_id, qos_policy):
+    def update_policy(self, context, policy_id, policy):
         pass
 
     @abc.abstractmethod
@@ -217,12 +220,13 @@ class QoSPluginBase(service_base.ServicePluginBase):
         pass
 
     @abc.abstractmethod
-    def create_policy_bandwidth_limit_rule(self, context, policy_id, rule):
+    def create_policy_bandwidth_limit_rule(self, context, policy_id,
+                                           bandwidth_limit_rule):
         pass
 
     @abc.abstractmethod
     def update_policy_bandwidth_limit_rule(self, context, rule_id,
-                                           policy_id, rule):
+                                           policy_id, bandwidth_limit_rule):
         pass
 
     @abc.abstractmethod
