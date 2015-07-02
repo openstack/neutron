@@ -141,6 +141,12 @@ class BaseOVS(object):
         return self.ovsdb.db_get(table, record, column).execute(
             check_error=check_error, log_errors=log_errors)
 
+    def db_list(self, table, records=None, columns=None,
+                check_error=True, log_errors=True, if_exists=False):
+        return (self.ovsdb.db_list(table, records=records, columns=columns,
+                                   if_exists=if_exists).
+                execute(check_error=check_error, log_errors=log_errors))
+
 
 class OVSBridge(BaseOVS):
     def __init__(self, br_name):
@@ -319,11 +325,12 @@ class OVSBridge(BaseOVS):
     def get_vif_ports(self):
         edge_ports = []
         port_names = self.get_port_name_list()
+        port_info = self.db_list(
+            'Interface', columns=['name', 'external_ids', 'ofport'])
+        by_name = {x['name']: x for x in port_info}
         for name in port_names:
-            external_ids = self.db_get_val("Interface", name, "external_ids",
-                                           check_error=True)
-            ofport = self.db_get_val("Interface", name, "ofport",
-                                     check_error=True)
+            external_ids = by_name[name]['external_ids']
+            ofport = by_name[name]['ofport']
             if "iface-id" in external_ids and "attached-mac" in external_ids:
                 p = VifPort(name, ofport, external_ids["iface-id"],
                             external_ids["attached-mac"], self)
@@ -341,10 +348,9 @@ class OVSBridge(BaseOVS):
 
     def get_vif_port_to_ofport_map(self):
         port_names = self.get_port_name_list()
-        cmd = self.ovsdb.db_list(
-            'Interface', port_names,
-            columns=['name', 'external_ids', 'ofport'], if_exists=True)
-        results = cmd.execute(check_error=True)
+        results = self.db_list(
+            'Interface', port_names, ['name', 'external_ids', 'ofport'],
+            if_exists=True)
         port_map = {}
         for r in results:
             # fall back to basic interface name
@@ -359,10 +365,9 @@ class OVSBridge(BaseOVS):
     def get_vif_port_set(self):
         edge_ports = set()
         port_names = self.get_port_name_list()
-        cmd = self.ovsdb.db_list(
-            'Interface', port_names,
-            columns=['name', 'external_ids', 'ofport'], if_exists=True)
-        results = cmd.execute(check_error=True)
+        results = self.db_list(
+            'Interface', port_names, ['name', 'external_ids', 'ofport'],
+            if_exists=True)
         for result in results:
             if result['ofport'] == UNASSIGNED_OFPORT:
                 LOG.warn(_LW("Found not yet ready openvswitch port: %s"),
@@ -400,10 +405,41 @@ class OVSBridge(BaseOVS):
 
         """
         port_names = self.get_port_name_list()
-        cmd = self.ovsdb.db_list('Port', port_names, columns=['name', 'tag'],
-                                 if_exists=True)
-        results = cmd.execute(check_error=True)
+        results = self.db_list('Port', port_names, ['name', 'tag'],
+                               if_exists=True)
         return {p['name']: p['tag'] for p in results}
+
+    def get_vifs_by_ids(self, port_ids):
+        interface_info = self.db_list(
+            "Interface", columns=["name", "external_ids", "ofport"])
+        by_id = {x['external_ids'].get('iface-id'): x for x in interface_info}
+        intfs_on_bridge = self.ovsdb.list_ports(self.br_name).execute(
+            check_error=True)
+        result = {}
+        for port_id in port_ids:
+            result[port_id] = None
+            if (port_id not in by_id or
+                    by_id[port_id]['name'] not in intfs_on_bridge):
+                LOG.info(_LI("Port %(port_id)s not present in bridge "
+                             "%(br_name)s"),
+                         {'port_id': port_id, 'br_name': self.br_name})
+                continue
+            pinfo = by_id[port_id]
+            if not self._check_ofport(port_id, pinfo):
+                continue
+            mac = pinfo['external_ids'].get('attached-mac')
+            result[port_id] = VifPort(pinfo['name'], pinfo['ofport'],
+                                      port_id, mac, self)
+        return result
+
+    @staticmethod
+    def _check_ofport(port_id, port_info):
+        if port_info['ofport'] in [UNASSIGNED_OFPORT, INVALID_OFPORT]:
+            LOG.warn(_LW("ofport: %(ofport)s for VIF: %(vif)s is not a"
+                         " positive integer"),
+                     {'ofport': port_info['ofport'], 'vif': port_id})
+            return False
+        return True
 
     def get_vif_port_by_id(self, port_id):
         ports = self.ovsdb.db_find(
@@ -413,10 +449,7 @@ class OVSBridge(BaseOVS):
         for port in ports:
             if self.br_name != self.get_bridge_for_iface(port['name']):
                 continue
-            if port['ofport'] in [UNASSIGNED_OFPORT, INVALID_OFPORT]:
-                LOG.warn(_LW("ofport: %(ofport)s for VIF: %(vif)s is not a"
-                             " positive integer"),
-                         {'ofport': port['ofport'], 'vif': port_id})
+            if not self._check_ofport(port_id, port):
                 continue
             mac = port['external_ids'].get('attached-mac')
             return VifPort(port['name'], port['ofport'], port_id, mac, self)
