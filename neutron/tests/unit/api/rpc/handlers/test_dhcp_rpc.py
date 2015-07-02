@@ -190,6 +190,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                 }
         expected_port = {'port': {'network_id': 'foo_network_id',
                                   'device_owner': constants.DEVICE_OWNER_DHCP,
+                                  'binding:host_id': 'foo_host',
                                   'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
                                   },
                          'id': 'foo_port_id'
@@ -211,6 +212,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                 }
         expected_port = {'port': {'network_id': 'foo_network_id',
                                   'device_owner': constants.DEVICE_OWNER_DHCP,
+                                  'binding:host_id': 'foo_host',
                                   'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
                                   },
                          'id': 'foo_port_id'
