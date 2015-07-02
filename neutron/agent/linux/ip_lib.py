@@ -464,6 +464,17 @@ class IpAddrCommand(IpDeviceCommandBase):
 class IpRouteCommand(IpDeviceCommandBase):
     COMMAND = 'route'
 
+    def __init__(self, parent, table=None):
+        super(IpRouteCommand, self).__init__(parent)
+        self._table = table
+
+    def table(self, table):
+        """Return an instance of IpRouteCommand which works on given table"""
+        return IpRouteCommand(self._parent, table)
+
+    def _table_args(self):
+        return ['table', self._table] if self._table else []
+
     def add_gateway(self, gateway, metric=None, table=None):
         ip_version = get_ip_version(gateway)
         args = ['replace', 'default', 'via', gateway]
@@ -472,6 +483,8 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += ['dev', self.name]
         if table:
             args += ['table', table]
+        else:
+            args += self._table_args()
         self._as_root([ip_version], tuple(args))
 
     def delete_gateway(self, gateway, table=None):
@@ -481,6 +494,8 @@ class IpRouteCommand(IpDeviceCommandBase):
                 'dev', self.name]
         if table:
             args += ['table', table]
+        else:
+            args += self._table_args()
         try:
             self._as_root([ip_version], tuple(args))
         except RuntimeError as rte:
@@ -492,10 +507,9 @@ class IpRouteCommand(IpDeviceCommandBase):
 
     def list_onlink_routes(self, ip_version):
         def iterate_routes():
-            output = self._run([ip_version],
-                               ('list',
-                                'dev', self.name,
-                                'scope', 'link'))
+            args = ['list', 'dev', self.name, 'scope', 'link']
+            args += self._table_args()
+            output = self._run([ip_version], tuple(args))
             for line in output.split('\n'):
                 line = line.strip()
                 if line and not line.count('src'):
@@ -505,22 +519,21 @@ class IpRouteCommand(IpDeviceCommandBase):
 
     def add_onlink_route(self, cidr):
         ip_version = get_ip_version(cidr)
-        self._as_root([ip_version],
-                      ('replace', cidr,
-                       'dev', self.name,
-                       'scope', 'link'))
+        args = ['replace', cidr, 'dev', self.name, 'scope', 'link']
+        args += self._table_args()
+        self._as_root([ip_version], tuple(args))
 
     def delete_onlink_route(self, cidr):
         ip_version = get_ip_version(cidr)
-        self._as_root([ip_version],
-                      ('del', cidr,
-                       'dev', self.name,
-                       'scope', 'link'))
+        args = ['del', cidr, 'dev', self.name, 'scope', 'link']
+        args += self._table_args()
+        self._as_root([ip_version], tuple(args))
 
     def get_gateway(self, scope=None, filters=None, ip_version=None):
         options = [ip_version] if ip_version else []
 
         args = ['list', 'dev', self.name]
+        args += self._table_args()
         if filters:
             args += filters
 
