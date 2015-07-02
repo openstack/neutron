@@ -1397,8 +1397,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 session.begin(subtransactions=True):
             port = db.get_port(session, port_id)
             if not port:
-                LOG.warning(_LW("Port %(port)s updated up by agent not found"),
-                            {'port': port_id})
+                LOG.debug("Port %(port)s update to %(val)s by agent not found",
+                          {'port': port_id, 'val': status})
                 return None
             if (port.status != status and
                 port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE):
