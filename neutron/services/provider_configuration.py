@@ -111,11 +111,12 @@ def parse_service_provider_opt():
                        prov_def)
                 LOG.error(msg)
                 raise n_exc.Invalid(msg)
-        if svc_type not in constants.ALLOWED_SERVICES:
+        ALLOWED_SERVICES = constants.EXT_TO_SERVICE_MAPPING.values()
+        if svc_type not in ALLOWED_SERVICES:
             msg = (_("Service type '%(svc_type)s' is not allowed, "
                      "allowed types: %(allowed)s") %
                    {'svc_type': svc_type,
-                    'allowed': constants.ALLOWED_SERVICES})
+                    'allowed': ALLOWED_SERVICES})
             LOG.error(msg)
             raise n_exc.Invalid(msg)
         driver = get_provider_driver_class(driver)
