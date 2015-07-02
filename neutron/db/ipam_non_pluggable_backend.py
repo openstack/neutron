@@ -27,6 +27,8 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
+from neutron import ipam
+from neutron.ipam import subnet_alloc
 from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
@@ -465,3 +467,30 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             raise n_exc.IpAddressInUse(net_id=network_id,
                                        ip_address=ip_address)
         return ip_address
+
+    def _allocate_subnet(self, context, network, subnet, subnetpool_id):
+        subnetpool = None
+        if subnetpool_id:
+            subnetpool = self._get_subnetpool(context, subnetpool_id)
+            self._validate_ip_version_with_subnetpool(subnet, subnetpool)
+
+        subnet_request = ipam.SubnetRequestFactory.get_request(context,
+                                                               subnet,
+                                                               subnetpool)
+
+        if subnetpool_id:
+            driver = subnet_alloc.SubnetAllocator(subnetpool, context)
+            ipam_subnet = driver.allocate_subnet(subnet_request)
+            subnet_request = ipam_subnet.get_details()
+
+        subnet = self._save_subnet(context,
+                                   network,
+                                   self._make_subnet_args(
+                                       network.shared,
+                                       subnet_request,
+                                       subnet,
+                                       subnetpool_id),
+                                   subnet['dns_nameservers'],
+                                   subnet['host_routes'],
+                                   subnet['allocation_pools'])
+        return subnet
