@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import mock
 import uuid
 
 from neutron.agent.common import ovs_lib
@@ -195,6 +196,19 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         vif_ports = [self.create_ovs_vif_port() for i in range(2)]
         ports = self.br.get_vif_port_set()
         expected = set([x.vif_id for x in vif_ports])
+        self.assertEqual(expected, ports)
+
+    def test_get_vif_port_set_with_missing_port(self):
+        self.create_ovs_port()
+        vif_ports = [self.create_ovs_vif_port()]
+
+        # return an extra port to make sure the db list ignores it
+        orig = self.br.get_port_name_list
+        new_port_name_list = lambda: orig() + ['anotherport']
+        mock.patch.object(self.br, 'get_port_name_list',
+                          new=new_port_name_list).start()
+        ports = self.br.get_vif_port_set()
+        expected = set([vif_ports[0].vif_id])
         self.assertEqual(expected, ports)
 
     def test_get_port_tag_dict(self):
