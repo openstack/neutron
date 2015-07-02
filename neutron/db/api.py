@@ -91,6 +91,15 @@ class convert_db_exception_to_retry(object):
 
 
 # Common database operation implementations
+# TODO(QoS): consider handling multiple objects found, or no objects at all
+# TODO(QoS): consider changing the name and making it public, officially
+def _find_object(context, model, *kwargs):
+    with context.session.begin(subtransactions=True):
+        return (common_db_mixin.model_query(context, model)
+                .filter_by(**kwargs)
+                .first())
+
+
 def get_object(context, model, id):
     with context.session.begin(subtransactions=True):
         return (common_db_mixin.model_query(context, model)
