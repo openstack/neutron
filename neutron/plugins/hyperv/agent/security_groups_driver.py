@@ -32,7 +32,8 @@ class HyperVSecurityGroupsDriver(firewall.FirewallDriver):
                       'egress': utilsv2.HyperVUtilsV2._ACL_DIR_OUT},
         'ethertype': {'IPv4': utilsv2.HyperVUtilsV2._ACL_TYPE_IPV4,
                       'IPv6': utilsv2.HyperVUtilsV2._ACL_TYPE_IPV6},
-        'protocol': {'icmp': utilsv2.HyperVUtilsV2._ICMP_PROTOCOL},
+        'protocol': {'icmp': utilsv2.HyperVUtilsV2._ICMP_PROTOCOL,
+                     'icmpv6': utilsv2.HyperVUtilsV2._ICMPV6_PROTOCOL},
         'default': "ANY",
         'address_default': {'IPv4': '0.0.0.0/0', 'IPv6': '::/0'}
     }

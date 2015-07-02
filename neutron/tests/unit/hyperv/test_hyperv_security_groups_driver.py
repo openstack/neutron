@@ -160,6 +160,10 @@ class TestHyperVSecurityGroupsDriver(base.BaseTestCase):
         self._test_get_rule_protocol(
             'icmp', self._driver._ACL_PROP_MAP['protocol']['icmp'])
 
+    def test_get_rule_protocol_icmpv6(self):
+        self._test_get_rule_protocol(
+            'icmpv6', self._driver._ACL_PROP_MAP['protocol']['icmpv6'])
+
     def test_get_rule_protocol_no_icmp(self):
         self._test_get_rule_protocol('tcp', 'tcp')
 
