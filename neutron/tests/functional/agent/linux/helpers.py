@@ -14,10 +14,10 @@
 #    under the License.
 import os
 
-from neutron.tests import tools
+import fixtures
 
 
-class RecursivePermDirFixture(tools.SafeFixture):
+class RecursivePermDirFixture(fixtures.Fixture):
     """Ensure at least perms permissions on directory and ancestors."""
 
     def __init__(self, directory, perms):
@@ -25,8 +25,7 @@ class RecursivePermDirFixture(tools.SafeFixture):
         self.directory = directory
         self.least_perms = perms
 
-    def setUp(self):
-        super(RecursivePermDirFixture, self).setUp()
+    def _setUp(self):
         previous_directory = None
         current_directory = self.directory
         while previous_directory != current_directory:
