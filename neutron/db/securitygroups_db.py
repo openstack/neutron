@@ -495,8 +495,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def delete_security_group_rule(self, context, id):
         with context.session.begin(subtransactions=True):
-            rule = self._get_security_group_rule(context, id)
-            context.session.delete(rule)
+            query = self._model_query(context, SecurityGroupRule)
+            if query.filter(SecurityGroupRule.id == id).delete() == 0:
+                raise ext_sg.SecurityGroupRuleNotFound(id=id)
 
     def _extend_port_dict_security_group(self, port_res, port_db):
         # Security group bindings will be retrieved from the sqlalchemy
