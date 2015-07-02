@@ -43,8 +43,13 @@ def _random_boolean():
     return bool(random.getrandbits(1))
 
 
+def _random_integer():
+    return random.randint(0, 1000)
+
+
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.BooleanField: _random_boolean,
+    obj_fields.IntegerField: _random_integer,
     obj_fields.StringField: _random_string,
     obj_fields.UUIDField: _random_string,
 }

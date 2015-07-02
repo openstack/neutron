@@ -74,8 +74,8 @@ class QosBandwidthLimitRule(QosRule):
     __tablename__ = 'qos_bandwidth_limit_rules'
     max_kbps = sa.Column(sa.Integer)
     max_burst_kbps = sa.Column(sa.Integer)
-    qos_rule_id = sa.Column(sa.String(36),
-                            sa.ForeignKey('qos_rules.id',
-                                          ondelete='CASCADE'),
-                            nullable=False,
-                            primary_key=True)
+    id = sa.Column(sa.String(36),
+                   sa.ForeignKey('qos_rules.id',
+                                 ondelete='CASCADE'),
+                   nullable=False,
+                   primary_key=True)
