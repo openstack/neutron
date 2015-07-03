@@ -4110,8 +4110,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                             self.fmt)
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertEqual(len(res['subnet']['allocation_pools']), 2)
-                res_vals = res['subnet']['allocation_pools'][0].values() +\
-                    res['subnet']['allocation_pools'][1].values()
+                res_vals = (
+                    list(res['subnet']['allocation_pools'][0].values()) +
+                    list(res['subnet']['allocation_pools'][1].values())
+                )
                 for pool_val in ['10', '20', '30', '40']:
                     self.assertTrue('192.168.0.%s' % (pool_val) in res_vals)
                 if with_gateway_ip:
