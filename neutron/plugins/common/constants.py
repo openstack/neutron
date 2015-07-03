@@ -35,14 +35,10 @@ EXT_TO_SERVICE_MAPPING = {
 }
 
 COMMON_PREFIXES = {
-    CORE: "",
-    DUMMY: "/dummy_svc",
     LOADBALANCER: "/lb",
     LOADBALANCERV2: "/lbaas",
     FIREWALL: "/fw",
     VPN: "/vpn",
-    METERING: "/metering",
-    L3_ROUTER_NAT: "",
 }
 
 # Service operation status constants
