@@ -16,20 +16,9 @@ from oslo_config import cfg
 
 from neutron.agent.common import config
 
-DEFAULT_VLAN_RANGES = []
 DEFAULT_INTERFACE_MAPPINGS = []
 DEFAULT_VXLAN_GROUP = '224.0.0.1'
 
-
-vlan_opts = [
-    cfg.StrOpt('tenant_network_type', default='local',
-               help=_("Network type for tenant networks "
-                      "(local, vlan, or none)")),
-    cfg.ListOpt('network_vlan_ranges',
-                default=DEFAULT_VLAN_RANGES,
-                help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
-                       "or <physical_network>")),
-]
 
 vxlan_opts = [
     cfg.BoolOpt('enable_vxlan', default=True,
@@ -60,8 +49,6 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
-    cfg.BoolOpt('rpc_support_old_agents', default=False,
-                help=_("Enable server RPC compatibility with old agents")),
     cfg.IntOpt('quitting_rpc_timeout', default=10,
                help=_("Set new timeout in seconds for new rpc calls after "
                       "agent receives SIGTERM. If value is set to 0, rpc "
@@ -69,7 +56,6 @@ agent_opts = [
 ]
 
 
-cfg.CONF.register_opts(vlan_opts, "VLANS")
 cfg.CONF.register_opts(vxlan_opts, "VXLAN")
 cfg.CONF.register_opts(bridge_opts, "LINUX_BRIDGE")
 cfg.CONF.register_opts(agent_opts, "AGENT")
