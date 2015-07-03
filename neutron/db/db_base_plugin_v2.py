@@ -34,7 +34,6 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
-from neutron import context as ctx
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_non_pluggable_backend
@@ -471,7 +470,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             gw_ports = self._get_router_gw_ports_by_network(context,
                     network['id'])
             router_ids = [p['device_id'] for p in gw_ports]
-            ctx_admin = ctx.get_admin_context()
+            ctx_admin = context.elevated()
             ext_subnets_dict = {s['id']: s for s in network['subnets']}
             for id in router_ids:
                 router = l3plugin.get_router(ctx_admin, id)
@@ -1133,7 +1132,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if device_id:
                 if hasattr(self, 'get_router'):
                     try:
-                        ctx_admin = ctx.get_admin_context()
+                        ctx_admin = context.elevated()
                         router = self.get_router(ctx_admin, device_id)
                     except l3.RouterNotFound:
                         return
@@ -1143,7 +1142,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             service_constants.L3_ROUTER_NAT))
                     if l3plugin:
                         try:
-                            ctx_admin = ctx.get_admin_context()
+                            ctx_admin = context.elevated()
                             router = l3plugin.get_router(ctx_admin,
                                                          device_id)
                         except l3.RouterNotFound:
