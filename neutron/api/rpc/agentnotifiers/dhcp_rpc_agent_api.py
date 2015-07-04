@@ -168,7 +168,7 @@ class DhcpAgentNotifyAPI(object):
         # data is {'key' : 'value'} with only one key
         if method_name not in self.VALID_METHOD_NAMES:
             return
-        obj_type = data.keys()[0]
+        obj_type = list(data.keys())[0]
         if obj_type not in self.VALID_RESOURCES:
             return
         obj_value = data[obj_type]

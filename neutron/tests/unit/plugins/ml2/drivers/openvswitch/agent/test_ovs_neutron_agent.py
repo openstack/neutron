@@ -1885,7 +1885,8 @@ class TestOvsDvrNeutronAgent(object):
                                   'mac_address': '11:22:33:44:55:66'}]):
             self.agent.dvr_agent.setup_dvr_flows_on_integ_br()
             self.assertTrue(self.agent.dvr_agent.in_distributed_mode())
-            physical_networks = self.agent.dvr_agent.bridge_mappings.keys()
+            physical_networks = list(
+                self.agent.dvr_agent.bridge_mappings.keys())
             ioport = self.agent.dvr_agent.int_ofports[physical_networks[0]]
             expected_on_int_br = [
                 # setup_dvr_flows_on_integ_br
