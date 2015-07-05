@@ -77,6 +77,79 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.agent.plugin_rpc.update_device_list.reset_mock()
         self.wait_until_ports_state(self.ports, up=True)
 
+    def test_resync_dev_up_after_failure(self):
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(),
+            failed_dev_up=True)
+        # in the RPC mock the first port fails and should
+        # be re-synced
+        expected_ports = self.ports + [self.ports[0]]
+        self.wait_until_ports_state(expected_ports, up=True)
+
+    def test_resync_dev_down_after_failure(self):
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(),
+            failed_dev_down=True)
+        self.wait_until_ports_state(self.ports, up=True)
+        for port in self.ports:
+            self.agent.int_br.delete_port(port['vif_name'])
+
+        # in the RPC mock the first port fails and should
+        # be re-synced
+        expected_ports = self.ports + [self.ports[0]]
+        self.wait_until_ports_state(expected_ports, up=False)
+
+    def test_ancillary_port_creation_and_deletion(self):
+        external_bridge = self.useFixture(
+            net_helpers.OVSBridgeFixture()).bridge
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(),
+            ancillary_bridge=external_bridge)
+        self.wait_until_ports_state(self.ports, up=True)
+
+        for port in self.ports:
+            external_bridge.delete_port(port['vif_name'])
+
+        self.wait_until_ports_state(self.ports, up=False)
+
+    def test_resync_ancillary_devices(self):
+        external_bridge = self.useFixture(
+            net_helpers.OVSBridgeFixture()).bridge
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(),
+            ancillary_bridge=external_bridge,
+            trigger_resync=True)
+        self.wait_until_ports_state(self.ports, up=True)
+
+    def test_resync_ancillary_dev_up_after_failure(self):
+        external_bridge = self.useFixture(
+            net_helpers.OVSBridgeFixture()).bridge
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(),
+            ancillary_bridge=external_bridge,
+            failed_dev_up=True)
+        # in the RPC mock the first port fails and should
+        # be re-synced
+        expected_ports = self.ports + [self.ports[0]]
+        self.wait_until_ports_state(expected_ports, up=True)
+
+    def test_resync_ancillary_dev_down_after_failure(self):
+        external_bridge = self.useFixture(
+            net_helpers.OVSBridgeFixture()).bridge
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(),
+            ancillary_bridge=external_bridge,
+            failed_dev_down=True)
+        self.wait_until_ports_state(self.ports, up=True)
+
+        for port in self.ports:
+            external_bridge.delete_port(port['vif_name'])
+
+        # in the RPC mock the first port fails and should
+        # be re-synced
+        expected_ports = self.ports + [self.ports[0]]
+        self.wait_until_ports_state(expected_ports, up=False)
+
     def test_port_vlan_tags(self):
         self.setup_agent_and_ports(
             port_dicts=self.create_test_ports(),

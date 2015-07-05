@@ -99,7 +99,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             'br_tun': br_tun.OVSTunnelBridge
         }
 
-    def create_agent(self, create_tunnels=True):
+    def create_agent(self, create_tunnels=True, ancillary_bridge=None):
         if create_tunnels:
             tunnel_types = [p_const.TYPE_VXLAN]
         else:
@@ -120,6 +120,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.addCleanup(self.ovs.delete_bridge, self.br_phys)
         agent.sg_agent = mock.Mock()
         agent.ancillary_brs = []
+        if ancillary_bridge:
+            agent.ancillary_brs.append(ancillary_bridge)
         return agent
 
     def _mock_get_events(self, agent, polling_manager, ports):
@@ -182,12 +184,14 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         return {'id': uuidutils.generate_uuid(),
                 'tenant_id': uuidutils.generate_uuid()}
 
-    def _plug_ports(self, network, ports, agent, ip_len=24):
+    def _plug_ports(self, network, ports, agent, ip_len=24,
+                    bridge=None):
         for port in ports:
+            bridge = bridge or agent.int_br
             self.driver.plug(
                 network.get('id'), port.get('id'), port.get('vif_name'),
                 port.get('mac_address'),
-                agent.int_br.br_name, namespace=self.namespace)
+                bridge.br_name, namespace=self.namespace)
             ip_cidrs = ["%s/%s" % (port.get('fixed_ips')[0][
                 'ip_address'], ip_len)]
             self.driver.init_l3(port.get('vif_name'), ip_cidrs,
@@ -249,7 +253,13 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         else:
             rpc_devices = [
                 dev for args in call.call_args_list for dev in args[0][2]]
-        return not (set(expected_devices) - set(rpc_devices))
+        for dev in rpc_devices:
+            if dev in expected_devices:
+                expected_devices.remove(dev)
+        # reset mock otherwise if the mock is called again the same call param
+        # will be processed again
+        call.reset_mock()
+        return not expected_devices
 
     def create_test_ports(self, amount=3, **kwargs):
         ports = []
@@ -299,6 +309,53 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.agent.plugin_rpc.update_device_list.side_effect = (
             mock_device_raise_exception)
 
+    def _prepare_failed_dev_up_trigger(self, agent):
+
+        def mock_failed_devices_up(context, devices_up, devices_down,
+                                   agent_id, host=None):
+            failed_devices = []
+            devices = list(devices_up)
+            # first port fails
+            if self.ports[0]['id'] in devices_up:
+                # reassign side_effect so that next RPC call will succeed
+                agent.plugin_rpc.update_device_list.side_effect = (
+                    self._mock_update_device)
+                devices.remove(self.ports[0]['id'])
+                failed_devices.append(self.ports[0]['id'])
+            return {'devices_up': devices,
+                    'failed_devices_up': failed_devices,
+                    'devices_down': [],
+                    'failed_devices_down': []}
+
+        self.agent.plugin_rpc.update_device_list.side_effect = (
+            mock_failed_devices_up)
+
+    def _prepare_failed_dev_down_trigger(self, agent):
+
+        def mock_failed_devices_down(context, devices_up, devices_down,
+                                     agent_id, host=None):
+            # first port fails
+            failed_port_id = self.ports[0]['id']
+            failed_devices_down = []
+            dev_down = [
+                {'device': p['id'], 'exists': True}
+                for p in self.ports if p['id'] in devices_down and (
+                    p['id'] != failed_port_id)]
+            # check if it's the call to set devices down and if the device
+            # that is supposed to fail is in the call then modify the
+            # side_effect so that next RPC call will succeed.
+            if devices_down and failed_port_id in devices_down:
+                agent.plugin_rpc.update_device_list.side_effect = (
+                     self._mock_update_device)
+                failed_devices_down.append(failed_port_id)
+            return {'devices_up': devices_up,
+                    'failed_devices_up': [],
+                    'devices_down': dev_down,
+                    'failed_devices_down': failed_devices_down}
+
+        self.agent.plugin_rpc.update_device_list.side_effect = (
+            mock_failed_devices_down)
+
     def wait_until_ports_state(self, ports, up, timeout=60):
         port_ids = [p['id'] for p in ports]
         agent_utils.wait_until_true(
@@ -307,11 +364,21 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             timeout=timeout)
 
     def setup_agent_and_ports(self, port_dicts, create_tunnels=True,
-                              trigger_resync=False):
+                              ancillary_bridge=None,
+                              trigger_resync=False,
+                              failed_dev_up=False,
+                              failed_dev_down=False):
         self.ports = port_dicts
-        self.agent = self.create_agent(create_tunnels=create_tunnels)
+        self.agent = self.create_agent(create_tunnels=create_tunnels,
+                                       ancillary_bridge=ancillary_bridge)
         self.polling_manager = self.start_agent(self.agent, ports=self.ports)
         self.network = self._create_test_network_dict()
         if trigger_resync:
             self._prepare_resync_trigger(self.agent)
-        self._plug_ports(self.network, self.ports, self.agent)
+        elif failed_dev_up:
+            self._prepare_failed_dev_up_trigger(self.agent)
+        elif failed_dev_down:
+            self._prepare_failed_dev_down_trigger(self.agent)
+
+        self._plug_ports(self.network, self.ports, self.agent,
+                         bridge=ancillary_bridge)
