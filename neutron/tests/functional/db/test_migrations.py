@@ -112,7 +112,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         super(_TestModelsMigrations, self).setUp()
         self.cfg = self.useFixture(config_fixture.Config())
         self.cfg.config(core_plugin=CORE_PLUGIN)
-        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
     def db_sync(self, engine):
@@ -218,7 +218,7 @@ class TestSanityCheck(test_base.DbTestCase):
 
     def setUp(self):
         super(TestSanityCheck, self).setUp()
-        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
     def test_check_sanity_14be42f3d0a5(self):
@@ -246,7 +246,7 @@ class TestWalkMigrations(test_base.DbTestCase):
 
     def setUp(self):
         super(TestWalkMigrations, self).setUp()
-        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
     def test_no_downgrade(self):
