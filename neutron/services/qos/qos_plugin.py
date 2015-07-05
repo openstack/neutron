@@ -138,10 +138,10 @@ class QoSPlugin(qos.QoSPluginBase):
         #            extension of resources
         pass
 
-    def create_policy(self, context, qos_policy):
+    def create_policy(self, context, policy):
         pass
 
-    def update_policy(self, context, policy_id, qos_policy):
+    def update_policy(self, context, policy_id, policy):
         pass
 
     def delete_policy(self, context, policy_id):
@@ -155,11 +155,12 @@ class QoSPlugin(qos.QoSPluginBase):
                      page_reverse=False):
         pass
 
-    def create_policy_bandwidth_limit_rule(self, context, policy_id, rule):
+    def create_policy_bandwidth_limit_rule(self, context, policy_id,
+                                           bandwidth_limit_rule):
         pass
 
     def update_policy_bandwidth_limit_rule(self, context, rule_id,
-                                           policy_id, rule):
+                                           policy_id, bandwidth_limit_rule):
         pass
 
     def get_policy_bandwidth_limit_rule(self, context, rule_id,
