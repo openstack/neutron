@@ -124,6 +124,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                                 'validate': {'type:ip_address_or_none': None},
                                 'is_visible': True, 'default': None,
                                 'enforce_policy': True},
+        'subnet_id': {'allow_post': True, 'allow_put': False,
+                      'validate': {'type:uuid_or_none': None},
+                      'is_visible': False,  # Use False for input only attr
+                      'default': None},
         'floating_network_id': {'allow_post': True, 'allow_put': False,
                                 'validate': {'type:uuid': None},
                                 'is_visible': True},

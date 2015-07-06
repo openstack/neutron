@@ -408,7 +408,7 @@ class L3NatTestCaseMixin(object):
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None, set_context=False,
-                           floating_ip=None):
+                           floating_ip=None, subnet_id=False):
         data = {'floatingip': {'floating_network_id': network_id,
                                'tenant_id': self._tenant_id}}
         if port_id:
@@ -419,6 +419,8 @@ class L3NatTestCaseMixin(object):
         if floating_ip:
             data['floatingip']['floating_ip_address'] = floating_ip
 
+        if subnet_id:
+            data['floatingip']['subnet_id'] = subnet_id
         floatingip_req = self.new_create_request('floatingips', data, fmt)
         if set_context and self._tenant_id:
             # create a specific auth context for this request
@@ -2098,6 +2100,52 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_floatingip_with_invalid_create_port(self):
         self._test_floatingip_with_invalid_create_port(
             'neutron.db.db_base_plugin_v2.NeutronDbPluginV2')
+
+    def test_create_floatingip_with_subnet_id_non_admin(self):
+        with self.subnet() as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.router():
+                res = self._create_floatingip(
+                    self.fmt,
+                    public_sub['subnet']['network_id'],
+                    subnet_id=public_sub['subnet']['id'],
+                    set_context=True)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+
+    def test_create_floatingip_with_multisubnet_id(self):
+        with self.network() as network:
+            self._set_net_external(network['network']['id'])
+            with self.subnet(network, cidr='10.0.12.0/24') as subnet1:
+                with self.subnet(network, cidr='10.0.13.0/24') as subnet2:
+                    with self.router():
+                        res = self._create_floatingip(
+                            self.fmt,
+                            subnet1['subnet']['network_id'],
+                            subnet_id=subnet1['subnet']['id'])
+                        fip1 = self.deserialize(self.fmt, res)
+                        res = self._create_floatingip(
+                            self.fmt,
+                            subnet1['subnet']['network_id'],
+                            subnet_id=subnet2['subnet']['id'])
+                        fip2 = self.deserialize(self.fmt, res)
+        self.assertTrue(
+            fip1['floatingip']['floating_ip_address'].startswith('10.0.12'))
+        self.assertTrue(
+            fip2['floatingip']['floating_ip_address'].startswith('10.0.13'))
+
+    def test_create_floatingip_with_wrong_subnet_id(self):
+        with self.network() as network1:
+            self._set_net_external(network1['network']['id'])
+            with self.subnet(network1, cidr='10.0.12.0/24') as subnet1:
+                with self.network() as network2:
+                    self._set_net_external(network2['network']['id'])
+                    with self.subnet(network2, cidr='10.0.13.0/24') as subnet2:
+                        with self.router():
+                            res = self._create_floatingip(
+                                self.fmt,
+                                subnet1['subnet']['network_id'],
+                                subnet_id=subnet2['subnet']['id'])
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_floatingip_no_ext_gateway_return_404(self):
         with self.subnet() as public_sub:
