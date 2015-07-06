@@ -2371,6 +2371,51 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         result = plugin.create_router(context.Context('', 'foo'), router_req)
         self.assertEqual(result['id'], router_req['router']['id'])
 
+    def test_create_floatingip_ipv6_only_network_returns_400(self):
+        with self.subnet(cidr="2001:db8::/48", ip_version=6) as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            res = self._create_floatingip(
+                self.fmt,
+                public_sub['subnet']['network_id'])
+            self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_create_floatingip_ipv6_and_ipv4_network_creates_ipv4(self):
+        with self.network() as n,\
+                self.subnet(cidr="2001:db8::/48", ip_version=6, network=n),\
+                self.subnet(cidr="192.168.1.0/24", ip_version=4, network=n):
+            self._set_net_external(n['network']['id'])
+            fip = self._make_floatingip(self.fmt, n['network']['id'])
+            self.assertEqual(fip['floatingip']['floating_ip_address'],
+                             '192.168.1.2')
+
+    def test_create_floatingip_with_assoc_to_ipv6_subnet(self):
+        with self.subnet() as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.subnet(cidr="2001:db8::/48",
+                             ip_version=6) as private_sub:
+                with self.port(subnet=private_sub) as private_port:
+                    res = self._create_floatingip(
+                        self.fmt,
+                        public_sub['subnet']['network_id'],
+                        port_id=private_port['port']['id'])
+                    self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_create_floatingip_with_assoc_to_ipv4_and_ipv6_port(self):
+        with self.network() as n,\
+                self.subnet(cidr='10.0.0.0/24', network=n) as s4,\
+                self.subnet(cidr='2001:db8::/64', ip_version=6, network=n),\
+                self.port(subnet=s4) as p:
+            self.assertEqual(len(p['port']['fixed_ips']), 2)
+            ipv4_address = next(i['ip_address'] for i in
+                    p['port']['fixed_ips'] if
+                    netaddr.IPAddress(i['ip_address']).version == 4)
+            with self.floatingip_with_assoc(port_id=p['port']['id']) as fip:
+                self.assertEqual(fip['floatingip']['fixed_ip_address'],
+                                 ipv4_address)
+                floating_ip = netaddr.IPAddress(
+                        fip['floatingip']['floating_ip_address'])
+                self.assertEqual(floating_ip.version, 4)
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
