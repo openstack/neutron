@@ -199,7 +199,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.dist_fip_count = 0
         ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
         ri.floating_ip_added_dist(fip, ip_cidr)
-        mIPRule().rule.add.assert_called_with('192.168.0.1', 16, FIP_PRI)
+        mIPRule().rule.add.assert_called_with(ip='192.168.0.1',
+                                              table=16,
+                                              priority=FIP_PRI)
         self.assertEqual(1, ri.dist_fip_count)
         # TODO(mrsmith): add more asserts
 
@@ -233,7 +235,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.rtr_fip_subnet = s
         ri.floating_ip_removed_dist(fip_cidr)
         mIPRule().rule.delete.assert_called_with(
-            str(netaddr.IPNetwork(fip_cidr).ip), 16, FIP_PRI)
+            ip=str(netaddr.IPNetwork(fip_cidr).ip), table=16, priority=FIP_PRI)
         mIPDevice().route.delete_route.assert_called_with(fip_cidr, str(s.ip))
         self.assertFalse(ri.fip_ns.unsubscribe.called)
 
