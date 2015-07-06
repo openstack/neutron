@@ -34,6 +34,7 @@ Programming HowTos and Tutorials
     contribute
     neutron_api
     sub_projects
+    client_command_extensions
 
 
 Neutron Internals
