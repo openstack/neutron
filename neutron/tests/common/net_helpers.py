@@ -23,6 +23,7 @@ import shlex
 import signal
 import subprocess
 
+import fixtures
 import netaddr
 from oslo_utils import uuidutils
 import six
@@ -328,7 +329,7 @@ class NetcatTester(object):
                 setattr(self, proc_attr, None)
 
 
-class NamespaceFixture(tools.SafeFixture):
+class NamespaceFixture(fixtures.Fixture):
     """Create a namespace.
 
     :ivar ip_wrapper: created namespace
@@ -341,27 +342,25 @@ class NamespaceFixture(tools.SafeFixture):
         super(NamespaceFixture, self).__init__()
         self.prefix = prefix
 
-    def setUp(self):
-        super(NamespaceFixture, self).setUp()
+    def _setUp(self):
         ip = ip_lib.IPWrapper()
         self.name = self.prefix + uuidutils.generate_uuid()
-        self.ip_wrapper = ip.ensure_namespace(self.name)
         self.addCleanup(self.destroy)
+        self.ip_wrapper = ip.ensure_namespace(self.name)
 
     def destroy(self):
         if self.ip_wrapper.netns.exists(self.name):
             self.ip_wrapper.netns.delete(self.name)
 
 
-class VethFixture(tools.SafeFixture):
+class VethFixture(fixtures.Fixture):
     """Create a veth.
 
     :ivar ports: created veth ports
     :type ports: IPDevice 2-uplet
     """
 
-    def setUp(self):
-        super(VethFixture, self).setUp()
+    def _setUp(self):
         ip_wrapper = ip_lib.IPWrapper()
 
         self.ports = common_base.create_resource(
@@ -392,7 +391,7 @@ class VethFixture(tools.SafeFixture):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class PortFixture(tools.SafeFixture):
+class PortFixture(fixtures.Fixture):
     """Create a port.
 
     :ivar port: created port
@@ -410,8 +409,8 @@ class PortFixture(tools.SafeFixture):
         pass
 
     @abc.abstractmethod
-    def setUp(self):
-        super(PortFixture, self).setUp()
+    def _setUp(self):
+        super(PortFixture, self)._setUp()
         if not self.bridge:
             self.bridge = self.useFixture(self._create_bridge_fixture()).bridge
 
@@ -427,7 +426,7 @@ class PortFixture(tools.SafeFixture):
         tools.fail('Unexpected bridge type: %s' % type(bridge))
 
 
-class OVSBridgeFixture(tools.SafeFixture):
+class OVSBridgeFixture(fixtures.Fixture):
     """Create an OVS bridge.
 
     :ivar prefix: bridge name prefix
@@ -440,8 +439,7 @@ class OVSBridgeFixture(tools.SafeFixture):
         super(OVSBridgeFixture, self).__init__()
         self.prefix = prefix
 
-    def setUp(self):
-        super(OVSBridgeFixture, self).setUp()
+    def _setUp(self):
         ovs = ovs_lib.BaseOVS()
         self.bridge = common_base.create_resource(self.prefix, ovs.add_bridge)
         self.addCleanup(self.bridge.destroy)
@@ -458,8 +456,8 @@ class OVSPortFixture(PortFixture):
     def _create_bridge_fixture(self):
         return OVSBridgeFixture()
 
-    def setUp(self):
-        super(OVSPortFixture, self).setUp()
+    def _setUp(self):
+        super(OVSPortFixture, self)._setUp()
 
         port_name = common_base.create_resource(PORT_PREFIX, self.create_port)
         self.addCleanup(self.bridge.delete_port, port_name)
@@ -475,7 +473,7 @@ class OVSPortFixture(PortFixture):
         return name
 
 
-class LinuxBridgeFixture(tools.SafeFixture):
+class LinuxBridgeFixture(fixtures.Fixture):
     """Create a linux bridge.
 
     :ivar bridge: created bridge
@@ -484,9 +482,7 @@ class LinuxBridgeFixture(tools.SafeFixture):
     :type namespace: str
     """
 
-    def setUp(self):
-        super(LinuxBridgeFixture, self).setUp()
-
+    def _setUp(self):
         self.namespace = self.useFixture(NamespaceFixture()).name
         self.bridge = common_base.create_resource(
             BR_PREFIX,
@@ -509,8 +505,8 @@ class LinuxBridgePortFixture(PortFixture):
     def _create_bridge_fixture(self):
         return LinuxBridgeFixture()
 
-    def setUp(self):
-        super(LinuxBridgePortFixture, self).setUp()
+    def _setUp(self):
+        super(LinuxBridgePortFixture, self)._setUp()
         self.port, self.br_port = self.useFixture(VethFixture()).ports
 
         # bridge side
@@ -539,15 +535,14 @@ class VethBridge(object):
                        len(self.ports))
 
 
-class VethBridgeFixture(tools.SafeFixture):
+class VethBridgeFixture(fixtures.Fixture):
     """Simulate a bridge with a veth.
 
     :ivar bridge: created bridge
     :type bridge: FakeBridge
     """
 
-    def setUp(self):
-        super(VethBridgeFixture, self).setUp()
+    def _setUp(self):
         ports = self.useFixture(VethFixture()).ports
         self.bridge = VethBridge(ports)
 
@@ -562,8 +557,8 @@ class VethPortFixture(PortFixture):
     def _create_bridge_fixture(self):
         return VethBridgeFixture()
 
-    def setUp(self):
-        super(VethPortFixture, self).setUp()
+    def _setUp(self):
+        super(VethPortFixture, self)._setUp()
         self.port = self.bridge.allocate_port()
 
         ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)

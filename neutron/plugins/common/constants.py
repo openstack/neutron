@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# Service type constants:
+# Neutron well-known service type constants:
 CORE = "CORE"
 DUMMY = "DUMMY"
 LOADBALANCER = "LOADBALANCER"
@@ -34,22 +34,6 @@ EXT_TO_SERVICE_MAPPING = {
     'metering': METERING,
     'router': L3_ROUTER_NAT,
     'qos': QOS,
-}
-
-# TODO(salvatore-orlando): Move these (or derive them) from conf file
-ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER, FIREWALL, VPN, METERING,
-                    L3_ROUTER_NAT, LOADBALANCERV2, QOS]
-
-COMMON_PREFIXES = {
-    CORE: "",
-    DUMMY: "/dummy_svc",
-    LOADBALANCER: "/lb",
-    LOADBALANCERV2: "/lbaas",
-    FIREWALL: "/fw",
-    VPN: "/vpn",
-    METERING: "/metering",
-    L3_ROUTER_NAT: "",
-    QOS: "/qos",
 }
 
 # Service operation status constants

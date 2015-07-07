@@ -45,6 +45,7 @@ from neutron.common import log as neutron_log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.db import address_scope_db
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
@@ -89,7 +90,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 addr_pair_db.AllowedAddressPairsMixin,
                 vlantransparent_db.Vlantransparent_db_mixin,
                 extradhcpopt_db.ExtraDhcpOptMixin,
-                netmtu_db.Netmtu_db_mixin):
+                netmtu_db.Netmtu_db_mixin,
+                address_scope_db.AddressScopeDbMixin):
 
     """Implement the Neutron L2 abstractions using modules.
 
@@ -113,7 +115,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "dhcp_agent_scheduler",
                                     "multi-provider", "allowed-address-pairs",
                                     "extra_dhcp_opt", "subnet_allocation",
-                                    "net-mtu", "vlan-transparent"]
+                                    "net-mtu", "vlan-transparent",
+                                    "address-scope"]
 
     @property
     def supported_extension_aliases(self):
@@ -1411,8 +1414,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 session.begin(subtransactions=True):
             port = db.get_port(session, port_id)
             if not port:
-                LOG.warning(_LW("Port %(port)s updated up by agent not found"),
-                            {'port': port_id})
+                LOG.debug("Port %(port)s update to %(val)s by agent not found",
+                          {'port': port_id, 'val': status})
                 return None
             if (port.status != status and
                 port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE):

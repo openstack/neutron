@@ -18,7 +18,6 @@ from oslo_log import log as logging
 
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
-from neutron.agent.l3 import namespaces
 
 LOG = logging.getLogger(__name__)
 
@@ -49,11 +48,6 @@ class AgentMixin(object):
         self._fip_namespaces[ext_net_id] = fip_ns
 
         return fip_ns
-
-    def _destroy_fip_namespace(self, ns):
-        ex_net_id = namespaces.get_id_from_ns_name(ns)
-        fip_ns = self.get_fip_ns(ex_net_id)
-        fip_ns.delete()
 
     def get_ports_by_subnet(self, subnet_id):
         return self.plugin_rpc.get_ports_by_subnet(self.context, subnet_id)

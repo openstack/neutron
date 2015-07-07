@@ -14,12 +14,15 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron import quota
+
+LOG = logging.getLogger(__name__)
 
 
 def build_plural_mappings(special_mappings, resource_map):
@@ -68,6 +71,9 @@ def build_resource_info(plural_mappings, resource_map, which_service,
         plugin = manager.NeutronManager.get_service_plugins()[which_service]
     else:
         plugin = manager.NeutronManager.get_plugin()
+    path_prefix = getattr(plugin, "path_prefix", "")
+    LOG.debug('Service %(service)s assigned prefix: %(prefix)s'
+              % {'service': which_service, 'prefix': path_prefix})
     for collection_name in resource_map:
         resource_name = plural_mappings[collection_name]
         params = resource_map.get(collection_name, {})
@@ -85,7 +91,7 @@ def build_resource_info(plural_mappings, resource_map, which_service,
         resource = extensions.ResourceExtension(
             collection_name,
             controller,
-            path_prefix=constants.COMMON_PREFIXES[which_service],
+            path_prefix=path_prefix,
             member_actions=member_actions,
             attr_map=params)
         resources.append(resource)

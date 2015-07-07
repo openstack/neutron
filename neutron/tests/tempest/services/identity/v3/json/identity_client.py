@@ -14,7 +14,8 @@
 #    under the License.
 
 import json
-import urllib
+
+from six.moves.urllib import parse
 
 from neutron.tests.tempest.common import service_client
 
@@ -95,7 +96,7 @@ class IdentityV3ClientJSON(service_client.ServiceClient):
         """Get the list of users."""
         url = 'users'
         if params:
-            url += '?%s' % urllib.urlencode(params)
+            url += '?%s' % parse.urlencode(params)
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
         body = json.loads(body)
@@ -134,7 +135,7 @@ class IdentityV3ClientJSON(service_client.ServiceClient):
     def list_projects(self, params=None):
         url = "projects"
         if params:
-            url += '?%s' % urllib.urlencode(params)
+            url += '?%s' % parse.urlencode(params)
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
         body = json.loads(body)

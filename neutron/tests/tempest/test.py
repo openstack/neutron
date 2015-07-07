@@ -20,13 +20,13 @@ import os
 import re
 import sys
 import time
-import urllib
 import uuid
 
 import fixtures
 from oslo_log import log as logging
 from oslo_utils import importutils
 import six
+from six.moves.urllib import parse
 import testscenarios
 import testtools
 
@@ -590,7 +590,7 @@ class NegativeAutoTest(BaseTestCase):
         if not json_dict:
             return url, None
         elif method in ["GET", "HEAD", "PUT", "DELETE"]:
-            return "%s?%s" % (url, urllib.urlencode(json_dict)), None
+            return "%s?%s" % (url, parse.urlencode(json_dict)), None
         else:
             return url, json.dumps(json_dict)
 

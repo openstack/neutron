@@ -226,7 +226,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         """
         for subnet in network.subnets:
             if (subnet.ip_version == ip_version and
-               new_subnetpool_id != subnet.subnetpool_id):
+                    new_subnetpool_id != subnet.subnetpool_id):
                 raise n_exc.NetworkSubnetPoolAffinityError()
 
     def _validate_allocation_pools(self, ip_pools, subnet_cidr):

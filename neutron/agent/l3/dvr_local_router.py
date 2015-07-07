@@ -84,7 +84,9 @@ class DvrLocalRouter(router.RouterInfo):
         self.floating_ips_dict[floating_ip] = rule_pr
         fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
         ip_rule = ip_lib.IPRule(namespace=self.ns_name)
-        ip_rule.rule.add(fixed_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
+        ip_rule.rule.add(ip=fixed_ip,
+                         table=dvr_fip_ns.FIP_RT_TBL,
+                         priority=rule_pr)
         #Add routing rule in fip namespace
         fip_ns_name = self.fip_ns.get_name()
         rtr_2_fip, _ = self.rtr_fip_subnet.get_pair()
@@ -114,7 +116,9 @@ class DvrLocalRouter(router.RouterInfo):
         if floating_ip in self.floating_ips_dict:
             rule_pr = self.floating_ips_dict[floating_ip]
             ip_rule = ip_lib.IPRule(namespace=self.ns_name)
-            ip_rule.rule.delete(floating_ip, dvr_fip_ns.FIP_RT_TBL, rule_pr)
+            ip_rule.rule.delete(ip=floating_ip,
+                                table=dvr_fip_ns.FIP_RT_TBL,
+                                priority=rule_pr)
             self.fip_ns.deallocate_rule_priority(rule_pr)
             #TODO(rajeev): Handle else case - exception/log?
 
@@ -258,7 +262,9 @@ class DvrLocalRouter(router.RouterInfo):
                         if is_add:
                             ns_ipd.route.add_gateway(gw_ip_addr,
                                                      table=snat_idx)
-                            ns_ipr.rule.add(sn_port_cidr, snat_idx, snat_idx)
+                            ns_ipr.rule.add(ip=sn_port_cidr,
+                                            table=snat_idx,
+                                            priority=snat_idx)
                             ns_ipwrapr.netns.execute(
                                 ['sysctl', '-w',
                                  'net.ipv4.conf.%s.send_redirects=0' % sn_int])
@@ -266,8 +272,9 @@ class DvrLocalRouter(router.RouterInfo):
                             self._delete_gateway_device_if_exists(ns_ipd,
                                                                   gw_ip_addr,
                                                                   snat_idx)
-                            ns_ipr.rule.delete(sn_port_cidr, snat_idx,
-                                               snat_idx)
+                            ns_ipr.rule.delete(ip=sn_port_cidr,
+                                               table=snat_idx,
+                                               priority=snat_idx)
                         break
         except Exception:
             if is_add:

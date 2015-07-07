@@ -26,6 +26,8 @@ from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services import service_base
 
+QOS_PREFIX = "/qos"
+
 RULE_TYPE_BANDWIDTH_LIMIT = 'bandwidth_limit'
 VALID_RULE_TYPES = [RULE_TYPE_BANDWIDTH_LIMIT]
 
@@ -156,8 +158,7 @@ class Qos(extensions.ExtensionDescriptor):
             resource = extensions.ResourceExtension(
                 collection_name,
                 controller, parent,
-                path_prefix=constants.COMMON_PREFIXES[
-                    constants.QOS],
+                path_prefix=QOS_PREFIX,
                 attr_map=params)
             resources.append(resource)
 

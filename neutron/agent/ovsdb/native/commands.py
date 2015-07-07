@@ -375,24 +375,42 @@ class PortToBridgeCommand(BaseCommand):
 class DbListCommand(BaseCommand):
     def __init__(self, api, table, records, columns, if_exists):
         super(DbListCommand, self).__init__(api)
+        self.requested_info = {'records': records, 'columns': columns,
+                               'table': table}
         self.table = self.api._tables[table]
         self.columns = columns or self.table.columns.keys() + ['_uuid']
         self.if_exists = if_exists
         if records:
-            self.records = [
-                idlutils.row_by_record(self.api.idl, table, record).uuid
-                for record in records]
+            self.records = []
+            for record in records:
+                try:
+                    self.records.append(idlutils.row_by_record(
+                          self.api.idl, table, record).uuid)
+                except idlutils.RowNotFound:
+                    if self.if_exists:
+                        continue
+                    raise
         else:
             self.records = self.table.rows.keys()
 
     def run_idl(self, txn):
-        self.result = [
-            {
-                c: idlutils.get_column_value(self.table.rows[uuid], c)
-                for c in self.columns
-            }
-            for uuid in self.records
-        ]
+        try:
+            self.result = [
+                {
+                    c: idlutils.get_column_value(self.table.rows[uuid], c)
+                    for c in self.columns
+                    if not self.if_exists or uuid in self.table.rows
+                }
+                for uuid in self.records
+            ]
+        except KeyError:
+            # NOTE(kevinbenton): this is converted to a RuntimeError for compat
+            # with the vsctl version. It might make more sense to change this
+            # to a RowNotFoundError in the future.
+            raise RuntimeError(_LE(
+                  "Row removed from DB during listing. Request info: "
+                  "Table=%(table)s. Columns=%(columns)s. "
+                  "Records=%(records)s.") % self.requested_info)
 
 
 class DbFindCommand(BaseCommand):

@@ -1,0 +1,10 @@
+{
+    "create_network_gateway": "rule:admin_or_owner",
+    "update_network_gateway": "rule:admin_or_owner",
+    "delete_network_gateway": "rule:admin_or_owner",
+    "connect_network": "rule:admin_or_owner",
+    "disconnect_network": "rule:admin_or_owner",
+    "create_gateway_device": "rule:admin_or_owner",
+    "update_gateway_device": "rule:admin_or_owner",
+    "delete_gateway_device": "rule_admin_or_owner"
+}

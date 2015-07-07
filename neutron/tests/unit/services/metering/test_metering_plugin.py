@@ -62,7 +62,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          test_metering_db.MeteringPluginDbTestCaseMixin):
 
     resource_prefix_map = dict(
-        (k.replace('_', '-'), constants.COMMON_PREFIXES[constants.METERING])
+        (k.replace('_', '-'), "/metering")
         for k in ext_metering.RESOURCE_ATTRIBUTE_MAP.keys()
     )
 
@@ -281,7 +281,7 @@ class TestMeteringPluginL3AgentScheduler(
         test_metering_db.MeteringPluginDbTestCaseMixin):
 
     resource_prefix_map = dict(
-        (k.replace('_', '-'), constants.COMMON_PREFIXES[constants.METERING])
+        (k.replace('_', '-'), "/metering")
         for k in ext_metering.RESOURCE_ATTRIBUTE_MAP.keys()
     )
 
@@ -404,7 +404,7 @@ class TestMeteringPluginRpcFromL3Agent(
         test_metering_db.MeteringPluginDbTestCaseMixin):
 
     resource_prefix_map = dict(
-        (k.replace('_', '-'), constants.COMMON_PREFIXES[constants.METERING])
+        (k.replace('_', '-'), "/metering")
         for k in ext_metering.RESOURCE_ATTRIBUTE_MAP
     )
 

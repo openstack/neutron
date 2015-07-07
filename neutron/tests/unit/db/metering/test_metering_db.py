@@ -114,7 +114,7 @@ class MeteringPluginDbTestCase(
     fmt = 'json'
 
     resource_prefix_map = dict(
-        (k.replace('_', '-'), constants.COMMON_PREFIXES[constants.METERING])
+        (k.replace('_', '-'), "/metering")
         for k in metering.RESOURCE_ATTRIBUTE_MAP.keys()
     )
 
