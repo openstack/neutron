@@ -15,7 +15,6 @@
 import netaddr
 
 from oslo_log import log as logging
-import six
 
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -479,6 +478,10 @@ class RouterInfo(object):
                            namespace=self.ns_name,
                            prefix=EXTERNAL_DEV_PREFIX)
 
+    @staticmethod
+    def _gateway_ports_equal(port1, port2):
+        return port1 == port2
+
     def _process_external_gateway(self, ex_gw_port):
         # TODO(Carl) Refactor to clarify roles of ex_gw_port vs self.ex_gw_port
         ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
@@ -488,19 +491,9 @@ class RouterInfo(object):
         if ex_gw_port_id:
             interface_name = self.get_external_device_name(ex_gw_port_id)
         if ex_gw_port:
-            def _gateway_ports_equal(port1, port2):
-                def _get_filtered_dict(d, ignore):
-                    return dict((k, v) for k, v in six.iteritems(d)
-                                if k not in ignore)
-
-                keys_to_ignore = set(['binding:host_id'])
-                port1_filtered = _get_filtered_dict(port1, keys_to_ignore)
-                port2_filtered = _get_filtered_dict(port2, keys_to_ignore)
-                return port1_filtered == port2_filtered
-
             if not self.ex_gw_port:
                 self.external_gateway_added(ex_gw_port, interface_name)
-            elif not _gateway_ports_equal(ex_gw_port, self.ex_gw_port):
+            elif not self._gateway_ports_equal(ex_gw_port, self.ex_gw_port):
                 self.external_gateway_updated(ex_gw_port, interface_name)
         elif not ex_gw_port and self.ex_gw_port:
             self.external_gateway_removed(self.ex_gw_port, interface_name)
