@@ -34,13 +34,6 @@ EXT_TO_SERVICE_MAPPING = {
     'router': L3_ROUTER_NAT
 }
 
-COMMON_PREFIXES = {
-    LOADBALANCER: "/lb",
-    LOADBALANCERV2: "/lbaas",
-    FIREWALL: "/fw",
-    VPN: "/vpn",
-}
-
 # Service operation status constants
 ACTIVE = "ACTIVE"
 DOWN = "DOWN"
