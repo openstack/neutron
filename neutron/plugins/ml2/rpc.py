@@ -22,7 +22,7 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -97,8 +97,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             return {'device': device}
 
         if (not host or host == port_context.host):
-            new_status = (q_const.PORT_STATUS_BUILD if port['admin_state_up']
-                          else q_const.PORT_STATUS_DOWN)
+            new_status = (n_const.PORT_STATUS_BUILD if port['admin_state_up']
+                          else n_const.PORT_STATUS_DOWN)
             if port['status'] != new_status:
                 plugin.update_port_status(rpc_context,
                                           port_id,
@@ -157,7 +157,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
         try:
             port_exists = bool(plugin.update_port_status(
-                rpc_context, port_id, q_const.PORT_STATUS_DOWN, host))
+                rpc_context, port_id, n_const.PORT_STATUS_DOWN, host))
         except exc.StaleDataError:
             port_exists = False
             LOG.debug("delete_port and update_device_down are being executed "
@@ -183,7 +183,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             return
 
         port_id = plugin.update_port_status(rpc_context, port_id,
-                                            q_const.PORT_STATUS_ACTIVE,
+                                            n_const.PORT_STATUS_ACTIVE,
                                             host)
         try:
             # NOTE(armax): it's best to remove all objects from the

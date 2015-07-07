@@ -41,7 +41,7 @@ from neutron.common import config as common_config
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import topics
-from neutron.common import utils as q_utils
+from neutron.common import utils as n_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
@@ -1040,7 +1040,7 @@ def main():
 
     common_config.setup_logging()
     try:
-        interface_mappings = q_utils.parse_mappings(
+        interface_mappings = n_utils.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
     except ValueError as e:
         LOG.error(_LE("Parsing physical_interface_mappings failed: %s. "

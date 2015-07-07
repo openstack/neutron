@@ -27,7 +27,7 @@ from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import exceptions as nexception
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -150,10 +150,10 @@ class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = n_rpc.create_connection(new=True)
         self.notifier = NVSDPluginV2AgentNotifierApi(topics.AGENT)
-        self.agent_notifiers[q_const.AGENT_TYPE_DHCP] = (
+        self.agent_notifiers[n_const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
-        self.agent_notifiers[q_const.AGENT_TYPE_L3] = (
+        self.agent_notifiers[n_const.AGENT_TYPE_L3] = (
             l3_rpc_agent_api.L3AgentNotifyAPI()
         )
         self.endpoints = [securitygroups_rpc.SecurityGroupServerRpcCallback(),

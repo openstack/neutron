@@ -13,7 +13,7 @@
 #    under the License.
 
 import eventlet
-from oslo_config import cfg as q_conf
+from oslo_config import cfg as o_conf
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
@@ -99,7 +99,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self._setup_vsm()
         self._setup_rpc()
         self.network_scheduler = importutils.import_object(
-            q_conf.CONF.network_scheduler_driver
+            o_conf.CONF.network_scheduler_driver
         )
         self.start_periodic_dhcp_agent_status_check()
 

@@ -18,7 +18,7 @@ from oslo_utils import importutils
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import log as neutron_log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -68,7 +68,7 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
         self.topic = topics.L3PLUGIN
         self.conn = n_rpc.create_connection(new=True)
         self.agent_notifiers.update(
-            {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
+            {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
         self.endpoints = [l3_rpc.L3RpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
@@ -96,4 +96,4 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
         """
         return super(L3RouterPlugin, self).create_floatingip(
             context, floatingip,
-            initial_status=q_const.FLOATINGIP_STATUS_DOWN)
+            initial_status=n_const.FLOATINGIP_STATUS_DOWN)
