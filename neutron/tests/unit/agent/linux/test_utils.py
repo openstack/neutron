@@ -18,6 +18,8 @@ import mock
 import six
 import testtools
 
+import oslo_i18n
+
 from neutron.agent.linux import utils
 from neutron.tests import base
 
@@ -99,6 +101,21 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         with mock.patch.object(utils, 'LOG') as log:
             utils.execute(['ls'])
             self.assertTrue(log.debug.called)
+
+    def test_return_code_log_error_change_locale(self):
+        ja_output = 'std_out in Japanese'
+        ja_error = 'std_err in Japanese'
+        ja_message_out = oslo_i18n._message.Message(ja_output)
+        ja_message_err = oslo_i18n._message.Message(ja_error)
+        ja_translate_out = oslo_i18n._translate.translate(ja_message_out, 'ja')
+        ja_translate_err = oslo_i18n._translate.translate(ja_message_err, 'ja')
+        self.mock_popen.return_value = (ja_translate_out, ja_translate_err)
+        self.process.return_value.returncode = 1
+
+        with mock.patch.object(utils, 'LOG') as log:
+            utils.execute(['ls'], check_exit_code=False)
+            self.assertIn(ja_translate_out, str(log.error.call_args_list))
+            self.assertIn(ja_translate_err, str(log.error.call_args_list))
 
     def test_return_code_raise_runtime_do_not_log_fail_as_error(self):
         self.mock_popen.return_value = ('', '')
