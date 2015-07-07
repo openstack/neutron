@@ -83,7 +83,7 @@ class PortSecurityDbCommon(object):
                 NetworkSecurityBinding.network_id == network_id).one()
         except exc.NoResultFound:
             raise psec.PortSecurityBindingNotFound()
-        return binding[psec.PORTSECURITY]
+        return binding.port_security_enabled
 
     def _get_port_security_binding(self, context, port_id):
         try:
@@ -92,7 +92,7 @@ class PortSecurityDbCommon(object):
                 PortSecurityBinding.port_id == port_id).one()
         except exc.NoResultFound:
             raise psec.PortSecurityBindingNotFound()
-        return binding[psec.PORTSECURITY]
+        return binding.port_security_enabled
 
     def _process_port_port_security_update(
         self, context, port_req, port_res):
@@ -130,10 +130,10 @@ class PortSecurityDbCommon(object):
 
     def _make_network_port_security_dict(self, port_security, fields=None):
         res = {'network_id': port_security['network_id'],
-               psec.PORTSECURITY: port_security[psec.PORTSECURITY]}
+               psec.PORTSECURITY: port_security.port_security_enabled}
         return self._fields(res, fields)
 
     def _make_port_security_dict(self, port, fields=None):
         res = {'port_id': port['port_id'],
-               psec.PORTSECURITY: port[psec.PORTSECURITY]}
+               psec.PORTSECURITY: port.port_security_enabled}
         return self._fields(res, fields)
