@@ -175,3 +175,8 @@ class QoSPlugin(qos.QoSPluginBase):
                                          sorts=None, limit=None,
                                          marker=None, page_reverse=False):
         pass
+
+    def get_rule_types(self, context, filters=None, fields=None,
+                       sorts=None, limit=None,
+                       marker=None, page_reverse=False):
+        pass

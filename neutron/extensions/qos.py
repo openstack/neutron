@@ -62,6 +62,10 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'is_visible': True}
+    },
+    'rule_types': {
+        'type': {'allow_post': False, 'allow_put': False,
+                 'is_visible': True}
     }
 }
 
@@ -232,4 +236,10 @@ class QoSPluginBase(service_base.ServicePluginBase):
 
     @abc.abstractmethod
     def delete_policy_bandwidth_limit_rule(self, context, rule_id, policy_id):
+        pass
+
+    @abc.abstractmethod
+    def get_rule_types(self, context, filters=None, fields=None,
+                       sorts=None, limit=None,
+                       marker=None, page_reverse=False):
         pass
