@@ -191,9 +191,7 @@ class HaRouter(router.RouterInfo):
         for gw_ip in gateway_ips:
                 # TODO(Carl) This is repeated everywhere.  A method would
                 # be nice.
-                default_gw = (n_consts.IPv4_ANY if
-                              netaddr.IPAddress(gw_ip).version == 4 else
-                              n_consts.IPv6_ANY)
+                default_gw = n_consts.IP_ANY[netaddr.IPAddress(gw_ip).version]
                 instance = self._get_keepalived_instance()
                 default_gw_rts.append(keepalived.KeepalivedVirtualRoute(
                     default_gw, gw_ip, interface_name))
