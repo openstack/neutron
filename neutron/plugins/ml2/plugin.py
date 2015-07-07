@@ -31,6 +31,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import metadata_rpc
+from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -153,7 +154,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             dvr_rpc.DVRServerRpcCallback(),
             dhcp_rpc.DhcpRpcCallback(),
             agents_db.AgentExtRpcCallback(),
-            metadata_rpc.MetadataRpcCallback()
+            metadata_rpc.MetadataRpcCallback(),
+            resources_rpc.ResourcesServerRpcCallback()
         ]
 
     def _setup_dhcp(self):
@@ -621,6 +623,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_network(self, context, network):
         result, mech_context = self._create_network_with_retries(context,
                                                                  network)
+        self._notify_registry(
+            resources.NETWORK, events.AFTER_CREATE, context, result)
         try:
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
@@ -633,6 +637,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_network_bulk(self, context, networks):
         objects = self._create_bulk_ml2(attributes.NETWORK, context, networks)
+
+        for obj in objects:
+            self._notify_registry(resources.NETWORK,
+                                  events.AFTER_CREATE,
+                                  context,
+                                  obj)
         return [obj['result'] for obj in objects]
 
     def update_network(self, context, id, network):
@@ -654,6 +664,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self, context, updated_network,
                 original_network=original_network)
             self.mechanism_manager.update_network_precommit(mech_context)
+
+        # Notifications must be sent after the above transaction is complete
+        self._notify_registry(
+            resources.NETWORK, events.AFTER_UPDATE, context, updated_network)
 
         # TODO(apech) - handle errors raised by update_network, potentially
         # by re-calling update_network with the previous attributes. For
@@ -1499,3 +1513,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if port:
                 return port.id
         return device
+
+    def _notify_registry(self, resource_type, event_type, context, resource):
+        kwargs = {
+            'context': context,
+            resource_type: resource,
+        }
+        registry.notify(resource_type, event_type, self, **kwargs)
