@@ -80,3 +80,10 @@ class TestIpamUtils(base.BaseTestCase):
         cidr = 'F111::0/64'
         expected = [netaddr.IPRange('F111::1', 'F111::FFFF:FFFF:FFFF:FFFF')]
         self.assertEqual(expected, utils.generate_pools(cidr, None))
+
+    def test_generate_pools_v6_empty(self):
+        # We want to be sure the range will begin and end with an IPv6
+        # address, even if an ambiguous ::/64 cidr is given.
+        cidr = '::/64'
+        expected = [netaddr.IPRange('::1', '::FFFF:FFFF:FFFF:FFFF')]
+        self.assertEqual(expected, utils.generate_pools(cidr, None))
