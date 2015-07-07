@@ -39,6 +39,7 @@ from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
+from neutron.db import l3_dvrscheduler_db
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -300,8 +301,8 @@ class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
 # A L3 routing with L3 agent scheduling service plugin class for tests with
 # plugins that delegate away L3 routing functionality
 class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
-                                            l3_agentschedulers_db.
-                                            L3AgentSchedulerDbMixin):
+                                            l3_dvrscheduler_db.
+                                            L3_DVRsch_db_mixin):
 
     supported_extension_aliases = ["router", "l3_agent_scheduler"]
 
