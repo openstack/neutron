@@ -103,7 +103,7 @@ class TestProcessManager(base.BaseTestCase):
         self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         self.execute = self.execute_p.start()
         self.delete_if_exists = mock.patch(
-            'neutron.openstack.common.fileutils.delete_if_exists').start()
+            'oslo_utils.fileutils.delete_if_exists').start()
         self.ensure_dir = mock.patch.object(
             utils, 'ensure_dir').start()
 
