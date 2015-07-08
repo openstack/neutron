@@ -46,6 +46,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         """
         pass
 
+    @staticmethod
+    def _gateway_ip_str(subnet, cidr_net):
+        if subnet.get('gateway_ip') is attributes.ATTR_NOT_SPECIFIED:
+            return str(netaddr.IPNetwork(cidr_net).network + 1)
+        return subnet.get('gateway_ip')
+
     def _validate_pools_with_subnetpool(self, subnet):
         """Verifies that allocation pools are set correctly
 
@@ -169,18 +175,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         subnet.update(s)
         return subnet, changes
 
-    def _allocate_pools_for_subnet(self, context, subnet):
-        """Create IP allocation pools for a given subnet
-
-        Pools are defined by the 'allocation_pools' attribute,
-        a list of dict objects with 'start' and 'end' keys for
-        defining the pool range.
-        """
-        pools = ipam_utils.generate_pools(subnet['cidr'], subnet['gateway_ip'])
-        return [{'start': str(netaddr.IPAddress(pool.first)),
-                 'end': str(netaddr.IPAddress(pool.last))}
-                for pool in pools]
-
     def _validate_subnet_cidr(self, context, network, new_subnet_cidr):
         """Validate the CIDR for a subnet.
 
@@ -297,15 +291,17 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         pool_2=r_range,
                         subnet_cidr=subnet_cidr)
 
-    def _prepare_allocation_pools(self, context, allocation_pools, subnet):
+    def _prepare_allocation_pools(self, allocation_pools, cidr, gateway_ip):
+        """Returns allocation pools represented as list of IPRanges"""
         if not attributes.is_attr_set(allocation_pools):
-            return self._allocate_pools_for_subnet(context, subnet)
+            return ipam_utils.generate_pools(cidr, gateway_ip)
 
-        self._validate_allocation_pools(allocation_pools, subnet['cidr'])
-        if subnet['gateway_ip']:
-            self._validate_gw_out_of_pools(subnet['gateway_ip'],
+        self._validate_allocation_pools(allocation_pools, cidr)
+        if gateway_ip:
+            self._validate_gw_out_of_pools(gateway_ip,
                                            allocation_pools)
-        return allocation_pools
+        return [netaddr.IPRange(p['start'], p['end'])
+                for p in allocation_pools]
 
     def _validate_gw_out_of_pools(self, gateway_ip, pools):
         for allocation_pool in pools:
@@ -385,10 +381,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                      subnet_args,
                      dns_nameservers,
                      host_routes,
-                     allocation_pools):
-        allocation_pools = self._prepare_allocation_pools(context,
-                                                          allocation_pools,
-                                                          subnet_args)
+                     subnet_request):
         self._validate_subnet_cidr(context, network, subnet_args['cidr'])
         self._validate_network_subnetpools(network,
                                            subnet_args['subnetpool_id'],
@@ -410,6 +403,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     nexthop=rt['nexthop'])
                 context.session.add(route)
 
-        self._save_allocation_pools(context, subnet, allocation_pools)
+        self._save_allocation_pools(context, subnet,
+                                    subnet_request.allocation_pools)
 
         return subnet

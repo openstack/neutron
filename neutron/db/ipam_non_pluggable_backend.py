@@ -188,14 +188,16 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
     def _save_allocation_pools(self, context, subnet, allocation_pools):
         for pool in allocation_pools:
+            first_ip = str(netaddr.IPAddress(pool.first, pool.version))
+            last_ip = str(netaddr.IPAddress(pool.last, pool.version))
             ip_pool = models_v2.IPAllocationPool(subnet=subnet,
-                                                 first_ip=pool['start'],
-                                                 last_ip=pool['end'])
+                                                 first_ip=first_ip,
+                                                 last_ip=last_ip)
             context.session.add(ip_pool)
             ip_range = models_v2.IPAvailabilityRange(
                 ipallocationpool=ip_pool,
-                first_ip=pool['start'],
-                last_ip=pool['end'])
+                first_ip=first_ip,
+                last_ip=last_ip)
             context.session.add(ip_range)
 
     def _allocate_ips_for_port_and_store(self, context, port, port_id):
@@ -474,6 +476,16 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             subnetpool = self._get_subnetpool(context, subnetpool_id)
             self._validate_ip_version_with_subnetpool(subnet, subnetpool)
 
+        # gateway_ip and allocation pools should be validated or generated
+        # only for specific request
+        if subnet['cidr'] is not attributes.ATTR_NOT_SPECIFIED:
+            subnet['gateway_ip'] = self._gateway_ip_str(subnet,
+                                                        subnet['cidr'])
+            # allocation_pools are converted to list of IPRanges
+            subnet['allocation_pools'] = self._prepare_allocation_pools(
+                subnet['allocation_pools'],
+                subnet['cidr'],
+                subnet['gateway_ip'])
         subnet_request = ipam.SubnetRequestFactory.get_request(context,
                                                                subnet,
                                                                subnetpool)
@@ -492,5 +504,5 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                        subnetpool_id),
                                    subnet['dns_nameservers'],
                                    subnet['host_routes'],
-                                   subnet['allocation_pools'])
+                                   subnet_request)
         return subnet

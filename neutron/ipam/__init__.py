@@ -284,4 +284,6 @@ class SubnetRequestFactory(object):
         else:
             return SpecificSubnetRequest(subnet['tenant_id'],
                                          subnet_id,
-                                         cidr)
+                                         cidr,
+                                         subnet.get('gateway_ip'),
+                                         subnet.get('allocation_pools'))
