@@ -282,8 +282,6 @@ class IPRule(SubProcessBase):
 class IpRuleCommand(IpCommandBase):
     COMMAND = 'rule'
 
-    ALL = {4: constants.IPv4_ANY, 6: constants.IPv6_ANY}
-
     def _parse_line(self, ip_version, line):
         # Typical rules from 'ip rule show':
         # 4030201:  from 1.2.3.4/24 lookup 10203040
@@ -299,7 +297,7 @@ class IpRuleCommand(IpCommandBase):
 
         # Canonicalize some arguments
         if settings.get('from') == "all":
-            settings['from'] = self.ALL[ip_version]
+            settings['from'] = constants.IP_ANY[ip_version]
         if 'lookup' in settings:
             settings['table'] = settings.pop('lookup')
 
