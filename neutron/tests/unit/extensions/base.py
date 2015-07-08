@@ -84,6 +84,7 @@ class ExtensionTestCase(testlib_api.WebTestCase):
             quota.QUOTAS._driver = None
             cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
                                   group='QUOTAS')
+        setattr(instance, 'path_prefix', resource_prefix)
 
         class ExtensionTestExtensionManager(object):
             def get_resources(self):
