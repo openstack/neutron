@@ -43,16 +43,19 @@ def generate_pools(cidr, gateway_ip):
     """
     # Auto allocate the pool around gateway_ip
     net = netaddr.IPNetwork(cidr)
-    if net.first == net.last:
+    ip_version = net.version
+    first = netaddr.IPAddress(net.first, ip_version)
+    last = netaddr.IPAddress(net.last, ip_version)
+    if first == last:
         # handle single address subnet case
-        return [netaddr.IPRange(net.first, net.last)]
-    first_ip = net.first + 1
+        return [netaddr.IPRange(first, last)]
+    first_ip = first + 1
     # last address is broadcast in v4
-    last_ip = net.last - (net.version == 4)
+    last_ip = last - (ip_version == 4)
     if first_ip >= last_ip:
         # /31 lands here
         return []
     ipset = netaddr.IPSet(netaddr.IPRange(first_ip, last_ip))
     if gateway_ip:
-        ipset.remove(netaddr.IPAddress(gateway_ip))
+        ipset.remove(netaddr.IPAddress(gateway_ip, ip_version))
     return list(ipset.iter_ipranges())
