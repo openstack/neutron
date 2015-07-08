@@ -12,8 +12,20 @@
 
 from neutron.objects.qos import policy
 from neutron.tests.unit.objects import test_base
+from neutron.tests.unit import testlib_api
 
 
-class QosPolicyObjectTestCase(test_base.BaseObjectTestCase):
+class QosPolicyBaseTestCase(object):
 
     _test_class = policy.QosPolicy
+
+
+class QosPolicyObjectTestCase(QosPolicyBaseTestCase,
+                              test_base.BaseObjectIfaceTestCase):
+    pass
+
+
+class QosPolicyDbObjectTestCase(QosPolicyBaseTestCase,
+                                test_base.BaseDbObjectTestCase,
+                                testlib_api.SqlTestCase):
+    pass
