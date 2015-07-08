@@ -25,7 +25,7 @@ from sqlalchemy.orm import joinedload
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
@@ -104,7 +104,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             subnet = ip['subnet_id']
             filter_sub = {'fixed_ips': {'subnet_id': [subnet]},
                           'device_owner':
-                          [q_const.DEVICE_OWNER_DVR_INTERFACE]}
+                          [n_const.DEVICE_OWNER_DVR_INTERFACE]}
             router_id = None
             ports = self._core_plugin.get_ports(context, filters=filter_sub)
             for port in ports:
@@ -126,7 +126,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             vm_subnet = fixedip['subnet_id']
             filter_sub = {'fixed_ips': {'subnet_id': [vm_subnet]},
                           'device_owner':
-                          [q_const.DEVICE_OWNER_DVR_INTERFACE]}
+                          [n_const.DEVICE_OWNER_DVR_INTERFACE]}
             subnet_ports = self._core_plugin.get_ports(
                 context, filters=filter_sub)
             for subnet_port in subnet_ports:
@@ -188,7 +188,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 continue
             filter_rtr = {'device_id': [router_id],
                           'device_owner':
-                          [q_const.DEVICE_OWNER_DVR_INTERFACE]}
+                          [n_const.DEVICE_OWNER_DVR_INTERFACE]}
             int_ports = self._core_plugin.get_ports(
                 admin_context, filters=filter_rtr)
             for prt in int_ports:
@@ -201,7 +201,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                     dvr_binding['router_id'] = None
                     dvr_binding.update(dvr_binding)
             agent = self._get_agent_by_type_and_host(context,
-                                                     q_const.AGENT_TYPE_L3,
+                                                     n_const.AGENT_TYPE_L3,
                                                      port_host)
             info = {'router_id': router_id, 'host': port_host,
                     'agent_id': str(agent.id)}
@@ -320,7 +320,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def _get_active_l3_agent_routers_sync_data(self, context, host, agent,
                                                router_ids):
-        if n_utils.is_extension_supported(self, q_const.L3_HA_MODE_EXT_ALIAS):
+        if n_utils.is_extension_supported(self, n_const.L3_HA_MODE_EXT_ALIAS):
             return self.get_ha_sync_data_for_host(context, host,
                                                   router_ids=router_ids,
                                                   active=True)

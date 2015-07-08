@@ -19,7 +19,7 @@ from networking_ibm.sdnve.l3plugin import sdnve_l3driver
 from oslo_log import log as logging
 from oslo_utils import excutils
 
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
@@ -141,7 +141,7 @@ class SdnveL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 subnet = super(SdnveL3ServicePlugin, self).\
                     get_subnet(context, subnet_id)
                 device_filter = {'device_id': [router_id],
-                    'device_owner': [q_const.DEVICE_OWNER_ROUTER_INTF],
+                    'device_owner': [n_const.DEVICE_OWNER_ROUTER_INTF],
                     'network_id': [subnet['network_id']]}
                 ports = super(SdnveL3ServicePlugin, self).get_ports(context,
                                                    filters=device_filter)

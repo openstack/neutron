@@ -29,9 +29,9 @@ from oslo_service import loopingcall
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
-from neutron.common import constants as q_constants
+from neutron.common import constants as n_constants
 from neutron.common import topics
-from neutron.common import utils as q_utils
+from neutron.common import utils as n_utils
 from neutron import context
 from neutron.i18n import _LE, _LI
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
@@ -78,9 +78,9 @@ class SriovNicSwitchAgent(object):
         self.agent_state = {
             'binary': 'neutron-sriov-nic-agent',
             'host': cfg.CONF.host,
-            'topic': q_constants.L2_AGENT_TOPIC,
+            'topic': n_constants.L2_AGENT_TOPIC,
             'configurations': configurations,
-            'agent_type': q_constants.AGENT_TYPE_NIC_SWITCH,
+            'agent_type': n_constants.AGENT_TYPE_NIC_SWITCH,
             'start_flag': True}
 
         # Stores port update notifications for processing in the main loop
@@ -297,7 +297,7 @@ class SriovNicAgentConfigParser(object):
 
         Parse and validate the consistency in both mappings
         """
-        self.device_mappings = q_utils.parse_mappings(
+        self.device_mappings = n_utils.parse_mappings(
             cfg.CONF.SRIOV_NIC.physical_device_mappings)
         self.exclude_devices = config.parse_exclude_devices(
             cfg.CONF.SRIOV_NIC.exclude_devices)

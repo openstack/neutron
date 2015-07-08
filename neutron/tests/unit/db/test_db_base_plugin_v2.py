@@ -1074,13 +1074,13 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     # Admin request - must return both ports
                     self._test_list_resources('port', [port1, port2])
                     # Tenant_1 request - must return single port
-                    q_context = context.Context('', 'tenant_1')
+                    n_context = context.Context('', 'tenant_1')
                     self._test_list_resources('port', [port1],
-                                              neutron_context=q_context)
+                                              neutron_context=n_context)
                     # Tenant_2 request - must return single port
-                    q_context = context.Context('', 'tenant_2')
+                    n_context = context.Context('', 'tenant_2')
                     self._test_list_resources('port', [port2],
-                                              neutron_context=q_context)
+                                              neutron_context=n_context)
 
     def test_list_ports_with_sort_native(self):
         if self._skip_native_sorting:

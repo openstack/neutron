@@ -70,8 +70,8 @@ class Dummy(object):
     @classmethod
     def get_resources(cls):
         """Returns Extended Resource for dummy management."""
-        q_mgr = manager.NeutronManager.get_instance()
-        dummy_inst = q_mgr.get_service_plugins()['DUMMY']
+        n_mgr = manager.NeutronManager.get_instance()
+        dummy_inst = n_mgr.get_service_plugins()['DUMMY']
         controller = base.create_resource(
             COLLECTION_NAME, RESOURCE_NAME, dummy_inst,
             RESOURCE_ATTRIBUTE_MAP[COLLECTION_NAME])

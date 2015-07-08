@@ -517,13 +517,13 @@ class TunnelTest(object):
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
 
-            q_agent = self._build_agent()
+            n_agent = self._build_agent()
 
             # Hack to test loop
             # We start method and expect it will raise after 2nd loop
             # If something goes wrong, assert_has_calls below will catch it
             try:
-                q_agent.daemon_loop()
+                n_agent.daemon_loop()
             except Exception:
                 pass
 
