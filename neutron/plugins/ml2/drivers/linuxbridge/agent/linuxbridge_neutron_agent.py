@@ -47,6 +47,7 @@ from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager \
     import l2population_rpc as l2pop_rpc
+from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst
@@ -768,6 +769,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         self.quitting_rpc_timeout = quitting_rpc_timeout
 
     def start(self):
+        self.prevent_arp_spoofing = cfg.CONF.AGENT.prevent_arp_spoofing
         self.setup_linux_bridge(self.interface_mappings)
         configurations = {'interface_mappings': self.interface_mappings}
         if self.br_mgr.vxlan_mode != lconst.VXLAN_NONE:
@@ -895,6 +897,11 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
             if 'port_id' in device_details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': device_details})
+                if self.prevent_arp_spoofing:
+                    port = self.br_mgr.get_tap_device_name(
+                        device_details['port_id'])
+                    arp_protect.setup_arp_spoofing_protection(port,
+                                                              device_details)
                 if device_details['admin_state_up']:
                     # create the networking for the port
                     network_type = device_details.get('network_type')
@@ -948,6 +955,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                 LOG.info(_LI("Port %s updated."), device)
             else:
                 LOG.debug("Device %s not defined on plugin", device)
+        if self.prevent_arp_spoofing:
+            arp_protect.delete_arp_spoofing_protection(devices)
         return resync
 
     def scan_devices(self, previous, sync):
@@ -968,6 +977,10 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                         'current': set(),
                         'updated': set(),
                         'removed': set()}
+            # clear any orphaned ARP spoofing rules (e.g. interface was
+            # manually deleted)
+            if self.prevent_arp_spoofing:
+                arp_protect.delete_unreferenced_arp_protection(current_devices)
 
         if sync:
             # This is the first iteration, or the previous one had a problem.
