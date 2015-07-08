@@ -29,6 +29,8 @@ from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
+    as ovs_agent
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
@@ -346,6 +348,40 @@ class TestOvsNeutronAgent(object):
             update_devices.assert_called_once_with(mock.ANY, devices_up,
                                                    devices_down,
                                                    mock.ANY, mock.ANY)
+
+    def _test_arp_spoofing(self, enable_prevent_arp_spoofing):
+        self.agent.prevent_arp_spoofing = enable_prevent_arp_spoofing
+
+        ovs_db_list = [{'name': 'fake_device', 'tag': []}]
+        self.agent.local_vlan_map = {
+            'fake_network': ovs_agent.LocalVLANMapping(1, None, None, 1)}
+        vif_port = mock.Mock()
+        vif_port.port_name = 'fake_device'
+        vif_port.ofport = 1
+        need_binding_ports = [{'network_id': 'fake_network',
+                               'vif_port': vif_port,
+                               'device': 'fake_device',
+                               'admin_state_up': True}]
+        with mock.patch.object(
+            self.agent.plugin_rpc, 'update_device_list',
+            return_value={'devices_up': [],
+                          'devices_down': [],
+                          'failed_devices_up': [],
+                          'failed_devices_down': []}), \
+                mock.patch.object(self.agent,
+                                  'int_br') as int_br, \
+                mock.patch.object(
+                    self.agent,
+                    'setup_arp_spoofing_protection') as setup_arp:
+            int_br.db_list.return_value = ovs_db_list
+            self.agent._bind_devices(need_binding_ports)
+            self.assertEqual(enable_prevent_arp_spoofing, setup_arp.called)
+
+    def test_setup_arp_spoofing_protection_enable(self):
+        self._test_arp_spoofing(True)
+
+    def test_setup_arp_spoofing_protection_disabled(self):
+        self._test_arp_spoofing(False)
 
     def _mock_treat_devices_added_updated(self, details, port, func_name):
         """Mock treat devices added or updated.
@@ -1055,28 +1091,6 @@ class TestOvsNeutronAgent(object):
             self.agent._handle_sigterm(None, None)
         self.assertFalse(mock_set_rpc.called)
 
-    def test_arp_spoofing_disabled(self):
-        self.agent.prevent_arp_spoofing = False
-        # all of this is required just to get to the part of
-        # treat_devices_added_or_updated that checks the prevent_arp_spoofing
-        # flag
-        self.agent.int_br = mock.create_autospec(self.agent.int_br)
-        self.agent.treat_vif_port = mock.Mock()
-        self.agent.get_vif_port_by_id = mock.Mock(return_value=FakeVif())
-        self.agent.plugin_rpc = mock.Mock()
-        plist = [{a: a for a in ('port_id', 'network_id', 'network_type',
-                                 'physical_network', 'segmentation_id',
-                                 'admin_state_up', 'fixed_ips', 'device',
-                                 'device_owner')}]
-        (self.agent.plugin_rpc.get_devices_details_list_and_failed_devices.
-            return_value) = {'devices': plist, 'failed_devices': []}
-        self.agent.plugin_rpc.update_device_list.return_value = {
-            'devices_up': plist, 'devices_down': [], 'failed_devices_up': [],
-            'failed_devices_down': []}
-        self.agent.setup_arp_spoofing_protection = mock.Mock()
-        self.agent.treat_devices_added_or_updated([], False)
-        self.assertFalse(self.agent.setup_arp_spoofing_protection.called)
-
     def test_arp_spoofing_port_security_disabled(self):
         int_br = mock.create_autospec(self.agent.int_br)
         self.agent.setup_arp_spoofing_protection(
@@ -1146,9 +1160,8 @@ class TestOvsNeutronAgent(object):
         # simulate port1 was moved
         newmap = {'port2': 2, 'port1': 90}
         self.agent.int_br.get_vif_port_to_ofport_map.return_value = newmap
-        self.agent.update_stale_ofport_rules()
-        self.agent.treat_devices_added_or_updated.assert_called_with(
-            ['port1'], ovs_restarted=False)
+        ofport_changed_ports = self.agent.update_stale_ofport_rules()
+        self.assertEqual(['port1'], ofport_changed_ports)
 
     def test__setup_tunnel_port_while_new_mapping_is_added(self):
         """
