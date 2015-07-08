@@ -147,8 +147,8 @@ def get_sorts(request, attr_info):
                 'asc': constants.SORT_DIRECTION_ASC,
                 'desc': constants.SORT_DIRECTION_DESC})
         raise exc.HTTPBadRequest(explanation=msg)
-    return zip(sort_keys,
-               [x == constants.SORT_DIRECTION_ASC for x in sort_dirs])
+    return list(zip(sort_keys,
+                    [x == constants.SORT_DIRECTION_ASC for x in sort_dirs]))
 
 
 def get_page_reverse(request):
