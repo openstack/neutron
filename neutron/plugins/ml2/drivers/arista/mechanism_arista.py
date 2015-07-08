@@ -22,6 +22,7 @@ from oslo_log import log as logging
 
 from neutron.common import constants as n_const
 from neutron.i18n import _LI
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api
 from neutron.plugins.ml2.drivers.arista import config  # noqa
@@ -69,6 +70,9 @@ class AristaDriver(driver_api.MechanismDriver):
 
         network = context.current
         segments = context.network_segments
+        if segments[0][driver_api.NETWORK_TYPE] != p_const.TYPE_VLAN:
+            # If network type is not VLAN, do nothing
+            return
         network_id = network['id']
         tenant_id = network['tenant_id']
         if not tenant_id:
@@ -165,6 +169,10 @@ class AristaDriver(driver_api.MechanismDriver):
     def delete_network_postcommit(self, context):
         """Send network delete request to Arista HW."""
         network = context.current
+        segments = context.network_segments
+        if segments[0][driver_api.NETWORK_TYPE] != p_const.TYPE_VLAN:
+            # If networtk type is not VLAN, do nothing
+            return
         network_id = network['id']
         tenant_id = network['tenant_id']
         if not tenant_id:
@@ -202,6 +210,9 @@ class AristaDriver(driver_api.MechanismDriver):
             if not tenant_id:
                 tenant_id = context._plugin_context.tenant_id
             with self.eos_sync_lock:
+                if not db_lib.is_network_provisioned(tenant_id, network_id):
+                    # Ignore this request if network is not provisioned
+                    return
                 db_lib.remember_tenant(tenant_id)
                 db_lib.remember_vm(device_id, host, port_id,
                                network_id, tenant_id)
@@ -390,6 +401,9 @@ class AristaDriver(driver_api.MechanismDriver):
         device_owner = port['device_owner']
 
         try:
+            if not db_lib.is_network_provisioned(tenant_id, network_id):
+                # If we do not have network associated with this, ignore it
+                return
             hostname = self._host_name(host)
             if device_owner == n_const.DEVICE_OWNER_DHCP:
                 self.rpc.unplug_dhcp_port_from_network(device_id,
