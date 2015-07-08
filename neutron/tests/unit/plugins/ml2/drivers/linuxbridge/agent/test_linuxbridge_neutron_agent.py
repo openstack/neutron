@@ -280,16 +280,15 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                        'added': set(['tap3', 'tap4']),
                        'updated': set(['tap2', 'tap3']),
                        'removed': set(['tap1'])}
-        agent.sg_agent.prepare_devices_filter = mock.Mock()
-        agent.sg_agent.refresh_firewall = mock.Mock()
+        agent.sg_agent.setup_port_filters = mock.Mock()
         agent.treat_devices_added_updated = mock.Mock(return_value=False)
         agent.treat_devices_removed = mock.Mock(return_value=False)
 
         agent.process_network_devices(device_info)
 
-        agent.sg_agent.prepare_devices_filter.assert_called_with(
-                set(['tap3', 'tap4']))
-        self.assertTrue(agent.sg_agent.refresh_firewall.called)
+        agent.sg_agent.setup_port_filters.assert_called_with(
+                device_info['added'],
+                device_info['updated'])
         agent.treat_devices_added_updated.assert_called_with(set(['tap2',
                                                                   'tap3',
                                                                   'tap4']))
