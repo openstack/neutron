@@ -291,7 +291,8 @@ class RouterInfo(object):
                          prefix=prefix)
 
         ip_cidrs = common_utils.fixed_ip_cidrs(fixed_ips)
-        self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name)
+        self.driver.init_router_port(
+            interface_name, ip_cidrs, namespace=ns_name)
         for fixed_ip in fixed_ips:
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,
@@ -456,14 +457,15 @@ class RouterInfo(object):
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
 
         gateway_ips, enable_ra_on_gw = self._get_external_gw_ips(ex_gw_port)
-        self.driver.init_l3(interface_name,
-                            ip_cidrs,
-                            namespace=ns_name,
-                            gateway_ips=gateway_ips,
-                            extra_subnets=ex_gw_port.get('extra_subnets', []),
-                            preserve_ips=preserve_ips,
-                            enable_ra_on_gw=enable_ra_on_gw,
-                            clean_connections=True)
+        self.driver.init_router_port(
+            interface_name,
+            ip_cidrs,
+            namespace=ns_name,
+            gateway_ips=gateway_ips,
+            extra_subnets=ex_gw_port.get('extra_subnets', []),
+            preserve_ips=preserve_ips,
+            enable_ra_on_gw=enable_ra_on_gw,
+            clean_connections=True)
         for fixed_ip in ex_gw_port['fixed_ips']:
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,
