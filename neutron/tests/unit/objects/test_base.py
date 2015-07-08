@@ -61,7 +61,7 @@ def get_obj_fields(obj):
 
 class BaseObjectTestCase(test_base.BaseTestCase):
 
-    test_class = FakeNeutronObject
+    _test_class = FakeNeutronObject
 
     def setUp(self):
         super(BaseObjectTestCase, self).setUp()
@@ -72,35 +72,35 @@ class BaseObjectTestCase(test_base.BaseTestCase):
     @classmethod
     def _get_random_fields(cls):
         fields = {}
-        for field in cls.test_class.fields:
-            field_obj = cls.test_class.fields[field]
+        for field in cls._test_class.fields:
+            field_obj = cls._test_class.fields[field]
             fields[field] = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]()
         return fields
 
     @classmethod
     def _is_test_class(cls, obj):
-        return isinstance(obj, cls.test_class)
+        return isinstance(obj, cls._test_class)
 
     def test_get_by_id(self):
         with mock.patch.object(db_api, 'get_object',
                                return_value=self.db_obj) as get_object_mock:
-            obj = self.test_class.get_by_id(self.context, id='fake_id')
+            obj = self._test_class.get_by_id(self.context, id='fake_id')
             self.assertTrue(self._is_test_class(obj))
             self.assertEqual(self.db_obj, get_obj_fields(obj))
             get_object_mock.assert_called_once_with(
-                self.context, self.test_class.db_model, 'fake_id')
+                self.context, self._test_class.db_model, 'fake_id')
 
     def test_get_objects(self):
         with mock.patch.object(db_api, 'get_objects',
                                return_value=self.db_objs) as get_objects_mock:
-            objs = self.test_class.get_objects(self.context)
+            objs = self._test_class.get_objects(self.context)
             self.assertFalse(
                 filter(lambda obj: not self._is_test_class(obj), objs))
             self.assertEqual(
                 sorted(self.db_objs),
                 sorted(get_obj_fields(obj) for obj in objs))
             get_objects_mock.assert_called_once_with(
-                self.context, self.test_class.db_model)
+                self.context, self._test_class.db_model)
 
     def _check_equal(self, obj, db_obj):
         self.assertEqual(
@@ -110,17 +110,17 @@ class BaseObjectTestCase(test_base.BaseTestCase):
     def test_create(self):
         with mock.patch.object(db_api, 'create_object',
                                return_value=self.db_obj) as create_mock:
-            obj = self.test_class(self.context, **self.db_obj)
+            obj = self._test_class(self.context, **self.db_obj)
             self._check_equal(obj, self.db_obj)
             obj.create()
             self._check_equal(obj, self.db_obj)
             create_mock.assert_called_once_with(
-                self.context, self.test_class.db_model, self.db_obj)
+                self.context, self._test_class.db_model, self.db_obj)
 
     def test_create_updates_from_db_object(self):
         with mock.patch.object(db_api, 'create_object',
                                return_value=self.db_obj):
-            obj = self.test_class(self.context, **self.db_objs[1])
+            obj = self._test_class(self.context, **self.db_objs[1])
             self._check_equal(obj, self.db_objs[1])
             obj.create()
             self._check_equal(obj, self.db_obj)
@@ -128,7 +128,7 @@ class BaseObjectTestCase(test_base.BaseTestCase):
     def test_update_no_changes(self):
         with mock.patch.object(db_api, 'update_object',
                                return_value=self.db_obj) as update_mock:
-            obj = self.test_class(self.context, **self.db_obj)
+            obj = self._test_class(self.context, **self.db_obj)
             self._check_equal(obj, self.db_obj)
             obj.update()
             self.assertTrue(update_mock.called)
@@ -142,27 +142,27 @@ class BaseObjectTestCase(test_base.BaseTestCase):
     def test_update_changes(self):
         with mock.patch.object(db_api, 'update_object',
                                return_value=self.db_obj) as update_mock:
-            obj = self.test_class(self.context, **self.db_obj)
+            obj = self._test_class(self.context, **self.db_obj)
             self._check_equal(obj, self.db_obj)
             obj.update()
             self._check_equal(obj, self.db_obj)
             update_mock.assert_called_once_with(
-                self.context, self.test_class.db_model,
+                self.context, self._test_class.db_model,
                 self.db_obj['id'], self.db_obj)
 
     def test_update_updates_from_db_object(self):
         with mock.patch.object(db_api, 'update_object',
                                return_value=self.db_obj):
-            obj = self.test_class(self.context, **self.db_objs[1])
+            obj = self._test_class(self.context, **self.db_objs[1])
             self._check_equal(obj, self.db_objs[1])
             obj.update()
             self._check_equal(obj, self.db_obj)
 
     @mock.patch.object(db_api, 'delete_object')
     def test_delete(self, delete_mock):
-        obj = self.test_class(self.context, **self.db_obj)
+        obj = self._test_class(self.context, **self.db_obj)
         self._check_equal(obj, self.db_obj)
         obj.delete()
         self._check_equal(obj, self.db_obj)
         delete_mock.assert_called_once_with(
-            self.context, self.test_class.db_model, self.db_obj['id'])
+            self.context, self._test_class.db_model, self.db_obj['id'])

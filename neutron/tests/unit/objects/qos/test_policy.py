@@ -16,4 +16,4 @@ from neutron.tests.unit.objects import test_base
 
 class QosPolicyObjectTestCase(test_base.BaseObjectTestCase):
 
-    test_class = policy.QosPolicy
+    _test_class = policy.QosPolicy
