@@ -67,6 +67,40 @@ class FakePluginWithExtension(object):
         self._log("method_to_support_foxnsox_extension", context)
 
 
+class ExtensionPathTest(base.BaseTestCase):
+
+    def setUp(self):
+        self.base_path = extensions.get_extensions_path()
+        super(ExtensionPathTest, self).setUp()
+
+    def test_get_extensions_path_with_plugins(self):
+        path = extensions.get_extensions_path(
+            {constants.CORE: FakePluginWithExtension()})
+        self.assertEqual(path,
+                         '%s:neutron/tests/unit/extensions' % self.base_path)
+
+    def test_get_extensions_path_no_extensions(self):
+        # Reset to default value, as it's overriden by base class
+        cfg.CONF.set_override('api_extensions_path', '')
+        path = extensions.get_extensions_path()
+        self.assertEqual(path, self.base_path)
+
+    def test_get_extensions_path_single_extension(self):
+        cfg.CONF.set_override('api_extensions_path', 'path1')
+        path = extensions.get_extensions_path()
+        self.assertEqual(path, '%s:path1' % self.base_path)
+
+    def test_get_extensions_path_multiple_extensions(self):
+        cfg.CONF.set_override('api_extensions_path', 'path1:path2')
+        path = extensions.get_extensions_path()
+        self.assertEqual(path, '%s:path1:path2' % self.base_path)
+
+    def test_get_extensions_path_duplicate_extensions(self):
+        cfg.CONF.set_override('api_extensions_path', 'path1:path1')
+        path = extensions.get_extensions_path()
+        self.assertEqual(path, '%s:path1' % self.base_path)
+
+
 class PluginInterfaceTest(base.BaseTestCase):
     def test_issubclass_hook(self):
         class A(object):

@@ -38,65 +38,63 @@ _get_path = test_base._get_path
 
 class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
     def setUp(self):
+        self.service_providers = mock.patch.object(
+            provconf.NeutronModule, 'service_providers').start()
         super(ServiceTypeManagerTestCase, self).setUp()
-        st_db.ServiceTypeManager._instance = None
-        self.manager = st_db.ServiceTypeManager.get_instance()
         self.ctx = context.get_admin_context()
 
+    def _set_override(self, service_providers):
+        self.service_providers.return_value = service_providers
+        st_db.ServiceTypeManager._instance = None
+        self.manager = st_db.ServiceTypeManager.get_instance()
+        for provider in service_providers:
+            self.manager.add_provider_configuration(
+                provider.split(':')[0], provconf.ProviderConfiguration())
+
     def test_service_provider_driver_not_unique(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver'],
-                              'service_providers')
+        self._set_override([constants.LOADBALANCER + ':lbaas:driver'])
         prov = {'service_type': constants.LOADBALANCER,
                 'name': 'name2',
                 'driver': 'driver',
                 'default': False}
-        self.manager._load_conf()
         self.assertRaises(
-            n_exc.Invalid, self.manager.conf.add_provider, prov)
+            n_exc.Invalid,
+            self.manager.config['LOADBALANCER'].add_provider, prov)
 
     def test_get_service_providers(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver_path',
-                               constants.DUMMY + ':dummy:dummy_dr'],
-                              'service_providers')
+        """Test that get_service_providers filters correctly."""
+        self._set_override(
+            [constants.LOADBALANCER +
+             ':lbaas:driver_path1',
+             constants.FIREWALL +
+             ':fwaas:driver_path2'])
         ctx = context.get_admin_context()
-        provconf.parse_service_provider_opt()
-        self.manager._load_conf()
-        res = self.manager.get_service_providers(ctx)
-        self.assertEqual(len(res), 2)
-
-        res = self.manager.get_service_providers(
-            ctx,
-            filters=dict(service_type=[constants.DUMMY])
-        )
-        self.assertEqual(len(res), 1)
-
         res = self.manager.get_service_providers(
             ctx,
             filters=dict(service_type=[constants.LOADBALANCER])
         )
         self.assertEqual(len(res), 1)
 
+        res = self.manager.get_service_providers(
+            ctx,
+            filters=dict(service_type=[constants.FIREWALL])
+        )
+        self.assertEqual(len(res), 1)
+
     def test_multiple_default_providers_specified_for_service(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas1:driver_path:default',
-                               constants.LOADBALANCER +
-                               ':lbaas2:driver_path:default'],
-                              'service_providers')
-        self.assertRaises(n_exc.Invalid, self.manager._load_conf)
+        self.assertRaises(
+            n_exc.Invalid,
+            self._set_override,
+            [constants.LOADBALANCER +
+            ':lbaas1:driver_path:default',
+            constants.LOADBALANCER +
+            ':lbaas2:driver_path:default'])
 
     def test_get_default_provider(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas1:driver_path:default',
-                               constants.DUMMY +
-                               ':lbaas2:driver_path2'],
-                              'service_providers')
-        self.manager._load_conf()
+        self._set_override([constants.LOADBALANCER +
+                            ':lbaas1:driver_path:default',
+                            constants.DUMMY +
+                            ':lbaas2:driver_path2'])
         # can pass None as a context
         p = self.manager.get_default_service_provider(None,
                                                       constants.LOADBALANCER)
@@ -112,13 +110,10 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
         )
 
     def test_add_resource_association(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas1:driver_path:default',
-                               constants.DUMMY +
-                               ':lbaas2:driver_path2'],
-                              'service_providers')
-        self.manager._load_conf()
+        self._set_override([constants.LOADBALANCER +
+                            ':lbaas1:driver_path:default',
+                            constants.DUMMY +
+                            ':lbaas2:driver_path2'])
         ctx = context.get_admin_context()
         self.manager.add_resource_association(ctx,
                                               constants.LOADBALANCER,
@@ -130,13 +125,10 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
         ctx.session.delete(assoc)
 
     def test_invalid_resource_association(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas1:driver_path:default',
-                               constants.DUMMY +
-                               ':lbaas2:driver_path2'],
-                              'service_providers')
-        self.manager._load_conf()
+        self._set_override([constants.LOADBALANCER +
+                            ':lbaas1:driver_path:default',
+                            constants.DUMMY +
+                            ':lbaas2:driver_path2'])
         ctx = context.get_admin_context()
         self.assertRaises(provconf.ServiceProviderNotFound,
                           self.manager.add_resource_association,
@@ -200,13 +192,19 @@ class ServiceTypeExtensionTestCase(ServiceTypeExtensionTestCaseBase):
 class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
     """Tests ServiceTypemanager as a public API."""
     def setUp(self):
+        self.service_providers = mock.patch.object(
+            provconf.NeutronModule, 'service_providers').start()
+        service_providers = [
+            constants.LOADBALANCER + ':lbaas:driver_path',
+            constants.DUMMY + ':dummy:dummy_dr'
+        ]
+        self.service_providers.return_value = service_providers
         # Blank out service type manager instance
         st_db.ServiceTypeManager._instance = None
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver_path',
-                               constants.DUMMY + ':dummy:dummy_dr'],
-                              'service_providers')
+        self.manager = st_db.ServiceTypeManager.get_instance()
+        for provider in service_providers:
+            self.manager.add_provider_configuration(
+                provider.split(':')[0], provconf.ProviderConfiguration())
         super(ServiceTypeManagerExtTestCase, self).setUp()
 
     def _list_service_providers(self):
@@ -217,4 +215,4 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
         self.assertEqual(res.status_int, webexc.HTTPOk.code)
         data = self.deserialize(res)
         self.assertIn('service_providers', data)
-        self.assertEqual(len(data['service_providers']), 2)
+        self.assertGreaterEqual(len(data['service_providers']), 2)

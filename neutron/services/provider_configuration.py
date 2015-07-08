@@ -13,14 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import importlib
+import os
+
 from oslo_config import cfg
 from oslo_log import log as logging
+from six.moves import configparser as ConfigParser
 import stevedore
 
 from neutron.common import exceptions as n_exc
-from neutron.common import repos
 from neutron.i18n import _LW
-from neutron.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
 
@@ -34,6 +36,67 @@ serviceprovider_opts = [
 ]
 
 cfg.CONF.register_opts(serviceprovider_opts, 'service_providers')
+
+
+class NeutronModule(object):
+    """A Neutron extension module."""
+
+    def __init__(self, service_module):
+        self.module_name = service_module
+        self.repo = {
+            'mod': self._import_or_none(),
+            'ini': None
+        }
+
+    def _import_or_none(self):
+            try:
+                return importlib.import_module(self.module_name)
+            except ImportError:
+                return None
+
+    def installed(self):
+        LOG.debug("NeutronModule installed = %s", self.module_name)
+        return self.module_name
+
+    def module(self):
+        return self.repo['mod']
+
+    # Return an INI parser for the child module. oslo.config is a bit too
+    # magical in its INI loading, and in one notable case, we need to merge
+    # together the [service_providers] section across at least four
+    # repositories.
+    def ini(self):
+        if self.repo['ini'] is None:
+            neutron_dir = None
+            try:
+                neutron_dir = cfg.CONF.config_dir
+            except cfg.NoSuchOptError:
+                pass
+
+            if neutron_dir is None:
+                neutron_dir = '/etc/neutron'
+
+            ini = ConfigParser.SafeConfigParser()
+            ini_path = os.path.join(neutron_dir, '%s.conf' % self.module_name)
+            if os.path.exists(ini_path):
+                ini.read(ini_path)
+
+            self.repo['ini'] = ini
+
+        return self.repo['ini']
+
+    def service_providers(self):
+        ini = self.ini()
+
+        sp = []
+        try:
+            for name, value in ini.items('service_providers'):
+                if name == 'service_provider':
+                    sp.append(value)
+        except ConfigParser.NoSectionError:
+            pass
+
+        return sp
 
 
 #global scope function that should be used in service APIs
@@ -65,32 +128,16 @@ def get_provider_driver_class(driver, namespace=SERVICE_PROVIDERS):
     return new_driver
 
 
-def parse_service_provider_opt():
+def parse_service_provider_opt(service_module='neutron'):
+
     """Parse service definition opts and returns result."""
     def validate_name(name):
         if len(name) > 255:
             raise n_exc.Invalid(
                 _("Provider name is limited by 255 characters: %s") % name)
 
-    # TODO(dougwig) - phase out the neutron.conf location for service
-    # providers a cycle or two after Kilo.
-
-    # Look in neutron.conf for service providers first (legacy mode)
-    try:
-        svc_providers_opt = cfg.CONF.service_providers.service_provider
-    except cfg.NoSuchOptError:
-        svc_providers_opt = []
-
-    # Look in neutron-*aas.conf files for service provider configs
-    if svc_providers_opt:
-        LOG.warning(_LW("Reading service_providers from legacy location in "
-                        "neutron.conf, and ignoring values in "
-                        "neutron_*aas.conf files; this override will be "
-                        "going away soon."))
-    else:
-        neutron_mods = repos.NeutronModules()
-        for x in neutron_mods.installed_list():
-            svc_providers_opt += neutron_mods.service_providers(x)
+    neutron_mod = NeutronModule(service_module)
+    svc_providers_opt = neutron_mod.service_providers()
 
     LOG.debug("Service providers = %s", svc_providers_opt)
 
@@ -113,14 +160,7 @@ def parse_service_provider_opt():
                        prov_def)
                 LOG.error(msg)
                 raise n_exc.Invalid(msg)
-        ALLOWED_SERVICES = constants.EXT_TO_SERVICE_MAPPING.values()
-        if svc_type not in ALLOWED_SERVICES:
-            msg = (_("Service type '%(svc_type)s' is not allowed, "
-                     "allowed types: %(allowed)s") %
-                   {'svc_type': svc_type,
-                    'allowed': ALLOWED_SERVICES})
-            LOG.error(msg)
-            raise n_exc.Invalid(msg)
+
         driver = get_provider_driver_class(driver)
         res.append({'service_type': svc_type,
                     'name': name,
@@ -145,9 +185,10 @@ class ServiceProviderAlreadyAssociated(n_exc.Conflict):
 
 
 class ProviderConfiguration(object):
-    def __init__(self, prov_data):
+
+    def __init__(self, svc_module='neutron'):
         self.providers = {}
-        for prov in prov_data:
+        for prov in parse_service_provider_opt(svc_module):
             self.add_provider(prov)
 
     def _ensure_driver_unique(self, driver):
