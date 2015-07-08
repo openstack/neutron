@@ -121,8 +121,7 @@ class Pidfile(object):
         return self.pidfile
 
     def unlock(self):
-        if not not fcntl.flock(self.fd, fcntl.LOCK_UN):
-            raise IOError(_('Unable to unlock pid file'))
+        fcntl.flock(self.fd, fcntl.LOCK_UN)
 
     def write(self, pid):
         os.ftruncate(self.fd, 0)
