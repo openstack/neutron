@@ -434,7 +434,10 @@ class HyperVUtilsV2R2(HyperVUtilsV2):
         return [v for v in acls
                 if v.Action == action and
                 v.Direction == direction and
-                v.LocalPort == str(local_port) and
+                v.LocalPort == ((str(local_port))
+                                if not protocol ==
+                                self._ICMP_PROTOCOL else '')
+                and
                 v.Protocol == protocol and
                 v.RemoteIPAddress == remote_addr]
 
