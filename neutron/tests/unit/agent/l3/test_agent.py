@@ -29,7 +29,6 @@ from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import dvr_edge_router as dvr_router
-from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import legacy_router
@@ -1488,7 +1487,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             **self.ri_kwargs)
         ri.iptables_manager = mock.Mock()
 
-        with mock.patch.object(dvr_local_router.LOG,
+        with mock.patch.object(dvr_router.LOG,
                                'debug') as log_debug:
             ri._handle_router_snat_rules(mock.ANY, mock.ANY, mock.ANY)
         self.assertIsNone(ri.snat_iptables_manager)
