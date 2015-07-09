@@ -104,7 +104,7 @@ def get_object(context, model, id):
     with context.session.begin(subtransactions=True):
         return (common_db_mixin.model_query(context, model)
                 .filter_by(id=id)
-                .one())
+                .first())
 
 
 def get_objects(context, model):
@@ -132,4 +132,4 @@ def update_object(context, model, id, values):
 def delete_object(context, model, id):
     with context.session.begin(subtransactions=True):
         db_obj = get_object(context, model, id)
-        db_obj.delete()
+        context.session.delete(db_obj)

@@ -93,6 +93,11 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             get_object_mock.assert_called_once_with(
                 self.context, self._test_class.db_model, 'fake_id')
 
+    def test_get_by_id_missing_object(self):
+        with mock.patch.object(db_api, 'get_object', return_value=None):
+            obj = self._test_class.get_by_id(self.context, id='fake_id')
+            self.assertIsNone(obj)
+
     def test_get_objects(self):
         with mock.patch.object(db_api, 'get_objects',
                                return_value=self.db_objs) as get_objects_mock:
@@ -173,9 +178,24 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):
 
-    def test_create(self):
+    def test_get_by_id_create_update_delete(self):
         obj = self._test_class(self.context, **self.db_obj)
         obj.create()
 
         new = self._test_class.get_by_id(self.context, id=obj.id)
         self.assertEqual(obj, new)
+
+        obj = new
+        for key, val in self.db_objs[1].items():
+            if key not in self._test_class.fields_no_update:
+                setattr(obj, key, val)
+        obj.update()
+
+        new = self._test_class.get_by_id(self.context, id=obj.id)
+        self.assertEqual(obj, new)
+
+        obj = new
+        new.delete()
+
+        new = self._test_class.get_by_id(self.context, id=obj.id)
+        self.assertIsNone(new)

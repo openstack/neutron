@@ -42,6 +42,8 @@ class QosPolicy(base.NeutronObject):
         'shared': obj_fields.BooleanField()
     }
 
+    fields_no_update = ['id', 'tenant_id']
+
     @classmethod
     def _get_object_policy(cls, context, model, **kwargs):
         # TODO(QoS): we should make sure we use public functions
