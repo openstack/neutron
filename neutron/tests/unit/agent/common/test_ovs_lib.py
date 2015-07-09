@@ -473,28 +473,10 @@ class OVS_Lib_Test(base.BaseTestCase):
         vif_id = uuidutils.generate_uuid()
         mac = "ca:fe:de:ad:be:ef"
         id_field = 'xs-vif-uuid' if is_xen else 'iface-id'
-        external_ids = ('{"data":[[["map",[["attached-mac","%(mac)s"],'
-                        '["%(id_field)s","%(vif)s"],'
-                        '["iface-status","active"]]], '
-                        '"%(name)s", %(ofport)s]],'
-                        '"headings":["external_ids", "name", "ofport"]}' % {
-                            'mac': mac, 'vif': vif_id, 'id_field': id_field,
-                            'name': pname, 'ofport': ofport})
-
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME), "%s\n" % pname),
-            (self._vsctl_mock("--columns=name,external_ids,ofport", "list",
-                              "Interface"), external_ids),
-        ]
-        if is_xen:
-            expected_calls_and_values.append(
-                (mock.call(["xe", "vif-param-get", "param-name=other-config",
-                            "param-key=nicira-iface-id", "uuid=" + vif_id],
-                           run_as_root=True),
-                 vif_id)
-            )
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+        external_ids = {"attached-mac": mac, id_field: vif_id}
+        self.br.get_ports_attributes = mock.Mock(return_value=[{
+            'name': pname, 'ofport': ofport, 'external_ids': external_ids}])
+        self.br.get_xapi_iface_id = mock.Mock(return_value=vif_id)
 
         ports = self.br.get_vif_ports()
         self.assertEqual(1, len(ports))
@@ -503,7 +485,10 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertEqual(ports[0].vif_id, vif_id)
         self.assertEqual(ports[0].vif_mac, mac)
         self.assertEqual(ports[0].switch.br_name, self.BR_NAME)
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+        self.br.get_ports_attributes.assert_called_once_with(
+            'Interface',
+            columns=['name', 'external_ids', 'ofport'],
+            if_exists=True)
 
     def _encode_ovs_json(self, headings, data):
         # See man ovs-vsctl(8) for the encoding details.
@@ -576,23 +561,6 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_get_vif_ports_xen(self):
         self._test_get_vif_ports(is_xen=True)
-
-    def test_get_vif_ports_with_bond(self):
-        pname = "bond0"
-        #NOTE(dprince): bond ports don't have records in the Interface table
-        external_ids = ('{"data":[], "headings":[]}')
-
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME), "%s\n" % pname),
-            (self._vsctl_mock("--columns=name,external_ids,ofport", "list",
-                              "Interface"), external_ids),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        ports = self.br.get_vif_ports()
-        self.assertEqual(0, len(ports))
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_get_vif_port_set_nonxen(self):
         self._test_get_vif_port_set(False)
@@ -746,22 +714,17 @@ class OVS_Lib_Test(base.BaseTestCase):
              'external_ids': {'iface-id': 'pid1', 'attached-mac': '11'}},
             {'name': 'qvo2', 'ofport': 2,
              'external_ids': {'iface-id': 'pid2', 'attached-mac': '22'}},
-            {'name': 'qvo3', 'ofport': 3,
-             'external_ids': {'iface-id': 'pid3', 'attached-mac': '33'}},
             {'name': 'qvo4', 'ofport': -1,
              'external_ids': {'iface-id': 'pid4', 'attached-mac': '44'}},
         ]
-        self.br.db_list = mock.Mock(return_value=db_list_res)
+        self.br.get_ports_attributes = mock.Mock(return_value=db_list_res)
         self.br.ovsdb = mock.Mock()
         self.br.ovsdb.list_ports.return_value.execute.return_value = [
             'qvo1', 'qvo2', 'qvo4']
-        by_id = self.br.get_vifs_by_ids(['pid1', 'pid2', 'pid3',
-                                        'pid4', 'pid5'])
-        # pid3 isn't on bridge and pid4 doesn't have a valid ofport and pid5
-        # isn't present in the db
+        by_id = self.br.get_vifs_by_ids(['pid1', 'pid2', 'pid3', 'pid4'])
+        # pid3 isn't on bridge and pid4 doesn't have a valid ofport
         self.assertIsNone(by_id['pid3'])
         self.assertIsNone(by_id['pid4'])
-        self.assertIsNone(by_id['pid5'])
         self.assertEqual('pid1', by_id['pid1'].vif_id)
         self.assertEqual('qvo1', by_id['pid1'].port_name)
         self.assertEqual(1, by_id['pid1'].ofport)
