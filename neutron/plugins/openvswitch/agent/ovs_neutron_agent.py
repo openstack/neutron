@@ -742,6 +742,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if port_details.get('allowed_address_pairs'):
             addresses += [p['ip_address']
                           for p in port_details['allowed_address_pairs']]
+        if any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in addresses):
+            # don't try to install protection because a /0 prefix allows any
+            # address anyway and the ARP_SPA can only match on /1 or more.
+            return
 
         # allow ARPs as long as they match addresses that actually
         # belong to the port.
