@@ -61,11 +61,13 @@ class QosPolicy(base.NeutronObject):
                                       port_id=port_id)
 
     def attach_network(self, network_id):
-        qos_db_api.create_policy_network_binding(policy_id=self.id,
+        qos_db_api.create_policy_network_binding(self._context,
+                                                 policy_id=self.id,
                                                  network_id=network_id)
 
     def attach_port(self, port_id):
-        qos_db_api.create_policy_port_binding(policy_id=self.id,
+        qos_db_api.create_policy_port_binding(self._context,
+                                              policy_id=self.id,
                                               port_id=port_id)
 
     def detach_network(self, network_id):
