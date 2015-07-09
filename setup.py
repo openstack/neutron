@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +26,4 @@ except ImportError:
 
 setuptools.setup(
     setup_requires=['pbr'],
-    pbr=True,
-    # TODO(lifeless): Once pbr supports markers in requirements.txt, move this
-    # there, so that update.py can see it.
-    extras_require={
-        ':sys_platform=="win32"': ['pywin32', 'wmi']
-    })
+    pbr=True)

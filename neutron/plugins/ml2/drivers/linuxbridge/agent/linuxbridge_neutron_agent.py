@@ -29,6 +29,8 @@ eventlet.monkey_patch()
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
+from oslo_service import service
 from six import moves
 
 from neutron.agent.linux import ip_lib
@@ -39,14 +41,13 @@ from neutron.common import config as common_config
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import topics
-from neutron.common import utils as q_utils
+from neutron.common import utils as n_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import loopingcall
-from neutron.openstack.common import service
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager \
     import l2population_rpc as l2pop_rpc
+from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst
@@ -768,6 +769,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         self.quitting_rpc_timeout = quitting_rpc_timeout
 
     def start(self):
+        self.prevent_arp_spoofing = cfg.CONF.AGENT.prevent_arp_spoofing
         self.setup_linux_bridge(self.interface_mappings)
         configurations = {'interface_mappings': self.interface_mappings}
         if self.br_mgr.vxlan_mode != lconst.VXLAN_NONE:
@@ -788,7 +790,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc)
+                self.sg_plugin_rpc, defer_refresh_firewall=True)
         self.setup_rpc(self.interface_mappings.values())
         self.daemon_loop()
 
@@ -859,11 +861,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         resync_a = False
         resync_b = False
 
-        self.sg_agent.prepare_devices_filter(device_info.get('added'))
-
-        if device_info.get('updated'):
-            self.sg_agent.refresh_firewall()
-
+        self.sg_agent.setup_port_filters(device_info.get('added'),
+                                         device_info.get('updated'))
         # Updated devices are processed the same as new ones, as their
         # admin_state_up may have changed. The set union prevents duplicating
         # work when a device is new and updated in the same polling iteration.
@@ -895,6 +894,11 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
             if 'port_id' in device_details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': device_details})
+                if self.prevent_arp_spoofing:
+                    port = self.br_mgr.get_tap_device_name(
+                        device_details['port_id'])
+                    arp_protect.setup_arp_spoofing_protection(port,
+                                                              device_details)
                 if device_details['admin_state_up']:
                     # create the networking for the port
                     network_type = device_details.get('network_type')
@@ -948,7 +952,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                 LOG.info(_LI("Port %s updated."), device)
             else:
                 LOG.debug("Device %s not defined on plugin", device)
-            self.br_mgr.remove_empty_bridges()
+        if self.prevent_arp_spoofing:
+            arp_protect.delete_arp_spoofing_protection(devices)
         return resync
 
     def scan_devices(self, previous, sync):
@@ -969,6 +974,10 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                         'current': set(),
                         'updated': set(),
                         'removed': set()}
+            # clear any orphaned ARP spoofing rules (e.g. interface was
+            # manually deleted)
+            if self.prevent_arp_spoofing:
+                arp_protect.delete_unreferenced_arp_protection(current_devices)
 
         if sync:
             # This is the first iteration, or the previous one had a problem.
@@ -1011,7 +1020,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                 LOG.info(_LI("Agent out of sync with plugin!"))
                 sync = False
 
-            if self._device_info_has_changes(device_info):
+            if (self._device_info_has_changes(device_info)
+                or self.sg_agent.firewall_refresh_needed()):
                 LOG.debug("Agent loop found changes! %s", device_info)
                 try:
                     sync = self.process_network_devices(device_info)
@@ -1041,7 +1051,7 @@ def main():
 
     common_config.setup_logging()
     try:
-        interface_mappings = q_utils.parse_mappings(
+        interface_mappings = n_utils.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
     except ValueError as e:
         LOG.error(_LE("Parsing physical_interface_mappings failed: %s. "
@@ -1055,7 +1065,7 @@ def main():
                                        polling_interval,
                                        quitting_rpc_timeout)
     LOG.info(_LI("Agent initialized successfully, now running... "))
-    launcher = service.launch(agent)
+    launcher = service.launch(cfg.CONF, agent)
     launcher.wait()
 
 

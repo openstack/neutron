@@ -31,7 +31,7 @@ from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -94,7 +94,7 @@ class BridgeRpcCallbacks(object):
         LOG.debug("Device %(device)s details requested from %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         port = brocade_db.get_port(rpc_context,
-                                   device[len(q_const.TAP_DEVICE_PREFIX):])
+                                   device[len(n_const.TAP_DEVICE_PREFIX):])
         if port:
             entry = {'device': device,
                      'vlan_id': port.vlan_id,
@@ -154,7 +154,7 @@ class SecurityGroupServerRpcMixin(sg_db_rpc.SecurityGroupServerRpcMixin):
         # Doing what other plugins are doing
         session = db.get_session()
         port = brocade_db.get_port_from_device(
-            session, device[len(q_const.TAP_DEVICE_PREFIX):])
+            session, device[len(n_const.TAP_DEVICE_PREFIX):])
 
         # TODO(shiv): need to extend the db model to include device owners
         # make it appears that the device owner is of type network
@@ -267,10 +267,10 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Consume from all consumers in threads
         self.conn.consume_in_threads()
         self.notifier = AgentNotifierApi(topics.AGENT)
-        self.agent_notifiers[q_const.AGENT_TYPE_DHCP] = (
+        self.agent_notifiers[n_const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
-        self.agent_notifiers[q_const.AGENT_TYPE_L3] = (
+        self.agent_notifiers[n_const.AGENT_TYPE_L3] = (
             l3_rpc_agent_api.L3AgentNotifyAPI()
         )
 

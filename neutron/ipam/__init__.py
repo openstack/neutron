@@ -44,7 +44,7 @@ class SubnetRequest(object):
         :param tenant_id: The tenant id who will own the subnet
         :type tenant_id: str uuid
         :param subnet_id: Neutron's subnet ID
-        :type subnet_id: srt uuid
+        :type subnet_id: str uuid
         :param gateway_ip: An IP to reserve for the subnet gateway.
         :type gateway_ip: None or convertible to netaddr.IPAddress
         :param allocation_pools: The pool from which IPAM should allocate
@@ -284,4 +284,6 @@ class SubnetRequestFactory(object):
         else:
             return SpecificSubnetRequest(subnet['tenant_id'],
                                          subnet_id,
-                                         cidr)
+                                         cidr,
+                                         subnet.get('gateway_ip'),
+                                         subnet.get('allocation_pools'))

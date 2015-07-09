@@ -16,12 +16,12 @@
 
 
 from six.moves import http_client as httplib
-import urllib
 
 import httplib2
 from keystoneclient.v2_0 import client as keyclient
 from oslo_config import cfg
 from oslo_log import log as logging
+from six.moves.urllib import parse
 
 from neutron.api.v2 import attributes
 from neutron.common import utils
@@ -158,7 +158,7 @@ class RequestHandler(object):
             serverurl = SDNVE_URL % (controller_ip, self.port, self.base_url)
             myurl = serverurl + url
             if params and isinstance(params, dict):
-                myurl += '?' + urllib.urlencode(params, doseq=1)
+                myurl += '?' + parse.urlencode(params, doseq=1)
 
             try:
                 LOG.debug("Sending request to SDN-VE. url: "

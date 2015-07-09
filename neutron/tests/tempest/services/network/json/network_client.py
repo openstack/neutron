@@ -12,8 +12,8 @@
 
 import json
 import time
-import urllib
 
+from six.moves.urllib import parse
 from tempest_lib.common.utils import misc
 from tempest_lib import exceptions as lib_exc
 
@@ -98,7 +98,7 @@ class NetworkClientJSON(service_client.ServiceClient):
         def _list(**filters):
             uri = self.get_uri(plural_name)
             if filters:
-                uri += '?' + urllib.urlencode(filters, doseq=1)
+                uri += '?' + parse.urlencode(filters, doseq=1)
             resp, body = self.get(uri)
             result = {plural_name: self.deserialize_list(body)}
             self.expected_success(200, resp.status)
@@ -124,7 +124,7 @@ class NetworkClientJSON(service_client.ServiceClient):
             plural = self.pluralize(resource_name)
             uri = '%s/%s' % (self.get_uri(plural), resource_id)
             if fields:
-                uri += '?' + urllib.urlencode(fields, doseq=1)
+                uri += '?' + parse.urlencode(fields, doseq=1)
             resp, body = self.get(uri)
             body = self.deserialize_single(body)
             self.expected_success(200, resp.status)

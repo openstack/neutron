@@ -78,14 +78,13 @@ class LinuxInterfaceDriver(object):
         self.conf = conf
 
     def init_l3(self, device_name, ip_cidrs, namespace=None,
-                preserve_ips=[], gateway_ips=None, extra_subnets=[],
-                enable_ra_on_gw=False, clean_connections=False):
+                preserve_ips=[], gateway_ips=None,
+                clean_connections=False):
         """Set the L3 settings for the interface using data from the port.
 
         ip_cidrs: list of 'X.X.X.X/YY' strings
         preserve_ips: list of ip cidrs that should not be removed from device
         gateway_ips: For gateway ports, list of external gateway ip addresses
-        enable_ra_on_gw: Boolean to indicate configuring acceptance of IPv6 RA
         clean_connections: Boolean to indicate if we should cleanup connections
           associated to removed ips
         """
@@ -123,10 +122,39 @@ class LinuxInterfaceDriver(object):
         for gateway_ip in gateway_ips or []:
             device.route.add_gateway(gateway_ip)
 
+    def init_router_port(self,
+                         device_name,
+                         ip_cidrs,
+                         namespace,
+                         preserve_ips=None,
+                         gateway_ips=None,
+                         extra_subnets=None,
+                         enable_ra_on_gw=False,
+                         clean_connections=False):
+        """Set the L3 settings for a router interface using data from the port.
+
+        ip_cidrs: list of 'X.X.X.X/YY' strings
+        preserve_ips: list of ip cidrs that should not be removed from device
+        gateway_ips: For gateway ports, list of external gateway ip addresses
+        enable_ra_on_gw: Boolean to indicate configuring acceptance of IPv6 RA
+        clean_connections: Boolean to indicate if we should cleanup connections
+          associated to removed ips
+        extra_subnets: An iterable of cidrs to add as routes without address
+        """
+        self.init_l3(device_name=device_name,
+                     ip_cidrs=ip_cidrs,
+                     namespace=namespace,
+                     preserve_ips=preserve_ips or [],
+                     gateway_ips=gateway_ips,
+                     clean_connections=clean_connections)
+
         if enable_ra_on_gw:
             self.configure_ipv6_ra(namespace, device_name)
 
-        new_onlink_routes = set(s['cidr'] for s in extra_subnets)
+        device = ip_lib.IPDevice(device_name, namespace=namespace)
+
+        # Manage on-link routes (routes without an associated address)
+        new_onlink_routes = set(s['cidr'] for s in extra_subnets or [])
         existing_onlink_routes = set(
             device.route.list_onlink_routes(n_const.IP_VERSION_4) +
             device.route.list_onlink_routes(n_const.IP_VERSION_6))

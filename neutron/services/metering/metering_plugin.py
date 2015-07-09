@@ -22,6 +22,7 @@ from neutron.db.metering import metering_rpc
 class MeteringPlugin(metering_db.MeteringDbMixin):
     """Implementation of the Neutron Metering Service Plugin."""
     supported_extension_aliases = ["metering"]
+    path_prefix = "/metering"
 
     def __init__(self):
         super(MeteringPlugin, self).__init__()

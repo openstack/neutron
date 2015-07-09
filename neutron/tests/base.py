@@ -244,10 +244,10 @@ class DietTestCase(testtools.TestCase):
                              {'key': k, 'exp': v, 'act': actual_superset[k]})
 
 
-class ProcessMonitorFixture(tools.SafeFixture):
+class ProcessMonitorFixture(fixtures.Fixture):
     """Test fixture to capture and cleanup any spawn process monitor."""
-    def setUp(self):
-        super(ProcessMonitorFixture, self).setUp()
+
+    def _setUp(self):
         self.old_callable = (
             external_process.ProcessMonitor._spawn_checking_thread)
         p = mock.patch("neutron.agent.linux.external_process.ProcessMonitor."
@@ -410,14 +410,13 @@ class BaseTestCase(DietTestCase):
         cfg.CONF.set_override("notification_driver", notification_driver)
 
 
-class PluginFixture(tools.SafeFixture):
+class PluginFixture(fixtures.Fixture):
 
     def __init__(self, core_plugin=None):
         super(PluginFixture, self).__init__()
         self.core_plugin = core_plugin
 
-    def setUp(self):
-        super(PluginFixture, self).setUp()
+    def _setUp(self):
         self.dhcp_periodic_p = mock.patch(
             'neutron.db.agentschedulers_db.DhcpAgentSchedulerDbMixin.'
             'start_periodic_dhcp_agent_status_check')

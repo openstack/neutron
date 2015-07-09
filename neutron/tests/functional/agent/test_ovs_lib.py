@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import mock
 import uuid
 
 from neutron.agent.common import ovs_lib
@@ -197,6 +198,19 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         expected = set([x.vif_id for x in vif_ports])
         self.assertEqual(expected, ports)
 
+    def test_get_vif_port_set_with_missing_port(self):
+        self.create_ovs_port()
+        vif_ports = [self.create_ovs_vif_port()]
+
+        # return an extra port to make sure the db list ignores it
+        orig = self.br.get_port_name_list
+        new_port_name_list = lambda: orig() + ['anotherport']
+        mock.patch.object(self.br, 'get_port_name_list',
+                          new=new_port_name_list).start()
+        ports = self.br.get_vif_port_set()
+        expected = set([vif_ports[0].vif_id])
+        self.assertEqual(expected, ports)
+
     def test_get_port_tag_dict(self):
         # Simple case tested in port test_set_get_clear_db_val
         pass
@@ -208,6 +222,15 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         for vif in vif_ports:
             self.assertEqual(self.br.get_vif_port_by_id(vif.vif_id).vif_id,
                              vif.vif_id)
+
+    def test_get_vifs_by_ids(self):
+        for i in range(2):
+            self.create_ovs_port()
+        vif_ports = [self.create_ovs_vif_port() for i in range(3)]
+        by_id = self.br.get_vifs_by_ids([v.vif_id for v in vif_ports])
+        # convert to str for comparison of VifPorts
+        by_id = {vid: str(vport) for vid, vport in by_id.items()}
+        self.assertEqual({v.vif_id: str(v) for v in vif_ports}, by_id)
 
     def test_delete_ports(self):
         # TODO(twilson) I intensely dislike the current delete_ports function

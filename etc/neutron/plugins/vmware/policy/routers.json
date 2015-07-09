@@ -1,0 +1,7 @@
+{
+    "create_router:external_gateway_info:enable_snat": "rule:admin_or_owner",
+    "create_router:distributed": "rule:admin_or_owner",
+    "get_router:distributed": "rule:admin_or_owner",
+    "update_router:external_gateway_info:enable_snat": "rule:admin_or_owner",
+    "update_router:distributed": "rule:admin_or_owner"
+}

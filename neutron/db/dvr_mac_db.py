@@ -20,7 +20,7 @@ from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import model_base
 from neutron.extensions import dvr as ext_dvr
@@ -158,7 +158,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
     def get_subnet_for_dvr(self, context, subnet):
         try:
             subnet_info = self.plugin.get_subnet(context, subnet)
-        except q_exc.SubnetNotFound:
+        except n_exc.SubnetNotFound:
             return {}
         else:
             # retrieve the gateway port on this subnet

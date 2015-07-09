@@ -36,7 +36,7 @@ class TestOneConvergenceAgentBase(base.BaseTestCase):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        with mock.patch('neutron.openstack.common.loopingcall.'
+        with mock.patch('oslo_service.loopingcall.'
                         'FixedIntervalLoopingCall') as loopingcall:
             kwargs = {'integ_br': 'integration_bridge',
                       'polling_interval': 5}

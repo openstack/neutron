@@ -14,11 +14,11 @@
 #    under the License.
 
 import functools
-import urllib
 
 from oslo_config import cfg
 from oslo_log import log as logging
 import six
+from six.moves.urllib import parse
 from webob import exc
 
 from neutron.common import constants
@@ -60,7 +60,7 @@ def get_previous_link(request, items, id_key):
         marker = items[0][id_key]
         params['marker'] = marker
     params['page_reverse'] = True
-    return "%s?%s" % (request.path_url, urllib.urlencode(params))
+    return "%s?%s" % (request.path_url, parse.urlencode(params))
 
 
 def get_next_link(request, items, id_key):
@@ -70,7 +70,7 @@ def get_next_link(request, items, id_key):
         marker = items[-1][id_key]
         params['marker'] = marker
     params.pop('page_reverse', None)
-    return "%s?%s" % (request.path_url, urllib.urlencode(params))
+    return "%s?%s" % (request.path_url, parse.urlencode(params))
 
 
 def get_limit_and_marker(request):
@@ -147,8 +147,8 @@ def get_sorts(request, attr_info):
                 'asc': constants.SORT_DIRECTION_ASC,
                 'desc': constants.SORT_DIRECTION_DESC})
         raise exc.HTTPBadRequest(explanation=msg)
-    return zip(sort_keys,
-               [x == constants.SORT_DIRECTION_ASC for x in sort_dirs])
+    return list(zip(sort_keys,
+                    [x == constants.SORT_DIRECTION_ASC for x in sort_dirs]))
 
 
 def get_page_reverse(request):

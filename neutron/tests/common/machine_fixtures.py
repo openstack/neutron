@@ -13,12 +13,13 @@
 #    under the License.
 #
 
+import fixtures
+
 from neutron.agent.linux import ip_lib
 from neutron.tests.common import net_helpers
-from neutron.tests import tools
 
 
-class FakeMachine(tools.SafeFixture):
+class FakeMachine(fixtures.Fixture):
     """Create a fake machine.
 
     :ivar bridge: bridge on which the fake machine is bound
@@ -42,8 +43,7 @@ class FakeMachine(tools.SafeFixture):
         self.ip = self.ip_cidr.partition('/')[0]
         self.gateway_ip = gateway_ip
 
-    def setUp(self):
-        super(FakeMachine, self).setUp()
+    def _setUp(self):
         ns_fixture = self.useFixture(
             net_helpers.NamespaceFixture())
         self.namespace = ns_fixture.name
@@ -66,7 +66,7 @@ class FakeMachine(tools.SafeFixture):
         net_helpers.assert_no_ping(self.namespace, dst_ip)
 
 
-class PeerMachines(tools.SafeFixture):
+class PeerMachines(fixtures.Fixture):
     """Create 'amount' peered machines on an ip_cidr.
 
     :ivar bridge: bridge on which peer machines are bound
@@ -76,20 +76,19 @@ class PeerMachines(tools.SafeFixture):
     :type machines: FakeMachine list
     """
 
-    AMOUNT = 2
     CIDR = '192.168.0.1/24'
 
-    def __init__(self, bridge, ip_cidr=None, gateway_ip=None):
+    def __init__(self, bridge, ip_cidr=None, gateway_ip=None, amount=2):
         super(PeerMachines, self).__init__()
         self.bridge = bridge
         self.ip_cidr = ip_cidr or self.CIDR
         self.gateway_ip = gateway_ip
+        self.amount = amount
 
-    def setUp(self):
-        super(PeerMachines, self).setUp()
+    def _setUp(self):
         self.machines = []
 
-        for index in range(self.AMOUNT):
+        for index in range(self.amount):
             ip_cidr = net_helpers.increment_ip_cidr(self.ip_cidr, index)
             self.machines.append(
                 self.useFixture(

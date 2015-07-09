@@ -17,18 +17,18 @@ Neutron API via different methods.
 
 import abc
 
+import fixtures
 import six
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
 from neutron.tests import base
-from neutron.tests import tools
 from neutron.tests.unit import testlib_api
 
 
 @six.add_metaclass(abc.ABCMeta)
-class AbstractClientFixture(tools.SafeFixture):
+class AbstractClientFixture(fixtures.Fixture):
     """
     Base class for a client that can interact the neutron api in some
     manner.
@@ -71,8 +71,8 @@ class PluginClientFixture(AbstractClientFixture):
         super(PluginClientFixture, self).__init__()
         self.plugin_conf = plugin_conf
 
-    def setUp(self):
-        super(PluginClientFixture, self).setUp()
+    def _setUp(self):
+        super(PluginClientFixture, self)._setUp()
         self.useFixture(testlib_api.SqlFixture())
         self.useFixture(self.plugin_conf)
         self.useFixture(base.PluginFixture(self.plugin_conf.plugin_name))
@@ -89,7 +89,7 @@ class PluginClientFixture(AbstractClientFixture):
 
     @property
     def NotFound(self):
-        return q_exc.NetworkNotFound
+        return n_exc.NetworkNotFound
 
     def create_network(self, **kwargs):
         # Supply defaults that are expected to be set by the api

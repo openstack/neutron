@@ -132,7 +132,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         l3pluginApi_cls.return_value = self.plugin_api
 
         self.looping_call_p = mock.patch(
-            'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
+            'oslo_service.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()
 
         subnet_id_1 = _uuid()
@@ -283,7 +283,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.device_exists.return_value = False
             ri.internal_network_added(port)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
-            self.assertEqual(self.mock_driver.init_l3.call_count, 1)
+            self.assertEqual(self.mock_driver.init_router_port.call_count, 1)
             self.send_adv_notif.assert_called_once_with(ri.ns_name,
                                                         interface_name,
                                                         '99.0.1.9', mock.ANY)
@@ -395,7 +395,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.external_gateway_added(ex_gw_port, interface_name)
         if not router.get('distributed'):
             self.assertEqual(self.mock_driver.plug.call_count, 1)
-            self.assertEqual(self.mock_driver.init_l3.call_count, 1)
+            self.assertEqual(self.mock_driver.init_router_port.call_count, 1)
             if no_subnet and not dual_stack:
                 self.assertEqual(self.send_adv_notif.call_count, 0)
                 ip_cidrs = []
@@ -430,9 +430,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           'extra_subnets': [{'cidr': '172.16.0.0/24'}],
                           'enable_ra_on_gw': enable_ra_on_gw,
                           'clean_connections': True}
-            self.mock_driver.init_l3.assert_called_with(interface_name,
-                                                        ip_cidrs,
-                                                        **kwargs)
+            self.mock_driver.init_router_port.assert_called_with(
+                interface_name, ip_cidrs, **kwargs)
         else:
             ri._create_dvr_gateway.assert_called_once_with(
                 ex_gw_port, interface_name,
@@ -551,7 +550,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router[l3_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
         ri.external_gateway_updated(ex_gw_port, interface_name)
         self.assertEqual(1, self.mock_driver.plug.call_count)
-        self.assertEqual(self.mock_driver.init_l3.call_count, 1)
+        self.assertEqual(self.mock_driver.init_router_port.call_count, 1)
         exp_arp_calls = [mock.call(ri.ns_name, interface_name,
                                    '20.0.0.30', mock.ANY)]
         if dual_stack:
@@ -570,9 +569,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'extra_subnets': [{'cidr': '172.16.0.0/24'}],
                   'enable_ra_on_gw': False,
                   'clean_connections': True}
-        self.mock_driver.init_l3.assert_called_with(interface_name,
-                                                    ip_cidrs,
-                                                    **kwargs)
+        self.mock_driver.init_router_port.assert_called_with(interface_name,
+                                                             ip_cidrs,
+                                                             **kwargs)
 
     def test_external_gateway_updated(self):
         self._test_external_gateway_updated()
@@ -1967,7 +1966,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # check 2 internal ports are plugged
         # check 1 ext-gw-port is plugged
         self.assertEqual(self.mock_driver.plug.call_count, 3)
-        self.assertEqual(self.mock_driver.init_l3.call_count, 3)
+        self.assertEqual(self.mock_driver.init_router_port.call_count, 3)
 
     def test_get_service_plugin_list(self):
         service_plugins = [p_const.L3_ROUTER_NAT]

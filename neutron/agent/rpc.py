@@ -18,6 +18,7 @@ import itertools
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
@@ -72,6 +73,11 @@ class PluginReportStateAPI(object):
 
     def report_state(self, context, agent_state, use_call=False):
         cctxt = self.client.prepare()
+        # add unique identifier to a report
+        # that can be logged on server side.
+        # This create visible correspondence between events on
+        # the agent and on the server
+        agent_state['uuid'] = uuidutils.generate_uuid()
         kwargs = {
             'agent_state': {'agent_state': agent_state},
             'time': timeutils.strtime(),

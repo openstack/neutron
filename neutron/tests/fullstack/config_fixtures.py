@@ -15,13 +15,13 @@
 import os.path
 import tempfile
 
+import fixtures
 import six
 
 from neutron.common import constants
 from neutron.tests import base
 from neutron.tests.common import helpers as c_helpers
-from neutron.tests.functional.agent.linux import helpers
-from neutron.tests import tools
+from neutron.tests.common import net_helpers
 
 
 class ConfigDict(base.AttributeDict):
@@ -41,7 +41,7 @@ class ConfigDict(base.AttributeDict):
                 self.convert_to_attr_dict(value)
 
 
-class ConfigFileFixture(tools.SafeFixture):
+class ConfigFileFixture(fixtures.Fixture):
     """A fixture that knows how to translate configurations to files.
 
     :param base_filename: the filename to use on disk.
@@ -55,8 +55,7 @@ class ConfigFileFixture(tools.SafeFixture):
         self.config = config
         self.temp_dir = temp_dir
 
-    def setUp(self):
-        super(ConfigFileFixture, self).setUp()
+    def _setUp(self):
         config_parser = self.dict_to_config_parser(self.config)
         # Need to randomly generate a unique folder to put the file in
         self.filename = os.path.join(self.temp_dir, self.base_filename)
@@ -74,7 +73,7 @@ class ConfigFileFixture(tools.SafeFixture):
         return config_parser
 
 
-class ConfigFixture(tools.SafeFixture):
+class ConfigFixture(fixtures.Fixture):
     """A fixture that holds an actual Neutron configuration.
 
     Note that 'self.config' is intended to only be updated once, during
@@ -88,8 +87,7 @@ class ConfigFixture(tools.SafeFixture):
         self.temp_dir = temp_dir
         self.base_filename = base_filename
 
-    def setUp(self):
-        super(ConfigFixture, self).setUp()
+    def _setUp(self):
         cfg_fixture = ConfigFileFixture(
             self.base_filename, self.config, self.temp_dir)
         self.useFixture(cfg_fixture)
@@ -140,7 +138,8 @@ class NeutronConfigFixture(ConfigFixture):
         This might fail if some other process occupies this port after this
         function finished but before the neutron-server process started.
         """
-        return str(helpers.get_free_namespace_port(constants.PROTO_NAME_TCP))
+        return str(net_helpers.get_free_namespace_port(
+            constants.PROTO_NAME_TCP))
 
     def _generate_api_paste(self):
         return c_helpers.find_sample_file('api-paste.ini')

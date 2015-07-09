@@ -1,8 +1,14 @@
-PLUMgrid Neutron Plugin for Virtual Network Infrastructure (VNI)
+PLUMgrid Neutron Plugin
+========================
 
-This plugin implements Neutron v2 APIs and helps configure
-L2/L3 virtual networks consisting of PLUMgrid Platform.
-Implements External Networks and Port Binding Extension
+PLUMgrid Neutron Plugin for PLUMgrid Open Networking Suite
 
-For more details on use please refer to:
-http://wiki.openstack.org/PLUMgrid-Neutron
+* Full plugin code is available at:
+  * https://github.com/stackforge/networking-plumgrid
+
+* PyPI package location:
+  * https://pypi.python.org/pypi/networking-plumgrid
+
+* For config, install and other details, please refer to
+  wiki page:
+  * http://wiki.openstack.org/PLUMgrid-Neutron

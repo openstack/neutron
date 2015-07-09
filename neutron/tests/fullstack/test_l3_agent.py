@@ -23,8 +23,8 @@ from neutron.tests.fullstack import fullstack_fixtures as f_fixtures
 
 
 class SingleNodeEnvironment(f_fixtures.FullstackFixture):
-    def setUp(self):
-        super(SingleNodeEnvironment, self).setUp()
+    def _setUp(self):
+        super(SingleNodeEnvironment, self)._setUp()
 
         neutron_config = self.neutron_server.neutron_cfg_fixture
         ml2_config = self.neutron_server.plugin_cfg_fixture

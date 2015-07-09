@@ -28,7 +28,7 @@ NOTIFIER = ('neutron.plugins.ml2.drivers.cisco.apic.'
             'apic_topology.ApicTopologyServiceNotifierApi')
 RPC_CONNECTION = 'neutron.common.rpc.Connection'
 AGENTS_DB = 'neutron.db.agents_db'
-PERIODIC_TASK = 'neutron.openstack.common.periodic_task'
+PERIODIC_TASK = 'oslo_service.periodic_task'
 DEV_EXISTS = 'neutron.agent.linux.ip_lib.device_exists'
 IP_DEVICE = 'neutron.agent.linux.ip_lib.IPDevice'
 EXECUTE = 'neutron.agent.linux.utils.execute'

@@ -25,6 +25,7 @@ eventlet.monkey_patch()
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
 import six
 
 from neutron.agent.common import ovs_lib
@@ -36,7 +37,6 @@ from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron.i18n import _LE, _LI
 from neutron import context
-from neutron.openstack.common import loopingcall
 from neutron.plugins.ibm.common import constants
 
 

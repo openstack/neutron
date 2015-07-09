@@ -227,8 +227,9 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 attributes.NETWORKS, res, network)
         return self._fields(res, fields)
 
-    def _make_subnet_args(self, context, shared, detail,
+    def _make_subnet_args(self, shared, detail,
                           subnet, subnetpool_id=None):
+        gateway_ip = str(detail.gateway_ip) if detail.gateway_ip else None
         args = {'tenant_id': detail.tenant_id,
                 'id': detail.subnet_id,
                 'name': subnet['name'],
@@ -237,7 +238,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 'cidr': str(detail.subnet_cidr),
                 'subnetpool_id': subnetpool_id,
                 'enable_dhcp': subnet['enable_dhcp'],
-                'gateway_ip': self._gateway_ip_str(subnet, detail.subnet_cidr),
+                'gateway_ip': gateway_ip,
                 'shared': shared}
         if subnet['ip_version'] == 6 and subnet['enable_dhcp']:
             if attributes.is_attr_set(subnet['ipv6_ra_mode']):
@@ -251,8 +252,3 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return [{'subnet_id': ip["subnet_id"],
                  'ip_address': ip["ip_address"]}
                 for ip in ips]
-
-    def _gateway_ip_str(self, subnet, cidr_net):
-        if subnet.get('gateway_ip') is attributes.ATTR_NOT_SPECIFIED:
-                return str(cidr_net.network + 1)
-        return subnet.get('gateway_ip')

@@ -121,6 +121,7 @@ class TunnelTest(object):
         self.mock_int_bridge.add_patch_port.side_effect = (
             lambda tap, peer: self.ovs_int_ofports[tap])
         self.mock_int_bridge.get_vif_ports.return_value = []
+        self.mock_int_bridge.db_list.return_value = []
         self.mock_int_bridge.db_get_val.return_value = {}
 
         self.mock_map_tun_bridge = self.ovs_bridges[self.MAP_TUN_BRIDGE]
@@ -208,6 +209,7 @@ class TunnelTest(object):
         ]
         self.mock_int_bridge_expected += [
             mock.call.get_vif_ports(),
+            mock.call.db_list('Port', columns=['name', 'other_config', 'tag'])
         ]
 
         self.mock_tun_bridge_expected += [
@@ -246,7 +248,7 @@ class TunnelTest(object):
 
     def _verify_mock_call(self, mock_obj, expected):
         mock_obj.assert_has_calls(expected)
-        self.assertEqual(len(mock_obj.mock_calls), len(expected))
+        self.assertEqual(expected, mock_obj.mock_calls)
 
     def _verify_mock_calls(self):
         self._verify_mock_call(self.mock_int_bridge_cls,
@@ -515,13 +517,13 @@ class TunnelTest(object):
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
 
-            q_agent = self._build_agent()
+            n_agent = self._build_agent()
 
             # Hack to test loop
             # We start method and expect it will raise after 2nd loop
             # If something goes wrong, assert_has_calls below will catch it
             try:
-                q_agent.daemon_loop()
+                n_agent.daemon_loop()
             except Exception:
                 pass
 
@@ -599,6 +601,7 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
         self.mock_int_bridge_expected += [
             mock.call.get_vif_ports(),
+            mock.call.db_list('Port', columns=['name', 'other_config', 'tag'])
         ]
         self.mock_tun_bridge_expected += [
             mock.call.delete_flows(),

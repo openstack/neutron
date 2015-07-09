@@ -17,6 +17,7 @@
 import sys
 
 from oslo_config import cfg
+from oslo_service import service
 
 from neutron.agent.common import config
 from neutron.agent.dhcp import config as dhcp_config
@@ -24,7 +25,6 @@ from neutron.agent.linux import interface
 from neutron.agent.metadata import config as metadata_config
 from neutron.common import config as common_config
 from neutron.common import topics
-from neutron.openstack.common import service
 from neutron import service as neutron_service
 
 
@@ -49,4 +49,4 @@ def main():
         topic=topics.DHCP_AGENT,
         report_interval=cfg.CONF.AGENT.report_interval,
         manager='neutron.agent.dhcp.agent.DhcpAgentWithStateReport')
-    service.launch(server).wait()
+    service.launch(cfg.CONF, server).wait()

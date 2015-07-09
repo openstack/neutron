@@ -14,12 +14,12 @@
 #    under the License.
 
 from oslo_log import log
+from oslo_service import loopingcall
 
 from neutron.common import constants as n_constants
 from neutron import context
 from neutron.i18n import _LW
 from neutron import manager
-from neutron.openstack.common import loopingcall
 from neutron.plugins.ml2 import db as l2_db
 from neutron.plugins.ml2 import driver_context
 

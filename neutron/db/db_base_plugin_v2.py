@@ -442,60 +442,23 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
     @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
                                retry_on_request=True,
                                retry_on_deadlock=True)
-    def _create_subnet_from_pool(self, context, subnet, subnetpool_id):
+    def _create_subnet(self, context, subnet, subnetpool_id):
         s = subnet['subnet']
-        self._validate_pools_with_subnetpool(s)
 
         with context.session.begin(subtransactions=True):
-            subnetpool = self._get_subnetpool(context, subnetpool_id)
-            self._validate_ip_version_with_subnetpool(s, subnetpool)
-
             network = self._get_network(context, s["network_id"])
-            allocator = subnet_alloc.SubnetAllocator(subnetpool, context)
-            req = ipam.SubnetRequestFactory.get_request(context, s, subnetpool)
-
-            ipam_subnet = allocator.allocate_subnet(req)
-            detail = ipam_subnet.get_details()
-            subnet = self._save_subnet(context,
-                                       network,
-                                       self._make_subnet_args(
-                                              context,
-                                              network.shared,
-                                              detail,
-                                              s,
-                                              subnetpool_id=subnetpool['id']),
-                                       s['dns_nameservers'],
-                                       s['host_routes'],
-                                       s['allocation_pools'])
+            subnet = self._allocate_subnet(context,
+                                           network,
+                                           s,
+                                           subnetpool_id)
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
                                          network,
                                          subnet)
-        return self._make_subnet_dict(subnet)
-
-    def _create_subnet_from_implicit_pool(self, context, subnet):
-        s = subnet['subnet']
-        self._validate_subnet(context, s)
-        id = s.get('id', uuidutils.generate_uuid())
-        detail = ipam.SpecificSubnetRequest(s['tenant_id'],
-                                            id,
-                                            s['cidr'])
-        with context.session.begin(subtransactions=True):
-            network = self._get_network(context, s["network_id"])
-            self._validate_subnet_cidr(context, network, s['cidr'])
-            subnet = self._save_subnet(context,
-                                       network,
-                                       self._make_subnet_args(context,
-                                                              network.shared,
-                                                              detail,
-                                                              s),
-                                       s['dns_nameservers'],
-                                       s['host_routes'],
-                                       s['allocation_pools'])
-        if hasattr(network, 'external') and network.external:
-            self._update_router_gw_ports(context,
-                                         network,
-                                         subnet)
+        # If this subnet supports auto-addressing, then update any
+        # internal ports on the network with addresses for this subnet.
+        if ipv6_utils.is_auto_address_subnet(subnet):
+            self._add_auto_addrs_on_network_ports(context, subnet)
         return self._make_subnet_dict(subnet)
 
     def _get_subnetpool_id(self, subnet):
@@ -550,24 +513,16 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
 
         s['tenant_id'] = self._get_tenant_id_for_create(context, s)
         subnetpool_id = self._get_subnetpool_id(s)
-        if not subnetpool_id:
+        if subnetpool_id:
+            self._validate_pools_with_subnetpool(s)
+        else:
             if not has_cidr:
                 msg = _('A cidr must be specified in the absence of a '
                         'subnet pool')
                 raise n_exc.BadRequest(resource='subnets', msg=msg)
-            # Create subnet from the implicit(AKA null) pool
-            created_subnet = self._create_subnet_from_implicit_pool(context,
-                                                                    subnet)
-        else:
-            created_subnet = self._create_subnet_from_pool(context, subnet,
-                                                           subnetpool_id)
+            self._validate_subnet(context, s)
 
-        # If this subnet supports auto-addressing, then update any
-        # internal ports on the network with addresses for this subnet.
-        if ipv6_utils.is_auto_address_subnet(created_subnet):
-            self._add_auto_addrs_on_network_ports(context, created_subnet)
-
-        return created_subnet
+        return self._create_subnet(context, subnet, subnetpool_id)
 
     def update_subnet(self, context, id, subnet):
         """Update the subnet with new info.
@@ -586,8 +541,13 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
         self._validate_subnet(context, s, cur_subnet=db_subnet)
 
         if s.get('gateway_ip') is not None:
-            allocation_pools = [{'start': p['first_ip'], 'end': p['last_ip']}
-                                for p in db_subnet.allocation_pools]
+            if s.get('allocation_pools') is not None:
+                allocation_pools = [{'start': p['start'], 'end': p['end']}
+                                    for p in s['allocation_pools']]
+            else:
+                allocation_pools = [{'start': p['first_ip'],
+                                     'end': p['last_ip']}
+                                    for p in db_subnet.allocation_pools]
             self._validate_gw_out_of_pools(s["gateway_ip"], allocation_pools)
 
         with context.session.begin(subtransactions=True):

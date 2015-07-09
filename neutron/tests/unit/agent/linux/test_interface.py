@@ -80,7 +80,7 @@ class TestABCDriver(TestBase):
         device_name = bc.get_device_name(FakePort())
         self.assertEqual('tapabcdef01-12', device_name)
 
-    def test_l3_init(self):
+    def test_init_router_port(self):
         addresses = [dict(scope='global',
                           dynamic=False, cidr='172.16.77.240/24')]
         self.ip_dev().addr.list = mock.Mock(return_value=addresses)
@@ -88,18 +88,19 @@ class TestABCDriver(TestBase):
 
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'
-        bc.init_l3('tap0', ['192.168.1.2/24'], namespace=ns,
-                   extra_subnets=[{'cidr': '172.20.0.0/24'}])
+        bc.init_router_port('tap0', ['192.168.1.2/24'], namespace=ns,
+                            extra_subnets=[{'cidr': '172.20.0.0/24'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
              mock.call().addr.list(filters=['permanent']),
              mock.call().addr.add('192.168.1.2/24'),
              mock.call().addr.delete('172.16.77.240/24'),
+             mock.call('tap0', namespace=ns),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
              mock.call().route.add_onlink_route('172.20.0.0/24')])
 
-    def test_l3_init_delete_onlink_routes(self):
+    def test_init_router_port_delete_onlink_routes(self):
         addresses = [dict(scope='global',
                           dynamic=False, cidr='172.16.77.240/24')]
         self.ip_dev().addr.list = mock.Mock(return_value=addresses)
@@ -107,7 +108,7 @@ class TestABCDriver(TestBase):
 
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'
-        bc.init_l3('tap0', ['192.168.1.2/24'], namespace=ns)
+        bc.init_router_port('tap0', ['192.168.1.2/24'], namespace=ns)
         self.ip_dev.assert_has_calls(
             [mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
@@ -152,7 +153,7 @@ class TestABCDriver(TestBase):
     def test_l3_init_without_clean_connections(self):
         self._test_l3_init_clean_connections(False)
 
-    def _test_l3_init_with_ipv6(self, include_gw_ip):
+    def _test_init_router_port_with_ipv6(self, include_gw_ip):
         addresses = [dict(scope='global',
                           dynamic=False,
                           cidr='2001:db8:a::123/64')]
@@ -166,7 +167,7 @@ class TestABCDriver(TestBase):
                   'extra_subnets': [{'cidr': '2001:db8:b::/64'}]}
         if include_gw_ip:
             kwargs['gateway_ips'] = ['2001:db8:a::1']
-        bc.init_l3('tap0', [new_cidr], **kwargs)
+        bc.init_router_port('tap0', [new_cidr], **kwargs)
         expected_calls = (
             [mock.call('tap0', namespace=ns),
              mock.call().addr.list(filters=['permanent']),
@@ -176,18 +177,19 @@ class TestABCDriver(TestBase):
             expected_calls += (
                 [mock.call().route.add_gateway('2001:db8:a::1')])
         expected_calls += (
-             [mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
+             [mock.call('tap0', namespace=ns),
+              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
               mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
               mock.call().route.add_onlink_route('2001:db8:b::/64')])
         self.ip_dev.assert_has_calls(expected_calls)
 
-    def test_l3_init_ipv6_with_gw_ip(self):
-        self._test_l3_init_with_ipv6(include_gw_ip=True)
+    def test_init_router_port_ipv6_with_gw_ip(self):
+        self._test_init_router_port_with_ipv6(include_gw_ip=True)
 
-    def test_l3_init_ipv6_without_gw_ip(self):
-        self._test_l3_init_with_ipv6(include_gw_ip=False)
+    def test_init_router_port_ipv6_without_gw_ip(self):
+        self._test_init_router_port_with_ipv6(include_gw_ip=False)
 
-    def test_l3_init_ext_gw_with_dual_stack(self):
+    def test_init_router_port_ext_gw_with_dual_stack(self):
         old_addrs = [dict(ip_version=4, scope='global',
                           dynamic=False, cidr='172.16.77.240/24'),
                      dict(ip_version=6, scope='global',
@@ -197,8 +199,8 @@ class TestABCDriver(TestBase):
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'
         new_cidrs = ['192.168.1.2/24', '2001:db8:a::124/64']
-        bc.init_l3('tap0', new_cidrs, namespace=ns,
-                   extra_subnets=[{'cidr': '172.20.0.0/24'}])
+        bc.init_router_port('tap0', new_cidrs, namespace=ns,
+            extra_subnets=[{'cidr': '172.20.0.0/24'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
              mock.call().addr.list(filters=['permanent']),
@@ -211,7 +213,7 @@ class TestABCDriver(TestBase):
              mock.call().route.add_onlink_route('172.20.0.0/24')],
             any_order=True)
 
-    def test_l3_init_with_ipv6_delete_onlink_routes(self):
+    def test_init_router_port_with_ipv6_delete_onlink_routes(self):
         addresses = [dict(scope='global',
                           dynamic=False, cidr='2001:db8:a::123/64')]
         route = '2001:db8:a::/64'
@@ -220,7 +222,7 @@ class TestABCDriver(TestBase):
 
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'
-        bc.init_l3('tap0', ['2001:db8:a::124/64'], namespace=ns)
+        bc.init_router_port('tap0', ['2001:db8:a::124/64'], namespace=ns)
         self.ip_dev.assert_has_calls(
             [mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),

@@ -23,6 +23,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_service import loopingcall
 import six
 from six import moves
 
@@ -34,13 +35,12 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import config
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import topics
-from neutron.common import utils as q_utils
+from neutron.common import utils as n_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
-from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
@@ -192,7 +192,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.agent_state = {
             'binary': 'neutron-openvswitch-agent',
             'host': self.conf.host,
-            'topic': q_const.L2_AGENT_TOPIC,
+            'topic': n_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': bridge_mappings,
                                'tunnel_types': self.tunnel_types,
                                'tunneling_ip': local_ip,
@@ -200,8 +200,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                'arp_responder_enabled':
                                self.arp_responder_enabled,
                                'enable_distributed_routing':
-                               self.enable_distributed_routing},
-            'agent_type': q_const.AGENT_TYPE_OVS,
+                               self.enable_distributed_routing,
+                               'log_agent_heartbeats':
+                               self.conf.AGENT.log_agent_heartbeats},
+            'agent_type': n_const.AGENT_TYPE_OVS,
             'start_flag': True}
 
         if tunnel_types:
@@ -310,10 +312,17 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def _restore_local_vlan_map(self):
         cur_ports = self.int_br.get_vif_ports()
+        port_info = self.int_br.db_list(
+            "Port", columns=["name", "other_config", "tag"])
+        by_name = {x['name']: x for x in port_info}
         for port in cur_ports:
-            local_vlan_map = self.int_br.db_get_val("Port", port.port_name,
-                                                    "other_config")
-            local_vlan = self.int_br.db_get_val("Port", port.port_name, "tag")
+            # if a port was deleted between get_vif_ports and db_lists, we
+            # will get a KeyError
+            try:
+                local_vlan_map = by_name[port.port_name]['other_config']
+                local_vlan = by_name[port.port_name]['tag']
+            except KeyError:
+                continue
             if not local_vlan:
                 continue
             net_uuid = local_vlan_map.get('net_uuid')
@@ -463,7 +472,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                         agent_ports, self._tunnel_port_lookup)
 
     def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
-        if port_info == q_const.FLOODING_ENTRY:
+        if port_info == n_const.FLOODING_ENTRY:
             lvm.tun_ofports.add(ofport)
             br.install_flood_to_tun(lvm.vlan, lvm.segmentation_id,
                                     lvm.tun_ofports)
@@ -477,7 +486,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                       port_info.mac_address)
 
     def del_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
-        if port_info == q_const.FLOODING_ENTRY:
+        if port_info == n_const.FLOODING_ENTRY:
             if ofport not in lvm.tun_ofports:
                 LOG.debug("attempt to remove a non-existent port %s", ofport)
                 return
@@ -728,6 +737,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                      port_other_config)
 
     def _bind_devices(self, need_binding_ports):
+        port_info = self.int_br.db_list(
+            "Port", columns=["name", "tag"])
+        tags_by_name = {x['name']: x['tag'] for x in port_info}
         for port_detail in need_binding_ports:
             lvm = self.local_vlan_map.get(port_detail['network_id'])
             if not lvm:
@@ -737,7 +749,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             port = port_detail['vif_port']
             device = port_detail['device']
             # Do not bind a port if it's already bound
-            cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+            cur_tag = tags_by_name.get(port.port_name)
             if cur_tag != lvm.vlan:
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "tag", lvm.vlan)
@@ -858,7 +870,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         br_names = []
         for bridge in ovs_bridges:
             bridge_id = ovs.get_bridge_external_bridge_id(bridge)
-            if bridge_id and bridge_id != bridge:
+            if bridge_id != bridge:
                 br_names.append(bridge)
         ovs_bridges.difference_update(br_names)
         ancillary_bridges = []
@@ -910,20 +922,20 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         The peer name can not exceed the maximum length allowed for a linux
         device. Longer names are hashed to help ensure uniqueness.
         """
-        if len(prefix + name) <= q_const.DEVICE_NAME_MAX_LEN:
+        if len(prefix + name) <= n_const.DEVICE_NAME_MAX_LEN:
             return prefix + name
         # We can't just truncate because bridges may be distinguished
         # by an ident at the end. A hash over the name should be unique.
         # Leave part of the bridge name on for easier identification
         hashlen = 6
-        namelen = q_const.DEVICE_NAME_MAX_LEN - len(prefix) - hashlen
+        namelen = n_const.DEVICE_NAME_MAX_LEN - len(prefix) - hashlen
         new_name = ('%(prefix)s%(truncated)s%(hash)s' %
                     {'prefix': prefix, 'truncated': name[0:namelen],
                      'hash': hashlib.sha1(name).hexdigest()[0:hashlen]})
         LOG.warning(_LW("Creating an interface named %(name)s exceeds the "
                         "%(limit)d character limitation. It was shortened to "
                         "%(new_name)s to fit."),
-                    {'name': name, 'limit': q_const.DEVICE_NAME_MAX_LEN,
+                    {'name': name, 'limit': n_const.DEVICE_NAME_MAX_LEN,
                      'new_name': new_name})
         return new_name
 
@@ -1194,10 +1206,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.conf.host)
         except Exception as e:
             raise DeviceListRetrievalError(devices=devices, error=e)
+        vif_by_id = self.int_br.get_vifs_by_ids(
+            [vif['device'] for vif in devices_details_list])
         for details in devices_details_list:
             device = details['device']
             LOG.debug("Processing port: %s", device)
-            port = self.int_br.get_vif_port_by_id(device)
+            port = vif_by_id.get(device)
             if not port:
                 # The port disappeared and cannot be processed
                 LOG.info(_LI("Port %s was not found on the integration bridge "
@@ -1632,7 +1646,7 @@ def create_agent_config_map(config):
     :returns: a map of agent configuration parameters
     """
     try:
-        bridge_mappings = q_utils.parse_mappings(config.OVS.bridge_mappings)
+        bridge_mappings = n_utils.parse_mappings(config.OVS.bridge_mappings)
     except ValueError as e:
         raise ValueError(_("Parsing bridge_mappings failed: %s.") % e)
 

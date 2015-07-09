@@ -24,8 +24,8 @@ from oslo_utils import excutils
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.common import constants as q_const
-from neutron.common import rpc as q_rpc
+from neutron.common import constants as n_const
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as nctx
 from neutron.db import db_base_plugin_v2
@@ -65,9 +65,9 @@ class AristaL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def setup_rpc(self):
         # RPC support
         self.topic = topics.L3PLUGIN
-        self.conn = q_rpc.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.agent_notifiers.update(
-            {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
+            {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
         self.endpoints = [l3_rpc.L3RpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)

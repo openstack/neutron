@@ -27,7 +27,7 @@ from oslo_utils import timeutils
 from sqlalchemy.orm import query
 
 from neutron.common import constants
-from neutron import context as q_context
+from neutron import context as n_context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2 as db_v2
@@ -770,7 +770,7 @@ class L3SchedulerTestCaseMixin(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         super(L3SchedulerTestCaseMixin, self).setUp(plugin=plugin_str,
                                                     ext_mgr=ext_mgr)
 
-        self.adminContext = q_context.get_admin_context()
+        self.adminContext = n_context.get_admin_context()
         self.plugin = manager.NeutronManager.get_plugin()
         self.plugin.router_scheduler = importutils.import_object(
             'neutron.scheduler.l3_agent_scheduler.ChanceScheduler'
@@ -899,7 +899,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
         self.setup_coreplugin(plugin)
         super(L3DvrSchedulerTestCase, self).setUp()
-        self.adminContext = q_context.get_admin_context()
+        self.adminContext = n_context.get_admin_context()
         self.dut = L3DvrScheduler()
 
     def test__notify_port_delete(self):
@@ -1108,7 +1108,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
     def test_dvr_deletens_if_no_port_no_routers(self):
         # Delete a vm port, the port subnet has no router interface.
         vm_tenant_id = 'tenant-1'
-        my_context = q_context.Context('user-1', vm_tenant_id, is_admin=False)
+        my_context = n_context.Context('user-1', vm_tenant_id, is_admin=False)
         vm_port_host = 'compute-node-1'
 
         vm_port = self._create_port(
@@ -1139,7 +1139,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         # A VM port is deleted, but the router can't be unscheduled from the
         # compute node because there is another VM port present.
         vm_tenant_id = 'tenant-1'
-        my_context = q_context.Context('user-1', vm_tenant_id, is_admin=False)
+        my_context = n_context.Context('user-1', vm_tenant_id, is_admin=False)
         shared_subnet_id = '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
         vm_port_host = 'compute-node-1'
 
@@ -1199,7 +1199,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 self.host = host
                 self.agent_type = agent_type
 
-        my_context = q_context.Context('user-1', vm_tenant, is_admin=False)
+        my_context = n_context.Context('user-1', vm_tenant, is_admin=False)
         shared_subnet_id = '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
         vm_port_host = 'compute-node-1'
 
@@ -1417,7 +1417,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
     def setUp(self):
         super(L3HATestCaseMixin, self).setUp()
 
-        self.adminContext = q_context.get_admin_context()
+        self.adminContext = n_context.get_admin_context()
         self.plugin = L3HAPlugin()
 
         self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
@@ -1732,7 +1732,7 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
         super(TestGetL3AgentsWithAgentModeFilter, self).setUp()
         self.plugin = L3HAPlugin()
         self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
-        self.adminContext = q_context.get_admin_context()
+        self.adminContext = n_context.get_admin_context()
         hosts = ['host_1', 'host_2', 'host_3', 'host_4', 'host_5']
         agent_modes = ['legacy', 'dvr_snat', 'dvr', 'fake_mode', 'legacy']
         for host, agent_mode in zip(hosts, agent_modes):

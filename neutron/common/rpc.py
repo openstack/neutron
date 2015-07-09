@@ -18,10 +18,10 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_messaging import serializer as om_serializer
+from oslo_service import service
 
 from neutron.common import exceptions
 from neutron import context
-from neutron.openstack.common import service
 
 
 LOG = logging.getLogger(__name__)
