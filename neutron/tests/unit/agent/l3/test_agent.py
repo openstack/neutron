@@ -337,7 +337,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         if action == 'add':
             self.device_exists.return_value = False
 
-            ri._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            ri.get_snat_port_for_internal_port = mock.Mock(
+                return_value=sn_port)
             ri._snat_redirect_add = mock.Mock()
             ri._set_subnet_arp_info = mock.Mock()
             ri._internal_network_added = mock.Mock()
@@ -356,7 +357,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 dvr_snat_ns.SNAT_INT_DEV_PREFIX)
         elif action == 'remove':
             self.device_exists.return_value = False
-            ri._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            ri.get_snat_port_for_internal_port = mock.Mock(
+                return_value=sn_port)
             ri._snat_redirect_modify = mock.Mock()
             ri.internal_network_removed(port)
             ri._snat_redirect_modify.assert_called_with(
@@ -432,8 +434,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 interface_name, ip_cidrs, **kwargs)
         else:
             ri._create_dvr_gateway.assert_called_once_with(
-                ex_gw_port, interface_name,
-                self.snat_ports)
+                ex_gw_port, interface_name)
 
     def _test_external_gateway_action(self, action, router, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -518,7 +519,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         elif action == 'remove':
             self.device_exists.return_value = True
-            ri._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            ri.get_snat_port_for_internal_port = mock.Mock(
+                return_value=sn_port)
             ri._snat_redirect_remove = mock.Mock()
             ri.external_gateway_removed(ex_gw_port, interface_name)
             if not router.get('distributed'):
@@ -700,7 +702,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             else:
                 self.assertIn(r.rule, expected_rules)
 
-    def test__map_internal_interfaces(self):
+    def test_get_snat_port_for_internal_port(self):
         router = l3_test_common.prepare_router_data(num_internal_ports=4)
         ri = dvr_router.DvrEdgeRouter(mock.sentinel.agent,
                                       HOSTNAME,
@@ -714,13 +716,15 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 'ip_address': '101.12.13.14'}]}
         internal_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
         # test valid case
-        res_port = ri._map_internal_interfaces(internal_ports[0], [test_port])
-        self.assertEqual(test_port, res_port)
-        # test invalid case
-        test_port['fixed_ips'][0]['subnet_id'] = 1234
-        res_ip = ri._map_internal_interfaces(internal_ports[0], [test_port])
-        self.assertNotEqual(test_port, res_ip)
-        self.assertIsNone(res_ip)
+        with mock.patch.object(ri, 'get_snat_interfaces') as get_interfaces:
+            get_interfaces.return_value = [test_port]
+            res_port = ri.get_snat_port_for_internal_port(internal_ports[0])
+            self.assertEqual(test_port, res_port)
+            # test invalid case
+            test_port['fixed_ips'][0]['subnet_id'] = 1234
+            res_ip = ri.get_snat_port_for_internal_port(internal_ports[0])
+            self.assertNotEqual(test_port, res_ip)
+            self.assertIsNone(res_ip)
 
     def test_process_cent_router(self):
         router = l3_test_common.prepare_router_data()
@@ -1953,7 +1957,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         interface_name = ri.get_snat_int_device_name(port_id)
         self.device_exists.return_value = False
 
-        ri._create_dvr_gateway(dvr_gw_port, interface_name, self.snat_ports)
+        with mock.patch.object(ri, 'get_snat_interfaces') as get_interfaces:
+            get_interfaces.return_value = self.snat_ports
+            ri._create_dvr_gateway(dvr_gw_port, interface_name)
 
         # check 2 internal ports are plugged
         # check 1 ext-gw-port is plugged
