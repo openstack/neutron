@@ -107,12 +107,20 @@ def check_assert_called_once_with(logical_line, filename):
     # Try to detect unintended calls of nonexistent mock methods like:
     #    assert_called_once
     #    assertCalledOnceWith
+    #    assert_has_called
     if 'neutron/tests/' in filename:
         if '.assert_called_once_with(' in logical_line:
             return
-        if '.assertcalledonce' in logical_line.lower().replace('_', ''):
+        uncased_line = logical_line.lower().replace('_', '')
+
+        if '.assertcalledonce' in uncased_line:
             msg = ("N322: Possible use of no-op mock method. "
                    "please use assert_called_once_with.")
+            yield (0, msg)
+
+        if '.asserthascalled' in uncased_line:
+            msg = ("N322: Possible use of no-op mock method. "
+                   "please use assert_has_calls.")
             yield (0, msg)
 
 

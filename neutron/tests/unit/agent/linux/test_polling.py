@@ -32,8 +32,8 @@ class TestGetPollingManager(base.BaseTestCase):
                 with polling.get_polling_manager(minimize_polling=True) as pm:
                     self.assertEqual(pm.__class__,
                                      polling.InterfacePollingMinimizer)
-                mock_stop.assert_has_calls(mock.call())
-            mock_start.assert_has_calls(mock.call())
+                mock_stop.assert_has_calls([mock.call()])
+            mock_start.assert_has_calls([mock.call()])
 
 
 class TestInterfacePollingMinimizer(base.BaseTestCase):

@@ -663,4 +663,4 @@ class TestMidonetInterfaceDriver(TestBase):
         self.ip_dev.assert_has_calls([
             mock.call(self.device_name, namespace=self.namespace),
             mock.call().link.delete()])
-        self.ip.assert_has_calls(mock.call().garbage_collect_namespace())
+        self.ip.assert_has_calls([mock.call().garbage_collect_namespace()])

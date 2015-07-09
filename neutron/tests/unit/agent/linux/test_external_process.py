@@ -171,8 +171,9 @@ class TestProcessManager(base.BaseTestCase):
 
                 with mock.patch.object(ep, 'utils') as utils:
                     manager.disable()
-                    utils.assert_has_calls(
-                        mock.call.execute(['kill', '-9', 4], run_as_root=True))
+                    utils.assert_has_calls([
+                        mock.call.execute(['kill', '-9', 4],
+                                          run_as_root=True)])
 
     def test_disable_namespace(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -184,8 +185,9 @@ class TestProcessManager(base.BaseTestCase):
 
                 with mock.patch.object(ep, 'utils') as utils:
                     manager.disable()
-                    utils.assert_has_calls(
-                        mock.call.execute(['kill', '-9', 4], run_as_root=True))
+                    utils.assert_has_calls([
+                        mock.call.execute(['kill', '-9', 4],
+                                          run_as_root=True)])
 
     def test_disable_not_active(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:

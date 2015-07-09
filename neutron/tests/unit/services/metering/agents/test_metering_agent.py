@@ -63,7 +63,7 @@ class TestMeteringOperations(base.BaseTestCase):
         self.metering_rpc_patch = mock.patch(metering_rpc, return_value=[])
         self.metering_rpc_patch.start()
 
-        self.driver_patch = mock.patch(self.noop_driver, autospec=True)
+        self.driver_patch = mock.patch(self.noop_driver, spec=True)
         self.driver_patch.start()
 
         loopingcall_patch = mock.patch(
