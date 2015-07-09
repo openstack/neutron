@@ -317,7 +317,8 @@ class DvrLocalRouter(router.RouterInfo):
         if not self.ex_gw_port:
             return
 
-        sn_port = self._map_internal_interfaces(port, self.snat_ports)
+        snat_ports = self.get_snat_interfaces()
+        sn_port = self._map_internal_interfaces(port, snat_ports)
         if not sn_port:
             return
 
