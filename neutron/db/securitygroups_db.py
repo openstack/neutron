@@ -21,6 +21,10 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
 
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import exceptions
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
@@ -125,6 +129,21 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         a given tenant if it does not exist.
         """
         s = security_group['security_group']
+        kwargs = {
+            'context': context,
+            'security_group': s,
+            'is_default': default_sg,
+        }
+        # NOTE(armax): a callback exception here will prevent the request
+        # from being processed. This is a hook point for backend's validation;
+        # we raise to propagate the reason for the failure.
+        try:
+            registry.notify(
+                resources.SECURITY_GROUP, events.BEFORE_CREATE, self,
+                **kwargs)
+        except exceptions.CallbackFailure as e:
+            raise ext_sg.SecurityGroupConflict(reason=e)
+
         tenant_id = self._get_tenant_id_for_create(context, s)
 
         if not default_sg:
@@ -159,7 +178,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                     ethertype=ethertype)
                 context.session.add(egress_rule)
 
-        return self._make_security_group_dict(security_group_db)
+        secgroup_dict = self._make_security_group_dict(security_group_db)
+
+        kwargs['security_group'] = secgroup_dict
+        registry.notify(resources.SECURITY_GROUP, events.AFTER_CREATE, self,
+                        **kwargs)
+        return secgroup_dict
 
     def get_security_groups(self, context, filters=None, fields=None,
                             sorts=None, limit=None,
@@ -229,17 +253,58 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         if sg['name'] == 'default' and not context.is_admin:
             raise ext_sg.SecurityGroupCannotRemoveDefault()
+        kwargs = {
+            'context': context,
+            'security_group_id': id,
+            'security_group': sg,
+        }
+        # NOTE(armax): a callback exception here will prevent the request
+        # from being processed. This is a hook point for backend's validation;
+        # we raise to propagate the reason for the failure.
+        try:
+            registry.notify(
+                resources.SECURITY_GROUP, events.BEFORE_DELETE, self,
+                **kwargs)
+        except exceptions.CallbackFailure as e:
+            reason = _('cannot be deleted due to %s') % e
+            raise ext_sg.SecurityGroupInUse(id=id, reason=reason)
+
         with context.session.begin(subtransactions=True):
             context.session.delete(sg)
 
+        kwargs.pop('security_group')
+        registry.notify(resources.SECURITY_GROUP, events.AFTER_DELETE, self,
+                        **kwargs)
+
     def update_security_group(self, context, id, security_group):
         s = security_group['security_group']
+
+        kwargs = {
+            'context': context,
+            'security_group_id': id,
+            'security_group': s,
+        }
+        # NOTE(armax): a callback exception here will prevent the request
+        # from being processed. This is a hook point for backend's validation;
+        # we raise to propagate the reason for the failure.
+        try:
+            registry.notify(
+                resources.SECURITY_GROUP, events.BEFORE_UPDATE, self,
+                **kwargs)
+        except exceptions.CallbackFailure as e:
+            raise ext_sg.SecurityGroupConflict(reason=e)
+
         with context.session.begin(subtransactions=True):
             sg = self._get_security_group(context, id)
             if sg['name'] == 'default' and 'name' in s:
                 raise ext_sg.SecurityGroupCannotUpdateDefault()
             sg.update(s)
-        return self._make_security_group_dict(sg)
+        sg_dict = self._make_security_group_dict(sg)
+
+        kwargs['security_group'] = sg_dict
+        registry.notify(resources.SECURITY_GROUP, events.AFTER_UPDATE, self,
+                        **kwargs)
+        return sg_dict
 
     def _make_security_group_dict(self, security_group, fields=None):
         res = {'id': security_group['id'],
@@ -313,9 +378,29 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         return ret
 
     def create_security_group_rule(self, context, security_group_rule):
+        kwargs = {
+            'context': context,
+            'security_group_rule': security_group_rule,
+        }
+        # NOTE(armax): a callback exception here will prevent the request
+        # from being processed. This is a hook point for backend's validation;
+        # we raise to propagate the reason for the failure.
+        try:
+            registry.notify(
+                resources.SECURITY_GROUP_RULE, events.BEFORE_CREATE, self,
+                **kwargs)
+        except exceptions.CallbackFailure as e:
+            raise ext_sg.SecurityGroupConflict(reason=e)
+
         bulk_rule = {'security_group_rules': [security_group_rule]}
-        return self.create_security_group_rule_bulk_native(context,
-                                                           bulk_rule)[0]
+        sg_rule_dict = self.create_security_group_rule_bulk_native(
+            context, bulk_rule)[0]
+
+        kwargs['security_group_rule'] = sg_rule_dict
+        registry.notify(
+            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, self,
+            **kwargs)
+        return sg_rule_dict
 
     def _get_ip_proto_number(self, protocol):
         if protocol is None:
@@ -494,10 +579,29 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         return sgr
 
     def delete_security_group_rule(self, context, id):
+        kwargs = {
+            'context': context,
+            'security_group_rule_id': id
+        }
+        # NOTE(armax): a callback exception here will prevent the request
+        # from being processed. This is a hook point for backend's validation;
+        # we raise to propagate the reason for the failure.
+        try:
+            registry.notify(
+                resources.SECURITY_GROUP_RULE, events.BEFORE_DELETE, self,
+                **kwargs)
+        except exceptions.CallbackFailure as e:
+            reason = _('cannot be deleted due to %s') % e
+            raise ext_sg.SecurityGroupRuleInUse(id=id, reason=reason)
+
         with context.session.begin(subtransactions=True):
             query = self._model_query(context, SecurityGroupRule)
             if query.filter(SecurityGroupRule.id == id).delete() == 0:
                 raise ext_sg.SecurityGroupRuleNotFound(id=id)
+
+        registry.notify(
+            resources.SECURITY_GROUP_RULE, events.AFTER_DELETE, self,
+            **kwargs)
 
     def _extend_port_dict_security_group(self, port_res, port_db):
         # Security group bindings will be retrieved from the sqlalchemy

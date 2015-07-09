@@ -50,7 +50,12 @@ class SecurityGroupMissingIcmpType(nexception.InvalidInput):
 
 
 class SecurityGroupInUse(nexception.InUse):
-    message = _("Security Group %(id)s in use.")
+    message = _("Security Group %(id)s %(reason)s.")
+
+    def __init__(self, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs['reason'] = _("in use")
+        super(SecurityGroupInUse, self).__init__(**kwargs)
 
 
 class SecurityGroupCannotRemoveDefault(nexception.InUse):
@@ -106,8 +111,21 @@ class SecurityGroupRuleExists(nexception.InUse):
     message = _("Security group rule already exists. Rule id is %(id)s.")
 
 
+class SecurityGroupRuleInUse(nexception.InUse):
+    message = _("Security Group Rule %(id)s %(reason)s.")
+
+    def __init__(self, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs['reason'] = _("in use")
+        super(SecurityGroupRuleInUse, self).__init__(**kwargs)
+
+
 class SecurityGroupRuleParameterConflict(nexception.InvalidInput):
     message = _("Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s")
+
+
+class SecurityGroupConflict(nexception.Conflict):
+    message = _("Error %(reason)s while attempting the operation.")
 
 
 def convert_protocol(value):
