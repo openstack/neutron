@@ -154,7 +154,6 @@ class DietTestCase(testtools.TestCase):
         self.useFixture(fixtures.NestedTempfile())
         self.useFixture(fixtures.TempHomeDir())
 
-        self.setup_double_mock_guard()
         self.addCleanup(mock.patch.stopall)
 
         if bool_from_env('OS_STDOUT_CAPTURE'):
@@ -166,34 +165,6 @@ class DietTestCase(testtools.TestCase):
 
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
-
-    def setup_double_mock_guard(self):
-        # mock.patch.stopall() uses a set in python < 3.4 so patches may not
-        # be unwound in the same order they were applied. This can leak mocks
-        # and cause tests down the line to fail.
-        # More info: http://bugs.python.org/issue21239
-        #
-        # Use mock to patch mock.patch.start to check if a target has already
-        # been patched and fail if it has.
-        self.first_traceback = {}
-        orig_start = mock._patch.start
-
-        def new_start(mself):
-            mytarget = mself.getter()
-            myattr = mself.attribute
-            for patch in mself._active_patches:
-                if (mytarget, myattr) == (patch.target, patch.attribute):
-                    key = str((patch.target, patch.attribute))
-                    self.fail("mock.patch was setup on an already patched "
-                              "target %s.%s. Stop the original patch before "
-                              "starting a new one. Traceback of 1st patch: %s"
-                              % (mytarget, myattr,
-                                 ''.join(self.first_traceback.get(key, []))))
-            self.first_traceback[
-                str((mytarget, myattr))] = traceback.format_stack()[:-2]
-            return orig_start(mself)
-
-        mock.patch('mock._patch.start', new=new_start).start()
 
     def check_for_systemexit(self, exc_info):
         if isinstance(exc_info[1], SystemExit):

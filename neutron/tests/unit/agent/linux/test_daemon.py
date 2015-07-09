@@ -49,7 +49,7 @@ class TestPrivileges(base.BaseTestCase):
             with mock.patch.object(daemon.LOG, 'critical') as log_critical:
                 self.assertRaises(exceptions.FailToDropPrivilegesExit,
                                   daemon.setuid, '321')
-                log_critical.assert_once_with(mock.ANY)
+                log_critical.assert_called_once_with(mock.ANY)
 
     def test_setgid_with_name(self):
         with mock.patch('grp.getgrnam', return_value=FakeEntry('gr_gid', 123)):
@@ -67,7 +67,7 @@ class TestPrivileges(base.BaseTestCase):
             with mock.patch.object(daemon.LOG, 'critical') as log_critical:
                 self.assertRaises(exceptions.FailToDropPrivilegesExit,
                                   daemon.setgid, '321')
-                log_critical.assert_once_with(mock.ANY)
+                log_critical.assert_called_once_with(mock.ANY)
 
     @mock.patch.object(os, 'setgroups')
     @mock.patch.object(daemon, 'setgid')
@@ -113,7 +113,7 @@ class TestPrivileges(base.BaseTestCase):
             with mock.patch.object(daemon.LOG, 'critical') as log_critical:
                 self.assertRaises(exceptions.FailToDropPrivilegesExit,
                                   daemon.drop_privileges, 'user')
-                log_critical.assert_once_with(mock.ANY)
+                log_critical.assert_called_once_with(mock.ANY)
 
 
 class TestPidfile(base.BaseTestCase):

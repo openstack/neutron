@@ -84,7 +84,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
     def _test__port_action_good_action(self, action, port, expected_call):
         self.callbacks._port_action(self.plugin, mock.Mock(),
                                     port, action)
-        self.plugin.assert_has_calls(expected_call)
+        self.plugin.assert_has_calls([expected_call])
 
     def test_port_action_create_port(self):
         self._test__port_action_good_action(
@@ -188,8 +188,8 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                                         host='foo_host',
                                         port_id='foo_port_id',
                                         port=port)
-        self.plugin.assert_has_calls(
-            mock.call.update_port(mock.ANY, 'foo_port_id', expected_port))
+        self.plugin.assert_has_calls([
+            mock.call.update_port(mock.ANY, 'foo_port_id', expected_port)])
 
     def test_release_dhcp_port(self):
         port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])
