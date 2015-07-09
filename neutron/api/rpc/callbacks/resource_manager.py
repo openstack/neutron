@@ -27,43 +27,41 @@ class ResourcesCallbacksManager(object):
     def __init__(self):
         self.clear()
 
-    def register(self, callback, resource):
-        """register callback for a resource .
+    def register(self, callback, resource_type):
+        """Register a callback for a resource type.
 
-        One callback can be register to a resource
+        Only one callback can be registered for a resource type.
 
-        :param callback: the callback. It must raise or return a dict.
-        :param resource: the resource. It must be a valid resource.
+        :param callback: the callback. It must raise or return NeutronObject.
+        :param resource_type: must be a valid resource type.
         """
-        LOG.debug("register: %(callback)s %(resource)s",
-                  {'callback': callback, 'resource': resource})
-        if resource not in resources.VALID:
-            raise exceptions.Invalid(element='resource', value=resource)
+        LOG.debug("register: %(callback)s %(resource_type)s",
+                  {'callback': callback, 'resource_type': resource_type})
+        if not resources.is_valid_resource_type(resource_type):
+            raise exceptions.Invalid(element='resource', value=resource_type)
 
-        self._callbacks[resource] = callback
+        self._callbacks[resource_type] = callback
 
-    def unregister(self, resource):
+    def unregister(self, resource_type):
         """Unregister callback from the registry.
 
-        :param callback: the callback.
-        :param resource: the resource.
+        :param resource: must be a valid resource type.
         """
-        LOG.debug("Unregister: %(resource)s",
-                  {'resource': resource})
-        if resource not in resources.VALID:
-            raise exceptions.Invalid(element='resource', value=resource)
-        self._callbacks[resource] = None
+        LOG.debug("Unregister: %s", resource_type)
+        if not resources.is_valid_resource_type(resource_type):
+            raise exceptions.Invalid(element='resource', value=resource_type)
+        self._callbacks[resource_type] = None
 
     def clear(self):
-        """Brings the manager to a clean slate."""
+        """Brings the manager to a clean state."""
         self._callbacks = collections.defaultdict(dict)
 
-    def get_callback(self, resource):
+    def get_callback(self, resource_type):
         """Return the callback if found, None otherwise.
 
-        :param resource: the resource. It must be a valid resource.
+        :param resource_type: must be a valid resource type.
         """
-        if resource not in resources.VALID:
-            raise exceptions.Invalid(element='resource', value=resource)
+        if not resources.is_valid_resource_type(resource_type):
+            raise exceptions.Invalid(element='resource', value=resource_type)
 
-        return self._callbacks[resource]
+        return self._callbacks[resource_type]

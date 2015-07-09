@@ -30,67 +30,19 @@ from oslo_log import log as logging
 LOG = logging.getLogger(__name__)
 
 
-#TODO(QoS): remove this stub when db is ready
-def _get_qos_policy_cb_stub(resource, policy_id, **kwargs):
-    """Hardcoded stub for testing until we get the db working."""
-    qos_policy = {
-        "tenant_id": "8d4c70a21fed4aeba121a1a429ba0d04",
-        "id": "46ebaec0-0570-43ac-82f6-60d2b03168c4",
-        "name": "10Mbit",
-        "description": "This policy limits the ports to 10Mbit max.",
-        "shared": False,
-        "rules": [{
-            "id": "5f126d84-551a-4dcf-bb01-0e9c0df0c793",
-            "max_kbps": "10000",
-            "max_burst_kbps": "0",
-            "type": "bandwidth_limit"
-        }]
-    }
-    return qos_policy
-
-
-def _get_qos_policy_cb(resource, policy_id, **kwargs):
+def _get_qos_policy_cb(resource_type, policy_id, **kwargs):
     qos_plugin = manager.NeutronManager.get_service_plugins().get(
         constants.QOS)
     context = kwargs.get('context')
     if context is None:
         LOG.warning(_LW(
-            'Received %(resource)s %(policy_id)s without context'),
-            {'resource': resource, 'policy_id': policy_id}
+            'Received %(resource_type)s %(policy_id)s without context'),
+            {'resource_type': resource_type, 'policy_id': policy_id}
         )
         return
 
     qos_policy = qos_plugin.get_qos_policy(context, policy_id)
     return qos_policy
-
-
-#TODO(QoS): remove this stub when db is ready
-def _get_qos_bandwidth_limit_rule_cb_stub(resource, rule_id, **kwargs):
-    """Hardcoded for testing until we get the db working."""
-    bandwidth_limit = {
-        "id": "5f126d84-551a-4dcf-bb01-0e9c0df0c793",
-        "qos_policy_id": "46ebaec0-0570-43ac-82f6-60d2b03168c4",
-        "max_kbps": "10000",
-        "max_burst_kbps": "0",
-    }
-    return bandwidth_limit
-
-
-def _get_qos_bandwidth_limit_rule_cb(resource, rule_id, **kwargs):
-    qos_plugin = manager.NeutronManager.get_service_plugins().get(
-        constants.QOS)
-    context = kwargs.get('context')
-    if context is None:
-        LOG.warning(_LW(
-            'Received %(resource)s %(rule_id,)s without context '),
-            {'resource': resource, 'rule_id,': rule_id}
-        )
-        return
-
-    bandwidth_limit = qos_plugin.get_qos_bandwidth_limit_rule(
-                                        context,
-                                        rule_id)
-    return bandwidth_limit
 
 
 class QoSPlugin(qos.QoSPluginBase):
@@ -105,15 +57,8 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def __init__(self):
         super(QoSPlugin, self).__init__()
-        self.register_resource_providers()
-
-    def register_resource_providers(self):
         rpc_registry.register_provider(
-            _get_qos_bandwidth_limit_rule_cb_stub,
-            rpc_resources.QOS_RULE)
-
-        rpc_registry.register_provider(
-            _get_qos_policy_cb_stub,
+            _get_qos_policy_cb,
             rpc_resources.QOS_POLICY)
 
     def create_policy(self, context, policy):

@@ -27,10 +27,10 @@ def _get_resources_callback_manager():
 def get_info(resource_type, resource_id, **kwargs):
     """Get information about resource type with resource id.
 
-    The function will check the providers for an specific remotable
+    The function will check the providers for a specific remotable
     resource and get the resource.
 
-    :returns: an oslo versioned object.
+    :returns: NeutronObject
     """
     callback = _get_resources_callback_manager().get_callback(resource_type)
     if callback:
