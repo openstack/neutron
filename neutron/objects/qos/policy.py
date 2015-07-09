@@ -73,9 +73,11 @@ class QosPolicy(base.NeutronObject):
                                               port_id=port_id)
 
     def detach_network(self, network_id):
-        # TODO(QoS): implement it, in the next life maybe
-        pass
+        qos_db_api.delete_policy_network_binding(self._context,
+                                                 policy_id=self.id,
+                                                 network_id=network_id)
 
     def detach_port(self, port_id):
-        # TODO(QoS): implement it, in the next life maybe
-        pass
+        qos_db_api.delete_policy_port_binding(self._context,
+                                              policy_id=self.id,
+                                              port_id=port_id)
