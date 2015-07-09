@@ -590,13 +590,12 @@ class RouterInfo(object):
                              action)
 
     def process_external(self, agent):
+        fip_statuses = {}
         existing_floating_ips = self.floating_ips
         try:
             with self.iptables_manager.defer_apply():
                 ex_gw_port = self.get_ex_gw_port()
                 self._process_external_gateway(ex_gw_port)
-                # TODO(Carl) Return after setting existing_floating_ips and
-                # still call update_fip_statuses?
                 if not ex_gw_port:
                     return
 
@@ -614,8 +613,9 @@ class RouterInfo(object):
                 # All floating IPs must be put in error state
                 LOG.exception(e)
                 fip_statuses = self.put_fips_in_error_state()
-
-        agent.update_fip_statuses(self, existing_floating_ips, fip_statuses)
+        finally:
+            agent.update_fip_statuses(
+                self, existing_floating_ips, fip_statuses)
 
     @common_utils.exception_logger()
     def process(self, agent):
