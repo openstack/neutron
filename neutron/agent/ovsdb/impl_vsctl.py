@@ -184,6 +184,15 @@ class OvsdbVsctl(ovsdb.API):
         return BaseCommand(self.context, 'br-get-external-id',
                            args=[name, field])
 
+    def db_create(self, table, **col_values):
+        args = [table]
+        args += _set_colval_args(*col_values.items())
+        return BaseCommand(self.context, 'create', args=args)
+
+    def db_destroy(self, table, record):
+        args = [table, record]
+        return BaseCommand(self.context, 'destroy', args=args)
+
     def db_set(self, table, record, *col_values):
         args = [table, record]
         args += _set_colval_args(*col_values)
@@ -256,8 +265,11 @@ def _set_colval_args(*col_values):
                 col, k, op, ovsdb.py_to_val(v)) for k, v in val.items()]
         elif (isinstance(val, collections.Sequence)
                 and not isinstance(val, six.string_types)):
-            args.append(
-                "%s%s%s" % (col, op, ",".join(map(ovsdb.py_to_val, val))))
+            if len(val) == 0:
+                args.append("%s%s%s" % (col, op, "[]"))
+            else:
+                args.append(
+                    "%s%s%s" % (col, op, ",".join(map(ovsdb.py_to_val, val))))
         else:
             args.append("%s%s%s" % (col, op, ovsdb.py_to_val(val)))
     return args
