@@ -470,3 +470,7 @@ class DeviceNotFoundError(NeutronException):
 class NetworkSubnetPoolAffinityError(BadRequest):
     message = _("Subnets hosted on the same network must be allocated from "
                 "the same subnet pool")
+
+
+class ObjectActionError(NeutronException):
+    message = _('Object action %(action)s failed because: %(reason)s')

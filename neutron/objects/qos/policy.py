@@ -13,20 +13,41 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
+import six
 
+from neutron.common import exceptions
+from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.qos import api as qos_db_api
 from neutron.db.qos import models as qos_db_model
+from neutron.extensions import qos as qos_extension
 from neutron.objects import base
+from neutron.objects.qos import rule as rule_obj_impl
 
 
-# TODO(QoS): add rule lists to object fields
-# TODO(QoS): implement something for binding networks and ports with policies
+class QosRulesExtenderMeta(abc.ABCMeta):
+
+    def __new__(cls, *args, **kwargs):
+        cls_ = super(QosRulesExtenderMeta, cls).__new__(cls, *args, **kwargs)
+
+        cls_.rule_fields = {}
+        for rule in qos_extension.VALID_RULE_TYPES:
+            rule_cls_name = 'Qos%sRule' % utils.camelize(rule)
+            field = '%s_rules' % rule
+            cls_.fields[field] = obj_fields.ListOfObjectsField(rule_cls_name)
+            cls_.rule_fields[field] = rule_cls_name
+
+        cls_.synthetic_fields = list(cls_.rule_fields.keys())
+
+        return cls_
 
 
 @obj_base.VersionedObjectRegistry.register
+@six.add_metaclass(QosRulesExtenderMeta)
 class QosPolicy(base.NeutronObject):
 
     db_model = qos_db_model.QosPolicy
@@ -43,6 +64,16 @@ class QosPolicy(base.NeutronObject):
     }
 
     fields_no_update = ['id', 'tenant_id']
+
+    def obj_load_attr(self, attrname):
+        if attrname not in self.rule_fields:
+            raise exceptions.ObjectActionError(
+                action='obj_load_attr', reason='unable to load %s' % attrname)
+
+        rule_cls = getattr(rule_obj_impl, self.rule_fields[attrname])
+        rules = rule_cls.get_rules_by_policy(self._context, self.id)
+        setattr(self, attrname, rules)
+        self.obj_reset_changes([attrname])
 
     @classmethod
     def _get_object_policy(cls, context, model, **kwargs):

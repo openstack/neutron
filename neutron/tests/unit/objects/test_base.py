@@ -52,11 +52,13 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.IntegerField: _random_integer,
     obj_fields.StringField: _random_string,
     obj_fields.UUIDField: _random_string,
+    obj_fields.ListOfObjectsField: lambda: []
 }
 
 
-def get_obj_fields(obj):
-    return {field: getattr(obj, field) for field in obj.fields}
+def get_obj_db_fields(obj):
+    return {field: getattr(obj, field) for field in obj.fields
+            if field not in obj.synthetic_fields}
 
 
 class _BaseObjectTestCase(object):
@@ -66,15 +68,17 @@ class _BaseObjectTestCase(object):
     def setUp(self):
         super(_BaseObjectTestCase, self).setUp()
         self.context = context.get_admin_context()
-        self.db_objs = list(self._get_random_fields() for _ in range(3))
+        self.db_objs = list(self.get_random_fields() for _ in range(3))
         self.db_obj = self.db_objs[0]
 
     @classmethod
-    def _get_random_fields(cls):
+    def get_random_fields(cls, obj_cls=None):
+        obj_cls = obj_cls or cls._test_class
         fields = {}
-        for field in cls._test_class.fields:
-            field_obj = cls._test_class.fields[field]
-            fields[field] = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]()
+        for field, field_obj in obj_cls.fields.items():
+            if field not in obj_cls.synthetic_fields:
+                generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
+                fields[field] = generator()
         return fields
 
     @classmethod
@@ -89,7 +93,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                return_value=self.db_obj) as get_object_mock:
             obj = self._test_class.get_by_id(self.context, id='fake_id')
             self.assertTrue(self._is_test_class(obj))
-            self.assertEqual(self.db_obj, get_obj_fields(obj))
+            self.assertEqual(self.db_obj, get_obj_db_fields(obj))
             get_object_mock.assert_called_once_with(
                 self.context, self._test_class.db_model, 'fake_id')
 
@@ -106,14 +110,14 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 filter(lambda obj: not self._is_test_class(obj), objs))
             self.assertEqual(
                 sorted(self.db_objs),
-                sorted(get_obj_fields(obj) for obj in objs))
+                sorted(get_obj_db_fields(obj) for obj in objs))
             get_objects_mock.assert_called_once_with(
                 self.context, self._test_class.db_model)
 
     def _check_equal(self, obj, db_obj):
         self.assertEqual(
             sorted(db_obj),
-            sorted(get_obj_fields(obj)))
+            sorted(get_obj_db_fields(obj)))
 
     def test_create(self):
         with mock.patch.object(db_api, 'create_object',
