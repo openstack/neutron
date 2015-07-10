@@ -583,6 +583,23 @@ class TestHyperVUtilsV2R2(base.BaseTestCase):
         self.assertEqual(right_acls, good_acls)
         self.assertEqual([], bad_acls)
 
+    def test_filter_security_acls_icmp(self):
+        default = self._utils._ACL_DEFAULT
+
+        mock_acl = mock.MagicMock()
+        mock_acl.Action = self._utils._ACL_ACTION_ALLOW
+        mock_acl.Direction = self._FAKE_ACL_DIR
+        mock_acl.LocalPort = ''
+        mock_acl.Protocol = self._utils._ICMP_PROTOCOL
+        mock_acl.RemoteIPAddress = self._FAKE_REMOTE_ADDR
+
+        icmp_acl_empty_port = self._utils._filter_security_acls(
+            [mock_acl], mock_acl.Action, self._FAKE_ACL_DIR,
+            self._FAKE_ACL_TYPE, default,
+            self._utils._ICMP_PROTOCOL, self._FAKE_REMOTE_ADDR)
+
+        self.assertEqual(mock_acl, icmp_acl_empty_port[0])
+
     def test_get_new_weight(self):
         mockacl1 = mock.MagicMock()
         mockacl1.Weight = self._utils._MAX_WEIGHT - 1
