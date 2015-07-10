@@ -674,6 +674,51 @@ class RealNetStorageAristaDriverTestCase(testlib_api.SqlTestCase):
                          'There should be %d '
                          'VMs, not %d' % (expected_vms, provisioned_vms))
 
+    def test_update_port(self):
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id)
+
+        port_context = self._get_port_context(tenant_id,
+                                              network_id,
+                                              vm_id,
+                                              network_context)
+        port_id = port_context.current['id']
+        # Create the network
+        self.drv.create_network_precommit(network_context)
+        # Create the port
+        self.drv.create_port_precommit(port_context)
+
+        # Update the host id
+        port_context.current['binding:host_id'] = 'ubuntu2'
+        self.drv.update_port_precommit(port_context)
+
+        port = port_context.current
+        device_id = port['device_id']
+        device_owner = port['device_owner']
+        host_id = port['binding:host_id']
+        orig_host_id = 'ubuntu0'
+        port_context.original['binding:host_id'] = orig_host_id
+        port_id = port['id']
+        port_name = port['name']
+
+        self.drv.update_port_postcommit(port_context)
+
+        expected_calls = [
+            mock.call.unplug_host_from_network(device_id, orig_host_id,
+                                               port_id, network_id, tenant_id),
+            mock.call.plug_port_into_network(device_id, host_id, port_id,
+                                             network_id, tenant_id,
+                                             port_name, device_owner)
+        ]
+
+        self.fake_rpc.assert_has_calls(expected_calls)
+
     def _get_network_context(self, tenant_id, net_id, seg_id):
         network = {'id': net_id,
                    'tenant_id': tenant_id}
@@ -684,11 +729,12 @@ class RealNetStorageAristaDriverTestCase(testlib_api.SqlTestCase):
         port = {'device_id': vm_id,
                 'device_owner': 'compute',
                 'binding:host_id': 'ubuntu1',
+                'name': 'test-port',
                 'tenant_id': tenant_id,
                 'id': 101,
                 'network_id': net_id
                 }
-        return FakePortContext(port, port, network)
+        return FakePortContext(port, dict(port), network)
 
 
 class fake_keystone_info_class(object):
