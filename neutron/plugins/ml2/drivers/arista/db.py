@@ -142,6 +142,25 @@ def remember_vm(vm_id, host_id, port_id, network_id, tenant_id):
         session.add(vm)
 
 
+def update_vm_host(vm_id, host_id, port_id, network_id, tenant_id):
+    """Updates the VM host id in the database.
+
+    :param vm_id: globally unique identifier for VM instance
+    :param host_id: ID of the new host where the VM is placed
+    :param port_id: globally unique port ID that connects VM to network
+    :param network_id: globally unique neutron network identifier
+    :param tenant_id: globally unique neutron tenant identifier
+    """
+    session = db.get_session()
+    with session.begin():
+        vm = session.query(AristaProvisionedVms).filter_by(
+            vm_id=vm_id, port_id=port_id, tenant_id=tenant_id,
+            network_id=network_id).first()
+        if vm:
+            # Update the VM's host id
+            vm.host_id = host_id
+
+
 def forget_vm(vm_id, host_id, port_id, network_id, tenant_id):
     """Removes all relevant information about a VM from repository.
 
