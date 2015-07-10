@@ -102,7 +102,11 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             raise mapped_exc(**kwargs)
         except webob.exc.HTTPException as e:
             type_, value, tb = sys.exc_info()
-            LOG.exception(_LE('%s failed'), action)
+            if hasattr(e, 'code') and 400 <= e.code < 500:
+                LOG.info(_LI('%(action)s failed (client error): %(exc)s'),
+                         {'action': action, 'exc': e})
+            else:
+                LOG.exception(_LE('%s failed'), action)
             translate(e, language)
             value.body = serializer.serialize(
                 {'NeutronError': get_exception_data(e)})
