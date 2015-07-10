@@ -19,27 +19,27 @@ from neutron.tests.unit.objects import test_base
 
 class QosBandwidthLimitPolicyObjectTestCase(test_base.BaseObjectTestCase):
 
-    test_class = rule.QosBandwidthLimitRule
+    _test_class = rule.QosBandwidthLimitRule
 
     def _filter_db_object(self, func):
         return {
             field: self.db_obj[field]
-            for field in self.test_class.fields
+            for field in self._test_class.fields
             if func(field)
         }
 
     def _get_core_db_obj(self):
         return self._filter_db_object(
-            lambda field: self.test_class._is_core_field(field))
+            lambda field: self._test_class._is_core_field(field))
 
     def _get_addn_db_obj(self):
         return self._filter_db_object(
-            lambda field: self.test_class._is_addn_field(field))
+            lambda field: self._test_class._is_addn_field(field))
 
     def test_create(self):
         with mock.patch.object(db_api, 'create_object',
                                return_value=self.db_obj) as create_mock:
-            test_class = self.test_class
+            test_class = self._test_class
             obj = test_class(self.context, **self.db_obj)
             self._check_equal(obj, self.db_obj)
             obj.create()
@@ -47,27 +47,27 @@ class QosBandwidthLimitPolicyObjectTestCase(test_base.BaseObjectTestCase):
 
             core_db_obj = self._get_core_db_obj()
             create_mock.assert_any_call(
-                self.context, self.test_class.base_db_model, core_db_obj)
+                self.context, self._test_class.base_db_model, core_db_obj)
 
             addn_db_obj = self._get_addn_db_obj()
             create_mock.assert_any_call(
-                self.context, self.test_class.db_model,
+                self.context, self._test_class.db_model,
                 addn_db_obj)
 
     def test_update_changes(self):
         with mock.patch.object(db_api, 'update_object',
                                return_value=self.db_obj) as update_mock:
-            obj = self.test_class(self.context, **self.db_obj)
+            obj = self._test_class(self.context, **self.db_obj)
             self._check_equal(obj, self.db_obj)
             obj.update()
             self._check_equal(obj, self.db_obj)
 
             core_db_obj = self._get_core_db_obj()
             update_mock.assert_any_call(
-                self.context, self.test_class.base_db_model, obj.id,
+                self.context, self._test_class.base_db_model, obj.id,
                 core_db_obj)
 
             addn_db_obj = self._get_addn_db_obj()
             update_mock.assert_any_call(
-                self.context, self.test_class.db_model, obj.id,
+                self.context, self._test_class.db_model, obj.id,
                 addn_db_obj)
