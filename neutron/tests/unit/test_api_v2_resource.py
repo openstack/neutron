@@ -363,19 +363,21 @@ class ResourceTestCase(base.BaseTestCase):
         res = resource.delete('', extra_environ=environ)
         self.assertEqual(res.status_int, 204)
 
-    def _test_error_log_level(self, map_webob_exc, expect_log_info=False,
-                              use_fault_map=True):
-        class TestException(n_exc.NeutronException):
-            message = 'Test Exception'
+    def _test_error_log_level(self, expected_webob_exc, expect_log_info=False,
+                              use_fault_map=True, exc_raised=None):
+        if not exc_raised:
+            class TestException(n_exc.NeutronException):
+                message = 'Test Exception'
+            exc_raised = TestException
 
         controller = mock.MagicMock()
-        controller.test.side_effect = TestException()
-        faults = {TestException: map_webob_exc} if use_fault_map else {}
+        controller.test.side_effect = exc_raised()
+        faults = {exc_raised: expected_webob_exc} if use_fault_map else {}
         resource = webtest.TestApp(wsgi_resource.Resource(controller, faults))
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
         with mock.patch.object(wsgi_resource, 'LOG') as log:
             res = resource.get('', extra_environ=environ, expect_errors=True)
-            self.assertEqual(res.status_int, map_webob_exc.code)
+            self.assertEqual(res.status_int, expected_webob_exc.code)
         self.assertEqual(expect_log_info, log.info.called)
         self.assertNotEqual(expect_log_info, log.exception.called)
 
@@ -389,6 +391,16 @@ class ResourceTestCase(base.BaseTestCase):
     def test_unmapped_error_logged_exception_level(self):
         self._test_error_log_level(exc.HTTPInternalServerError,
                                    expect_log_info=False, use_fault_map=False)
+
+    def test_webob_4xx_logged_info_level(self):
+        self._test_error_log_level(exc.HTTPNotFound,
+                                   use_fault_map=False, expect_log_info=True,
+                                   exc_raised=exc.HTTPNotFound)
+
+    def test_webob_5xx_logged_info_level(self):
+        self._test_error_log_level(exc.HTTPServiceUnavailable,
+                                   use_fault_map=False, expect_log_info=False,
+                                   exc_raised=exc.HTTPServiceUnavailable)
 
     def test_no_route_args(self):
         controller = mock.MagicMock()
