@@ -7,11 +7,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-06-11 06:02+0000\n"
-"PO-Revision-Date: 2015-06-10 23:52+0000\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
-"es/)\n"
+"Language-Team: Spanish (http://www.transifex.com/p/neutron/language/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -73,26 +72,6 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "Se ha intentado actualizar el filtro de puerto que no está filtrado %s"
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "Se ha captado %s, saliendo"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "Se ha captado %s, deteniendo hijos"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "Hijo %(pid)d matado por señal %(sig)d"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "El hijo %(pid)s ha salido con el estado %(code)d"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "Hijo captado %s, saliendo"
-
-#, python-format
 msgid "Config paste file: %s"
 msgstr "Archivo de configuración de pegar: %s"
 
@@ -109,13 +88,6 @@ msgstr "El dispositivo %s no está definido en el plug-in"
 
 msgid "Disabled security-group extension."
 msgstr "La extensión security-group se ha inhabilitado."
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet oculto escuchando en %(port)s para el proceso %(pid)d"
-
-msgid "Forking too fast, sleeping"
-msgstr "Bifurcación demasiado rápida, en reposo"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -184,9 +156,6 @@ msgstr "No se ha cargado ningún plug-in de %s"
 msgid "OVS cleanup completed successfully"
 msgstr "La limpieza de OVS se ha completado satisfactoriamente"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "El proceso padre se ha detenido inesperadamente, saliendo"
-
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "Se ha actualizado el puerto %(device)s. Detalles: %(details)s"
@@ -226,14 +195,6 @@ msgid "Security group rule updated %r"
 msgstr "Se ha actualizado la regla de grupo de seguridad %r"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "Omitiendo la tarea periódica %(task)s porque está inhabilitada"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "Omitiendo la tarea periódica %(task)s porque el intervalo es negativo"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "Saltando el puerto %s, ya que no hay ninguna IP configurada en él"
 
@@ -246,14 +207,6 @@ msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 "La IP de inicio (%(start)s) es mayor que la IP de finalización (%(end)s)"
 
-#, python-format
-msgid "Started child %d"
-msgstr "Se ha iniciado el hijo %d"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "Iniciando %d trabajadores"
-
 msgid "Synchronizing state"
 msgstr "Sincronizando estado"
 
@@ -264,13 +217,6 @@ msgid ""
 msgstr ""
 "Se ha encontrado un error en validación para CIDR: %(new_cidr)s; se solapa "
 "con la subred %(subnet_id)s (CIDR: %(cidr)s)"
-
-msgid "Wait called after thread killed. Cleaning up."
-msgstr "Esperar llamado después de cortar la línea. Limpiando."
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "En espera de %d hijos para salir"
 
 #, python-format
 msgid "agent_updated by server side %s!"
