@@ -59,12 +59,12 @@ def get_obj_fields(obj):
     return {field: getattr(obj, field) for field in obj.fields}
 
 
-class BaseObjectTestCase(test_base.BaseTestCase):
+class _BaseObjectTestCase(object):
 
     _test_class = FakeNeutronObject
 
     def setUp(self):
-        super(BaseObjectTestCase, self).setUp()
+        super(_BaseObjectTestCase, self).setUp()
         self.context = context.get_admin_context()
         self.db_objs = list(self._get_random_fields() for _ in range(3))
         self.db_obj = self.db_objs[0]
@@ -80,6 +80,9 @@ class BaseObjectTestCase(test_base.BaseTestCase):
     @classmethod
     def _is_test_class(cls, obj):
         return isinstance(obj, cls._test_class)
+
+
+class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     def test_get_by_id(self):
         with mock.patch.object(db_api, 'get_object',
@@ -166,3 +169,13 @@ class BaseObjectTestCase(test_base.BaseTestCase):
         self._check_equal(obj, self.db_obj)
         delete_mock.assert_called_once_with(
             self.context, self._test_class.db_model, self.db_obj['id'])
+
+
+class BaseDbObjectTestCase(_BaseObjectTestCase):
+
+    def test_create(self):
+        obj = self._test_class(self.context, **self.db_obj)
+        obj.create()
+
+        new = self._test_class.get_by_id(self.context, id=obj.id)
+        self.assertEqual(obj, new)

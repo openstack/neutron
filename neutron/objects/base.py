@@ -23,7 +23,8 @@ from neutron.db import api as db_api
 
 @six.add_metaclass(abc.ABCMeta)
 class NeutronObject(obj_base.VersionedObject,
-                    obj_base.VersionedObjectDictCompat):
+                    obj_base.VersionedObjectDictCompat,
+                    obj_base.ComparableVersionedObject):
 
     # should be overridden for all persistent objects
     db_model = None
@@ -43,12 +44,16 @@ class NeutronObject(obj_base.VersionedObject,
     @classmethod
     def get_by_id(cls, context, id):
         db_obj = db_api.get_object(context, cls.db_model, id)
-        return cls(context, **db_obj)
+        obj = cls(context, **db_obj)
+        obj.obj_reset_changes()
+        return obj
 
     @classmethod
     def get_objects(cls, context):
         db_objs = db_api.get_objects(context, cls.db_model)
         objs = [cls(context, **db_obj) for db_obj in db_objs]
+        for obj in objs:
+            obj.obj_reset_changes()
         return objs
 
     def create(self):

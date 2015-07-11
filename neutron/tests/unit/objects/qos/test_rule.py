@@ -17,7 +17,7 @@ from neutron.objects.qos import rule
 from neutron.tests.unit.objects import test_base
 
 
-class QosBandwidthLimitPolicyObjectTestCase(test_base.BaseObjectTestCase):
+class QosBandwidthLimitPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = rule.QosBandwidthLimitRule
 
