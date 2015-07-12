@@ -207,6 +207,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 subnet_id = ip['subnet_id']
                 self._store_ip_allocation(context, ip_address, network_id,
                                           subnet_id, port_id)
+        return ips
 
     def update_port_with_ips(self, context, db_port, new_port, new_mac):
         changes = self.Changes(add=[], original=[], remove=[])
