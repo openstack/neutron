@@ -21,7 +21,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import context
-import neutron.ipam as ipam
+from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
 from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -64,7 +64,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
         with self.ctx.session.begin(subtransactions=True):
             sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-            req = ipam.AnySubnetRequest(self._tenant_id,
+            req = ipam_req.AnySubnetRequest(self._tenant_id,
                                         uuidutils.generate_uuid(),
                                         constants.IPv4, 21)
             res = sa.allocate_subnet(req)
@@ -81,7 +81,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         with self.ctx.session.begin(subtransactions=True):
             sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
             sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-            req = ipam.SpecificSubnetRequest(self._tenant_id,
+            req = ipam_req.SpecificSubnetRequest(self._tenant_id,
                                              uuidutils.generate_uuid(),
                                              '10.1.2.0/24')
             res = sa.allocate_subnet(req)
@@ -96,7 +96,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                       21, 4)
         sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
         sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-        req = ipam.AnySubnetRequest(self._tenant_id,
+        req = ipam_req.AnySubnetRequest(self._tenant_id,
                                     uuidutils.generate_uuid(),
                                     constants.IPv4,
                                     21)
@@ -109,7 +109,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                       21, 4)
         sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
         sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-        req = ipam.SpecificSubnetRequest(self._tenant_id,
+        req = ipam_req.SpecificSubnetRequest(self._tenant_id,
                                          uuidutils.generate_uuid(),
                                          '10.1.0.0/21')
         self.assertRaises(n_exc.SubnetAllocationError,
@@ -122,7 +122,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
         with self.ctx.session.begin(subtransactions=True):
             sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-            req = ipam.AnySubnetRequest(self._tenant_id,
+            req = ipam_req.AnySubnetRequest(self._tenant_id,
                                         uuidutils.generate_uuid(),
                                         constants.IPv4, 21)
             res = sa.allocate_subnet(req)
@@ -137,7 +137,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
         with self.ctx.session.begin(subtransactions=True):
             sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-            req = ipam.SpecificSubnetRequest(self._tenant_id,
+            req = ipam_req.SpecificSubnetRequest(self._tenant_id,
                                              uuidutils.generate_uuid(),
                                              '10.1.2.0/24',
                                              gateway_ip='10.1.2.254')
@@ -154,10 +154,10 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
         with self.ctx.session.begin(subtransactions=True):
             sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-            req = ipam.SpecificSubnetRequest(self._tenant_id,
-                                             uuidutils.generate_uuid(),
-                                             '2210::/64',
-                                             '2210::ffff:ffff:ffff:ffff')
+            req = ipam_req.SpecificSubnetRequest(self._tenant_id,
+                                                 uuidutils.generate_uuid(),
+                                                 '2210::/64',
+                                                 '2210::ffff:ffff:ffff:ffff')
             res = sa.allocate_subnet(req)
             detail = res.get_details()
             self.assertEqual(detail.gateway_ip,
@@ -177,7 +177,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                       48, 6, default_quota=1)
         sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
         sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-        req = ipam.SpecificSubnetRequest(self._tenant_id,
+        req = ipam_req.SpecificSubnetRequest(self._tenant_id,
                                          uuidutils.generate_uuid(),
                                          'fe80::/63')
         self.assertRaises(n_exc.SubnetPoolQuotaExceeded,
