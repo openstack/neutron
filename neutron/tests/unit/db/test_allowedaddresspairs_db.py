@@ -279,6 +279,21 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                     res = req.get_response(self.api)
                     self.assertEqual(409, res.status_int)
 
+    def test_update_with_none_and_own_mac_for_duplicate_ip(self):
+        with self.network() as net:
+            res = self._create_port(self.fmt, net['network']['id'])
+            port = self.deserialize(self.fmt, res)
+            mac_address = port['port']['mac_address']
+            address_pairs = [{'ip_address': '10.0.0.1'},
+                             {'mac_address': mac_address,
+                              'ip_address': '10.0.0.1'}]
+            update_port = {'port': {addr_pair.ADDRESS_PAIRS:
+                                    address_pairs}}
+            req = self.new_update_request('ports', update_port,
+                                          port['port']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(400, res.status_int)
+
     def test_create_port_remove_allowed_address_pairs(self):
         with self.network() as net:
             address_pairs = [{'mac_address': '00:00:00:00:00:01',
