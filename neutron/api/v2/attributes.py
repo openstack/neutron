@@ -170,6 +170,10 @@ def _validate_mac_address(data, valid_values=None):
         valid_mac = netaddr.valid_mac(_validate_no_whitespace(data))
     except Exception:
         valid_mac = False
+
+    if valid_mac:
+        valid_mac = not netaddr.EUI(data) in map(netaddr.EUI,
+                    constants.INVALID_MAC_ADDRESSES)
     # TODO(arosen): The code in this file should be refactored
     # so it catches the correct exceptions. _validate_no_whitespace
     # raises AttributeError if data is None.

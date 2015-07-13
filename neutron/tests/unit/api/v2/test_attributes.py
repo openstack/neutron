@@ -19,6 +19,7 @@ import testtools
 import mock
 
 from neutron.api.v2 import attributes
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.tests import base
 from neutron.tests import tools
@@ -186,6 +187,10 @@ class TestAttributes(base.BaseTestCase):
         msg = validator(mac_addr)
         err_msg = "'%s' is not a valid MAC address"
         self.assertEqual(err_msg % mac_addr, msg)
+
+        for invalid_mac_addr in constants.INVALID_MAC_ADDRESSES:
+            msg = validator(invalid_mac_addr)
+            self.assertEqual(err_msg % invalid_mac_addr, msg)
 
         mac_addr = "123"
         msg = validator(mac_addr)
