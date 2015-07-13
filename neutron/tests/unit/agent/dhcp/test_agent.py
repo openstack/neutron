@@ -438,22 +438,17 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_none_interface_driver(self):
         cfg.CONF.set_override('interface_driver', None)
-        with mock.patch.object(dhcp, 'LOG') as log:
-            self.assertRaises(SystemExit, dhcp.DeviceManager,
-                              cfg.CONF, None)
-            msg = 'An interface driver must be specified'
-            log.error.assert_called_once_with(msg)
+        self.assertRaises(SystemExit, dhcp.DeviceManager,
+                          cfg.CONF, None)
 
     def test_nonexistent_interface_driver(self):
         # Temporarily turn off mock, so could use the real import_class
         # to import interface_driver.
         self.driver_cls_p.stop()
         self.addCleanup(self.driver_cls_p.start)
-        cfg.CONF.set_override('interface_driver', 'foo')
-        with mock.patch.object(dhcp, 'LOG') as log:
-            self.assertRaises(SystemExit, dhcp.DeviceManager,
-                              cfg.CONF, None)
-            self.assertEqual(log.error.call_count, 1)
+        cfg.CONF.set_override('interface_driver', 'foo.bar')
+        self.assertRaises(SystemExit, dhcp.DeviceManager,
+                          cfg.CONF, None)
 
 
 class TestLogArgs(base.BaseTestCase):

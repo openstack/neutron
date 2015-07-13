@@ -44,7 +44,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
-from neutron.i18n import _LE
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
@@ -1852,18 +1851,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_nonexistent_interface_driver(self):
         self.conf.set_override('interface_driver', None)
-        with mock.patch.object(l3_agent, 'LOG') as log:
-            self.assertRaises(SystemExit, l3_agent.L3NATAgent,
-                              HOSTNAME, self.conf)
-            msg = 'An interface driver must be specified'
-            log.error.assert_called_once_with(msg)
+        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
+                          HOSTNAME, self.conf)
 
-        self.conf.set_override('interface_driver', 'wrong_driver')
-        with mock.patch.object(l3_agent, 'LOG') as log:
-            self.assertRaises(SystemExit, l3_agent.L3NATAgent,
-                              HOSTNAME, self.conf)
-            msg = _LE("Error importing interface driver '%s'")
-            log.error.assert_called_once_with(msg, 'wrong_driver')
+        self.conf.set_override('interface_driver', 'wrong.driver')
+        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
+                          HOSTNAME, self.conf)
 
     @mock.patch.object(namespaces.RouterNamespace, 'delete')
     @mock.patch.object(dvr_snat_ns.SnatNamespace, 'delete')
