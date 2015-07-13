@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.db import common_db_mixin as db
 from neutron.db.qos import models
 
 
@@ -20,8 +21,24 @@ def create_policy_network_binding(context, policy_id, network_id):
         context.session.add(db_obj)
 
 
+def delete_policy_network_binding(context, policy_id, network_id):
+    with context.session.begin(subtransactions=True):
+        db_object = (db.model_query(context, models.QosNetworkPolicyBinding)
+                     .filter_by(policy_id=policy_id,
+                                network_id=network_id).one())
+        context.session.delete(db_object)
+
+
 def create_policy_port_binding(context, policy_id, port_id):
     with context.session.begin(subtransactions=True):
         db_obj = models.QosPortPolicyBinding(policy_id=policy_id,
                                              port_id=port_id)
         context.session.add(db_obj)
+
+
+def delete_policy_port_binding(context, policy_id, port_id):
+    with context.session.begin(subtransactions=True):
+        db_object = (db.model_query(context, models.QosPortPolicyBinding)
+                     .filter_by(policy_id=policy_id,
+                                port_id=port_id).one())
+        context.session.delete(db_object)
