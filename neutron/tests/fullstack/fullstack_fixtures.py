@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
 from distutils import spawn
 import functools
 import os
@@ -21,7 +22,6 @@ from neutronclient.common import exceptions as nc_exc
 from neutronclient.v2_0 import client
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import timeutils
 
 from neutron.agent.linux import async_process
 from neutron.agent.linux import utils
@@ -55,7 +55,7 @@ class ProcessFixture(fixtures.Fixture):
 
         cmd = [spawn.find_executable(self.exec_name),
                '--log-dir', log_dir,
-               '--log-file', timeutils.strtime(fmt=fmt)]
+               '--log-file', datetime.utcnow().strftime(fmt)]
         for filename in self.config_filenames:
             cmd += ['--config-file', filename]
         self.process = async_process.AsyncProcess(cmd)

@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
 import itertools
 
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.common import constants
@@ -80,7 +80,7 @@ class PluginReportStateAPI(object):
         agent_state['uuid'] = uuidutils.generate_uuid()
         kwargs = {
             'agent_state': {'agent_state': agent_state},
-            'time': timeutils.strtime(),
+            'time': datetime.utcnow().isoformat(),
         }
         method = cctxt.call if use_call else cctxt.cast
         return method(context, 'report_state', **kwargs)
