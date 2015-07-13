@@ -146,14 +146,11 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         return long_name[:self.driver.DEV_NAME_LEN]
 
     def _is_this_snat_host(self):
-        return self._get_gw_port_host() == self.host
-
-    def _get_gw_port_host(self):
         host = self.router.get('gw_port_host')
         if not host:
             LOG.debug("gw_port_host missing from router: %s",
                       self.router['id'])
-        return host
+        return host == self.host
 
     def _handle_router_snat_rules(self, ex_gw_port,
                                   interface_name, action):
@@ -173,7 +170,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         # NOTE DVR skips this step in a few cases...
         if not self.get_ex_gw_port():
             return
-        if self._get_gw_port_host() != self.host:
+        if not self._is_this_snat_host():
             return
 
         super(DvrEdgeRouter, self).perform_snat_action(snat_callback, *args)
