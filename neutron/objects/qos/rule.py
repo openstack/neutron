@@ -35,6 +35,8 @@ class QosRule(base.NeutronObject):
         'qos_policy_id': obj_fields.UUIDField()
     }
 
+    fields_no_update = ['id', 'tenant_id', 'qos_policy_id']
+
     _core_fields = list(fields.keys())
 
     _common_fields = ['id']

@@ -29,6 +29,9 @@ class NeutronObject(obj_base.VersionedObject,
     # should be overridden for all persistent objects
     db_model = None
 
+    # fields that are not allowed to update
+    fields_no_update = []
+
     def from_db_object(self, *objs):
         for field in self.fields:
             for db_obj in objs:
@@ -44,9 +47,10 @@ class NeutronObject(obj_base.VersionedObject,
     @classmethod
     def get_by_id(cls, context, id):
         db_obj = db_api.get_object(context, cls.db_model, id)
-        obj = cls(context, **db_obj)
-        obj.obj_reset_changes()
-        return obj
+        if db_obj:
+            obj = cls(context, **db_obj)
+            obj.obj_reset_changes()
+            return obj
 
     @classmethod
     def get_objects(cls, context):
@@ -62,6 +66,7 @@ class NeutronObject(obj_base.VersionedObject,
         self.from_db_object(db_obj)
 
     def update(self):
+        # TODO(QoS): enforce fields_no_update
         updates = self.obj_get_changes()
         if updates:
             db_obj = db_api.update_object(self._context, self.db_model,
