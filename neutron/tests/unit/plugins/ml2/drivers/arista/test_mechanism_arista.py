@@ -320,6 +320,7 @@ class AristaDriverTestCase(testlib_api.SqlTestCase):
                                         network_id, tenant_id),
             mock.call.is_network_provisioned(tenant_id, network_id,
                                              segmentation_id),
+            mock.call.is_network_provisioned(tenant_id, network_id),
             mock.call.unplug_host_from_network(device_id, orig_host_id,
                                                port_id, network_id, tenant_id),
             mock.call.num_nets_provisioned(tenant_id),
@@ -336,7 +337,8 @@ class AristaDriverTestCase(testlib_api.SqlTestCase):
                    'tenant_id': tenant_id,
                    'name': 'test-net',
                    'shared': shared}
-        network_segments = [{'segmentation_id': seg_id}]
+        network_segments = [{'segmentation_id': seg_id,
+                             'network_type': 'vlan'}]
         return FakeNetworkContext(network, network_segments, network)
 
     def _get_port_context(self, tenant_id, net_id, vm_id, network):
