@@ -14,7 +14,6 @@
 #    under the License.
 
 from eventlet import greenthread
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as os_db_exception
@@ -344,13 +343,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # After we've attempted to bind the port, we begin a
         # transaction, get the current port state, and decide whether
         # to commit the binding results.
-        #
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             # Get the current port state and build a new PortContext
             # reflecting this state as original state for subsequent
             # mechanism driver update_port_*commit() calls.
@@ -729,15 +722,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # to 'lock wait timeout' errors.
                 #
                 # Process L3 first, since, depending on the L3 plugin, it may
-                # involve locking the db-access semaphore, sending RPC
-                # notifications, and/or calling delete_port on this plugin.
+                # involve sending RPC notifications, and/or calling delete_port
+                # on this plugin.
                 # Additionally, a rollback may not be enough to undo the
                 # deletion of a floating IP with certain L3 backends.
                 self._process_l3_delete(context, id)
                 # Using query().with_lockmode isn't necessary. Foreign-key
                 # constraints prevent deletion if concurrent creation happens.
-                with lockutils.lock('db-access'),\
-                        session.begin(subtransactions=True):
+                with session.begin(subtransactions=True):
                     # Get ports to auto-delete.
                     ports = (session.query(models_v2.Port).
                              enable_eagerloads(False).
@@ -852,12 +844,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("Deleting subnet %s", id)
         session = context.session
         while True:
-            # REVISIT: Serialize this operation with a semaphore to
-            # prevent deadlock waiting to acquire a DB lock held by
-            # another thread in the same process, leading to 'lock
-            # wait timeout' errors.
-            with lockutils.lock('db-access'),\
-                    session.begin(subtransactions=True):
+            with session.begin(subtransactions=True):
                 record = self._get_subnet(context, id)
                 subnet = self._make_subnet_dict(record, None)
                 qry_allocated = (session.query(models_v2.IPAllocation).
@@ -1102,12 +1089,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         need_port_update_notify = False
         session = context.session
 
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 raise exc.PortNotFound(port_id=id)
@@ -1258,12 +1240,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)
 
         session = context.session
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 LOG.debug("The port '%s' was deleted", id)
@@ -1392,12 +1369,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         """
         updated = False
         session = context.session
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             port = db.get_port(session, port_id)
             if not port:
                 LOG.debug("Port %(port)s update to %(val)s by agent not found",
@@ -1428,8 +1400,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if (updated and
             port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
-            with lockutils.lock('db-access'),\
-                    session.begin(subtransactions=True):
+            with session.begin(subtransactions=True):
                 port = db.get_port(session, port_id)
                 if not port:
                     LOG.warning(_LW("Port %s not found during update"),
