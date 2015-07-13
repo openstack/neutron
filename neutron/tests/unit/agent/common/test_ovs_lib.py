@@ -577,6 +577,23 @@ class OVS_Lib_Test(base.BaseTestCase):
     def test_get_vif_ports_xen(self):
         self._test_get_vif_ports(is_xen=True)
 
+    def test_get_vif_ports_with_bond(self):
+        pname = "bond0"
+        #NOTE(dprince): bond ports don't have records in the Interface table
+        external_ids = ('{"data":[], "headings":[]}')
+
+        # Each element is a tuple of (expected mock call, return_value)
+        expected_calls_and_values = [
+            (self._vsctl_mock("list-ports", self.BR_NAME), "%s\n" % pname),
+            (self._vsctl_mock("--columns=name,external_ids,ofport", "list",
+                              "Interface"), external_ids),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+
+        ports = self.br.get_vif_ports()
+        self.assertEqual(0, len(ports))
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
     def test_get_vif_port_set_nonxen(self):
         self._test_get_vif_port_set(False)
 
