@@ -8,11 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-06-11 06:02+0000\n"
-"PO-Revision-Date: 2015-06-10 23:52+0000\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
-"neutron/language/pt_BR/)\n"
+"Language-Team: Portuguese (Brazil) (http://www.transifex.com/p/neutron/"
+"language/pt_BR/)\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -98,26 +98,6 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "Tentou atualizar o filtro de porta que não foi filtrado %s"
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "%s capturadas, saindo"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s capturado, parando filhos"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "%(pid)d filho eliminado pelo sinal %(sig)d"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "Filho %(pid)s encerrando com status %(code)d"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "Filho capturado %s, terminando"
-
-#, python-format
 msgid "Config paste file: %s"
 msgstr "Arquivo de colagem configurado: %s"
 
@@ -150,13 +130,6 @@ msgstr "Dispositivo %s não definido no plug-in"
 
 msgid "Disabled security-group extension."
 msgstr "Extensão de grupo de segurança desativada."
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Backdoor de Eventlet escutando na porta %(port)s pelo processo %(pid)d"
-
-msgid "Forking too fast, sleeping"
-msgstr "Bifurcação muito rápida, suspendendo"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -260,9 +233,6 @@ msgstr "Nenhuma porta aqui para atualizar firewall"
 msgid "OVS cleanup completed successfully"
 msgstr "Limpeza de OVS concluída com êxito"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "Processo pai saiu inesperadamente, saindo"
-
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "Porta %(device)s atualizada. Detalhes: %(details)s"
@@ -317,14 +287,6 @@ msgid "Service %s is supported by the core plugin"
 msgstr "Serviço %s é suportado pelo plugin núcleo"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "Ignorando tarefa periódica %(task)s porque ela está desativada"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "Ignorando tarefa periódica %(task)s porque seu intervalo é negativo"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "Ignorando a porta %s porque nenhum IP está configurado nela"
 
@@ -334,14 +296,6 @@ msgstr "Endereços IP especificado não correspondem à versão do IP da sub-red
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "IP inicial (%(start)s) é maior que IP final (%(end)s)"
-
-#, python-format
-msgid "Started child %d"
-msgstr "Filho %d iniciado"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "Iniciando %d trabalhadores"
 
 msgid "Synchronizing state"
 msgstr "Sincronizando estado"
@@ -363,13 +317,6 @@ msgstr ""
 
 msgid "VlanTypeDriver initialization complete"
 msgstr "Inicialização do VlanTypeDriver concluída"
-
-msgid "Wait called after thread killed. Cleaning up."
-msgstr "Espera requisitada depois que thread foi morta.  Limpando."
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "Aguardando em %d filhos para sair"
 
 #, python-format
 msgid "agent_updated by server side %s!"

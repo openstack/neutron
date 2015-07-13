@@ -299,6 +299,41 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             CentralizedSnatL3AgentBinding.router_id.in_(router_ids))
         return query.all()
 
+    def get_snat_candidates(self, sync_router, l3_agents):
+        """Get the valid snat enabled l3 agents for the distributed router."""
+        candidates = []
+        is_router_distributed = sync_router.get('distributed', False)
+        if not is_router_distributed:
+            return candidates
+        for l3_agent in l3_agents:
+            if not l3_agent.admin_state_up:
+                continue
+
+            agent_conf = self.get_configuration_dict(l3_agent)
+            agent_mode = agent_conf.get(n_const.L3_AGENT_MODE,
+                                        n_const.L3_AGENT_MODE_LEGACY)
+            if agent_mode != n_const.L3_AGENT_MODE_DVR_SNAT:
+                continue
+
+            router_id = agent_conf.get('router_id', None)
+            use_namespaces = agent_conf.get('use_namespaces', True)
+            if not use_namespaces and router_id != sync_router['id']:
+                continue
+
+            handle_internal_only_routers = agent_conf.get(
+                'handle_internal_only_routers', True)
+            gateway_external_network_id = agent_conf.get(
+                'gateway_external_network_id', None)
+            ex_net_id = (sync_router['external_gateway_info'] or {}).get(
+                'network_id')
+            if ((not ex_net_id and not handle_internal_only_routers) or
+                (ex_net_id and gateway_external_network_id and
+                 ex_net_id != gateway_external_network_id)):
+                continue
+
+            candidates.append(l3_agent)
+        return candidates
+
     def schedule_snat_router(self, context, router_id, sync_router):
         """Schedule the snat router on l3 service agent."""
         active_l3_agents = self.get_l3_agents(context, active=True)

@@ -8,11 +8,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: German (http://www.transifex.com/projects/p/neutron/language/"
-"de/)\n"
+"Language-Team: German (http://www.transifex.com/p/neutron/language/de/)\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -73,26 +72,6 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "Versuch, ungefilterten Portfilter %s zu aktualisieren"
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "%s abgefangen. Vorgang wird beendet"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s abgefangen, untergeordnete Elemente werden gestoppt"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "Untergeordnetes Element %(pid)d durch Signal %(sig)d abgebrochen"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "Untergeordnete %(pid)s mit Status %(code)d beendet"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "Untergeordnetes Element %s abgefangen; Vorgang wird beendet"
-
-#, python-format
 msgid "Config paste file: %s"
 msgstr "Konfigurations-Paste-Datei: %s"
 
@@ -109,13 +88,6 @@ msgstr "Gerät %s nicht für Plug-in definiert"
 
 msgid "Disabled security-group extension."
 msgstr "Sicherheitsgruppenerweiterung wurde inaktiviert."
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet backdoor hört auf %(port)s für Prozess %(pid)d"
-
-msgid "Forking too fast, sleeping"
-msgstr "Verzweigung zu schnell; im Ruhemodus"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -180,10 +152,6 @@ msgstr "Kein %s-Plug-in geladen"
 msgid "OVS cleanup completed successfully"
 msgstr "OVS-Bereinigungsprozedur erfolgreich abgeschlossen"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr ""
-"Übergeordneter Prozess wurde unerwartet abgebrochen. Vorgang wird beendet"
-
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "Port %(device)s aktualisiert. Details: %(details)s"
@@ -223,15 +191,6 @@ msgid "Security group rule updated %r"
 msgstr "Sicherheitsgruppenregel aktualisiert %r"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "Überspringe periodische Aufgabe %(task)s weil sie deaktiviert ist"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr ""
-"Überspringe periodische Aufgabe %(task)s weil der Intervall negativ ist"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
 "Port %s wird übersprungen, da keine IP-Adresse auf ihm konfiguriert ist"
@@ -245,14 +204,6 @@ msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 "Anfangs-IP-Adresse (%(start)s) ist größer als Ende-IP-Adresse (%(end)s)"
 
-#, python-format
-msgid "Started child %d"
-msgstr "Untergeordnetes Element %d gestartet"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "Starten von %d Workers"
-
 msgid "Synchronizing state"
 msgstr "Synchronisation von Status"
 
@@ -263,10 +214,6 @@ msgid ""
 msgstr ""
 "Überprüfung für CIDR: %(new_cidr)s fehlgeschlagen - Überschneidung mit "
 "Teilnetz %(subnet_id)s (CIDR: %(cidr)s)"
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "Warten auf Beenden von %d untergeordneten Elementen"
 
 #, python-format
 msgid "agent_updated by server side %s!"

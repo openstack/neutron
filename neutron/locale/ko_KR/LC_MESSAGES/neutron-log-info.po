@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
-"language/ko_KR/)\n"
+"Language-Team: Korean (Korea) (http://www.transifex.com/p/neutron/language/"
+"ko_KR/)\n"
 "Language: ko_KR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -71,26 +71,6 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "필터링된 %s이(가) 아닌 포트 필터를 업데이트하려고 시도함"
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "%s 발견, 종료 중"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s 발견, 하위 중지 중"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "%(pid)d 하위가 %(sig)d 신호에 의해 강제 종료됨"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "%(pid)s 하위가 %(code)d 상태와 함께 종료했음"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "자식으로 된 %s가 존재함."
-
-#, python-format
 msgid "Config paste file: %s"
 msgstr "구성 붙여넣기 파일: %s"
 
@@ -115,13 +95,6 @@ msgstr "%s 디바이스가 플러그인에서 정의되지 않음"
 
 msgid "Disabled security-group extension."
 msgstr "보안 그룹 확장을 사용하지 않습니다. "
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet 백도어는 프로세스 %(pid)d 일 동안 %(port)s에서 수신"
-
-msgid "Forking too fast, sleeping"
-msgstr "포크가 너무 빠름. 정지 중"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -198,9 +171,6 @@ msgstr "로드된 %s 플러그인이 없음"
 msgid "OVS cleanup completed successfully"
 msgstr "OVS 정리가 완료됨"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "상위 프로세스가 예기치 않게 정지했습니다. 종료 중"
-
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "%(device)s 포트가 업데이트되었습니다. 세부사항: %(details)s"
@@ -244,14 +214,6 @@ msgid "Security group rule updated %r"
 msgstr "보안 그룹 규칙이 %r을(를) 업데이트함"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "사용 안하기 때문에 주기적 태스크 %(task)s을(를) 건너뜀"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "간격이 음수이기 때문에 주기적 태스크 %(task)s을(를) 건너뜀"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "구성된 IP가 없어서 포트 %s을(를) 건너뜀"
 
@@ -261,14 +223,6 @@ msgstr "지정된 IP 주소가 서브넷 IP 버전과 일치하지 않음"
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "시작 IP(%(start)s)가 끝 IP(%(end)s)보다 큼"
-
-#, python-format
-msgid "Started child %d"
-msgstr "%d 하위를 시작했음"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "%d 작업자 시작 중"
 
 msgid "Synchronizing state"
 msgstr "상태 동기화 중"
@@ -284,10 +238,6 @@ msgid ""
 msgstr ""
 "CIDR %(new_cidr)s 유효성 검증 실패 - 서브넷 %(subnet_id)s(CIDR: %(cidr)s)과"
 "(와) 겹침"
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "%d 하위에서 종료하기를 대기 중임"
 
 #, python-format
 msgid "agent_updated by server side %s!"

@@ -329,6 +329,10 @@ class OVSBridge(BaseOVS):
             'Interface', columns=['name', 'external_ids', 'ofport'])
         by_name = {x['name']: x for x in port_info}
         for name in port_names:
+            if not by_name.get(name):
+                #NOTE(dprince): some ports (like bonds) won't have all
+                # these attributes so we skip them entirely
+                continue
             external_ids = by_name[name]['external_ids']
             ofport = by_name[name]['ofport']
             if "iface-id" in external_ids and "attached-mac" in external_ids:

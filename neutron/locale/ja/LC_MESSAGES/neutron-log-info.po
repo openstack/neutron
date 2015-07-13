@@ -8,11 +8,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Japanese (http://www.transifex.com/projects/p/neutron/"
-"language/ja/)\n"
+"Language-Team: Japanese (http://www.transifex.com/p/neutron/language/ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -74,22 +73,6 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "フィルター処理されていないポート・フィルター %s を更新しようとしました"
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "%s が見つかりました。終了しています"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s が見つかりました。子を停止しています"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "子 %(pid)d がシグナル %(sig)d によって強制終了されました"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "子 %(pid)s が状況 %(code)d で終了しました"
-
-#, python-format
 msgid "Config paste file: %s"
 msgstr "構成貼り付けファイル: %s"
 
@@ -106,13 +89,6 @@ msgstr "デバイス %s がプラグインで定義されていません"
 
 msgid "Disabled security-group extension."
 msgstr "security-group 拡張を無効にしました。"
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet backdoorは、プロセス%(pid)dの%(port)sをリスニングしています。"
-
-msgid "Forking too fast, sleeping"
-msgstr "fork が早すぎます。スリープ状態にしています"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -181,9 +157,6 @@ msgstr "%s プラグインはロードされませんでした"
 msgid "OVS cleanup completed successfully"
 msgstr "OVS のクリーンアップが正常に完了しました"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "親プロセスが予期せずに停止しました。終了しています"
-
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "ポート %(device)s が更新されました。詳細: %(details)s"
@@ -223,14 +196,6 @@ msgid "Security group rule updated %r"
 msgstr "セキュリティー・グループ・ルールが %r を更新しました"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "タスクが使用不可であるため、定期タスク %(task)s をスキップしています"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "タスクの間隔が負であるため、定期タスク %(task)s をスキップしています"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "ポート %s には IP が構成されていないため、このポートをスキップします"
 
@@ -240,14 +205,6 @@ msgstr "指定された IP アドレスが、サブネット IP バージョン�
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "開始 IP (%(start)s) が終了 IP (%(end)s) より大きくなっています"
-
-#, python-format
-msgid "Started child %d"
-msgstr "子 %d を開始しました"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "%d ワーカーを開始しています"
 
 msgid "Synchronizing state"
 msgstr "状態の同期中"
@@ -259,10 +216,6 @@ msgid ""
 msgstr ""
 "CIDR %(new_cidr)s の検証が失敗しました。サブネット %(subnet_id)s (CIDR: "
 "%(cidr)s) とオーバーラップしています"
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "%d 個の子で終了を待機しています"
 
 #, python-format
 msgid "agent_updated by server side %s!"

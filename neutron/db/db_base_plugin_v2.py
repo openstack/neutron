@@ -15,7 +15,6 @@
 
 import netaddr
 from oslo_config import cfg
-from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -33,6 +32,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron import context as ctx
 from neutron.db import api as db_api
+from neutron.db import db_base_plugin_common
 from neutron.db import ipam_non_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import sqlalchemyutils
@@ -66,7 +66,7 @@ def _check_subnet_not_used(context, subnet_id):
         raise n_exc.SubnetInUse(subnet_id=subnet_id, reason=e)
 
 
-class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
+class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         neutron_plugin_base_v2.NeutronPluginBaseV2):
     """V2 Neutron plugin interface implementation using SQLAlchemy models.
 
@@ -84,6 +84,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
     __native_sorting_support = True
 
     def __init__(self):
+        self.set_ipam_backend()
         if cfg.CONF.notify_nova_on_port_status_changes:
             from neutron.notifiers import nova
             # NOTE(arosen) These event listeners are here to hook into when
@@ -95,6 +96,9 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                          self.nova_notifier.send_port_status)
             event.listen(models_v2.Port.status, 'set',
                          self.nova_notifier.record_port_status_changed)
+
+    def set_ipam_backend(self):
+        self.ipam = ipam_non_pluggable_backend.IpamNonPluggableBackend()
 
     def _validate_host_route(self, route, ip_version):
         try:
@@ -439,18 +443,15 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                     external_gateway_info}}
                 l3plugin.update_router(context, id, info)
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_request=True,
-                               retry_on_deadlock=True)
     def _create_subnet(self, context, subnet, subnetpool_id):
         s = subnet['subnet']
 
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, s["network_id"])
-            subnet = self._allocate_subnet(context,
-                                           network,
-                                           s,
-                                           subnetpool_id)
+            subnet = self.ipam.allocate_subnet(context,
+                                               network,
+                                               s,
+                                               subnetpool_id)
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
                                          network,
@@ -458,7 +459,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
         # If this subnet supports auto-addressing, then update any
         # internal ports on the network with addresses for this subnet.
         if ipv6_utils.is_auto_address_subnet(subnet):
-            self._add_auto_addrs_on_network_ports(context, subnet)
+            self.ipam.add_auto_addrs_on_network_ports(context, subnet)
         return self._make_subnet_dict(subnet)
 
     def _get_subnetpool_id(self, subnet):
@@ -514,7 +515,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
         s['tenant_id'] = self._get_tenant_id_for_create(context, s)
         subnetpool_id = self._get_subnetpool_id(s)
         if subnetpool_id:
-            self._validate_pools_with_subnetpool(s)
+            self.ipam.validate_pools_with_subnetpool(s)
         else:
             if not has_cidr:
                 msg = _('A cidr must be specified in the absence of a '
@@ -548,10 +549,11 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                 allocation_pools = [{'start': p['first_ip'],
                                      'end': p['last_ip']}
                                     for p in db_subnet.allocation_pools]
-            self._validate_gw_out_of_pools(s["gateway_ip"], allocation_pools)
+            self.ipam.validate_gw_out_of_pools(s["gateway_ip"],
+                                               allocation_pools)
 
         with context.session.begin(subtransactions=True):
-            subnet, changes = self._update_db_subnet(context, id, s)
+            subnet, changes = self.ipam.update_db_subnet(context, id, s)
         result = self._make_subnet_dict(subnet)
         # Keep up with fields that changed
         result.update(changes)
@@ -832,7 +834,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
                 db_port = self._create_port_with_mac(
                     context, network_id, port_data, p['mac_address'])
 
-            self._allocate_ips_for_port_and_store(context, port, port_id)
+            self.ipam.allocate_ips_for_port_and_store(context, port, port_id)
 
         return self._make_port_dict(db_port, process_extensions=False)
 
@@ -859,8 +861,8 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
             port = self._get_port(context, id)
             new_mac = new_port.get('mac_address')
             self._validate_port_for_update(context, port, new_port, new_mac)
-            changes = self._update_port_with_ips(context, port,
-                                                 new_port, new_mac)
+            changes = self.ipam.update_port_with_ips(context, port,
+                                                     new_port, new_mac)
         result = self._make_port_dict(port)
         # Keep up with fields that changed
         if changes.original or changes.add or changes.remove:
@@ -870,7 +872,7 @@ class NeutronDbPluginV2(ipam_non_pluggable_backend.IpamNonPluggableBackend,
 
     def delete_port(self, context, id):
         with context.session.begin(subtransactions=True):
-            self._delete_port(context, id)
+            self.ipam.delete_port(context, id)
 
     def delete_ports_by_device_id(self, context, device_id, network_id=None):
         query = (context.session.query(models_v2.Port.id)

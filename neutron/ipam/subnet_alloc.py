@@ -23,8 +23,8 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
-import neutron.ipam as ipam
 from neutron.ipam import driver
+from neutron.ipam import requests as ipam_req
 from neutron.ipam import utils as ipam_utils
 
 
@@ -151,9 +151,9 @@ class SubnetAllocator(driver.Pool):
                               prefixlen=request.prefixlen,
                               min_prefixlen=min_prefixlen)
 
-        if isinstance(request, ipam.AnySubnetRequest):
+        if isinstance(request, ipam_req.AnySubnetRequest):
             return self._allocate_any_subnet(request)
-        elif isinstance(request, ipam.SpecificSubnetRequest):
+        elif isinstance(request, ipam_req.SpecificSubnetRequest):
             return self._allocate_specific_subnet(request)
         else:
             msg = _("Unsupported request type")
@@ -177,7 +177,7 @@ class IpamSubnet(driver.Subnet):
                  cidr,
                  gateway_ip=None,
                  allocation_pools=None):
-        self._req = ipam.SpecificSubnetRequest(
+        self._req = ipam_req.SpecificSubnetRequest(
             tenant_id,
             subnet_id,
             cidr,

@@ -1581,6 +1581,8 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                                   'get_service_plugins',
                                   return_value={'L3_ROUTER_NAT': l3plugin}):
             plugin = self._create_plugin_for_create_update_port(mock.Mock())
+            # Set backend manually here since __init__ was mocked
+            plugin.set_ipam_backend()
             # deleting the port will call registry.notify, which will
             # run the transaction balancing function defined in this test
             plugin.delete_port(self.context, 'fake_id')
