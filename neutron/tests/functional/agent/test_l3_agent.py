@@ -1239,3 +1239,48 @@ class TestDvrRouter(L3AgentTestFramework):
             router.router_id, router.fip_ns.get_int_device_name,
             router.fip_ns.get_name())
         self.assertEqual(expected_mtu, dev_mtu)
+
+    def test_dvr_router_fip_agent_mismatch(self):
+        """Test to validate the floatingip agent mismatch.
+
+        This test validates the condition where floatingip agent
+        gateway port host mismatches with the agent and so the
+        binding will not be there.
+
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        floating_ip = router_info['_floatingips'][0]
+        floating_ip['host'] = 'my_new_host'
+        # In this case the floatingip binding is different and so it
+        # should not create the floatingip namespace on the given agent.
+        # This is also like there is no current binding.
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertFalse(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_does_not_exist(router1)
+
+    def test_dvr_router_fip_late_binding(self):
+        """Test to validate the floatingip migration or latebinding.
+
+        This test validates the condition where floatingip private
+        port changes while migration or when the private port host
+        binding is done later after floatingip association.
+
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        fip_agent_gw_port = router_info[l3_constants.FLOATINGIP_AGENT_INTF_KEY]
+        # Now let us not pass the FLOATINGIP_AGENT_INTF_KEY, to emulate
+        # that the server did not create the port, since there was no valid
+        # host binding.
+        router_info[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = []
+        mocked_gw_port = (
+            neutron_l3_agent.L3PluginApi.return_value.get_agent_gateway_port)
+        mocked_gw_port.return_value = fip_agent_gw_port[0]
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_does_not_exist(router1)
