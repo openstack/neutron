@@ -19,6 +19,7 @@ PORT = 'port'
 SECURITY_GROUP = 'security_group'
 L2POPULATION = 'l2population'
 DVR = 'dvr'
+RESOURCES = 'resources'
 
 CREATE = 'create'
 DELETE = 'delete'
