@@ -228,19 +228,25 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         # id -> is_agent_starting_up
         checked_agents = {}
         for binding in bindings:
-            agent_id = binding.dhcp_agent['id']
-            if agent_id not in checked_agents:
-                if self.agent_starting_up(context, binding.dhcp_agent):
-                    # When agent starts and it has many networks to process
-                    # it may fail to send state reports in defined interval.
-                    # The server will consider it dead and try to remove
-                    # networks from it.
-                    checked_agents[agent_id] = True
-                    LOG.debug("Agent %s is starting up, skipping", agent_id)
-                else:
-                    checked_agents[agent_id] = False
-            if not checked_agents[agent_id]:
-                yield binding
+            try:
+                agent_id = binding.dhcp_agent['id']
+                if agent_id not in checked_agents:
+                    if self.agent_starting_up(context, binding.dhcp_agent):
+                        # When agent starts and it has many networks to process
+                        # it may fail to send state reports in defined interval
+                        # The server will consider it dead and try to remove
+                        # networks from it.
+                        checked_agents[agent_id] = True
+                        LOG.debug("Agent %s is starting up, skipping",
+                                  agent_id)
+                    else:
+                        checked_agents[agent_id] = False
+                if not checked_agents[agent_id]:
+                    yield binding
+            except exc.ObjectDeletedError:
+                # we're not within a transaction, so object can be lost
+                # because underlying row is removed, just ignore this issue
+                LOG.debug("binding was removed concurrently, skipping it")
 
     def remove_networks_from_down_agents(self):
         """Remove networks from down DHCP agents if admin state is up.
@@ -370,7 +376,9 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             for port in ports:
                 port['device_id'] = constants.DEVICE_ID_RESERVED_DHCP_PORT
                 self.update_port(context, port['id'], dict(port=port))
-            query.delete()
+            # avoid issues with query.one() object that was
+            # loaded into the session
+            query.delete(synchronize_session=False)
 
         if not notify:
             return
