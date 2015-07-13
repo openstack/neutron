@@ -14,6 +14,8 @@
 #
 
 import sqlalchemy as sa
+
+from oslo_db import exception as db_exc
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
@@ -43,16 +45,21 @@ class AllowedAddressPairsMixin(object):
                                               allowed_address_pairs):
         if not attr.is_attr_set(allowed_address_pairs):
             return []
-        with context.session.begin(subtransactions=True):
-            for address_pair in allowed_address_pairs:
-                # use port.mac_address if no mac address in address pair
-                if 'mac_address' not in address_pair:
-                    address_pair['mac_address'] = port['mac_address']
-                db_pair = AllowedAddressPair(
-                    port_id=port['id'],
-                    mac_address=address_pair['mac_address'],
-                    ip_address=address_pair['ip_address'])
-                context.session.add(db_pair)
+        try:
+            with context.session.begin(subtransactions=True):
+                for address_pair in allowed_address_pairs:
+                    # use port.mac_address if no mac address in address pair
+                    if 'mac_address' not in address_pair:
+                        address_pair['mac_address'] = port['mac_address']
+                    db_pair = AllowedAddressPair(
+                        port_id=port['id'],
+                        mac_address=address_pair['mac_address'],
+                        ip_address=address_pair['ip_address'])
+                    context.session.add(db_pair)
+        except db_exc.DBDuplicateEntry:
+            raise addr_pair.DuplicateAddressPairInRequest(
+                mac_address=address_pair['mac_address'],
+                ip_address=address_pair['ip_address'])
 
         return allowed_address_pairs
 

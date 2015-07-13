@@ -254,12 +254,92 @@ class AristaDriverTestCase(testlib_api.SqlTestCase):
 
         mechanism_arista.db_lib.assert_has_calls(expected_calls)
 
+    def test_update_port_precommit(self):
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id,
+                                                    False)
+
+        port_context = self._get_port_context(tenant_id,
+                                              network_id,
+                                              vm_id,
+                                              network_context)
+        host_id = port_context.current['binding:host_id']
+        port_context.original['binding:host_id'] = 'ubuntu0'
+        port_id = port_context.current['id']
+        self.drv.update_port_precommit(port_context)
+
+        expected_calls = [
+            mock.call.update_vm_host(vm_id, host_id, port_id,
+                                     network_id, tenant_id)
+        ]
+
+        mechanism_arista.db_lib.assert_has_calls(expected_calls)
+
+    def test_update_port_postcommit(self):
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id,
+                                                    False)
+        port_context = self._get_port_context(tenant_id,
+                                              network_id,
+                                              vm_id,
+                                              network_context)
+
+        mechanism_arista.db_lib.is_vm_provisioned.return_value = True
+        mechanism_arista.db_lib.is_network_provisioned.return_value = True
+        mechanism_arista.db_lib.get_shared_network_owner_id.return_value = 1
+        mechanism_arista.db_lib.get_segmentation_id.return_value = 1001
+        mechanism_arista.db_lib.num_nets_provisioned.return_value = 1
+        mechanism_arista.db_lib.num_vms_provisioned.return_value = 1
+
+        port = port_context.current
+        device_id = port['device_id']
+        device_owner = port['device_owner']
+        host_id = port['binding:host_id']
+        orig_host_id = 'ubuntu0'
+        port_context.original['binding:host_id'] = orig_host_id
+        port_id = port['id']
+        port_name = port['name']
+
+        self.drv.update_port_postcommit(port_context)
+
+        expected_calls = [
+            mock.call.NeutronNets(),
+            mock.call.get_segmentation_id(tenant_id, network_id),
+            mock.call.is_vm_provisioned(device_id, host_id, port_id,
+                                        network_id, tenant_id),
+            mock.call.is_network_provisioned(tenant_id, network_id,
+                                             segmentation_id),
+            mock.call.is_network_provisioned(tenant_id, network_id),
+            mock.call.unplug_host_from_network(device_id, orig_host_id,
+                                               port_id, network_id, tenant_id),
+            mock.call.num_nets_provisioned(tenant_id),
+            mock.call.num_vms_provisioned(tenant_id),
+            mock.call.plug_port_into_network(device_id, host_id, port_id,
+                                             network_id, tenant_id,
+                                             port_name, device_owner)
+        ]
+
+        mechanism_arista.db_lib.assert_has_calls(expected_calls)
+
     def _get_network_context(self, tenant_id, net_id, seg_id, shared):
         network = {'id': net_id,
                    'tenant_id': tenant_id,
                    'name': 'test-net',
                    'shared': shared}
-        network_segments = [{'segmentation_id': seg_id}]
+        network_segments = [{'segmentation_id': seg_id,
+                             'network_type': 'vlan'}]
         return FakeNetworkContext(network, network_segments, network)
 
     def _get_port_context(self, tenant_id, net_id, vm_id, network):
@@ -271,7 +351,7 @@ class AristaDriverTestCase(testlib_api.SqlTestCase):
                 'id': 101,
                 'network_id': net_id
                 }
-        return FakePortContext(port, port, network)
+        return FakePortContext(port, dict(port), network)
 
 
 class fake_keystone_info_class(object):

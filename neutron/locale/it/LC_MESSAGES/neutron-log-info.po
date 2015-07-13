@@ -8,11 +8,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
-"it/)\n"
+"Language-Team: Italian (http://www.transifex.com/p/neutron/language/it/)\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -72,26 +71,6 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "Tentativo di aggiornare il filtro della porta che non è filtrata %s"
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "Rilevato %s, esistente"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "Intercettato %s, arresto in corso dei children"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "Child %(pid)d interrotto dal segnale %(sig)d"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "Child %(pid)s terminato con stato %(code)d"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "Cogliere Child %s, uscendo"
-
-#, python-format
 msgid "Config paste file: %s"
 msgstr "Configurazione file paste: %s"
 
@@ -108,13 +87,6 @@ msgstr "Unità %s non definita nel plugin"
 
 msgid "Disabled security-group extension."
 msgstr "Estensione di security-group disabilitata."
-
-#, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Ascolto di eventlet backdoor su %(port)s per il processo %(pid)d"
-
-msgid "Forking too fast, sleeping"
-msgstr "Sblocco troppo veloce, attendere"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -177,9 +149,6 @@ msgstr "Nessun plugin %s caricato"
 msgid "OVS cleanup completed successfully"
 msgstr "Ripulitura di OVS completata correttamente"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "Il processo principale è stato interrotto inaspettatamente, uscire"
-
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "Porta %(device)s aggiornata. Dettagli: %(details)s"
@@ -219,15 +188,6 @@ msgid "Security group rule updated %r"
 msgstr "Regola gruppo di sicurezza aggiornata %r"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "Abbadono dell'attività periodica %(task)s perché è disabilitata"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr ""
-"Abbadono dell'attività periodica %(task)s perché l'intervalo è negativo"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "La porta %s viene ignorata in quanto non ha nessun IP configurato"
 
@@ -240,14 +200,6 @@ msgstr ""
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "L'IP iniziale (%(start)s) è superiore all'IP finale (%(end)s)"
 
-#, python-format
-msgid "Started child %d"
-msgstr "Child avviato %d"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "Avvio %d operatori"
-
 msgid "Synchronizing state"
 msgstr "Stato sincronizzazione"
 
@@ -258,10 +210,6 @@ msgid ""
 msgstr ""
 "Convalida per CIDR: %(new_cidr)s non riuscita - si sovrappone con la "
 "sottorete %(subnet_id)s (CIDR: %(cidr)s)"
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "In attesa %d degli elementi secondari per uscire"
 
 #, python-format
 msgid "agent_updated by server side %s!"

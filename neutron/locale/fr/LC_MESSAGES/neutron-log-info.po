@@ -9,11 +9,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-06-02 06:15+0000\n"
-"PO-Revision-Date: 2015-06-01 16:41+0000\n"
-"Last-Translator: Maxime COQUEREL <max.coquerel@gmail.com>\n"
-"Language-Team: French (http://www.transifex.com/projects/p/neutron/language/"
-"fr/)\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"Language-Team: French (http://www.transifex.com/p/neutron/language/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -116,26 +115,6 @@ msgstr ""
 "avoir été effacée."
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "%s interceptée, sortie"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "%s interceptée, arrêt de l'enfant"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "Enfant %(pid)d arrêté par le signal %(sig)d"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "Processus fils %(pid)s terminé avec le status %(code)d"
-
-#, python-format
-msgid "Child caught %s, exiting"
-msgstr "L'enfant a reçu %s, sortie"
-
-#, python-format
 msgid "Cleaning bridge: %s"
 msgstr "Supprimer le pont: %s"
 
@@ -175,15 +154,8 @@ msgid "Disabled security-group extension."
 msgstr "Extension du groupe de sécurité désactivée."
 
 #, python-format
-msgid "Eventlet backdoor listening on %(port)s for process %(pid)d"
-msgstr "Eventlet backdoor en écoute sur le port %(port)s for process %(pid)d"
-
-#, python-format
 msgid "Exclude Devices: %s"
 msgstr "Equipements exclus: %s"
-
-msgid "Forking too fast, sleeping"
-msgstr "Bifurcation trop rapide, pause"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -280,9 +252,6 @@ msgstr "Aucun équipement avec MAC %s défini sur l'agent."
 msgid "OVS cleanup completed successfully"
 msgstr "Le nettoyage d'OVS s'est terminé avec succès."
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "Processus parent arrêté de manière inattendue, sortie"
-
 #, python-format
 msgid "Physical Devices mappings: %s"
 msgstr "Mappages d'Équipements Physiques: %s"
@@ -355,14 +324,6 @@ msgid "Service %s is supported by the core plugin"
 msgstr "Le service %s est supporté par le core plugin"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "Tâche périodique %(task)s car elle est désactivée"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "Tâche périodique %(task)s ignorée car son intervalle est négatif"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "Ignorer le port %s car aucune adresse IP n'est configurée"
 
@@ -375,14 +336,6 @@ msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 "L'adresse IP de début (%(start)s) est supérieure à l'adresse IP de fin "
 "(%(end)s)."
-
-#, python-format
-msgid "Started child %d"
-msgstr "Enfant démarré %d"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "Démarrage des travailleurs %d"
 
 #, python-format
 msgid "Subnet %s was deleted concurrently"
@@ -401,13 +354,6 @@ msgid ""
 msgstr ""
 "La validation du routage CIDR %(new_cidr)s a échoué : il chevauche le sous-"
 "réseau %(subnet_id)s (CIDR : %(cidr)s) "
-
-msgid "Wait called after thread killed. Cleaning up."
-msgstr "Pause demandée après suppression de thread. Nettoyage."
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "En attente %d enfants pour sortie"
 
 #, python-format
 msgid "agent_updated by server side %s!"

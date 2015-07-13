@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-05-29 06:16+0000\n"
-"PO-Revision-Date: 2015-05-28 20:54+0000\n"
+"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"PO-Revision-Date: 2015-07-08 20:45+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Chinese (Taiwan) (http://www.transifex.com/projects/p/neutron/"
-"language/zh_TW/)\n"
+"Language-Team: Chinese (Taiwan) (http://www.transifex.com/p/neutron/language/"
+"zh_TW/)\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -69,22 +69,6 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "已嘗試更新未過濾的埠過濾器 %s"
 
 #, python-format
-msgid "Caught %s, exiting"
-msgstr "已捕捉到 %s，正在結束"
-
-#, python-format
-msgid "Caught %s, stopping children"
-msgstr "已捕捉到 %s，正在停止子項"
-
-#, python-format
-msgid "Child %(pid)d killed by signal %(sig)d"
-msgstr "信號 %(sig)d 結束了子項 %(pid)d"
-
-#, python-format
-msgid "Child %(pid)s exited with status %(code)d"
-msgstr "子項 %(pid)s 已結束，狀態為 %(code)d"
-
-#, python-format
 msgid "Config paste file: %s"
 msgstr "配置貼上檔案：%s"
 
@@ -101,9 +85,6 @@ msgstr "外掛程式上未定義裝置 %s"
 
 msgid "Disabled security-group extension."
 msgstr "已停用安全群組延伸。"
-
-msgid "Forking too fast, sleeping"
-msgstr "分岔太快，正在休眠"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -165,9 +146,6 @@ msgstr "未載入 %s 外掛程式"
 msgid "OVS cleanup completed successfully"
 msgstr "已順利完成 OVS 清理"
 
-msgid "Parent process has died unexpectedly, exiting"
-msgstr "母程序已非預期地當掉，正在結束"
-
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
@@ -207,14 +185,6 @@ msgid "Security group rule updated %r"
 msgstr "安全群組規則已更新 %r"
 
 #, python-format
-msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr "正在跳過定期作業 %(task)s，因為它已停用"
-
-#, python-format
-msgid "Skipping periodic task %(task)s because its interval is negative"
-msgstr "正在跳過定期作業 %(task)s，因為其間隔為負數"
-
-#, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "正在跳過埠 %s，因為其上沒有配置 IP"
 
@@ -225,14 +195,6 @@ msgstr "指定的 IP 位址與子網路 IP 版本不符"
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "起始 IP (%(start)s) 大於結尾 IP (%(end)s)"
 
-#, python-format
-msgid "Started child %d"
-msgstr "已開始子行程 %d"
-
-#, python-format
-msgid "Starting %d workers"
-msgstr "正在啟動 %d 個工作程式"
-
 msgid "Synchronizing state"
 msgstr "正在同步化狀態"
 
@@ -242,10 +204,6 @@ msgid ""
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr ""
 "驗證 CIDR %(new_cidr)s 失敗 - 與子網路 %(subnet_id)s (CIDR %(cidr)s) 重疊"
-
-#, python-format
-msgid "Waiting on %d children to exit"
-msgstr "正在等待 %d 個子項結束"
 
 #, python-format
 msgid "agent_updated by server side %s!"

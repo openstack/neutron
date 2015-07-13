@@ -57,7 +57,7 @@ class TestAsyncProcess(base.BaseTestCase):
         with mock.patch.object(self.proc, '_kill') as kill:
             self.proc._handle_process_error()
 
-        kill.assert_has_calls(mock.call(respawning=False))
+        kill.assert_has_calls([mock.call(respawning=False)])
 
     def test__handle_process_error_kills_without_respawn(self):
         self.proc.respawn_interval = 1
@@ -66,8 +66,8 @@ class TestAsyncProcess(base.BaseTestCase):
                 with mock.patch('eventlet.sleep') as sleep:
                     self.proc._handle_process_error()
 
-        kill.assert_has_calls(mock.call(respawning=True))
-        sleep.assert_has_calls(mock.call(self.proc.respawn_interval))
+        kill.assert_has_calls([mock.call(respawning=True)])
+        sleep.assert_has_calls([mock.call(self.proc.respawn_interval)])
         spawn.assert_called_once_with()
 
     def _test__watch_process(self, callback, kill_event):
