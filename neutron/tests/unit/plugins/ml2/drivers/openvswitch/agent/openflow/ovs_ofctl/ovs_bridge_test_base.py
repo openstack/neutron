@@ -16,6 +16,8 @@
 
 import mock
 
+from neutron.common import constants
+
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
@@ -112,7 +114,8 @@ class OVSDVRProcessTestMixin(object):
         expected = [
             call.add_flow(table=self.dvr_process_table_id,
                           proto='icmp6', dl_src=gateway_mac, actions='drop',
-                          priority=3, dl_vlan=vlan_tag),
+                          priority=3, dl_vlan=vlan_tag,
+                          icmp_type=constants.ICMPV6_TYPE_RA),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -124,7 +127,8 @@ class OVSDVRProcessTestMixin(object):
         expected = [
             call.delete_flows(table=self.dvr_process_table_id,
                               dl_vlan=vlan_tag, dl_src=gateway_mac,
-                              proto='icmp6'),
+                              proto='icmp6',
+                              icmp_type=constants.ICMPV6_TYPE_RA),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
