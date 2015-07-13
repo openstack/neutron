@@ -722,7 +722,8 @@ class RealNetStorageAristaDriverTestCase(testlib_api.SqlTestCase):
     def _get_network_context(self, tenant_id, net_id, seg_id):
         network = {'id': net_id,
                    'tenant_id': tenant_id}
-        network_segments = [{'segmentation_id': seg_id}]
+        network_segments = [{'segmentation_id': seg_id,
+                             'network_type': 'vlan'}]
         return FakeNetworkContext(network, network_segments, network)
 
     def _get_port_context(self, tenant_id, net_id, vm_id, network):
