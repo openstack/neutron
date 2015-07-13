@@ -538,23 +538,33 @@ class RouterInfo(object):
                                  interface_name)
 
     def external_gateway_nat_rules(self, ex_gw_ip, interface_name):
-        mark = self.agent_conf.external_ingress_mark
-        rules = [('POSTROUTING', '! -i %(interface_name)s '
-                  '! -o %(interface_name)s -m conntrack ! '
-                  '--ctstate DNAT -j ACCEPT' %
-                  {'interface_name': interface_name}),
-                 ('snat', '-o %s -j SNAT --to-source %s' %
-                  (interface_name, ex_gw_ip)),
-                 ('snat', '-m mark ! --mark %s '
-                  '-m conntrack --ctstate DNAT '
-                  '-j SNAT --to-source %s' % (mark, ex_gw_ip))]
-        return rules
+        dont_snat_traffic_to_internal_ports_if_not_to_floating_ip = (
+            'POSTROUTING', '! -i %(interface_name)s '
+                           '! -o %(interface_name)s -m conntrack ! '
+                           '--ctstate DNAT -j ACCEPT' %
+                           {'interface_name': interface_name})
+
+        snat_normal_external_traffic = (
+            'snat', '-o %s -j SNAT --to-source %s' %
+                    (interface_name, ex_gw_ip))
+
+        # Makes replies come back through the router to reverse DNAT
+        ext_in_mark = self.agent_conf.external_ingress_mark
+        snat_internal_traffic_to_floating_ip = (
+            'snat', '-m mark ! --mark %s '
+                    '-m conntrack --ctstate DNAT '
+                    '-j SNAT --to-source %s' % (ext_in_mark, ex_gw_ip))
+
+        return [dont_snat_traffic_to_internal_ports_if_not_to_floating_ip,
+                snat_normal_external_traffic,
+                snat_internal_traffic_to_floating_ip]
 
     def external_gateway_mangle_rules(self, interface_name):
         mark = self.agent_conf.external_ingress_mark
-        rules = [('mark', '-i %s -j MARK --set-xmark %s/%s' %
-                 (interface_name, mark, EXTERNAL_INGRESS_MARK_MASK))]
-        return rules
+        mark_packets_entering_external_gateway_port = (
+            'mark', '-i %s -j MARK --set-xmark %s/%s' %
+                    (interface_name, mark, EXTERNAL_INGRESS_MARK_MASK))
+        return [mark_packets_entering_external_gateway_port]
 
     def _empty_snat_chains(self, iptables_manager):
         iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
