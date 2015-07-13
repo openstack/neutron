@@ -110,6 +110,8 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-ovn         | Russell Bryant            | russellb             |
 +------------------------+---------------------------+----------------------+
+| networking-plumgrid    | Fawad Khaliq              | fawadkhaliq          |
++------------------------+---------------------------+----------------------+
 | networking-vshpere     | Vivekanandan Narasimhan   | viveknarasimhan      |
 +------------------------+---------------------------+----------------------+
 | octavia                | German Eichberger         | xgerman              |
