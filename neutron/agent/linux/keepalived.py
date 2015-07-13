@@ -33,6 +33,8 @@ HA_DEFAULT_PRIORITY = 50
 PRIMARY_VIP_RANGE_SIZE = 24
 # TODO(amuller): Use L3 agent constant when new constants module is introduced.
 FIP_LL_SUBNET = '169.254.30.0/23'
+GARP_MASTER_REPEAT = 5
+GARP_MASTER_REFRESH = 10
 
 
 LOG = logging.getLogger(__name__)
@@ -139,7 +141,9 @@ class KeepalivedInstance(object):
 
     def __init__(self, state, interface, vrouter_id, ha_cidr,
                  priority=HA_DEFAULT_PRIORITY, advert_int=None,
-                 mcast_src_ip=None, nopreempt=False):
+                 mcast_src_ip=None, nopreempt=False,
+                 garp_master_repeat=GARP_MASTER_REPEAT,
+                 garp_master_refresh=GARP_MASTER_REFRESH):
         self.name = 'VR_%s' % vrouter_id
 
         if state not in VALID_STATES:
@@ -152,6 +156,8 @@ class KeepalivedInstance(object):
         self.nopreempt = nopreempt
         self.advert_int = advert_int
         self.mcast_src_ip = mcast_src_ip
+        self.garp_master_repeat = garp_master_repeat
+        self.garp_master_refresh = garp_master_refresh
         self.track_interfaces = []
         self.vips = []
         self.virtual_routes = []
@@ -249,7 +255,9 @@ class KeepalivedInstance(object):
                   '    state %s' % self.state,
                   '    interface %s' % self.interface,
                   '    virtual_router_id %s' % self.vrouter_id,
-                  '    priority %s' % self.priority]
+                  '    priority %s' % self.priority,
+                  '    garp_master_repeat %s' % self.garp_master_repeat,
+                  '    garp_master_refresh %s' % self.garp_master_refresh]
 
         if self.nopreempt:
             config.append('    nopreempt')
