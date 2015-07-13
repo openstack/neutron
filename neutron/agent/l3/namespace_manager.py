@@ -12,6 +12,7 @@
 
 from oslo_log import log as logging
 
+from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
@@ -41,6 +42,12 @@ class NamespaceManager(object):
     does not rely on state recorded at runtime in the agent so it handles
     agent restarts gracefully.
     """
+
+    ns_prefix_to_class_map = {
+        namespaces.NS_PREFIX: namespaces.RouterNamespace,
+        dvr_snat_ns.SNAT_NS_PREFIX: dvr_snat_ns.SnatNamespace,
+        dvr_fip_ns.FIP_NS_PREFIX: dvr_fip_ns.FipNamespace,
+    }
 
     def __init__(self, agent_conf, driver, clean_stale, metadata_driver=None):
         """Initialize the NamespaceManager.
@@ -95,7 +102,7 @@ class NamespaceManager(object):
         :returns: tuple with prefix and id or None if no prefix matches
         """
         prefix = namespaces.get_prefix_from_ns_name(ns_name)
-        if prefix in (namespaces.NS_PREFIX, dvr_snat_ns.SNAT_NS_PREFIX):
+        if prefix in self.ns_prefix_to_class_map:
             identifier = namespaces.get_id_from_ns_name(ns_name)
             return (prefix, identifier)
 
@@ -123,10 +130,7 @@ class NamespaceManager(object):
                 self._cleanup(ns_prefix, ns_id)
 
     def _cleanup(self, ns_prefix, ns_id):
-        if ns_prefix == namespaces.NS_PREFIX:
-            ns_class = namespaces.RouterNamespace
-        else:
-            ns_class = dvr_snat_ns.SnatNamespace
+        ns_class = self.ns_prefix_to_class_map[ns_prefix]
         ns = ns_class(ns_id, self.agent_conf, self.driver, use_ipv6=False)
         try:
             if self.metadata_driver:
