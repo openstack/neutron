@@ -194,7 +194,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
             for key in ('protocol', 'port_range_min', 'port_range_max',
                         'remote_ip_prefix', 'remote_group_id'):
-                if rule_in_db.get(key):
+                if rule_in_db.get(key) is not None:
                     if key == 'remote_ip_prefix':
                         direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
                         rule_dict[direction_ip_prefix] = rule_in_db[key]
@@ -440,7 +440,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             }
             for key in ('protocol', 'port_range_min', 'port_range_max',
                         'remote_ip_prefix', 'remote_group_id'):
-                if rule_in_db.get(key):
+                if rule_in_db.get(key) is not None:
                     if key == 'remote_ip_prefix':
                         direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
                         rule_dict[direction_ip_prefix] = rule_in_db[key]
