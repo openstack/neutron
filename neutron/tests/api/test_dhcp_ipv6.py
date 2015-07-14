@@ -227,7 +227,7 @@ class NetworksTestDHCPv6(base.BaseNetworkTest):
         """When a Network contains two subnets, one being an IPv6 subnet
         configured with ipv6_ra_mode either as slaac or dhcpv6-stateless,
         and the other subnet being an IPv4 subnet, a port attached to the
-        network shall recieve IP addresses from the subnets as follows: An
+        network shall receive IP addresses from the subnets as follows: An
         IPv6 address calculated using EUI-64 from the first subnet, and an
         IPv4 address from the second subnet. The ordering of the subnets
         that the port is associated with should not affect this behavior.
