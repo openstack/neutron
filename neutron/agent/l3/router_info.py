@@ -633,6 +633,4 @@ class RouterInfo(object):
 
         # Update ex_gw_port and enable_snat on the router info cache
         self.ex_gw_port = self.get_ex_gw_port()
-        self.snat_ports = self.router.get(
-            l3_constants.SNAT_ROUTER_INTF_KEY, [])
         self.enable_snat = self.router.get('enable_snat')
