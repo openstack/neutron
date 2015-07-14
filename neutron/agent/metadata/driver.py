@@ -24,12 +24,12 @@ from neutron.agent.linux import utils
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.common import constants
 from neutron.common import exceptions
 
 LOG = logging.getLogger(__name__)
 
 # Access with redirection to metadata proxy iptables mark mask
-METADATA_ACCESS_MARK_MASK = '0xffffffff'
 METADATA_SERVICE_NAME = 'metadata-proxy'
 
 
@@ -45,7 +45,8 @@ class MetadataDriver(object):
 
     @classmethod
     def metadata_filter_rules(cls, port, mark):
-        return [('INPUT', '-m mark --mark %s -j ACCEPT' % mark),
+        return [('INPUT', '-m mark --mark %s/%s -j ACCEPT' %
+                 (mark, constants.ROUTER_MARK_MASK)),
                 ('INPUT', '-p tcp -m tcp --dport %s '
                  '-j DROP' % port)]
 
@@ -55,7 +56,7 @@ class MetadataDriver(object):
                  '-p tcp -m tcp --dport 80 '
                  '-j MARK --set-xmark %(value)s/%(mask)s' %
                  {'value': mark,
-                  'mask': METADATA_ACCESS_MARK_MASK})]
+                  'mask': constants.ROUTER_MARK_MASK})]
 
     @classmethod
     def metadata_nat_rules(cls, port):
