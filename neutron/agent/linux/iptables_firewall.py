@@ -358,7 +358,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ipv6_rules += [comment_rule('-p icmpv6 -j RETURN',
                                     comment=ic.IPV6_ICMP_ALLOW)]
         ipv6_rules += [comment_rule('-p udp -m udp --sport 546 --dport 547 '
-                                    '-j RETURN', comment=None)]
+                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
         mac_ipv4_pairs = []
         mac_ipv6_pairs = []
 
@@ -386,7 +386,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ipv4_rules += [comment_rule('-p udp -m udp --sport 67 --dport 68 '
                                     '-j DROP', comment=ic.DHCP_SPOOF)]
         ipv6_rules += [comment_rule('-p udp -m udp --sport 547 --dport 546 '
-                                    '-j DROP', comment=None)]
+                                    '-j DROP', comment=ic.DHCP_SPOOF)]
 
     def _accept_inbound_icmpv6(self):
         # Allow multicast listener, neighbor solicitation and
