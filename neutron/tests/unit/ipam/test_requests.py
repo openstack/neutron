@@ -291,19 +291,25 @@ class TestAddressRequestFactory(base.BaseTestCase):
 
     def test_specific_address_request_is_loaded(self):
         for address in ('10.12.0.15', 'fffe::1'):
+            ip = {'ip_address': address}
             self.assertIsInstance(
-                ipam_req.AddressRequestFactory.get_request(None,
-                                                           None,
-                                                           address),
+                ipam_req.AddressRequestFactory.get_request(None, None, ip),
                 ipam_req.SpecificAddressRequest)
 
     def test_any_address_request_is_loaded(self):
         for addr in [None, '']:
+            ip = {'ip_address': addr}
             self.assertIsInstance(
-                ipam_req.AddressRequestFactory.get_request(None,
-                                                       None,
-                                                       addr),
+                ipam_req.AddressRequestFactory.get_request(None, None, ip),
                 ipam_req.AnyAddressRequest)
+
+    def test_automatic_address_request_is_loaded(self):
+        ip = {'mac': '6c:62:6d:de:cf:49',
+              'subnet_cidr': '2001:470:abcd::/64',
+              'eui64_address': True}
+        self.assertIsInstance(
+            ipam_req.AddressRequestFactory.get_request(None, None, ip),
+            ipam_req.AutomaticAddressRequest)
 
 
 class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
@@ -331,31 +337,31 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
             subnet, subnetpool = self._build_subnet_dict(cidr=address)
             self.assertIsInstance(
                 ipam_req.SubnetRequestFactory.get_request(None,
-                                                      subnet,
-                                                      subnetpool),
+                                                          subnet,
+                                                          subnetpool),
                 ipam_req.SpecificSubnetRequest)
 
     def test_any_address_request_is_loaded_for_ipv4(self):
         subnet, subnetpool = self._build_subnet_dict(cidr=None, ip_version=4)
         self.assertIsInstance(
             ipam_req.SubnetRequestFactory.get_request(None,
-                                                  subnet,
-                                                  subnetpool),
+                                                      subnet,
+                                                      subnetpool),
             ipam_req.AnySubnetRequest)
 
     def test_any_address_request_is_loaded_for_ipv6(self):
         subnet, subnetpool = self._build_subnet_dict(cidr=None, ip_version=6)
         self.assertIsInstance(
             ipam_req.SubnetRequestFactory.get_request(None,
-                                                  subnet,
-                                                  subnetpool),
+                                                      subnet,
+                                                      subnetpool),
             ipam_req.AnySubnetRequest)
 
     def test_args_are_passed_to_specific_request(self):
         subnet, subnetpool = self._build_subnet_dict()
         request = ipam_req.SubnetRequestFactory.get_request(None,
-                                                        subnet,
-                                                        subnetpool)
+                                                            subnet,
+                                                            subnetpool)
         self.assertIsInstance(request,
                               ipam_req.SpecificSubnetRequest)
         self.assertEqual(self.tenant_id, request.tenant_id)
