@@ -18,7 +18,7 @@
 * references
 ** OVS agent https://wiki.openstack.org/wiki/Ovs-flow-logic
 """
-
+from neutron.common import constants as const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
@@ -110,6 +110,23 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         self.delete_flows(table_id=constants.LOCAL_SWITCHING,
                           in_port=port, eth_src=mac)
 
+    def install_icmpv6_na_spoofing_protection(self, port, ip_addresses):
+        # Allow neighbor advertisements as long as they match addresses
+        # that actually belong to the port.
+        for ip in ip_addresses:
+            self.install_normal(
+                table_id=constants.ARP_SPOOF_TABLE, priority=2,
+                dl_type=const.ETHERTYPE_IPV6, nw_proto=const.PROTO_NUM_ICMP_V6,
+                icmp_type=const.ICMPV6_TYPE_NA, nd_target=ip, in_port=port)
+
+        # Now that the rules are ready, direct icmpv6 neighbor advertisement
+        # traffic from the port into the anti-spoof table.
+        self.add_flow(table=constants.LOCAL_SWITCHING,
+                      priority=10, dl_type=const.ETHERTYPE_IPV6,
+                      nw_proto=const.PROTO_NUM_ICMP_V6,
+                      icmp_type=const.ICMPV6_TYPE_NA, in_port=port,
+                      actions=("resubmit(,%s)" % constants.ARP_SPOOF_TABLE))
+
     def install_arp_spoofing_protection(self, port, ip_addresses):
         # allow ARPs as long as they match addresses that actually
         # belong to the port.
@@ -129,5 +146,8 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
     def delete_arp_spoofing_protection(self, port):
         self.delete_flows(table_id=constants.LOCAL_SWITCHING,
                           in_port=port, proto='arp')
+        self.delete_flows(table_id=constants.LOCAL_SWITCHING,
+                          in_port=port, nw_proto=const.PROTO_NUM_ICMP_V6,
+                          icmp_type=const.ICMPV6_TYPE_NA)
         self.delete_flows(table_id=constants.ARP_SPOOF_TABLE,
                           in_port=port)

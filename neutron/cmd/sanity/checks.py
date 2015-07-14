@@ -134,6 +134,17 @@ def arp_header_match_supported():
                                actions="NORMAL")
 
 
+def icmpv6_header_match_supported():
+    return ofctl_arg_supported(cmd='add-flow',
+                               table=ovs_const.ARP_SPOOF_TABLE,
+                               priority=1,
+                               dl_type=n_consts.ETHERTYPE_IPV6,
+                               nw_proto=n_consts.PROTO_NUM_ICMP_V6,
+                               icmp_type=n_consts.ICMPV6_TYPE_NA,
+                               nd_target='fdf8:f53b:82e4::10',
+                               actions="NORMAL")
+
+
 def vf_management_supported():
     is_supported = True
     required_caps = (

@@ -40,6 +40,7 @@ from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import config
 from neutron.common import constants as n_const
 from neutron.common import exceptions
+from neutron.common import ipv6_utils as ipv6
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -94,6 +95,10 @@ class LocalVLANMapping(object):
 
 class OVSPluginApi(agent_rpc.PluginApi):
     pass
+
+
+def has_zero_prefixlen_address(ip_addresses):
+    return any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in ip_addresses)
 
 
 class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
@@ -867,19 +872,35 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             return
         # collect all of the addresses and cidrs that belong to the port
         addresses = {f['ip_address'] for f in port_details['fixed_ips']}
+        mac_addresses = {vif.vif_mac}
         if port_details.get('allowed_address_pairs'):
             addresses |= {p['ip_address']
                           for p in port_details['allowed_address_pairs']}
+            mac_addresses |= {p['mac_address']
+                              for p in port_details['allowed_address_pairs']
+                              if p.get('mac_address')}
 
-        addresses = {ip for ip in addresses
-                     if netaddr.IPNetwork(ip).version == 4}
-        if any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in addresses):
-            # don't try to install protection because a /0 prefix allows any
-            # address anyway and the ARP_SPA can only match on /1 or more.
-            return
+        ipv6_addresses = {ip for ip in addresses
+                          if netaddr.IPNetwork(ip).version == 6}
+        # Allow neighbor advertisements for LLA address.
+        ipv6_addresses |= {str(ipv6.get_ipv6_addr_by_EUI64(
+                               n_const.IPV6_LLA_PREFIX, mac))
+                           for mac in mac_addresses}
+        if not has_zero_prefixlen_address(ipv6_addresses):
+            # Install protection only when prefix is not zero because a /0
+            # prefix allows any address anyway and the nd_target can only
+            # match on /1 or more.
+            bridge.install_icmpv6_na_spoofing_protection(port=vif.ofport,
+                ip_addresses=ipv6_addresses)
 
-        bridge.install_arp_spoofing_protection(port=vif.ofport,
-                                               ip_addresses=addresses)
+        ipv4_addresses = {ip for ip in addresses
+                          if netaddr.IPNetwork(ip).version == 4}
+        if not has_zero_prefixlen_address(ipv4_addresses):
+            # Install protection only when prefix is not zero because a /0
+            # prefix allows any address anyway and the ARP_SPA can only
+            # match on /1 or more.
+            bridge.install_arp_spoofing_protection(port=vif.ofport,
+                                                   ip_addresses=ipv4_addresses)
 
     def port_unbound(self, vif_id, net_uuid=None):
         '''Unbind port.

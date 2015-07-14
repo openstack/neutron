@@ -112,6 +112,8 @@ L3_DISTRIBUTED_EXT_ALIAS = 'dvr'
 L3_HA_MODE_EXT_ALIAS = 'l3-ha'
 SUBNET_ALLOCATION_EXT_ALIAS = 'subnet_allocation'
 
+ETHERTYPE_IPV6 = 0x86DD
+
 # Protocol names and numbers for Security Groups/Firewalls
 PROTO_NAME_TCP = 'tcp'
 PROTO_NAME_ICMP = 'icmp'
@@ -130,6 +132,7 @@ PROTO_NUM_UDP = 17
 # Neighbor Advertisement (136)
 ICMPV6_ALLOWED_TYPES = [130, 131, 132, 135, 136]
 ICMPV6_TYPE_RA = 134
+ICMPV6_TYPE_NA = 136
 
 DHCPV6_STATEFUL = 'dhcpv6-stateful'
 DHCPV6_STATELESS = 'dhcpv6-stateless'

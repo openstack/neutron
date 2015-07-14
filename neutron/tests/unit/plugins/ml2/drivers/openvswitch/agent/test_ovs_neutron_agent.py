@@ -54,6 +54,7 @@ TEST_NETWORK_ID2 = 'net-id-2'
 class FakeVif(object):
     ofport = 99
     port_name = 'name'
+    vif_mac = 'aa:bb:cc:11:22:33'
 
 
 class MockFixedIntervalLoopingCall(object):
@@ -1387,6 +1388,18 @@ class TestOvsNeutronAgent(object):
             [mock.call(ip_addresses=set(), port=vif.ofport)],
             int_br.install_arp_spoofing_protection.mock_calls)
 
+    def test_arp_spoofing_basic_rule_setup_fixed_ipv6(self):
+        vif = FakeVif()
+        fake_details = {'fixed_ips': [{'ip_address': 'fdf8:f53b:82e4::1'}],
+                        'device_owner': 'nobody'}
+        self.agent.prevent_arp_spoofing = True
+        br = mock.create_autospec(self.agent.int_br)
+        self.agent.setup_arp_spoofing_protection(br, vif, fake_details)
+        self.assertEqual(
+            [mock.call(port=vif.ofport)],
+            br.delete_arp_spoofing_protection.mock_calls)
+        self.assertTrue(br.install_icmpv6_na_spoofing_protection.called)
+
     def test_arp_spoofing_fixed_and_allowed_addresses(self):
         vif = FakeVif()
         fake_details = {
@@ -1405,6 +1418,25 @@ class TestOvsNeutronAgent(object):
         self.assertEqual(
             [mock.call(port=vif.ofport, ip_addresses=addresses)],
             int_br.install_arp_spoofing_protection.mock_calls)
+
+    def test_arp_spoofing_fixed_and_allowed_addresses_ipv6(self):
+        vif = FakeVif()
+        fake_details = {
+            'device_owner': 'nobody',
+            'fixed_ips': [{'ip_address': '2001:db8::1'},
+                          {'ip_address': '2001:db8::2'}],
+            'allowed_address_pairs': [{'ip_address': '2001:db8::200',
+                                       'mac_address': 'aa:22:33:44:55:66'}]
+        }
+        self.agent.prevent_arp_spoofing = True
+        int_br = mock.create_autospec(self.agent.int_br)
+        self.agent.setup_arp_spoofing_protection(int_br, vif, fake_details)
+        # make sure all addresses are allowed including ipv6 LLAs
+        addresses = {'2001:db8::1', '2001:db8::2', '2001:db8::200',
+                     'fe80::a822:33ff:fe44:5566', 'fe80::a8bb:ccff:fe11:2233'}
+        self.assertEqual(
+            [mock.call(port=vif.ofport, ip_addresses=addresses)],
+            int_br.install_icmpv6_na_spoofing_protection.mock_calls)
 
     def test__get_ofport_moves(self):
         previous = {'port1': 1, 'port2': 2}
