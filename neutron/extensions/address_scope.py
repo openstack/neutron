@@ -113,7 +113,7 @@ class Address_scope(extensions.ExtensionDescriptor):
 class AddressScopePluginBase(object):
 
     @abc.abstractmethod
-    def create_address_scope(self, context, adress_scope):
+    def create_address_scope(self, context, address_scope):
         pass
 
     @abc.abstractmethod

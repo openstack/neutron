@@ -238,7 +238,7 @@ class KeepalivedInstanceTestCase(base.BaseTestCase,
                                                  ['169.254.192.0/18'])
         self.assertEqual('169.254.0.42/24', instance.get_primary_vip())
 
-    def test_remove_adresses_by_interface(self):
+    def test_remove_addresses_by_interface(self):
         config = self._get_config()
         instance = config.get_instance(1)
         instance.remove_vips_vroutes_by_interface('eth2')
