@@ -100,6 +100,7 @@ updating the core review team for the sub-project's repositories.
 | Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | dragonflow             | Eran Gampel               | gampel               |
+|                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
