@@ -65,7 +65,7 @@ do whatever they are supposed to do. In a callback-less world this would work li
   # A gets hold of the references of B and C
   # A calls B
   # A calls C
-  B->my_random_method_for_knowning_about_router_created()
+  B->my_random_method_for_knowing_about_router_created()
   C->my_random_very_difficult_to_remember_method_about_router_created()
 
 If B and/or C change, things become sour. In a callback-based world, things become a lot
