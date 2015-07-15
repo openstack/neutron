@@ -163,15 +163,18 @@ def _get_sorted_heads(script):
 def validate_heads_file(config):
     '''Check that HEADS file contains the latest heads for each branch.'''
     script = alembic_script.ScriptDirectory.from_config(config)
-    heads = _get_sorted_heads(script)
+    expected_heads = _get_sorted_heads(script)
     heads_path = _get_heads_file_path(CONF)
     try:
         with open(heads_path) as file_:
-            if file_.read().split() == heads:
+            observed_heads = file_.read().split()
+            if observed_heads == expected_heads:
                 return
     except IOError:
         pass
-    alembic_util.err(_('HEADS file does not match migration timeline heads'))
+    alembic_util.err(
+        _('HEADS file does not match migration timeline heads, expected: %s')
+        % ', '.join(expected_heads))
 
 
 def update_heads_file(config):
