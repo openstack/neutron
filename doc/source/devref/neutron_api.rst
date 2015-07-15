@@ -2,7 +2,7 @@ Neutron public API
 ==================
 
 Neutron main tree serves as a library for multiple subprojects that rely on
-different modules from neutron.* namespace to accomodate their needs.
+different modules from neutron.* namespace to accommodate their needs.
 Specifically, advanced service repositories and open source or vendor
 plugin/driver repositories do it.
 
