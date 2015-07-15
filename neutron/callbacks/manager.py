@@ -131,14 +131,22 @@ class CallbacksManager(object):
 
     def _notify_loop(self, resource, event, trigger, **kwargs):
         """The notification loop."""
-        LOG.debug("Notify callbacks for %(resource)s, %(event)s",
-                  {'resource': resource, 'event': event})
+
+        #TODO(QoS): we found callback logs happening in the middle
+        #           of transactions being a source of DBDeadLocks
+        #           because they can yield. (Can LOG writes yield?,
+        #           please revisit this).
+        #
+        #LOG.debug("Notify callbacks for %(resource)s, %(event)s",
+        #          {'resource': resource, 'event': event})
 
         errors = []
         # TODO(armax): consider using a GreenPile
         for callback_id, callback in self._callbacks[resource][event].items():
             try:
-                LOG.debug("Calling callback %s", callback_id)
+                #TODO(QoS): muting logs for the reasons explained in the
+                #           previous TODO(QoS)
+                #LOG.debug("Calling callback %s", callback_id)
                 callback(resource, event, trigger, **kwargs)
             except Exception as e:
                 LOG.exception(_LE("Error during notification for "
