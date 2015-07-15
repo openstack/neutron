@@ -1175,24 +1175,31 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertIn('port_id', body)
 
     def test_router_add_interface_port(self):
-        with self.router() as r:
-            with self.port() as p:
-                body = self._router_interface_action('add',
-                                                     r['router']['id'],
-                                                     None,
-                                                     p['port']['id'])
-                self.assertIn('port_id', body)
-                self.assertEqual(body['port_id'], p['port']['id'])
+        orig_update_port = self.plugin.update_port
+        with self.router() as r, (
+            self.port()) as p, (
+                mock.patch.object(self.plugin, 'update_port')) as update_port:
+            update_port.side_effect = orig_update_port
+            body = self._router_interface_action('add',
+                                                 r['router']['id'],
+                                                 None,
+                                                 p['port']['id'])
+            self.assertIn('port_id', body)
+            self.assertEqual(p['port']['id'], body['port_id'])
+            expected_port_update = {
+                'device_owner': l3_constants.DEVICE_OWNER_ROUTER_INTF,
+                'device_id': r['router']['id']}
+            update_port.assert_called_with(
+                mock.ANY, p['port']['id'], {'port': expected_port_update})
+            # fetch port and confirm device_id
+            body = self._show('ports', p['port']['id'])
+            self.assertEqual(r['router']['id'], body['port']['device_id'])
 
-                # fetch port and confirm device_id
-                body = self._show('ports', p['port']['id'])
-                self.assertEqual(body['port']['device_id'], r['router']['id'])
-
-                # clean-up
-                self._router_interface_action('remove',
-                                              r['router']['id'],
-                                              None,
-                                              p['port']['id'])
+            # clean-up
+            self._router_interface_action('remove',
+                                          r['router']['id'],
+                                          None,
+                                          p['port']['id'])
 
     def test_router_add_interface_multiple_ipv4_subnet_port_returns_400(self):
         """Test adding router port with multiple IPv4 subnets fails.
