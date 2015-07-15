@@ -25,9 +25,12 @@ LOG = log.getLogger(__name__)
 class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
     """Manage agent extensions."""
 
-    def __init__(self, agent_extensions):
+    def __init__(self):
         # Ordered list of agent extensions, defining
         # the order in which the agent extensions are called.
+
+        #TODO(QoS): get extensions from config
+        agent_extensions = ('qos', )
 
         LOG.info(_LI("Configured agent extensions names: %s"),
                  agent_extensions)
@@ -49,11 +52,11 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
                     {'name': extension.name, 'method': method_name}
                 )
 
-    def initialize(self, resource_rpc):
+    def initialize(self):
         # Initialize each agent extension in the list.
         for extension in self:
             LOG.info(_LI("Initializing agent extension '%s'"), extension.name)
-            extension.obj.initialize(resource_rpc)
+            extension.obj.initialize()
 
     def handle_network(self, context, data):
         """Notify all agent extensions to handle network."""

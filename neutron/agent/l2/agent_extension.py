@@ -25,16 +25,14 @@ class AgentCoreResourceExtension(object):
     An agent extension extends the agent core functionality.
     """
 
-    def initialize(self, resource_rpc):
+    def initialize(self):
         """Perform agent core resource extension initialization.
 
         Called after all extensions have been loaded.
         No abstract methods defined below will be
         called prior to this method being called.
-        :param resource_rpc - the agent side rpc for getting
-        resource by type and id
         """
-        self.resource_rpc = resource_rpc
+        pass
 
     def handle_network(self, context, data):
         """handle agent extension for network.

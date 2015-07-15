@@ -39,13 +39,12 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
             return_value=lambda: mock.Mock(spec=qos_agent.QosAgentDriver)
         ).start()
 
+        self.qos_agent.initialize()
         self._create_fake_resource_rpc()
-        self.qos_agent.initialize(self.resource_rpc_mock)
 
     def _create_fake_resource_rpc(self):
         self.get_info_mock = mock.Mock(return_value=TEST_GET_INFO_RULES)
-        self.resource_rpc_mock = mock.Mock()
-        self.resource_rpc_mock.get_info = self.get_info_mock
+        self.qos_agent.resource_rpc.get_info = self.get_info_mock
 
     def _create_test_port_dict(self):
         return {'port_id': uuidutils.generate_uuid(),
@@ -82,7 +81,7 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
     def test_handle_known_port_change_policy_id(self):
         port = self._create_test_port_dict()
         self.qos_agent.handle_port(self.context, port)
-        self.resource_rpc_mock.get_info.reset_mock()
+        self.qos_agent.resource_rpc.get_info.reset_mock()
         port['qos_policy_id'] = uuidutils.generate_uuid()
         self.qos_agent.handle_port(self.context, port)
         self.get_info_mock.assert_called_once_with(

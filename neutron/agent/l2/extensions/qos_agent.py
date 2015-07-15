@@ -21,6 +21,7 @@ import six
 
 from neutron.agent.l2 import agent_extension
 from neutron.api.rpc.callbacks import resources
+from neutron.api.rpc.handlers import resources_rpc
 from neutron import manager
 
 
@@ -69,14 +70,13 @@ class QosAgentDriver(object):
 
 
 class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
-    def initialize(self, resource_rpc):
+    def initialize(self):
         """Perform Agent Extension initialization.
 
-        :param resource_rpc: the agent side rpc for getting
-        resource by type and id
         """
-        super(QosAgentExtension, self).initialize(resource_rpc)
+        super(QosAgentExtension, self).initialize()
 
+        self.resource_rpc = resources_rpc.ResourcesServerRpcApi()
         self.qos_driver = manager.NeutronManager.load_class_for_provider(
             'neutron.qos.agent_drivers', cfg.CONF.qos.agent_driver)()
         self.qos_driver.initialize()
