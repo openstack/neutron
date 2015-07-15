@@ -127,18 +127,23 @@ def arp_header_match_supported():
 
 
 def vf_management_supported():
+    is_supported = True
+    required_caps = (
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE,
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
     try:
         vf_section = ip_link_support.IpLinkSupport.get_vf_mgmt_section()
-        if not ip_link_support.IpLinkSupport.vf_mgmt_capability_supported(
-                vf_section,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE):
-            LOG.debug("ip link command does not support vf capability")
-            return False
+        for cap in required_caps:
+            if not ip_link_support.IpLinkSupport.vf_mgmt_capability_supported(
+                   vf_section, cap):
+                is_supported = False
+                LOG.debug("ip link command does not support "
+                          "vf capability '%(cap)s'", cap)
     except ip_link_support.UnsupportedIpLinkCommand:
         LOG.exception(_LE("Unexpected exception while checking supported "
                           "ip link command"))
         return False
-    return True
+    return is_supported
 
 
 def netns_read_requires_helper():
