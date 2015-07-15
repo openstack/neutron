@@ -21,12 +21,12 @@ import eventlet
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import fileutils
 
 from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.i18n import _LE
-from neutron.openstack.common import fileutils
 
 LOG = logging.getLogger(__name__)
 

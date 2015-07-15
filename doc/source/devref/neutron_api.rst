@@ -33,3 +33,9 @@ incompatible changes that could or are known to trigger those breakages.
   - commit: 6e693fc91dd79cfbf181e3b015a1816d985ad02c
   - solution: switch using oslo_service.* namespace; stop using ANY neutron.openstack.* contents.
   - severity: low (plugins must not rely on that subtree).
+
+* change: oslo.utils.fileutils adopted.
+
+  - commit: I933d02aa48260069149d16caed02b020296b943a
+  - solution: switch using oslo_utils.fileutils module; stop using neutron.openstack.fileutils module.
+  - severity: low (plugins must not rely on that subtree).
