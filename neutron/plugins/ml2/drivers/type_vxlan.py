@@ -15,12 +15,10 @@
 
 from oslo_config import cfg
 from oslo_log import log
-from six import moves
 import sqlalchemy as sa
 from sqlalchemy import sql
 
 from neutron.common import exceptions as n_exc
-from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.i18n import _LE
 from neutron.plugins.common import constants as p_const
@@ -85,45 +83,6 @@ class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
             LOG.exception(_LE("Failed to parse vni_ranges. "
                               "Service terminated!"))
             raise SystemExit()
-
-    def sync_allocations(self):
-
-        # determine current configured allocatable vnis
-        vxlan_vnis = set()
-        for tun_min, tun_max in self.tunnel_ranges:
-            vxlan_vnis |= set(moves.range(tun_min, tun_max + 1))
-
-        session = db_api.get_session()
-        with session.begin(subtransactions=True):
-            # remove from table unallocated tunnels not currently allocatable
-            # fetch results as list via all() because we'll be iterating
-            # through them twice
-            allocs = (session.query(VxlanAllocation).
-                      with_lockmode("update").all())
-            # collect all vnis present in db
-            existing_vnis = set(alloc.vxlan_vni for alloc in allocs)
-            # collect those vnis that needs to be deleted from db
-            vnis_to_remove = [alloc.vxlan_vni for alloc in allocs
-                              if (alloc.vxlan_vni not in vxlan_vnis and
-                                  not alloc.allocated)]
-            # Immediately delete vnis in chunks. This leaves no work for
-            # flush at the end of transaction
-            bulk_size = 100
-            chunked_vnis = (vnis_to_remove[i:i + bulk_size] for i in
-                            range(0, len(vnis_to_remove), bulk_size))
-            for vni_list in chunked_vnis:
-                if vni_list:
-                    session.query(VxlanAllocation).filter(
-                        VxlanAllocation.vxlan_vni.in_(vni_list)).delete(
-                            synchronize_session=False)
-            # collect vnis that need to be added
-            vnis = list(vxlan_vnis - existing_vnis)
-            chunked_vnis = (vnis[i:i + bulk_size] for i in
-                            range(0, len(vnis), bulk_size))
-            for vni_list in chunked_vnis:
-                bulk = [{'vxlan_vni': vni, 'allocated': False}
-                        for vni in vni_list]
-                session.execute(VxlanAllocation.__table__.insert(), bulk)
 
     def get_endpoints(self):
         """Get every vxlan endpoints from database."""

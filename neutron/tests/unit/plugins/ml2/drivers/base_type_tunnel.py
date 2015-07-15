@@ -93,6 +93,35 @@ class TunnelTypeTestMixin(object):
         self.assertIsNone(
             self.driver.get_allocation(self.session, (TUN_MAX + 5 + 1)))
 
+    def _test_sync_allocations_and_allocated(self, tunnel_id):
+        segment = {api.NETWORK_TYPE: self.TYPE,
+                   api.PHYSICAL_NETWORK: None,
+                   api.SEGMENTATION_ID: tunnel_id}
+        self.driver.reserve_provider_segment(self.session, segment)
+
+        self.driver.tunnel_ranges = UPDATED_TUNNEL_RANGES
+        self.driver.sync_allocations()
+
+        self.assertTrue(
+            self.driver.get_allocation(self.session, tunnel_id).allocated)
+
+    def test_sync_allocations_and_allocated_in_initial_range(self):
+        self._test_sync_allocations_and_allocated(TUN_MIN + 2)
+
+    def test_sync_allocations_and_allocated_in_final_range(self):
+        self._test_sync_allocations_and_allocated(TUN_MAX + 2)
+
+    def test_sync_allocations_no_op(self):
+
+        def verify_no_chunk(iterable, chunk_size):
+            # no segment removed/added
+            self.assertEqual(0, len(list(iterable)))
+            return []
+        with mock.patch.object(
+                type_tunnel, 'chunks', side_effect=verify_no_chunk) as chunks:
+            self.driver.sync_allocations()
+            self.assertEqual(2, len(chunks.mock_calls))
+
     def test_partial_segment_is_partial_segment(self):
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: None,
