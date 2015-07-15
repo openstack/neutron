@@ -64,6 +64,7 @@ from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as provider
+from neutron.extensions import qos
 from neutron.extensions import vlantransparent
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
@@ -1139,6 +1140,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if (psec.PORTSECURITY in attrs) and (
                         original_port[psec.PORTSECURITY] !=
                         updated_port[psec.PORTSECURITY]):
+                need_port_update_notify = True
+            # TODO(QoS): Move out to the extension framework somehow.
+            # Follow https://review.openstack.org/#/c/169223 for a solution.
+            if (qos.QOS_POLICY_ID in attrs and
+                    original_port[qos.QOS_POLICY_ID] !=
+                    updated_port[qos.QOS_POLICY_ID]):
                 need_port_update_notify = True
 
             if addr_pair.ADDRESS_PAIRS in attrs:

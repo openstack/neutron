@@ -17,9 +17,6 @@ from neutron import manager
 
 from neutron.api.rpc.callbacks import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources as rpc_resources
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.extensions import qos
 from neutron.i18n import _LW
 from neutron.objects.qos import policy as policy_object
@@ -108,8 +105,6 @@ class QoSPlugin(qos.QoSPluginBase):
     def __init__(self):
         super(QoSPlugin, self).__init__()
         self.register_resource_providers()
-        self.register_port_callbacks()
-        self.register_net_callbacks()
 
     def register_resource_providers(self):
         rpc_registry.register_provider(
@@ -119,55 +114,6 @@ class QoSPlugin(qos.QoSPluginBase):
         rpc_registry.register_provider(
             _get_qos_policy_cb_stub,
             rpc_resources.QOS_POLICY)
-
-    def register_port_callbacks(self):
-        registry.subscribe(
-            self._extend_port_policy_data, resources.PORT, events.AFTER_READ)
-
-    def _extend_port_policy_data(self, resource, event, trigger, **kwargs):
-        context = kwargs['context']
-        port = kwargs['port']
-        policy = policy_object.QosPolicy.get_port_policy(context, port['id'])
-        port['qos_policy_id'] = policy.id if policy else None
-
-    def update_port_policy(self, context, port):
-        old_policy = policy_object.QosPolicy.get_port_policy(
-            context, port['id'])
-        if old_policy is not None:
-            #TODO(QoS): this means two transactions. One for detaching
-            #           one for re-attaching, we may want to update
-            #           within a single transaction instead, or put
-            #           a whole transaction on top, or handle the switch
-            #           at db api level automatically within transaction.
-            old_policy.detach_port(port['id'])
-
-        qos_policy_id = port.get('qos_policy_id')
-        if qos_policy_id is not None:
-            policy = self._get_policy_obj(context, qos_policy_id)
-            policy.attach_port(port['id'])
-
-    def register_net_callbacks(self):
-        registry.subscribe(self._extend_network_policy_data,
-                           resources.NETWORK,
-                           events.AFTER_READ)
-
-    def _extend_network_policy_data(self, resource, event, trigger, **kwargs):
-        context = kwargs['context']
-        network = kwargs['network']
-        policy = policy_object.QosPolicy.get_network_policy(
-            context, network['id'])
-        network['qos_policy_id'] = policy.id if policy else None
-
-    def update_network_policy(self, context, network):
-        old_policy = policy_object.QosPolicy.get_network_policy(
-            context, network['id'])
-        if old_policy:
-            old_policy.detach_network(network['id'])
-
-        qos_policy_id = network.get('qos_policy_id')
-        if qos_policy_id:
-            policy = self._get_policy_obj(context, qos_policy_id)
-            policy.attach_network(network['id'])
 
     def create_policy(self, context, policy):
         policy = policy_object.QosPolicy(context, **policy['policy'])

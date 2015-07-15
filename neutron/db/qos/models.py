@@ -44,6 +44,10 @@ class QosNetworkPolicyBinding(model_base.BASEV2):
                            nullable=False,
                            unique=True,
                            primary_key=True)
+    network = sa.orm.relationship(
+        models_v2.Network,
+        backref=sa.orm.backref("qos_policy_binding", uselist=False,
+                               cascade='delete', lazy='joined'))
 
 
 class QosPortPolicyBinding(model_base.BASEV2):
@@ -59,6 +63,10 @@ class QosPortPolicyBinding(model_base.BASEV2):
                         nullable=False,
                         unique=True,
                         primary_key=True)
+    port = sa.orm.relationship(
+        models_v2.Port,
+        backref=sa.orm.backref("qos_policy_binding", uselist=False,
+                               cascade='delete', lazy='joined'))
 
 
 class QosRule(model_base.BASEV2, models_v2.HasId):
