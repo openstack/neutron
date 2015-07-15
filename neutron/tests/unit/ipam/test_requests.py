@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import types
-
 import mock
 import netaddr
 from oslo_config import cfg
@@ -277,7 +275,7 @@ class TestIpamDriverLoader(base.BaseTestCase):
     def test_ipam_driver_is_loaded_from_ipam_driver_config_value(self):
         ipam_driver = self._load_ipam_driver('fake', None)
         self.assertIsInstance(
-            ipam_driver, (fake_driver.FakeDriver, types.ClassType),
+            ipam_driver, fake_driver.FakeDriver,
             "loaded ipam driver should be of type FakeDriver")
 
     @mock.patch(FAKE_IPAM_CLASS)
