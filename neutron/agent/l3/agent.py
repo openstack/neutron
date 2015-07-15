@@ -21,9 +21,9 @@ import oslo_messaging
 from oslo_service import loopingcall
 from oslo_service import periodic_task
 from oslo_utils import excutils
-from oslo_utils import importutils
 from oslo_utils import timeutils
 
+from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_local_router as dvr_local_router
@@ -165,15 +165,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             config=self.conf,
             resource_type='router')
 
-        try:
-            self.driver = importutils.import_object(
-                self.conf.interface_driver,
-                self.conf
-            )
-        except Exception:
-            LOG.error(_LE("Error importing interface driver "
-                          "'%s'"), self.conf.interface_driver)
-            raise SystemExit(1)
+        self.driver = common_utils.load_interface_driver(self.conf)
 
         self.context = n_context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, host)

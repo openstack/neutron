@@ -23,10 +23,10 @@ import time
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import importutils
 from oslo_utils import uuidutils
 import six
 
+from neutron.agent.common import utils as common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
@@ -36,7 +36,7 @@ from neutron.common import exceptions
 from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
 from neutron.extensions import extra_dhcp_opt as edo_ext
-from neutron.i18n import _LE, _LI, _LW
+from neutron.i18n import _LI, _LW
 
 LOG = logging.getLogger(__name__)
 
@@ -919,18 +919,7 @@ class DeviceManager(object):
     def __init__(self, conf, plugin):
         self.conf = conf
         self.plugin = plugin
-        if not conf.interface_driver:
-            LOG.error(_LE('An interface driver must be specified'))
-            raise SystemExit(1)
-        try:
-            self.driver = importutils.import_object(
-                conf.interface_driver, conf)
-        except Exception as e:
-            LOG.error(_LE("Error importing interface driver '%(driver)s': "
-                          "%(inner)s"),
-                      {'driver': conf.interface_driver,
-                       'inner': e})
-            raise SystemExit(1)
+        self.driver = common_utils.load_interface_driver(conf)
 
     def get_interface_name(self, network, port):
         """Return interface(device) name for use by the DHCP process."""
