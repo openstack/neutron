@@ -17,8 +17,9 @@ from networking_plumgrid.neutron.plugins import plugin
 
 class NeutronPluginPLUMgridV2(plugin.NeutronPluginPLUMgridV2):
 
-    supported_extension_aliases = ["binding", "external-net", "provider",
-                                   "quotas", "router", "security-group"]
+    supported_extension_aliases = ["binding", "external-net", "extraroute",
+                                   "provider", "quotas", "router",
+                                   "security-group"]
 
     def __init__(self):
         super(NeutronPluginPLUMgridV2, self).__init__()
