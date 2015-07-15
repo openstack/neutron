@@ -25,7 +25,12 @@ from oslo_utils import importutils
 
 from neutron.common import repos
 
-HEAD_FILENAME = 'HEAD'
+
+# TODO(ihrachyshka): maintain separate HEAD files per branch
+HEADS_FILENAME = 'HEADS'
+CURRENT_RELEASE = "liberty"
+MIGRATION_BRANCHES = ('expand', 'contract')
+
 
 mods = repos.NeutronModules()
 VALID_SERVICES = map(mods.alembic_name, mods.installed_list())
@@ -76,7 +81,7 @@ def do_alembic_command(config, cmd, *args, **kwargs):
 
 def do_check_migration(config, cmd):
     do_alembic_command(config, 'branches')
-    validate_head_file(config)
+    validate_heads_file(config)
 
 
 def add_alembic_subparser(sub, cmd):
@@ -101,6 +106,10 @@ def do_upgrade(config, cmd):
             raise SystemExit(_('Negative delta (downgrade) not supported'))
         revision = '%s+%d' % (revision, delta)
 
+    # leave branchless 'head' revision request backward compatible by applying
+    # all heads in all available branches.
+    if revision == 'head':
+        revision = 'heads'
     if not CONF.command.sql:
         run_sanity_checks(config, revision)
     do_alembic_command(config, cmd, revision, sql=CONF.command.sql)
@@ -116,35 +125,62 @@ def do_stamp(config, cmd):
                        sql=CONF.command.sql)
 
 
+def _get_branch_head(branch):
+    '''Get the latest @head specification for a branch.'''
+    return '%s_%s@head' % (CURRENT_RELEASE, branch)
+
+
 def do_revision(config, cmd):
-    do_alembic_command(config, cmd,
-                       message=CONF.command.message,
-                       autogenerate=CONF.command.autogenerate,
-                       sql=CONF.command.sql)
-    update_head_file(config)
-
-
-def validate_head_file(config):
-    script = alembic_script.ScriptDirectory.from_config(config)
-    if len(script.get_heads()) > 1:
-        alembic_util.err(_('Timeline branches unable to generate timeline'))
-
-    head_path = os.path.join(script.versions, HEAD_FILENAME)
-    if (os.path.isfile(head_path) and
-        open(head_path).read().strip() == script.get_current_head()):
-        return
+    '''Generate new revision files, one per branch.'''
+    if _separate_migration_branches_supported(CONF):
+        for branch in MIGRATION_BRANCHES:
+            version_path = _get_version_branch_path(CONF, branch)
+            head = _get_branch_head(branch)
+            do_alembic_command(config, cmd,
+                               message=CONF.command.message,
+                               autogenerate=CONF.command.autogenerate,
+                               sql=CONF.command.sql,
+                               version_path=version_path,
+                               head=head)
     else:
-        alembic_util.err(_('HEAD file does not match migration timeline head'))
+        do_alembic_command(config, cmd,
+                           message=CONF.command.message,
+                           autogenerate=CONF.command.autogenerate,
+                           sql=CONF.command.sql)
+    update_heads_file(config)
 
 
-def update_head_file(config):
+def _get_sorted_heads(script):
+    '''Get the list of heads for all branches, sorted.'''
+    heads = script.get_heads()
+    # +1 stands for the core 'kilo' branch, the one that didn't have branches
+    if len(heads) > len(MIGRATION_BRANCHES) + 1:
+        alembic_util.err(_('No new branches are allowed except: %s') %
+                         ' '.join(MIGRATION_BRANCHES))
+    return sorted(heads)
+
+
+def validate_heads_file(config):
+    '''Check that HEADS file contains the latest heads for each branch.'''
     script = alembic_script.ScriptDirectory.from_config(config)
-    if len(script.get_heads()) > 1:
-        alembic_util.err(_('Timeline branches unable to generate timeline'))
+    heads = _get_sorted_heads(script)
+    heads_path = _get_heads_file_path(CONF)
+    try:
+        with open(heads_path) as file_:
+            if file_.read().split() == heads:
+                return
+    except IOError:
+        pass
+    alembic_util.err(_('HEADS file does not match migration timeline heads'))
 
-    head_path = os.path.join(script.versions, HEAD_FILENAME)
-    with open(head_path, 'w+') as f:
-        f.write(script.get_current_head())
+
+def update_heads_file(config):
+    '''Update HEADS file with the latest branch heads.'''
+    script = alembic_script.ScriptDirectory.from_config(config)
+    heads = _get_sorted_heads(script)
+    heads_path = _get_heads_file_path(CONF)
+    with open(heads_path, 'w+') as f:
+        f.write('\n'.join(heads))
 
 
 def add_command_parsers(subparsers):
@@ -191,6 +227,55 @@ command_opt = cfg.SubCommandOpt('command',
 CONF.register_cli_opt(command_opt)
 
 
+def _get_neutron_service_base(neutron_config):
+    '''Return base python namespace name for a service.'''
+    if neutron_config.service:
+        validate_service_installed(neutron_config.service)
+        return "neutron_%s" % neutron_config.service
+    return "neutron"
+
+
+def _get_root_versions_dir(neutron_config):
+    '''Return root directory that contains all migration rules.'''
+    service_base = _get_neutron_service_base(neutron_config)
+    root_module = importutils.import_module(service_base)
+    return os.path.join(
+        os.path.dirname(root_module.__file__),
+        'db/migration/alembic_migrations/versions')
+
+
+def _get_heads_file_path(neutron_config):
+    '''Return the path of the file that contains all latest heads, sorted.'''
+    return os.path.join(
+        _get_root_versions_dir(neutron_config),
+        HEADS_FILENAME)
+
+
+def _get_version_branch_path(neutron_config, branch=None):
+    version_path = _get_root_versions_dir(neutron_config)
+    if branch:
+        return os.path.join(version_path, CURRENT_RELEASE, branch)
+    return version_path
+
+
+def _separate_migration_branches_supported(neutron_config):
+    '''Detect whether split migration branches are supported.'''
+    # Use HEADS file to indicate the new, split migration world
+    return os.path.exists(_get_heads_file_path(neutron_config))
+
+
+def _set_version_locations(config):
+    '''Make alembic see all revisions in all migration branches.'''
+    version_paths = []
+
+    version_paths.append(_get_version_branch_path(CONF))
+    if _separate_migration_branches_supported(CONF):
+        for branch in MIGRATION_BRANCHES:
+            version_paths.append(_get_version_branch_path(CONF, branch))
+
+    config.set_main_option('version_locations', ' '.join(version_paths))
+
+
 def validate_service_installed(service):
     if not importutils.try_import('neutron_%s' % service):
         alembic_util.err(_('Package neutron-%s not installed') % service)
@@ -198,18 +283,14 @@ def validate_service_installed(service):
 
 def get_script_location(neutron_config):
     location = '%s.db.migration:alembic_migrations'
-    if neutron_config.service:
-        validate_service_installed(neutron_config.service)
-        base = "neutron_%s" % neutron_config.service
-    else:
-        base = "neutron"
-    return location % base
+    return location % _get_neutron_service_base(neutron_config)
 
 
 def get_alembic_config():
     config = alembic_config.Config(os.path.join(os.path.dirname(__file__),
                                                 'alembic.ini'))
     config.set_main_option('script_location', get_script_location(CONF))
+    _set_version_locations(config)
     return config
 
 
@@ -217,7 +298,11 @@ def run_sanity_checks(config, revision):
     script_dir = alembic_script.ScriptDirectory.from_config(config)
 
     def check_sanity(rev, context):
-        for script in script_dir.iterate_revisions(revision, rev):
+        # TODO(ihrachyshka): here we use internal API for alembic; we may need
+        # alembic to expose implicit_base= argument into public
+        # iterate_revisions() call
+        for script in script_dir.revision_map.iterate_revisions(
+                revision, rev, implicit_base=True):
             if hasattr(script.module, 'check_sanity'):
                 script.module.check_sanity(context.connection)
         return []

@@ -23,7 +23,10 @@ Create Date: 2015-04-19 14:59:15.102609
 
 # revision identifiers, used by Alembic.
 revision = '354db87e3225'
-down_revision = 'kilo'
+down_revision = None
+branch_labels = ('liberty_expand',)
+depends_on = ('kilo',)
+
 from alembic import op
 import sqlalchemy as sa
 

@@ -121,7 +121,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def db_sync(self, engine):
         cfg.CONF.set_override('connection', engine.url, group='database')
-        migration.do_alembic_command(self.alembic_config, 'upgrade', 'head')
+        migration.do_alembic_command(self.alembic_config, 'upgrade', 'heads')
         cfg.CONF.clear_override('connection', group='database')
 
     def get_engine(self):

@@ -23,6 +23,47 @@ should also be added in model. If default value in database is not needed,
 business logic.
 
 
+How we manage database migration rules
+--------------------------------------
+
+Since Liberty, Neutron maintains two parallel alembic migration branches.
+
+The first one, called 'expand', is used to store expansion-only migration
+rules. Those rules are strictly additive and can be applied while
+neutron-server is running. Examples of additive database schema changes are:
+creating a new table, adding a new table column, adding a new index, etc.
+
+The second branch, called 'contract', is used to store those migration rules
+that are not safe to apply while neutron-server is running. Those include:
+column or table removal, moving data from one part of the database into another
+(renaming a column, transforming single table into multiple, etc.), introducing
+or modifying constraints, etc.
+
+The intent of the split is to allow invoking those safe migrations from
+'expand' branch while neutron-server is running, reducing downtime needed to
+upgrade the service.
+
+To apply just expansion rules, execute:
+
+- neutron-db-manage upgrade liberty_expand@head
+
+After the first step is done, you can stop neutron-server, apply remaining
+non-expansive migration rules, if any:
+
+- neutron-db-manage upgrade liberty_contract@head
+
+and finally, start your neutron-server again.
+
+If you are not interested in applying safe migration rules while the service is
+running, you can still upgrade database the old way, by stopping the service,
+and then applying all available rules:
+
+- neutron-db-manage upgrade head[s]
+
+It will apply all the rules from both the expand and the contract branches, in
+proper order.
+
+
 Tests to verify that database migrations and models are in sync
 ---------------------------------------------------------------
 
