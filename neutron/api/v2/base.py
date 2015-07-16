@@ -17,7 +17,6 @@ import copy
 
 import netaddr
 from oslo_config import cfg
-from oslo_db import api as oslo_db_api
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
@@ -187,6 +186,7 @@ class Controller(object):
 
     def __getattr__(self, name):
         if name in self._member_actions:
+            @db_api.retry_db_errors
             def _handle_action(request, id, **kwargs):
                 arg_list = [request.context, id]
                 # Ensure policy engine is initialized
@@ -197,7 +197,7 @@ class Controller(object):
                 except oslo_policy.PolicyNotAuthorized:
                     msg = _('The resource could not be found.')
                     raise webob.exc.HTTPNotFound(msg)
-                body = kwargs.pop('body', None)
+                body = copy.deepcopy(kwargs.pop('body', None))
                 # Explicit comparison with None to distinguish from {}
                 if body is not None:
                     arg_list.append(body)
@@ -383,8 +383,7 @@ class Controller(object):
                 # We need a way for ensuring that if it has been created,
                 # it is then deleted
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True)
+    @db_api.retry_db_errors
     def create(self, request, body=None, **kwargs):
         """Creates a new instance of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
@@ -470,8 +469,7 @@ class Controller(object):
                 return notify({self._resource: self._view(request.context,
                                                           obj)})
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True)
+    @db_api.retry_db_errors
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
         self._notifier.info(request.context,
@@ -506,8 +504,7 @@ class Controller(object):
                                      result,
                                      notifier_method)
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True)
+    @db_api.retry_db_errors
     def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes."""
         parent_id = kwargs.get(self._parent_id_name)
