@@ -167,7 +167,7 @@ class ApicTopologyAgent(manager.Manager):
         self.interfaces = {}
         self.lldpcmd = None
         self.peers = {}
-        self.port_desc_re = map(re.compile, ACI_PORT_DESCR_FORMATS)
+        self.port_desc_re = list(map(re.compile, ACI_PORT_DESCR_FORMATS))
         self.service_agent = ApicTopologyServiceNotifierApi()
         self.state = None
         self.state_agent = None

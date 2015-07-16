@@ -1520,7 +1520,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.router = {'distributed': False}
         ri._handle_router_snat_rules(ex_gw_port, "iface", "add_rules")
 
-        nat_rules = map(str, ri.iptables_manager.ipv4['nat'].rules)
+        nat_rules = list(map(str, ri.iptables_manager.ipv4['nat'].rules))
         wrap_name = ri.iptables_manager.wrap_name
 
         jump_float_rule = "-A %s-snat -j %s-float-snat" % (wrap_name,
@@ -1539,7 +1539,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertThat(nat_rules.index(jump_float_rule),
                         matchers.LessThan(nat_rules.index(snat_rule1)))
 
-        mangle_rules = map(str, ri.iptables_manager.ipv4['mangle'].rules)
+        mangle_rules = list(map(str, ri.iptables_manager.ipv4['mangle'].rules))
         mangle_rule = ("-A %s-mark -i iface "
                        "-j MARK --set-xmark 0x2/0xffffffff") % wrap_name
         self.assertIn(mangle_rule, mangle_rules)

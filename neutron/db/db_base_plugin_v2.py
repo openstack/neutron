@@ -612,7 +612,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     in_(AUTO_DELETE_PORT_OWNERS)))
             network_ports = qry_network_ports.all()
             if network_ports:
-                map(context.session.delete, network_ports)
+                for port in network_ports:
+                    context.session.delete(port)
             # Check if there are more IP allocations, unless
             # is_auto_address_subnet is True. In that case the check is
             # unnecessary. This additional check not only would be wasteful

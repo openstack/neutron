@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 
 
 def create_process(cmd, addl_env=None):
-    cmd = map(str, cmd)
+    cmd = list(map(str, cmd))
 
     LOG.debug("Running command: %s", cmd)
     env = os.environ.copy()
