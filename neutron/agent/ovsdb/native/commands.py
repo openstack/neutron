@@ -351,42 +351,43 @@ class PortToBridgeCommand(BaseCommand):
 class DbListCommand(BaseCommand):
     def __init__(self, api, table, records, columns, if_exists):
         super(DbListCommand, self).__init__(api)
-        self.requested_info = {'records': records, 'columns': columns,
-                               'table': table}
-        self.table = self.api._tables[table]
-        self.columns = columns or self.table.columns.keys() + ['_uuid']
+        self.table = table
+        self.columns = columns
         self.if_exists = if_exists
-        if records:
-            self.records = []
-            for record in records:
+        self.records = records
+
+    def run_idl(self, txn):
+        table_schema = self.api._tables[self.table]
+        columns = self.columns or table_schema.columns.keys() + ['_uuid']
+        if self.records:
+            row_uuids = []
+            for record in self.records:
                 try:
-                    self.records.append(idlutils.row_by_record(
-                          self.api.idl, table, record).uuid)
+                    row_uuids.append(idlutils.row_by_record(
+                                     self.api.idl, self.table, record).uuid)
                 except idlutils.RowNotFound:
                     if self.if_exists:
                         continue
-                    raise
+                    # NOTE(kevinbenton): this is converted to a RuntimeError
+                    # for compat with the vsctl version. It might make more
+                    # sense to change this to a RowNotFoundError in the future.
+                    raise RuntimeError(_LE(
+                          "Row doesn't exist in the DB. Request info: "
+                          "Table=%(table)s. Columns=%(columns)s. "
+                          "Records=%(records)s.") % {
+                              "table": self.table,
+                              "columns": self.columns,
+                              "records": self.records,
+                          })
         else:
-            self.records = self.table.rows.keys()
-
-    def run_idl(self, txn):
-        try:
-            self.result = [
-                {
-                    c: idlutils.get_column_value(self.table.rows[uuid], c)
-                    for c in self.columns
-                    if not self.if_exists or uuid in self.table.rows
-                }
-                for uuid in self.records
-            ]
-        except KeyError:
-            # NOTE(kevinbenton): this is converted to a RuntimeError for compat
-            # with the vsctl version. It might make more sense to change this
-            # to a RowNotFoundError in the future.
-            raise RuntimeError(_LE(
-                  "Row removed from DB during listing. Request info: "
-                  "Table=%(table)s. Columns=%(columns)s. "
-                  "Records=%(records)s.") % self.requested_info)
+            row_uuids = table_schema.rows.keys()
+        self.result = [
+            {
+                c: idlutils.get_column_value(table_schema.rows[uuid], c)
+                for c in columns
+            }
+            for uuid in row_uuids
+        ]
 
 
 class DbFindCommand(BaseCommand):
