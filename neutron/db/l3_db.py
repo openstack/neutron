@@ -310,8 +310,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 msg = _("Network %s is not an external network") % network_id
                 raise n_exc.BadRequest(resource='router', msg=msg)
             if ext_ips:
-                subnets = self._core_plugin._get_subnets_by_network(context,
-                                                                    network_id)
+                subnets = self._core_plugin.get_subnets_by_network(context,
+                                                                   network_id)
                 for s in subnets:
                     if not s['gateway_ip']:
                         continue
@@ -361,8 +361,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             new_network and (not router.gw_port or
                              router.gw_port['network_id'] != new_network))
         if new_valid_gw_port_attachment:
-            subnets = self._core_plugin._get_subnets_by_network(context,
-                                                                new_network)
+            subnets = self._core_plugin.get_subnets_by_network(context,
+                                                               new_network)
             for subnet in subnets:
                 self._check_for_dup_router_subnet(context, router,
                                                   new_network, subnet['id'],
@@ -471,8 +471,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                                % subnet_id)
                         raise n_exc.BadRequest(resource='router', msg=msg)
                     sub_id = ip['subnet_id']
-                    cidr = self._core_plugin._get_subnet(context.elevated(),
-                                                         sub_id)['cidr']
+                    cidr = self._core_plugin.get_subnet(context.elevated(),
+                                                        sub_id)['cidr']
                     ipnet = netaddr.IPNetwork(cidr)
                     match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
                     match2 = netaddr.all_matching_cidrs(ipnet, [subnet_cidr])
@@ -533,8 +533,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             fixed_ips = [ip for ip in port['fixed_ips']]
             subnets = []
             for fixed_ip in fixed_ips:
-                subnet = self._core_plugin._get_subnet(context,
-                                                       fixed_ip['subnet_id'])
+                subnet = self._core_plugin.get_subnet(context,
+                                                      fixed_ip['subnet_id'])
                 subnets.append(subnet)
                 self._check_for_dup_router_subnet(context, router,
                                                   port['network_id'],
@@ -562,7 +562,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 return port
 
     def _add_interface_by_subnet(self, context, router, subnet_id, owner):
-        subnet = self._core_plugin._get_subnet(context, subnet_id)
+        subnet = self._core_plugin.get_subnet(context, subnet_id)
         if not subnet['gateway_ip']:
             msg = _('Subnet for router interface must have a gateway IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
@@ -645,8 +645,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
-        subnet_db = self._core_plugin._get_subnet(context, subnet_id)
-        subnet_cidr = netaddr.IPNetwork(subnet_db['cidr'])
+        subnet = self._core_plugin.get_subnet(context, subnet_id)
+        subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
         fip_qry = context.session.query(FloatingIP)
         try:
             kwargs = {'context': context, 'subnet_id': subnet_id}
@@ -682,7 +682,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         if subnet_id and subnet_id not in port_subnet_ids:
             raise n_exc.SubnetMismatchForPort(
                 port_id=port_id, subnet_id=subnet_id)
-        subnets = [self._core_plugin._get_subnet(context, port_subnet_id)
+        subnets = [self._core_plugin.get_subnet(context, port_subnet_id)
                    for port_subnet_id in port_subnet_ids]
         for port_subnet_id in port_subnet_ids:
             self._confirm_router_interface_not_in_use(
@@ -695,7 +695,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                                     router_id, subnet_id, owner):
         self._confirm_router_interface_not_in_use(
             context, router_id, subnet_id)
-        subnet = self._core_plugin._get_subnet(context, subnet_id)
+        subnet = self._core_plugin.get_subnet(context, subnet_id)
 
         try:
             rport_qry = context.session.query(models_v2.Port).join(RouterPort)
@@ -777,9 +777,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def _get_router_for_floatingip(self, context, internal_port,
                                    internal_subnet_id,
                                    external_network_id):
-        subnet_db = self._core_plugin._get_subnet(context,
-                                                  internal_subnet_id)
-        if not subnet_db['gateway_ip']:
+        subnet = self._core_plugin.get_subnet(context, internal_subnet_id)
+        if not subnet['gateway_ip']:
             msg = (_('Cannot add floating IP to port on subnet %s '
                      'which has no gateway_ip') % internal_subnet_id)
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
