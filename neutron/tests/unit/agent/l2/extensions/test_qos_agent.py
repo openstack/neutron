@@ -13,13 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 import mock
 from oslo_utils import uuidutils
 
 from neutron.agent.l2.extensions import qos_agent
 from neutron.api.rpc.callbacks import resources
+from neutron import context
 from neutron.tests import base
 
 # This is a minimalistic mock of rules to be passed/checked around
@@ -32,7 +31,7 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
     def setUp(self):
         super(QosAgentExtensionTestCase, self).setUp()
         self.qos_agent = qos_agent.QosAgentExtension()
-        self.context = mock.Mock()
+        self.context = context.get_admin_context()
 
         # Don't rely on used driver
         mock.patch(
@@ -73,7 +72,7 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
 
     def test_handle_known_port(self):
         port_obj1 = self._create_test_port_dict()
-        port_obj2 = copy.copy(port_obj1)
+        port_obj2 = dict(port_obj1)
         self.qos_agent.handle_port(self.context, port_obj1)
         self.qos_agent.qos_driver.reset_mock()
         self.qos_agent.handle_port(self.context, port_obj2)
