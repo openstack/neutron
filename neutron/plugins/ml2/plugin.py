@@ -1125,6 +1125,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.PortContext(
                 self, context, updated_port, network, binding, levels,
                 original_port=original_port)
+            new_host_port = self._get_host_port_if_changed(
+                mech_context, attrs)
+            need_port_update_notify |= self._process_port_binding(
+                mech_context, attrs)
             # For DVR router interface ports we need to retrieve the
             # DVRPortbinding context instead of the normal port context.
             # The normal Portbinding context does not have the status
@@ -1151,10 +1155,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.mechanism_manager.update_port_precommit(mech_context)
                 bound_mech_contexts.append(mech_context)
 
-            new_host_port = self._get_host_port_if_changed(
-                mech_context, attrs)
-            need_port_update_notify |= self._process_port_binding(
-                mech_context, attrs)
         # Notifications must be sent after the above transaction is complete
         kwargs = {
             'context': context,
