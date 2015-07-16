@@ -93,6 +93,8 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.ethertype = "IPv" + str(cls._ip_version)
         cls.address_scopes = []
         cls.admin_address_scopes = []
+        cls.subnetpools = []
+        cls.admin_subnetpools = []
 
     @classmethod
     def resource_cleanup(cls):
@@ -187,6 +189,14 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for network in cls.shared_networks:
                 cls._try_delete_resource(cls.admin_client.delete_network,
                                          network['id'])
+
+            for subnetpool in cls.subnetpools:
+                cls._try_delete_resource(cls.client.delete_subnetpool,
+                                         subnetpool['id'])
+
+            for subnetpool in cls.admin_subnetpools:
+                cls._try_delete_resource(cls.admin_client.delete_subnetpool,
+                                         subnetpool['id'])
 
             for address_scope in cls.address_scopes:
                 cls._try_delete_resource(cls.client.delete_address_scope,
@@ -489,6 +499,16 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             body = cls.client.create_address_scope(name=name, **kwargs)
             cls.address_scopes.append(body['address_scope'])
         return body['address_scope']
+
+    @classmethod
+    def create_subnetpool(cls, name, is_admin=False, **kwargs):
+        if is_admin:
+            body = cls.admin_client.create_subnetpool(name=name, **kwargs)
+            cls.admin_subnetpools.append(body['subnetpool'])
+        else:
+            body = cls.client.create_subnetpool(name=name, **kwargs)
+            cls.subnetpools.append(body['subnetpool'])
+        return body['subnetpool']
 
 
 class BaseAdminNetworkTest(BaseNetworkTest):
