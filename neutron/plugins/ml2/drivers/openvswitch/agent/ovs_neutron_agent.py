@@ -708,7 +708,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         '''Bind port to net_uuid/lsw_id and install flow for inbound traffic
         to vm.
 
-        :param port: a ovslib.VifPort object.
+        :param port: a ovs_lib.VifPort object.
         :param net_uuid: the net_uuid this port is to be associated with.
         :param network_type: the network type ('gre', 'vlan', 'flat', 'local')
         :param physical_network: the physical network for 'vlan' or 'flat'
