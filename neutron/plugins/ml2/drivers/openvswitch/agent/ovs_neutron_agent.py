@@ -289,6 +289,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.iter_num = 0
         self.run_daemon_loop = True
 
+        self.catch_sigterm = False
+        self.catch_sighup = False
+
         # The initialization is complete; we can start receiving messages
         self.connection.consume_in_threads()
 
@@ -1477,7 +1480,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ancillary_ports = set()
         tunnel_sync = True
         ovs_restarted = False
-        while self.run_daemon_loop:
+        while self._check_and_handle_signal():
             start = time.time()
             port_stats = {'regular': {'added': 0,
                                       'updated': 0,
@@ -1614,17 +1617,26 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.rpc_loop(polling_manager=pm)
 
     def _handle_sigterm(self, signum, frame):
-        LOG.info(_LI("Agent caught SIGTERM, quitting daemon loop."))
-        self.run_daemon_loop = False
+        self.catch_sigterm = True
         if self.quitting_rpc_timeout:
             self.set_rpc_timeout(self.quitting_rpc_timeout)
 
     def _handle_sighup(self, signum, frame):
-        LOG.info(_LI("Agent caught SIGHUP, resetting."))
-        self.conf.reload_config_files()
-        config.setup_logging()
-        LOG.debug('Full set of CONF:')
-        self.conf.log_opt_values(LOG, std_logging.DEBUG)
+        self.catch_sighup = True
+
+    def _check_and_handle_signal(self):
+        if self.catch_sigterm:
+            LOG.info(_LI("Agent caught SIGTERM, quitting daemon loop."))
+            self.run_daemon_loop = False
+            self.catch_sigterm = False
+        if self.catch_sighup:
+            LOG.info(_LI("Agent caught SIGHUP, resetting."))
+            self.conf.reload_config_files()
+            config.setup_logging()
+            LOG.debug('Full set of CONF:')
+            self.conf.log_opt_values(LOG, std_logging.DEBUG)
+            self.catch_sighup = False
+        return self.run_daemon_loop
 
     def set_rpc_timeout(self, timeout):
         for rpc_api in (self.plugin_rpc, self.sg_plugin_rpc,
