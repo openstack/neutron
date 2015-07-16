@@ -32,6 +32,8 @@ class NeutronObject(obj_base.VersionedObject,
     # fields that are not allowed to update
     fields_no_update = []
 
+    synthetic_fields = []
+
     def from_db_object(self, *objs):
         for field in self.fields:
             for db_obj in objs:
@@ -53,21 +55,27 @@ class NeutronObject(obj_base.VersionedObject,
             return obj
 
     @classmethod
-    def get_objects(cls, context):
-        db_objs = db_api.get_objects(context, cls.db_model)
+    def get_objects(cls, context, **kwargs):
+        db_objs = db_api.get_objects(context, cls.db_model, **kwargs)
         objs = [cls(context, **db_obj) for db_obj in db_objs]
         for obj in objs:
             obj.obj_reset_changes()
         return objs
 
-    def create(self):
+    def _get_changed_persistent_fields(self):
         fields = self.obj_get_changes()
+        for field in self.synthetic_fields:
+            if field in fields:
+                del fields[field]
+        return fields
+
+    def create(self):
+        fields = self._get_changed_persistent_fields()
         db_obj = db_api.create_object(self._context, self.db_model, fields)
         self.from_db_object(db_obj)
 
     def update(self):
-        # TODO(QoS): enforce fields_no_update
-        updates = self.obj_get_changes()
+        updates = self._get_changed_persistent_fields()
         if updates:
             db_obj = db_api.update_object(self._context, self.db_model,
                                           self.id, updates)

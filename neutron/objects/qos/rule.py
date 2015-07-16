@@ -21,6 +21,7 @@ import six
 
 from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model
+from neutron.extensions import qos as qos_extension
 from neutron.objects import base
 
 
@@ -36,6 +37,9 @@ class QosRule(base.NeutronObject):
     }
 
     fields_no_update = ['id', 'tenant_id', 'qos_policy_id']
+
+    # each rule subclass should redefine it
+    rule_type = None
 
     _core_fields = list(fields.keys())
 
@@ -60,8 +64,6 @@ class QosRule(base.NeutronObject):
             if func(key)
         }
 
-    # TODO(QoS): reimplement get_by_id to merge both core and addn fields
-
     def _get_changed_core_fields(self):
         fields = self.obj_get_changes()
         return self._filter_fields(fields, self._is_core_field)
@@ -75,8 +77,31 @@ class QosRule(base.NeutronObject):
         for field in self._common_fields:
             to_[field] = from_[field]
 
+    @classmethod
+    def get_objects(cls, context, **kwargs):
+        # TODO(QoS): support searching for subtype fields
+        db_objs = db_api.get_objects(context, cls.base_db_model, **kwargs)
+        return [cls.get_by_id(context, db_obj['id']) for db_obj in db_objs]
+
+    @classmethod
+    def get_by_id(cls, context, id):
+        obj = super(QosRule, cls).get_by_id(context, id)
+
+        if obj:
+            # the object above does not contain fields from base QosRule yet,
+            # so fetch it and mix its fields into the object
+            base_db_obj = db_api.get_object(context, cls.base_db_model, id)
+            for field in cls._core_fields:
+                setattr(obj, field, base_db_obj[field])
+
+            obj.obj_reset_changes()
+            return obj
+
     # TODO(QoS): create and update are not transactional safe
     def create(self):
+
+        # TODO(QoS): enforce that type field value is bound to specific class
+        self.type = self.rule_type
 
         # create base qos_rule
         core_fields = self._get_changed_core_fields()
@@ -94,6 +119,8 @@ class QosRule(base.NeutronObject):
 
     def update(self):
         updated_db_objs = []
+
+        # TODO(QoS): enforce that type field cannot be changed
 
         # update base qos_rule, if needed
         core_fields = self._get_changed_core_fields()
@@ -113,13 +140,19 @@ class QosRule(base.NeutronObject):
 
     # delete is the same, additional rule object cleanup is done thru cascading
 
+    @classmethod
+    def get_rules_by_policy(cls, context, policy_id):
+        return cls.get_objects(context, qos_policy_id=policy_id)
+
 
 @obj_base.VersionedObjectRegistry.register
 class QosBandwidthLimitRule(QosRule):
 
     db_model = qos_db_model.QosBandwidthLimitRule
 
+    rule_type = qos_extension.RULE_TYPE_BANDWIDTH_LIMIT
+
     fields = {
-        'max_kbps': obj_fields.IntegerField(),
-        'max_burst_kbps': obj_fields.IntegerField()
+        'max_kbps': obj_fields.IntegerField(nullable=True),
+        'max_burst_kbps': obj_fields.IntegerField(nullable=True)
     }

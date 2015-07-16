@@ -13,6 +13,7 @@
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.objects.qos import policy
+from neutron.objects.qos import rule
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
@@ -112,3 +113,18 @@ class QosPolicyDbObjectTestCase(QosPolicyBaseTestCase,
         policy_obj = policy.QosPolicy.get_network_policy(self.context,
                                                          self._network['id'])
         self.assertIsNone(policy_obj)
+
+    def test_synthetic_rule_fields(self):
+        obj = policy.QosPolicy(self.context, **self.db_obj)
+        obj.create()
+
+        rule_fields = self.get_random_fields(
+            obj_cls=rule.QosBandwidthLimitRule)
+        rule_fields['qos_policy_id'] = obj.id
+        rule_fields['tenant_id'] = obj.tenant_id
+
+        rule_obj = rule.QosBandwidthLimitRule(self.context, **rule_fields)
+        rule_obj.create()
+
+        obj = policy.QosPolicy.get_by_id(self.context, obj.id)
+        self.assertEqual([rule_obj], obj.bandwidth_limit_rules)
