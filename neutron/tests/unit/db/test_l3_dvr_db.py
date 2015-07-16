@@ -288,7 +288,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
         plugin.get_ports.assert_called_with(self.ctx, filters={
             'network_id': ['network_id'],
             'device_owner': [l3_const.DEVICE_OWNER_AGENT_GW]})
-        plugin._delete_port.assert_called_with(self.ctx, 'my_port_id')
+        plugin.ipam.delete_port.assert_called_with(self.ctx, 'my_port_id')
 
     def _delete_floatingip_test_setup(self, floatingip):
         fip_id = floatingip['id']

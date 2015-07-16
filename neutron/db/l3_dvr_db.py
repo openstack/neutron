@@ -535,7 +535,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                             filters=device_filter)
         for p in ports:
             if self._get_vm_port_hostid(context, p['id'], p) == host_id:
-                self._core_plugin._delete_port(context, p['id'])
+                self._core_plugin.ipam.delete_port(context, p['id'])
                 return
 
     def create_fip_agent_gw_port_if_not_exists(
