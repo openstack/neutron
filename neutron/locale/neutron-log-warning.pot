@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b2.dev192\n"
+"Project-Id-Version: neutron 7.0.0.0b2.dev267\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-07-11 06:09+0000\n"
+"POT-Creation-Date: 2015-07-16 06:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,17 +59,17 @@ msgid ""
 "falling back to old security_group_rules_for_devices which scales worse."
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:373
+#: neutron/agent/common/ovs_lib.py:377
 #, python-format
 msgid "Found not yet ready openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:376
+#: neutron/agent/common/ovs_lib.py:380
 #, python-format
 msgid "Found failed openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:438
+#: neutron/agent/common/ovs_lib.py:442
 #, python-format
 msgid "ofport: %(ofport)s for VIF: %(vif)s is not a positive integer"
 msgstr ""
@@ -101,7 +101,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:571 neutron/agent/l3/agent.py:635
+#: neutron/agent/dhcp/agent.py:571 neutron/agent/l3/agent.py:627
 #: neutron/agent/metadata/agent.py:310
 #: neutron/services/metering/agents/metering_agent.py:278
 msgid ""
@@ -109,7 +109,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/l3/agent.py:194
+#: neutron/agent/l3/agent.py:186
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled at the neutron server when "
@@ -118,14 +118,14 @@ msgid ""
 "warning. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:206
+#: neutron/agent/l3/agent.py:198
 #, python-format
 msgid ""
 "l3-agent cannot check service plugins enabled on the neutron server. "
 "Retrying. Detail message: %s"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:341
+#: neutron/agent/l3/agent.py:333
 #, python-format
 msgid "Info for router %s was not found. Performing router cleanup"
 msgstr ""
@@ -349,18 +349,18 @@ msgstr ""
 msgid "Could not expand segment %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:530
+#: neutron/plugins/ml2/plugin.py:523
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:781
+#: neutron/plugins/ml2/plugin.py:773
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1435
+#: neutron/plugins/ml2/plugin.py:1445
 #, python-format
 msgid "Port %s not found during update"
 msgstr ""
@@ -388,16 +388,12 @@ msgstr ""
 msgid "No flat network found on physical network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:102
-msgid "Gre allocations were already created."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/type_tunnel.py:179
+#: neutron/plugins/ml2/drivers/type_tunnel.py:225
 #, python-format
 msgid "%(type)s tunnel %(id)s not found"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:236
+#: neutron/plugins/ml2/drivers/type_tunnel.py:282
 #, python-format
 msgid "Endpoint with ip %s already exists"
 msgstr ""
@@ -524,38 +520,38 @@ msgid ""
 "message: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:531
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:534
 #, python-format
 msgid "Action %s not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:935
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:938
 #, python-format
 msgid ""
 "Creating an interface named %(name)s exceeds the %(limit)d character "
 "limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1130
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1133
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1241
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1244
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1401
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1404
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1444
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1447
 msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1447
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1450
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
 "periodically."
