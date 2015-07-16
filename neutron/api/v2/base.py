@@ -187,6 +187,8 @@ class Controller(object):
 
     def __getattr__(self, name):
         if name in self._member_actions:
+            @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                                       retry_on_deadlock=True)
             def _handle_action(request, id, **kwargs):
                 arg_list = [request.context, id]
                 # Ensure policy engine is initialized
@@ -197,7 +199,7 @@ class Controller(object):
                 except oslo_policy.PolicyNotAuthorized:
                     msg = _('The resource could not be found.')
                     raise webob.exc.HTTPNotFound(msg)
-                body = kwargs.pop('body', None)
+                body = copy.deepcopy(kwargs.pop('body', None))
                 # Explicit comparison with None to distinguish from {}
                 if body is not None:
                     arg_list.append(body)
