@@ -16,11 +16,12 @@
 import abc
 import collections
 
-from oslo_utils import importutils
+from oslo_config import cfg
 import six
 
 from neutron.agent.l2 import agent_extension
 from neutron.api.rpc.callbacks import resources
+from neutron import manager
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -75,11 +76,9 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         resource by type and id
         """
         super(QosAgentExtension, self).initialize(resource_rpc)
-        #TODO(QoS) - Load it from Config
-        qos_driver_cls = importutils.import_class(
-            'neutron.plugins.ml2.drivers.openvswitch.agent.'
-            'extension_drivers.qos_driver.QosOVSAgentDriver')
-        self.qos_driver = qos_driver_cls()
+
+        self.qos_driver = manager.NeutronManager.load_class_for_provider(
+            'neutron.qos.agent_drivers', cfg.CONF.qos.agent_driver)
         self.qos_driver.initialize()
         self.qos_policy_ports = collections.defaultdict(dict)
         self.known_ports = set()

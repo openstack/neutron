@@ -34,14 +34,10 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
         self.qos_agent = qos_agent.QosAgentExtension()
         self.context = mock.Mock()
 
-        # Force our fake underlying QoS driver
-        #TODO(QoS): change config value when we tie this to a configuration
-        #           entry.
-
-        self.import_patcher = mock.patch(
-            'oslo_utils.importutils.import_class',
-            return_value=mock.Mock())
-        self.import_patcher.start()
+        # Don't rely on used driver
+        mock.patch(
+            'neutron.manager.NeutronManager.load_class_for_provider',
+            return_value=mock.Mock(spec=qos_agent.QosAgentDriver)).start()
 
         self._create_fake_resource_rpc()
         self.qos_agent.initialize(self.resource_rpc_mock)
