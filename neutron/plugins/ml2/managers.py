@@ -172,7 +172,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def _add_network_segment(self, session, network_id, segment, mtu,
                              segment_index=0):
         db.add_network_segment(session, network_id, segment, segment_index)
-        if segment.get(api.MTU) > 0:
+        if segment.get(api.MTU, 0) > 0:
             mtu.append(segment[api.MTU])
 
     def create_network_segments(self, context, network, tenant_id):
