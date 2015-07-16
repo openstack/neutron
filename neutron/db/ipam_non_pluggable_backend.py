@@ -243,7 +243,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             subnet = self._get_subnet_for_fixed_ip(context, fixed, network_id)
 
             is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
-            if 'ip_address' in fixed:
+            if ('ip_address' in fixed and
+                subnet['cidr'] != constants.PROVISIONAL_IPV6_PD_PREFIX):
                 # Ensure that the IP's are unique
                 if not IpamNonPluggableBackend._check_unique_ip(
                         context, network_id,
@@ -268,6 +269,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 # listed explicitly here by subnet ID) are associated
                 # with the port.
                 if (device_owner in constants.ROUTER_INTERFACE_OWNERS_SNAT or
+                    ipv6_utils.is_ipv6_pd_enabled(subnet) or
                     not is_auto_addr_subnet):
                     fixed_ip_set.append({'subnet_id': subnet['id']})
 
@@ -433,7 +435,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
     def allocate_subnet(self, context, network, subnet, subnetpool_id):
         subnetpool = None
-        if subnetpool_id:
+        if subnetpool_id and not subnetpool_id == constants.IPV6_PD_POOL_ID:
             subnetpool = self._get_subnetpool(context, subnetpool_id)
             self._validate_ip_version_with_subnetpool(subnet, subnetpool)
 
@@ -452,7 +454,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                                    subnet,
                                                                    subnetpool)
 
-        if subnetpool_id:
+        if subnetpool_id and not subnetpool_id == constants.IPV6_PD_POOL_ID:
             driver = subnet_alloc.SubnetAllocator(subnetpool, context)
             ipam_subnet = driver.allocate_subnet(subnet_request)
             subnet_request = ipam_subnet.get_details()

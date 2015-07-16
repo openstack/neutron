@@ -43,7 +43,8 @@ class L3RpcCallback(object):
     # 1.4 Added L3 HA update_router_state. This method was later removed,
     #     since it was unused. The RPC version was not changed
     # 1.5 Added update_ha_routers_states
-    target = oslo_messaging.Target(version='1.5')
+    # 1.6 Added process_prefix_update to support IPv6 Prefix Delegation
+    target = oslo_messaging.Target(version='1.6')
 
     @property
     def plugin(self):
@@ -224,3 +225,10 @@ class L3RpcCallback(object):
 
         LOG.debug('Updating HA routers states on host %s: %s', host, states)
         self.l3plugin.update_routers_states(context, states, host)
+
+    def process_prefix_update(self, context, **kwargs):
+        subnets = kwargs.get('subnets')
+
+        for subnet_id, prefix in subnets.items():
+            self.plugin.update_subnet(context, subnet_id,
+                                      {'subnet': {'cidr': prefix}})

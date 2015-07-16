@@ -168,7 +168,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         context.session.add_all(new_pools)
         # Call static method with self to redefine in child
         # (non-pluggable backend)
-        self._rebuild_availability_ranges(context, [s])
+        if not ipv6_utils.is_ipv6_pd_enabled(s):
+            self._rebuild_availability_ranges(context, [s])
         # Gather new pools for result
         result_pools = [{'start': p[0], 'end': p[1]} for p in pools]
         del s['allocation_pools']
@@ -199,7 +200,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         Verifies the specified CIDR does not overlap with the ones defined
         for the other subnets specified for this network, or with any other
-        CIDR if overlapping IPs are disabled.
+        CIDR if overlapping IPs are disabled. Does not apply to subnets with
+        temporary IPv6 Prefix Delegation CIDRs (::/64).
         """
         new_subnet_ipset = netaddr.IPSet([new_subnet_cidr])
         # Disallow subnets with prefix length 0 as they will lead to
@@ -217,7 +219,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         else:
             subnet_list = self._get_all_subnets(context)
         for subnet in subnet_list:
-            if (netaddr.IPSet([subnet.cidr]) & new_subnet_ipset):
+            if ((netaddr.IPSet([subnet.cidr]) & new_subnet_ipset) and
+                subnet.cidr != constants.PROVISIONAL_IPV6_PD_PREFIX):
                 # don't give out details of the overlapping subnet
                 err_msg = (_("Requested subnet with cidr: %(cidr)s for "
                              "network: %(network_id)s overlaps with another "
@@ -330,10 +333,13 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 return subnet
         raise n_exc.InvalidIpForNetwork(ip_address=fixed['ip_address'])
 
+    def generate_pools(self, cidr, gateway_ip):
+        return ipam_utils.generate_pools(cidr, gateway_ip)
+
     def _prepare_allocation_pools(self, allocation_pools, cidr, gateway_ip):
         """Returns allocation pools represented as list of IPRanges"""
         if not attributes.is_attr_set(allocation_pools):
-            return ipam_utils.generate_pools(cidr, gateway_ip)
+            return self.generate_pools(cidr, gateway_ip)
 
         ip_range_pools = self.pools_to_ip_range(allocation_pools)
         self._validate_allocation_pools(ip_range_pools, cidr)
@@ -355,7 +361,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             return True
 
         subnet = self._get_subnet(context, subnet_id)
-        return not ipv6_utils.is_auto_address_subnet(subnet)
+        return not (ipv6_utils.is_auto_address_subnet(subnet) and
+                    not ipv6_utils.is_ipv6_pd_enabled(subnet))
 
     def _get_changed_ips_for_port(self, context, original_ips,
                                   new_ips, device_owner):
