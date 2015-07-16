@@ -78,7 +78,7 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         super(QosAgentExtension, self).initialize(resource_rpc)
 
         self.qos_driver = manager.NeutronManager.load_class_for_provider(
-            'neutron.qos.agent_drivers', cfg.CONF.qos.agent_driver)
+            'neutron.qos.agent_drivers', cfg.CONF.qos.agent_driver)()
         self.qos_driver.initialize()
         self.qos_policy_ports = collections.defaultdict(dict)
         self.known_ports = set()

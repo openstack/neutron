@@ -36,7 +36,8 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
         # Don't rely on used driver
         mock.patch(
             'neutron.manager.NeutronManager.load_class_for_provider',
-            return_value=mock.Mock(spec=qos_agent.QosAgentDriver)).start()
+            return_value=lambda: mock.Mock(spec=qos_agent.QosAgentDriver)
+        ).start()
 
         self._create_fake_resource_rpc()
         self.qos_agent.initialize(self.resource_rpc_mock)
