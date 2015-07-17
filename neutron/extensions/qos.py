@@ -183,8 +183,9 @@ class Qos(extensions.ExtensionDescriptor):
 @six.add_metaclass(abc.ABCMeta)
 class QoSPluginBase(service_base.ServicePluginBase):
 
+    path_prefix = QOS_PREFIX
+
     def get_plugin_description(self):
-        """returns string description of the plugin."""
         return "QoS Service Plugin for ports and networks"
 
     def get_plugin_type(self):
@@ -230,8 +231,8 @@ class QoSPluginBase(service_base.ServicePluginBase):
         pass
 
     @abc.abstractmethod
-    def update_policy_bandwidth_limit_rule(self, context, rule_id,
-                                           policy_id, bandwidth_limit_rule):
+    def update_policy_bandwidth_limit_rule(self, context, rule_id, policy_id,
+                                           bandwidth_limit_rule):
         pass
 
     @abc.abstractmethod
