@@ -22,6 +22,10 @@ from neutron.db.migration import cli
 from neutron.tests import base
 
 
+class FakeConfig(object):
+    service = ''
+
+
 class TestDbMigration(base.BaseTestCase):
 
     def setUp(self):
@@ -112,9 +116,6 @@ class TestCli(base.BaseTestCase):
 
     def _test_database_sync_revision(self, separate_branches=True):
         with mock.patch.object(cli, 'update_heads_file') as update:
-            class FakeConfig(object):
-                service = ''
-
             fake_config = FakeConfig()
             if separate_branches:
                 expected_kwargs = [
@@ -196,28 +197,38 @@ class TestCli(base.BaseTestCase):
     def test_upgrade_rejects_delta_with_relative_revision(self):
         self.assert_command_fails(['prog', 'upgrade', '+2', '--delta', '3'])
 
-    def _test_validate_heads_file_helper(self, heads, file_content=None):
+    def _test_validate_heads_file_helper(self, heads, file_heads=None,
+                                         branchless=False):
+        if file_heads is None:
+            file_heads = []
+        fake_config = FakeConfig()
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
             fc.return_value.get_heads.return_value = heads
-            fc.return_value.get_current_head.return_value = heads[0]
             with mock.patch('six.moves.builtins.open') as mock_open:
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()
-                mock_open.return_value.read.return_value = file_content
+                mock_open.return_value.read.return_value = (
+                    '\n'.join(file_heads))
 
                 with mock.patch('os.path.isfile') as is_file:
-                    is_file.return_value = file_content is not None
+                    is_file.return_value = bool(file_heads)
 
-                    if file_content in heads:
-                        cli.validate_heads_file(mock.sentinel.config)
+                    if all(head in file_heads for head in heads):
+                        cli.validate_heads_file(fake_config)
                     else:
                         self.assertRaises(
                             SystemExit,
                             cli.validate_heads_file,
-                            mock.sentinel.config
+                            fake_config
                         )
                         self.mock_alembic_err.assert_called_once_with(mock.ANY)
-            fc.assert_called_once_with(mock.sentinel.config)
+                if branchless:
+                    mock_open.assert_called_with(
+                        cli._get_head_file_path(fake_config))
+                else:
+                    mock_open.assert_called_with(
+                        cli._get_heads_file_path(fake_config))
+            fc.assert_called_once_with(fake_config)
 
     def test_validate_heads_file_multiple_heads(self):
         self._test_validate_heads_file_helper(['a', 'b'])
@@ -226,10 +237,20 @@ class TestCli(base.BaseTestCase):
         self._test_validate_heads_file_helper(['a'])
 
     def test_validate_heads_file_wrong_contents(self):
-        self._test_validate_heads_file_helper(['a'], 'b')
+        self._test_validate_heads_file_helper(['a'], ['b'])
 
-    def test_validate_head_success(self):
-        self._test_validate_heads_file_helper(['a'], 'a')
+    def test_validate_heads_success(self):
+        self._test_validate_heads_file_helper(['a'], ['a'])
+
+    @mock.patch.object(cli, '_separate_migration_branches_supported',
+                       return_value=False)
+    def test_validate_heads_file_branchless_failure(self, *args):
+        self._test_validate_heads_file_helper(['a'], ['b'], branchless=True)
+
+    @mock.patch.object(cli, '_separate_migration_branches_supported',
+                       return_value=False)
+    def test_validate_heads_file_branchless_success(self, *args):
+        self._test_validate_heads_file_helper(['a'], ['a'], branchless=True)
 
     def test_update_heads_file_two_heads(self):
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
@@ -258,7 +279,6 @@ class TestCli(base.BaseTestCase):
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
             heads = ('a', 'b')
             fc.return_value.get_heads.return_value = heads
-            fc.return_value.get_current_head.return_value = heads
             with mock.patch('six.moves.builtins.open') as mock_open:
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()

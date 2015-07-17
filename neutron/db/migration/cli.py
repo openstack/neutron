@@ -27,6 +27,7 @@ from neutron.common import repos
 
 
 # TODO(ihrachyshka): maintain separate HEAD files per branch
+HEAD_FILENAME = 'HEAD'
 HEADS_FILENAME = 'HEADS'
 CURRENT_RELEASE = "liberty"
 MIGRATION_BRANCHES = ('expand', 'contract')
@@ -164,7 +165,7 @@ def validate_heads_file(config):
     '''Check that HEADS file contains the latest heads for each branch.'''
     script = alembic_script.ScriptDirectory.from_config(config)
     expected_heads = _get_sorted_heads(script)
-    heads_path = _get_heads_file_path(CONF)
+    heads_path = _get_active_head_file_path(CONF)
     try:
         with open(heads_path) as file_:
             observed_heads = file_.read().split()
@@ -181,7 +182,7 @@ def update_heads_file(config):
     '''Update HEADS file with the latest branch heads.'''
     script = alembic_script.ScriptDirectory.from_config(config)
     heads = _get_sorted_heads(script)
-    heads_path = _get_heads_file_path(CONF)
+    heads_path = _get_active_head_file_path(CONF)
     with open(heads_path, 'w+') as f:
         f.write('\n'.join(heads))
 
@@ -247,11 +248,27 @@ def _get_root_versions_dir(neutron_config):
         'db/migration/alembic_migrations/versions')
 
 
+def _get_head_file_path(neutron_config):
+    '''Return the path of the file that contains single head.'''
+    return os.path.join(
+        _get_root_versions_dir(neutron_config),
+        HEAD_FILENAME)
+
+
 def _get_heads_file_path(neutron_config):
     '''Return the path of the file that contains all latest heads, sorted.'''
     return os.path.join(
         _get_root_versions_dir(neutron_config),
         HEADS_FILENAME)
+
+
+def _get_active_head_file_path(neutron_config):
+    '''Return the path of the file that contains latest head(s), depending on
+       whether multiple branches are used.
+    '''
+    if _separate_migration_branches_supported(neutron_config):
+        return _get_heads_file_path(neutron_config)
+    return _get_head_file_path(neutron_config)
 
 
 def _get_version_branch_path(neutron_config, branch=None):
