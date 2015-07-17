@@ -32,6 +32,49 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         super(SharedNetworksTest, cls).resource_setup()
         cls.shared_network = cls.create_shared_network()
 
+    @test.idempotent_id('6661d219-b96d-4597-ad10-55766123421a')
+    def test_filtering_shared_networks(self):
+        # this test is necessary because the 'shared' column does not actually
+        # exist on networks so the filter function has to translate it into
+        # queries against the RBAC table
+        self.create_network()
+        self._check_shared_correct(
+            self.client.list_networks(shared=True)['networks'], True)
+        self._check_shared_correct(
+            self.admin_client.list_networks(shared=True)['networks'], True)
+        self._check_shared_correct(
+            self.client.list_networks(shared=False)['networks'], False)
+        self._check_shared_correct(
+            self.admin_client.list_networks(shared=False)['networks'], False)
+
+    def _check_shared_correct(self, items, shared):
+        self.assertNotEmpty(items)
+        self.assertTrue(all(n['shared'] == shared for n in items))
+
+    @test.idempotent_id('6661d219-b96d-4597-ad10-51672353421a')
+    def test_filtering_shared_subnets(self):
+        # shared subnets need to be tested because their shared status isn't
+        # visible as a regular API attribute and it's solely dependent on the
+        # parent network
+        reg = self.create_network()
+        priv = self.create_subnet(reg, client=self.client)
+        shared = self.create_subnet(self.shared_network,
+                                    client=self.admin_client)
+        self.assertIn(shared, self.client.list_subnets(shared=True)['subnets'])
+        self.assertIn(shared,
+            self.admin_client.list_subnets(shared=True)['subnets'])
+        self.assertNotIn(priv,
+            self.client.list_subnets(shared=True)['subnets'])
+        self.assertNotIn(priv,
+            self.admin_client.list_subnets(shared=True)['subnets'])
+        self.assertIn(priv, self.client.list_subnets(shared=False)['subnets'])
+        self.assertIn(priv,
+            self.admin_client.list_subnets(shared=False)['subnets'])
+        self.assertNotIn(shared,
+            self.client.list_subnets(shared=False)['subnets'])
+        self.assertNotIn(shared,
+            self.admin_client.list_subnets(shared=False)['subnets'])
+
     @test.idempotent_id('6661d219-b96d-4597-ad10-55766ce4abf7')
     def test_create_update_shared_network(self):
         shared_network = self.create_shared_network()
