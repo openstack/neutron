@@ -1001,6 +1001,19 @@ class TestDnsmasq(TestBase):
                           '--server=9.9.9.9',
                           '--domain=openstacklocal'])
 
+    def test_spawn_cfg_enable_dnsmasq_log(self):
+        self.conf.set_override('dnsmasq_base_log_dir', '/tmp')
+        network = FakeV4Network()
+        dhcp_dns_log = \
+            '/tmp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/dhcp_dns_log'
+
+        self._test_spawn(['--conf-file=',
+                          '--domain=openstacklocal',
+                          '--log-queries',
+                          '--log-dhcp',
+                          ('--log-facility=%s' % dhcp_dns_log)],
+                         network)
+
     def test_spawn_max_leases_is_smaller_than_cap(self):
         self._test_spawn(
             ['--conf-file=', '--domain=openstacklocal'],
