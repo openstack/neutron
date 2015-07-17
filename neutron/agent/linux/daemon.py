@@ -160,11 +160,13 @@ class Daemon(object):
     def __init__(self, pidfile, stdin=DEVNULL, stdout=DEVNULL,
                  stderr=DEVNULL, procname='python', uuid=None,
                  user=None, group=None, watch_log=True):
+        """Note: pidfile may be None."""
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
         self.procname = procname
-        self.pidfile = Pidfile(pidfile, procname, uuid)
+        self.pidfile = (Pidfile(pidfile, procname, uuid)
+                        if pidfile is not None else None)
         self.user = user
         self.group = group
         self.watch_log = watch_log
@@ -202,13 +204,15 @@ class Daemon(object):
         os.dup2(stdout.fileno(), sys.stdout.fileno())
         os.dup2(stderr.fileno(), sys.stderr.fileno())
 
-        # write pidfile
-        atexit.register(self.delete_pid)
-        signal.signal(signal.SIGTERM, self.handle_sigterm)
-        self.pidfile.write(os.getpid())
+        if self.pidfile is not None:
+            # write pidfile
+            atexit.register(self.delete_pid)
+            signal.signal(signal.SIGTERM, self.handle_sigterm)
+            self.pidfile.write(os.getpid())
 
     def delete_pid(self):
-        os.remove(str(self.pidfile))
+        if self.pidfile is not None:
+            os.remove(str(self.pidfile))
 
     def handle_sigterm(self, signum, frame):
         sys.exit(0)
@@ -216,7 +220,7 @@ class Daemon(object):
     def start(self):
         """Start the daemon."""
 
-        if self.pidfile.is_running():
+        if self.pidfile is not None and self.pidfile.is_running():
             self.pidfile.unlock()
             LOG.error(_LE('Pidfile %s already exist. Daemon already '
                           'running?'), self.pidfile)
