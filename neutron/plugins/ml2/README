@@ -18,10 +18,10 @@ alternative L3 solutions. Additional service plugins can also be used
 with the ML2 core plugin.
 
 Drivers within ML2 implement separately extensible sets of network
-types and of mechanisms for accessing networks of those types. Unlike
-with the metaplugin, multiple mechanisms can be used simultaneously to
-access different ports of the same virtual network. Mechanisms can
-utilize L2 agents via RPC and/or interact with external devices or
+types and of mechanisms for accessing networks of those
+types. Multiple mechanisms can be used simultaneously to access
+different ports of the same virtual network. Mechanisms can utilize L2
+agents via RPC and/or interact with external devices or
 controllers. By utilizing the multiprovidernet extension, virtual
 networks can be composed of multiple segments of the same or different
 types. Type and mechanism drivers are loaded as python entrypoints
