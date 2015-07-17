@@ -128,9 +128,9 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
                 'default': False}
         pconf.add_provider(prov)
         self.assertEqual(len(pconf.providers), 1)
-        self.assertEqual(pconf.providers.keys(),
+        self.assertEqual(list(pconf.providers.keys()),
                          [(constants.LOADBALANCER, 'name')])
-        self.assertEqual(pconf.providers.values(),
+        self.assertEqual(list(pconf.providers.values()),
                          [{'driver': 'path', 'default': False}])
 
     def test_add_duplicate_provider(self):
