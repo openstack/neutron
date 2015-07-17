@@ -486,6 +486,46 @@ class ExtensionManagerTest(base.BaseTestCase):
         self.assertIn('valid_extension', ext_mgr.extensions)
         self.assertNotIn('invalid_extension', ext_mgr.extensions)
 
+    def test_assignment_of_attr_map(self):
+
+        class ExtendResourceExtension(object):
+            """Generated Extended Resources.
+
+            This extension's extended resource will assign
+            to more than one resource.
+            """
+
+            def get_name(self):
+                return "extension"
+
+            def get_alias(self):
+                return "extension"
+
+            def get_description(self):
+                return "Extension for test"
+
+            def get_updated(self):
+                return "2013-07-23T10:00:00-00:00"
+
+            def get_extended_resources(self, version):
+                EXTENDED_TIMESTAMP = {
+                    'created_at': {'allow_post': False, 'allow_put': False,
+                                   'is_visible': True}}
+                EXTENDED_RESOURCES = ["ext1", "ext2"]
+                attrs = {}
+                for resources in EXTENDED_RESOURCES:
+                    attrs[resources] = EXTENDED_TIMESTAMP
+
+                return attrs
+
+        ext_mgr = extensions.ExtensionManager('')
+        ext_mgr.add_extension(ExtendResourceExtension())
+        ext_mgr.add_extension(ext_stubs.StubExtension("ext1"))
+        ext_mgr.add_extension(ext_stubs.StubExtension("ext2"))
+        attr_map = {}
+        ext_mgr.extend_resources("2.0", attr_map)
+        self.assertNotEqual(id(attr_map['ext1']), id(attr_map['ext2']))
+
 
 class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
