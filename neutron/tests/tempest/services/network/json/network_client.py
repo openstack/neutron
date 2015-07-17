@@ -45,7 +45,7 @@ class NetworkClientJSON(service_client.ServiceClient):
         # The following list represents resource names that do not require
         # changing underscore to a hyphen
         hyphen_exceptions = ["health_monitors", "firewall_rules",
-                             "firewall_policies"]
+                             "firewall_policies", "service_profiles"]
         # the following map is used to construct proper URI
         # for the given neutron resource
         service_resource_prefix_map = {

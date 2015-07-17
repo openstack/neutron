@@ -22,6 +22,7 @@ FIREWALL = "FIREWALL"
 VPN = "VPN"
 METERING = "METERING"
 L3_ROUTER_NAT = "L3_ROUTER_NAT"
+FLAVORS = "FLAVORS"
 
 # Maps extension alias to service type
 EXT_TO_SERVICE_MAPPING = {
@@ -31,7 +32,8 @@ EXT_TO_SERVICE_MAPPING = {
     'fwaas': FIREWALL,
     'vpnaas': VPN,
     'metering': METERING,
-    'router': L3_ROUTER_NAT
+    'router': L3_ROUTER_NAT,
+    'flavors': FLAVORS
 }
 
 # Service operation status constants
