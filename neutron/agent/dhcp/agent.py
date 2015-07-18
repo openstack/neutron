@@ -26,7 +26,6 @@ from oslo_utils import importutils
 
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
-from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants
@@ -63,7 +62,7 @@ class DhcpAgent(manager.Manager):
                                         ctx, self.conf.use_namespaces)
         # create dhcp dir to store dhcp info
         dhcp_dir = os.path.dirname("/%s/dhcp/" % self.conf.state_path)
-        linux_utils.ensure_dir(dhcp_dir)
+        utils.ensure_dir(dhcp_dir)
         self.dhcp_version = self.dhcp_driver_cls.check_version()
         self._populate_networks_cache()
         self._process_monitor = external_process.ProcessMonitor(

@@ -79,8 +79,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
             'neutron.agent.linux.ip_lib.device_exists')
         self.device_exists = self.device_exists_p.start()
 
-        self.ensure_dir = mock.patch('neutron.agent.linux.utils'
-                                     '.ensure_dir').start()
+        self.ensure_dir = mock.patch('neutron.common.utils.ensure_dir').start()
 
         mock.patch('neutron.agent.linux.keepalived.KeepalivedManager'
                    '.get_full_config_file_path').start()

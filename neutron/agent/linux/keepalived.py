@@ -23,6 +23,7 @@ from oslo_log import log as logging
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import exceptions
+from neutron.common import utils as common_utils
 
 VALID_STATES = ['MASTER', 'BACKUP']
 VALID_AUTH_TYPES = ['AH', 'PASS']
@@ -340,7 +341,7 @@ class KeepalivedManager(object):
     def get_full_config_file_path(self, filename, ensure_conf_dir=True):
         conf_dir = self.get_conf_dir()
         if ensure_conf_dir:
-            utils.ensure_dir(conf_dir)
+            common_utils.ensure_dir(conf_dir)
         return os.path.join(conf_dir, filename)
 
     def _output_config_file(self):
