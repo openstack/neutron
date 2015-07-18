@@ -357,8 +357,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             internal_interface = self.get_internal_device_name(p['id'])
             self._snat_redirect_remove(gateway, p, internal_interface)
 
-    def _handle_router_snat_rules(self, ex_gw_port,
-                                  interface_name, action):
+    def _handle_router_snat_rules(self, ex_gw_port, interface_name):
         pass
 
     def process_external(self, agent):

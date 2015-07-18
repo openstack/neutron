@@ -1489,10 +1489,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             {},
             **self.ri_kwargs)
         ri.iptables_manager = mock.Mock()
+        ri._is_this_snat_host = mock.Mock(return_value=True)
+        ri.get_ex_gw_port = mock.Mock(return_value=mock.ANY)
 
-        with mock.patch.object(dvr_router.LOG,
-                               'debug') as log_debug:
-            ri._handle_router_snat_rules(mock.ANY, mock.ANY, mock.ANY)
+        with mock.patch.object(dvr_router.LOG, 'debug') as log_debug:
+            ri._handle_router_snat_rules(mock.ANY, mock.ANY)
         self.assertIsNone(ri.snat_iptables_manager)
         self.assertFalse(ri.iptables_manager.called)
         self.assertTrue(log_debug.called)
@@ -1502,7 +1503,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.iptables_manager = mock.MagicMock()
         port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
 
-        ri._handle_router_snat_rules(port, "iface", "add_rules")
+        ri._handle_router_snat_rules(port, "iface")
 
         nat = ri.iptables_manager.ipv4['nat']
         nat.empty_chain.assert_any_call('snat')
@@ -1518,7 +1519,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(_uuid(), {}, **self.ri_kwargs)
         ex_gw_port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
         ri.router = {'distributed': False}
-        ri._handle_router_snat_rules(ex_gw_port, "iface", "add_rules")
+        ri._handle_router_snat_rules(ex_gw_port, "iface")
 
         nat_rules = map(str, ri.iptables_manager.ipv4['nat'].rules)
         wrap_name = ri.iptables_manager.wrap_name
