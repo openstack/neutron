@@ -13,26 +13,11 @@
 # under the License.
 
 """Log helper functions."""
-import functools
 
-from oslo_log import log as logging
+from oslo_log import helpers
 from oslo_log import versionutils
 
 
-@versionutils.deprecated(as_of=versionutils.deprecated.LIBERTY,
-                         in_favor_of='oslo_log.helpers.log_method_call')
-def log(method):
-    """Decorator helping to log method calls."""
-    LOG = logging.getLogger(method.__module__)
-
-    @functools.wraps(method)
-    def wrapper(*args, **kwargs):
-        instance = args[0]
-        data = {"class_name": "%s.%s" % (instance.__class__.__module__,
-                                         instance.__class__.__name__),
-                "method_name": method.__name__,
-                "args": args[1:], "kwargs": kwargs}
-        LOG.debug('%(class_name)s method %(method_name)s'
-                  ' called with arguments %(args)s %(kwargs)s', data)
-        return method(*args, **kwargs)
-    return wrapper
+log = versionutils.deprecated(
+    as_of=versionutils.deprecated.LIBERTY,
+    in_favor_of='oslo_log.helpers.log_method_call')(helpers.log_method_call)
