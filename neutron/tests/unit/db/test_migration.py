@@ -150,7 +150,7 @@ class TestCli(base.BaseTestCase):
     def test_database_sync_revision(self):
         self._test_database_sync_revision()
 
-    @mock.patch.object(cli, '_separate_migration_branches_supported',
+    @mock.patch.object(cli, '_use_separate_migration_branches',
                        return_value=False)
     def test_database_sync_revision_no_branches(self, *args):
         # Test that old branchless approach is still supported
@@ -242,12 +242,12 @@ class TestCli(base.BaseTestCase):
     def test_validate_heads_success(self):
         self._test_validate_heads_file_helper(['a'], ['a'])
 
-    @mock.patch.object(cli, '_separate_migration_branches_supported',
+    @mock.patch.object(cli, '_use_separate_migration_branches',
                        return_value=False)
     def test_validate_heads_file_branchless_failure(self, *args):
         self._test_validate_heads_file_helper(['a'], ['b'], branchless=True)
 
-    @mock.patch.object(cli, '_separate_migration_branches_supported',
+    @mock.patch.object(cli, '_use_separate_migration_branches',
                        return_value=False)
     def test_validate_heads_file_branchless_success(self, *args):
         self._test_validate_heads_file_helper(['a'], ['a'], branchless=True)
