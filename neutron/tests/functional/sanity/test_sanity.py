@@ -67,3 +67,6 @@ class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
 
     def test_ovsdb_native_supported_runs(self):
         checks.ovsdb_native_supported()
+
+    def test_keepalived_ipv6_support(self):
+        checks.keepalived_ipv6_supported()
