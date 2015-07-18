@@ -864,7 +864,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 allocated = qry_allocated.all()
                 # Delete all the IPAllocation that can be auto-deleted
                 if allocated:
-                    map(session.delete, allocated)
+                    for x in allocated:
+                        session.delete(x)
                 LOG.debug("Ports to auto-deallocate: %s", allocated)
                 # Check if there are more IP allocations, unless
                 # is_auto_address_subnet is True. In that case the check is

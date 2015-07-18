@@ -557,7 +557,7 @@ class DeferredOVSBridge(object):
                                     key=operator.itemgetter(0))
         itemgetter_1 = operator.itemgetter(1)
         for action, action_flow_list in grouped:
-            flows = map(itemgetter_1, action_flow_list)
+            flows = list(map(itemgetter_1, action_flow_list))
             self.br.do_action_flows(action, flows)
 
     def __enter__(self):

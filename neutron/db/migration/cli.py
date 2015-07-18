@@ -33,7 +33,7 @@ MIGRATION_BRANCHES = ('expand', 'contract')
 
 
 mods = repos.NeutronModules()
-VALID_SERVICES = map(mods.alembic_name, mods.installed_list())
+VALID_SERVICES = list(map(mods.alembic_name, mods.installed_list()))
 
 
 _core_opts = [

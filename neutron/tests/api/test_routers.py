@@ -189,7 +189,7 @@ class RoutersTest(base.BaseRouterTest):
             CONF.network.public_network_id)
         public_subnet_id = public_net_body['network']['subnets'][0]
         self.assertIn(public_subnet_id,
-                      map(lambda x: x['subnet_id'], fixed_ips))
+                      [x['subnet_id'] for x in fixed_ips])
 
     @test.attr(type='smoke')
     @test.idempotent_id('6cc285d8-46bf-4f36-9b1a-783e3008ba79')

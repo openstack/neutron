@@ -79,7 +79,7 @@ def create_process(cmd, run_as_root=False, addl_env=None):
     The return value will be a tuple of the process object and the
     list of command arguments used to create it.
     """
-    cmd = map(str, addl_env_args(addl_env) + cmd)
+    cmd = list(map(str, addl_env_args(addl_env) + cmd))
     if run_as_root:
         cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
     LOG.debug("Running command: %s", cmd)
@@ -92,7 +92,7 @@ def create_process(cmd, run_as_root=False, addl_env=None):
 
 
 def execute_rootwrap_daemon(cmd, process_input, addl_env):
-    cmd = map(str, addl_env_args(addl_env) + cmd)
+    cmd = list(map(str, addl_env_args(addl_env) + cmd))
     # NOTE(twilson) oslo_rootwrap.daemon will raise on filter match
     # errors, whereas oslo_rootwrap.cmd converts them to return codes.
     # In practice, no neutron code should be trying to execute something that
