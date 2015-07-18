@@ -223,9 +223,10 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         # The shared attribute for a network now reflects if the network
         # is shared to the calling tenant via an RBAC entry.
         shared = False
+        matches = ('*',) + ((context.tenant_id,) if context else ())
         for entry in network.rbac_entries:
             if (entry.action == 'access_as_shared' and
-                    entry.target_tenant in ('*', context.tenant_id)):
+                    entry.target_tenant in matches):
                 shared = True
                 break
         res['shared'] = shared
