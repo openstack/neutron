@@ -723,14 +723,10 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         # the order in which the drivers are called.
         self.ordered_ext_drivers = []
 
-        #TODO(QoS): enforce qos extension until we enable it in devstack-gate
-        drivers = cfg.CONF.ml2.extension_drivers
-        if 'qos' not in drivers:
-            drivers += ['qos']
         LOG.info(_LI("Configured extension driver names: %s"),
-                 drivers)
+                 cfg.CONF.ml2.extension_drivers)
         super(ExtensionManager, self).__init__('neutron.ml2.extension_drivers',
-                                               drivers,
+                                               cfg.CONF.ml2.extension_drivers,
                                                invoke_on_load=True,
                                                name_order=True)
         LOG.info(_LI("Loaded extension driver names: %s"), self.names())
