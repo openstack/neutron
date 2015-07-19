@@ -35,13 +35,22 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
     def test_validate_interface_mappings(self):
         mappings = {'physnet1': 'int1', 'physnet2': 'int2'}
         with testtools.ExpectedException(SystemExit):
-            lba.LinuxBridgeManager(mappings)
+            lba.LinuxBridgeManager({}, mappings)
         self.manage_device(
             self.generate_device_details()._replace(namespace=None,
                                                     name='int1'))
         with testtools.ExpectedException(SystemExit):
-            lba.LinuxBridgeManager(mappings)
+            lba.LinuxBridgeManager({}, mappings)
         self.manage_device(
             self.generate_device_details()._replace(namespace=None,
                                                     name='int2'))
-        lba.LinuxBridgeManager(mappings)
+        lba.LinuxBridgeManager({}, mappings)
+
+    def test_validate_bridge_mappings(self):
+        mappings = {'physnet1': 'br-eth1'}
+        with testtools.ExpectedException(SystemExit):
+            lba.LinuxBridgeManager(mappings, {})
+        self.manage_device(
+            self.generate_device_details()._replace(namespace=None,
+                                                    name='br-eth1'))
+        lba.LinuxBridgeManager(mappings, {})
