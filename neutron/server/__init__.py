@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright 2011 VMware, Inc.
 # All Rights Reserved.
 #
