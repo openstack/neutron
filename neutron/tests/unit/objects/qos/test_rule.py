@@ -13,11 +13,13 @@
 import mock
 
 from neutron.db import api as db_api
+from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.tests.unit.objects import test_base
+from neutron.tests.unit import testlib_api
 
 
-class QosBandwidthLimitPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
+class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = rule.QosBandwidthLimitRule
 
@@ -25,7 +27,7 @@ class QosBandwidthLimitPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
     def get_random_fields(cls):
         # object middleware should not allow random types, so override it with
         # proper type
-        fields = (super(QosBandwidthLimitPolicyObjectTestCase, cls)
+        fields = (super(QosBandwidthLimitRuleObjectTestCase, cls)
                   .get_random_fields())
         fields['type'] = cls._test_class.rule_type
         return fields
@@ -110,3 +112,18 @@ class QosBandwidthLimitPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             update_mock.assert_any_call(
                 self.context, self._test_class.db_model, obj.id,
                 addn_db_obj)
+
+
+class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
+                                            testlib_api.SqlTestCase):
+
+    _test_class = rule.QosBandwidthLimitRule
+
+    def setUp(self):
+        super(QosBandwidthLimitRuleDbObjectTestCase, self).setUp()
+
+        # Prepare policy to be able to insert a rule
+        generated_qos_policy_id = self.db_obj['qos_policy_id']
+        policy_obj = policy.QosPolicy(self.context,
+                                      id=generated_qos_policy_id)
+        policy_obj.create()

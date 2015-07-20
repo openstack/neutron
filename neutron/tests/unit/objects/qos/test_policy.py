@@ -18,19 +18,15 @@ from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
 
-class QosPolicyBaseTestCase(object):
+class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = policy.QosPolicy
 
 
-class QosPolicyObjectTestCase(QosPolicyBaseTestCase,
-                              test_base.BaseObjectIfaceTestCase):
-    pass
-
-
-class QosPolicyDbObjectTestCase(QosPolicyBaseTestCase,
-                                test_base.BaseDbObjectTestCase,
+class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                 testlib_api.SqlTestCase):
+
+    _test_class = policy.QosPolicy
 
     def setUp(self):
         super(QosPolicyDbObjectTestCase, self).setUp()
