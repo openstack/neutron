@@ -16,13 +16,18 @@
 import copy
 import os
 import sys
+import textwrap
 
+from alembic.autogenerate import api as alembic_ag_api
 from alembic import config as alembic_config
+from alembic.operations import ops as alembic_ops
 import fixtures
 import mock
 import pkg_resources
+import sqlalchemy as sa
 
 from neutron.db import migration
+from neutron.db.migration import autogen
 from neutron.db.migration import cli
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
@@ -177,17 +182,9 @@ class TestCli(base.BaseTestCase):
                                   return_value=separate_branches):
             if separate_branches:
                 mock.patch('os.path.exists').start()
-                expected_kwargs = [
-                    {'message': 'message', 'sql': False, 'autogenerate': True,
-                     'version_path':
-                         cli._get_version_branch_path(config, branch),
-                     'head': cli._get_branch_head(branch)}
-                    for config in self.configs
-                    for branch in cli.MIGRATION_BRANCHES]
-            else:
-                expected_kwargs = [{
-                    'message': 'message', 'sql': False, 'autogenerate': True,
-                }]
+            expected_kwargs = [{
+                'message': 'message', 'sql': False, 'autogenerate': True,
+            }]
             self._main_test_helper(
                 ['prog', 'revision', '--autogenerate', '-m', 'message'],
                 'revision',
@@ -496,6 +493,112 @@ class TestCli(base.BaseTestCase):
         cli.validate_labels(self.configs[0])
         validate_mock.assert_has_calls(
             [mock.call(mock.ANY, revision) for revision in revisions]
+        )
+
+    @mock.patch.object(cli, '_use_separate_migration_branches')
+    @mock.patch.object(cli, '_get_version_branch_path')
+    def test_autogen_process_directives(
+            self,
+            get_version_branch_path,
+            use_separate_migration_branches):
+
+        use_separate_migration_branches.return_value = True
+        get_version_branch_path.side_effect = lambda cfg, branch: (
+            "/foo/expand" if branch == 'expand' else "/foo/contract")
+
+        migration_script = alembic_ops.MigrationScript(
+            'eced083f5df',
+            # these directives will be split into separate
+            # expand/contract scripts
+            alembic_ops.UpgradeOps(
+                ops=[
+                    alembic_ops.CreateTableOp(
+                        'organization',
+                        [
+                            sa.Column('id', sa.Integer(), primary_key=True),
+                            sa.Column('name', sa.String(50), nullable=False)
+                        ]
+                    ),
+                    alembic_ops.ModifyTableOps(
+                        'user',
+                        ops=[
+                            alembic_ops.AddColumnOp(
+                                'user',
+                                sa.Column('organization_id', sa.Integer())
+                            ),
+                            alembic_ops.CreateForeignKeyOp(
+                                'org_fk', 'user', 'organization',
+                                ['organization_id'], ['id']
+                            ),
+                            alembic_ops.DropConstraintOp(
+                                'user', 'uq_user_org'
+                            ),
+                            alembic_ops.DropColumnOp(
+                                'user', 'organization_name'
+                            )
+                        ]
+                    )
+                ]
+            ),
+            # these will be discarded
+            alembic_ops.DowngradeOps(
+                ops=[
+                    alembic_ops.AddColumnOp(
+                        'user', sa.Column(
+                            'organization_name', sa.String(50), nullable=True)
+                    ),
+                    alembic_ops.CreateUniqueConstraintOp(
+                        'uq_user_org', 'user',
+                        ['user_name', 'organization_name']
+                    ),
+                    alembic_ops.ModifyTableOps(
+                        'user',
+                        ops=[
+                            alembic_ops.DropConstraintOp('org_fk', 'user'),
+                            alembic_ops.DropColumnOp('user', 'organization_id')
+                        ]
+                    ),
+                    alembic_ops.DropTableOp('organization')
+                ]
+            ),
+            message='create the organization table and '
+            'replace user.organization_name'
+        )
+
+        directives = [migration_script]
+        autogen.process_revision_directives(
+            mock.Mock(), mock.Mock(), directives
+        )
+
+        expand = directives[0]
+        contract = directives[1]
+        self.assertEqual("/foo/expand", expand.version_path)
+        self.assertEqual("/foo/contract", contract.version_path)
+        self.assertTrue(expand.downgrade_ops.is_empty())
+        self.assertTrue(contract.downgrade_ops.is_empty())
+
+        self.assertEqual(
+            textwrap.dedent("""\
+            ### commands auto generated by Alembic - please adjust! ###
+                op.create_table('organization',
+                sa.Column('id', sa.Integer(), nullable=False),
+                sa.Column('name', sa.String(length=50), nullable=False),
+                sa.PrimaryKeyConstraint('id')
+                )
+                op.add_column('user', """
+                """sa.Column('organization_id', sa.Integer(), nullable=True))
+                op.create_foreign_key('org_fk', 'user', """
+                """'organization', ['organization_id'], ['id'])
+                ### end Alembic commands ###"""),
+            alembic_ag_api.render_python_code(expand.upgrade_ops)
+        )
+        self.assertEqual(
+            textwrap.dedent("""\
+            ### commands auto generated by Alembic - please adjust! ###
+                op.drop_constraint('user', 'uq_user_org', type_=None)
+                op.drop_column('user', 'organization_name')
+                ### end Alembic commands ###"""),
+            alembic_ag_api.render_python_code(contract.upgrade_ops)
         )
 
 

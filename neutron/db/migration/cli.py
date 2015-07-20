@@ -186,29 +186,21 @@ def _get_branch_head(branch):
     return '%s@head' % branch
 
 
+def _check_bootstrap_new_branch(branch, version_path, addn_kwargs):
+    addn_kwargs['version_path'] = version_path
+    addn_kwargs['head'] = _get_branch_head(branch)
+    if not os.path.exists(version_path):
+        # Bootstrap initial directory structure
+        utils.ensure_dir(version_path)
+        addn_kwargs['branch_label'] = branch
+
+
 def do_revision(config, cmd):
     '''Generate new revision files, one per branch.'''
-    addn_kwargs = {
-        'message': CONF.command.message,
-        'autogenerate': CONF.command.autogenerate,
-        'sql': CONF.command.sql,
-    }
-
-    if _use_separate_migration_branches(config):
-        for branch in MIGRATION_BRANCHES:
-            version_path = _get_version_branch_path(config, branch)
-            addn_kwargs['version_path'] = version_path
-            addn_kwargs['head'] = _get_branch_head(branch)
-
-            if not os.path.exists(version_path):
-                # Bootstrap initial directory structure
-                utils.ensure_dir(version_path)
-                # Mark the very first revision in the new branch with its label
-                addn_kwargs['branch_label'] = branch
-
-            do_alembic_command(config, cmd, **addn_kwargs)
-    else:
-        do_alembic_command(config, cmd, **addn_kwargs)
+    do_alembic_command(config, cmd,
+                       message=CONF.command.message,
+                       autogenerate=CONF.command.autogenerate,
+                       sql=CONF.command.sql)
     update_heads_file(config)
 
 
