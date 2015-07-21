@@ -54,7 +54,7 @@ class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
             self.assertTrue(self._is_test_class(obj))
             self.assertEqual(self.db_obj, test_base.get_obj_db_fields(obj))
             get_object_mock.assert_has_calls([
-                mock.call(self.context, model, 'fake_id')
+                mock.call(self.context, model, id='fake_id')
                 for model in (self._test_class.db_model,
                               self._test_class.base_db_model)
             ], any_order=True)

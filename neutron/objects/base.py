@@ -48,7 +48,7 @@ class NeutronObject(obj_base.VersionedObject,
 
     @classmethod
     def get_by_id(cls, context, id):
-        db_obj = db_api.get_object(context, cls.db_model, id)
+        db_obj = db_api.get_object(context, cls.db_model, id=id)
         if db_obj:
             obj = cls(context, **db_obj)
             obj.obj_reset_changes()

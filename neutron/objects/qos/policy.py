@@ -77,8 +77,7 @@ class QosPolicy(base.NeutronObject):
 
     @classmethod
     def _get_object_policy(cls, context, model, **kwargs):
-        # TODO(QoS): we should make sure we use public functions
-        binding_db_obj = db_api._find_object(context, model, **kwargs)
+        binding_db_obj = db_api.get_object(context, model, **kwargs)
         # TODO(QoS): rethink handling missing binding case
         if binding_db_obj:
             return cls.get_by_id(context, binding_db_obj['policy_id'])
