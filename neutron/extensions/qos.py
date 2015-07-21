@@ -61,7 +61,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                    'convert_to': attr.convert_to_boolean},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'is_visible': True}
+                      'is_visible': True},
+        'bandwidth_limit_rules': {'allow_post': False, 'allow_put': False,
+                                  'is_visible': True},
     },
     'rule_types': {
         'type': {'allow_post': False, 'allow_put': False,

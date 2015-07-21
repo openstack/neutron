@@ -96,7 +96,7 @@ class QosRule(base.NeutronObject):
             obj.obj_reset_changes()
             return obj
 
-    # TODO(QoS): create and update are not transactional safe
+    # TODO(QoS): Test that create is in single transaction
     def create(self):
 
         # TODO(QoS): enforce that type field value is bound to specific class
@@ -104,18 +104,21 @@ class QosRule(base.NeutronObject):
 
         # create base qos_rule
         core_fields = self._get_changed_core_fields()
-        base_db_obj = db_api.create_object(
-            self._context, self.base_db_model, core_fields)
 
-        # create type specific qos_..._rule
-        addn_fields = self._get_changed_addn_fields()
-        self._copy_common_fields(core_fields, addn_fields)
-        addn_db_obj = db_api.create_object(
-            self._context, self.db_model, addn_fields)
+        with db_api.autonested_transaction(self._context.session):
+            base_db_obj = db_api.create_object(
+                self._context, self.base_db_model, core_fields)
+
+            # create type specific qos_..._rule
+            addn_fields = self._get_changed_addn_fields()
+            self._copy_common_fields(core_fields, addn_fields)
+            addn_db_obj = db_api.create_object(
+                self._context, self.db_model, addn_fields)
 
         # merge two db objects into single neutron one
         self.from_db_object(base_db_obj, addn_db_obj)
 
+    # TODO(QoS): Test that update is in single transaction
     def update(self):
         updated_db_objs = []
 
@@ -123,16 +126,18 @@ class QosRule(base.NeutronObject):
 
         # update base qos_rule, if needed
         core_fields = self._get_changed_core_fields()
-        if core_fields:
-            base_db_obj = db_api.update_object(
-                self._context, self.base_db_model, self.id, core_fields)
-            updated_db_objs.append(base_db_obj)
 
-        addn_fields = self._get_changed_addn_fields()
-        if addn_fields:
-            addn_db_obj = db_api.update_object(
-                self._context, self.db_model, self.id, addn_fields)
-            updated_db_objs.append(addn_db_obj)
+        with db_api.autonested_transaction(self._context.session):
+            if core_fields:
+                base_db_obj = db_api.update_object(
+                    self._context, self.base_db_model, self.id, core_fields)
+                updated_db_objs.append(base_db_obj)
+
+            addn_fields = self._get_changed_addn_fields()
+            if addn_fields:
+                addn_db_obj = db_api.update_object(
+                    self._context, self.db_model, self.id, addn_fields)
+                updated_db_objs.append(addn_db_obj)
 
         # update neutron object with values from both database objects
         self.from_db_object(*updated_db_objs)

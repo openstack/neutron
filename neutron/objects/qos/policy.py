@@ -75,12 +75,37 @@ class QosPolicy(base.NeutronObject):
         setattr(self, attrname, rules)
         self.obj_reset_changes([attrname])
 
+    def _load_rules(self):
+        for attr in self.rule_fields:
+            self.obj_load_attr(attr)
+
+    @classmethod
+    def get_by_id(cls, context, id):
+        with db_api.autonested_transaction(context.session):
+            policy_obj = super(QosPolicy, cls).get_by_id(context, id)
+            if policy_obj:
+                policy_obj._load_rules()
+        return policy_obj
+
+    # TODO(QoS): Test that all objects are fetched within one transaction
+    @classmethod
+    def get_objects(cls, context, **kwargs):
+        with db_api.autonested_transaction(context.session):
+            db_objs = db_api.get_objects(context, cls.db_model, **kwargs)
+            objs = list()
+            for db_obj in db_objs:
+                obj = cls(context, **db_obj)
+                obj._load_rules()
+                objs.append(obj)
+        return objs
+
     @classmethod
     def _get_object_policy(cls, context, model, **kwargs):
-        binding_db_obj = db_api.get_object(context, model, **kwargs)
-        # TODO(QoS): rethink handling missing binding case
-        if binding_db_obj:
-            return cls.get_by_id(context, binding_db_obj['policy_id'])
+        with db_api.autonested_transaction(context.session):
+            binding_db_obj = db_api.get_object(context, model, **kwargs)
+            # TODO(QoS): rethink handling missing binding case
+            if binding_db_obj:
+                return cls.get_by_id(context, binding_db_obj['policy_id'])
 
     @classmethod
     def get_network_policy(cls, context, network_id):
@@ -91,6 +116,11 @@ class QosPolicy(base.NeutronObject):
     def get_port_policy(cls, context, port_id):
         return cls._get_object_policy(context, cls.port_binding_model,
                                       port_id=port_id)
+
+    def create(self):
+        with db_api.autonested_transaction(self._context.session):
+            super(QosPolicy, self).create()
+            self._load_rules()
 
     def attach_network(self, network_id):
         qos_db_api.create_policy_network_binding(self._context,

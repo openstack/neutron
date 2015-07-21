@@ -23,10 +23,15 @@ from neutron.objects import base
 from neutron.tests import base as test_base
 
 
+class FakeModel(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+
 @obj_base.VersionedObjectRegistry.register
 class FakeNeutronObject(base.NeutronObject):
 
-    db_model = 'fake_model'
+    db_model = FakeModel
 
     fields = {
         'id': obj_fields.UUIDField(),
@@ -106,13 +111,16 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         with mock.patch.object(db_api, 'get_objects',
                                return_value=self.db_objs) as get_objects_mock:
             objs = self._test_class.get_objects(self.context)
-            self.assertFalse(
-                filter(lambda obj: not self._is_test_class(obj), objs))
-            self.assertEqual(
-                sorted(self.db_objs),
-                sorted(get_obj_db_fields(obj) for obj in objs))
-            get_objects_mock.assert_called_once_with(
-                self.context, self._test_class.db_model)
+            self._validate_objects(self.db_objs, objs)
+        get_objects_mock.assert_called_once_with(
+            self.context, self._test_class.db_model)
+
+    def _validate_objects(self, expected, observed):
+        self.assertFalse(
+            filter(lambda obj: not self._is_test_class(obj), observed))
+        self.assertEqual(
+            sorted(expected),
+            sorted(get_obj_db_fields(obj) for obj in observed))
 
     def _check_equal(self, obj, db_obj):
         self.assertEqual(

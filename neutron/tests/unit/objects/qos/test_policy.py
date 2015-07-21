@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.objects.qos import policy
@@ -21,6 +23,50 @@ from neutron.tests.unit import testlib_api
 class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = policy.QosPolicy
+
+    def setUp(self):
+        super(QosPolicyObjectTestCase, self).setUp()
+        self.db_qos_rules = [self.get_random_fields(rule.QosRule)
+                             for _ in range(3)]
+
+        # Tie qos rules with policies
+        self.db_qos_rules[0]['qos_policy_id'] = self.db_objs[0]['id']
+        self.db_qos_rules[1]['qos_policy_id'] = self.db_objs[0]['id']
+        self.db_qos_rules[2]['qos_policy_id'] = self.db_objs[1]['id']
+
+        self.db_qos_bandwidth_rules = [
+            self.get_random_fields(rule.QosBandwidthLimitRule)
+            for _ in range(3)]
+
+        # Tie qos rules with qos bandwidth limit rules
+        for i, qos_rule in enumerate(self.db_qos_rules):
+            self.db_qos_bandwidth_rules[i]['id'] = qos_rule['id']
+
+        self.model_map = {
+            self._test_class.db_model: self.db_objs,
+            rule.QosRule.base_db_model: self.db_qos_rules,
+            rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules}
+
+    def fake_get_objects(self, context, model, qos_policy_id=None):
+        objs = self.model_map[model]
+        if model is rule.QosRule.base_db_model and qos_policy_id:
+            return [obj for obj in objs
+                    if obj['qos_policy_id'] == qos_policy_id]
+        return objs
+
+    def fake_get_object(self, context, model, id):
+        objects = self.model_map[model]
+        return [obj for obj in objects if obj['id'] == id][0]
+
+    def test_get_objects(self):
+        with mock.patch.object(
+                    db_api, 'get_objects',
+                    side_effect=self.fake_get_objects),\
+                mock.patch.object(
+                    db_api, 'get_object',
+                    side_effect=self.fake_get_object):
+            objs = self._test_class.get_objects(self.context)
+        self._validate_objects(self.db_objs, objs)
 
 
 class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
@@ -41,6 +87,19 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj = policy.QosPolicy(self.context, **self.db_obj)
         policy_obj.create()
         return policy_obj
+
+    def _create_test_policy_with_rule(self):
+        policy_obj = self._create_test_policy()
+
+        rule_fields = self.get_random_fields(
+            obj_cls=rule.QosBandwidthLimitRule)
+        rule_fields['qos_policy_id'] = policy_obj.id
+        rule_fields['tenant_id'] = policy_obj.tenant_id
+
+        rule_obj = rule.QosBandwidthLimitRule(self.context, **rule_fields)
+        rule_obj.create()
+
+        return policy_obj, rule_obj
 
     def _create_test_network(self):
         # TODO(ihrachys): replace with network.create() once we get an object
@@ -111,16 +170,22 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertIsNone(policy_obj)
 
     def test_synthetic_rule_fields(self):
-        obj = policy.QosPolicy(self.context, **self.db_obj)
-        obj.create()
+        policy_obj, rule_obj = self._create_test_policy_with_rule()
+        policy_obj = policy.QosPolicy.get_by_id(self.context, policy_obj.id)
+        self.assertEqual([rule_obj], policy_obj.bandwidth_limit_rules)
 
-        rule_fields = self.get_random_fields(
-            obj_cls=rule.QosBandwidthLimitRule)
-        rule_fields['qos_policy_id'] = obj.id
-        rule_fields['tenant_id'] = obj.tenant_id
+    def test_create_is_in_single_transaction(self):
+        obj = self._test_class(self.context, **self.db_obj)
+        with mock.patch('sqlalchemy.engine.'
+                        'Transaction.commit') as mock_commit,\
+                mock.patch.object(obj._context.session, 'add'):
+            obj.create()
+        self.assertEqual(1, mock_commit.call_count)
 
-        rule_obj = rule.QosBandwidthLimitRule(self.context, **rule_fields)
-        rule_obj.create()
+    def test_get_by_id_fetches_rules_non_lazily(self):
+        policy_obj, rule_obj = self._create_test_policy_with_rule()
+        policy_obj = policy.QosPolicy.get_by_id(self.context, policy_obj.id)
 
-        obj = policy.QosPolicy.get_by_id(self.context, obj.id)
-        self.assertEqual([rule_obj], obj.bandwidth_limit_rules)
+        primitive = policy_obj.obj_to_primitive()
+        self.assertNotEqual([], (primitive['versioned_object.data']
+                                          ['bandwidth_limit_rules']))

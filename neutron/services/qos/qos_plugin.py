@@ -17,6 +17,7 @@ from neutron import manager
 
 from neutron.api.rpc.callbacks import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources as rpc_resources
+from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.i18n import _LW
 from neutron.objects.qos import policy as policy_object
@@ -134,10 +135,11 @@ class QoSPlugin(qos.QoSPluginBase):
     def _get_policy_obj(self, context, policy_id):
         return policy_object.QosPolicy.get_by_id(context, policy_id)
 
+    @db_base_plugin_common.filter_fields
     def get_policy(self, context, policy_id, fields=None):
-        #TODO(QoS): Support the fields parameter
         return self._get_policy_obj(context, policy_id).to_dict()
 
+    @db_base_plugin_common.filter_fields
     def get_policies(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
@@ -174,12 +176,13 @@ class QoSPlugin(qos.QoSPluginBase):
         rule.id = rule_id
         rule.delete()
 
+    @db_base_plugin_common.filter_fields
     def get_policy_bandwidth_limit_rule(self, context, rule_id,
                                         policy_id, fields=None):
-        #TODO(QoS): Support the fields parameter
         return rule_object.QosBandwidthLimitRule.get_by_id(context,
                                                            rule_id).to_dict()
 
+    @db_base_plugin_common.filter_fields
     def get_policy_bandwidth_limit_rules(self, context, policy_id,
                                          filters=None, fields=None,
                                          sorts=None, limit=None,
@@ -188,6 +191,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return [rule_obj.to_dict() for rule_obj in
                 rule_object.QosBandwidthLimitRule.get_objects(context)]
 
+    @db_base_plugin_common.filter_fields
     def get_rule_types(self, context, filters=None, fields=None,
                        sorts=None, limit=None,
                        marker=None, page_reverse=False):
