@@ -32,6 +32,7 @@ class QosRule(base.NeutronObject):
 
     fields = {
         'id': obj_fields.UUIDField(),
+        #TODO(QoS): We ought to kill the `type' attribute
         'type': obj_fields.StringField(),
         'qos_policy_id': obj_fields.UUIDField()
     }
