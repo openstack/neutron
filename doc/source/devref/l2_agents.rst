@@ -5,3 +5,4 @@ L2 Agent Networking
 
    openvswitch_agent
    linuxbridge_agent
+   sriov_nic_agent
