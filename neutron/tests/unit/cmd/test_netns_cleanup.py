@@ -78,6 +78,9 @@ class TestNetnsCleanup(base.BaseTestCase):
     def test_eligible_for_deletion_fip_namespace(self):
         self._test_eligible_for_deletion_helper('fip-', False, True, True)
 
+    def test_eligible_for_deletion_lbaas_namespace(self):
+        self._test_eligible_for_deletion_helper('qlbaas-', False, True, True)
+
     def test_eligible_for_deletion_snat_namespace(self):
         self._test_eligible_for_deletion_helper('snat-', False, True, True)
 

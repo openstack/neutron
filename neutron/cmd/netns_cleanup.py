@@ -36,10 +36,12 @@ from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)
-NS_MANGLING_PATTERN = ('(%s|%s|%s|%s)' % (dhcp.NS_PREFIX,
+LB_NS_PREFIX = 'qlbaas-'
+NS_MANGLING_PATTERN = ('(%s|%s|%s|%s|%s)' % (dhcp.NS_PREFIX,
                                           l3_agent.NS_PREFIX,
                                           dvr.SNAT_NS_PREFIX,
-                                          dvr_fip_ns.FIP_NS_PREFIX) +
+                                          dvr_fip_ns.FIP_NS_PREFIX,
+                                          LB_NS_PREFIX) +
                        attributes.UUID_PATTERN)
 
 
