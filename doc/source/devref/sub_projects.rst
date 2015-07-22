@@ -7,10 +7,10 @@ part of the overall Neutron project.
 Inclusion Process
 -----------------
 
-The process for proposing the move of a repo into openstack/ and under
-the Neutron project is to propose a patch to the openstack/governance
-repository.  For example, to propose moving networking-foo, one
-would add the following entry under Neutron in reference/projects.yaml::
+The process for proposing a repo into openstack/ and under the Neutron
+project is to propose a patch to the openstack/governance repository.
+For example, to propose networking-foo, one would add the following entry
+under Neutron in reference/projects.yaml::
 
     - repo: openstack/networking-foo
       tags:
@@ -27,6 +27,11 @@ additional repos without needing TC approval as long as the added
 repositories are within the existing approved scope of the project.
 
     http://git.openstack.org/cgit/openstack/governance/commit/?id=321a020cbcaada01976478ea9f677ebb4df7bd6d
+
+In order to create a project, in case it does not exist, follow steps
+as explained in:
+
+    http://docs.openstack.org/infra/manual/creators.html
 
 Responsibilities
 ----------------
