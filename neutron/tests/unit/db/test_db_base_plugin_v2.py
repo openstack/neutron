@@ -728,8 +728,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         for k in keys:
             self.assertIn(k, resource[res_name])
             if isinstance(keys[k], list):
-                self.assertEqual(sorted(resource[res_name][k]),
-                                 sorted(keys[k]))
+                self.assertEqual(
+                     sorted(resource[res_name][k], key=utils.safe_sort_key),
+                     sorted(keys[k], key=utils.safe_sort_key))
             else:
                 self.assertEqual(resource[res_name][k], keys[k])
 
@@ -3988,8 +3989,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             req = self.new_update_request('subnets', data,
                                           res['subnet']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEqual(sorted(res['subnet']['host_routes']),
-                             sorted(host_routes))
+            self.assertEqual(
+                sorted(res['subnet']['host_routes'], key=utils.safe_sort_key),
+                sorted(host_routes, key=utils.safe_sort_key))
             self.assertEqual(res['subnet']['dns_nameservers'],
                              dns_nameservers)
 
