@@ -18,6 +18,7 @@ import os
 from eventlet.green import subprocess
 from eventlet import greenthread
 from oslo_log import log as logging
+import six
 
 from neutron.common import utils
 
@@ -45,12 +46,29 @@ def create_process(cmd, addl_env=None):
 
 def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
-            extra_ok_codes=None, run_as_root=False):
+            extra_ok_codes=None, run_as_root=False, do_decode=True):
 
     try:
+        if (process_input is None or
+            isinstance(process_input, six.binary_type)):
+            _process_input = process_input
+        else:
+            _process_input = process_input.encode('utf-8')
         obj, cmd = create_process(cmd, addl_env=addl_env)
-        _stdout, _stderr = obj.communicate(process_input)
+        _stdout, _stderr = obj.communicate(_process_input)
         obj.stdin.close()
+        if six.PY3:
+            if isinstance(_stdout, bytes):
+                try:
+                    _stdout = _stdout.decode(encoding='utf-8')
+                except UnicodeError:
+                    pass
+            if isinstance(_stderr, bytes):
+                try:
+                    _stderr = _stderr.decode(encoding='utf-8')
+                except UnicodeError:
+                    pass
+
         m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdin: %(stdin)s\n"
               "Stdout: %(stdout)s\nStderr: %(stderr)s") % \
             {'cmd': cmd,

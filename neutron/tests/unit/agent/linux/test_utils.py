@@ -15,6 +15,7 @@
 import socket
 
 import mock
+import six
 import testtools
 
 from neutron.agent.linux import utils
@@ -106,6 +107,55 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
             self.assertRaises(RuntimeError, utils.execute,
                               ['ls'], log_fail_as_error=False)
             self.assertFalse(log.error.called)
+
+    def test_encode_process_input(self):
+        str_idata = "%s\n" % self.test_file[:-1]
+        str_odata = "%s\n" % self.test_file
+        if six.PY3:
+            bytes_idata = str_idata.encode(encoding='utf-8')
+            bytes_odata = str_odata.encode(encoding='utf-8')
+            self.mock_popen.return_value = [bytes_odata, b'']
+            result = utils.execute(['cat'], process_input=str_idata)
+            self.mock_popen.assert_called_once_with(bytes_idata)
+            self.assertEqual(str_odata, result)
+        else:
+            self.mock_popen.return_value = [str_odata, '']
+            result = utils.execute(['cat'], process_input=str_idata)
+            self.mock_popen.assert_called_once_with(str_idata)
+            self.assertEqual(str_odata, result)
+
+    def test_return_str_data(self):
+        str_data = "%s\n" % self.test_file
+        self.mock_popen.return_value = [str_data, '']
+        result = utils.execute(['ls', self.test_file], return_stderr=True)
+        self.assertEqual((str_data, ''), result)
+
+    def test_raise_unicodeerror_in_decoding_out_data(self):
+        class m_bytes(bytes):
+            def decode(self, encoding=None):
+                raise UnicodeError
+
+        err_data = 'UnicodeError'
+        bytes_err_data = b'UnicodeError'
+        out_data = "%s\n" % self.test_file
+        bytes_out_data = m_bytes(out_data.encode(encoding='utf-8'))
+        if six.PY3:
+            self.mock_popen.return_value = [bytes_out_data, bytes_err_data]
+            result = utils.execute(['ls', self.test_file],
+                                   return_stderr=True)
+            self.assertEqual((bytes_out_data, err_data), result)
+
+
+class AgentUtilsExecuteEncodeTest(base.BaseTestCase):
+    def setUp(self):
+        super(AgentUtilsExecuteEncodeTest, self).setUp()
+        self.test_file = self.get_temp_file_path('test_execute.tmp')
+        open(self.test_file, 'w').close()
+
+    def test_decode_return_data(self):
+        str_data = "%s\n" % self.test_file
+        result = utils.execute(['ls', self.test_file], return_stderr=True)
+        self.assertEqual((str_data, ''), result)
 
 
 class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
