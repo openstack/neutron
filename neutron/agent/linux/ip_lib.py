@@ -348,10 +348,10 @@ class IpLinkCommand(IpDeviceCommandBase):
         self._as_root([], ('set', self.name, 'mtu', mtu_size))
 
     def set_up(self):
-        self._as_root([], ('set', self.name, 'up'))
+        return self._as_root([], ('set', self.name, 'up'))
 
     def set_down(self):
-        self._as_root([], ('set', self.name, 'down'))
+        return self._as_root([], ('set', self.name, 'down'))
 
     def set_netns(self, namespace):
         self._as_root([], ('set', self.name, 'netns', namespace))

@@ -41,6 +41,12 @@ class BridgeLibTest(base.BaseTestCase):
         self.assertEqual(namespace, br.namespace)
         self._verify_bridge_mock(['brctl', 'addbr', self._BR_NAME])
 
+        br.setfd(0)
+        self._verify_bridge_mock(['brctl', 'setfd', self._BR_NAME, '0'])
+
+        br.disable_stp()
+        self._verify_bridge_mock(['brctl', 'stp', self._BR_NAME, 'off'])
+
         br.addif(self._IF_NAME)
         self._verify_bridge_mock(
             ['brctl', 'addif', self._BR_NAME, self._IF_NAME])
