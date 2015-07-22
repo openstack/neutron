@@ -687,15 +687,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             '! -i %s ! -o %s -m conntrack ! --ctstate DNAT -j ACCEPT' %
             (interface_name, interface_name),
             '-o %s -j SNAT --to-source %s' % (interface_name, source_nat_ip),
-            '-m mark ! --mark 0x2 -m conntrack --ctstate DNAT '
-            '-j SNAT --to-source %s' % source_nat_ip]
+            '-m mark ! --mark 0x2/%s -m conntrack --ctstate DNAT '
+            '-j SNAT --to-source %s' %
+            (l3_constants.ROUTER_MARK_MASK, source_nat_ip)]
         for r in nat_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
             else:
                 self.assertIn(r.rule, expected_rules)
         expected_rules = [
-            '-i %s -j MARK --set-xmark 0x2/0xffffffff' % interface_name]
+            '-i %s -j MARK --set-xmark 0x2/%s' %
+            (interface_name, l3_constants.ROUTER_MARK_MASK)]
         for r in mangle_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
@@ -1528,10 +1530,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                                            wrap_name)
         snat_rule1 = ("-A %s-snat -o iface -j SNAT --to-source %s") % (
             wrap_name, ex_gw_port['fixed_ips'][0]['ip_address'])
-        snat_rule2 = ("-A %s-snat -m mark ! --mark 0x2 "
+        snat_rule2 = ("-A %s-snat -m mark ! --mark 0x2/%s "
                       "-m conntrack --ctstate DNAT "
                       "-j SNAT --to-source %s") % (
-            wrap_name, ex_gw_port['fixed_ips'][0]['ip_address'])
+            wrap_name, l3_constants.ROUTER_MARK_MASK,
+            ex_gw_port['fixed_ips'][0]['ip_address'])
 
         self.assertIn(jump_float_rule, nat_rules)
 
@@ -1542,7 +1545,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         mangle_rules = list(map(str, ri.iptables_manager.ipv4['mangle'].rules))
         mangle_rule = ("-A %s-mark -i iface "
-                       "-j MARK --set-xmark 0x2/0xffffffff") % wrap_name
+                       "-j MARK --set-xmark 0x2/%s" %
+                       (wrap_name, l3_constants.ROUTER_MARK_MASK))
         self.assertIn(mangle_rule, mangle_rules)
 
     def test_process_router_delete_stale_internal_devices(self):

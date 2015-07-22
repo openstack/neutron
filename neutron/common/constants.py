@@ -178,3 +178,5 @@ RPC_NAMESPACE_STATE = None
 
 # Default network MTU value when not configured
 DEFAULT_NETWORK_MTU = 0
+
+ROUTER_MARK_MASK = "0xffff"
