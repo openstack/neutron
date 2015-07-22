@@ -26,6 +26,7 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
+import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -127,6 +128,22 @@ class LinuxBridgeManager(object):
         else:
             LOG.warning(_LW("Invalid Segmentation ID: %s, will lead to "
                             "incorrect vxlan device name"), segmentation_id)
+
+    def get_vxlan_group(self, segmentation_id):
+        try:
+            # Ensure the configured group address/range is valid and multicast
+            net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
+            if not (net.network.is_multicast() and
+                    net.broadcast.is_multicast()):
+                raise ValueError()
+            # Map the segmentation ID to (one of) the group address(es)
+            return str(net.network +
+                       (int(segmentation_id) & int(net.hostmask)))
+        except (netaddr.core.AddrFormatError, ValueError):
+            LOG.warning(_LW("Invalid VXLAN Group: %s, must be an address "
+                            "or network (in CIDR notation) in a multicast "
+                            "range"),
+                        cfg.CONF.VXLAN.vxlan_group)
 
     def get_all_neutron_bridges(self):
         neutron_bridge_list = []
@@ -241,7 +258,7 @@ class LinuxBridgeManager(object):
                        'segmentation_id': segmentation_id})
             args = {'dev': self.local_int}
             if self.vxlan_mode == lconst.VXLAN_MCAST:
-                args['group'] = cfg.CONF.VXLAN.vxlan_group
+                args['group'] = self.get_vxlan_group(segmentation_id)
             if cfg.CONF.VXLAN.ttl:
                 args['ttl'] = cfg.CONF.VXLAN.ttl
             if cfg.CONF.VXLAN.tos:
@@ -547,7 +564,7 @@ class LinuxBridgeManager(object):
 
     def vxlan_mcast_supported(self):
         if not cfg.CONF.VXLAN.vxlan_group:
-            LOG.warning(_LW('VXLAN muticast group must be provided in '
+            LOG.warning(_LW('VXLAN muticast group(s) must be provided in '
                             'vxlan_group option to enable VXLAN MCAST mode'))
             return False
         if not ip_lib.iproute_arg_supported(

@@ -397,6 +397,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                          "vxlan-" + str(vn_id))
         self.assertIsNone(self.lbm.get_vxlan_device_name(vn_id + 1))
 
+    def test_get_vxlan_group(self):
+        cfg.CONF.set_override('vxlan_group', '239.1.2.3/24', 'VXLAN')
+        vn_id = p_const.MAX_VXLAN_VNI
+        self.assertEqual('239.1.2.255', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 256
+        self.assertEqual('239.1.2.0', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 257
+        self.assertEqual('239.1.2.1', self.lbm.get_vxlan_group(vn_id))
+        cfg.CONF.set_override('vxlan_group', '240.0.0.0', 'VXLAN')
+        self.assertIsNone(self.lbm.get_vxlan_group(vn_id))
+        cfg.CONF.set_override('vxlan_group', '224.0.0.1/', 'VXLAN')
+        self.assertIsNone(self.lbm.get_vxlan_group(vn_id))
+
     def test_get_all_neutron_bridges(self):
         br_list = ["br-int", "brq1", "brq2", "br-ex"]
         with mock.patch.object(os, 'listdir') as listdir_fn:
