@@ -29,11 +29,11 @@ Since the test runs on the machine itself, full stack testing enables
 through the API and then assert that a namespace was created for it.
 
 Full stack tests run in the Neutron tree with Neutron resources alone. You
-may use the Neutron API (Keystone is set to NOAUTH so that it's out of the
-picture). VMs may be simulated with a helper class that contains a container-
-like object in its own namespace and IP address. It has helper methods to send
-different kinds of traffic. The "VM" may be connected to br-int or br-ex,
-to simulate internal or external traffic.
+may use the Neutron API (The Neutron server is set to NOAUTH so that Keystone
+is out of the picture). instances may be simulated with a helper class that
+contains a container-like object in its own namespace and IP address. It has
+helper methods to send different kinds of traffic. The "instance" may be
+connected to br-int or br-ex, to simulate internal or external traffic.
 
 Full stack testing can simulate multi node testing by starting an agent
 multiple times. Specifically, each node would have its own copy of the
@@ -84,9 +84,12 @@ Long Term Goals
 * Currently we configure the OVS agent with VLANs segmentation (Only because
   it's easier). This allows us to validate most functionality, but we might
   need to support tunneling somehow.
-* How do advanced services use the full stack testing infrastructure? I'd
-  assume we treat all of the infrastructure classes as a publicly consumed
-  API and have the XaaS repos import and use them.
+* How will advanced services use the full stack testing infrastructure? Full
+  stack tests infrastructure classes are expected to change quite a bit over
+  the next coming months. This means that other repositories may import these
+  classes and break from time to time, or copy them in their repositories
+  instead. Since changes to full stack testing infrastructure is a given,
+  XaaS repositories should be copying it and not importing it directly.
 * Currently we configure the Neutron server with the ML2 plugin and the OVS
   mechanism driver. We may modularize the topology configuration further to
   allow to rerun full stack tests against different Neutron plugins or ML2
