@@ -162,6 +162,29 @@ class API(object):
         """
 
     @abc.abstractmethod
+    def db_create(self, table, **col_values):
+        """Create a command to create new record
+
+        :param table:      The OVS table containing the record to be created
+        :type table:       string
+        :param col_values: The columns and their associated values
+                           to be set after create
+        :type col_values:  Dictionary of columns id's and values
+        :returns:          :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
+    def db_destroy(self, table, record):
+        """Create a command to destroy a record
+
+        :param table:      The OVS table containing the record to be destroyed
+        :type table:       string
+        :param record:     The record id (name/uuid) to be destroyed
+        :type record:      uuid/string
+        :returns:          :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
     def db_set(self, table, record, *col_values):
         """Create a command to set fields in a record
 

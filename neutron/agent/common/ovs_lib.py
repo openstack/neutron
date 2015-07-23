@@ -492,6 +492,81 @@ class OVSBridge(BaseOVS):
                 txn.add(self.ovsdb.db_set('Controller',
                                           controller_uuid, *attr))
 
+    def _create_qos_bw_limit_queue(self, port_name, max_bw_in_bits,
+                                   max_burst_in_bits):
+        external_ids = {'id': port_name}
+        queue_other_config = {'min-rate': max_bw_in_bits,
+                              'max-rate': max_bw_in_bits,
+                              'burst': max_burst_in_bits}
+
+        self.ovsdb.db_create(
+            'Queue', external_ids=external_ids,
+            other_config=queue_other_config).execute(check_error=True)
+
+    def _create_qos_bw_limit_profile(self, port_name, max_bw_in_bits):
+        external_ids = {'id': port_name}
+        queue = self.ovsdb.db_find(
+            'Queue',
+            ('external_ids', '=', {'id': port_name}),
+            columns=['_uuid']).execute(
+            check_error=True)
+        queues = {}
+        queues[0] = queue[0]['_uuid']
+        qos_other_config = {'max-rate': max_bw_in_bits}
+        self.ovsdb.db_create('QoS', external_ids=external_ids,
+                             other_config=qos_other_config,
+                             type='linux-htb',
+                             queues=queues).execute(check_error=True)
+
+    def create_qos_bw_limit_for_port(self, port_name, max_kbps,
+                                     max_burst_kbps):
+        # TODO(QoS) implement this with transactions,
+        # or roll back on failure
+        max_bw_in_bits = str(max_kbps * 1000)
+        max_burst_in_bits = str(max_burst_kbps * 1000)
+
+        self._create_qos_bw_limit_queue(port_name, max_bw_in_bits,
+                                        max_burst_in_bits)
+        self._create_qos_bw_limit_profile(port_name, max_bw_in_bits)
+
+        qos = self.ovsdb.db_find('QoS',
+                                 ('external_ids', '=', {'id': port_name}),
+                                 columns=['_uuid']).execute(check_error=True)
+        qos_profile = qos[0]['_uuid']
+        self.set_db_attribute('Port', port_name, 'qos', qos_profile,
+                              check_error=True)
+
+    def get_qos_bw_limit_for_port(self, port_name):
+
+        res = self.ovsdb.db_find(
+                'Queue',
+                ('external_ids', '=', {'id': port_name}),
+                columns=['other_config']).execute(check_error=True)
+
+        if res is None or len(res) == 0:
+            return None, None
+
+        other_config = res[0]['other_config']
+        max_kbps = int(other_config['max-rate']) / 1000
+        max_burst_kbps = int(other_config['burst']) / 1000
+        return max_kbps, max_burst_kbps
+
+    def del_qos_bw_limit_for_port(self, port_name):
+        qos = self.ovsdb.db_find('QoS',
+                                 ('external_ids', '=', {'id': port_name}),
+                                 columns=['_uuid']).execute(check_error=True)
+        qos_row = qos[0]['_uuid']
+
+        queue = self.ovsdb.db_find('Queue',
+                                   ('external_ids', '=', {'id': port_name}),
+                                   columns=['_uuid']).execute(check_error=True)
+        queue_row = queue[0]['_uuid']
+
+        with self.ovsdb.transaction(check_error=True) as txn:
+            txn.add(self.ovsdb.db_set('Port', port_name, ('qos', [])))
+            txn.add(self.ovsdb.db_destroy('QoS', qos_row))
+            txn.add(self.ovsdb.db_destroy('Queue', queue_row))
+
     def __enter__(self):
         self.create()
         return self
