@@ -16,7 +16,7 @@ import mock
 import os.path
 
 from neutron.agent.linux import external_process as ep
-from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.tests import base
 
 
@@ -105,7 +105,7 @@ class TestProcessManager(base.BaseTestCase):
         self.delete_if_exists = mock.patch(
             'oslo_utils.fileutils.delete_if_exists').start()
         self.ensure_dir = mock.patch.object(
-            utils, 'ensure_dir').start()
+            common_utils, 'ensure_dir').start()
 
         self.conf = mock.Mock()
         self.conf.external_pids = '/var/path'

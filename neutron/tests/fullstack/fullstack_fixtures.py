@@ -25,6 +25,7 @@ from oslo_utils import timeutils
 
 from neutron.agent.linux import async_process
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.tests import base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import config_fixtures
@@ -51,7 +52,7 @@ class ProcessFixture(fixtures.Fixture):
     def start(self):
         fmt = self.process_name + "--%Y-%m-%d--%H%M%S.log"
         log_dir = os.path.join(DEFAULT_LOG_DIR, self.test_name)
-        utils.ensure_dir(log_dir)
+        common_utils.ensure_dir(log_dir)
 
         cmd = [spawn.find_executable(self.exec_name),
                '--log-dir', log_dir,

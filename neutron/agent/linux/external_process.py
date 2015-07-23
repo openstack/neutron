@@ -26,6 +26,7 @@ from oslo_utils import fileutils
 from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ class ProcessManager(MonitoredProcess):
             self.service_pid_fname = 'pid'
             self.service = 'default-service'
 
-        utils.ensure_dir(os.path.dirname(self.get_pid_file_name()))
+        common_utils.ensure_dir(os.path.dirname(self.get_pid_file_name()))
 
     def enable(self, cmd_callback=None, reload_cfg=False):
         if not self.active:

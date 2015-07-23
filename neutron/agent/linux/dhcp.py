@@ -174,7 +174,7 @@ class DhcpLocalProcess(DhcpBase):
                                                version, plugin)
         self.confs_dir = self.get_confs_dir(conf)
         self.network_conf_dir = os.path.join(self.confs_dir, network.id)
-        utils.ensure_dir(self.network_conf_dir)
+        commonutils.ensure_dir(self.network_conf_dir)
 
     @staticmethod
     def get_confs_dir(conf):
@@ -199,7 +199,7 @@ class DhcpLocalProcess(DhcpBase):
         if self.active:
             self.restart()
         elif self._enable_dhcp():
-            utils.ensure_dir(self.network_conf_dir)
+            commonutils.ensure_dir(self.network_conf_dir)
             interface_name = self.device_manager.setup(self.network)
             self.interface_name = interface_name
             self.spawn_process()
