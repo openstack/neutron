@@ -35,8 +35,15 @@ LOG = logging.getLogger(__name__)
 dvr_mac_address_opts = [
     cfg.StrOpt('dvr_base_mac',
                default="fa:16:3f:00:00:00",
-               help=_('The base mac address used for unique '
-                      'DVR instances by Neutron')),
+               help=_("The base mac address used for unique "
+                      "DVR instances by Neutron. The first 3 octets will "
+                      "remain unchanged. If the 4th octet is not 00, it will "
+                      "also be used. The others will be randomly generated. "
+                      "The 'dvr_base_mac' *must* be different from "
+                      "'base_mac' to avoid mixing them up with MAC's "
+                      "allocated for tenant ports. A 4 octet example would be "
+                      "dvr_base_mac = fa:16:3f:4f:00:00. The default is 3 "
+                      "octet")),
 ]
 cfg.CONF.register_opts(dvr_mac_address_opts)
 
