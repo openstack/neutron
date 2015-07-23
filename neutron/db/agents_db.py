@@ -287,6 +287,18 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         agent = self._get_agent(context, id)
         return self._make_agent_dict(agent, fields)
 
+    def filter_hosts_with_network_access(
+            self, context, network_id, candidate_hosts):
+        """Filter hosts with access to network_id.
+
+        This method returns a subset of candidate_hosts with the ones with
+        network access to network_id.
+
+        A plugin can overload this method to define its own host network_id
+        based filter.
+        """
+        return candidate_hosts
+
     def _log_heartbeat(self, state, agent_db, agent_conf):
         if agent_conf.get('log_agent_heartbeats'):
             delta = timeutils.utcnow() - agent_db.heartbeat_timestamp

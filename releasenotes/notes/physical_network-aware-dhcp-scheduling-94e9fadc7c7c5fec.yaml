@@ -1,0 +1,8 @@
+---
+prelude: >
+    Schedule networks on dhcp-agents with access to network
+features:
+  - DHCP schedulers use "filter_host_with_network_access" plugin method to
+    filter hosts with access to dhcp network. Plugins can overload it to
+    define their own filtering logic. In particular, ML2 plugin delegates
+    the filtering to mechanism drivers.

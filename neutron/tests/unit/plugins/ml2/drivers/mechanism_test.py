@@ -240,3 +240,7 @@ class TestMechanismDriver(api.MechanismDriver):
                                 portbindings.VIF_TYPE_BINDING_FAILED,
                                 {portbindings.CAP_PORT_FILTER: False})
             self.bound_ports.add((context.current['id'], host))
+
+    def filter_hosts_with_segment_access(
+            self, context, segments, candidate_hosts, agent_getter):
+        return set()
