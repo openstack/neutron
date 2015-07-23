@@ -53,9 +53,11 @@ class MetadataDriver(object):
     @classmethod
     def metadata_mangle_rules(cls, mark):
         return [('PREROUTING', '-d 169.254.169.254/32 '
+                 '-i %(interface_name)s '
                  '-p tcp -m tcp --dport 80 '
                  '-j MARK --set-xmark %(value)s/%(mask)s' %
-                 {'value': mark,
+                 {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
+                  'value': mark,
                   'mask': constants.ROUTER_MARK_MASK})]
 
     @classmethod

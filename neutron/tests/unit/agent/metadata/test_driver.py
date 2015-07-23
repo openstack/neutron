@@ -48,7 +48,7 @@ class TestMetadataDriverRules(base.BaseTestCase):
             metadata_driver.MetadataDriver.metadata_filter_rules(8775, '0x1'))
 
     def test_metadata_mangle_rules(self):
-        rule = ('PREROUTING', '-d 169.254.169.254/32 '
+        rule = ('PREROUTING', '-d 169.254.169.254/32 -i qr-+ '
                 '-p tcp -m tcp --dport 80 '
                 '-j MARK --set-xmark 0x1/%s' %
                 constants.ROUTER_MARK_MASK)
