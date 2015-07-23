@@ -604,6 +604,25 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def _test_filter_ingress_tcp_min_port_0(self, ethertype):
+        rule = {'ethertype': ethertype,
+                'direction': 'ingress',
+                'protocol': 'tcp',
+                'port_range_min': 0,
+                'port_range_max': 100}
+        ingress = mock.call.add_rule(
+            'ifake_dev',
+            '-p tcp -m tcp -m multiport --dports 0:100 -j RETURN',
+            comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ingress_tcp_min_port_0_for_ipv4(self):
+        self._test_filter_ingress_tcp_min_port_0('IPv4')
+
+    def test_filter_ingress_tcp_min_port_0_for_ipv6(self):
+        self._test_filter_ingress_tcp_min_port_0('IPv6')
+
     def test_filter_ipv6_ingress_tcp_mport_prefix(self):
         prefix = FAKE_PREFIX['IPv6']
         rule = {'ethertype': 'IPv6',
