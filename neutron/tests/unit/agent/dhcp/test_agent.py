@@ -400,13 +400,14 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_periodic_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            dhcp.needs_resync_reasons = collections.OrderedDict(
+            resync_reasons = collections.OrderedDict(
                 (('a', 'reason1'), ('b', 'reason2')))
+            dhcp.needs_resync_reasons = resync_reasons
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
                 with testtools.ExpectedException(RuntimeError):
                     dhcp._periodic_resync_helper()
-                sync_state.assert_called_once_with(['a', 'b'])
+                sync_state.assert_called_once_with(resync_reasons.keys())
                 sleep.assert_called_once_with(dhcp.conf.resync_interval)
                 self.assertEqual(len(dhcp.needs_resync_reasons), 0)
 
@@ -1062,7 +1063,7 @@ class TestNetworkCache(base.BaseTestCase):
         nc = dhcp_agent.NetworkCache()
         nc.put(fake_network)
 
-        self.assertEqual(nc.get_network_ids(), [fake_network.id])
+        self.assertEqual(list(nc.get_network_ids()), [fake_network.id])
 
     def test_get_network_by_subnet_id(self):
         nc = dhcp_agent.NetworkCache()
