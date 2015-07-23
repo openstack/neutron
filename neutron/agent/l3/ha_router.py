@@ -363,6 +363,7 @@ class HaRouter(router.RouterInfo):
         if self.ha_port:
             self.enable_keepalived()
 
+    @common_utils.synchronized('enable_radvd')
     def enable_radvd(self, internal_ports=None):
         if (self.keepalived_manager.get_process().active and
                 self.ha_state == 'master'):
