@@ -31,6 +31,16 @@ LOG = logging.getLogger(__name__)
 
 DEVNULL = object()
 
+# Note: We can't use sys.std*.fileno() here.  sys.std* objects may be
+# random file-like objects that may not match the true system std* fds
+# - and indeed may not even have a file descriptor at all (eg: test
+# fixtures that monkey patch fixtures.StringStream onto sys.stdout).
+# Below we always want the _real_ well-known 0,1,2 Unix fds during
+# os.dup2 manipulation.
+STDIN_FILENO = 0
+STDOUT_FILENO = 1
+STDERR_FILENO = 2
+
 
 def setuid(user_id_or_name):
     try:
@@ -182,6 +192,16 @@ class Daemon(object):
 
     def daemonize(self):
         """Daemonize process by doing Stevens double fork."""
+
+        # flush any buffered data before fork/dup2.
+        if self.stdout is not DEVNULL:
+            self.stdout.flush()
+        if self.stderr is not DEVNULL:
+            self.stderr.flush()
+        # sys.std* may not match STD{OUT,ERR}_FILENO.  Tough.
+        for f in (sys.stdout, sys.stderr):
+            f.flush()
+
         # fork first time
         self._fork()
 
@@ -194,15 +214,13 @@ class Daemon(object):
         self._fork()
 
         # redirect standard file descriptors
-        sys.stdout.flush()
-        sys.stderr.flush()
-        devnull = open(os.devnull, 'w+')
-        stdin = devnull if self.stdin is DEVNULL else self.stdin
-        stdout = devnull if self.stdout is DEVNULL else self.stdout
-        stderr = devnull if self.stderr is DEVNULL else self.stderr
-        os.dup2(stdin.fileno(), sys.stdin.fileno())
-        os.dup2(stdout.fileno(), sys.stdout.fileno())
-        os.dup2(stderr.fileno(), sys.stderr.fileno())
+        with open(os.devnull, 'w+') as devnull:
+            stdin = devnull if self.stdin is DEVNULL else self.stdin
+            stdout = devnull if self.stdout is DEVNULL else self.stdout
+            stderr = devnull if self.stderr is DEVNULL else self.stderr
+            os.dup2(stdin.fileno(), STDIN_FILENO)
+            os.dup2(stdout.fileno(), STDOUT_FILENO)
+            os.dup2(stderr.fileno(), STDERR_FILENO)
 
         if self.pidfile is not None:
             # write pidfile
