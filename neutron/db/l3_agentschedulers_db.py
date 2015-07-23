@@ -35,6 +35,7 @@ from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
+from neutron.plugins.common import constants as service_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -182,7 +183,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 return False
         if router.get('distributed'):
             return False
-        # non-dvr case: centralized router is already bound to some agent
+        if router.get('ha'):
+            return True
+        # legacy router case: router is already bound to some agent
         raise l3agentscheduler.RouterHostedByL3Agent(
             router_id=router_id,
             agent_id=bindings[0].l3_agent_id)
@@ -193,7 +196,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         agent_id = agent['id']
         if self.router_scheduler:
             try:
-                self.router_scheduler.bind_router(context, router_id, agent)
+                if router.get('ha'):
+                    plugin = manager.NeutronManager.get_service_plugins().get(
+                        service_constants.L3_ROUTER_NAT)
+                    self.router_scheduler.create_ha_port_and_bind(
+                        plugin, context, router['id'],
+                        router['tenant_id'], agent)
+                else:
+                    self.router_scheduler.bind_router(
+                        context, router_id, agent)
             except db_exc.DBError:
                 raise l3agentscheduler.RouterSchedulingFailed(
                     router_id=router_id, agent_id=agent_id)
@@ -223,6 +234,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """
         agent = self._get_agent(context, agent_id)
         self._unbind_router(context, router_id, agent_id)
+
+        router = self.get_router(context, router_id)
+        if router.get('ha'):
+            plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
+            plugin.delete_ha_interfaces_on_host(context, router_id, agent.host)
+
         l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
         if l3_notifier:
             l3_notifier.router_removed_from_agent(
