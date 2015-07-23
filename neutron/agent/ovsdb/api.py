@@ -308,11 +308,20 @@ class API(object):
 
     @abc.abstractmethod
     def list_ports(self, bridge):
-        """Create a command to list the names of porsts on a bridge
+        """Create a command to list the names of ports on a bridge
 
         :param bridge: The name of the bridge
         :type bridge:  string
         :returns:      :class:`Command` with list of port names result
+        """
+
+    @abc.abstractmethod
+    def list_ifaces(self, bridge):
+        """Create a command to list the names of interfaces on a bridge
+
+        :param bridge: The name of the bridge
+        :type bridge:  string
+        :returns:      :class:`Command` with list of interfaces names result
         """
 
 

@@ -241,6 +241,9 @@ class OvsdbVsctl(ovsdb.API):
     def list_ports(self, bridge):
         return MultiLineCommand(self.context, 'list-ports', args=[bridge])
 
+    def list_ifaces(self, bridge):
+        return MultiLineCommand(self.context, 'list-ifaces', args=[bridge])
+
 
 def _set_colval_args(*col_values):
     args = []
