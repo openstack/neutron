@@ -65,7 +65,9 @@ class NetworkClientJSON(service_client.ServiceClient):
             'metering_label_rules': 'metering',
             'firewall_rules': 'fw',
             'firewall_policies': 'fw',
-            'firewalls': 'fw'
+            'firewalls': 'fw',
+            'policies': 'qos',
+            'bandwidth_limit_rules': 'qos',
         }
         service_prefix = service_resource_prefix_map.get(
             plural_name)
@@ -90,7 +92,8 @@ class NetworkClientJSON(service_client.ServiceClient):
             'ikepolicy': 'ikepolicies',
             'ipsec_site_connection': 'ipsec-site-connections',
             'quotas': 'quotas',
-            'firewall_policy': 'firewall_policies'
+            'firewall_policy': 'firewall_policies',
+            'qos_policy': 'policies'
         }
         return resource_plural_map.get(resource_name, resource_name + 's')
 
@@ -619,4 +622,73 @@ class NetworkClientJSON(service_client.ServiceClient):
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
         body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def list_qos_policies(self):
+        uri = '%s/qos/policies' % self.uri_prefix
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def create_qos_policy(self, name, description, shared):
+        uri = '%s/qos/policies' % self.uri_prefix
+        post_data = self.serialize(
+            {'policy': {
+                'name': name,
+                'description': description,
+                'shared': shared
+            }})
+        resp, body = self.post(uri, post_data)
+        body = self.deserialize_single(body)
+        self.expected_success(201, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def get_qos_policy(self, policy_id):
+        uri = '%s/qos/policies/%s' % (self.uri_prefix, policy_id)
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def create_bandwidth_limit_rule(self, policy_id, max_kbps, max_burst_kbps):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules' % (
+            self.uri_prefix, policy_id)
+        #TODO(QoS): 'bandwidth_limit' should not be a magic string.
+        post_data = self.serialize(
+            {'bandwidth_limit_rule': {
+                'max_kbps': max_kbps,
+                'max_burst_kbps': max_burst_kbps,
+                'type': 'bandwidth_limit'}})
+        resp, body = self.post(uri, post_data)
+        self.expected_success(201, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def list_bandwidth_limit_rules(self, policy_id):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules' % (
+            self.uri_prefix, policy_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def show_bandwidth_limit_rule(self, policy_id, rule_id):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def update_bandwidth_limit_rule(self, policy_id, rule_id,
+                                    max_kbps, max_burst_kbps):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        post_data = {
+            'bandwidth_limit_rule': {
+                'max_kbps': max_kbps,
+                'max_burst_kbps': max_burst_kbps,
+                'type': 'bandwidth_limit'}}
+        resp, body = self.put(uri, json.dumps(post_data))
+        self.expected_success(200, resp.status)
         return service_client.ResponseBody(resp, body)

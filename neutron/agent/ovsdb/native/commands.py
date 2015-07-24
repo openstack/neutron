@@ -148,6 +148,30 @@ class BrSetExternalIdCommand(BaseCommand):
         br.external_ids = external_ids
 
 
+class DbCreateCommand(BaseCommand):
+    def __init__(self, api, table, **columns):
+        super(DbCreateCommand, self).__init__(api)
+        self.table = table
+        self.columns = columns
+
+    def run_idl(self, txn):
+        row = txn.insert(self.api._tables[self.table])
+        for col, val in self.columns.items():
+            setattr(row, col, val)
+        self.result = row
+
+
+class DbDestroyCommand(BaseCommand):
+    def __init__(self, api, table, record):
+        super(DbDestroyCommand, self).__init__(api)
+        self.table = table
+        self.record = record
+
+    def run_idl(self, txn):
+        record = idlutils.row_by_record(self.api.idl, self.table, self.record)
+        record.delete()
+
+
 class DbSetCommand(BaseCommand):
     def __init__(self, api, table, record, *col_values):
         super(DbSetCommand, self).__init__(api)

@@ -20,8 +20,11 @@ from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as os_db_exception
 from oslo_db.sqlalchemy import session
+from oslo_utils import uuidutils
 from sqlalchemy import exc
 from sqlalchemy import orm
+
+from neutron.db import common_db_mixin
 
 
 _FACADE = None
@@ -88,3 +91,41 @@ class convert_db_exception_to_retry(object):
             except self.to_catch as e:
                 raise os_db_exception.RetryRequest(e)
         return wrapper
+
+
+# Common database operation implementations
+def get_object(context, model, **kwargs):
+    with context.session.begin(subtransactions=True):
+        return (common_db_mixin.model_query(context, model)
+                .filter_by(**kwargs)
+                .first())
+
+
+def get_objects(context, model, **kwargs):
+    with context.session.begin(subtransactions=True):
+        return (common_db_mixin.model_query(context, model)
+                .filter_by(**kwargs)
+                .all())
+
+
+def create_object(context, model, values):
+    with context.session.begin(subtransactions=True):
+        if 'id' not in values:
+            values['id'] = uuidutils.generate_uuid()
+        db_obj = model(**values)
+        context.session.add(db_obj)
+    return db_obj.__dict__
+
+
+def update_object(context, model, id, values):
+    with context.session.begin(subtransactions=True):
+        db_obj = get_object(context, model, id=id)
+        db_obj.update(values)
+        db_obj.save(session=context.session)
+    return db_obj.__dict__
+
+
+def delete_object(context, model, id):
+    with context.session.begin(subtransactions=True):
+        db_obj = get_object(context, model, id=id)
+        context.session.delete(db_obj)
