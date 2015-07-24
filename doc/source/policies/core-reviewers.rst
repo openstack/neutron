@@ -117,6 +117,8 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-plumgrid    | Fawad Khaliq              | fawadkhaliq          |
 +------------------------+---------------------------+----------------------+
+| networking-sfc         | Cathy Zhang               | cathy                |
++------------------------+---------------------------+----------------------+
 | networking-vshpere     | Vivekanandan Narasimhan   | viveknarasimhan      |
 +------------------------+---------------------------+----------------------+
 | octavia                | German Eichberger         | xgerman              |
