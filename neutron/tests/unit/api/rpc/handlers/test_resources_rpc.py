@@ -42,55 +42,59 @@ class ResourcesRpcBaseTestCase(base.BaseTestCase):
         return policy_obj
 
 
-class ResourcesServerRpcApiTestCase(ResourcesRpcBaseTestCase):
+class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):
-        super(ResourcesServerRpcApiTestCase, self).setUp()
+        super(ResourcesPullRpcApiTestCase, self).setUp()
         self.client_p = mock.patch.object(resources_rpc.n_rpc, 'get_client')
         self.client = self.client_p.start()
-        self.rpc = resources_rpc.ResourcesServerRpcApi()
+        self.rpc = resources_rpc.ResourcesPullRpcApi()
         self.mock_cctxt = self.rpc.client.prepare.return_value
 
-    def test_get_info(self):
+    def test_is_singleton(self):
+        self.assertEqual(id(self.rpc),
+                         id(resources_rpc.ResourcesPullRpcApi()))
+
+    def test_pull(self):
         policy_dict = self._create_test_policy_dict()
         expected_policy_obj = self._create_test_policy(policy_dict)
         qos_policy_id = policy_dict['id']
         self.mock_cctxt.call.return_value = (
             expected_policy_obj.obj_to_primitive())
-        get_info_result = self.rpc.get_info(
+        pull_result = self.rpc.pull(
             self.context, resources.QOS_POLICY, qos_policy_id)
         self.mock_cctxt.call.assert_called_once_with(
-            self.context, 'get_info', resource_type=resources.QOS_POLICY,
+            self.context, 'pull', resource_type=resources.QOS_POLICY,
             version=policy.QosPolicy.VERSION, resource_id=qos_policy_id)
-        self.assertEqual(expected_policy_obj, get_info_result)
+        self.assertEqual(expected_policy_obj, pull_result)
 
-    def test_get_info_invalid_resource_type_cls(self):
+    def test_pull_invalid_resource_type_cls(self):
         self.assertRaises(
-            resources_rpc.InvalidResourceTypeClass, self.rpc.get_info,
+            resources_rpc.InvalidResourceTypeClass, self.rpc.pull,
             self.context, 'foo_type', 'foo_id')
 
-    def test_get_info_resource_not_found(self):
+    def test_pull_resource_not_found(self):
         policy_dict = self._create_test_policy_dict()
         qos_policy_id = policy_dict['id']
         self.mock_cctxt.call.return_value = None
         self.assertRaises(
-            resources_rpc.ResourceNotFound, self.rpc.get_info, self.context,
-            resources.QOS_POLICY, qos_policy_id)
+            resources_rpc.ResourceNotFound, self.rpc.pull,
+            self.context, resources.QOS_POLICY, qos_policy_id)
 
 
-class ResourcesServerRpcCallbackTestCase(ResourcesRpcBaseTestCase):
+class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):
-        super(ResourcesServerRpcCallbackTestCase, self).setUp()
-        self.callbacks = resources_rpc.ResourcesServerRpcCallback()
+        super(ResourcesPullRpcCallbackTestCase, self).setUp()
+        self.callbacks = resources_rpc.ResourcesPullRpcCallback()
 
-    def test_get_info(self):
+    def test_pull(self):
         policy_dict = self._create_test_policy_dict()
         policy_obj = self._create_test_policy(policy_dict)
         qos_policy_id = policy_dict['id']
-        with mock.patch.object(resources_rpc.registry, 'get_info',
+        with mock.patch.object(resources_rpc.registry, 'pull',
                                return_value=policy_obj) as registry_mock:
-            primitive = self.callbacks.get_info(
+            primitive = self.callbacks.pull(
                 self.context, resource_type=resources.QOS_POLICY,
                 version=policy.QosPolicy.VERSION,
                 resource_id=qos_policy_id)
@@ -101,26 +105,26 @@ class ResourcesServerRpcCallbackTestCase(ResourcesRpcBaseTestCase):
         self.assertEqual(policy_obj.obj_to_primitive(), primitive)
 
     @mock.patch.object(policy.QosPolicy, 'obj_to_primitive')
-    def test_get_info_no_backport_for_latest_version(self, to_prim_mock):
+    def test_pull_no_backport_for_latest_version(self, to_prim_mock):
         policy_dict = self._create_test_policy_dict()
         policy_obj = self._create_test_policy(policy_dict)
         qos_policy_id = policy_dict['id']
-        with mock.patch.object(resources_rpc.registry, 'get_info',
+        with mock.patch.object(resources_rpc.registry, 'pull',
                                return_value=policy_obj):
-            self.callbacks.get_info(
+            self.callbacks.pull(
                 self.context, resource_type=resources.QOS_POLICY,
                 version=policy.QosPolicy.VERSION,
                 resource_id=qos_policy_id)
             to_prim_mock.assert_called_with(target_version=None)
 
     @mock.patch.object(policy.QosPolicy, 'obj_to_primitive')
-    def test_get_info_backports_to_older_version(self, to_prim_mock):
+    def test_pull_backports_to_older_version(self, to_prim_mock):
         policy_dict = self._create_test_policy_dict()
         policy_obj = self._create_test_policy(policy_dict)
         qos_policy_id = policy_dict['id']
-        with mock.patch.object(resources_rpc.registry, 'get_info',
+        with mock.patch.object(resources_rpc.registry, 'pull',
                                return_value=policy_obj):
-            self.callbacks.get_info(
+            self.callbacks.pull(
                 self.context, resource_type=resources.QOS_POLICY,
                 version='0.9',  # less than initial version 1.0
                 resource_id=qos_policy_id)

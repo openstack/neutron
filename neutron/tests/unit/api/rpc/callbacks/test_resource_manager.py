@@ -10,52 +10,131 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 
-from neutron.api.rpc.callbacks import registry as rpc_registry
-from neutron.api.rpc.callbacks import resources
-from neutron.objects.qos import policy
-from neutron.objects.qos import rule
+from neutron.api.rpc.callbacks import exceptions as rpc_exc
+from neutron.api.rpc.callbacks import resource_manager
+from neutron.callbacks import exceptions as exceptions
+from neutron.tests.unit.services.qos import base
+
+IS_VALID_RESOURCE_TYPE = (
+    'neutron.api.rpc.callbacks.resources.is_valid_resource_type')
 
 
-from neutron.tests import base
+class ResourceCallbacksManagerTestCaseMixin(object):
+
+    def test_register_fails_on_invalid_type(self):
+        self.assertRaises(
+            exceptions.Invalid,
+            self.mgr.register, lambda: None, 'TYPE')
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_clear_unregisters_all_callbacks(self, *mocks):
+        self.mgr.register(lambda: None, 'TYPE1')
+        self.mgr.register(lambda: None, 'TYPE2')
+        self.mgr.clear()
+        self.assertEqual([], self.mgr.get_subscribed_types())
+
+    def test_unregister_fails_on_invalid_type(self):
+        self.assertRaises(
+            exceptions.Invalid,
+            self.mgr.unregister, lambda: None, 'TYPE')
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_unregister_fails_on_unregistered_callback(self, *mocks):
+        self.assertRaises(
+            rpc_exc.CallbackNotFound,
+            self.mgr.unregister, lambda: None, 'TYPE')
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_unregister_unregisters_callback(self, *mocks):
+        callback = lambda: None
+        self.mgr.register(callback, 'TYPE')
+        self.mgr.unregister(callback, 'TYPE')
+        self.assertEqual([], self.mgr.get_subscribed_types())
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test___init___does_not_reset_callbacks(self, *mocks):
+        callback = lambda: None
+        self.mgr.register(callback, 'TYPE')
+        resource_manager.ProducerResourceCallbacksManager()
+        self.assertEqual(['TYPE'], self.mgr.get_subscribed_types())
 
 
-class ResourcesCallbackRequestTestCase(base.BaseTestCase):
+class ProducerResourceCallbacksManagerTestCase(
+    base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
 
     def setUp(self):
-        super(ResourcesCallbackRequestTestCase, self).setUp()
-        self.resource_id = '46ebaec0-0570-43ac-82f6-60d2b03168c4'
-        self.qos_rule_id = '5f126d84-551a-4dcf-bb01-0e9c0df0c793'
+        super(ProducerResourceCallbacksManagerTestCase, self).setUp()
+        self.mgr = self.prod_mgr
 
-    def test_resource_callback_request(self):
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_register_registers_callback(self, *mocks):
+        callback = lambda: None
+        self.mgr.register(callback, 'TYPE')
+        self.assertEqual(callback, self.mgr.get_callback('TYPE'))
 
-        def _get_qos_policy_cb(resource, policy_id, **kwargs):
-            context = kwargs.get('context')
-            qos_policy = policy.QosPolicy(context,
-                tenant_id="8d4c70a21fed4aeba121a1a429ba0d04",
-                id="46ebaec0-0570-43ac-82f6-60d2b03168c4",
-                name="10Mbit",
-                description="This policy limits the ports to 10Mbit max.",
-                shared=False,
-                rules=[
-                    rule.QosBandwidthLimitRule(context,
-                        id="5f126d84-551a-4dcf-bb01-0e9c0df0c793",
-                        max_kbps=10000,
-                        max_burst_kbps=0)
-                ]
-            )
-            qos_policy.obj_reset_changes()
-            return qos_policy
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_register_fails_on_multiple_calls(self, *mocks):
+        self.mgr.register(lambda: None, 'TYPE')
+        self.assertRaises(
+            rpc_exc.CallbacksMaxLimitReached,
+            self.mgr.register, lambda: None, 'TYPE')
 
-        rpc_registry.register_provider(
-            _get_qos_policy_cb,
-            resources.QOS_POLICY)
+    def test_get_callback_fails_on_invalid_type(self):
+        self.assertRaises(
+            exceptions.Invalid,
+            self.mgr.get_callback, 'TYPE')
 
-        self.ctx = None
-        kwargs = {'context': self.ctx}
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_get_callback_fails_on_unregistered_callback(
+            self, *mocks):
+        self.assertRaises(
+            rpc_exc.CallbackNotFound,
+            self.mgr.get_callback, 'TYPE')
 
-        qos_policy = rpc_registry.get_info(
-            resources.QOS_POLICY,
-            self.resource_id,
-            **kwargs)
-        self.assertEqual(self.resource_id, qos_policy['id'])
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_get_callback_returns_proper_callback(self, *mocks):
+        callback1 = lambda: None
+        callback2 = lambda: None
+        self.mgr.register(callback1, 'TYPE1')
+        self.mgr.register(callback2, 'TYPE2')
+        self.assertEqual(callback1, self.mgr.get_callback('TYPE1'))
+        self.assertEqual(callback2, self.mgr.get_callback('TYPE2'))
+
+
+class ConsumerResourceCallbacksManagerTestCase(
+    base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
+
+    def setUp(self):
+        super(ConsumerResourceCallbacksManagerTestCase, self).setUp()
+        self.mgr = self.cons_mgr
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_register_registers_callback(self, *mocks):
+        callback = lambda: None
+        self.mgr.register(callback, 'TYPE')
+        self.assertEqual({callback}, self.mgr.get_callbacks('TYPE'))
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_register_succeeds_on_multiple_calls(self, *mocks):
+        callback1 = lambda: None
+        callback2 = lambda: None
+        self.mgr.register(callback1, 'TYPE')
+        self.mgr.register(callback2, 'TYPE')
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_get_callbacks_fails_on_unregistered_callback(
+        self, *mocks):
+        self.assertRaises(
+            rpc_exc.CallbackNotFound,
+            self.mgr.get_callbacks, 'TYPE')
+
+    @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
+    def test_get_callbacks_returns_proper_callbacks(self, *mocks):
+        callback1 = lambda: None
+        callback2 = lambda: None
+        self.mgr.register(callback1, 'TYPE1')
+        self.mgr.register(callback2, 'TYPE2')
+        self.assertEqual(set([callback1]), self.mgr.get_callbacks('TYPE1'))
+        self.assertEqual(set([callback2]), self.mgr.get_callbacks('TYPE2'))

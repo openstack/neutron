@@ -10,12 +10,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-CREATED = 'created'
-UPDATED = 'updated'
-DELETED = 'deleted'
+from neutron.common import exceptions
 
-VALID = (
-    CREATED,
-    UPDATED,
-    DELETED
-)
+
+class CallbackWrongResourceType(exceptions.NeutronException):
+    message = _('Callback for %(resource_type)s returned wrong resource type')
+
+
+class CallbackNotFound(exceptions.NeutronException):
+    message = _('Callback for %(resource_type)s not found')
+
+
+class CallbacksMaxLimitReached(exceptions.NeutronException):
+    message = _("Cannot add multiple callbacks for %(resource_type)s")

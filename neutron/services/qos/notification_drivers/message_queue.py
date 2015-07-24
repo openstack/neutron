@@ -12,8 +12,7 @@
 
 from oslo_log import log as logging
 
-from neutron.api.rpc.callbacks import events
-from neutron.api.rpc.callbacks import registry as rpc_registry
+from neutron.api.rpc.callbacks.producer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.i18n import _LW
 from neutron.objects.qos import policy as policy_object
@@ -41,9 +40,7 @@ class RpcQosServiceNotificationDriver(
     """RPC message queue service notification driver for QoS."""
 
     def __init__(self):
-        rpc_registry.register_provider(
-            _get_qos_policy_cb,
-            resources.QOS_POLICY)
+        registry.provide(_get_qos_policy_cb, resources.QOS_POLICY)
 
     def get_description(self):
         return "Message queue updates"
@@ -53,19 +50,9 @@ class RpcQosServiceNotificationDriver(
         pass
 
     def update_policy(self, policy):
-        # TODO(QoS): this is temporary until we get notify() implemented
-        try:
-            rpc_registry.notify(resources.QOS_POLICY,
-                                events.UPDATED,
-                                policy)
-        except NotImplementedError:
-            pass
+        # TODO(QoS): implement notification
+        pass
 
     def delete_policy(self, policy):
-        # TODO(QoS): this is temporary until we get notify() implemented
-        try:
-            rpc_registry.notify(resources.QOS_POLICY,
-                                events.DELETED,
-                                policy)
-        except NotImplementedError:
-            pass
+        # TODO(QoS): implement notification
+        pass

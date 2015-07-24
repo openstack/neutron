@@ -60,8 +60,8 @@ class QoSPlugin(qos.QoSPluginBase):
     def delete_policy(self, context, policy_id):
         policy = policy_object.QosPolicy(context)
         policy.id = policy_id
-        self.notification_driver_manager.delete_policy(policy)
         policy.delete()
+        self.notification_driver_manager.delete_policy(policy)
 
     def _get_policy_obj(self, context, policy_id):
         obj = policy_object.QosPolicy.get_by_id(context, policy_id)

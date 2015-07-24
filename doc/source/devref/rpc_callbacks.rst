@@ -4,7 +4,7 @@ Neutron Messaging Callback System
 
 Neutron already has a callback system [link-to: callbacks.rst] for
 in-process resource callbacks where publishers and subscribers are able
-to publish, subscribe and extend resources.
+to publish and subscribe for resource events.
 
 This system is different, and is intended to be used for inter-process
 callbacks, via the messaging fanout mechanisms.
@@ -16,12 +16,11 @@ modify existing RPC calls, or creating new RPC messages.
 
 A few resource which can benefit of this system:
 
-* security groups members
-* security group rules,
-* QoS policies.
+* QoS policies;
+* Security Groups.
 
 Using a remote publisher/subscriber pattern, the information about such
-resources could be published using fanout queues to all interested nodes,
+resources could be published using fanout messages to all interested nodes,
 minimizing messaging requests from agents to server since the agents
 get subscribed for their whole lifecycle (unless they unsubscribe).
 
@@ -37,8 +36,6 @@ versioned objects to be published and subscribed. Oslo versioned objects
 allow object version down/up conversion. #[vo_mkcompat]_ #[vo_mkcptests]_
 
 For the VO's versioning schema look here: #[vo_versioning]_
-
-
 
 versioned_objects serialization/deserialization with the
 obj_to_primitive(target_version=..) and primitive_to_obj() #[ov_serdes]_
@@ -58,42 +55,21 @@ Considering rolling upgrades, there are several scenarios to look at:
   to deserialize the object, in this case (PLEASE DISCUSS), we can think of two
   strategies:
 
-a) During upgrades, we pin neutron-server to a compatible version for resource
-   fanout updates, and server sends both the old, and the newer version to
-   different topic, queues. Old agents receive the updates on the old version
-   topic, new agents receive updates on the new version topic.
-   When the whole system upgraded, we un-pin the compatible version fanout.
 
-   A variant of this could be using a single fanout queue, and sending the
-   pinned version of the object to all. Newer agents can deserialize to the
-   latest version and upgrade any fields internally. Again at the end, we
-   unpin the version and restart the service.
-
-b) The subscriber will rpc call the publisher to start publishing also a downgraded
-   version of the object on every update on a separate queue. The complication
-   of this version, is the need to ignore new version objects as long as we keep
-   receiving the downgraded ones, and otherwise resend the request to send the
-   downgraded objects after a certain timeout (thinking of the case where the
-   request for downgraded queue is done, but the publisher restarted).
-   This approach is more complicated to implement, but more automated from the
-   administrator point of view. We may want to look into it as a second step
-   from a
-
-c) The subscriber will send a registry.get_info for the latest specific version
-   he knows off. This can have scalability issues during upgrade as any outdated
-   agent will require a flow of two messages (request, and response). This is
-   indeed very bad at scale if you have hundreds or thousands of agents.
-
-Option a seems like a reasonable strategy, similar to what nova does now with
-versioned objects.
+The strategy for upgrades will be:
+   During upgrades, we pin neutron-server to a compatible version for resource
+   fanout updates, and the server sends both the old, and the newer version.
+   The new agents process updates, taking the newer version of the resource
+   fanout updates.  When the whole system upgraded, we un-pin the compatible
+   version fanout.
 
 Serialized versioned objects look like::
 
    {'versioned_object.version': '1.0',
-    'versioned_object.name': 'QoSProfile',
+    'versioned_object.name': 'QoSPolicy',
     'versioned_object.data': {'rules': [
                                         {'versioned_object.version': '1.0',
-                                         'versioned_object.name': 'QoSRule',
+                                         'versioned_object.name': 'QoSBandwidthLimitRule',
                                          'versioned_object.data': {'name': u'a'},
                                          'versioned_object.namespace': 'versionedobjects'}
                                         ],
@@ -101,19 +77,18 @@ Serialized versioned objects look like::
                               'name': u'aaa'},
     'versioned_object.namespace': 'versionedobjects'}
 
-Topic names for the fanout queues
-=================================
+Topic names for every resource type RPC endpoint
+================================================
 
-if we adopted option a:
-neutron-<resouce_type>_<resource_id>-<vo_version>
-[neutron-<resouce_type>_<resource_id>-<vo_version_compat>]
+neutron-vo-<resource_class_name>-<version>
 
-if we adopted option b for rolling upgrades:
-neutron-<resource_type>-<resource_id>
-neutron-<resource_type>-<resource_id>-<vo_version>
+In the future, we may want to get oslo messaging to support subscribing
+topics dynamically, then we may want to use:
 
-for option c, just:
-neutron-<resource_type>-<resource_id>
+neutron-vo-<resource_class_name>-<resource_id>-<version> instead,
+
+or something equivalent which would allow fine granularity for the receivers
+to only get interesting information to them.
 
 Subscribing to resources
 ========================
@@ -123,103 +98,86 @@ has an associated security group, and QoS policy.
 
 The agent code processing port updates may look like::
 
-    from neutron.rpc_resources import events
-    from neutron.rpc_resources import resources
-    from neutron.rpc_resources import registry
+    from neutron.api.rpc.callbacks.consumer import registry
+    from neutron.api.rpc.callbacks import events
+    from neutron.api.rpc.callbacks import resources
 
 
-    def process_resource_updates(resource_type, resource_id, resource_list, action_type):
+    def process_resource_updates(resource_type, resource, event_type):
 
         # send to the right handler which will update any control plane
         # details related to the updated resource...
 
 
-    def port_update(...):
+    def subscribe_resources():
+        registry.subscribe(process_resource_updates, resources.SEC_GROUP)
+
+        registry.subscribe(process_resource_updates, resources.QOS_POLICY)
+
+    def port_update(port):
 
         # here we extract sg_id and qos_policy_id from port..
 
-        registry.subscribe(resources.SG_RULES, sg_id,
-                           callback=process_resource_updates)
-        sg_rules = registry.get_info(resources.SG_RULES, sg_id)
-
-        registry.subscribe(resources.SG_MEMBERS, sg_id,
-                           callback=process_resource_updates)
-        sg_members = registry.get_info(resources.SG_MEMBERS, sg_id)
-
-        registry.subscribe(resources.QOS_RULES, qos_policy_id,
-                           callback=process_resource_updates)
-        qos_rules = registry.get_info(resources.QOS_RULES, qos_policy_id,
-                                      callback=process_resource_updates)
-
-        cleanup_subscriptions()
+        sec_group = registry.pull(resources.SEC_GROUP, sg_id)
+        qos_policy = registry.pull(resources.QOS_POLICY, qos_policy_id)
 
 
-    def cleanup_subscriptions()
-        sg_ids = determine_unreferenced_sg_ids()
-        qos_policy_id = determine_unreferenced_qos_policy_ids()
-        registry.unsubscribe_info(resource.SG_RULES, sg_ids)
-        registry.unsubscribe_info(resource.SG_MEMBERS, sg_ids)
-        registry.unsubscribe_info(resource.QOS_RULES, qos_policy_id)
+The relevant function is:
 
-Another unsubscription strategy could be to lazily unsubscribe resources when
-we receive updates for them, and we discover that they are not needed anymore.
-
-Deleted resources are automatically unsubscribed as we receive the delete event.
-
-NOTE(irenab): this could be extended to core resources like ports, making use
-of the standard neutron in-process callbacks at server side and propagating
-AFTER_UPDATE events, for example, but we may need to wait until those callbacks
-are used with proper versioned objects.
+* subscribe(callback, resource_type): subscribes callback to a resource type.
 
 
-Unsubscribing to resources
-==========================
+The callback function will receive the following arguments:
 
-There are a few options to unsubscribe registered callbacks:
+* resource_type: the type of resource which is receiving the update.
+* resource: resource of supported object
+* event_type: will be one of CREATED, UPDATED, or DELETED, see
+  neutron.api.rpc.callbacks.events for details.
 
-* unsubscribe_resource_id(): it selectively unsubscribes an specific
-                             resource type + id.
-* unsubscribe_resource_type(): it unsubscribes from an specific resource type,
-                               any ID.
-* unsubscribe_all(): it unsubscribes all subscribed resources and ids.
+With the underlaying oslo_messaging support for dynamic topics on the receiver
+we cannot implement a per "resource type + resource id" topic, rabbitmq seems
+to handle 10000's of topics without suffering, but creating 100's of
+oslo_messaging receivers on different topics seems to crash.
+
+We may want to look into that later, to avoid agents receiving resource updates
+which are uninteresting to them.
+
+Unsubscribing from resources
+============================
+
+To unsubscribe registered callbacks:
+
+* unsubscribe(callback, resource_type): unsubscribe from specific resource type.
+* unsubscribe_all(): unsubscribe from all resources.
 
 
-Sending resource updates
-========================
+Sending resource events
+=======================
 
 On the server side, resource updates could come from anywhere, a service plugin,
-an extension, anything that updates the resource and that it's of any interest
-to the agents.
+an extension, anything that updates, creates, or destroys the resource and that
+is of any interest to subscribed agents.
 
 The server/publisher side may look like::
 
-    from neutron.rpc_resources import events
-    from neutron.rpc_resources import resources
-    from neutron.rpc_resources import registry as rpc_registry
+    from neutron.api.rpc.callbacks.producer import registry
+    from neutron.api.rpc.callbacks import events
 
-    def add_qos_x_rule(...):
+    def create_qos_policy(...):
+        policy = fetch_policy(...)
         update_the_db(...)
-        send_rpc_updates_on_qos_policy(qos_policy_id)
+        registry.push(policy, events.CREATED)
 
-    def del_qos_x_rule(...):
+    def update_qos_policy(...):
+        policy = fetch_policy(...)
         update_the_db(...)
-        send_rpc_deletion_of_qos_policy(qos_policy_id)
+        registry.push(policy, events.UPDATED)
 
-    def send_rpc_updates_on_qos_policy(qos_policy_id):
-        rules = get_qos_policy_rules_versioned_object(qos_policy_id)
-        rpc_registry.notify(resources.QOS_RULES, qos_policy_id, rules, events.UPDATE)
+    def delete_qos_policy(...):
+        policy = fetch_policy(...)
+        update_the_db(...)
+        registry.push(policy, events.DELETED)
 
-    def send_rpc_deletion_of_qos_policy(qos_policy_id):
-        rpc_registry.notify(resources.QOS_RULES, qos_policy_id, None, events.DELETE)
-
-    # This part is added for the registry mechanism, to be able to request
-    # older versions of the notified objects if any oudated agent requires
-    # them.
-    def retrieve_older_version_callback(qos_policy_id, version):
-        return get_qos_policy_rules_versioned_object(qos_policy_id, version)
-
-    rpc_registry.register_retrieve_callback(resource.QOS_RULES,
-                                            retrieve_older_version_callback)
 
 References
 ==========

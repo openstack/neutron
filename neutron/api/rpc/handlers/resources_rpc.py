@@ -17,7 +17,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.api.rpc.callbacks import registry
+from neutron.api.rpc.callbacks.producer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions
@@ -46,13 +46,19 @@ def _validate_resource_type(resource_type):
         raise InvalidResourceTypeClass(resource_type=resource_type)
 
 
-class ResourcesServerRpcApi(object):
+class ResourcesPullRpcApi(object):
     """Agent-side RPC (stub) for agent-to-plugin interaction.
 
     This class implements the client side of an rpc interface.  The server side
-    can be found below: ResourcesServerRpcCallback.  For more information on
+    can be found below: ResourcesPullRpcCallback.  For more information on
     this RPC interface, see doc/source/devref/rpc_callbacks.rst.
     """
+
+    def __new__(cls):
+        # make it a singleton
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(ResourcesPullRpcApi, cls).__new__(cls)
+        return cls._instance
 
     def __init__(self):
         target = oslo_messaging.Target(
@@ -61,7 +67,7 @@ class ResourcesServerRpcApi(object):
         self.client = n_rpc.get_client(target)
 
     @log_helpers.log_method_call
-    def get_info(self, context, resource_type, resource_id):
+    def pull(self, context, resource_type, resource_id):
         _validate_resource_type(resource_type)
 
         # we've already validated the resource type, so we are pretty sure the
@@ -69,7 +75,7 @@ class ResourcesServerRpcApi(object):
         resource_type_cls = resources.get_resource_cls(resource_type)
 
         cctxt = self.client.prepare()
-        primitive = cctxt.call(context, 'get_info',
+        primitive = cctxt.call(context, 'pull',
             resource_type=resource_type,
             version=resource_type_cls.VERSION, resource_id=resource_id)
 
@@ -82,11 +88,11 @@ class ResourcesServerRpcApi(object):
         return obj
 
 
-class ResourcesServerRpcCallback(object):
+class ResourcesPullRpcCallback(object):
     """Plugin-side RPC (implementation) for agent-to-plugin interaction.
 
     This class implements the server side of an rpc interface.  The client side
-    can be found above: ResourcesServerRpcApi.  For more information on
+    can be found above: ResourcesPullRpcApi.  For more information on
     this RPC interface, see doc/source/devref/rpc_callbacks.rst.
     """
 
@@ -96,14 +102,10 @@ class ResourcesServerRpcCallback(object):
     target = oslo_messaging.Target(
         version='1.0', namespace=constants.RPC_NAMESPACE_RESOURCES)
 
-    def get_info(self, context, resource_type, version, resource_id):
+    def pull(self, context, resource_type, version, resource_id):
         _validate_resource_type(resource_type)
 
-        obj = registry.get_info(
-            resource_type,
-            resource_id,
-            context=context)
-
+        obj = registry.pull(resource_type, resource_id, context=context)
         if obj:
             # don't request a backport for the latest known version
             if version == obj.VERSION:

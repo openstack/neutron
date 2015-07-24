@@ -164,7 +164,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             dhcp_rpc.DhcpRpcCallback(),
             agents_db.AgentExtRpcCallback(),
             metadata_rpc.MetadataRpcCallback(),
-            resources_rpc.ResourcesServerRpcCallback()
+            resources_rpc.ResourcesPullRpcCallback()
         ]
 
     def _setup_dhcp(self):

@@ -76,7 +76,7 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         """
         super(QosAgentExtension, self).initialize()
 
-        self.resource_rpc = resources_rpc.ResourcesServerRpcApi()
+        self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self.qos_driver = manager.NeutronManager.load_class_for_provider(
             'neutron.qos.agent_drivers', cfg.CONF.qos.agent_driver)()
         self.qos_driver.initialize()
@@ -111,8 +111,8 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         # 1. to add new api for subscribe
         #    registry.subscribe(self._process_policy_updates,
         #                   resources.QOS_POLICY, qos_policy_id)
-        # 2. combine get_info rpc to also subscribe to the resource
-        qos_policy = self.resource_rpc.get_info(
+        # 2. combine pull rpc to also subscribe to the resource
+        qos_policy = self.resource_rpc.pull(
             context,
             resources.QOS_POLICY,
             qos_policy_id)

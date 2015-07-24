@@ -23,7 +23,7 @@ from neutron.tests import base
 
 # This is a minimalistic mock of rules to be passed/checked around
 # which should be exteneded as needed to make real rules
-TEST_GET_INFO_RULES = ['rule1', 'rule2']
+TEST_GET_RESOURCE_RULES = ['rule1', 'rule2']
 
 
 class QosAgentExtensionTestCase(base.BaseTestCase):
@@ -40,11 +40,10 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
         ).start()
 
         self.qos_ext.initialize()
-        self._create_fake_resource_rpc()
 
-    def _create_fake_resource_rpc(self):
-        self.get_info_mock = mock.Mock(return_value=TEST_GET_INFO_RULES)
-        self.qos_ext.resource_rpc.get_info = self.get_info_mock
+        self.pull_mock = mock.patch.object(
+            self.qos_ext.resource_rpc, 'pull',
+            return_value=TEST_GET_RESOURCE_RULES).start()
 
     def _create_test_port_dict(self):
         return {'port_id': uuidutils.generate_uuid(),
@@ -65,7 +64,7 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
         # we make sure the underlaying qos driver is called with the
         # right parameters
         self.qos_ext.qos_driver.create.assert_called_once_with(
-            port, TEST_GET_INFO_RULES)
+            port, TEST_GET_RESOURCE_RULES)
         self.assertEqual(port,
             self.qos_ext.qos_policy_ports[qos_policy_id][port_id])
         self.assertTrue(port_id in self.qos_ext.known_ports)
@@ -81,10 +80,10 @@ class QosAgentExtensionTestCase(base.BaseTestCase):
     def test_handle_known_port_change_policy_id(self):
         port = self._create_test_port_dict()
         self.qos_ext.handle_port(self.context, port)
-        self.qos_ext.resource_rpc.get_info.reset_mock()
+        self.qos_ext.resource_rpc.pull.reset_mock()
         port['qos_policy_id'] = uuidutils.generate_uuid()
         self.qos_ext.handle_port(self.context, port)
-        self.get_info_mock.assert_called_once_with(
+        self.pull_mock.assert_called_once_with(
              self.context, resources.QOS_POLICY,
              port['qos_policy_id'])
         #TODO(QoS): handle qos_driver.update call check when
