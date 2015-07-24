@@ -112,12 +112,6 @@ class Qos(extensions.ExtensionDescriptor):
         return "qos"
 
     @classmethod
-    def get_namespace(cls):
-        #TODO(QoS): Remove, there's still a caller using it for log/debug
-        #           which will crash otherwise
-        return None
-
-    @classmethod
     def get_description(cls):
         return "The Quality of Service extension."
 
