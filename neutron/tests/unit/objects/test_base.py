@@ -95,7 +95,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertTrue(self._is_test_class(obj))
             self.assertEqual(self.db_obj, get_obj_db_fields(obj))
             get_object_mock.assert_called_once_with(
-                self.context, self._test_class.db_model, 'fake_id')
+                self.context, self._test_class.db_model, id='fake_id')
 
     def test_get_by_id_missing_object(self):
         with mock.patch.object(db_api, 'get_object', return_value=None):

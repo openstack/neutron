@@ -89,7 +89,7 @@ class QosRule(base.NeutronObject):
         if obj:
             # the object above does not contain fields from base QosRule yet,
             # so fetch it and mix its fields into the object
-            base_db_obj = db_api.get_object(context, cls.base_db_model, id)
+            base_db_obj = db_api.get_object(context, cls.base_db_model, id=id)
             for field in cls._core_fields:
                 setattr(obj, field, base_db_obj[field])
 

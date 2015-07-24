@@ -94,20 +94,10 @@ class convert_db_exception_to_retry(object):
 
 
 # Common database operation implementations
-# TODO(QoS): consider reusing get_objects below
-# TODO(QoS): consider changing the name and making it public, officially
-def _find_object(context, model, **kwargs):
+def get_object(context, model, **kwargs):
     with context.session.begin(subtransactions=True):
         return (common_db_mixin.model_query(context, model)
                 .filter_by(**kwargs)
-                .first())
-
-
-def get_object(context, model, id):
-    # TODO(QoS): consider reusing get_objects below
-    with context.session.begin(subtransactions=True):
-        return (common_db_mixin.model_query(context, model)
-                .filter_by(id=id)
                 .first())
 
 
@@ -129,7 +119,7 @@ def create_object(context, model, values):
 
 def update_object(context, model, id, values):
     with context.session.begin(subtransactions=True):
-        db_obj = get_object(context, model, id)
+        db_obj = get_object(context, model, id=id)
         db_obj.update(values)
         db_obj.save(session=context.session)
     return db_obj.__dict__
@@ -137,5 +127,5 @@ def update_object(context, model, id, values):
 
 def delete_object(context, model, id):
     with context.session.begin(subtransactions=True):
-        db_obj = get_object(context, model, id)
+        db_obj = get_object(context, model, id=id)
         context.session.delete(db_obj)
