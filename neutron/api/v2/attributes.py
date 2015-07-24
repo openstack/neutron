@@ -578,7 +578,7 @@ def convert_none_to_empty_dict(value):
 def convert_to_list(data):
     if data is None:
         return []
-    elif hasattr(data, '__iter__'):
+    elif hasattr(data, '__iter__') and not isinstance(data, six.string_types):
         return list(data)
     else:
         return [data]
