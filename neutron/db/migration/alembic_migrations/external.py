@@ -29,6 +29,13 @@ DRIVER_TABLES = [
     'cisco_ml2_apic_contracts',
     'cisco_ml2_apic_names',
     'cisco_ml2_apic_host_links',
+    'cisco_ml2_n1kv_policy_profiles',
+    'cisco_ml2_n1kv_network_profiles',
+    'cisco_ml2_n1kv_port_bindings',
+    'cisco_ml2_n1kv_network_bindings',
+    'cisco_ml2_n1kv_vxlan_allocations',
+    'cisco_ml2_n1kv_vlan_allocations',
+    'cisco_ml2_n1kv_profile_bindings',
     # Add your tables with moved models here^. Please end with a comma.
 ]
 
