@@ -19,6 +19,7 @@ Utility methods for working with WSGI servers
 from __future__ import print_function
 
 import errno
+import logging as std_logging
 import os
 import socket
 import ssl
@@ -238,6 +239,8 @@ class Server(object):
         if workers < 1:
             # The API service should run in the current process.
             self._server = service
+            # Dump the initial option values
+            cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
             service.start()
             systemd.notify_once()
         else:
