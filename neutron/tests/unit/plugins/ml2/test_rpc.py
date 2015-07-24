@@ -28,6 +28,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import topics
+from neutron.extensions import qos
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc as plugin_rpc
@@ -133,6 +134,31 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.plugin.update_port_status.reset_mock()
         self.callbacks.get_device_details(mock.Mock())
         self.assertTrue(self.plugin.update_port_status.called)
+
+    def test_get_device_details_qos_policy_id_none(self):
+        port = collections.defaultdict(lambda: 'fake_port')
+        self.plugin.get_bound_port_context().current = port
+        self.plugin.get_bound_port_context().network._network = (
+            {"id": "fake_network"})
+        res = self.callbacks.get_device_details(mock.Mock(), host='fake')
+        self.assertIsNone(res['qos_policy_id'])
+
+    def test_get_device_details_qos_policy_id_inherited_from_network(self):
+        port = collections.defaultdict(lambda: 'fake_port')
+        self.plugin.get_bound_port_context().current = port
+        self.plugin.get_bound_port_context().network._network = (
+            {"id": "fake_network", qos.QOS_POLICY_ID: 'test-policy-id'})
+        res = self.callbacks.get_device_details(mock.Mock(), host='fake')
+        self.assertEqual('test-policy-id', res['qos_policy_id'])
+
+    def test_get_device_details_qos_policy_id_taken_from_port(self):
+        port = collections.defaultdict(
+            lambda: 'fake_port', {qos.QOS_POLICY_ID: 'test-port-policy-id'})
+        self.plugin.get_bound_port_context().current = port
+        self.plugin.get_bound_port_context().network._network = (
+            {"id": "fake_network", qos.QOS_POLICY_ID: 'test-net-policy-id'})
+        res = self.callbacks.get_device_details(mock.Mock(), host='fake')
+        self.assertEqual('test-port-policy-id', res['qos_policy_id'])
 
     def test_get_devices_details_list(self):
         devices = [1, 2, 3, 4, 5]
