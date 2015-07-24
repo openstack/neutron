@@ -120,8 +120,8 @@ class QoSPlugin(qos.QoSPluginBase):
         policy.create()
         return policy.to_dict()
 
-    def update_policy(self, context, policy_id, qos_policy):
-        policy = policy_object.QosPolicy(context, **qos_policy['policy'])
+    def update_policy(self, context, policy_id, policy):
+        policy = policy_object.QosPolicy(context, **policy['policy'])
         policy.id = policy_id
         policy.update()
         return policy.to_dict()
@@ -159,7 +159,7 @@ class QoSPlugin(qos.QoSPluginBase):
             context, qos_policy_id=policy_id,
             **bandwidth_limit_rule['bandwidth_limit_rule'])
         rule.create()
-        return rule
+        return rule.to_dict()
 
     def update_policy_bandwidth_limit_rule(self, context, rule_id, policy_id,
                                            bandwidth_limit_rule):
@@ -167,7 +167,7 @@ class QoSPlugin(qos.QoSPluginBase):
             context, **bandwidth_limit_rule['bandwidth_limit_rule'])
         rule.id = rule_id
         rule.update()
-        return rule
+        return rule.to_dict()
 
     def delete_policy_bandwidth_limit_rule(self, context, rule_id, policy_id):
         rule = rule_object.QosBandwidthLimitRule()
