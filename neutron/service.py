@@ -14,7 +14,6 @@
 #    under the License.
 
 import inspect
-import logging as std_logging
 import os
 import random
 
@@ -92,8 +91,6 @@ class NeutronApiService(WsgiService):
         # Log the options used when starting if we're in debug mode...
 
         config.setup_logging()
-        # Dump the initial option values
-        cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
         service = cls(app_name)
         return service
 
@@ -186,8 +183,6 @@ def _run_wsgi(app_name):
     server = wsgi.Server("Neutron")
     server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host,
                  workers=_get_api_workers())
-    # Dump all option values here after all options are parsed
-    cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
     LOG.info(_LI("Neutron service started, listening on %(host)s:%(port)s"),
              {'host': cfg.CONF.bind_host, 'port': cfg.CONF.bind_port})
     return server
