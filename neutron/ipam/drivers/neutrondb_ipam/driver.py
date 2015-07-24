@@ -56,7 +56,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         ipam_subnet_id = uuidutils.generate_uuid()
         subnet_manager = ipam_db_api.IpamSubnetManager(
             ipam_subnet_id,
-            None)
+            subnet_request.subnet_id)
         # Create subnet resource
         session = ctx.session
         subnet_manager.create(session)
@@ -76,8 +76,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
                    allocation_pools=pools,
                    gateway_ip=subnet_request.gateway_ip,
                    tenant_id=subnet_request.tenant_id,
-                   subnet_id=subnet_request.subnet_id,
-                   subnet_id_not_set=True)
+                   subnet_id=subnet_request.subnet_id)
 
     @classmethod
     def load(cls, neutron_subnet_id, ctx):
@@ -88,7 +87,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         ipam_subnet = ipam_db_api.IpamSubnetManager.load_by_neutron_subnet_id(
             ctx.session, neutron_subnet_id)
         if not ipam_subnet:
-            LOG.error(_LE("Unable to retrieve IPAM subnet as the referenced "
+            LOG.error(_LE("IPAM subnet referenced to "
                           "Neutron subnet %s does not exist"),
                       neutron_subnet_id)
             raise n_exc.SubnetNotFound(subnet_id=neutron_subnet_id)
@@ -113,7 +112,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
     def __init__(self, internal_id, ctx, cidr=None,
                  allocation_pools=None, gateway_ip=None, tenant_id=None,
-                 subnet_id=None, subnet_id_not_set=False):
+                 subnet_id=None):
         # NOTE: In theory it could have been possible to grant the IPAM
         # driver direct access to the database. While this is possible,
         # it would have led to duplicate code and/or non-trivial
@@ -124,7 +123,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         self._pools = allocation_pools
         self._gateway_ip = gateway_ip
         self._tenant_id = tenant_id
-        self._subnet_id = None if subnet_id_not_set else subnet_id
+        self._subnet_id = subnet_id
         self.subnet_manager = ipam_db_api.IpamSubnetManager(internal_id,
                                                             self._subnet_id)
         self._context = ctx
@@ -363,17 +362,6 @@ class NeutronDbSubnet(ipam_base.Subnet):
             self._tenant_id, self.subnet_manager.neutron_id,
             self._cidr, self._gateway_ip, self._pools)
 
-    def associate_neutron_subnet(self, subnet_id):
-        """Set neutron identifier for this subnet"""
-        session = self._context.session
-        if self._subnet_id:
-            raise
-        # IPAMSubnet does not have foreign key to Subnet,
-        # so need verify subnet existence.
-        NeutronDbSubnet._fetch_subnet(self._context, subnet_id)
-        self.subnet_manager.associate_neutron_id(session, subnet_id)
-        self._subnet_id = subnet_id
-
 
 class NeutronDbPool(subnet_alloc.SubnetAllocator):
     """Subnet pools backed by Neutron Database.
@@ -429,10 +417,16 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
         subnet.update_allocation_pools(subnet_request.allocation_pools)
         return subnet
 
-    def remove_subnet(self, subnet):
+    def remove_subnet(self, subnet_id):
         """Remove data structures for a given subnet.
 
-        All the IPAM-related data are cleared when a subnet is deleted thanks
-        to cascaded foreign key relationships.
+        IPAM-related data has no foreign key relationships to neutron subnet,
+        so removing ipam subnet manually
         """
-        pass
+        count = ipam_db_api.IpamSubnetManager.delete(self._context.session,
+                                                     subnet_id)
+        if count < 1:
+            LOG.error(_LE("IPAM subnet referenced to "
+                          "Neutron subnet %s does not exist"),
+                      subnet_id)
+            raise n_exc.SubnetNotFound(subnet_id=subnet_id)

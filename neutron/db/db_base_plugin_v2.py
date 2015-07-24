@@ -36,6 +36,7 @@ from neutron import context as ctx
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_non_pluggable_backend
+from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import sqlalchemyutils
@@ -101,7 +102,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          self.nova_notifier.record_port_status_changed)
 
     def set_ipam_backend(self):
-        self.ipam = ipam_non_pluggable_backend.IpamNonPluggableBackend()
+        if cfg.CONF.ipam_driver:
+            self.ipam = ipam_pluggable_backend.IpamPluggableBackend()
+        else:
+            self.ipam = ipam_non_pluggable_backend.IpamNonPluggableBackend()
 
     def _validate_host_route(self, route, ip_version):
         try:
@@ -470,10 +474,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, s["network_id"])
-            subnet = self.ipam.allocate_subnet(context,
-                                               network,
-                                               s,
-                                               subnetpool_id)
+            subnet, ipam_subnet = self.ipam.allocate_subnet(context,
+                                                            network,
+                                                            s,
+                                                            subnetpool_id)
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
                                          network,
@@ -481,7 +485,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # If this subnet supports auto-addressing, then update any
         # internal ports on the network with addresses for this subnet.
         if ipv6_utils.is_auto_address_subnet(subnet):
-            self.ipam.add_auto_addrs_on_network_ports(context, subnet)
+            self.ipam.add_auto_addrs_on_network_ports(context, subnet,
+                                                      ipam_subnet)
         return self._make_subnet_dict(subnet, context=context)
 
     def _get_subnetpool_id(self, subnet):
@@ -561,21 +566,24 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         s['ip_version'] = db_subnet.ip_version
         s['cidr'] = db_subnet.cidr
         s['id'] = db_subnet.id
+        s['tenant_id'] = db_subnet.tenant_id
         self._validate_subnet(context, s, cur_subnet=db_subnet)
+        db_pools = [netaddr.IPRange(p['first_ip'], p['last_ip'])
+                    for p in db_subnet.allocation_pools]
+
+        range_pools = None
+        if s.get('allocation_pools') is not None:
+            # Convert allocation pools to IPRange to simplify future checks
+            range_pools = self.ipam.pools_to_ip_range(s['allocation_pools'])
+            s['allocation_pools'] = range_pools
 
         if s.get('gateway_ip') is not None:
-            if s.get('allocation_pools') is not None:
-                allocation_pools = [{'start': p['start'], 'end': p['end']}
-                                    for p in s['allocation_pools']]
-            else:
-                allocation_pools = [{'start': p['first_ip'],
-                                     'end': p['last_ip']}
-                                    for p in db_subnet.allocation_pools]
-            self.ipam.validate_gw_out_of_pools(s["gateway_ip"],
-                                               allocation_pools)
+            pools = range_pools if range_pools is not None else db_pools
+            self.ipam.validate_gw_out_of_pools(s["gateway_ip"], pools)
 
         with context.session.begin(subtransactions=True):
-            subnet, changes = self.ipam.update_db_subnet(context, id, s)
+            subnet, changes = self.ipam.update_db_subnet(context, id, s,
+                                                         db_pools)
         result = self._make_subnet_dict(subnet, context=context)
         # Keep up with fields that changed
         result.update(changes)
@@ -654,6 +662,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     raise n_exc.SubnetInUse(subnet_id=id)
 
             context.session.delete(subnet)
+            # Delete related ipam subnet manually,
+            # since there is no FK relationship
+            self.ipam.delete_subnet(context, id)
 
     def get_subnet(self, context, id, fields=None):
         subnet = self._get_subnet(context, id)
