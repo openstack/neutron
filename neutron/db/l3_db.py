@@ -1266,7 +1266,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         routers_dict = dict((router['id'], router) for router in routers)
         self._process_floating_ips(context, routers_dict, floating_ips)
         self._process_interfaces(routers_dict, interfaces)
-        return routers_dict.values()
+        return list(routers_dict.values())
 
 
 class L3RpcNotifierMixin(object):
