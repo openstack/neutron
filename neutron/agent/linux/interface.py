@@ -18,7 +18,6 @@ import abc
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import importutils
 import six
 
 from neutron.agent.common import ovs_lib
@@ -26,7 +25,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions
-from neutron.extensions import flavor
 from neutron.i18n import _LE, _LI
 
 
@@ -41,29 +39,6 @@ OPTS = [
                 help=_('Uses veth for an interface or not')),
     cfg.IntOpt('network_device_mtu',
                help=_('MTU setting for device.')),
-    cfg.StrOpt('meta_flavor_driver_mappings',
-               help=_('Mapping between flavor and LinuxInterfaceDriver. '
-                      'It is specific to MetaInterfaceDriver used with '
-                      'admin_user, admin_password, admin_tenant_name, '
-                      'admin_url, auth_strategy, auth_region and '
-                      'endpoint_type.')),
-    cfg.StrOpt('admin_user',
-               help=_("Admin username")),
-    cfg.StrOpt('admin_password',
-               help=_("Admin password"),
-               secret=True),
-    cfg.StrOpt('admin_tenant_name',
-               help=_("Admin tenant name")),
-    cfg.StrOpt('auth_url',
-               help=_("Authentication URL")),
-    cfg.StrOpt('auth_strategy', default='keystone',
-               help=_("The type of authentication to use")),
-    cfg.StrOpt('auth_region',
-               help=_("Authentication region")),
-    cfg.StrOpt('endpoint_type',
-               default='publicURL',
-               help=_("Network service endpoint type to pull from "
-                      "the keystone catalog")),
 ]
 
 
@@ -420,63 +395,3 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         except RuntimeError:
             LOG.error(_LE("Failed unplugging interface '%s'"),
                       device_name)
-
-
-class MetaInterfaceDriver(LinuxInterfaceDriver):
-    def __init__(self, conf):
-        super(MetaInterfaceDriver, self).__init__(conf)
-        from neutronclient.v2_0 import client
-        self.neutron = client.Client(
-            username=self.conf.admin_user,
-            password=self.conf.admin_password,
-            tenant_name=self.conf.admin_tenant_name,
-            auth_url=self.conf.auth_url,
-            auth_strategy=self.conf.auth_strategy,
-            region_name=self.conf.auth_region,
-            endpoint_type=self.conf.endpoint_type
-        )
-        self.flavor_driver_map = {}
-        for net_flavor, driver_name in [
-                driver_set.split(':')
-                for driver_set in
-                self.conf.meta_flavor_driver_mappings.split(',')]:
-            self.flavor_driver_map[net_flavor] = self._load_driver(driver_name)
-
-    def _get_flavor_by_network_id(self, network_id):
-        network = self.neutron.show_network(network_id)
-        return network['network'][flavor.FLAVOR_NETWORK]
-
-    def _get_driver_by_network_id(self, network_id):
-        net_flavor = self._get_flavor_by_network_id(network_id)
-        return self.flavor_driver_map[net_flavor]
-
-    def _set_device_plugin_tag(self, network_id, device_name, namespace=None):
-        plugin_tag = self._get_flavor_by_network_id(network_id)
-        device = ip_lib.IPDevice(device_name, namespace=namespace)
-        device.link.set_alias(plugin_tag)
-
-    def _get_device_plugin_tag(self, device_name, namespace=None):
-        device = ip_lib.IPDevice(device_name, namespace=namespace)
-        return device.link.alias
-
-    def get_device_name(self, port):
-        driver = self._get_driver_by_network_id(port.network_id)
-        return driver.get_device_name(port)
-
-    def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None):
-        driver = self._get_driver_by_network_id(network_id)
-        ret = driver.plug(network_id, port_id, device_name, mac_address,
-                          bridge=bridge, namespace=namespace, prefix=prefix)
-        self._set_device_plugin_tag(network_id, device_name, namespace)
-        return ret
-
-    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
-        plugin_tag = self._get_device_plugin_tag(device_name, namespace)
-        driver = self.flavor_driver_map[plugin_tag]
-        return driver.unplug(device_name, bridge, namespace, prefix)
-
-    def _load_driver(self, driver_provider):
-        LOG.debug("Driver location: %s", driver_provider)
-        plugin_klass = importutils.import_class(driver_provider)
-        return plugin_klass(self.conf)
