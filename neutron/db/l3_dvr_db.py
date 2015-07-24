@@ -87,7 +87,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             router_res.get('distributed') is False):
             LOG.info(_LI("Centralizing distributed router %s "
                          "is not supported"), router_db['id'])
-            raise NotImplementedError()
+            raise n_exc.NotSupported(msg=_("Migration from distributed router "
+                                           "to centralized"))
         elif (not router_db.extra_attributes.distributed and
               router_res.get('distributed')):
             # Notify advanced services of the imminent state transition

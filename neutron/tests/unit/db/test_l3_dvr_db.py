@@ -85,7 +85,7 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             'distributed': True
         }
         router_db = self._create_router(router)
-        self.assertRaises(NotImplementedError,
+        self.assertRaises(exceptions.NotSupported,
                           self.mixin._validate_router_migration,
                           self.ctx, router_db, {'distributed': False})
 
