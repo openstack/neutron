@@ -27,33 +27,17 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     def setUp(self):
         super(QosPolicyObjectTestCase, self).setUp()
-        self.db_qos_rules = [self.get_random_fields(rule.QosRule)
-                             for _ in range(3)]
-
-        # Tie qos rules with policies
-        self.db_qos_rules[0]['qos_policy_id'] = self.db_objs[0]['id']
-        self.db_qos_rules[1]['qos_policy_id'] = self.db_objs[0]['id']
-        self.db_qos_rules[2]['qos_policy_id'] = self.db_objs[1]['id']
-
+        # qos_policy_ids will be incorrect, but we don't care in this test
         self.db_qos_bandwidth_rules = [
             self.get_random_fields(rule.QosBandwidthLimitRule)
             for _ in range(3)]
 
-        # Tie qos rules with qos bandwidth limit rules
-        for i, qos_rule in enumerate(self.db_qos_rules):
-            self.db_qos_bandwidth_rules[i]['id'] = qos_rule['id']
-
         self.model_map = {
             self._test_class.db_model: self.db_objs,
-            rule.QosRule.base_db_model: self.db_qos_rules,
             rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules}
 
-    def fake_get_objects(self, context, model, qos_policy_id=None):
-        objs = self.model_map[model]
-        if model is rule.QosRule.base_db_model and qos_policy_id:
-            return [obj for obj in objs
-                    if obj['qos_policy_id'] == qos_policy_id]
-        return objs
+    def fake_get_objects(self, context, model, **kwargs):
+        return self.model_map[model]
 
     def fake_get_object(self, context, model, id):
         objects = self.model_map[model]
@@ -76,8 +60,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
                     objs = self._test_class.get_objects(self.context)
                     context_mock.assert_called_once_with()
-                    get_objects_mock.assert_any_call(
-                        admin_context, self._test_class.db_model)
+            get_objects_mock.assert_any_call(
+                admin_context, self._test_class.db_model)
         self._validate_objects(self.db_objs, objs)
 
     def test_get_by_id(self):

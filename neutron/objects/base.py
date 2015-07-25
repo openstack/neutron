@@ -15,7 +15,20 @@ import abc
 from oslo_versionedobjects import base as obj_base
 import six
 
+from neutron.common import exceptions
 from neutron.db import api as db_api
+
+
+class NeutronObjectUpdateForbidden(exceptions.NeutronException):
+    message = _("Unable to update the following object fields: %(fields)s")
+
+
+def get_updatable_fields(cls, fields):
+    fields = fields.copy()
+    for field in cls.fields_no_update:
+        if field in fields:
+            del fields[field]
+    return fields
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -54,10 +67,9 @@ class NeutronDbObject(NeutronObject):
     # should be overridden for all persistent objects
     db_model = None
 
-    # fields that are not allowed to update
-    fields_no_update = []
-
     synthetic_fields = []
+
+    fields_no_update = []
 
     def from_db_object(self, *objs):
         for field in self.fields:
@@ -90,6 +102,18 @@ class NeutronDbObject(NeutronObject):
                 del fields[field]
         return fields
 
+    def _validate_changed_fields(self, fields):
+        fields = fields.copy()
+        # We won't allow id update anyway, so let's pop it out not to trigger
+        # update on id field touched by the consumer
+        fields.pop('id', None)
+
+        forbidden_updates = set(self.fields_no_update) & set(fields.keys())
+        if forbidden_updates:
+            raise NeutronObjectUpdateForbidden(fields=forbidden_updates)
+
+        return fields
+
     def create(self):
         fields = self._get_changed_persistent_fields()
         db_obj = db_api.create_object(self._context, self.db_model, fields)
@@ -97,6 +121,8 @@ class NeutronDbObject(NeutronObject):
 
     def update(self):
         updates = self._get_changed_persistent_fields()
+        updates = self._validate_changed_fields(updates)
+
         if updates:
             db_obj = db_api.update_object(self._context, self.db_model,
                                           self.id, updates)

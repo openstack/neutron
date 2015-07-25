@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 from sqlalchemy import exc
 from sqlalchemy import orm
 
+from neutron.common import exceptions as n_exc
 from neutron.db import common_db_mixin
 
 
@@ -117,9 +118,16 @@ def create_object(context, model, values):
     return db_obj.__dict__
 
 
+def _safe_get_object(context, model, id):
+    db_obj = get_object(context, model, id=id)
+    if db_obj is None:
+        raise n_exc.ObjectNotFound(id=id)
+    return db_obj
+
+
 def update_object(context, model, id, values):
     with context.session.begin(subtransactions=True):
-        db_obj = get_object(context, model, id=id)
+        db_obj = _safe_get_object(context, model, id)
         db_obj.update(values)
         db_obj.save(session=context.session)
     return db_obj.__dict__
@@ -127,5 +135,5 @@ def update_object(context, model, id, values):
 
 def delete_object(context, model, id):
     with context.session.begin(subtransactions=True):
-        db_obj = get_object(context, model, id=id)
+        db_obj = _safe_get_object(context, model, id)
         context.session.delete(db_obj)

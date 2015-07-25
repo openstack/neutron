@@ -73,6 +73,10 @@ class AdminRequired(NotAuthorized):
     message = _("User does not have admin privileges: %(reason)s")
 
 
+class ObjectNotFound(NotFound):
+    message = _("Object %(id)s not found.")
+
+
 class NetworkNotFound(NotFound):
     message = _("Network %(net_id)s could not be found")
 
