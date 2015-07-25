@@ -16,10 +16,9 @@
 import random
 import testscenarios
 
-import neutron.extensions.l3 as l3_ext
-
 from neutron import context
 from neutron.scheduler import l3_agent_scheduler
+from neutron.services.l3_router import l3_router_plugin
 from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -34,12 +33,9 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     """
 
     def setUp(self):
-        ext_mgr = l3_ext.L3()
-        plugin_str = ('neutron.services.l3_router.l3_router_plugin.'
-                      'L3RouterPlugin')
-        super(L3SchedulerBaseTest, self).setUp(plugin=plugin_str,
-                                               ext_mgr=ext_mgr)
+        super(L3SchedulerBaseTest, self).setUp()
 
+        self.l3_plugin = l3_router_plugin.L3RouterPlugin()
         self.adminContext = context.get_admin_context()
         self.adminContext.tenant_id = '_func_test_tenant_'
 
@@ -51,14 +47,15 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _create_router(self, name):
         router = {'name': name, 'admin_state_up': True}
-        return self.plugin.create_router(self.adminContext, {'router': router})
+        return self.l3_plugin.create_router(
+            self.adminContext, {'router': router})
 
     def _create_legacy_agents(self, agent_count, down_agent_count):
         # Creates legacy l3 agents and sets admin state based on
         #  down agent count.
         self.hosts = ['host-%s' % i for i in range(agent_count)]
         self.l3_agents = [self._create_l3_agent(self.hosts[i],
-               self.adminContext, 'legacy', self.plugin,
+               self.adminContext, 'legacy', self.l3_plugin,
                (i >= down_agent_count)) for i in range(agent_count)]
 
     def _create_routers(self, scheduled_router_count,
@@ -93,10 +90,10 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         # Try scheduling on each host
         for host in self.hosts:
             did_it_schedule = self.scheduler.auto_schedule_routers(
-                                                       self.plugin,
-                                                       self.adminContext,
-                                                       host,
-                                                       router_ids)
+                self.l3_plugin,
+                self.adminContext,
+                host,
+                router_ids)
             if did_it_schedule:
                 break
 
@@ -168,9 +165,7 @@ class L3ChanceSchedulerTestCase(L3SchedulerBaseTest):
                                     self.scheduled_router_count)
         # schedule:
         actual_scheduled_agent = self.scheduler.schedule(
-                                                     self.plugin,
-                                                     self.adminContext,
-                                                     self.routers[-1]['id'])
+            self.l3_plugin, self.adminContext, self.routers[-1]['id'])
 
         if self.expected_scheduled_router_count:
             self.assertIsNotNone(actual_scheduled_agent,
@@ -255,9 +250,7 @@ class L3LeastRoutersSchedulerTestCase(L3SchedulerBaseTest):
                                     self.scheduled_router_count)
 
         actual_scheduled_agent = self.scheduler.schedule(
-                                                      self.plugin,
-                                                      self.adminContext,
-                                                      self.routers[-1]['id'])
+            self.l3_plugin, self.adminContext, self.routers[-1]['id'])
 
         if self.expected_scheduled_router_count:
             # For case where there is just one agent:
