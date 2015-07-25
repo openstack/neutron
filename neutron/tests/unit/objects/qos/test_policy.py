@@ -94,7 +94,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         rule_fields = self.get_random_fields(
             obj_cls=rule.QosBandwidthLimitRule)
         rule_fields['qos_policy_id'] = policy_obj.id
-        rule_fields['tenant_id'] = policy_obj.tenant_id
 
         rule_obj = rule.QosBandwidthLimitRule(self.context, **rule_fields)
         rule_obj.create()
