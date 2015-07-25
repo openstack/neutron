@@ -657,8 +657,8 @@ class NetworkClientJSON(service_client.ServiceClient):
         post_data = self.serialize(
             {'bandwidth_limit_rule': {
                 'max_kbps': max_kbps,
-                'max_burst_kbps': max_burst_kbps,
-                'type': 'bandwidth_limit'}})
+                'max_burst_kbps': max_burst_kbps}
+            })
         resp, body = self.post(uri, post_data)
         self.expected_success(201, resp.status)
         body = json.loads(body)
@@ -687,8 +687,8 @@ class NetworkClientJSON(service_client.ServiceClient):
         post_data = {
             'bandwidth_limit_rule': {
                 'max_kbps': max_kbps,
-                'max_burst_kbps': max_burst_kbps,
-                'type': 'bandwidth_limit'}}
+                'max_burst_kbps': max_burst_kbps}
+            }
         resp, body = self.put(uri, json.dumps(post_data))
         self.expected_success(200, resp.status)
         return service_client.ResponseBody(resp, body)
