@@ -172,7 +172,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return rule.to_dict()
 
     def delete_policy_bandwidth_limit_rule(self, context, rule_id, policy_id):
-        rule = rule_object.QosBandwidthLimitRule()
+        rule = rule_object.QosBandwidthLimitRule(context)
         rule.id = rule_id
         rule.delete()
 
