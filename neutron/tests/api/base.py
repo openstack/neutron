@@ -91,6 +91,8 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.qos_rules = []
         cls.qos_policies = []
         cls.ethertype = "IPv" + str(cls._ip_version)
+        cls.address_scopes = []
+        cls.admin_address_scopes = []
 
     @classmethod
     def resource_cleanup(cls):
@@ -185,6 +187,15 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for network in cls.shared_networks:
                 cls._try_delete_resource(cls.admin_client.delete_network,
                                          network['id'])
+
+            for address_scope in cls.address_scopes:
+                cls._try_delete_resource(cls.client.delete_address_scope,
+                                         address_scope['id'])
+
+            for address_scope in cls.admin_address_scopes:
+                cls._try_delete_resource(
+                    cls.admin_client.delete_address_scope,
+                    address_scope['id'])
 
             cls.clear_isolated_creds()
         super(BaseNetworkTest, cls).resource_cleanup()
@@ -467,6 +478,16 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         ipsecpolicy = body['ipsecpolicy']
         cls.ipsecpolicies.append(ipsecpolicy)
         return ipsecpolicy
+
+    @classmethod
+    def create_address_scope(cls, name, is_admin=False, **kwargs):
+        if is_admin:
+            body = cls.admin_client.create_address_scope(name=name, **kwargs)
+            cls.admin_address_scopes.append(body['address_scope'])
+        else:
+            body = cls.client.create_address_scope(name=name, **kwargs)
+            cls.address_scopes.append(body['address_scope'])
+        return body['address_scope']
 
 
 class BaseAdminNetworkTest(BaseNetworkTest):

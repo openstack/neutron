@@ -97,8 +97,6 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-l2gw_              |         l2            |
 +-------------------------------+-----------------------+
-| networking-metaplugin_        |         core          |
-+-------------------------------+-----------------------+
 | networking-midonet_           |        core,lb        |
 +-------------------------------+-----------------------+
 | networking-mlnx_              |          ml2          |
@@ -243,13 +241,6 @@ L2 Gateway
 
 * Git: https://git.openstack.org/cgit/openstack/networking-l2gw
 * Launchpad: https://launchpad.net/networking-l2gw
-
-.. _networking-metaplugin:
-
-Metaplugin
-----------
-
-* Git: https://github.com/ntt-sic/networking-metaplugin
 
 .. _networking-midonet:
 

@@ -109,7 +109,7 @@ UNIX_DOMAIN_METADATA_PROXY_OPTS = [
     cfg.StrOpt('metadata_proxy_socket_mode',
                default=DEDUCE_MODE,
                choices=SOCKET_MODES,
-               help=_("Metadata Proxy UNIX domain socket mode, 3 values "
+               help=_("Metadata Proxy UNIX domain socket mode, 4 values "
                       "allowed: "
                       "'deduce': deduce mode from metadata_proxy_user/group "
                       "values, "

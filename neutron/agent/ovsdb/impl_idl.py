@@ -157,8 +157,7 @@ class OvsdbIdl(api.API):
         return cmd.PortToBridgeCommand(self, name)
 
     def iface_to_br(self, name):
-        # For our purposes, ports and interfaces always have the same name
-        return cmd.PortToBridgeCommand(self, name)
+        return cmd.InterfaceToBridgeCommand(self, name)
 
     def list_br(self):
         return cmd.ListBridgesCommand(self)
@@ -210,3 +209,6 @@ class OvsdbIdl(api.API):
 
     def list_ports(self, bridge):
         return cmd.ListPortsCommand(self, bridge)
+
+    def list_ifaces(self, bridge):
+        return cmd.ListIfacesCommand(self, bridge)

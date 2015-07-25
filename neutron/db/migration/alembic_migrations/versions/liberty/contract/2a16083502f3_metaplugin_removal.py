@@ -1,5 +1,4 @@
-# Copyright 2012, Nachi Ueno, NTT MCL, Inc.
-# All Rights Reserved.
+# Copyright 2015 OpenStack Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,8 +11,23 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
 
-from metaplugin.plugin import meta_neutron_plugin
+"""Metaplugin removal
+
+Revision ID: 2a16083502f3
+Revises: 5498d17be016
+Create Date: 2015-06-16 09:11:10.488566
+
+"""
+
+# revision identifiers, used by Alembic.
+revision = '2a16083502f3'
+down_revision = '5498d17be016'
+
+from alembic import op
 
 
-MetaPluginV2 = meta_neutron_plugin.MetaPluginV2
+def upgrade():
+    op.drop_table('networkflavors')
+    op.drop_table('routerflavors')

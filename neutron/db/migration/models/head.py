@@ -53,7 +53,6 @@ from neutron.plugins.brocade.db import models as brocade_models  # noqa
 from neutron.plugins.cisco.db.l3 import l3_models  # noqa
 from neutron.plugins.cisco.db import n1kv_models_v2  # noqa
 from neutron.plugins.cisco.db import network_models_v2  # noqa
-from neutron.plugins.metaplugin import meta_models_v2  # noqa
 from neutron.plugins.ml2.drivers.arista import db  # noqa
 from neutron.plugins.ml2.drivers.brocade.db import (  # noqa
     models as ml2_brocade_models)
@@ -62,9 +61,6 @@ from neutron.plugins.ml2.drivers.cisco.n1kv import n1kv_models  # noqa
 from neutron.plugins.ml2.drivers.cisco.nexus import (  # noqa
     nexus_models_v2 as ml2_nexus_models_v2)
 from neutron.plugins.ml2.drivers.cisco.ucsm import ucsm_model  # noqa
-from neutron.plugins.ml2.drivers.linuxbridge.agent import (  # noqa
-    l2network_models_v2)
-from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_models_v2  # noqa
 from neutron.plugins.ml2.drivers import type_flat  # noqa
 from neutron.plugins.ml2.drivers import type_gre  # noqa
 from neutron.plugins.ml2.drivers import type_vlan  # noqa

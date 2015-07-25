@@ -1,4 +1,0 @@
-The Open vSwitch (OVS) Neutron plugin has been removed and replaced by ML2. You
-must run the migration manually to upgrade to Juno.
-
-See neutron/db/migration/migrate_to_ml2.py

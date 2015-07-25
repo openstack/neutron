@@ -106,7 +106,10 @@ class Address_scope(extensions.ExtensionDescriptor):
         return [ex]
 
     def get_extended_resources(self, version):
-        return {}
+        if version == "2.0":
+            return RESOURCE_ATTRIBUTE_MAP
+        else:
+            return {}
 
 
 @six.add_metaclass(abc.ABCMeta)

@@ -566,7 +566,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):
         if (protocol not in ['udp', 'tcp', 'icmp', 'icmpv6']
-            or not port_range_min):
+            or port_range_min is None):
             return []
 
         if protocol in ['icmp', 'icmpv6']:

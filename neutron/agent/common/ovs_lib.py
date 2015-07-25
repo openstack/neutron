@@ -304,7 +304,12 @@ class OVSBridge(BaseOVS):
                  ('options', {'peer': remote_name})]
         return self.add_port(local_name, *attrs)
 
+    def get_iface_name_list(self):
+        # get the interface name list for this bridge
+        return self.ovsdb.list_ifaces(self.br_name).execute(check_error=True)
+
     def get_port_name_list(self):
+        # get the port name list for this bridge
         return self.ovsdb.list_ports(self.br_name).execute(check_error=True)
 
     def get_port_stats(self, port_name):
