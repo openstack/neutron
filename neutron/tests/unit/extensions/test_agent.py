@@ -14,11 +14,11 @@
 #    under the License.
 
 import copy
+from datetime import datetime
 import time
 
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from webob import exc
 
@@ -108,10 +108,10 @@ class AgentDBTestMixIn(object):
             callback = agents_db.AgentExtRpcCallback()
             callback.report_state(self.adminContext,
                                   agent_state={'agent_state': lbaas_hosta},
-                                  time=timeutils.strtime())
+                                  time=datetime.utcnow().isoformat())
             callback.report_state(self.adminContext,
                                   agent_state={'agent_state': lbaas_hostb},
-                                  time=timeutils.strtime())
+                                  time=datetime.utcnow().isoformat())
             res += [lbaas_hosta, lbaas_hostb]
 
         return res
