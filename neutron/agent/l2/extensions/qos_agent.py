@@ -109,16 +109,18 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         #TODO(QoS): handle updates when implemented
         # we have two options:
         # 1. to add new api for subscribe
-        #    registry.subscribe(self._process_rules_updates,
-        #                   resources.QOS_RULES, qos_policy_id)
+        #    registry.subscribe(self._process_policy_updates,
+        #                   resources.QOS_POLICY, qos_policy_id)
         # 2. combine get_info rpc to also subscribe to the resource
-        qos_rules = self.resource_rpc.get_info(
-            context, resources.QOS_POLICY, qos_policy_id)
-        self._process_rules_updates(
+        qos_policy = self.resource_rpc.get_info(
+            context,
+            resources.QOS_POLICY,
+            qos_policy_id)
+        self._process_policy_updates(
             port, resources.QOS_POLICY, qos_policy_id,
-            qos_rules, 'create')
+            qos_policy, 'create')
 
-    def _process_rules_updates(
+    def _process_policy_updates(
             self, port, resource_type, resource_id,
-            qos_rules, action_type):
-        getattr(self.qos_driver, action_type)(port, qos_rules)
+            qos_policy, action_type):
+        getattr(self.qos_driver, action_type)(port, qos_policy)

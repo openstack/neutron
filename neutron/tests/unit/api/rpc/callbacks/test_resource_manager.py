@@ -44,20 +44,6 @@ class ResourcesCallbackRequestTestCase(base.BaseTestCase):
             }
             return qos_policy
 
-        #TODO(QoS) convert it to the version object format
-        def _get_qos_bandwidth_limit_rule_cb(resource, rule_id, **kwargs):
-            bandwidth_limit = {
-                "id": "5f126d84-551a-4dcf-bb01-0e9c0df0c793",
-                "qos_policy_id": "46ebaec0-0570-43ac-82f6-60d2b03168c4",
-                "max_kbps": "10000",
-                "max_burst_kbps": "0",
-            }
-            return bandwidth_limit
-
-        rpc_registry.register_provider(
-                        _get_qos_bandwidth_limit_rule_cb,
-                        resources.QOS_RULE)
-
         rpc_registry.register_provider(
             _get_qos_policy_cb,
             resources.QOS_POLICY)
@@ -70,9 +56,3 @@ class ResourcesCallbackRequestTestCase(base.BaseTestCase):
             self.resource_id,
             **kwargs)
         self.assertEqual(self.resource_id, qos_policy['id'])
-
-        qos_rule = rpc_registry.get_info(
-            resources.QOS_RULE,
-            self.qos_rule_id,
-            **kwargs)
-        self.assertEqual(self.qos_rule_id, qos_rule['id'])
