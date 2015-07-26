@@ -49,6 +49,9 @@ class QosResourceExtensionHandler(object):
         qos_policy_id = port_changes.get(qos.QOS_POLICY_ID)
         if qos_policy_id is not None:
             policy = self._get_policy_obj(context, qos_policy_id)
+            #TODO(QoS): If the policy doesn't exist (or if it is not shared and
+            #           the tenant id doesn't match the context's), this will
+            #           raise an exception (policy is None).
             policy.attach_port(port['id'])
             port[qos.QOS_POLICY_ID] = qos_policy_id
 
@@ -61,6 +64,9 @@ class QosResourceExtensionHandler(object):
         qos_policy_id = network_changes.get(qos.QOS_POLICY_ID)
         if qos_policy_id:
             policy = self._get_policy_obj(context, qos_policy_id)
+            #TODO(QoS): If the policy doesn't exist (or if it is not shared and
+            #           the tenant id doesn't match the context's), this will
+            #           raise an exception (policy is None).
             policy.attach_network(network['id'])
             network[qos.QOS_POLICY_ID] = qos_policy_id
 

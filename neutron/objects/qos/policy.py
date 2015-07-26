@@ -86,21 +86,40 @@ class QosPolicy(base.NeutronDbObject):
         for attr in self.rule_fields:
             self.obj_load_attr(attr)
 
+    @staticmethod
+    def _is_policy_accessible(context, db_obj):
+        #TODO(QoS): Look at I3426b13eede8bfa29729cf3efea3419fb91175c4 for
+        #           other possible solutions to this.
+        return (context.is_admin or
+                db_obj.shared or
+                db_obj.tenant_id == context.tenant_id)
+
     @classmethod
     def get_by_id(cls, context, id):
-        with db_api.autonested_transaction(context.session):
-            policy_obj = super(QosPolicy, cls).get_by_id(context, id)
-            if policy_obj:
-                policy_obj._load_rules()
-        return policy_obj
+        # We want to get the policy regardless of its tenant id. We'll make
+        # sure the tenant has permission to access the policy later on.
+        admin_context = context.elevated()
+        with db_api.autonested_transaction(admin_context.session):
+            policy_obj = super(QosPolicy, cls).get_by_id(admin_context, id)
+            if (not policy_obj or
+                not cls._is_policy_accessible(context, policy_obj)):
+                return
+
+            policy_obj._load_rules()
+            return policy_obj
 
     # TODO(QoS): Test that all objects are fetched within one transaction
     @classmethod
     def get_objects(cls, context, **kwargs):
-        with db_api.autonested_transaction(context.session):
-            db_objs = db_api.get_objects(context, cls.db_model, **kwargs)
-            objs = list()
+        # We want to get the policy regardless of its tenant id. We'll make
+        # sure the tenant has permission to access the policy later on.
+        admin_context = context.elevated()
+        with db_api.autonested_transaction(admin_context.session):
+            db_objs = db_api.get_objects(admin_context, cls.db_model, **kwargs)
+            objs = []
             for db_obj in db_objs:
+                if not cls._is_policy_accessible(context, db_obj):
+                    continue
                 obj = cls(context, **db_obj)
                 obj._load_rules()
                 objs.append(obj)
