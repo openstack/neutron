@@ -94,6 +94,16 @@ class PortNotFoundOnNetwork(NotFound):
                 "on network %(net_id)s")
 
 
+class PortQosBindingNotFound(NotFound):
+    message = _("QoS binding for port %(port_id)s and policy %(policy_id)s "
+                "could not be found")
+
+
+class NetworkQosBindingNotFound(NotFound):
+    message = _("QoS binding for network %(net_id)s and policy %(policy_id)s "
+                "could not be found")
+
+
 class PolicyFileNotFound(NotFound):
     message = _("Policy configuration policy.json could not be found")
 

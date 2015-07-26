@@ -12,6 +12,7 @@
 
 import mock
 
+from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.objects.qos import policy
@@ -78,10 +79,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         super(QosPolicyDbObjectTestCase, self).setUp()
         self._create_test_network()
         self._create_test_port(self._network)
-        #TODO(QoS): move _create_test_policy here, as it's common
-        #           to all. Now the base DB Object test case breaks
-        #           that by introducing a duplicate object colliding
-        #           on PK.
 
     def _create_test_policy(self):
         policy_obj = policy.QosPolicy(self.context, **self.db_obj)
@@ -135,6 +132,30 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                                          self._network['id'])
         self.assertEqual(obj, policy_obj)
 
+    def test_attach_network_nonexistent_network(self):
+
+        obj = self._create_test_policy()
+        self.assertRaises(n_exc.NetworkQosBindingNotFound,
+                          obj.attach_network, 'non-existent-network')
+
+    def test_attach_port_nonexistent_port(self):
+
+        obj = self._create_test_policy()
+        self.assertRaises(n_exc.PortQosBindingNotFound,
+                          obj.attach_port, 'non-existent-port')
+
+    def test_attach_network_nonexistent_policy(self):
+
+        policy_obj = policy.QosPolicy(self.context, **self.db_obj)
+        self.assertRaises(n_exc.NetworkQosBindingNotFound,
+                          policy_obj.attach_network, self._network['id'])
+
+    def test_attach_port_nonexistent_policy(self):
+
+        policy_obj = policy.QosPolicy(self.context, **self.db_obj)
+        self.assertRaises(n_exc.PortQosBindingNotFound,
+                          policy_obj.attach_port, self._port['id'])
+
     def test_attach_port_get_port_policy(self):
 
         obj = self._create_test_policy()
@@ -168,6 +189,26 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj = policy.QosPolicy.get_network_policy(self.context,
                                                          self._network['id'])
         self.assertIsNone(policy_obj)
+
+    def test_detach_port_nonexistent_port(self):
+        obj = self._create_test_policy()
+        self.assertRaises(n_exc.PortQosBindingNotFound,
+                          obj.detach_port, 'non-existent-port')
+
+    def test_detach_network_nonexistent_network(self):
+        obj = self._create_test_policy()
+        self.assertRaises(n_exc.NetworkQosBindingNotFound,
+                          obj.detach_network, 'non-existent-port')
+
+    def test_detach_port_nonexistent_policy(self):
+        policy_obj = policy.QosPolicy(self.context, **self.db_obj)
+        self.assertRaises(n_exc.PortQosBindingNotFound,
+                          policy_obj.detach_port, self._port['id'])
+
+    def test_detach_network_nonexistent_policy(self):
+        policy_obj = policy.QosPolicy(self.context, **self.db_obj)
+        self.assertRaises(n_exc.NetworkQosBindingNotFound,
+                          policy_obj.detach_network, self._network['id'])
 
     def test_synthetic_rule_fields(self):
         policy_obj, rule_obj = self._create_test_policy_with_rule()

@@ -103,7 +103,6 @@ class QosPolicy(base.NeutronObject):
     def _get_object_policy(cls, context, model, **kwargs):
         with db_api.autonested_transaction(context.session):
             binding_db_obj = db_api.get_object(context, model, **kwargs)
-            # TODO(QoS): rethink handling missing binding case
             if binding_db_obj:
                 return cls.get_by_id(context, binding_db_obj['policy_id'])
 
