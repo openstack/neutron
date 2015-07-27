@@ -83,7 +83,7 @@ class DbQuotaDriver(object):
 
             tenant_quota[quota['resource']] = quota['limit']
 
-        return all_tenant_quotas.values()
+        return list(all_tenant_quotas.values())
 
     @staticmethod
     def update_quota_limit(context, tenant_id, resource, limit):
