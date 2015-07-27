@@ -170,6 +170,23 @@ class LinuxInterfaceDriver(object):
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
 
+    @property
+    def bridged(self):
+        """Whether the DHCP port is bridged to the VM TAP interfaces.
+
+        When the DHCP port is bridged to the TAP interfaces for the
+        VMs for which it is providing DHCP service - as is the case
+        for most Neutron network implementations - the DHCP server
+        only needs to listen on the DHCP port, and will still receive
+        DHCP requests from all the relevant VMs.
+
+        If the DHCP port is not bridged to the relevant VM TAP
+        interfaces, the DHCP server needs to listen explicitly on
+        those TAP interfaces, and to treat those as aliases of the
+        DHCP port where the IP subnet is defined.
+        """
+        return True
+
 
 class NullDriver(LinuxInterfaceDriver):
     def plug_new(self, network_id, port_id, device_name, mac_address,
