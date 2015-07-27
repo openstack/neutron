@@ -107,7 +107,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         return allocate_mock
 
     def _validate_allocate_calls(self, expected_calls, mocks):
-        assert mocks['subnet'].allocate.called
+        self.assertTrue(mocks['subnet'].allocate.called)
 
         actual_calls = mocks['subnet'].allocate.call_args_list
         self.assertEqual(len(expected_calls), len(actual_calls))
@@ -115,13 +115,13 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         i = 0
         for call in expected_calls:
             if call['ip_address']:
-                self.assertEqual(ipam_req.SpecificAddressRequest,
-                                 type(actual_calls[i][0][0]))
+                self.assertIsInstance(actual_calls[i][0][0],
+                                      ipam_req.SpecificAddressRequest)
                 self.assertEqual(netaddr.IPAddress(call['ip_address']),
                                  actual_calls[i][0][0].address)
             else:
-                self.assertEqual(ipam_req.AnyAddressRequest,
-                                 type(actual_calls[i][0][0]))
+                self.assertIsInstance(actual_calls[i][0][0],
+                                      ipam_req.AnyAddressRequest)
             i += 1
 
     def _convert_to_ips(self, data):
@@ -172,7 +172,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
 
         mocks['driver'].get_subnet.assert_called_once_with(subnet)
 
-        assert mocks['subnet'].allocate.called
+        self.assertTrue(mocks['subnet'].allocate.called)
         request = mocks['subnet'].allocate.call_args[0][0]
 
         return {'ips': allocated_ips,
@@ -188,8 +188,8 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                                   '192.168.15.0/24',
                                                   self._gen_subnet_id())
 
-        self.assertEqual(ipam_req.SpecificAddressRequest,
-                         type(results['request']))
+        self.assertIsInstance(results['request'],
+                              ipam_req.SpecificAddressRequest)
         self.assertEqual(netaddr.IPAddress(ip), results['request'].address)
 
         self.assertEqual(ip, results['ips'][0]['ip_address'],
@@ -204,7 +204,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         results = self._single_ip_allocate_helper(mocks, '', network,
                                                   self._gen_subnet_id())
 
-        self.assertEqual(ipam_req.AnyAddressRequest, type(results['request']))
+        self.assertIsInstance(results['request'], ipam_req.AnyAddressRequest)
         self.assertEqual(ip, results['ips'][0]['ip_address'])
 
     def test_allocate_eui64_ip(self):
@@ -219,7 +219,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                          mock.ANY, [ip])
 
         request = mocks['subnet'].allocate.call_args[0][0]
-        self.assertEqual(ipam_req.AutomaticAddressRequest, type(request))
+        self.assertIsInstance(request, ipam_req.AutomaticAddressRequest)
         self.assertEqual(eui64_ip, request.address)
 
     def test_allocate_multiple_ips(self):
@@ -278,9 +278,9 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         with self.subnet(allocation_pools=allocation_pools,
                          cidr=cidr):
             pool_mock.get_instance.assert_called_once_with(None, mock.ANY)
-            assert mocks['driver'].allocate_subnet.called
+            self.assertTrue(mocks['driver'].allocate_subnet.called)
             request = mocks['driver'].allocate_subnet.call_args[0][0]
-            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertIsInstance(request, ipam_req.SpecificSubnetRequest)
             self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
 
     @mock.patch('neutron.ipam.driver.Pool')
@@ -293,9 +293,9 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                 cidr, expected_res_status=500)
 
             pool_mock.get_instance.assert_called_once_with(None, mock.ANY)
-            assert mocks['driver'].allocate_subnet.called
+            self.assertTrue(mocks['driver'].allocate_subnet.called)
             request = mocks['driver'].allocate_subnet.call_args[0][0]
-            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertIsInstance(request, ipam_req.SpecificSubnetRequest)
             self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
             # Verify no subnet was created for network
             req = self.new_show_request('networks', network['network']['id'])
@@ -314,9 +314,9 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                 cidr, expected_res_status=500)
             pool_mock.get_instance.assert_any_call(None, mock.ANY)
             self.assertEqual(2, pool_mock.get_instance.call_count)
-            assert mocks['driver'].allocate_subnet.called
+            self.assertTrue(mocks['driver'].allocate_subnet.called)
             request = mocks['driver'].allocate_subnet.call_args[0][0]
-            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertIsInstance(request, ipam_req.SpecificSubnetRequest)
             self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
             # Verify remove ipam subnet was called
             mocks['driver'].remove_subnet.assert_called_once_with(
@@ -335,13 +335,13 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_code, 200)
+            self.assertEqual(200, res.status_code)
 
             pool_mock.get_instance.assert_any_call(None, mock.ANY)
             self.assertEqual(2, pool_mock.get_instance.call_count)
-            assert mocks['driver'].update_subnet.called
+            self.assertTrue(mocks['driver'].update_subnet.called)
             request = mocks['driver'].update_subnet.call_args[0][0]
-            self.assertEqual(ipam_req.SpecificSubnetRequest, type(request))
+            self.assertIsInstance(request, ipam_req.SpecificSubnetRequest)
             self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
 
             ip_ranges = [netaddr.IPRange(p['start'],
@@ -360,7 +360,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                    cidr, ip_version=4)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+        self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
 
         pool_mock.get_instance.assert_any_call(None, mock.ANY)
         self.assertEqual(2, pool_mock.get_instance.call_count)
@@ -380,7 +380,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                    cidr, ip_version=4)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, webob.exc.HTTPServerError.code)
+        self.assertEqual(webob.exc.HTTPServerError.code, res.status_int)
 
         pool_mock.get_instance.assert_any_call(None, mock.ANY)
         self.assertEqual(2, pool_mock.get_instance.call_count)
@@ -422,8 +422,8 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                              'tenant_id': network['network']['tenant_id']}}
                 port_req = self.new_create_request('ports', data)
                 res = port_req.get_response(self.api)
-                self.assertEqual(res.status_int,
-                                 webob.exc.HTTPServerError.code)
+                self.assertEqual(webob.exc.HTTPServerError.code,
+                                 res.status_int)
 
                 # verify no port left after failure
                 req = self.new_list_request('ports', self.fmt,
@@ -474,7 +474,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                 req = self.new_delete_request('ports', port['port']['id'])
                 res = req.get_response(self.api)
 
-                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+                self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
                 mocks['subnet'].deallocate.assert_called_once_with(auto_ip)
 
     def test_recreate_port_ipam(self):
@@ -486,7 +486,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                 self.assertEqual(ips[0]['ip_address'], ip)
                 req = self.new_delete_request('ports', port['port']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
+                self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
                 with self.port(subnet=subnet, fixed_ips=ips) as port:
                     ips = port['port']['fixed_ips']
                     self.assertEqual(1, len(ips))
