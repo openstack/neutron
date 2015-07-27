@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.extensions import qos
 from neutron import manager
 from neutron.objects.qos import policy as policy_object
 from neutron.plugins.common import constants as plugin_constants
+from neutron.services.qos import qos_consts
 
 NETWORK = 'network'
 PORT = 'port'
@@ -46,14 +46,14 @@ class QosResourceExtensionHandler(object):
             #           at db api level automatically within transaction.
             old_policy.detach_port(port['id'])
 
-        qos_policy_id = port_changes.get(qos.QOS_POLICY_ID)
+        qos_policy_id = port_changes.get(qos_consts.QOS_POLICY_ID)
         if qos_policy_id is not None:
             policy = self._get_policy_obj(context, qos_policy_id)
             #TODO(QoS): If the policy doesn't exist (or if it is not shared and
             #           the tenant id doesn't match the context's), this will
             #           raise an exception (policy is None).
             policy.attach_port(port['id'])
-            port[qos.QOS_POLICY_ID] = qos_policy_id
+            port[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _update_network_policy(self, context, network, network_changes):
         old_policy = policy_object.QosPolicy.get_network_policy(
@@ -61,21 +61,22 @@ class QosResourceExtensionHandler(object):
         if old_policy:
             old_policy.detach_network(network['id'])
 
-        qos_policy_id = network_changes.get(qos.QOS_POLICY_ID)
+        qos_policy_id = network_changes.get(qos_consts.QOS_POLICY_ID)
         if qos_policy_id:
             policy = self._get_policy_obj(context, qos_policy_id)
             #TODO(QoS): If the policy doesn't exist (or if it is not shared and
             #           the tenant id doesn't match the context's), this will
             #           raise an exception (policy is None).
             policy.attach_network(network['id'])
-            network[qos.QOS_POLICY_ID] = qos_policy_id
+            network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _exec(self, method_name, context, kwargs):
         return getattr(self, method_name)(context=context, **kwargs)
 
     def process_resource(self, context, resource_type, requested_resource,
                          actual_resource):
-        if qos.QOS_POLICY_ID in requested_resource and self.plugin_loaded:
+        if (qos_consts.QOS_POLICY_ID in requested_resource and
+            self.plugin_loaded):
             self._exec('_update_%s_policy' % resource_type, context,
                        {resource_type: actual_resource,
                         "%s_changes" % resource_type: requested_resource})
@@ -85,4 +86,5 @@ class QosResourceExtensionHandler(object):
             return {}
 
         binding = resource['qos_policy_binding']
-        return {qos.QOS_POLICY_ID: binding['policy_id'] if binding else None}
+        qos_policy_id = binding['policy_id'] if binding else None
+        return {qos_consts.QOS_POLICY_ID: qos_policy_id}
