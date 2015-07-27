@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b2.dev267\n"
+"Project-Id-Version: neutron 7.0.0.0b2.dev396\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-07-16 06:09+0000\n"
+"POT-Creation-Date: 2015-07-27 06:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,22 +59,22 @@ msgid ""
 "falling back to old security_group_rules_for_devices which scales worse."
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:377
+#: neutron/agent/common/ovs_lib.py:382
 #, python-format
 msgid "Found not yet ready openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:380
+#: neutron/agent/common/ovs_lib.py:385
 #, python-format
 msgid "Found failed openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:442
+#: neutron/agent/common/ovs_lib.py:447
 #, python-format
 msgid "ofport: %(ofport)s for VIF: %(vif)s is not a positive integer"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:120
+#: neutron/agent/dhcp/agent.py:119
 #, python-format
 msgid ""
 "Unable to %(action)s dhcp for %(net_id)s: there is a conflict with its "
@@ -82,26 +82,26 @@ msgid ""
 "exist."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:135 neutron/agent/dhcp/agent.py:204
+#: neutron/agent/dhcp/agent.py:134 neutron/agent/dhcp/agent.py:203
 #, python-format
 msgid "Network %s has been deleted."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:221
+#: neutron/agent/dhcp/agent.py:220
 #, python-format
 msgid ""
 "Network %s may have been deleted and its resources may have already been "
 "disposed."
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:370
+#: neutron/agent/dhcp/agent.py:369
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:571 neutron/agent/l3/agent.py:627
+#: neutron/agent/dhcp/agent.py:570 neutron/agent/l3/agent.py:627
 #: neutron/agent/metadata/agent.py:310
 #: neutron/services/metering/agents/metering_agent.py:278
 msgid ""
@@ -130,7 +130,7 @@ msgstr ""
 msgid "Info for router %s was not found. Performing router cleanup"
 msgstr ""
 
-#: neutron/agent/l3/router_info.py:208
+#: neutron/agent/l3/router_info.py:191
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
@@ -180,22 +180,22 @@ msgid ""
 "greater to 0"
 msgstr ""
 
-#: neutron/api/extensions.py:521
+#: neutron/api/extensions.py:518
 #, python-format
 msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
 msgstr ""
 
-#: neutron/api/extensions.py:529
+#: neutron/api/extensions.py:526
 #, python-format
 msgid "Extension file %(f)s wasn't loaded due to %(exception)s"
 msgstr ""
 
-#: neutron/api/extensions.py:570
+#: neutron/api/extensions.py:567
 #, python-format
 msgid "Extension %s not supported by any of loaded plugins"
 msgstr ""
 
-#: neutron/api/extensions.py:582
+#: neutron/api/extensions.py:579
 #, python-format
 msgid "Loaded plugins do not implement extension %s interface"
 msgstr ""
@@ -238,7 +238,7 @@ msgid ""
 " end of the init process."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:78
+#: neutron/cmd/sanity_check.py:80
 msgid ""
 "The user that is executing neutron can read the namespaces without using "
 "the root_helper. Disable the use_helper_for_ns_read option to avoid a "
@@ -274,7 +274,7 @@ msgid ""
 "not report to the server in the last %(dead_time)s seconds."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:105
+#: neutron/db/l3_agentschedulers_db.py:106
 #, python-format
 msgid ""
 "Rescheduling router %(router)s from agent %(agent)s because the agent did"
@@ -360,7 +360,7 @@ msgstr ""
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1445
+#: neutron/plugins/ml2/plugin.py:1446
 #, python-format
 msgid "Port %s not found during update"
 msgstr ""
@@ -403,26 +403,6 @@ msgstr ""
 msgid "No vlan_id %(vlan_id)s found on physical network %(physical_network)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:67
-#, python-format
-msgid "Create network postcommit failed for network %s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:77
-#, python-format
-msgid "Create subnet postcommit failed for subnet %s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:91
-#, python-format
-msgid "Create port postcommit failed for port %s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/cisco/apic/apic_sync.py:110
-#, python-format
-msgid "Add interface postcommit failed for port %s"
-msgstr ""
-
 #: neutron/plugins/ml2/drivers/cisco/ucsm/mech_cisco_ucsm.py:78
 msgid "update_port_precommit: vlan_id is None."
 msgstr ""
@@ -449,36 +429,36 @@ msgstr ""
 msgid "Port %(port)s updated by agent %(agent)s isn't bound to any segment"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:90
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:91
 msgid "VXLAN is enabled, a valid local_ip must be provided"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:104
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:105
 msgid "Invalid Network ID, will lead to incorrect bridge name"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:111
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:112
 msgid "Invalid VLAN ID, will lead to incorrect subinterface name"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:118
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:119
 msgid "Invalid Interface ID, will lead to incorrect tap device name"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:127
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:128
 #, python-format
 msgid "Invalid Segmentation ID: %s, will lead to incorrect vxlan device name"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:527
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:563
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:520
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:556
 #, python-format
 msgid ""
 "Option \"%(option)s\" must be supported by command \"%(command)s\" to "
 "enable %(mode)s mode"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:557
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:550
 msgid ""
 "VXLAN muticast group must be provided in vxlan_group option to enable "
 "VXLAN MCAST mode"
