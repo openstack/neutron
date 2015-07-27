@@ -30,6 +30,10 @@ class CallbackReturnedWrongObjectType(exceptions.NeutronException):
     message = _('Callback for %(resource_type)s returned wrong object type')
 
 
+class CallbackNotFound(exceptions.NeutronException):
+    message = _('Callback for %(resource_type)s not found')
+
+
 #resource implementation callback registration functions
 def get_info(resource_type, resource_id, **kwargs):
     """Get information about resource type with resource id.
@@ -40,14 +44,16 @@ def get_info(resource_type, resource_id, **kwargs):
     :returns: NeutronObject
     """
     callback = _get_resources_callback_manager().get_callback(resource_type)
-    if callback:
-        obj = callback(resource_type, resource_id, **kwargs)
-        if obj:
-            expected_cls = resources.get_resource_cls(resource_type)
-            if not isinstance(obj, expected_cls):
-                raise CallbackReturnedWrongObjectType(
-                    resource_type=resource_type)
-        return obj
+    if not callback:
+        raise CallbackNotFound(resource_type=resource_type)
+
+    obj = callback(resource_type, resource_id, **kwargs)
+    if obj:
+        expected_cls = resources.get_resource_cls(resource_type)
+        if not isinstance(obj, expected_cls):
+            raise CallbackReturnedWrongObjectType(
+                resource_type=resource_type)
+    return obj
 
 
 def register_provider(callback, resource_type):

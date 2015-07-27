@@ -56,3 +56,8 @@ class GetInfoTestCase(base.BaseTestCase):
         self.assertRaises(
             registry.CallbackReturnedWrongObjectType,
             registry.get_info, resources.QOS_POLICY, 'fake_id')
+
+    def test_raises_on_callback_not_found(self):
+        self.assertRaises(
+            registry.CallbackNotFound,
+            registry.get_info, resources.QOS_POLICY, 'fake_id')
