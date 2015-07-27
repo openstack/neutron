@@ -13,21 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sa
-
 from neutron.common import exceptions
-from neutron.db import model_base
-from neutron.db import models_v2
-
-
-class Quota(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    """Represent a single quota override for a tenant.
-
-    If there is no row for a given tenant id and resource, then the
-    default for the deployment is used.
-    """
-    resource = sa.Column(sa.String(255))
-    limit = sa.Column(sa.Integer)
+from neutron.db.quota import models as quota_models
 
 
 class DbQuotaDriver(object):
@@ -53,7 +40,8 @@ class DbQuotaDriver(object):
                             for key, resource in resources.items())
 
         # update with tenant specific limits
-        q_qry = context.session.query(Quota).filter_by(tenant_id=tenant_id)
+        q_qry = context.session.query(quota_models.Quota).filter_by(
+            tenant_id=tenant_id)
         tenant_quota.update((q['resource'], q['limit']) for q in q_qry)
 
         return tenant_quota
@@ -65,7 +53,7 @@ class DbQuotaDriver(object):
         Atfer deletion, this tenant will use default quota values in conf.
         """
         with context.session.begin():
-            tenant_quotas = context.session.query(Quota)
+            tenant_quotas = context.session.query(quota_models.Quota)
             tenant_quotas = tenant_quotas.filter_by(tenant_id=tenant_id)
             tenant_quotas.delete()
 
@@ -83,7 +71,7 @@ class DbQuotaDriver(object):
 
         all_tenant_quotas = {}
 
-        for quota in context.session.query(Quota):
+        for quota in context.session.query(quota_models.Quota):
             tenant_id = quota['tenant_id']
 
             # avoid setdefault() because only want to copy when actually req'd
@@ -100,15 +88,15 @@ class DbQuotaDriver(object):
     @staticmethod
     def update_quota_limit(context, tenant_id, resource, limit):
         with context.session.begin():
-            tenant_quota = context.session.query(Quota).filter_by(
+            tenant_quota = context.session.query(quota_models.Quota).filter_by(
                 tenant_id=tenant_id, resource=resource).first()
 
             if tenant_quota:
                 tenant_quota.update({'limit': limit})
             else:
-                tenant_quota = Quota(tenant_id=tenant_id,
-                                     resource=resource,
-                                     limit=limit)
+                tenant_quota = quota_models.Quota(tenant_id=tenant_id,
+                                                  resource=resource,
+                                                  limit=limit)
                 context.session.add(tenant_quota)
 
     def _get_quotas(self, context, tenant_id, resources):
