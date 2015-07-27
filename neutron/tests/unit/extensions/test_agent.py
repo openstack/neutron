@@ -106,12 +106,14 @@ class AgentDBTestMixIn(object):
             lbaas_hostb = copy.deepcopy(lbaas_hosta)
             lbaas_hostb['host'] = LBAAS_HOSTB
             callback = agents_db.AgentExtRpcCallback()
-            callback.report_state(self.adminContext,
-                                  agent_state={'agent_state': lbaas_hosta},
-                                  time=datetime.utcnow().isoformat())
-            callback.report_state(self.adminContext,
-                                  agent_state={'agent_state': lbaas_hostb},
-                                  time=datetime.utcnow().isoformat())
+            callback.report_state(
+                self.adminContext,
+                agent_state={'agent_state': lbaas_hosta},
+                time=datetime.utcnow().strftime(constants.ISO8601_TIME_FORMAT))
+            callback.report_state(
+                self.adminContext,
+                agent_state={'agent_state': lbaas_hostb},
+                time=datetime.utcnow().strftime(constants.ISO8601_TIME_FORMAT))
             res += [lbaas_hosta, lbaas_hostb]
 
         return res

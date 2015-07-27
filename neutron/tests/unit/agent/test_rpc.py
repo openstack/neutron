@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
 import mock
 from oslo_context import context as oslo_context
 import oslo_messaging
@@ -100,6 +101,26 @@ class AgentPluginReportState(base.BaseTestCase):
             self.assertEqual(mock_cast.call_args[1]['agent_state'],
                              {'agent_state': expected_agent_state})
             self.assertIsInstance(mock_cast.call_args[1]['time'], str)
+
+    def test_plugin_report_state_microsecond_is_0(self):
+        topic = 'test'
+        expected_time = datetime.datetime(2015, 7, 27, 15, 33, 30, 0)
+        expected_time_str = '2015-07-27T15:33:30.000000'
+        expected_agent_state = {'agent': 'test'}
+        with mock.patch('neutron.agent.rpc.datetime') as mock_datetime:
+            reportStateAPI = rpc.PluginReportStateAPI(topic)
+            mock_datetime.utcnow.return_value = expected_time
+            with mock.patch.object(reportStateAPI.client, 'call'), \
+                    mock.patch.object(reportStateAPI.client, 'cast'
+                                      ) as mock_cast, \
+                    mock.patch.object(reportStateAPI.client, 'prepare'
+                                      ) as mock_prepare:
+                mock_prepare.return_value = reportStateAPI.client
+                ctxt = oslo_context.RequestContext('fake_user',
+                                                   'fake_project')
+                reportStateAPI.report_state(ctxt, expected_agent_state)
+                self.assertEqual(expected_time_str,
+                                 mock_cast.call_args[1]['time'])
 
 
 class AgentRPCMethods(base.BaseTestCase):
