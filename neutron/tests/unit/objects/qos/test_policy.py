@@ -230,3 +230,18 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         primitive = policy_obj.obj_to_primitive()
         self.assertNotEqual([], (primitive['versioned_object.data']
                                           ['bandwidth_limit_rules']))
+
+    def test_to_dict_returns_rules_as_dicts(self):
+        policy_obj, rule_obj = self._create_test_policy_with_rule()
+        policy_obj = policy.QosPolicy.get_by_id(self.context, policy_obj.id)
+
+        obj_dict = policy_obj.to_dict()
+        rule_dict = rule_obj.to_dict()
+
+        # first make sure that to_dict() is still sane and does not return
+        # objects
+        for obj in (rule_dict, obj_dict):
+            self.assertIsInstance(obj, dict)
+
+        self.assertEqual(rule_dict,
+                         obj_dict['bandwidth_limit_rules'][0])

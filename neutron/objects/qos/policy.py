@@ -65,6 +65,13 @@ class QosPolicy(base.NeutronDbObject):
 
     fields_no_update = ['id', 'tenant_id']
 
+    def to_dict(self):
+        dict_ = super(QosPolicy, self).to_dict()
+        for field in self.rule_fields:
+            if field in dict_:
+                dict_[field] = [rule.to_dict() for rule in dict_[field]]
+        return dict_
+
     def obj_load_attr(self, attrname):
         if attrname not in self.rule_fields:
             raise exceptions.ObjectActionError(
