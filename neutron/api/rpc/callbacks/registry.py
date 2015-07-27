@@ -11,6 +11,9 @@
 #    under the License.
 
 from neutron.api.rpc.callbacks import resource_manager
+from neutron.api.rpc.callbacks import resources
+from neutron.common import exceptions
+
 
 # TODO(ajo): consider adding locking
 CALLBACK_MANAGER = None
@@ -21,6 +24,10 @@ def _get_resources_callback_manager():
     if CALLBACK_MANAGER is None:
         CALLBACK_MANAGER = resource_manager.ResourcesCallbacksManager()
     return CALLBACK_MANAGER
+
+
+class CallbackReturnedWrongObjectType(exceptions.NeutronException):
+    message = _('Callback for %(resource_type)s returned wrong object type')
 
 
 #resource implementation callback registration functions
@@ -34,7 +41,13 @@ def get_info(resource_type, resource_id, **kwargs):
     """
     callback = _get_resources_callback_manager().get_callback(resource_type)
     if callback:
-        return callback(resource_type, resource_id, **kwargs)
+        obj = callback(resource_type, resource_id, **kwargs)
+        if obj:
+            expected_cls = resources.get_resource_cls(resource_type)
+            if not isinstance(obj, expected_cls):
+                raise CallbackReturnedWrongObjectType(
+                    resource_type=resource_type)
+        return obj
 
 
 def register_provider(callback, resource_type):
