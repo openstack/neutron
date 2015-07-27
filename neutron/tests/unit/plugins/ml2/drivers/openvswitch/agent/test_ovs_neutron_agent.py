@@ -322,16 +322,30 @@ class TestOvsNeutronAgent(object):
                 vif_port_set, registered_ports, port_tags_dict=port_tags_dict)
         self.assertEqual(expected, actual)
 
-    def test_treat_devices_added_returns_raises_for_missing_device(self):
-        with mock.patch.object(self.agent.plugin_rpc,
-                               'get_devices_details_list',
-                               side_effect=Exception()),\
-                mock.patch.object(self.agent.int_br,
-                                  'get_vif_port_by_id',
-                                  return_value=mock.Mock()):
-            self.assertRaises(
-                self.mod_agent.DeviceListRetrievalError,
-                self.agent.treat_devices_added_or_updated, [{}], False)
+    def test_bind_devices(self):
+        devices_up = ['tap1']
+        devices_down = ['tap2']
+        self.agent.local_vlan_map["net1"] = mock.Mock()
+        port_details = [
+            {'network_id': 'net1', 'vif_port': mock.Mock(),
+             'device': devices_up[0],
+             'admin_state_up': True},
+            {'network_id': 'net1', 'vif_port': mock.Mock(),
+             'device': devices_down[0],
+             'admin_state_up': False}]
+        with mock.patch.object(
+            self.agent.plugin_rpc, 'update_device_list',
+            return_value={'devices_up': devices_up,
+                          'devices_down': devices_down,
+                          'failed_devices_up': [],
+                          'failed_devices_down': []}) as update_devices, \
+                mock.patch.object(self.agent,
+                                  'int_br') as int_br:
+            int_br.db_list.return_value = []
+            self.agent._bind_devices(port_details)
+            update_devices.assert_called_once_with(mock.ANY, devices_up,
+                                                   devices_down,
+                                                   mock.ANY, mock.ANY)
 
     def _mock_treat_devices_added_updated(self, details, port, func_name):
         """Mock treat devices added or updated.
@@ -342,11 +356,17 @@ class TestOvsNeutronAgent(object):
         :returns: whether the named function was called
         """
         with mock.patch.object(self.agent.plugin_rpc,
-                               'get_devices_details_list',
-                               return_value=[details]),\
+                               'get_devices_details_list_and_failed_devices',
+                               return_value={'devices': [details],
+                                             'failed_devices': None}),\
                 mock.patch.object(self.agent.int_br,
                                   'get_vifs_by_ids',
                                   return_value={details['device']: port}),\
+                mock.patch.object(self.agent.plugin_rpc, 'update_device_list',
+                                  return_value={'devices_up': [],
+                                                'devices_down': details,
+                                                'failed_devices_up': [],
+                                                'failed_devices_down': []}),\
                 mock.patch.object(self.agent, func_name) as func:
             skip_devs, need_bound_devices = (
                 self.agent.treat_devices_added_or_updated([{}], False))
@@ -367,8 +387,9 @@ class TestOvsNeutronAgent(object):
             mock.MagicMock(), port, 'port_dead'))
 
     def test_treat_devices_added_does_not_process_missing_port(self):
-        with mock.patch.object(self.agent.plugin_rpc,
-                               'get_device_details') as get_dev_fn,\
+        with mock.patch.object(
+            self.agent.plugin_rpc,
+            'get_devices_details_list_and_failed_devices') as get_dev_fn,\
                 mock.patch.object(self.agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=None):
@@ -384,8 +405,9 @@ class TestOvsNeutronAgent(object):
         dev_mock = mock.MagicMock()
         dev_mock.__getitem__.return_value = 'the_skipped_one'
         with mock.patch.object(self.agent.plugin_rpc,
-                               'get_devices_details_list',
-                               return_value=[dev_mock]),\
+                               'get_devices_details_list_and_failed_devices',
+                               return_value={'devices': [dev_mock],
+                                             'failed_devices': None}),\
                 mock.patch.object(self.agent.int_br,
                                   'get_vifs_by_ids',
                                   return_value={}),\
@@ -411,8 +433,9 @@ class TestOvsNeutronAgent(object):
                              }
 
         with mock.patch.object(self.agent.plugin_rpc,
-                               'get_devices_details_list',
-                               return_value=[fake_details_dict]),\
+                               'get_devices_details_list_and_failed_devices',
+                               return_value={'devices': [fake_details_dict],
+                                             'failed_devices': None}),\
                 mock.patch.object(self.agent.int_br,
                                   'get_vifs_by_ids',
                                   return_value={'xxx': mock.MagicMock()}),\
@@ -424,15 +447,14 @@ class TestOvsNeutronAgent(object):
             self.assertFalse(skip_devs)
             self.assertTrue(treat_vif_port.called)
 
-    def test_treat_devices_removed_returns_true_for_missing_device(self):
-        with mock.patch.object(self.agent.plugin_rpc, 'update_device_down',
-                               side_effect=Exception()):
-            self.assertTrue(self.agent.treat_devices_removed([{}]))
-
     def _mock_treat_devices_removed(self, port_exists):
         details = dict(exists=port_exists)
-        with mock.patch.object(self.agent.plugin_rpc, 'update_device_down',
-                               return_value=details):
+        with mock.patch.object(self.agent.plugin_rpc,
+                               'update_device_list',
+                               return_value={'devices_up': [],
+                                             'devices_down': details,
+                                             'failed_devices_up': [],
+                                             'failed_devices_down': []}):
             with mock.patch.object(self.agent, 'port_unbound') as port_unbound:
                 self.assertFalse(self.agent.treat_devices_removed([{}]))
         self.assertTrue(port_unbound.called)
@@ -1046,7 +1068,11 @@ class TestOvsNeutronAgent(object):
                                  'physical_network', 'segmentation_id',
                                  'admin_state_up', 'fixed_ips', 'device',
                                  'device_owner')}]
-        self.agent.plugin_rpc.get_devices_details_list.return_value = plist
+        (self.agent.plugin_rpc.get_devices_details_list_and_failed_devices.
+            return_value) = {'devices': plist, 'failed_devices': []}
+        self.agent.plugin_rpc.update_device_list.return_value = {
+            'devices_up': plist, 'devices_down': [], 'failed_devices_up': [],
+            'failed_devices_down': []}
         self.agent.setup_arp_spoofing_protection = mock.Mock()
         self.agent.treat_devices_added_or_updated([], False)
         self.assertFalse(self.agent.setup_arp_spoofing_protection.called)
@@ -1664,9 +1690,12 @@ class TestOvsDvrNeutronAgent(object):
         int_br.reset_mock()
         tun_br.reset_mock()
         with mock.patch.object(self.agent, 'reclaim_local_vlan'),\
-                mock.patch.object(self.agent.plugin_rpc,
-                                  'update_device_down',
-                                  return_value=None),\
+                mock.patch.object(self.agent.plugin_rpc, 'update_device_list',
+                                  return_value={
+                                      'devices_up': [],
+                                      'devices_down': [self._port.vif_id],
+                                      'failed_devices_up': [],
+                                      'failed_devices_down': []}),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent, 'tun_br', new=tun_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
@@ -1766,9 +1795,13 @@ class TestOvsDvrNeutronAgent(object):
         int_br.reset_mock()
         tun_br.reset_mock()
         with mock.patch.object(self.agent, 'reclaim_local_vlan'),\
-                mock.patch.object(self.agent.plugin_rpc,
-                                  'update_device_down',
-                                  return_value=None),\
+                mock.patch.object(self.agent.plugin_rpc, 'update_device_list',
+                                  return_value={
+                                      'devices_up': [],
+                                      'devices_down': [
+                                          self._compute_port.vif_id],
+                                      'failed_devices_up': [],
+                                      'failed_devices_down': []}),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent, 'tun_br', new=tun_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
@@ -1853,9 +1886,12 @@ class TestOvsDvrNeutronAgent(object):
         int_br.reset_mock()
         tun_br.reset_mock()
         with mock.patch.object(self.agent, 'reclaim_local_vlan'),\
-                mock.patch.object(self.agent.plugin_rpc,
-                                  'update_device_down',
-                                  return_value=None),\
+                mock.patch.object(self.agent.plugin_rpc, 'update_device_list',
+                                  return_value={
+                                      'devices_up': [],
+                                      'devices_down': [self._port.vif_id],
+                                      'failed_devices_up': [],
+                                      'failed_devices_down': []}),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent, 'tun_br', new=tun_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\

@@ -64,8 +64,7 @@ class _mac_mydialect(netaddr.mac_unix):
 
 
 class DeviceListRetrievalError(exceptions.NeutronException):
-    message = _("Unable to retrieve port details for devices: %(devices)s "
-                "because of error: %(error)s")
+    message = _("Unable to retrieve port details for devices: %(devices)s ")
 
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
@@ -740,6 +739,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                      port_other_config)
 
     def _bind_devices(self, need_binding_ports):
+        devices_up = []
+        devices_down = []
         port_info = self.int_br.db_list(
             "Port", columns=["name", "tag"])
         tags_by_name = {x['name']: x['tag'] for x in port_info}
@@ -768,13 +769,26 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # API server, thus possibly preventing instance spawn.
             if port_detail.get('admin_state_up'):
                 LOG.debug("Setting status for %s to UP", device)
-                self.plugin_rpc.update_device_up(
-                    self.context, device, self.agent_id, self.conf.host)
+                devices_up.append(device)
             else:
                 LOG.debug("Setting status for %s to DOWN", device)
-                self.plugin_rpc.update_device_down(
-                    self.context, device, self.agent_id, self.conf.host)
-            LOG.info(_LI("Configuration for device %s completed."), device)
+                devices_down.append(device)
+        failed_devices = []
+        if devices_up or devices_down:
+            devices_set = self.plugin_rpc.update_device_list(
+                self.context, devices_up, devices_down, self.agent_id,
+                self.conf.host)
+            failed_devices = (devices_set.get('failed_devices_up') +
+                devices_set.get('failed_devices_down'))
+        if failed_devices:
+            LOG.error(_LE("Configuration for devices %s failed!"),
+                      failed_devices)
+            #TODO(rossella_s) handle better the resync in next patches,
+            # this is just to preserve the current behavior
+            raise DeviceListRetrievalError(devices=failed_devices)
+        LOG.info(_LI("Configuration for devices up %(up)s and devices "
+                     "down %(down)s completed."),
+                 {'up': devices_up, 'down': devices_down})
 
     @staticmethod
     def setup_arp_spoofing_protection(bridge, vif, port_details):
@@ -1201,17 +1215,21 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def treat_devices_added_or_updated(self, devices, ovs_restarted):
         skipped_devices = []
         need_binding_devices = []
-        try:
-            devices_details_list = self.plugin_rpc.get_devices_details_list(
+        devices_details_list = (
+            self.plugin_rpc.get_devices_details_list_and_failed_devices(
                 self.context,
                 devices,
                 self.agent_id,
-                self.conf.host)
-        except Exception as e:
-            raise DeviceListRetrievalError(devices=devices, error=e)
+                self.conf.host))
+        if devices_details_list.get('failed_devices'):
+            #TODO(rossella_s) handle better the resync in next patches,
+            # this is just to preserve the current behavior
+            raise DeviceListRetrievalError(devices=devices)
+
+        devices = devices_details_list.get('devices')
         vif_by_id = self.int_br.get_vifs_by_ids(
-            [vif['device'] for vif in devices_details_list])
-        for details in devices_details_list:
+            [vif['device'] for vif in devices])
+        for details in devices:
             device = details['device']
             LOG.debug("Processing port: %s", device)
             port = vif_by_id.get(device)
@@ -1247,62 +1265,67 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         return skipped_devices, need_binding_devices
 
     def treat_ancillary_devices_added(self, devices):
-        try:
-            devices_details_list = self.plugin_rpc.get_devices_details_list(
+        devices_details_list = (
+            self.plugin_rpc.get_devices_details_list_and_failed_devices(
                 self.context,
                 devices,
                 self.agent_id,
-                self.conf.host)
-        except Exception as e:
-            raise DeviceListRetrievalError(devices=devices, error=e)
+                self.conf.host))
+        if devices_details_list.get('failed_devices'):
+            #TODO(rossella_s) handle better the resync in next patches,
+            # this is just to preserve the current behavior
+            raise DeviceListRetrievalError(devices=devices)
+        devices_added = [
+            d['device'] for d in devices_details_list.get('devices')]
+        LOG.info(_LI("Ancillary Ports %s added"), devices_added)
 
-        for details in devices_details_list:
-            device = details['device']
-            LOG.info(_LI("Ancillary Port %s added"), device)
-
-            # update plugin about port status
-            self.plugin_rpc.update_device_up(self.context,
-                                             device,
-                                             self.agent_id,
-                                             self.conf.host)
+        # update plugin about port status
+        devices_set_up = (
+            self.plugin_rpc.update_device_list(self.context,
+                                               devices_added,
+                                               [],
+                                               self.agent_id,
+                                               self.conf.host))
+        if devices_set_up.get('failed_devices_up'):
+            #TODO(rossella_s) handle better the resync in next patches,
+            # this is just to preserve the current behavior
+            raise DeviceListRetrievalError()
 
     def treat_devices_removed(self, devices):
         resync = False
         self.sg_agent.remove_devices_filter(devices)
+        LOG.info(_LI("Ports %s removed"), devices)
+        devices_down = self.plugin_rpc.update_device_list(self.context,
+                                                          [],
+                                                          devices,
+                                                          self.agent_id,
+                                                          self.conf.host)
+        failed_devices = devices_down.get('failed_devices_down')
+        if failed_devices:
+            LOG.debug("Port removal failed for %(devices)s ", failed_devices)
+            resync = True
         for device in devices:
-            LOG.info(_LI("Attachment %s removed"), device)
-            try:
-                self.plugin_rpc.update_device_down(self.context,
-                                                   device,
-                                                   self.agent_id,
-                                                   self.conf.host)
-            except Exception as e:
-                LOG.debug("port_removed failed for %(device)s: %(e)s",
-                          {'device': device, 'e': e})
-                resync = True
-                continue
             self.port_unbound(device)
         return resync
 
     def treat_ancillary_devices_removed(self, devices):
         resync = False
-        for device in devices:
-            LOG.info(_LI("Attachment %s removed"), device)
-            try:
-                details = self.plugin_rpc.update_device_down(self.context,
-                                                             device,
-                                                             self.agent_id,
-                                                             self.conf.host)
-            except Exception as e:
-                LOG.debug("port_removed failed for %(device)s: %(e)s",
-                          {'device': device, 'e': e})
-                resync = True
-                continue
-            if details['exists']:
-                LOG.info(_LI("Port %s updated."), device)
+        LOG.info(_LI("Ancillary ports %s removed"), devices)
+        devices_down = self.plugin_rpc.update_device_list(self.context,
+                                                          [],
+                                                          devices,
+                                                          self.agent_id,
+                                                          self.conf.host)
+        failed_devices = devices_down.get('failed_devices_down')
+        if failed_devices:
+            LOG.debug("Port removal failed for %(devices)s ", failed_devices)
+            resync = True
+        for detail in devices_down.get('devices_down'):
+            if detail['exists']:
+                LOG.info(_LI("Port %s updated."), detail['device'])
                 # Nothing to do regarding local networking
             else:
-                LOG.debug("Device %s not defined on plugin", device)
+                LOG.debug("Device %s not defined on plugin", detail['device'])
         return resync
 
     def process_network_ports(self, port_info, ovs_restarted):
@@ -1355,7 +1378,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                          port_info.get('updated', set()))
         self._bind_devices(need_binding_devices)
 
-        if 'removed' in port_info:
+        if 'removed' in port_info and port_info['removed']:
             start = time.time()
             resync_b = self.treat_devices_removed(port_info['removed'])
             LOG.debug("process_network_ports - iteration:%(iter_num)d - "
@@ -1368,15 +1391,15 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def process_ancillary_network_ports(self, port_info):
         resync_a = False
         resync_b = False
-        if 'added' in port_info:
+        if 'added' in port_info and port_info['added']:
             start = time.time()
             try:
                 self.treat_ancillary_devices_added(port_info['added'])
                 LOG.debug("process_ancillary_network_ports - iteration: "
                           "%(iter_num)d - treat_ancillary_devices_added "
                           "completed in %(elapsed).3f",
-                        {'iter_num': self.iter_num,
-                        'elapsed': time.time() - start})
+                          {'iter_num': self.iter_num,
+                           'elapsed': time.time() - start})
             except DeviceListRetrievalError:
                 # Need to resync as there was an error with server
                 # communication.
@@ -1384,7 +1407,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                   "iteration:%d - failure while retrieving "
                                   "port details from server"), self.iter_num)
                 resync_a = True
-        if 'removed' in port_info:
+        if 'removed' in port_info and port_info['removed']:
             start = time.time()
             resync_b = self.treat_ancillary_devices_removed(
                 port_info['removed'])
