@@ -24,6 +24,7 @@ from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional import base as functional_base
 
@@ -164,3 +165,16 @@ class IpLibTestCase(IpLibTestFramework):
 
         routes = ip_lib.get_routing_table(4, namespace=attr.namespace)
         self.assertEqual(expected_routes, routes)
+
+    def _check_for_device_name(self, ip, name, should_exist):
+        exist = any(d for d in ip.get_devices() if d.name == name)
+        self.assertEqual(should_exist, exist)
+
+    def test_dummy_exists(self):
+        namespace = self.useFixture(net_helpers.NamespaceFixture())
+        dev_name = base.get_rand_name()
+        device = namespace.ip_wrapper.add_dummy(dev_name)
+        self.addCleanup(self._safe_delete_device, device)
+        self._check_for_device_name(namespace.ip_wrapper, dev_name, True)
+        device.link.delete()
+        self._check_for_device_name(namespace.ip_wrapper, dev_name, False)

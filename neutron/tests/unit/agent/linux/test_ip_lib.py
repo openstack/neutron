@@ -313,6 +313,14 @@ class TestIpWrapper(base.BaseTestCase):
                                              run_as_root=True, namespace=None,
                                              log_fail_as_error=True)
 
+    def test_add_dummy(self):
+        ip_lib.IPWrapper().add_dummy('dummy0')
+        self.execute.assert_called_once_with([], 'link',
+                                             ('add', 'dummy0',
+                                              'type', 'dummy'),
+                                             run_as_root=True, namespace=None,
+                                             log_fail_as_error=True)
+
     def test_get_device(self):
         dev = ip_lib.IPWrapper(namespace='ns').device('eth0')
         self.assertEqual(dev.namespace, 'ns')
