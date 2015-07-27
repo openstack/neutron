@@ -45,16 +45,6 @@ class ServiceTypeManager(object):
 
     def __init__(self):
         self.config = {}
-        # TODO(armax): remove these as soon as *-aaS start using
-        # the newly introduced add_provider_configuration API
-        self.config['LOADBALANCER'] = (
-            pconf.ProviderConfiguration('neutron_lbaas'))
-        self.config['LOADBALANCERV2'] = (
-            pconf.ProviderConfiguration('neutron_lbaas'))
-        self.config['FIREWALL'] = (
-            pconf.ProviderConfiguration('neutron_fwaas'))
-        self.config['VPN'] = (
-            pconf.ProviderConfiguration('neutron_vpnaas'))
 
     def add_provider_configuration(self, service_type, configuration):
         """Add or update the provider configuration for the service type."""
