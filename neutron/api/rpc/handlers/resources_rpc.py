@@ -105,4 +105,7 @@ class ResourcesServerRpcCallback(object):
             context=context)
 
         if obj:
+            # don't request a backport for the latest known version
+            if version == obj.VERSION:
+                version = None
             return obj.obj_to_primitive(target_version=version)

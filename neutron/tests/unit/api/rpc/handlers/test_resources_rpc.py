@@ -99,3 +99,29 @@ class ResourcesServerRpcCallbackTestCase(ResourcesRpcBaseTestCase):
                 qos_policy_id, context=self.context)
         self.assertEqual(policy_dict, primitive['versioned_object.data'])
         self.assertEqual(policy_obj.obj_to_primitive(), primitive)
+
+    @mock.patch.object(policy.QosPolicy, 'obj_to_primitive')
+    def test_get_info_no_backport_for_latest_version(self, to_prim_mock):
+        policy_dict = self._create_test_policy_dict()
+        policy_obj = self._create_test_policy(policy_dict)
+        qos_policy_id = policy_dict['id']
+        with mock.patch.object(resources_rpc.registry, 'get_info',
+                               return_value=policy_obj):
+            self.callbacks.get_info(
+                self.context, resource_type=resources.QOS_POLICY,
+                version=policy.QosPolicy.VERSION,
+                resource_id=qos_policy_id)
+            to_prim_mock.assert_called_with(target_version=None)
+
+    @mock.patch.object(policy.QosPolicy, 'obj_to_primitive')
+    def test_get_info_backports_to_older_version(self, to_prim_mock):
+        policy_dict = self._create_test_policy_dict()
+        policy_obj = self._create_test_policy(policy_dict)
+        qos_policy_id = policy_dict['id']
+        with mock.patch.object(resources_rpc.registry, 'get_info',
+                               return_value=policy_obj):
+            self.callbacks.get_info(
+                self.context, resource_type=resources.QOS_POLICY,
+                version='0.9',  # less than initial version 1.0
+                resource_id=qos_policy_id)
+            to_prim_mock.assert_called_with(target_version='0.9')
